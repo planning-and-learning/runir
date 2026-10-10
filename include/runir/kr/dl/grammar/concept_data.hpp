@@ -2,7 +2,7 @@
 #define RUNIR_GRAMMAR_CONCEPT_DATA_HPP_
 
 #include "runir/kr/dl/data_helpers.hpp"
-#include "runir/kr/dl/grammar/indices.hpp"
+#include "runir/kr/dl/grammar/declarations.hpp"
 
 #include <concepts>
 #include <yggdrasil/core/types.hpp>
@@ -15,6 +15,10 @@ using GrammarConceptChoice = runir::kr::dl::grammar::ConstructorOrNonTerminal<Fa
 
 template<runir::kr::dl::FamilyTag Family>
 using GrammarRoleChoice = runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, runir::kr::dl::RoleTag>;
+
+/// The arguments of count and nonempty in a grammar: a concept or a role choice.
+template<runir::kr::dl::FamilyTag Family>
+using GrammarArgumentTypes = ygg::MapTypeListSecondT<runir::kr::dl::grammar::ConstructorOrNonTerminal, Family, runir::kr::dl::ConceptOrRoleTags>;
 
 template<runir::kr::dl::FamilyTag Family>
 using GrammarConceptConstructor = runir::kr::dl::grammar::Constructor<Family, runir::kr::dl::ConceptTag>;

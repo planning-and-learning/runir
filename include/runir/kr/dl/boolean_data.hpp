@@ -3,10 +3,12 @@
 
 #include "runir/kr/dl/query_data.hpp"
 #include "runir/kr/dl/role_data.hpp"
+#include <yggdrasil/containers/variant.hpp>
 
 #include <cista/containers/variant.h>
 #include <tuple>
 #include <utility>
+#include <variant>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 
@@ -32,7 +34,7 @@ struct Data<runir::kr::dl::Boolean<Family, runir::kr::dl::AtomicGoalTag<T>>> :
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::Boolean<Family, runir::kr::dl::NonemptyTag>>
 {
-    using ConstructorVariant = ::cista::offset::variant<Index<DlConcept<Family>>, Index<DlRole<Family>>, Index<runir::kr::dl::Query<Family>>>;
+    using ConstructorVariant = ::ygg::IndexVariant<DlArgumentTypes<Family>>;
     using Arg = ConstructorVariant;
 
     Index<runir::kr::dl::Boolean<Family, runir::kr::dl::NonemptyTag>> index;
@@ -40,6 +42,15 @@ struct Data<runir::kr::dl::Boolean<Family, runir::kr::dl::NonemptyTag>>
 
     Data() = default;
     explicit Data(ConstructorVariant arg_) : index(), arg(std::move(arg_)) {}
+    template<typename C>
+    using ViewVariant =
+        std::variant<::ygg::View<Index<DlConcept<Family>>, C>, ::ygg::View<Index<DlRole<Family>>, C>, ::ygg::View<Index<runir::kr::dl::Query<Family>>, C>>;
+    template<typename C>
+    explicit Data(ViewVariant<C> arg_) :
+        index(),
+        arg(std::visit([](const auto& view) -> ConstructorVariant { return ConstructorVariant(view.get_index()); }, arg_))
+    {
+    }
 
     auto cista_members() noexcept { return std::tie(index, arg); }
     auto cista_members() const noexcept { return std::tie(index, arg); }

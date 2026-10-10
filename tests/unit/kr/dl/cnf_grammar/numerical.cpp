@@ -1,10 +1,12 @@
+#include "runir/kr/dl/cnf_grammar/declarations.hpp"
+
 #include <concepts>
 #include <gtest/gtest.h>
 #include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
 #include <runir/kr/dl/cnf_grammar/numerical_data.hpp>
-#include <runir/kr/dl/cnf_grammar/numerical_index.hpp>
 #include <runir/kr/dl/cnf_grammar/numerical_view.hpp>
 #include <yggdrasil/core/concepts.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::tests
 {
@@ -67,7 +69,7 @@ consteval bool numerical_data_view()
             data.identifier;
             view.get_value();
         };
-    else if constexpr (kr::dl::TypeListContains<Tag, kr::dl::NumericalBinaryConstructorTags>::value)
+    else if constexpr (ygg::InTypeList<Tag, kr::dl::NumericalBinaryConstructorTags>)
         return requires(Data& data, const View& view) {
             data.lhs;
             data.rhs;

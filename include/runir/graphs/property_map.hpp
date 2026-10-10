@@ -9,7 +9,6 @@
 #include <yggdrasil/containers/indexed_hash_set.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
-#include <yggdrasil/ids/index_mixins.hpp>
 #include <yggdrasil/semantics/canonicalization.hpp>
 
 namespace ygg
@@ -25,20 +24,6 @@ concept HasIsCanonical = requires(const T& value) {
 template<typename T>
 concept HasCanonicalize = requires(T& value) { ygg::canonicalize(value); };
 }
-
-template<runir::graphs::Property P>
-struct Index<runir::graphs::VertexProperty<P>> : IndexMixin<Index<runir::graphs::VertexProperty<P>>>
-{
-    using Base = IndexMixin<Index<runir::graphs::VertexProperty<P>>>;
-    using Base::Base;
-};
-
-template<runir::graphs::Property P>
-struct Index<runir::graphs::EdgeProperty<P>> : IndexMixin<Index<runir::graphs::EdgeProperty<P>>>
-{
-    using Base = IndexMixin<Index<runir::graphs::EdgeProperty<P>>>;
-    using Base::Base;
-};
 
 template<runir::graphs::Property P>
 struct Data<runir::graphs::VertexProperty<P>>

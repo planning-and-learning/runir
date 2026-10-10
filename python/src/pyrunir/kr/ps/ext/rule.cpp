@@ -2,6 +2,7 @@
 #include "pyrunir/kr/binding_utils.hpp"
 
 #include <nanobind/stl/list.h>
+#include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
@@ -68,6 +69,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     auto term = nb::class_<TermData>(m, "OrderTermData")
                     .def(nb::init<>())
                     .def(nb::init<OrderDirection, TermData::Feature>(), "direction"_a, "feature"_a)
+                    .def(nb::init<OrderDirection, TermData::ViewVariant<Repository>>(), "direction"_a, "feature"_a)
                     .def_rw("index", &TermData::index)
                     .def_rw("direction", &TermData::direction)
                     .def_rw("feature", &TermData::feature);

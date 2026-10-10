@@ -11,7 +11,6 @@
 #include <tyr/formalism/declarations.hpp>
 #include <yggdrasil/core/type_list.hpp>
 #include <yggdrasil/core/types.hpp>
-#include <yggdrasil/ids/index_mixins.hpp>
 
 namespace runir::kr::dl
 {
@@ -53,6 +52,8 @@ template<typename T>
 concept BooleanOrNumericalTag = std::same_as<T, BooleanTag> || std::same_as<T, NumericalTag>;
 
 using CategoryTags = ygg::TypeList<ConceptTag, RoleTag, BooleanTag, NumericalTag>;
+using ConceptOrRoleTags = ygg::TypeList<ConceptTag, RoleTag>;
+using BooleanOrNumericalTags = ygg::TypeList<BooleanTag, NumericalTag>;
 
 /**
  * Truth values
@@ -349,19 +350,22 @@ struct ArgumentTag
     }();
 };
 
+/// Register and argument positions; `Register` and `Argument` name their constructors.
 template<ConceptOrRoleTag Category>
-struct RegisterIdentifier : ygg::IndexMixin<RegisterIdentifier<Category>>
+struct RegisterSlot
 {
-    using Base = ygg::IndexMixin<RegisterIdentifier<Category>>;
-    using Base::Base;
 };
 
 template<CategoryTag Category>
-struct ArgumentIdentifier : ygg::IndexMixin<ArgumentIdentifier<Category>>
+struct ArgumentSlot
 {
-    using Base = ygg::IndexMixin<ArgumentIdentifier<Category>>;
-    using Base::Base;
 };
+
+template<ConceptOrRoleTag Category>
+using RegisterIdentifier = ygg::Index<RegisterSlot<Category>>;
+
+template<CategoryTag Category>
+using ArgumentIdentifier = ygg::Index<ArgumentSlot<Category>>;
 
 /**
  * Uns family constructors
@@ -710,15 +714,8 @@ using QueryConstructorTags = ygg::TypeList<AtomicStateTag<tyr::formalism::Static
                                            QueryUnionTag,
                                            QueryDifferenceTag>;
 
-template<typename T, typename List>
-struct TypeListContains : std::false_type
-{
-};
-
-template<typename T, typename... Ts>
-struct TypeListContains<T, ygg::TypeList<Ts...>> : std::bool_constant<(std::same_as<T, Ts> || ...)>
-{
-};
+/// Column types of relations over planning objects.
+using ObjectValues = ygg::TypeList<ygg::Index<tyr::formalism::Object>>;
 
 template<FamilyTag Family>
 struct DlFamilyTraits;
@@ -743,16 +740,16 @@ template<FamilyTag Family>
 using FamilyNumericalConstructorTags = typename DlFamilyTraits<Family>::NumericalConstructorTags;
 
 template<typename Family, typename T>
-concept FamilyConceptConstructorTag = FamilyTag<Family> && TypeListContains<T, FamilyConceptConstructorTags<Family>>::value;
+concept FamilyConceptConstructorTag = FamilyTag<Family> && ygg::InTypeList<T, FamilyConceptConstructorTags<Family>>;
 
 template<typename Family, typename T>
-concept FamilyRoleConstructorTag = FamilyTag<Family> && TypeListContains<T, FamilyRoleConstructorTags<Family>>::value;
+concept FamilyRoleConstructorTag = FamilyTag<Family> && ygg::InTypeList<T, FamilyRoleConstructorTags<Family>>;
 
 template<typename Family, typename T>
-concept FamilyBooleanConstructorTag = FamilyTag<Family> && TypeListContains<T, FamilyBooleanConstructorTags<Family>>::value;
+concept FamilyBooleanConstructorTag = FamilyTag<Family> && ygg::InTypeList<T, FamilyBooleanConstructorTags<Family>>;
 
 template<typename Family, typename T>
-concept FamilyNumericalConstructorTag = FamilyTag<Family> && TypeListContains<T, FamilyNumericalConstructorTags<Family>>::value;
+concept FamilyNumericalConstructorTag = FamilyTag<Family> && ygg::InTypeList<T, FamilyNumericalConstructorTags<Family>>;
 
 template<typename T>
 concept BaseConceptConstructorTag = FamilyConceptConstructorTag<runir::kr::BaseFamilyTag, T>;

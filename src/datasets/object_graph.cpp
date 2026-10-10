@@ -155,7 +155,7 @@ void add_goal_atoms(tyr::planning::StateView<Kind> state, ObjectGraphConstructio
 template<tyr::TaskKind Kind>
 auto create_object_graph(tyr::planning::StateView<Kind> state, ColorRepository& repository) -> std::unique_ptr<ObjectGraph>
 {
-    if (&state.get_repository()->get_root() != &repository.get_planning_repository().get_root())
+    if (&state.get_formalism_repository()->get_root() != &repository.get_planning_repository().get_root())
         throw std::invalid_argument("State and ColorRepository use different planning repositories.");
 
     auto context = ObjectGraphConstructionContext(repository);

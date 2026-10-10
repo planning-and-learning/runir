@@ -31,7 +31,7 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationMapsNumericalOpponent)
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/incomplete_numerical_opponent.module"), planning_domain.get_domain(), *repository);
 
     const auto result = kr::ps::ext::dl::incomplete_structural_termination(module_);
-    const auto numericals = module_.get_features<kr::ps::dl::NumericalFeature>();
+    const auto numericals = module_.get_features<kr::dl::NumericalTag>();
 
     ASSERT_FALSE(result.is_terminating());
     ASSERT_EQ(numericals.size(), 1);
@@ -87,7 +87,7 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationHasNoFeatureLimit)
     const auto result = kr::ps::ext::dl::incomplete_structural_termination(module_);
 
     EXPECT_TRUE(result.is_terminating());
-    EXPECT_EQ(module_.get_features<kr::ps::dl::NumericalFeature>().size(), 15);
+    EXPECT_EQ(module_.get_features<kr::dl::NumericalTag>().size(), 15);
 }
 
 TEST(RunirTests, ExtIncompleteStructuralTerminationAcyclicCallIsLocallyTerminating)

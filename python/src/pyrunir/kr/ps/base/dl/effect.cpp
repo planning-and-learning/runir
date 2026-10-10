@@ -32,27 +32,27 @@ void bind_effect(nb::module_& m, RepositoryBinding& repository)
     using Family = runir::kr::BaseFamilyTag;
     using Variant = runir::kr::ps::ConcreteEffectVariant<Family, runir::kr::DlTag>;
     runir::kr::python::bind_variant<Variant>(m, repository, "ConcreteEffectVariant");
-    bind_observation<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>>(
+    bind_observation<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>>(
         m,
         repository,
         "PositiveBooleanEffect");
-    bind_observation<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>>(
+    bind_observation<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Negative>>(
         m,
         repository,
         "NegativeBooleanEffect");
-    bind_observation<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>>(
+    bind_observation<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Unchanged>>(
         m,
         repository,
         "UnchangedBooleanEffect");
-    bind_observation<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>>(
+    bind_observation<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::Increases>>(
         m,
         repository,
         "IncreasesNumericalEffect");
-    bind_observation<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>>(
+    bind_observation<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::Decreases>>(
         m,
         repository,
         "DecreasesNumericalEffect");
-    bind_observation<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>>(
+    bind_observation<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::Unchanged>>(
         m,
         repository,
         "UnchangedNumericalEffect");

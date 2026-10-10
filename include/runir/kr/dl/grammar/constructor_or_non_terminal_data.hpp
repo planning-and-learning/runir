@@ -1,12 +1,13 @@
 #ifndef RUNIR_GRAMMAR_CONSTRUCTOR_OR_NON_TERMINAL_DATA_HPP_
 #define RUNIR_GRAMMAR_CONSTRUCTOR_OR_NON_TERMINAL_DATA_HPP_
 
-#include "runir/kr/dl/grammar/constructor_index.hpp"
-#include "runir/kr/dl/grammar/non_terminal_index.hpp"
+#include "runir/kr/dl/grammar/declarations.hpp"
+#include <yggdrasil/containers/variant.hpp>
 
 #include <cista/containers/variant.h>
 #include <tuple>
 #include <utility>
+#include <variant>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 
@@ -16,12 +17,17 @@ namespace ygg
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 struct Data<runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, Category>>
 {
-    using Variant =
-        ::cista::offset::variant<Index<runir::kr::dl::grammar::Constructor<Family, Category>>, Index<runir::kr::dl::grammar::NonTerminal<Family, Category>>>;
+    using Variant = ::ygg::IndexVariant<ygg::TypeList<runir::kr::dl::grammar::Constructor<Family, Category>, runir::kr::dl::grammar::NonTerminal<Family, Category>>>;
     Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, Category>> index;
     Variant variant;
     Data() = default;
     explicit Data(Variant variant_) : index(), variant(std::move(variant_)) {}
+    template<typename C>
+    using ViewVariant = ::ygg::ViewVariant<Variant, C>;
+    template<typename C>
+    explicit Data(const ViewVariant<C>& variant_) : index(), variant(std::visit([](const auto& view) -> Variant { return Variant(view.get_index()); }, variant_))
+    {
+    }
 
     auto cista_members() noexcept { return std::tie(index, variant); }
     auto cista_members() const noexcept { return std::tie(index, variant); }

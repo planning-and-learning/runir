@@ -150,8 +150,8 @@ template<typename Result, runir::kr::FamilyTag Family, typename C, typename Defi
 Result materialize_incomplete_result(Definition definition, const PolicyAnalysis<Family, C>& analysis, const IncompletePolicyResult& policy_result)
 {
     auto result = Result {};
-    const auto booleans = definition.template get_features<dl::BooleanFeature>();
-    const auto numericals = definition.template get_features<dl::NumericalFeature>();
+    const auto booleans = definition.template get_features<runir::kr::dl::BooleanTag>();
+    const auto numericals = definition.template get_features<runir::kr::dl::NumericalTag>();
     for (const auto& policy_rule : policy_result.surviving_rules)
     {
         result.surviving_rules.push_back({ analysis.rules[policy_rule.rule_position], {} });
@@ -188,8 +188,8 @@ Result materialize_result(Definition definition,
 
     auto& sieve = result.sieve_result.emplace();
     sieve.scc_results = materialize_scc_results<Family, C>(*sieve_result.scc_feature_positions,
-                                                           definition.template get_features<dl::BooleanFeature>(),
-                                                           definition.template get_features<dl::NumericalFeature>());
+                                                           definition.template get_features<runir::kr::dl::BooleanTag>(),
+                                                           definition.template get_features<runir::kr::dl::NumericalTag>());
     if (sieve_result.components.empty())
         return result;
 

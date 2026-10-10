@@ -83,8 +83,8 @@ void bind_execution_types(nb::module_& m, const char* prefix)
 
     bind_feature_evaluation<Kind, runir::kr::dl::ConceptTag>(m);
     bind_feature_evaluation<Kind, runir::kr::dl::RoleTag>(m);
-    bind_feature_evaluation<Kind, runir::kr::ps::dl::BooleanFeature>(m);
-    bind_feature_evaluation<Kind, runir::kr::ps::dl::NumericalFeature>(m);
+    bind_feature_evaluation<Kind, runir::kr::dl::BooleanTag>(m);
+    bind_feature_evaluation<Kind, runir::kr::dl::NumericalTag>(m);
     bind_feature_evaluation<Kind, runir::kr::ps::dl::QueryFeature>(m);
 
     auto histories = nb::class_<HistoryView>(m, (std::string(prefix) + "Histories").c_str())

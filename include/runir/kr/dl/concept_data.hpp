@@ -2,7 +2,7 @@
 #define RUNIR_KR_DL_CONCEPT_DATA_HPP_
 
 #include "runir/kr/dl/data_helpers.hpp"
-#include "runir/kr/dl/indices.hpp"
+#include "runir/kr/dl/declarations.hpp"
 
 #include <concepts>
 #include <tuple>
@@ -16,6 +16,10 @@ using DlConcept = runir::kr::dl::Constructor<Family, runir::kr::dl::ConceptTag>;
 
 template<runir::kr::dl::FamilyTag Family>
 using DlRole = runir::kr::dl::Constructor<Family, runir::kr::dl::RoleTag>;
+
+/// The arguments of count and nonempty: a concept, a role, or a query.
+template<runir::kr::dl::FamilyTag Family>
+using DlArgumentTypes = ygg::TypeList<DlConcept<Family>, DlRole<Family>, runir::kr::dl::Query<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::Concept<Family, runir::kr::dl::BotTag>> : runir::kr::dl::NullaryData<runir::kr::dl::Concept<Family, runir::kr::dl::BotTag>>

@@ -45,8 +45,8 @@ in `DlFamilyFor<Family>`:
 | --- | --- |
 | `kr::dl::ConceptTag` | `Constructor<DlFamily, ConceptTag>` |
 | `kr::dl::RoleTag` | `Constructor<DlFamily, RoleTag>` |
-| `ps::dl::BooleanFeature` | `Constructor<DlFamily, BooleanTag>` |
-| `ps::dl::NumericalFeature` | `Constructor<DlFamily, NumericalTag>` |
+| `kr::dl::BooleanTag` | `Constructor<DlFamily, BooleanTag>` |
+| `kr::dl::NumericalTag` | `Constructor<DlFamily, NumericalTag>` |
 | `ps::dl::QueryFeature` | `Query<DlFamily>` |
 
 This mapping describes expression types; the policy family inventory determines
@@ -98,7 +98,7 @@ using Family = kr::IcpFamilyTag;
 using DlFamily = kr::ps::DlFamilyFor<Family>;  // ExtFamilyTag
 
 using Feature = kr::ps::ConcreteFeature<Family, kr::DlTag,
-                                      kr::ps::dl::NumericalFeature>;
+                                      kr::dl::NumericalTag>;
 using StateContext = kr::dl::semantics::StateEvaluationContext<DlFamily, tyr::LiftedTag>;
 using TransitionContext = kr::ps::dl::TransitionEvaluationContext<Family, tyr::LiftedTag>;
 ```

@@ -84,8 +84,8 @@ public:
             };
             append.template operator()<runir::kr::dl::ConceptTag>();
             append.template operator()<runir::kr::dl::RoleTag>();
-            append.template operator()<runir::kr::ps::dl::BooleanFeature>();
-            append.template operator()<runir::kr::ps::dl::NumericalFeature>();
+            append.template operator()<runir::kr::dl::BooleanTag>();
+            append.template operator()<runir::kr::dl::NumericalTag>();
             append.template operator()<runir::kr::ps::dl::QueryFeature>();
             m_modules.emplace_back(*task_context.search_context->task, module_, roots);
         }

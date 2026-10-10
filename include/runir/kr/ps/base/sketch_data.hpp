@@ -2,10 +2,8 @@
 #define RUNIR_KR_PS_BASE_SKETCH_DATA_HPP_
 
 #include "runir/kr/ps/base/declarations.hpp"
-#include "runir/kr/ps/base/rule_index.hpp"
-#include "runir/kr/ps/base/sketch_index.hpp"
+#include "runir/kr/ps/declarations.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
-#include "runir/kr/ps/feature_index.hpp"
 
 #include <tuple>
 #include <utility>
@@ -20,13 +18,13 @@ template<>
 struct Data<runir::kr::ps::base::Sketch>
 {
     Index<runir::kr::ps::base::Sketch> index;
-    IndexList<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>> boolean_features;
-    IndexList<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>> numerical_features;
+    IndexList<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>> boolean_features;
+    IndexList<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>> numerical_features;
     IndexList<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>> rules;
 
     Data() = default;
-    Data(IndexList<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>> boolean_features_,
-         IndexList<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>> numerical_features_,
+    Data(IndexList<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>> boolean_features_,
+         IndexList<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>> numerical_features_,
          IndexList<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>> rules_) :
         index(),
         boolean_features(std::move(boolean_features_)),
@@ -35,8 +33,8 @@ struct Data<runir::kr::ps::base::Sketch>
     {
     }
     template<typename C>
-    Data(const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>, C>>& boolean_features_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>, C>>& numerical_features_,
+    Data(const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>, C>>& boolean_features_,
+         const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>, C>>& numerical_features_,
          const std::vector<::ygg::View<Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C>>& rules_) :
         index(),
         boolean_features(),

@@ -1,8 +1,10 @@
+#include "runir/kr/ps/declarations.hpp"
+
 #include <concepts>
-#include <runir/kr/ps/condition_index.hpp>
 #include <runir/kr/ps/dl/condition_data.hpp>
 #include <runir/kr/ps/dl/condition_view.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::tests
 {
@@ -39,19 +41,19 @@ concept ConditionContract = IndexedDataView<Entity> && requires(ygg::Data<Entity
 template<typename Feature, typename Observation>
 using Condition = kr::ps::ConcreteCondition<kr::ExtFamilyTag, kr::DlTag, Feature, Observation>;
 
-using ConcreteTypes = ygg::TypeList<Condition<kr::ps::dl::BooleanFeature, kr::ps::dl::Positive>,
-                                    Condition<kr::ps::dl::BooleanFeature, kr::ps::dl::Negative>,
-                                    Condition<kr::ps::dl::NumericalFeature, kr::ps::dl::EqualZero>,
-                                    Condition<kr::ps::dl::NumericalFeature, kr::ps::dl::GreaterZero>>;
+using ConcreteTypes = ygg::TypeList<Condition<kr::dl::BooleanTag, kr::ps::dl::Positive>,
+                                    Condition<kr::dl::BooleanTag, kr::ps::dl::Negative>,
+                                    Condition<kr::dl::NumericalTag, kr::ps::dl::EqualZero>,
+                                    Condition<kr::dl::NumericalTag, kr::ps::dl::GreaterZero>>;
 static_assert(
     std::same_as<typename ygg::Data<ConditionVariant>::Variant, ygg::ApplyTypeListT<::cista::offset::variant, ygg::MapTypeListT<ygg::Index, ConcreteTypes>>>);
 static_assert(std::same_as<kr::ps::PsConditionTypes<kr::ExtFamilyTag>,
                            ygg::ConcatTypeListsT<ygg::TypeList<kr::ps::ConditionVariant<kr::ExtFamilyTag>, ConditionVariant>, ConcreteTypes>>);
 
-static_assert(ConditionContract<Condition<kr::ps::dl::BooleanFeature, kr::ps::dl::Positive>>);
-static_assert(ConditionContract<Condition<kr::ps::dl::BooleanFeature, kr::ps::dl::Negative>>);
-static_assert(ConditionContract<Condition<kr::ps::dl::NumericalFeature, kr::ps::dl::EqualZero>>);
-static_assert(ConditionContract<Condition<kr::ps::dl::NumericalFeature, kr::ps::dl::GreaterZero>>);
+static_assert(ConditionContract<Condition<kr::dl::BooleanTag, kr::ps::dl::Positive>>);
+static_assert(ConditionContract<Condition<kr::dl::BooleanTag, kr::ps::dl::Negative>>);
+static_assert(ConditionContract<Condition<kr::dl::NumericalTag, kr::ps::dl::EqualZero>>);
+static_assert(ConditionContract<Condition<kr::dl::NumericalTag, kr::ps::dl::GreaterZero>>);
 
 }  // namespace
 

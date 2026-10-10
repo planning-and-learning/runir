@@ -1,6 +1,7 @@
 #include "bindings.hpp"
 #include "pyrunir/kr/binding_utils.hpp"
 
+#include <nanobind/stl/variant.h>
 #include <runir/kr/ps/effect_data.hpp>
 #include <runir/kr/ps/effect_view.hpp>
 #include <runir/kr/ps/icp/formatter.hpp>
@@ -22,6 +23,7 @@ void bind_effect(nb::module_& m, RepositoryBinding& repository)
     auto data = nb::class_<Data>(m, "EffectVariantData")
                     .def(nb::init<>())
                     .def(nb::init<Data::Variant>(), nb::arg("variant"))
+                    .def(nb::init<Data::ViewVariant<Repository>>(), nb::arg("variant"))
                     .def_rw("index", &Data::index)
                     .def_rw("variant", &Data::variant);
     ygg::add_comparison(data);

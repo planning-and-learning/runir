@@ -5,19 +5,16 @@
 
 #include <tuple>
 #include <yggdrasil/core/types.hpp>
-#include <yggdrasil/formalism/detail/view.hpp>
+#include <yggdrasil/formalism/declarations.hpp>
 
 namespace ygg
 {
 
 template<formalism::SymbolContextFor<runir::kr::ps::ext::MemoryState> C>
-class View<Index<runir::kr::ps::ext::MemoryState>, C> : public formalism::detail::View<Index<runir::kr::ps::ext::MemoryState>, C>
+class View<Index<runir::kr::ps::ext::MemoryState>, C> : public ygg::IndexViewBase<runir::kr::ps::ext::MemoryState, C>
 {
 public:
-    View(Index<runir::kr::ps::ext::MemoryState> handle, const C& context) noexcept :
-        formalism::detail::View<Index<runir::kr::ps::ext::MemoryState>, C>(handle, context)
-    {
-    }
+    using ygg::IndexViewBase<runir::kr::ps::ext::MemoryState, C>::IndexViewBase;
 
     const auto& get_name() const noexcept { return this->get_data().name; }
 };

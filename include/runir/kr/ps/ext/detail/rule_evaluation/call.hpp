@@ -61,7 +61,7 @@ private:
                     result->concept_arguments.push_back(denotation.get_index());
                 else if constexpr (std::same_as<FeatureTag, runir::kr::dl::RoleTag>)
                     result->role_arguments.push_back(denotation.get_index());
-                else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature>)
+                else if constexpr (std::same_as<FeatureTag, runir::kr::dl::BooleanTag>)
                     result->boolean_arguments.push_back(denotation.get_index());
                 else
                     result->numerical_arguments.push_back(denotation.get_index());

@@ -1,6 +1,7 @@
 #include "bindings.hpp"
 #include "pyrunir/kr/binding_utils.hpp"
 
+#include <nanobind/stl/variant.h>
 #include <runir/kr/ps/icp/formatter.hpp>
 #include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/ps/icp/rule_variant_data.hpp>
@@ -22,6 +23,7 @@ void bind_rule_variant(nb::module_& m, RepositoryBinding& repository)
     auto data = nb::class_<Data>(m, "RuleVariantData")
                     .def(nb::init<>())
                     .def(nb::init<::cista::offset::string, Data::Variant>(), nb::arg("symbol"), nb::arg("variant"))
+                    .def(nb::init<::cista::offset::string, Data::ViewVariant<Repository>>(), nb::arg("symbol"), nb::arg("variant"))
                     .def_rw("index", &Data::index)
                     .def_rw("symbol", &Data::symbol)
                     .def_rw("variant", &Data::variant);

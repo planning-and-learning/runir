@@ -1,9 +1,11 @@
+#include "runir/kr/ps/declarations.hpp"
+
 #include <concepts>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/dl/feature_data.hpp>
 #include <runir/kr/ps/dl/feature_view.hpp>
-#include <runir/kr/ps/feature_index.hpp>
 #include <utility>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::tests
 {
@@ -50,10 +52,10 @@ concept ConcreteFeatureContract =
            view.get_symbol();
        };
 
-using BooleanFeature = kr::ps::Feature<kr::BaseFamilyTag, kr::ps::dl::BooleanFeature>;
-using NumericalFeature = kr::ps::Feature<kr::BaseFamilyTag, kr::ps::dl::NumericalFeature>;
-using ConcreteBooleanFeature = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::DlTag, kr::ps::dl::BooleanFeature>;
-using ConcreteNumericalFeature = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::DlTag, kr::ps::dl::NumericalFeature>;
+using BooleanFeature = kr::ps::Feature<kr::BaseFamilyTag, kr::dl::BooleanTag>;
+using NumericalFeature = kr::ps::Feature<kr::BaseFamilyTag, kr::dl::NumericalTag>;
+using ConcreteBooleanFeature = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::DlTag, kr::dl::BooleanTag>;
+using ConcreteNumericalFeature = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::DlTag, kr::dl::NumericalTag>;
 
 static_assert(FeatureContract<BooleanFeature, ConcreteBooleanFeature>);
 static_assert(FeatureContract<NumericalFeature, ConcreteNumericalFeature>);

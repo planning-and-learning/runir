@@ -2,17 +2,16 @@
 #define RUNIR_KR_PS_EXT_EXECUTION_DATA_HPP_
 
 #include "runir/kr/dl/semantics/call_arguments_data.hpp"
+#include "runir/kr/dl/semantics/declarations.hpp"
 #include "runir/kr/dl/semantics/register_values_data.hpp"
-#include "runir/kr/ps/ext/execution_index.hpp"
-#include "runir/kr/ps/ext/memory_state_index.hpp"
-#include "runir/kr/ps/ext/module_index.hpp"
-#include "runir/kr/ps/ext/program_index.hpp"
+#include "runir/kr/ps/ext/declarations.hpp"
+#include "runir/kr/ps/ext/execution_declarations.hpp"
 
 #include <cista/containers/optional.h>
 #include <optional>
 #include <tuple>
-#include <tyr/formalism/object_index.hpp>
-#include <tyr/planning/state_index.hpp>
+#include <tyr/formalism/declarations.hpp>
+#include <tyr/planning/declarations.hpp>
 #include <utility>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>

@@ -1,9 +1,11 @@
+#include "runir/kr/dl/grammar/declarations.hpp"
+
 #include <concepts>
 #include <runir/kr/dl/grammar/constructor_repository.hpp>
 #include <runir/kr/dl/grammar/role_data.hpp>
-#include <runir/kr/dl/grammar/role_index.hpp>
 #include <runir/kr/dl/grammar/role_view.hpp>
 #include <yggdrasil/core/concepts.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::tests
 {
@@ -57,21 +59,21 @@ consteval bool role_data_view()
             data.index;
             view.get_index();
         };
-    else if constexpr (kr::dl::TypeListContains<Tag, PredicateTags>::value)
+    else if constexpr (ygg::InTypeList<Tag, PredicateTags>)
         return requires(Data& data, const View& view) {
             data.predicate;
             data.polarity;
             view.get_predicate();
             view.get_polarity();
         };
-    else if constexpr (kr::dl::TypeListContains<Tag, BinaryTags>::value)
+    else if constexpr (ygg::InTypeList<Tag, BinaryTags>)
         return requires(Data& data, const View& view) {
             data.lhs;
             data.rhs;
             view.get_lhs();
             view.get_rhs();
         };
-    else if constexpr (kr::dl::TypeListContains<Tag, UnaryTags>::value)
+    else if constexpr (ygg::InTypeList<Tag, UnaryTags>)
         return requires(Data& data, const View& view) {
             data.arg;
             view.get_arg();

@@ -65,8 +65,8 @@ template<runir::kr::FamilyTag Family, typename Repository, typename Builder>
 auto parse_condition(Repository& repository,
                      Builder& builder,
                      const runir::kr::ps::base::dl::ast::Condition& condition,
-                     const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<Family, runir::kr::ps::dl::BooleanFeature>>>& boolean_features,
-                     const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<Family, runir::kr::ps::dl::NumericalFeature>>>& numerical_features,
+                     const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<Family, runir::kr::dl::BooleanTag>>>& boolean_features,
+                     const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<Family, runir::kr::dl::NumericalTag>>>& numerical_features,
                      const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     return boost::apply_visitor(
@@ -75,28 +75,28 @@ auto parse_condition(Repository& repository,
             using Observation = std::remove_cvref_t<decltype(observation)>;
             if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Positive>)
             {
-                return make_condition<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>(
+                return make_condition<runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>(
                     repository,
                     builder,
                     require_feature(boolean_features, condition.feature, diagnostics));
             }
             else if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Negative>)
             {
-                return make_condition<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>(
+                return make_condition<runir::kr::dl::BooleanTag, runir::kr::ps::dl::Negative>(
                     repository,
                     builder,
                     require_feature(boolean_features, condition.feature, diagnostics));
             }
             else if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::EqualZero>)
             {
-                return make_condition<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>(
+                return make_condition<runir::kr::dl::NumericalTag, runir::kr::ps::dl::EqualZero>(
                     repository,
                     builder,
                     require_feature(numerical_features, condition.feature, diagnostics));
             }
             else if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::GreaterZero>)
             {
-                return make_condition<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>(
+                return make_condition<runir::kr::dl::NumericalTag, runir::kr::ps::dl::GreaterZero>(
                     repository,
                     builder,
                     require_feature(numerical_features, condition.feature, diagnostics));
@@ -109,8 +109,8 @@ template<runir::kr::FamilyTag Family, typename Repository, typename Builder>
 auto parse_effect(Repository& repository,
                   Builder& builder,
                   const runir::kr::ps::base::dl::ast::Effect& effect,
-                  const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<Family, runir::kr::ps::dl::BooleanFeature>>>& boolean_features,
-                  const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<Family, runir::kr::ps::dl::NumericalFeature>>>& numerical_features,
+                  const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<Family, runir::kr::dl::BooleanTag>>>& boolean_features,
+                  const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<Family, runir::kr::dl::NumericalTag>>>& numerical_features,
                   const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     return boost::apply_visitor(
@@ -119,14 +119,14 @@ auto parse_effect(Repository& repository,
             using Observation = std::remove_cvref_t<decltype(observation)>;
             if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Positive>)
             {
-                return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>(
+                return make_effect<runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>(
                     repository,
                     builder,
                     require_feature(boolean_features, effect.feature, diagnostics));
             }
             else if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Negative>)
             {
-                return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>(
+                return make_effect<runir::kr::dl::BooleanTag, runir::kr::ps::dl::Negative>(
                     repository,
                     builder,
                     require_feature(boolean_features, effect.feature, diagnostics));
@@ -136,25 +136,25 @@ auto parse_effect(Repository& repository,
                 if (boolean_features.contains(effect.feature.text) && numerical_features.contains(effect.feature.text))
                     diagnostics.throw_at(effect.feature, runir::kr::InvalidExpressionError("Ambiguous feature \"" + effect.feature.text + "\"."));
                 if (boolean_features.contains(effect.feature.text))
-                    return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>(
+                    return make_effect<runir::kr::dl::BooleanTag, runir::kr::ps::dl::Unchanged>(
                         repository,
                         builder,
                         require_feature(boolean_features, effect.feature, diagnostics));
-                return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>(
+                return make_effect<runir::kr::dl::NumericalTag, runir::kr::ps::dl::Unchanged>(
                     repository,
                     builder,
                     require_feature(numerical_features, effect.feature, diagnostics));
             }
             else if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Increases>)
             {
-                return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>(
+                return make_effect<runir::kr::dl::NumericalTag, runir::kr::ps::dl::Increases>(
                     repository,
                     builder,
                     require_feature(numerical_features, effect.feature, diagnostics));
             }
             else if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Decreases>)
             {
-                return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>(
+                return make_effect<runir::kr::dl::NumericalTag, runir::kr::ps::dl::Decreases>(
                     repository,
                     builder,
                     require_feature(numerical_features, effect.feature, diagnostics));
@@ -168,8 +168,8 @@ void append_conditions(
     Repository& repository,
     Builder& builder,
     const std::vector<runir::kr::ps::base::dl::ast::Condition>& observations,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<Family, runir::kr::ps::dl::BooleanFeature>>>& boolean_features,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<Family, runir::kr::ps::dl::NumericalFeature>>>& numerical_features,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<Family, runir::kr::dl::BooleanTag>>>& boolean_features,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<Family, runir::kr::dl::NumericalTag>>>& numerical_features,
     const runir::kr::parser::DiagnosticContext& diagnostics,
     ygg::IndexList<runir::kr::ps::ConditionVariant<Family>>& result)
 {
@@ -182,8 +182,8 @@ template<runir::kr::FamilyTag Family, typename Repository, typename Builder>
 void append_effects(Repository& repository,
                     Builder& builder,
                     const std::vector<runir::kr::ps::base::dl::ast::Effect>& observations,
-                    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<Family, runir::kr::ps::dl::BooleanFeature>>>& boolean_features,
-                    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<Family, runir::kr::ps::dl::NumericalFeature>>>& numerical_features,
+                    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<Family, runir::kr::dl::BooleanTag>>>& boolean_features,
+                    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<Family, runir::kr::dl::NumericalTag>>>& numerical_features,
                     const runir::kr::parser::DiagnosticContext& diagnostics,
                     ygg::IndexList<runir::kr::ps::EffectVariant<Family>>& result)
 {

@@ -1,7 +1,7 @@
 #ifndef RUNIR_SEMANTICS_DENOTATION_DATA_HPP_
 #define RUNIR_SEMANTICS_DENOTATION_DATA_HPP_
 
-#include "runir/kr/dl/semantics/denotation_index.hpp"
+#include "runir/kr/dl/semantics/declarations.hpp"
 
 #include <tuple>
 #include <utility>

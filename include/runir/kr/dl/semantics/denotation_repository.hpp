@@ -5,7 +5,6 @@
 #include "runir/kr/dl/semantics/canonicalization.hpp"
 #include "runir/kr/dl/semantics/declarations.hpp"
 #include "runir/kr/dl/semantics/denotation_data.hpp"
-#include "runir/kr/dl/semantics/denotation_index.hpp"
 #include "runir/kr/dl/semantics/denotation_view.hpp"
 #include "runir/kr/dl/semantics/register_values_view.hpp"
 
@@ -16,7 +15,7 @@
 #include <yggdrasil/containers/raw_vector_set.hpp>
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/core/types.hpp>
-#include <yggdrasil/database/relation_repository.hpp>
+#include <yggdrasil/database/semantics/relation_repository.hpp>
 #include <yggdrasil/formalism/interning.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>
 
@@ -30,7 +29,7 @@ class DenotationRepositoryFactory
 private:
     // Copies share identity sequences, including factories retained by repositories.
     std::shared_ptr<size_t> m_next_index;
-    ygg::database::RelationRepositoryFactory<ygg::Index<tyr::formalism::Object>> m_relation_factory;
+    ygg::database::RelationRepositoryFactory<ObjectValues> m_relation_factory;
 
 public:
     DenotationRepositoryFactory() : m_next_index(std::make_shared<size_t>(0)) {}
@@ -50,7 +49,7 @@ public:
 
 private:
     VectorRepository m_vector_repository;
-    ygg::database::RelationRepository<ygg::Index<tyr::formalism::Object>> m_relation_repository;
+    ygg::database::RelationRepository<ObjectValues> m_relation_repository;
     std::shared_ptr<const tyr::formalism::planning::Repository> m_formalism_repository;
     DenotationRepositoryFactory m_factory;
     size_t m_index;
@@ -119,21 +118,8 @@ inline DenotationRepositoryPtr DenotationRepositoryFactory::create_shared(std::s
     return DenotationRepositoryPtr(new DenotationRepository((*m_next_index)++, *this, std::move(formalism_repository)));
 }
 
-inline const DenotationRepository& get_denotation_repository(const DenotationRepository& repository) noexcept { return repository; }
-
-inline const auto& get_relation_repository(const DenotationRepository& repository) noexcept { return repository.get_relation_repository(); }
-inline auto& get_relation_repository(DenotationRepository& repository) noexcept { return repository.get_relation_repository(); }
-inline const auto& get_repository(const DenotationRepository& repository) noexcept { return repository.get_formalism_repository(); }
-
-inline const DenotationRepository::VectorRepository& get_denotation_vector_repository(const DenotationRepository& repository) noexcept
-{
-    return repository.get_vector_repository();
-}
-
-inline DenotationRepository::VectorRepository& get_denotation_vector_repository(DenotationRepository& repository) noexcept
-{
-    return repository.get_vector_repository();
-}
+/// A repository owns the records viewed through it.
+inline const DenotationRepository& get_repository(const DenotationRepository& repository) noexcept { return repository; }
 
 template<typename T>
     requires ygg::formalism::SupportsSymbol<DenotationRepository, T>

@@ -22,18 +22,18 @@ using PsFeatureTypes = ygg::ConcatTypeListsT<ygg::MapTypeListSecondT<Feature, Fa
 
 template<runir::kr::FamilyTag Family>
 using PsConcreteConditionTypes =
-    ygg::TypeList<ConcreteCondition<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>,
-                  ConcreteCondition<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>,
-                  ConcreteCondition<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>,
-                  ConcreteCondition<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>>;
+    ygg::TypeList<ConcreteCondition<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>,
+                  ConcreteCondition<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Negative>,
+                  ConcreteCondition<Family, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::EqualZero>,
+                  ConcreteCondition<Family, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::GreaterZero>>;
 
 template<runir::kr::FamilyTag Family>
-using PsConcreteEffectTypes = ygg::TypeList<ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>,
-                                            ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>,
-                                            ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>,
-                                            ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>,
-                                            ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>,
-                                            ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>>;
+using PsConcreteEffectTypes = ygg::TypeList<ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>,
+                                            ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Negative>,
+                                            ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Unchanged>,
+                                            ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::Increases>,
+                                            ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::Decreases>,
+                                            ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::Unchanged>>;
 
 template<runir::kr::FamilyTag Family>
 using PsConditionTypes =
@@ -52,7 +52,7 @@ template<>
 struct PsFamilyTraits<runir::kr::BaseFamilyTag>
 {
     using DlFamily = runir::kr::BaseFamilyTag;
-    using FeatureCategories = ygg::TypeList<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::NumericalFeature>;
+    using FeatureCategories = ygg::TypeList<runir::kr::dl::BooleanTag, runir::kr::dl::NumericalTag>;
 
     using FeatureTypes = detail::PsFeatureTypes<runir::kr::BaseFamilyTag, FeatureCategories>;
 
@@ -67,8 +67,8 @@ struct PsFamilyTraits<runir::kr::ExtFamilyTag>
     using DlFamily = runir::kr::ExtFamilyTag;
     using FeatureCategories = ygg::TypeList<runir::kr::dl::ConceptTag,
                                             runir::kr::dl::RoleTag,
-                                            runir::kr::ps::dl::BooleanFeature,
-                                            runir::kr::ps::dl::NumericalFeature,
+                                            runir::kr::dl::BooleanTag,
+                                            runir::kr::dl::NumericalTag,
                                             runir::kr::ps::dl::QueryFeature>;
 
     using FeatureTypes = detail::PsFeatureTypes<runir::kr::ExtFamilyTag, FeatureCategories>;
@@ -95,7 +95,7 @@ template<>
 struct PsFamilyTraits<runir::kr::UnsFamilyTag>
 {
     using DlFamily = runir::kr::UnsFamilyTag;
-    using FeatureCategories = ygg::TypeList<runir::kr::ps::dl::BooleanFeature>;
+    using FeatureCategories = ygg::TypeList<runir::kr::dl::BooleanTag>;
     using FeatureTypes = detail::PsFeatureTypes<runir::kr::UnsFamilyTag, FeatureCategories>;
     using ConditionTypes = ygg::TypeList<>;
     using EffectTypes = ygg::TypeList<>;

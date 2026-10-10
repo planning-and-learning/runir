@@ -45,9 +45,9 @@ using ClassifierView = ygg::View<ygg::Index<runir::kr::uns::Classifier>, Reposit
 namespace runir::kr::uns::dl
 {
 
-using BooleanFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::ps::dl::BooleanFeature>>, Repository>;
+using BooleanFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>>, Repository>;
 using ConcreteBooleanFeatureView =
-    ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>, Repository>;
+    ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>>, Repository>;
 
 }  // namespace runir::kr::uns::dl
 

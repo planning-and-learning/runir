@@ -20,3 +20,11 @@ def test_value_and_view_constructors_build_equal_data(gripper_planning_domain):
     query_by_index = semantics.QueryConceptData(concept.get_index(), [column.get_index()])
     query_by_view = semantics.QueryConceptData(concept, [column])
     assert query_by_index == query_by_view
+
+
+def test_view_variant_constructor_builds_equal_data(gripper_planning_domain):
+    semantics = base.semantics
+    repository = semantics.ConstructorRepositoryFactory().create(gripper_planning_domain)
+
+    top = repository.insert(semantics.ConceptTopData())[0]
+    assert semantics.ConceptData(top) == semantics.ConceptData(top.get_index())

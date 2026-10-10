@@ -35,8 +35,8 @@ using RuleView = ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyT
 namespace runir::kr::ps::base::dl
 {
 
-using BooleanFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>, Repository>;
-using NumericalFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>, Repository>;
+using BooleanFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>, Repository>;
+using NumericalFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>, Repository>;
 
 }  // namespace runir::kr::ps::base::dl
 

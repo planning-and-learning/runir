@@ -4,12 +4,18 @@
 #include "runir/kr/dl/declarations.hpp"
 
 #include <concepts>
+#include <cstddef>
 #include <memory>
-#include <tyr/formalism/object_index.hpp>
+#include <ranges>
+#include <span>
+#include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
+#include <vector>
+#include <yggdrasil/containers/span.hpp>
 #include <yggdrasil/core/type_list.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/database/declarations.hpp>
+#include <yggdrasil/database/syntax/row.hpp>
 
 namespace runir::kr::dl::semantics
 {
@@ -43,7 +49,7 @@ template<CategoryTag Category>
 using BorrowedDenotationView = ygg::View<ygg::Builder<Denotation<Category>>, tyr::formalism::planning::Repository>;
 
 using ConceptDenotationView = DenotationView<ConceptTag>;
-using QueryDenotationView = ygg::View<ygg::Index<ygg::database::Relation<ygg::Index<tyr::formalism::Object>>>, DenotationRepository>;
+using QueryDenotationView = ygg::database::RelationView<ObjectValues>;
 using DenotationRepositoryPtr = std::shared_ptr<DenotationRepository>;
 
 }

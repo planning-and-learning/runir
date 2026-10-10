@@ -64,19 +64,19 @@ consteval bool concept_data_view()
     else
         static_assert(std::same_as<View, kr::dl::UnsConceptView<Tag>>);
 
-    if constexpr (kr::dl::TypeListContains<Tag, NullaryTags>::value)
+    if constexpr (ygg::InTypeList<Tag, NullaryTags>)
         return requires(Data& data, const View& view) {
             data.index;
             view.get_index();
         };
-    else if constexpr (kr::dl::TypeListContains<Tag, PredicateTags>::value)
+    else if constexpr (ygg::InTypeList<Tag, PredicateTags>)
         return requires(Data& data, const View& view) {
             data.predicate;
             data.polarity;
             view.get_predicate();
             view.get_polarity();
         };
-    else if constexpr (kr::dl::TypeListContains<Tag, BinaryTags>::value)
+    else if constexpr (ygg::InTypeList<Tag, BinaryTags>)
         return requires(Data& data, const View& view) {
             data.lhs;
             data.rhs;
@@ -88,14 +88,14 @@ consteval bool concept_data_view()
             data.arg;
             view.get_arg();
         };
-    else if constexpr (kr::dl::TypeListContains<Tag, NumberRestrictionTags>::value)
+    else if constexpr (ygg::InTypeList<Tag, NumberRestrictionTags>)
         return requires(Data& data, const View& view) {
             data.n;
             data.role;
             view.get_n();
             view.get_role();
         };
-    else if constexpr (kr::dl::TypeListContains<Tag, QualifiedNumberRestrictionTags>::value)
+    else if constexpr (ygg::InTypeList<Tag, QualifiedNumberRestrictionTags>)
         return requires(Data& data, const View& view) {
             data.n;
             data.role;

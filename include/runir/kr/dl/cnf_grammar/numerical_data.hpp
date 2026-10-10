@@ -2,10 +2,12 @@
 #define RUNIR_CNF_GRAMMAR_NUMERICAL_DATA_HPP_
 
 #include "runir/kr/dl/cnf_grammar/data_helpers.hpp"
+#include <yggdrasil/containers/variant.hpp>
 
 #include <cista/containers/variant.h>
 #include <tuple>
 #include <utility>
+#include <variant>
 #include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
@@ -16,14 +18,19 @@ namespace ygg
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::CountTag>>
 {
-    using Arg = ::cista::offset::variant<ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>,
-                                         ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>>>;
+    using Arg = ::ygg::IndexVariant<::ygg::MapTypeListSecondT<runir::kr::dl::cnf_grammar::NonTerminal, Family, runir::kr::dl::ConceptOrRoleTags>>;
 
     Index<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::CountTag>> index;
     Arg arg;
 
     Data() = default;
     explicit Data(Arg arg_) : index(), arg(std::move(arg_)) {}
+    template<typename C>
+    using ViewVariant = ::ygg::ViewVariant<Arg, C>;
+    template<typename C>
+    explicit Data(const ViewVariant<C>& arg_) : index(), arg(std::visit([](const auto& view) -> Arg { return Arg(view.get_index()); }, arg_))
+    {
+    }
 
     auto cista_members() noexcept { return std::tie(index, arg); }
     auto cista_members() const noexcept { return std::tie(index, arg); }

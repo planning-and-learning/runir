@@ -13,31 +13,22 @@ namespace ygg
 {
 
 template<typename C>
-class View<Index<runir::kr::dl::semantics::CallArguments>, C>
+class View<Index<runir::kr::dl::semantics::CallArguments>, C> : public ygg::IndexViewBase<runir::kr::dl::semantics::CallArguments, C>
 {
-private:
-    Index<runir::kr::dl::semantics::CallArguments> m_handle;
-    const C* m_context;
-
 public:
-    View(Index<runir::kr::dl::semantics::CallArguments> handle, const C& context) noexcept : m_handle(handle), m_context(&context) {}
-
-    const auto& get_data() const noexcept { return get_denotation_repository(*m_context)[m_handle]; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return m_handle; }
-    auto get_index() const noexcept { return m_handle; }
+    using ygg::IndexViewBase<runir::kr::dl::semantics::CallArguments, C>::IndexViewBase;
 
     template<runir::kr::dl::CategoryTag Category>
     auto get() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return make_view(get_data().concept_arguments, get_context());
+            return make_view(this->get_data().concept_arguments, this->get_context());
         else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return make_view(get_data().role_arguments, get_context());
+            return make_view(this->get_data().role_arguments, this->get_context());
         else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-            return make_view(get_data().boolean_arguments, get_context());
+            return make_view(this->get_data().boolean_arguments, this->get_context());
         else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-            return make_view(get_data().numerical_arguments, get_context());
+            return make_view(this->get_data().numerical_arguments, this->get_context());
         else
             static_assert(dependent_false<Category>::value, "unhandled argument category");
     }
@@ -48,7 +39,6 @@ public:
         return get<Category>().at(static_cast<size_t>(ygg::uint_t(arg)));
     }
 
-    auto identifying_members() const noexcept { return std::make_tuple(get_handle(), get_denotation_repository(*m_context).get_index()); }
 };
 
 }  // namespace ygg

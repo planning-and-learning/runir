@@ -1,6 +1,7 @@
 #include "bindings.hpp"
+#include "runir/kr/dl/declarations.hpp"
 
-#include <runir/kr/dl/constructor_index.hpp>
+#include <yggdrasil/core/types.hpp>
 #include <yggdrasil/python/bindings.hpp>
 
 namespace runir::kr::dl::uns

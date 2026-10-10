@@ -7,20 +7,17 @@
 #include <tuple>
 #include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/core/types.hpp>
-#include <yggdrasil/formalism/detail/view.hpp>
+#include <yggdrasil/formalism/declarations.hpp>
 
 namespace ygg
 {
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, formalism::SymbolContextFor<runir::kr::dl::grammar::Numerical<Family, Tag>> C>
     requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
-class View<Index<runir::kr::dl::grammar::Numerical<Family, Tag>>, C> : public formalism::detail::View<Index<runir::kr::dl::grammar::Numerical<Family, Tag>>, C>
+class View<Index<runir::kr::dl::grammar::Numerical<Family, Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::grammar::Numerical<Family, Tag>, C>
 {
 public:
-    View(Index<runir::kr::dl::grammar::Numerical<Family, Tag>> handle, const C& context) noexcept :
-        formalism::detail::View<Index<runir::kr::dl::grammar::Numerical<Family, Tag>>, C>(handle, context)
-    {
-    }
+    using ygg::IndexViewBase<runir::kr::dl::grammar::Numerical<Family, Tag>, C>::IndexViewBase;
 
     auto get_identifier() const noexcept
         requires std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>
@@ -31,25 +28,25 @@ public:
     auto get_arg() const noexcept
         requires std::same_as<Tag, runir::kr::dl::CountTag>
     {
-        return make_view(this->get_data().arg, *this->m_context);
+        return make_view(this->get_data().arg, this->get_context());
     }
 
     auto get_lhs() const noexcept
         requires(std::same_as<Tag, runir::kr::dl::DistanceTag> || runir::kr::dl::NumericalBinaryTag<Tag>)
     {
-        return make_view(this->get_data().lhs, *this->m_context);
+        return make_view(this->get_data().lhs, this->get_context());
     }
 
     auto get_mid() const noexcept
         requires std::same_as<Tag, runir::kr::dl::DistanceTag>
     {
-        return make_view(this->get_data().mid, *this->m_context);
+        return make_view(this->get_data().mid, this->get_context());
     }
 
     auto get_rhs() const noexcept
         requires(std::same_as<Tag, runir::kr::dl::DistanceTag> || runir::kr::dl::NumericalBinaryTag<Tag>)
     {
-        return make_view(this->get_data().rhs, *this->m_context);
+        return make_view(this->get_data().rhs, this->get_context());
     }
 
     auto get_value() const noexcept

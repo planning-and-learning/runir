@@ -2,9 +2,7 @@
 #define RUNIR_KR_PS_BASE_RULE_DATA_HPP_
 
 #include "runir/kr/ps/base/declarations.hpp"
-#include "runir/kr/ps/base/rule_index.hpp"
-#include "runir/kr/ps/condition_index.hpp"
-#include "runir/kr/ps/effect_index.hpp"
+#include "runir/kr/ps/declarations.hpp"
 
 #include <cista/containers/string.h>
 #include <string>

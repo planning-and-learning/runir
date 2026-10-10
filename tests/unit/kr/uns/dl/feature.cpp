@@ -1,17 +1,19 @@
+#include "runir/kr/ps/declarations.hpp"
+
 #include <concepts>
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/ps/dl/evaluation.hpp>
 #include <runir/kr/ps/dl/feature_data.hpp>
 #include <runir/kr/ps/dl/feature_view.hpp>
-#include <runir/kr/ps/feature_index.hpp>
 #include <runir/kr/ps/feature_view.hpp>
 #include <runir/kr/uns/repository.hpp>
 #include <utility>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::tests
 {
 
-using Entity = kr::ps::ConcreteFeature<kr::UnsFamilyTag, kr::DlTag, kr::ps::dl::BooleanFeature>;
+using Entity = kr::ps::ConcreteFeature<kr::UnsFamilyTag, kr::DlTag, kr::dl::BooleanTag>;
 using Index = ygg::Index<Entity>;
 using Data = ygg::Data<Entity>;
 using View = ygg::View<Index, kr::uns::Repository>;

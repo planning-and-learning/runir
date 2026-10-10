@@ -91,7 +91,7 @@ TEST(RunirTests, StructuralTerminationBooleanOscillatorCounterexample)
     const auto sketch = kr::ps::base::dl::parse_sketch(read_fixture("kr/ps/base/dl/oscillator.sketch"), planning_domain.get_domain(), *repository);
 
     const auto result = kr::ps::base::dl::structural_termination(sketch);
-    const auto booleans = sketch.get_features<kr::ps::dl::BooleanFeature>();
+    const auto booleans = sketch.get_features<kr::dl::BooleanTag>();
     ASSERT_FALSE(result.is_terminating());
     ASSERT_TRUE(result.incomplete_result.has_value());
     EXPECT_EQ(result.incomplete_result->status, kr::ps::base::dl::IncompleteStructuralTerminationStatus::UNKNOWN);
@@ -115,7 +115,7 @@ TEST(RunirTests, StructuralTerminationNumericalCycleCounterexample)
     const auto sketch = kr::ps::base::dl::parse_sketch(read_fixture("kr/ps/base/dl/numerical_cycle.sketch"), planning_domain.get_domain(), *repository);
 
     const auto result = kr::ps::base::dl::structural_termination(sketch);
-    const auto numericals = sketch.get_features<kr::ps::dl::NumericalFeature>();
+    const auto numericals = sketch.get_features<kr::dl::NumericalTag>();
     ASSERT_FALSE(result.is_terminating());
     ASSERT_TRUE(result.sieve_result.has_value());
     ASSERT_NE(result.sieve_result->counterexample, nullptr);

@@ -2,10 +2,10 @@
 #define RUNIR_SEMANTICS_EVALUATION_WORKSPACE_HPP_
 
 #include <limits>
-#include <tyr/formalism/object_index.hpp>
+#include <tyr/formalism/declarations.hpp>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/database/operations.hpp>
+#include <yggdrasil/database/semantics/operations.hpp>
 
 namespace runir::kr::dl::semantics
 {
@@ -15,7 +15,7 @@ class EvaluationWorkspace
 private:
     std::vector<ygg::uint_t> m_distance_queue;
     std::vector<ygg::uint_t> m_distance_values;
-    ygg::database::Workspace<ygg::Index<tyr::formalism::Object>> m_database_workspace;
+    ygg::database::Workspace<ObjectValues> m_database_workspace;
 
 public:
     EvaluationWorkspace() = default;

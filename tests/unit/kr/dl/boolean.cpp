@@ -53,7 +53,7 @@ consteval bool boolean_data_view()
     else
         static_assert(std::same_as<View, kr::dl::UnsBooleanView<Tag>>);
 
-    if constexpr (kr::dl::TypeListContains<Tag, PredicateTags>::value)
+    if constexpr (ygg::InTypeList<Tag, PredicateTags>)
         return requires(Data& data, const View& view) {
             data.predicate;
             data.polarity;
@@ -70,7 +70,7 @@ consteval bool boolean_data_view()
             data.arg;
             view.get_arg();
         };
-    else if constexpr (kr::dl::TypeListContains<Tag, kr::dl::UnsComparisonConstructorTags>::value || kr::dl::TypeListContains<Tag, LogicalBinaryTags>::value)
+    else if constexpr (ygg::InTypeList<Tag, kr::dl::UnsComparisonConstructorTags> || ygg::InTypeList<Tag, LogicalBinaryTags>)
         return requires(Data& data, const View& view) {
             data.lhs;
             data.rhs;

@@ -78,12 +78,11 @@ template<CategoryTag Category>
     return interned;
 }
 
-/// Publish typed query rows with the repository that owns their planning-object context.
+/// Publish typed query rows in the denotation repository's relation repository, which owns them.
 [[nodiscard]] inline std::pair<QueryDenotationView, bool> insert(DenotationRepository& repository,
-                                                                 ygg::Builder<ygg::database::Relation<ygg::Index<tyr::formalism::Object>>>& source)
+                                                                 ygg::Builder<ygg::database::Relation<ObjectValues>>& source)
 {
-    const auto [relation, created] = ygg::database::insert(repository.get_relation_repository(), source);
-    return { ygg::make_view(relation.get_index(), repository), created };
+    return ygg::database::insert(repository.get_relation_repository(), source);
 }
 
 /// Register object identities remain tied to the same planning formalism.

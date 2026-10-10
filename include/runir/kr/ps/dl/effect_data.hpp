@@ -1,14 +1,15 @@
 #ifndef RUNIR_KR_PS_DL_EFFECT_DATA_HPP_
 #define RUNIR_KR_PS_DL_EFFECT_DATA_HPP_
 
+#include "runir/kr/ps/declarations.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
-#include "runir/kr/ps/effect_index.hpp"
 #include "runir/kr/ps/family_traits.hpp"
-#include "runir/kr/ps/feature_index.hpp"
+#include <yggdrasil/containers/variant.hpp>
 
 #include <cista/containers/variant.h>
 #include <tuple>
 #include <utility>
+#include <variant>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 
@@ -18,13 +19,19 @@ namespace ygg
 template<runir::kr::FamilyTag Family>
 struct Data<runir::kr::ps::ConcreteEffectVariant<Family, runir::kr::DlTag>>
 {
-    using Variant = ygg::ApplyTypeListT<::cista::offset::variant, ygg::MapTypeListT<Index, runir::kr::ps::detail::PsConcreteEffectTypes<Family>>>;
+    using Variant = ygg::IndexVariant<runir::kr::ps::detail::PsConcreteEffectTypes<Family>>;
 
     Index<runir::kr::ps::ConcreteEffectVariant<Family, runir::kr::DlTag>> index;
     Variant variant;
 
     Data() = default;
     Data(Variant variant_) : index(), variant(std::move(variant_)) {}
+    template<typename C>
+    using ViewVariant = ::ygg::ViewVariant<Variant, C>;
+    template<typename C>
+    explicit Data(const ViewVariant<C>& variant_) : index(), variant(std::visit([](const auto& view) -> Variant { return Variant(view.get_index()); }, variant_))
+    {
+    }
 
     auto cista_members() noexcept { return std::tie(index, variant); }
     auto cista_members() const noexcept { return std::tie(index, variant); }

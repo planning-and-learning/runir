@@ -1,9 +1,11 @@
+#include "runir/kr/ps/declarations.hpp"
+
 #include <concepts>
 #include <runir/kr/ps/dl/feature_data.hpp>
 #include <runir/kr/ps/dl/feature_view.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
-#include <runir/kr/ps/feature_index.hpp>
 #include <utility>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::tests
 {
@@ -37,8 +39,8 @@ using ConcreteFeature = kr::ps::ConcreteFeature<kr::ExtFamilyTag, kr::DlTag, Fea
 
 static_assert(ConcreteFeatureContract<ConcreteFeature<kr::dl::ConceptTag>, kr::dl::Constructor<kr::ExtFamilyTag, kr::dl::ConceptTag>>);
 static_assert(ConcreteFeatureContract<ConcreteFeature<kr::dl::RoleTag>, kr::dl::Constructor<kr::ExtFamilyTag, kr::dl::RoleTag>>);
-static_assert(ConcreteFeatureContract<ConcreteFeature<kr::ps::dl::BooleanFeature>, kr::dl::Constructor<kr::ExtFamilyTag, kr::dl::BooleanTag>>);
-static_assert(ConcreteFeatureContract<ConcreteFeature<kr::ps::dl::NumericalFeature>, kr::dl::Constructor<kr::ExtFamilyTag, kr::dl::NumericalTag>>);
+static_assert(ConcreteFeatureContract<ConcreteFeature<kr::dl::BooleanTag>, kr::dl::Constructor<kr::ExtFamilyTag, kr::dl::BooleanTag>>);
+static_assert(ConcreteFeatureContract<ConcreteFeature<kr::dl::NumericalTag>, kr::dl::Constructor<kr::ExtFamilyTag, kr::dl::NumericalTag>>);
 
 static_assert(ConcreteFeatureContract<ConcreteFeature<kr::ps::dl::QueryFeature>, kr::dl::Query<kr::ExtFamilyTag>>);
 

@@ -1,4 +1,5 @@
 #include "fixtures.hpp"
+#include "runir/kr/uns/declarations.hpp"
 
 #include <concepts>
 #include <fmt/format.h>
@@ -6,7 +7,6 @@
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/errors.hpp>
 #include <runir/kr/uns/classifier_data.hpp>
-#include <runir/kr/uns/classifier_index.hpp>
 #include <runir/kr/uns/classifier_view.hpp>
 #include <runir/kr/uns/dl/parser.hpp>
 #include <runir/kr/uns/formatter.hpp>
@@ -14,6 +14,7 @@
 #include <runir/kr/uns/syntactic_complexity.hpp>
 #include <string>
 #include <tyr/formalism/planning/parser.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::tests
 {

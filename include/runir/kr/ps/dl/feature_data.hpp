@@ -1,8 +1,7 @@
 #ifndef RUNIR_KR_PS_DL_FEATURE_DATA_HPP_
 #define RUNIR_KR_PS_DL_FEATURE_DATA_HPP_
 
-#include "runir/kr/dl/constructor_index.hpp"
-#include "runir/kr/dl/query_index.hpp"
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/family_traits.hpp"
 #include "runir/kr/ps/feature_data.hpp"
@@ -19,15 +18,10 @@
 namespace runir::kr::ps::dl
 {
 
-template<runir::kr::ps::dl::FeatureTag FeatureTag>
-using FeatureCategory = std::conditional_t<std::same_as<FeatureTag, BooleanFeature>,
-                                           runir::kr::dl::BooleanTag,
-                                           std::conditional_t<std::same_as<FeatureTag, NumericalFeature>, runir::kr::dl::NumericalTag, FeatureTag>>;
-
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag>
 struct FeatureExpression
 {
-    using Type = runir::kr::dl::Constructor<runir::kr::ps::DlFamilyFor<Family>, FeatureCategory<FeatureTag>>;
+    using Type = runir::kr::dl::Constructor<runir::kr::ps::DlFamilyFor<Family>, FeatureTag>;
 };
 
 template<runir::kr::FamilyTag Family>

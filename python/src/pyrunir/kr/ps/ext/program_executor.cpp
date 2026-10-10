@@ -128,8 +128,8 @@ void bind_execution_types(nb::module_& m, const char* prefix)
 
     bind_feature_evaluation<Kind, runir::kr::dl::ConceptTag>(m);
     bind_feature_evaluation<Kind, runir::kr::dl::RoleTag>(m);
-    bind_feature_evaluation<Kind, runir::kr::ps::dl::BooleanFeature>(m);
-    bind_feature_evaluation<Kind, runir::kr::ps::dl::NumericalFeature>(m);
+    bind_feature_evaluation<Kind, runir::kr::dl::BooleanTag>(m);
+    bind_feature_evaluation<Kind, runir::kr::dl::NumericalTag>(m);
     bind_feature_evaluation<Kind, runir::kr::ps::dl::QueryFeature>(m);
 
     auto module_state = nb::class_<LocalStateView>(m, (std::string(prefix) + "ModuleState").c_str())
@@ -218,10 +218,10 @@ void bind_execution_types(nb::module_& m, const char* prefix)
                 return self.for_each_successor(
                     state,
                     statistics,
-                    [&](auto expansion)
+                    [&]<typename Expansion>(Expansion expansion)
                     {
                         auto value = nb::cast(std::move(expansion));
-                        if constexpr (!std::same_as<decltype(expansion), Step>)
+                        if constexpr (!std::same_as<Expansion, Step>)
                             value = retain_expander(value, owner);
                         return nb::cast<bool>(emit(value));
                     },

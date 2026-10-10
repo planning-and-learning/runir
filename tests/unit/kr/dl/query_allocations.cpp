@@ -20,12 +20,13 @@
 #include <runir/kr/task_context.hpp>
 #include <set>
 #include <string>
+#include <tuple>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <utility>
 #include <variant>
 #include <vector>
-#include <yggdrasil/database/incremental/projection.hpp>
+#include <yggdrasil/database/semantics/incremental/projection.hpp>
 
 #if defined(_MSC_VER)
 #include <malloc.h>
@@ -177,6 +178,7 @@ void operator delete[](void* pointer, std::align_val_t, const std::nothrow_t&) n
 namespace runir::tests
 {
 using ObjectIndex = ygg::Index<tyr::formalism::Object>;
+using ObjectValues = kr::dl::ObjectValues;
 
 TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
 {
@@ -277,8 +279,8 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
     const auto projected = query.get_variant().get<ygg::Index<dl::Query<Ext, dl::QueryProjectTag>>>();
     const auto atomic = projected.get_arg().get_variant().get<ygg::Index<dl::Query<Ext, dl::AtomicStateTag<Fluent>>>>();
     auto leaf = sem::incremental::detail::AtomicQueryEvaluator<Fluent>(atomic);
-    auto projection = ygg::database::incremental::ProjectionEvaluator<ObjectIndex>(projected.get_data().plan);
-    auto workspace = ygg::database::Workspace<ObjectIndex> {};
+    auto projection = ygg::database::incremental::ProjectionEvaluator<ObjectValues>(projected.get_data().plan);
+    auto workspace = ygg::database::Workspace<ObjectValues> {};
     leaf.initialize<tyr::GroundTag>(initial.get_state());
     projection.initialize(leaf.get_result(), workspace);
     ASSERT_EQ(leaf.get_result().size(), 4);
@@ -337,7 +339,7 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
         const auto previous_size = projection.get_result().size();
         leaf.update(change.added.fluent_atoms, change.removed.fluent_atoms);
         const auto& delta = leaf.get_delta();
-        projection.update(delta.added, delta.removed, workspace);
+        projection.update(delta.change(), workspace);
         graph.update(change, workspace);
         const auto& projected_delta = projection.get_delta();
         return leaf.get_result().size() == rows && delta.added.size() == size_t(adding) && delta.removed.size() == size_t(!adding)
@@ -492,7 +494,7 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
         graph.initialize(context);
     };
     initialize();
-    auto workspace = ygg::database::Workspace<ObjectIndex> {};
+    auto workspace = ygg::database::Workspace<ObjectValues> {};
     const auto apply = [&](const auto& delta, size_t members, size_t register_members)
     {
         for (auto& evaluator : concepts)
@@ -564,13 +566,13 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
     auto builder = sem::Builder {};
     const auto columns = std::array<ColumnIndex, 2> { ColumnIndex(0), ColumnIndex(1) };
     const auto renamed = std::array<ColumnIndex, 2> { ColumnIndex(2), ColumnIndex(3) };
-    auto result = builder.get_builder<ygg::database::Relation<ObjectIndex>>(columns);
+    auto result = builder.get_builder<ygg::database::Relation<ObjectValues>>(columns);
     for (ygg::uint_t i = 0; i < 32; ++i)
-        result->insert({ ObjectIndex(i), ObjectIndex(i + 1) });
+        result->insert(std::tuple { ObjectIndex(i), ObjectIndex(i + 1) });
     const auto* slot = result.get();
     const auto* schema_buffer = result->columns().data();
     const auto schema_capacity = result->memory_usage() - result->storage().memory_usage();
-    const auto* row_buffer = (*result)[0].data();
+    const auto* row_buffer = result->row(0).data();
     const auto row_capacity = result->storage().memory_usage();
     const auto stored = ygg::database::insert(repository, *result).first;
     const auto* stored_schema_buffer = stored.columns().data();
@@ -584,15 +586,15 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
     {
         denotations.clear();
         reused &= repository.empty();
-        auto next = builder.get_builder<ygg::database::Relation<ObjectIndex>>(repeat % 2 ? renamed : columns);
+        auto next = builder.get_builder<ygg::database::Relation<ObjectValues>>(repeat % 2 ? renamed : columns);
         // Cista schema storage uses malloc, which the global new/delete counter does not cover.
         reused &= next.get() == slot;
         reused &= next->columns().data() == schema_buffer;
         reused &= next->memory_usage() - next->storage().memory_usage() == schema_capacity;
         reused &= next->storage().memory_usage() == row_capacity;
         for (ygg::uint_t i = 0; i < 32; ++i)
-            next->insert({ ObjectIndex(i), ObjectIndex(i + 1) });
-        reused &= (*next)[0].data() == row_buffer;
+            next->insert(std::tuple { ObjectIndex(i), ObjectIndex(i + 1) });
+        reused &= next->row(0).data() == row_buffer;
         const auto value = ygg::database::insert(repository, *next).first;
         reused &= value.columns().data() == stored_schema_buffer;
         reused &= value.row(0).data() == stored_row_buffer;
@@ -623,16 +625,16 @@ TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
         for (ygg::uint_t i = 0; i < 512; ++i)
         {
             const auto object = ObjectIndex(ygg::uint_t(i + generation * 512));
-            auto owner = builder.get_builder<ygg::database::Relation<ObjectIndex>>(columns);
-            owner->insert({ object, ObjectIndex(1) });
-            owner->insert({ object, ObjectIndex(2) });
+            auto owner = builder.get_builder<ygg::database::Relation<ObjectValues>>(columns);
+            owner->insert(std::tuple { object, ObjectIndex(1) });
+            owner->insert(std::tuple { object, ObjectIndex(2) });
             const auto value = ygg::database::insert(repository, *owner, generation).first;
             const auto alias = repository.rename(value, aliases);
-            valid &= value.size() == 2 && alias.size() == 2 && value.row(0)[0] == object;
+            valid &= value.size() == 2 && alias.size() == 2 && value[0].get<ObjectIndex>(size_t { 0 }) == object;
             valid &= value.get_storage_address() == alias.get_storage_address();
-            auto duplicate = builder.get_builder<ygg::database::Relation<ObjectIndex>>(columns);
-            duplicate->insert({ object, ObjectIndex(2) });
-            duplicate->insert({ object, ObjectIndex(1) });
+            auto duplicate = builder.get_builder<ygg::database::Relation<ObjectValues>>(columns);
+            duplicate->insert(std::tuple { object, ObjectIndex(2) });
+            duplicate->insert(std::tuple { object, ObjectIndex(1) });
             valid &= ygg::database::insert(repository, *duplicate, generation).first == value;
             valid &= repository.rename(value, aliases) == alias;
         }

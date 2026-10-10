@@ -17,13 +17,14 @@
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <type_traits>
 #include <tyr/formalism/planning/parser.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <utility>
 #include <vector>
-#include <yggdrasil/database/operations.hpp>
+#include <yggdrasil/database/semantics/operations.hpp>
 #include <yggdrasil/execution/onetbb.hpp>
 #include <yggdrasil/semantics/hash.hpp>
 
@@ -36,7 +37,23 @@ namespace sem = dl::semantics;
 namespace parser = kr::ps::ext::dl;
 using Ext = kr::ExtFamilyTag;
 using ObjectIndex = ygg::Index<tyr::formalism::Object>;
+using ObjectValues = kr::dl::ObjectValues;
 using ColumnIndex = ygg::Index<ygg::database::Column>;
+
+/// The raw object indices of a relation row.
+std::vector<ObjectIndex> object_values(const auto& row)
+{
+    auto result = std::vector<ObjectIndex> {};
+    for (size_t i = 0; i < row.size(); ++i)
+        result.push_back(row.template get<ObjectIndex>(i));
+    return result;
+}
+
+/// The column labels of a schema.
+std::vector<ColumnIndex> column_labels(const auto& columns)
+{
+    return ygg::database::column_labels(columns.span());
+}
 static_assert(!std::same_as<ColumnIndex, ygg::Index<tyr::formalism::Object>>);
 static_assert(!std::is_convertible_v<ygg::Index<tyr::formalism::Object>, ColumnIndex>);
 
@@ -456,33 +473,36 @@ void check_cached_queries()
     check_relocated_data(join_data,
                          [&](const auto& decoded)
                          {
-                             ygg::Builder<ygg::database::Relation<>> lhs(decoded.plan.lhs_columns()), rhs(decoded.plan.rhs_columns()),
-                                 result(decoded.plan.output_columns());
-                             lhs.insert({ 10, 20 });
-                             lhs.insert({ 30, 40 });
-                             rhs.insert({ 20 });
-                             ygg::database::Workspace<> scratch;
+                             ygg::Builder<ygg::database::Relation<ObjectValues>> lhs(decoded.plan.lhs_columns().span()),
+                                 rhs(decoded.plan.rhs_columns().span()), result(decoded.plan.output_columns().span());
+                             lhs.insert(std::tuple { ObjectIndex(10), ObjectIndex(20) });
+                             lhs.insert(std::tuple { ObjectIndex(30), ObjectIndex(40) });
+                             rhs.insert(std::tuple { ObjectIndex(20) });
+                             ygg::database::Workspace<ObjectValues> scratch;
                              ygg::database::join(lhs, rhs, decoded.plan, result, scratch);
                              EXPECT_EQ(result.size(), 1);
-                             EXPECT_TRUE(result.contains({ 10, 20 }));
+                             EXPECT_TRUE(result.contains(std::tuple { ObjectIndex(10), ObjectIndex(20) }));
                          });
+    const auto slice_position = [](const ygg::database::ColumnSlice& slice) { return slice.offset / sizeof(ygg::uint_t); };
     const auto check_projection_plan = [&](auto& data, auto positions)
     {
         const auto concrete = dl::insert(repo, data).first;
         check_relocated_data(concrete.get_data(),
                              [&](const auto& decoded)
                              {
-                                 EXPECT_TRUE(std::ranges::equal(decoded.plan.positions(), positions));
-                                 ygg::Builder<ygg::database::Relation<>> input(decoded.plan.input_columns()), result(decoded.plan.output_columns());
-                                 std::vector<ygg::uint_t> row(input.arity());
-                                 for (size_t i = 0; i < row.size(); ++i)
-                                     row[i] = 10 + i;
-                                 input.insert(row);
-                                 ygg::database::Workspace<> scratch;
+                                 EXPECT_TRUE(std::ranges::equal(decoded.plan.positions(), positions, {}, slice_position));
+                                 ygg::Builder<ygg::database::Relation<ObjectValues>> input(decoded.plan.input_columns().span()),
+                                     result(decoded.plan.output_columns().span());
+                                 std::vector<ObjectIndex> row;
+                                 for (size_t i = 0; i < input.arity(); ++i)
+                                     row.emplace_back(10 + i);
+                                 std::vector<std::byte> bytes;
+                                 input.insert(ygg::database::encode_row<ObjectValues, ObjectIndex>(row, bytes));
+                                 ygg::database::Workspace<ObjectValues> scratch;
                                  ygg::database::project(input, decoded.plan, result, scratch);
                                  ASSERT_EQ(result.size(), 1);
                                  for (size_t i = 0; i < positions.size(); ++i)
-                                     EXPECT_EQ(result[0][i], 10 + positions[i]);
+                                     EXPECT_EQ(result[0].get<ObjectIndex>(i), ObjectIndex(10 + positions[i]));
                              });
         auto stale = data;
         stale.plan = {};
@@ -490,7 +510,7 @@ void check_cached_queries()
         const auto [same, created] = dl::insert(repo, stale);
         EXPECT_FALSE(created);
         EXPECT_EQ(same.get_index(), concrete.get_index());
-        EXPECT_TRUE(std::ranges::equal(stale.plan.positions(), positions));
+        EXPECT_TRUE(std::ranges::equal(stale.plan.positions(), positions, {}, slice_position));
         stale.clear();
         EXPECT_TRUE(stale.plan.input_columns().empty());
         EXPECT_TRUE(stale.plan.output_columns().empty());
@@ -543,7 +563,7 @@ void check_cached_queries()
     const auto held = sem::evaluate<tyr::GroundTag>(renamed, context);
     const auto* held_storage = held.get_storage_address();
     const auto* held_columns = held.columns().data();
-    EXPECT_EQ(held.columns()[0], ColumnIndex(ygg::uint_t(renamed_column)));
+    EXPECT_EQ(held.columns()[0].label, ColumnIndex(ygg::uint_t(renamed_column)));
     EXPECT_NE(held_columns, renamed.get_schema().data());
     EXPECT_TRUE(std::ranges::equal(held.columns(), renamed.get_schema()));
     EXPECT_EQ(sem::evaluate<tyr::GroundTag>(query, context).get_storage_address(), held_storage);
@@ -552,10 +572,10 @@ void check_cached_queries()
     nested_rename_data.columns[0] = x;
     query_data.variant = dl::insert(repo, nested_rename_data).first.get_index();
     const auto nested = sem::evaluate<tyr::GroundTag>(dl::insert(repo, query_data).first, context);
-    EXPECT_EQ(nested.columns()[0], ColumnIndex(ygg::uint_t(x)));
+    EXPECT_EQ(nested.columns()[0].label, ColumnIndex(ygg::uint_t(x)));
     EXPECT_EQ(nested.get_storage_address(), held_storage);
     EXPECT_EQ(nested.size(), held.size());
-    EXPECT_EQ(held.columns()[0], ColumnIndex(ygg::uint_t(renamed_column)));
+    EXPECT_EQ(held.columns()[0].label, ColumnIndex(ygg::uint_t(renamed_column)));
     // Owned labels and shared rows remain valid during repository/cache growth.
     for (int i = 0; i < 64; ++i)
     {
@@ -568,8 +588,8 @@ void check_cached_queries()
         EXPECT_EQ(other.get_storage_address(), held_storage);
         EXPECT_EQ(held.size(), 3);
         EXPECT_EQ(held.columns().data(), held_columns);
-        EXPECT_EQ(held.columns()[0], ColumnIndex(ygg::uint_t(renamed_column)));
-        EXPECT_EQ(other.columns()[0], ColumnIndex(ygg::uint_t(extra_column)));
+        EXPECT_EQ(held.columns()[0].label, ColumnIndex(ygg::uint_t(renamed_column)));
+        EXPECT_EQ(other.columns()[0].label, ColumnIndex(ygg::uint_t(extra_column)));
     }
 
     // Repositories from one factory have distinct identities even when query indices match.
@@ -588,8 +608,8 @@ void check_cached_queries()
     ASSERT_NE(other_column, x);
     const auto cached = sem::evaluate<tyr::GroundTag>(query, context);
     const auto other_cached = sem::evaluate<tyr::GroundTag>(other_query, context);
-    EXPECT_EQ(cached.columns()[0], ColumnIndex(ygg::uint_t(x)));
-    EXPECT_EQ(other_cached.columns()[0], ColumnIndex(ygg::uint_t(other_column)));
+    EXPECT_EQ(cached.columns()[0].label, ColumnIndex(ygg::uint_t(x)));
+    EXPECT_EQ(other_cached.columns()[0].label, ColumnIndex(ygg::uint_t(other_column)));
     EXPECT_EQ(cached.size(), 3);
     EXPECT_EQ(other_cached.size(), 3);
     EXPECT_NE(cached, other_cached);
@@ -603,7 +623,7 @@ void check_cached_queries()
     EXPECT_TRUE(caches.get_queries(false).empty());
     const auto rebuilt = sem::evaluate<tyr::GroundTag>(renamed, context);
     EXPECT_EQ(rebuilt.size(), 3);
-    EXPECT_EQ(rebuilt.columns()[0], ColumnIndex(ygg::uint_t(renamed_column)));
+    EXPECT_EQ(rebuilt.columns()[0].label, ColumnIndex(ygg::uint_t(renamed_column)));
     EXPECT_EQ(rebuilt.get_storage_address(), sem::evaluate<tyr::GroundTag>(query, context).get_storage_address());
     storage.reset_all();
     repo.clear();
@@ -640,7 +660,7 @@ void check_query_cache_across_states()
     const auto count = parser::parse_numerical(R"((n_count (q_atomic_state "triple" (x y z))))", domain, *repository);
     const auto fixed_count = parser::parse_numerical(R"((n_count (q_atomic_state "fixed" (x y z))))", domain, *repository);
     const auto matching_row =
-        std::array { domain.get_constants()[0].get_index(), domain.get_constants()[1].get_index(), domain.get_constants()[2].get_index() };
+        std::tuple { domain.get_constants()[0].get_index(), domain.get_constants()[1].get_index(), domain.get_constants()[2].get_index() };
     const auto check_mixed_joins = [&](auto& target)
     {
         const auto matches = sem::evaluate<Kind>(triple, target).contains(matching_row);
@@ -801,7 +821,7 @@ void check_query_cache_across_bindings()
     EXPECT_EQ(sem::evaluate<Kind>(role_register, bound).size(), 1);
     const auto rhs_rows = sem::evaluate<Kind>(register_rhs, bound);
     EXPECT_EQ(rhs_rows.size(), 1);
-    EXPECT_TRUE(rhs_rows.contains({ a.get_index(), c.get_index(), b.get_index() }));
+    EXPECT_TRUE(rhs_rows.contains(std::tuple { a.get_index(), c.get_index(), b.get_index() }));
     EXPECT_TRUE(std::ranges::equal(rhs_rows.columns(), register_rhs.get_schema()));
     EXPECT_TRUE(sem::evaluate<Kind>(role_register_rhs, bound).empty());
     registers.concept_values[0] = b.get_index();
@@ -817,7 +837,7 @@ void check_query_cache_across_bindings()
     // Reordered shared columns are matched by label, not by their position in either operand.
     const auto rhs_role_rows = sem::evaluate<Kind>(role_register_rhs, rebound);
     EXPECT_EQ(rhs_role_rows.size(), 1);
-    EXPECT_TRUE(rhs_role_rows.contains({ b.get_index(), c.get_index(), a.get_index() }));
+    EXPECT_TRUE(rhs_role_rows.contains(std::tuple { b.get_index(), c.get_index(), a.get_index() }));
     EXPECT_TRUE(std::ranges::equal(rhs_role_rows.columns(), role_register_rhs.get_schema()));
     EXPECT_TRUE(caches.template get<dl::NumericalTag>(false).contains(register_count));
     EXPECT_FALSE(caches.template get<dl::NumericalTag>(true).contains(register_count));
@@ -968,29 +988,23 @@ void check_query_object_views()
     const auto constant = task->get_task().get_domain().get_constants()[0];
     const auto local = task->get_task().get_objects()[0];
     ASSERT_NE(&constant.get_context(), &local.get_context());
-    const auto expected = std::array { constant, local };
-    const auto raw = std::array { constant.get_index(), local.get_index() };
+    const auto raw = std::vector { constant.get_index(), local.get_index() };
     const auto result = sem::evaluate<Kind>(query, context);
     ASSERT_EQ(result.size(), 1);
-    EXPECT_EQ(&result.get_context(), &storage.get_denotation_repository(true));
+    EXPECT_EQ(&result.get_context(), &storage.get_denotation_repository(true).get_relation_repository());
+    // Rows hold raw object indices; the relation repository cannot resolve them.
     const auto row = result[0];
-    static_assert(std::same_as<std::remove_cvref_t<decltype(row)>, fp::ObjectSpanView>);
-    EXPECT_EQ(&row.get_context(), task->get_repository().get());
-    EXPECT_TRUE(std::ranges::equal(result.row(0), raw));
-    EXPECT_TRUE(result.contains(raw));
-    EXPECT_TRUE(std::ranges::equal(row, expected));
-    EXPECT_EQ(row[0].get_name(), "parent");
-    EXPECT_EQ(row[1].get_name(), "local");
-    EXPECT_EQ(&row[0].get_context(), &constant.get_context());
-    EXPECT_EQ(&row[1].get_context(), &local.get_context());
+    static_assert(std::same_as<decltype(row.template get<ObjectIndex>(size_t { 0 })), ObjectIndex>);
+    EXPECT_EQ(object_values(row), raw);
+    EXPECT_TRUE(result.contains(std::tuple { constant.get_index(), local.get_index() }));
 
     storage.reset_dynamic();
-    EXPECT_TRUE(std::ranges::equal(row, expected));
+    EXPECT_EQ(object_values(row), raw);
     EXPECT_EQ(sem::evaluate<Kind>(query, context), result);
     storage.reset_all();
     const auto rebuilt = sem::evaluate<Kind>(query, context);
     ASSERT_EQ(rebuilt.size(), 1);
-    EXPECT_TRUE(std::ranges::equal(rebuilt[0], expected));
+    EXPECT_EQ(object_values(rebuilt[0]), raw);
 }
 
 template<tyr::TaskKind Kind>
@@ -1052,23 +1066,23 @@ void check_multiword_bit_evaluation()
     const auto selected = query("(q_concept x " + marked + ")");
     ASSERT_EQ(selected.size(), 4);
     for (const auto i : { ygg::uint_t(0), word_bits - 1, word_bits, last })
-        EXPECT_TRUE(selected.contains({ ObjectIndex(i) }));
+        EXPECT_TRUE(selected.contains(std::tuple { ObjectIndex(i) }));
     EXPECT_EQ(query("(q_concept x (c_top))").size(), num_objects);
     EXPECT_TRUE(query("(q_concept x (c_bot))").empty());
     const auto identity = query("(q_role (x y) (r_identity (c_top)))");
     EXPECT_EQ(identity.size(), num_objects);
-    EXPECT_TRUE(identity.contains({ ObjectIndex(last), ObjectIndex(last) }));
+    EXPECT_TRUE(identity.contains(std::tuple { ObjectIndex(last), ObjectIndex(last) }));
     EXPECT_TRUE(query("(q_role (x y) (r_identity (c_bot)))").empty());
 
     const auto inverse = query("(q_role (x y) (r_inverse " + edge + "))");
     ASSERT_EQ(inverse.size(), 4);
-    EXPECT_TRUE(inverse.contains({ ObjectIndex(word_bits - 1), ObjectIndex(0) }));
-    EXPECT_TRUE(inverse.contains({ ObjectIndex(word_bits), ObjectIndex(0) }));
-    EXPECT_TRUE(inverse.contains({ ObjectIndex(last), ObjectIndex(word_bits - 1) }));
-    EXPECT_TRUE(inverse.contains({ ObjectIndex(last), ObjectIndex(word_bits) }));
+    EXPECT_TRUE(inverse.contains(std::tuple { ObjectIndex(word_bits - 1), ObjectIndex(0) }));
+    EXPECT_TRUE(inverse.contains(std::tuple { ObjectIndex(word_bits), ObjectIndex(0) }));
+    EXPECT_TRUE(inverse.contains(std::tuple { ObjectIndex(last), ObjectIndex(word_bits - 1) }));
+    EXPECT_TRUE(inverse.contains(std::tuple { ObjectIndex(last), ObjectIndex(word_bits) }));
     const auto composition = query("(q_role (x y) (r_composition " + edge + " " + edge + "))");
     ASSERT_EQ(composition.size(), 1);
-    EXPECT_TRUE(composition.contains({ ObjectIndex(0), ObjectIndex(last) }));
+    EXPECT_TRUE(composition.contains(std::tuple { ObjectIndex(0), ObjectIndex(last) }));
     EXPECT_TRUE(query("(q_role (x y) (r_composition " + edge + " (r_identity (c_bot))))").empty());
 
     const auto at_least = concept_value("(c_at_least 2 " + edge + " " + marked + ")").get();
@@ -1259,9 +1273,9 @@ TEST(RunirQueries, QueryResultIdentityIncludesOrderedSchemaAndUnorderedRows)
     using Row = std::array<ObjectIndex, 2>;
     const auto intern = [&](std::array<ColumnIndex, 2> columns, std::array<Row, 2> rows)
     {
-        auto result = builder.get_builder<ygg::database::Relation<ObjectIndex>>(columns);
+        auto result = builder.get_builder<ygg::database::Relation<ObjectValues>>(columns);
         for (const auto& row : rows)
-            result->insert(std::span<const ObjectIndex>(row));
+            result->insert(std::tuple { row[0], row[1] });
         return ygg::database::insert(repository, *result).first;
     };
     const auto columns = std::array<ColumnIndex, 2> { ColumnIndex(0), ColumnIndex(1) };
@@ -1275,7 +1289,7 @@ TEST(RunirQueries, QueryResultIdentityIncludesOrderedSchemaAndUnorderedRows)
     auto renamed_columns = std::array<ColumnIndex, 2> { ColumnIndex(6), ColumnIndex(7) };
     const auto renamed = repository.rename(first, renamed_columns);
     renamed_columns[0] = ColumnIndex(99);
-    EXPECT_EQ(renamed.columns()[0], ColumnIndex(6));
+    EXPECT_EQ(renamed.columns()[0].label, ColumnIndex(6));
     EXPECT_EQ(renamed.get_storage_address(), first.get_storage_address());
     EXPECT_NE(renamed, first);
     EXPECT_EQ(repository.rename(renamed, columns), first);
@@ -1303,15 +1317,15 @@ TEST(RunirQueries, PersistentRenameSurvivesIntermediateResetAndConstructorReleas
     const auto expression = parse_query(R"((q_rename (a b c) (q_atomic_state "triple" (x y z))))", domain, *constructors);
     const auto result = sem::evaluate<tyr::GroundTag>(expression, context);
     ASSERT_EQ(result.size(), 4);
-    const auto schema = std::vector<ColumnIndex>(result.columns().begin(), result.columns().end());
-    const auto first = std::vector<ObjectIndex>(result.row(0).begin(), result.row(0).end());
+    const auto schema = column_labels(result.columns());
+    const auto first = object_values(result[0]);
     intermediates.reset_all();
     EXPECT_EQ(sem::evaluate<tyr::GroundTag>(expression, context), result);
     output_memo.reset_all();
     constructors->clear();
     EXPECT_EQ(result.size(), 4);
-    EXPECT_TRUE(std::ranges::equal(result.columns(), schema));
-    EXPECT_TRUE(std::ranges::equal(result.row(0), first));
+    EXPECT_EQ(column_labels(result.columns()), schema);
+    EXPECT_EQ(object_values(result[0]), first);
 }
 
 }  // namespace runir::tests

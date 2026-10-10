@@ -1,8 +1,11 @@
+#include "runir/kr/ps/base/declarations.hpp"
+#include "runir/kr/ps/declarations.hpp"
+
 #include <concepts>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/sketch_data.hpp>
-#include <runir/kr/ps/base/sketch_index.hpp>
 #include <runir/kr/ps/base/sketch_view.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::tests
 {
@@ -26,8 +29,8 @@ static_assert(requires(Data& data) {
 });
 static_assert(requires(const View& view) {
     view.get_index();
-    view.template get_features<kr::ps::dl::BooleanFeature>();
-    view.template get_features<kr::ps::dl::NumericalFeature>();
+    view.template get_features<kr::dl::BooleanTag>();
+    view.template get_features<kr::dl::NumericalTag>();
     view.get_rules();
 });
 

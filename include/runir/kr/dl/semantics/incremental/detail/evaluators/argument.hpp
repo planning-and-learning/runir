@@ -21,7 +21,7 @@ struct ArgumentEvaluator
     {
         value.assign(context.arguments().at(identifier));
     }
-    void update(EvaluationGraph<Family, Kind>&, const Delta<Family>&, ygg::database::Workspace<ygg::Index<tyr::formalism::Object>>&) {}
+    void update(EvaluationGraph<Family, Kind>&, const Delta<Family>&, ygg::database::Workspace<ObjectValues>&) {}
 };
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

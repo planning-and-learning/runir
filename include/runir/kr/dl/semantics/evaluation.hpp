@@ -16,7 +16,7 @@
 #include <limits>
 #include <stdexcept>
 #include <type_traits>
-#include <tyr/formalism/object_index.hpp>
+#include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/planning/conjunctive_condition_view.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <tyr/planning/ground/state_repository.hpp>

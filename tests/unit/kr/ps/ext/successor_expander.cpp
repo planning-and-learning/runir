@@ -291,7 +291,7 @@ void expect_borrowed_query_evaluation()
         {
             const auto target_rows = kr::ps::evaluate<Kind>(feature, transition.get_target_context());
             ASSERT_EQ(target_rows.size(), 1);
-            EXPECT_NE(target_rows[0][0], rows[0][0]);
+            EXPECT_NE(target_rows[0].template get<ygg::Index<tyr::formalism::Object>>(size_t { 0 }), rows[0].template get<ygg::Index<tyr::formalism::Object>>(size_t { 0 }));
             EXPECT_NE(target_rows.get_storage_address(), rows.get_storage_address());
 
             // The indexed program state supplies bindings; its prepared planning view may use builder storage.
@@ -304,7 +304,7 @@ void expect_borrowed_query_evaluation()
             static_assert(std::same_as<std::remove_cvref_t<decltype(prepared_context.get_state())>, tyr::planning::BuilderStateView<Kind>>);
             const auto prepared_rows = kr::ps::evaluate<Kind>(feature, prepared_context);
             ASSERT_EQ(prepared_rows.size(), rows.size());
-            EXPECT_EQ(prepared_rows[0][0], rows[0][0]);
+            EXPECT_EQ(prepared_rows[0].template get<ygg::Index<tyr::formalism::Object>>(size_t { 0 }), rows[0].template get<ygg::Index<tyr::formalism::Object>>(size_t { 0 }));
             const auto candidate = tyr::planning::LabeledNode<Kind, tyr::planning::BuilderStateView<Kind>> {
                 successors.front().label,
                 tyr::planning::Node<Kind, tyr::planning::BuilderStateView<Kind>>(prepared_target, successors.front().node.get_metric())
@@ -312,8 +312,8 @@ void expect_borrowed_query_evaluation()
             auto prepared_transition = context.make_dl_transition_context(state, candidate);
             const auto prepared_target_rows = kr::ps::evaluate<Kind>(feature, prepared_transition.get_target_context());
             ASSERT_EQ(prepared_target_rows.size(), target_rows.size());
-            EXPECT_EQ(prepared_target_rows[0][0], target_rows[0][0]);
-            EXPECT_EQ(kr::ps::evaluate<Kind>(feature, prepared_transition.get_source_context())[0][0], rows[0][0]);
+            EXPECT_EQ(prepared_target_rows[0].template get<ygg::Index<tyr::formalism::Object>>(size_t { 0 }), target_rows[0].template get<ygg::Index<tyr::formalism::Object>>(size_t { 0 }));
+            EXPECT_EQ(kr::ps::evaluate<Kind>(feature, prepared_transition.get_source_context())[0].template get<ygg::Index<tyr::formalism::Object>>(size_t { 0 }), rows[0].template get<ygg::Index<tyr::formalism::Object>>(size_t { 0 }));
         }
         EXPECT_TRUE(environment.get_dl_target_caches().get_queries(false).contains(query));
         environment.reset_target();
@@ -1194,8 +1194,8 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     call_data.target = caller_return.get_index();
     const auto top_feature = create_feature<kr::dl::ConceptTag>(*repository, top_concept.get_index(), "top");
     const auto universal_feature = create_feature<kr::dl::RoleTag>(*repository, universal_role.get_index(), "universal");
-    const auto true_feature = create_feature<kr::ps::dl::BooleanFeature>(*repository, true_boolean.get_index(), "true");
-    const auto count_feature = create_feature<kr::ps::dl::NumericalFeature>(*repository, object_count.get_index(), "count");
+    const auto true_feature = create_feature<kr::dl::BooleanTag>(*repository, true_boolean.get_index(), "true");
+    const auto count_feature = create_feature<kr::dl::NumericalTag>(*repository, object_count.get_index(), "count");
     call_data.callee = callee.get_symbol().get_index();
     call_data.arguments.push_back(top_feature.get_index());
     call_data.arguments.push_back(universal_feature.get_index());

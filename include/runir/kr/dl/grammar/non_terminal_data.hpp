@@ -1,14 +1,14 @@
 #ifndef RUNIR_GRAMMAR_NON_TERMINAL_DATA_HPP_
 #define RUNIR_GRAMMAR_NON_TERMINAL_DATA_HPP_
 
-#include "runir/kr/dl/grammar/indices.hpp"
+#include "runir/kr/dl/grammar/declarations.hpp"
 
 #include <cista/containers/string.h>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
-#include <utility>
 
 namespace ygg
 {

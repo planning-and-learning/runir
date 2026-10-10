@@ -1,8 +1,8 @@
 #ifndef RUNIR_KR_PS_ICP_XEFFECT_DATA_HPP_
 #define RUNIR_KR_PS_ICP_XEFFECT_DATA_HPP_
 
+#include "runir/kr/ps/icp/declarations.hpp"
 #include "runir/kr/ps/icp/object_reference.hpp"
-#include "runir/kr/ps/icp/xeffect_index.hpp"
 
 #include <cista/containers/variant.h>
 #include <tuple>

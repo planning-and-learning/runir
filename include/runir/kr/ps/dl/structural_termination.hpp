@@ -74,21 +74,21 @@ struct RuleProfile
     template<typename FeatureTag, typename ObservationTag>
     auto& effects() noexcept
     {
-        if constexpr (std::same_as<FeatureTag, BooleanFeature> && std::same_as<ObservationTag, Positive>)
+        if constexpr (std::same_as<FeatureTag, runir::kr::dl::BooleanTag> && std::same_as<ObservationTag, Positive>)
             return boolean_positive_effects;
-        else if constexpr (std::same_as<FeatureTag, BooleanFeature> && std::same_as<ObservationTag, Negative>)
+        else if constexpr (std::same_as<FeatureTag, runir::kr::dl::BooleanTag> && std::same_as<ObservationTag, Negative>)
             return boolean_negative_effects;
-        else if constexpr (std::same_as<FeatureTag, BooleanFeature> && std::same_as<ObservationTag, Unchanged>)
+        else if constexpr (std::same_as<FeatureTag, runir::kr::dl::BooleanTag> && std::same_as<ObservationTag, Unchanged>)
             return boolean_unchanged_effects;
-        else if constexpr (std::same_as<FeatureTag, BooleanFeature> && std::same_as<ObservationTag, Unconstrained>)
+        else if constexpr (std::same_as<FeatureTag, runir::kr::dl::BooleanTag> && std::same_as<ObservationTag, Unconstrained>)
             return boolean_unconstrained_effects;
-        else if constexpr (std::same_as<FeatureTag, NumericalFeature> && std::same_as<ObservationTag, Increases>)
+        else if constexpr (std::same_as<FeatureTag, runir::kr::dl::NumericalTag> && std::same_as<ObservationTag, Increases>)
             return numerical_increase_effects;
-        else if constexpr (std::same_as<FeatureTag, NumericalFeature> && std::same_as<ObservationTag, Decreases>)
+        else if constexpr (std::same_as<FeatureTag, runir::kr::dl::NumericalTag> && std::same_as<ObservationTag, Decreases>)
             return numerical_decrease_effects;
-        else if constexpr (std::same_as<FeatureTag, NumericalFeature> && std::same_as<ObservationTag, Unchanged>)
+        else if constexpr (std::same_as<FeatureTag, runir::kr::dl::NumericalTag> && std::same_as<ObservationTag, Unchanged>)
             return numerical_unchanged_effects;
-        else if constexpr (std::same_as<FeatureTag, NumericalFeature> && std::same_as<ObservationTag, Unconstrained>)
+        else if constexpr (std::same_as<FeatureTag, runir::kr::dl::NumericalTag> && std::same_as<ObservationTag, Unconstrained>)
             return numerical_unconstrained_effects;
         else
             static_assert(ygg::dependent_false<ObservationTag>::value, "unhandled effect feature or observation tag");
@@ -241,8 +241,8 @@ StructuralTerminationResult structural_termination(const QualitativePolicy& poli
 template<runir::kr::FamilyTag Family, typename C>
 struct SccStructuralTerminationResult
 {
-    std::vector<ygg::View<ygg::Index<runir::kr::ps::Feature<Family, BooleanFeature>>, C>> booleans;
-    std::vector<ygg::View<ygg::Index<runir::kr::ps::Feature<Family, NumericalFeature>>, C>> numericals;
+    std::vector<ygg::View<ygg::Index<runir::kr::ps::Feature<Family, runir::kr::dl::BooleanTag>>, C>> booleans;
+    std::vector<ygg::View<ygg::Index<runir::kr::ps::Feature<Family, runir::kr::dl::NumericalTag>>, C>> numericals;
 };
 
 }  // namespace runir::kr::ps::dl

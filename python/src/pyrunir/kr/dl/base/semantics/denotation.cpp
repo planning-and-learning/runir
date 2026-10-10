@@ -61,39 +61,37 @@ void bind_denotation_view(nb::module_& m, const char* name)
 void bind_query_denotation(nb::module_& m)
 {
     using ObjectIndex = ygg::Index<tyr::formalism::Object>;
-    using Type = ygg::database::Relation<ObjectIndex>;
+    using Type = ygg::database::Relation<ObjectValues>;
     using View = semantics::QueryDenotationView;
-    using Row = tyr::formalism::planning::ObjectSpanView;
-    using Repository = ygg::database::RelationRepository<ObjectIndex>;
-    const auto retainer = ygg::python::make_owner_retainer();
+    using Repository = ygg::database::RelationRepository<ObjectValues>;
+    using Row = ygg::View<ygg::database::Row<ObjectValues>, Repository>;
 
     ygg::bind_index<ygg::Index<Type>>(m, "QueryDenotationIndex");
-    nb::class_<Row>(m, "QueryDenotationRow", "Read-only borrowed row of Tyr objects; keeps its query result alive.")
+    nb::class_<Row>(m, "QueryDenotationRow", "Read-only borrowed row of raw object indices; keeps its query result alive.")
         .def("__len__", &Row::size)
-        .def(
-            "__getitem__",
-            [](const Row& row, std::ptrdiff_t index)
-            {
-                if (index < 0)
-                    index += static_cast<std::ptrdiff_t>(row.size());
-                if (index < 0 || static_cast<std::size_t>(index) >= row.size())
-                    throw nb::index_error();
-                return row[index];
-            },
-            nb::keep_alive<0, 1>())
-        .def("__iter__",
-             [retainer](nb::typed<nb::handle, Row> owner)
+        .def("__getitem__",
+             [](const Row& row, std::ptrdiff_t index)
              {
-                 const auto& row = nb::cast<const Row&>(owner);
-                 return nb::borrow<nb::typed<nb::iterator, tyr::formalism::planning::ObjectView>>(
-                     ygg::python::make_iterator_with_owner(nb::make_iterator(nb::type<Row>(), "QueryDenotationRowIterator", row.begin(), row.end()),
-                                                           owner,
-                                                           retainer));
+                 if (index < 0)
+                     index += static_cast<std::ptrdiff_t>(row.size());
+                 if (index < 0 || static_cast<std::size_t>(index) >= row.size())
+                     throw nb::index_error();
+                 return row.template get<ObjectIndex>(static_cast<std::size_t>(index));
+             })
+        .def("__iter__",
+             [](const Row& row)
+             {
+                 // ponytail: indices are values, so a copied list needs no owner retention.
+                 auto values = std::vector<ObjectIndex> {};
+                 values.reserve(row.size());
+                 for (std::size_t i = 0; i < row.size(); ++i)
+                     values.push_back(row.template get<ObjectIndex>(i));
+                 return nb::borrow<nb::typed<nb::iterator, ObjectIndex>>(nb::iter(nb::cast(std::move(values))));
              });
 
     auto view = nb::class_<View>(m,
                                  "QueryDenotation",
-                                 "Interned query result with ordered columns and Tyr object rows. Clearing its result repository invalidates its views.")
+                                 "Interned query result with ordered columns and rows of raw object indices. Clearing its result repository invalidates its views.")
                     .def("get_index", &View::get_index)
                     .def("__len__", &View::size)
                     .def(

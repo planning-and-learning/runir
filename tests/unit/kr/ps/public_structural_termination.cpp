@@ -413,8 +413,8 @@ TEST(RunirTests, PublicStructuralTerminationRequiresCompleteEffectCoverage)
         auto policy = dl::QualitativePolicy(1, num_booleans, num_numericals);
         auto rule = dl::RuleProfile(num_booleans, num_numericals);
         const auto full = [](std::size_t size) { return size == 64 ? std::numeric_limits<std::uint64_t>::max() : (std::uint64_t { 1 } << size) - 1; };
-        EXPECT_EQ((rule.effects<dl::BooleanFeature, dl::Unconstrained>()), full(num_booleans));
-        EXPECT_EQ((rule.effects<dl::NumericalFeature, dl::Unconstrained>()), full(num_numericals));
+        EXPECT_EQ((rule.effects<runir::kr::dl::BooleanTag, dl::Unconstrained>()), full(num_booleans));
+        EXPECT_EQ((rule.effects<runir::kr::dl::NumericalTag, dl::Unconstrained>()), full(num_numericals));
         EXPECT_EQ(rule.boolean_positive_conditions | rule.boolean_negative_conditions | rule.numerical_greater_conditions | rule.numerical_zero_conditions, 0);
         EXPECT_EQ(rule.boolean_positive_effects | rule.boolean_negative_effects | rule.boolean_unchanged_effects, 0);
         EXPECT_EQ(rule.numerical_increase_effects | rule.numerical_decrease_effects | rule.numerical_unchanged_effects, 0);

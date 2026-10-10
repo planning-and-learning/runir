@@ -4,6 +4,7 @@
 #include "module.hpp"
 
 #include <concepts>
+#include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
 #include <pyrunir/kr/binding_utils.hpp>
 #include <pyrunir/kr/dl/evaluation_bindings.hpp>
@@ -48,7 +49,8 @@ void def_query_data_constructors(Class& cls)
     using QueryView = ygg::View<ygg::Index<Query<Family>>, Repository>;
 
     if constexpr (std::same_as<Tag, void>)
-        cls.def(nb::init<typename ygg::Data<Query<Family>>::Variant>(), "variant"_a);
+        cls.def(nb::init<typename ygg::Data<Query<Family>>::Variant>(), "variant"_a)
+            .def(nb::init<typename ygg::Data<Query<Family>>::template ViewVariant<Repository>>(), "variant"_a);
     else if constexpr (is_atomic_state_tag_v<Tag>)
         cls.def(nb::init<ygg::Index<tyr::formalism::Predicate<typename Tag::FactKind>>, ColumnIndexList>(), "predicate"_a, "columns"_a)
             .def(nb::init<tyr::formalism::planning::PredicateView<typename Tag::FactKind>, const ColumnViewList&>(), "predicate"_a, "columns"_a);

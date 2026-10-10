@@ -24,7 +24,7 @@ using x3::ascii::digit;
 using ygg::diagnostics::context;
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename Tag>
-inline constexpr bool has_ast_constructor_tag_v = runir::kr::dl::TypeListContains<Tag, grammar_ast::AstConstructorTagsT<Family, Category>>::value;
+inline constexpr bool has_ast_constructor_tag_v = ygg::InTypeList<Tag, grammar_ast::AstConstructorTagsT<Family, Category>>;
 
 template<bool Enabled, typename Parser>
 auto maybe(Parser parser)

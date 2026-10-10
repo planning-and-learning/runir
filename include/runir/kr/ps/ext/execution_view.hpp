@@ -16,193 +16,83 @@
 #include <yggdrasil/containers/pair.hpp>
 #include <yggdrasil/containers/vector.hpp>
 #include <yggdrasil/core/types.hpp>
-#include <yggdrasil/formalism/detail/view.hpp>
+#include <yggdrasil/formalism/declarations.hpp>
 
 namespace ygg
 {
 
-template<tyr::TaskKind Kind, formalism::SymbolContextFor<runir::kr::ps::ext::ModuleState<Kind>> C>
-class View<Index<runir::kr::ps::ext::ModuleState<Kind>>, C> : public formalism::detail::View<Index<runir::kr::ps::ext::ModuleState<Kind>>, C>
+/// Getters shared by the index, data, and builder views of a module state. The builder
+/// view overrides the two that read inline construction data.
+template<tyr::TaskKind Kind, typename V>
+class ViewMixin<runir::kr::ps::ext::ModuleState<Kind>, V>
 {
-public:
-    View(Index<runir::kr::ps::ext::ModuleState<Kind>> handle, const C& context) noexcept :
-        formalism::detail::View<Index<runir::kr::ps::ext::ModuleState<Kind>>, C>(handle, context)
-    {
-    }
+    const V& self() const noexcept { return static_cast<const V&>(*this); }
 
-    auto get_state() const { return get_repository(*this->m_context).get_state_repository().get_registered_state(this->get_data().state); }
-    auto get_module() const noexcept { return make_view(this->get_data().module_, get_repository(*this->m_context).get_program_repository()); }
-    auto get_memory_state() const noexcept { return make_view(this->get_data().memory_state, get_repository(*this->m_context).get_program_repository()); }
-    auto get_registers() const noexcept { return make_view(this->get_data().registers, get_repository(*this->m_context).get_denotation_repository()); }
-    auto get_arguments() const noexcept { return make_view(this->get_data().arguments, get_repository(*this->m_context).get_denotation_repository()); }
+public:
+    auto get_state() const { return self().get_repository().get_state_repository().get_registered_state(self().get_data().state); }
+    auto get_module() const noexcept { return make_view(self().get_data().module_, self().get_repository().get_program_repository()); }
+    auto get_memory_state() const noexcept { return make_view(self().get_data().memory_state, self().get_repository().get_program_repository()); }
+    auto get_registers() const noexcept { return make_view(self().get_data().registers, self().get_repository().get_denotation_repository()); }
+    auto get_arguments() const noexcept { return make_view(self().get_data().arguments, self().get_repository().get_denotation_repository()); }
 };
 
-template<formalism::SymbolContextFor<runir::kr::ps::ext::CallStack> C>
-class View<Index<runir::kr::ps::ext::CallStack>, C> : public formalism::detail::View<Index<runir::kr::ps::ext::CallStack>, C>
+/// Getters shared by the index and data views of a call stack frame.
+template<typename V>
+class ViewMixin<runir::kr::ps::ext::CallStack, V>
 {
-public:
-    View(Index<runir::kr::ps::ext::CallStack> handle, const C& context) noexcept :
-        formalism::detail::View<Index<runir::kr::ps::ext::CallStack>, C>(handle, context)
-    {
-    }
+    const V& self() const noexcept { return static_cast<const V&>(*this); }
 
-    auto get_module() const noexcept { return make_view(this->get_data().module_, get_repository(*this->m_context).get_program_repository()); }
+public:
+    auto get_module() const noexcept { return make_view(self().get_data().module_, self().get_repository().get_program_repository()); }
     auto get_return_memory_state() const noexcept
     {
-        return make_view(this->get_data().return_memory_state, get_repository(*this->m_context).get_program_repository());
+        return make_view(self().get_data().return_memory_state, self().get_repository().get_program_repository());
     }
-    auto get_registers() const noexcept { return make_view(this->get_data().registers, get_repository(*this->m_context).get_denotation_repository()); }
-    auto get_arguments() const noexcept { return make_view(this->get_data().arguments, get_repository(*this->m_context).get_denotation_repository()); }
+    auto get_registers() const noexcept { return make_view(self().get_data().registers, self().get_repository().get_denotation_repository()); }
+    auto get_arguments() const noexcept { return make_view(self().get_data().arguments, self().get_repository().get_denotation_repository()); }
 
-    auto get_caller() const -> std::optional<View>
+    auto get_caller() const
     {
-        if (!this->get_data().caller)
-            return std::nullopt;
-        return make_view(*this->get_data().caller, *this->m_context);
+        using CallerView = decltype(make_view(*self().get_data().caller, self().get_context()));
+        if (!self().get_data().caller)
+            return std::optional<CallerView> {};
+        return std::optional<CallerView>(make_view(*self().get_data().caller, self().get_context()));
     }
 };
 
-template<tyr::TaskKind Kind, formalism::SymbolContextFor<runir::kr::ps::ext::ProgramState<Kind>> C>
-class View<Index<runir::kr::ps::ext::ProgramState<Kind>>, C> : public formalism::detail::View<Index<runir::kr::ps::ext::ProgramState<Kind>>, C>
+/// Getters shared by the index, data, and builder views of a program state. A builder may move when
+/// search buffers grow; create a builder view only while its owner remains in place.
+template<tyr::TaskKind Kind, typename V>
+class ViewMixin<runir::kr::ps::ext::ProgramState<Kind>, V>
 {
-public:
-    View(Index<runir::kr::ps::ext::ProgramState<Kind>> handle, const C& context) noexcept :
-        formalism::detail::View<Index<runir::kr::ps::ext::ProgramState<Kind>>, C>(handle, context)
-    {
-    }
+    const V& self() const noexcept { return static_cast<const V&>(*this); }
 
+public:
+    auto get_program() const noexcept { return make_view(self().get_data().program, self().get_repository().get_program_repository()); }
+    auto get_module_state() const noexcept { return make_view(self().get_data().module_state, self().get_context()); }
     auto get_state() const { return get_module_state().get_state(); }
-    auto get_program() const noexcept { return make_view(this->get_data().program, get_repository(*this->m_context).get_program_repository()); }
-    auto get_module_state() const noexcept { return make_view(this->get_data().module_state, *this->m_context); }
 
-    auto get_call_stack() const -> std::optional<View<Index<runir::kr::ps::ext::CallStack>, C>>
+    auto get_call_stack() const
     {
-        if (!this->get_data().call_stack)
-            return std::nullopt;
-        return make_view(*this->get_data().call_stack, *this->m_context);
+        using CallStackView = decltype(make_view(*self().get_data().call_stack, self().get_context()));
+        if (!self().get_data().call_stack)
+            return std::optional<CallStackView> {};
+        return std::optional<CallStackView>(make_view(*self().get_data().call_stack, self().get_context()));
     }
 };
 
-/// Borrows data whose children remain in their repositories.
+/// Borrows inline construction data: the state is not yet registered and the registers live in the
+/// formalism repository, so these two getters differ from the interned views.
 template<tyr::TaskKind Kind, typename C>
-class View<Data<runir::kr::ps::ext::ModuleState<Kind>>, C>
+class View<Builder<runir::kr::ps::ext::ModuleState<Kind>>, C> :
+    public ygg::BuilderViewBase<runir::kr::ps::ext::ModuleState<Kind>, C>,
+    public ViewMixin<runir::kr::ps::ext::ModuleState<Kind>, View<Builder<runir::kr::ps::ext::ModuleState<Kind>>, C>>
 {
-private:
-    const Data<runir::kr::ps::ext::ModuleState<Kind>>* m_handle;
-    const C* m_context;
-
 public:
-    View(const Data<runir::kr::ps::ext::ModuleState<Kind>>& handle, const C& context) noexcept : m_handle(&handle), m_context(&context) {}
+    using ygg::BuilderViewBase<runir::kr::ps::ext::ModuleState<Kind>, C>::BuilderViewBase;
 
-    const auto& get_data() const noexcept { return *m_handle; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return *m_handle; }
-
-    auto get_state() const { return get_repository(*m_context).get_state_repository().get_registered_state(get_data().state); }
-    auto get_module() const noexcept { return make_view(get_data().module_, get_repository(*m_context).get_program_repository()); }
-    auto get_memory_state() const noexcept { return make_view(get_data().memory_state, get_repository(*m_context).get_program_repository()); }
-    auto get_registers() const noexcept { return make_view(get_data().registers, get_repository(*m_context).get_denotation_repository()); }
-    auto get_arguments() const noexcept { return make_view(get_data().arguments, get_repository(*m_context).get_denotation_repository()); }
-};
-
-/// Borrows data whose children remain in their repositories.
-template<typename C>
-class View<Data<runir::kr::ps::ext::CallStack>, C>
-{
-private:
-    const Data<runir::kr::ps::ext::CallStack>* m_handle;
-    const C* m_context;
-
-public:
-    View(const Data<runir::kr::ps::ext::CallStack>& handle, const C& context) noexcept : m_handle(&handle), m_context(&context) {}
-
-    const auto& get_data() const noexcept { return *m_handle; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return *m_handle; }
-
-    auto get_module() const noexcept { return make_view(get_data().module_, get_repository(*m_context).get_program_repository()); }
-    auto get_return_memory_state() const noexcept { return make_view(get_data().return_memory_state, get_repository(*m_context).get_program_repository()); }
-    auto get_registers() const noexcept { return make_view(get_data().registers, get_repository(*m_context).get_denotation_repository()); }
-    auto get_arguments() const noexcept { return make_view(get_data().arguments, get_repository(*m_context).get_denotation_repository()); }
-
-    auto get_caller() const -> std::optional<View<Index<runir::kr::ps::ext::CallStack>, C>>
-    {
-        if (!get_data().caller)
-            return std::nullopt;
-        return make_view(*get_data().caller, *m_context);
-    }
-};
-
-/// Borrows data whose children remain in their repositories.
-template<tyr::TaskKind Kind, typename C>
-class View<Data<runir::kr::ps::ext::ProgramState<Kind>>, C>
-{
-private:
-    const Data<runir::kr::ps::ext::ProgramState<Kind>>* m_handle;
-    const C* m_context;
-
-public:
-    View(const Data<runir::kr::ps::ext::ProgramState<Kind>>& handle, const C& context) noexcept : m_handle(&handle), m_context(&context) {}
-
-    const auto& get_data() const noexcept { return *m_handle; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return *m_handle; }
-
-    auto get_state() const { return get_module_state().get_state(); }
-    auto get_program() const noexcept { return make_view(get_data().program, get_repository(*m_context).get_program_repository()); }
-    auto get_module_state() const noexcept { return make_view(get_data().module_state, *m_context); }
-
-    auto get_call_stack() const -> std::optional<View<Index<runir::kr::ps::ext::CallStack>, C>>
-    {
-        if (!get_data().call_stack)
-            return std::nullopt;
-        return make_view(*get_data().call_stack, *m_context);
-    }
-};
-
-/// Borrows inline construction data and supplies its repository context.
-template<tyr::TaskKind Kind, typename C>
-class View<Builder<runir::kr::ps::ext::ModuleState<Kind>>, C>
-{
-    const Builder<runir::kr::ps::ext::ModuleState<Kind>>* m_handle;
-    const C* m_context;
-
-public:
-    View(const Builder<runir::kr::ps::ext::ModuleState<Kind>>& handle, const C& context) noexcept : m_handle(&handle), m_context(&context) {}
-
-    const auto& get_data() const noexcept { return *m_handle; }
-    const auto& get_handle() const noexcept { return *m_handle; }
-    const auto& get_context() const noexcept { return *m_context; }
-    auto get_state() const { return make_view(get_data().state, *get_repository(*m_context).get_state_repository().get_task()); }
-    auto get_module() const noexcept { return make_view(get_data().module_, get_repository(*m_context).get_program_repository()); }
-    auto get_memory_state() const noexcept { return make_view(get_data().memory_state, get_repository(*m_context).get_program_repository()); }
-    auto get_registers() const noexcept { return make_view(get_data().registers, get_repository(*m_context).get_formalism_repository()); }
-    auto get_arguments() const noexcept { return make_view(get_data().arguments, get_repository(*m_context).get_denotation_repository()); }
-};
-
-/// The builder may move when search buffers grow. Create this view only while its owner remains in place.
-template<tyr::TaskKind Kind, typename C>
-class View<Builder<runir::kr::ps::ext::ProgramState<Kind>>, C>
-{
-    const Builder<runir::kr::ps::ext::ProgramState<Kind>>* m_handle;
-    const C* m_context;
-
-public:
-    View(const Builder<runir::kr::ps::ext::ProgramState<Kind>>& handle, const C& context) noexcept : m_handle(&handle), m_context(&context) {}
-
-    const auto& get_data() const noexcept { return *m_handle; }
-    const auto& get_handle() const noexcept { return *m_handle; }
-    const auto& get_context() const noexcept { return *m_context; }
-    auto get_state() const { return get_module_state().get_state(); }
-    auto get_program() const noexcept { return make_view(get_data().program, get_repository(*m_context).get_program_repository()); }
-    auto get_module_state() const noexcept { return make_view(get_data().module_state, *m_context); }
-
-    auto get_call_stack() const -> std::optional<View<Index<runir::kr::ps::ext::CallStack>, C>>
-    {
-        if (!get_data().call_stack)
-            return std::nullopt;
-        return make_view(*get_data().call_stack, *m_context);
-    }
+    auto get_state() const { return make_view(this->get_data().state, *this->get_repository().get_state_repository().get_task()); }
+    auto get_registers() const noexcept { return make_view(this->get_data().registers, this->get_repository().get_formalism_repository()); }
 };
 
 }  // namespace ygg

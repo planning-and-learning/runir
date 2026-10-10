@@ -1,10 +1,12 @@
+#include "runir/kr/dl/cnf_grammar/declarations.hpp"
+
 #include <concepts>
 #include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
 #include <runir/kr/dl/cnf_grammar/grammar_data.hpp>
-#include <runir/kr/dl/cnf_grammar/grammar_index.hpp>
 #include <runir/kr/dl/cnf_grammar/grammar_view.hpp>
 #include <utility>
 #include <yggdrasil/core/concepts.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::tests
 {

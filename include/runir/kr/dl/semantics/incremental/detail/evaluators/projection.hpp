@@ -8,7 +8,7 @@
 
 #include <concepts>
 #include <span>
-#include <yggdrasil/database/incremental/projection.hpp>
+#include <yggdrasil/database/semantics/incremental/projection.hpp>
 
 namespace runir::kr::dl::semantics::incremental::detail
 {
@@ -17,16 +17,18 @@ template<FamilyTag Family, tyr::TaskKind Kind, CategoryTag Category>
 struct ProjectionEvaluator
 {
     QueryEvaluationIndex child;
-    ygg::database::incremental::ProjectionEvaluator<ygg::Index<tyr::formalism::Object>> operation;
+    ygg::database::incremental::ProjectionEvaluator<ObjectValues> operation;
     DenotationState<Category> value;
 
-    ProjectionEvaluator(QueryEvaluationIndex child, const ygg::database::ProjectionPlan& plan) : child(child), operation(plan) {}
-    void set_row(EvaluationGraph<Family, Kind>& graph, std::span<const ygg::Index<tyr::formalism::Object>> row, bool present)
+    ProjectionEvaluator(QueryEvaluationIndex child, const ygg::database::ProjectionPlan<ObjectValues>& plan) : child(child), operation(plan) {}
+    template<typename Builder>
+    static void set_row(Builder& builder, ygg::database::Row<ObjectValues> row, bool present, auto&&... context)
     {
+        using ObjectIndex = ygg::Index<tyr::formalism::Object>;
         if constexpr (std::same_as<Category, ConceptTag>)
-            value.set(row[0], present, graph.repository());
+            builder.set(row.get<ObjectIndex>(size_t { 0 }), present, context...);
         else
-            value.set(row[0], row[1], present, graph.repository());
+            builder.set(row.get<ObjectIndex>(size_t { 0 }), row.get<ObjectIndex>(size_t { 1 }), present, context...);
     }
     template<StateEvaluationContextConcept<Family, Kind> Context>
     void initialize(EvaluationGraph<Family, Kind>& graph, Context& context)
@@ -35,23 +37,16 @@ struct ProjectionEvaluator
         operation.initialize(graph.result(child), context.get_workspace().get_database_workspace());
         const auto& rows = operation.get_result();
         for (size_t i = 0; i < rows.size(); ++i)
-        {
-            const auto row = rows.row(i);
-            if constexpr (std::same_as<Category, ConceptTag>)
-                builder.set(row[0], true);
-            else
-                builder.set(row[0], row[1], true);
-        }
+            set_row(builder, rows[i], true);
     }
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<ygg::Index<tyr::formalism::Object>>& workspace)
+    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<ObjectValues>& workspace)
     {
-        const auto& input = graph.change(child);
-        operation.update(input.added, input.removed, workspace);
+        operation.update(graph.change(child).change(), workspace);
         const auto& change = operation.get_delta();
         for (size_t i = 0; i < change.removed.size(); ++i)
-            set_row(graph, change.removed.row(i), false);
+            set_row(value, change.removed[i], false, graph.repository());
         for (size_t i = 0; i < change.added.size(); ++i)
-            set_row(graph, change.added.row(i), true);
+            set_row(value, change.added[i], true, graph.repository());
     }
 };
 

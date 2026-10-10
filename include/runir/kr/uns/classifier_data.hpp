@@ -1,14 +1,16 @@
 #ifndef RUNIR_KR_UNS_CLASSIFIER_DATA_HPP_
 #define RUNIR_KR_UNS_CLASSIFIER_DATA_HPP_
 
-#include "runir/kr/ps/feature_index.hpp"
-#include "runir/kr/uns/classifier_index.hpp"
+#include "runir/kr/ps/declarations.hpp"
+#include "runir/kr/uns/declarations.hpp"
+#include <yggdrasil/containers/variant.hpp>
 
 #include <cista/containers/string.h>
 #include <cista/containers/variant.h>
 #include <string>
 #include <tuple>
 #include <utility>
+#include <variant>
 #include <vector>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
@@ -21,7 +23,7 @@ namespace ygg
 template<>
 struct Data<runir::kr::uns::ClassifierLiteral>
 {
-    using Variant = ::cista::offset::variant<Index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::ps::dl::BooleanFeature>>>;
+    using Variant = ::cista::offset::variant<Index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>>>;
 
     Index<runir::kr::uns::ClassifierLiteral> index;
     Variant variant;
@@ -29,6 +31,15 @@ struct Data<runir::kr::uns::ClassifierLiteral>
 
     Data() = default;
     Data(Variant variant_, bool polarity_) : index(), variant(std::move(variant_)), polarity(polarity_) {}
+    template<typename C>
+    using ViewVariant = ::ygg::ViewVariant<Variant, C>;
+    template<typename C>
+    Data(const ViewVariant<C>& variant_, bool polarity_) :
+        index(),
+        variant(std::visit([](const auto& view) -> Variant { return Variant(view.get_index()); }, variant_)),
+        polarity(polarity_)
+    {
+    }
 
     auto cista_members() noexcept { return std::tie(index, variant, polarity); }
     auto cista_members() const noexcept { return std::tie(index, variant, polarity); }
@@ -69,12 +80,12 @@ struct Data<runir::kr::uns::Classifier>
 {
     Index<runir::kr::uns::Classifier> index;
     ::cista::offset::string symbol;
-    IndexList<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::ps::dl::BooleanFeature>> features;
+    IndexList<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>> features;
     IndexList<runir::kr::uns::ClassifierClause> clauses;
 
     Data() = default;
     Data(::cista::offset::string symbol_,
-         IndexList<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::ps::dl::BooleanFeature>> features_,
+         IndexList<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>> features_,
          IndexList<runir::kr::uns::ClassifierClause> clauses_) :
         index(),
         symbol(std::move(symbol_)),
@@ -84,7 +95,7 @@ struct Data<runir::kr::uns::Classifier>
     }
     template<typename C>
     Data(::cista::offset::string symbol_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::ps::dl::BooleanFeature>>, C>>& features_,
+         const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>>, C>>& features_,
          const std::vector<::ygg::View<Index<runir::kr::uns::ClassifierClause>, C>>& clauses_) :
         index(),
         symbol(std::move(symbol_)),

@@ -69,7 +69,7 @@ consteval bool numerical_data_view()
             data.identifier;
             view.get_value();
         };
-    else if constexpr (kr::dl::TypeListContains<Tag, kr::dl::NumericalBinaryConstructorTags>::value)
+    else if constexpr (ygg::InTypeList<Tag, kr::dl::NumericalBinaryConstructorTags>)
         return requires(Data& data, const View& view) {
             data.lhs;
             data.rhs;

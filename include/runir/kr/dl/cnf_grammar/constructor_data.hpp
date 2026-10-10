@@ -2,10 +2,12 @@
 #define RUNIR_KR_DL_CNF_GRAMMAR_CONSTRUCTOR_DATA_HPP_
 
 #include "runir/kr/dl/cnf_grammar/numerical_data.hpp"
+#include <yggdrasil/containers/variant.hpp>
 
 #include <cista/containers/variant.h>
 #include <tuple>
 #include <utility>
+#include <variant>
 #include <yggdrasil/core/type_list.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
@@ -72,6 +74,12 @@ struct Data<runir::kr::dl::cnf_grammar::Constructor<Family, Category>>
 
     Data() = default;
     explicit Data(Variant variant_) : index(), variant(std::move(variant_)) {}
+    template<typename C>
+    using ViewVariant = ::ygg::ViewVariant<Variant, C>;
+    template<typename C>
+    explicit Data(const ViewVariant<C>& variant_) : index(), variant(std::visit([](const auto& view) -> Variant { return Variant(view.get_index()); }, variant_))
+    {
+    }
 
     auto cista_members() noexcept { return std::tie(index, variant); }
     auto cista_members() const noexcept { return std::tie(index, variant); }

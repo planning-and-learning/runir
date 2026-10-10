@@ -2,15 +2,10 @@
 #define RUNIR_KR_PS_EXT_RULE_DATA_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
-#include "runir/kr/dl/register_index.hpp"
-#include "runir/kr/ps/condition_index.hpp"
+#include "runir/kr/ps/declarations.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
-#include "runir/kr/ps/effect_index.hpp"
-#include "runir/kr/ps/ext/memory_state_index.hpp"
-#include "runir/kr/ps/ext/module_symbol_index.hpp"
+#include "runir/kr/ps/ext/declarations.hpp"
 #include "runir/kr/ps/ext/order_term_data.hpp"
-#include "runir/kr/ps/ext/rule_index.hpp"
-#include "runir/kr/ps/feature_index.hpp"
 
 #include <cista/containers/string.h>
 #include <cista/containers/variant.h>
@@ -22,14 +17,12 @@
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 #include <yggdrasil/semantics/comparison.hpp>
+#include <yggdrasil/containers/variant.hpp>
 
 namespace runir::kr::ps::ext
 {
 
-using CallArgument = ::cista::offset::variant<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>,
-                                              ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>,
-                                              ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>,
-                                              ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>>;
+using CallArgument = ::ygg::IndexVariant<::ygg::MapTypeListSecondT<runir::kr::ps::Feature, runir::kr::ExtFamilyTag, runir::kr::dl::CategoryTags>>;
 
 }  // namespace runir::kr::ps::ext
 

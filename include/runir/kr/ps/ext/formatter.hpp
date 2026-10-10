@@ -173,8 +173,8 @@ void append_module(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext::Mo
             };
             append_features(view.template get_features<runir::kr::dl::ConceptTag>());
             append_features(view.template get_features<runir::kr::dl::RoleTag>());
-            append_features(view.template get_features<runir::kr::ps::dl::BooleanFeature>());
-            append_features(view.template get_features<runir::kr::ps::dl::NumericalFeature>());
+            append_features(view.template get_features<runir::kr::dl::BooleanTag>());
+            append_features(view.template get_features<runir::kr::dl::NumericalTag>());
             append_features(view.get_query_features());
         }
         os << ygg::print_indent << ")\n";

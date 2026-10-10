@@ -130,8 +130,8 @@ ModuleView lower_module(const ast::Module& module,
 
     auto concepts = std::unordered_map<std::string, ygg::Index<ps::Feature<IcpFamilyTag, runir::kr::dl::ConceptTag>>> {};
     auto roles = std::unordered_map<std::string, ygg::Index<ps::Feature<IcpFamilyTag, runir::kr::dl::RoleTag>>> {};
-    auto booleans = std::unordered_map<std::string, ygg::Index<ps::Feature<IcpFamilyTag, ps::dl::BooleanFeature>>> {};
-    auto numericals = std::unordered_map<std::string, ygg::Index<ps::Feature<IcpFamilyTag, ps::dl::NumericalFeature>>> {};
+    auto booleans = std::unordered_map<std::string, ygg::Index<ps::Feature<IcpFamilyTag, runir::kr::dl::BooleanTag>>> {};
+    auto numericals = std::unordered_map<std::string, ygg::Index<ps::Feature<IcpFamilyTag, runir::kr::dl::NumericalTag>>> {};
     auto feature_names = std::unordered_set<std::string> {};
     const auto context = ConstructorContext { repository.get_dl_repository(), dl_builder, diagnostics, &references };
     for (const auto& feature : module.features)
@@ -164,13 +164,13 @@ ModuleView lower_module(const ast::Module& module,
                     }
                     else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
                     {
-                        const auto index = make_feature<ps::dl::BooleanFeature>(repository, builder, expression.get_index(), concrete.symbol.text);
+                        const auto index = make_feature<runir::kr::dl::BooleanTag>(repository, builder, expression.get_index(), concrete.symbol.text);
                         booleans.emplace(concrete.symbol.text, index);
                         data->boolean_features.push_back(index);
                     }
                     else
                     {
-                        const auto index = make_feature<ps::dl::NumericalFeature>(repository, builder, expression.get_index(), concrete.symbol.text);
+                        const auto index = make_feature<runir::kr::dl::NumericalTag>(repository, builder, expression.get_index(), concrete.symbol.text);
                         numericals.emplace(concrete.symbol.text, index);
                         data->numerical_features.push_back(index);
                     }

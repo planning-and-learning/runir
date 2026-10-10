@@ -31,7 +31,7 @@ struct DistanceFeatureEvaluator
         operation.initialize(graph.result(sources), graph.result(edges), graph.result(targets));
         value.set(operation.get_result());
     }
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<ygg::Index<tyr::formalism::Object>>&)
+    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<ObjectValues>&)
     {
         operation.update(graph.result(sources), graph.result(edges), graph.result(targets), graph.change(sources), graph.change(edges), graph.change(targets));
         value.set(operation.get_result());

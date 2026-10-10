@@ -1,5 +1,6 @@
 #include "bindings.hpp"
 
+#include <nanobind/stl/variant.h>
 #include <pyrunir/kr/dl/evaluation_bindings.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/constructor_view.hpp>
@@ -20,6 +21,7 @@ void bind_constructor_data(nb::module_& m, const char* name)
     auto cls = nb::class_<Data>(m, name)
                    .def(nb::init<>())
                    .def(nb::init<typename Data::Variant>(), nb::arg("variant"))
+                   .def(nb::init<typename Data::template ViewVariant<runir::kr::dl::ExtConstructorRepository>>(), nb::arg("variant"))
                    .def_rw("index", &Data::index)
                    .def_rw("variant", &Data::variant)
                    .def_rw("is_static", &Data::is_static);

@@ -6,7 +6,7 @@
 #include <tuple>
 #include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/core/types.hpp>
-#include <yggdrasil/formalism/detail/view.hpp>
+#include <yggdrasil/formalism/declarations.hpp>
 
 namespace ygg
 {
@@ -15,15 +15,12 @@ template<runir::kr::dl::FamilyTag Family,
          runir::kr::dl::CategoryTag Category,
          formalism::SymbolContextFor<runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, Category>> C>
 class View<Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, Category>>, C> :
-    public formalism::detail::View<Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, Category>>, C>
+    public ygg::IndexViewBase<runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, Category>, C>
 {
 public:
-    View(Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, Category>> handle, const C& context) noexcept :
-        formalism::detail::View<Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, Category>>, C>(handle, context)
-    {
-    }
+    using ygg::IndexViewBase<runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, Category>, C>::IndexViewBase;
 
-    auto get_variant() const noexcept { return make_view(this->get_data().variant, *this->m_context); }
+    auto get_variant() const noexcept { return make_view(this->get_data().variant, this->get_context()); }
 };
 
 }  // namespace ygg

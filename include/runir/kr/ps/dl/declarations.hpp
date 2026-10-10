@@ -8,16 +8,6 @@
 namespace runir::kr::ps::dl
 {
 
-struct BooleanFeature
-{
-    static constexpr auto keyword = "boolean";
-};
-
-struct NumericalFeature
-{
-    static constexpr auto keyword = "numerical";
-};
-
 struct QueryFeature
 {
     static constexpr auto keyword = "query";
@@ -63,20 +53,21 @@ struct Unconstrained
     static constexpr auto keyword = "unconstrained";
 };
 
+// Features use the DL categories as tags; a query feature has no DL category of its own.
 // These are semantic categories, independent of a default policy repository's inventory.
 template<typename T>
-concept FeatureTag = std::same_as<T, runir::kr::dl::ConceptTag> || std::same_as<T, runir::kr::dl::RoleTag> || std::same_as<T, BooleanFeature>
-                     || std::same_as<T, NumericalFeature> || std::same_as<T, QueryFeature>;
+concept FeatureTag = std::same_as<T, runir::kr::dl::ConceptTag> || std::same_as<T, runir::kr::dl::RoleTag> || std::same_as<T, runir::kr::dl::BooleanTag>
+                     || std::same_as<T, runir::kr::dl::NumericalTag> || std::same_as<T, QueryFeature>;
 
 template<typename Observation, typename Feature>
 concept ConditionObservationTag =
-    (std::same_as<Feature, BooleanFeature> && (std::same_as<Observation, Positive> || std::same_as<Observation, Negative>) )
-    || (std::same_as<Feature, NumericalFeature> && (std::same_as<Observation, EqualZero> || std::same_as<Observation, GreaterZero>) );
+    (std::same_as<Feature, runir::kr::dl::BooleanTag> && (std::same_as<Observation, Positive> || std::same_as<Observation, Negative>) )
+    || (std::same_as<Feature, runir::kr::dl::NumericalTag> && (std::same_as<Observation, EqualZero> || std::same_as<Observation, GreaterZero>) );
 
 template<typename Observation, typename Feature>
-concept EffectObservationTag = (std::same_as<Feature, BooleanFeature>
+concept EffectObservationTag = (std::same_as<Feature, runir::kr::dl::BooleanTag>
                                 && (std::same_as<Observation, Positive> || std::same_as<Observation, Negative> || std::same_as<Observation, Unchanged>) )
-                               || (std::same_as<Feature, NumericalFeature>
+                               || (std::same_as<Feature, runir::kr::dl::NumericalTag>
                                    && (std::same_as<Observation, Increases> || std::same_as<Observation, Decreases> || std::same_as<Observation, Unchanged>) );
 
 }  // namespace runir::kr::ps::dl

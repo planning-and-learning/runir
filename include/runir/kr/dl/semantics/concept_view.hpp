@@ -11,25 +11,22 @@
 #include <tyr/formalism/object_view.hpp>
 #include <tyr/formalism/predicate_view.hpp>
 #include <yggdrasil/core/types.hpp>
-#include <yggdrasil/formalism/detail/view.hpp>
+#include <yggdrasil/formalism/declarations.hpp>
 
 namespace ygg
 {
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, formalism::SymbolContextFor<runir::kr::dl::FamilyConcept<Family, Tag>> C>
     requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
-class View<Index<runir::kr::dl::FamilyConcept<Family, Tag>>, C> : public formalism::detail::View<Index<runir::kr::dl::FamilyConcept<Family, Tag>>, C>
+class View<Index<runir::kr::dl::FamilyConcept<Family, Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::FamilyConcept<Family, Tag>, C>
 {
 public:
-    View(Index<runir::kr::dl::FamilyConcept<Family, Tag>> handle, const C& context) noexcept :
-        formalism::detail::View<Index<runir::kr::dl::FamilyConcept<Family, Tag>>, C>(handle, context)
-    {
-    }
+    using ygg::IndexViewBase<runir::kr::dl::FamilyConcept<Family, Tag>, C>::IndexViewBase;
 
     auto get_predicate() const noexcept
         requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)
     {
-        return make_view(this->get_data().predicate, this->m_context->get_planning_repository());
+        return make_view(this->get_data().predicate, this->get_context().get_planning_repository());
     }
 
     auto get_polarity() const noexcept
@@ -41,25 +38,25 @@ public:
     auto get_object() const noexcept
         requires std::same_as<Tag, runir::kr::dl::NominalTag>
     {
-        return make_view(this->get_data().object, this->m_context->get_planning_repository());
+        return make_view(this->get_data().object, this->get_context().get_planning_repository());
     }
 
     auto get_register() const noexcept
         requires std::same_as<Tag, runir::kr::dl::RegisterTag>
     {
-        return make_view(this->get_data().reference, *this->m_context);
+        return make_view(this->get_data().reference, this->get_context());
     }
 
     auto get_argument() const noexcept
         requires std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>
     {
-        return make_view(this->get_data().reference, *this->m_context);
+        return make_view(this->get_data().reference, this->get_context());
     }
 
     auto get_objects() const noexcept
         requires(std::same_as<Tag, runir::kr::dl::RoleFillersTag> || std::same_as<Tag, runir::kr::dl::OneOfTag>)
     {
-        return make_view(this->get_data().objects, this->m_context->get_planning_repository());
+        return make_view(this->get_data().objects, this->get_context().get_planning_repository());
     }
 
     auto get_n() const noexcept
@@ -77,20 +74,20 @@ public:
                  || std::same_as<Tag, runir::kr::dl::QualifiedAtMostNumberRestrictionTag>
                  || std::same_as<Tag, runir::kr::dl::QualifiedExactNumberRestrictionTag> || std::same_as<Tag, runir::kr::dl::RoleFillersTag>)
     {
-        return make_view(this->get_data().role, *this->m_context);
+        return make_view(this->get_data().role, this->get_context());
     }
 
     auto get_concept() const noexcept
         requires(std::same_as<Tag, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag> || std::same_as<Tag, runir::kr::dl::QualifiedAtMostNumberRestrictionTag>
                  || std::same_as<Tag, runir::kr::dl::QualifiedExactNumberRestrictionTag>)
     {
-        return make_view(this->get_data().concept_, *this->m_context);
+        return make_view(this->get_data().concept_, this->get_context());
     }
 
     auto get_arg() const noexcept
         requires std::same_as<Tag, runir::kr::dl::NegationTag>
     {
-        return make_view(this->get_data().arg, *this->m_context);
+        return make_view(this->get_data().arg, this->get_context());
     }
 
     auto get_lhs() const noexcept
@@ -98,7 +95,7 @@ public:
                  || std::same_as<Tag, runir::kr::dl::ValueRestrictionTag> || std::same_as<Tag, runir::kr::dl::ExistentialQuantificationTag>
                  || std::same_as<Tag, runir::kr::dl::RoleValueMapTag> || std::same_as<Tag, runir::kr::dl::AgreementTag>)
     {
-        return make_view(this->get_data().lhs, *this->m_context);
+        return make_view(this->get_data().lhs, this->get_context());
     }
 
     auto get_rhs() const noexcept
@@ -106,7 +103,7 @@ public:
                  || std::same_as<Tag, runir::kr::dl::ValueRestrictionTag> || std::same_as<Tag, runir::kr::dl::ExistentialQuantificationTag>
                  || std::same_as<Tag, runir::kr::dl::RoleValueMapTag> || std::same_as<Tag, runir::kr::dl::AgreementTag>)
     {
-        return make_view(this->get_data().rhs, *this->m_context);
+        return make_view(this->get_data().rhs, this->get_context());
     }
 };
 

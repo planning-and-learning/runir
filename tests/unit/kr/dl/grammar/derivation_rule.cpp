@@ -1,9 +1,11 @@
+#include "runir/kr/dl/grammar/declarations.hpp"
+
 #include <concepts>
 #include <runir/kr/dl/grammar/constructor_repository.hpp>
 #include <runir/kr/dl/grammar/derivation_rule_data.hpp>
-#include <runir/kr/dl/grammar/derivation_rule_index.hpp>
 #include <runir/kr/dl/grammar/derivation_rule_view.hpp>
 #include <yggdrasil/core/concepts.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::tests
 {

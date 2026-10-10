@@ -26,13 +26,13 @@ bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<Fa
                         Context& context)
 {
     const auto value = runir::kr::ps::evaluate<Kind>(condition.get_feature(), context).get();
-    if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature> && std::same_as<ObservationTag, runir::kr::ps::dl::Positive>)
+    if constexpr (std::same_as<FeatureTag, runir::kr::dl::BooleanTag> && std::same_as<ObservationTag, runir::kr::ps::dl::Positive>)
         return value;
-    else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature> && std::same_as<ObservationTag, runir::kr::ps::dl::Negative>)
+    else if constexpr (std::same_as<FeatureTag, runir::kr::dl::BooleanTag> && std::same_as<ObservationTag, runir::kr::ps::dl::Negative>)
         return !value;
-    else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature> && std::same_as<ObservationTag, runir::kr::ps::dl::EqualZero>)
+    else if constexpr (std::same_as<FeatureTag, runir::kr::dl::NumericalTag> && std::same_as<ObservationTag, runir::kr::ps::dl::EqualZero>)
         return value == 0;
-    else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature> && std::same_as<ObservationTag, runir::kr::ps::dl::GreaterZero>)
+    else if constexpr (std::same_as<FeatureTag, runir::kr::dl::NumericalTag> && std::same_as<ObservationTag, runir::kr::ps::dl::GreaterZero>)
         return value > 0;
 }
 
@@ -58,9 +58,9 @@ bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<Famil
 {
     const auto target = runir::kr::ps::evaluate<Kind>(effect.get_feature(), context.get_target_context()).get();
 
-    if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature> && std::same_as<ObservationTag, runir::kr::ps::dl::Positive>)
+    if constexpr (std::same_as<FeatureTag, runir::kr::dl::BooleanTag> && std::same_as<ObservationTag, runir::kr::ps::dl::Positive>)
         return target;
-    else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature> && std::same_as<ObservationTag, runir::kr::ps::dl::Negative>)
+    else if constexpr (std::same_as<FeatureTag, runir::kr::dl::BooleanTag> && std::same_as<ObservationTag, runir::kr::ps::dl::Negative>)
         return !target;
     else
     {
@@ -68,9 +68,9 @@ bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<Famil
 
         if constexpr (std::same_as<ObservationTag, runir::kr::ps::dl::Unchanged>)
             return source == target;
-        else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature> && std::same_as<ObservationTag, runir::kr::ps::dl::Increases>)
+        else if constexpr (std::same_as<FeatureTag, runir::kr::dl::NumericalTag> && std::same_as<ObservationTag, runir::kr::ps::dl::Increases>)
             return target > source;
-        else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature> && std::same_as<ObservationTag, runir::kr::ps::dl::Decreases>)
+        else if constexpr (std::same_as<FeatureTag, runir::kr::dl::NumericalTag> && std::same_as<ObservationTag, runir::kr::ps::dl::Decreases>)
             return target < source;
     }
 }

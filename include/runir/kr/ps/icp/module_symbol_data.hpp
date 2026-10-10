@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_ICP_MODULE_SYMBOL_DATA_HPP_
 #define RUNIR_KR_PS_ICP_MODULE_SYMBOL_DATA_HPP_
 
-#include "runir/kr/ps/icp/module_symbol_index.hpp"
+#include "runir/kr/ps/icp/declarations.hpp"
 
 #include <cista/containers/string.h>
 #include <string>

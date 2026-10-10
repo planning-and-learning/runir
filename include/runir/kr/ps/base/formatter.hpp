@@ -95,8 +95,8 @@ std::string sketch(ygg::View<ygg::Index<runir::kr::ps::base::Sketch>, C> view)
         os << ygg::print_indent << "(:features\n";
         {
             ygg::IndentScope feature_scope(os);
-            append_features(os, view.template get_features<runir::kr::ps::dl::BooleanFeature>());
-            append_features(os, view.template get_features<runir::kr::ps::dl::NumericalFeature>());
+            append_features(os, view.template get_features<runir::kr::dl::BooleanTag>());
+            append_features(os, view.template get_features<runir::kr::dl::NumericalTag>());
         }
         os << ygg::print_indent << ")\n";
 

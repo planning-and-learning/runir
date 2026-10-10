@@ -16,6 +16,7 @@
 #include <span>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <tyr/formalism/object_data.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <utility>
@@ -28,6 +29,7 @@ namespace dl = kr::dl;
 namespace sem = dl::semantics;
 using Ext = kr::ExtFamilyTag;
 using ObjectIndex = ygg::Index<tyr::formalism::Object>;
+using ObjectValues = kr::dl::ObjectValues;
 
 using GroundExtContext = sem::StateEvaluationContext<Ext, tyr::GroundTag>;
 struct InvalidResultContext : GroundExtContext
@@ -57,7 +59,7 @@ static_assert(!sem::StateEvaluationContextConcept<WrongKindContext, Ext, tyr::Gr
 constexpr auto acquires_builder = []<typename T, typename... Args>()
 { return requires(sem::Builder& builder, Args&&... args) { builder.template get_builder<T>(std::forward<Args>(args)...); }; };
 static_assert(acquires_builder.template operator()<sem::Denotation<dl::ConceptTag>, ygg::uint_t>());
-static_assert(acquires_builder.template operator()<ygg::database::Relation<ObjectIndex>, std::span<const ygg::Index<ygg::database::Column>>>());
+static_assert(acquires_builder.template operator()<ygg::database::Relation<ObjectValues>, std::span<const ygg::Index<ygg::database::Column>>>());
 static_assert(!acquires_builder.template operator()<int>());
 static_assert(!acquires_builder.template operator()<sem::Denotation<dl::ConceptTag>, std::string>());
 
@@ -517,7 +519,8 @@ TEST(RunirEvaluationStorage, DynamicResetPreservesStaticRowsAndJoinIndexes)
     const auto fixed = sem::evaluate<tyr::GroundTag>(fixed_query, context);
     const auto alias = sem::evaluate<tyr::GroundTag>(renamed_query, context);
     EXPECT_EQ(sem::evaluate<tyr::GroundTag>(dynamic_query, context).size(), 4);
-    const auto keys = std::array<size_t, 1> { 0 };
+    const auto& key = fixed.columns()[0];
+    const auto keys = std::array { ygg::database::ColumnSlice { key.type, key.offset, key.size } };
     storage.get_caches().get_static_join_indexes().get_or_create(fixed, keys);
     EXPECT_EQ(alias.get_storage_address(), fixed.get_storage_address());
     EXPECT_NE(alias, fixed);
@@ -623,8 +626,8 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     const auto left_result = sem::evaluate<tyr::GroundTag>(left, context);
     const auto right_result = sem::evaluate<tyr::GroundTag>(right, context);
     ASSERT_EQ(left_result.size(), 9);
-    EXPECT_TRUE(std::ranges::equal(left_result.columns(), columns));
-    EXPECT_EQ(&left_result.get_context(), &persistent);
+    EXPECT_EQ(ygg::database::column_labels(left_result.columns().span()), std::vector<ColumnIndex>(columns.begin(), columns.end()));
+    EXPECT_EQ(&left_result.get_context(), &persistent.get_relation_repository());
     EXPECT_EQ(left_result, right_result);
     EXPECT_EQ(left_result.get_storage_address(), right_result.get_storage_address());
     EXPECT_EQ(results.size(), 1);
@@ -634,7 +637,7 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     ASSERT_EQ(left_alias.get_columns()[0].get_index(), right_alias.get_columns()[0].get_index());
     const auto renamed_left = sem::evaluate<tyr::GroundTag>(left_alias, context);
     const auto renamed_right = sem::evaluate<tyr::GroundTag>(right_alias, context);
-    EXPECT_TRUE(std::ranges::equal(renamed_left.columns(), reversed_columns));
+    EXPECT_EQ(ygg::database::column_labels(renamed_left.columns().span()), std::vector<ColumnIndex>(reversed_columns.begin(), reversed_columns.end()));
     EXPECT_EQ(renamed_left, renamed_right);
     EXPECT_NE(renamed_left, left_result);
     EXPECT_EQ(renamed_left.get_storage_address(), left_result.get_storage_address());
@@ -642,7 +645,7 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     EXPECT_EQ(results.size(), 2);
 
     {
-        auto direct = builder.get_builder<ygg::database::Relation<ObjectIndex>>(columns);
+        auto direct = builder.get_builder<ygg::database::Relation<ObjectValues>>(columns);
         for (size_t i = 0; i < left_result.size(); ++i)
             direct->insert(left_result.row(i));
         const auto [interned, inserted] = sem::insert(persistent, *direct);
@@ -656,8 +659,8 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     first_repository.reset();
     second_repository.reset();
     EXPECT_EQ(left_result.size(), 9);
-    EXPECT_TRUE(left_result.contains({ ObjectIndex(0), ObjectIndex(2) }));
-    EXPECT_TRUE(std::ranges::equal(renamed_left.columns(), reversed_columns));
+    EXPECT_TRUE(left_result.contains(std::tuple { ObjectIndex(0), ObjectIndex(2) }));
+    EXPECT_EQ(ygg::database::column_labels(renamed_left.columns().span()), std::vector<ColumnIndex>(reversed_columns.begin(), reversed_columns.end()));
     auto fresh_repository = factory.create(search->task->get_repository());
     const auto fresh = query("(q_role (fresh_source fresh_target) (r_universal))", *fresh_repository);
     EXPECT_EQ(sem::evaluate<tyr::GroundTag>(fresh, context), left_result);

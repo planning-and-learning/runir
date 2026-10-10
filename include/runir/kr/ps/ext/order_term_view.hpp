@@ -10,18 +10,14 @@ namespace ygg
 {
 
 template<formalism::SymbolContextFor<runir::kr::ps::ext::OrderTerm> C>
-class View<Index<runir::kr::ps::ext::OrderTerm>, C> : public formalism::detail::View<Index<runir::kr::ps::ext::OrderTerm>, C>
+class View<Index<runir::kr::ps::ext::OrderTerm>, C> : public ygg::IndexViewBase<runir::kr::ps::ext::OrderTerm, C>
 {
 public:
-    View(Index<runir::kr::ps::ext::OrderTerm> handle, const C& context) noexcept :
-        formalism::detail::View<Index<runir::kr::ps::ext::OrderTerm>, C>(handle, context)
-    {
-    }
+    using ygg::IndexViewBase<runir::kr::ps::ext::OrderTerm, C>::IndexViewBase;
 
     auto get_direction() const noexcept { return this->get_data().direction; }
-    auto get_feature() const noexcept { return make_view(this->get_data().feature, *this->m_context); }
+    auto get_feature() const noexcept { return make_view(this->get_data().feature, this->get_context()); }
 
-    auto identifying_members() const noexcept { return std::make_tuple(this->m_handle, this->m_context->get_index()); }
 };
 
 }  // namespace ygg

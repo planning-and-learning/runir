@@ -1,8 +1,7 @@
 #ifndef RUNIR_KR_PS_EXT_PROGRAM_DATA_HPP_
 #define RUNIR_KR_PS_EXT_PROGRAM_DATA_HPP_
 
-#include "runir/kr/ps/ext/module_index.hpp"
-#include "runir/kr/ps/ext/program_index.hpp"
+#include "runir/kr/ps/ext/declarations.hpp"
 
 #include <tuple>
 #include <utility>

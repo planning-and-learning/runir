@@ -9,21 +9,19 @@
 #include <tuple>
 #include <yggdrasil/containers/vector.hpp>
 #include <yggdrasil/core/types.hpp>
-#include <yggdrasil/formalism/detail/view.hpp>
+#include <yggdrasil/formalism/declarations.hpp>
 
 namespace ygg
 {
 
 template<formalism::SymbolContextFor<runir::kr::ps::ext::Program> C>
-class View<Index<runir::kr::ps::ext::Program>, C> : public formalism::detail::View<Index<runir::kr::ps::ext::Program>, C>
+class View<Index<runir::kr::ps::ext::Program>, C> : public ygg::IndexViewBase<runir::kr::ps::ext::Program, C>
 {
 public:
-    View(Index<runir::kr::ps::ext::Program> handle, const C& context) noexcept : formalism::detail::View<Index<runir::kr::ps::ext::Program>, C>(handle, context)
-    {
-    }
+    using ygg::IndexViewBase<runir::kr::ps::ext::Program, C>::IndexViewBase;
 
-    auto get_entry_module() const noexcept { return View<Index<runir::kr::ps::ext::Module>, C>(this->get_data().entry_module, *this->m_context); }
-    auto get_modules() const noexcept { return make_view(this->get_data().modules, *this->m_context); }
+    auto get_entry_module() const noexcept { return View<Index<runir::kr::ps::ext::Module>, C>(this->get_data().entry_module, this->get_context()); }
+    auto get_modules() const noexcept { return make_view(this->get_data().modules, this->get_context()); }
     std::optional<View<Index<runir::kr::ps::ext::Module>, C>> find_module(View<Index<runir::kr::ps::ext::ModuleSymbol>, C> symbol) const
     {
         for (auto module_ : get_modules())

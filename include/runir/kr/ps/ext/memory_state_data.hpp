@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_EXT_MEMORY_STATE_DATA_HPP_
 #define RUNIR_KR_PS_EXT_MEMORY_STATE_DATA_HPP_
 
-#include "runir/kr/ps/ext/memory_state_index.hpp"
+#include "runir/kr/ps/ext/declarations.hpp"
 
 #include <cista/containers/string.h>
 #include <string>

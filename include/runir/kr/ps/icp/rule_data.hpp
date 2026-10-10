@@ -1,14 +1,9 @@
 #ifndef RUNIR_KR_PS_ICP_RULE_DATA_HPP_
 #define RUNIR_KR_PS_ICP_RULE_DATA_HPP_
 
-#include "runir/kr/dl/register_index.hpp"
-#include "runir/kr/ps/condition_index.hpp"
-#include "runir/kr/ps/effect_index.hpp"
-#include "runir/kr/ps/feature_index.hpp"
-#include "runir/kr/ps/icp/memory_state_index.hpp"
-#include "runir/kr/ps/icp/rule_index.hpp"
-#include "runir/kr/ps/icp/xcondition_index.hpp"
-#include "runir/kr/ps/icp/xeffect_index.hpp"
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/ps/declarations.hpp"
+#include "runir/kr/ps/icp/declarations.hpp"
 
 #include <cista/containers/string.h>
 #include <cista/containers/vector.h>

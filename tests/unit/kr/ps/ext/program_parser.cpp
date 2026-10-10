@@ -53,8 +53,8 @@ TEST(RunirTests, ExtSyntacticComplexityAggregatesDeclaredFeatures)
     const auto numerical = kr::ps::ext::dl::parse_numerical("(n_count (c_top))", planning_domain.get_domain(), *dl_repository);
     const auto concept_feature = create_feature<kr::dl::ConceptTag>(*repository, concept_expression.get_index(), "concept");
     const auto role_feature = create_feature<kr::dl::RoleTag>(*repository, role.get_index(), "role");
-    const auto boolean_feature = create_feature<kr::ps::dl::BooleanFeature>(*repository, boolean.get_index(), "boolean");
-    const auto numerical_feature = create_feature<kr::ps::dl::NumericalFeature>(*repository, numerical.get_index(), "numerical");
+    const auto boolean_feature = create_feature<kr::dl::BooleanTag>(*repository, boolean.get_index(), "boolean");
+    const auto numerical_feature = create_feature<kr::dl::NumericalTag>(*repository, numerical.get_index(), "numerical");
 
     const auto expect_feature_complexity = [](auto feature, std::size_t expected)
     {
@@ -79,7 +79,7 @@ TEST(RunirTests, ExtSyntacticComplexityAggregatesDeclaredFeatures)
     kr::ps::ext::canonicalize(all_data);
     const auto all = repository->insert(all_data).first;
 
-    const auto shared_feature = create_feature<kr::ps::dl::BooleanFeature>(*repository, boolean.get_index(), "shared");
+    const auto shared_feature = create_feature<kr::dl::BooleanTag>(*repository, boolean.get_index(), "shared");
     const auto shared_entry = create_memory_state(*repository, "shared_entry");
     auto shared_data = make_module_data(*repository, "shared");
     shared_data.entry_memory_state = shared_entry.get_index();
@@ -445,8 +445,8 @@ TEST(RunirTests, ExtModuleParserLowersPaperFactoryDescriptionsAgainstBlocksworld
         EXPECT_EQ(module_.get_name(), ygg::common::as_string(expected, "name", "module"));
         EXPECT_EQ(module_.get_features<kr::dl::ConceptTag>().size(), ygg::common::as_size(expected, "concept_features", "module"));
         EXPECT_EQ(module_.get_features<kr::dl::RoleTag>().size(), ygg::common::as_size(expected, "role_features", "module"));
-        EXPECT_EQ(module_.get_features<kr::ps::dl::BooleanFeature>().size(), ygg::common::as_size(expected, "boolean_features", "module"));
-        EXPECT_EQ(module_.get_features<kr::ps::dl::NumericalFeature>().size(), ygg::common::as_size(expected, "numerical_features", "module"));
+        EXPECT_EQ(module_.get_features<kr::dl::BooleanTag>().size(), ygg::common::as_size(expected, "boolean_features", "module"));
+        EXPECT_EQ(module_.get_features<kr::dl::NumericalTag>().size(), ygg::common::as_size(expected, "numerical_features", "module"));
         EXPECT_EQ(module_.get_memory_transitions().size(), ygg::common::as_size(expected, "transitions", "module"));
         EXPECT_EQ(kr::ps::ext::syntactic_complexity(module_), ygg::common::as_size(expected, "syntactic_complexity", "module"));
     }

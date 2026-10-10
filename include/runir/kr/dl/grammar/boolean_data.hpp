@@ -2,10 +2,12 @@
 #define RUNIR_GRAMMAR_BOOLEAN_DATA_HPP_
 
 #include "runir/kr/dl/grammar/role_data.hpp"
+#include <yggdrasil/containers/variant.hpp>
 
 #include <cista/containers/variant.h>
 #include <tuple>
 #include <utility>
+#include <variant>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 
@@ -31,12 +33,20 @@ struct Data<runir::kr::dl::grammar::Boolean<Family, runir::kr::dl::AtomicGoalTag
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::grammar::Boolean<Family, runir::kr::dl::NonemptyTag>>
 {
-    using ConstructorVariant = ::cista::offset::variant<Index<GrammarConceptChoice<Family>>, Index<GrammarRoleChoice<Family>>>;
+    using ConstructorVariant = ::ygg::IndexVariant<GrammarArgumentTypes<Family>>;
     using Arg = ConstructorVariant;
     Index<runir::kr::dl::grammar::Boolean<Family, runir::kr::dl::NonemptyTag>> index;
     ConstructorVariant arg;
     Data() = default;
     explicit Data(ConstructorVariant arg_) : index(), arg(std::move(arg_)) {}
+    template<typename C>
+    using ViewVariant = ::ygg::ViewVariant<ConstructorVariant, C>;
+    template<typename C>
+    explicit Data(const ViewVariant<C>& arg_) :
+        index(),
+        arg(std::visit([](const auto& view) -> ConstructorVariant { return ConstructorVariant(view.get_index()); }, arg_))
+    {
+    }
 
     auto cista_members() noexcept { return std::tie(index, arg); }
     auto cista_members() const noexcept { return std::tie(index, arg); }

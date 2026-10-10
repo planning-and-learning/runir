@@ -1490,8 +1490,6 @@ void check_transient_builder_values_and_reuse()
     static_assert(!ext::ProgramStateViewConcept<MutableDataAccess<ext::ProgramStateView<Kind>>&, Kind>);
     static_assert(ext::ProgramStateViewConcept<ReferenceProgramStateAccess<Kind>, Kind>);
     constexpr auto has_index = []<typename V>() { return requires(const V& view) { view.get_index(); }; };
-    static_assert(!has_index.template operator()<sem::BorrowedRegisterValuesView>());
-    static_assert(!has_index.template operator()<ext::BorrowedProgramStateView<Kind>>());
     static_assert(!has_index.template operator()<ext::BuilderProgramStateView<Kind>>());
     const auto directory = benchmark_path("classical/tests/gripper");
     const auto search = [&]()

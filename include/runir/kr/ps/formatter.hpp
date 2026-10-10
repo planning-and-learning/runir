@@ -24,12 +24,10 @@ namespace runir::kr::ps
 template<runir::kr::ps::dl::FeatureTag FeatureTag>
 constexpr std::string_view feature_type()
 {
-    if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)
-        return runir::kr::dl::ConceptTag::name;
-    else if constexpr (std::same_as<FeatureTag, runir::kr::dl::RoleTag>)
-        return runir::kr::dl::RoleTag::name;
-    else
+    if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::QueryFeature>)
         return FeatureTag::keyword;
+    else
+        return FeatureTag::name;
 }
 
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, typename C>

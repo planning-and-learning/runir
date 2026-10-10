@@ -1,12 +1,11 @@
 #ifndef RUNIR_KR_DL_DATA_HELPERS_HPP_
 #define RUNIR_KR_DL_DATA_HELPERS_HPP_
 
-#include "runir/kr/dl/indices.hpp"
+#include "runir/kr/dl/declarations.hpp"
 
 #include <cista/containers/vector.h>
 #include <tuple>
-#include <tyr/formalism/object_index.hpp>
-#include <tyr/formalism/predicate_index.hpp>
+#include <tyr/formalism/declarations.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/types.hpp>

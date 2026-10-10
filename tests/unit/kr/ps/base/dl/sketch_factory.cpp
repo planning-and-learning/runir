@@ -73,8 +73,8 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
     EXPECT_EQ(sketch.get_index(), ygg::Index<kr::ps::base::Sketch>(0));
     EXPECT_EQ(repository->template size<kr::ps::base::Sketch>(), 1);
     EXPECT_EQ(repository->template size<kr::ps::Rule<kr::BaseFamilyTag>>(), 2);
-    EXPECT_EQ((repository->template size<kr::ps::Feature<kr::BaseFamilyTag, kr::ps::dl::BooleanFeature>>()), 2);
-    EXPECT_EQ((repository->template size<kr::ps::Feature<kr::BaseFamilyTag, kr::ps::dl::NumericalFeature>>()), 1);
+    EXPECT_EQ((repository->template size<kr::ps::Feature<kr::BaseFamilyTag, kr::dl::BooleanTag>>()), 2);
+    EXPECT_EQ((repository->template size<kr::ps::Feature<kr::BaseFamilyTag, kr::dl::NumericalTag>>()), 1);
     EXPECT_EQ(repository->template size<kr::ps::ConditionVariant<kr::BaseFamilyTag>>(), 4);
     EXPECT_EQ(repository->template size<kr::ps::EffectVariant<kr::BaseFamilyTag>>(), 5);
 
@@ -107,7 +107,7 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
 
     const auto formatted = fmt::format("{}", sketch);
     EXPECT_EQ(fmt::format("{}", kr::ps::base::dl::parse_sketch(formatted, planning_domain.get_domain(), *repository)), formatted);
-    const auto feature = sketch.template get_features<kr::ps::dl::BooleanFeature>().front();
+    const auto feature = sketch.template get_features<kr::dl::BooleanTag>().front();
     const auto concrete_complexity = ygg::visit([](auto concrete) { return kr::ps::dl::syntactic_complexity(concrete); }, feature.get_variant());
     EXPECT_EQ(kr::ps::syntactic_complexity(feature), concrete_complexity);
     EXPECT_EQ(concrete_complexity, kr::dl::semantics::syntactic_complexity(feature.get_expression()));

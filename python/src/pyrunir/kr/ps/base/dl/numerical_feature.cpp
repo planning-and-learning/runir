@@ -13,7 +13,7 @@ void bind_numerical_feature(nb::module_& m, RepositoryBinding& repository)
     using GroundContext = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>;
     using LiftedContext = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
     auto [feature, concrete] =
-        runir::kr::python::bind_feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>(m, repository, "NumericalFeature");
+        runir::kr::python::bind_feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>(m, repository, "NumericalFeature");
     const auto bind_evaluate = []<typename View>(nb::class_<View>& cls)
     {
         cls.def(

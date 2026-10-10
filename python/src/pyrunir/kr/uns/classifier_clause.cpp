@@ -1,10 +1,11 @@
 #include "bindings.hpp"
+#include "runir/kr/uns/declarations.hpp"
 
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/uns/classifier_index.hpp>
 #include <runir/kr/uns/classifier_view.hpp>
 #include <runir/kr/uns/formatter.hpp>
 #include <runir/kr/uns/repository.hpp>
+#include <yggdrasil/core/types.hpp>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 

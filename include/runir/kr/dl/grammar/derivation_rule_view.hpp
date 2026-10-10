@@ -8,7 +8,7 @@
 #include <tuple>
 #include <yggdrasil/containers/vector.hpp>
 #include <yggdrasil/core/types.hpp>
-#include <yggdrasil/formalism/detail/view.hpp>
+#include <yggdrasil/formalism/declarations.hpp>
 
 namespace ygg
 {
@@ -17,16 +17,13 @@ template<runir::kr::dl::FamilyTag Family,
          runir::kr::dl::CategoryTag Category,
          formalism::SymbolContextFor<runir::kr::dl::grammar::DerivationRule<Family, Category>> C>
 class View<Index<runir::kr::dl::grammar::DerivationRule<Family, Category>>, C> :
-    public formalism::detail::View<Index<runir::kr::dl::grammar::DerivationRule<Family, Category>>, C>
+    public ygg::IndexViewBase<runir::kr::dl::grammar::DerivationRule<Family, Category>, C>
 {
 public:
-    View(Index<runir::kr::dl::grammar::DerivationRule<Family, Category>> handle, const C& context) noexcept :
-        formalism::detail::View<Index<runir::kr::dl::grammar::DerivationRule<Family, Category>>, C>(handle, context)
-    {
-    }
+    using ygg::IndexViewBase<runir::kr::dl::grammar::DerivationRule<Family, Category>, C>::IndexViewBase;
 
-    auto get_lhs() const noexcept { return make_view(this->get_data().lhs, *this->m_context); }
-    auto get_rhs() const noexcept { return make_view(this->get_data().rhs, *this->m_context); }
+    auto get_lhs() const noexcept { return make_view(this->get_data().lhs, this->get_context()); }
+    auto get_rhs() const noexcept { return make_view(this->get_data().rhs, this->get_context()); }
 };
 
 }  // namespace ygg

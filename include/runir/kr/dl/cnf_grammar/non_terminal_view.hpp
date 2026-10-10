@@ -5,7 +5,7 @@
 
 #include <tuple>
 #include <yggdrasil/core/types.hpp>
-#include <yggdrasil/formalism/detail/view.hpp>
+#include <yggdrasil/formalism/declarations.hpp>
 
 namespace ygg
 {
@@ -14,13 +14,10 @@ template<runir::kr::dl::FamilyTag Family,
          runir::kr::dl::CategoryTag Category,
          formalism::SymbolContextFor<runir::kr::dl::cnf_grammar::NonTerminal<Family, Category>> C>
 class View<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, Category>>, C> :
-    public formalism::detail::View<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, Category>>, C>
+    public ygg::IndexViewBase<runir::kr::dl::cnf_grammar::NonTerminal<Family, Category>, C>
 {
 public:
-    View(Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, Category>> handle, const C& context) noexcept :
-        formalism::detail::View<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, Category>>, C>(handle, context)
-    {
-    }
+    using ygg::IndexViewBase<runir::kr::dl::cnf_grammar::NonTerminal<Family, Category>, C>::IndexViewBase;
 
     const auto& get_name() const noexcept { return this->get_data().name; }
 };

@@ -159,13 +159,13 @@ public:
     template<StateEvaluationContextConcept<Family, Kind> Context>
     void initialize(Context& context);
     /// Failed updates invalidate the graph until initialize() replaces its baseline.
-    void update(const Delta<Family>& delta, ygg::database::Workspace<ygg::Index<tyr::formalism::Object>>& workspace);
+    void update(const Delta<Family>& delta, ygg::database::Workspace<ObjectValues>& workspace);
 
     /// Start a demand-driven invocation, retaining buffers and task-static values.
     void reset() noexcept;
     /// Maintain previously demanded nodes in the next state; inactive nodes stay untouched.
     /// A failed advance invalidates the graph until reset() starts a fresh invocation.
-    void advance(const Delta<Family>& delta, ygg::database::Workspace<ygg::Index<tyr::formalism::Object>>& workspace);
+    void advance(const Delta<Family>& delta, ygg::database::Workspace<ObjectValues>& workspace);
     /// Initialize a root and its inactive dependencies on first demand. Later states
     /// maintain them through advance(); exact deltas are exposed only in eager mode.
     template<CategoryTag Category, StateEvaluationContextConcept<Family, Kind> Context>
@@ -251,7 +251,7 @@ public:
     {
         m_graph.initialize(context);
     }
-    void update(const Delta<Family>& delta, ygg::database::Workspace<ygg::Index<tyr::formalism::Object>>& workspace) { m_graph.update(delta, workspace); }
+    void update(const Delta<Family>& delta, ygg::database::Workspace<ObjectValues>& workspace) { m_graph.update(delta, workspace); }
     auto get_result() const& { return m_graph.get_result(m_root); }
     auto get_result() const&& = delete;
     const auto& get_delta() const&
@@ -289,7 +289,7 @@ public:
     {
         m_graph.initialize(context);
     }
-    void update(const Delta<Family>& delta, ygg::database::Workspace<ygg::Index<tyr::formalism::Object>>& workspace) { m_graph.update(delta, workspace); }
+    void update(const Delta<Family>& delta, ygg::database::Workspace<ObjectValues>& workspace) { m_graph.update(delta, workspace); }
     const auto& get_result() const& { return m_graph.get_result(m_root); }
     const auto& get_result() const&& = delete;
     const auto& get_delta() const& { return m_graph.get_delta(m_root); }
@@ -326,7 +326,7 @@ void EvaluationGraph<Family, Kind>::reset() noexcept
 }
 
 template<FamilyTag Family, tyr::TaskKind Kind>
-void EvaluationGraph<Family, Kind>::advance(const Delta<Family>& delta, ygg::database::Workspace<ygg::Index<tyr::formalism::Object>>& workspace)
+void EvaluationGraph<Family, Kind>::advance(const Delta<Family>& delta, ygg::database::Workspace<ObjectValues>& workspace)
 {
     if (m_mode != Mode::DEMAND)
         throw std::logic_error("Incremental evaluation: reset before advancing demand evaluation.");
@@ -465,7 +465,7 @@ void EvaluationGraph<Family, Kind>::initialize(Context& context)
 }
 
 template<FamilyTag Family, tyr::TaskKind Kind>
-void EvaluationGraph<Family, Kind>::update(const Delta<Family>& delta, ygg::database::Workspace<ygg::Index<tyr::formalism::Object>>& workspace)
+void EvaluationGraph<Family, Kind>::update(const Delta<Family>& delta, ygg::database::Workspace<ObjectValues>& workspace)
 {
     require_eager();
     m_mode = Mode::UNINITIALIZED;

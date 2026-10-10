@@ -2,7 +2,7 @@
 #define RUNIR_GRAMMAR_DATA_HELPERS_HPP_
 
 #include "runir/kr/dl/data_helpers.hpp"
-#include "runir/kr/dl/grammar/indices.hpp"
+#include "runir/kr/dl/grammar/declarations.hpp"
 
 #include <yggdrasil/core/types.hpp>
 

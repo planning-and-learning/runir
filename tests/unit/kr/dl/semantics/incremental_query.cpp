@@ -14,13 +14,14 @@
 #include <runir/kr/dl/semantics/incremental/evaluation.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <string>
+#include <tuple>
 #include <type_traits>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <tyr/planning/lifted/task.hpp>
 #include <vector>
-#include <yggdrasil/database/incremental/projection.hpp>
+#include <yggdrasil/database/semantics/incremental/projection.hpp>
 
 namespace runir::tests
 {
@@ -33,6 +34,7 @@ using Ext = kr::ExtFamilyTag;
 using Fluent = tyr::formalism::FluentTag;
 using Derived = tyr::formalism::DerivedTag;
 using Object = ygg::Index<tyr::formalism::Object>;
+using ObjectValues = kr::dl::ObjectValues;
 
 auto parse_query(const std::string& expression, tyr::formalism::planning::DomainView domain, dl::ConstructorRepositoryFor<Ext>& repository)
 {
@@ -45,8 +47,10 @@ auto rows(const auto& relation)
     auto result = std::vector<std::vector<Object>> {};
     for (size_t i = 0; i < relation.size(); ++i)
     {
-        const auto row = relation.row(i);
-        result.emplace_back(row.begin(), row.end());
+        const auto row = db::Row<ObjectValues>(relation.row(i), relation.columns().span());
+        auto& values = result.emplace_back();
+        for (size_t j = 0; j < row.size(); ++j)
+            values.push_back(row.get<Object>(j));
     }
     std::ranges::sort(result);
     return result;
@@ -105,11 +109,11 @@ void check_atomic_projection()
         sem::incremental::detail::AtomicQueryEvaluator<Derived>(copied.get_variant().template get<ygg::Index<dl::Query<Ext, dl::AtomicStateTag<Derived>>>>());
     auto ready_leaf =
         sem::incremental::detail::AtomicQueryEvaluator<Fluent>(ready.get_variant().template get<ygg::Index<dl::Query<Ext, dl::AtomicStateTag<Fluent>>>>());
-    auto triple_projection = db::incremental::ProjectionEvaluator<Object>(
+    auto triple_projection = db::incremental::ProjectionEvaluator<ObjectValues>(
         projected_triple.get_variant().template get<ygg::Index<dl::Query<Ext, dl::QueryProjectTag>>>().get_data().plan);
-    auto copied_projection = db::incremental::ProjectionEvaluator<Object>(
+    auto copied_projection = db::incremental::ProjectionEvaluator<ObjectValues>(
         projected_copied.get_variant().template get<ygg::Index<dl::Query<Ext, dl::QueryProjectTag>>>().get_data().plan);
-    auto workspace = db::Workspace<Object> {};
+    auto workspace = db::Workspace<ObjectValues> {};
     auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = sem::EvaluationStorage<Ext>(denotations);
     auto builder = sem::Builder {};
@@ -156,8 +160,8 @@ void check_atomic_projection()
         triple_leaf.update(delta.added.fluent_atoms, delta.removed.fluent_atoms);
         copied_leaf.update(delta.added.derived_atoms, delta.removed.derived_atoms);
         ready_leaf.update(delta.added.fluent_atoms, delta.removed.fluent_atoms);
-        triple_projection.update(triple_leaf.get_delta().added, triple_leaf.get_delta().removed, workspace);
-        copied_projection.update(copied_leaf.get_delta().added, copied_leaf.get_delta().removed, workspace);
+        triple_projection.update(triple_leaf.get_delta().change(), workspace);
+        copied_projection.update(copied_leaf.get_delta().change(), workspace);
         EXPECT_EQ(publications(), published);
         expect_net_delta(triple_leaf, before_triple);
         expect_net_delta(copied_leaf, before_copied);
@@ -171,7 +175,7 @@ void check_atomic_projection()
     initialize(initial.get_state());
     ASSERT_EQ(triple_leaf.get_result().size(), 4);
     ASSERT_EQ(triple_projection.get_result().size(), 2);
-    ASSERT_TRUE(ready_leaf.get_result().contains({}));
+    ASSERT_TRUE(ready_leaf.get_result().contains(std::tuple<> {}));
     auto first_delta = sem::incremental::Delta<Ext> {};
     first_delta.template assign<Kind>(initial.get_state(), registers, first->node.get_state(), registers);
     EXPECT_THROW(triple_leaf.update(first_delta.removed.fluent_atoms, {}), std::invalid_argument);
@@ -181,33 +185,33 @@ void check_atomic_projection()
     // The first action removes both ready and a triple; each leaf filters the other predicate.
     EXPECT_EQ(triple_leaf.get_delta().removed.size(), 1);
     EXPECT_EQ(ready_leaf.get_delta().removed.size(), 1);
-    EXPECT_TRUE(ready_leaf.get_delta().removed.contains({}));
-    EXPECT_TRUE(triple_projection.get_result().contains({ a }));
+    EXPECT_TRUE(ready_leaf.get_delta().removed.contains(std::tuple<> {}));
+    EXPECT_TRUE(triple_projection.get_result().contains(std::tuple { a }));
     expect_empty_delta(triple_projection);
     expect_empty_delta(copied_projection);
 
     auto second_delta = sem::incremental::Delta<Ext> {};
     second_delta.template assign<Kind>(first->node.get_state(), registers, second->node.get_state(), registers);
     update(second_delta, second->node.get_state());
-    EXPECT_FALSE(triple_projection.get_result().contains({ a }));
-    EXPECT_TRUE(triple_projection.get_delta().removed.contains({ a }));
-    EXPECT_TRUE(copied_projection.get_delta().removed.contains({ a }));
+    EXPECT_FALSE(triple_projection.get_result().contains(std::tuple { a }));
+    EXPECT_TRUE(triple_projection.get_delta().removed.contains(std::tuple { a }));
+    EXPECT_TRUE(copied_projection.get_delta().removed.contains(std::tuple { a }));
     expect_empty_delta(ready_leaf);
 
     second_delta.reverse();
     update(second_delta, first->node.get_state());
-    EXPECT_TRUE(triple_projection.get_delta().added.contains({ a }));
+    EXPECT_TRUE(triple_projection.get_delta().added.contains(std::tuple { a }));
     first_delta.reverse();
     update(first_delta, initial.get_state());
     expect_empty_delta(triple_projection);
     expect_empty_delta(copied_projection);
-    EXPECT_TRUE(ready_leaf.get_delta().added.contains({}));
+    EXPECT_TRUE(ready_leaf.get_delta().added.contains(std::tuple<> {}));
 
     // Reinitialization replaces the baseline and clears every previously emitted delta.
     const auto borrowed_builder = second->node.get_state().get_state_builder();
     initialize(ygg::make_view(borrowed_builder, *search->task));
     EXPECT_EQ(triple_leaf.get_result().size(), 2);
-    EXPECT_FALSE(triple_projection.get_result().contains({ a }));
+    EXPECT_FALSE(triple_projection.get_result().contains(std::tuple { a }));
     EXPECT_TRUE(ready_leaf.get_result().empty());
     EXPECT_TRUE(denotations.get_relation_repository().empty());
 }
@@ -247,7 +251,7 @@ void check_query_graph()
     auto deltas = std::vector<sem::incremental::Delta<Ext>>(4);
     for (size_t i = 0; i < deltas.size(); ++i)
         deltas[i].template assign<Kind>(nodes[i].get_state(), registers, nodes[i + 1].get_state(), registers);
-    auto workspace = db::Workspace<Object> {};
+    auto workspace = db::Workspace<ObjectValues> {};
     const auto empty_delta = sem::incremental::Delta<Ext> {};
     const auto triple = std::string(R"((q_atomic_state "triple" (x y z)))");
     const auto copied = std::string(R"((q_atomic_state "copied" (x y z)))");
@@ -324,7 +328,7 @@ void check_query_graph()
             EXPECT_TRUE(storage.get_denotation_repository(true).get_relation_repository().empty());
         }
         expect_empty_delta(evaluator);
-        EXPECT_EQ(evaluator.get_delta().memory_usage(), db::incremental::Delta<Object>(query.get_schema().span()).memory_usage());
+        EXPECT_EQ(evaluator.get_delta().memory_usage(), db::incremental::Delta<ObjectValues>(query.get_schema().span()).memory_usage());
         compare_full(nodes.front().get_state());
         for (size_t i = 0; i < deltas.size(); ++i)
             update(deltas[i], nodes[i + 1].get_state());

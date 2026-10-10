@@ -1,9 +1,11 @@
+#include "runir/kr/dl/cnf_grammar/declarations.hpp"
+
 #include <concepts>
 #include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
 #include <runir/kr/dl/cnf_grammar/non_terminal_data.hpp>
-#include <runir/kr/dl/cnf_grammar/non_terminal_index.hpp>
 #include <runir/kr/dl/cnf_grammar/non_terminal_view.hpp>
 #include <yggdrasil/core/concepts.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::tests
 {

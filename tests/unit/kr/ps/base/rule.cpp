@@ -1,8 +1,11 @@
+#include "runir/kr/ps/base/declarations.hpp"
+#include "runir/kr/ps/declarations.hpp"
+
 #include <concepts>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/rule_data.hpp>
-#include <runir/kr/ps/base/rule_index.hpp>
 #include <runir/kr/ps/base/rule_view.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::tests
 {

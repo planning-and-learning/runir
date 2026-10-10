@@ -29,6 +29,7 @@ namespace sem = dl::semantics;
 namespace parser = kr::ps::ext::dl;
 using Ext = kr::ExtFamilyTag;
 using Object = ygg::Index<tyr::formalism::Object>;
+using ObjectValues = kr::dl::ObjectValues;
 
 template<typename Index>
 concept HasGraphDelta = requires(const sem::incremental::EvaluationGraph<Ext, tyr::GroundTag>& graph, Index index) { graph.get_delta(index); };
@@ -178,7 +179,7 @@ void check_incremental_evaluation()
     auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = sem::EvaluationStorage<Ext>(denotations);
     auto builder = sem::Builder {};
-    auto workspace = ygg::database::Workspace<Object> {};
+    auto workspace = ygg::database::Workspace<ObjectValues> {};
     auto register_data = std::array<ygg::Data<sem::RegisterValues>, 3> {};
     for (auto& data : register_data)
     {
@@ -551,8 +552,10 @@ void check_incremental_evaluation()
         auto result = std::vector<std::vector<Object>> {};
         for (size_t i = 0; i < relation.size(); ++i)
         {
-            const auto row = relation.row(i);
-            result.emplace_back(row.begin(), row.end());
+            const auto row = ygg::database::Row<ObjectValues>(relation.row(i), relation.columns().span());
+            auto& values = result.emplace_back();
+            for (size_t j = 0; j < row.size(); ++j)
+                values.push_back(row.get<Object>(j));
         }
         std::ranges::sort(result);
         return result;

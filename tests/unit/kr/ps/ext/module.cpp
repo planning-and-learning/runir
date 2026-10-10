@@ -1,8 +1,10 @@
+#include "runir/kr/ps/ext/declarations.hpp"
+
 #include <concepts>
 #include <runir/kr/ps/ext/module_data.hpp>
-#include <runir/kr/ps/ext/module_index.hpp>
 #include <runir/kr/ps/ext/module_view.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::tests
 {
@@ -50,8 +52,8 @@ static_assert(requires(const View& view) {
     view.template get_registers<kr::dl::RoleTag>();
     view.template get_features<kr::dl::ConceptTag>();
     view.template get_features<kr::dl::RoleTag>();
-    view.template get_features<kr::ps::dl::BooleanFeature>();
-    view.template get_features<kr::ps::dl::NumericalFeature>();
+    view.template get_features<kr::dl::BooleanTag>();
+    view.template get_features<kr::dl::NumericalTag>();
     view.template get_features<kr::ps::dl::QueryFeature>();
     view.get_query_features();
     view.get_entry_memory_state();

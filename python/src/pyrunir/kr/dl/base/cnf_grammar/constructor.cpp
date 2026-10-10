@@ -1,5 +1,6 @@
 #include "bindings.hpp"
 
+#include <nanobind/stl/variant.h>
 #include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
 #include <runir/kr/dl/cnf_grammar/constructor_view.hpp>
 #include <runir/kr/dl/cnf_grammar/formatter.hpp>
@@ -18,6 +19,8 @@ void bind_constructor_data(nb::module_& m, const char* name)
     auto cls = nb::class_<Data>(m, name)
                    .def(nb::init<>())
                    .def(nb::init<typename Data::Variant>(), nb::arg("variant"))
+                   .def(nb::init<typename Data::template ViewVariant<runir::kr::dl::cnf_grammar::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>>>(),
+                        nb::arg("variant"))
                    .def_rw("index", &Data::index)
                    .def_rw("variant", &Data::variant);
     ygg::add_comparison(cls);

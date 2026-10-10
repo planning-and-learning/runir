@@ -43,7 +43,7 @@ TEST(RunirTests, IncompleteStructuralTerminationBooleanOscillatorReportsBlocking
     const auto sketch = kr::ps::base::dl::parse_sketch(read_fixture("kr/ps/base/dl/oscillator.sketch"), planning_domain.get_domain(), *repository);
 
     const auto result = kr::ps::base::dl::incomplete_structural_termination(sketch);
-    const auto booleans = sketch.get_features<kr::ps::dl::BooleanFeature>();
+    const auto booleans = sketch.get_features<kr::dl::BooleanTag>();
     ASSERT_FALSE(result.is_terminating());
     ASSERT_EQ(result.surviving_rules.size(), 2);
     ASSERT_EQ(booleans.size(), 1);

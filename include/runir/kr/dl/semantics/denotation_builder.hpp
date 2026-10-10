@@ -1,12 +1,12 @@
 #ifndef RUNIR_SEMANTICS_DENOTATION_BUILDER_HPP_
 #define RUNIR_SEMANTICS_DENOTATION_BUILDER_HPP_
 
-#include "runir/kr/dl/semantics/denotation_index.hpp"
+#include "runir/kr/dl/semantics/declarations.hpp"
 
 #include <cassert>
 #include <cstddef>
 #include <tuple>
-#include <tyr/formalism/object_index.hpp>
+#include <tyr/formalism/declarations.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/containers/dynamic_bitset.hpp>

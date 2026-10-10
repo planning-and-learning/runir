@@ -5,6 +5,7 @@
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/vector.h>
+#include <optional>
 #include <pyrunir/kr/binding_utils.hpp>
 #include <pyrunir/kr/dl/evaluation_bindings.hpp>
 #include <runir/kr/dl/repository.hpp>
@@ -16,6 +17,7 @@
 #include <tyr/formalism/planning/planning_domain.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/task.hpp>
+#include <utility>
 #include <vector>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
@@ -99,6 +101,10 @@ void bind_semantics_repositories(nb::module_& m)
                       ::cista::offset::vector<::cista::optional<::cista::pair<ygg::Index<tyr::formalism::Object>, ygg::Index<tyr::formalism::Object>>>>>(),
              nb::arg("concept_values"),
              nb::arg("role_values"))
+        .def(nb::init<const std::vector<std::optional<tyr::formalism::planning::ObjectView>>&,
+                      const std::vector<std::optional<std::pair<tyr::formalism::planning::ObjectView, tyr::formalism::planning::ObjectView>>>&>(),
+             nb::arg("concept_values"),
+             nb::arg("role_values"))
         .def_rw("index", &RegisterValuesData::index)
         .def_rw("concept_values", &RegisterValuesData::concept_values)
         .def_rw("role_values", &RegisterValuesData::role_values);
@@ -151,7 +157,13 @@ void bind_semantics_repositories(nb::module_& m)
                            .def(
                                "get_relation_repository",
                                [](DenotationRepository& self) -> auto& { return self.get_relation_repository(); },
-                               nb::rv_policy::reference_internal);
+                               nb::rv_policy::reference_internal)
+                           .def(
+                               "get_object",
+                               [](const DenotationRepository& self, ygg::Index<tyr::formalism::Object> index) -> tyr::formalism::planning::ObjectView
+                               { return ygg::make_view(index, self.get_formalism_repository()); },
+                               nb::arg("index"),
+                               nb::keep_alive<0, 1>());
     runir::kr::python::bind_insert<semantics::CallArguments>(denotations);
     runir::kr::python::bind_insert<semantics::RegisterValues>(denotations);
 

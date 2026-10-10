@@ -1,14 +1,15 @@
 #ifndef RUNIR_KR_PS_ICP_RULE_VARIANT_DATA_HPP_
 #define RUNIR_KR_PS_ICP_RULE_VARIANT_DATA_HPP_
 
-#include "runir/kr/ps/icp/rule_index.hpp"
-#include "runir/kr/ps/icp/rule_variant_index.hpp"
+#include "runir/kr/ps/icp/declarations.hpp"
+#include <yggdrasil/containers/variant.hpp>
 
 #include <cista/containers/string.h>
 #include <cista/containers/variant.h>
 #include <string>
 #include <tuple>
 #include <utility>
+#include <variant>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 
@@ -18,9 +19,7 @@ namespace ygg
 template<>
 struct Data<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>>
 {
-    using Variant = ::cista::offset::variant<Index<runir::kr::ps::icp::Rule<runir::kr::ps::icp::LoadTag<runir::kr::dl::ConceptTag>>>,
-                                             Index<runir::kr::ps::icp::Rule<runir::kr::ps::icp::LoadTag<runir::kr::dl::RoleTag>>>,
-                                             Index<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>>>;
+    using Variant = ::ygg::IndexVariant<runir::kr::ps::icp::ConcreteRuleTypes>;
 
     Index<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>> index;
     ::cista::offset::string symbol;
@@ -28,6 +27,15 @@ struct Data<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>>
 
     Data() = default;
     Data(::cista::offset::string symbol_, Variant variant_) : index(), symbol(std::move(symbol_)), variant(std::move(variant_)) {}
+    template<typename C>
+    using ViewVariant = ::ygg::ViewVariant<Variant, C>;
+    template<typename C>
+    Data(::cista::offset::string symbol_, const ViewVariant<C>& variant_) :
+        index(),
+        symbol(std::move(symbol_)),
+        variant(std::visit([](const auto& view) -> Variant { return Variant(view.get_index()); }, variant_))
+    {
+    }
 
     auto cista_members() noexcept { return std::tie(index, symbol, variant); }
     auto cista_members() const noexcept { return std::tie(index, symbol, variant); }

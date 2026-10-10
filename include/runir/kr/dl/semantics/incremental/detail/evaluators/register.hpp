@@ -34,7 +34,7 @@ struct RegisterEvaluator
                 builder.set(slot.value().get_first().get_index(), slot.value().get_second().get_index(), true);
         }
     }
-    void update(EvaluationGraph<Family, Kind>&, const Delta<Family>& delta, ygg::database::Workspace<ygg::Index<tyr::formalism::Object>>&)
+    void update(EvaluationGraph<Family, Kind>&, const Delta<Family>& delta, ygg::database::Workspace<ObjectValues>&)
     {
         if constexpr (std::same_as<Category, ConceptTag>)
             update_values(delta.added.concept_registers, delta.removed.concept_registers);

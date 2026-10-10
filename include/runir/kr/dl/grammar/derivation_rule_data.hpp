@@ -2,7 +2,7 @@
 #define RUNIR_GRAMMAR_DERIVATION_RULE_DATA_HPP_
 
 #include "runir/kr/dl/grammar/constructor_or_non_terminal_data.hpp"
-#include "runir/kr/dl/grammar/derivation_rule_index.hpp"
+#include "runir/kr/dl/grammar/declarations.hpp"
 
 #include <tuple>
 #include <utility>

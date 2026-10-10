@@ -71,8 +71,8 @@ bool feature_references_register(ygg::View<ygg::Index<runir::kr::ps::Feature<run
 template<runir::kr::dl::CategoryTag Category>
 void record_binding_effects(ModuleView module_, runir::kr::ps::detail::RuleProfile& profile, runir::kr::dl::RegisterIdentifier<Category> reg)
 {
-    const auto booleans = module_.get_features<runir::kr::ps::dl::BooleanFeature>();
-    const auto numericals = module_.get_features<runir::kr::ps::dl::NumericalFeature>();
+    const auto booleans = module_.get_features<runir::kr::dl::BooleanTag>();
+    const auto numericals = module_.get_features<runir::kr::dl::NumericalTag>();
     for (std::size_t position = 0; position < booleans.size(); ++position)
         if ((profile.boolean_unconstrained_effects & (std::uint64_t { 1 } << position)) && !feature_references_register(booleans[position], reg))
         {
@@ -92,8 +92,8 @@ Analysis analyze_module(ModuleView module_)
 {
     const auto memory_states = module_.get_memory_states();
 
-    const auto booleans = module_.get_features<runir::kr::ps::dl::BooleanFeature>();
-    const auto numericals = module_.get_features<runir::kr::ps::dl::NumericalFeature>();
+    const auto booleans = module_.get_features<runir::kr::dl::BooleanTag>();
+    const auto numericals = module_.get_features<runir::kr::dl::NumericalTag>();
     auto policy = runir::kr::ps::detail::QualitativePolicy(memory_states.size(), booleans.size(), numericals.size());
     auto analysis = Analysis { {}, std::move(policy) };
     const auto memory_position = [&](MemoryStateView memory_state)

@@ -1,9 +1,11 @@
+#include "runir/kr/dl/cnf_grammar/declarations.hpp"
+
 #include <concepts>
 #include <runir/kr/dl/cnf_grammar/boolean_data.hpp>
-#include <runir/kr/dl/cnf_grammar/boolean_index.hpp>
 #include <runir/kr/dl/cnf_grammar/boolean_view.hpp>
 #include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
 #include <yggdrasil/core/concepts.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::tests
 {
@@ -50,7 +52,7 @@ consteval bool boolean_data_view()
     if constexpr (std::same_as<Family, kr::BaseFamilyTag>)
         static_assert(std::same_as<View, kr::dl::cnf_grammar::BaseBooleanView<Tag>>);
 
-    if constexpr (kr::dl::TypeListContains<Tag, PredicateTags>::value)
+    if constexpr (ygg::InTypeList<Tag, PredicateTags>)
         return requires(Data& data, const View& view) {
             data.predicate;
             data.polarity;
@@ -67,7 +69,7 @@ consteval bool boolean_data_view()
             data.arg;
             view.get_arg();
         };
-    else if constexpr (kr::dl::TypeListContains<Tag, kr::dl::UnsComparisonConstructorTags>::value || kr::dl::TypeListContains<Tag, LogicalBinaryTags>::value)
+    else if constexpr (ygg::InTypeList<Tag, kr::dl::UnsComparisonConstructorTags> || ygg::InTypeList<Tag, LogicalBinaryTags>)
         return requires(Data& data, const View& view) {
             data.lhs;
             data.rhs;

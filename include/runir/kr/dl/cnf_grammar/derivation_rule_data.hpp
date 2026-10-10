@@ -1,7 +1,7 @@
 #ifndef RUNIR_CNF_GRAMMAR_DERIVATION_RULE_DATA_HPP_
 #define RUNIR_CNF_GRAMMAR_DERIVATION_RULE_DATA_HPP_
 
-#include "runir/kr/dl/cnf_grammar/indices.hpp"
+#include "runir/kr/dl/cnf_grammar/declarations.hpp"
 
 #include <tuple>
 #include <utility>

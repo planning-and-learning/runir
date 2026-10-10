@@ -22,7 +22,7 @@ private:
 
     void validate_inputs() const
     {
-        const auto* repository = this->get_state().get_repository().get();
+        const auto* repository = this->get_state().get_formalism_repository().get();
         if (&m_arguments.get_context().get_formalism_repository() != repository)
             throw std::invalid_argument("Evaluation requires arguments for the same planning task.");
         if (&m_registers.get_formalism_repository() != repository)

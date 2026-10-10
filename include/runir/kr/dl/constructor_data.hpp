@@ -3,10 +3,12 @@
 
 #include "runir/kr/dl/numerical_data.hpp"
 #include "runir/kr/dl/query_data.hpp"
+#include <yggdrasil/containers/variant.hpp>
 
 #include <cista/containers/variant.h>
 #include <tuple>
 #include <utility>
+#include <variant>
 #include <yggdrasil/core/type_list.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
@@ -81,6 +83,12 @@ struct Data<runir::kr::dl::Constructor<Family, Category>>
     Data() = default;
     // is_static is derived during insertion and therefore not a constructor parameter.
     explicit Data(Variant variant_) : index(), variant(std::move(variant_)) {}
+    template<typename C>
+    using ViewVariant = ::ygg::ViewVariant<Variant, C>;
+    template<typename C>
+    explicit Data(const ViewVariant<C>& variant_) : index(), variant(std::visit([](const auto& view) -> Variant { return Variant(view.get_index()); }, variant_))
+    {
+    }
 
     auto cista_members() noexcept { return std::tie(index, variant, is_static); }
     auto cista_members() const noexcept { return std::tie(index, variant, is_static); }

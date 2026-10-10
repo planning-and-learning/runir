@@ -13,9 +13,9 @@
 #include <utility>
 #include <variant>
 #include <vector>
-#include <yggdrasil/database/incremental/delta.hpp>
-#include <yggdrasil/database/incremental/join.hpp>
-#include <yggdrasil/database/incremental/projection.hpp>
+#include <yggdrasil/database/semantics/incremental/delta.hpp>
+#include <yggdrasil/database/semantics/incremental/join.hpp>
+#include <yggdrasil/database/semantics/incremental/projection.hpp>
 
 namespace runir::kr::dl::semantics::incremental::detail
 {
@@ -31,8 +31,9 @@ class AtomicQueryEvaluator
 {
     tyr::formalism::planning::PredicateView<Fact> m_predicate;
     bool m_initialized = false;
-    ygg::Builder<ygg::database::Relation<ygg::Index<tyr::formalism::Object>>> m_result;
-    ygg::database::incremental::Delta<ygg::Index<tyr::formalism::Object>> m_delta;
+    ygg::Builder<ygg::database::Relation<ObjectValues>> m_result;
+    ygg::database::incremental::Delta<ObjectValues> m_delta;
+    std::vector<std::byte> m_row;
 
 public:
     template<FamilyTag Family, typename C>
@@ -47,10 +48,10 @@ public:
     void update(std::span<const tyr::formalism::planning::AtomView<tyr::GroundTag, Fact>> added,
                 std::span<const tyr::formalism::planning::AtomView<tyr::GroundTag, Fact>> removed);
 
-    const ygg::Builder<ygg::database::Relation<ygg::Index<tyr::formalism::Object>>>& get_result() const& noexcept { return m_result; }
-    const ygg::Builder<ygg::database::Relation<ygg::Index<tyr::formalism::Object>>>& get_result() const&& = delete;
-    const ygg::database::incremental::Delta<ygg::Index<tyr::formalism::Object>>& get_delta() const& noexcept { return m_delta; }
-    const ygg::database::incremental::Delta<ygg::Index<tyr::formalism::Object>>& get_delta() const&& = delete;
+    const ygg::Builder<ygg::database::Relation<ObjectValues>>& get_result() const& noexcept { return m_result; }
+    const ygg::Builder<ygg::database::Relation<ObjectValues>>& get_result() const&& = delete;
+    const ygg::database::incremental::Delta<ObjectValues>& get_delta() const& noexcept { return m_delta; }
+    const ygg::database::incremental::Delta<ObjectValues>& get_delta() const&& = delete;
 };
 
 template<tyr::formalism::FactKind Fact>
@@ -68,13 +69,13 @@ template<tyr::formalism::FactKind Fact>
 template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> State>
 void AtomicQueryEvaluator<Fact>::initialize(const State& state)
 {
-    if (!state.get_repository()->contains(m_predicate))
+    if (!state.get_formalism_repository()->contains(m_predicate))
         throw std::invalid_argument("Incremental atomic query: predicate does not belong to the task repository.");
     m_initialized = false;
     m_result.clear();
     m_delta.clear();
     for (const auto atom : state.get_atoms_view(m_predicate))
-        m_result.insert(atom.get_row().get_data());
+        m_result.insert(ygg::database::encode_row<ObjectValues, ygg::Index<tyr::formalism::Object>>(atom.get_row().get_data(), m_row));
     m_initialized = true;
 }
 
@@ -92,7 +93,7 @@ void AtomicQueryEvaluator<Fact>::update(std::span<const tyr::formalism::planning
     {
         if (atom.get_predicate() != m_predicate)
             continue;
-        const auto& row = atom.get_row().get_data();
+        const auto row = ygg::database::encode_row<ObjectValues, ygg::Index<tyr::formalism::Object>>(atom.get_row().get_data(), m_row);
         if (m_result.contains(row))
             throw std::invalid_argument("Incremental atomic query: added atom is already present.");
         m_delta.added.insert(row);
@@ -101,7 +102,7 @@ void AtomicQueryEvaluator<Fact>::update(std::span<const tyr::formalism::planning
     {
         if (atom.get_predicate() != m_predicate)
             continue;
-        const auto& row = atom.get_row().get_data();
+        const auto row = ygg::database::encode_row<ObjectValues, ygg::Index<tyr::formalism::Object>>(atom.get_row().get_data(), m_row);
         const auto position = m_result.find(row);
         if (!position)
             throw std::invalid_argument("Incremental atomic query: removed atom is absent.");

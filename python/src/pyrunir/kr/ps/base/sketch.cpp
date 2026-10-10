@@ -29,13 +29,13 @@ void bind_sketch(nb::module_& m, RepositoryBinding& repository)
 
     ygg::bind_index<ygg::Index<T>>(m, "SketchIndex");
 
-    using BooleanFeatureIndex = ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>;
-    using NumericalFeatureIndex = ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>;
+    using BooleanFeatureIndex = ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>;
+    using NumericalFeatureIndex = ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>;
     using RuleIndex = ygg::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>;
     auto data = nb::class_<Data>(m, "SketchData")
                     .def(nb::init<>())
-                    .def(nb::init<ygg::IndexList<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>,
-                                  ygg::IndexList<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>,
+                    .def(nb::init<ygg::IndexList<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>,
+                                  ygg::IndexList<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>,
                                   ygg::IndexList<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>>(),
                          "boolean_features"_a,
                          "numerical_features"_a,
@@ -54,8 +54,8 @@ void bind_sketch(nb::module_& m, RepositoryBinding& repository)
 
     auto view = nb::class_<View>(m, "Sketch")
                     .def("get_index", &View::get_index)
-                    .def("get_boolean_features", &View::template get_features<runir::kr::ps::dl::BooleanFeature>)
-                    .def("get_numerical_features", &View::template get_features<runir::kr::ps::dl::NumericalFeature>)
+                    .def("get_boolean_features", &View::template get_features<runir::kr::dl::BooleanTag>)
+                    .def("get_numerical_features", &View::template get_features<runir::kr::dl::NumericalTag>)
                     .def("get_rules", &View::get_rules)
                     .def(
                         "is_compatible_with",

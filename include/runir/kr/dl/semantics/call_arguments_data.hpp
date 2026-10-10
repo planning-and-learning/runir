@@ -1,12 +1,12 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_CALL_ARGUMENTS_DATA_HPP_
 #define RUNIR_KR_DL_SEMANTICS_CALL_ARGUMENTS_DATA_HPP_
 
-#include "runir/kr/dl/semantics/call_arguments_index.hpp"
-#include "runir/kr/dl/semantics/denotation_index.hpp"
+#include "runir/kr/dl/semantics/declarations.hpp"
 
 #include <tuple>
 #include <utility>
 #include <vector>
+#include <yggdrasil/core/config.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 #include <yggdrasil/serialization/cista_equal_to.hpp>

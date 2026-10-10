@@ -1,13 +1,13 @@
 #ifndef RUNIR_GRAMMAR_GRAMMAR_DATA_HPP_
 #define RUNIR_GRAMMAR_GRAMMAR_DATA_HPP_
 
+#include "runir/kr/dl/grammar/declarations.hpp"
 #include "runir/kr/dl/grammar/derivation_rule_data.hpp"
-#include "runir/kr/dl/grammar/grammar_index.hpp"
 
 #include <cista/containers/optional.h>
 #include <optional>
 #include <tuple>
-#include <tyr/formalism/planning/domain_index.hpp>
+#include <tyr/formalism/planning/declarations.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/types.hpp>

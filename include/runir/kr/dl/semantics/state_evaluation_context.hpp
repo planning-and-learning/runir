@@ -78,7 +78,7 @@ public:
         m_denotations { &storage.get_denotation_repository(false), &storage.get_denotation_repository(true) },
         m_intermediates(storage)
     {
-        if (storage.get_denotation_repository(false).get_formalism_repository_ptr() != m_state.get_repository())
+        if (storage.get_denotation_repository(false).get_formalism_repository_ptr() != m_state.get_formalism_repository())
             throw std::invalid_argument("Evaluation requires a result repository for the same planning task.");
     }
 
@@ -90,7 +90,7 @@ public:
                                EvaluationStorage<Family>& intermediates) :
         BaseStateEvaluationContext(std::move(state), builder, intermediates)
     {
-        if (repository.get_formalism_repository_ptr() != m_state.get_repository())
+        if (repository.get_formalism_repository_ptr() != m_state.get_formalism_repository())
             throw std::invalid_argument("Evaluation requires a result repository for the same planning task.");
         m_caches = &caches;
         m_denotations = { &repository, &repository };
@@ -133,12 +133,6 @@ class StateEvaluationContext<Family, Kind, S, R> : public BaseStateEvaluationCon
 public:
     using BaseStateEvaluationContext<Family, Kind, S>::BaseStateEvaluationContext;
 };
-
-template<FamilyTag Family, tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> State>
-const auto& get_repository(const BaseStateEvaluationContext<Family, Kind, State>& context) noexcept
-{
-    return context.get_state().get_repository();
-}
 
 }
 

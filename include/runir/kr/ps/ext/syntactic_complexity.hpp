@@ -19,9 +19,9 @@ std::size_t syntactic_complexity(ygg::View<ygg::Index<Module>, C> view)
         result += runir::kr::ps::syntactic_complexity(feature);
     for (auto feature : view.template get_features<runir::kr::dl::RoleTag>())
         result += runir::kr::ps::syntactic_complexity(feature);
-    for (auto feature : view.template get_features<runir::kr::ps::dl::BooleanFeature>())
+    for (auto feature : view.template get_features<runir::kr::dl::BooleanTag>())
         result += runir::kr::ps::syntactic_complexity(feature);
-    for (auto feature : view.template get_features<runir::kr::ps::dl::NumericalFeature>())
+    for (auto feature : view.template get_features<runir::kr::dl::NumericalTag>())
         result += runir::kr::ps::syntactic_complexity(feature);
     for (auto feature : view.get_query_features())
         result += runir::kr::ps::syntactic_complexity(feature);

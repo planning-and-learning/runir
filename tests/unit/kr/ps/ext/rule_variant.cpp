@@ -1,8 +1,10 @@
+#include "runir/kr/ps/ext/declarations.hpp"
+
 #include <concepts>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/rule_variant_data.hpp>
-#include <runir/kr/ps/ext/rule_variant_index.hpp>
 #include <runir/kr/ps/ext/rule_variant_view.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::tests
 {

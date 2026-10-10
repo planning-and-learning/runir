@@ -1,17 +1,15 @@
 #ifndef RUNIR_KR_PS_EXT_EXECUTION_BUILDER_HPP_
 #define RUNIR_KR_PS_EXT_EXECUTION_BUILDER_HPP_
 
-#include "runir/kr/dl/semantics/call_arguments_index.hpp"
+#include "runir/kr/dl/semantics/declarations.hpp"
 #include "runir/kr/dl/semantics/register_values_data.hpp"
+#include "runir/kr/ps/ext/declarations.hpp"
 #include "runir/kr/ps/ext/execution_declarations.hpp"
-#include "runir/kr/ps/ext/execution_index.hpp"
-#include "runir/kr/ps/ext/memory_state_index.hpp"
-#include "runir/kr/ps/ext/module_index.hpp"
-#include "runir/kr/ps/ext/program_index.hpp"
 
 #include <cista/containers/optional.h>
 #include <tuple>
 #include <tyr/planning/state_builder.hpp>
+#include <yggdrasil/core/types.hpp>
 #include <yggdrasil/serialization/cista_equal_to.hpp>
 #include <yggdrasil/serialization/cista_hash.hpp>
 

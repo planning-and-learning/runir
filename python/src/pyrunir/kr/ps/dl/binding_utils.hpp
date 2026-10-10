@@ -3,6 +3,7 @@
 
 #include "pyrunir/kr/binding_utils.hpp"
 
+#include <nanobind/stl/variant.h>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/condition_data.hpp>
 #include <runir/kr/ps/dl/declarations.hpp>
@@ -31,6 +32,7 @@ auto bind_variant(nb::module_& m, nb::class_<Repository>& repository, const std:
     auto data = nb::class_<Data>(m, (name + "Data").c_str())
                     .def(nb::init<>())
                     .def(nb::init<typename Data::Variant>(), nb::arg("variant"))
+                    .def(nb::init<typename Data::template ViewVariant<Repository>>(), nb::arg("variant"))
                     .def_rw("index", &Data::index)
                     .def_rw("variant", &Data::variant);
     ygg::add_comparison(data);

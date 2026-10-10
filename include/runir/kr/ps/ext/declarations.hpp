@@ -101,8 +101,10 @@ struct Program
 
 using LoadRuleTypes = ygg::TypeList<Rule<LoadTag<runir::kr::dl::ConceptTag>>, Rule<LoadTag<runir::kr::dl::RoleTag>>>;
 using ChooseRuleTypes = ygg::TypeList<Rule<ChooseTag<runir::kr::dl::ConceptTag>>, Rule<ChooseTag<runir::kr::dl::RoleTag>>>;
-using ControlRuleTypes = ygg::MapTypeListT<Rule, ygg::TypeList<SketchTag, DoTag, CallTag, ActionTag>>;
-using ConcreteRuleTypes = ygg::ConcatTypeListsT<LoadRuleTypes, ControlRuleTypes, ChooseRuleTypes, ygg::TypeList<Rule<BacktrackTag>>>;
+using ConcreteRuleTypes = ygg::ConcatTypeListsT<LoadRuleTypes,
+                                                ygg::MapTypeListT<Rule, ygg::TypeList<SketchTag, DoTag, CallTag>>,
+                                                ChooseRuleTypes,
+                                                ygg::MapTypeListT<Rule, ygg::TypeList<ActionTag, BacktrackTag>>>;
 using RuleTypes = ygg::ConcatTypeListsT<ygg::TypeList<ps::Rule<ExtFamilyTag>>, ConcreteRuleTypes>;
 using FeatureTypes = runir::kr::ps::PsFeatureTypes<runir::kr::ExtFamilyTag>;
 using ConditionTypes = runir::kr::ps::PsConditionTypes<runir::kr::ExtFamilyTag>;
@@ -140,8 +142,8 @@ concept BindingRuleView = LoadRuleView<R> || ChooseRuleView<R>;
 namespace runir::kr::ps::ext::dl
 {
 
-using BooleanFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>, Repository>;
-using NumericalFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>, Repository>;
+using BooleanFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>, Repository>;
+using NumericalFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>, Repository>;
 using QueryFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>, Repository>;
 
 }  // namespace runir::kr::ps::ext::dl

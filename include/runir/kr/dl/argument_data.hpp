@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_DL_ARGUMENT_DATA_HPP_
 #define RUNIR_KR_DL_ARGUMENT_DATA_HPP_
 
-#include "runir/kr/dl/argument_index.hpp"
+#include "runir/kr/dl/declarations.hpp"
 
 #include <cista/containers/string.h>
 #include <string>

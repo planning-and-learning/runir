@@ -1,15 +1,16 @@
 #ifndef RUNIR_KR_PS_ICP_EXECUTION_DATA_HPP_
 #define RUNIR_KR_PS_ICP_EXECUTION_DATA_HPP_
 
-#include "runir/kr/dl/semantics/denotation_index.hpp"
-#include "runir/kr/dl/semantics/register_values_index.hpp"
-#include "runir/kr/ps/icp/execution_index.hpp"
-#include "runir/kr/ps/icp/indices.hpp"
+#include "runir/kr/dl/semantics/declarations.hpp"
+#include "runir/kr/ps/declarations.hpp"
+#include "runir/kr/ps/icp/declarations.hpp"
+#include "runir/kr/ps/icp/execution_declarations.hpp"
 
 #include <tuple>
-#include <tyr/planning/state_index.hpp>
+#include <tyr/planning/declarations.hpp>
 #include <utility>
 #include <vector>
+#include <yggdrasil/core/config.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 #include <yggdrasil/serialization/cista_equal_to.hpp>

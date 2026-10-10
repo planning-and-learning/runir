@@ -1,9 +1,9 @@
 #ifndef RUNIR_SEMANTICS_DENOTATION_VIEW_HPP_
 #define RUNIR_SEMANTICS_DENOTATION_VIEW_HPP_
 
+#include "runir/kr/dl/semantics/declarations.hpp"
 #include "runir/kr/dl/semantics/denotation_builder.hpp"
 #include "runir/kr/dl/semantics/denotation_data.hpp"
-#include "runir/kr/dl/semantics/denotation_index.hpp"
 
 #include <cassert>
 #include <concepts>
@@ -12,13 +12,15 @@
 #include <ranges>
 #include <tuple>
 #include <type_traits>
-#include <tyr/formalism/object_index.hpp>
+#include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/object_view.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/containers/dynamic_bitset.hpp>
+#include <yggdrasil/core/config.hpp>
 #include <yggdrasil/core/types.hpp>
+#include <yggdrasil/formalism/declarations.hpp>
 
 namespace runir::kr::dl::semantics
 {
@@ -166,22 +168,17 @@ namespace ygg
 /// Borrows mutable denotation storage through a read-only interface. The builder
 /// and formalism repository must outlive the view; mutations invalidate iterators.
 template<runir::kr::dl::CategoryTag Category, typename C>
-class View<Builder<runir::kr::dl::semantics::Denotation<Category>>, C>
+class View<Builder<runir::kr::dl::semantics::Denotation<Category>>, C> : public ygg::BuilderViewBase<runir::kr::dl::semantics::Denotation<Category>, C>
 {
-    const Builder<runir::kr::dl::semantics::Denotation<Category>>* m_handle;
-    const C* m_context;
-
 public:
-    View(const Builder<runir::kr::dl::semantics::Denotation<Category>>& handle, const C& context) noexcept : m_handle(&handle), m_context(&context) {}
+    using ygg::BuilderViewBase<runir::kr::dl::semantics::Denotation<Category>, C>::BuilderViewBase;
 
-    const auto& get_handle() const noexcept { return *m_handle; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_formalism_repository() const noexcept { return *m_context; }
+    const auto& get_formalism_repository() const noexcept { return this->get_context(); }
 
     auto get_num_objects() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
     {
-        return m_handle->num_objects;
+        return this->get_data().num_objects;
     }
 
     bool any() const noexcept
@@ -207,13 +204,13 @@ public:
     auto get() const noexcept
         requires(!std::same_as<Category, runir::kr::dl::RoleTag>)
     {
-        return m_handle->get();
+        return this->get_data().get();
     }
 
     auto get(Index<tyr::formalism::Object> object) const noexcept
         requires std::same_as<Category, runir::kr::dl::RoleTag>
     {
-        return m_handle->get(object);
+        return this->get_data().get(object);
     }
 
     auto get(ygg::uint_t object) const noexcept
@@ -226,7 +223,7 @@ public:
     auto storage_bits() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
     {
-        return m_handle->storage_bits();
+        return this->get_data().storage_bits();
     }
 
     /// Typed indices borrowing only the bits, independently of the view and range wrappers.
@@ -287,32 +284,23 @@ public:
 };
 
 template<runir::kr::dl::CategoryTag Category, typename C>
-class View<Index<runir::kr::dl::semantics::Denotation<Category>>, C>
+class View<Index<runir::kr::dl::semantics::Denotation<Category>>, C> : public ygg::IndexViewBase<runir::kr::dl::semantics::Denotation<Category>, C>
 {
-private:
-    const C* m_context;
-    Index<runir::kr::dl::semantics::Denotation<Category>> m_handle;
-
     auto get_vector() const noexcept
         requires(std::same_as<Category, runir::kr::dl::ConceptTag> || std::same_as<Category, runir::kr::dl::RoleTag>)
     {
-        return get_denotation_vector_repository(*m_context)[get_data().vec_index];
+        return this->get_context().get_vector_repository()[this->get_data().vec_index];
     }
 
 public:
-    View(Index<runir::kr::dl::semantics::Denotation<Category>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    using ygg::IndexViewBase<runir::kr::dl::semantics::Denotation<Category>, C>::IndexViewBase;
 
-    const auto& get_data() const noexcept { return get_denotation_repository(*m_context)[m_handle]; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return m_handle; }
-
-    auto get_index() const noexcept { return m_handle; }
-    const auto& get_formalism_repository() const noexcept { return get_denotation_repository(*m_context).get_formalism_repository(); }
+    const auto& get_formalism_repository() const noexcept { return this->get_context().get_formalism_repository(); }
 
     auto get_num_objects() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
     {
-        return get_data().num_objects;
+        return this->get_data().num_objects;
     }
 
     bool any() const noexcept
@@ -333,14 +321,12 @@ public:
             return storage_bits().count();
     }
 
-    auto identifying_members() const noexcept { return std::make_tuple(m_handle, get_denotation_repository(*m_context).get_index()); }
-
     // Internal interface: raw values, bitsets and typed indices avoid constructing object views.
 
     auto get() const noexcept
         requires runir::kr::dl::BooleanOrNumericalTag<Category>
     {
-        return get_data().get_data();
+        return this->get_data().get_data();
     }
 
     auto get() const noexcept
@@ -350,7 +336,7 @@ public:
         using Bitset = BitsetSpan<const ygg::uint_t>;
 
         const auto vector = get_vector();
-        const auto& data = get_data();
+        const auto& data = this->get_data();
 
         assert(vector.size() == Layout::num_blocks(data.num_objects));
 
@@ -364,7 +350,7 @@ public:
         using Bitset = BitsetSpan<const ygg::uint_t>;
 
         const auto vector = get_vector();
-        const auto& data = get_data();
+        const auto& data = this->get_data();
 
         assert(vector.size() == Layout::num_blocks(data.num_objects));
         assert(ygg::uint_t(object) < data.num_objects);

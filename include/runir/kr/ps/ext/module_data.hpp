@@ -1,15 +1,10 @@
 #ifndef RUNIR_KR_PS_EXT_MODULE_DATA_HPP_
 #define RUNIR_KR_PS_EXT_MODULE_DATA_HPP_
 
-#include "runir/kr/dl/argument_index.hpp"
-#include "runir/kr/dl/register_index.hpp"
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
-#include "runir/kr/ps/ext/memory_state_index.hpp"
-#include "runir/kr/ps/ext/module_index.hpp"
-#include "runir/kr/ps/ext/module_symbol_index.hpp"
+#include "runir/kr/ps/ext/declarations.hpp"
 #include "runir/kr/ps/ext/rule_data.hpp"
-#include "runir/kr/ps/ext/rule_index.hpp"
-#include "runir/kr/ps/ext/rule_variant_index.hpp"
 
 #include <tuple>
 #include <utility>
@@ -33,8 +28,8 @@ struct Data<runir::kr::ps::ext::Module>
     IndexList<runir::kr::dl::Register<runir::kr::dl::RoleTag>> role_registers;
     IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>> concept_features;
     IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>> role_features;
-    IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>> boolean_features;
-    IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>> numerical_features;
+    IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>> boolean_features;
+    IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>> numerical_features;
     IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>> query_features;
     Index<runir::kr::ps::ext::MemoryState> entry_memory_state;
     IndexList<runir::kr::ps::ext::MemoryState> memory_states;
@@ -50,8 +45,8 @@ struct Data<runir::kr::ps::ext::Module>
          IndexList<runir::kr::dl::Register<runir::kr::dl::RoleTag>> role_registers_,
          IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>> concept_features_,
          IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>> role_features_,
-         IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>> boolean_features_,
-         IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>> numerical_features_,
+         IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>> boolean_features_,
+         IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>> numerical_features_,
          IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>> query_features_,
          Index<runir::kr::ps::ext::MemoryState> entry_memory_state_,
          IndexList<runir::kr::ps::ext::MemoryState> memory_states_,
@@ -84,8 +79,8 @@ struct Data<runir::kr::ps::ext::Module>
          const std::vector<::ygg::View<Index<runir::kr::dl::Register<runir::kr::dl::RoleTag>>, D>>& role_registers_,
          const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>, C>>& concept_features_,
          const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>, C>>& role_features_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>, C>>& boolean_features_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>, C>>& numerical_features_,
+         const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>, C>>& boolean_features_,
+         const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>, C>>& numerical_features_,
          const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>, C>>& query_features_,
          ::ygg::View<Index<runir::kr::ps::ext::MemoryState>, C> entry_memory_state_,
          const std::vector<::ygg::View<Index<runir::kr::ps::ext::MemoryState>, C>>& memory_states_,

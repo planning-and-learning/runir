@@ -9,7 +9,7 @@ namespace runir::kr::ps::base::dl::detail
 
 ps::dl::RuleProfile make_rule_profile(SketchView sketch, RuleView rule)
 {
-    auto profile = ps::dl::RuleProfile(sketch.get_features<ps::dl::BooleanFeature>().size(), sketch.get_features<ps::dl::NumericalFeature>().size());
+    auto profile = ps::dl::RuleProfile(sketch.get_features<runir::kr::dl::BooleanTag>().size(), sketch.get_features<runir::kr::dl::NumericalTag>().size());
     for (auto condition : rule.get_conditions())
         ygg::visit([&](auto concrete_variant)
                    { ygg::visit([&](auto concrete) { ps::detail::record_condition(sketch, profile, concrete); }, concrete_variant.get_variant()); },
@@ -25,8 +25,8 @@ Analysis analyze_sketch(SketchView sketch)
 {
     auto analysis = Analysis { {},
                                runir::kr::ps::detail::QualitativePolicy(1,
-                                                                        sketch.get_features<runir::kr::ps::dl::BooleanFeature>().size(),
-                                                                        sketch.get_features<runir::kr::ps::dl::NumericalFeature>().size()) };
+                                                                        sketch.get_features<runir::kr::dl::BooleanTag>().size(),
+                                                                        sketch.get_features<runir::kr::dl::NumericalTag>().size()) };
 
     for (auto rule : sketch.get_rules())
     {

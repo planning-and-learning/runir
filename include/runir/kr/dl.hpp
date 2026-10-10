@@ -3,22 +3,21 @@
 
 #include "runir/kr/dl/canonicalization.hpp"
 #include "runir/kr/dl/cnf_grammar/constructor_repository.hpp"
+#include "runir/kr/dl/cnf_grammar/declarations.hpp"
 #include "runir/kr/dl/cnf_grammar/generate.hpp"
 #include "runir/kr/dl/cnf_grammar/grammar.hpp"
-#include "runir/kr/dl/cnf_grammar/indices.hpp"
 #include "runir/kr/dl/cnf_grammar/views.hpp"
-#include "runir/kr/dl/concept_index.hpp"
-#include "runir/kr/dl/constructor_index.hpp"
 #include "runir/kr/dl/constructors.hpp"
 #include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/grammar/declarations.hpp"
 #include "runir/kr/dl/grammar/grammar.hpp"
-#include "runir/kr/dl/grammar/indices.hpp"
 #include "runir/kr/dl/grammar/views.hpp"
-#include "runir/kr/dl/indices.hpp"
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/dl/semantics/denotations.hpp"
 #include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/formatter.hpp"
 #include "runir/kr/dl/semantics/views.hpp"
+
+#include <yggdrasil/core/types.hpp>
 
 #endif

@@ -1,12 +1,12 @@
 #ifndef RUNIR_CNF_GRAMMAR_GRAMMAR_DATA_HPP_
 #define RUNIR_CNF_GRAMMAR_GRAMMAR_DATA_HPP_
 
-#include "runir/kr/dl/cnf_grammar/indices.hpp"
+#include "runir/kr/dl/cnf_grammar/declarations.hpp"
 
 #include <cista/containers/optional.h>
 #include <optional>
 #include <tuple>
-#include <tyr/formalism/planning/domain_index.hpp>
+#include <tyr/formalism/planning/declarations.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/types.hpp>

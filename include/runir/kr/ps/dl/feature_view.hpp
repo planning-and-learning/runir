@@ -7,7 +7,7 @@
 
 #include <tuple>
 #include <yggdrasil/core/types.hpp>
-#include <yggdrasil/formalism/detail/view.hpp>
+#include <yggdrasil/formalism/declarations.hpp>
 
 namespace ygg
 {
@@ -16,15 +16,12 @@ template<runir::kr::FamilyTag Family,
          runir::kr::ps::dl::FeatureTag FeatureTag,
          formalism::SymbolContextFor<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>> C>
 class View<Index<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>>, C> :
-    public formalism::detail::View<Index<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>>, C>
+    public ygg::IndexViewBase<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>, C>
 {
 public:
-    View(Index<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>> handle, const C& context) noexcept :
-        formalism::detail::View<Index<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>>, C>(handle, context)
-    {
-    }
+    using ygg::IndexViewBase<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>, C>::IndexViewBase;
 
-    auto get_expression() const noexcept { return make_view(this->get_data().feature, this->m_context->get_dl_repository()); }
+    auto get_expression() const noexcept { return make_view(this->get_data().feature, this->get_context().get_dl_repository()); }
     auto get_feature() const noexcept { return get_expression(); }
     const auto& get_symbol() const noexcept { return this->get_data().symbol; }
 };

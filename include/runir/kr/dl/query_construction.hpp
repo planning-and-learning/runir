@@ -5,22 +5,29 @@
 
 #include <algorithm>
 #include <concepts>
+#include <span>
 #include <stdexcept>
 #include <tyr/formalism/predicate_view.hpp>
 #include <variant>
 #include <vector>
-#include <yggdrasil/database/columns.hpp>
+#include <yggdrasil/database/semantics/plans.hpp>
+#include <yggdrasil/database/syntax/columns.hpp>
 
 namespace runir::kr::dl::detail
 {
 
-inline ygg::Builder<ygg::database::Columns> query_columns(const ygg::IndexList<QueryColumn>& columns)
+inline std::vector<ygg::Index<ygg::database::Column>> query_labels(const ygg::IndexList<QueryColumn>& columns)
 {
     std::vector<ygg::Index<ygg::database::Column>> labels;
     labels.reserve(columns.size());
     for (const auto column : columns)
         labels.emplace_back(column.get_value());
-    return ygg::Builder<ygg::database::Columns>(labels);
+    return labels;
+}
+
+inline ygg::Builder<ygg::database::Columns<ObjectValues>> query_columns(const ygg::IndexList<QueryColumn>& columns)
+{
+    return ygg::Builder<ygg::database::Columns<ObjectValues>>(std::span<const ygg::Index<ygg::database::Column>>(query_labels(columns)));
 }
 
 inline void require_query_arity(size_t actual, size_t expected)
@@ -48,17 +55,16 @@ void prepare(ygg::Data<Query<Family, Tag>>& data, const ConstructorRepositoryFor
     {
         const auto lhs = ygg::make_view(data.lhs, repository).get_schema();
         const auto rhs = ygg::make_view(data.rhs, repository).get_schema();
-        data.plan = ygg::database::JoinPlan(lhs.span(), rhs.span());
+        data.plan = ygg::database::JoinPlan<ObjectValues>(lhs.span(), rhs.span());
         data.columns.clear();
         data.columns.reserve(data.plan.output_columns().size());
         for (const auto column : data.plan.output_columns())
-            data.columns.push_back(ygg::Index<QueryColumn>(column.get_value()));
+            data.columns.push_back(ygg::Index<QueryColumn>(column.label.get_value()));
     }
     else if constexpr (std::same_as<Tag, QueryProjectTag>)
     {
         const auto arg = ygg::make_view(data.arg, repository).get_schema();
-        const auto columns = query_columns(data.columns);
-        data.plan = ygg::database::ProjectionPlan(arg.span(), columns.span());
+        data.plan = ygg::database::ProjectionPlan<ObjectValues>(arg.span(), query_labels(data.columns));
     }
     else
     {
@@ -102,7 +108,7 @@ void prepare(ygg::Data<QueryProjection<Family, Category>>& data, const Construct
     const auto columns = query_columns(data.columns);
     require_query_arity(columns.size(), std::same_as<Category, ConceptTag> ? 1 : 2);
     const auto arg = ygg::make_view(data.arg, repository).get_schema();
-    data.plan = ygg::database::ProjectionPlan(arg.span(), columns.span());
+    data.plan = ygg::database::ProjectionPlan<ObjectValues>(arg.span(), query_labels(data.columns));
 }
 
 }  // namespace runir::kr::dl::detail

@@ -9,7 +9,7 @@ from pyrunir.kr.ps.base.dl import parse_sketch
 from pyrunir.kr.ps.ext.dl import parse_program
 from pyrunir.kr.uns.dl import parse_classifier
 from pyrunir.serialization import register_table, serialize, table
-from pytyr.formalism.planning import Object
+from pytyr.formalism.planning import Object, ObjectIndex
 from pyyggdrasil.serialization import Dictionaries
 
 
@@ -80,7 +80,8 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
     assert isinstance(retained_query, semantics.QueryDenotation)
     assert isinstance(retained_query.get_index(), semantics.QueryDenotationIndex)
     assert all(isinstance(row, semantics.QueryDenotationRow) for row in retained_query)
-    assert all(isinstance(object_, Object) for row in retained_query for object_ in row)
+    assert all(isinstance(object_, ObjectIndex) for row in retained_query for object_ in row)
+    assert all(isinstance(repository.get_object(object_), Object) for row in retained_query for object_ in row)
     assert relations.rename(retained_query, list(retained_query.columns())) == retained_query
     retained_rows = {tuple(row) for row in retained_query}
     with pytest.raises(TypeError):

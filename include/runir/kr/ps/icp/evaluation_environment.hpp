@@ -33,8 +33,8 @@ class EvaluationEnvironment
         };
         append.template operator()<runir::kr::dl::ConceptTag>();
         append.template operator()<runir::kr::dl::RoleTag>();
-        append.template operator()<runir::kr::ps::dl::BooleanFeature>();
-        append.template operator()<runir::kr::ps::dl::NumericalFeature>();
+        append.template operator()<runir::kr::dl::BooleanTag>();
+        append.template operator()<runir::kr::dl::NumericalTag>();
         append.template operator()<runir::kr::ps::dl::QueryFeature>();
         return result;
     }

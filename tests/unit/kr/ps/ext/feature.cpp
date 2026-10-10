@@ -1,9 +1,11 @@
+#include "runir/kr/ps/declarations.hpp"
+
 #include <concepts>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/feature_data.hpp>
-#include <runir/kr/ps/feature_index.hpp>
 #include <runir/kr/ps/feature_view.hpp>
 #include <utility>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::tests
 {
@@ -33,8 +35,8 @@ concept FeatureContract =
 
 using ConceptFeature = kr::ps::Feature<kr::ExtFamilyTag, kr::dl::ConceptTag>;
 using RoleFeature = kr::ps::Feature<kr::ExtFamilyTag, kr::dl::RoleTag>;
-using BooleanFeature = kr::ps::Feature<kr::ExtFamilyTag, kr::ps::dl::BooleanFeature>;
-using NumericalFeature = kr::ps::Feature<kr::ExtFamilyTag, kr::ps::dl::NumericalFeature>;
+using BooleanFeature = kr::ps::Feature<kr::ExtFamilyTag, kr::dl::BooleanTag>;
+using NumericalFeature = kr::ps::Feature<kr::ExtFamilyTag, kr::dl::NumericalTag>;
 using QueryFeature = kr::ps::Feature<kr::ExtFamilyTag, kr::ps::dl::QueryFeature>;
 
 template<typename FeatureTag>
@@ -42,8 +44,8 @@ using ConcreteFeature = kr::ps::ConcreteFeature<kr::ExtFamilyTag, kr::DlTag, Fea
 
 static_assert(FeatureContract<ConceptFeature, ConcreteFeature<kr::dl::ConceptTag>>);
 static_assert(FeatureContract<RoleFeature, ConcreteFeature<kr::dl::RoleTag>>);
-static_assert(FeatureContract<BooleanFeature, ConcreteFeature<kr::ps::dl::BooleanFeature>>);
-static_assert(FeatureContract<NumericalFeature, ConcreteFeature<kr::ps::dl::NumericalFeature>>);
+static_assert(FeatureContract<BooleanFeature, ConcreteFeature<kr::dl::BooleanTag>>);
+static_assert(FeatureContract<NumericalFeature, ConcreteFeature<kr::dl::NumericalTag>>);
 static_assert(FeatureContract<QueryFeature, ConcreteFeature<kr::ps::dl::QueryFeature>>);
 static_assert(std::same_as<View<QueryFeature>, kr::ps::ext::dl::QueryFeatureView>);
 static_assert(std::same_as<View<BooleanFeature>, kr::ps::ext::dl::BooleanFeatureView>);

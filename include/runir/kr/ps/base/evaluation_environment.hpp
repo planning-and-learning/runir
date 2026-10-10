@@ -27,9 +27,9 @@ private:
     static auto roots(SketchView sketch)
     {
         auto result = std::vector<runir::kr::dl::semantics::incremental::EvaluationRoot<BaseFamilyTag>> {};
-        for (const auto feature : sketch.get_features<runir::kr::ps::dl::BooleanFeature>())
+        for (const auto feature : sketch.get_features<runir::kr::dl::BooleanTag>())
             result.emplace_back(feature.get_expression());
-        for (const auto feature : sketch.get_features<runir::kr::ps::dl::NumericalFeature>())
+        for (const auto feature : sketch.get_features<runir::kr::dl::NumericalTag>())
             result.emplace_back(feature.get_expression());
         return result;
     }

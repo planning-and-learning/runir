@@ -23,7 +23,7 @@ struct NonemptyEvaluator
     {
         value.set(std::visit([&](auto index) { return graph.nonempty(index); }, child));
     }
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<ygg::Index<tyr::formalism::Object>>&)
+    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<ObjectValues>&)
     {
         value.set(std::visit(
             [&](auto index)

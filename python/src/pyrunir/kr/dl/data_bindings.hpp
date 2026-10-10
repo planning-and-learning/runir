@@ -4,6 +4,7 @@
 #include "module.hpp"
 
 #include <concepts>
+#include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
 #include <runir/kr/dl/declarations.hpp>
 #include <type_traits>
@@ -114,7 +115,7 @@ void def_boolean_data_constructors(Class& cls)
     if constexpr (is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag>)
         def_predicate_data_constructors<Tag>(cls);
     else if constexpr (std::same_as<Tag, NonemptyTag>)
-        cls.def(nb::init<typename Class::Type::Arg>(), "arg"_a);
+        cls.def(nb::init<typename Class::Type::Arg>(), "arg"_a).def(nb::init<typename Class::Type::template ViewVariant<Repository>>(), "arg"_a);
     else if constexpr (std::same_as<Tag, ArgumentTag<BooleanTag>>)
         def_reference_data_constructors<ygg::Index<Argument<BooleanTag>>, Repository>(cls);
     else if constexpr (ComparisonTag<Tag>)
@@ -137,7 +138,7 @@ void def_numerical_data_constructors(Class& cls)
 {
     using namespace nb::literals;
     if constexpr (std::same_as<Tag, CountTag>)
-        cls.def(nb::init<typename Class::Type::Arg>(), "arg"_a);
+        cls.def(nb::init<typename Class::Type::Arg>(), "arg"_a).def(nb::init<typename Class::Type::template ViewVariant<Repository>>(), "arg"_a);
     else if constexpr (std::same_as<Tag, DistanceTag>)
         cls.def(nb::init<ConceptIndex, RoleIndex, ConceptIndex>(), "lhs"_a, "mid"_a, "rhs"_a)
             .def(nb::init<ygg::View<ConceptIndex, Repository>, ygg::View<RoleIndex, Repository>, ygg::View<ConceptIndex, Repository>>(),

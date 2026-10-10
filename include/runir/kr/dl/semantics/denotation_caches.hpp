@@ -7,8 +7,8 @@
 #include <array>
 #include <tuple>
 #include <yggdrasil/containers/associative_containers.hpp>
-#include <yggdrasil/database/join_index.hpp>
-#include <yggdrasil/database/relation_repository.hpp>
+#include <yggdrasil/database/semantics/join_index.hpp>
+#include <yggdrasil/database/semantics/relation_repository.hpp>
 
 namespace runir::kr::dl::semantics
 {
@@ -39,7 +39,7 @@ private:
     };
 
     std::array<Partition, 2> m_partitions;
-    ygg::database::JoinIndexCache<ygg::Index<tyr::formalism::Object>> m_static_join_indexes;
+    ygg::database::JoinIndexCache<ObjectValues> m_static_join_indexes;
 
 public:
     DenotationCaches() = default;

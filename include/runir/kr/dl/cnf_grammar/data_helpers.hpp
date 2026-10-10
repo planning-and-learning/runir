@@ -1,7 +1,7 @@
 #ifndef RUNIR_CNF_GRAMMAR_DATA_HELPERS_HPP_
 #define RUNIR_CNF_GRAMMAR_DATA_HELPERS_HPP_
 
-#include "runir/kr/dl/cnf_grammar/indices.hpp"
+#include "runir/kr/dl/cnf_grammar/declarations.hpp"
 #include "runir/kr/dl/data_helpers.hpp"
 
 #include <yggdrasil/core/types.hpp>

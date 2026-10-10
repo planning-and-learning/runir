@@ -11,7 +11,7 @@ from pyrunir.kr.dl.ext import semantics
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext import dl
 from pyrunir.serialization import register_table, serialize, table
-from pytyr.formalism.planning import Object, Parser
+from pytyr.formalism.planning import Object, ObjectIndex, Parser
 from pytyr.planning import lifted
 from pyyggdrasil.execution import ExecutionContext
 from pyyggdrasil.serialization import Dictionaries
@@ -160,8 +160,10 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
     assert len({relation, ext.evaluate(features["selected"], dl_context)}) == 1
     assert all(isinstance(row, base_semantics.QueryDenotationRow) and len(row) == 2 for row in relation)
     rows = {tuple(row) for row in relation}
-    assert all(isinstance(value, Object) for row in rows for value in row)
-    assert {tuple(value.get_name() for value in row) for row in rows} == {("start", "bad"), ("start", "good")}
+    assert all(isinstance(value, ObjectIndex) for row in rows for value in row)
+    objects = task_context.dl_denotation_repository
+    assert all(isinstance(objects.get_object(value), Object) for row in rows for value in row)
+    assert {tuple(objects.get_object(value).get_name() for value in row) for row in rows} == {("start", "bad"), ("start", "good")}
     assert relation[-1][-1] == relation.at(len(relation) - 1)[relation.arity() - 1]
     with pytest.raises(IndexError):
         relation[len(relation)]
@@ -181,7 +183,7 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
     steps = collect_steps(expander, state)
     assert len(steps) == 2
     assert rows == {
-        tuple(step.state_transition.action.get_objects())
+        tuple(object_.get_index() for object_ in step.state_transition.action.get_objects())
         for step in steps
     }
     for step in steps:
@@ -200,7 +202,7 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
     row = relation.at(0)
     iterated_row = next(iter(relation))
     expected_row = tuple(row)
-    del steps, good_step, successor, step, features, environment, dl_context, state, expander, program, task_context
+    del steps, good_step, successor, step, features, environment, dl_context, state, expander, program, task_context, objects
     gc.collect()
     assert {tuple(value) for value in relation} == new_rows
     del relation
@@ -222,7 +224,7 @@ def test_query_objects_iterators_and_renames_retain_owners(kind, access):
         )
         feature = program.get_entry_module().get_query_features()[0]
         relation = feature.get_expression().evaluate(context)
-        expected = tuple(object_.get_name() for object_ in relation[0])
+        expected = tuple(relation[0])
         if access == "object":
             return relation[0][0], expected
         if access == "row_iterator":
@@ -243,13 +245,13 @@ def test_query_objects_iterators_and_renames_retain_owners(kind, access):
         object_ = next(value)
     else:
         row = next(value) if access == "query_iterator" else value[0]
-        assert tuple(object_.get_name() for object_ in row) == expected
+        assert tuple(row) == expected
         object_ = next(iter(row))
         del row
     del value
     gc.collect()
-    assert isinstance(object_, Object)
-    assert object_.get_name() == expected[0]
+    assert isinstance(object_, ObjectIndex)
+    assert object_ == expected[0]
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
@@ -350,7 +352,7 @@ def test_query_features_follow_module_arguments_and_registers_in_the_same_state(
     assert len(choices) == 2
     assert choices[0].state == choices[1].state == initial.state
     features = {feature.get_symbol(): feature for feature in child.module_state.module.get_query_features()}
-    expected = [((state.module_state.registers.concept_values[0],),) for state in choices]
+    expected = [((state.module_state.registers.concept_values[0].get_index(),),) for state in choices]
     all_candidates = {row for selected in expected for row in selected}
     assert expected[0] != expected[1]
 
@@ -364,9 +366,9 @@ def test_query_features_follow_module_arguments_and_registers_in_the_same_state(
         assert tuple(tuple(row) for row in selected) == expected[position]
         intersection = ext.evaluate(features["intersection"], dl_context)
         assert tuple(tuple(row) for row in intersection) == expected[position]
-        snapshots.append(tuple(tuple(int(object_.get_index()) for object_ in row) for row in selected))
+        snapshots.append(tuple(tuple(int(object_) for object_ in row) for row in selected))
         del selected, intersection
-    expected_indices = [tuple(tuple(int(object_.get_index()) for object_ in row) for row in rows) for rows in expected]
+    expected_indices = [tuple(tuple(int(object_) for object_ in row) for row in rows) for rows in expected]
     assert snapshots == [expected_indices[0], expected_indices[1], expected_indices[0]]
 
 

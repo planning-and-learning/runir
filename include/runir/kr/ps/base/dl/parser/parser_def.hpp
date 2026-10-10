@@ -66,9 +66,9 @@ const auto boolean_expression_section_def =
 const auto numerical_expression_section_def =
     context(":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::numerical_parser<runir::kr::BaseFamilyTag>() > lit(")")];
 
-const auto boolean_feature_def = context("boolean feature")[(lit("(") >> lit(":") >> keyword(runir::kr::ps::dl::BooleanFeature::keyword)) > symbol_section_def
+const auto boolean_feature_def = context("boolean feature")[(lit("(") >> lit(":") >> keyword(runir::kr::dl::BooleanTag::name)) > symbol_section_def
                                                             > boolean_expression_section_def > lit(")")];
-const auto numerical_feature_def = context("numerical feature")[(lit("(") >> lit(":") >> keyword(runir::kr::ps::dl::NumericalFeature::keyword))
+const auto numerical_feature_def = context("numerical feature")[(lit("(") >> lit(":") >> keyword(runir::kr::dl::NumericalTag::name))
                                                                 > symbol_section_def > numerical_expression_section_def > lit(")")];
 const auto feature_def = boolean_feature | numerical_feature;
 

@@ -10,25 +10,22 @@
 #include <tuple>
 #include <tyr/formalism/predicate_view.hpp>
 #include <yggdrasil/core/types.hpp>
-#include <yggdrasil/formalism/detail/view.hpp>
+#include <yggdrasil/formalism/declarations.hpp>
 
 namespace ygg
 {
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, formalism::SymbolContextFor<runir::kr::dl::FamilyRole<Family, Tag>> C>
     requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
-class View<Index<runir::kr::dl::FamilyRole<Family, Tag>>, C> : public formalism::detail::View<Index<runir::kr::dl::FamilyRole<Family, Tag>>, C>
+class View<Index<runir::kr::dl::FamilyRole<Family, Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::FamilyRole<Family, Tag>, C>
 {
 public:
-    View(Index<runir::kr::dl::FamilyRole<Family, Tag>> handle, const C& context) noexcept :
-        formalism::detail::View<Index<runir::kr::dl::FamilyRole<Family, Tag>>, C>(handle, context)
-    {
-    }
+    using ygg::IndexViewBase<runir::kr::dl::FamilyRole<Family, Tag>, C>::IndexViewBase;
 
     auto get_predicate() const noexcept
         requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)
     {
-        return make_view(this->get_data().predicate, this->m_context->get_planning_repository());
+        return make_view(this->get_data().predicate, this->get_context().get_planning_repository());
     }
 
     auto get_polarity() const noexcept
@@ -40,13 +37,13 @@ public:
     auto get_register() const noexcept
         requires std::same_as<Tag, runir::kr::dl::RegisterTag>
     {
-        return make_view(this->get_data().reference, *this->m_context);
+        return make_view(this->get_data().reference, this->get_context());
     }
 
     auto get_argument() const noexcept
         requires std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>
     {
-        return make_view(this->get_data().reference, *this->m_context);
+        return make_view(this->get_data().reference, this->get_context());
     }
 
     auto get_arg() const noexcept
@@ -54,21 +51,21 @@ public:
                  || std::same_as<Tag, runir::kr::dl::TransitiveClosureTag> || std::same_as<Tag, runir::kr::dl::ReflexiveTransitiveClosureTag>
                  || std::same_as<Tag, runir::kr::dl::IdentityTag>)
     {
-        return make_view(this->get_data().arg, *this->m_context);
+        return make_view(this->get_data().arg, this->get_context());
     }
 
     auto get_lhs() const noexcept
         requires(std::same_as<Tag, runir::kr::dl::IntersectionTag> || std::same_as<Tag, runir::kr::dl::UnionTag>
                  || std::same_as<Tag, runir::kr::dl::CompositionTag> || std::same_as<Tag, runir::kr::dl::RestrictionTag>)
     {
-        return make_view(this->get_data().lhs, *this->m_context);
+        return make_view(this->get_data().lhs, this->get_context());
     }
 
     auto get_rhs() const noexcept
         requires(std::same_as<Tag, runir::kr::dl::IntersectionTag> || std::same_as<Tag, runir::kr::dl::UnionTag>
                  || std::same_as<Tag, runir::kr::dl::CompositionTag> || std::same_as<Tag, runir::kr::dl::RestrictionTag>)
     {
-        return make_view(this->get_data().rhs, *this->m_context);
+        return make_view(this->get_data().rhs, this->get_context());
     }
 };
 

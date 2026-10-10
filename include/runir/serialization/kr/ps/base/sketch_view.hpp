@@ -12,8 +12,8 @@ namespace ygg::serialization
 template<typename Archive, typename C>
 void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::base::Sketch>, C>>)
 {
-    ar.field("boolean_features", [](const auto& value) -> decltype(auto) { return (value.template get_features<runir::kr::ps::dl::BooleanFeature>()); });
-    ar.field("numerical_features", [](const auto& value) -> decltype(auto) { return (value.template get_features<runir::kr::ps::dl::NumericalFeature>()); });
+    ar.field("boolean_features", [](const auto& value) -> decltype(auto) { return (value.template get_features<runir::kr::dl::BooleanTag>()); });
+    ar.field("numerical_features", [](const auto& value) -> decltype(auto) { return (value.template get_features<runir::kr::dl::NumericalTag>()); });
     ar.field("rules", [](const auto& value) -> decltype(auto) { return (value.get_rules()); });
 }
 

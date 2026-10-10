@@ -179,7 +179,7 @@ template<tyr::TaskKind Kind,
          RegisterValuesViewConcept TargetRegisters>
 void Delta<runir::kr::ExtFamilyTag>::assign(const Source& source, SourceRegisters source_registers, const Target& target, TargetRegisters target_registers)
 {
-    const auto* repository = source.get_repository().get();
+    const auto* repository = source.get_formalism_repository().get();
     if (&source_registers.get_formalism_repository() != repository || &target_registers.get_formalism_repository() != repository)
         throw std::invalid_argument("Feature delta requires registers for the same planning task.");
 

@@ -8,47 +8,39 @@
 #include <tuple>
 #include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/core/types.hpp>
-#include <yggdrasil/formalism/detail/view.hpp>
+#include <yggdrasil/formalism/declarations.hpp>
 
 namespace ygg
 {
 
 template<formalism::SymbolContextFor<runir::kr::uns::ClassifierLiteral> C>
-class View<Index<runir::kr::uns::ClassifierLiteral>, C> : public formalism::detail::View<Index<runir::kr::uns::ClassifierLiteral>, C>
+class View<Index<runir::kr::uns::ClassifierLiteral>, C> : public ygg::IndexViewBase<runir::kr::uns::ClassifierLiteral, C>
 {
 public:
-    View(Index<runir::kr::uns::ClassifierLiteral> handle, const C& context) noexcept :
-        formalism::detail::View<Index<runir::kr::uns::ClassifierLiteral>, C>(handle, context)
-    {
-    }
+    using ygg::IndexViewBase<runir::kr::uns::ClassifierLiteral, C>::IndexViewBase;
 
-    auto get_feature() const noexcept { return make_view(this->get_data().variant, *this->m_context); }
+    auto get_feature() const noexcept { return make_view(this->get_data().variant, this->get_context()); }
     auto get_polarity() const noexcept { return this->get_data().polarity; }
 };
 
 template<formalism::SymbolContextFor<runir::kr::uns::ClassifierClause> C>
-class View<Index<runir::kr::uns::ClassifierClause>, C> : public formalism::detail::View<Index<runir::kr::uns::ClassifierClause>, C>
+class View<Index<runir::kr::uns::ClassifierClause>, C> : public ygg::IndexViewBase<runir::kr::uns::ClassifierClause, C>
 {
 public:
-    View(Index<runir::kr::uns::ClassifierClause> handle, const C& context) noexcept :
-        formalism::detail::View<Index<runir::kr::uns::ClassifierClause>, C>(handle, context)
-    {
-    }
+    using ygg::IndexViewBase<runir::kr::uns::ClassifierClause, C>::IndexViewBase;
 
-    auto get_literals() const noexcept { return make_view(this->get_data().literals, *this->m_context); }
+    auto get_literals() const noexcept { return make_view(this->get_data().literals, this->get_context()); }
 };
 
 template<formalism::SymbolContextFor<runir::kr::uns::Classifier> C>
-class View<Index<runir::kr::uns::Classifier>, C> : public formalism::detail::View<Index<runir::kr::uns::Classifier>, C>
+class View<Index<runir::kr::uns::Classifier>, C> : public ygg::IndexViewBase<runir::kr::uns::Classifier, C>
 {
 public:
-    View(Index<runir::kr::uns::Classifier> handle, const C& context) noexcept : formalism::detail::View<Index<runir::kr::uns::Classifier>, C>(handle, context)
-    {
-    }
+    using ygg::IndexViewBase<runir::kr::uns::Classifier, C>::IndexViewBase;
 
     const auto& get_symbol() const noexcept { return this->get_data().symbol; }
-    auto get_features() const noexcept { return make_view(this->get_data().features, *this->m_context); }
-    auto get_clauses() const noexcept { return make_view(this->get_data().clauses, *this->m_context); }
+    auto get_features() const noexcept { return make_view(this->get_data().features, this->get_context()); }
+    auto get_clauses() const noexcept { return make_view(this->get_data().clauses, this->get_context()); }
 };
 
 }  // namespace ygg

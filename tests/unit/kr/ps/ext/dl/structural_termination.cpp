@@ -111,7 +111,7 @@ TEST(RunirTests, ExtStructuralTerminationDecreaseWithUnchangedReturnIsTerminatin
     const auto incomplete_result = kr::ps::ext::dl::incomplete_structural_termination(module_);
     const auto result = kr::ps::ext::dl::structural_termination(module_);
     const auto without_incomplete = kr::ps::ext::dl::structural_termination(module_, kr::ps::dl::default_max_features, false);
-    const auto numericals = module_.get_features<kr::ps::dl::NumericalFeature>();
+    const auto numericals = module_.get_features<kr::dl::NumericalTag>();
 
     EXPECT_TRUE(result.is_terminating());
     ASSERT_TRUE(result.incomplete_result.has_value());
@@ -500,8 +500,8 @@ TEST(RunirTests, ExtStructuralTerminationLiftsProjectedComponentsToGlobalAxes)
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/projected_components.module"), planning_task.get_domain().get_domain(), *repository);
 
     const auto result = kr::ps::ext::dl::structural_termination(module_);
-    const auto booleans = module_.get_features<kr::ps::dl::BooleanFeature>();
-    const auto numericals = module_.get_features<kr::ps::dl::NumericalFeature>();
+    const auto booleans = module_.get_features<kr::dl::BooleanTag>();
+    const auto numericals = module_.get_features<kr::dl::NumericalTag>();
 
     ASSERT_FALSE(result.is_terminating());
     ASSERT_TRUE(result.sieve_result.has_value());
@@ -579,7 +579,7 @@ TEST(RunirTests, ExtStructuralTerminationAppliesFeatureLimitPerResidualComponent
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/split_features.module"), planning_task.get_domain().get_domain(), *repository);
 
     const auto result = kr::ps::ext::dl::structural_termination(module_);
-    const auto numericals = module_.get_features<kr::ps::dl::NumericalFeature>();
+    const auto numericals = module_.get_features<kr::dl::NumericalTag>();
 
     EXPECT_FALSE(result.is_terminating());
     EXPECT_EQ(numericals.size(), 15);

@@ -334,8 +334,8 @@ void append_feature(
     tyr::formalism::planning::DomainView domain,
     std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>& concept_features,
     std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>& role_features,
-    std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>>& boolean_features,
-    std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>>& numerical_features,
+    std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>>& boolean_features,
+    std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>>& numerical_features,
     const ModuleReferences& references,
     runir::kr::parser::DiagnosticContext& diagnostics)
 {
@@ -355,13 +355,13 @@ void append_feature(
     }
     else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
     {
-        const auto view = intern_dl_feature<runir::kr::ps::dl::BooleanFeature>(repository, builders.ps, constructor.get_index(), feature.symbol.text);
+        const auto view = intern_dl_feature<runir::kr::dl::BooleanTag>(repository, builders.ps, constructor.get_index(), feature.symbol.text);
         boolean_features.emplace(feature.symbol.text, view.get_index());
         module_data.boolean_features.push_back(view.get_index());
     }
     else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
     {
-        const auto view = intern_dl_feature<runir::kr::ps::dl::NumericalFeature>(repository, builders.ps, constructor.get_index(), feature.symbol.text);
+        const auto view = intern_dl_feature<runir::kr::dl::NumericalTag>(repository, builders.ps, constructor.get_index(), feature.symbol.text);
         numerical_features.emplace(feature.symbol.text, view.get_index());
         module_data.numerical_features.push_back(view.get_index());
     }
@@ -383,8 +383,8 @@ auto parse_call_argument(
     const ast::SymbolExpression& expression,
     const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>& concept_features,
     const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>& role_features,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>>& boolean_features,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>>& numerical_features,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>>& boolean_features,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>>& numerical_features,
     const runir::kr::parser::DiagnosticContext& diagnostics) -> CallArgument
 {
     const auto& name = expression.symbol.text;
@@ -552,8 +552,8 @@ auto parse_binding_rule(
     ygg::Index<MemoryState> target,
     const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>& concept_features,
     const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>& role_features,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>>& boolean_features,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>>& numerical_features,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>>& boolean_features,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>>& numerical_features,
     const ModuleReferences& references,
     const std::string& symbol,
     runir::kr::parser::DiagnosticContext& diagnostics)
@@ -600,8 +600,8 @@ auto parse_rule(
     const std::unordered_map<std::string, ygg::Index<ModuleSymbol>>& modules,
     const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>& concept_features,
     const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>& role_features,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>>& boolean_features,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>>& numerical_features,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>>& boolean_features,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>>& numerical_features,
     const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>>& query_features,
     const ModuleReferences& references,
     const std::string& symbol,
@@ -879,9 +879,9 @@ ModuleView lower_module(const ast::Module& ast,
 
     auto concept_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>> {};
     auto role_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>> {};
-    auto boolean_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>> {};
+    auto boolean_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>> {};
     auto numerical_features =
-        std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>> {};
+        std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>> {};
     auto query_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>> {};
     for (const auto& feature : ast.features)
     {

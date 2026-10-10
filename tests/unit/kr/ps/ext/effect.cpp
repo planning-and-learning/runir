@@ -1,8 +1,10 @@
+#include "runir/kr/ps/declarations.hpp"
+
 #include <concepts>
 #include <runir/kr/ps/effect_data.hpp>
-#include <runir/kr/ps/effect_index.hpp>
 #include <runir/kr/ps/effect_view.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::tests
 {

@@ -1,10 +1,11 @@
 #ifndef RUNIR_KR_PS_ICP_OBJECT_REFERENCE_HPP_
 #define RUNIR_KR_PS_ICP_OBJECT_REFERENCE_HPP_
 
-#include "runir/kr/dl/register_index.hpp"
-#include "runir/kr/ps/feature_index.hpp"
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/ps/declarations.hpp"
 
 #include <tuple>
+#include <yggdrasil/core/types.hpp>
 #include <yggdrasil/ids/uint_mixins.hpp>
 
 namespace runir::kr::ps::icp

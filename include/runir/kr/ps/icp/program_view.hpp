@@ -8,23 +8,13 @@ namespace ygg
 {
 
 template<typename C>
-class View<Index<runir::kr::ps::icp::Program>, C>
+class View<Index<runir::kr::ps::icp::Program>, C> : public ygg::IndexViewBase<runir::kr::ps::icp::Program, C>
 {
-    const C* m_context;
-    Index<runir::kr::ps::icp::Program> m_handle;
-
 public:
-    View(Index<runir::kr::ps::icp::Program> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    using ygg::IndexViewBase<runir::kr::ps::icp::Program, C>::IndexViewBase;
 
-    const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return m_handle; }
-
-    auto get_index() const noexcept { return m_handle; }
-    auto get_module() const noexcept { return make_view(get_data().module, *m_context); }
+    auto get_module() const noexcept { return make_view(this->get_data().module, this->get_context()); }
     auto get_entry_module() const noexcept { return get_module(); }
-
-    auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };
 
 }

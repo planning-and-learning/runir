@@ -1,8 +1,7 @@
 #ifndef RUNIR_KR_PS_ICP_PROGRAM_DATA_HPP_
 #define RUNIR_KR_PS_ICP_PROGRAM_DATA_HPP_
 
-#include "runir/kr/ps/icp/module_index.hpp"
-#include "runir/kr/ps/icp/program_index.hpp"
+#include "runir/kr/ps/icp/declarations.hpp"
 
 #include <tuple>
 #include <utility>

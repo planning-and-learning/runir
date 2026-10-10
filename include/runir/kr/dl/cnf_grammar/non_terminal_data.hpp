@@ -1,7 +1,7 @@
 #ifndef RUNIR_CNF_GRAMMAR_NON_TERMINAL_DATA_HPP_
 #define RUNIR_CNF_GRAMMAR_NON_TERMINAL_DATA_HPP_
 
-#include "runir/kr/dl/cnf_grammar/indices.hpp"
+#include "runir/kr/dl/cnf_grammar/declarations.hpp"
 
 #include <cista/containers/string.h>
 #include <string>

@@ -112,8 +112,8 @@ class RuleEvaluator;
 namespace runir::kr::ps::icp::dl
 {
 
-using BooleanFeatureView = ygg::View<ygg::Index<ps::Feature<IcpFamilyTag, ps::dl::BooleanFeature>>, Repository>;
-using NumericalFeatureView = ygg::View<ygg::Index<ps::Feature<IcpFamilyTag, ps::dl::NumericalFeature>>, Repository>;
+using BooleanFeatureView = ygg::View<ygg::Index<ps::Feature<IcpFamilyTag, runir::kr::dl::BooleanTag>>, Repository>;
+using NumericalFeatureView = ygg::View<ygg::Index<ps::Feature<IcpFamilyTag, runir::kr::dl::NumericalTag>>, Repository>;
 using QueryFeatureView = ygg::View<ygg::Index<ps::Feature<IcpFamilyTag, ps::dl::QueryFeature>>, Repository>;
 
 }

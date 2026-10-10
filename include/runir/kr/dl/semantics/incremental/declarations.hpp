@@ -4,7 +4,7 @@
 #include "runir/kr/dl/semantics/declarations.hpp"
 
 #include <variant>
-#include <yggdrasil/ids/index_mixins.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::kr::dl::semantics::incremental
 {
@@ -14,15 +14,17 @@ struct Delta;
 
 /// Identifies a prepared result in its owning evaluation graph.
 template<CategoryTag Category>
-struct EvaluationIndex : ygg::IndexMixin<EvaluationIndex<Category>>
+struct Evaluation
 {
-    using ygg::IndexMixin<EvaluationIndex<Category>>::IndexMixin;
 };
 
-struct QueryEvaluationIndex : ygg::IndexMixin<QueryEvaluationIndex>
+struct QueryEvaluation
 {
-    using ygg::IndexMixin<QueryEvaluationIndex>::IndexMixin;
 };
+
+template<CategoryTag Category>
+using EvaluationIndex = ygg::Index<Evaluation<Category>>;
+using QueryEvaluationIndex = ygg::Index<QueryEvaluation>;
 
 /// Borrowed feature or query expression supplied when constructing a graph.
 template<FamilyTag Family>

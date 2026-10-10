@@ -31,8 +31,8 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
                           ygg::IndexList<runir::kr::dl::Register<runir::kr::dl::RoleTag>>,
                           ygg::IndexList<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>>,
                           ygg::IndexList<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::RoleTag>>,
-                          ygg::IndexList<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::ps::dl::BooleanFeature>>,
-                          ygg::IndexList<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::ps::dl::NumericalFeature>>,
+                          ygg::IndexList<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::BooleanTag>>,
+                          ygg::IndexList<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::NumericalTag>>,
                           ygg::IndexList<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::ps::dl::QueryFeature>>,
                           ygg::Index<MemoryState>,
                           ygg::IndexList<MemoryState>,
@@ -57,8 +57,8 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
                     const std::vector<ygg::View<ygg::Index<runir::kr::dl::Register<runir::kr::dl::RoleTag>>, DlRepository>>&,
                     const std::vector<ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>>, Repository>>&,
                     const std::vector<ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::RoleTag>>, Repository>>&,
-                    const std::vector<ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::ps::dl::BooleanFeature>>, Repository>>&,
-                    const std::vector<ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::ps::dl::NumericalFeature>>, Repository>>&,
+                    const std::vector<ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::BooleanTag>>, Repository>>&,
+                    const std::vector<ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::NumericalTag>>, Repository>>&,
                     const std::vector<ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::ps::dl::QueryFeature>>, Repository>>&,
                     ygg::View<ygg::Index<MemoryState>, Repository>,
                     const std::vector<ygg::View<ygg::Index<MemoryState>, Repository>>&,
@@ -98,8 +98,8 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
                     .def("get_role_registers", &View::template get_registers<runir::kr::dl::RoleTag>)
                     .def("get_concept_features", &View::template get_features<runir::kr::dl::ConceptTag>)
                     .def("get_role_features", &View::template get_features<runir::kr::dl::RoleTag>)
-                    .def("get_boolean_features", &View::template get_features<runir::kr::ps::dl::BooleanFeature>)
-                    .def("get_numerical_features", &View::template get_features<runir::kr::ps::dl::NumericalFeature>)
+                    .def("get_boolean_features", &View::template get_features<runir::kr::dl::BooleanTag>)
+                    .def("get_numerical_features", &View::template get_features<runir::kr::dl::NumericalTag>)
                     .def("get_query_features", &View::get_query_features)
                     .def("get_entry_memory_state", &View::get_entry_memory_state, nb::keep_alive<0, 1>())
                     .def("get_memory_states", &View::get_memory_states)
