@@ -538,14 +538,16 @@ void check_incremental_evaluation()
     const auto self_distance_id = graph.get_index(self_distance);
     const auto query_id = graph.get_index(query);
     const auto query_count_id = graph.get_index(query_count);
-    EXPECT_EQ(graph.node_count(), 9);
+    // Nine expression nodes plus the three relations lifted for the distance arguments; the
+    // self distance reuses the same lifts.
+    EXPECT_EQ(graph.node_count(), 12);
     EXPECT_EQ(graph.get_index(distance_expression), distance_id);
     EXPECT_EQ(graph.get_index(source), source_id);
     EXPECT_EQ(graph.get_index(edge), edge_id);
     EXPECT_EQ(graph.get_index(query), query_id);
     const auto unprepared = parser::parse_numerical("(n_const 42)", domain, *constructors);
     EXPECT_THROW(graph.get_index(unprepared), std::invalid_argument);
-    EXPECT_EQ(graph.node_count(), 9);
+    EXPECT_EQ(graph.node_count(), 12);
     const auto scalar_expressions = std::array { source_count, edge_count, distance_expression, self_distance, query_count };
     const auto scalar_ids = std::array { source_count_id, edge_count_id, distance_id, self_distance_id, query_count_id };
     const auto scalar_values = [&]
