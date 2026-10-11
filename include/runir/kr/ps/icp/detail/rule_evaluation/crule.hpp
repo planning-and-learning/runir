@@ -32,9 +32,9 @@ class RuleEvaluator<Kind, CruleTag>
             Binding binding) const
     {
         return reference.apply(
-            [&](auto ref) -> std::optional<ygg::uint_t>
+            [&]<typename Ref>(Ref ref) -> std::optional<ygg::uint_t>
             {
-                if constexpr (std::same_as<decltype(ref), ArgumentPosition>)
+                if constexpr (std::same_as<Ref, ArgumentPosition>)
                     return ygg::uint_t(binding.get_objects().at(ygg::uint_t(ref)).get_index());
                 else
                 {

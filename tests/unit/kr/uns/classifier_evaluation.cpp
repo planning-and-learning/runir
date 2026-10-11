@@ -14,18 +14,16 @@ namespace runir::tests
 
 TEST(RunirTests, UnsClassifierClassifies)
 {
-    namespace sem = kr::dl::semantics;
-
     auto search = make_gripper_ground_context();
     auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::UnsFamilyTag>().create(search->task->get_repository());
     auto repository = kr::uns::RepositoryFactory().create(dl_repository);
     const auto classifier = kr::uns::dl::parse_classifier(read_fixture("kr/uns/positive.classifier"), search->task->get_domain().get_domain(), *repository);
 
     const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
-    auto builder = sem::Builder();
-    auto denotation_repository = sem::DenotationRepositoryFactory().create(search->task->get_repository());
-    auto storage = sem::EvaluationStorage<kr::UnsFamilyTag>(denotation_repository);
-    auto context = sem::StateEvaluationContext<kr::UnsFamilyTag, tyr::GroundTag>(state, builder, storage);
+    auto builder = kr::dl::semantics::Builder();
+    auto denotation_repository = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto storage = kr::dl::semantics::EvaluationStorage<kr::UnsFamilyTag>(denotation_repository);
+    auto context = kr::dl::semantics::StateEvaluationContext<kr::UnsFamilyTag, tyr::GroundTag>(state, builder, storage);
 
     // some_ball is true and no_object is false, so the first clause (some_ball AND NOT no_object) holds.
     EXPECT_TRUE(kr::uns::classify<tyr::GroundTag>(classifier, context));

@@ -63,22 +63,20 @@ static_assert(IndexedDataView<Classifier> && std::same_as<View<Classifier>, kr::
                      view.get_clauses();
                  });
 
-namespace fp = tyr::formalism::planning;
-
 struct Fixture
 {
-    fp::PlanningDomain planning_domain;
+    tyr::formalism::planning::PlanningDomain planning_domain;
     kr::dl::ConstructorRepositoryPtrFor<kr::UnsFamilyTag> dl_repository;
     kr::uns::RepositoryPtr repository;
 
     Fixture() :
-        planning_domain(fp::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain()),
+        planning_domain(tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain()),
         dl_repository(kr::dl::ConstructorRepositoryFactoryFor<kr::UnsFamilyTag>().create(planning_domain.get_repository())),
         repository(kr::uns::RepositoryFactory().create(dl_repository))
     {
     }
 
-    fp::DomainView domain() const { return planning_domain.get_domain(); }
+    tyr::formalism::planning::DomainView domain() const { return planning_domain.get_domain(); }
 };
 
 }  // namespace

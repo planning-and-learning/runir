@@ -11,60 +11,59 @@
 
 namespace runir::kr::ps::base::dl::ast
 {
-namespace x3 = boost::spirit::x3;
 
 template<typename... Alternatives>
-struct PositionedVariant : x3::position_tagged, x3::variant<Alternatives...>
+struct PositionedVariant : boost::spirit::x3::position_tagged, boost::spirit::x3::variant<Alternatives...>
 {
-    using Base = x3::variant<Alternatives...>;
+    using Base = boost::spirit::x3::variant<Alternatives...>;
     using Base::Base;
     using Base::operator=;
 };
 
-struct Positive : x3::position_tagged
+struct Positive : boost::spirit::x3::position_tagged
 {
 };
 
-struct Negative : x3::position_tagged
+struct Negative : boost::spirit::x3::position_tagged
 {
 };
 
-struct EqualZero : x3::position_tagged
+struct EqualZero : boost::spirit::x3::position_tagged
 {
 };
 
-struct GreaterZero : x3::position_tagged
+struct GreaterZero : boost::spirit::x3::position_tagged
 {
 };
 
-struct Increases : x3::position_tagged
+struct Increases : boost::spirit::x3::position_tagged
 {
 };
 
-struct Decreases : x3::position_tagged
+struct Decreases : boost::spirit::x3::position_tagged
 {
 };
 
-struct Unchanged : x3::position_tagged
+struct Unchanged : boost::spirit::x3::position_tagged
 {
 };
 
 template<runir::kr::FamilyTag Family>
-struct Concept : x3::position_tagged
+struct Concept : boost::spirit::x3::position_tagged
 {
     runir::kr::parser::ast::Identifier symbol;
     runir::kr::dl::grammar::ast::Constructor<Family, runir::kr::dl::ConceptTag> feature;
 };
 
 template<runir::kr::FamilyTag Family>
-struct BooleanFeature : x3::position_tagged
+struct BooleanFeature : boost::spirit::x3::position_tagged
 {
     runir::kr::parser::ast::Identifier symbol;
     runir::kr::dl::grammar::ast::Constructor<Family, runir::kr::dl::BooleanTag> feature;
 };
 
 template<runir::kr::FamilyTag Family>
-struct NumericalFeature : x3::position_tagged
+struct NumericalFeature : boost::spirit::x3::position_tagged
 {
     runir::kr::parser::ast::Identifier symbol;
     runir::kr::dl::grammar::ast::Constructor<Family, runir::kr::dl::NumericalTag> feature;
@@ -85,7 +84,7 @@ struct ConditionObservation : PositionedVariant<Positive, Negative, EqualZero, G
     using Base::operator=;
 };
 
-struct Condition : x3::position_tagged
+struct Condition : boost::spirit::x3::position_tagged
 {
     ConditionObservation observation;
     runir::kr::parser::ast::Identifier feature;
@@ -98,14 +97,14 @@ struct EffectObservation : PositionedVariant<Positive, Negative, Unchanged, Incr
     using Base::operator=;
 };
 
-struct Effect : x3::position_tagged
+struct Effect : boost::spirit::x3::position_tagged
 {
     EffectObservation observation;
     runir::kr::parser::ast::Identifier feature;
 };
 
 template<runir::kr::FamilyTag Family>
-struct Rule : x3::position_tagged
+struct Rule : boost::spirit::x3::position_tagged
 {
     runir::kr::parser::ast::Identifier symbol;
     std::vector<Condition> conditions;
@@ -113,7 +112,7 @@ struct Rule : x3::position_tagged
 };
 
 template<runir::kr::FamilyTag Family>
-struct Sketch : x3::position_tagged
+struct Sketch : boost::spirit::x3::position_tagged
 {
     std::vector<Feature<Family>> features;
     std::vector<Rule<Family>> rules;

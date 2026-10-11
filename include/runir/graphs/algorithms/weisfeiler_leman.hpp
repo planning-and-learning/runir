@@ -42,7 +42,6 @@ template<std::size_t K>
 class Certificate : public ygg::comparison::Mixin<Certificate<K>>
 {
 public:
-    using SignatureList = std::vector<std::pair<Signature<K>, Color>>;
     using RoundSummary = std::vector<std::pair<Signature<K>, std::size_t>>;
     using RoundSummaryList = std::vector<RoundSummary>;
 

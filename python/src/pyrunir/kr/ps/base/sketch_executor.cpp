@@ -18,7 +18,6 @@
 namespace runir::kr::ps::base
 {
 
-using namespace nanobind::literals;
 using runir::graphs::bind_forward_graph;
 using runir::graphs::bind_readable_graph_methods;
 
@@ -74,6 +73,7 @@ void bind_sketch_search_options(nb::module_& m, const char* name)
 
 void bind_sketch_executor(nb::module_& m)
 {
+    using namespace nb::literals;
     nb::class_<SketchSearchStatistics>(m, "SketchSearchStatistics")
         .def(nb::init<>())
         .def_ro("num_expanded", &SketchSearchStatistics::num_expanded)

@@ -211,9 +211,9 @@ std::string rule(ygg::View<ygg::Index<DerivationRule<Family, Category>>, C> view
     for (auto symbol : view.get_rhs())
     {
         rhs.push_back(ygg::visit(
-            [](auto arg)
+            []<typename Arg>(Arg arg)
             {
-                if constexpr (std::same_as<std::decay_t<decltype(arg)>, ygg::View<ygg::Index<Constructor<Family, Category>>, C>>)
+                if constexpr (std::same_as<Arg, ygg::View<ygg::Index<Constructor<Family, Category>>, C>>)
                     return constructor_body(arg);
                 else
                     return fmt::format("{}", arg);

@@ -9,7 +9,7 @@ namespace runir::graphs
 {
 
 template<IsVertex Vertex>
-auto get_vertex_color(Vertex vertex) -> typename Vertex::PropertyIndexType
+auto get_vertex_color(Vertex vertex)
 {
     return vertex.get_property_index();
 }

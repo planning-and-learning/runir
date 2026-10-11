@@ -11,10 +11,9 @@
 namespace runir::kr
 {
 
-using namespace nanobind::literals;
-
 void bind_domain_context(nb::module_& m)
 {
+    using namespace nb::literals;
     nb::class_<DomainContext>(m, "DomainContext")
         .def(nb::new_(&DomainContext::create), "planning_domain"_a)
         .def_prop_ro(

@@ -19,8 +19,7 @@ namespace runir::tests
 
 TEST(RunirTests, RejectsUnknownGrammarFactorySpecification)
 {
-    namespace fp = tyr::formalism::planning;
-    const auto planning_domain = fp::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
+    const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
     const auto domain = planning_domain.get_domain();
 
     EXPECT_THROW(
@@ -35,7 +34,6 @@ TEST(RunirTests, RejectsUnknownGrammarFactorySpecification)
 
 TEST(RunirTests, GrammarFactoryFixturesMatch)
 {
-    namespace fp = tyr::formalism::planning;
     using GrammarTag = kr::dl::grammar::GrammarTag<kr::BaseFamilyTag>;
     const auto suite = load_fixture_json("kr/dl/grammar/factory.json");
     const auto& cases = ygg::common::as_array(ygg::common::require_member(ygg::common::as_object(suite, "suite"), "cases", "suite"), "suite.cases");
@@ -43,7 +41,7 @@ TEST(RunirTests, GrammarFactoryFixturesMatch)
     for (const auto& value : cases)
     {
         const auto& test_case = ygg::common::as_object(value, "case");
-        const auto planning_domain = fp::Parser(benchmark_path(ygg::common::as_string(test_case, "domain_file", "case"))).get_domain();
+        const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path(ygg::common::as_string(test_case, "domain_file", "case"))).get_domain();
         const auto domain = planning_domain.get_domain();
         auto repository = kr::dl::grammar::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(planning_domain.get_repository());
         const auto grammar = kr::dl::grammar::GrammarFactory::create(kr::dl::grammar::GrammarSpecification::FRANCE_ET_AL_AAAI2021, domain, *repository);
@@ -68,8 +66,7 @@ TEST(RunirTests, GrammarFactoryFixturesMatch)
 
 TEST(RunirTests, GrammarFactoryHandlesBooleanPrimitivePredicates)
 {
-    namespace fp = tyr::formalism::planning;
-    const auto planning_domain = fp::Parser(benchmark_path("classical/tests/ferry/domain.pddl")).get_domain();
+    const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/ferry/domain.pddl")).get_domain();
     const auto domain = planning_domain.get_domain();
     auto repository = kr::dl::grammar::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(planning_domain.get_repository());
     const auto grammar = kr::dl::grammar::GrammarFactory::create(kr::dl::grammar::GrammarSpecification::FRANCE_ET_AL_AAAI2021, domain, *repository);

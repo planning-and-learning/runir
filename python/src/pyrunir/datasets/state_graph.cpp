@@ -12,7 +12,6 @@
 namespace runir::datasets
 {
 
-using namespace nanobind::literals;
 using runir::graphs::bind_bidirectional_graph;
 using runir::graphs::bind_bidirectional_static_graph;
 using runir::graphs::bind_forward_graph;
@@ -27,6 +26,7 @@ namespace
 template<tyr::TaskKind Kind>
 void bind_state_graph_for_kind(nb::module_& m, const char* class_prefix, const char* function_prefix)
 {
+    using namespace nb::literals;
     using VertexLabel = StateGraphVertexLabel<Kind>;
     using AnnotatedVertexLabel = AnnotatedStateGraphVertexLabel<Kind>;
     using Builder = StateGraphBuilder<Kind>;

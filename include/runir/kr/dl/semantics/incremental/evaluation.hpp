@@ -59,6 +59,8 @@ class EvaluationGraph
     friend struct detail::QueryProjectionEvaluator;
     template<FamilyTag, tyr::TaskKind>
     friend struct detail::QueryJoinEvaluator;
+    template<FamilyTag, tyr::TaskKind>
+    friend struct detail::QueryGenericJoinEvaluator;
     template<FamilyTag, tyr::TaskKind, ConceptOrRoleTag>
     friend struct detail::QueryFromDenotationEvaluator;
     template<FamilyTag, tyr::TaskKind, typename>

@@ -53,10 +53,8 @@ public:
 
     auto get_caller() const
     {
-        using CallerView = decltype(make_view(*self().get_data().caller, self().get_context()));
-        if (!self().get_data().caller)
-            return std::optional<CallerView> {};
-        return std::optional<CallerView>(make_view(*self().get_data().caller, self().get_context()));
+        const auto& caller = self().get_data().caller;
+        return caller ? std::optional(make_view(*caller, self().get_context())) : std::nullopt;
     }
 };
 
@@ -74,10 +72,8 @@ public:
 
     auto get_call_stack() const
     {
-        using CallStackView = decltype(make_view(*self().get_data().call_stack, self().get_context()));
-        if (!self().get_data().call_stack)
-            return std::optional<CallStackView> {};
-        return std::optional<CallStackView>(make_view(*self().get_data().call_stack, self().get_context()));
+        const auto& call_stack = self().get_data().call_stack;
+        return call_stack ? std::optional(make_view(*call_stack, self().get_context())) : std::nullopt;
     }
 };
 

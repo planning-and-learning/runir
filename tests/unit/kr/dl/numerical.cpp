@@ -94,25 +94,24 @@ static_assert(numerical_data_views<kr::UnsFamilyTag>(kr::dl::FamilyNumericalCons
 
 TEST(RunirKrDlNumerical, RoutesValueBinaryAndDistanceData)
 {
-    namespace dl = kr::dl;
     using Family = kr::UnsFamilyTag;
-    using Concept = dl::Constructor<Family, dl::ConceptTag>;
-    using Role = dl::Constructor<Family, dl::RoleTag>;
-    using Numerical = dl::Constructor<Family, dl::NumericalTag>;
+    using Concept = kr::dl::Constructor<Family, kr::dl::ConceptTag>;
+    using Role = kr::dl::Constructor<Family, kr::dl::RoleTag>;
+    using Numerical = kr::dl::Constructor<Family, kr::dl::NumericalTag>;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-    auto repository = dl::UnsConstructorRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::UnsConstructorRepositoryFactory().create(planning_repository);
 
-    auto constant_data = ygg::Data<dl::Numerical<Family, dl::NumericalConstantTag>>(7);
+    auto constant_data = ygg::Data<kr::dl::Numerical<Family, kr::dl::NumericalConstantTag>>(7);
     EXPECT_EQ(repository->insert(constant_data).first.get_value(), 7);
 
-    auto binary_data = ygg::Data<dl::Numerical<Family, dl::AddTag>>(ygg::Index<Numerical>(1), ygg::Index<Numerical>(2));
+    auto binary_data = ygg::Data<kr::dl::Numerical<Family, kr::dl::AddTag>>(ygg::Index<Numerical>(1), ygg::Index<Numerical>(2));
     const auto binary = repository->insert(binary_data).first;
     EXPECT_EQ(binary.get_lhs().get_index(), ygg::Index<Numerical>(1));
     EXPECT_EQ(binary.get_rhs().get_index(), ygg::Index<Numerical>(2));
 
     // Vertices are concept-or-query and edges role-or-query variants.
-    using Query = dl::Query<Family>;
-    using DistanceData = ygg::Data<dl::Numerical<Family, dl::DistanceTag>>;
+    using Query = kr::dl::Query<Family>;
+    using DistanceData = ygg::Data<kr::dl::Numerical<Family, kr::dl::DistanceTag>>;
     static_assert(std::same_as<DistanceData::Vertex, ygg::IndexVariant<ygg::TypeList<Concept, Query>>>);
     static_assert(std::same_as<DistanceData::Edge, ygg::IndexVariant<ygg::TypeList<Role, Query>>>);
     auto distance_data = DistanceData(ygg::Index<Concept>(3), ygg::Index<Query>(4), ygg::Index<Query>(5));
@@ -122,5 +121,4 @@ TEST(RunirKrDlNumerical, RoutesValueBinaryAndDistanceData)
     EXPECT_EQ(distance.get_rhs().get<ygg::Index<Query>>().get_index(), ygg::Index<Query>(5));
     EXPECT_TRUE(distance.get_mid().is<ygg::Index<Query>>());
 }
-
 }

@@ -8,14 +8,13 @@
 namespace runir::kr
 {
 
-using namespace nanobind::literals;
-
 namespace
 {
 
 template<tyr::TaskKind Kind>
 void bind_task_context_for_kind(nb::module_& m, const char* prefix)
 {
+    using namespace nb::literals;
     using TaskContextT = TaskContext<Kind>;
 
     nb::class_<TaskContextT>(m, (std::string(prefix) + "TaskContext").c_str())

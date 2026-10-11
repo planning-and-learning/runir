@@ -15,8 +15,6 @@
 namespace runir::kr::ps::ext
 {
 
-using namespace nanobind::literals;
-
 namespace
 {
 
@@ -63,6 +61,7 @@ auto bind_rule_view(nb::module_& m, const char* name)
 
 void bind_rule(nb::module_& m, RepositoryBinding& repository)
 {
+    using namespace nb::literals;
     nb::enum_<OrderDirection>(m, "OrderDirection").value("MIN", OrderDirection::MIN).value("MAX", OrderDirection::MAX);
     using TermData = ygg::Data<OrderTerm>;
     ygg::bind_index<ygg::Index<OrderTerm>>(m, "OrderTermIndex");

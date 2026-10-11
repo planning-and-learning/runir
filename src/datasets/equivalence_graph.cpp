@@ -52,7 +52,7 @@ struct StateAssignment
 template<tyr::TaskKind Kind>
 struct EquivalenceWorkerState
 {
-    ygg::UnorderedMap<detail::StateLocator<Kind>, StateAssignment> assignments;
+    ygg::UnorderedMap<tyr::planning::PackedStateView<Kind>, StateAssignment> assignments;
 };
 
 template<tyr::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
@@ -61,7 +61,7 @@ class EquivalenceCoordinator
 public:
     EquivalenceCoordinator(ygg::uint_t state_graph_index, Policy& policy) : m_state_graph_index(state_graph_index), m_policy(&policy), m_workers(1) {}
 
-    void initialize_start(const tyr::planning::StateView<Kind>& state, detail::StateLocator<Kind> locator)
+    void initialize_start(const tyr::planning::StateView<Kind>& state, const tyr::planning::PackedStateView<Kind>& locator)
     {
         assert(!m_start);
         const auto concrete = allocate_vertex();
@@ -71,7 +71,7 @@ public:
         m_start = std::pair { locator, StateAssignment { concrete, result.representative } };
     }
 
-    bool register_start(ygg::Index<tyr::planning::Worker> worker, detail::StateLocator<Kind> locator)
+    bool register_start(ygg::Index<tyr::planning::Worker> worker, const tyr::planning::PackedStateView<Kind>& locator)
     {
         if (!m_start)
             throw std::logic_error("Equivalence search did not report its initial state before pruning.");
@@ -81,11 +81,9 @@ public:
         return false;
     }
 
-    bool should_prune_successor(ygg::Index<tyr::planning::Worker> worker,
-                                const tyr::planning::StateView<Kind>& state,
-                                detail::StateLocator<Kind> locator,
-                                bool is_new)
+    bool should_prune_successor(ygg::Index<tyr::planning::Worker> worker, const tyr::planning::StateView<Kind>& state, bool is_new)
     {
+        const auto locator = state.pack();
         auto& assignments = get_worker(worker).assignments;
         if (const auto it = assignments.find(locator); it != assignments.end())
             return !it->second.concrete;
@@ -121,7 +119,7 @@ private:
     Policy* m_policy;
     std::atomic<ygg::uint_t> m_next_state_vertex { 0 };
     std::vector<EquivalenceWorkerState<Kind>> m_workers;
-    std::optional<std::pair<detail::StateLocator<Kind>, StateAssignment>> m_start;
+    std::optional<std::pair<tyr::planning::PackedStateView<Kind>, StateAssignment>> m_start;
 };
 
 template<tyr::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
@@ -145,7 +143,6 @@ public:
         return m_events.make_worker(index);
     }
 
-    detail::StateGraphEventHandler<Kind>& get_events() noexcept { return m_events; }
     const detail::StateGraphEventHandler<Kind>& get_events() const noexcept { return m_events; }
 
 private:
@@ -158,32 +155,26 @@ class EquivalenceGraphPruningStrategy final : public tyr::planning::PruningStrat
 {
 public:
     EquivalenceGraphPruningStrategy(std::shared_ptr<EquivalenceCoordinator<Kind, Policy>> coordinator,
-                                    detail::StateGraphEventHandler<Kind>& events,
                                     ygg::Index<tyr::planning::Worker> worker = ygg::Index<tyr::planning::Worker>(0)) :
         m_coordinator(std::move(coordinator)),
-        m_events(&events),
         m_worker(worker)
     {
     }
 
     [[nodiscard]] tyr::planning::PruningStrategyPtr<Kind> make_worker(ygg::Index<tyr::planning::Worker> worker) const override
     {
-        return std::make_shared<EquivalenceGraphPruningStrategy>(m_coordinator, *m_events, worker);
+        return std::make_shared<EquivalenceGraphPruningStrategy>(m_coordinator, worker);
     }
 
-    bool should_prune_state(const tyr::planning::StateView<Kind>& state) override
-    {
-        return m_coordinator->register_start(m_worker, m_events->get_worker(m_worker).locate(state));
-    }
+    bool should_prune_state(const tyr::planning::StateView<Kind>& state) override { return m_coordinator->register_start(m_worker, state.pack()); }
 
     bool should_prune_successor_state(const tyr::planning::StateView<Kind>&, const tyr::planning::StateView<Kind>& successor, bool is_new) override
     {
-        return m_coordinator->should_prune_successor(m_worker, successor, m_events->get_worker(m_worker).locate(successor), is_new);
+        return m_coordinator->should_prune_successor(m_worker, successor, is_new);
     }
 
 private:
     std::shared_ptr<EquivalenceCoordinator<Kind, Policy>> m_coordinator;
-    detail::StateGraphEventHandler<Kind>* m_events;
     ygg::Index<tyr::planning::Worker> m_worker;
 };
 
@@ -199,9 +190,8 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(TaskSearchContext<Kind>& con
     if (!coordinator.get_start())
         throw std::logic_error("Equivalence search did not report its initial state.");
 
-    const auto repositories = events.collect_repositories();
-    auto assignments = ygg::UnorderedMap<detail::StateLocator<Kind>, StateAssignment> {};
-    auto concrete_states = std::vector<std::optional<detail::StateLocator<Kind>>>(coordinator.get_num_state_vertices());
+    auto assignments = ygg::UnorderedMap<tyr::planning::PackedStateView<Kind>, StateAssignment> {};
+    auto concrete_states = std::vector<std::optional<tyr::planning::PackedStateView<Kind>>>(coordinator.get_num_state_vertices());
 
     const auto& [start_locator, start_assignment] = *coordinator.get_start();
     assignments.emplace(start_locator, start_assignment);
@@ -218,7 +208,7 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(TaskSearchContext<Kind>& con
         }
     }
 
-    const auto get_assignment = [&](detail::StateLocator<Kind> locator) -> const StateAssignment&
+    const auto get_assignment = [&](const tyr::planning::PackedStateView<Kind>& locator) -> const StateAssignment&
     {
         const auto it = assignments.find(locator);
         if (it == assignments.end())
@@ -247,7 +237,7 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(TaskSearchContext<Kind>& con
     {
         if (!concrete_states[vertex])
             throw std::logic_error("Equivalence graph construction left a hole in the state vertex indices.");
-        auto state = detail::materialize_state(*concrete_states[vertex], repositories, *context.state_repository, *context.axiom_evaluator).pack();
+        auto state = tyr::planning::materialize_state(concrete_states[vertex]->unpack(), *context.state_repository, *context.axiom_evaluator).pack();
         [[maybe_unused]] const auto added = state_builder.add_vertex(StateGraphVertexLabel<Kind> { std::move(state) });
         assert(added == vertex);
         state_to_equivalence.push_back(get_or_create_equivalence_vertex(get_assignment(*concrete_states[vertex]).representative));
@@ -311,7 +301,7 @@ auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts,
         const auto initial_node = context.successor_generator->get_initial_node(*context.state_repository, *context.axiom_evaluator);
         auto coordinator = std::make_shared<EquivalenceCoordinator<Kind, Policy>>(state_graph_index, policy);
         auto event_handler = std::make_shared<EquivalenceGraphEventHandler<Kind, Policy>>(coordinator, initial_node.get_state());
-        auto pruning_strategy = std::make_shared<EquivalenceGraphPruningStrategy<Kind, Policy>>(coordinator, event_handler->get_events());
+        auto pruning_strategy = std::make_shared<EquivalenceGraphPruningStrategy<Kind, Policy>>(coordinator);
         auto options = create_astar_options<Kind>(state_graph_options);
         options.event_handler = event_handler;
         options.goal_strategy = tyr::planning::ExhaustiveGoalStrategy<Kind>::create();

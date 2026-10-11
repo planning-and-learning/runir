@@ -60,10 +60,13 @@ struct Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>
 template<>
 struct Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>
 {
+private:
     using Block = ygg::uint_t;
     using Blocks = std::vector<Block>;
-    using Bitset = ygg::BitsetSpan<Block>;
     using ConstBitset = ygg::BitsetSpan<const Block>;
+
+public:
+    using Bitset = ygg::BitsetSpan<Block>;
 
     Index<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>> index;
     ygg::uint_t num_objects = 0;
@@ -125,10 +128,13 @@ struct Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>
 template<>
 struct Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>
 {
+private:
     using Block = ygg::uint_t;
     using Blocks = std::vector<Block>;
-    using Bitset = ygg::BitsetSpan<Block>;
     using ConstBitset = ygg::BitsetSpan<const Block>;
+
+public:
+    using Bitset = ygg::BitsetSpan<Block>;
 
     Index<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>> index;
     ygg::uint_t num_objects = 0;

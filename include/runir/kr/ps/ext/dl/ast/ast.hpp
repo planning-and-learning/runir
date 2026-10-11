@@ -15,13 +15,12 @@
 
 namespace runir::kr::ps::ext::dl::ast
 {
-namespace x3 = boost::spirit::x3;
 using Identifier = runir::kr::parser::ast::Identifier;
 
 template<typename... Alternatives>
-struct PositionedVariant : x3::position_tagged, x3::variant<Alternatives...>
+struct PositionedVariant : boost::spirit::x3::position_tagged, boost::spirit::x3::variant<Alternatives...>
 {
-    using Base = x3::variant<Alternatives...>;
+    using Base = boost::spirit::x3::variant<Alternatives...>;
     using Base::Base;
     using Base::operator=;
 };
@@ -30,7 +29,7 @@ using Condition = runir::kr::ps::base::dl::ast::Condition;
 using Effect = runir::kr::ps::base::dl::ast::Effect;
 
 template<runir::kr::dl::CategoryTag Category>
-struct Argument : x3::position_tagged
+struct Argument : boost::spirit::x3::position_tagged
 {
     Identifier symbol;
 };
@@ -41,26 +40,26 @@ using ArgumentVariant = PositionedVariant<Argument<runir::kr::dl::ConceptTag>,
                                           Argument<runir::kr::dl::NumericalTag>>;
 
 template<runir::kr::dl::CategoryTag Category>
-struct Register : x3::position_tagged
+struct Register : boost::spirit::x3::position_tagged
 {
     Identifier symbol;
 };
 
 using RegisterVariant = PositionedVariant<Register<runir::kr::dl::ConceptTag>, Register<runir::kr::dl::RoleTag>>;
 
-struct SymbolExpression : x3::position_tagged
+struct SymbolExpression : boost::spirit::x3::position_tagged
 {
     Identifier symbol;
 };
 
 template<runir::kr::dl::CategoryTag Category>
-struct Feature : x3::position_tagged
+struct Feature : boost::spirit::x3::position_tagged
 {
     Identifier symbol;
     runir::kr::dl::grammar::ast::Constructor<runir::kr::ExtFamilyTag, Category> expression;
 };
 
-struct QueryFeature : x3::position_tagged
+struct QueryFeature : boost::spirit::x3::position_tagged
 {
     Identifier symbol;
     runir::kr::dl::grammar::ast::Query<runir::kr::ExtFamilyTag> expression;
@@ -72,13 +71,13 @@ using FeatureVariant = PositionedVariant<Feature<runir::kr::dl::ConceptTag>,
                                          Feature<runir::kr::dl::NumericalTag>,
                                          QueryFeature>;
 
-struct NamedValue : x3::position_tagged
+struct NamedValue : boost::spirit::x3::position_tagged
 {
     Identifier value;
 };
 
 template<runir::kr::dl::CategoryTag Category>
-struct LoadRule : x3::position_tagged
+struct LoadRule : boost::spirit::x3::position_tagged
 {
     std::vector<Condition> conditions;
     Identifier feature;
@@ -86,14 +85,14 @@ struct LoadRule : x3::position_tagged
     std::vector<Effect> effects;
 };
 
-struct OrderTerm : x3::position_tagged
+struct OrderTerm : boost::spirit::x3::position_tagged
 {
     OrderDirection direction;
     Identifier feature;
 };
 
 template<runir::kr::dl::CategoryTag Category>
-struct ChooseRule : x3::position_tagged
+struct ChooseRule : boost::spirit::x3::position_tagged
 {
     std::vector<Condition> conditions;
     Identifier feature;
@@ -102,13 +101,13 @@ struct ChooseRule : x3::position_tagged
     std::vector<OrderTerm> order;
 };
 
-struct SketchRule : x3::position_tagged
+struct SketchRule : boost::spirit::x3::position_tagged
 {
     std::vector<Condition> conditions;
     std::vector<Effect> effects;
 };
 
-struct DoRule : x3::position_tagged
+struct DoRule : boost::spirit::x3::position_tagged
 {
     std::vector<Condition> conditions;
     Identifier action;
@@ -116,7 +115,7 @@ struct DoRule : x3::position_tagged
     std::vector<Effect> effects;
 };
 
-struct ActionRule : x3::position_tagged
+struct ActionRule : boost::spirit::x3::position_tagged
 {
     std::vector<Condition> conditions;
     Identifier action;
@@ -124,14 +123,14 @@ struct ActionRule : x3::position_tagged
     std::vector<Effect> effects;
 };
 
-struct CallRule : x3::position_tagged
+struct CallRule : boost::spirit::x3::position_tagged
 {
     std::vector<Condition> conditions;
     Identifier callee;
     std::vector<SymbolExpression> arguments;
 };
 
-struct BacktrackRule : x3::position_tagged
+struct BacktrackRule : boost::spirit::x3::position_tagged
 {
     std::vector<Condition> conditions;
 };
@@ -146,7 +145,7 @@ using Rule = PositionedVariant<LoadRule<runir::kr::dl::ConceptTag>,
                                ActionRule,
                                BacktrackRule>;
 
-struct RuleEntry : x3::position_tagged
+struct RuleEntry : boost::spirit::x3::position_tagged
 {
     Identifier symbol;
     Identifier source;
@@ -154,7 +153,7 @@ struct RuleEntry : x3::position_tagged
     std::vector<Rule> rules;
 };
 
-struct Module : x3::position_tagged
+struct Module : boost::spirit::x3::position_tagged
 {
     Identifier name;
     std::vector<ArgumentVariant> arguments;
@@ -165,7 +164,7 @@ struct Module : x3::position_tagged
     std::vector<RuleEntry> rule_entries;
 };
 
-struct Program : x3::position_tagged
+struct Program : boost::spirit::x3::position_tagged
 {
     Identifier entry;
     std::vector<Module> modules;

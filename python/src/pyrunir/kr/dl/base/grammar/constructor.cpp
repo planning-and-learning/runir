@@ -18,9 +18,8 @@ void bind_constructor_data(nb::module_& m, const char* name)
     using Data = ygg::Data<runir::kr::dl::grammar::Constructor<runir::kr::BaseFamilyTag, Category>>;
     auto cls = nb::class_<Data>(m, name)
                    .def(nb::init<>())
-                   .def(nb::init<typename Data::Variant>(), nb::arg("variant"))
-                   .def(nb::init<typename Data::template ViewVariant<runir::kr::dl::grammar::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>>>(),
-                        nb::arg("variant"))
+                   .def(nb::init<DataVariant<Data>>(), nb::arg("variant"))
+                   .def(nb::init<DataViewVariant<Data, runir::kr::dl::grammar::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>>>(), nb::arg("variant"))
                    .def_rw("index", &Data::index)
                    .def_rw("variant", &Data::variant);
     ygg::add_comparison(cls);

@@ -17,6 +17,8 @@ BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::QueryProje
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::QueryRename)(Family), columns, arg)
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::QuerySelectEqual)(Family), lhs_column, rhs_column, arg)
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::QuerySelectValue)(Family), column, object_name, arg)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::QueryGenericJoin)(Family), variable_order, output_order, args)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::QueryEmpty)(Family), columns)
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::ConceptProject)(Family), columns, arg)
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::RoleProject)(Family), columns, arg)
 

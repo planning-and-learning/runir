@@ -14,8 +14,6 @@
 namespace runir::kr::ps::icp
 {
 
-using namespace nanobind::literals;
-
 namespace
 {
 
@@ -56,6 +54,7 @@ auto bind_rule_view(nb::module_& m, const char* name)
 
 void bind_rule(nb::module_& m, RepositoryBinding& repository)
 {
+    using namespace nb::literals;
     using ConceptLoad = Rule<LoadTag<runir::kr::dl::ConceptTag>>;
     using RoleLoad = Rule<LoadTag<runir::kr::dl::RoleTag>>;
     using Crule = Rule<CruleTag>;

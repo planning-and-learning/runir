@@ -9,10 +9,9 @@
 namespace runir::kr::ps::ext::dl
 {
 
-using namespace nanobind::literals;
-
 void bind_parser(nb::module_& m)
 {
+    using namespace nb::literals;
     m.def(
         "parse_module",
         [](const std::string& description, tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::ext::Repository& repository)

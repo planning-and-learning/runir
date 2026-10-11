@@ -13,19 +13,18 @@
 
 namespace runir::kr::ps::base::dl::parser
 {
-namespace x3 = boost::spirit::x3;
 
+using boost::spirit::x3::attr;
+using boost::spirit::x3::eoi;
+using boost::spirit::x3::lexeme;
+using boost::spirit::x3::lit;
+using boost::spirit::x3::raw;
 using runir::kr::parser::keyword;
-using x3::attr;
-using x3::eoi;
-using x3::lexeme;
-using x3::lit;
-using x3::raw;
 using ygg::diagnostics::context;
 
-using x3::ascii::alnum;
-using x3::ascii::alpha;
-using x3::ascii::char_;
+using boost::spirit::x3::ascii::alnum;
+using boost::spirit::x3::ascii::alpha;
+using boost::spirit::x3::ascii::char_;
 
 struct IdentifierText
 {
@@ -56,7 +55,7 @@ base_rule_type const rule = "rule";
 base_sketch_type const sketch = "sketch";
 base_sketch_root_type const sketch_root = "sketch_root";
 
-const auto identifier_def = x3::rule<IdentifierText, std::string> { "identifier_text" } =
+const auto identifier_def = boost::spirit::x3::rule<IdentifierText, std::string> { "identifier_text" } =
     raw[lexeme[(alpha | char_('_')) >> *(alnum | char_('_') | char_('-'))]];
 
 const auto symbol_value_def = identifier;
@@ -107,61 +106,61 @@ struct IdentifierClass : runir::kr::parser::ErrorHandlerBase
 {
 };
 
-struct BooleanFeatureClass : x3::annotate_on_success
+struct BooleanFeatureClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct NumericalFeatureClass : x3::annotate_on_success
+struct NumericalFeatureClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct FeatureClass : x3::annotate_on_success
-{
-};
-
-struct PositiveConditionClass : x3::annotate_on_success
-{
-};
-struct NegativeConditionClass : x3::annotate_on_success
-{
-};
-struct EqualZeroConditionClass : x3::annotate_on_success
-{
-};
-struct GreaterZeroConditionClass : x3::annotate_on_success
-{
-};
-struct ConditionObservationClass : x3::annotate_on_success
-{
-};
-struct ConditionClass : x3::annotate_on_success
+struct FeatureClass : boost::spirit::x3::annotate_on_success
 {
 };
 
-struct PositiveEffectClass : x3::annotate_on_success
+struct PositiveConditionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct NegativeEffectClass : x3::annotate_on_success
+struct NegativeConditionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct UnchangedEffectClass : x3::annotate_on_success
+struct EqualZeroConditionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct IncreasesEffectClass : x3::annotate_on_success
+struct GreaterZeroConditionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct DecreasesEffectClass : x3::annotate_on_success
+struct ConditionObservationClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct EffectObservationClass : x3::annotate_on_success
-{
-};
-struct EffectClass : x3::annotate_on_success
+struct ConditionClass : boost::spirit::x3::annotate_on_success
 {
 };
 
-struct RuleClass : x3::annotate_on_success
+struct PositiveEffectClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct SketchClass : x3::annotate_on_success
+struct NegativeEffectClass : boost::spirit::x3::annotate_on_success
+{
+};
+struct UnchangedEffectClass : boost::spirit::x3::annotate_on_success
+{
+};
+struct IncreasesEffectClass : boost::spirit::x3::annotate_on_success
+{
+};
+struct DecreasesEffectClass : boost::spirit::x3::annotate_on_success
+{
+};
+struct EffectObservationClass : boost::spirit::x3::annotate_on_success
+{
+};
+struct EffectClass : boost::spirit::x3::annotate_on_success
+{
+};
+
+struct RuleClass : boost::spirit::x3::annotate_on_success
+{
+};
+struct SketchClass : boost::spirit::x3::annotate_on_success
 {
 };
 struct SketchRootClass : runir::kr::parser::ErrorHandlerBase

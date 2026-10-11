@@ -42,7 +42,7 @@ class SuccessorExpander
 {
 public:
     using StorageType = ExecutionStorage;
-    using StoredState = typename ExecutionStorage::StoredState;
+    using StoredState = StorageStoredState<ExecutionStorage>;
 
     SuccessorExpander(runir::kr::TaskContextPtr<Kind> task_context, ProgramView program) :
         m_task_context(task_context ? std::move(task_context) : throw std::invalid_argument("SuccessorExpander requires a task context.")),
@@ -89,10 +89,10 @@ public:
         get_environment().reset_source();
         get_environment().select_source(state);
         bool emitted = false;
-        const auto emit_expansion = [&](auto expansion)
+        const auto emit_expansion = [&]<typename Expansion>(Expansion expansion)
         {
             emitted = true;
-            if constexpr (std::same_as<decltype(expansion), Step>)
+            if constexpr (std::same_as<Expansion, Step>)
                 statistics.num_generated += expansion.status == detail::ProgramOutcome::APPLIED || expansion.status == detail::ProgramOutcome::RESTORED_CALLER;
             return emit(std::move(expansion));
         };
@@ -131,7 +131,7 @@ public:
     /// Load, Choose, Call, and empty-effect Sketch rules derive their own control transition.
     /// Backtrack emits failure without requiring a planning successor.
     std::optional<detail::ProgramStep<Kind, ExecutionStorage>>
-    apply(typename ExecutionStorage::StateView state, RuleVariantView rule, std::optional<tyr::planning::LabeledNode<Kind>> candidate = std::nullopt)
+    apply(StorageStateView<ExecutionStorage> state, RuleVariantView rule, std::optional<tyr::planning::LabeledNode<Kind>> candidate = std::nullopt)
     {
         validate_source(state);
         if (candidate)

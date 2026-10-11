@@ -61,7 +61,7 @@ private:
     runir::kr::TaskContextPtr<Kind> m_task_context;
 
 public:
-    using StoredState = typename Storage::StoredState;
+    using StoredState = StorageStoredState<Storage>;
     ProgramOutcome status;
     StoredState target;
     std::optional<datasets::StateGraphEdgeLabel> state_transition = std::nullopt;
@@ -82,13 +82,13 @@ public:
 };
 
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage>
-ProgramStep<Kind, Storage> make_step(ProgramOutcome status, typename Storage::StoredState state, const runir::kr::TaskContextPtr<Kind>& task_context)
+ProgramStep<Kind, Storage> make_step(ProgramOutcome status, StorageStoredState<Storage> state, const runir::kr::TaskContextPtr<Kind>& task_context)
 {
     return ProgramStep<Kind, Storage>(status, std::move(state), task_context);
 }
 
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage>
-ProgramStep<Kind, Storage> applied(typename Storage::StoredState state, RuleVariantView rule, const runir::kr::TaskContextPtr<Kind>& task_context)
+ProgramStep<Kind, Storage> applied(StorageStoredState<Storage> state, RuleVariantView rule, const runir::kr::TaskContextPtr<Kind>& task_context)
 {
     auto step = make_step<Kind, Storage>(ProgramOutcome::APPLIED, std::move(state), task_context);
     step.rule = rule;

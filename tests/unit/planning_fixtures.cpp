@@ -14,11 +14,8 @@ namespace runir::tests
 auto make_ground_context(const std::filesystem::path& domain_file,
                          const std::filesystem::path& task_file) -> datasets::TaskSearchContextPtr<tyr::GroundTag>
 {
-    namespace fp = tyr::formalism::planning;
-    namespace p = tyr::planning;
-
     auto execution_context = ygg::ExecutionContext::create(1);
-    auto lifted_task = p::Task<tyr::LiftedTag>::create(fp::Parser(domain_file).parse_task(task_file));
+    auto lifted_task = tyr::planning::Task<tyr::LiftedTag>::create(tyr::formalism::planning::Parser(domain_file).parse_task(task_file));
     auto task = lifted_task->instantiate_ground_task(*execution_context).task;
     return datasets::TaskSearchContext<tyr::GroundTag>::create(std::move(task), std::move(execution_context));
 }
@@ -26,21 +23,15 @@ auto make_ground_context(const std::filesystem::path& domain_file,
 auto make_lifted_context(const std::filesystem::path& domain_file,
                          const std::filesystem::path& task_file) -> datasets::TaskSearchContextPtr<tyr::LiftedTag>
 {
-    namespace fp = tyr::formalism::planning;
-    namespace p = tyr::planning;
-
     auto execution_context = ygg::ExecutionContext::create(1);
-    auto task = p::Task<tyr::LiftedTag>::create(fp::Parser(domain_file).parse_task(task_file));
+    auto task = tyr::planning::Task<tyr::LiftedTag>::create(tyr::formalism::planning::Parser(domain_file).parse_task(task_file));
     return datasets::TaskSearchContext<tyr::LiftedTag>::create(std::move(task), std::move(execution_context));
 }
 
 auto make_ground_contexts(const std::filesystem::path& domain_file,
                           const std::vector<std::filesystem::path>& task_files) -> datasets::TaskSearchContextList<tyr::GroundTag>
 {
-    namespace fp = tyr::formalism::planning;
-    namespace p = tyr::planning;
-
-    auto parser = fp::Parser(domain_file);
+    auto parser = tyr::formalism::planning::Parser(domain_file);
     auto execution_context = ygg::ExecutionContext::create(1);
     auto contexts = datasets::TaskSearchContextList<tyr::GroundTag> {};
     contexts.reserve(task_files.size());
@@ -48,7 +39,7 @@ auto make_ground_contexts(const std::filesystem::path& domain_file,
     for (const auto& task_file : task_files)
     {
         const auto planning_task = parser.parse_task(task_file);
-        auto lifted_task = p::Task<tyr::LiftedTag>(planning_task);
+        auto lifted_task = tyr::planning::Task<tyr::LiftedTag>(planning_task);
         auto task = lifted_task.instantiate_ground_task(*execution_context).task;
         contexts.push_back(datasets::TaskSearchContext<tyr::GroundTag>::create(task, execution_context));
     }

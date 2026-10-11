@@ -24,19 +24,19 @@ auto num_vertices(const G& graph) -> typename boost::graph_traits<G>::vertices_s
 }
 
 template<IsGraph G>
-auto source(typename boost::graph_traits<G>::edge_descriptor edge, const G& graph) -> typename boost::graph_traits<G>::vertex_descriptor
+auto source(EdgeIndex edge, const G& graph) -> VertexIndex
 {
     return graph.get_source(edge);
 }
 
 template<IsGraph G>
-auto target(typename boost::graph_traits<G>::edge_descriptor edge, const G& graph) -> typename boost::graph_traits<G>::vertex_descriptor
+auto target(EdgeIndex edge, const G& graph) -> VertexIndex
 {
     return graph.get_target(edge);
 }
 
 template<IsGraph G>
-auto out_edges(typename boost::graph_traits<G>::vertex_descriptor vertex,
+auto out_edges(VertexIndex vertex,
                const G& graph) -> std::pair<typename boost::graph_traits<G>::out_edge_iterator, typename boost::graph_traits<G>::out_edge_iterator>
 {
     auto&& range = graph.get_out_edge_indices(vertex);
@@ -44,7 +44,7 @@ auto out_edges(typename boost::graph_traits<G>::vertex_descriptor vertex,
 }
 
 template<IsGraph G>
-auto out_degree(typename boost::graph_traits<G>::vertex_descriptor vertex, const G& graph) -> typename boost::graph_traits<G>::degree_size_type
+auto out_degree(VertexIndex vertex, const G& graph) -> typename boost::graph_traits<G>::degree_size_type
 {
     return graph.get_out_degree(vertex);
 }

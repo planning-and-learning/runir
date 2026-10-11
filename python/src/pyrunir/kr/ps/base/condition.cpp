@@ -14,10 +14,9 @@
 namespace runir::kr::ps::base
 {
 
-using namespace nanobind::literals;
-
 void bind_condition(nb::module_& m, RepositoryBinding& repository)
 {
+    using namespace nb::literals;
     using T = runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>;
     using Data = ygg::Data<T>;
     using View = ygg::View<ygg::Index<T>, Repository>;

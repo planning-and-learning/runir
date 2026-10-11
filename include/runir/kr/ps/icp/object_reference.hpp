@@ -22,6 +22,7 @@ struct ResetPair
     ygg::Index<ps::Feature<IcpFamilyTag, runir::kr::dl::ConceptTag>> before;
     ygg::Index<ps::Feature<IcpFamilyTag, runir::kr::dl::ConceptTag>> after;
 
+    auto cista_members() noexcept { return std::tie(before, after); }
     auto cista_members() const noexcept { return std::tie(before, after); }
     auto identifying_members() const noexcept { return std::tie(before, after); }
     bool operator==(const ResetPair&) const = default;

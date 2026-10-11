@@ -40,17 +40,16 @@ TEST(RunirTests, ExtGrammarNumericReferencesFormatWithoutExternalNames)
 
 TEST(RunirTests, GrammarSharedInterningCanonicalizesOperands)
 {
-    namespace grammar = kr::dl::grammar;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-    auto repository = grammar::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_repository);
-    auto data = ygg::Data<grammar::Concept<kr::ExtFamilyTag, kr::dl::IntersectionTag>>();
+    auto repository = kr::dl::grammar::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_repository);
+    auto data = ygg::Data<kr::dl::grammar::Concept<kr::ExtFamilyTag, kr::dl::IntersectionTag>>();
     data.lhs = decltype(data.lhs)(2);
     data.rhs = decltype(data.rhs)(1);
     const auto [first, created] = ygg::formalism::insert(*repository, data);
     EXPECT_TRUE(created);
-    EXPECT_TRUE(grammar::is_canonical(data));
+    EXPECT_TRUE(kr::dl::grammar::is_canonical(data));
     std::swap(data.lhs, data.rhs);
-    const auto [same, duplicate_created] = grammar::insert(*repository, data);
+    const auto [same, duplicate_created] = kr::dl::grammar::insert(*repository, data);
     EXPECT_FALSE(duplicate_created);
     EXPECT_EQ(first.get_index(), same.get_index());
 }

@@ -2,8 +2,10 @@
 #define PYRUNIR_KR_PS_DL_BINDING_UTILS_HPP_
 
 #include "pyrunir/kr/binding_utils.hpp"
+#include "pyrunir/kr/ps/dl/optimization_bindings.hpp"
 
 #include <nanobind/stl/variant.h>
+#include <nanobind/stl/vector.h>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/condition_data.hpp>
 #include <runir/kr/ps/dl/declarations.hpp>
@@ -15,6 +17,7 @@
 #include <runir/kr/ps/syntactic_complexity.hpp>
 #include <string>
 #include <utility>
+#include <vector>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
@@ -31,8 +34,8 @@ auto bind_variant(nb::module_& m, nb::class_<Repository>& repository, const std:
     ygg::bind_index<ygg::Index<T>>(m, (name + "Index").c_str());
     auto data = nb::class_<Data>(m, (name + "Data").c_str())
                     .def(nb::init<>())
-                    .def(nb::init<typename Data::Variant>(), nb::arg("variant"))
-                    .def(nb::init<typename Data::template ViewVariant<Repository>>(), nb::arg("variant"))
+                    .def(nb::init<DataVariant<Data>>(), nb::arg("variant"))
+                    .def(nb::init<DataViewVariant<Data, Repository>>(), nb::arg("variant"))
                     .def_rw("index", &Data::index)
                     .def_rw("variant", &Data::variant);
     ygg::add_comparison(data);
@@ -58,6 +61,7 @@ auto bind_feature(nb::module_& m, nb::class_<Repository>& repository, const std:
         .def("get_expression", &FeatureView::get_expression, nb::keep_alive<0, 1>())
         .def("get_symbol", &FeatureView::get_symbol)
         .def("syntactic_complexity", [](FeatureView value) { return runir::kr::ps::syntactic_complexity(value); });
+    bind_ps_optimize<Family, Repository>(feature);
 
     const auto concrete_name = "Concrete" + name;
     ygg::bind_index<ygg::Index<ConcreteFeature>>(m, (concrete_name + "Index").c_str());

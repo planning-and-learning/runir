@@ -14,8 +14,6 @@
 namespace runir::kr::ps::icp
 {
 
-using namespace nanobind::literals;
-
 void bind_module(nb::module_& m, RepositoryBinding& repository)
 {
     using T = Module;

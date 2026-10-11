@@ -24,8 +24,8 @@ template<typename Tag, typename Class>
 void def_predicate_data_constructors(Class& cls)
 {
     using namespace nb::literals;
-    cls.def(nb::init<ygg::Index<tyr::formalism::Predicate<typename Tag::FactKind>>, bool>(), "predicate"_a, "polarity"_a)
-        .def(nb::init<tyr::formalism::planning::PredicateView<typename Tag::FactKind>, bool>(), "predicate"_a, "polarity"_a);
+    cls.def(nb::init<ygg::Index<tyr::formalism::Predicate<TagFactKind<Tag>>>, bool>(), "predicate"_a, "polarity"_a)
+        .def(nb::init<tyr::formalism::planning::PredicateView<TagFactKind<Tag>>, bool>(), "predicate"_a, "polarity"_a);
 }
 
 template<typename ArgIndex, typename Repository, typename Class>

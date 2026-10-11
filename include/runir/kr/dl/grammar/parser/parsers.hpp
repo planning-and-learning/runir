@@ -10,15 +10,13 @@
 
 namespace runir::kr::dl::grammar::parser
 {
-namespace x3 = boost::spirit::x3;
-namespace ast = runir::kr::dl::grammar::ast;
 
 using iterator_type = runir::kr::parser::Iterator;
 using context_type = runir::kr::parser::Context;
 using ErrorHandlerBase = runir::kr::parser::ErrorHandlerBase;
 
 template<typename Ast>
-struct QueryClass : x3::annotate_on_success
+struct QueryClass : boost::spirit::x3::annotate_on_success
 {
 };
 
@@ -30,11 +28,11 @@ struct ObjectNameClass : ErrorHandlerBase
 {
 };
 
-struct IdentifierClass : x3::annotate_on_success
+struct IdentifierClass : boost::spirit::x3::annotate_on_success
 {
 };
 
-struct NumericReferenceClass : x3::annotate_on_success
+struct NumericReferenceClass : boost::spirit::x3::annotate_on_success
 {
 };
 
@@ -60,12 +58,12 @@ struct NonTerminalNameTextClass
 };
 
 template<runir::kr::dl::CategoryTag Category>
-struct ArgumentReferenceClass : x3::annotate_on_success
+struct ArgumentReferenceClass : boost::spirit::x3::annotate_on_success
 {
 };
 
 template<runir::kr::dl::CategoryTag Category>
-struct RegisterReferenceClass : x3::annotate_on_success
+struct RegisterReferenceClass : boost::spirit::x3::annotate_on_success
 {
 };
 
@@ -75,7 +73,7 @@ struct NonTerminalNameClass : ErrorHandlerBase
 };
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-struct ConstructorClass : x3::annotate_on_success
+struct ConstructorClass : boost::spirit::x3::annotate_on_success
 {
 };
 
@@ -85,42 +83,42 @@ struct ConstructorRootClass : ErrorHandlerBase
 };
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-struct NonTerminalClass : x3::annotate_on_success
+struct NonTerminalClass : boost::spirit::x3::annotate_on_success
 {
 };
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-struct ConstructorOrNonTerminalClass : x3::annotate_on_success
+struct ConstructorOrNonTerminalClass : boost::spirit::x3::annotate_on_success
 {
 };
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-struct DerivationRuleClass : x3::annotate_on_success
+struct DerivationRuleClass : boost::spirit::x3::annotate_on_success
 {
 };
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename Tag>
-struct ConstructorTagClass : x3::annotate_on_success
+struct ConstructorTagClass : boost::spirit::x3::annotate_on_success
 {
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct ConstructorOrNonTerminalVariantClass : x3::annotate_on_success
+struct ConstructorOrNonTerminalVariantClass : boost::spirit::x3::annotate_on_success
 {
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct DerivationRuleVariantClass : x3::annotate_on_success
+struct DerivationRuleVariantClass : boost::spirit::x3::annotate_on_success
 {
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct GrammarBodyClass : x3::annotate_on_success
+struct GrammarBodyClass : boost::spirit::x3::annotate_on_success
 {
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct GrammarClass : x3::annotate_on_success
+struct GrammarClass : boost::spirit::x3::annotate_on_success
 {
 };
 
@@ -129,85 +127,92 @@ struct GrammarRootClass : ErrorHandlerBase
 {
 };
 
-using predicate_name_type = x3::rule<PredicateNameClass, ast::Identifier>;
-using object_name_type = x3::rule<ObjectNameClass, ast::Identifier>;
-using identifier_type = x3::rule<IdentifierClass, ast::Identifier>;
-using numeric_reference_type = x3::rule<NumericReferenceClass, ast::NumericReference>;
+using predicate_name_type = boost::spirit::x3::rule<PredicateNameClass, ast::Identifier>;
+using object_name_type = boost::spirit::x3::rule<ObjectNameClass, ast::Identifier>;
+using identifier_type = boost::spirit::x3::rule<IdentifierClass, ast::Identifier>;
+using numeric_reference_type = boost::spirit::x3::rule<NumericReferenceClass, ast::NumericReference>;
 
 template<runir::kr::dl::CategoryTag Category>
-using argument_reference_type = x3::rule<ArgumentReferenceClass<Category>, ast::ArgumentReference<Category>>;
+using argument_reference_type = boost::spirit::x3::rule<ArgumentReferenceClass<Category>, ast::ArgumentReference<Category>>;
 
 template<runir::kr::dl::CategoryTag Category>
-using register_reference_type = x3::rule<RegisterReferenceClass<Category>, ast::RegisterReference<Category>>;
+using register_reference_type = boost::spirit::x3::rule<RegisterReferenceClass<Category>, ast::RegisterReference<Category>>;
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-using constructor_type = x3::rule<ConstructorClass<Family, Category>, ast::Constructor<Family, Category>>;
+using constructor_type = boost::spirit::x3::rule<ConstructorClass<Family, Category>, ast::Constructor<Family, Category>>;
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-using constructor_root_type = x3::rule<ConstructorRootClass<Family, Category>, ast::Constructor<Family, Category>>;
+using constructor_root_type = boost::spirit::x3::rule<ConstructorRootClass<Family, Category>, ast::Constructor<Family, Category>>;
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-using non_terminal_type = x3::rule<NonTerminalClass<Family, Category>, ast::NonTerminal<Family, Category>>;
+using non_terminal_type = boost::spirit::x3::rule<NonTerminalClass<Family, Category>, ast::NonTerminal<Family, Category>>;
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-using choice_type = x3::rule<ConstructorOrNonTerminalClass<Family, Category>, ast::ConstructorOrNonTerminal<Family, Category>>;
+using choice_type = boost::spirit::x3::rule<ConstructorOrNonTerminalClass<Family, Category>, ast::ConstructorOrNonTerminal<Family, Category>>;
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-using derivation_rule_type = x3::rule<DerivationRuleClass<Family, Category>, ast::DerivationRule<Family, Category>>;
+using derivation_rule_type = boost::spirit::x3::rule<DerivationRuleClass<Family, Category>, ast::DerivationRule<Family, Category>>;
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename Tag>
-using constructor_tag_type = x3::rule<ConstructorTagClass<Family, Category, Tag>, ast::Constructor<Family, Category, Tag>>;
+using constructor_tag_type = boost::spirit::x3::rule<ConstructorTagClass<Family, Category, Tag>, ast::Constructor<Family, Category, Tag>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using query_atomic_state_type = x3::rule<QueryClass<ast::QueryAtomicState<Family>>, ast::QueryAtomicState<Family>>;
+using query_atomic_state_type = boost::spirit::x3::rule<QueryClass<ast::QueryAtomicState<Family>>, ast::QueryAtomicState<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using query_atomic_goal_type = x3::rule<QueryClass<ast::QueryAtomicGoal<Family>>, ast::QueryAtomicGoal<Family>>;
+using query_atomic_goal_type = boost::spirit::x3::rule<QueryClass<ast::QueryAtomicGoal<Family>>, ast::QueryAtomicGoal<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using query_concept_type = x3::rule<QueryClass<ast::QueryConcept<Family>>, ast::QueryConcept<Family>>;
+using query_concept_type = boost::spirit::x3::rule<QueryClass<ast::QueryConcept<Family>>, ast::QueryConcept<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using query_role_type = x3::rule<QueryClass<ast::QueryRole<Family>>, ast::QueryRole<Family>>;
+using query_role_type = boost::spirit::x3::rule<QueryClass<ast::QueryRole<Family>>, ast::QueryRole<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using query_join_type = x3::rule<QueryClass<ast::QueryJoin<Family>>, ast::QueryJoin<Family>>;
+using query_join_type = boost::spirit::x3::rule<QueryClass<ast::QueryJoin<Family>>, ast::QueryJoin<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using query_project_type = x3::rule<QueryClass<ast::QueryProject<Family>>, ast::QueryProject<Family>>;
+using query_project_type = boost::spirit::x3::rule<QueryClass<ast::QueryProject<Family>>, ast::QueryProject<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using query_rename_type = x3::rule<QueryClass<ast::QueryRename<Family>>, ast::QueryRename<Family>>;
+using query_rename_type = boost::spirit::x3::rule<QueryClass<ast::QueryRename<Family>>, ast::QueryRename<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using query_select_equal_type = x3::rule<QueryClass<ast::QuerySelectEqual<Family>>, ast::QuerySelectEqual<Family>>;
+using query_select_equal_type = boost::spirit::x3::rule<QueryClass<ast::QuerySelectEqual<Family>>, ast::QuerySelectEqual<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using query_select_value_type = x3::rule<QueryClass<ast::QuerySelectValue<Family>>, ast::QuerySelectValue<Family>>;
+using query_select_value_type = boost::spirit::x3::rule<QueryClass<ast::QuerySelectValue<Family>>, ast::QuerySelectValue<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using query_union_type = x3::rule<QueryClass<ast::QueryUnion<Family>>, ast::QueryUnion<Family>>;
+using query_union_type = boost::spirit::x3::rule<QueryClass<ast::QueryUnion<Family>>, ast::QueryUnion<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using query_difference_type = x3::rule<QueryClass<ast::QueryDifference<Family>>, ast::QueryDifference<Family>>;
+using query_difference_type = boost::spirit::x3::rule<QueryClass<ast::QueryDifference<Family>>, ast::QueryDifference<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using query_type = x3::rule<QueryClass<ast::Query<Family>>, ast::Query<Family>>;
+using query_generic_join_type = boost::spirit::x3::rule<QueryClass<ast::QueryGenericJoin<Family>>, ast::QueryGenericJoin<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using constructor_or_non_terminal_variant_type = x3::rule<ConstructorOrNonTerminalVariantClass<Family>, ast::ConstructorOrNonTerminalVariant<Family>>;
+using query_empty_type = boost::spirit::x3::rule<QueryClass<ast::QueryEmpty<Family>>, ast::QueryEmpty<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using derivation_rule_variant_type = x3::rule<DerivationRuleVariantClass<Family>, ast::DerivationRuleVariant<Family>>;
+using query_type = boost::spirit::x3::rule<QueryClass<ast::Query<Family>>, ast::Query<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using grammar_body_type = x3::rule<GrammarBodyClass<Family>, std::vector<ast::DerivationRuleVariant<Family>>>;
+using constructor_or_non_terminal_variant_type =
+    boost::spirit::x3::rule<ConstructorOrNonTerminalVariantClass<Family>, ast::ConstructorOrNonTerminalVariant<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using grammar_type = x3::rule<GrammarClass<Family>, ast::Grammar<Family>>;
+using derivation_rule_variant_type = boost::spirit::x3::rule<DerivationRuleVariantClass<Family>, ast::DerivationRuleVariant<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using grammar_root_type = x3::rule<GrammarRootClass<Family>, ast::Grammar<Family>>;
+using grammar_body_type = boost::spirit::x3::rule<GrammarBodyClass<Family>, std::vector<ast::DerivationRuleVariant<Family>>>;
+
+template<runir::kr::dl::FamilyTag Family>
+using grammar_type = boost::spirit::x3::rule<GrammarClass<Family>, ast::Grammar<Family>>;
+
+template<runir::kr::dl::FamilyTag Family>
+using grammar_root_type = boost::spirit::x3::rule<GrammarRootClass<Family>, ast::Grammar<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
 using concept_type = constructor_type<Family, runir::kr::dl::ConceptTag>;

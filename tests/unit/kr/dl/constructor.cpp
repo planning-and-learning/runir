@@ -87,12 +87,11 @@ static_assert(view_aliases<kr::UnsFamilyTag>(kr::dl::CategoryTags {}));
 
 TEST(RunirKrDlConstructor, PreservesConcreteVariant)
 {
-    namespace dl = kr::dl;
     using Family = kr::BaseFamilyTag;
-    using Concrete = dl::Concept<Family, dl::TopTag>;
-    using Constructor = dl::Constructor<Family, dl::ConceptTag>;
+    using Concrete = kr::dl::Concept<Family, kr::dl::TopTag>;
+    using Constructor = kr::dl::Constructor<Family, kr::dl::ConceptTag>;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-    auto repository = dl::BaseConstructorRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::BaseConstructorRepositoryFactory().create(planning_repository);
     auto data = ygg::Data<Constructor>(ygg::Index<Concrete>(6));
     const auto constructor = repository->insert(data).first;
 
@@ -102,28 +101,27 @@ TEST(RunirKrDlConstructor, PreservesConcreteVariant)
 
 TEST(RunirKrDlConstructor, SharedInterningCanonicalizesAndPrepares)
 {
-    namespace dl = kr::dl;
-    const auto check = []<dl::FamilyTag Family>()
+    const auto check = []<kr::dl::FamilyTag Family>()
     {
         auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-        auto repository = dl::ConstructorRepositoryFactoryFor<Family>().create(planning_repository);
-        auto top = ygg::Data<dl::Concept<Family, dl::TopTag>>();
-        auto bot = ygg::Data<dl::Concept<Family, dl::BotTag>>();
-        auto first_data = ygg::Data<dl::Constructor<Family, dl::ConceptTag>>(ygg::formalism::insert(*repository, top).first.get_index());
-        auto second_data = ygg::Data<dl::Constructor<Family, dl::ConceptTag>>(ygg::formalism::insert(*repository, bot).first.get_index());
+        auto repository = kr::dl::ConstructorRepositoryFactoryFor<Family>().create(planning_repository);
+        auto top = ygg::Data<kr::dl::Concept<Family, kr::dl::TopTag>>();
+        auto bot = ygg::Data<kr::dl::Concept<Family, kr::dl::BotTag>>();
+        auto first_data = ygg::Data<kr::dl::Constructor<Family, kr::dl::ConceptTag>>(ygg::formalism::insert(*repository, top).first.get_index());
+        auto second_data = ygg::Data<kr::dl::Constructor<Family, kr::dl::ConceptTag>>(ygg::formalism::insert(*repository, bot).first.get_index());
         const auto first = ygg::formalism::insert(*repository, first_data).first;
         const auto second = ygg::formalism::insert(*repository, second_data).first;
         EXPECT_TRUE(first.is_static());
         EXPECT_TRUE(second.is_static());
 
-        auto data = ygg::Data<dl::Concept<Family, dl::IntersectionTag>>(second.get_index(), first.get_index());
-        ASSERT_FALSE(dl::is_canonical(data));
+        auto data = ygg::Data<kr::dl::Concept<Family, kr::dl::IntersectionTag>>(second.get_index(), first.get_index());
+        ASSERT_FALSE(kr::dl::is_canonical(data));
         const auto [intersection, created] = ygg::formalism::insert(*repository, data);
         EXPECT_TRUE(created);
-        EXPECT_TRUE(dl::is_canonical(data));
+        EXPECT_TRUE(kr::dl::is_canonical(data));
         EXPECT_EQ(data.lhs, first.get_index());
         std::swap(data.lhs, data.rhs);
-        const auto [same, duplicate_created] = dl::insert(*repository, data);
+        const auto [same, duplicate_created] = kr::dl::insert(*repository, data);
         EXPECT_FALSE(duplicate_created);
         EXPECT_EQ(same.get_index(), intersection.get_index());
     };

@@ -196,36 +196,35 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
     ASSERT_EQ(checked.allocated, 4);
     ASSERT_EQ(checked.deallocated, 4);
 
-    namespace dl = kr::dl;
-    namespace sem = dl::semantics;
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/dl/query";
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
-    auto repository = dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(search->task->get_repository());
-    auto builder = sem::Builder();
-    auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
-    auto storage = sem::EvaluationStorage<kr::ExtFamilyTag>(denotations);
-    auto arguments = ygg::Data<sem::CallArguments>();
-    auto registers = ygg::Data<sem::RegisterValues>();
+    auto repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(search->task->get_repository());
+    auto builder = kr::dl::semantics::Builder();
+    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto storage = kr::dl::semantics::EvaluationStorage<kr::ExtFamilyTag>(denotations);
+    auto arguments = ygg::Data<kr::dl::semantics::CallArguments>();
+    auto registers = ygg::Data<kr::dl::semantics::RegisterValues>();
     registers.concept_values.resize(8);
     registers.role_values.resize(8);
     const auto object = search->task->get_domain().get_domain().get_constants()[0];
     registers.concept_values[5] = object.get_index();
     registers.role_values[7] = ::cista::pair(object.get_index(), object.get_index());
-    const auto empty_arguments = sem::insert(denotations, arguments).first;
-    const auto register_values = sem::insert(denotations, registers).first;
-    auto context = sem::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>(initial.get_state(), builder, storage, empty_arguments, register_values);
+    const auto empty_arguments = kr::dl::semantics::insert(denotations, arguments).first;
+    const auto register_values = kr::dl::semantics::insert(denotations, registers).first;
+    auto context =
+        kr::dl::semantics::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>(initial.get_state(), builder, storage, empty_arguments, register_values);
     const auto nominal = kr::ps::ext::dl::parse_concept(R"((c_nominal "a"))", search->task->get_domain().get_domain(), *repository);
-    auto persistent_memo = sem::DenotationCaches<kr::ExtFamilyTag> {};
-    auto persistent = sem::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>(initial.get_state(),
-                                                                                    builder,
-                                                                                    persistent_memo,
-                                                                                    denotations,
-                                                                                    storage,
-                                                                                    empty_arguments,
-                                                                                    register_values);
-    arguments.concept_arguments.push_back(sem::evaluate<tyr::GroundTag>(nominal, persistent).get_index());
-    const auto argument_values = sem::insert(denotations, arguments).first;
+    auto persistent_memo = kr::dl::semantics::DenotationCaches<kr::ExtFamilyTag> {};
+    auto persistent = kr::dl::semantics::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>(initial.get_state(),
+                                                                                                  builder,
+                                                                                                  persistent_memo,
+                                                                                                  denotations,
+                                                                                                  storage,
+                                                                                                  empty_arguments,
+                                                                                                  register_values);
+    arguments.concept_arguments.push_back(kr::dl::semantics::evaluate<tyr::GroundTag>(nominal, persistent).get_index());
+    const auto argument_values = kr::dl::semantics::insert(denotations, arguments).first;
     const auto expression = kr::ps::ext::dl::parse_numerical(
         R"((n_count (q_rename (source target)
                 (q_project (x z)
@@ -237,23 +236,27 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
     for (size_t i = 0; i < 8; ++i)
     {
         storage.reset_dynamic();
-        ASSERT_EQ(sem::evaluate<tyr::GroundTag>(expression, context).get(), 3);
+        ASSERT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(expression, context).get(), 3);
     }
 
     bool valid = true;
     allocation_tracking::Scope measured;
     for (size_t i = 0; i < 1000; ++i)
     {
-        auto borrowed = sem::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>(initial.get_state(), builder, storage, argument_values, register_values);
+        auto borrowed = kr::dl::semantics::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>(initial.get_state(),
+                                                                                                    builder,
+                                                                                                    storage,
+                                                                                                    argument_values,
+                                                                                                    register_values);
         auto copied = borrowed;
         valid &= &copied.get_workspace() == &builder.get_workspace();
         valid &= &copied.registers().get_data() == &register_values.get_data();
         valid &= &copied.arguments().get_data() == &argument_values.get_data();
-        valid &= copied.registers().at(dl::RegisterIdentifier<dl::ConceptTag>(5)).value().get_index() == object.get_index();
-        valid &= copied.registers().at(dl::RegisterIdentifier<dl::RoleTag>(7)).value().get_second().get_index() == object.get_index();
-        valid &= copied.arguments().at(dl::ArgumentIdentifier<dl::ConceptTag>(0)).get().count() == 1;
+        valid &= copied.registers().at(kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(5)).value().get_index() == object.get_index();
+        valid &= copied.registers().at(kr::dl::RegisterIdentifier<kr::dl::RoleTag>(7)).value().get_second().get_index() == object.get_index();
+        valid &= copied.arguments().at(kr::dl::ArgumentIdentifier<kr::dl::ConceptTag>(0)).get().count() == 1;
         storage.reset_dynamic();
-        valid &= sem::evaluate<tyr::GroundTag>(expression, copied).get() == 3;
+        valid &= kr::dl::semantics::evaluate<tyr::GroundTag>(expression, copied).get() == 3;
     }
     const auto counts = measured.finish();
 
@@ -264,21 +267,19 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
 
 TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
 {
-    namespace dl = kr::dl;
-    namespace sem = dl::semantics;
     using Ext = kr::ExtFamilyTag;
     using Fluent = tyr::formalism::FluentTag;
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/dl/query";
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
-    auto repository = dl::ConstructorRepositoryFactoryFor<Ext>().create(search->task->get_repository());
+    auto repository = kr::dl::ConstructorRepositoryFactoryFor<Ext>().create(search->task->get_repository());
     const auto count = kr::ps::ext::dl::parse_numerical(R"((n_count (q_project (x) (q_atomic_state "triple" (x y z)))))",
                                                         search->task->get_domain().get_domain(),
                                                         *repository);
-    const auto query = count.get_variant().get<ygg::Index<dl::Numerical<Ext, dl::CountTag>>>().get_arg().get<ygg::Index<dl::Query<Ext>>>();
-    const auto projected = query.get_variant().get<ygg::Index<dl::Query<Ext, dl::QueryProjectTag>>>();
-    const auto atomic = projected.get_arg().get_variant().get<ygg::Index<dl::Query<Ext, dl::AtomicStateTag<Fluent>>>>();
-    auto leaf = sem::incremental::detail::AtomicQueryEvaluator<Fluent>(atomic);
+    const auto query = count.get_variant().get<ygg::Index<kr::dl::Numerical<Ext, kr::dl::CountTag>>>().get_arg().get<ygg::Index<kr::dl::Query<Ext>>>();
+    const auto projected = query.get_variant().get<ygg::Index<kr::dl::Query<Ext, kr::dl::QueryProjectTag>>>();
+    const auto atomic = projected.get_arg().get_variant().get<ygg::Index<kr::dl::Query<Ext, kr::dl::AtomicStateTag<Fluent>>>>();
+    auto leaf = kr::dl::semantics::incremental::detail::AtomicQueryEvaluator<Fluent>(atomic);
     auto projection = ygg::database::incremental::ProjectionEvaluator<QueryValues>(projected.get_data().plan);
     auto workspace = ygg::database::Workspace<QueryValues> {};
     leaf.initialize<tyr::GroundTag>(initial.get_state());
@@ -286,7 +287,7 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
     ASSERT_EQ(leaf.get_result().size(), 4);
     ASSERT_EQ(projection.get_result().size(), 2);
 
-    auto registers = ygg::Data<sem::RegisterValues> {};
+    auto registers = ygg::Data<kr::dl::semantics::RegisterValues> {};
     const auto register_view = ygg::make_view(registers, *search->task->get_repository());
     const auto graph_count = kr::ps::ext::dl::parse_numerical(
         R"((n_count (q_project (x)
@@ -295,20 +296,21 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
                 (q_join (q_atomic_state "triple" (x y z)) (q_project () (q_atomic_state "fixed" (x y z))))))))",
         search->task->get_domain().get_domain(),
         *repository);
-    const auto graph_query = graph_count.get_variant().get<ygg::Index<dl::Numerical<Ext, dl::CountTag>>>().get_arg().get<ygg::Index<dl::Query<Ext>>>();
-    auto graph = sem::incremental::QueryEvaluator<Ext, tyr::GroundTag>(*search->task, graph_query);
-    auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
-    auto storage = sem::EvaluationStorage<Ext>(denotations);
-    auto builder = sem::Builder {};
-    auto argument_data = ygg::Data<sem::CallArguments> {};
-    const auto arguments = sem::insert(denotations, argument_data).first;
-    const auto register_values = sem::insert(denotations, registers).first;
-    auto context = sem::StateEvaluationContext<Ext, tyr::GroundTag>(initial.get_state(), builder, storage, arguments, register_values);
+    const auto graph_query =
+        graph_count.get_variant().get<ygg::Index<kr::dl::Numerical<Ext, kr::dl::CountTag>>>().get_arg().get<ygg::Index<kr::dl::Query<Ext>>>();
+    auto graph = kr::dl::semantics::incremental::QueryEvaluator<Ext, tyr::GroundTag>(*search->task, graph_query);
+    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto storage = kr::dl::semantics::EvaluationStorage<Ext>(denotations);
+    auto builder = kr::dl::semantics::Builder {};
+    auto argument_data = ygg::Data<kr::dl::semantics::CallArguments> {};
+    const auto arguments = kr::dl::semantics::insert(denotations, argument_data).first;
+    const auto register_values = kr::dl::semantics::insert(denotations, registers).first;
+    auto context = kr::dl::semantics::StateEvaluationContext<Ext, tyr::GroundTag>(initial.get_state(), builder, storage, arguments, register_values);
     graph.initialize(context);
     ASSERT_EQ(graph.get_result().size(), 2);
 
     // Build completed planning transitions before tracking evaluation allocations.
-    auto changes = std::array<sem::incremental::Delta<Ext>, 4> {};
+    auto changes = std::array<kr::dl::semantics::incremental::Delta<Ext>, 4> {};
     auto projected_sizes = std::array<size_t, 5> { 2 };
     auto current = initial;
     for (size_t i = 0; i < changes.size(); ++i)
@@ -376,60 +378,58 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
 
 TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
 {
-    namespace dl = kr::dl;
-    namespace sem = dl::semantics;
-    namespace parser = kr::ps::ext::dl;
     using Ext = kr::ExtFamilyTag;
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/dl/incremental";
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     const auto domain = search->task->get_domain().get_domain();
-    auto repository = dl::ConstructorRepositoryFactoryFor<Ext>().create(search->task->get_repository());
-    auto concepts = std::vector<sem::incremental::Evaluator<Ext, tyr::GroundTag, dl::ConceptTag>> {};
-    auto roles = std::vector<sem::incremental::Evaluator<Ext, tyr::GroundTag, dl::RoleTag>> {};
-    auto numericals = std::vector<sem::incremental::Evaluator<Ext, tyr::GroundTag, dl::NumericalTag>> {};
-    auto booleans = std::vector<sem::incremental::Evaluator<Ext, tyr::GroundTag, dl::BooleanTag>> {};
+    auto repository = kr::dl::ConstructorRepositoryFactoryFor<Ext>().create(search->task->get_repository());
+    auto concepts = std::vector<kr::dl::semantics::incremental::Evaluator<Ext, tyr::GroundTag, kr::dl::ConceptTag>> {};
+    auto roles = std::vector<kr::dl::semantics::incremental::Evaluator<Ext, tyr::GroundTag, kr::dl::RoleTag>> {};
+    auto numericals = std::vector<kr::dl::semantics::incremental::Evaluator<Ext, tyr::GroundTag, kr::dl::NumericalTag>> {};
+    auto booleans = std::vector<kr::dl::semantics::incremental::Evaluator<Ext, tyr::GroundTag, kr::dl::BooleanTag>> {};
     for (const auto expression : { R"((c_atomic_state "present"))", R"((c_atomic_state "copied-present"))", "(c_register 0)", R"((c_atomic_state "fixed"))" })
-        concepts.emplace_back(*search->task, parser::parse_concept(expression, domain, *repository));
+        concepts.emplace_back(*search->task, kr::ps::ext::dl::parse_concept(expression, domain, *repository));
     for (const auto expression : { R"((r_atomic_state "edge"))", R"((r_atomic_state "copied-edge"))", "(r_register 0)" })
-        roles.emplace_back(*search->task, parser::parse_role(expression, domain, *repository));
+        roles.emplace_back(*search->task, kr::ps::ext::dl::parse_role(expression, domain, *repository));
     for (const auto expression : { R"((c_atomic_state "present"))", R"((r_atomic_state "edge"))", "(c_register 0)", "(r_register 0)" })
     {
-        numericals.emplace_back(*search->task, parser::parse_numerical(std::string("(n_count ") + expression + ")", domain, *repository));
-        booleans.emplace_back(*search->task, parser::parse_boolean(std::string("(b_nonempty ") + expression + ")", domain, *repository));
+        numericals.emplace_back(*search->task, kr::ps::ext::dl::parse_numerical(std::string("(n_count ") + expression + ")", domain, *repository));
+        booleans.emplace_back(*search->task, kr::ps::ext::dl::parse_boolean(std::string("(b_nonempty ") + expression + ")", domain, *repository));
     }
 
-    const auto source = parser::parse_concept("(c_register 0)", domain, *repository);
-    const auto edge = parser::parse_role(R"((r_atomic_state "edge"))", domain, *repository);
-    const auto target = parser::parse_concept("(c_register 1)", domain, *repository);
-    const auto source_count = parser::parse_numerical("(n_count (c_register 0))", domain, *repository);
-    const auto edge_count = parser::parse_numerical(R"((n_count (r_atomic_state "edge")))", domain, *repository);
-    const auto distance = parser::parse_numerical(R"((n_distance (c_register 0) (r_atomic_state "edge") (c_register 1)))", domain, *repository);
-    const auto self_distance = parser::parse_numerical(R"((n_distance (c_register 0) (r_atomic_state "edge") (c_register 0)))", domain, *repository);
-    const auto closure = parser::parse_role(R"((r_transitive_closure (r_atomic_state "edge")))", domain, *repository);
-    const auto nonempty = parser::parse_boolean(R"((b_nonempty (c_some (r_atomic_state "edge") (c_atomic_state "present"))))", domain, *repository);
-    const auto projected = parser::parse_concept(R"((c_project x (q_role (x y) (r_atomic_state "edge"))))", domain, *repository);
-    const auto projected_role = parser::parse_role(R"((r_project y x (q_role (x y) (r_atomic_state "edge"))))", domain, *repository);
-    const auto query_count =
-        parser::parse_numerical(R"((n_count (q_project (x) (q_join (q_role (x y) (r_atomic_state "edge")) (q_concept z (c_atomic_state "present"))))))",
-                                domain,
-                                *repository);
-    auto roots = std::vector<sem::incremental::EvaluationRoot<Ext>> { source,        edge,    target,   source_count, edge_count,     distance,
-                                                                      self_distance, closure, nonempty, projected,    projected_role, query_count };
+    const auto source = kr::ps::ext::dl::parse_concept("(c_register 0)", domain, *repository);
+    const auto edge = kr::ps::ext::dl::parse_role(R"((r_atomic_state "edge"))", domain, *repository);
+    const auto target = kr::ps::ext::dl::parse_concept("(c_register 1)", domain, *repository);
+    const auto source_count = kr::ps::ext::dl::parse_numerical("(n_count (c_register 0))", domain, *repository);
+    const auto edge_count = kr::ps::ext::dl::parse_numerical(R"((n_count (r_atomic_state "edge")))", domain, *repository);
+    const auto distance = kr::ps::ext::dl::parse_numerical(R"((n_distance (c_register 0) (r_atomic_state "edge") (c_register 1)))", domain, *repository);
+    const auto self_distance = kr::ps::ext::dl::parse_numerical(R"((n_distance (c_register 0) (r_atomic_state "edge") (c_register 0)))", domain, *repository);
+    const auto closure = kr::ps::ext::dl::parse_role(R"((r_transitive_closure (r_atomic_state "edge")))", domain, *repository);
+    const auto nonempty = kr::ps::ext::dl::parse_boolean(R"((b_nonempty (c_some (r_atomic_state "edge") (c_atomic_state "present"))))", domain, *repository);
+    const auto projected = kr::ps::ext::dl::parse_concept(R"((c_project x (q_role (x y) (r_atomic_state "edge"))))", domain, *repository);
+    const auto projected_role = kr::ps::ext::dl::parse_role(R"((r_project y x (q_role (x y) (r_atomic_state "edge"))))", domain, *repository);
+    const auto query_count = kr::ps::ext::dl::parse_numerical(
+        R"((n_count (q_project (x) (q_join (q_role (x y) (r_atomic_state "edge")) (q_concept z (c_atomic_state "present"))))))",
+        domain,
+        *repository);
+    auto roots =
+        std::vector<kr::dl::semantics::incremental::EvaluationRoot<Ext>> { source,        edge,    target,   source_count, edge_count,     distance,
+                                                                           self_distance, closure, nonempty, projected,    projected_role, query_count };
     for (const auto expression : {
              R"((c_and (c_not (c_atomic_state "present")) (c_register 0)))",
              R"((c_at_least 1 (r_atomic_state "edge") (c_atomic_state "present")))",
          })
-        roots.emplace_back(parser::parse_concept(expression, domain, *repository));
+        roots.emplace_back(kr::ps::ext::dl::parse_concept(expression, domain, *repository));
     for (const auto expression : {
              R"((r_composition (r_atomic_state "edge") (r_atomic_state "edge")))",
              R"((r_complement (r_or (r_atomic_state "edge") (r_register 0))))",
          })
-        roots.emplace_back(parser::parse_role(expression, domain, *repository));
+        roots.emplace_back(kr::ps::ext::dl::parse_role(expression, domain, *repository));
     roots.emplace_back(
-        parser::parse_numerical(R"((n_add (n_distance (c_register 0) (r_atomic_state "edge") (c_register 1)) (n_const 1)))", domain, *repository));
+        kr::ps::ext::dl::parse_numerical(R"((n_add (n_distance (c_register 0) (r_atomic_state "edge") (c_register 1)) (n_const 1)))", domain, *repository));
 
-    auto graph = sem::incremental::EvaluationGraph<Ext, tyr::GroundTag>(*search->task, roots);
+    auto graph = kr::dl::semantics::incremental::EvaluationGraph<Ext, tyr::GroundTag>(*search->task, roots);
     const auto source_id = graph.get_index(source);
     const auto edge_id = graph.get_index(edge);
     const auto source_count_id = graph.get_index(source_count);
@@ -442,7 +442,7 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
     const auto projected_role_id = graph.get_index(projected_role);
     const auto query_count_id = graph.get_index(query_count);
 
-    auto registers = std::array<ygg::Data<sem::RegisterValues>, 3> {};
+    auto registers = std::array<ygg::Data<kr::dl::semantics::RegisterValues>, 3> {};
     const auto objects = domain.get_constants();
     ASSERT_GE(objects.size(), 3);
     for (size_t i = 0; i < registers.size(); ++i)
@@ -456,7 +456,7 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
             registers[i].role_values[0] = ::cista::pair(objects[i].get_index(), objects[i + 1].get_index());
         }
     }
-    auto changes = std::array<sem::incremental::Delta<Ext>, 2> {};
+    auto changes = std::array<kr::dl::semantics::incremental::Delta<Ext>, 2> {};
     auto current = initial;
     for (size_t i = 0; i < changes.size(); ++i)
     {
@@ -470,17 +470,18 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
         current = next;
     }
 
-    auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
-    auto storage = sem::EvaluationStorage<Ext>(denotations);
-    auto builder = sem::Builder {};
-    auto argument_data = ygg::Data<sem::CallArguments> {};
-    const auto arguments = sem::insert(denotations, argument_data).first;
-    auto context = sem::StateEvaluationContext<Ext, tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>, sem::BorrowedRegisterValuesView>(
-        initial.get_state(),
-        builder,
-        storage,
-        arguments,
-        ygg::make_view(registers.front(), *search->task->get_repository()));
+    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto storage = kr::dl::semantics::EvaluationStorage<Ext>(denotations);
+    auto builder = kr::dl::semantics::Builder {};
+    auto argument_data = ygg::Data<kr::dl::semantics::CallArguments> {};
+    const auto arguments = kr::dl::semantics::insert(denotations, argument_data).first;
+    auto context =
+        kr::dl::semantics::StateEvaluationContext<Ext, tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>, kr::dl::semantics::BorrowedRegisterValuesView>(
+            initial.get_state(),
+            builder,
+            storage,
+            arguments,
+            ygg::make_view(registers.front(), *search->task->get_repository()));
     const auto initialize = [&]
     {
         for (auto& evaluator : concepts)
@@ -557,13 +558,12 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
 
 TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
 {
-    namespace sem = kr::dl::semantics;
     using ColumnIndex = ygg::Index<ygg::database::Column>;
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/dl/query";
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
-    auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto& repository = denotations.get_relation_repository();
-    auto builder = sem::Builder {};
+    auto builder = kr::dl::semantics::Builder {};
     const auto columns = std::array<ColumnIndex, 2> { ColumnIndex(0), ColumnIndex(1) };
     const auto renamed = std::array<ColumnIndex, 2> { ColumnIndex(2), ColumnIndex(3) };
     auto result = builder.get_builder<ygg::database::Relation<QueryValues>>(columns);
@@ -608,13 +608,12 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
 
 TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
 {
-    namespace sem = kr::dl::semantics;
     using ColumnIndex = ygg::Index<ygg::database::Column>;
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/dl/query";
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
-    auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto& repository = denotations.get_relation_repository();
-    auto builder = sem::Builder {};
+    auto builder = kr::dl::semantics::Builder {};
     const auto columns = std::array<ColumnIndex, 2> { ColumnIndex(0), ColumnIndex(1) };
     const auto aliases = std::array<ColumnIndex, 2> { ColumnIndex(100), ColumnIndex(101) };
     bool valid = true;
@@ -654,8 +653,7 @@ TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
 
 TEST(RunirSearch, WarmedProgramSearchAllocationsGrowWithContainerCapacity)
 {
-    namespace ext = kr::ps::ext;
-    using Path = ext::detail::SearchPath<tyr::GroundTag, ext::InternedExecutionStorage<tyr::GroundTag>>;
+    using Path = kr::ps::ext::detail::SearchPath<tyr::GroundTag, kr::ps::ext::InternedExecutionStorage<tyr::GroundTag>>;
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/ps/ext/choose";
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     auto context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(search->task->get_domain()), search);
@@ -693,10 +691,10 @@ TEST(RunirSearch, WarmedProgramSearchAllocationsGrowWithContainerCapacity)
                     text += "))";
                 }
                 text += ")))";
-                const auto program = ext::dl::parse_program(text, search->task->get_domain().get_domain(), *context->domain_context->ext_repository);
-                auto options = ext::ProgramSearchOptions<tyr::GroundTag> {};
+                const auto program = kr::ps::ext::dl::parse_program(text, search->task->get_domain().get_domain(), *context->domain_context->ext_repository);
+                auto options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
                 options.universal = universal;
-                auto expander = ext::SuccessorExpander<tyr::GroundTag>(context, program);
+                auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(context, program);
                 const auto initial_node = search->successor_generator->get_packed_initial_node(*search->state_repository, *search->axiom_evaluator);
                 const auto initial = expander.initial_state(initial_node.get_state().unpack());
                 auto classifier = kr::ps::NoUnsolvability<tyr::GroundTag> {};
@@ -706,17 +704,17 @@ TEST(RunirSearch, WarmedProgramSearchAllocationsGrowWithContainerCapacity)
                 for (const auto warmup : { true, false })
                 {
                     SCOPED_TRACE(warmup);
-                    auto storage = ext::detail::SearchStorage<tyr::GroundTag, ext::StateMemorization::ALL>(options);
-                    auto statistics = ext::ProgramSearchStatistics {};
+                    auto storage = kr::ps::ext::detail::SearchStorage<tyr::GroundTag, kr::ps::ext::StateMemorization::ALL>(options);
+                    auto statistics = kr::ps::ext::ProgramSearchStatistics {};
                     auto first_goal = ygg::SharedObjectPoolPtr<Path> {};
                     auto witness = ygg::SharedObjectPoolPtr<Path> {};
                     allocation_tracking::Scope measured;
-                    const auto status = ext::detail::depth_first_search<
+                    const auto status = kr::ps::ext::detail::depth_first_search<
                         tyr::GroundTag>(expander, initial_node.get_state(), initial, options, classifier, storage, statistics, path_pool, first_goal, witness);
                     const auto counts = measured.finish();
                     if (!warmup)
                         allocations[scale] = counts.allocated;
-                    ASSERT_EQ(status, ext::ProgramProofStatus::SUCCESS);
+                    ASSERT_EQ(status, kr::ps::ext::ProgramProofStatus::SUCCESS);
                     EXPECT_EQ(statistics.num_expanded, length + 2);
                     EXPECT_EQ(statistics.num_generated, length + 2);
                     ASSERT_TRUE(first_goal);
@@ -765,12 +763,11 @@ allocation_tracking::Counts measure_warmed_binding_enumeration(const kr::TaskCon
 template<tyr::TaskKind Kind, kr::ps::ext::ExecutionStorageConcept<Kind> Storage>
 void expect_warmed_action_expansions(const kr::TaskContextPtr<Kind>& context, kr::ps::ext::ProgramView program, allocation_tracking::Counts expected)
 {
-    namespace ext = kr::ps::ext;
-    auto expander = ext::SuccessorExpander<Kind, Storage>(context, program);
+    auto expander = kr::ps::ext::SuccessorExpander<Kind, Storage>(context, program);
     auto& search = *context->search_context;
     const auto node = search.successor_generator->get_initial_node(*search.state_repository, *search.axiom_evaluator);
     const auto initial = expander.initial_state(node.get_state());
-    auto statistics = ext::ProgramSearchStatistics {};
+    auto statistics = kr::ps::ext::ProgramSearchStatistics {};
     bool valid = true;
     const auto expand = [&]
     {
@@ -780,9 +777,9 @@ void expect_warmed_action_expansions(const kr::TaskContextPtr<Kind>& context, kr
             statistics,
             [&](auto step)
             {
-                if constexpr (std::same_as<decltype(step), ext::detail::ProgramStep<Kind, Storage>>)
+                if constexpr (std::same_as<decltype(step), kr::ps::ext::detail::ProgramStep<Kind, Storage>>)
                 {
-                    valid &= step.status == ext::detail::ProgramOutcome::APPLIED && step.state_transition.has_value();
+                    valid &= step.status == kr::ps::ext::detail::ProgramOutcome::APPLIED && step.state_transition.has_value();
                     ++emitted;
                 }
                 else
@@ -808,7 +805,6 @@ void expect_warmed_action_expansions(const kr::TaskContextPtr<Kind>& context, kr
 template<tyr::TaskKind Kind>
 void expect_warmed_action_storage()
 {
-    namespace ext = kr::ps::ext;
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/ps/ext/choose";
     const auto search = [&]
     {
@@ -843,10 +839,10 @@ void expect_warmed_action_storage()
     (:rules (:rule (:symbol move) (:expression
       (:source-memory source) (:target-memory target)
 )") + rule + ")))))";
-        const auto program = ext::dl::parse_program(source, search->task->get_domain().get_domain(), *context->domain_context->ext_repository);
+        const auto program = kr::ps::ext::dl::parse_program(source, search->task->get_domain().get_domain(), *context->domain_context->ext_repository);
         const auto expected = enumerates ? baseline : allocation_tracking::Counts {};
-        expect_warmed_action_expansions<Kind, ext::InternedExecutionStorage<Kind>>(context, program, expected);
-        expect_warmed_action_expansions<Kind, ext::TransientExecutionStorage<Kind>>(context, program, expected);
+        expect_warmed_action_expansions<Kind, kr::ps::ext::InternedExecutionStorage<Kind>>(context, program, expected);
+        expect_warmed_action_expansions<Kind, kr::ps::ext::TransientExecutionStorage<Kind>>(context, program, expected);
     }
 }
 }  // namespace

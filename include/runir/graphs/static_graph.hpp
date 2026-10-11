@@ -21,14 +21,15 @@ public:
     using VertexPropertyType = VP;
     using EdgePropertyType = EP;
     using VertexType = Vertex<StaticGraph, VP>;
-    using VertexList = std::vector<VertexType>;
     using EdgeType = Edge<StaticGraph, EP>;
-    using EdgeList = std::vector<EdgeType>;
-    using VertexPropertyMapType = VertexPropertyMap<VP>;
     using EdgePropertyMapType = EdgePropertyMap<EP>;
-    using EdgeOffsetList = std::vector<ygg::uint_t>;
 
 private:
+    using VertexList = std::vector<VertexType>;
+    using EdgeList = std::vector<EdgeType>;
+    using VertexPropertyMapType = VertexPropertyMap<VP>;
+    using EdgeOffsetList = std::vector<ygg::uint_t>;
+
     VertexList m_vertices;
     EdgeList m_edges;
     VertexPropertyMapType m_vertex_properties;

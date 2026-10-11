@@ -19,7 +19,6 @@ private:
     VertexPropertyIndex<P> m_property;
 
 public:
-    using GraphType = G;
     using PropertyType = P;
     using PropertyIndexType = VertexPropertyIndex<P>;
 

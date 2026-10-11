@@ -59,9 +59,8 @@ inline ModuleCallGraph build_module_call_graph(ProgramView program)
             for (auto rule_variant : transition)
             {
                 ygg::visit(
-                    [&](auto rule)
+                    [&]<typename RuleViewT>(RuleViewT rule)
                     {
-                        using RuleViewT = std::decay_t<decltype(rule)>;
                         if constexpr (std::same_as<RuleViewT, ygg::View<ygg::Index<Rule<CallTag>>, Repository>>)
                         {
                             const auto target_module = find_module(program, rule.get_callee());

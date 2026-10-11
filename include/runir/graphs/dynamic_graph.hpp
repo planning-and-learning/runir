@@ -22,14 +22,15 @@ public:
     using VertexPropertyType = VP;
     using EdgePropertyType = EP;
     using VertexType = Vertex<DynamicGraph, VP>;
-    using VertexMap = ygg::UnorderedMap<VertexIndex, VertexType>;
     using EdgeType = Edge<DynamicGraph, EP>;
-    using EdgeMap = ygg::UnorderedMap<EdgeIndex, EdgeType>;
-    using VertexPropertyMapType = VertexPropertyMap<VP>;
     using EdgePropertyMapType = EdgePropertyMap<EP>;
-    using AdjacentEdgeMap = ygg::UnorderedMap<VertexIndex, EdgeIndexSet>;
 
 private:
+    using VertexMap = ygg::UnorderedMap<VertexIndex, VertexType>;
+    using EdgeMap = ygg::UnorderedMap<EdgeIndex, EdgeType>;
+    using VertexPropertyMapType = VertexPropertyMap<VP>;
+    using AdjacentEdgeMap = ygg::UnorderedMap<VertexIndex, EdgeIndexSet>;
+
     VertexMap m_vertices;
     VertexIndexList m_free_vertices;
     ygg::uint_t m_next_vertex_index = 0;

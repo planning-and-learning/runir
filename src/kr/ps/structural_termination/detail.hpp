@@ -115,11 +115,11 @@ struct PolicySieveResult
 };
 
 template<typename Graph>
-auto surviving_rules(const Graph& graph) -> std::vector<typename Graph::EdgePropertyType>
+auto surviving_rules(const Graph& graph) -> std::vector<graphs::GraphEdgePropertyType<Graph>>
 {
     // Static counterexample graphs already intern exactly their retained edge labels.
     const auto& properties = graph.get_edge_property_map();
-    auto rules = std::vector<typename Graph::EdgePropertyType> {};
+    auto rules = std::vector<graphs::GraphEdgePropertyType<Graph>> {};
     rules.reserve(properties.size());
     for (ygg::uint_t position = 0; position < properties.size(); ++position)
         rules.push_back(properties.get_value(typename Graph::EdgePropertyMapType::Index(position)));
@@ -194,7 +194,7 @@ Result materialize_result(Definition definition,
         return result;
 
     result.status = decltype(result.status)::NON_TERMINATING;
-    auto builder = graphs::StaticGraphBuilder<typename Graph::VertexPropertyType, typename Graph::EdgePropertyType> {};
+    auto builder = graphs::StaticGraphBuilder<graphs::GraphVertexPropertyType<Graph>, graphs::GraphEdgePropertyType<Graph>> {};
     for (const auto& component : sieve_result.components)
     {
         const auto& projected = component.projected;

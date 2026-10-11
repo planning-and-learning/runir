@@ -12,19 +12,18 @@
 
 namespace runir::kr::uns::dl::parser
 {
-namespace x3 = boost::spirit::x3;
 
+using boost::spirit::x3::attr;
+using boost::spirit::x3::eoi;
+using boost::spirit::x3::lexeme;
+using boost::spirit::x3::lit;
+using boost::spirit::x3::raw;
 using runir::kr::parser::keyword;
-using x3::attr;
-using x3::eoi;
-using x3::lexeme;
-using x3::lit;
-using x3::raw;
 using ygg::diagnostics::context;
 
-using x3::ascii::alnum;
-using x3::ascii::alpha;
-using x3::ascii::char_;
+using boost::spirit::x3::ascii::alnum;
+using boost::spirit::x3::ascii::alpha;
+using boost::spirit::x3::ascii::char_;
 
 struct IdentifierText
 {
@@ -41,7 +40,7 @@ disjunction_type const disjunction = "disjunction";
 classifier_type const classifier = "classifier";
 classifier_root_type const classifier_root = "classifier_root";
 
-const auto identifier_def = x3::rule<IdentifierText, std::string> { "identifier_text" } =
+const auto identifier_def = boost::spirit::x3::rule<IdentifierText, std::string> { "identifier_text" } =
     raw[lexeme[(alpha | char_('_')) >> *(alnum | char_('_') | char_('-'))]];
 
 const auto symbol_value_def = identifier;
@@ -73,25 +72,25 @@ struct IdentifierClass : runir::kr::parser::ErrorHandlerBase
 {
 };
 
-struct BooleanFeatureClass : x3::annotate_on_success
+struct BooleanFeatureClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct PositiveLiteralClass : x3::annotate_on_success
+struct PositiveLiteralClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct NegativeLiteralClass : x3::annotate_on_success
+struct NegativeLiteralClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct LiteralClass : x3::annotate_on_success
+struct LiteralClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct ConjunctionClass : x3::annotate_on_success
+struct ConjunctionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct DisjunctionClass : x3::annotate_on_success
+struct DisjunctionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct ClassifierClass : x3::annotate_on_success
+struct ClassifierClass : boost::spirit::x3::annotate_on_success
 {
 };
 struct ClassifierRootClass : runir::kr::parser::ErrorHandlerBase

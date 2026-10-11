@@ -100,24 +100,22 @@ static_assert(boolean_data_views<kr::UnsFamilyTag>(kr::dl::FamilyBooleanConstruc
 
 TEST(RunirKrDlBoolean, RoutesConstantUnaryAndBinaryData)
 {
-    namespace dl = kr::dl;
     using Family = kr::UnsFamilyTag;
-    using Constructor = dl::Constructor<Family, dl::BooleanTag>;
+    using Constructor = kr::dl::Constructor<Family, kr::dl::BooleanTag>;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-    auto repository = dl::UnsConstructorRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::UnsConstructorRepositoryFactory().create(planning_repository);
 
-    auto constant_data = ygg::Data<dl::Boolean<Family, dl::BooleanConstantTag>>(true);
+    auto constant_data = ygg::Data<kr::dl::Boolean<Family, kr::dl::BooleanConstantTag>>(true);
     const auto constant = repository->insert(constant_data).first;
     EXPECT_TRUE(constant.get_value());
 
-    auto unary_data = ygg::Data<dl::Boolean<Family, dl::NotTag>>(ygg::Index<Constructor>(4));
+    auto unary_data = ygg::Data<kr::dl::Boolean<Family, kr::dl::NotTag>>(ygg::Index<Constructor>(4));
     const auto unary = repository->insert(unary_data).first;
     EXPECT_EQ(unary.get_arg().get_index(), ygg::Index<Constructor>(4));
 
-    auto binary_data = ygg::Data<dl::Boolean<Family, dl::AndTag>>(ygg::Index<Constructor>(1), ygg::Index<Constructor>(2));
+    auto binary_data = ygg::Data<kr::dl::Boolean<Family, kr::dl::AndTag>>(ygg::Index<Constructor>(1), ygg::Index<Constructor>(2));
     const auto binary = repository->insert(binary_data).first;
     EXPECT_EQ(binary.get_lhs().get_index(), ygg::Index<Constructor>(1));
     EXPECT_EQ(binary.get_rhs().get_index(), ygg::Index<Constructor>(2));
 }
-
 }

@@ -12,8 +12,6 @@
 namespace runir::kr::ps::icp
 {
 
-using namespace nanobind::literals;
-
 void bind_condition(nb::module_& m, RepositoryBinding& repository)
 {
     using T = runir::kr::ps::ConditionVariant<runir::kr::IcpFamilyTag>;

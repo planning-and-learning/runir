@@ -20,12 +20,11 @@ namespace runir::kr::dl::semantics
 template<FamilyTag Family>
 class DenotationCaches
 {
-public:
     template<CategoryTag Category>
     using Cache = ygg::UnorderedMap<FamilyConstructorView<Family, Category>, DenotationView<Category>>;
+
     using QueryCache = ygg::UnorderedMap<FamilyQueryView<Family>, QueryDenotationView>;
 
-private:
     struct Partition
     {
         std::tuple<Cache<ConceptTag>, Cache<RoleTag>, Cache<BooleanTag>, Cache<NumericalTag>> values;

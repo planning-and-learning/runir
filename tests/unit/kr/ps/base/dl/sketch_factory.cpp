@@ -18,8 +18,6 @@ namespace runir::tests
 
 TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesParse)
 {
-    namespace fp = tyr::formalism::planning;
-
     struct Case
     {
         std::string_view domain;
@@ -37,7 +35,7 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesParse)
     auto repository_factory = kr::ps::base::RepositoryFactory();
     for (const auto& test_case : cases)
     {
-        const auto planning_domain = fp::Parser(benchmark_path(test_case.domain)).get_domain();
+        const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path(test_case.domain)).get_domain();
         auto dl_repository = dl_repository_factory.create(planning_domain.get_repository());
         auto repository = repository_factory.create(dl_repository);
         const auto sketch = kr::ps::base::dl::SketchFactory::create(test_case.specification, planning_domain.get_domain(), *repository);
@@ -63,8 +61,7 @@ TEST(RunirTests, RejectsUnknownSketchFactorySpecification)
 
 TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
 {
-    namespace fp = tyr::formalism::planning;
-    const auto planning_domain = fp::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
+    const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
     auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
 

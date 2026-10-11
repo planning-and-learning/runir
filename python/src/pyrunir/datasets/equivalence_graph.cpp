@@ -18,7 +18,6 @@
 namespace runir::datasets
 {
 
-using namespace nanobind::literals;
 using runir::graphs::bind_bidirectional_graph;
 using runir::graphs::bind_bidirectional_static_graph;
 using runir::graphs::bind_forward_graph;
@@ -33,6 +32,7 @@ namespace
 template<tyr::TaskKind Kind>
 void bind_equivalence_graph_generation_for_kind(nb::module_& m, const char* class_prefix, const char* function_prefix)
 {
+    using namespace nb::literals;
     using Result = EquivalenceGraphConstructionResult<Kind>;
     using ContextList = TaskSearchContextList<Kind>;
 
@@ -69,6 +69,7 @@ void bind_equivalence_graph_generation_for_kind(nb::module_& m, const char* clas
 
 void bind_equivalence_graph(nb::module_& m)
 {
+    using namespace nb::literals;
     nb::class_<ColorRepository>(m, "ColorRepository").def_prop_ro("num_colors", [](const ColorRepository& self) { return self.size<Color>(); });
 
     nb::class_<ColorRepositoryFactory>(m, "ColorRepositoryFactory")

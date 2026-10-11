@@ -18,16 +18,11 @@ namespace ygg
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::cnf_grammar::Grammar<Family>>
 {
-    using ConceptStart = ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>>;
-    using RoleStart = ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>>>;
-    using BooleanStart = ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>>>;
-    using NumericalStart = ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::NumericalTag>>>;
-
     Index<runir::kr::dl::cnf_grammar::Grammar<Family>> index;
-    ConceptStart concept_start;
-    RoleStart role_start;
-    BooleanStart boolean_start;
-    NumericalStart numerical_start;
+    ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>> concept_start;
+    ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>>> role_start;
+    ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>>> boolean_start;
+    ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::NumericalTag>>> numerical_start;
     IndexList<runir::kr::dl::cnf_grammar::DerivationRule<Family, runir::kr::dl::ConceptTag>> concept_derivation_rules;
     IndexList<runir::kr::dl::cnf_grammar::DerivationRule<Family, runir::kr::dl::RoleTag>> role_derivation_rules;
     IndexList<runir::kr::dl::cnf_grammar::DerivationRule<Family, runir::kr::dl::BooleanTag>> boolean_derivation_rules;

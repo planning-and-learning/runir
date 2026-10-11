@@ -2,7 +2,6 @@
 #define RUNIR_KR_DL_QUERY_DATA_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
-#include <yggdrasil/containers/variant.hpp>
 
 #include <cista/containers/string.h>
 #include <cista/containers/variant.h>
@@ -13,8 +12,10 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
+#include <yggdrasil/database/semantics/generic_join.hpp>
 #include <yggdrasil/database/semantics/plans.hpp>
 
 namespace ygg
@@ -43,8 +44,11 @@ struct Data<runir::kr::dl::QueryColumn>
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::Query<Family>>
 {
+private:
     template<typename Tag>
     using AlternativeIndex = ygg::Index<runir::kr::dl::Query<Family, Tag>>;
+
+public:
     using Variant = ygg::ApplyTypeListT<cista::offset::variant, ygg::MapTypeListT<AlternativeIndex, runir::kr::dl::QueryConstructorTags>>;
 
     Index<runir::kr::dl::Query<Family>> index;
@@ -419,6 +423,75 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QuerySelectValueTag>>
     auto cista_members() noexcept { return std::tie(index, arg, column, object, columns, schema, position); }
     auto cista_members() const noexcept { return std::tie(index, arg, column, object, columns, schema, position); }
     auto identifying_members() const noexcept { return std::tie(arg, column, object); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryGenericJoinTag>>
+{
+    Index<runir::kr::dl::Query<Family, runir::kr::dl::QueryGenericJoinTag>> index;
+    IndexList<runir::kr::dl::Query<Family>> args {};
+    IndexList<runir::kr::dl::QueryColumn> variable_order {};
+    IndexList<runir::kr::dl::QueryColumn> output_order {};
+    IndexList<runir::kr::dl::QueryColumn> columns {};
+    ygg::database::GenericJoinPlan<runir::kr::dl::QueryValues> plan {};
+
+    Data() = default;
+    // columns and plan are derived during insertion and therefore not constructor parameters.
+    Data(IndexList<runir::kr::dl::Query<Family>> args_,
+         IndexList<runir::kr::dl::QueryColumn> variable_order_,
+         IndexList<runir::kr::dl::QueryColumn> output_order_) :
+        index(),
+        args(std::move(args_)),
+        variable_order(std::move(variable_order_)),
+        output_order(std::move(output_order_))
+    {
+    }
+    template<typename C>
+    Data(const std::vector<::ygg::View<Index<runir::kr::dl::Query<Family>>, C>>& args_,
+         const std::vector<::ygg::View<Index<runir::kr::dl::QueryColumn>, C>>& variable_order_,
+         const std::vector<::ygg::View<Index<runir::kr::dl::QueryColumn>, C>>& output_order_) :
+        index(),
+        args(),
+        variable_order(),
+        output_order()
+    {
+        set(args_, args);
+        set(variable_order_, variable_order);
+        set(output_order_, output_order);
+    }
+
+    auto cista_members() noexcept { return std::tie(index, args, variable_order, output_order, columns, plan); }
+    auto cista_members() const noexcept { return std::tie(index, args, variable_order, output_order, columns, plan); }
+    auto identifying_members() const noexcept { return std::tie(args, variable_order, output_order); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryEmptyTag>>
+{
+    Index<runir::kr::dl::Query<Family, runir::kr::dl::QueryEmptyTag>> index;
+    IndexList<runir::kr::dl::QueryColumn> columns {};
+    ygg::Builder<ygg::database::Columns<runir::kr::dl::QueryValues>> schema {};
+
+    Data() = default;
+    // schema is derived during insertion and therefore not a constructor parameter.
+    explicit Data(IndexList<runir::kr::dl::QueryColumn> columns_) : index(), columns(std::move(columns_)) {}
+    template<typename C>
+    explicit Data(const std::vector<::ygg::View<Index<runir::kr::dl::QueryColumn>, C>>& columns_) : index(), columns()
+    {
+        set(columns_, columns);
+    }
+
+    auto cista_members() noexcept { return std::tie(index, columns, schema); }
+    auto cista_members() const noexcept { return std::tie(index, columns, schema); }
+    auto identifying_members() const noexcept { return std::tie(columns); }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());

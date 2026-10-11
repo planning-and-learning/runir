@@ -23,7 +23,6 @@ class Certificate : public ygg::comparison::Mixin<Certificate<VertexProperty>>
 {
 public:
     using Signature = std::pair<Color, ColorList>;
-    using SignatureList = std::vector<std::pair<Signature, Color>>;
     using RoundSummary = std::vector<std::pair<Signature, std::size_t>>;
     using RoundSummaryList = std::vector<RoundSummary>;
 
@@ -114,7 +113,7 @@ void set_color(Coloring<G>& colors, VertexIndex vertex, Color color)
 template<IsGraph G>
 auto compute_certificate(const G& graph)
 {
-    using VertexProperty = typename G::VertexPropertyType;
+    using VertexProperty = GraphVertexPropertyType<G>;
     using Result = Certificate<VertexProperty>;
     using Signature = typename Result::Signature;
 

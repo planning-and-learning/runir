@@ -102,28 +102,34 @@ concept IsGraphWithProperties = requires(const G& graph, VertexPropertyIndex<VP>
 };
 
 template<typename G>
-concept IsGraph = IsGraphWithProperties<G, typename G::VertexPropertyType, typename G::EdgePropertyType>
-                  && requires(const G& graph, VertexIndex vertex, EdgeIndex edge) {
-                         { graph.get_num_vertices() } -> std::convertible_to<std::size_t>;
-                         { graph.get_num_edges() } -> std::convertible_to<std::size_t>;
-                         { graph.get_source(edge) } -> std::same_as<VertexIndex>;
-                         { graph.get_target(edge) } -> std::same_as<VertexIndex>;
-                         { graph.get_out_degree(vertex) } -> std::convertible_to<Degree>;
+using GraphVertexPropertyType = typename G::VertexPropertyType;
 
-                         // The Boost adapter returns these iterators after the range wrapper is destroyed.
-                         { graph.get_vertex_indices() } -> ygg::InputRangeOf<VertexIndex>;
-                         { graph.get_vertex_indices() } -> std::ranges::forward_range;
-                         { graph.get_vertex_indices() } -> std::ranges::common_range;
-                         { graph.get_vertex_indices() } -> std::ranges::borrowed_range;
-                         { graph.get_edge_indices() } -> ygg::InputRangeOf<EdgeIndex>;
-                         { graph.get_edge_indices() } -> std::ranges::forward_range;
-                         { graph.get_edge_indices() } -> std::ranges::common_range;
-                         { graph.get_edge_indices() } -> std::ranges::borrowed_range;
-                         { graph.get_out_edge_indices(vertex) } -> ygg::InputRangeOf<EdgeIndex>;
-                         { graph.get_out_edge_indices(vertex) } -> std::ranges::forward_range;
-                         { graph.get_out_edge_indices(vertex) } -> std::ranges::common_range;
-                         { graph.get_out_edge_indices(vertex) } -> std::ranges::borrowed_range;
-                     };
+template<typename G>
+using GraphEdgePropertyType = typename G::EdgePropertyType;
+
+template<typename G>
+concept IsGraph =
+    IsGraphWithProperties<G, GraphVertexPropertyType<G>, GraphEdgePropertyType<G>> && requires(const G& graph, VertexIndex vertex, EdgeIndex edge) {
+        { graph.get_num_vertices() } -> std::convertible_to<std::size_t>;
+        { graph.get_num_edges() } -> std::convertible_to<std::size_t>;
+        { graph.get_source(edge) } -> std::same_as<VertexIndex>;
+        { graph.get_target(edge) } -> std::same_as<VertexIndex>;
+        { graph.get_out_degree(vertex) } -> std::convertible_to<Degree>;
+
+        // The Boost adapter returns these iterators after the range wrapper is destroyed.
+        { graph.get_vertex_indices() } -> ygg::InputRangeOf<VertexIndex>;
+        { graph.get_vertex_indices() } -> std::ranges::forward_range;
+        { graph.get_vertex_indices() } -> std::ranges::common_range;
+        { graph.get_vertex_indices() } -> std::ranges::borrowed_range;
+        { graph.get_edge_indices() } -> ygg::InputRangeOf<EdgeIndex>;
+        { graph.get_edge_indices() } -> std::ranges::forward_range;
+        { graph.get_edge_indices() } -> std::ranges::common_range;
+        { graph.get_edge_indices() } -> std::ranges::borrowed_range;
+        { graph.get_out_edge_indices(vertex) } -> ygg::InputRangeOf<EdgeIndex>;
+        { graph.get_out_edge_indices(vertex) } -> std::ranges::forward_range;
+        { graph.get_out_edge_indices(vertex) } -> std::ranges::common_range;
+        { graph.get_out_edge_indices(vertex) } -> std::ranges::borrowed_range;
+    };
 
 template<typename G>
 concept IsDenseGraph = IsGraph<G> && std::same_as<typename GraphTraits<std::remove_cvref_t<G>>::VertexIndexRange, DenseIndexRangeTag>

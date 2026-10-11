@@ -1,5 +1,6 @@
 #include "bindings.hpp"
 #include "pyrunir/kr/binding_utils.hpp"
+#include "pyrunir/kr/ps/dl/optimization_bindings.hpp"
 
 #include <runir/kr/ps/icp/formatter.hpp>
 #include <runir/kr/ps/icp/program_data.hpp>
@@ -11,8 +12,6 @@
 
 namespace runir::kr::ps::icp
 {
-
-using namespace nanobind::literals;
 
 void bind_program(nb::module_& m, RepositoryBinding& repository)
 {
@@ -35,6 +34,7 @@ void bind_program(nb::module_& m, RepositoryBinding& repository)
     ygg::add_print(view);
     ygg::add_comparison(view);
     ygg::add_hash(view);
+    runir::kr::python::bind_ps_optimize<runir::kr::IcpFamilyTag, Repository>(view);
     runir::kr::python::bind_insert<T>(repository);
 }
 

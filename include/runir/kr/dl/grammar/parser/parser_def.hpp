@@ -9,22 +9,20 @@
 
 namespace runir::kr::dl::grammar::parser
 {
-namespace x3 = boost::spirit::x3;
-namespace grammar_ast = runir::kr::dl::grammar::ast;
 
+using boost::spirit::x3::eoi;
+using boost::spirit::x3::lexeme;
+using boost::spirit::x3::lit;
+using boost::spirit::x3::raw;
+using boost::spirit::x3::ascii::alnum;
+using boost::spirit::x3::ascii::alpha;
+using boost::spirit::x3::ascii::char_;
+using boost::spirit::x3::ascii::digit;
 using runir::kr::parser::keyword;
-using x3::eoi;
-using x3::lexeme;
-using x3::lit;
-using x3::raw;
-using x3::ascii::alnum;
-using x3::ascii::alpha;
-using x3::ascii::char_;
-using x3::ascii::digit;
 using ygg::diagnostics::context;
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename Tag>
-inline constexpr bool has_ast_constructor_tag_v = ygg::InTypeList<Tag, grammar_ast::AstConstructorTagsT<Family, Category>>;
+inline constexpr bool has_ast_constructor_tag_v = ygg::InTypeList<Tag, runir::kr::dl::grammar::ast::AstConstructorTagsT<Family, Category>>;
 
 template<bool Enabled, typename Parser>
 auto maybe(Parser parser)
@@ -32,7 +30,7 @@ auto maybe(Parser parser)
     if constexpr (Enabled)
         return parser;
     else
-        return x3::eps(false);
+        return boost::spirit::x3::eps(false);
 }
 
 predicate_name_type const predicate_name = "predicate name";
@@ -40,13 +38,14 @@ object_name_type const object_name = "object name";
 identifier_type const identifier = "identifier";
 numeric_reference_type const numeric_reference = "numeric_reference";
 
-const auto predicate_name_def = x3::rule<PredicateNameTextClass, std::string> { "predicate_name_text" } =
-    raw[lexeme[((&alpha >> +(alnum | char_('-') | char_('_'))) | x3::repeat(1)[char_('=')])]];
-const auto object_name_def = x3::rule<ObjectNameTextClass, std::string> { "object_name_text" } = raw[lexeme[&alpha >> +(alnum | char_('-') | char_('_'))]];
-const auto identifier_def = x3::rule<IdentifierTextClass, std::string> { "identifier_text" } =
+const auto predicate_name_def = boost::spirit::x3::rule<PredicateNameTextClass, std::string> { "predicate_name_text" } =
+    raw[lexeme[((&alpha >> +(alnum | char_('-') | char_('_'))) | boost::spirit::x3::repeat(1)[char_('=')])]];
+const auto object_name_def = boost::spirit::x3::rule<ObjectNameTextClass, std::string> { "object_name_text" } =
+    raw[lexeme[&alpha >> +(alnum | char_('-') | char_('_'))]];
+const auto identifier_def = boost::spirit::x3::rule<IdentifierTextClass, std::string> { "identifier_text" } =
     raw[lexeme[(alpha | char_('_')) >> *(alnum | char_('-') | char_('_'))]];
-const auto unsigned_integer = x3::rule<class UnsignedInteger, unsigned int> { "unsigned integer" } = x3::uint_;
-const auto numeric_reference_def = x3::rule<NumericReferenceTextClass, ygg::uint_t> { "numeric_reference_value" } = unsigned_integer;
+const auto unsigned_integer = boost::spirit::x3::rule<class UnsignedInteger, unsigned int> { "unsigned integer" } = boost::spirit::x3::uint_;
+const auto numeric_reference_def = boost::spirit::x3::rule<NumericReferenceTextClass, ygg::uint_t> { "numeric_reference_value" } = unsigned_integer;
 
 BOOST_SPIRIT_DEFINE(predicate_name, object_name, identifier, numeric_reference)
 
@@ -64,37 +63,42 @@ auto register_reference_parser()
 
 inline auto predicate_name_string_parser()
 {
-    return x3::rule<class QuotedPredicateName, grammar_ast::Identifier> { "quoted predicate name" } =
+    return boost::spirit::x3::rule<class QuotedPredicateName, runir::kr::dl::grammar::ast::Identifier> { "quoted predicate name" } =
                lexeme[context("quoted predicate name")[lit('"') > predicate_name > lit('"')]];
 }
 
 inline auto object_name_string_parser()
 {
-    return x3::rule<class QuotedObjectName, grammar_ast::Identifier> { "quoted object name" } =
+    return boost::spirit::x3::rule<class QuotedObjectName, runir::kr::dl::grammar::ast::Identifier> { "quoted object name" } =
                lexeme[context("quoted object name")[lit('"') > object_name > lit('"')]];
 }
 
 inline auto object_names_parser()
 {
-    return x3::rule<class ObjectNamesClass, std::vector<grammar_ast::Identifier>> { "object names" } = +object_name_string_parser();
+    return boost::spirit::x3::rule<class ObjectNamesClass, std::vector<runir::kr::dl::grammar::ast::Identifier>> { "object names" } =
+               +object_name_string_parser();
 }
 
 inline auto query_columns_parser()
 {
-    return x3::rule<class QueryColumnsClass, std::vector<grammar_ast::Identifier>> { "query columns" } = lit("(") > *identifier > lit(")");
+    return boost::spirit::x3::rule<class QueryColumnsClass, std::vector<runir::kr::dl::grammar::ast::Identifier>> { "query columns" } =
+               lit("(") > *identifier > lit(")");
 }
 
-inline auto true_string_parser() { return keyword(runir::kr::dl::TrueTag::keyword) >> x3::attr(true); }
-inline auto false_string_parser() { return keyword(runir::kr::dl::FalseTag::keyword) >> x3::attr(false); }
-inline auto bool_string_parser() { return x3::rule<class BooleanValue, bool> { "true or false" } = x3::lexeme[true_string_parser() | false_string_parser()]; }
+inline auto true_string_parser() { return keyword(runir::kr::dl::TrueTag::keyword) >> boost::spirit::x3::attr(true); }
+inline auto false_string_parser() { return keyword(runir::kr::dl::FalseTag::keyword) >> boost::spirit::x3::attr(false); }
+inline auto bool_string_parser()
+{
+    return boost::spirit::x3::rule<class BooleanValue, bool> { "true or false" } = boost::spirit::x3::lexeme[true_string_parser() | false_string_parser()];
+}
 
 template<typename Choice>
 auto derivation_choices_parser(Choice choice)
 {
-    const auto choices = x3::rule<class DerivationChoiceList, std::vector<typename Choice::attribute_type>> { "constructor alternatives" } =
+    const auto choices = boost::spirit::x3::rule<class DerivationChoiceList, std::vector<typename Choice::attribute_type>> { "constructor alternatives" } =
         choice % keyword("or");
-    return x3::rule<class DerivationChoices, std::vector<typename Choice::attribute_type>> { "constructor or alternatives" } =
-               x3::repeat(1)[choice] | (lit("(") > choices > lit(")"));
+    return boost::spirit::x3::rule<class DerivationChoices, std::vector<typename Choice::attribute_type>> { "constructor or alternatives" } =
+               boost::spirit::x3::repeat(1)[choice] | (lit("(") > choices > lit(")"));
 }
 
 template<typename Parser>
@@ -126,8 +130,8 @@ auto non_terminal_string_parser()
         else
             return lexeme[lit("n_") >> +digit];
     }();
-    return x3::rule<NonTerminalNameClass<Category>, grammar_ast::Identifier> { "non_terminal_name" } =
-               (x3::rule<NonTerminalNameTextClass<Category>, std::string> { "non_terminal_name_text" } = raw[parser]);
+    return boost::spirit::x3::rule<NonTerminalNameClass<Category>, runir::kr::dl::grammar::ast::Identifier> { "non_terminal_name" } =
+               (boost::spirit::x3::rule<NonTerminalNameTextClass<Category>, std::string> { "non_terminal_name_text" } = raw[parser]);
 }
 
 // Try longer arity overloads first; their final operand below remains backtrackable.
@@ -213,307 +217,342 @@ auto non_terminal_string_parser()
 #define RUNIR_CONSTRUCTOR_ALTERNATIVE(Family, prefix, Category, Tag, name) \
     | maybe<has_ast_constructor_tag_v<Family, Category, runir::kr::dl::Tag>>(constructor_context<runir::kr::dl::Tag>(#name)[prefix##_##name])
 
-#define RUNIR_DEFINE_FAMILY_PARSER(Family, prefix)                                                                                                             \
-    query_atomic_state_type<Family> const prefix##_query_atomic_state = "query_atomic_state";                                                                  \
-    query_atomic_goal_type<Family> const prefix##_query_atomic_goal = "query_atomic_goal";                                                                     \
-    query_concept_type<Family> const prefix##_query_concept = "query_concept";                                                                                 \
-    query_role_type<Family> const prefix##_query_role = "query_role";                                                                                          \
-    query_join_type<Family> const prefix##_query_join = "query_join";                                                                                          \
-    query_project_type<Family> const prefix##_query_project = "query_project";                                                                                 \
-    query_rename_type<Family> const prefix##_query_rename = "query_rename";                                                                                    \
-    query_select_equal_type<Family> const prefix##_query_select_equal = "query_select_equal";                                                                  \
-    query_select_value_type<Family> const prefix##_query_select_value = "query_select_value";                                                                  \
-    query_union_type<Family> const prefix##_query_union = "query_union";                                                                                       \
-    query_difference_type<Family> const prefix##_query_difference = "query_difference";                                                                        \
-    query_type<Family> const prefix##_query = "query";                                                                                                         \
-    constructor_type<Family, runir::kr::dl::ConceptTag> const prefix##_concept = "concept";                                                                    \
-    constructor_root_type<Family, runir::kr::dl::ConceptTag> const prefix##_concept_root = "concept_root";                                                     \
-    constructor_type<Family, runir::kr::dl::RoleTag> const prefix##_role = "role";                                                                             \
-    constructor_root_type<Family, runir::kr::dl::RoleTag> const prefix##_role_root = "role_root";                                                              \
-    constructor_type<Family, runir::kr::dl::BooleanTag> const prefix##_boolean = "boolean";                                                                    \
-    constructor_root_type<Family, runir::kr::dl::BooleanTag> const prefix##_boolean_root = "boolean_root";                                                     \
-    constructor_type<Family, runir::kr::dl::NumericalTag> const prefix##_numerical = "numerical";                                                              \
-    constructor_root_type<Family, runir::kr::dl::NumericalTag> const prefix##_numerical_root = "numerical_root";                                               \
-    non_terminal_type<Family, runir::kr::dl::ConceptTag> const prefix##_concept_non_terminal = "concept_non_terminal";                                         \
-    choice_type<Family, runir::kr::dl::ConceptTag> const prefix##_concept_choice = "concept_choice";                                                           \
-    non_terminal_type<Family, runir::kr::dl::RoleTag> const prefix##_role_non_terminal = "role_non_terminal";                                                  \
-    choice_type<Family, runir::kr::dl::RoleTag> const prefix##_role_choice = "role_choice";                                                                    \
-    non_terminal_type<Family, runir::kr::dl::BooleanTag> const prefix##_boolean_non_terminal = "boolean_non_terminal";                                         \
-    choice_type<Family, runir::kr::dl::BooleanTag> const prefix##_boolean_choice = "boolean_choice";                                                           \
-    non_terminal_type<Family, runir::kr::dl::NumericalTag> const prefix##_numerical_non_terminal = "numerical_non_terminal";                                   \
-    choice_type<Family, runir::kr::dl::NumericalTag> const prefix##_numerical_choice = "numerical_choice";                                                     \
-    constructor_or_non_terminal_variant_type<Family> const prefix##_constructor_or_non_terminal_variant = "constructor_or_non_terminal_variant";               \
-    derivation_rule_type<Family, runir::kr::dl::ConceptTag> const prefix##_concept_derivation_rule = "concept_derivation_rule";                                \
-    derivation_rule_type<Family, runir::kr::dl::RoleTag> const prefix##_role_derivation_rule = "role_derivation_rule";                                         \
-    derivation_rule_type<Family, runir::kr::dl::BooleanTag> const prefix##_boolean_derivation_rule = "boolean_derivation_rule";                                \
-    derivation_rule_type<Family, runir::kr::dl::NumericalTag> const prefix##_numerical_derivation_rule = "numerical_derivation_rule";                          \
-    derivation_rule_variant_type<Family> const prefix##_derivation_rule_variant = "derivation_rule_variant";                                                   \
-    grammar_body_type<Family> const prefix##_grammar_body = "grammar_body";                                                                                    \
-    grammar_type<Family> const prefix##_grammar = "grammar";                                                                                                   \
-    grammar_root_type<Family> const prefix##_grammar_root = "grammar_root";                                                                                    \
-    RUNIR_CONCEPT_CONSTRUCTORS(Family, prefix, RUNIR_DECLARE_CONSTRUCTOR_RULE)                                                                                 \
-    RUNIR_ROLE_CONSTRUCTORS(Family, prefix, RUNIR_DECLARE_CONSTRUCTOR_RULE)                                                                                    \
-    RUNIR_BOOLEAN_CONSTRUCTORS(Family, prefix, RUNIR_DECLARE_CONSTRUCTOR_RULE)                                                                                 \
-    RUNIR_NUMERICAL_CONSTRUCTORS(Family, prefix, RUNIR_DECLARE_CONSTRUCTOR_RULE)                                                                               \
-    const auto prefix##_concept_def = x3::eps(false) RUNIR_CONCEPT_CONSTRUCTORS(Family, prefix, RUNIR_CONSTRUCTOR_ALTERNATIVE);                                \
-    const auto prefix##_concept_root_def = context("concept expression")[prefix##_concept > eoi];                                                              \
-    const auto prefix##_concept_non_terminal_def = non_terminal_string_parser<runir::kr::dl::ConceptTag>();                                                    \
-    const auto prefix##_concept_choice_def = prefix##_concept_non_terminal | prefix##_concept;                                                                 \
-    const auto prefix##_role_def = x3::eps(false) RUNIR_ROLE_CONSTRUCTORS(Family, prefix, RUNIR_CONSTRUCTOR_ALTERNATIVE);                                      \
-    const auto prefix##_role_root_def = context("role expression")[prefix##_role > eoi];                                                                       \
-    const auto prefix##_role_non_terminal_def = non_terminal_string_parser<runir::kr::dl::RoleTag>();                                                          \
-    const auto prefix##_role_choice_def = prefix##_role_non_terminal | prefix##_role;                                                                          \
-    const auto prefix##_constructor_or_non_terminal_variant_def = prefix##_concept_choice | prefix##_role_choice | prefix##_query;                                              \
-    const auto prefix##_boolean_def = x3::eps(false) RUNIR_BOOLEAN_CONSTRUCTORS(Family, prefix, RUNIR_CONSTRUCTOR_ALTERNATIVE);                                \
-    const auto prefix##_boolean_root_def = context("boolean expression")[prefix##_boolean > eoi];                                                              \
-    const auto prefix##_boolean_non_terminal_def = non_terminal_string_parser<runir::kr::dl::BooleanTag>();                                                    \
-    const auto prefix##_boolean_choice_def = prefix##_boolean_non_terminal | prefix##_boolean;                                                                 \
-    const auto prefix##_numerical_def = x3::eps(false) RUNIR_NUMERICAL_CONSTRUCTORS(Family, prefix, RUNIR_CONSTRUCTOR_ALTERNATIVE);                            \
-    const auto prefix##_numerical_root_def = context("numerical expression")[prefix##_numerical > eoi];                                                        \
-    const auto prefix##_numerical_non_terminal_def = non_terminal_string_parser<runir::kr::dl::NumericalTag>();                                                \
-    const auto prefix##_numerical_choice_def = prefix##_numerical_non_terminal | prefix##_numerical;                                                           \
-    const auto prefix##_query_atomic_state_def = with_constructor_parentheses(keyword("q_atomic_state") > predicate_name_string_parser() > query_columns_parser()); \
-    const auto prefix##_query_atomic_goal_def = with_constructor_parentheses(keyword("q_atomic_goal") > predicate_name_string_parser() > bool_string_parser() > query_columns_parser()); \
-    const auto prefix##_query_concept_def = with_constructor_parentheses(keyword(runir::kr::dl::QueryConceptTag::keyword) > x3::repeat(1)[identifier] > prefix##_concept_choice); \
-    const auto prefix##_query_role_def = with_constructor_parentheses(keyword(runir::kr::dl::QueryRoleTag::keyword) > query_columns_parser() > prefix##_role_choice); \
-    const auto prefix##_query_join_def = with_constructor_parentheses(keyword(runir::kr::dl::QueryJoinTag::keyword) > prefix##_query > prefix##_query); \
-    const auto prefix##_query_project_def = with_constructor_parentheses(keyword(runir::kr::dl::QueryProjectTag::keyword) > query_columns_parser() > prefix##_query); \
-    const auto prefix##_query_rename_def = with_constructor_parentheses(keyword(runir::kr::dl::QueryRenameTag::keyword) > query_columns_parser() > prefix##_query); \
-    const auto prefix##_query_select_equal_def = with_constructor_parentheses(keyword(runir::kr::dl::QuerySelectEqualTag::keyword) > identifier > identifier > prefix##_query); \
-    const auto prefix##_query_select_value_def = with_constructor_parentheses(keyword(runir::kr::dl::QuerySelectValueTag::keyword) > identifier > object_name_string_parser() > prefix##_query); \
-    const auto prefix##_query_union_def = with_constructor_parentheses(keyword(runir::kr::dl::QueryUnionTag::keyword) > prefix##_query > prefix##_query); \
-    const auto prefix##_query_difference_def = with_constructor_parentheses(keyword(runir::kr::dl::QueryDifferenceTag::keyword) > prefix##_query > prefix##_query); \
-    const auto prefix##_concept_project_def = with_constructor_parentheses(keyword(runir::kr::dl::ConceptProjectSyntaxTag::keyword) > x3::repeat(1)[identifier] > prefix##_query); \
-    const auto prefix##_role_project_def = with_constructor_parentheses(keyword(runir::kr::dl::RoleProjectSyntaxTag::keyword) > x3::repeat(2)[identifier] > prefix##_query); \
-    const auto prefix##_query_def = prefix##_query_atomic_state | prefix##_query_atomic_goal | prefix##_query_concept | prefix##_query_role | prefix##_query_join | prefix##_query_project | prefix##_query_rename | prefix##_query_select_equal | prefix##_query_select_value | prefix##_query_union | prefix##_query_difference; \
-    BOOST_SPIRIT_DEFINE(prefix##_query_atomic_state, prefix##_query_atomic_goal, prefix##_query_concept, prefix##_query_role, prefix##_query_join, prefix##_query_project, prefix##_query_rename, prefix##_query_select_equal, prefix##_query_select_value, prefix##_query_union, prefix##_query_difference, prefix##_query, prefix##_concept_project, prefix##_role_project) \
-    const auto prefix##_concept_bot_def =                                                                                                                      \
-        with_constructor_parentheses(keyword(runir::kr::dl::BotTag::keyword) >> x3::attr(grammar_ast::ConceptBot<Family> {}));                                 \
-    const auto prefix##_concept_top_def =                                                                                                                      \
-        with_constructor_parentheses(keyword(runir::kr::dl::TopTag::keyword) >> x3::attr(grammar_ast::ConceptTop<Family> {}));                                 \
-    const auto prefix##_concept_atomic_state_def =                                                                                                             \
-        with_constructor_parentheses(keyword(runir::kr::dl::ConceptAtomicStateSyntaxTag::keyword) > predicate_name_string_parser());                           \
-    const auto prefix##_concept_atomic_goal_def =                                                                                                              \
-        with_constructor_parentheses(keyword(runir::kr::dl::ConceptAtomicGoalSyntaxTag::keyword) > predicate_name_string_parser() > bool_string_parser());     \
-    const auto prefix##_concept_intersection_def =                                                                                                             \
-        with_constructor_parentheses(keyword(runir::kr::dl::ConceptIntersectionSyntaxTag::keyword) > prefix##_concept_choice > prefix##_concept_choice);       \
-    const auto prefix##_concept_union_def =                                                                                                                    \
-        with_constructor_parentheses(keyword(runir::kr::dl::ConceptUnionSyntaxTag::keyword) > prefix##_concept_choice > prefix##_concept_choice);              \
-    const auto prefix##_concept_negation_def = with_constructor_parentheses(keyword(runir::kr::dl::NegationTag::keyword) > prefix##_concept_choice);           \
-    const auto prefix##_concept_value_restriction_def =                                                                                                        \
-        with_constructor_parentheses(keyword(runir::kr::dl::ValueRestrictionTag::keyword) > prefix##_role_choice > prefix##_concept_choice);                   \
-    const auto prefix##_concept_existential_quantification_def =                                                                                               \
-        with_constructor_parentheses(keyword(runir::kr::dl::ExistentialQuantificationTag::keyword) > prefix##_role_choice > prefix##_concept_choice);          \
-    const auto prefix##_concept_at_least_number_restriction_def =                                                                                              \
-        with_constructor_parentheses(keyword(runir::kr::dl::AtLeastNumberRestrictionTag::keyword) > unsigned_integer > prefix##_role_choice);                  \
-    const auto prefix##_concept_at_most_number_restriction_def =                                                                                               \
-        with_constructor_parentheses(keyword(runir::kr::dl::AtMostNumberRestrictionTag::keyword) > unsigned_integer > prefix##_role_choice);                   \
-    const auto prefix##_concept_exact_number_restriction_def =                                                                                                 \
-        with_constructor_parentheses(keyword(runir::kr::dl::ExactNumberRestrictionTag::keyword) > unsigned_integer > prefix##_role_choice);                    \
-    const auto prefix##_concept_qualified_at_least_number_restriction_def = with_constructor_parentheses(                                                      \
-        (keyword(runir::kr::dl::QualifiedAtLeastNumberRestrictionTag::keyword) > unsigned_integer > prefix##_role_choice) >> prefix##_concept_choice);         \
-    const auto prefix##_concept_qualified_at_most_number_restriction_def = with_constructor_parentheses(                                                       \
-        (keyword(runir::kr::dl::QualifiedAtMostNumberRestrictionTag::keyword) > unsigned_integer > prefix##_role_choice) >> prefix##_concept_choice);          \
-    const auto prefix##_concept_qualified_exact_number_restriction_def = with_constructor_parentheses(                                                         \
-        (keyword(runir::kr::dl::QualifiedExactNumberRestrictionTag::keyword) > unsigned_integer > prefix##_role_choice) >> prefix##_concept_choice);           \
-    const auto prefix##_concept_role_value_map_def =                                                                                                           \
-        with_constructor_parentheses(keyword(runir::kr::dl::RoleValueMapTag::keyword) > prefix##_role_choice > prefix##_role_choice);                          \
-    const auto prefix##_concept_agreement_def =                                                                                                                \
-        with_constructor_parentheses(keyword(runir::kr::dl::AgreementTag::keyword) > prefix##_role_choice > prefix##_role_choice);                             \
-    const auto prefix##_concept_role_fillers_def =                                                                                                             \
-        with_constructor_parentheses(keyword(runir::kr::dl::RoleFillersTag::keyword) > prefix##_role_choice > object_names_parser());                          \
-    const auto prefix##_concept_one_of_def = with_constructor_parentheses(keyword(runir::kr::dl::OneOfTag::keyword) > object_names_parser());                  \
-    const auto prefix##_concept_nominal_def = with_constructor_parentheses(keyword(runir::kr::dl::NominalTag::keyword) > object_name_string_parser());         \
-    const auto prefix##_concept_register_def =                                                                                                                 \
-        with_constructor_parentheses(keyword(runir::kr::dl::ConceptRegisterSyntaxTag::keyword) > register_reference_parser<runir::kr::dl::ConceptTag>());      \
-    const auto prefix##_concept_argument_def = with_constructor_parentheses(keyword(runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>::keyword)            \
-                                                                            > argument_reference_parser<runir::kr::dl::ConceptTag>());                         \
-    const auto prefix##_role_universal_def =                                                                                                                   \
-        with_constructor_parentheses(keyword(runir::kr::dl::UniversalTag::keyword) >> x3::attr(grammar_ast::RoleUniversal<Family> {}));                        \
-    const auto prefix##_role_atomic_state_def =                                                                                                                \
-        with_constructor_parentheses(keyword(runir::kr::dl::RoleAtomicStateSyntaxTag::keyword) > predicate_name_string_parser());                              \
-    const auto prefix##_role_atomic_goal_def =                                                                                                                 \
-        with_constructor_parentheses(keyword(runir::kr::dl::RoleAtomicGoalSyntaxTag::keyword) > predicate_name_string_parser() > bool_string_parser());        \
-    const auto prefix##_role_intersection_def =                                                                                                                \
-        with_constructor_parentheses(keyword(runir::kr::dl::RoleIntersectionSyntaxTag::keyword) > prefix##_role_choice > prefix##_role_choice);                \
-    const auto prefix##_role_union_def =                                                                                                                       \
-        with_constructor_parentheses(keyword(runir::kr::dl::RoleUnionSyntaxTag::keyword) > prefix##_role_choice > prefix##_role_choice);                       \
-    const auto prefix##_role_complement_def = with_constructor_parentheses(keyword(runir::kr::dl::ComplementTag::keyword) > prefix##_role_choice);             \
-    const auto prefix##_role_inverse_def = with_constructor_parentheses(keyword(runir::kr::dl::InverseTag::keyword) > prefix##_role_choice);                   \
-    const auto prefix##_role_composition_def =                                                                                                                 \
-        with_constructor_parentheses(keyword(runir::kr::dl::CompositionTag::keyword) > prefix##_role_choice > prefix##_role_choice);                           \
-    const auto prefix##_role_transitive_closure_def =                                                                                                          \
-        with_constructor_parentheses(keyword(runir::kr::dl::TransitiveClosureTag::keyword) > prefix##_role_choice);                                            \
-    const auto prefix##_role_reflexive_transitive_closure_def =                                                                                                \
-        with_constructor_parentheses(keyword(runir::kr::dl::ReflexiveTransitiveClosureTag::keyword) > prefix##_role_choice);                                   \
-    const auto prefix##_role_restriction_def =                                                                                                                 \
-        with_constructor_parentheses(keyword(runir::kr::dl::RestrictionTag::keyword) > prefix##_role_choice > prefix##_concept_choice);                        \
-    const auto prefix##_role_identity_def = with_constructor_parentheses(keyword(runir::kr::dl::IdentityTag::keyword) > prefix##_concept_choice);              \
-    const auto prefix##_role_register_def =                                                                                                                    \
-        with_constructor_parentheses(keyword(runir::kr::dl::RoleRegisterSyntaxTag::keyword) > register_reference_parser<runir::kr::dl::RoleTag>());            \
-    const auto prefix##_role_argument_def = with_constructor_parentheses(keyword(runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>::keyword)                  \
-                                                                         > argument_reference_parser<runir::kr::dl::RoleTag>());                               \
-    const auto prefix##_boolean_atomic_state_def =                                                                                                             \
-        with_constructor_parentheses(keyword(runir::kr::dl::BooleanAtomicStateSyntaxTag::keyword) > predicate_name_string_parser() > bool_string_parser());    \
-    const auto prefix##_boolean_atomic_goal_def =                                                                                                              \
-        with_constructor_parentheses(keyword(runir::kr::dl::BooleanAtomicGoalSyntaxTag::keyword) > predicate_name_string_parser() > bool_string_parser());     \
-    const auto prefix##_boolean_nonempty_def =                                                                                                                 \
-        with_constructor_parentheses(keyword(runir::kr::dl::NonemptyTag::keyword) > prefix##_constructor_or_non_terminal_variant);                             \
-    const auto prefix##_boolean_eq_def =                                                                                                                       \
-        with_constructor_parentheses(keyword(runir::kr::dl::BooleanEqTag::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                       \
-    const auto prefix##_boolean_neq_def =                                                                                                                      \
-        with_constructor_parentheses(keyword(runir::kr::dl::BooleanNeTag::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                       \
-    const auto prefix##_boolean_lt_def =                                                                                                                       \
-        with_constructor_parentheses(keyword(runir::kr::dl::BooleanLtTag::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                       \
-    const auto prefix##_boolean_le_def =                                                                                                                       \
-        with_constructor_parentheses(keyword(runir::kr::dl::BooleanLeTag::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                       \
-    const auto prefix##_boolean_gt_def =                                                                                                                       \
-        with_constructor_parentheses(keyword(runir::kr::dl::BooleanGtTag::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                       \
-    const auto prefix##_boolean_ge_def =                                                                                                                       \
-        with_constructor_parentheses(keyword(runir::kr::dl::BooleanGeTag::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                       \
-    const auto prefix##_numerical_eq_def =                                                                                                                     \
-        with_constructor_parentheses(keyword(runir::kr::dl::NumericalEqTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                 \
-    const auto prefix##_numerical_neq_def =                                                                                                                    \
-        with_constructor_parentheses(keyword(runir::kr::dl::NumericalNeTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                 \
-    const auto prefix##_numerical_lt_def =                                                                                                                     \
-        with_constructor_parentheses(keyword(runir::kr::dl::NumericalLtTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                 \
-    const auto prefix##_numerical_le_def =                                                                                                                     \
-        with_constructor_parentheses(keyword(runir::kr::dl::NumericalLeTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                 \
-    const auto prefix##_numerical_gt_def =                                                                                                                     \
-        with_constructor_parentheses(keyword(runir::kr::dl::NumericalGtTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                 \
-    const auto prefix##_numerical_ge_def =                                                                                                                     \
-        with_constructor_parentheses(keyword(runir::kr::dl::NumericalGeTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                 \
-    const auto prefix##_boolean_constant_def = with_constructor_parentheses(keyword(runir::kr::dl::BooleanConstantTag::keyword) > bool_string_parser());       \
-    const auto prefix##_boolean_and_def =                                                                                                                      \
-        with_constructor_parentheses(keyword(runir::kr::dl::AndTag::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                             \
-    const auto prefix##_boolean_or_def =                                                                                                                       \
-        with_constructor_parentheses(keyword(runir::kr::dl::OrTag::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                              \
-    const auto prefix##_boolean_not_def = with_constructor_parentheses(keyword(runir::kr::dl::NotTag::keyword) > prefix##_boolean_choice);                     \
-    const auto prefix##_boolean_argument_def = with_constructor_parentheses(keyword(runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>::keyword)            \
-                                                                            > argument_reference_parser<runir::kr::dl::BooleanTag>());                         \
-    const auto prefix##_numerical_count_def =                                                                                                                  \
-        with_constructor_parentheses(keyword(runir::kr::dl::CountTag::keyword) > prefix##_constructor_or_non_terminal_variant);                                \
-    const auto prefix##_numerical_distance_def =                                                                                                               \
-        with_constructor_parentheses(keyword(runir::kr::dl::DistanceTag::keyword) > (prefix##_concept_choice | prefix##_query)                                  \
-                                     > (prefix##_role_choice | prefix##_query) > (prefix##_concept_choice | prefix##_query));                                  \
-    const auto prefix##_numerical_constant_def = with_constructor_parentheses(keyword(runir::kr::dl::NumericalConstantTag::keyword) > unsigned_integer);       \
-    const auto prefix##_numerical_add_def =                                                                                                                    \
-        with_constructor_parentheses(keyword(runir::kr::dl::AddTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                         \
-    const auto prefix##_numerical_sub_def =                                                                                                                    \
-        with_constructor_parentheses(keyword(runir::kr::dl::SubTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                         \
-    const auto prefix##_numerical_mul_def =                                                                                                                    \
-        with_constructor_parentheses(keyword(runir::kr::dl::MulTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                         \
-    const auto prefix##_numerical_div_def =                                                                                                                    \
-        with_constructor_parentheses(keyword(runir::kr::dl::DivTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                         \
-    const auto prefix##_numerical_min_def =                                                                                                                    \
-        with_constructor_parentheses(keyword(runir::kr::dl::MinTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                         \
-    const auto prefix##_numerical_max_def =                                                                                                                    \
-        with_constructor_parentheses(keyword(runir::kr::dl::MaxTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                         \
-    const auto prefix##_numerical_argument_def = with_constructor_parentheses(keyword(runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>::keyword)        \
-                                                                              > argument_reference_parser<runir::kr::dl::NumericalTag>());                     \
-    const auto prefix##_concept_derivation_rule_def =                                                                                                          \
-        context("concept derivation")[(lit("(") >> prefix##_concept_non_terminal) > derivation_choices_parser(prefix##_concept_choice) > lit(")")];            \
-    const auto prefix##_role_derivation_rule_def =                                                                                                             \
-        context("role derivation")[(lit("(") >> prefix##_role_non_terminal) > derivation_choices_parser(prefix##_role_choice) > lit(")")];                     \
-    const auto prefix##_boolean_derivation_rule_def =                                                                                                          \
-        context("boolean derivation")[(lit("(") >> prefix##_boolean_non_terminal) > derivation_choices_parser(prefix##_boolean_choice) > lit(")")];            \
-    const auto prefix##_numerical_derivation_rule_def =                                                                                                        \
-        context("numerical derivation")[(lit("(") >> prefix##_numerical_non_terminal) > derivation_choices_parser(prefix##_numerical_choice) > lit(")")];      \
-    const auto prefix##_derivation_rule_variant_def =                                                                                                          \
-        prefix##_concept_derivation_rule | prefix##_role_derivation_rule | prefix##_boolean_derivation_rule | prefix##_numerical_derivation_rule;              \
-    const auto prefix##_grammar_body_def = *prefix##_derivation_rule_variant;                                                                                  \
-    const auto prefix##_grammar_def = context("DL grammar")[lit("(") > prefix##_grammar_body > lit(")")];                                                      \
-    const auto prefix##_grammar_root_def = context("DL grammar")[prefix##_grammar > eoi];                                                                      \
-    BOOST_SPIRIT_DEFINE(prefix##_concept,                                                                                                                      \
-                        prefix##_concept_root,                                                                                                                 \
-                        prefix##_role,                                                                                                                         \
-                        prefix##_role_root,                                                                                                                    \
-                        prefix##_boolean,                                                                                                                      \
-                        prefix##_boolean_root,                                                                                                                 \
-                        prefix##_numerical,                                                                                                                    \
-                        prefix##_numerical_root,                                                                                                               \
-                        prefix##_concept_non_terminal,                                                                                                         \
-                        prefix##_concept_choice,                                                                                                               \
-                        prefix##_role_non_terminal,                                                                                                            \
-                        prefix##_role_choice,                                                                                                                  \
-                        prefix##_boolean_non_terminal,                                                                                                         \
-                        prefix##_boolean_choice,                                                                                                               \
-                        prefix##_numerical_non_terminal,                                                                                                       \
-                        prefix##_numerical_choice,                                                                                                             \
-                        prefix##_constructor_or_non_terminal_variant,                                                                                          \
-                        prefix##_concept_derivation_rule,                                                                                                      \
-                        prefix##_role_derivation_rule,                                                                                                         \
-                        prefix##_boolean_derivation_rule,                                                                                                      \
-                        prefix##_numerical_derivation_rule,                                                                                                    \
-                        prefix##_derivation_rule_variant,                                                                                                      \
-                        prefix##_grammar_body,                                                                                                                 \
-                        prefix##_grammar,                                                                                                                      \
-                        prefix##_grammar_root)                                                                                                                 \
-    BOOST_SPIRIT_DEFINE(prefix##_concept_bot,                                                                                                                  \
-                        prefix##_concept_top,                                                                                                                  \
-                        prefix##_concept_atomic_state,                                                                                                         \
-                        prefix##_concept_atomic_goal,                                                                                                          \
-                        prefix##_concept_intersection,                                                                                                         \
-                        prefix##_concept_union,                                                                                                                \
-                        prefix##_concept_negation,                                                                                                             \
-                        prefix##_concept_value_restriction,                                                                                                    \
-                        prefix##_concept_existential_quantification,                                                                                           \
-                        prefix##_concept_at_least_number_restriction,                                                                                          \
-                        prefix##_concept_at_most_number_restriction,                                                                                           \
-                        prefix##_concept_exact_number_restriction,                                                                                             \
-                        prefix##_concept_qualified_at_least_number_restriction,                                                                                \
-                        prefix##_concept_qualified_at_most_number_restriction,                                                                                 \
-                        prefix##_concept_qualified_exact_number_restriction,                                                                                   \
-                        prefix##_concept_role_value_map,                                                                                                       \
-                        prefix##_concept_agreement,                                                                                                            \
-                        prefix##_concept_role_fillers,                                                                                                         \
-                        prefix##_concept_one_of,                                                                                                               \
-                        prefix##_concept_nominal,                                                                                                              \
-                        prefix##_concept_register,                                                                                                             \
-                        prefix##_concept_argument)                                                                                                             \
-    BOOST_SPIRIT_DEFINE(prefix##_role_universal,                                                                                                               \
-                        prefix##_role_atomic_state,                                                                                                            \
-                        prefix##_role_atomic_goal,                                                                                                             \
-                        prefix##_role_intersection,                                                                                                            \
-                        prefix##_role_union,                                                                                                                   \
-                        prefix##_role_complement,                                                                                                              \
-                        prefix##_role_inverse,                                                                                                                 \
-                        prefix##_role_composition,                                                                                                             \
-                        prefix##_role_transitive_closure,                                                                                                      \
-                        prefix##_role_reflexive_transitive_closure,                                                                                            \
-                        prefix##_role_restriction,                                                                                                             \
-                        prefix##_role_identity,                                                                                                                \
-                        prefix##_role_register,                                                                                                                \
-                        prefix##_role_argument)                                                                                                                \
-    BOOST_SPIRIT_DEFINE(prefix##_boolean_atomic_state,                                                                                                         \
-                        prefix##_boolean_atomic_goal,                                                                                                          \
-                        prefix##_boolean_nonempty,                                                                                                             \
-                        prefix##_boolean_eq,                                                                                                                   \
-                        prefix##_boolean_neq,                                                                                                                  \
-                        prefix##_boolean_lt,                                                                                                                   \
-                        prefix##_boolean_le,                                                                                                                   \
-                        prefix##_boolean_gt,                                                                                                                   \
-                        prefix##_boolean_ge,                                                                                                                   \
-                        prefix##_numerical_eq,                                                                                                                 \
-                        prefix##_numerical_neq,                                                                                                                \
-                        prefix##_numerical_lt,                                                                                                                 \
-                        prefix##_numerical_le,                                                                                                                 \
-                        prefix##_numerical_gt,                                                                                                                 \
-                        prefix##_numerical_ge,                                                                                                                 \
-                        prefix##_boolean_constant,                                                                                                             \
-                        prefix##_boolean_and,                                                                                                                  \
-                        prefix##_boolean_or,                                                                                                                   \
-                        prefix##_boolean_not,                                                                                                                  \
-                        prefix##_boolean_argument)                                                                                                             \
-    BOOST_SPIRIT_DEFINE(prefix##_numerical_count,                                                                                                              \
-                        prefix##_numerical_distance,                                                                                                           \
-                        prefix##_numerical_constant,                                                                                                           \
-                        prefix##_numerical_add,                                                                                                                \
-                        prefix##_numerical_sub,                                                                                                                \
-                        prefix##_numerical_mul,                                                                                                                \
-                        prefix##_numerical_div,                                                                                                                \
-                        prefix##_numerical_min,                                                                                                                \
-                        prefix##_numerical_max,                                                                                                                \
+#define RUNIR_DEFINE_FAMILY_PARSER(Family, prefix)                                                                                                            \
+    query_atomic_state_type<Family> const prefix##_query_atomic_state = "query_atomic_state";                                                                 \
+    query_atomic_goal_type<Family> const prefix##_query_atomic_goal = "query_atomic_goal";                                                                    \
+    query_concept_type<Family> const prefix##_query_concept = "query_concept";                                                                                \
+    query_role_type<Family> const prefix##_query_role = "query_role";                                                                                         \
+    query_join_type<Family> const prefix##_query_join = "query_join";                                                                                         \
+    query_project_type<Family> const prefix##_query_project = "query_project";                                                                                \
+    query_rename_type<Family> const prefix##_query_rename = "query_rename";                                                                                   \
+    query_select_equal_type<Family> const prefix##_query_select_equal = "query_select_equal";                                                                 \
+    query_select_value_type<Family> const prefix##_query_select_value = "query_select_value";                                                                 \
+    query_union_type<Family> const prefix##_query_union = "query_union";                                                                                      \
+    query_difference_type<Family> const prefix##_query_difference = "query_difference";                                                                       \
+    query_generic_join_type<Family> const prefix##_query_generic_join = "query_generic_join";                                                                 \
+    query_empty_type<Family> const prefix##_query_empty = "query_empty";                                                                                      \
+    query_type<Family> const prefix##_query = "query";                                                                                                        \
+    constructor_type<Family, runir::kr::dl::ConceptTag> const prefix##_concept = "concept";                                                                   \
+    constructor_root_type<Family, runir::kr::dl::ConceptTag> const prefix##_concept_root = "concept_root";                                                    \
+    constructor_type<Family, runir::kr::dl::RoleTag> const prefix##_role = "role";                                                                            \
+    constructor_root_type<Family, runir::kr::dl::RoleTag> const prefix##_role_root = "role_root";                                                             \
+    constructor_type<Family, runir::kr::dl::BooleanTag> const prefix##_boolean = "boolean";                                                                   \
+    constructor_root_type<Family, runir::kr::dl::BooleanTag> const prefix##_boolean_root = "boolean_root";                                                    \
+    constructor_type<Family, runir::kr::dl::NumericalTag> const prefix##_numerical = "numerical";                                                             \
+    constructor_root_type<Family, runir::kr::dl::NumericalTag> const prefix##_numerical_root = "numerical_root";                                              \
+    non_terminal_type<Family, runir::kr::dl::ConceptTag> const prefix##_concept_non_terminal = "concept_non_terminal";                                        \
+    choice_type<Family, runir::kr::dl::ConceptTag> const prefix##_concept_choice = "concept_choice";                                                          \
+    non_terminal_type<Family, runir::kr::dl::RoleTag> const prefix##_role_non_terminal = "role_non_terminal";                                                 \
+    choice_type<Family, runir::kr::dl::RoleTag> const prefix##_role_choice = "role_choice";                                                                   \
+    non_terminal_type<Family, runir::kr::dl::BooleanTag> const prefix##_boolean_non_terminal = "boolean_non_terminal";                                        \
+    choice_type<Family, runir::kr::dl::BooleanTag> const prefix##_boolean_choice = "boolean_choice";                                                          \
+    non_terminal_type<Family, runir::kr::dl::NumericalTag> const prefix##_numerical_non_terminal = "numerical_non_terminal";                                  \
+    choice_type<Family, runir::kr::dl::NumericalTag> const prefix##_numerical_choice = "numerical_choice";                                                    \
+    constructor_or_non_terminal_variant_type<Family> const prefix##_constructor_or_non_terminal_variant = "constructor_or_non_terminal_variant";              \
+    derivation_rule_type<Family, runir::kr::dl::ConceptTag> const prefix##_concept_derivation_rule = "concept_derivation_rule";                               \
+    derivation_rule_type<Family, runir::kr::dl::RoleTag> const prefix##_role_derivation_rule = "role_derivation_rule";                                        \
+    derivation_rule_type<Family, runir::kr::dl::BooleanTag> const prefix##_boolean_derivation_rule = "boolean_derivation_rule";                               \
+    derivation_rule_type<Family, runir::kr::dl::NumericalTag> const prefix##_numerical_derivation_rule = "numerical_derivation_rule";                         \
+    derivation_rule_variant_type<Family> const prefix##_derivation_rule_variant = "derivation_rule_variant";                                                  \
+    grammar_body_type<Family> const prefix##_grammar_body = "grammar_body";                                                                                   \
+    grammar_type<Family> const prefix##_grammar = "grammar";                                                                                                  \
+    grammar_root_type<Family> const prefix##_grammar_root = "grammar_root";                                                                                   \
+    RUNIR_CONCEPT_CONSTRUCTORS(Family, prefix, RUNIR_DECLARE_CONSTRUCTOR_RULE)                                                                                \
+    RUNIR_ROLE_CONSTRUCTORS(Family, prefix, RUNIR_DECLARE_CONSTRUCTOR_RULE)                                                                                   \
+    RUNIR_BOOLEAN_CONSTRUCTORS(Family, prefix, RUNIR_DECLARE_CONSTRUCTOR_RULE)                                                                                \
+    RUNIR_NUMERICAL_CONSTRUCTORS(Family, prefix, RUNIR_DECLARE_CONSTRUCTOR_RULE)                                                                              \
+    const auto prefix##_concept_def = boost::spirit::x3::eps(false) RUNIR_CONCEPT_CONSTRUCTORS(Family, prefix, RUNIR_CONSTRUCTOR_ALTERNATIVE);                \
+    const auto prefix##_concept_root_def = context("concept expression")[prefix##_concept > eoi];                                                             \
+    const auto prefix##_concept_non_terminal_def = non_terminal_string_parser<runir::kr::dl::ConceptTag>();                                                   \
+    const auto prefix##_concept_choice_def = prefix##_concept_non_terminal | prefix##_concept;                                                                \
+    const auto prefix##_role_def = boost::spirit::x3::eps(false) RUNIR_ROLE_CONSTRUCTORS(Family, prefix, RUNIR_CONSTRUCTOR_ALTERNATIVE);                      \
+    const auto prefix##_role_root_def = context("role expression")[prefix##_role > eoi];                                                                      \
+    const auto prefix##_role_non_terminal_def = non_terminal_string_parser<runir::kr::dl::RoleTag>();                                                         \
+    const auto prefix##_role_choice_def = prefix##_role_non_terminal | prefix##_role;                                                                         \
+    const auto prefix##_constructor_or_non_terminal_variant_def = prefix##_concept_choice | prefix##_role_choice | prefix##_query;                            \
+    const auto prefix##_boolean_def = boost::spirit::x3::eps(false) RUNIR_BOOLEAN_CONSTRUCTORS(Family, prefix, RUNIR_CONSTRUCTOR_ALTERNATIVE);                \
+    const auto prefix##_boolean_root_def = context("boolean expression")[prefix##_boolean > eoi];                                                             \
+    const auto prefix##_boolean_non_terminal_def = non_terminal_string_parser<runir::kr::dl::BooleanTag>();                                                   \
+    const auto prefix##_boolean_choice_def = prefix##_boolean_non_terminal | prefix##_boolean;                                                                \
+    const auto prefix##_numerical_def = boost::spirit::x3::eps(false) RUNIR_NUMERICAL_CONSTRUCTORS(Family, prefix, RUNIR_CONSTRUCTOR_ALTERNATIVE);            \
+    const auto prefix##_numerical_root_def = context("numerical expression")[prefix##_numerical > eoi];                                                       \
+    const auto prefix##_numerical_non_terminal_def = non_terminal_string_parser<runir::kr::dl::NumericalTag>();                                               \
+    const auto prefix##_numerical_choice_def = prefix##_numerical_non_terminal | prefix##_numerical;                                                          \
+    const auto prefix##_query_atomic_state_def =                                                                                                              \
+        with_constructor_parentheses(keyword("q_atomic_state") > predicate_name_string_parser() > query_columns_parser());                                    \
+    const auto prefix##_query_atomic_goal_def =                                                                                                               \
+        with_constructor_parentheses(keyword("q_atomic_goal") > predicate_name_string_parser() > bool_string_parser() > query_columns_parser());              \
+    const auto prefix##_query_concept_def =                                                                                                                   \
+        with_constructor_parentheses(keyword(runir::kr::dl::QueryConceptTag::keyword) > boost::spirit::x3::repeat(1)[identifier] > prefix##_concept_choice);  \
+    const auto prefix##_query_role_def =                                                                                                                      \
+        with_constructor_parentheses(keyword(runir::kr::dl::QueryRoleTag::keyword) > query_columns_parser() > prefix##_role_choice);                          \
+    const auto prefix##_query_join_def = with_constructor_parentheses(keyword(runir::kr::dl::QueryJoinTag::keyword) > prefix##_query > prefix##_query);       \
+    const auto prefix##_query_project_def =                                                                                                                   \
+        with_constructor_parentheses(keyword(runir::kr::dl::QueryProjectTag::keyword) > query_columns_parser() > prefix##_query);                             \
+    const auto prefix##_query_rename_def =                                                                                                                    \
+        with_constructor_parentheses(keyword(runir::kr::dl::QueryRenameTag::keyword) > query_columns_parser() > prefix##_query);                              \
+    const auto prefix##_query_select_equal_def =                                                                                                              \
+        with_constructor_parentheses(keyword(runir::kr::dl::QuerySelectEqualTag::keyword) > identifier > identifier > prefix##_query);                        \
+    const auto prefix##_query_select_value_def =                                                                                                              \
+        with_constructor_parentheses(keyword(runir::kr::dl::QuerySelectValueTag::keyword) > identifier > object_name_string_parser() > prefix##_query);       \
+    const auto prefix##_query_union_def = with_constructor_parentheses(keyword(runir::kr::dl::QueryUnionTag::keyword) > prefix##_query > prefix##_query);     \
+    const auto prefix##_query_difference_def =                                                                                                                \
+        with_constructor_parentheses(keyword(runir::kr::dl::QueryDifferenceTag::keyword) > prefix##_query > prefix##_query);                                  \
+    const auto prefix##_query_generic_join_def =                                                                                                              \
+        with_constructor_parentheses(keyword(runir::kr::dl::QueryGenericJoinTag::keyword) > query_columns_parser() > query_columns_parser()                   \
+                                     > boost::spirit::x3::repeat(2, boost::spirit::x3::inf)[prefix##_query]);                                                 \
+    const auto prefix##_query_empty_def = with_constructor_parentheses(keyword(runir::kr::dl::QueryEmptyTag::keyword) > query_columns_parser());              \
+    const auto prefix##_concept_project_def =                                                                                                                 \
+        with_constructor_parentheses(keyword(runir::kr::dl::ConceptProjectSyntaxTag::keyword) > boost::spirit::x3::repeat(1)[identifier] > prefix##_query);   \
+    const auto prefix##_role_project_def =                                                                                                                    \
+        with_constructor_parentheses(keyword(runir::kr::dl::RoleProjectSyntaxTag::keyword) > boost::spirit::x3::repeat(2)[identifier] > prefix##_query);      \
+    const auto prefix##_query_def = prefix##_query_atomic_state | prefix##_query_atomic_goal | prefix##_query_concept | prefix##_query_role                   \
+                                    | prefix##_query_join | prefix##_query_project | prefix##_query_rename | prefix##_query_select_equal                      \
+                                    | prefix##_query_select_value | prefix##_query_union | prefix##_query_difference | prefix##_query_generic_join            \
+                                    | prefix##_query_empty;                                                                                                   \
+    BOOST_SPIRIT_DEFINE(prefix##_query_atomic_state,                                                                                                          \
+                        prefix##_query_atomic_goal,                                                                                                           \
+                        prefix##_query_concept,                                                                                                               \
+                        prefix##_query_role,                                                                                                                  \
+                        prefix##_query_join,                                                                                                                  \
+                        prefix##_query_project,                                                                                                               \
+                        prefix##_query_rename,                                                                                                                \
+                        prefix##_query_select_equal,                                                                                                          \
+                        prefix##_query_select_value,                                                                                                          \
+                        prefix##_query_union,                                                                                                                 \
+                        prefix##_query_difference,                                                                                                            \
+                        prefix##_query_generic_join,                                                                                                          \
+                        prefix##_query_empty,                                                                                                                 \
+                        prefix##_query,                                                                                                                       \
+                        prefix##_concept_project,                                                                                                             \
+                        prefix##_role_project)                                                                                                                \
+    const auto prefix##_concept_bot_def =                                                                                                                     \
+        with_constructor_parentheses(keyword(runir::kr::dl::BotTag::keyword) >> boost::spirit::x3::attr(runir::kr::dl::grammar::ast::ConceptBot<Family> {})); \
+    const auto prefix##_concept_top_def =                                                                                                                     \
+        with_constructor_parentheses(keyword(runir::kr::dl::TopTag::keyword) >> boost::spirit::x3::attr(runir::kr::dl::grammar::ast::ConceptTop<Family> {})); \
+    const auto prefix##_concept_atomic_state_def =                                                                                                            \
+        with_constructor_parentheses(keyword(runir::kr::dl::ConceptAtomicStateSyntaxTag::keyword) > predicate_name_string_parser());                          \
+    const auto prefix##_concept_atomic_goal_def =                                                                                                             \
+        with_constructor_parentheses(keyword(runir::kr::dl::ConceptAtomicGoalSyntaxTag::keyword) > predicate_name_string_parser() > bool_string_parser());    \
+    const auto prefix##_concept_intersection_def =                                                                                                            \
+        with_constructor_parentheses(keyword(runir::kr::dl::ConceptIntersectionSyntaxTag::keyword) > prefix##_concept_choice > prefix##_concept_choice);      \
+    const auto prefix##_concept_union_def =                                                                                                                   \
+        with_constructor_parentheses(keyword(runir::kr::dl::ConceptUnionSyntaxTag::keyword) > prefix##_concept_choice > prefix##_concept_choice);             \
+    const auto prefix##_concept_negation_def = with_constructor_parentheses(keyword(runir::kr::dl::NegationTag::keyword) > prefix##_concept_choice);          \
+    const auto prefix##_concept_value_restriction_def =                                                                                                       \
+        with_constructor_parentheses(keyword(runir::kr::dl::ValueRestrictionTag::keyword) > prefix##_role_choice > prefix##_concept_choice);                  \
+    const auto prefix##_concept_existential_quantification_def =                                                                                              \
+        with_constructor_parentheses(keyword(runir::kr::dl::ExistentialQuantificationTag::keyword) > prefix##_role_choice > prefix##_concept_choice);         \
+    const auto prefix##_concept_at_least_number_restriction_def =                                                                                             \
+        with_constructor_parentheses(keyword(runir::kr::dl::AtLeastNumberRestrictionTag::keyword) > unsigned_integer > prefix##_role_choice);                 \
+    const auto prefix##_concept_at_most_number_restriction_def =                                                                                              \
+        with_constructor_parentheses(keyword(runir::kr::dl::AtMostNumberRestrictionTag::keyword) > unsigned_integer > prefix##_role_choice);                  \
+    const auto prefix##_concept_exact_number_restriction_def =                                                                                                \
+        with_constructor_parentheses(keyword(runir::kr::dl::ExactNumberRestrictionTag::keyword) > unsigned_integer > prefix##_role_choice);                   \
+    const auto prefix##_concept_qualified_at_least_number_restriction_def = with_constructor_parentheses(                                                     \
+        (keyword(runir::kr::dl::QualifiedAtLeastNumberRestrictionTag::keyword) > unsigned_integer > prefix##_role_choice) >> prefix##_concept_choice);        \
+    const auto prefix##_concept_qualified_at_most_number_restriction_def = with_constructor_parentheses(                                                      \
+        (keyword(runir::kr::dl::QualifiedAtMostNumberRestrictionTag::keyword) > unsigned_integer > prefix##_role_choice) >> prefix##_concept_choice);         \
+    const auto prefix##_concept_qualified_exact_number_restriction_def = with_constructor_parentheses(                                                        \
+        (keyword(runir::kr::dl::QualifiedExactNumberRestrictionTag::keyword) > unsigned_integer > prefix##_role_choice) >> prefix##_concept_choice);          \
+    const auto prefix##_concept_role_value_map_def =                                                                                                          \
+        with_constructor_parentheses(keyword(runir::kr::dl::RoleValueMapTag::keyword) > prefix##_role_choice > prefix##_role_choice);                         \
+    const auto prefix##_concept_agreement_def =                                                                                                               \
+        with_constructor_parentheses(keyword(runir::kr::dl::AgreementTag::keyword) > prefix##_role_choice > prefix##_role_choice);                            \
+    const auto prefix##_concept_role_fillers_def =                                                                                                            \
+        with_constructor_parentheses(keyword(runir::kr::dl::RoleFillersTag::keyword) > prefix##_role_choice > object_names_parser());                         \
+    const auto prefix##_concept_one_of_def = with_constructor_parentheses(keyword(runir::kr::dl::OneOfTag::keyword) > object_names_parser());                 \
+    const auto prefix##_concept_nominal_def = with_constructor_parentheses(keyword(runir::kr::dl::NominalTag::keyword) > object_name_string_parser());        \
+    const auto prefix##_concept_register_def =                                                                                                                \
+        with_constructor_parentheses(keyword(runir::kr::dl::ConceptRegisterSyntaxTag::keyword) > register_reference_parser<runir::kr::dl::ConceptTag>());     \
+    const auto prefix##_concept_argument_def = with_constructor_parentheses(keyword(runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>::keyword)           \
+                                                                            > argument_reference_parser<runir::kr::dl::ConceptTag>());                        \
+    const auto prefix##_role_universal_def = with_constructor_parentheses(keyword(runir::kr::dl::UniversalTag::keyword)                                       \
+                                                                          >> boost::spirit::x3::attr(runir::kr::dl::grammar::ast::RoleUniversal<Family> {})); \
+    const auto prefix##_role_atomic_state_def =                                                                                                               \
+        with_constructor_parentheses(keyword(runir::kr::dl::RoleAtomicStateSyntaxTag::keyword) > predicate_name_string_parser());                             \
+    const auto prefix##_role_atomic_goal_def =                                                                                                                \
+        with_constructor_parentheses(keyword(runir::kr::dl::RoleAtomicGoalSyntaxTag::keyword) > predicate_name_string_parser() > bool_string_parser());       \
+    const auto prefix##_role_intersection_def =                                                                                                               \
+        with_constructor_parentheses(keyword(runir::kr::dl::RoleIntersectionSyntaxTag::keyword) > prefix##_role_choice > prefix##_role_choice);               \
+    const auto prefix##_role_union_def =                                                                                                                      \
+        with_constructor_parentheses(keyword(runir::kr::dl::RoleUnionSyntaxTag::keyword) > prefix##_role_choice > prefix##_role_choice);                      \
+    const auto prefix##_role_complement_def = with_constructor_parentheses(keyword(runir::kr::dl::ComplementTag::keyword) > prefix##_role_choice);            \
+    const auto prefix##_role_inverse_def = with_constructor_parentheses(keyword(runir::kr::dl::InverseTag::keyword) > prefix##_role_choice);                  \
+    const auto prefix##_role_composition_def =                                                                                                                \
+        with_constructor_parentheses(keyword(runir::kr::dl::CompositionTag::keyword) > prefix##_role_choice > prefix##_role_choice);                          \
+    const auto prefix##_role_transitive_closure_def =                                                                                                         \
+        with_constructor_parentheses(keyword(runir::kr::dl::TransitiveClosureTag::keyword) > prefix##_role_choice);                                           \
+    const auto prefix##_role_reflexive_transitive_closure_def =                                                                                               \
+        with_constructor_parentheses(keyword(runir::kr::dl::ReflexiveTransitiveClosureTag::keyword) > prefix##_role_choice);                                  \
+    const auto prefix##_role_restriction_def =                                                                                                                \
+        with_constructor_parentheses(keyword(runir::kr::dl::RestrictionTag::keyword) > prefix##_role_choice > prefix##_concept_choice);                       \
+    const auto prefix##_role_identity_def = with_constructor_parentheses(keyword(runir::kr::dl::IdentityTag::keyword) > prefix##_concept_choice);             \
+    const auto prefix##_role_register_def =                                                                                                                   \
+        with_constructor_parentheses(keyword(runir::kr::dl::RoleRegisterSyntaxTag::keyword) > register_reference_parser<runir::kr::dl::RoleTag>());           \
+    const auto prefix##_role_argument_def = with_constructor_parentheses(keyword(runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>::keyword)                 \
+                                                                         > argument_reference_parser<runir::kr::dl::RoleTag>());                              \
+    const auto prefix##_boolean_atomic_state_def =                                                                                                            \
+        with_constructor_parentheses(keyword(runir::kr::dl::BooleanAtomicStateSyntaxTag::keyword) > predicate_name_string_parser() > bool_string_parser());   \
+    const auto prefix##_boolean_atomic_goal_def =                                                                                                             \
+        with_constructor_parentheses(keyword(runir::kr::dl::BooleanAtomicGoalSyntaxTag::keyword) > predicate_name_string_parser() > bool_string_parser());    \
+    const auto prefix##_boolean_nonempty_def =                                                                                                                \
+        with_constructor_parentheses(keyword(runir::kr::dl::NonemptyTag::keyword) > prefix##_constructor_or_non_terminal_variant);                            \
+    const auto prefix##_boolean_eq_def =                                                                                                                      \
+        with_constructor_parentheses(keyword(runir::kr::dl::BooleanEqTag::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                      \
+    const auto prefix##_boolean_neq_def =                                                                                                                     \
+        with_constructor_parentheses(keyword(runir::kr::dl::BooleanNeTag::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                      \
+    const auto prefix##_boolean_lt_def =                                                                                                                      \
+        with_constructor_parentheses(keyword(runir::kr::dl::BooleanLtTag::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                      \
+    const auto prefix##_boolean_le_def =                                                                                                                      \
+        with_constructor_parentheses(keyword(runir::kr::dl::BooleanLeTag::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                      \
+    const auto prefix##_boolean_gt_def =                                                                                                                      \
+        with_constructor_parentheses(keyword(runir::kr::dl::BooleanGtTag::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                      \
+    const auto prefix##_boolean_ge_def =                                                                                                                      \
+        with_constructor_parentheses(keyword(runir::kr::dl::BooleanGeTag::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                      \
+    const auto prefix##_numerical_eq_def =                                                                                                                    \
+        with_constructor_parentheses(keyword(runir::kr::dl::NumericalEqTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                \
+    const auto prefix##_numerical_neq_def =                                                                                                                   \
+        with_constructor_parentheses(keyword(runir::kr::dl::NumericalNeTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                \
+    const auto prefix##_numerical_lt_def =                                                                                                                    \
+        with_constructor_parentheses(keyword(runir::kr::dl::NumericalLtTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                \
+    const auto prefix##_numerical_le_def =                                                                                                                    \
+        with_constructor_parentheses(keyword(runir::kr::dl::NumericalLeTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                \
+    const auto prefix##_numerical_gt_def =                                                                                                                    \
+        with_constructor_parentheses(keyword(runir::kr::dl::NumericalGtTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                \
+    const auto prefix##_numerical_ge_def =                                                                                                                    \
+        with_constructor_parentheses(keyword(runir::kr::dl::NumericalGeTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                \
+    const auto prefix##_boolean_constant_def = with_constructor_parentheses(keyword(runir::kr::dl::BooleanConstantTag::keyword) > bool_string_parser());      \
+    const auto prefix##_boolean_and_def =                                                                                                                     \
+        with_constructor_parentheses(keyword(runir::kr::dl::AndTag::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                            \
+    const auto prefix##_boolean_or_def =                                                                                                                      \
+        with_constructor_parentheses(keyword(runir::kr::dl::OrTag::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                             \
+    const auto prefix##_boolean_not_def = with_constructor_parentheses(keyword(runir::kr::dl::NotTag::keyword) > prefix##_boolean_choice);                    \
+    const auto prefix##_boolean_argument_def = with_constructor_parentheses(keyword(runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>::keyword)           \
+                                                                            > argument_reference_parser<runir::kr::dl::BooleanTag>());                        \
+    const auto prefix##_numerical_count_def =                                                                                                                 \
+        with_constructor_parentheses(keyword(runir::kr::dl::CountTag::keyword) > prefix##_constructor_or_non_terminal_variant);                               \
+    const auto prefix##_numerical_distance_def =                                                                                                              \
+        with_constructor_parentheses(keyword(runir::kr::dl::DistanceTag::keyword) > (prefix##_concept_choice | prefix##_query)                                \
+                                     > (prefix##_role_choice | prefix##_query) > (prefix##_concept_choice | prefix##_query));                                 \
+    const auto prefix##_numerical_constant_def = with_constructor_parentheses(keyword(runir::kr::dl::NumericalConstantTag::keyword) > unsigned_integer);      \
+    const auto prefix##_numerical_add_def =                                                                                                                   \
+        with_constructor_parentheses(keyword(runir::kr::dl::AddTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                        \
+    const auto prefix##_numerical_sub_def =                                                                                                                   \
+        with_constructor_parentheses(keyword(runir::kr::dl::SubTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                        \
+    const auto prefix##_numerical_mul_def =                                                                                                                   \
+        with_constructor_parentheses(keyword(runir::kr::dl::MulTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                        \
+    const auto prefix##_numerical_div_def =                                                                                                                   \
+        with_constructor_parentheses(keyword(runir::kr::dl::DivTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                        \
+    const auto prefix##_numerical_min_def =                                                                                                                   \
+        with_constructor_parentheses(keyword(runir::kr::dl::MinTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                        \
+    const auto prefix##_numerical_max_def =                                                                                                                   \
+        with_constructor_parentheses(keyword(runir::kr::dl::MaxTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                        \
+    const auto prefix##_numerical_argument_def = with_constructor_parentheses(keyword(runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>::keyword)       \
+                                                                              > argument_reference_parser<runir::kr::dl::NumericalTag>());                    \
+    const auto prefix##_concept_derivation_rule_def =                                                                                                         \
+        context("concept derivation")[(lit("(") >> prefix##_concept_non_terminal) > derivation_choices_parser(prefix##_concept_choice) > lit(")")];           \
+    const auto prefix##_role_derivation_rule_def =                                                                                                            \
+        context("role derivation")[(lit("(") >> prefix##_role_non_terminal) > derivation_choices_parser(prefix##_role_choice) > lit(")")];                    \
+    const auto prefix##_boolean_derivation_rule_def =                                                                                                         \
+        context("boolean derivation")[(lit("(") >> prefix##_boolean_non_terminal) > derivation_choices_parser(prefix##_boolean_choice) > lit(")")];           \
+    const auto prefix##_numerical_derivation_rule_def =                                                                                                       \
+        context("numerical derivation")[(lit("(") >> prefix##_numerical_non_terminal) > derivation_choices_parser(prefix##_numerical_choice) > lit(")")];     \
+    const auto prefix##_derivation_rule_variant_def =                                                                                                         \
+        prefix##_concept_derivation_rule | prefix##_role_derivation_rule | prefix##_boolean_derivation_rule | prefix##_numerical_derivation_rule;             \
+    const auto prefix##_grammar_body_def = *prefix##_derivation_rule_variant;                                                                                 \
+    const auto prefix##_grammar_def = context("DL grammar")[lit("(") > prefix##_grammar_body > lit(")")];                                                     \
+    const auto prefix##_grammar_root_def = context("DL grammar")[prefix##_grammar > eoi];                                                                     \
+    BOOST_SPIRIT_DEFINE(prefix##_concept,                                                                                                                     \
+                        prefix##_concept_root,                                                                                                                \
+                        prefix##_role,                                                                                                                        \
+                        prefix##_role_root,                                                                                                                   \
+                        prefix##_boolean,                                                                                                                     \
+                        prefix##_boolean_root,                                                                                                                \
+                        prefix##_numerical,                                                                                                                   \
+                        prefix##_numerical_root,                                                                                                              \
+                        prefix##_concept_non_terminal,                                                                                                        \
+                        prefix##_concept_choice,                                                                                                              \
+                        prefix##_role_non_terminal,                                                                                                           \
+                        prefix##_role_choice,                                                                                                                 \
+                        prefix##_boolean_non_terminal,                                                                                                        \
+                        prefix##_boolean_choice,                                                                                                              \
+                        prefix##_numerical_non_terminal,                                                                                                      \
+                        prefix##_numerical_choice,                                                                                                            \
+                        prefix##_constructor_or_non_terminal_variant,                                                                                         \
+                        prefix##_concept_derivation_rule,                                                                                                     \
+                        prefix##_role_derivation_rule,                                                                                                        \
+                        prefix##_boolean_derivation_rule,                                                                                                     \
+                        prefix##_numerical_derivation_rule,                                                                                                   \
+                        prefix##_derivation_rule_variant,                                                                                                     \
+                        prefix##_grammar_body,                                                                                                                \
+                        prefix##_grammar,                                                                                                                     \
+                        prefix##_grammar_root)                                                                                                                \
+    BOOST_SPIRIT_DEFINE(prefix##_concept_bot,                                                                                                                 \
+                        prefix##_concept_top,                                                                                                                 \
+                        prefix##_concept_atomic_state,                                                                                                        \
+                        prefix##_concept_atomic_goal,                                                                                                         \
+                        prefix##_concept_intersection,                                                                                                        \
+                        prefix##_concept_union,                                                                                                               \
+                        prefix##_concept_negation,                                                                                                            \
+                        prefix##_concept_value_restriction,                                                                                                   \
+                        prefix##_concept_existential_quantification,                                                                                          \
+                        prefix##_concept_at_least_number_restriction,                                                                                         \
+                        prefix##_concept_at_most_number_restriction,                                                                                          \
+                        prefix##_concept_exact_number_restriction,                                                                                            \
+                        prefix##_concept_qualified_at_least_number_restriction,                                                                               \
+                        prefix##_concept_qualified_at_most_number_restriction,                                                                                \
+                        prefix##_concept_qualified_exact_number_restriction,                                                                                  \
+                        prefix##_concept_role_value_map,                                                                                                      \
+                        prefix##_concept_agreement,                                                                                                           \
+                        prefix##_concept_role_fillers,                                                                                                        \
+                        prefix##_concept_one_of,                                                                                                              \
+                        prefix##_concept_nominal,                                                                                                             \
+                        prefix##_concept_register,                                                                                                            \
+                        prefix##_concept_argument)                                                                                                            \
+    BOOST_SPIRIT_DEFINE(prefix##_role_universal,                                                                                                              \
+                        prefix##_role_atomic_state,                                                                                                           \
+                        prefix##_role_atomic_goal,                                                                                                            \
+                        prefix##_role_intersection,                                                                                                           \
+                        prefix##_role_union,                                                                                                                  \
+                        prefix##_role_complement,                                                                                                             \
+                        prefix##_role_inverse,                                                                                                                \
+                        prefix##_role_composition,                                                                                                            \
+                        prefix##_role_transitive_closure,                                                                                                     \
+                        prefix##_role_reflexive_transitive_closure,                                                                                           \
+                        prefix##_role_restriction,                                                                                                            \
+                        prefix##_role_identity,                                                                                                               \
+                        prefix##_role_register,                                                                                                               \
+                        prefix##_role_argument)                                                                                                               \
+    BOOST_SPIRIT_DEFINE(prefix##_boolean_atomic_state,                                                                                                        \
+                        prefix##_boolean_atomic_goal,                                                                                                         \
+                        prefix##_boolean_nonempty,                                                                                                            \
+                        prefix##_boolean_eq,                                                                                                                  \
+                        prefix##_boolean_neq,                                                                                                                 \
+                        prefix##_boolean_lt,                                                                                                                  \
+                        prefix##_boolean_le,                                                                                                                  \
+                        prefix##_boolean_gt,                                                                                                                  \
+                        prefix##_boolean_ge,                                                                                                                  \
+                        prefix##_numerical_eq,                                                                                                                \
+                        prefix##_numerical_neq,                                                                                                               \
+                        prefix##_numerical_lt,                                                                                                                \
+                        prefix##_numerical_le,                                                                                                                \
+                        prefix##_numerical_gt,                                                                                                                \
+                        prefix##_numerical_ge,                                                                                                                \
+                        prefix##_boolean_constant,                                                                                                            \
+                        prefix##_boolean_and,                                                                                                                 \
+                        prefix##_boolean_or,                                                                                                                  \
+                        prefix##_boolean_not,                                                                                                                 \
+                        prefix##_boolean_argument)                                                                                                            \
+    BOOST_SPIRIT_DEFINE(prefix##_numerical_count,                                                                                                             \
+                        prefix##_numerical_distance,                                                                                                          \
+                        prefix##_numerical_constant,                                                                                                          \
+                        prefix##_numerical_add,                                                                                                               \
+                        prefix##_numerical_sub,                                                                                                               \
+                        prefix##_numerical_mul,                                                                                                               \
+                        prefix##_numerical_div,                                                                                                               \
+                        prefix##_numerical_min,                                                                                                               \
+                        prefix##_numerical_max,                                                                                                               \
                         prefix##_numerical_argument)
 
 RUNIR_DEFINE_FAMILY_PARSER(runir::kr::BaseFamilyTag, base_family)

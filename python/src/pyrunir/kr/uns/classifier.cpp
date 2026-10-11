@@ -1,4 +1,5 @@
 #include "bindings.hpp"
+#include "pyrunir/kr/ps/dl/optimization_bindings.hpp"
 #include "runir/kr/uns/declarations.hpp"
 
 #include <runir/kr/dl/repository.hpp>
@@ -16,10 +17,9 @@
 namespace runir::kr::uns
 {
 
-using namespace nanobind::literals;
-
 void bind_classifier(nb::module_& m)
 {
+    using namespace nb::literals;
     using Family = runir::kr::UnsFamilyTag;
     using View = ygg::View<ygg::Index<Classifier>, Repository>;
     ygg::bind_index<ygg::Index<Classifier>>(m, "ClassifierIndex");
@@ -32,6 +32,7 @@ void bind_classifier(nb::module_& m)
     ygg::add_print(cls);
     ygg::add_comparison(cls);
     ygg::add_hash(cls);
+    runir::kr::python::bind_ps_optimize<Family, Repository>(cls);
 
     m.def(
         "classify",

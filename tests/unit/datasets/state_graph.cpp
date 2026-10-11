@@ -11,8 +11,6 @@ namespace runir::tests
 
 TEST(StateGraphTest, RejectsUnsupportedCostMode)
 {
-    namespace p = tyr::planning;
-
     auto context = make_gripper_ground_context();
 
     auto builder = datasets::StateGraphBuilder<tyr::GroundTag> {};
@@ -78,15 +76,13 @@ TEST(StateGraphTest, AnnotatesGeneratedGraphWithReachabilityAndGoalMetadata)
 
 TEST(StateGraphTest, KeepsInitialVertexWhenStateLimitIsZero)
 {
-    namespace p = tyr::planning;
-
     auto context = make_gripper_ground_context();
     auto options = datasets::StateGraphGenerationOptions {};
     options.max_num_states = 0;
 
     const auto result = datasets::generate_state_graph_result(*context, options);
 
-    EXPECT_EQ(result.status, p::SearchStatus::OUT_OF_STATES);
+    EXPECT_EQ(result.status, tyr::planning::SearchStatus::OUT_OF_STATES);
     ASSERT_NE(result.graph, nullptr);
     const auto& graph = result.graph->get_forward_graph();
     ASSERT_EQ(graph.get_num_vertices(), 1);
@@ -97,14 +93,12 @@ TEST(StateGraphTest, KeepsInitialVertexWhenStateLimitIsZero)
 
 TEST(StateGraphTest, LabelsKeepTheRepositoryWithoutRetainingUnpackedBuilders)
 {
-    namespace p = tyr::planning;
-
-    auto repository = std::weak_ptr<p::StateRepository<tyr::GroundTag>> {};
+    auto repository = std::weak_ptr<tyr::planning::StateRepository<tyr::GroundTag>> {};
     const auto retained = [&]
     {
         auto context = make_gripper_ground_context();
         repository = context->state_repository;
-        const ygg::Builder<p::State<tyr::GroundTag>>* released_builder = nullptr;
+        const ygg::Builder<tyr::planning::State<tyr::GroundTag>>* released_builder = nullptr;
         auto builder = datasets::StateGraphBuilder<tyr::GroundTag> {};
         {
             const auto node = context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator);

@@ -31,7 +31,6 @@
 namespace runir::kr::ps::ext
 {
 
-using namespace nanobind::literals;
 using runir::graphs::bind_forward_graph;
 using runir::graphs::bind_readable_graph_methods;
 
@@ -41,6 +40,7 @@ namespace
 template<tyr::TaskKind Kind, runir::kr::ps::dl::FeatureTag FeatureTag>
 void bind_feature_evaluation(nb::module_& m)
 {
+    using namespace nb::literals;
     using FeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, Repository>;
     using Context = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, Kind>;
 
@@ -96,6 +96,7 @@ void bind_choice(nb::module_& m, const char* name)
 template<tyr::TaskKind Kind>
 void bind_execution_types(nb::module_& m, const char* prefix)
 {
+    using namespace nb::literals;
     using LocalStateView = ModuleStateView<Kind>;
     using StackView = CallStackView<Kind>;
     using StateView = ProgramStateView<Kind>;
@@ -253,6 +254,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
 
 void bind_program_executor(nb::module_& m)
 {
+    using namespace nb::literals;
     nb::enum_<StateMemorization>(m, "StateMemorization")
         .value("NONE", StateMemorization::NONE)
         .value("CHOICE", StateMemorization::CHOICE)

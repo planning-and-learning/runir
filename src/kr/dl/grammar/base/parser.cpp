@@ -31,6 +31,7 @@ struct ConstructorContext
 using runir::kr::parser::constructors::parse;
 using runir::kr::parser::constructors::parse_constructor;
 using runir::kr::parser::constructors::unwrap;
+using runir::kr::parser::constructors::Unwrapped;
 
 template<typename T, typename Initialize>
 auto intern(const ConstructorContext& context, Initialize&& initialize)
@@ -51,10 +52,10 @@ FamilyConstructorOrNonTerminalView<Family, Category>
 parse(const ast::ConstructorOrNonTerminal<Family, Category>& node, tyr::formalism::planning::DomainView domain, const ConstructorContext& context)
 {
     const auto index = boost::apply_visitor(
-        [&](const auto& arg) -> ygg::Data<ConstructorOrNonTerminal<Family, Category>>::Variant
+        [&]<typename Arg>(const Arg& arg) -> ygg::Data<ConstructorOrNonTerminal<Family, Category>>::Variant
         {
             const auto& unwrapped = unwrap(arg);
-            if constexpr (std::same_as<std::remove_cvref_t<decltype(unwrapped)>, ast::NonTerminal<Family, Category>>)
+            if constexpr (std::same_as<Unwrapped<Arg>, ast::NonTerminal<Family, Category>>)
                 return parse(unwrapped, domain, context).get_index();
             else
                 return parse_constructor(unwrapped, domain, context).get_index();
@@ -111,10 +112,10 @@ void append_derivation_rule(ygg::Data<GrammarTag<Family>>& data,
                             const ConstructorContext& context)
 {
     boost::apply_visitor(
-        [&](const auto& value)
+        [&]<typename Value>(const Value& value)
         {
             const auto& rule = unwrap(value);
-            using Category = typename std::decay_t<decltype(rule)>::CategoryTag;
+            using Category = typename Unwrapped<Value>::CategoryTag;
             if constexpr (std::same_as<Category, ConceptTag>)
                 append_derivation_rule(data.concept_derivation_rules, rule, domain, context);
             else if constexpr (std::same_as<Category, RoleTag>)

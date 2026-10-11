@@ -44,8 +44,8 @@ private:
     }
 
 public:
-    using VertexPropertyType = typename G::VertexPropertyType;
-    using EdgePropertyType = typename G::EdgePropertyType;
+    using VertexPropertyType = GraphVertexPropertyType<G>;
+    using EdgePropertyType = GraphEdgePropertyType<G>;
     using VertexType = typename G::VertexType;
     using EdgeType = typename G::EdgeType;
 

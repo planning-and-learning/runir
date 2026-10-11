@@ -60,6 +60,18 @@ struct GrammarTarget
     using ConstructorView = runir::kr::dl::grammar::FamilyConstructorView<Family, Category>;
 };
 
+template<typename Context, typename Tag>
+using TargetConcept = typename Context::Target::template Concept<Tag>;
+
+template<typename Context, typename Tag>
+using TargetRole = typename Context::Target::template Role<Tag>;
+
+template<typename Context, typename Tag>
+using TargetBoolean = typename Context::Target::template Boolean<Tag>;
+
+template<typename Context, typename Tag>
+using TargetNumerical = typename Context::Target::template Numerical<Tag>;
+
 template<typename T>
 const T& unwrap(const T& value) noexcept
 {
@@ -71,6 +83,22 @@ const T& unwrap(const boost::spirit::x3::forward_ast<T>& value) noexcept
 {
     return value.get();
 }
+
+template<typename T>
+struct UnwrapTraits
+{
+    using Type = T;
+};
+
+template<typename T>
+struct UnwrapTraits<boost::spirit::x3::forward_ast<T>>
+{
+    using Type = T;
+};
+
+/// The type `unwrap` returns a reference to.
+template<typename T>
+using Unwrapped = typename UnwrapTraits<T>::Type;
 
 template<typename T, typename Context>
 auto checkout(const Context& context)
@@ -136,9 +164,9 @@ auto parse(const runir::kr::dl::grammar::ast::QueryAtomicState<Family>& node, ty
                                                 node.columns.size(),
                                                 "q_atomic_state",
                                                 context.diagnostics,
-                                                [&](auto tag, auto predicate)
+                                                [&]<typename T>(T, auto predicate)
                                                 {
-                                                    auto data = checkout<runir::kr::dl::Query<Family, runir::kr::dl::AtomicStateTag<decltype(tag)>>>(context);
+                                                    auto data = checkout<runir::kr::dl::Query<Family, runir::kr::dl::AtomicStateTag<T>>>(context);
                                                     data->predicate = predicate;
                                                     data->columns = parse_columns(node.columns, context);
                                                     return intern_query(context, intern(context, *data).get_index());
@@ -153,9 +181,9 @@ auto parse(const runir::kr::dl::grammar::ast::QueryAtomicGoal<Family>& node, tyr
                                                 node.columns.size(),
                                                 "q_atomic_goal",
                                                 context.diagnostics,
-                                                [&](auto tag, auto predicate)
+                                                [&]<typename T>(T, auto predicate)
                                                 {
-                                                    auto data = checkout<runir::kr::dl::Query<Family, runir::kr::dl::AtomicGoalTag<decltype(tag)>>>(context);
+                                                    auto data = checkout<runir::kr::dl::Query<Family, runir::kr::dl::AtomicGoalTag<T>>>(context);
                                                     data->predicate = predicate;
                                                     data->polarity = node.polarity;
                                                     data->columns = parse_columns(node.columns, context);
@@ -200,6 +228,27 @@ auto parse(const runir::kr::dl::grammar::ast::QueryColumns<Family, Tag>& node, t
     const auto arg = parse(node.arg.get(), domain, context).get_index();
     auto data = checkout<runir::kr::dl::Query<Family, Tag>>(context);
     data->arg = arg;
+    data->columns = parse_columns(node.columns, context);
+    return intern_query(context, intern(context, *data).get_index());
+}
+
+template<runir::kr::dl::FamilyTag Family, typename Context>
+auto parse(const runir::kr::dl::grammar::ast::QueryGenericJoin<Family>& node, tyr::formalism::planning::DomainView domain, const Context& context)
+{
+    ygg::IndexList<runir::kr::dl::Query<Family>> args;
+    for (const auto& arg : node.args)
+        args.push_back(parse(arg.get(), domain, context).get_index());
+    auto data = checkout<runir::kr::dl::Query<Family, runir::kr::dl::QueryGenericJoinTag>>(context);
+    data->args = std::move(args);
+    data->variable_order = parse_columns(node.variable_order, context);
+    data->output_order = parse_columns(node.output_order, context);
+    return intern_query(context, intern(context, *data).get_index());
+}
+
+template<runir::kr::dl::FamilyTag Family, typename Context>
+auto parse(const runir::kr::dl::grammar::ast::QueryEmpty<Family>& node, tyr::formalism::planning::DomainView, const Context& context)
+{
+    auto data = checkout<runir::kr::dl::Query<Family, runir::kr::dl::QueryEmptyTag>>(context);
     data->columns = parse_columns(node.columns, context);
     return intern_query(context, intern(context, *data).get_index());
 }
@@ -287,14 +336,14 @@ auto parse(const runir::kr::dl::grammar::ast::Constructor<Family, Category, runi
 template<runir::kr::dl::FamilyTag Family, typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptBot<Family>&, tyr::formalism::planning::DomainView, const Context& context)
 {
-    auto data = checkout<typename Context::Target::template Concept<runir::kr::dl::BotTag>>(context);
+    auto data = checkout<TargetConcept<Context, runir::kr::dl::BotTag>>(context);
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptTop<Family>&, tyr::formalism::planning::DomainView, const Context& context)
 {
-    auto data = checkout<typename Context::Target::template Concept<runir::kr::dl::TopTag>>(context);
+    auto data = checkout<TargetConcept<Context, runir::kr::dl::TopTag>>(context);
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
 }
 
@@ -306,10 +355,9 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptAtomicState<Family>& node, 
                                                 1,
                                                 "ConceptAtomicState",
                                                 context.diagnostics,
-                                                [&](auto tag, auto predicate)
+                                                [&]<typename T>(T, auto predicate)
                                                 {
-                                                    using T = decltype(tag);
-                                                    auto data = checkout<typename Context::Target::template Concept<runir::kr::dl::AtomicStateTag<T>>>(context);
+                                                    auto data = checkout<TargetConcept<Context, runir::kr::dl::AtomicStateTag<T>>>(context);
                                                     data->predicate = predicate;
                                                     data->polarity = true;
                                                     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
@@ -324,10 +372,9 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptAtomicGoal<Family>& node, t
                                                 1,
                                                 "ConceptAtomicGoal",
                                                 context.diagnostics,
-                                                [&](auto tag, auto predicate)
+                                                [&]<typename T>(T, auto predicate)
                                                 {
-                                                    using T = decltype(tag);
-                                                    auto data = checkout<typename Context::Target::template Concept<runir::kr::dl::AtomicGoalTag<T>>>(context);
+                                                    auto data = checkout<TargetConcept<Context, runir::kr::dl::AtomicGoalTag<T>>>(context);
                                                     data->predicate = predicate;
                                                     data->polarity = node.polarity;
                                                     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
@@ -339,7 +386,7 @@ auto parse_binary_concept(const Ast& node, tyr::formalism::planning::DomainView 
 {
     const auto lhs = parse(node.lhs, domain, context);
     const auto rhs = parse(node.rhs, domain, context);
-    auto data = checkout<typename Context::Target::template Concept<Tag>>(context);
+    auto data = checkout<TargetConcept<Context, Tag>>(context);
     data->lhs = lhs.get_index();
     data->rhs = rhs.get_index();
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
@@ -375,7 +422,7 @@ template<typename Tag, typename Ast, typename Context>
 auto parse_number_restriction_concept(const Ast& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
     const auto role = parse(node.role, domain, context);
-    auto data = checkout<typename Context::Target::template Concept<Tag>>(context);
+    auto data = checkout<TargetConcept<Context, Tag>>(context);
     data->n = node.n;
     data->role = role.get_index();
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
@@ -406,7 +453,7 @@ auto parse_qualified_number_restriction_concept(const Ast& node, tyr::formalism:
 {
     const auto role = parse(node.role, domain, context);
     const auto concept_view = parse(node.concept_, domain, context);
-    auto data = checkout<typename Context::Target::template Concept<Tag>>(context);
+    auto data = checkout<TargetConcept<Context, Tag>>(context);
     data->n = node.n;
     data->role = role.get_index();
     data->concept_ = concept_view.get_index();
@@ -453,7 +500,7 @@ template<runir::kr::dl::FamilyTag Family, typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptRoleFillers<Family>& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
     const auto role = parse(node.role, domain, context);
-    auto data = checkout<typename Context::Target::template Concept<runir::kr::dl::RoleFillersTag>>(context);
+    auto data = checkout<TargetConcept<Context, runir::kr::dl::RoleFillersTag>>(context);
     data->role = role.get_index();
     runir::kr::parser::append_objects(domain, node.object_names, context.diagnostics, data->objects);
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
@@ -462,7 +509,7 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptRoleFillers<Family>& node, 
 template<runir::kr::dl::FamilyTag Family, typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptOneOf<Family>& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
-    auto data = checkout<typename Context::Target::template Concept<runir::kr::dl::OneOfTag>>(context);
+    auto data = checkout<TargetConcept<Context, runir::kr::dl::OneOfTag>>(context);
     runir::kr::parser::append_objects(domain, node.object_names, context.diagnostics, data->objects);
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
 }
@@ -471,7 +518,7 @@ template<runir::kr::dl::FamilyTag Family, typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptNegation<Family>& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
     const auto arg = parse(node.arg, domain, context);
-    auto data = checkout<typename Context::Target::template Concept<runir::kr::dl::NegationTag>>(context);
+    auto data = checkout<TargetConcept<Context, runir::kr::dl::NegationTag>>(context);
     data->arg = arg.get_index();
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
 }
@@ -479,7 +526,7 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptNegation<Family>& node, tyr
 template<runir::kr::dl::FamilyTag Family, typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptNominal<Family>& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
-    auto data = checkout<typename Context::Target::template Concept<runir::kr::dl::NominalTag>>(context);
+    auto data = checkout<TargetConcept<Context, runir::kr::dl::NominalTag>>(context);
     data->object = runir::kr::parser::require_object(domain, node.object_name, context.diagnostics);
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
 }
@@ -487,7 +534,7 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptNominal<Family>& node, tyr:
 template<runir::kr::dl::FamilyTag Family, typename Context>
 auto parse(const runir::kr::dl::grammar::ast::RoleUniversal<Family>&, tyr::formalism::planning::DomainView, const Context& context)
 {
-    auto data = checkout<typename Context::Target::template Role<runir::kr::dl::UniversalTag>>(context);
+    auto data = checkout<TargetRole<Context, runir::kr::dl::UniversalTag>>(context);
     return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).get_index());
 }
 
@@ -499,10 +546,9 @@ auto parse(const runir::kr::dl::grammar::ast::RoleAtomicState<Family>& node, tyr
                                                 2,
                                                 "RoleAtomicState",
                                                 context.diagnostics,
-                                                [&](auto tag, auto predicate)
+                                                [&]<typename T>(T, auto predicate)
                                                 {
-                                                    using T = decltype(tag);
-                                                    auto data = checkout<typename Context::Target::template Role<runir::kr::dl::AtomicStateTag<T>>>(context);
+                                                    auto data = checkout<TargetRole<Context, runir::kr::dl::AtomicStateTag<T>>>(context);
                                                     data->predicate = predicate;
                                                     data->polarity = true;
                                                     return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).get_index());
@@ -517,10 +563,9 @@ auto parse(const runir::kr::dl::grammar::ast::RoleAtomicGoal<Family>& node, tyr:
                                                 2,
                                                 "RoleAtomicGoal",
                                                 context.diagnostics,
-                                                [&](auto tag, auto predicate)
+                                                [&]<typename T>(T, auto predicate)
                                                 {
-                                                    using T = decltype(tag);
-                                                    auto data = checkout<typename Context::Target::template Role<runir::kr::dl::AtomicGoalTag<T>>>(context);
+                                                    auto data = checkout<TargetRole<Context, runir::kr::dl::AtomicGoalTag<T>>>(context);
                                                     data->predicate = predicate;
                                                     data->polarity = node.polarity;
                                                     return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).get_index());
@@ -532,7 +577,7 @@ auto parse_binary_role(const Ast& node, tyr::formalism::planning::DomainView dom
 {
     const auto lhs = parse(node.lhs, domain, context);
     const auto rhs = parse(node.rhs, domain, context);
-    auto data = checkout<typename Context::Target::template Role<Tag>>(context);
+    auto data = checkout<TargetRole<Context, Tag>>(context);
     data->lhs = lhs.get_index();
     data->rhs = rhs.get_index();
     return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).get_index());
@@ -560,7 +605,7 @@ template<typename Tag, typename Ast, typename Context>
 auto parse_unary_role(const Ast& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
     const auto arg = parse(node.arg, domain, context);
-    auto data = checkout<typename Context::Target::template Role<Tag>>(context);
+    auto data = checkout<TargetRole<Context, Tag>>(context);
     data->arg = arg.get_index();
     return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).get_index());
 }
@@ -594,7 +639,7 @@ auto parse(const runir::kr::dl::grammar::ast::RoleRestriction<Family>& node, tyr
 {
     const auto lhs = parse(node.lhs, domain, context);
     const auto rhs = parse(node.rhs, domain, context);
-    auto data = checkout<typename Context::Target::template Role<runir::kr::dl::RestrictionTag>>(context);
+    auto data = checkout<TargetRole<Context, runir::kr::dl::RestrictionTag>>(context);
     data->lhs = lhs.get_index();
     data->rhs = rhs.get_index();
     return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).get_index());
@@ -604,7 +649,7 @@ template<runir::kr::dl::FamilyTag Family, typename Context>
 auto parse(const runir::kr::dl::grammar::ast::RoleIdentity<Family>& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
     const auto arg = parse(node.arg, domain, context);
-    auto data = checkout<typename Context::Target::template Role<runir::kr::dl::IdentityTag>>(context);
+    auto data = checkout<TargetRole<Context, runir::kr::dl::IdentityTag>>(context);
     data->arg = arg.get_index();
     return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).get_index());
 }
@@ -617,10 +662,9 @@ auto parse(const runir::kr::dl::grammar::ast::BooleanAtomicState<Family>& node, 
                                                 0,
                                                 "BooleanAtomicState",
                                                 context.diagnostics,
-                                                [&](auto tag, auto predicate)
+                                                [&]<typename T>(T, auto predicate)
                                                 {
-                                                    using T = decltype(tag);
-                                                    auto data = checkout<typename Context::Target::template Boolean<runir::kr::dl::AtomicStateTag<T>>>(context);
+                                                    auto data = checkout<TargetBoolean<Context, runir::kr::dl::AtomicStateTag<T>>>(context);
                                                     data->predicate = predicate;
                                                     data->polarity = node.polarity;
                                                     return intern_constructor<runir::kr::dl::BooleanTag>(context, intern(context, *data).get_index());
@@ -635,10 +679,9 @@ auto parse(const runir::kr::dl::grammar::ast::BooleanAtomicGoal<Family>& node, t
                                                 0,
                                                 "BooleanAtomicGoal",
                                                 context.diagnostics,
-                                                [&](auto tag, auto predicate)
+                                                [&]<typename T>(T, auto predicate)
                                                 {
-                                                    using T = decltype(tag);
-                                                    auto data = checkout<typename Context::Target::template Boolean<runir::kr::dl::AtomicGoalTag<T>>>(context);
+                                                    auto data = checkout<TargetBoolean<Context, runir::kr::dl::AtomicGoalTag<T>>>(context);
                                                     data->predicate = predicate;
                                                     data->polarity = node.polarity;
                                                     return intern_constructor<runir::kr::dl::BooleanTag>(context, intern(context, *data).get_index());
@@ -648,10 +691,10 @@ auto parse(const runir::kr::dl::grammar::ast::BooleanAtomicGoal<Family>& node, t
 template<runir::kr::dl::FamilyTag Family, typename Context>
 auto parse(const runir::kr::dl::grammar::ast::BooleanNonempty<Family>& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
-    using Data = ygg::Data<typename Context::Target::template Boolean<runir::kr::dl::NonemptyTag>>;
+    using Data = ygg::Data<TargetBoolean<Context, runir::kr::dl::NonemptyTag>>;
     const auto arg = parse_operand<typename Data::ConstructorVariant>(node.arg, domain, context);
 
-    auto data = checkout<typename Context::Target::template Boolean<runir::kr::dl::NonemptyTag>>(context);
+    auto data = checkout<TargetBoolean<Context, runir::kr::dl::NonemptyTag>>(context);
     data->arg = arg;
     return intern_constructor<runir::kr::dl::BooleanTag>(context, intern(context, *data).get_index());
 }
@@ -659,10 +702,10 @@ auto parse(const runir::kr::dl::grammar::ast::BooleanNonempty<Family>& node, tyr
 template<runir::kr::dl::FamilyTag Family, typename Context>
 auto parse(const runir::kr::dl::grammar::ast::NumericalCount<Family>& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
-    using Data = ygg::Data<typename Context::Target::template Numerical<runir::kr::dl::CountTag>>;
+    using Data = ygg::Data<TargetNumerical<Context, runir::kr::dl::CountTag>>;
     const auto arg = parse_operand<typename Data::ConstructorVariant>(node.arg, domain, context);
 
-    auto data = checkout<typename Context::Target::template Numerical<runir::kr::dl::CountTag>>(context);
+    auto data = checkout<TargetNumerical<Context, runir::kr::dl::CountTag>>(context);
     data->arg = arg;
     return intern_constructor<runir::kr::dl::NumericalTag>(context, intern(context, *data).get_index());
 }
@@ -670,11 +713,11 @@ auto parse(const runir::kr::dl::grammar::ast::NumericalCount<Family>& node, tyr:
 template<runir::kr::dl::FamilyTag Family, typename Context>
 auto parse(const runir::kr::dl::grammar::ast::NumericalDistance<Family>& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
-    using Data = ygg::Data<typename Context::Target::template Numerical<runir::kr::dl::DistanceTag>>;
+    using Data = ygg::Data<TargetNumerical<Context, runir::kr::dl::DistanceTag>>;
     const auto lhs = parse_operand<typename Data::Vertex>(node.lhs, domain, context);
     const auto mid = parse_operand<typename Data::Edge>(node.mid, domain, context);
     const auto rhs = parse_operand<typename Data::Vertex>(node.rhs, domain, context);
-    auto data = checkout<typename Context::Target::template Numerical<runir::kr::dl::DistanceTag>>(context);
+    auto data = checkout<TargetNumerical<Context, runir::kr::dl::DistanceTag>>(context);
     data->lhs = lhs;
     data->mid = mid;
     data->rhs = rhs;
@@ -689,7 +732,7 @@ auto parse(const runir::kr::dl::grammar::ast::Constructor<Family, runir::kr::dl:
 {
     const auto lhs = parse(node.lhs, domain, context).get_index();
     const auto rhs = parse(node.rhs, domain, context).get_index();
-    auto data = checkout<typename Context::Target::template Boolean<Tag>>(context);
+    auto data = checkout<TargetBoolean<Context, Tag>>(context);
     data->lhs = lhs;
     data->rhs = rhs;
     return intern_constructor<runir::kr::dl::BooleanTag>(context, intern(context, *data).get_index());
@@ -702,7 +745,7 @@ auto parse(const runir::kr::dl::grammar::ast::Constructor<Family, runir::kr::dl:
 {
     const auto lhs = parse(node.lhs, domain, context).get_index();
     const auto rhs = parse(node.rhs, domain, context).get_index();
-    auto data = checkout<typename Context::Target::template Numerical<Tag>>(context);
+    auto data = checkout<TargetNumerical<Context, Tag>>(context);
     data->lhs = lhs;
     data->rhs = rhs;
     return intern_constructor<runir::kr::dl::NumericalTag>(context, intern(context, *data).get_index());
@@ -711,7 +754,7 @@ auto parse(const runir::kr::dl::grammar::ast::Constructor<Family, runir::kr::dl:
 template<runir::kr::dl::FamilyTag Family, typename Context>
 auto parse(const runir::kr::dl::grammar::ast::BooleanConstant<Family>& node, tyr::formalism::planning::DomainView, const Context& context)
 {
-    auto data = checkout<typename Context::Target::template Boolean<runir::kr::dl::BooleanConstantTag>>(context);
+    auto data = checkout<TargetBoolean<Context, runir::kr::dl::BooleanConstantTag>>(context);
     data->identifier = node.value;
     return intern_constructor<runir::kr::dl::BooleanTag>(context, intern(context, *data).get_index());
 }
@@ -719,7 +762,7 @@ auto parse(const runir::kr::dl::grammar::ast::BooleanConstant<Family>& node, tyr
 template<runir::kr::dl::FamilyTag Family, typename Context>
 auto parse(const runir::kr::dl::grammar::ast::NumericalConstant<Family>& node, tyr::formalism::planning::DomainView, const Context& context)
 {
-    auto data = checkout<typename Context::Target::template Numerical<runir::kr::dl::NumericalConstantTag>>(context);
+    auto data = checkout<TargetNumerical<Context, runir::kr::dl::NumericalConstantTag>>(context);
     data->identifier = node.value;
     return intern_constructor<runir::kr::dl::NumericalTag>(context, intern(context, *data).get_index());
 }
@@ -728,7 +771,7 @@ template<runir::kr::dl::FamilyTag Family, typename Context>
 auto parse(const runir::kr::dl::grammar::ast::BooleanNot<Family>& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
     const auto arg = parse(node.arg, domain, context).get_index();
-    auto data = checkout<typename Context::Target::template Boolean<runir::kr::dl::NotTag>>(context);
+    auto data = checkout<TargetBoolean<Context, runir::kr::dl::NotTag>>(context);
     data->arg = arg;
     return intern_constructor<runir::kr::dl::BooleanTag>(context, intern(context, *data).get_index());
 }

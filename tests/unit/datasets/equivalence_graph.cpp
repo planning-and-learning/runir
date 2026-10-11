@@ -110,8 +110,6 @@ TEST_P(EquivalenceGraphTest, MatchesExpectedProperties)
 
 TEST(EquivalenceGraphTest, RejectsUnsupportedPolicyMode)
 {
-    namespace p = tyr::planning;
-
     auto contexts = datasets::TaskSearchContextList<tyr::GroundTag> {};
 
     EXPECT_THROW(

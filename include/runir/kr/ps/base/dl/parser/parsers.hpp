@@ -7,7 +7,6 @@
 
 namespace runir::kr::ps::base::dl::parser
 {
-namespace x3 = boost::spirit::x3;
 
 struct IdentifierClass;
 struct BooleanFeatureClass;
@@ -33,29 +32,29 @@ struct RuleClass;
 struct SketchClass;
 struct SketchRootClass;
 
-using identifier_type = x3::rule<IdentifierClass, runir::kr::parser::ast::Identifier>;
-using base_boolean_feature_type = x3::rule<BooleanFeatureClass, ast::BooleanFeature<runir::kr::BaseFamilyTag>>;
-using base_numerical_feature_type = x3::rule<NumericalFeatureClass, ast::NumericalFeature<runir::kr::BaseFamilyTag>>;
-using base_feature_type = x3::rule<FeatureClass, ast::Feature<runir::kr::BaseFamilyTag>>;
+using identifier_type = boost::spirit::x3::rule<IdentifierClass, runir::kr::parser::ast::Identifier>;
+using base_boolean_feature_type = boost::spirit::x3::rule<BooleanFeatureClass, ast::BooleanFeature<runir::kr::BaseFamilyTag>>;
+using base_numerical_feature_type = boost::spirit::x3::rule<NumericalFeatureClass, ast::NumericalFeature<runir::kr::BaseFamilyTag>>;
+using base_feature_type = boost::spirit::x3::rule<FeatureClass, ast::Feature<runir::kr::BaseFamilyTag>>;
 
-using positive_condition_type = x3::rule<PositiveConditionClass, ast::Positive>;
-using negative_condition_type = x3::rule<NegativeConditionClass, ast::Negative>;
-using equal_zero_condition_type = x3::rule<EqualZeroConditionClass, ast::EqualZero>;
-using greater_zero_condition_type = x3::rule<GreaterZeroConditionClass, ast::GreaterZero>;
-using base_condition_observation_type = x3::rule<ConditionObservationClass, ast::ConditionObservation>;
-using base_condition_type = x3::rule<ConditionClass, ast::Condition>;
+using positive_condition_type = boost::spirit::x3::rule<PositiveConditionClass, ast::Positive>;
+using negative_condition_type = boost::spirit::x3::rule<NegativeConditionClass, ast::Negative>;
+using equal_zero_condition_type = boost::spirit::x3::rule<EqualZeroConditionClass, ast::EqualZero>;
+using greater_zero_condition_type = boost::spirit::x3::rule<GreaterZeroConditionClass, ast::GreaterZero>;
+using base_condition_observation_type = boost::spirit::x3::rule<ConditionObservationClass, ast::ConditionObservation>;
+using base_condition_type = boost::spirit::x3::rule<ConditionClass, ast::Condition>;
 
-using positive_effect_type = x3::rule<PositiveEffectClass, ast::Positive>;
-using negative_effect_type = x3::rule<NegativeEffectClass, ast::Negative>;
-using unchanged_effect_type = x3::rule<UnchangedEffectClass, ast::Unchanged>;
-using increases_effect_type = x3::rule<IncreasesEffectClass, ast::Increases>;
-using decreases_effect_type = x3::rule<DecreasesEffectClass, ast::Decreases>;
-using base_effect_observation_type = x3::rule<EffectObservationClass, ast::EffectObservation>;
-using base_effect_type = x3::rule<EffectClass, ast::Effect>;
+using positive_effect_type = boost::spirit::x3::rule<PositiveEffectClass, ast::Positive>;
+using negative_effect_type = boost::spirit::x3::rule<NegativeEffectClass, ast::Negative>;
+using unchanged_effect_type = boost::spirit::x3::rule<UnchangedEffectClass, ast::Unchanged>;
+using increases_effect_type = boost::spirit::x3::rule<IncreasesEffectClass, ast::Increases>;
+using decreases_effect_type = boost::spirit::x3::rule<DecreasesEffectClass, ast::Decreases>;
+using base_effect_observation_type = boost::spirit::x3::rule<EffectObservationClass, ast::EffectObservation>;
+using base_effect_type = boost::spirit::x3::rule<EffectClass, ast::Effect>;
 
-using base_rule_type = x3::rule<RuleClass, ast::Rule<runir::kr::BaseFamilyTag>>;
-using base_sketch_type = x3::rule<SketchClass, ast::Sketch<runir::kr::BaseFamilyTag>>;
-using base_sketch_root_type = x3::rule<SketchRootClass, ast::Sketch<runir::kr::BaseFamilyTag>>;
+using base_rule_type = boost::spirit::x3::rule<RuleClass, ast::Rule<runir::kr::BaseFamilyTag>>;
+using base_sketch_type = boost::spirit::x3::rule<SketchClass, ast::Sketch<runir::kr::BaseFamilyTag>>;
+using base_sketch_root_type = boost::spirit::x3::rule<SketchRootClass, ast::Sketch<runir::kr::BaseFamilyTag>>;
 
 BOOST_SPIRIT_DECLARE(base_boolean_feature_type, base_numerical_feature_type, base_feature_type)
 BOOST_SPIRIT_DECLARE(positive_condition_type,

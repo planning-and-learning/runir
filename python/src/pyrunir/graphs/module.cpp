@@ -12,6 +12,7 @@ namespace runir::graphs
 
 void bind_module_definitions(nb::module_& m)
 {
+    using namespace nb::literals;
     bind_graph_certificates(m);
 
     auto dynamic_graph = nb::class_<PyObjectDynamicGraph>(m, "DynamicGraph");

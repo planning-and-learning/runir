@@ -30,7 +30,6 @@
 namespace runir::kr::ps::icp
 {
 
-using namespace nanobind::literals;
 using runir::graphs::bind_forward_graph;
 using runir::graphs::bind_readable_graph_methods;
 
@@ -40,6 +39,7 @@ namespace
 template<tyr::TaskKind Kind, runir::kr::ps::dl::FeatureTag FeatureTag>
 void bind_feature_evaluation(nb::module_& m)
 {
+    using namespace nb::literals;
     using FeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, FeatureTag>>, Repository>;
     using Context = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, Kind>;
 
@@ -54,6 +54,7 @@ void bind_feature_evaluation(nb::module_& m)
 template<tyr::TaskKind Kind>
 void bind_execution_types(nb::module_& m, const char* prefix)
 {
+    using namespace nb::literals;
     using HistoryView = HistoriesView<Kind>;
     using StateView = ProgramStateView<Kind>;
     using VertexLabel = ProgramProofVertexLabel<Kind>;
@@ -161,6 +162,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
 
 void bind_program_executor(nb::module_& m)
 {
+    using namespace nb::literals;
     nb::class_<ProgramSearchStatistics>(m, "ProgramSearchStatistics")
         .def(nb::init<>())
         .def_ro("num_expanded", &ProgramSearchStatistics::num_expanded)

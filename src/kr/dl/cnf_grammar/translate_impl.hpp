@@ -20,7 +20,7 @@ namespace detail
 template<runir::kr::dl::FamilyTag Family>
 struct TranslationContext
 {
-    using GrammarData = decltype(runir::kr::dl::cnf_grammar::checkout<Grammar<Family>>(std::declval<Builder<Family>&>()));
+    using GrammarData = ygg::UniqueObjectPoolPtr<ygg::Data<Grammar<Family>>>;
 
     const runir::kr::dl::grammar::FamilyGrammarView<runir::kr::BaseFamilyTag>& source;
     ConstructorRepositoryFor<Family>& repository;
@@ -195,9 +195,8 @@ public:
     auto translate_to_non_terminal(runir::kr::dl::grammar::FamilyConstructorOrNonTerminalView<runir::kr::BaseFamilyTag, Category> source)
     {
         return ygg::visit(
-            [&](auto value)
+            [&]<typename View>(View value)
             {
-                using View = std::decay_t<decltype(value)>;
                 if constexpr (std::same_as<View, runir::kr::dl::grammar::FamilyNonTerminalView<runir::kr::BaseFamilyTag, Category>>)
                 {
                     return translate_non_terminal(value);
@@ -225,9 +224,8 @@ public:
         for (const auto symbol : source.get_rhs())
         {
             ygg::visit(
-                [&](auto value)
+                [&]<typename View>(View value)
                 {
-                    using View = std::decay_t<decltype(value)>;
                     if constexpr (std::same_as<View, runir::kr::dl::grammar::FamilyNonTerminalView<runir::kr::BaseFamilyTag, Category>>)
                     {
                         add_substitution_rule(lhs, translate_non_terminal(value));
@@ -505,9 +503,8 @@ public:
         requires std::same_as<Category, runir::kr::dl::BooleanTag>
     {
         const auto arg = ygg::visit(
-            [&](auto value) -> typename ygg::Data<Boolean<Family, runir::kr::dl::NonemptyTag>>::Arg
+            [&]<typename View>(View value) -> typename ygg::Data<Boolean<Family, runir::kr::dl::NonemptyTag>>::Arg
             {
-                using View = std::decay_t<decltype(value)>;
                 if constexpr (std::same_as<View,
                                            runir::kr::dl::grammar::FamilyConstructorOrNonTerminalView<runir::kr::BaseFamilyTag, runir::kr::dl::ConceptTag>>)
                     return translate_child<runir::kr::dl::ConceptTag>(value).get_index();
@@ -523,9 +520,8 @@ public:
         requires std::same_as<Category, runir::kr::dl::NumericalTag>
     {
         const auto arg = ygg::visit(
-            [&](auto value) -> typename ygg::Data<Numerical<Family, runir::kr::dl::CountTag>>::Arg
+            [&]<typename View>(View value) -> typename ygg::Data<Numerical<Family, runir::kr::dl::CountTag>>::Arg
             {
-                using View = std::decay_t<decltype(value)>;
                 if constexpr (std::same_as<View,
                                            runir::kr::dl::grammar::FamilyConstructorOrNonTerminalView<runir::kr::BaseFamilyTag, runir::kr::dl::ConceptTag>>)
                     return translate_child<runir::kr::dl::ConceptTag>(value).get_index();

@@ -7,10 +7,13 @@
 #include <concepts>
 #include <span>
 #include <stdexcept>
+#include <string>
+#include <string_view>
 #include <tyr/formalism/predicate_view.hpp>
 #include <variant>
 #include <vector>
 #include <yggdrasil/database/semantics/distance.hpp>
+#include <yggdrasil/database/semantics/generic_join.hpp>
 #include <yggdrasil/database/semantics/plans.hpp>
 #include <yggdrasil/database/syntax/columns.hpp>
 
@@ -35,6 +38,26 @@ inline void require_query_arity(size_t actual, size_t expected)
 {
     if (actual != expected)
         throw std::invalid_argument("Query: column count does not match arity.");
+}
+
+/// Rejects an order that does not list every input column exactly once, naming the offending column.
+template<FamilyTag Family>
+void require_generic_join_order(std::string_view name,
+                                const ygg::IndexList<QueryColumn>& order,
+                                const std::vector<ygg::Index<QueryColumn>>& input_columns,
+                                const ConstructorRepositoryFor<Family>& repository)
+{
+    const auto column_name = [&](ygg::Index<QueryColumn> column) { return std::string(ygg::make_view(column, repository).get_name()); };
+    for (size_t i = 0; i < order.size(); ++i)
+    {
+        if (std::ranges::find(input_columns, order[i]) == input_columns.end())
+            throw std::invalid_argument("q_generic_join: " + std::string(name) + " lists column `" + column_name(order[i]) + "`, which no input has.");
+        if (std::ranges::find(order.begin(), order.begin() + i, order[i]) != order.begin() + i)
+            throw std::invalid_argument("q_generic_join: " + std::string(name) + " lists column `" + column_name(order[i]) + "` twice.");
+    }
+    for (const auto column : input_columns)
+        if (std::ranges::find(order, column) == order.end())
+            throw std::invalid_argument("q_generic_join: " + std::string(name) + " is missing column `" + column_name(column) + "`.");
 }
 
 template<FamilyTag Family>
@@ -66,6 +89,25 @@ void prepare(ygg::Data<Query<Family, Tag>>& data, const ConstructorRepositoryFor
     {
         const auto arg = ygg::make_view(data.arg, repository).get_schema();
         data.plan = ygg::database::ProjectionPlan<QueryValues>(arg.span(), query_labels(data.columns));
+    }
+    else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
+    {
+        if (data.args.size() < 2)
+            throw std::invalid_argument("q_generic_join: requires at least two input queries.");
+        std::vector<std::vector<ygg::database::ColumnLayout>> inputs;
+        std::vector<ygg::Index<QueryColumn>> input_columns;
+        for (const auto arg : data.args)
+        {
+            const auto schema = ygg::make_view(arg, repository).get_schema().span();
+            inputs.emplace_back(schema.begin(), schema.end());
+            for (const auto column : get_query_columns(arg, repository))
+                if (std::ranges::find(input_columns, column) == input_columns.end())
+                    input_columns.push_back(column);
+        }
+        require_generic_join_order("variable order", data.variable_order, input_columns, repository);
+        require_generic_join_order("output order", data.output_order, input_columns, repository);
+        data.plan = ygg::database::GenericJoinPlan<QueryValues>(inputs, query_labels(data.variable_order), query_labels(data.output_order));
+        data.columns = data.output_order;
     }
     else
     {

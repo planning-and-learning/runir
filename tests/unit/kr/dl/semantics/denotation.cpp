@@ -134,23 +134,18 @@ TEST(RunirKrDlSemanticsDenotation, BuilderIdentityUsesValuesRatherThanRegistrati
 
 TEST(RunirKrDlSemanticsDenotation, ExposesScalarValues)
 {
-    namespace dl = kr::dl;
-    namespace semantics = dl::semantics;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-    auto repository = semantics::DenotationRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::semantics::DenotationRepositoryFactory().create(planning_repository);
 
-    auto boolean_data = ygg::Data<semantics::Denotation<dl::BooleanTag>>(true);
-    auto numerical_data = ygg::Data<semantics::Denotation<dl::NumericalTag>>(9);
+    auto boolean_data = ygg::Data<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>(true);
+    auto numerical_data = ygg::Data<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>(9);
     EXPECT_TRUE(repository.insert(boolean_data).first.get());
     EXPECT_EQ(repository.insert(numerical_data).first.get(), 9);
 }
 
 TEST(RunirKrDlSemanticsDenotation, CountsRolePairs)
 {
-    namespace dl = kr::dl;
-    namespace semantics = dl::semantics;
-
-    auto builder = ygg::Builder<semantics::Denotation<dl::RoleTag>>(3);
+    auto builder = ygg::Builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(3);
     EXPECT_FALSE(builder.any());
     EXPECT_EQ(builder.count(), 0);
 
@@ -160,9 +155,9 @@ TEST(RunirKrDlSemanticsDenotation, CountsRolePairs)
     EXPECT_EQ(builder.count(), 2);
 
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-    auto repository = semantics::DenotationRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::semantics::DenotationRepositoryFactory().create(planning_repository);
     const auto vec_index = repository.get_vector_repository().insert(builder.blocks);
-    auto data = ygg::Data<semantics::Denotation<dl::RoleTag>>(builder.get_num_objects(), vec_index);
+    auto data = ygg::Data<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(builder.get_num_objects(), vec_index);
     const auto view = repository.insert(data).first;
 
     EXPECT_TRUE(view.any());
@@ -258,20 +253,18 @@ TEST(RunirKrDlSemanticsDenotation, RoleMutationsClearIdentityAndPreserveRowPaddi
 
 TEST(RunirKrDlSemanticsDenotation, BorrowedAssignmentClearsIdentityAndRetainsBuffersIncludingSelfAssignment)
 {
-    namespace dl = kr::dl;
-    namespace semantics = dl::semantics;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-    const auto check = [&]<dl::CategoryTag Category>()
+    const auto check = [&]<kr::dl::CategoryTag Category>()
     {
-        using D = semantics::Denotation<Category>;
+        using D = kr::dl::semantics::Denotation<Category>;
         auto source = ygg::Builder<D>();
         auto destination = ygg::Builder<D>();
-        if constexpr (dl::ConceptOrRoleTag<Category>)
+        if constexpr (kr::dl::ConceptOrRoleTag<Category>)
         {
             constexpr auto size = static_cast<ygg::uint_t>(ygg::Builder<D>::Bitset::Digits + 3);
             source.initialize(size);
             destination.initialize(size + 1);
-            if constexpr (std::same_as<Category, dl::ConceptTag>)
+            if constexpr (std::same_as<Category, kr::dl::ConceptTag>)
                 source.get().set(size - 1);
             else
                 source.get(size - 1).set(0);
@@ -284,43 +277,41 @@ TEST(RunirKrDlSemanticsDenotation, BorrowedAssignmentClearsIdentityAndRetainsBuf
             SCOPED_TRACE(self);
             destination.index = ygg::Index<D>(7);
             const auto view = ygg::make_view(self ? destination : source, *planning_repository);
-            if constexpr (dl::ConceptOrRoleTag<Category>)
+            if constexpr (kr::dl::ConceptOrRoleTag<Category>)
             {
                 const auto* storage = destination.blocks.data();
                 const auto capacity = destination.blocks.capacity();
-                EXPECT_EQ(&semantics::assign(destination, view), &destination);
+                EXPECT_EQ(&kr::dl::semantics::assign(destination, view), &destination);
                 EXPECT_EQ(destination.blocks.data(), storage);
                 EXPECT_EQ(destination.blocks.capacity(), capacity);
             }
             else
-                EXPECT_EQ(&semantics::assign(destination, view), &destination);
+                EXPECT_EQ(&kr::dl::semantics::assign(destination, view), &destination);
             EXPECT_EQ(destination.index, ygg::Index<D>());
             EXPECT_EQ(source.index, ygg::Index<D>(8));
             EXPECT_TRUE(ygg::EqualTo<> {}(destination, source));
         }
     };
-    check.template operator()<dl::BooleanTag>();
-    check.template operator()<dl::NumericalTag>();
-    check.template operator()<dl::ConceptTag>();
-    check.template operator()<dl::RoleTag>();
+    check.template operator()<kr::dl::BooleanTag>();
+    check.template operator()<kr::dl::NumericalTag>();
+    check.template operator()<kr::dl::ConceptTag>();
+    check.template operator()<kr::dl::RoleTag>();
 }
 
 TEST(RunirKrDlSemanticsDenotation, IteratorsOutliveViewWrappers)
 {
-    namespace dl = kr::dl;
-    namespace semantics = dl::semantics;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     for (const auto* name : { "a", "b", "c" })
     {
         auto data = ygg::Data<tyr::formalism::Object>(std::string(name));
         (void) planning_repository->insert(data);
     }
-    auto repository = semantics::DenotationRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::semantics::DenotationRepositoryFactory().create(planning_repository);
 
-    auto concept_builder = ygg::Builder<semantics::Denotation<dl::ConceptTag>>(3);
+    auto concept_builder = ygg::Builder<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(3);
     concept_builder.get().set(0);
     concept_builder.get().set(2);
-    auto concept_data = ygg::Data<semantics::Denotation<dl::ConceptTag>>(3, repository.get_vector_repository().insert(concept_builder.blocks));
+    auto concept_data = ygg::Data<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(3, repository.get_vector_repository().insert(concept_builder.blocks));
     const auto concept_view = repository.insert(concept_data).first;
     const auto concept_copy = concept_view;
     EXPECT_TRUE(concept_view.begin() == concept_copy.begin());
@@ -332,10 +323,10 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsOutliveViewWrappers)
     EXPECT_EQ((*concept_iterator).get_index(), ygg::Index<tyr::formalism::Object>(2));
     EXPECT_TRUE(++concept_iterator == concept_end);
 
-    auto role_builder = ygg::Builder<semantics::Denotation<dl::RoleTag>>(3);
+    auto role_builder = ygg::Builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(3);
     role_builder.get(0).set(1);
     role_builder.get(2).set(0);
-    auto role_data = ygg::Data<semantics::Denotation<dl::RoleTag>>(3, repository.get_vector_repository().insert(role_builder.blocks));
+    auto role_data = ygg::Data<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(3, repository.get_vector_repository().insert(role_builder.blocks));
     const auto role_view = repository.insert(role_data).first;
     const auto role_copy = role_view;
     EXPECT_TRUE(role_view.begin() == role_copy.begin());
@@ -352,8 +343,6 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsOutliveViewWrappers)
 
 TEST(RunirKrDlSemanticsDenotation, IteratorsSurviveRepositoryGrowthAndSkipRolePadding)
 {
-    namespace dl = kr::dl;
-    namespace semantics = dl::semantics;
     using ObjectIndex = ygg::Index<tyr::formalism::Object>;
     const auto check_indices = [](const auto& indices, const auto& expected)
     {
@@ -379,7 +368,7 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsSurviveRepositoryGrowthAndSkipRolePa
         auto data = ygg::Data<tyr::formalism::Object>("object" + std::to_string(i));
         (void) planning_repository->insert(data);
     }
-    auto repository = semantics::DenotationRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::semantics::DenotationRepositoryFactory().create(planning_repository);
     auto concept_builder = ygg::Builder<Concept>(num_objects);
     concept_builder.get().set(0);
     concept_builder.get().set(64);
@@ -457,7 +446,6 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsSurviveRepositoryGrowthAndSkipRolePa
 
 TEST(RunirKrDlSemanticsDenotation, RoleStorageBitsetsPreserveRowPadding)
 {
-    namespace semantics = kr::dl::semantics;
     using RoleBuilder = ygg::Builder<Role>;
     constexpr auto digits = static_cast<ygg::uint_t>(RoleBuilder::Bitset::Digits);
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
@@ -466,7 +454,7 @@ TEST(RunirKrDlSemanticsDenotation, RoleStorageBitsetsPreserveRowPadding)
         auto data = ygg::Data<tyr::formalism::Object>("object" + std::to_string(i));
         (void) planning_repository->insert(data);
     }
-    auto repository = semantics::DenotationRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::semantics::DenotationRepositoryFactory().create(planning_repository);
     for (const auto size : { ygg::uint_t { 0 }, ygg::uint_t { 1 }, digits - 1, digits, digits + 1, ygg::uint_t { 130 } })
     {
         SCOPED_TRACE(size);
@@ -526,5 +514,4 @@ TEST(RunirKrDlSemanticsDenotation, RoleStorageBitsetsPreserveRowPadding)
         }
     }
 }
-
 }

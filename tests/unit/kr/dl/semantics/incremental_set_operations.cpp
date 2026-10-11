@@ -14,10 +14,6 @@ namespace
 template<ygg::uint_t size>
 void check_composition_and_closures()
 {
-    namespace dl = kr::dl;
-    namespace sem = dl::semantics;
-    namespace inc = sem::incremental;
-    namespace kernels = inc::detail;
     SCOPED_TRACE(size);
     auto repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     for (ygg::uint_t i = 0; i < size; ++i)
@@ -26,8 +22,8 @@ void check_composition_and_closures()
         (void) repository->insert(data);
     }
     const auto object = [&](ygg::uint_t index) { return ygg::make_view(ygg::Index<tyr::formalism::Object>(index), *repository); };
-    auto lhs = ygg::Builder<sem::Denotation<dl::RoleTag>>(size);
-    auto rhs = ygg::Builder<sem::Denotation<dl::RoleTag>>(size);
+    auto lhs = ygg::Builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size);
+    auto rhs = ygg::Builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size);
     for (ygg::uint_t i = 0; i < size; ++i)
     {
         lhs.get(i).set((i + 1) % size);
@@ -35,16 +31,16 @@ void check_composition_and_closures()
     }
     auto previous_lhs = lhs;
     auto previous_rhs = rhs;
-    auto composition = kernels::DenotationState<dl::RoleTag>();
-    auto transitive = kernels::DenotationState<dl::RoleTag>();
-    auto reflexive = kernels::DenotationState<dl::RoleTag>();
-    auto workspace = kernels::SetOperationWorkspace();
+    auto composition = kr::dl::semantics::incremental::detail::DenotationState<kr::dl::RoleTag>();
+    auto transitive = kr::dl::semantics::incremental::detail::DenotationState<kr::dl::RoleTag>();
+    auto reflexive = kr::dl::semantics::incremental::detail::DenotationState<kr::dl::RoleTag>();
+    auto workspace = kr::dl::semantics::incremental::detail::SetOperationWorkspace();
     workspace.initialize(size);
     const auto lhs_view = ygg::make_view(lhs, *repository);
     const auto rhs_view = ygg::make_view(rhs, *repository);
 
-    const auto check_result = [&](const kernels::DenotationState<dl::RoleTag>& output,
-                                  const ygg::Builder<sem::Denotation<dl::RoleTag>>& previous,
+    const auto check_result = [&](const kr::dl::semantics::incremental::detail::DenotationState<kr::dl::RoleTag>& output,
+                                  const ygg::Builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>& previous,
                                   const std::array<bool, size * size>& expected,
                                   bool initialized)
     {
@@ -83,8 +79,8 @@ void check_composition_and_closures()
 
     const auto check = [&](bool initialize = false)
     {
-        auto lhs_delta = inc::DenotationDelta<dl::RoleTag>();
-        auto rhs_delta = inc::DenotationDelta<dl::RoleTag>();
+        auto lhs_delta = kr::dl::semantics::incremental::DenotationDelta<kr::dl::RoleTag>();
+        auto rhs_delta = kr::dl::semantics::incremental::DenotationDelta<kr::dl::RoleTag>();
         for (ygg::uint_t source = 0; source < size; ++source)
             for (ygg::uint_t target = 0; target < size; ++target)
             {
@@ -93,20 +89,20 @@ void check_composition_and_closures()
                 if (rhs.get(source)[target] != previous_rhs.get(source)[target])
                     (rhs.get(source)[target] ? rhs_delta.added : rhs_delta.removed).emplace_back(object(source), object(target));
             }
-        const auto old_composition = initialize ? ygg::Builder<sem::Denotation<dl::RoleTag>>(size) : composition.get_builder();
-        const auto old_transitive = initialize ? ygg::Builder<sem::Denotation<dl::RoleTag>>(size) : transitive.get_builder();
-        const auto old_reflexive = initialize ? ygg::Builder<sem::Denotation<dl::RoleTag>>(size) : reflexive.get_builder();
+        const auto old_composition = initialize ? ygg::Builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) : composition.get_builder();
+        const auto old_transitive = initialize ? ygg::Builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) : transitive.get_builder();
+        const auto old_reflexive = initialize ? ygg::Builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) : reflexive.get_builder();
         if (initialize)
         {
-            kernels::initialize_set(dl::CompositionTag {}, composition, lhs_view, lhs_delta, rhs_view, rhs_delta, workspace);
-            kernels::initialize_set(dl::TransitiveClosureTag {}, transitive, lhs_view, lhs_delta, workspace);
-            kernels::initialize_set(dl::ReflexiveTransitiveClosureTag {}, reflexive, lhs_view, lhs_delta, workspace);
+            kr::dl::semantics::incremental::detail::initialize_set(kr::dl::CompositionTag {}, composition, lhs_view, lhs_delta, rhs_view, rhs_delta, workspace);
+            kr::dl::semantics::incremental::detail::initialize_set(kr::dl::TransitiveClosureTag {}, transitive, lhs_view, lhs_delta, workspace);
+            kr::dl::semantics::incremental::detail::initialize_set(kr::dl::ReflexiveTransitiveClosureTag {}, reflexive, lhs_view, lhs_delta, workspace);
         }
         else
         {
-            kernels::update_set(dl::CompositionTag {}, composition, lhs_view, lhs_delta, rhs_view, rhs_delta, workspace);
-            kernels::update_set(dl::TransitiveClosureTag {}, transitive, lhs_view, lhs_delta, workspace);
-            kernels::update_set(dl::ReflexiveTransitiveClosureTag {}, reflexive, lhs_view, lhs_delta, workspace);
+            kr::dl::semantics::incremental::detail::update_set(kr::dl::CompositionTag {}, composition, lhs_view, lhs_delta, rhs_view, rhs_delta, workspace);
+            kr::dl::semantics::incremental::detail::update_set(kr::dl::TransitiveClosureTag {}, transitive, lhs_view, lhs_delta, workspace);
+            kr::dl::semantics::incremental::detail::update_set(kr::dl::ReflexiveTransitiveClosureTag {}, reflexive, lhs_view, lhs_delta, workspace);
         }
 
         auto expected_composition = std::array<bool, size * size> {};
@@ -221,8 +217,6 @@ TEST(RunirIncrementalSetOperations, CompositionAndClosuresMatchFreshResultsAndEx
 
 TEST(RunirIncrementalSetOperations, ConceptIntersectionAndUnionAcrossWordBoundaries)
 {
-    namespace dl = kr::dl;
-    namespace inc = dl::semantics::incremental;
     constexpr auto digits = static_cast<ygg::uint_t>(ygg::BitsetSpan<const ygg::uint_t>::Digits), size = digits + 2;
     auto repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     for (ygg::uint_t i = 0; i < size; ++i)
@@ -233,19 +227,19 @@ TEST(RunirIncrementalSetOperations, ConceptIntersectionAndUnionAcrossWordBoundar
     const auto object = [&](ygg::uint_t i) { return ygg::make_view(ygg::Index<tyr::formalism::Object>(i), *repository); };
     const auto check = [&](auto tag)
     {
-        constexpr auto intersection = std::same_as<decltype(tag), dl::IntersectionTag>;
+        constexpr auto intersection = std::same_as<decltype(tag), kr::dl::IntersectionTag>;
         SCOPED_TRACE(intersection);
-        auto lhs = ygg::Builder<dl::semantics::Denotation<dl::ConceptTag>>(size), rhs = lhs;
+        auto lhs = ygg::Builder<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(size), rhs = lhs;
         for (const auto i : { digits - 1, digits, digits + 1 })
             lhs.get().set(i);
         for (const auto i : { ygg::uint_t { 0 }, digits, digits + 1 })
             rhs.get().set(i);
         const auto left = ygg::make_view(lhs, *repository), right = ygg::make_view(rhs, *repository);
-        auto lhs_delta = inc::DenotationDelta<dl::ConceptTag>(), rhs_delta = lhs_delta;
-        auto output = inc::detail::DenotationState<dl::ConceptTag>();
-        auto workspace = inc::detail::SetOperationWorkspace();
+        auto lhs_delta = kr::dl::semantics::incremental::DenotationDelta<kr::dl::ConceptTag>(), rhs_delta = lhs_delta;
+        auto output = kr::dl::semantics::incremental::detail::DenotationState<kr::dl::ConceptTag>();
+        auto workspace = kr::dl::semantics::incremental::detail::SetOperationWorkspace();
         workspace.initialize(size);
-        inc::detail::initialize_set(tag, output, left, lhs_delta, right, rhs_delta, workspace);
+        kr::dl::semantics::incremental::detail::initialize_set(tag, output, left, lhs_delta, right, rhs_delta, workspace);
         EXPECT_TRUE(output.get_delta().empty());
         EXPECT_EQ(output.size(), intersection ? 2 : 4);
         for (ygg::uint_t i = 0; i < size; ++i)
@@ -257,7 +251,7 @@ TEST(RunirIncrementalSetOperations, ConceptIntersectionAndUnionAcrossWordBoundar
         lhs_delta.removed = rhs_delta.removed = { object(digits + 1) };
         lhs_delta.added = { object(1) };
         rhs_delta.added = { object(digits - 1) };
-        inc::detail::update_set(tag, output, left, lhs_delta, right, rhs_delta, workspace);
+        kr::dl::semantics::incremental::detail::update_set(tag, output, left, lhs_delta, right, rhs_delta, workspace);
         EXPECT_EQ(output.get_delta().added, std::vector { object(intersection ? digits - 1 : 1) });
         EXPECT_EQ(output.get_delta().removed, std::vector { object(digits + 1) });
         for (ygg::uint_t i = 0; i < size; ++i)
@@ -265,16 +259,12 @@ TEST(RunirIncrementalSetOperations, ConceptIntersectionAndUnionAcrossWordBoundar
         EXPECT_EQ(output.size(), intersection ? 2 : 4);
         EXPECT_TRUE(output.get_builder().get().trailing_bits_zero());
     };
-    check(dl::IntersectionTag {});
-    check(dl::UnionTag {});
+    check(kr::dl::IntersectionTag {});
+    check(kr::dl::UnionTag {});
 }
 
 TEST(RunirIncrementalSetOperations, RestrictionBatchesConceptChangesWithChangedRoleRows)
 {
-    namespace dl = kr::dl;
-    namespace sem = dl::semantics;
-    namespace inc = sem::incremental;
-    namespace kernels = inc::detail;
     constexpr auto size = static_cast<ygg::uint_t>(ygg::BitsetSpan<const ygg::uint_t>::Digits + 3);
     auto repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     for (ygg::uint_t i = 0; i < size; ++i)
@@ -283,24 +273,36 @@ TEST(RunirIncrementalSetOperations, RestrictionBatchesConceptChangesWithChangedR
         (void) repository->insert(data);
     }
     const auto object = [&](ygg::uint_t i) { return ygg::make_view(ygg::Index<tyr::formalism::Object>(i), *repository); };
-    auto role = ygg::Builder<sem::Denotation<dl::RoleTag>>(size);
-    auto concept_ = ygg::Builder<sem::Denotation<dl::ConceptTag>>(size);
+    auto role = ygg::Builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size);
+    auto concept_ = ygg::Builder<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(size);
     role.get(0).set(1);
     role.get(1).set(size - 1);
     role.get(2).set(1);
     role.get(2).set(size - 1);
     role.get(3).set(2);
     concept_.get().set(1);
-    auto role_delta = inc::DenotationDelta<dl::RoleTag>();
-    auto concept_delta = inc::DenotationDelta<dl::ConceptTag>();
-    auto restricted = kernels::DenotationState<dl::RoleTag>();
-    auto existential = kernels::DenotationState<dl::ConceptTag>();
-    auto workspace = kernels::SetOperationWorkspace();
+    auto role_delta = kr::dl::semantics::incremental::DenotationDelta<kr::dl::RoleTag>();
+    auto concept_delta = kr::dl::semantics::incremental::DenotationDelta<kr::dl::ConceptTag>();
+    auto restricted = kr::dl::semantics::incremental::detail::DenotationState<kr::dl::RoleTag>();
+    auto existential = kr::dl::semantics::incremental::detail::DenotationState<kr::dl::ConceptTag>();
+    auto workspace = kr::dl::semantics::incremental::detail::SetOperationWorkspace();
     workspace.initialize(size);
     const auto role_view = ygg::make_view(role, *repository);
     const auto concept_view = ygg::make_view(concept_, *repository);
-    kernels::initialize_set(dl::RestrictionTag {}, restricted, role_view, role_delta, concept_view, concept_delta, workspace);
-    kernels::initialize_set(dl::ExistentialQuantificationTag {}, existential, role_view, role_delta, concept_view, concept_delta, workspace);
+    kr::dl::semantics::incremental::detail::initialize_set(kr::dl::RestrictionTag {},
+                                                           restricted,
+                                                           role_view,
+                                                           role_delta,
+                                                           concept_view,
+                                                           concept_delta,
+                                                           workspace);
+    kr::dl::semantics::incremental::detail::initialize_set(kr::dl::ExistentialQuantificationTag {},
+                                                           existential,
+                                                           role_view,
+                                                           role_delta,
+                                                           concept_view,
+                                                           concept_delta,
+                                                           workspace);
 
     role.get(0).reset(1);
     role.get(0).set(size - 1);
@@ -310,8 +312,14 @@ TEST(RunirIncrementalSetOperations, RestrictionBatchesConceptChangesWithChangedR
     concept_.get().set(size - 1);
     concept_delta.removed.push_back(object(1));
     concept_delta.added.push_back(object(size - 1));
-    kernels::update_set(dl::RestrictionTag {}, restricted, role_view, role_delta, concept_view, concept_delta, workspace);
-    kernels::update_set(dl::ExistentialQuantificationTag {}, existential, role_view, role_delta, concept_view, concept_delta, workspace);
+    kr::dl::semantics::incremental::detail::update_set(kr::dl::RestrictionTag {}, restricted, role_view, role_delta, concept_view, concept_delta, workspace);
+    kr::dl::semantics::incremental::detail::update_set(kr::dl::ExistentialQuantificationTag {},
+                                                       existential,
+                                                       role_view,
+                                                       role_delta,
+                                                       concept_view,
+                                                       concept_delta,
+                                                       workspace);
     for (ygg::uint_t source = 0; source < size; ++source)
     {
         EXPECT_EQ(existential.get_builder().get().test(source), source < 3);
@@ -326,10 +334,6 @@ TEST(RunirIncrementalSetOperations, RestrictionBatchesConceptChangesWithChangedR
 
 TEST(RunirIncrementalSetOperations, InverseAndComplementPreservePaddingAcrossWordBoundaries)
 {
-    namespace dl = kr::dl;
-    namespace sem = dl::semantics;
-    namespace inc = sem::incremental;
-    namespace kernels = inc::detail;
     constexpr auto size = static_cast<ygg::uint_t>(ygg::BitsetSpan<const ygg::uint_t>::Digits + 3);
     auto repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     for (ygg::uint_t i = 0; i < size; ++i)
@@ -338,17 +342,17 @@ TEST(RunirIncrementalSetOperations, InverseAndComplementPreservePaddingAcrossWor
         (void) repository->insert(data);
     }
     const auto object = [&](ygg::uint_t index) { return ygg::make_view(ygg::Index<tyr::formalism::Object>(index), *repository); };
-    auto role = ygg::Builder<sem::Denotation<dl::RoleTag>>(size);
+    auto role = ygg::Builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size);
     role.get(0).set(size - 1);
     role.get(size - 1).set(1);
-    auto inverse = kernels::DenotationState<dl::RoleTag>();
-    auto complement = kernels::DenotationState<dl::RoleTag>();
-    auto delta = inc::DenotationDelta<dl::RoleTag>();
-    auto workspace = kernels::SetOperationWorkspace();
+    auto inverse = kr::dl::semantics::incremental::detail::DenotationState<kr::dl::RoleTag>();
+    auto complement = kr::dl::semantics::incremental::detail::DenotationState<kr::dl::RoleTag>();
+    auto delta = kr::dl::semantics::incremental::DenotationDelta<kr::dl::RoleTag>();
+    auto workspace = kr::dl::semantics::incremental::detail::SetOperationWorkspace();
     workspace.initialize(size);
     const auto view = ygg::make_view(role, *repository);
-    kernels::initialize_set(dl::InverseTag {}, inverse, view, delta, workspace);
-    kernels::initialize_set(dl::ComplementTag {}, complement, view, delta, workspace);
+    kr::dl::semantics::incremental::detail::initialize_set(kr::dl::InverseTag {}, inverse, view, delta, workspace);
+    kr::dl::semantics::incremental::detail::initialize_set(kr::dl::ComplementTag {}, complement, view, delta, workspace);
     for (const auto* output : { &inverse, &complement })
     {
         EXPECT_TRUE(output->get_delta().empty());
@@ -359,8 +363,8 @@ TEST(RunirIncrementalSetOperations, InverseAndComplementPreservePaddingAcrossWor
     role.get(size - 2).set(size - 1);
     delta.removed.emplace_back(object(0), object(size - 1));
     delta.added.emplace_back(object(size - 2), object(size - 1));
-    kernels::update_set(dl::InverseTag {}, inverse, view, delta, workspace);
-    kernels::update_set(dl::ComplementTag {}, complement, view, delta, workspace);
+    kr::dl::semantics::incremental::detail::update_set(kr::dl::InverseTag {}, inverse, view, delta, workspace);
+    kr::dl::semantics::incremental::detail::update_set(kr::dl::ComplementTag {}, complement, view, delta, workspace);
     EXPECT_EQ(inverse.size(), 2);
     EXPECT_EQ(complement.size(), static_cast<size_t>(size) * size - 2);
     ASSERT_EQ(inverse.get_delta().added.size(), 1);
@@ -388,8 +392,8 @@ TEST(RunirIncrementalSetOperations, InverseAndComplementPreservePaddingAcrossWor
     const auto inverse_capacity = std::pair(inverse.get_delta().added.capacity(), inverse.get_delta().removed.capacity());
     const auto complement_capacity = std::pair(complement.get_delta().added.capacity(), complement.get_delta().removed.capacity());
     role.get(2).set(3);
-    kernels::initialize_set(dl::InverseTag {}, inverse, view, delta, workspace);
-    kernels::initialize_set(dl::ComplementTag {}, complement, view, delta, workspace);
+    kr::dl::semantics::incremental::detail::initialize_set(kr::dl::InverseTag {}, inverse, view, delta, workspace);
+    kr::dl::semantics::incremental::detail::initialize_set(kr::dl::ComplementTag {}, complement, view, delta, workspace);
     EXPECT_TRUE(inverse.get_delta().empty());
     EXPECT_TRUE(complement.get_delta().empty());
     EXPECT_EQ(std::pair(inverse.get_delta().added.capacity(), inverse.get_delta().removed.capacity()), inverse_capacity);

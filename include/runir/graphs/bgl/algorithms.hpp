@@ -152,7 +152,7 @@ auto strong_components(const G& graph)
 template<IsGraph G, typename SourceInputIterator>
 auto breadth_first_visit(const G& graph, SourceInputIterator first, SourceInputIterator last, auto visitor)
 {
-    using Vertex = typename boost::graph_traits<G>::vertex_descriptor;
+    using Vertex = VertexIndex;
 
     auto colors = make_vertex_map_storage(graph, boost::white_color);
     auto color_map = VertexReadWritePropertyMap<G, boost::default_color_type>(colors);
@@ -178,8 +178,8 @@ auto breadth_first_visit(const G& graph, const std::vector<VertexIndex>& sources
 template<IsGraph G, typename SourceInputIterator>
 auto breadth_first_search(const G& graph, SourceInputIterator first, SourceInputIterator last)
 {
-    using Vertex = typename boost::graph_traits<G>::vertex_descriptor;
-    using Edge = typename boost::graph_traits<G>::edge_descriptor;
+    using Vertex = VertexIndex;
+    using Edge = EdgeIndex;
     using Distance = ygg::uint_t;
 
     const auto infinity = std::numeric_limits<Distance>::max();
@@ -251,8 +251,8 @@ auto depth_first_visit(const G& graph, const std::vector<VertexIndex>& sources, 
 template<IsGraph G, typename SourceInputIterator>
 auto depth_first_search(const G& graph, SourceInputIterator first, SourceInputIterator last)
 {
-    using Vertex = typename boost::graph_traits<G>::vertex_descriptor;
-    using Edge = typename boost::graph_traits<G>::edge_descriptor;
+    using Vertex = VertexIndex;
+    using Edge = EdgeIndex;
 
     auto predecessors = make_vertex_map_storage(graph, boost::graph_traits<G>::null_vertex());
 
@@ -282,7 +282,7 @@ auto depth_first_search(const G& graph, const std::vector<VertexIndex>& sources)
 template<IsGraph G>
 auto topological_sort(const G& graph)
 {
-    using Vertex = typename boost::graph_traits<G>::vertex_descriptor;
+    using Vertex = VertexIndex;
 
     auto result = std::vector<Vertex>();
     auto colors = make_vertex_map_storage(graph, boost::white_color);
@@ -296,7 +296,7 @@ auto topological_sort(const G& graph)
 template<IsGraph G, typename Cost, typename SourceInputIterator>
 auto dijkstra_shortest_paths_impl(const G& graph, const EdgeMapStorage<G, Cost>& weights, SourceInputIterator first, SourceInputIterator last)
 {
-    using Vertex = typename boost::graph_traits<G>::vertex_descriptor;
+    using Vertex = VertexIndex;
 
     auto predecessors = make_vertex_map_storage(graph, boost::graph_traits<G>::null_vertex());
     auto distances = make_vertex_map_storage(graph, std::numeric_limits<Cost>::max());

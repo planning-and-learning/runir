@@ -95,6 +95,10 @@ struct AtomicGoalTag
     using FactKind = T;
 };
 
+/// Fact kind of an atomic state or goal tag.
+template<typename Tag>
+using TagFactKind = typename Tag::FactKind;
+
 struct IntersectionTag
 {
     static constexpr auto keyword = "c_and";
@@ -698,6 +702,16 @@ struct QueryDifferenceTag
     static constexpr auto keyword = "q_difference";
 };
 
+struct QueryGenericJoinTag
+{
+    static constexpr auto keyword = "q_generic_join";
+};
+
+struct QueryEmptyTag
+{
+    static constexpr auto keyword = "q_empty";
+};
+
 using QueryConstructorTags = ygg::TypeList<AtomicStateTag<tyr::formalism::StaticTag>,
                                            AtomicStateTag<tyr::formalism::FluentTag>,
                                            AtomicStateTag<tyr::formalism::DerivedTag>,
@@ -712,7 +726,9 @@ using QueryConstructorTags = ygg::TypeList<AtomicStateTag<tyr::formalism::Static
                                            QuerySelectEqualTag,
                                            QuerySelectValueTag,
                                            QueryUnionTag,
-                                           QueryDifferenceTag>;
+                                           QueryDifferenceTag,
+                                           QueryGenericJoinTag,
+                                           QueryEmptyTag>;
 
 /// Column types of query relations: planning objects, plus uint_t for distance outputs.
 /// uint_t is last, so object columns keep their type code and labels-only schemas stay object-typed.

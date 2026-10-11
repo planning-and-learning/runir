@@ -59,14 +59,12 @@ static_assert(view_aliases(kr::dl::CategoryTags {}));
 
 TEST(RunirKrDlArgument, ExposesNameAndIdentifier)
 {
-    namespace dl = kr::dl;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-    auto repository = dl::ExtConstructorRepositoryFactory().create(planning_repository);
-    auto data = ygg::Data<dl::Argument<dl::ConceptTag>>(std::string("source"), dl::ArgumentIdentifier<dl::ConceptTag>(3));
+    auto repository = kr::dl::ExtConstructorRepositoryFactory().create(planning_repository);
+    auto data = ygg::Data<kr::dl::Argument<kr::dl::ConceptTag>>(std::string("source"), kr::dl::ArgumentIdentifier<kr::dl::ConceptTag>(3));
     const auto argument = repository->insert(data).first;
 
     EXPECT_EQ(argument.get_name(), "source");
-    EXPECT_EQ(argument.get_identifier(), dl::ArgumentIdentifier<dl::ConceptTag>(3));
+    EXPECT_EQ(argument.get_identifier(), kr::dl::ArgumentIdentifier<kr::dl::ConceptTag>(3));
 }
-
 }

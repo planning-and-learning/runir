@@ -149,26 +149,24 @@ static_assert(concept_data_views<kr::UnsFamilyTag>(kr::dl::FamilyConceptConstruc
 
 TEST(RunirKrDlConcept, RoutesUnaryBinaryAndNumberRestrictionData)
 {
-    namespace dl = kr::dl;
     using Family = kr::BaseFamilyTag;
-    using Concept = dl::Constructor<Family, dl::ConceptTag>;
-    using Role = dl::Constructor<Family, dl::RoleTag>;
+    using Concept = kr::dl::Constructor<Family, kr::dl::ConceptTag>;
+    using Role = kr::dl::Constructor<Family, kr::dl::RoleTag>;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-    auto repository = dl::BaseConstructorRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::BaseConstructorRepositoryFactory().create(planning_repository);
 
-    auto unary_data = ygg::Data<dl::Concept<Family, dl::NegationTag>>(ygg::Index<Concept>(3));
+    auto unary_data = ygg::Data<kr::dl::Concept<Family, kr::dl::NegationTag>>(ygg::Index<Concept>(3));
     const auto unary = repository->insert(unary_data).first;
     EXPECT_EQ(unary.get_arg().get_index(), ygg::Index<Concept>(3));
 
-    auto binary_data = ygg::Data<dl::Concept<Family, dl::ValueRestrictionTag>>(ygg::Index<Role>(1), ygg::Index<Concept>(2));
+    auto binary_data = ygg::Data<kr::dl::Concept<Family, kr::dl::ValueRestrictionTag>>(ygg::Index<Role>(1), ygg::Index<Concept>(2));
     const auto binary = repository->insert(binary_data).first;
     EXPECT_EQ(binary.get_lhs().get_index(), ygg::Index<Role>(1));
     EXPECT_EQ(binary.get_rhs().get_index(), ygg::Index<Concept>(2));
 
-    auto restriction_data = ygg::Data<dl::Concept<Family, dl::AtLeastNumberRestrictionTag>>(5, ygg::Index<Role>(4));
+    auto restriction_data = ygg::Data<kr::dl::Concept<Family, kr::dl::AtLeastNumberRestrictionTag>>(5, ygg::Index<Role>(4));
     const auto restriction = repository->insert(restriction_data).first;
     EXPECT_EQ(restriction.get_n(), 5);
     EXPECT_EQ(restriction.get_role().get_index(), ygg::Index<Role>(4));
 }
-
 }

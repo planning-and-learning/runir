@@ -5,6 +5,7 @@
 #include <vector>
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/database/semantics/distance.hpp>
+#include <yggdrasil/database/semantics/generic_join.hpp>
 #include <yggdrasil/database/semantics/operations.hpp>
 
 namespace runir::kr::dl::semantics
@@ -14,6 +15,7 @@ class EvaluationWorkspace
 {
 private:
     std::vector<ygg::database::DistanceWorkspace<QueryValues>> m_distance_workspaces;  ///< One per vertex byte width.
+    std::vector<ygg::database::GenericJoinWorkspace<QueryValues>> m_generic_join_workspaces;  ///< One per generic join plan.
     ygg::database::Workspace<QueryValues> m_database_workspace;
 
 public:
@@ -25,6 +27,14 @@ public:
             if (workspace.matches(plan))
                 return workspace;
         return m_distance_workspaces.emplace_back(plan);
+    }
+    // ponytail: linear scan over distinct plans; key by query index if features carry many generic joins.
+    auto& get_generic_join_workspace(const ygg::database::GenericJoinPlan<QueryValues>& plan)
+    {
+        for (auto& workspace : m_generic_join_workspaces)
+            if (workspace.matches(plan))
+                return workspace;
+        return m_generic_join_workspaces.emplace_back(plan);
     }
     auto& get_database_workspace() noexcept { return m_database_workspace; }
 };

@@ -70,9 +70,8 @@ auto parse_condition(Repository& repository,
                      const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     return boost::apply_visitor(
-        [&](const auto& observation)
+        [&]<typename Observation>(const Observation& observation)
         {
-            using Observation = std::remove_cvref_t<decltype(observation)>;
             if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Positive>)
             {
                 return make_condition<runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>(
@@ -114,9 +113,8 @@ auto parse_effect(Repository& repository,
                   const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     return boost::apply_visitor(
-        [&](const auto& observation)
+        [&]<typename Observation>(const Observation& observation)
         {
-            using Observation = std::remove_cvref_t<decltype(observation)>;
             if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Positive>)
             {
                 return make_effect<runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>(

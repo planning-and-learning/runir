@@ -32,8 +32,6 @@ TEST(RunirTests, SketchProofStatusToString)
 
 TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
 {
-    namespace p = tyr::planning;
-
     struct Case
     {
         std::filesystem::path domain;
@@ -123,7 +121,6 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
 
 TEST(RunirTests, BaseMatchingDistinguishesCollidingStateIdsAcrossStorage)
 {
-    namespace p = tyr::planning;
     const auto search_context = make_gripper_ground_context();
     const auto task = search_context->task;
     const auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
@@ -137,8 +134,8 @@ TEST(RunirTests, BaseMatchingDistinguishesCollidingStateIdsAcrossStorage)
     const auto successor = std::ranges::find_if(successors, [&](const auto& candidate) { return candidate.node.get_state() != initial.get_state(); });
     ASSERT_NE(successor, successors.end());
 
-    const auto target_repository = p::StateRepositoryFactory<tyr::GroundTag> {}.create(task);
-    const auto target = p::materialize_state(successor->node.get_state(), *target_repository, *search_context->axiom_evaluator);
+    const auto target_repository = tyr::planning::StateRepositoryFactory<tyr::GroundTag> {}.create(task);
+    const auto target = tyr::planning::materialize_state(successor->node.get_state(), *target_repository, *search_context->axiom_evaluator);
     ASSERT_EQ(initial.get_state().get_index(), target.get_index());
     ASSERT_NE(initial.get_state(), target);
     EXPECT_TRUE(expander.matching_rule(initial.get_state(), target));
@@ -147,8 +144,6 @@ TEST(RunirTests, BaseMatchingDistinguishesCollidingStateIdsAcrossStorage)
 
 TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
 {
-    namespace p = tyr::planning;
-
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
     auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);

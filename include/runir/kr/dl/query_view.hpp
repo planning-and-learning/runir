@@ -61,6 +61,24 @@ public:
         return make_view(this->get_data().rhs, this->get_context());
     }
 
+    auto get_args() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag>
+    {
+        return make_view(this->get_data().args, this->get_context());
+    }
+
+    auto get_variable_order() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag>
+    {
+        return make_view(this->get_data().variable_order, this->get_context());
+    }
+
+    auto get_output_order() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag>
+    {
+        return make_view(this->get_data().output_order, this->get_context());
+    }
+
     auto get_columns() const noexcept
     {
         if constexpr (std::same_as<Tag, void>)
@@ -75,6 +93,8 @@ public:
             return ygg::visit([](auto concrete) { return concrete.get_schema(); }, get_variant());
         else if constexpr (std::same_as<Tag, runir::kr::dl::QueryJoinTag> || std::same_as<Tag, runir::kr::dl::QueryProjectTag>)
             return make_view(this->get_data().plan.output_columns().get_record(), this->get_context());
+        else if constexpr (std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag>)
+            return make_view(this->get_data().plan.output_columns().get_data(), this->get_context());
         else
             return make_view(this->get_data().schema.get_data(), this->get_context());
     }

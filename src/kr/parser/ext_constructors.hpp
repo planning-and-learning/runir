@@ -14,6 +14,7 @@ using constructors::intern_constructor;
 using constructors::parse;
 using constructors::parse_constructor;
 using constructors::unwrap;
+using constructors::Unwrapped;
 
 template<typename Entity>
 struct ReferenceTable
@@ -48,10 +49,10 @@ inline auto parse(const runir::kr::dl::grammar::ast::ConstructorOrNonTerminal<ru
                   const ConstructorContext& context) -> runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, Category>
 {
     return boost::apply_visitor(
-        [&](const auto& value) -> runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, Category>
+        [&]<typename Value>(const Value& value) -> runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, Category>
         {
             const auto& unwrapped = unwrap(value);
-            if constexpr (std::same_as<std::remove_cvref_t<decltype(unwrapped)>, runir::kr::dl::grammar::ast::NonTerminal<runir::kr::ExtFamilyTag, Category>>)
+            if constexpr (std::same_as<Unwrapped<Value>, runir::kr::dl::grammar::ast::NonTerminal<runir::kr::ExtFamilyTag, Category>>)
                 context.diagnostics.throw_at(unwrapped.name,
                                              runir::kr::InvalidExpressionError("Ext module DL expressions cannot reference "
                                                                                "grammar nonterminals."));
@@ -66,9 +67,8 @@ ygg::Index<Entity>
 resolve_reference(const Reference& reference, const ReferenceTable<Entity>* declarations, const char* kind, const ConstructorContext& context)
 {
     return boost::apply_visitor(
-        [&](const auto& concrete) -> ygg::Index<Entity>
+        [&]<typename Concrete>(const Concrete& concrete) -> ygg::Index<Entity>
         {
-            using Concrete = std::remove_cvref_t<decltype(concrete)>;
             if constexpr (std::same_as<Concrete, runir::kr::dl::grammar::ast::NumericReference>)
             {
                 if (declarations)

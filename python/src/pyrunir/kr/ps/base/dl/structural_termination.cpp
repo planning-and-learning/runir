@@ -15,12 +15,12 @@
 namespace runir::kr::ps::base::dl
 {
 
-using namespace nanobind::literals;
 using runir::graphs::bind_forward_graph;
 using runir::graphs::bind_readable_graph_methods;
 
 void bind_structural_termination(nb::module_& m)
 {
+    using namespace nb::literals;
     nb::enum_<StructuralTerminationStatus>(m, "StructuralTerminationStatus")
         .value("TERMINATING", StructuralTerminationStatus::TERMINATING)
         .value("NON_TERMINATING", StructuralTerminationStatus::NON_TERMINATING);

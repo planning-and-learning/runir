@@ -4,6 +4,7 @@
 #include "runir/kr/dl/constructor_data.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 
+#include <algorithm>
 #include <concepts>
 #include <variant>
 #include <yggdrasil/core/dependent_false.hpp>
@@ -16,7 +17,7 @@ template<template<typename, typename> typename Expression, FamilyTag Family, typ
 bool infer_is_static(ygg::View<ygg::Index<Expression<Family, Tag>>, C> constructor)
 {
     if constexpr (is_atomic_state_tag_v<Tag>)
-        return std::same_as<typename Tag::FactKind, tyr::formalism::StaticTag>;
+        return std::same_as<TagFactKind<Tag>, tyr::formalism::StaticTag>;
     else if constexpr (is_atomic_goal_tag_v<Tag>)
         return true;
     else if constexpr (requires { constructor.get_register(); } || requires { constructor.get_argument(); })
@@ -31,6 +32,8 @@ bool infer_is_static(ygg::View<ygg::Index<Expression<Family, Tag>>, C> construct
                            constructor.get_rhs();
                        })
         return constructor.get_lhs().is_static() && constructor.get_rhs().is_static();
+    else if constexpr (requires { constructor.get_args(); })
+        return std::ranges::all_of(constructor.get_args(), [](auto child) { return child.is_static(); });
     else if constexpr (std::same_as<Tag, CountTag> || std::same_as<Tag, NonemptyTag>)
         return ygg::visit([](auto child) { return child.is_static(); }, constructor.get_arg());
     else if constexpr (requires { constructor.get_arg(); })
@@ -43,7 +46,8 @@ bool infer_is_static(ygg::View<ygg::Index<Expression<Family, Tag>>, C> construct
     else if constexpr (requires { constructor.get_role(); })
         return constructor.get_role().is_static();
     else if constexpr (std::same_as<Tag, BotTag> || std::same_as<Tag, TopTag> || std::same_as<Tag, UniversalTag> || std::same_as<Tag, OneOfTag>
-                       || std::same_as<Tag, NominalTag> || std::same_as<Tag, BooleanConstantTag> || std::same_as<Tag, NumericalConstantTag>)
+                       || std::same_as<Tag, NominalTag> || std::same_as<Tag, BooleanConstantTag> || std::same_as<Tag, NumericalConstantTag>
+                       || std::same_as<Tag, QueryEmptyTag>)
         return true;
     else
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL constructor staticness");

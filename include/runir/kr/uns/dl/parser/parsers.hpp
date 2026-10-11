@@ -7,7 +7,6 @@
 
 namespace runir::kr::uns::dl::parser
 {
-namespace x3 = boost::spirit::x3;
 
 struct IdentifierClass;
 struct BooleanFeatureClass;
@@ -19,15 +18,15 @@ struct DisjunctionClass;
 struct ClassifierClass;
 struct ClassifierRootClass;
 
-using identifier_type = x3::rule<IdentifierClass, runir::kr::parser::ast::Identifier>;
-using boolean_feature_type = x3::rule<BooleanFeatureClass, ast::BooleanFeature>;
-using positive_literal_type = x3::rule<PositiveLiteralClass, ast::PositiveLiteral>;
-using negative_literal_type = x3::rule<NegativeLiteralClass, ast::NegativeLiteral>;
-using literal_type = x3::rule<LiteralClass, ast::Literal>;
-using conjunction_type = x3::rule<ConjunctionClass, ast::Conjunction>;
-using disjunction_type = x3::rule<DisjunctionClass, ast::Disjunction>;
-using classifier_type = x3::rule<ClassifierClass, ast::Classifier>;
-using classifier_root_type = x3::rule<ClassifierRootClass, ast::Classifier>;
+using identifier_type = boost::spirit::x3::rule<IdentifierClass, runir::kr::parser::ast::Identifier>;
+using boolean_feature_type = boost::spirit::x3::rule<BooleanFeatureClass, ast::BooleanFeature>;
+using positive_literal_type = boost::spirit::x3::rule<PositiveLiteralClass, ast::PositiveLiteral>;
+using negative_literal_type = boost::spirit::x3::rule<NegativeLiteralClass, ast::NegativeLiteral>;
+using literal_type = boost::spirit::x3::rule<LiteralClass, ast::Literal>;
+using conjunction_type = boost::spirit::x3::rule<ConjunctionClass, ast::Conjunction>;
+using disjunction_type = boost::spirit::x3::rule<DisjunctionClass, ast::Disjunction>;
+using classifier_type = boost::spirit::x3::rule<ClassifierClass, ast::Classifier>;
+using classifier_root_type = boost::spirit::x3::rule<ClassifierRootClass, ast::Classifier>;
 
 BOOST_SPIRIT_DECLARE(boolean_feature_type,
                      positive_literal_type,

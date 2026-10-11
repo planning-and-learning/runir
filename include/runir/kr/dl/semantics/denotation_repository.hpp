@@ -44,10 +44,8 @@ class DenotationRepository : public ygg::formalism::SymbolRepositoryBase<Denotat
 
     friend class DenotationRepositoryFactory;
 
-public:
     using VectorRepository = ygg::RawVectorSet<ygg::uint_t, ygg::uint_t>;
 
-private:
     VectorRepository m_vector_repository;
     ygg::database::RelationRepository<QueryValues> m_relation_repository;
     std::shared_ptr<const tyr::formalism::planning::Repository> m_formalism_repository;

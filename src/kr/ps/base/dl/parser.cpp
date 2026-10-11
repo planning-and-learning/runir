@@ -47,6 +47,7 @@ using runir::kr::parser::constructors::intern_constructor;
 using runir::kr::parser::constructors::parse;
 using runir::kr::parser::constructors::parse_constructor;
 using runir::kr::parser::constructors::unwrap;
+using runir::kr::parser::constructors::Unwrapped;
 
 template<typename T>
 auto intern(runir::kr::ps::base::Repository& repository, ygg::Data<T>& data)
@@ -60,10 +61,10 @@ auto parse(const runir::kr::dl::grammar::ast::ConstructorOrNonTerminal<runir::kr
            const ConstructorContext& context) -> runir::kr::dl::FamilyConstructorView<runir::kr::BaseFamilyTag, Category>
 {
     return boost::apply_visitor(
-        [&](const auto& value) -> runir::kr::dl::FamilyConstructorView<runir::kr::BaseFamilyTag, Category>
+        [&]<typename Value>(const Value& value) -> runir::kr::dl::FamilyConstructorView<runir::kr::BaseFamilyTag, Category>
         {
             const auto& unwrapped = unwrap(value);
-            if constexpr (std::same_as<std::remove_cvref_t<decltype(unwrapped)>, runir::kr::dl::grammar::ast::NonTerminal<runir::kr::BaseFamilyTag, Category>>)
+            if constexpr (std::same_as<Unwrapped<Value>, runir::kr::dl::grammar::ast::NonTerminal<runir::kr::BaseFamilyTag, Category>>)
                 context.diagnostics.throw_at(unwrapped.name,
                                              runir::kr::InvalidExpressionError("General-sketch DL features cannot "
                                                                                "reference grammar nonterminals."));

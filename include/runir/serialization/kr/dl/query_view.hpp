@@ -33,6 +33,12 @@ void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Q
         ar.field("columns", [](const auto& value) -> decltype(auto) { return (value.get_columns()); });
         if constexpr (requires(const Value& value) { value.get_arg(); })
             ar.field("arg", [](const auto& value) -> decltype(auto) { return (value.get_arg()); });
+        if constexpr (requires(const Value& value) { value.get_args(); })
+            ar.field("args", [](const auto& value) -> decltype(auto) { return (value.get_args()); });
+        if constexpr (requires(const Value& value) { value.get_variable_order(); })
+            ar.field("variable_order", [](const auto& value) -> decltype(auto) { return (value.get_variable_order()); });
+        if constexpr (requires(const Value& value) { value.get_output_order(); })
+            ar.field("output_order", [](const auto& value) -> decltype(auto) { return (value.get_output_order()); });
         if constexpr (requires(const Value& value) { value.get_lhs(); })
             ar.field("lhs", [](const auto& value) -> decltype(auto) { return (value.get_lhs()); });
         if constexpr (requires(const Value& value) { value.get_rhs(); })

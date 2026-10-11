@@ -1,23 +1,24 @@
 #include "fixtures.hpp"
 
+#include <concepts>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
-#include <runir/kr/dl/repository.hpp>
-#include <runir/kr/errors.hpp>
+#include <optional>
 #include <runir/kr/dl/grammar/constructor_repository.hpp>
 #include <runir/kr/dl/grammar/parser.hpp>
+#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
+#include <runir/kr/errors.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/syntactic_complexity.hpp>
-#include <concepts>
-#include <optional>
 #include <stdexcept>
-#include <type_traits>
 #include <string>
-#include <vector>
+#include <type_traits>
 #include <tyr/formalism/planning/parser.hpp>
+#include <utility>
+#include <vector>
 #include <yggdrasil/serialization/json.hpp>
 
 namespace runir::tests
@@ -173,15 +174,15 @@ TEST(RunirTests, RelationalExpressionsRoundTripAndRejectGenerationGrammars)
     auto repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
     auto grammar_repository = kr::dl::grammar::BaseConstructorRepositoryFactory().create(planning_domain.get_repository());
 
-    const std::vector<std::string> expressions {
-        R"((n_count (q_project () (q_atomic_state "at" (X Y)))))",
-        R"((n_count (q_atomic_goal "at" false (X Y))))",
-        R"((n_count (q_join (q_rename (X) (q_concept a (c_top))) (q_concept Y (c_top)))))",
-        R"((n_count (q_union (q_concept X (c_top)) (q_concept X (c_bot)))))",
-        R"((n_count (q_difference (q_concept X (c_top)) (q_concept X (c_bot)))))",
-        R"((n_count (c_project Y (q_atomic_state "at" (X Y)))))",
-        R"((n_count (r_project Y X (q_atomic_state "at" (X Y)))))"
-    };
+    const std::vector<std::string> expressions { R"((n_count (q_project () (q_atomic_state "at" (X Y)))))",
+                                                 R"((n_count (q_atomic_goal "at" false (X Y))))",
+                                                 R"((n_count (q_join (q_rename (X) (q_concept a (c_top))) (q_concept Y (c_top)))))",
+                                                 R"((n_count (q_union (q_concept X (c_top)) (q_concept X (c_bot)))))",
+                                                 R"((n_count (q_difference (q_concept X (c_top)) (q_concept X (c_bot)))))",
+                                                 R"((n_count (c_project Y (q_atomic_state "at" (X Y)))))",
+                                                 R"((n_count (r_project Y X (q_atomic_state "at" (X Y)))))",
+                                                 R"((n_count (q_generic_join (X Y) (Y X) (q_atomic_state "at" (X Y)) (q_concept X (c_top)))))",
+                                                 R"((n_count (q_empty (X Y))))" };
     for (const auto& expression : expressions)
     {
         const auto parsed = kr::ps::ext::dl::parse_numerical(expression, domain, *repository);
@@ -225,6 +226,25 @@ TEST(RunirTests, RelationalExpressionsRoundTripAndRejectGenerationGrammars)
         }
     }
     EXPECT_THROW(kr::ps::ext::dl::parse_numerical("(n_count (q_concept X c_0))", domain, *repository), kr::InvalidExpressionError);
+    // Generic join errors name the offending column, so a model writing the expression can repair it.
+    for (const auto& [expression, message] : std::vector<std::pair<std::string, std::string>> {
+             { R"((n_count (q_generic_join (X) (X Y) (q_atomic_state "at" (X Y)) (q_concept X (c_top)))))", "variable order is missing column `Y`" },
+             { R"((n_count (q_generic_join (X Y Y) (X Y) (q_atomic_state "at" (X Y)) (q_concept X (c_top)))))", "variable order lists column `Y` twice" },
+             { R"((n_count (q_generic_join (X Y) (X Z) (q_atomic_state "at" (X Y)) (q_concept X (c_top)))))",
+               "output order lists column `Z`, which no input has" } })
+    {
+        try
+        {
+            kr::ps::ext::dl::parse_numerical(expression, domain, *repository);
+            FAIL() << "Expected an invalid generic join order to fail: " << expression;
+        }
+        catch (const kr::InvalidExpressionError& error)
+        {
+            EXPECT_NE(error.message().find(message), std::string::npos) << error.what();
+        }
+    }
+    EXPECT_THROW(kr::ps::ext::dl::parse_numerical(R"((n_count (q_generic_join (X Y) (X Y) (q_atomic_state "at" (X Y)))))", domain, *repository),
+                 kr::ParseError);
     EXPECT_THROW(kr::ps::ext::dl::parse_numerical("(n_count (q_select_value X \"missing\" (q_concept X (c_top))))", domain, *repository), kr::UndefinedSymbolError);
 }
 

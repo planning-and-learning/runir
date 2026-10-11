@@ -6,6 +6,8 @@
 
 #include <span>
 #include <tuple>
+#include <vector>
+#include <yggdrasil/database/semantics/generic_join.hpp>
 #include <yggdrasil/database/semantics/operations.hpp>
 
 namespace runir::kr::dl::semantics
@@ -54,7 +56,7 @@ void evaluate_query(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor,
         auto& row = context.get_workspace().get_database_workspace().row;
         const auto predicate = constructor.get_predicate();
         for (const auto atom :
-             context.get_state().get_task().get_task().get_goal().template get_atoms_view<typename Tag::FactKind>(constructor.get_polarity(), predicate))
+             context.get_state().get_task().get_task().get_goal().template get_atoms_view<TagFactKind<Tag>>(constructor.get_polarity(), predicate))
             result.insert(ygg::database::encode_row<QueryValues, ygg::Index<tyr::formalism::Object>>(atom.get_row().get_data(), row));
     }
     else if constexpr (std::same_as<Tag, QueryConceptTag>)
@@ -100,6 +102,17 @@ void evaluate_query(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor,
     {
         const auto child = evaluate<Kind>(constructor.get_arg(), children);
         ygg::database::select_equal_value(child, ygg::Index<ygg::database::Column>(data.column.get_value()), data.object, result);
+    }
+    else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
+    {
+        std::vector<QueryDenotationView> inputs;
+        for (const auto arg : constructor.get_args())
+            inputs.push_back(evaluate<Kind>(arg, children));
+        ygg::database::generic_join<QueryValues>(inputs, data.plan, result, context.get_workspace().get_generic_join_workspace(data.plan));
+    }
+    else if constexpr (std::same_as<Tag, QueryEmptyTag>)
+    {
+        // The result builder starts empty.
     }
     else
     {

@@ -53,14 +53,12 @@ static_assert(view_aliases(ygg::TypeList<kr::dl::ConceptTag, kr::dl::RoleTag> {}
 
 TEST(RunirKrDlRegister, ExposesNameAndUnboundedIdentifier)
 {
-    namespace dl = kr::dl;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-    auto repository = dl::ExtConstructorRepositoryFactory().create(planning_repository);
-    auto data = ygg::Data<dl::Register<dl::RoleTag>>(std::string("target"), dl::RegisterIdentifier<dl::RoleTag>(1024));
+    auto repository = kr::dl::ExtConstructorRepositoryFactory().create(planning_repository);
+    auto data = ygg::Data<kr::dl::Register<kr::dl::RoleTag>>(std::string("target"), kr::dl::RegisterIdentifier<kr::dl::RoleTag>(1024));
     const auto reg = repository->insert(data).first;
 
     EXPECT_EQ(reg.get_name(), "target");
-    EXPECT_EQ(reg.get_identifier(), dl::RegisterIdentifier<dl::RoleTag>(1024));
+    EXPECT_EQ(reg.get_identifier(), kr::dl::RegisterIdentifier<kr::dl::RoleTag>(1024));
 }
-
 }

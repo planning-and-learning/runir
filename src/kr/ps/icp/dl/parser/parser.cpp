@@ -13,18 +13,31 @@ namespace runir::kr::ps::icp::dl::parser
 namespace
 {
 
-namespace x3 = boost::spirit::x3;
-namespace ext = runir::kr::ps::ext::dl::parser;
+using boost::spirit::x3::attr;
+using boost::spirit::x3::lit;
 using runir::kr::parser::keyword;
-using x3::attr;
-using x3::lit;
+using runir::kr::ps::ext::dl::parser::action_section;
+using runir::kr::ps::ext::dl::parser::concept_feature_section_def;
+using runir::kr::ps::ext::dl::parser::concept_load_rule;
+using runir::kr::ps::ext::dl::parser::concept_register_section_def;
+using runir::kr::ps::ext::dl::parser::conditions_section;
+using runir::kr::ps::ext::dl::parser::entry_section;
+using runir::kr::ps::ext::dl::parser::features_section;
+using runir::kr::ps::ext::dl::parser::identifier;
+using runir::kr::ps::ext::dl::parser::memory_section;
+using runir::kr::ps::ext::dl::parser::optional_effects_section;
+using runir::kr::ps::ext::dl::parser::registers_section;
+using runir::kr::ps::ext::dl::parser::role_load_rule;
+using runir::kr::ps::ext::dl::parser::source_memory_section;
+using runir::kr::ps::ext::dl::parser::symbol_section;
+using runir::kr::ps::ext::dl::parser::target_memory_section;
 using ygg::diagnostics::context;
 
-#define ICP_RULE(name, Type)                      \
-    struct name##_class : x3::annotate_on_success \
-    {                                             \
-    };                                            \
-    const x3::rule<name##_class, Type> name = #name;
+#define ICP_RULE(name, Type)                                     \
+    struct name##_class : boost::spirit::x3::annotate_on_success \
+    {                                                            \
+    };                                                           \
+    const boost::spirit::x3::rule<name##_class, Type> name = #name;
 ICP_RULE(argument_object, ast::ArgumentObject)
 ICP_RULE(register_object, ast::RegisterObject)
 ICP_RULE(object, ast::Object)
@@ -45,35 +58,34 @@ struct ProgramRoot : runir::kr::parser::ErrorHandlerBase
 {
 };
 
-const x3::rule<ModuleRoot, ast::Module> module_root = "ICP module";
-const x3::rule<ProgramRoot, ast::Program> program_root = "ICP program";
+const boost::spirit::x3::rule<ModuleRoot, ast::Module> module_root = "ICP module";
+const boost::spirit::x3::rule<ProgramRoot, ast::Program> program_root = "ICP program";
 
-const auto argument_object_def = context("action argument")[(lit('(') >> keyword(":argument")) > ext::identifier > lit(')')];
-const auto register_object_def = ext::concept_register_section_def;
+const auto argument_object_def = context("action argument")[(lit('(') >> keyword(":argument")) > identifier > lit(')')];
+const auto register_object_def = concept_register_section_def;
 const auto object_def = argument_object | register_object;
 const auto xcondition_def = context("extended condition")[(lit('(') >> ((keyword("belongs") >> attr(true)) | (keyword("not-belongs") >> attr(false)))) > object
-                                                          > ext::concept_feature_section_def > lit(')')];
-const auto xeffect_def = context("extended effect")[(lit('(') >> ((keyword("enter") >> attr(true)) | (keyword("exit") >> attr(false)))) > object
-                                                    > ext::concept_feature_section_def > lit(')')];
-const auto arguments = context(":arguments")[(lit('(') >> keyword(":arguments")) > *ext::identifier > lit(')')];
+                                                          > concept_feature_section_def > lit(')')];
+const auto xeffect_def = context(
+    "extended effect")[(lit('(') >> ((keyword("enter") >> attr(true)) | (keyword("exit") >> attr(false)))) > object > concept_feature_section_def > lit(')')];
+const auto arguments = context(":arguments")[(lit('(') >> keyword(":arguments")) > *identifier > lit(')')];
 const auto xconditions = context(":xconditions")[(lit('(') >> keyword(":xconditions")) > *xcondition > lit(')')];
 const auto xeffects = context(":xeffects")[(lit('(') >> keyword(":xeffects")) > *xeffect > lit(')')];
-const auto crule_def = context("concept rule")[(lit('(') >> keyword(":crule")) > ext::action_section > arguments > ext::conditions_section > xconditions
-                                               > xeffects > ext::optional_effects_section > lit(')')];
-const auto rule_def = ext::concept_load_rule | ext::role_load_rule | crule;
-const auto rule_entry_def =
-    context("rule")[(lit('(') >> keyword(":rule")) > ext::symbol_section
-                    > context(":expression")[(lit('(') >> keyword(":expression")) > ext::source_memory_section > ext::target_memory_section > +rule > lit(')')]
-                    > lit(')')];
+const auto crule_def = context("concept rule")[(lit('(') >> keyword(":crule")) > action_section > arguments > conditions_section > xconditions > xeffects
+                                               > optional_effects_section > lit(')')];
+const auto rule_def = concept_load_rule | role_load_rule | crule;
+const auto rule_entry_def = context(
+    "rule")[(lit('(') >> keyword(":rule")) > symbol_section
+            > context(":expression")[(lit('(') >> keyword(":expression")) > source_memory_section > target_memory_section > +rule > lit(')')] > lit(')')];
 const auto rules = context(":rules")[(lit('(') >> keyword(":rules")) > *rule_entry > lit(')')];
-const auto reset_pair_def = context("reset precedence")[(lit('(') >> keyword(":prec")) > ext::identifier > ext::identifier > lit(')')];
+const auto reset_pair_def = context("reset precedence")[(lit('(') >> keyword(":prec")) > identifier > identifier > lit(')')];
 const auto resets = context(":reset-spo")[(lit('(') >> keyword(":reset-spo")) > *reset_pair > lit(')')];
 const auto empty_arguments = context(":arguments")[(lit('(') >> keyword(":arguments")) > lit(')')];
-const auto module_def = context("ICP module")[(lit('(') >> keyword(":module")) > ext::symbol_section > empty_arguments > ext::registers_section
-                                              > ext::entry_section > ext::memory_section > ext::features_section > rules > resets > lit(')')];
-const auto program_def = context("ICP program")[(lit('(') >> keyword(":program")) > ext::entry_section > module > lit(')')];
-const auto module_root_def = module > x3::eoi;
-const auto program_root_def = program > x3::eoi;
+const auto module_def = context("ICP module")[(lit('(') >> keyword(":module")) > symbol_section > empty_arguments > registers_section > entry_section
+                                              > memory_section > features_section > rules > resets > lit(')')];
+const auto program_def = context("ICP program")[(lit('(') >> keyword(":program")) > entry_section > module > lit(')')];
+const auto module_root_def = module > boost::spirit::x3::eoi;
+const auto program_root_def = program > boost::spirit::x3::eoi;
 BOOST_SPIRIT_DEFINE(argument_object,
                     register_object,
                     object,

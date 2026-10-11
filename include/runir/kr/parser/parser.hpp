@@ -14,8 +14,8 @@ bool parse_full(Iterator& first, Iterator last, const Parser& parser, Ast& ast, 
 {
     error_handler.clear_error();
     ast = Ast {};
-    const auto grammar = x3::with<ErrorHandlerTag>(std::ref(error_handler))[parser];
-    const auto success = x3::phrase_parse(first, last, grammar, skipper(), ast);
+    const auto grammar = boost::spirit::x3::with<ErrorHandlerTag>(std::ref(error_handler))[parser];
+    const auto success = boost::spirit::x3::phrase_parse(first, last, grammar, ygg::diagnostics::comment_skipper(), ast);
     if (success && first != last)
         error_handler.record_error(first, "Error! Unexpected trailing input here:");
     return success && first == last;

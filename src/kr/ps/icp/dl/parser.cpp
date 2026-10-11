@@ -54,6 +54,9 @@ struct AstCategory<ast::LoadRule<Category>>
     using Type = Category;
 };
 
+template<typename T>
+using AstCategoryT = typename AstCategory<std::remove_cvref_t<T>>::Type;
+
 template<typename Map>
 auto require(const Map& values, const ast::Identifier& name, const char* kind, const runir::kr::parser::DiagnosticContext& diagnostics)
 {
@@ -101,9 +104,9 @@ ModuleView lower_module(const ast::Module& module,
 
     for (const auto& reg : module.registers)
         boost::apply_visitor(
-            [&](const auto& concrete)
+            [&]<typename Concrete>(const Concrete& concrete)
             {
-                using Category = typename AstCategory<std::remove_cvref_t<decltype(concrete)>>::Type;
+                using Category = AstCategoryT<Concrete>;
                 auto& declarations = [&]() -> auto&
                 {
                     if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
@@ -136,11 +139,10 @@ ModuleView lower_module(const ast::Module& module,
     const auto context = ConstructorContext { repository.get_dl_repository(), dl_builder, diagnostics, &references };
     for (const auto& feature : module.features)
         boost::apply_visitor(
-            [&](const auto& concrete)
+            [&]<typename Concrete>(const Concrete& concrete)
             {
                 if (!feature_names.emplace(concrete.symbol.text).second)
                     diagnostics.throw_at(concrete.symbol, DuplicateDefinitionError("feature", concrete.symbol.text));
-                using Concrete = std::remove_cvref_t<decltype(concrete)>;
                 if constexpr (std::same_as<Concrete, ast::QueryFeature>)
                 {
                     const auto expression = parse(concrete.expression, domain, context);
@@ -148,7 +150,7 @@ ModuleView lower_module(const ast::Module& module,
                 }
                 else
                 {
-                    using Category = typename AstCategory<Concrete>::Type;
+                    using Category = AstCategoryT<Concrete>;
                     const auto expression = parse_constructor(concrete.expression, domain, context);
                     if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
                     {
@@ -193,11 +195,10 @@ ModuleView lower_module(const ast::Module& module,
         data->memory_transitions.emplace_back();
         for (const auto& body : entry.rules)
             boost::apply_visitor(
-                [&](const auto& concrete)
+                [&]<typename Concrete>(const Concrete& concrete)
                 {
                     auto variant = checkout<ps::Rule<IcpFamilyTag>>(builder);
                     variant->symbol = entry.symbol.text;
-                    using Concrete = std::remove_cvref_t<decltype(concrete)>;
                     if constexpr (std::same_as<Concrete, ast::Crule>)
                     {
                         auto rule = checkout<Rule<CruleTag>>(builder);
@@ -225,10 +226,10 @@ ModuleView lower_module(const ast::Module& module,
                         const auto object = [&](const ast::Object& source)
                         {
                             return boost::apply_visitor(
-                                [&](const auto& value)
+                                [&]<typename Value>(const Value& value)
                                     -> ::cista::offset::variant<ArgumentPosition, ygg::Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>
                                 {
-                                    if constexpr (std::same_as<std::remove_cvref_t<decltype(value)>, ast::ArgumentObject>)
+                                    if constexpr (std::same_as<Value, ast::ArgumentObject>)
                                         return ArgumentPosition { require(arguments, value.name, "action argument", diagnostics) };
                                     else
                                         return require(references.concept_registers.by_name, value.name, "concept register", diagnostics);
@@ -255,7 +256,7 @@ ModuleView lower_module(const ast::Module& module,
                     }
                     else
                     {
-                        using Category = typename AstCategory<Concrete>::Type;
+                        using Category = AstCategoryT<Concrete>;
                         auto rule = checkout<Rule<LoadTag<Category>>>(builder);
                         initialize_rule(*rule, concrete, entry);
                         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)

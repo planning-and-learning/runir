@@ -25,7 +25,6 @@
 
 namespace runir::kr::dl::grammar::ast
 {
-namespace x3 = boost::spirit::x3;
 struct Identifier : runir::kr::parser::ast::Identifier
 {
     Identifier& operator=(std::string value)
@@ -35,7 +34,7 @@ struct Identifier : runir::kr::parser::ast::Identifier
     }
 };
 
-struct NumericReference : x3::position_tagged
+struct NumericReference : boost::spirit::x3::position_tagged
 {
     ygg::uint_t value {};
 
@@ -47,9 +46,9 @@ struct NumericReference : x3::position_tagged
 };
 
 template<typename... Alternatives>
-struct PositionedVariant : x3::position_tagged, x3::variant<Alternatives...>
+struct PositionedVariant : boost::spirit::x3::position_tagged, boost::spirit::x3::variant<Alternatives...>
 {
-    using Base = x3::variant<Alternatives...>;
+    using Base = boost::spirit::x3::variant<Alternatives...>;
     using Base::Base;
     using Base::operator=;
 };
@@ -74,7 +73,7 @@ template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, t
 struct Constructor;
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-struct NonTerminal : x3::position_tagged
+struct NonTerminal : boost::spirit::x3::position_tagged
 {
     Identifier name;
 };
@@ -103,14 +102,14 @@ template<runir::kr::dl::FamilyTag Family>
 struct Query;
 
 template<runir::kr::dl::FamilyTag Family>
-struct QueryAtomicState : x3::position_tagged
+struct QueryAtomicState : boost::spirit::x3::position_tagged
 {
     Identifier predicate_name;
     std::vector<Identifier> columns;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct QueryAtomicGoal : x3::position_tagged
+struct QueryAtomicGoal : boost::spirit::x3::position_tagged
 {
     Identifier predicate_name;
     bool polarity;
@@ -118,26 +117,24 @@ struct QueryAtomicGoal : x3::position_tagged
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct QueryConcept : x3::position_tagged
+struct QueryConcept : boost::spirit::x3::position_tagged
 {
     std::vector<Identifier> columns;
     ConceptChoice<Family> arg;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct QueryRole : x3::position_tagged
+struct QueryRole : boost::spirit::x3::position_tagged
 {
     std::vector<Identifier> columns;
     RoleChoice<Family> arg;
 };
 
 template<runir::kr::dl::FamilyTag Family, typename Tag>
-struct QueryBinary : x3::position_tagged
+struct QueryBinary : boost::spirit::x3::position_tagged
 {
-    using ConstructorTag = Tag;
-
-    x3::forward_ast<Query<Family>> lhs;
-    x3::forward_ast<Query<Family>> rhs;
+    boost::spirit::x3::forward_ast<Query<Family>> lhs;
+    boost::spirit::x3::forward_ast<Query<Family>> rhs;
 };
 
 template<runir::kr::dl::FamilyTag Family>
@@ -150,12 +147,10 @@ template<runir::kr::dl::FamilyTag Family>
 using QueryDifference = QueryBinary<Family, runir::kr::dl::QueryDifferenceTag>;
 
 template<runir::kr::dl::FamilyTag Family, typename Tag>
-struct QueryColumns : x3::position_tagged
+struct QueryColumns : boost::spirit::x3::position_tagged
 {
-    using ConstructorTag = Tag;
-
     std::vector<Identifier> columns;
-    x3::forward_ast<Query<Family>> arg;
+    boost::spirit::x3::forward_ast<Query<Family>> arg;
 };
 
 template<runir::kr::dl::FamilyTag Family>
@@ -165,52 +160,70 @@ template<runir::kr::dl::FamilyTag Family>
 using QueryRename = QueryColumns<Family, runir::kr::dl::QueryRenameTag>;
 
 template<runir::kr::dl::FamilyTag Family>
-struct QuerySelectEqual : x3::position_tagged
+struct QuerySelectEqual : boost::spirit::x3::position_tagged
 {
     Identifier lhs_column;
     Identifier rhs_column;
-    x3::forward_ast<Query<Family>> arg;
+    boost::spirit::x3::forward_ast<Query<Family>> arg;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct QuerySelectValue : x3::position_tagged
+struct QuerySelectValue : boost::spirit::x3::position_tagged
 {
     Identifier column;
     Identifier object_name;
-    x3::forward_ast<Query<Family>> arg;
+    boost::spirit::x3::forward_ast<Query<Family>> arg;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct QueryGenericJoin : boost::spirit::x3::position_tagged
+{
+    std::vector<Identifier> variable_order;
+    std::vector<Identifier> output_order;
+    std::vector<boost::spirit::x3::forward_ast<Query<Family>>> args;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct QueryEmpty : boost::spirit::x3::position_tagged
+{
+    std::vector<Identifier> columns;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Query :
     PositionedVariant<QueryAtomicState<Family>,
                       QueryAtomicGoal<Family>,
-                      x3::forward_ast<QueryConcept<Family>>,
-                      x3::forward_ast<QueryRole<Family>>,
+                      boost::spirit::x3::forward_ast<QueryConcept<Family>>,
+                      boost::spirit::x3::forward_ast<QueryRole<Family>>,
                       QueryJoin<Family>,
                       QueryProject<Family>,
                       QueryRename<Family>,
                       QuerySelectEqual<Family>,
                       QuerySelectValue<Family>,
                       QueryUnion<Family>,
-                      QueryDifference<Family>>
+                      QueryDifference<Family>,
+                      QueryGenericJoin<Family>,
+                      QueryEmpty<Family>>
 {
     using Base = PositionedVariant<QueryAtomicState<Family>,
                                    QueryAtomicGoal<Family>,
-                                   x3::forward_ast<QueryConcept<Family>>,
-                                   x3::forward_ast<QueryRole<Family>>,
+                                   boost::spirit::x3::forward_ast<QueryConcept<Family>>,
+                                   boost::spirit::x3::forward_ast<QueryRole<Family>>,
                                    QueryJoin<Family>,
                                    QueryProject<Family>,
                                    QueryRename<Family>,
                                    QuerySelectEqual<Family>,
                                    QuerySelectValue<Family>,
                                    QueryUnion<Family>,
-                                   QueryDifference<Family>>;
+                                   QueryDifference<Family>,
+                                   QueryGenericJoin<Family>,
+                                   QueryEmpty<Family>>;
     using Base::Base;
     using Base::operator=;
 };
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-struct Constructor<Family, Category, runir::kr::dl::ProjectTag> : x3::position_tagged
+struct Constructor<Family, Category, runir::kr::dl::ProjectTag> : boost::spirit::x3::position_tagged
 {
     std::vector<Identifier> columns;
     Query<Family> arg;
@@ -249,93 +262,85 @@ struct RoleOrQueryVariant : PositionedVariant<RoleChoice<Family>, Query<Family>>
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::BotTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::BotTag> : boost::spirit::x3::position_tagged
 {
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::TopTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::TopTag> : boost::spirit::x3::position_tagged
 {
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptAtomicStateSyntaxTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptAtomicStateSyntaxTag> : boost::spirit::x3::position_tagged
 {
     Identifier predicate_name;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptAtomicGoalSyntaxTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptAtomicGoalSyntaxTag> : boost::spirit::x3::position_tagged
 {
     Identifier predicate_name;
     bool polarity;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptIntersectionSyntaxTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptIntersectionSyntaxTag> : boost::spirit::x3::position_tagged
 {
     ConceptChoice<Family> lhs;
     ConceptChoice<Family> rhs;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptUnionSyntaxTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptUnionSyntaxTag> : boost::spirit::x3::position_tagged
 {
     ConceptChoice<Family> lhs;
     ConceptChoice<Family> rhs;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::NegationTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::NegationTag> : boost::spirit::x3::position_tagged
 {
     ConceptChoice<Family> arg;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ValueRestrictionTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ValueRestrictionTag> : boost::spirit::x3::position_tagged
 {
     RoleChoice<Family> lhs;
     ConceptChoice<Family> rhs;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ExistentialQuantificationTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ExistentialQuantificationTag> : boost::spirit::x3::position_tagged
 {
     RoleChoice<Family> lhs;
     ConceptChoice<Family> rhs;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::AtLeastNumberRestrictionTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::AtLeastNumberRestrictionTag> : boost::spirit::x3::position_tagged
 {
     ygg::uint_t n;
     RoleChoice<Family> role;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::AtMostNumberRestrictionTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::AtMostNumberRestrictionTag> : boost::spirit::x3::position_tagged
 {
     ygg::uint_t n;
     RoleChoice<Family> role;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ExactNumberRestrictionTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ExactNumberRestrictionTag> : boost::spirit::x3::position_tagged
 {
     ygg::uint_t n;
     RoleChoice<Family> role;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag> : x3::position_tagged
-{
-    ygg::uint_t n;
-    RoleChoice<Family> role;
-    ConceptChoice<Family> concept_;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAtMostNumberRestrictionTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag> : boost::spirit::x3::position_tagged
 {
     ygg::uint_t n;
     RoleChoice<Family> role;
@@ -343,7 +348,7 @@ struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAt
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedExactNumberRestrictionTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAtMostNumberRestrictionTag> : boost::spirit::x3::position_tagged
 {
     ygg::uint_t n;
     RoleChoice<Family> role;
@@ -351,52 +356,60 @@ struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedEx
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RoleValueMapTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedExactNumberRestrictionTag> : boost::spirit::x3::position_tagged
+{
+    ygg::uint_t n;
+    RoleChoice<Family> role;
+    ConceptChoice<Family> concept_;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RoleValueMapTag> : boost::spirit::x3::position_tagged
 {
     RoleChoice<Family> lhs;
     RoleChoice<Family> rhs;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::AgreementTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::AgreementTag> : boost::spirit::x3::position_tagged
 {
     RoleChoice<Family> lhs;
     RoleChoice<Family> rhs;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RoleFillersTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RoleFillersTag> : boost::spirit::x3::position_tagged
 {
     RoleChoice<Family> role;
     std::vector<Identifier> object_names;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::OneOfTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::OneOfTag> : boost::spirit::x3::position_tagged
 {
     std::vector<Identifier> object_names;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::NominalTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::NominalTag> : boost::spirit::x3::position_tagged
 {
     Identifier object_name;
 };
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-struct Constructor<Family, Category, runir::kr::dl::ArgumentTag<Category>> : x3::position_tagged
+struct Constructor<Family, Category, runir::kr::dl::ArgumentTag<Category>> : boost::spirit::x3::position_tagged
 {
     ArgumentReference<Category> reference;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RegisterTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RegisterTag> : boost::spirit::x3::position_tagged
 {
     RegisterReference<runir::kr::dl::ConceptTag> reference;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RegisterTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RegisterTag> : boost::spirit::x3::position_tagged
 {
     RegisterReference<runir::kr::dl::RoleTag> reference;
 };
@@ -586,7 +599,7 @@ template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 struct AstConstructorAlternative
 {
     template<typename Tag>
-    using Type = x3::forward_ast<Constructor<Family, Category, Tag>>;
+    using Type = boost::spirit::x3::forward_ast<Constructor<Family, Category, Tag>>;
 };
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
@@ -595,77 +608,77 @@ using ConstructorVariantBase =
                         ygg::MapTypeListT<AstConstructorAlternative<Family, Category>::template Type, AstConstructorTagsT<Family, Category>>>;
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::UniversalTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::UniversalTag> : boost::spirit::x3::position_tagged
 {
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleAtomicStateSyntaxTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleAtomicStateSyntaxTag> : boost::spirit::x3::position_tagged
 {
     Identifier predicate_name;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleAtomicGoalSyntaxTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleAtomicGoalSyntaxTag> : boost::spirit::x3::position_tagged
 {
     Identifier predicate_name;
     bool polarity;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleIntersectionSyntaxTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleIntersectionSyntaxTag> : boost::spirit::x3::position_tagged
 {
     RoleChoice<Family> lhs;
     RoleChoice<Family> rhs;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleUnionSyntaxTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleUnionSyntaxTag> : boost::spirit::x3::position_tagged
 {
     RoleChoice<Family> lhs;
     RoleChoice<Family> rhs;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::ComplementTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::ComplementTag> : boost::spirit::x3::position_tagged
 {
     RoleChoice<Family> arg;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::InverseTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::InverseTag> : boost::spirit::x3::position_tagged
 {
     RoleChoice<Family> arg;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::CompositionTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::CompositionTag> : boost::spirit::x3::position_tagged
 {
     RoleChoice<Family> lhs;
     RoleChoice<Family> rhs;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::TransitiveClosureTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::TransitiveClosureTag> : boost::spirit::x3::position_tagged
 {
     RoleChoice<Family> arg;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::ReflexiveTransitiveClosureTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::ReflexiveTransitiveClosureTag> : boost::spirit::x3::position_tagged
 {
     RoleChoice<Family> arg;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RestrictionTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RestrictionTag> : boost::spirit::x3::position_tagged
 {
     RoleChoice<Family> lhs;
     ConceptChoice<Family> rhs;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::IdentityTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::IdentityTag> : boost::spirit::x3::position_tagged
 {
     ConceptChoice<Family> arg;
 };
@@ -700,47 +713,47 @@ template<runir::kr::dl::FamilyTag Family>
 using RoleArgument = Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>;
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicStateSyntaxTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicStateSyntaxTag> : boost::spirit::x3::position_tagged
 {
     Identifier predicate_name;
     bool polarity;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicGoalSyntaxTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicGoalSyntaxTag> : boost::spirit::x3::position_tagged
 {
     Identifier predicate_name;
     bool polarity;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NonemptyTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NonemptyTag> : boost::spirit::x3::position_tagged
 {
     ConstructorOrNonTerminalVariant<Family> arg;
 };
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::ComparisonTag Tag>
-struct Constructor<Family, runir::kr::dl::BooleanTag, Tag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::BooleanTag, Tag> : boost::spirit::x3::position_tagged
 {
     ConstructorOrNonTerminal<Family, typename Tag::OperandCategory> lhs;
     ConstructorOrNonTerminal<Family, typename Tag::OperandCategory> rhs;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanConstantTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanConstantTag> : boost::spirit::x3::position_tagged
 {
     bool value;
 };
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::LogicalBinaryTag Tag>
-struct Constructor<Family, runir::kr::dl::BooleanTag, Tag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::BooleanTag, Tag> : boost::spirit::x3::position_tagged
 {
     BooleanChoice<Family> lhs;
     BooleanChoice<Family> rhs;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NotTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NotTag> : boost::spirit::x3::position_tagged
 {
     BooleanChoice<Family> arg;
 };
@@ -787,13 +800,13 @@ template<runir::kr::dl::FamilyTag Family>
 using BooleanArgument = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>;
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::CountTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::CountTag> : boost::spirit::x3::position_tagged
 {
     ConstructorOrNonTerminalVariant<Family> arg;
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::DistanceTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::DistanceTag> : boost::spirit::x3::position_tagged
 {
     ConceptOrQueryVariant<Family> lhs;
     RoleOrQueryVariant<Family> mid;
@@ -801,13 +814,13 @@ struct Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::DistanceT
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::NumericalConstantTag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::NumericalConstantTag> : boost::spirit::x3::position_tagged
 {
     ygg::uint_t value;
 };
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalBinaryTag Tag>
-struct Constructor<Family, runir::kr::dl::NumericalTag, Tag> : x3::position_tagged
+struct Constructor<Family, runir::kr::dl::NumericalTag, Tag> : boost::spirit::x3::position_tagged
 {
     NumericalChoice<Family> lhs;
     NumericalChoice<Family> rhs;
@@ -843,14 +856,12 @@ struct Constructor<Family, Category, void> : ConstructorVariantBase<Family, Cate
 };
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-struct DerivationRule : x3::position_tagged
+struct DerivationRule : boost::spirit::x3::position_tagged
 {
     using CategoryTag = Category;
-    using Lhs = NonTerminal<Family, Category>;
-    using Rhs = std::vector<ConstructorOrNonTerminal<Family, Category>>;
 
-    Lhs lhs;
-    Rhs rhs;
+    NonTerminal<Family, Category> lhs;
+    std::vector<ConstructorOrNonTerminal<Family, Category>> rhs;
 };
 
 template<runir::kr::dl::FamilyTag Family>
@@ -869,7 +880,7 @@ struct DerivationRuleVariant :
 };
 
 template<runir::kr::dl::FamilyTag Family>
-struct Grammar : x3::position_tagged
+struct Grammar : boost::spirit::x3::position_tagged
 {
     std::vector<DerivationRuleVariant<Family>> rules;
 };

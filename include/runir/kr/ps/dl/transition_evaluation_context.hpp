@@ -51,9 +51,10 @@ class TransitionEvaluationContext
 public:
     using FamilyType = Family;
     using DlFamily = DlFamilyFor<Family>;
-    using DlContext = runir::kr::dl::semantics::StateEvaluationContext<DlFamily, Kind, S, R>;
 
 private:
+    using DlContext = runir::kr::dl::semantics::StateEvaluationContext<DlFamily, Kind, S, R>;
+
     DlContext m_source_context;
     DlContext m_target_context;
 

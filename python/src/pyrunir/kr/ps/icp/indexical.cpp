@@ -11,14 +11,13 @@
 namespace runir::kr::ps::icp
 {
 
-using namespace nanobind::literals;
-
 namespace
 {
 
 template<typename T, typename Operation>
 void bind_indexical_type(nb::module_& m, RepositoryBinding& repository, const char* name)
 {
+    using namespace nb::literals;
     using Data = ygg::Data<T>;
     using View = ygg::View<ygg::Index<T>, Repository>;
     using ObjectReference = ::cista::offset::variant<ArgumentPosition, ygg::Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>;

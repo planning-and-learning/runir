@@ -23,8 +23,6 @@
 namespace runir::graphs
 {
 
-using namespace nanobind::literals;
-
 struct PyObjectProperty
 {
     nb::object value;
@@ -116,6 +114,7 @@ auto get_edge_property(const Graph& graph, graphs::EdgeIndex edge)
 template<bool KeepPropertyOwnerAlive = false, typename Graph, typename VertexPropertyGetter, typename EdgePropertyGetter>
 void bind_readable_graph_methods(nb::class_<Graph>& cls, VertexPropertyGetter vertex_property_getter, EdgePropertyGetter edge_property_getter)
 {
+    using namespace nb::literals;
     cls.def("get_num_vertices", &Graph::get_num_vertices)
         .def("get_num_edges", &Graph::get_num_edges)
         .def(
@@ -177,6 +176,7 @@ auto materialize_edge_indices(Range&& range) -> graphs::EdgeIndexList
 template<typename Graph>
 void bind_forward_graph(nb::class_<Graph>& cls)
 {
+    using namespace nb::literals;
     cls.def(
            "get_out_edge_indices",
            [](const Graph& graph, graphs::VertexIndex vertex)
@@ -193,6 +193,7 @@ void bind_forward_graph(nb::class_<Graph>& cls)
 template<typename Graph>
 void bind_bidirectional_graph(nb::class_<Graph>& cls)
 {
+    using namespace nb::literals;
     cls.def(
            "get_in_edge_indices",
            [](const Graph& graph, graphs::VertexIndex vertex)
@@ -209,6 +210,7 @@ void bind_bidirectional_graph(nb::class_<Graph>& cls)
 template<typename Graph>
 void bind_materialized_bidirectional_graph(nb::class_<Graph>& cls)
 {
+    using namespace nb::literals;
     cls.def(
            "get_out_edge_indices",
            [](const Graph& graph, graphs::VertexIndex vertex) { return materialize_edge_indices(graph.get_out_edge_indices(vertex)); },
@@ -262,6 +264,7 @@ public:
 template<typename Graph>
 void bind_traversal_visitor(nb::module_& m, const char* name)
 {
+    using namespace nb::literals;
     using Visitor = graphs::bgl::TraversalVisitor<Graph>;
     using PyVisitor = PyTraversalVisitor<Graph>;
 
@@ -351,8 +354,9 @@ void bind_python_object_graph(nb::class_<Graph>& cls)
 template<typename Graph>
 void bind_labeled_constructible_graph(nb::class_<Graph>& cls)
 {
-    using VertexProperty = typename Graph::VertexPropertyType;
-    using EdgeProperty = typename Graph::EdgePropertyType;
+    using namespace nb::literals;
+    using VertexProperty = runir::graphs::GraphVertexPropertyType<Graph>;
+    using EdgeProperty = runir::graphs::GraphEdgePropertyType<Graph>;
 
     cls.def(
            "add_vertex",
@@ -377,6 +381,7 @@ void bind_labeled_constructible_graph(nb::class_<Graph>& cls)
 template<typename Graph>
 void bind_constructible_graph(nb::class_<Graph>& cls)
 {
+    using namespace nb::literals;
     cls.def(
            "add_vertex",
            [](Graph& graph, nb::object property) { return graph.add_vertex(PyObjectProperty(std::move(property))); },
@@ -400,6 +405,7 @@ void bind_constructible_graph(nb::class_<Graph>& cls)
 template<bool KeepPropertyOwnerAlive = false, typename Graph>
 void bind_labeled_dynamic_graph(nb::class_<Graph>& cls)
 {
+    using namespace nb::literals;
     cls.def(nb::init<>()).def("clear", &Graph::clear);
     bind_readable_graph<KeepPropertyOwnerAlive>(cls);
     bind_forward_graph(cls);
@@ -414,6 +420,7 @@ void bind_labeled_dynamic_graph(nb::class_<Graph>& cls)
 template<typename Graph>
 void bind_graph_properties(nb::module_& m)
 {
+    using namespace nb::literals;
     m.def("is_loopless", &graphs::is_loopless<Graph>, "graph"_a);
     m.def("is_multi_graph", &graphs::is_multi_graph<Graph>, "graph"_a);
     m.def("is_symmetric", &graphs::is_symmetric<Graph>, "graph"_a);
@@ -423,6 +430,7 @@ void bind_graph_properties(nb::module_& m)
 template<typename Graph>
 void bind_graph_algorithms(nb::module_& m)
 {
+    using namespace nb::literals;
     m.def("strong_components", &graphs::algorithms::strong_components<Graph>, "graph"_a);
     m.def("breadth_first_search", &graphs::algorithms::breadth_first_search<Graph>, "graph"_a, "sources"_a);
     m.def(

@@ -47,6 +47,7 @@ private:
                                    QueryAtomicEvaluator<Family, Kind, tyr::formalism::DerivedTag>,
                                    QueryProjectionEvaluator<Family, Kind>,
                                    QueryJoinEvaluator<Family, Kind>,
+                                   QueryGenericJoinEvaluator<Family, Kind>,
                                    QueryFromDenotationEvaluator<Family, Kind, ConceptTag>,
                                    QueryFromDenotationEvaluator<Family, Kind, RoleTag>,
                                    QuerySetCombinationEvaluator<Family, Kind, QueryUnionTag>,
@@ -113,6 +114,13 @@ auto QueryNode<Family, Kind>::prepare_operation(FamilyQueryView<Family> expressi
                 return QueryJoinEvaluator<Family, Kind>(graph.prepare(concrete.get_lhs(), m_dependencies),
                                                         graph.prepare(concrete.get_rhs(), m_dependencies),
                                                         concrete.get_data().plan);
+            else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
+            {
+                auto args = std::vector<QueryEvaluationIndex> {};
+                for (const auto arg : concrete.get_args())
+                    args.push_back(graph.prepare(arg, m_dependencies));
+                return QueryGenericJoinEvaluator<Family, Kind>(std::move(args), concrete.get_data().plan);
+            }
             else if constexpr (std::same_as<Tag, QueryConceptTag>)
                 return QueryFromDenotationEvaluator<Family, Kind, ConceptTag>(graph.prepare(concrete.get_arg(), m_dependencies), concrete.get_schema().span());
             else if constexpr (std::same_as<Tag, QueryRoleTag>)

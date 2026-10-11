@@ -13,20 +13,18 @@
 
 namespace runir::kr::ps::ext::dl::parser
 {
-namespace x3 = boost::spirit::x3;
-namespace dl_parser = runir::kr::dl::grammar::parser;
 
+using boost::spirit::x3::attr;
+using boost::spirit::x3::eoi;
+using boost::spirit::x3::lexeme;
+using boost::spirit::x3::lit;
+using boost::spirit::x3::raw;
 using runir::kr::parser::keyword;
-using x3::attr;
-using x3::eoi;
-using x3::lexeme;
-using x3::lit;
-using x3::raw;
 using ygg::diagnostics::context;
 
-using x3::ascii::alnum;
-using x3::ascii::alpha;
-using x3::ascii::char_;
+using boost::spirit::x3::ascii::alnum;
+using boost::spirit::x3::ascii::alpha;
+using boost::spirit::x3::ascii::char_;
 
 struct IdentifierText
 {
@@ -98,9 +96,9 @@ program_type const program = "program";
 module_root_type const module_root = "module_root";
 program_root_type const program_root = "program_root";
 
-const auto identifier_def = x3::rule<IdentifierText, std::string> { "identifier_text" } =
+const auto identifier_def = boost::spirit::x3::rule<IdentifierText, std::string> { "identifier_text" } =
     raw[lexeme[(alpha | char_('_')) >> *(alnum | char_('_') | char_('-'))]];
-const auto quoted_string_def = x3::rule<QuotedStringText, std::string> { "quoted_string_text" } =
+const auto quoted_string_def = boost::spirit::x3::rule<QuotedStringText, std::string> { "quoted_string_text" } =
     lexeme[context("quoted string")[lit('"') >> *((lit('\\') >> char_) | (char_ - '"')) > lit('"')]];
 
 const auto symbol_section_def = context(":symbol")[(lit("(") >> keyword(":symbol")) > identifier > lit(")")];
@@ -124,22 +122,28 @@ const auto registers_section_def = context(":registers")[(lit("(") >> keyword(":
 
 const auto concept_feature_def =
     context("concept feature")[keyword("(:concept") > symbol_section
-                               > context(":expression")[(lit("(") >> keyword(":expression")) > dl_parser::concept_parser<runir::kr::ExtFamilyTag>() > lit(")")]
+                               > context(":expression")[(lit("(") >> keyword(":expression"))
+                                                        > runir::kr::dl::grammar::parser::concept_parser<runir::kr::ExtFamilyTag>() > lit(")")]
                                > lit(")")];
 const auto role_feature_def = context(
-    "role feature")[keyword("(:role") > symbol_section
-                    > context(":expression")[(lit("(") >> keyword(":expression")) > dl_parser::role_parser<runir::kr::ExtFamilyTag>() > lit(")")] > lit(")")];
+    "role feature")[keyword("(:role") > symbol_section > context(
+                        ":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::role_parser<runir::kr::ExtFamilyTag>() > lit(")")]
+                    > lit(")")];
 const auto boolean_feature_def =
     context("boolean feature")[keyword("(:boolean") > symbol_section
-                               > context(":expression")[(lit("(") >> keyword(":expression")) > dl_parser::boolean_parser<runir::kr::ExtFamilyTag>() > lit(")")]
+                               > context(":expression")[(lit("(") >> keyword(":expression"))
+                                                        > runir::kr::dl::grammar::parser::boolean_parser<runir::kr::ExtFamilyTag>() > lit(")")]
                                > lit(")")];
-const auto numerical_feature_def = context(
-    "numerical feature")[keyword("(:numerical") > symbol_section
-                         > context(":expression")[(lit("(") >> keyword(":expression")) > dl_parser::numerical_parser<runir::kr::ExtFamilyTag>() > lit(")")]
-                         > lit(")")];
-const auto query_feature_def = context(
-    "query feature")[keyword("(:query") > symbol_section
-                     > context(":expression")[(lit("(") >> keyword(":expression")) > dl_parser::query_parser<runir::kr::ExtFamilyTag>() > lit(")")] > lit(")")];
+const auto numerical_feature_def =
+    context("numerical feature")[keyword("(:numerical") > symbol_section
+                                 > context(":expression")[(lit("(") >> keyword(":expression"))
+                                                          > runir::kr::dl::grammar::parser::numerical_parser<runir::kr::ExtFamilyTag>() > lit(")")]
+                                 > lit(")")];
+const auto query_feature_def =
+    context("query feature")[keyword("(:query") > symbol_section
+                             > context(":expression")[(lit("(") >> keyword(":expression"))
+                                                      > runir::kr::dl::grammar::parser::query_parser<runir::kr::ExtFamilyTag>() > lit(")")]
+                             > lit(")")];
 const auto feature_def = concept_feature | role_feature | boolean_feature | numerical_feature | query_feature;
 const auto features_section_def = context(":features")[(lit("(") >> keyword(":features")) > *feature > lit(")")];
 
@@ -153,19 +157,19 @@ const auto role_register_section_def =
     context("role register reference")[(lit("(") >> keyword(":register") >> keyword("(:role")) > identifier > lit(")") > lit(")")];
 const auto arguments_expression_section_def = context(":arguments")[(lit("(") >> keyword(":arguments")) > *symbol_expression > lit(")")];
 
-const auto positive_condition_def = keyword(runir::kr::ps::dl::Positive::keyword) >> attr(base_ast::Positive {});
-const auto negative_condition_def = keyword(runir::kr::ps::dl::Negative::keyword) >> attr(base_ast::Negative {});
-const auto equal_zero_condition_def = keyword(runir::kr::ps::dl::EqualZero::keyword) >> attr(base_ast::EqualZero {});
-const auto greater_zero_condition_def = keyword(runir::kr::ps::dl::GreaterZero::keyword) >> attr(base_ast::GreaterZero {});
+const auto positive_condition_def = keyword(runir::kr::ps::dl::Positive::keyword) >> attr(runir::kr::ps::base::dl::ast::Positive {});
+const auto negative_condition_def = keyword(runir::kr::ps::dl::Negative::keyword) >> attr(runir::kr::ps::base::dl::ast::Negative {});
+const auto equal_zero_condition_def = keyword(runir::kr::ps::dl::EqualZero::keyword) >> attr(runir::kr::ps::base::dl::ast::EqualZero {});
+const auto greater_zero_condition_def = keyword(runir::kr::ps::dl::GreaterZero::keyword) >> attr(runir::kr::ps::base::dl::ast::GreaterZero {});
 const auto condition_observation_def = positive_condition | negative_condition | equal_zero_condition | greater_zero_condition;
 const auto condition_def = context("condition")[(lit("(") >> condition_observation) > identifier > lit(")")];
 const auto conditions_section_def = context(":conditions")[(lit("(") >> keyword(":conditions")) > *condition > lit(")")];
 
-const auto positive_effect_def = keyword(runir::kr::ps::dl::Positive::keyword) >> attr(base_ast::Positive {});
-const auto negative_effect_def = keyword(runir::kr::ps::dl::Negative::keyword) >> attr(base_ast::Negative {});
-const auto unchanged_effect_def = keyword(runir::kr::ps::dl::Unchanged::keyword) >> attr(base_ast::Unchanged {});
-const auto increases_effect_def = keyword(runir::kr::ps::dl::Increases::keyword) >> attr(base_ast::Increases {});
-const auto decreases_effect_def = keyword(runir::kr::ps::dl::Decreases::keyword) >> attr(base_ast::Decreases {});
+const auto positive_effect_def = keyword(runir::kr::ps::dl::Positive::keyword) >> attr(runir::kr::ps::base::dl::ast::Positive {});
+const auto negative_effect_def = keyword(runir::kr::ps::dl::Negative::keyword) >> attr(runir::kr::ps::base::dl::ast::Negative {});
+const auto unchanged_effect_def = keyword(runir::kr::ps::dl::Unchanged::keyword) >> attr(runir::kr::ps::base::dl::ast::Unchanged {});
+const auto increases_effect_def = keyword(runir::kr::ps::dl::Increases::keyword) >> attr(runir::kr::ps::base::dl::ast::Increases {});
+const auto decreases_effect_def = keyword(runir::kr::ps::dl::Decreases::keyword) >> attr(runir::kr::ps::base::dl::ast::Decreases {});
 const auto effect_observation_def = positive_effect | negative_effect | unchanged_effect | increases_effect | decreases_effect;
 const auto effect_def = context("effect")[(lit("(") >> effect_observation) > identifier > lit(")")];
 const auto effects_section_def = context(":effects")[(lit("(") >> keyword(":effects")) > *effect > lit(")")];
@@ -194,7 +198,7 @@ const auto call_rule_def = context("call rule")[keyword("(:call") > conditions_s
 const auto backtrack_rule_def = context("backtrack rule")[keyword("(:backtrack") > conditions_section > lit(")")];
 const auto rule_def = concept_load_rule | role_load_rule | sketch_rule | do_rule | call_rule | concept_choose_rule | role_choose_rule | action_rule
                       | backtrack_rule;
-const auto required_rules = x3::rule<class RequiredRules, std::vector<ast::Rule>> { "one or more rules" } = +rule;
+const auto required_rules = boost::spirit::x3::rule<class RequiredRules, std::vector<ast::Rule>> { "one or more rules" } = +rule;
 
 const auto rule_entry_def = context(
     "rule")[(lit("(") >> keyword(":rule")) > symbol_section
@@ -203,12 +207,13 @@ const auto rule_entry_def = context(
 const auto rules_section_def = context(":rules")[(lit("(") >> keyword(":rules")) > *rule_entry > lit(")")];
 
 const auto named_value_def = identifier;
-const auto required_memory_states = x3::rule<class RequiredMemoryStates, std::vector<ast::NamedValue>> { "one or more memory states" } = +named_value;
+const auto required_memory_states = boost::spirit::x3::rule<class RequiredMemoryStates, std::vector<ast::NamedValue>> { "one or more memory states" } =
+    +named_value;
 const auto memory_section_def = context(":memory")[(lit("(") >> keyword(":memory")) > required_memory_states > lit(")")];
 
 const auto module_def = context("module")[(lit("(") >> keyword(":module")) > symbol_section > arguments_section > registers_section > entry_section
                                           > memory_section > features_section > rules_section > lit(")")];
-const auto required_modules = x3::rule<class RequiredModules, std::vector<ast::Module>> { "one or more modules" } = +module;
+const auto required_modules = boost::spirit::x3::rule<class RequiredModules, std::vector<ast::Module>> { "one or more modules" } = +module;
 const auto program_def = context("program")[(lit("(") >> keyword(":program")) > entry_section > required_modules > lit(")")];
 const auto module_root_def = context("module")[module > eoi];
 const auto program_root_def = context("program")[program > eoi];
@@ -276,184 +281,184 @@ BOOST_SPIRIT_DEFINE(identifier,
                     module_root,
                     program_root)
 
-struct IdentifierClass : x3::annotate_on_success
+struct IdentifierClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct QuotedStringClass : x3::annotate_on_success
+struct QuotedStringClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct SymbolSectionClass : x3::annotate_on_success
+struct SymbolSectionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct SourceMemorySectionClass : x3::annotate_on_success
+struct SourceMemorySectionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct TargetMemorySectionClass : x3::annotate_on_success
+struct TargetMemorySectionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct EntrySectionClass : x3::annotate_on_success
+struct EntrySectionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct ActionSectionClass : x3::annotate_on_success
+struct ActionSectionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct CalleeSectionClass : x3::annotate_on_success
+struct CalleeSectionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct ArgumentsSectionClass : x3::annotate_on_success
+struct ArgumentsSectionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct RegistersSectionClass : x3::annotate_on_success
+struct RegistersSectionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct FeaturesSectionClass : x3::annotate_on_success
+struct FeaturesSectionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct ConditionsSectionClass : x3::annotate_on_success
+struct ConditionsSectionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct EffectsSectionClass : x3::annotate_on_success
+struct EffectsSectionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct ArgumentsExpressionSectionClass : x3::annotate_on_success
+struct ArgumentsExpressionSectionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct RulesSectionClass : x3::annotate_on_success
+struct RulesSectionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct MemorySectionClass : x3::annotate_on_success
+struct MemorySectionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct ConceptArgumentClass : x3::annotate_on_success
+struct ConceptArgumentClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct RoleArgumentClass : x3::annotate_on_success
+struct RoleArgumentClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct BooleanArgumentClass : x3::annotate_on_success
+struct BooleanArgumentClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct NumericalArgumentClass : x3::annotate_on_success
+struct NumericalArgumentClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct ArgumentClass : x3::annotate_on_success
+struct ArgumentClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct ConceptRegisterClass : x3::annotate_on_success
+struct ConceptRegisterClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct RoleRegisterClass : x3::annotate_on_success
+struct RoleRegisterClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct RegisterClass : x3::annotate_on_success
+struct RegisterClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct ConceptFeatureClass : x3::annotate_on_success
+struct ConceptFeatureClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct RoleFeatureClass : x3::annotate_on_success
+struct RoleFeatureClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct BooleanFeatureClass : x3::annotate_on_success
+struct BooleanFeatureClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct NumericalFeatureClass : x3::annotate_on_success
+struct NumericalFeatureClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct QueryFeatureClass : x3::annotate_on_success
+struct QueryFeatureClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct FeatureClass : x3::annotate_on_success
+struct FeatureClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct SymbolExpressionClass : x3::annotate_on_success
+struct SymbolExpressionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct NamedValueClass : x3::annotate_on_success
+struct NamedValueClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct PositiveConditionClass : x3::annotate_on_success
+struct PositiveConditionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct NegativeConditionClass : x3::annotate_on_success
+struct NegativeConditionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct EqualZeroConditionClass : x3::annotate_on_success
+struct EqualZeroConditionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct GreaterZeroConditionClass : x3::annotate_on_success
+struct GreaterZeroConditionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct ConditionObservationClass : x3::annotate_on_success
+struct ConditionObservationClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct ConditionClass : x3::annotate_on_success
+struct ConditionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct PositiveEffectClass : x3::annotate_on_success
+struct PositiveEffectClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct NegativeEffectClass : x3::annotate_on_success
+struct NegativeEffectClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct UnchangedEffectClass : x3::annotate_on_success
+struct UnchangedEffectClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct IncreasesEffectClass : x3::annotate_on_success
+struct IncreasesEffectClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct DecreasesEffectClass : x3::annotate_on_success
+struct DecreasesEffectClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct EffectObservationClass : x3::annotate_on_success
+struct EffectObservationClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct EffectClass : x3::annotate_on_success
+struct EffectClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct ConceptLoadRuleClass : x3::annotate_on_success
+struct ConceptLoadRuleClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct RoleLoadRuleClass : x3::annotate_on_success
+struct RoleLoadRuleClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct OrderTermClass : x3::annotate_on_success
+struct OrderTermClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct OrderSectionClass : x3::annotate_on_success
+struct OrderSectionClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct ConceptChooseRuleClass : x3::annotate_on_success
+struct ConceptChooseRuleClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct RoleChooseRuleClass : x3::annotate_on_success
+struct RoleChooseRuleClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct SketchRuleClass : x3::annotate_on_success
+struct SketchRuleClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct DoRuleClass : x3::annotate_on_success
+struct DoRuleClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct CallRuleClass : x3::annotate_on_success
+struct CallRuleClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct ActionRuleClass : x3::annotate_on_success
+struct ActionRuleClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct BacktrackRuleClass : x3::annotate_on_success
+struct BacktrackRuleClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct RuleClass : x3::annotate_on_success
+struct RuleClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct RuleEntryClass : x3::annotate_on_success
+struct RuleEntryClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct ModuleClass : x3::annotate_on_success
+struct ModuleClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct ProgramClass : x3::annotate_on_success
+struct ProgramClass : boost::spirit::x3::annotate_on_success
 {
 };
 struct ModuleRootClass : runir::kr::parser::ErrorHandlerBase

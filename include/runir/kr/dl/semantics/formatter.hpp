@@ -71,34 +71,43 @@ std::string query_columns(Columns columns)
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
 std::string query(ygg::View<ygg::Index<runir::kr::dl::Query<Family, Tag>>, C> view)
 {
-    using namespace runir::kr::dl;
     if constexpr (std::same_as<Tag, void>)
         return fmt::format("{}", view.get_variant());
-    else if constexpr (is_atomic_state_tag_v<Tag>)
+    else if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
         return constructor("q_atomic_state", fmt::format("{:?}", view.get_predicate().get_name().view()), query_columns(view.get_columns()));
-    else if constexpr (is_atomic_goal_tag_v<Tag>)
+    else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
         return constructor("q_atomic_goal",
                            fmt::format("{:?}", view.get_predicate().get_name().view()),
                            boolean(view.get_polarity()),
                            query_columns(view.get_columns()));
-    else if constexpr (std::same_as<Tag, QueryConceptTag>)
-        return constructor(QueryConceptTag::keyword, *view.get_columns().begin(), view.get_arg());
-    else if constexpr (std::same_as<Tag, QueryRoleTag>)
-        return constructor(QueryRoleTag::keyword, query_columns(view.get_columns()), view.get_arg());
-    else if constexpr (std::same_as<Tag, QueryProjectTag>)
-        return constructor(QueryProjectTag::keyword, query_columns(view.get_columns()), view.get_arg());
-    else if constexpr (std::same_as<Tag, QueryRenameTag>)
-        return constructor(QueryRenameTag::keyword, query_columns(view.get_columns()), view.get_arg());
-    else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
-        return constructor(QuerySelectEqualTag::keyword, view.get_lhs_column(), view.get_rhs_column(), view.get_arg());
-    else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
-        return constructor(QuerySelectValueTag::keyword, view.get_column(), fmt::format("{:?}", view.get_object().get_name().view()), view.get_arg());
-    else if constexpr (std::same_as<Tag, QueryJoinTag>)
-        return constructor(QueryJoinTag::keyword, view.get_lhs(), view.get_rhs());
-    else if constexpr (std::same_as<Tag, QueryUnionTag>)
-        return constructor(QueryUnionTag::keyword, view.get_lhs(), view.get_rhs());
-    else if constexpr (std::same_as<Tag, QueryDifferenceTag>)
-        return constructor(QueryDifferenceTag::keyword, view.get_lhs(), view.get_rhs());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::QueryConceptTag>)
+        return constructor(runir::kr::dl::QueryConceptTag::keyword, *view.get_columns().begin(), view.get_arg());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::QueryRoleTag>)
+        return constructor(runir::kr::dl::QueryRoleTag::keyword, query_columns(view.get_columns()), view.get_arg());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::QueryProjectTag>)
+        return constructor(runir::kr::dl::QueryProjectTag::keyword, query_columns(view.get_columns()), view.get_arg());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::QueryRenameTag>)
+        return constructor(runir::kr::dl::QueryRenameTag::keyword, query_columns(view.get_columns()), view.get_arg());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::QuerySelectEqualTag>)
+        return constructor(runir::kr::dl::QuerySelectEqualTag::keyword, view.get_lhs_column(), view.get_rhs_column(), view.get_arg());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::QuerySelectValueTag>)
+        return constructor(runir::kr::dl::QuerySelectValueTag::keyword,
+                           view.get_column(),
+                           fmt::format("{:?}", view.get_object().get_name().view()),
+                           view.get_arg());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::QueryJoinTag>)
+        return constructor(runir::kr::dl::QueryJoinTag::keyword, view.get_lhs(), view.get_rhs());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::QueryUnionTag>)
+        return constructor(runir::kr::dl::QueryUnionTag::keyword, view.get_lhs(), view.get_rhs());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::QueryDifferenceTag>)
+        return constructor(runir::kr::dl::QueryDifferenceTag::keyword, view.get_lhs(), view.get_rhs());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag>)
+        return constructor(runir::kr::dl::QueryGenericJoinTag::keyword,
+                           query_columns(view.get_variable_order()),
+                           query_columns(view.get_output_order()),
+                           fmt::format("{}", fmt::join(view.get_args(), " ")));
+    else if constexpr (std::same_as<Tag, runir::kr::dl::QueryEmptyTag>)
+        return constructor(runir::kr::dl::QueryEmptyTag::keyword, query_columns(view.get_columns()));
     else
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL query constructor tag");
 }

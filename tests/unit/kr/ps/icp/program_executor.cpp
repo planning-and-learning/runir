@@ -18,9 +18,8 @@ namespace runir::tests
 namespace
 {
 
-namespace icp = kr::ps::icp;
-using Status = icp::ProgramProofStatus;
-using Outcome = icp::detail::ProgramOutcome;
+using Status = kr::ps::icp::ProgramProofStatus;
+using Outcome = kr::ps::icp::detail::ProgramOutcome;
 
 std::string rule(const std::string& name, const std::string& source, const std::string& target, const std::string& body)
 {
@@ -77,23 +76,23 @@ auto make_context(const std::string& fixture)
 template<tyr::TaskKind Kind>
 auto program(const kr::TaskContextPtr<Kind>& context, const std::string& text)
 {
-    return icp::dl::parse_program("(:program (:entry policy) " + text + ")",
-                                  context->search_context->task->get_domain().get_domain(),
-                                  *context->domain_context->icp_repository);
+    return kr::ps::icp::dl::parse_program("(:program (:entry policy) " + text + ")",
+                                          context->search_context->task->get_domain().get_domain(),
+                                          *context->domain_context->icp_repository);
 }
 
 template<tyr::TaskKind Kind, kr::dl::semantics::EvaluationPolicyConcept<kr::ExtFamilyTag, Kind> EvaluationPolicy>
-auto initial(icp::SuccessorExpander<Kind, EvaluationPolicy>& expander)
+auto initial(kr::ps::icp::SuccessorExpander<Kind, EvaluationPolicy>& expander)
 {
     auto& search = *expander.get_task_context()->search_context;
     return expander.initial_state(search.successor_generator->get_initial_node(*search.state_repository, *search.axiom_evaluator).get_state());
 }
 
 template<tyr::TaskKind Kind, kr::dl::semantics::EvaluationPolicyConcept<kr::ExtFamilyTag, Kind> EvaluationPolicy>
-auto successors(icp::SuccessorExpander<Kind, EvaluationPolicy>& expander, icp::ProgramStateView<Kind> source, bool grouped = false)
+auto successors(kr::ps::icp::SuccessorExpander<Kind, EvaluationPolicy>& expander, kr::ps::icp::ProgramStateView<Kind> source, bool grouped = false)
 {
-    auto result = std::vector<typename icp::SuccessorExpander<Kind, EvaluationPolicy>::Step> {};
-    auto stats = icp::ProgramSearchStatistics {};
+    auto result = std::vector<typename kr::ps::icp::SuccessorExpander<Kind, EvaluationPolicy>::Step> {};
+    auto stats = kr::ps::icp::ProgramSearchStatistics {};
     expander.for_each_successor(
         source,
         stats,
@@ -115,15 +114,15 @@ void check_evaluation_policies()
                                 module(rule("load-bad", "m0", "m1", load("Candidates", "r0", "(positive Bad)"))
                                        + rule("load-good", "m0", "m1", load("Candidates", "r0", "(negative Bad)"))
                                        + rule("move", "m1", "m2", move("R")) + rule("finish", "m2", "m3", move("Goal"))));
-    auto full = icp::SuccessorExpander<Kind, kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, Kind>>(context, policy);
-    auto delta = icp::SuccessorExpander<Kind, kr::dl::semantics::DeltaEvaluationPolicy<kr::ExtFamilyTag, Kind>>(context, policy);
+    auto full = kr::ps::icp::SuccessorExpander<Kind, kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, Kind>>(context, policy);
+    auto delta = kr::ps::icp::SuccessorExpander<Kind, kr::dl::semantics::DeltaEvaluationPolicy<kr::ExtFamilyTag, Kind>>(context, policy);
     const auto source = initial(full);
     EXPECT_EQ(initial(delta), source);
 
     for (const auto grouped : { false, true })
     {
         SCOPED_TRACE(grouped);
-        const auto compare = [&](icp::ProgramStateView<Kind> state)
+        const auto compare = [&](kr::ps::icp::ProgramStateView<Kind> state)
         {
             const auto expected = successors(full, state, grouped);
             const auto actual = successors(delta, state, grouped);
@@ -166,13 +165,13 @@ template<tyr::TaskKind Kind>
 void check_executor()
 {
     auto context = make_context<Kind>("choose");
-    auto options = icp::ProgramSearchOptions<Kind> {};
+    auto options = kr::ps::icp::ProgramSearchOptions<Kind> {};
     const auto tail = rule("move", "m1", "m2", move("R")) + rule("finish", "m2", "m3", move("Goal"));
     const auto filtered = program(context, module(rule("select", "m0", "m1", load("Candidates", "r0", "(negative Bad)")) + tail));
     for (const auto universal : { false, true })
     {
         options.universal = universal;
-        const auto result = icp::find_solution(context, filtered, options);
+        const auto result = kr::ps::icp::find_solution(context, filtered, options);
         ASSERT_EQ(result.status, Status::SUCCESS);
         EXPECT_TRUE(result.cycle.empty());
         EXPECT_EQ(result.plan.has_value(), !universal);
@@ -185,12 +184,12 @@ void check_executor()
     // First load binding is the bad object; universal execution retains the other branch through the goal.
     const auto branching = program(context, module(rule("select", "m0", "m1", load("Candidates")) + tail));
     options.universal = false;
-    const auto greedy = icp::find_solution(context, branching, options);
+    const auto greedy = kr::ps::icp::find_solution(context, branching, options);
     EXPECT_EQ(greedy.status, Status::FAILURE);
     EXPECT_FALSE(greedy.plan);
     EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
     options.universal = true;
-    const auto complete = icp::find_solution(context, branching, options);
+    const auto complete = kr::ps::icp::find_solution(context, branching, options);
     EXPECT_EQ(complete.status, Status::FAILURE);
     EXPECT_EQ(complete.graph->get_out_degree(0), 2);
     auto goals = 0U;
@@ -208,9 +207,9 @@ void check_executor()
     const auto good_path = rule("move", "m0", "m1", move("Good")) + rule("finish", "m1", "m2", move("Goal"));
     const auto empty = program(context, module(rule("empty", "m0", "m1", load("Empty")) + good_path));
     options.universal = false;
-    EXPECT_EQ(icp::find_solution(context, empty, options).status, Status::FAILURE);
+    EXPECT_EQ(kr::ps::icp::find_solution(context, empty, options).status, Status::FAILURE);
     options.universal = true;
-    const auto empty_result = icp::find_solution(context, empty, options);
+    const auto empty_result = kr::ps::icp::find_solution(context, empty, options);
     EXPECT_EQ(empty_result.status, Status::FAILURE);
     EXPECT_FALSE(empty_result.deadend_states.empty());
     EXPECT_EQ(empty_result.graph->get_num_edges(), 2);
@@ -218,7 +217,7 @@ void check_executor()
     const auto cycle_program = program(context,
                                        module(rule("select", "m0", "m1", load("Here")) + rule("repeat", "m1", "m1", load("Here"))
                                               + rule("move", "m1", "m2", move("Good")) + rule("finish", "m2", "m3", move("Goal"))));
-    const auto cycle = icp::find_solution(context, cycle_program, options);
+    const auto cycle = kr::ps::icp::find_solution(context, cycle_program, options);
     EXPECT_EQ(cycle.status, Status::FAILURE);
     EXPECT_FALSE(cycle.cycle.empty());
     goals = 0;
@@ -230,7 +229,7 @@ void check_executor()
     const auto parallel =
         program(context,
                 module(rule("first", "m0", "m1", move("Good")) + rule("parallel", "m0", "m1", move("Good")) + rule("finish", "m1", "m2", move("Goal"))));
-    const auto joined = icp::find_solution(context, parallel, options);
+    const auto joined = kr::ps::icp::find_solution(context, parallel, options);
     EXPECT_EQ(joined.status, Status::SUCCESS);
     EXPECT_EQ(joined.graph->get_num_vertices(), 3);
     EXPECT_EQ(joined.graph->get_num_edges(), 3);
@@ -238,15 +237,15 @@ void check_executor()
 
     const auto unset = program(context, module(rule("unset", "m0", "m1", R"((:crule (:action "move") (:arguments from to)
         (:conditions) (:xconditions (not-belongs (:register (:concept r0)) (:concept Empty))) (:xeffects)))")));
-    const auto unset_result = icp::find_solution(context, unset, options);
+    const auto unset_result = kr::ps::icp::find_solution(context, unset, options);
     EXPECT_EQ(unset_result.status, Status::FAILURE);
     EXPECT_EQ(unset_result.graph->get_num_edges(), 0);
 
     options.max_num_states = 0;
-    EXPECT_EQ(icp::find_solution(context, filtered, options).status, Status::OUT_OF_STATES);
+    EXPECT_EQ(kr::ps::icp::find_solution(context, filtered, options).status, Status::OUT_OF_STATES);
     options.max_num_states = 100;
     options.max_time = std::chrono::steady_clock::duration::zero();
-    EXPECT_EQ(icp::find_solution(context, filtered, options).status, Status::OUT_OF_TIME);
+    EXPECT_EQ(kr::ps::icp::find_solution(context, filtered, options).status, Status::OUT_OF_TIME);
 }
 
 template<tyr::TaskKind Kind>
@@ -260,7 +259,7 @@ void check_histories()
         (:rules (:rule (:symbol load-edge) (:expression (:source-memory m0) (:target-memory m1)
             (:load (:conditions) (:role Edges) (:register (:role edge)) (:effects (increases Bound))))))
         (:reset-spo)))");
-    auto role_expander = icp::SuccessorExpander<Kind>(context, role_policy);
+    auto role_expander = kr::ps::icp::SuccessorExpander<Kind>(context, role_policy);
     const auto role_initial = initial(role_expander);
     const auto role_steps = successors(role_expander, role_initial);
     ASSERT_EQ(role_steps.size(), 3);
@@ -273,7 +272,7 @@ void check_histories()
 
     const auto prefix = rule("load-good", "m0", "m1", load("Good")) + rule("load-start", "m1", "m2", load("Here"));
     const auto policy = program(context, module(prefix + rule("reload-good", "m2", "m3", load("Good"))));
-    auto expander = icp::SuccessorExpander<Kind>(context, policy);
+    auto expander = kr::ps::icp::SuccessorExpander<Kind>(context, policy);
     const auto source = initial(expander);
     for (const auto history : source.get_histories().get_concepts())
         EXPECT_EQ(history.get().count(), 0);
@@ -291,7 +290,7 @@ void check_histories()
     // Equal planning state, memory, and registers with different histories must have distinct identities.
     auto cleared = step2.front().target.get_data();
     cleared.histories = source.get_histories().get_index();
-    const auto unvisited = icp::insert(*context->icp_execution_repository, cleared).first;
+    const auto unvisited = kr::ps::icp::insert(*context->icp_execution_repository, cleared).first;
     EXPECT_NE(unvisited, step2.front().target);
     const auto allowed = successors(expander, unvisited);
     ASSERT_EQ(allowed.size(), 1);
@@ -299,7 +298,7 @@ void check_histories()
 
     const auto reset_policy =
         program(context, module(prefix + rule("reset", "m2", "m3", load("Here", "r1")) + rule("reload-good", "m3", "m4", load("Good")), "(:prec R R1)"));
-    auto reset_expander = icp::SuccessorExpander<Kind>(context, reset_policy);
+    auto reset_expander = kr::ps::icp::SuccessorExpander<Kind>(context, reset_policy);
     auto current = initial(reset_expander);
     for (int i = 0; i < 4; ++i)
     {
@@ -317,7 +316,7 @@ void check_histories()
                                                 + rule("load-start", "m2", "m3", load("Here")) + rule("reset-exit", "m3", "m4", load("Good", "r1"))
                                                 + rule("reload-good", "m4", "m5", load("Good")),
                                             "(:prec R Reset)"));
-    auto exit_expander = icp::SuccessorExpander<Kind>(context, exit_policy);
+    auto exit_expander = kr::ps::icp::SuccessorExpander<Kind>(context, exit_policy);
     current = initial(exit_expander);
     for (int i = 0; i < 5; ++i)
     {
@@ -333,7 +332,7 @@ void check_histories()
     const auto same_step = program(
         context,
         module(prefix + rule("prepare-reset", "m2", "m3", load("Good", "r1")) + rule("reenter-and-reset", "m3", "m4", load("Good")), "(:prec R Together)"));
-    auto same_expander = icp::SuccessorExpander<Kind>(context, same_step);
+    auto same_expander = kr::ps::icp::SuccessorExpander<Kind>(context, same_step);
     current = initial(same_expander);
     for (int i = 0; i < 3; ++i)
     {
@@ -363,10 +362,10 @@ void check_normalized_arguments()
     };
     for (const auto universal : { false, true })
     {
-        auto options = icp::ProgramSearchOptions<Kind> {};
+        auto options = kr::ps::icp::ProgramSearchOptions<Kind> {};
         options.universal = universal;
-        EXPECT_EQ(icp::find_solution(context, make("W"), options).status, Status::FAILURE);
-        const auto progress = icp::find_solution(context, make("X"), options);
+        EXPECT_EQ(kr::ps::icp::find_solution(context, make("W"), options).status, Status::FAILURE);
+        const auto progress = kr::ps::icp::find_solution(context, make("X"), options);
         EXPECT_EQ(progress.status, Status::SUCCESS);
         if (!universal)
         {
@@ -396,7 +395,7 @@ void check_rejected_bindings_stay_unpublished()
                      + rule("reject", "m0", "m1", R"((:crule (:action "move") (:arguments from to) (:conditions) (:xconditions) (:xeffects)))")
                      + ") (:reset-spo))";
         const auto rejected = program(context, source);
-        auto expander = icp::SuccessorExpander<Kind>(context, rejected);
+        auto expander = kr::ps::icp::SuccessorExpander<Kind>(context, rejected);
         const auto state = initial(expander);
         const auto count_bindings = [&]
         {
@@ -412,7 +411,7 @@ void check_rejected_bindings_stay_unpublished()
         EXPECT_EQ(count_bindings(), before);
 
         const auto admitted = program(context, module(rule("accept", "m0", "m1", move("Candidates"))));
-        auto accepted_expander = icp::SuccessorExpander<Kind>(context, admitted);
+        auto accepted_expander = kr::ps::icp::SuccessorExpander<Kind>(context, admitted);
         const auto accepted_state = initial(accepted_expander);
         const auto accepted_steps = successors(accepted_expander, accepted_state);
         ASSERT_EQ(accepted_steps.size(), 2);
@@ -421,17 +420,17 @@ void check_rejected_bindings_stay_unpublished()
         // Scenario 2 passes the rule itself and is rejected separately by history admission.
         ASSERT_TRUE(accepted_steps.front().planning_successor);
         const auto candidate = accepted_steps.front().planning_successor->unpack();
-        auto workspace = icp::detail::RuleEvaluationWorkspace<Kind>(context, rejected);
+        auto workspace = kr::ps::icp::detail::RuleEvaluationWorkspace<Kind>(context, rejected);
         auto evaluation_context = kr::ps::RuleEvaluationContext<kr::IcpFamilyTag, Kind> { workspace, state.get_state() };
         const auto published_before_matching = count_bindings();
         for (const auto rules : rejected.get_module().get_memory_transitions())
             for (const auto variant : rules)
                 ygg::visit(
-                    [&]<icp::RuleKind Tag>(icp::RuleView<Tag> concrete)
+                    [&]<kr::ps::icp::RuleKind Tag>(kr::ps::icp::RuleView<Tag> concrete)
                     {
-                        if constexpr (std::same_as<Tag, icp::CruleTag>)
+                        if constexpr (std::same_as<Tag, kr::ps::icp::CruleTag>)
                         {
-                            const auto evaluator = icp::detail::RuleEvaluator<Kind, Tag>(*context, concrete, variant);
+                            const auto evaluator = kr::ps::icp::detail::RuleEvaluator<Kind, Tag>(*context, concrete, variant);
                             EXPECT_EQ(evaluator.matches(evaluation_context, state, candidate), scenario == 2);
                             EXPECT_FALSE(evaluator.matches(evaluation_context, accepted_steps.front().target, candidate));
                         }
@@ -462,23 +461,23 @@ void check_load_evaluator_entry_checks()
         if (scenario == 0)
             body.replace(body.find("(:conditions)"), std::string("(:conditions)").size(), "(:conditions (equal_zero Count))");
         const auto policy = program(task, module(rule("load", scenario == 1 ? "m1" : "m0", "m2", body)));
-        auto workspace = icp::detail::RuleEvaluationWorkspace<Kind>(task, policy);
+        auto workspace = kr::ps::icp::detail::RuleEvaluationWorkspace<Kind>(task, policy);
         auto& search = *task->search_context;
         const auto planning_state = search.successor_generator->get_initial_node(*search.state_repository, *search.axiom_evaluator).get_state();
         const auto source = workspace.initial_state(planning_state);
         auto context = kr::ps::RuleEvaluationContext<kr::IcpFamilyTag, Kind> { workspace, planning_state };
-        const auto states_before = task->icp_execution_repository->template size<icp::ProgramState<Kind>>();
-        const auto histories_before = task->icp_execution_repository->template size<icp::Histories>();
+        const auto states_before = task->icp_execution_repository->template size<kr::ps::icp::ProgramState<Kind>>();
+        const auto histories_before = task->icp_execution_repository->template size<kr::ps::icp::Histories>();
         const auto registers_before = task->dl_denotation_repository->template size<kr::dl::semantics::RegisterValues>();
-        auto steps = std::vector<icp::detail::ProgramStep<Kind>> {};
+        auto steps = std::vector<kr::ps::icp::detail::ProgramStep<Kind>> {};
         for (const auto rules : policy.get_module().get_memory_transitions())
             for (const auto variant : rules)
                 ygg::visit(
-                    [&]<icp::RuleKind Tag>(icp::RuleView<Tag> concrete)
+                    [&]<kr::ps::icp::RuleKind Tag>(kr::ps::icp::RuleView<Tag> concrete)
                     {
-                        if constexpr (std::same_as<Tag, icp::LoadTag<kr::dl::ConceptTag>>)
+                        if constexpr (std::same_as<Tag, kr::ps::icp::LoadTag<kr::dl::ConceptTag>>)
                         {
-                            const auto evaluator = icp::detail::RuleEvaluator<Kind, Tag>(*task, concrete, variant);
+                            const auto evaluator = kr::ps::icp::detail::RuleEvaluator<Kind, Tag>(*task, concrete, variant);
                             EXPECT_EQ(evaluator.emit(
                                           context,
                                           source,
@@ -510,8 +509,8 @@ void check_load_evaluator_entry_checks()
             }
             else
                 EXPECT_TRUE(steps.empty());
-            EXPECT_EQ(task->icp_execution_repository->template size<icp::ProgramState<Kind>>(), states_before);
-            EXPECT_EQ(task->icp_execution_repository->template size<icp::Histories>(), histories_before);
+            EXPECT_EQ(task->icp_execution_repository->template size<kr::ps::icp::ProgramState<Kind>>(), states_before);
+            EXPECT_EQ(task->icp_execution_repository->template size<kr::ps::icp::Histories>(), histories_before);
             EXPECT_EQ(task->dl_denotation_repository->template size<kr::dl::semantics::RegisterValues>(), registers_before);
         }
     }
@@ -522,7 +521,7 @@ void check_rule_evaluator_scheduling()
 {
     auto context = make_context<Kind>("choose");
     const auto policy = program(context, module(rule("first", "m0", "m1", move("Candidates")) + rule("second", "m0", "m2", move("Candidates"))));
-    auto expander = icp::SuccessorExpander<Kind>(context, policy);
+    auto expander = kr::ps::icp::SuccessorExpander<Kind>(context, policy);
     const auto source = initial(expander);
     const auto natural = successors(expander, source);
     ASSERT_EQ(natural.size(), 4);
@@ -532,14 +531,14 @@ void check_rule_evaluator_scheduling()
 
     auto history_buffer = [&]
     {
-        auto histories = icp::checkout<icp::Histories>(context->icp_execution_builder);
+        auto histories = kr::ps::icp::checkout<kr::ps::icp::Histories>(context->icp_execution_builder);
         return histories->concepts.data();
     };
     const auto* reused_history_buffer = history_buffer();
     ASSERT_NE(reused_history_buffer, nullptr);
 
     {
-        auto data = ygg::Data<icp::Histories>();
+        auto data = ygg::Data<kr::ps::icp::Histories>();
         data.concepts = source.get_histories().get_data().concepts;
         ASSERT_FALSE(data.concepts.empty());
         data.concepts.push_back(data.concepts.front());
@@ -550,15 +549,15 @@ void check_rule_evaluator_scheduling()
         EXPECT_EQ(stored.get_data().concepts, data.concepts);
         EXPECT_EQ(data.concepts.size(), expected_size);
         EXPECT_EQ(data.concepts.data(), buffer);
-        EXPECT_FALSE(icp::insert(*context->icp_execution_repository, data).second);
+        EXPECT_FALSE(kr::ps::icp::insert(*context->icp_execution_repository, data).second);
     }
 
     // Repeated grouped expansions retain action-group and history scratch, while the
     // public order remains binding-major and each rule still emits its own edge.
     for (int repetition = 0; repetition < 3; ++repetition)
     {
-        auto grouped = std::vector<typename icp::SuccessorExpander<Kind>::Step> {};
-        auto statistics = icp::ProgramSearchStatistics {};
+        auto grouped = std::vector<typename kr::ps::icp::SuccessorExpander<Kind>::Step> {};
+        auto statistics = kr::ps::icp::ProgramSearchStatistics {};
         EXPECT_TRUE(expander.for_each_successor(
             source,
             statistics,
@@ -604,15 +603,15 @@ void check_rule_evaluator_scheduling()
     for (const auto row : { 1, 0, 1 })
         module_data.memory_transitions.push_back(policy.get_module().get_data().memory_transitions[row]);
     auto program_data = policy.get_data();
-    program_data.module = icp::insert(repository, module_data).first.get_index();
-    const auto repeated_policy = icp::insert(repository, program_data).first;
-    auto repeated_expander = icp::SuccessorExpander<Kind>(context, repeated_policy);
+    program_data.module = kr::ps::icp::insert(repository, module_data).first.get_index();
+    const auto repeated_policy = kr::ps::icp::insert(repository, program_data).first;
+    auto repeated_expander = kr::ps::icp::SuccessorExpander<Kind>(context, repeated_policy);
     const auto repeated_source = initial(repeated_expander);
     const auto expected = std::array { natural[2].rule, natural[0].rule, natural[2].rule };
     for (const auto grouped : { false, true })
     {
-        auto steps = std::vector<typename icp::SuccessorExpander<Kind>::Step> {};
-        auto statistics = icp::ProgramSearchStatistics {};
+        auto steps = std::vector<typename kr::ps::icp::SuccessorExpander<Kind>::Step> {};
+        auto statistics = kr::ps::icp::ProgramSearchStatistics {};
         EXPECT_TRUE(repeated_expander.for_each_successor(
             repeated_source,
             statistics,

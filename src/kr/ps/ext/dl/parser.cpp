@@ -124,6 +124,9 @@ struct AstCategory<ast::ChooseRule<Category>>
     using Kind = ChooseTag<Category>;
 };
 
+template<typename T>
+using AstCategoryT = typename AstCategory<std::remove_cvref_t<T>>::Type;
+
 template<runir::kr::dl::CategoryTag Category>
 auto intern_argument(Repository& repository,
                      runir::kr::dl::Builder<runir::kr::ExtFamilyTag>& builder,
@@ -169,8 +172,7 @@ SignatureCounts signature_counts(const ast::Module& module_)
 {
     auto result = SignatureCounts {};
     for (const auto& argument : module_.arguments)
-        boost::apply_visitor([&](const auto& concrete) { increment<typename AstCategory<std::remove_cvref_t<decltype(concrete)>>::Type>(result); },
-                             argument.get());
+        boost::apply_visitor([&]<typename Concrete>(const Concrete&) { increment<AstCategoryT<Concrete>>(result); }, argument.get());
     return result;
 }
 
@@ -190,9 +192,9 @@ std::vector<ast::Register<Category>> collect_registers(const std::vector<ast::Re
     for (const auto& reg : registers)
     {
         boost::apply_visitor(
-            [&](const auto& concrete)
+            [&]<typename Concrete>(const Concrete& concrete)
             {
-                using ConcreteCategory = typename AstCategory<std::remove_cvref_t<decltype(concrete)>>::Type;
+                using ConcreteCategory = AstCategoryT<Concrete>;
                 if constexpr (std::same_as<ConcreteCategory, Category>)
                     result.push_back(concrete);
             },
@@ -217,9 +219,9 @@ void validate_module_declarations(const ast::Module& module_, const runir::kr::p
     for (const auto& argument : module_.arguments)
     {
         boost::apply_visitor(
-            [&](const auto& concrete)
+            [&]<typename Concrete>(const Concrete& concrete)
             {
-                using Category = typename AstCategory<std::remove_cvref_t<decltype(concrete)>>::Type;
+                using Category = AstCategoryT<Concrete>;
                 if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
                     add_argument(concept_arguments, concrete.symbol, "concept");
                 else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
@@ -252,9 +254,9 @@ void validate_module_declarations(const ast::Module& module_, const runir::kr::p
             diagnostics.throw_at(entry.symbol, runir::kr::DuplicateDefinitionError("rule", entry.symbol.text));
         for (const auto& rule : entry.rules)
             boost::apply_visitor(
-                [&](const auto& concrete)
+                [&]<typename Concrete>(const Concrete& concrete)
                 {
-                    if constexpr (std::same_as<std::remove_cvref_t<decltype(concrete)>, ast::BacktrackRule>)
+                    if constexpr (std::same_as<Concrete, ast::BacktrackRule>)
                     {
                         if (entry.target)
                             diagnostics.throw_at(*entry.target,
@@ -278,9 +280,9 @@ void append_argument(Repository& repository,
                      ygg::uint_t& numerical_identifier)
 {
     boost::apply_visitor(
-        [&](const auto& concrete)
+        [&]<typename Concrete>(const Concrete& concrete)
         {
-            using Category = typename AstCategory<std::remove_cvref_t<decltype(concrete)>>::Type;
+            using Category = AstCategoryT<Concrete>;
             if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
             {
                 const auto index = intern_argument<Category>(repository, builder, concrete, concept_identifier++).get_index();
@@ -432,9 +434,9 @@ FeatureSymbolSets feature_symbols(const ast::Module& module_)
     for (const auto& feature : module_.features)
     {
         boost::apply_visitor(
-            [&](const auto& concrete)
+            [&]<typename Concrete>(const Concrete& concrete)
             {
-                using Category = typename AstCategory<std::remove_cvref_t<decltype(concrete)>>::Type;
+                using Category = AstCategoryT<Concrete>;
                 if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
                     result.concepts.emplace(concrete.symbol.text);
                 else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
@@ -608,9 +610,8 @@ auto parse_rule(
     runir::kr::parser::DiagnosticContext& diagnostics)
 {
     return boost::apply_visitor(
-        [&](const auto& concrete) -> RuleVariantView
+        [&]<typename RuleAst>(const RuleAst& concrete) -> RuleVariantView
         {
-            using RuleAst = std::remove_cvref_t<decltype(concrete)>;
             if constexpr (requires { typename AstCategory<RuleAst>::Kind; })
             {
                 using Kind = typename AstCategory<RuleAst>::Kind;
@@ -847,9 +848,9 @@ ModuleView lower_module(const ast::Module& ast,
     for (const auto& reg : ast.registers)
     {
         boost::apply_visitor(
-            [&](const auto& concrete)
+            [&]<typename Concrete>(const Concrete& concrete)
             {
-                using Category = typename AstCategory<std::remove_cvref_t<decltype(concrete)>>::Type;
+                using Category = AstCategoryT<Concrete>;
                 if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
                 {
                     auto reg_data = runir::kr::dl::checkout<runir::kr::dl::Register<Category>>(builders.dl);
@@ -886,9 +887,9 @@ ModuleView lower_module(const ast::Module& ast,
     for (const auto& feature : ast.features)
     {
         boost::apply_visitor(
-            [&](const auto& concrete)
+            [&]<typename Concrete>(const Concrete& concrete)
             {
-                if constexpr (std::same_as<std::remove_cvref_t<decltype(concrete)>, ast::QueryFeature>)
+                if constexpr (std::same_as<Concrete, ast::QueryFeature>)
                 {
                     const auto context = ConstructorContext { repository.get_dl_repository(), builders.dl, diagnostics, &references };
                     const auto query = parse(concrete.expression, domain, context);
@@ -993,9 +994,8 @@ void validate_module_set(const std::vector<ast::Module>& modules,
                     for (const auto& rule : transition.rules)
                     {
                         boost::apply_visitor(
-                            [&](const auto& concrete)
+                            [&]<typename RuleAst>(const RuleAst& concrete)
                             {
-                                using RuleAst = std::remove_cvref_t<decltype(concrete)>;
                                 if constexpr (std::same_as<RuleAst, ast::CallRule>)
                                 {
                                     const auto callee = signatures_by_name.find(concrete.callee.text);

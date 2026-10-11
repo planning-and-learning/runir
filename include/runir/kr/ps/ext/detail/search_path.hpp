@@ -20,7 +20,7 @@ namespace runir::kr::ps::ext::detail
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage>
 struct SearchPath
 {
-    using StoredState = typename Storage::StoredState;
+    using StoredState = StorageStoredState<Storage>;
     std::optional<StoredState> state;
     ygg::SharedObjectPoolPtr<SearchPath<Kind, Storage>> parent;
     std::optional<datasets::StateGraphEdgeLabel> transition;

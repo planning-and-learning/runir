@@ -15,9 +15,10 @@ public:
     using VertexPropertyType = VP;
     using EdgePropertyType = EP;
     using ForwardGraphType = StaticGraph<VP, EP>;
-    using BackwardGraphType = BackwardStaticGraphView<ForwardGraphType>;
 
 private:
+    using BackwardGraphType = BackwardStaticGraphView<ForwardGraphType>;
+
     ForwardGraphType m_forward_graph;
     BackwardGraphType m_backward_graph;
 

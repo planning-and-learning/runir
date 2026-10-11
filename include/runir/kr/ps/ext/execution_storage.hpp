@@ -18,13 +18,19 @@
 namespace runir::kr::ps::ext
 {
 
+template<typename Storage>
+using StorageStoredState = typename Storage::StoredState;
+
+template<typename Storage>
+using StorageStateView = typename Storage::StateView;
+
 /// Shared execution operations; each storage chooses its own owned handles and borrowed views.
 template<typename Storage, typename Kind>
 concept ExecutionStorageConcept = requires(Storage& storage,
                                            const Storage& const_storage,
                                            tyr::planning::StateView<Kind> initial,
-                                           const typename Storage::StoredState& stored,
-                                           typename Storage::StateView state,
+                                           const StorageStoredState<Storage>& stored,
+                                           StorageStateView<Storage> state,
                                            ModuleView module_,
                                            MemoryStateView memory,
                                            ygg::Data<runir::kr::dl::semantics::RegisterValues>& registers,
@@ -34,14 +40,14 @@ concept ExecutionStorageConcept = requires(Storage& storage,
                                            tyr::formalism::planning::ActionBindingView binding,
                                            tyr::planning::BorrowedActionBindingView<Kind> borrowed_binding) {
     requires tyr::TaskKind<Kind>;
-    requires std::copyable<typename Storage::StoredState>;
-    requires ProgramStateViewConcept<typename Storage::StateView, Kind>;
-    { storage.initial_state(initial) } -> std::same_as<typename Storage::StoredState>;
-    { const_storage.view(stored) } -> std::same_as<typename Storage::StateView>;
-    { storage.retain(state) } -> std::same_as<typename Storage::StoredState>;
+    requires std::copyable<StorageStoredState<Storage>>;
+    requires ProgramStateViewConcept<StorageStateView<Storage>, Kind>;
+    { storage.initial_state(initial) } -> std::same_as<StorageStoredState<Storage>>;
+    { const_storage.view(stored) } -> std::same_as<StorageStateView<Storage>>;
+    { storage.retain(state) } -> std::same_as<StorageStoredState<Storage>>;
     { storage.registers(registers) } -> runir::kr::dl::semantics::RegisterValuesViewConcept;
-    { storage.store(state.get_state(), module_, memory, storage.registers(registers), arguments, caller) } -> std::same_as<typename Storage::StoredState>;
-    { storage.store(state.get_state(), module_, memory, saved_registers, arguments, caller) } -> std::same_as<typename Storage::StoredState>;
+    { storage.store(state.get_state(), module_, memory, storage.registers(registers), arguments, caller) } -> std::same_as<StorageStoredState<Storage>>;
+    { storage.store(state.get_state(), module_, memory, saved_registers, arguments, caller) } -> std::same_as<StorageStoredState<Storage>>;
     { storage.save_caller(state, memory) } -> std::same_as<CallStackView<Kind>>;
     { storage.materialize(state) } -> std::same_as<ProgramStateView<Kind>>;
     { storage.successor(state.get_state(), binding) } -> std::same_as<tyr::planning::Node<Kind, decltype(state.get_state())>>;
@@ -50,7 +56,7 @@ concept ExecutionStorageConcept = requires(Storage& storage,
 
 /// Emission consumes this storage's source view; matching may inspect other program-state views.
 template<typename State, typename Storage>
-concept ExecutionStateViewConcept = std::same_as<State, typename Storage::StateView>;
+concept ExecutionStateViewConcept = std::same_as<State, StorageStateView<Storage>>;
 
 /// Repository-backed construction used when the full explored graph is retained.
 template<tyr::TaskKind Kind>

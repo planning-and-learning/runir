@@ -2,6 +2,7 @@
 
 #include <nanobind/stl/variant.h>
 #include <pyrunir/kr/dl/evaluation_bindings.hpp>
+#include <pyrunir/kr/dl/optimization_bindings.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/constructor_view.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
@@ -20,8 +21,8 @@ void bind_constructor_data(nb::module_& m, const char* name)
     using Data = ygg::Data<runir::kr::dl::Constructor<runir::kr::BaseFamilyTag, Category>>;
     auto cls = nb::class_<Data>(m, name)
                    .def(nb::init<>())
-                   .def(nb::init<typename Data::Variant>(), nb::arg("variant"))
-                   .def(nb::init<typename Data::template ViewVariant<runir::kr::dl::BaseConstructorRepository>>(), nb::arg("variant"))
+                   .def(nb::init<DataVariant<Data>>(), nb::arg("variant"))
+                   .def(nb::init<DataViewVariant<Data, runir::kr::dl::BaseConstructorRepository>>(), nb::arg("variant"))
                    .def_rw("index", &Data::index)
                    .def_rw("variant", &Data::variant)
                    .def_rw("is_static", &Data::is_static);
@@ -38,6 +39,7 @@ void bind_constructor_view(nb::module_& m, const char* name)
     ygg::add_comparison(cls);
     ygg::add_hash(cls);
     runir::kr::python::bind_evaluate<runir::kr::BaseFamilyTag>(cls);
+    runir::kr::python::bind_optimize<runir::kr::BaseFamilyTag>(cls);
     cls.def("syntactic_complexity", [](View view) { return runir::kr::dl::semantics::syntactic_complexity(view); });
     m.def("syntactic_complexity", [](View view) { return runir::kr::dl::semantics::syntactic_complexity(view); }, nb::arg("constructor"));
 }

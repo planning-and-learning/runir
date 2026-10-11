@@ -24,13 +24,13 @@ public:
     using VertexPropertyType = VP;
     using EdgePropertyType = EP;
     using VertexType = Vertex<StaticGraphBuilder, VP>;
-    using VertexList = std::vector<VertexType>;
     using EdgeType = Edge<StaticGraphBuilder, EP>;
-    using EdgeList = std::vector<EdgeType>;
-    using VertexPropertyMapType = VertexPropertyMap<VP>;
     using EdgePropertyMapType = EdgePropertyMap<EP>;
 
 private:
+    using VertexList = std::vector<VertexType>;
+    using EdgeList = std::vector<EdgeType>;
+    using VertexPropertyMapType = VertexPropertyMap<VP>;
     VertexList m_vertices;
     EdgeList m_edges;
     std::vector<EdgeIndexList> m_out_edges;

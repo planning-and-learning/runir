@@ -30,7 +30,6 @@
 #include <utility>
 #include <vector>
 #include <yggdrasil/containers/associative_containers.hpp>
-#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::datasets::detail
 {
@@ -38,21 +37,10 @@ namespace runir::datasets::detail
 using StateGraphEdgeKey = std::tuple<graphs::VertexIndex, graphs::VertexIndex, tyr::formalism::planning::ActionBindingView, ygg::float_t>;
 
 template<tyr::TaskKind Kind>
-struct StateLocator : ygg::comparison::Mixin<StateLocator<Kind>>
-{
-    ygg::uint_t repository;
-    ygg::Index<tyr::planning::State<Kind>> state;
-
-    StateLocator(ygg::uint_t repository_, ygg::Index<tyr::planning::State<Kind>> state_) : repository(repository_), state(state_) {}
-
-    auto identifying_members() const noexcept { return std::tie(repository, state); }
-};
-
-template<tyr::TaskKind Kind>
 struct StateGraphTransition
 {
-    StateLocator<Kind> source;
-    StateLocator<Kind> target;
+    tyr::planning::PackedStateView<Kind> source;
+    tyr::planning::PackedStateView<Kind> target;
     tyr::formalism::planning::ActionBindingView action;
     ygg::float_t cost;
 };
@@ -61,38 +49,17 @@ template<tyr::TaskKind Kind>
 class StateGraphFragment
 {
 public:
-    using RepositoryMap = ygg::UnorderedMap<ygg::uint_t, tyr::planning::StateRepositoryPtr<Kind>>;
-
-    StateLocator<Kind> locate(const tyr::planning::StateView<Kind>& state)
-    {
-        const auto& repository = state.get_state_repository();
-        const auto index = repository->get_index();
-        [[maybe_unused]] const auto [it, inserted] = m_repositories.emplace(index, repository);
-        assert(inserted || it->second.get() == repository.get());
-        return { index, state.get_index() };
-    }
-
     void record(const tyr::planning::Node<Kind>& source, const tyr::planning::LabeledNode<Kind>& target)
     {
-        m_transitions.push_back(StateGraphTransition<Kind> { locate(source.get_state()),
-                                                             locate(target.node.get_state()),
+        m_transitions.push_back(StateGraphTransition<Kind> { source.get_state().pack(),
+                                                             target.node.get_state().pack(),
                                                              target.label,
                                                              target.node.get_metric() - source.get_metric() });
-    }
-
-    void append_repositories(RepositoryMap& repositories) const
-    {
-        for (const auto& [index, repository] : m_repositories)
-        {
-            [[maybe_unused]] const auto [it, inserted] = repositories.emplace(index, repository);
-            assert(inserted || it->second.get() == repository.get());
-        }
     }
 
     const auto& get_transitions() const noexcept { return m_transitions; }
 
 private:
-    RepositoryMap m_repositories;
     std::vector<StateGraphTransition<Kind>> m_transitions;
 };
 
@@ -116,12 +83,9 @@ template<tyr::TaskKind Kind>
 class StateGraphEventHandler final : public tyr::planning::astar_eager::EventHandler<Kind>
 {
 public:
-    explicit StateGraphEventHandler(const tyr::planning::StateView<Kind>& start) : m_workers(1), m_start(m_root.locate(start)) {}
+    explicit StateGraphEventHandler(const tyr::planning::StateView<Kind>& start) : m_workers(1), m_start(start.pack()) {}
 
-    void on_start_search([[maybe_unused]] const tyr::planning::Node<Kind>& node, ygg::float_t) override
-    {
-        assert(m_start == m_root.locate(node.get_state()));
-    }
+    void on_start_search([[maybe_unused]] const tyr::planning::Node<Kind>& node, ygg::float_t) override { assert(m_start == node.get_state().pack()); }
 
     void on_end_search(tyr::planning::SearchStatus, const tyr::planning::Statistics&) override {}
     void on_solved(const tyr::planning::Plan<Kind>&) override {}
@@ -134,42 +98,13 @@ public:
         return std::make_unique<StateGraphWorkerEventHandler<Kind>>(m_workers[value]);
     }
 
-    StateGraphFragment<Kind>& get_worker(ygg::Index<tyr::planning::Worker> index)
-    {
-        const auto value = static_cast<size_t>(ygg::uint_t(index));
-        assert(value < m_workers.size());
-        return m_workers[value];
-    }
-
     const auto& get_workers() const noexcept { return m_workers; }
     const auto& get_start() const noexcept { return m_start; }
 
-    auto collect_repositories() const -> typename StateGraphFragment<Kind>::RepositoryMap
-    {
-        auto repositories = typename StateGraphFragment<Kind>::RepositoryMap {};
-        m_root.append_repositories(repositories);
-        for (const auto& worker : m_workers)
-            worker.append_repositories(repositories);
-        return repositories;
-    }
-
 private:
-    StateGraphFragment<Kind> m_root;
     std::vector<StateGraphFragment<Kind>> m_workers;
-    std::optional<StateLocator<Kind>> m_start;
+    std::optional<tyr::planning::PackedStateView<Kind>> m_start;
 };
-
-template<tyr::TaskKind Kind>
-tyr::planning::StateView<Kind> materialize_state(const StateLocator<Kind>& locator,
-                                                 const typename StateGraphFragment<Kind>::RepositoryMap& repositories,
-                                                 tyr::planning::StateRepository<Kind>& target,
-                                                 tyr::planning::AxiomEvaluator<Kind>& axiom_evaluator)
-{
-    const auto it = repositories.find(locator.repository);
-    if (it == repositories.end())
-        throw std::logic_error("State graph fragment references an unknown state repository.");
-    return tyr::planning::materialize_state(it->second->get_registered_state(locator.state), target, axiom_evaluator);
-}
 
 template<tyr::TaskKind Kind>
 std::unique_ptr<StateGraph<Kind>> build_state_graph(const StateGraphEventHandler<Kind>& events,
@@ -179,17 +114,16 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(const StateGraphEventHandler
     if (!events.get_start())
         throw std::logic_error("State graph search did not report its initial state.");
 
-    const auto repositories = events.collect_repositories();
     auto builder = StateGraphBuilder<Kind> {};
-    auto locator_to_vertex = ygg::UnorderedMap<StateLocator<Kind>, graphs::VertexIndex> {};
+    auto packed_to_vertex = ygg::UnorderedMap<tyr::planning::PackedStateView<Kind>, graphs::VertexIndex> {};
     auto state_to_vertex = ygg::UnorderedMap<tyr::planning::PackedStateView<Kind>, graphs::VertexIndex> {};
     auto edges = ygg::UnorderedSet<StateGraphEdgeKey> {};
-    auto get_or_create_vertex = [&](StateLocator<Kind> locator)
+    auto get_or_create_vertex = [&](const tyr::planning::PackedStateView<Kind>& packed)
     {
-        if (const auto it = locator_to_vertex.find(locator); it != locator_to_vertex.end())
+        if (const auto it = packed_to_vertex.find(packed); it != packed_to_vertex.end())
             return it->second;
 
-        auto state = materialize_state(locator, repositories, target_repository, axiom_evaluator).pack();
+        auto state = tyr::planning::materialize_state(packed.unpack(), target_repository, axiom_evaluator).pack();
         auto vertex = graphs::VertexIndex {};
         if (const auto it = state_to_vertex.find(state); it != state_to_vertex.end())
             vertex = it->second;
@@ -200,7 +134,7 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(const StateGraphEventHandler
             [[maybe_unused]] const auto added = builder.add_vertex(StateGraphVertexLabel<Kind> { std::move(state) });
             assert(added == vertex);
         }
-        locator_to_vertex.emplace(locator, vertex);
+        packed_to_vertex.emplace(packed, vertex);
         return vertex;
     };
 

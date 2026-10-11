@@ -48,18 +48,18 @@ void append_effects(std::ostream& os, Effects effects)
     append_inline_section(os, "effects", effects, [](std::ostream& output, auto value) { effect(value, std::ostream_iterator<char>(output)); });
 }
 
+inline const char* operation_name(ConditionOperation operation) noexcept { return operation == ConditionOperation::BELONGS ? "belongs" : "not-belongs"; }
+
+inline const char* operation_name(EffectOperation operation) noexcept { return operation == EffectOperation::ENTER ? "enter" : "exit"; }
+
 template<typename Predicate, typename ArgumentNames>
 void append_indexical(std::ostream& os, Predicate predicate, const ArgumentNames& arguments)
 {
-    const auto operation = predicate.get_operation();
-    if constexpr (std::same_as<decltype(operation), const ConditionOperation>)
-        os << '(' << (operation == ConditionOperation::BELONGS ? "belongs" : "not-belongs");
-    else
-        os << '(' << (operation == EffectOperation::ENTER ? "enter" : "exit");
+    os << '(' << operation_name(predicate.get_operation());
     predicate.get_object_reference().apply(
-        [&](const auto& reference)
+        [&]<typename Reference>(const Reference& reference)
         {
-            if constexpr (std::same_as<std::remove_cvref_t<decltype(reference)>, ArgumentPosition>)
+            if constexpr (std::same_as<Reference, ArgumentPosition>)
             {
                 os << " (:argument ";
                 const auto position = ygg::uint_t(reference);

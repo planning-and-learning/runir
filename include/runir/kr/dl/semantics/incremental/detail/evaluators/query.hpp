@@ -7,8 +7,12 @@
 
 #include <concepts>
 #include <cstddef>
+#include <ranges>
 #include <span>
 #include <tuple>
+#include <utility>
+#include <vector>
+#include <yggdrasil/database/semantics/incremental/generic_join.hpp>
 #include <yggdrasil/database/semantics/incremental/query.hpp>
 
 namespace runir::kr::dl::semantics::incremental::detail
@@ -112,6 +116,29 @@ struct QueryJoinEvaluator : ygg::database::incremental::JoinEvaluator<QueryValue
     void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<QueryValues>& workspace)
     {
         ygg::database::incremental::JoinEvaluator<QueryValues>::update(graph.change(lhs).change(), graph.change(rhs).change(), workspace);
+    }
+};
+
+template<FamilyTag Family, tyr::TaskKind Kind>
+struct QueryGenericJoinEvaluator : ygg::database::incremental::GenericJoinEvaluator<QueryValues>
+{
+    std::vector<QueryEvaluationIndex> args;
+
+    QueryGenericJoinEvaluator(std::vector<QueryEvaluationIndex> args, const ygg::database::GenericJoinPlan<QueryValues>& plan) :
+        ygg::database::incremental::GenericJoinEvaluator<QueryValues>(plan),
+        args(std::move(args))
+    {
+    }
+    template<StateEvaluationContextConcept<Family, Kind> Context>
+    void initialize(EvaluationGraph<Family, Kind>& graph, Context&)
+    {
+        ygg::database::incremental::GenericJoinEvaluator<QueryValues>::initialize(
+            args | std::views::transform([&](QueryEvaluationIndex arg) -> const auto& { return graph.result(arg); }));
+    }
+    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<QueryValues>&)
+    {
+        ygg::database::incremental::GenericJoinEvaluator<QueryValues>::update(
+            args | std::views::transform([&](QueryEvaluationIndex arg) { return graph.change(arg).change(); }));
     }
 };
 

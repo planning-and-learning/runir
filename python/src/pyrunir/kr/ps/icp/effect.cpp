@@ -12,8 +12,6 @@
 namespace runir::kr::ps::icp
 {
 
-using namespace nanobind::literals;
-
 void bind_effect(nb::module_& m, RepositoryBinding& repository)
 {
     using T = runir::kr::ps::EffectVariant<runir::kr::IcpFamilyTag>;

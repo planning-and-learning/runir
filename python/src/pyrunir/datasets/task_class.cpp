@@ -14,14 +14,13 @@
 namespace runir::datasets
 {
 
-using namespace nanobind::literals;
-
 namespace
 {
 
 template<tyr::TaskKind Kind>
 void bind_task_class_for_kind(nb::module_& m, const char* prefix)
 {
+    using namespace nb::literals;
     using TaskClassT = TaskClass<Kind>;
     using TaskSearchContextT = TaskSearchContext<Kind>;
     using TaskClassSearchContextsT = TaskClassSearchContexts<Kind>;

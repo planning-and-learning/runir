@@ -52,8 +52,6 @@ TEST(RunirTests, ProgramStatusesToString)
 
 TEST(RunirTests, ExtFindSolutionTreatsClassifierMatchesAsTerminalFailures)
 {
-    namespace p = tyr::planning;
-
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
     auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
@@ -94,8 +92,6 @@ TEST(RunirTests, ExtFindSolutionTreatsClassifierMatchesAsTerminalFailures)
 
 TEST(RunirTests, ExtFindSolutionRejectsNonterminatingPaperModules)
 {
-    namespace p = tyr::planning;
-
     const auto domain = benchmark_path("classical/profiling/blocksworld-large-simple/domain.pddl");
     const auto task_file = benchmark_path("classical/profiling/blocksworld-large-simple/p-100-2.pddl");
     auto search_context = make_ground_context(domain, task_file);
@@ -119,8 +115,6 @@ TEST(RunirTests, ExtFindSolutionRejectsNonterminatingPaperModules)
 
 TEST(RunirTests, ExtSketchUsesOnlyImmediateOutcomesAndUniversalPreservesParallelEdges)
 {
-    namespace p = tyr::planning;
-
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
     auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
@@ -179,8 +173,6 @@ TEST(RunirTests, ExtSketchUsesOnlyImmediateOutcomesAndUniversalPreservesParallel
 
 TEST(RunirTests, ExtFindSolutionRejectsCyclesBeforeInterningStates)
 {
-    namespace p = tyr::planning;
-
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
     auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
@@ -213,8 +205,6 @@ TEST(RunirTests, ExtFindSolutionRejectsCyclesBeforeInterningStates)
 
 TEST(RunirTests, ExtExecutorFixtureOutcomesMatch)
 {
-    namespace p = tyr::planning;
-
     const auto domain = benchmark_path("classical/profiling/blocksworld-large-simple/domain.pddl");
     const auto task_file = benchmark_path("classical/profiling/blocksworld-large-simple/p-100-2.pddl");
     auto search_context = make_ground_context(domain, task_file);
@@ -290,10 +280,9 @@ std::string backtrack_rule(const std::string& name, const std::string& source, c
 template<tyr::TaskKind Kind>
 void check_backtrack_execution()
 {
-    namespace ext = kr::ps::ext;
-    using Status = ext::ProgramProofStatus;
-    using Mode = ext::StateMemorization;
-    using Outcome = ext::detail::ProgramOutcome;
+    using Status = kr::ps::ext::ProgramProofStatus;
+    using Mode = kr::ps::ext::StateMemorization;
+    using Outcome = kr::ps::ext::detail::ProgramOutcome;
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
     const auto search = [&]
     {
@@ -304,16 +293,16 @@ void check_backtrack_execution()
     }();
     auto context = kr::TaskContext<Kind>::create(kr::DomainContext::create(search->task->get_domain()), search);
     auto& repository = *context->domain_context->ext_repository;
-    const auto parse = [&](const std::string& text) { return ext::dl::parse_module(text, search->task->get_domain().get_domain(), repository); };
-    const auto wrap = [&](ext::ModuleView module_) { return create_program(repository, module_, { module_ }); };
+    const auto parse = [&](const std::string& text) { return kr::ps::ext::dl::parse_module(text, search->task->get_domain().get_domain(), repository); };
+    const auto wrap = [&](kr::ps::ext::ModuleView module_) { return create_program(repository, module_, { module_ }); };
     const auto ordinary = choice_rule("advance", "m0", "m1", "(:sketch (:conditions) (:effects))");
     const auto priority_module = parse(choice_module("priority", ordinary + backtrack_rule("reject", "m0")));
     const auto priority = wrap(priority_module);
-    auto expander = ext::SuccessorExpander<Kind>(context, priority);
+    auto expander = kr::ps::ext::SuccessorExpander<Kind>(context, priority);
     const auto planning_node = initial_planning_node(expander);
     const auto initial = expander.initial_state(planning_node.get_state());
     const auto guard = priority_module.get_memory_transitions().back().front();
-    const auto retained = context->execution_repository->template size<ext::ProgramState<Kind>>();
+    const auto retained = context->execution_repository->template size<kr::ps::ext::ProgramState<Kind>>();
     const auto step = expander.apply(initial, guard);
     ASSERT_TRUE(step);
     EXPECT_EQ(step->status, Outcome::FAILURE);
@@ -322,7 +311,7 @@ void check_backtrack_execution()
     EXPECT_EQ(*step->rule, guard);
     EXPECT_FALSE(step->state_transition);
     EXPECT_FALSE(step->planning_successor);
-    EXPECT_EQ(context->execution_repository->template size<ext::ProgramState<Kind>>(), retained);
+    EXPECT_EQ(context->execution_repository->template size<kr::ps::ext::ProgramState<Kind>>(), retained);
     const auto candidates = search->successor_generator->get_labeled_successor_nodes(planning_node, *search->state_repository, *search->axiom_evaluator);
     ASSERT_FALSE(candidates.empty());
     const auto planning_rule = choice_rule("move", "m0", "m1", "(:sketch (:conditions) (:effects (unchanged Bad)))");
@@ -330,14 +319,14 @@ void check_backtrack_execution()
     {
         SCOPED_TRACE(guarded);
         const auto module_ = parse(choice_module(guarded ? "matching-guarded" : "matching", planning_rule + (guarded ? backtrack_rule("reject", "m0") : "")));
-        auto matching = ext::SuccessorExpander<Kind>(context, wrap(module_));
+        auto matching = kr::ps::ext::SuccessorExpander<Kind>(context, wrap(module_));
         const auto source = matching.initial_state(planning_node.get_state());
         EXPECT_EQ(bool(matching.matching_rule(source, candidates.front())), !guarded);
     }
 
     const auto unmatched_module =
         parse(choice_module("unmatched", ordinary + backtrack_rule("wrong-mode", "m7") + backtrack_rule("false-condition", "m0", "(positive Bad)")));
-    auto unmatched = ext::SuccessorExpander<Kind>(context, wrap(unmatched_module));
+    auto unmatched = kr::ps::ext::SuccessorExpander<Kind>(context, wrap(unmatched_module));
     const auto unmatched_source = unmatched.initial_state(planning_node.get_state());
     const auto unmatched_steps = collect_steps(unmatched, unmatched_source);
     ASSERT_EQ(unmatched_steps.size(), 1);
@@ -365,10 +354,10 @@ void check_backtrack_execution()
         {
             SCOPED_TRACE(static_cast<int>(mode));
             SCOPED_TRACE(universal);
-            auto options = ext::ProgramSearchOptions<Kind> {};
+            auto options = kr::ps::ext::ProgramSearchOptions<Kind> {};
             options.state_memorization = mode;
             options.universal = universal;
-            const auto rejected = ext::find_solution(context, priority, options);
+            const auto rejected = kr::ps::ext::find_solution(context, priority, options);
             EXPECT_EQ(rejected.status, Status::FAILURE);
             EXPECT_EQ(rejected.statistics.num_generated, 0);
             EXPECT_EQ(rejected.statistics.num_expanded, 1);
@@ -379,7 +368,7 @@ void check_backtrack_execution()
             EXPECT_TRUE(rejected.open_states.empty());
             EXPECT_FALSE(rejected.graph->get_vertex(rejected.deadend_states.front()).get_property().is_unsolvable);
 
-            const auto selected = ext::find_solution(context, choices, options);
+            const auto selected = kr::ps::ext::find_solution(context, choices, options);
             ASSERT_EQ(selected.status, Status::SUCCESS);
             EXPECT_EQ(selected.statistics.num_generated, 5);
             EXPECT_EQ(selected.statistics.num_expanded, 5);
@@ -397,7 +386,7 @@ void check_backtrack_execution()
                 EXPECT_EQ(selected.plan->get_labeled_succ_nodes().front().label.get_objects()[1].get_name(), "good");
             }
 
-            const auto blocked = ext::find_solution(context, called, options);
+            const auto blocked = kr::ps::ext::find_solution(context, called, options);
             EXPECT_EQ(blocked.status, Status::FAILURE);
             EXPECT_EQ(blocked.statistics.num_generated, 3);  // Call, load, move; never return to the caller.
             ASSERT_TRUE(blocked.graph);
@@ -414,9 +403,8 @@ void check_backtrack_execution()
 template<tyr::TaskKind Kind>
 void check_and_backtracking()
 {
-    namespace ext = kr::ps::ext;
-    using Status = ext::ProgramProofStatus;
-    using Mode = ext::StateMemorization;
+    using Status = kr::ps::ext::ProgramProofStatus;
+    using Mode = kr::ps::ext::StateMemorization;
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
     const auto search = [&]
     {
@@ -427,10 +415,10 @@ void check_and_backtracking()
     }();
     auto context = kr::TaskContext<Kind>::create(kr::DomainContext::create(search->task->get_domain()), search);
     auto& repository = *context->domain_context->ext_repository;
-    const auto run = [&](const std::string& name, const std::string& rules, const ext::ProgramSearchOptions<Kind>& options)
+    const auto run = [&](const std::string& name, const std::string& rules, const kr::ps::ext::ProgramSearchOptions<Kind>& options)
     {
-        const auto module_ = ext::dl::parse_module(choice_module(name, rules), search->task->get_domain().get_domain(), repository);
-        return ext::find_solution(context, create_program(repository, module_, { module_ }), options);
+        const auto module_ = kr::ps::ext::dl::parse_module(choice_module(name, rules), search->task->get_domain().get_domain(), repository);
+        return kr::ps::ext::find_solution(context, create_program(repository, module_, { module_ }), options);
     };
     const auto skip = std::string("(:sketch (:conditions) (:effects))");
     const auto load_good = std::string("(:load (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (negative Bad)))");
@@ -446,7 +434,7 @@ void check_and_backtracking()
     for (const auto mode : { Mode::NONE, Mode::CHOICE, Mode::ALL })
     {
         SCOPED_TRACE(static_cast<int>(mode));
-        auto options = ext::ProgramSearchOptions<Kind> {};
+        auto options = kr::ps::ext::ProgramSearchOptions<Kind> {};
         EXPECT_FALSE(options.and_backtracking);
         options.state_memorization = mode;
         EXPECT_EQ(run("greedy-ordinary", branches, options).status, Status::FAILURE);
@@ -511,16 +499,15 @@ void check_backtrack_evaluation_policy(const kr::TaskContextPtr<tyr::GroundTag>&
                                        kr::ps::ext::ProgramStateView<tyr::GroundTag> bad,
                                        kr::ps::ext::ProgramStateView<tyr::GroundTag> good)
 {
-    namespace ext = kr::ps::ext;
     using Kind = tyr::GroundTag;
-    using Step = ext::detail::ProgramStep<Kind>;
-    using Outcome = ext::detail::ProgramOutcome;
-    auto expander = ext::SuccessorExpander<Kind, ext::InternedExecutionStorage<Kind>, Policy>(context, program);
+    using Step = kr::ps::ext::detail::ProgramStep<Kind>;
+    using Outcome = kr::ps::ext::detail::ProgramOutcome;
+    auto expander = kr::ps::ext::SuccessorExpander<Kind, kr::ps::ext::InternedExecutionStorage<Kind>, Policy>(context, program);
     // Revisit an earlier binding after a different register value, as DFS backtracking does.
     for (const auto source : { bad, good, bad })
     {
         const bool reject = source == bad;
-        auto statistics = ext::ProgramSearchStatistics {};
+        auto statistics = kr::ps::ext::ProgramSearchStatistics {};
         auto steps = std::vector<Step> {};
         EXPECT_TRUE(expander.for_each_successor(
             source,
@@ -548,8 +535,7 @@ void check_backtrack_evaluation_policy(const kr::TaskContextPtr<tyr::GroundTag>&
 template<tyr::TaskKind Kind>
 void check_choice_execution()
 {
-    namespace ext = kr::ps::ext;
-    using Status = ext::ProgramProofStatus;
+    using Status = kr::ps::ext::ProgramProofStatus;
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
     auto search_context = [&]()
     {
@@ -561,13 +547,13 @@ void check_choice_execution()
     const auto task = search_context->task;
     auto context = kr::TaskContext<Kind>::create(kr::DomainContext::create(task->get_domain()), search_context);
     auto& repository = *context->domain_context->ext_repository;
-    const auto parse = [&](const std::string& text) { return ext::dl::parse_module(text, task->get_domain().get_domain(), repository); };
+    const auto parse = [&](const std::string& text) { return kr::ps::ext::dl::parse_module(text, task->get_domain().get_domain(), repository); };
     const auto make_program = [&](const std::string& text)
     {
         const auto module_ = parse(text);
         return create_program(repository, module_, { module_ });
     };
-    const auto expect_single_expansion = [](const ext::ProgramProofResults<Kind>& result)
+    const auto expect_single_expansion = [](const kr::ps::ext::ProgramProofResults<Kind>& result)
     {
         ASSERT_TRUE(result.graph);
         auto expandable = std::size_t(0);
@@ -579,7 +565,7 @@ void check_choice_execution()
         EXPECT_EQ(result.statistics.num_expanded, expandable);
     };
     const auto program = make_program(choice_module("choose", choice_rule("select", "m0", "m1", choose_candidates) + move_rules));
-    auto expander = ext::SuccessorExpander<Kind>(context, program);
+    auto expander = kr::ps::ext::SuccessorExpander<Kind>(context, program);
     const auto planning_node = initial_planning_node(expander);
     const auto bindings = collect_steps(expander, expander.initial_state(planning_node.get_state()));
     ASSERT_EQ(bindings.size(), 2);
@@ -594,7 +580,7 @@ void check_choice_execution()
                           + choice_rule("choose", "m3", "m4", choose_candidates)
                           + choice_rule("fail", "m4", "m6", "(:load (:conditions (positive Bad)) (:concept Goal) (:register (:concept r0)))")
                           + choice_rule("finish", "m4", "m5", R"((:do (:conditions (negative Bad)) (:action "move") (:arguments Here Goal) (:effects)))")));
-    const auto plan_result = ext::find_solution(context, plan_program, ext::ProgramSearchOptions<Kind> {});
+    const auto plan_result = kr::ps::ext::find_solution(context, plan_program, kr::ps::ext::ProgramSearchOptions<Kind> {});
     ASSERT_EQ(plan_result.status, Status::SUCCESS);
     EXPECT_TRUE(plan_result.cycle.empty());
     EXPECT_FALSE(plan_result.open_states.empty());
@@ -623,9 +609,9 @@ void check_choice_execution()
     for (const auto universal : { false, true })
     {
         SCOPED_TRACE(universal);
-        auto options = ext::ProgramSearchOptions<Kind> {};
+        auto options = kr::ps::ext::ProgramSearchOptions<Kind> {};
         options.universal = universal;
-        const auto result = ext::find_solution(context, program, options);
+        const auto result = kr::ps::ext::find_solution(context, program, options);
         ASSERT_EQ(result.status, Status::SUCCESS);
         EXPECT_EQ(result.statistics.choice_depth, 1);
         EXPECT_EQ(result.statistics.num_expanded, 5);
@@ -645,13 +631,13 @@ void check_choice_execution()
             choice_rule("select", "m0", "m1", choose_candidates) + choice_rule("loop", "m1", "m1", "(:sketch (:conditions (positive Bad)) (:effects))")
                 + choice_rule("move-selected", "m1", "m2", R"((:do (:conditions (negative Bad)) (:action "move") (:arguments Here R) (:effects)))")
                 + choice_rule("finish", "m2", "m3", move_to_goal)));
-        EXPECT_THROW((void) ext::find_solution(context, cyclic, options), std::invalid_argument);
+        EXPECT_THROW((void) kr::ps::ext::find_solution(context, cyclic, options), std::invalid_argument);
 
         for (const auto& body :
              { choose_empty, std::string("(:choose (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (positive Same)))") })
         {
             const auto empty = make_program(choice_module("empty", choice_rule("select", "m0", "m1", body)));
-            const auto empty_result = ext::find_solution(context, empty, options);
+            const auto empty_result = kr::ps::ext::find_solution(context, empty, options);
             EXPECT_EQ(empty_result.status, Status::FAILURE);
             EXPECT_EQ(empty_result.statistics.choice_depth, 0);
             EXPECT_EQ(empty_result.statistics.choice_width, 0);
@@ -671,7 +657,7 @@ void check_choice_execution()
                                                        std::string("(:choose (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (")
                                                            + (good ? "negative" : "positive") + " Bad)))")
                                                + move_rules));
-            const auto filtered_result = ext::find_solution(context, filtered, options);
+            const auto filtered_result = kr::ps::ext::find_solution(context, filtered, options);
             EXPECT_EQ(filtered_result.status, good ? Status::SUCCESS : Status::FAILURE);
             EXPECT_EQ(filtered_result.statistics.choice_depth, 0);
             EXPECT_EQ(filtered_result.statistics.choice_width, good ? 1 : 0);
@@ -685,7 +671,7 @@ void check_choice_execution()
             choice_rule("select-good", "m0", "m1", "(:load (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (negative Bad)))")
                 + choice_rule("move-good", "m1", "m2", move_to_register) + choice_rule("outer", "m2", "m3", choose_goal)
                 + choice_rule("inner", "m3", "m4", choose_goal) + choice_rule("finish", "m4", "m5", move_to_goal)));
-        const auto singleton_chain_result = ext::find_solution(context, singleton_chain, options);
+        const auto singleton_chain_result = kr::ps::ext::find_solution(context, singleton_chain, options);
         EXPECT_EQ(singleton_chain_result.status, Status::SUCCESS);
         EXPECT_EQ(singleton_chain_result.statistics.choice_depth, 0);
         EXPECT_EQ(singleton_chain_result.statistics.choice_width, 1);
@@ -698,7 +684,7 @@ void check_choice_execution()
         const auto ordinary = make_program(choice_module(
             "ordinary-success",
             choice_rule("select", "m0", "m1", "(:load (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (negative Bad)))") + move_rules));
-        const auto ordinary_result = ext::find_solution(context, ordinary, options);
+        const auto ordinary_result = kr::ps::ext::find_solution(context, ordinary, options);
         EXPECT_EQ(ordinary_result.status, Status::SUCCESS);
         EXPECT_EQ(ordinary_result.statistics.choice_depth, 0);
         EXPECT_EQ(ordinary_result.statistics.choice_width, 0);
@@ -706,7 +692,7 @@ void check_choice_execution()
         EXPECT_EQ(ordinary_result.statistics.num_generated, 3);
 
         const auto exhausted = make_program(choice_module("exhausted", choice_rule("select", "m0", "m1", choose_candidates)));
-        const auto exhausted_result = ext::find_solution(context, exhausted, options);
+        const auto exhausted_result = kr::ps::ext::find_solution(context, exhausted, options);
         EXPECT_EQ(exhausted_result.status, Status::FAILURE);
         EXPECT_EQ(exhausted_result.statistics.choice_depth, 0);
         EXPECT_EQ(exhausted_result.statistics.num_expanded, 3);
@@ -718,7 +704,7 @@ void check_choice_execution()
                 + choice_rule("inner", "m1", "m4", "(:choose (:conditions) (:concept Candidates) (:register (:concept r1)))")
                 + choice_rule("move-selected", "m4", "m2", R"((:do (:conditions (positive Same)) (:action "move") (:arguments Here R) (:effects)))")
                 + choice_rule("finish", "m2", "m3", move_to_goal)));
-        const auto nested_result = ext::find_solution(context, nested, options);
+        const auto nested_result = kr::ps::ext::find_solution(context, nested, options);
         EXPECT_EQ(nested_result.status, Status::SUCCESS);
         EXPECT_EQ(nested_result.statistics.choice_depth, 2);
         if (!universal)
@@ -735,7 +721,7 @@ void check_choice_execution()
                               + choice_rule("bad-deepest", "m4", "m5", "(:choose (:conditions) (:concept Candidates) (:register (:concept r1)))")
                               + choice_rule("move-good", "m1", "m2", R"((:do (:conditions (negative Bad)) (:action "move") (:arguments Here R) (:effects)))")
                               + choice_rule("finish", "m2", "m3", move_to_goal)));
-        const auto deeper_failure_result = ext::find_solution(context, deeper_failure, options);
+        const auto deeper_failure_result = kr::ps::ext::find_solution(context, deeper_failure, options);
         EXPECT_EQ(deeper_failure_result.status, Status::SUCCESS);
         EXPECT_EQ(deeper_failure_result.statistics.choice_depth, 1);
         // Both inner bindings share the deepest failed states, which are expanded only once.
@@ -750,7 +736,7 @@ void check_choice_execution()
                                                     + choice_rule("call", "m1", "m2", "(:call (:conditions) (:callee callee) (:arguments))")
                                                     + choice_rule("finish", "m2", "m3", move_to_register)));
         const auto call_program = create_program(repository, caller, { caller, callee });
-        const auto call_result = ext::find_solution(context, call_program, options);
+        const auto call_result = kr::ps::ext::find_solution(context, call_program, options);
         EXPECT_EQ(call_result.status, Status::SUCCESS);
         EXPECT_EQ(call_result.statistics.choice_depth, 1);
         EXPECT_EQ(call_result.statistics.num_expanded, 9);
@@ -769,11 +755,11 @@ void check_choice_execution()
             choice_rule("load-good", "m0", "m1", "(:load (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (negative Bad)))")
                 + choice_rule("move-good", "m1", "m2", move_to_register) + choice_rule("empty", "m2", "m3", choose_empty)));
         const auto blocked_call = create_program(repository, caller, { caller, empty_callee });
-        EXPECT_EQ(ext::find_solution(context, blocked_call, options).status, Status::FAILURE);
+        EXPECT_EQ(kr::ps::ext::find_solution(context, blocked_call, options).status, Status::FAILURE);
 
         auto limited = options;
         limited.max_num_states = 1;
-        const auto state_limited = ext::find_solution(context, program, limited);
+        const auto state_limited = kr::ps::ext::find_solution(context, program, limited);
         EXPECT_EQ(state_limited.status, Status::OUT_OF_STATES);
         EXPECT_EQ(state_limited.statistics.choice_depth, 0);
         EXPECT_EQ(state_limited.statistics.num_expanded, 1);
@@ -782,7 +768,7 @@ void check_choice_execution()
         EXPECT_EQ(state_limited.graph->get_num_vertices(), 1);
         EXPECT_EQ(state_limited.graph->get_num_edges(), 0);
         limited.max_num_states = 0;
-        const auto no_states = ext::find_solution(context, program, limited);
+        const auto no_states = kr::ps::ext::find_solution(context, program, limited);
         EXPECT_EQ(no_states.status, Status::OUT_OF_STATES);
         EXPECT_EQ(no_states.statistics.num_expanded, 0);
         EXPECT_EQ(no_states.statistics.num_generated, 0);
@@ -790,17 +776,17 @@ void check_choice_execution()
         EXPECT_EQ(no_states.graph->get_num_vertices(), 0);
         EXPECT_EQ(no_states.graph->get_num_edges(), 0);
         limited.max_num_states = result.graph->get_num_vertices() - 1;
-        EXPECT_EQ(ext::find_solution(context, program, limited).status, Status::OUT_OF_STATES);
+        EXPECT_EQ(kr::ps::ext::find_solution(context, program, limited).status, Status::OUT_OF_STATES);
         limited = options;
         limited.max_time = std::chrono::steady_clock::duration::zero();
-        const auto time_limited = ext::find_solution(context, program, limited);
+        const auto time_limited = kr::ps::ext::find_solution(context, program, limited);
         EXPECT_EQ(time_limited.status, Status::OUT_OF_TIME);
         EXPECT_EQ(time_limited.statistics.choice_depth, 0);
         EXPECT_EQ(time_limited.statistics.num_expanded, 0);
         EXPECT_EQ(time_limited.statistics.num_generated, 0);
 
         const auto& first = result;
-        const auto second = ext::find_solution(context, program, options);
+        const auto second = kr::ps::ext::find_solution(context, program, options);
         EXPECT_EQ(first.status, Status::SUCCESS);
         EXPECT_EQ(first.statistics.num_expanded, second.statistics.num_expanded);
         EXPECT_EQ(first.statistics.num_generated, second.statistics.num_generated);
@@ -815,12 +801,12 @@ void check_choice_execution()
                                            + choice_rule("inner", "m1", "m4", "(:choose (:conditions) (:concept Candidates) (:register (:concept r1)))")
                                            + choice_rule("deepest", "m4", "m5", "(:choose (:conditions) (:concept Candidates) (:register (:concept r1)))")
                                            + choice_rule("shared-suffix", "m5", "m6", "(:load (:conditions) (:concept Goal) (:register (:concept r1)))")));
-        const auto replay_first = ext::find_solution(context, replayed, options);
-        const auto interned_states = context->execution_repository->template size<ext::ProgramState<Kind>>();
-        const auto replay_second = ext::find_solution(context, replayed, options);
+        const auto replay_first = kr::ps::ext::find_solution(context, replayed, options);
+        const auto interned_states = context->execution_repository->template size<kr::ps::ext::ProgramState<Kind>>();
+        const auto replay_second = kr::ps::ext::find_solution(context, replayed, options);
         EXPECT_EQ(replay_first.status, Status::FAILURE);
         EXPECT_EQ(replay_second.status, replay_first.status);
-        EXPECT_EQ(context->execution_repository->template size<ext::ProgramState<Kind>>(), interned_states);
+        EXPECT_EQ(context->execution_repository->template size<kr::ps::ext::ProgramState<Kind>>(), interned_states);
         EXPECT_EQ(replay_first.statistics.num_expanded, 13);
         EXPECT_EQ(replay_second.statistics.num_expanded, replay_first.statistics.num_expanded);
         EXPECT_EQ(replay_first.statistics.num_generated, 18);
@@ -846,7 +832,7 @@ void check_choice_execution()
         }
     }
 
-    auto universal = ext::ProgramSearchOptions<Kind> {};
+    auto universal = kr::ps::ext::ProgramSearchOptions<Kind> {};
     universal.universal = true;
     const auto load_goal = std::string("(:load (:conditions) (:concept Goal) (:register (:concept r0)))");
     const auto load_good = std::string("(:load (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (negative Bad)))");
@@ -855,15 +841,15 @@ void check_choice_execution()
                                    choice_rule("left", "m0", "m1", choose_candidates) + choice_rule("right", "m0", "m2", choose_candidates)
                                        + choice_rule("join-left", "m1", "m3", load_good) + choice_rule("join-right", "m2", "m3", load_good)
                                        + choice_rule("move", "m3", "m4", move_to_register) + choice_rule("finish", "m4", "m5", move_to_goal)));
-    const auto states_before_parallel = context->execution_repository->template size<ext::ProgramState<Kind>>();
-    const auto parallel_result = ext::find_solution(context, parallel, universal);
+    const auto states_before_parallel = context->execution_repository->template size<kr::ps::ext::ProgramState<Kind>>();
+    const auto parallel_result = kr::ps::ext::find_solution(context, parallel, universal);
     EXPECT_EQ(parallel_result.status, Status::SUCCESS);
     EXPECT_EQ(parallel_result.statistics.choice_depth, 1);  // The selected solution path crosses one choice.
     EXPECT_EQ(parallel_result.statistics.num_expanded, 5);
     EXPECT_EQ(parallel_result.statistics.num_generated, 6);  // Two attempted bindings, two normalization loads, and two moves.
     expect_single_expansion(parallel_result);
     ASSERT_TRUE(parallel_result.graph);
-    EXPECT_EQ(context->execution_repository->template size<ext::ProgramState<Kind>>() - states_before_parallel,
+    EXPECT_EQ(context->execution_repository->template size<kr::ps::ext::ProgramState<Kind>>() - states_before_parallel,
               parallel_result.graph->get_num_vertices());  // Untried bindings do not intern program states.
 
     // A second Choose must satisfy its own obligation when its first binding reaches an already proved child.
@@ -872,8 +858,8 @@ void check_choice_execution()
                                    choice_rule("left", "m0", "m1", choose_candidates) + choice_rule("right", "m0", "m1", choose_candidates)
                                        + choice_rule("normalize", "m1", "m2", load_good) + choice_rule("move", "m2", "m3", move_to_register)
                                        + choice_rule("finish", "m3", "m4", move_to_goal)));
-    const auto states_before_shared_choice = context->execution_repository->template size<ext::ProgramState<Kind>>();
-    const auto shared_choice_result = ext::find_solution(context, shared_choice, universal);
+    const auto states_before_shared_choice = context->execution_repository->template size<kr::ps::ext::ProgramState<Kind>>();
+    const auto shared_choice_result = kr::ps::ext::find_solution(context, shared_choice, universal);
     EXPECT_EQ(shared_choice_result.status, Status::SUCCESS);
     EXPECT_EQ(shared_choice_result.statistics.num_expanded, 4);
     EXPECT_EQ(shared_choice_result.statistics.num_generated, 5);
@@ -892,7 +878,7 @@ void check_choice_execution()
     }
     EXPECT_EQ(shared_targets.size(), 1);
     EXPECT_EQ(shared_rules, (std::set<std::string> { "left", "right" }));
-    EXPECT_EQ(context->execution_repository->template size<ext::ProgramState<Kind>>() - states_before_shared_choice, 5);
+    EXPECT_EQ(context->execution_repository->template size<kr::ps::ext::ProgramState<Kind>>() - states_before_shared_choice, 5);
 
     // Both choices retain their own cursor; retrying one does not repeat the other sibling's attempts.
     const auto replayed_sibling =
@@ -900,7 +886,7 @@ void check_choice_execution()
                                    choice_rule("left", "m0", "m1", choose_candidates) + choice_rule("right", "m0", "m2", choose_candidates)
                                        + choice_rule("move-left", "m1", "m3", move_to_register) + choice_rule("move-right", "m2", "m4", move_to_register)
                                        + choice_rule("finish-left", "m3", "m5", move_to_goal) + choice_rule("finish-right", "m4", "m6", move_to_goal)));
-    const auto replayed_sibling_result = ext::find_solution(context, replayed_sibling, universal);
+    const auto replayed_sibling_result = kr::ps::ext::find_solution(context, replayed_sibling, universal);
     EXPECT_EQ(replayed_sibling_result.status, Status::SUCCESS);
     EXPECT_EQ(replayed_sibling_result.statistics.choice_depth, 1);
     expect_single_expansion(replayed_sibling_result);
@@ -912,7 +898,7 @@ void check_choice_execution()
         + choice_rule("shared-choice", "m3", "m4", choose_candidates) + choice_rule("normalize-suffix", "m4", "m5", load_good)
         + choice_rule("move", "m5", "m6", move_to_register) + choice_rule("finish", "m6", "m7", move_to_goal);
     const auto reconverged = make_program(choice_module("unequal-depths", reconverged_rules));
-    const auto reconverged_result = ext::find_solution(context, reconverged, universal);
+    const auto reconverged_result = kr::ps::ext::find_solution(context, reconverged, universal);
     EXPECT_EQ(reconverged_result.status, Status::SUCCESS);
     EXPECT_EQ(reconverged_result.statistics.choice_depth, 1);  // The first goal's parent chain takes the short route.
     expect_single_expansion(reconverged_result);
@@ -921,7 +907,7 @@ void check_choice_execution()
     const auto partial = make_program(choice_module("partial-unequal-depths", reconverged_rules + choice_rule("exceed-limit", "m2", "m6", load_goal)));
     auto limited = universal;
     limited.max_num_states = reconverged_result.graph->get_num_vertices();
-    const auto partial_result = ext::find_solution(context, partial, limited);
+    const auto partial_result = kr::ps::ext::find_solution(context, partial, limited);
     EXPECT_EQ(partial_result.status, Status::OUT_OF_STATES);
     EXPECT_EQ(partial_result.statistics.choice_depth, 0);
     EXPECT_EQ(partial_result.statistics.choice_width, 0);
@@ -930,7 +916,7 @@ void check_choice_execution()
     const auto required_choice =
         make_program(choice_module("ordinary-success-failing-choice",
                                    choice_rule("ordinary", "m0", "m1", load_good) + choice_rule("choose", "m0", "m6", choose_candidates) + move_rules));
-    const auto required_choice_result = ext::find_solution(context, required_choice, universal);
+    const auto required_choice_result = kr::ps::ext::find_solution(context, required_choice, universal);
     EXPECT_EQ(required_choice_result.status, Status::FAILURE);
     EXPECT_EQ(required_choice_result.statistics.choice_width, 0);
     ASSERT_TRUE(required_choice_result.graph);
@@ -951,7 +937,7 @@ void check_choice_execution()
     {
         const auto mixed =
             make_program(choice_module("mixed", choice_rule("select", "m0", "m1", choose_candidates) + choice_rule("other", "m0", "m1", other) + move_rules));
-        EXPECT_EQ(ext::find_solution(context, mixed, universal).status, Status::FAILURE);
+        EXPECT_EQ(kr::ps::ext::find_solution(context, mixed, universal).status, Status::FAILURE);
     }
 }
 
@@ -964,24 +950,28 @@ TEST(RunirTests, ExtAndBacktrackingInLiftedExecution) { check_and_backtracking<t
 
 TEST(RunirTests, ExtBacktrackRulesUseFullAndDeltaEvaluation)
 {
-    namespace ext = kr::ps::ext;
-    namespace sem = kr::dl::semantics;
     using Kind = tyr::GroundTag;
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     auto context = kr::TaskContext<Kind>::create(kr::DomainContext::create(search->task->get_domain()), search);
     auto& repository = *context->domain_context->ext_repository;
-    const auto module_ = ext::dl::parse_module(
+    const auto module_ = kr::ps::ext::dl::parse_module(
         choice_module("incremental", choice_rule("select", "m0", "m1", choose_candidates) + move_rules + backtrack_rule("bad-binding", "m1", "(positive Bad)")),
         search->task->get_domain().get_domain(),
         repository);
     const auto program = create_program(repository, module_, { module_ });
-    auto expander = ext::SuccessorExpander<Kind>(context, program);
+    auto expander = kr::ps::ext::SuccessorExpander<Kind>(context, program);
     const auto bindings = collect_steps(expander, expander.initial_state(initial_planning_node(expander).get_state()));
     ASSERT_EQ(bindings.size(), 2);
     ASSERT_EQ(bindings.front().target.get_module_state().get_registers().template get<kr::dl::ConceptTag>()[0].value().get_name(), "bad");
-    check_backtrack_evaluation_policy<sem::FullEvaluationPolicy<kr::ExtFamilyTag, Kind>>(context, program, bindings[0].target, bindings[1].target);
-    check_backtrack_evaluation_policy<sem::DeltaEvaluationPolicy<kr::ExtFamilyTag, Kind>>(context, program, bindings[0].target, bindings[1].target);
+    check_backtrack_evaluation_policy<kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, Kind>>(context,
+                                                                                                       program,
+                                                                                                       bindings[0].target,
+                                                                                                       bindings[1].target);
+    check_backtrack_evaluation_policy<kr::dl::semantics::DeltaEvaluationPolicy<kr::ExtFamilyTag, Kind>>(context,
+                                                                                                        program,
+                                                                                                        bindings[0].target,
+                                                                                                        bindings[1].target);
 }
 
 TEST(RunirTests, ExtChooseBacktracksInGroundExecution) { check_choice_execution<tyr::GroundTag>(); }
@@ -993,7 +983,6 @@ namespace
 template<tyr::TaskKind Kind>
 void check_ordinary_execution_keeps_complete_graph()
 {
-    namespace ext = kr::ps::ext;
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
     auto search_context = [&]()
     {
@@ -1022,12 +1011,12 @@ void check_ordinary_execution_keeps_complete_graph()
                                          + choice_rule("move", "m4", "m5", move_to_register) + choice_rule("finish", "m5", "m6", move_to_goal) :
                                      choice_rule("first", "m0", "m1", skip) + choice_rule("parallel", "m0", "m1", skip) + choice_rule("load", "m1", "m2", load)
                                          + choice_rule("move", "m2", "m3", move_to_register) + choice_rule("finish", "m3", "m4", move_to_goal);
-        const auto module_ = ext::dl::parse_module(choice_module("ordinary", rules), task->get_domain().get_domain(), repository);
+        const auto module_ = kr::ps::ext::dl::parse_module(choice_module("ordinary", rules), task->get_domain().get_domain(), repository);
         const auto program = create_program(repository, module_, { module_ });
 
-        auto options = ext::ProgramSearchOptions<Kind> {};
-        const auto greedy = ext::find_solution(context, program, options);
-        EXPECT_EQ(greedy.status, ext::ProgramProofStatus::FAILURE);
+        auto options = kr::ps::ext::ProgramSearchOptions<Kind> {};
+        const auto greedy = kr::ps::ext::find_solution(context, program, options);
+        EXPECT_EQ(greedy.status, kr::ps::ext::ProgramProofStatus::FAILURE);
         ASSERT_TRUE(greedy.graph);
         EXPECT_EQ(greedy.graph->get_num_vertices(), diamond ? 5 : 4);
         EXPECT_EQ(greedy.graph->get_num_edges(), diamond ? 4 : 3);
@@ -1040,8 +1029,8 @@ void check_ordinary_execution_keeps_complete_graph()
         {
             SCOPED_TRACE(classify);
             options.classifier = classify ? std::optional(classifier) : std::nullopt;
-            const auto complete = ext::find_solution(context, program, options);
-            EXPECT_EQ(complete.status, ext::ProgramProofStatus::FAILURE);
+            const auto complete = kr::ps::ext::find_solution(context, program, options);
+            EXPECT_EQ(complete.status, kr::ps::ext::ProgramProofStatus::FAILURE);
             ASSERT_TRUE(complete.graph);
             EXPECT_EQ(complete.graph->get_num_vertices(), diamond ? 9 : 7);
             EXPECT_EQ(complete.graph->get_num_edges(), diamond ? 9 : 7);
@@ -1063,7 +1052,7 @@ void check_ordinary_execution_keeps_complete_graph()
             EXPECT_EQ(failure.program_state.get_module_state().get_registers().template get<kr::dl::ConceptTag>()[0].value().get_name(), "bad");
 
             const auto& first = complete;
-            const auto second = ext::find_solution(context, program, options);
+            const auto second = kr::ps::ext::find_solution(context, program, options);
             EXPECT_EQ(second.status, first.status);
             ASSERT_TRUE(first.graph);
             ASSERT_TRUE(second.graph);
@@ -1095,12 +1084,11 @@ namespace
 template<tyr::TaskKind Kind>
 void check_state_memorization()
 {
-    namespace ext = kr::ps::ext;
-    using Mode = ext::StateMemorization;
-    using Status = ext::ProgramProofStatus;
+    using Mode = kr::ps::ext::StateMemorization;
+    using Status = kr::ps::ext::ProgramProofStatus;
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
     // Fresh repositories make retained-state assertions independent of previous searches.
-    const auto run = [&](const std::string& modules, const ext::ProgramSearchOptions<Kind>& options)
+    const auto run = [&](const std::string& modules, const kr::ps::ext::ProgramSearchOptions<Kind>& options)
     {
         auto search = [&]()
         {
@@ -1110,10 +1098,10 @@ void check_state_memorization()
                 return make_lifted_context(directory / "domain.pddl", directory / "task.pddl");
         }();
         auto context = kr::TaskContext<Kind>::create(kr::DomainContext::create(search->task->get_domain()), search);
-        const auto program = ext::dl::parse_program("(:program (:entry main) " + modules + ")",
-                                                    search->task->get_domain().get_domain(),
-                                                    *context->domain_context->ext_repository);
-        return ext::find_solution(context, program, options);
+        const auto program = kr::ps::ext::dl::parse_program("(:program (:entry main) " + modules + ")",
+                                                            search->task->get_domain().get_domain(),
+                                                            *context->domain_context->ext_repository);
+        return kr::ps::ext::find_solution(context, program, options);
     };
     const auto select = choice_rule("select", "m0", "m1", choose_candidates);
     const auto backtrack = choice_module("main", select + move_rules);
@@ -1209,7 +1197,7 @@ void check_state_memorization()
         {
             SCOPED_TRACE(static_cast<int>(mode));
             SCOPED_TRACE(universal);
-            auto options = ext::ProgramSearchOptions<Kind> {};
+            auto options = kr::ps::ext::ProgramSearchOptions<Kind> {};
             options.state_memorization = mode;
             options.universal = universal;
             const auto result = run(backtrack, options);
@@ -1222,7 +1210,7 @@ void check_state_memorization()
             EXPECT_EQ(result.graph->get_num_vertices(), mode == Mode::ALL ? 6 : 4);
             EXPECT_EQ(result.graph->get_num_edges(), mode == Mode::ALL ? 5 : 3);
             EXPECT_EQ(result.open_states.empty(), mode != Mode::ALL);
-            EXPECT_EQ(result.task_context_owner->execution_repository->template size<ext::ProgramState<Kind>>(), result.graph->get_num_vertices());
+            EXPECT_EQ(result.task_context_owner->execution_repository->template size<kr::ps::ext::ProgramState<Kind>>(), result.graph->get_num_vertices());
             EXPECT_EQ(result.task_context_owner->search_context->state_repository->num_states(), mode == Mode::ALL ? 4 : 3);
             EXPECT_EQ(result.plan.has_value(), !universal);
             if (result.plan)
@@ -1390,7 +1378,7 @@ void check_state_memorization()
                                                    + choice_rule("finish", "m5", "m6", move_to_goal));
             for (const auto mode : { Mode::NONE, Mode::CHOICE, Mode::ALL })
             {
-                auto options = ext::ProgramSearchOptions<Kind> {};
+                auto options = kr::ps::ext::ProgramSearchOptions<Kind> {};
                 options.state_memorization = mode;
                 options.universal = true;
                 const auto result = run(diamond, options);
@@ -1425,14 +1413,14 @@ void check_state_memorization()
                           + choice_rule("move", "m3", "m4", move_to_register) + choice_rule("finish", "m4", "m5", move_to_goal));
     for (const auto mode : { Mode::NONE, Mode::CHOICE, Mode::ALL })
     {
-        auto options = ext::ProgramSearchOptions<Kind> {};
+        auto options = kr::ps::ext::ProgramSearchOptions<Kind> {};
         options.state_memorization = mode;
         options.universal = true;
         const auto result = run(separate_choices, options);
         ASSERT_EQ(result.status, Status::SUCCESS);
         ASSERT_TRUE(result.graph);
         EXPECT_EQ(result.graph->get_num_vertices(), mode == Mode::ALL ? 8 : 5);
-        EXPECT_EQ(result.task_context_owner->execution_repository->template size<ext::ProgramState<Kind>>(),
+        EXPECT_EQ(result.task_context_owner->execution_repository->template size<kr::ps::ext::ProgramState<Kind>>(),
                   result.graph->get_num_vertices() + (mode == Mode::CHOICE ? 1 : 0));
         EXPECT_EQ(result.task_context_owner->search_context->state_repository->num_states(), mode == Mode::ALL ? 4 : 3);
     }
@@ -1469,28 +1457,26 @@ struct ReferenceProgramStateAccess : kr::ps::ext::ProgramStateView<Kind>
 template<tyr::TaskKind Kind>
 void check_transient_builder_values_and_reuse()
 {
-    namespace ext = kr::ps::ext;
-    namespace sem = kr::dl::semantics;
-    static_assert(sem::RegisterValuesViewConcept<sem::RegisterValuesView>);
-    static_assert(sem::RegisterValuesViewConcept<sem::BorrowedRegisterValuesView>);
-    static_assert(ext::ProgramStateViewConcept<ext::ProgramStateView<Kind>, Kind>);
-    static_assert(ext::ProgramStateViewConcept<ext::BorrowedProgramStateView<Kind>, Kind>);
-    static_assert(ext::ProgramStateViewConcept<ext::BuilderProgramStateView<Kind>, Kind>);
-    static_assert(sem::RegisterValuesViewConcept<sem::RegisterValuesView&>);
-    static_assert(sem::RegisterValuesViewConcept<const sem::BorrowedRegisterValuesView&>);
-    static_assert(!sem::RegisterValuesViewConcept<volatile sem::RegisterValuesView&>);
-    static_assert(!sem::RegisterValuesViewConcept<MutableDataAccess<sem::BorrowedRegisterValuesView>&>);
-    static_assert(ext::ModuleStateViewConcept<ext::ModuleStateView<Kind>&, Kind>);
-    static_assert(ext::ModuleStateViewConcept<const ext::BuilderModuleStateView<Kind>&, Kind>);
-    static_assert(!ext::ModuleStateViewConcept<volatile ext::ModuleStateView<Kind>&, Kind>);
-    static_assert(!ext::ModuleStateViewConcept<MutableDataAccess<ext::ModuleStateView<Kind>>&, Kind>);
-    static_assert(ext::ProgramStateViewConcept<ext::ProgramStateView<Kind>&, Kind>);
-    static_assert(ext::ProgramStateViewConcept<const ext::BuilderProgramStateView<Kind>&, Kind>);
-    static_assert(!ext::ProgramStateViewConcept<volatile ext::ProgramStateView<Kind>&, Kind>);
-    static_assert(!ext::ProgramStateViewConcept<MutableDataAccess<ext::ProgramStateView<Kind>>&, Kind>);
-    static_assert(ext::ProgramStateViewConcept<ReferenceProgramStateAccess<Kind>, Kind>);
+    static_assert(kr::dl::semantics::RegisterValuesViewConcept<kr::dl::semantics::RegisterValuesView>);
+    static_assert(kr::dl::semantics::RegisterValuesViewConcept<kr::dl::semantics::BorrowedRegisterValuesView>);
+    static_assert(kr::ps::ext::ProgramStateViewConcept<kr::ps::ext::ProgramStateView<Kind>, Kind>);
+    static_assert(kr::ps::ext::ProgramStateViewConcept<kr::ps::ext::BorrowedProgramStateView<Kind>, Kind>);
+    static_assert(kr::ps::ext::ProgramStateViewConcept<kr::ps::ext::BuilderProgramStateView<Kind>, Kind>);
+    static_assert(kr::dl::semantics::RegisterValuesViewConcept<kr::dl::semantics::RegisterValuesView&>);
+    static_assert(kr::dl::semantics::RegisterValuesViewConcept<const kr::dl::semantics::BorrowedRegisterValuesView&>);
+    static_assert(!kr::dl::semantics::RegisterValuesViewConcept<volatile kr::dl::semantics::RegisterValuesView&>);
+    static_assert(!kr::dl::semantics::RegisterValuesViewConcept<MutableDataAccess<kr::dl::semantics::BorrowedRegisterValuesView>&>);
+    static_assert(kr::ps::ext::ModuleStateViewConcept<kr::ps::ext::ModuleStateView<Kind>&, Kind>);
+    static_assert(kr::ps::ext::ModuleStateViewConcept<const kr::ps::ext::BuilderModuleStateView<Kind>&, Kind>);
+    static_assert(!kr::ps::ext::ModuleStateViewConcept<volatile kr::ps::ext::ModuleStateView<Kind>&, Kind>);
+    static_assert(!kr::ps::ext::ModuleStateViewConcept<MutableDataAccess<kr::ps::ext::ModuleStateView<Kind>>&, Kind>);
+    static_assert(kr::ps::ext::ProgramStateViewConcept<kr::ps::ext::ProgramStateView<Kind>&, Kind>);
+    static_assert(kr::ps::ext::ProgramStateViewConcept<const kr::ps::ext::BuilderProgramStateView<Kind>&, Kind>);
+    static_assert(!kr::ps::ext::ProgramStateViewConcept<volatile kr::ps::ext::ProgramStateView<Kind>&, Kind>);
+    static_assert(!kr::ps::ext::ProgramStateViewConcept<MutableDataAccess<kr::ps::ext::ProgramStateView<Kind>>&, Kind>);
+    static_assert(kr::ps::ext::ProgramStateViewConcept<ReferenceProgramStateAccess<Kind>, Kind>);
     constexpr auto has_index = []<typename V>() { return requires(const V& view) { view.get_index(); }; };
-    static_assert(!has_index.template operator()<ext::BuilderProgramStateView<Kind>>());
+    static_assert(!has_index.template operator()<kr::ps::ext::BuilderProgramStateView<Kind>>());
     const auto directory = benchmark_path("classical/tests/gripper");
     const auto search = [&]()
     {
@@ -1502,37 +1488,37 @@ void check_transient_builder_values_and_reuse()
     auto context = kr::TaskContext<Kind>::create(kr::DomainContext::create(search->task->get_domain()), search);
     auto& repository = *context->domain_context->ext_repository;
     const auto module_ =
-        ext::dl::parse_module(read_fixture("kr/ps/ext/executor/ext_find_solution_treats_classifier_matches_as_terminal_failures/module.module"),
-                              search->task->get_domain().get_domain(),
-                              repository);
+        kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/executor/ext_find_solution_treats_classifier_matches_as_terminal_failures/module.module"),
+                                      search->task->get_domain().get_domain(),
+                                      repository);
     const auto program = create_program(repository, module_, { module_ });
-    auto pool = ygg::SharedObjectPool<ygg::Builder<ext::ProgramState<Kind>>> {};
+    auto pool = ygg::SharedObjectPool<ygg::Builder<kr::ps::ext::ProgramState<Kind>>> {};
     auto first = pool.get_or_allocate();
     first->program = program.get_index();
     auto& first_module = first->module_state;
     first_module.module_ = module_.get_index();
     first_module.memory_state = module_.get_entry_memory_state().get_index();
-    auto arguments = sem::checkout<sem::CallArguments>(context->dl_builder);
-    const auto argument_view = sem::insert(*context->dl_denotation_repository, *arguments).first;
+    auto arguments = kr::dl::semantics::checkout<kr::dl::semantics::CallArguments>(context->dl_builder);
+    const auto argument_view = kr::dl::semantics::insert(*context->dl_denotation_repository, *arguments).first;
     first_module.arguments = argument_view.get_index();
     const auto program_state = ygg::make_view(*first, *context->execution_repository);
     const auto module_state = program_state.get_module_state();
     EXPECT_EQ(&module_state.get_data(), &first_module);
-    EXPECT_TRUE(ygg::EqualTo<ext::ProgramView> {}(program_state.get_program(), program));
-    EXPECT_TRUE(ygg::EqualTo<ext::ModuleView> {}(module_state.get_module(), module_));
-    EXPECT_TRUE(ygg::EqualTo<ext::MemoryStateView> {}(module_state.get_memory_state(), module_.get_entry_memory_state()));
+    EXPECT_TRUE(ygg::EqualTo<kr::ps::ext::ProgramView> {}(program_state.get_program(), program));
+    EXPECT_TRUE(ygg::EqualTo<kr::ps::ext::ModuleView> {}(module_state.get_module(), module_));
+    EXPECT_TRUE(ygg::EqualTo<kr::ps::ext::MemoryStateView> {}(module_state.get_memory_state(), module_.get_entry_memory_state()));
     EXPECT_EQ(&module_state.get_module().get_context(), &repository);
     EXPECT_EQ(&module_state.get_state().get_task(), search->task.get());
     EXPECT_EQ(&module_state.get_state().get_state_builder(), &first_module.state);
     EXPECT_EQ(&module_state.get_registers().get_data(), &first_module.registers);
-    EXPECT_TRUE(ygg::EqualTo<sem::CallArgumentsView> {}(module_state.get_arguments(), argument_view));
+    EXPECT_TRUE(ygg::EqualTo<kr::dl::semantics::CallArgumentsView> {}(module_state.get_arguments(), argument_view));
     EXPECT_EQ(&module_state.get_arguments().get_context(), context->dl_denotation_repository.get());
     EXPECT_FALSE(program_state.get_call_stack());
     first_module.registers.concept_values.emplace_back(ygg::Index<tyr::formalism::Object>(0));
     first_module.registers.role_values.emplace_back(
         ::cista::pair<ygg::Index<tyr::formalism::Object>, ygg::Index<tyr::formalism::Object>>(ygg::Index<tyr::formalism::Object>(0),
                                                                                               ygg::Index<tyr::formalism::Object>(1)));
-    const auto registered_registers = sem::insert(*context->dl_denotation_repository, first_module.registers).first;
+    const auto registered_registers = kr::dl::semantics::insert(*context->dl_denotation_repository, first_module.registers).first;
     const auto borrowed_registers = module_state.get_registers();
     const auto concept_id = kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(0);
     const auto role_id = kr::dl::RegisterIdentifier<kr::dl::RoleTag>(0);
@@ -1551,23 +1537,25 @@ void check_transient_builder_values_and_reuse()
     first_module.state.get_numeric_variables().values = { 3.0 };
 
     // Transient module values use the same interned callers as registered execution states.
-    auto tail_data = ygg::Data<ext::CallStack>(first_module.module_, first_module.memory_state, registered_registers.get_index(), first_module.arguments, {});
-    const auto tail = ext::insert(*context->execution_repository, tail_data).first;
+    auto tail_data =
+        ygg::Data<kr::ps::ext::CallStack>(first_module.module_, first_module.memory_state, registered_registers.get_index(), first_module.arguments, {});
+    const auto tail = kr::ps::ext::insert(*context->execution_repository, tail_data).first;
     auto head_registers = first_module.registers;
     head_registers.concept_values.front() = ygg::Index<tyr::formalism::Object>(1);
-    const auto head_register_values = sem::insert(*context->dl_denotation_repository, head_registers).first;
-    auto head_data = ygg::Data<ext::CallStack>(first_module.module_, first_module.memory_state, head_register_values.get_index(), first_module.arguments, {});
+    const auto head_register_values = kr::dl::semantics::insert(*context->dl_denotation_repository, head_registers).first;
+    auto head_data =
+        ygg::Data<kr::ps::ext::CallStack>(first_module.module_, first_module.memory_state, head_register_values.get_index(), first_module.arguments, {});
     head_data.caller = tail.get_index();
-    const auto head = ext::insert(*context->execution_repository, head_data).first;
+    const auto head = kr::ps::ext::insert(*context->execution_repository, head_data).first;
     first->call_stack = head.get_index();
-    EXPECT_EQ(ext::insert(*context->execution_repository, head_data).first.get_index(), head.get_index());
-    static_assert(std::same_as<decltype(program_state.get_call_stack()), std::optional<ext::CallStackView<Kind>>>);
+    EXPECT_EQ(kr::ps::ext::insert(*context->execution_repository, head_data).first.get_index(), head.get_index());
+    static_assert(std::same_as<decltype(program_state.get_call_stack()), std::optional<kr::ps::ext::CallStackView<Kind>>>);
     const auto stack = program_state.get_call_stack();
     ASSERT_TRUE(stack);
     EXPECT_EQ(stack->get_index(), head.get_index());
-    EXPECT_TRUE(ygg::EqualTo<ext::ModuleView> {}(stack->get_module(), module_));
-    EXPECT_TRUE(ygg::EqualTo<ext::MemoryStateView> {}(stack->get_return_memory_state(), module_.get_entry_memory_state()));
-    EXPECT_TRUE(ygg::EqualTo<sem::CallArgumentsView> {}(stack->get_arguments(), argument_view));
+    EXPECT_TRUE(ygg::EqualTo<kr::ps::ext::ModuleView> {}(stack->get_module(), module_));
+    EXPECT_TRUE(ygg::EqualTo<kr::ps::ext::MemoryStateView> {}(stack->get_return_memory_state(), module_.get_entry_memory_state()));
+    EXPECT_TRUE(ygg::EqualTo<kr::dl::semantics::CallArgumentsView> {}(stack->get_arguments(), argument_view));
     EXPECT_EQ(stack->get_registers().at(concept_id).value().get_index(), ygg::Index<tyr::formalism::Object>(1));
     const auto caller = stack->get_caller();
     ASSERT_TRUE(caller);
@@ -1582,28 +1570,28 @@ void check_transient_builder_values_and_reuse()
     EXPECT_NE(separate_module.state.get_numeric_variables().values.data(), first_module.state.get_numeric_variables().values.data());
     EXPECT_NE(separate_module.registers.concept_values.data(), first_module.registers.concept_values.data());
     EXPECT_EQ(*separate->call_stack, *first->call_stack);
-    EXPECT_TRUE(ygg::EqualTo<ygg::Builder<ext::ProgramState<Kind>>> {}(*first, *separate));
-    EXPECT_EQ(ygg::Hash<ygg::Builder<ext::ProgramState<Kind>>> {}(*first), ygg::Hash<ygg::Builder<ext::ProgramState<Kind>>> {}(*separate));
+    EXPECT_TRUE(ygg::EqualTo<ygg::Builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
+    EXPECT_EQ(ygg::Hash<ygg::Builder<kr::ps::ext::ProgramState<Kind>>> {}(*first), ygg::Hash<ygg::Builder<kr::ps::ext::ProgramState<Kind>>> {}(*separate));
     separate_module.state.template get_atom_storage<tyr::formalism::DerivedTag>().indices.resize(1, true);
-    EXPECT_TRUE(ygg::EqualTo<ygg::Builder<ext::ProgramState<Kind>>> {}(*first, *separate));
-    EXPECT_EQ(ygg::Hash<ygg::Builder<ext::ProgramState<Kind>>> {}(*first), ygg::Hash<ygg::Builder<ext::ProgramState<Kind>>> {}(*separate));
+    EXPECT_TRUE(ygg::EqualTo<ygg::Builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
+    EXPECT_EQ(ygg::Hash<ygg::Builder<kr::ps::ext::ProgramState<Kind>>> {}(*first), ygg::Hash<ygg::Builder<kr::ps::ext::ProgramState<Kind>>> {}(*separate));
     if constexpr (std::same_as<Kind, tyr::GroundTag>)
         separate_module.state.template get_atom_storage<tyr::formalism::FluentTag>().values.front() = 0;
     else
         separate_module.state.template get_atom_storage<tyr::formalism::FluentTag>().indices.flip(0);
-    EXPECT_FALSE(ygg::EqualTo<ygg::Builder<ext::ProgramState<Kind>>> {}(*first, *separate));
+    EXPECT_FALSE(ygg::EqualTo<ygg::Builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
     separate_module.state = first_module.state;
     separate_module.state.get_numeric_variables().values.front() = 4.0;
     EXPECT_EQ(first_module.state.get_numeric_variables().values.front(), 3.0);
-    EXPECT_FALSE(ygg::EqualTo<ygg::Builder<ext::ProgramState<Kind>>> {}(*first, *separate));
+    EXPECT_FALSE(ygg::EqualTo<ygg::Builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
     separate_module.state = first_module.state;
     separate_module.registers.concept_values.front() = ygg::Index<tyr::formalism::Object>(1);
     EXPECT_EQ(first_module.registers.concept_values.front().value(), ygg::Index<tyr::formalism::Object>(0));
-    EXPECT_FALSE(ygg::EqualTo<ygg::Builder<ext::ProgramState<Kind>>> {}(*first, *separate));
+    EXPECT_FALSE(ygg::EqualTo<ygg::Builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
     separate_module.registers = first_module.registers;
     separate->call_stack = tail.get_index();
     EXPECT_EQ(program_state.get_call_stack()->get_index(), head.get_index());
-    EXPECT_FALSE(ygg::EqualTo<ygg::Builder<ext::ProgramState<Kind>>> {}(*first, *separate));
+    EXPECT_FALSE(ygg::EqualTo<ygg::Builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
 
     // Releasing a program retains its mutable module buffers for reuse.
     const auto slot = separate.get();
@@ -1628,19 +1616,18 @@ TEST(RunirTests, ExtLiftedPlanningBuildersOwnValuesAndReuseBuffers) { check_tran
 
 TEST(RunirTests, ExtPooledSearchPathReleasesLongChainsIteratively)
 {
-    namespace ext = kr::ps::ext;
     using Kind = tyr::GroundTag;
-    using Path = ext::detail::SearchPath<Kind, ext::InternedExecutionStorage<Kind>>;
+    using Path = kr::ps::ext::detail::SearchPath<Kind, kr::ps::ext::InternedExecutionStorage<Kind>>;
     using PathPtr = ygg::SharedObjectPoolPtr<Path>;
     auto search = make_gripper_ground_context();
     auto context = kr::TaskContext<Kind>::create(kr::DomainContext::create(search->task->get_domain()), search);
     auto& repository = *context->domain_context->ext_repository;
     const auto module_ =
-        ext::dl::parse_module(read_fixture("kr/ps/ext/executor/ext_find_solution_treats_classifier_matches_as_terminal_failures/module.module"),
-                              search->task->get_domain().get_domain(),
-                              repository);
+        kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/executor/ext_find_solution_treats_classifier_matches_as_terminal_failures/module.module"),
+                                      search->task->get_domain().get_domain(),
+                                      repository);
     const auto program = create_program(repository, module_, { module_ });
-    auto expander = ext::SuccessorExpander<Kind>(context, program);
+    auto expander = kr::ps::ext::SuccessorExpander<Kind>(context, program);
     const auto state = expander.initial_state(initial_planning_node(expander).get_state());
     auto pool = ygg::SharedObjectPool<Path> {};
     auto tip = PathPtr {};

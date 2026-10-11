@@ -49,6 +49,9 @@ bool references_register(View view, runir::kr::dl::RegisterIdentifier<Category> 
             result = result || child_references_register(view.get_rhs());
         if constexpr (requires { view.get_mid(); })
             result = result || child_references_register(view.get_mid());
+        if constexpr (requires { view.get_args(); })
+            for (const auto arg : view.get_args())
+                result = result || child_references_register(arg);
         if constexpr (requires { view.get_role(); })
             result = result || references_register(view.get_role(), reg);
         if constexpr (requires { view.get_concept(); })

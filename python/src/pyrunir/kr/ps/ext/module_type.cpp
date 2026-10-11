@@ -1,5 +1,6 @@
 #include "bindings.hpp"
 #include "pyrunir/kr/binding_utils.hpp"
+#include "pyrunir/kr/ps/dl/optimization_bindings.hpp"
 
 #include <nanobind/stl/vector.h>
 #include <runir/kr/ps/ext/formatter.hpp>
@@ -13,8 +14,6 @@
 
 namespace runir::kr::ps::ext
 {
-
-using namespace nanobind::literals;
 
 void bind_module(nb::module_& m, RepositoryBinding& repository)
 {
@@ -127,6 +126,7 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
     ygg::add_print(view);
     ygg::add_comparison(view);
     ygg::add_hash(view);
+    runir::kr::python::bind_ps_optimize<runir::kr::ExtFamilyTag, Repository>(view);
     runir::kr::python::bind_insert<T>(repository);
 }
 

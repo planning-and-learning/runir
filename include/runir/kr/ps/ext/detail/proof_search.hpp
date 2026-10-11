@@ -30,7 +30,7 @@ namespace detail
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, typename Expander, typename Storage, typename Unsolvability>
 ProgramProofStatus depth_first_search(Expander& expander,
                                       const tyr::planning::PackedStateView<Kind>& initial_state,
-                                      const typename ExecutionStorage::StoredState& initial,
+                                      const StorageStoredState<ExecutionStorage>& initial,
                                       const ProgramSearchOptions<Kind>& options,
                                       Unsolvability& classifier,
                                       Storage& storage,
@@ -78,7 +78,7 @@ ProgramProofStatus depth_first_search(Expander& expander,
         const auto action = transition ? std::optional(transition->action) : std::nullopt;
         return storage.record_transition(source, expander.view(step.target), action, step.rule, choice_width, classify);
     };
-    const auto make_path = [&](typename ExecutionStorage::StoredState state,
+    const auto make_path = [&](StorageStoredState<ExecutionStorage> state,
                                PathPtr parent,
                                std::optional<datasets::StateGraphEdgeLabel> transition,
                                std::optional<RuleVariantView> rule,
@@ -136,14 +136,14 @@ ProgramProofStatus depth_first_search(Expander& expander,
             expander.for_each_successor(
                 state,
                 statistics,
-                [&](auto expansion)
+                [&]<typename Expansion>(Expansion expansion)
                 {
                     if (out_of_time())
                     {
                         limit = ProgramProofStatus::OUT_OF_TIME;
                         return false;
                     }
-                    if constexpr (std::same_as<decltype(expansion), Step>)
+                    if constexpr (std::same_as<Expansion, Step>)
                     {
                         if (expansion.status == ProgramOutcome::APPLIED || expansion.status == ProgramOutcome::RESTORED_CALLER)
                         {

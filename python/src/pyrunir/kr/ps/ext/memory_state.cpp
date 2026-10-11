@@ -11,8 +11,6 @@
 namespace runir::kr::ps::ext
 {
 
-using namespace nanobind::literals;
-
 void bind_memory_state(nb::module_& m, RepositoryBinding& repository)
 {
     using T = MemoryState;
