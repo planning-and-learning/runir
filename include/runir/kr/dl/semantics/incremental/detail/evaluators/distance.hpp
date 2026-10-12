@@ -95,10 +95,10 @@ struct QueryEdgeDistanceEvaluator
     {
         feature.distance.bind(input(graph));
         if (!heuristic)
-            heuristic = semantics::detail::make_heuristic<Family, C>(expression.get_data().plan,
-                                                                    edges(),
-                                                                    semantics::detail::num_objects<Kind, Family>(context),
-                                                                    [&](ygg::uint_t leaf) -> const ygg::Builder<ygg::database::Relation<QueryValues>>& { return leaf_rows(leaf); });
+            heuristic = semantics::detail::make_heuristic(feature,
+                                                          expression.get_data().plan,
+                                                          semantics::detail::num_objects<Kind, Family>(context),
+                                                          [&](size_t slot) -> const ygg::Builder<ygg::database::Relation<QueryValues>>& { return feature.distance.input(slot); });
         evaluate(graph);
     }
     void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<QueryValues>&)
@@ -115,14 +115,6 @@ private:
     auto input(const EvaluationGraph<Family, Kind>& graph) const
     {
         return [this, &graph](size_t slot) -> const ygg::Builder<ygg::database::Relation<QueryValues>>& { return graph.result(slots[slot]); };
-    }
-    /// A leaf's rows as bound in the min-distance evaluator.
-    const ygg::Builder<ygg::database::Relation<QueryValues>>& leaf_rows(ygg::uint_t leaf) const
-    {
-        for (size_t slot = 0; slot < feature.slots.size(); ++slot)
-            if (feature.slots[slot].kind == QuerySlot::Kind::QUERY && feature.slots[slot].index == leaf)
-                return feature.distance.input(slot);
-        throw std::logic_error("Distance: relaxed leaf without an input slot.");
     }
     void evaluate(const EvaluationGraph<Family, Kind>& graph)
     {

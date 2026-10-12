@@ -10,10 +10,12 @@
 #include <optional>
 #include <span>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 #include <yggdrasil/containers/associative_containers.hpp>
 #include <yggdrasil/core/dependent_false.hpp>
 #include <yggdrasil/database/syntax/query.hpp>
+#include <yggdrasil/database/syntax/translations/relaxation.hpp>
 
 namespace runir::kr::dl
 {
@@ -132,6 +134,14 @@ public:
         out->arg = query.get_index();
         out->labels.set(labels.begin(), labels.end());
         return insert(*out);
+    }
+
+    /// The relaxation of a translated query whose input slots are known only where `known(slot)` holds
+    /// (ygg::database::relax); built in this translator's repository.
+    template<std::predicate<size_t> Known>
+    ygg::database::Relaxation<QueryValues> relax(YggQuery query, Known&& known)
+    {
+        return ygg::database::relax(query, std::forward<Known>(known), m_repository, m_builder);
     }
 
     /// The expression of each input slot, by slot.

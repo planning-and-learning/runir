@@ -78,11 +78,11 @@ the materialized edges (`ygg::database::incremental::SourceMinDistance`, Ramalin
 **Heuristic.** For k > 1 query edges A* uses a pattern database heuristic
 (`semantics/heuristics/projection.hpp`): h(v) = maxᵢ hᵢ(v[i]) over one database per
 vertex column i.
-- Each database is built from a static relaxation of the edge query
-  (`semantics/heuristics/query_relaxation.hpp`), projected onto (i, k + i):
-  - dynamic leaves are dropped;
-  - differences and complements keep their left side;
-  - a join's conjuncts are joined pairwise with early projection.
+- Each database is built from the relaxation of the translated edge query in which only the
+  static slots are known (`ygg::database::relax`, with its translation table in
+  `syntax/translations/relaxation.hpp`), projected onto (i, k + i).
+- The relaxation is evaluated once by yggdrasil (`optimize` + `QueryEvaluator`) over the static
+  rows. A static complement stays an exact antijoin.
 - The relaxation is a superset of the projected edges in every state, so h is consistent in
   every state.
 - hᵢ is a breadth-first distance table to the projected targets, recomputed only when they

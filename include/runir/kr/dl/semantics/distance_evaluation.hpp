@@ -39,7 +39,8 @@ DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePla
     {
         const auto columns = plan.edge_columns().span();
         return { { QuerySlot { QuerySlot::Kind::ROLE, ygg::uint_t(edges.get_index()), { columns.begin(), columns.end() }, edges.is_static() } },
-                 Distance(plan, edges.is_static()) };
+                 Distance(plan, edges.is_static()),
+                 std::nullopt };
     }
     else
     {
@@ -48,20 +49,20 @@ DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePla
         auto static_slots = std::vector<bool>();
         for (const auto& slot : translator.get_slots())
             static_slots.push_back(slot.is_static);
-        return { translator.get_slots(), Distance(query, plan, static_slots) };
+        auto abstraction = plan.arity() > 1 ? heuristics::abstract_edges(translator, query, plan) : std::nullopt;
+        return { translator.get_slots(), Distance(query, plan, static_slots), std::move(abstraction) };
     }
 }
 
-/// The heuristic of a feature: a pattern database heuristic for k > 1 query edges, otherwise blind;
-/// `leaves(index)` returns a static leaf's rows.
-template<FamilyTag Family, typename C, typename Edges, typename Leaves>
+/// The heuristic of a feature: a pattern database heuristic if it has an abstraction, otherwise blind;
+/// `slot_rows(slot)` returns a static slot's rows.
+template<typename Distance, typename SlotRows>
 heuristics::ProjectionHeuristic
-make_heuristic(const ygg::database::DistancePlan<QueryValues>& plan, Edges edges, ygg::uint_t num_objects, Leaves leaves)
+make_heuristic(const DistanceFeature<Distance>& feature, const ygg::database::DistancePlan<QueryValues>& plan, ygg::uint_t num_objects, SlotRows&& slot_rows)
 {
-    if constexpr (!is_role_edges_v<Edges, Family, C>)
-        if (plan.arity() > 1)
-            return heuristics::make_projection_heuristic<Family>(edges, plan, num_objects, std::move(leaves));
-    return {};
+    if (!feature.abstraction)
+        return {};
+    return heuristics::make_projection_heuristic(*feature.abstraction, plan, num_objects, slot_rows);
 }
 
 /// Minimum distance from any source to any target, or uint_t's maximum if none is reachable, from the state alone
@@ -84,10 +85,12 @@ ygg::uint_t on_demand_distance(ygg::View<ygg::Index<FamilyNumerical<Family, Dist
                 ygg::uint_t(constructor.get_index()),
                 [&]
                 {
-                    const auto leaves = [&](ygg::uint_t leaf)
-                    { return evaluate<Kind>(ygg::make_view(ygg::Index<Query<Family>>(leaf), edges.get_context()), children); };
-                    return FullDistanceFeature { make_distance_feature<ygg::database::MinDistance<QueryValues, heuristics::ProjectionHeuristic>, Family, C>(plan, edges),
-                                                 make_heuristic<Family, C>(plan, edges, detail::num_objects<Kind, Family>(context), leaves) };
+                    auto feature = make_distance_feature<ygg::database::MinDistance<QueryValues, heuristics::ProjectionHeuristic>, Family, C>(plan, edges);
+                    auto heuristic = make_heuristic(feature,
+                                                    plan,
+                                                    detail::num_objects<Kind, Family>(context),
+                                                    [&](size_t slot) { return evaluate_slot<Kind, Family>(feature.slots[slot], edges.get_context(), children); });
+                    return FullDistanceFeature { std::move(feature), std::move(heuristic) };
                 });
             feature.heuristic.update(targets);
             const auto input = [&](size_t slot) { return evaluate_slot<Kind, Family>(feature.edges.slots[slot], edges.get_context(), children); };
