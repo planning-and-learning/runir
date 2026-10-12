@@ -6,12 +6,12 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
-#include <limits>
 #include <optional>
 #include <span>
 #include <tyr/formalism/declarations.hpp>
 #include <vector>
 #include <yggdrasil/database/optimization/optimization.hpp>
+#include <yggdrasil/database/semantics/search/concepts.hpp>
 #include <yggdrasil/database/semantics/distance.hpp>
 #include <yggdrasil/database/semantics/operations.hpp>
 #include <yggdrasil/database/semantics/query_evaluation.hpp>
@@ -31,8 +31,7 @@ struct PatternDatabase
     std::vector<ygg::uint_t> offsets;               ///< CSR: the abstract predecessors of o are at [offsets[o], offsets[o + 1]).
     std::vector<ygg::uint_t> abstract_predecessors;
     std::vector<bool> targets;                      ///< α_i(T), for which h was computed.
-    std::vector<ygg::uint_t> h;                     ///< Abstract distance to α_i(T); uint_t's maximum if unreachable.
-    bool informative = false;                       ///< Some entry of h is nonzero.
+    std::vector<ygg::uint_t> h;                     ///< Abstract distance to α_i(T); ygg::database::infinity if unreachable.
 };
 
 /// h(v) = max_i h_i(α_i(v)) over single-column pattern databases (Culberson & Schaeffer, "Pattern Databases",
@@ -45,8 +44,6 @@ struct PatternDatabase
 class ProjectionHeuristic
 {
 public:
-    static constexpr ygg::uint_t infinity = std::numeric_limits<ygg::uint_t>::max();
-
     ProjectionHeuristic() = default;
     ProjectionHeuristic(std::vector<PatternDatabase> databases,
                         std::span<const ygg::database::ColumnLayout> vertex_columns,
@@ -63,23 +60,17 @@ public:
     template<typename Targets>
     void update(const Targets& targets)
     {
-        m_informative.clear();
-        for (size_t i = 0; i < m_databases.size(); ++i)
-        {
-            update_table(m_databases[i], targets);
-            if (m_databases[i].informative)
-                m_informative.push_back(i);
-        }
+        for (auto& database : m_databases)
+            update_table(database, targets);
     }
 
     ygg::uint_t estimate(std::span<const std::byte> vertex) const
     {
         ygg::uint_t value = 0;
-        for (const auto i : m_informative)
+        for (const auto& database : m_databases)
         {
-            const auto& database = m_databases[i];
             const auto entry = database.h[ygg::uint_t(Row(vertex, m_vertex_columns).get<Object>(database.pattern))];
-            if (entry == infinity)
+            if (entry == ygg::database::infinity)
                 return entry;
             value = std::max(value, entry);
         }
@@ -88,7 +79,6 @@ public:
 
 private:
     std::vector<PatternDatabase> m_databases;
-    std::vector<size_t> m_informative;  ///< The databases with some nonzero entry.
     std::vector<ygg::database::ColumnLayout> m_vertex_columns;
     std::vector<ygg::database::ColumnLayout> m_target_columns;
     ygg::uint_t m_num_objects = 0;
@@ -104,7 +94,7 @@ private:
         if (!database.h.empty() && abstract_targets == database.targets)
             return;
         database.targets = std::move(abstract_targets);
-        database.h.assign(m_num_objects, infinity);
+        database.h.assign(m_num_objects, ygg::database::infinity);
         auto queue = std::vector<ygg::uint_t>();
         for (ygg::uint_t o = 0; o < m_num_objects; ++o)
             if (database.targets[o])
@@ -116,13 +106,12 @@ private:
         {
             const auto o = queue[head];
             for (auto i = database.offsets[o]; i < database.offsets[o + 1]; ++i)
-                if (const auto p = database.abstract_predecessors[i]; database.h[p] == infinity)
+                if (const auto p = database.abstract_predecessors[i]; database.h[p] == ygg::database::infinity)
                 {
                     database.h[p] = database.h[o] + 1;
                     queue.push_back(p);
                 }
         }
-        database.informative = std::ranges::any_of(database.h, [](ygg::uint_t value) { return value != 0; });
     }
 };
 

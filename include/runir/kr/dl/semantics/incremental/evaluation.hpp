@@ -97,6 +97,7 @@ public:
     EvaluationGraph(const EvaluationGraph&) = delete;
     EvaluationGraph& operator=(const EvaluationGraph&) = delete;
     EvaluationGraph(EvaluationGraph&&) = default;
+    EvaluationGraph& operator=(EvaluationGraph&&) = default;
 
     /// Resolve a prepared root or shared child once; retain its index for evaluation.
     template<CategoryTag Category>

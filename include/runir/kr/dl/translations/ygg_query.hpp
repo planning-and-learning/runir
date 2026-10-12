@@ -116,6 +116,8 @@ public:
     explicit QueryTranslator(bool rewrite_complements = false) : m_repository(m_factory.create()), m_rewrite_complements(rewrite_complements) {}
     QueryTranslator(const QueryTranslator&) = delete;
     QueryTranslator& operator=(const QueryTranslator&) = delete;
+    QueryTranslator(QueryTranslator&&) = delete;  // Translated views borrow the owned repository.
+    QueryTranslator& operator=(QueryTranslator&&) = delete;
 
     YggQuery translate(DlQuery query)
     {

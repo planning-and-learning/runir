@@ -109,6 +109,7 @@ public:
     DeltaEvaluationPolicy(const DeltaEvaluationPolicy&) = delete;
     DeltaEvaluationPolicy& operator=(const DeltaEvaluationPolicy&) = delete;
     DeltaEvaluationPolicy(DeltaEvaluationPolicy&&) = default;
+    DeltaEvaluationPolicy& operator=(DeltaEvaluationPolicy&&) = default;
 
     void reset_source() noexcept { m_source.reset(); }
     void reset_target() noexcept { m_target.reset(); }
