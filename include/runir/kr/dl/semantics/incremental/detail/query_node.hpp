@@ -18,7 +18,7 @@ template<FamilyTag Family, tyr::TaskKind Kind>
 class QueryNode
 {
 public:
-    QueryNode(FamilyQueryView<Family> expression, EvaluationGraph<Family, Kind>& graph);
+    QueryNode(FamilyQueryView<Family> expression, GraphBuilder<Family, Kind>& graph);
     /// A concept or role lifted into a relation with the given columns; it has no query expression.
     template<ConceptOrRoleTag Category>
     QueryNode(EvaluationIndex<Category> argument, std::span<const ygg::database::ColumnLayout> columns) :
@@ -59,11 +59,11 @@ private:
     std::optional<FamilyQueryView<Family>> m_expression;
     std::vector<ygg::uint_t> m_dependencies;
     Operation m_operation;
-    Operation prepare_operation(FamilyQueryView<Family> expression, EvaluationGraph<Family, Kind>& graph);
+    Operation prepare_operation(FamilyQueryView<Family> expression, GraphBuilder<Family, Kind>& graph);
 };
 
 template<FamilyTag Family, tyr::TaskKind Kind>
-QueryNode<Family, Kind>::QueryNode(FamilyQueryView<Family> expression, EvaluationGraph<Family, Kind>& graph) :
+QueryNode<Family, Kind>::QueryNode(FamilyQueryView<Family> expression, GraphBuilder<Family, Kind>& graph) :
     m_expression(expression),
     m_operation(prepare_operation(expression, graph))
 {
@@ -97,7 +97,7 @@ const ygg::database::incremental::Delta<QueryValues>& QueryNode<Family, Kind>::g
 }
 
 template<FamilyTag Family, tyr::TaskKind Kind>
-auto QueryNode<Family, Kind>::prepare_operation(FamilyQueryView<Family> expression, EvaluationGraph<Family, Kind>& graph) -> Operation
+auto QueryNode<Family, Kind>::prepare_operation(FamilyQueryView<Family> expression, GraphBuilder<Family, Kind>& graph) -> Operation
 {
     if (expression.is_static())
         return QueryStaticEvaluator<Family, Kind>(expression);

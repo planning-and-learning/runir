@@ -438,6 +438,12 @@ void check_distance_queries()
     EXPECT_EQ(number("(n_distance " + at("a", "b") + " " + moves + " " + box_at_c + ")"), 1);
     EXPECT_EQ(number("(n_distance " + at("b", "a") + " " + moves + " " + box_at_c + ")"), infinity);
     EXPECT_EQ(number("(n_distance " + at("a", "c") + " " + moves + " " + box_at_c + ")"), 0);
+    // The complement nested in a join of its own: the translation flattens the conjuncts to make it an antijoin.
+    const auto nested_walk =
+        "(q_project (x u y v) (q_join " + edges + " (q_join (q_role (u v) (r_identity (c_top))) (q_role (y u) (r_complement (r_identity (c_top)))))))";
+    const auto nested_moves = "(q_union " + nested_walk + " " + push + ")";
+    EXPECT_EQ(number("(n_distance " + at("a", "b") + " " + nested_moves + " " + box_at_c + ")"), 1);
+    EXPECT_EQ(number("(n_distance " + at("b", "a") + " " + nested_moves + " " + box_at_c + ")"), infinity);
 
     // A* relaxes dynamic leaves away: `triple` is dynamic, so the heuristic ignores which x may move,
     // while the search still respects it. x = a has triples (a b b) and (a b c); only x = b has (b c a).

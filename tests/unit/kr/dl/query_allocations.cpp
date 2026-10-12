@@ -1,3 +1,4 @@
+#include "incremental_root_evaluators.hpp"
 #include "planning_fixtures.hpp"
 
 #include <array>
@@ -298,7 +299,7 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
         *repository);
     const auto graph_query =
         graph_count.get_variant().get<ygg::Index<kr::dl::Numerical<Ext, kr::dl::CountTag>>>().get_arg().get<ygg::Index<kr::dl::Query<Ext>>>();
-    auto graph = kr::dl::semantics::incremental::QueryEvaluator<Ext, tyr::GroundTag>(*search->task, graph_query);
+    auto graph = QueryRootEvaluator<Ext, tyr::GroundTag>(*search->task, graph_query);
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage<Ext>(denotations);
     auto builder = kr::dl::semantics::Builder {};
@@ -384,10 +385,10 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     const auto domain = search->task->get_domain().get_domain();
     auto repository = kr::dl::ConstructorRepositoryFactoryFor<Ext>().create(search->task->get_repository());
-    auto concepts = std::vector<kr::dl::semantics::incremental::Evaluator<Ext, tyr::GroundTag, kr::dl::ConceptTag>> {};
-    auto roles = std::vector<kr::dl::semantics::incremental::Evaluator<Ext, tyr::GroundTag, kr::dl::RoleTag>> {};
-    auto numericals = std::vector<kr::dl::semantics::incremental::Evaluator<Ext, tyr::GroundTag, kr::dl::NumericalTag>> {};
-    auto booleans = std::vector<kr::dl::semantics::incremental::Evaluator<Ext, tyr::GroundTag, kr::dl::BooleanTag>> {};
+    auto concepts = std::vector<RootEvaluator<Ext, tyr::GroundTag, kr::dl::ConceptTag>> {};
+    auto roles = std::vector<RootEvaluator<Ext, tyr::GroundTag, kr::dl::RoleTag>> {};
+    auto numericals = std::vector<RootEvaluator<Ext, tyr::GroundTag, kr::dl::NumericalTag>> {};
+    auto booleans = std::vector<RootEvaluator<Ext, tyr::GroundTag, kr::dl::BooleanTag>> {};
     for (const auto expression : { R"((c_atomic_state "present"))", R"((c_atomic_state "copied-present"))", "(c_register 0)", R"((c_atomic_state "fixed"))" })
         concepts.emplace_back(*search->task, kr::ps::ext::dl::parse_concept(expression, domain, *repository));
     for (const auto expression : { R"((r_atomic_state "edge"))", R"((r_atomic_state "copied-edge"))", "(r_register 0)" })

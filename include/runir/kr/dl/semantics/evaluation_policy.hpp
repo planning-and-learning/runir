@@ -55,30 +55,30 @@ class DeltaEvaluationPolicy
 {
     class Evaluation
     {
-        const tyr::planning::Task<Kind>& m_task;
+        const tyr::planning::Task<Kind>* m_task;
         incremental::IncrementalEvaluation<Family, Kind> m_evaluation;
         ygg::Builder<tyr::planning::State<Kind>> m_state;
         ygg::Data<RegisterValues> m_registers;
         incremental::Delta<Family> m_delta;
-        bool m_initialized = false;  ///< m_state holds the previously entered state.
-        bool m_ready = false;        ///< The current state is entered.
+        bool m_has_previous = false;  ///< m_state holds the previously entered state.
+        bool m_entered = false;       ///< The current state is entered.
 
     public:
-        Evaluation(const tyr::planning::Task<Kind>& task, std::span<const incremental::EvaluationRoot<Family>> roots) : m_task(task), m_evaluation(task, roots) {}
-        void reset() noexcept { m_ready = false; }
-        void invalidate() noexcept { m_initialized = m_ready = false; }
+        Evaluation(const tyr::planning::Task<Kind>& task, std::span<const incremental::EvaluationRoot<Family>> roots) : m_task(&task), m_evaluation(task, roots) {}
+        void reset() noexcept { m_entered = false; }
+        void invalidate() noexcept { m_has_previous = m_entered = false; }
 
         template<StateEvaluationContextConcept<Family, Kind> Context>
         incremental::StateEvaluation<Family, Kind, Context> prepare(Context& context)
         {
-            const auto& task = m_task;
+            const auto& task = *m_task;
             if (&context.get_state().get_task() != &task)
                 throw std::invalid_argument("Delta evaluation requires states from its planning task.");
-            if (m_ready)
+            if (m_entered)
                 return m_evaluation.resume(context, m_delta, context.get_workspace().get_database_workspace());
             auto evaluation = [&]
             {
-                if (!std::exchange(m_initialized, false))
+                if (!std::exchange(m_has_previous, false))
                     return m_evaluation.enter(context);
                 if constexpr (std::same_as<Family, ExtFamilyTag>)
                     m_delta.template assign<Kind>(ygg::make_view(m_state, task),
@@ -92,7 +92,7 @@ class DeltaEvaluationPolicy
             m_state = context.get_state().get_state_builder();
             if constexpr (std::same_as<Family, ExtFamilyTag>)
                 assign(m_registers, context.registers());
-            m_initialized = m_ready = true;
+            m_has_previous = m_entered = true;
             return evaluation;
         }
     };

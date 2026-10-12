@@ -1,3 +1,4 @@
+#include "incremental_root_evaluators.hpp"
 #include "planning_fixtures.hpp"
 
 #include <algorithm>
@@ -297,7 +298,7 @@ void check_query_graph()
     {
         SCOPED_TRACE(expression);
         const auto query = parse_query(expression, domain, *constructors);
-        auto evaluator = kr::dl::semantics::incremental::QueryEvaluator<Ext, Kind>(*search->task, query);
+        auto evaluator = QueryRootEvaluator<Ext, Kind>(*search->task, query);
         EXPECT_THROW(evaluator.update(empty_delta, workspace), std::logic_error);
         const auto expect_unpublished = [&]
         {
@@ -361,7 +362,7 @@ void check_query_graph()
     }
 
     const auto goal = parse_query(R"((q_atomic_goal "triple" true (x y z)))", domain, *constructors);
-    auto evaluator = kr::dl::semantics::incremental::QueryEvaluator<Ext, Kind>(*search->task, goal);
+    auto evaluator = QueryRootEvaluator<Ext, Kind>(*search->task, goal);
     auto initial_context = context_for(nodes.front().get_state());
     evaluator.initialize(initial_context);
     const auto other = make_search();

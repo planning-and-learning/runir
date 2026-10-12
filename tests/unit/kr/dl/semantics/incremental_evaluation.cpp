@@ -1,3 +1,4 @@
+#include "incremental_root_evaluators.hpp"
 #include "planning_fixtures.hpp"
 
 #include <algorithm>
@@ -40,7 +41,7 @@ static_assert(!std::default_initializable<kr::dl::semantics::incremental::Evalua
 static_assert(!std::copy_constructible<kr::dl::semantics::incremental::EvaluationGraph<Ext, tyr::GroundTag>>);
 static_assert(std::move_constructible<kr::dl::semantics::incremental::EvaluationGraph<Ext, tyr::GroundTag>>);
 static_assert(!HasPublicPreparation<kr::dl::semantics::incremental::EvaluationGraph<Ext, tyr::GroundTag>>);
-static_assert(!std::constructible_from<kr::dl::semantics::incremental::Evaluator<Ext, tyr::GroundTag, kr::dl::ConceptTag>,
+static_assert(!std::constructible_from<RootEvaluator<Ext, tyr::GroundTag, kr::dl::ConceptTag>,
                                        kr::dl::FamilyConstructorView<Ext, kr::dl::ConceptTag>>);
 
 static_assert(!std::constructible_from<kr::dl::semantics::incremental::EvaluationIndex<kr::dl::RoleTag>,
@@ -259,7 +260,7 @@ void check_incremental_evaluation()
 
     const auto check = [&]<kr::dl::CategoryTag Category>(kr::dl::FamilyConstructorView<Ext, Category> expression)
     {
-        auto evaluator = kr::dl::semantics::incremental::Evaluator<Ext, Kind, Category>(*search->task, expression);
+        auto evaluator = RootEvaluator<Ext, Kind, Category>(*search->task, expression);
         EXPECT_THROW(evaluator.update(empty_delta, workspace), std::logic_error);
         const auto snapshot = [&]
         {
@@ -744,7 +745,7 @@ void check_incremental_evaluation()
     EXPECT_EQ(fresh.evaluate(query_count_id).get(), kr::dl::semantics::evaluate<Kind>(query_count, invocation_context).get());
     const auto reject_multiple_values = [&]<kr::dl::ConceptOrRoleTag Category>(kr::dl::FamilyConstructorView<Ext, Category> expression)
     {
-        auto evaluator = kr::dl::semantics::incremental::Evaluator<Ext, Kind, Category>(*search->task, expression);
+        auto evaluator = RootEvaluator<Ext, Kind, Category>(*search->task, expression);
         evaluator.initialize(invocation_context);
         auto invalid = kr::dl::semantics::incremental::Delta<Ext> {};
         for (const auto index : { a, b })

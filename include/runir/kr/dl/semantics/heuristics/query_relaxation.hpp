@@ -1,9 +1,8 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_HEURISTICS_QUERY_RELAXATION_HPP_
 #define RUNIR_KR_DL_SEMANTICS_HEURISTICS_QUERY_RELAXATION_HPP_
 
-#include "runir/kr/dl/complement.hpp"
 #include "runir/kr/dl/query_view.hpp"
-#include "runir/kr/dl/semantics/heuristics/projection.hpp"
+#include "runir/kr/dl/translations/ygg_query.hpp"
 
 #include <algorithm>
 #include <array>
@@ -17,9 +16,10 @@ namespace runir::kr::dl::semantics::detail
 {
 
 /// Static relaxations of DL edge queries, a superset of the edges in every state: dynamic leaves are dropped, and
-/// differences and complements keep their left side. A join's conjuncts are relaxed and combined by variable
-/// elimination (bucket elimination; Dechter, "Bucket Elimination: A Unifying Framework for Reasoning", AIJ 1999),
-/// projecting each intermediate result onto the labels still needed, as in Yannakakis' semijoin programs (VLDB 1981).
+/// differences and complements keep their left side. A join's conjuncts are relaxed and joined pairwise with early
+/// projection: each intermediate result is projected onto the labels still needed, as in existential quantifier
+/// scheduling (variable elimination; cf. Dechter, "Bucket Elimination: A Unifying Framework for Reasoning", AIJ 1999,
+/// which eliminates one variable at a time instead).
 /// `Leaves` returns a static leaf's rows: leaves(query index) -> a relation view.
 template<FamilyTag Family, typename Leaves>
 class QueryRelaxation
@@ -87,13 +87,13 @@ public:
     /// state), or Rows over a subset of the requested labels, whose missing labels are unconstrained.
     struct Relaxed
     {
-        enum class Shape
+        enum class Kind
         {
             FREE,
             EMPTY,
             ROWS
         };
-        Shape kind = Shape::FREE;
+        Kind kind = Kind::FREE;
         RelationPtr rows;
     };
 
@@ -108,7 +108,7 @@ public:
 
 private:
     static Relaxed free_relaxed() { return Relaxed {}; }
-    static Relaxed empty_relaxed() { return Relaxed { Relaxed::Shape::EMPTY, RelationPtr() }; }
+    static Relaxed empty_relaxed() { return Relaxed { Relaxed::Kind::EMPTY, RelationPtr() }; }
     static bool contains_label(std::span<const Label> labels, Label label) { return std::ranges::find(labels, label) != labels.end(); }
     /// Projects onto the relation's labels that occur in `needed`; with none left, only its emptiness remains.
     Relaxed restrict_rows(RelationPtr relation, std::span<const Label> needed)
@@ -120,8 +120,8 @@ private:
         if (labels.empty())
             return relation->empty() ? empty_relaxed() : free_relaxed();
         if (labels.size() == relation->arity())
-            return Relaxed { Relaxed::Shape::ROWS, std::move(relation) };
-        return Relaxed { Relaxed::Shape::ROWS, project(*relation, labels) };
+            return Relaxed { Relaxed::Kind::ROWS, std::move(relation) };
+        return Relaxed { Relaxed::Kind::ROWS, project(*relation, labels) };
     }
     /// Variable elimination over relaxed conjuncts: Free conjuncts are dropped,
     /// conjuncts sharing a label are joined first, and every result keeps only the labels in `needed` or in
@@ -132,20 +132,20 @@ private:
         {
             std::vector<Label> labels(needed.begin(), needed.end());
             for (size_t p = 0; p < parts.size(); ++p)
-                if (p != a && p != b && parts[p].kind == Relaxed::Shape::ROWS)
+                if (p != a && p != b && parts[p].kind == Relaxed::Kind::ROWS)
                     for (const auto& column : parts[p].rows->columns())
                         labels.push_back(column.label);
             return labels;
         };
         for (size_t i = 0; i < parts.size(); ++i)
-            if (parts[i].kind == Relaxed::Shape::ROWS)
+            if (parts[i].kind == Relaxed::Kind::ROWS)
                 parts[i] = restrict_rows(std::move(parts[i].rows), kept(i, i));
         while (true)
         {
             if (std::ranges::any_of(parts, [](const Relaxed& part)
-                                    { return part.kind == Relaxed::Shape::EMPTY || (part.kind == Relaxed::Shape::ROWS && part.rows->empty()); }))
+                                    { return part.kind == Relaxed::Kind::EMPTY || (part.kind == Relaxed::Kind::ROWS && part.rows->empty()); }))
                 return empty_relaxed();
-            std::erase_if(parts, [](const Relaxed& part) { return part.kind == Relaxed::Shape::FREE; });
+            std::erase_if(parts, [](const Relaxed& part) { return part.kind == Relaxed::Kind::FREE; });
             if (parts.empty())
                 return free_relaxed();
             if (parts.size() == 1)
@@ -218,11 +218,11 @@ private:
         {
             auto lhs = relax(concrete.get_lhs(), needed);
             auto rhs = relax(concrete.get_rhs(), needed);
-            if (lhs.kind == Relaxed::Shape::EMPTY)
+            if (lhs.kind == Relaxed::Kind::EMPTY)
                 return rhs;
-            if (rhs.kind == Relaxed::Shape::EMPTY)
+            if (rhs.kind == Relaxed::Kind::EMPTY)
                 return lhs;
-            if (lhs.kind == Relaxed::Shape::FREE || rhs.kind == Relaxed::Shape::FREE)
+            if (lhs.kind == Relaxed::Kind::FREE || rhs.kind == Relaxed::Kind::FREE)
                 return free_relaxed();
             // Only labels constrained on both sides stay constrained.
             std::vector<Label> common;
@@ -231,13 +231,12 @@ private:
                     common.push_back(column.label);
             if (common.empty())
                 return free_relaxed();
-            auto left = restrict_rows(std::move(lhs.rows), common);
-            auto right = restrict_rows(std::move(rhs.rows), common);
-            const auto aligned = project(*right.rows, common);
-            const auto ordered = project(*left.rows, common);
-            auto out = make(ordered->columns().span());
-            ygg::database::union_(*ordered, *aligned, *out);
-            return Relaxed { Relaxed::Shape::ROWS, std::move(out) };
+            // `common` follows the lhs column order, so only the rhs needs reordering.
+            const auto left = restrict_rows(std::move(lhs.rows), common);
+            const auto right = project(*restrict_rows(std::move(rhs.rows), common).rows, common);
+            auto out = make(left.rows->columns().span());
+            ygg::database::union_(*left.rows, *right, *out);
+            return Relaxed { Relaxed::Kind::ROWS, std::move(out) };
         }
         else if constexpr (std::same_as<Tag, QueryDifferenceTag>)
             return relax(concrete.get_lhs(), needed);
@@ -254,7 +253,7 @@ private:
                     child_needed.push_back(child_schema[i].label);
             }
             auto child = relax(concrete.get_arg(), child_needed);
-            if (child.kind != Relaxed::Shape::ROWS)
+            if (child.kind != Relaxed::Kind::ROWS)
                 return child;
             std::vector<ygg::database::ColumnLayout> layout;
             for (const auto& column : child.rows->columns())
@@ -266,7 +265,7 @@ private:
             auto out = make(layout);
             for (size_t i = 0; i < child.rows->size(); ++i)
                 out->insert(child.rows->row(i));
-            return Relaxed { Relaxed::Shape::ROWS, std::move(out) };
+            return Relaxed { Relaxed::Kind::ROWS, std::move(out) };
         }
         else if constexpr (std::same_as<Tag, QuerySelectEqualTag> || std::same_as<Tag, QuerySelectValueTag>)
         {
@@ -280,7 +279,7 @@ private:
             else
                 child_needed.push_back(Label(data.column.get_value()));
             auto child = relax(concrete.get_arg(), child_needed);
-            if (child.kind != Relaxed::Shape::ROWS)
+            if (child.kind != Relaxed::Kind::ROWS)
                 return child;
             const auto columns = child.rows->columns().span();
             auto out = make(columns);
@@ -308,83 +307,13 @@ private:
             if (!query.is_static())
                 return free_relaxed();
             // A complement is the universe minus its argument; like a difference it keeps its left side, Free.
-            if constexpr (std::same_as<Tag, QueryRoleTag>)
-            {
-                if (ygg::visit([]<typename R>(R) { return dl::detail::is_complement_role_view_v<R>; }, concrete.get_arg().get_variant()))
-                    return free_relaxed();
-            }
-            else if constexpr (std::same_as<Tag, QueryConceptTag>)
-            {
-                if (ygg::visit([]<typename R>(R) { return dl::detail::is_negation_concept_view_v<R>; }, concrete.get_arg().get_variant()))
-                    return free_relaxed();
-            }
+            if (dl::detail::is_complement_leaf(query))
+                return free_relaxed();
             return restrict_rows(full(query), needed);
         }
     }
 
 };
-
-using Object = ygg::Index<tyr::formalism::Object>;
-
-inline Object read_vertex_object(std::span<const std::byte> row, std::span<const ygg::database::ColumnLayout> layout, size_t position)
-{
-    return ygg::database::detail::read_column<QueryValues, Object>(row, layout, position);
-}
-
-/// Builds the abstract graph of every column whose relaxed projection constrains both of its endpoints.
-template<FamilyTag Family, typename C, typename Leaves>
-std::vector<heuristics::ProjectionColumn> relaxed_columns(ygg::View<ygg::Index<Query<Family>>, C> edges,
-                                                     std::span<const ygg::database::ColumnLayout> edge_columns,
-                                                     size_t k,
-                                                     ygg::uint_t num_objects,
-                                                     QueryRelaxation<Family, Leaves>& relaxation)
-{
-    auto columns = std::vector<heuristics::ProjectionColumn>();
-    for (size_t i = 0; i < k; ++i)
-    {
-        const auto from = edge_columns[i].label;
-        const auto to = edge_columns[k + i].label;
-        using Relaxed = typename QueryRelaxation<Family, Leaves>::Relaxed;
-        const auto pair = std::array<ygg::Index<ygg::database::Column>, 2> { from, to };
-        const auto relaxed = relaxation.relax(edges, pair);
-        // Free or a single endpoint: no information. Empty: no edges in any state, so only targets are finite.
-        if (relaxed.kind == Relaxed::Shape::FREE || (relaxed.kind == Relaxed::Shape::ROWS && relaxed.rows->arity() != 2))
-            continue;
-        auto& column = columns.emplace_back();
-        column.position = i;
-        column.offsets.assign(num_objects + 1, 0);
-        if (relaxed.kind == Relaxed::Shape::EMPTY)
-            continue;
-        const auto& rows = *relaxed.rows;
-        const auto layout = rows.columns().span();
-        const auto from_position = size_t(rows.column_index(from));
-        const auto to_position = size_t(rows.column_index(to));
-        for (size_t r = 0; r < rows.size(); ++r)
-            ++column.offsets[ygg::uint_t(read_vertex_object(rows.row(r), layout, to_position)) + 1];
-        for (size_t o = 0; o < num_objects; ++o)
-            column.offsets[o + 1] += column.offsets[o];
-        column.preds.resize(column.offsets.back());
-        auto fill = std::vector<ygg::uint_t>(column.offsets.begin(), column.offsets.end() - 1);
-        for (size_t r = 0; r < rows.size(); ++r)
-        {
-            const auto row = rows.row(r);
-            column.preds[fill[ygg::uint_t(read_vertex_object(row, layout, to_position))]++] = ygg::uint_t(read_vertex_object(row, layout, from_position));
-        }
-    }
-    return columns;
-}
-
-/// The projection heuristic of an edge query: per vertex column, the abstraction of a static relaxation.
-template<FamilyTag Family, typename C, typename Leaves>
-heuristics::ProjectionHeuristic make_projection_heuristic(ygg::View<ygg::Index<Query<Family>>, C> edges,
-                                                          const ygg::database::DistancePlan<QueryValues>& plan,
-                                                          ygg::uint_t num_objects,
-                                                          Leaves leaves)
-{
-    auto relaxation = QueryRelaxation<Family, Leaves>(std::move(leaves));
-    auto columns = relaxed_columns<Family>(edges, plan.edge_columns().span(), plan.arity(), num_objects, relaxation);
-    return heuristics::ProjectionHeuristic(std::move(columns), plan.source_columns().span(), plan.target_columns().span(), num_objects);
-}
 
 }  // namespace runir::kr::dl::semantics::detail
 

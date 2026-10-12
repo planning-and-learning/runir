@@ -2,8 +2,10 @@
 #define RUNIR_SEMANTICS_EVALUATION_WORKSPACE_HPP_
 
 #include <algorithm>
+#include <concepts>
 #include <deque>
 #include <limits>
+#include <memory>
 #include <optional>
 #include <span>
 #include "runir/kr/dl/semantics/distance/feature.hpp"
@@ -20,15 +22,21 @@
 namespace runir::kr::dl::semantics
 {
 
-using FullDistanceFeature = DistanceFeature<ygg::database::MinDistance<QueryValues, heuristics::ProjectionHeuristic>, heuristics::ProjectionHeuristic>;
+/// One n_distance in full evaluation: its edges and its heuristic, built at first use.
+struct FullDistanceFeature
+{
+    DistanceFeature<ygg::database::MinDistance<QueryValues, heuristics::ProjectionHeuristic>> edges;
+    heuristics::ProjectionHeuristic heuristic;
+};
 
 class EvaluationWorkspace
 {
 private:
     struct KeyedDistanceFeature
     {
-        const void* formalism = nullptr;
+        std::weak_ptr<const tyr::formalism::planning::Repository> formalism;  ///< Its control block identifies it while kept.
         const void* constructors = nullptr;
+        size_t constructors_index = 0;
         ygg::uint_t constructor = 0;
         FullDistanceFeature feature;
     };
@@ -48,17 +56,24 @@ public:
         return m_generic_join_workspaces.emplace_back(plan);
     }
     auto& get_database_workspace() noexcept { return m_database_workspace; }
-    // ponytail: linear scan over distance features; key by constructor index if programs carry many.
-    FullDistanceFeature& get_distance_feature(const void* formalism, const void* constructors, ygg::uint_t constructor)
+    /// The feature of a distance constructor of a constructor repository over a formalism repository, made by
+    /// make() at first use. References stay valid while this workspace lives.
+    // ponytail: linear scan, and entries of dead repositories are kept; a constructor repository freed and replaced at
+    // the same address with the same factory index over the same formalism would alias. Key by a repository-owned
+    // cache if that happens.
+    template<typename Repository, std::invocable Make>
+    FullDistanceFeature& get_distance_feature(const std::shared_ptr<tyr::formalism::planning::Repository>& formalism,
+                                              const Repository& constructors,
+                                              ygg::uint_t constructor,
+                                              Make&& make)
     {
+        const auto same_formalism = [&](const KeyedDistanceFeature& entry)
+        { return !entry.formalism.owner_before(formalism) && !formalism.owner_before(entry.formalism); };
         for (auto& entry : m_distance_features)
-            if (entry.formalism == formalism && entry.constructors == constructors && entry.constructor == constructor)
+            if (entry.constructors == &constructors && entry.constructors_index == constructors.get_index() && entry.constructor == constructor
+                && same_formalism(entry))
                 return entry.feature;
-        auto& entry = m_distance_features.emplace_back();
-        entry.formalism = formalism;
-        entry.constructors = constructors;
-        entry.constructor = constructor;
-        return entry.feature;
+        return m_distance_features.emplace_back(KeyedDistanceFeature { formalism, &constructors, constructors.get_index(), constructor, make() }).feature;
     }
 };
 

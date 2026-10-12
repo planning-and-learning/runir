@@ -39,6 +39,9 @@ class EvaluationGraph;
 
 namespace detail
 {
+template<FamilyTag Family, tyr::TaskKind Kind>
+class GraphBuilder;
+
 template<FamilyTag Family, tyr::TaskKind Kind, CategoryTag Category>
 class FeatureNode;
 

@@ -51,67 +51,54 @@ alone does not transfer the referenced storage.
 
 ## Distance evaluation
 
-`n_distance` is evaluated by a multi-source breadth-first search that stops at the
-first level reaching a target. Its edges are never materialized: each level
-evaluates the edge query restricted to the current frontier (`BoundQueryEvaluator`
-in `semantics/distance_evaluation.hpp`). Bound columns are passed down through
-unions, differences, projections, renames, and selections; joins evaluate the side
-with more bound columns first and bind the other side to their shared columns.
-Concept and role leaves become membership tests and successor iteration in their
-bitsets, so identities and complements never become query rows. Other leaves are
-evaluated fully and filtered by the bound columns. Work and memory therefore scale
-with the explored region rather than with the size of the edge relation. The value
-equals `ygg::database::min_distance` over the fully evaluated arguments.
+`n_distance` is the minimum distance from any source to any target over the edges, or
+`uint_t`'s maximum if no target is reachable. Its value equals
+`ygg::database::min_distance` over the fully evaluated arguments.
 
-For k > 1 query edges the search is a forward A*. Each vertex column i has a static
-abstraction: the edge query relaxed until it is static (dynamic leaves are dropped;
-differences and complements keep their left side) and projected onto columns (i, k + i). Every relaxation is a superset of the real
-edges in every state, so the backward distance table from the projected targets is an
-admissible and consistent heuristic, and the maximum over columns is too. The
-abstraction is built once per task and feature; its table is recomputed only when the
-projected targets change. Columns whose table is zero everywhere (e.g. targets that
-allow any value) are ignored. A source with an infinite estimate has distance ∞
-without search. k = 1 and role edges keep the blind breadth-first search.
+**Role edges** are a relation. Full evaluation searches it with
+`ygg::database::MinDistance`. Incremental evaluation maintains per-source distances over
+the materialized edges (`ygg::database::incremental::SourceMinDistance`, Ramalingam & Reps).
 
-The relaxation eliminates variables existentially (bucket elimination): the conjuncts
-of a join are relaxed, Free ones are dropped, and conjuncts sharing a label are joined
-first, each result keeping only the labels needed above or by another conjunct. Static
-leaves over other vertex columns therefore still constrain a column (e.g. a cell behind
-a pushed object).
+**Query edges** are never materialized:
+- `translations/ygg_query.hpp` translates the edge query into a yggdrasil query whose
+  input slots are its leaves (each distinct leaf is one slot). In a join, a complemented
+  leaf ¬R whose columns the other conjuncts cover becomes an antijoin, P ⋈ ¬R = P ▷ R, so
+  identities and complements never become rows. The same translator serves the query
+  optimizer, without this rewrite.
+- yggdrasil evaluates the edges on demand with some columns bound: a vertex's successors,
+  its predecessors, or one edge. Full evaluation uses `ygg::database::MinDistance`, which
+  computes from the current state alone. Incremental evaluation uses
+  `ygg::database::incremental::MinDistance`, which keeps its search tree across states.
+  Their headers describe the method: A* with a backward frontier grown under Pohl's
+  cardinality rule, and GAA*/MPGAA* learning, path reuse and repair while the targets
+  stay the same.
+- runir supplies the slots' relations in the current state. In incremental evaluation they
+  are nodes of the evaluation graph, and only slots whose node changed are re-read.
 
-Searches reuse a path tree across evaluations (Multipath Generalized Adaptive A*,
-Hernández, Asín & Baier 2015). Per distance feature it stores, for touched vertices,
-a learned distance to the targets (d − g after each search, an admissible and
-consistent estimate) and a pointer to the successor on a found path. A search stops
-at a stored vertex whose pointer chain still reaches a target with learned distances
-dropping by one per edge; each edge is checked against the current state. The tree is
-reset when the targets change. Between evaluations the edge query's dynamic leaves
-are compared with a snapshot: removed edges keep learned distances consistent, and
-added edges (a delta evaluation of the edge query with the changed leaf restricted to
-its new rows) lower learned distances by a Dijkstra-like repair over stored
-predecessors (Generalized Adaptive A*). Changes the delta evaluation cannot cover
-(leaves below generic joins, rows leaving the right side of a difference) reset the
-tree. Set RUNIR_DISTANCE_PROFILE to print search counters at exit and
-RUNIR_DISTANCE_LOG=<file> for one line per guided evaluation.
+**Heuristic.** For k > 1 query edges A* uses a pattern database heuristic
+(`semantics/heuristics/projection.hpp`): h(v) = maxᵢ hᵢ(v[i]) over one database per
+vertex column i.
+- Each database is built from a static relaxation of the edge query
+  (`semantics/heuristics/query_relaxation.hpp`), projected onto (i, k + i):
+  - dynamic leaves are dropped;
+  - differences and complements keep their left side;
+  - a join's conjuncts are joined pairwise with early projection.
+- The relaxation is a superset of the projected edges in every state, so h is consistent in
+  every state.
+- hᵢ is a breadth-first distance table to the projected targets, recomputed only when they
+  change.
+- k = 1 and role edges search blindly (h = 0).
 
-The search is bidirectional: a backward breadth-first search from the targets, kept in
-the tree across evaluations, advances one level whenever its frontier is not larger
-than the forward open list (Pohl's cardinality comparison). Its vertices get exact
-distances and pointers. If it runs dry, its closure is complete and every source
-outside it is unreachable; added edges stop it and invalidate that closure.
+## Incremental evaluation
 
-The edge query is compiled once per set of bound columns into a union of conjunctive
-branches over variable slots, ordered by estimated fanout from leaf sizes, and run
-without intermediate relations: concept leaves are bit tests, roles successor rows or
-cached predecessor lists of static roles, relations hash indexes on their bound
-columns, and dynamic atomic leaves are read from the state's atoms. Differences and
-generic joins fall back to the frontier-bound evaluation. Source queries use the same
-pipeline.
-
-Unchanged inputs are not re-evaluated. Targets and dynamic leaves are compared through
-the bits of their dynamic inputs; in incremental evaluation, the on-demand node also
-records which predicates and registers its state deltas changed and reuses the
-fingerprints of inputs whose dependencies they did not touch.
+`incremental::EvaluationGraph` interns the features' expressions into nodes in topological
+order. `incremental::IncrementalEvaluation` schedules them over a sequence of states:
+- `enter(context, delta, workspace)` starts the state reached by `delta`, and `enter(context)`
+  starts an unrelated one. Both return a `StateEvaluation` handle, which evaluates nodes on
+  demand.
+- A demanded node is updated from the delta if it was evaluated in the previous state and its
+  children hold exact deltas. Otherwise it is initialized from the state.
+- `DeltaEvaluationPolicy` computes the deltas between successive source and target states.
 
 ## Storage and lifetime
 

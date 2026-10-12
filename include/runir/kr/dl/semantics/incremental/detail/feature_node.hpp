@@ -30,7 +30,7 @@ template<FamilyTag Family, tyr::TaskKind Kind, CategoryTag Category>
 class FeatureNode
 {
 public:
-    FeatureNode(FamilyConstructorView<Family, Category> expression, EvaluationGraph<Family, Kind>& graph);
+    FeatureNode(FamilyConstructorView<Family, Category> expression, GraphBuilder<Family, Kind>& graph);
     FamilyConstructorView<Family, Category> get_expression() const noexcept { return m_expression; }
     template<StateEvaluationContextConcept<Family, Kind> Context>
     void initialize(EvaluationGraph<Family, Kind>& graph, Context& context);
@@ -102,8 +102,8 @@ private:
                                             ScalarBinaryEvaluator<Family, Kind, Category, NumericalGtTag, NumericalTag>,
                                             ScalarBinaryEvaluator<Family, Kind, Category, NumericalGeTag, NumericalTag>>;
     using NumericalOperations = ygg::TypeList<CountEvaluator<Family, Kind>,
-                                              DistanceFeatureEvaluator<Family, Kind>,
-                                              GuidedDistanceEvaluator<Family, Kind>,
+                                              RoleEdgeDistanceEvaluator<Family, Kind>,
+                                              QueryEdgeDistanceEvaluator<Family, Kind>,
                                               ScalarBinaryEvaluator<Family, Kind, Category, AddTag, NumericalTag>,
                                               ScalarBinaryEvaluator<Family, Kind, Category, SubTag, NumericalTag>,
                                               ScalarBinaryEvaluator<Family, Kind, Category, MulTag, NumericalTag>,
@@ -129,13 +129,13 @@ private:
     Evaluators m_evaluator;
 
     template<ConceptOrRoleTag Projected, typename C>
-    Evaluators prepare(ygg::View<ygg::Index<QueryProjection<Family, Projected>>, C> expression, EvaluationGraph<Family, Kind>& graph)
+    Evaluators prepare(ygg::View<ygg::Index<QueryProjection<Family, Projected>>, C> expression, GraphBuilder<Family, Kind>& graph)
     {
         return ProjectionEvaluator<Family, Kind, Category>(graph.prepare(expression.get_arg(), m_dependencies), expression.get_data().plan);
     }
 
     template<template<typename, typename> typename Expression, typename Tag, typename C>
-    Evaluators prepare(ygg::View<ygg::Index<Expression<Family, Tag>>, C> expression, EvaluationGraph<Family, Kind>& graph)
+    Evaluators prepare(ygg::View<ygg::Index<Expression<Family, Tag>>, C> expression, GraphBuilder<Family, Kind>& graph)
     {
         if constexpr (std::same_as<Tag, AtomicStateTag<tyr::formalism::FluentTag>>)
             return AtomicEvaluator<Family, Kind, Category, tyr::formalism::FluentTag>(expression.get_predicate(), expression.get_polarity());
@@ -148,12 +148,10 @@ private:
         else if constexpr (std::same_as<Tag, DistanceTag>)
         {
             // Query edges can range over pair vertices; maintaining them would materialize every edge.
-            const auto query_edges = ygg::visit([]<typename Edges>(Edges)
-                                                { return !std::same_as<Edges, ygg::View<ygg::Index<Constructor<Family, RoleTag>>, C>>; },
-                                                expression.get_mid());
-            if (query_edges)
-                return GuidedDistanceEvaluator<Family, Kind>(expression, graph, m_dependencies);
-            return DistanceFeatureEvaluator<Family, Kind>(expression, graph, m_dependencies);
+            const auto role_edges = ygg::visit([]<typename Edges>(Edges) { return semantics::detail::is_role_edges_v<Edges, Family, C>; }, expression.get_mid());
+            if (role_edges)
+                return RoleEdgeDistanceEvaluator<Family, Kind>(expression, graph, m_dependencies);
+            return QueryEdgeDistanceEvaluator<Family, Kind>(expression, graph, m_dependencies);
         }
         else if constexpr (std::same_as<Tag, CountTag>)
             return ygg::visit([&](auto child) -> Evaluators { return CountEvaluator<Family, Kind>(graph.prepare(child, m_dependencies)); },
@@ -207,7 +205,7 @@ private:
 };
 
 template<FamilyTag Family, tyr::TaskKind Kind, CategoryTag Category>
-FeatureNode<Family, Kind, Category>::FeatureNode(FamilyConstructorView<Family, Category> expression, EvaluationGraph<Family, Kind>& graph) :
+FeatureNode<Family, Kind, Category>::FeatureNode(FamilyConstructorView<Family, Category> expression, GraphBuilder<Family, Kind>& graph) :
     m_expression(expression),
     m_evaluator(expression.is_static() ? Evaluators(StaticEvaluator<Family, Kind, Category>(expression)) :
                                          ygg::visit([&](auto concrete) { return prepare(concrete, graph); }, expression.get_variant()))
