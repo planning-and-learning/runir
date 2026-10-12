@@ -17,60 +17,25 @@ namespace runir::kr::dl::semantics::incremental
 
 namespace detail
 {
+/// Appends the atoms of kind F true in `lhs` but not in `rhs`.
+template<tyr::formalism::FactKind F, typename Lhs, typename Rhs, typename Atoms>
+void append_only_in(const Lhs& lhs, const Rhs& rhs, Atoms& atoms)
+{
+    for (const auto atom : lhs.template get_atoms_view<F>())
+        if (!rhs.test(atom))
+            atoms.push_back(atom);
+}
+
 template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> Source, tyr::planning::StateViewConcept<Kind> Target, typename Changes>
 void assign_atom_delta(const Source& source, const Target& target, Changes& delta)
 {
     if (&source.get_task() != &target.get_task())
         throw std::invalid_argument("Feature delta requires states from the same task.");
     delta.clear();
-    if constexpr (std::same_as<Kind, tyr::LiftedTag>
-                  && requires {
-                         source.get_state_builder().template get_atom_storage<tyr::formalism::FluentTag>().indices;
-                         target.get_state_builder().template get_atom_storage<tyr::formalism::DerivedTag>().indices;
-                     })
-    {
-        // Lifted states store fluent facts and derived atoms as bitsets over ground atoms: compare the bits and
-        // decode only the atoms that changed.
-        const auto& repository = *target.get_formalism_repository();
-        const auto changed_bits = [](const auto& lhs, const auto& rhs, auto&& on_only_lhs)
-        {
-            for (auto bit = lhs.find_first(); bit != lhs.npos; bit = lhs.find_next(bit))
-                if (bit >= rhs.size() || !rhs.test(bit))
-                    on_only_lhs(bit);
-        };
-        const auto fluent_atom = [&](size_t bit)
-        {
-            const auto fact = ygg::Data<tyr::formalism::planning::FDRFact<tyr::formalism::FluentTag>> {
-                ygg::Index<tyr::formalism::planning::FDRVariable<tyr::formalism::FluentTag>> { static_cast<ygg::uint_t>(bit) },
-                tyr::formalism::planning::FDRValue { 1 }
-            };
-            return ygg::make_view(*ygg::make_view(fact, repository).get_atom_index(), repository);
-        };
-        const auto derived_atom = [&](size_t bit)
-        { return ygg::make_view(ygg::Index<tyr::formalism::planning::Atom<tyr::GroundTag, tyr::formalism::DerivedTag>>(static_cast<ygg::uint_t>(bit)), repository); };
-        const auto& source_fluent = source.get_state_builder().template get_atom_storage<tyr::formalism::FluentTag>().indices;
-        const auto& target_fluent = target.get_state_builder().template get_atom_storage<tyr::formalism::FluentTag>().indices;
-        changed_bits(source_fluent, target_fluent, [&](size_t bit) { delta.removed.fluent_atoms.push_back(fluent_atom(bit)); });
-        changed_bits(target_fluent, source_fluent, [&](size_t bit) { delta.added.fluent_atoms.push_back(fluent_atom(bit)); });
-        const auto& source_derived = source.get_state_builder().template get_atom_storage<tyr::formalism::DerivedTag>().indices;
-        const auto& target_derived = target.get_state_builder().template get_atom_storage<tyr::formalism::DerivedTag>().indices;
-        changed_bits(source_derived, target_derived, [&](size_t bit) { delta.removed.derived_atoms.push_back(derived_atom(bit)); });
-        changed_bits(target_derived, source_derived, [&](size_t bit) { delta.added.derived_atoms.push_back(derived_atom(bit)); });
-        return;
-    }
-    // Other states: compare decoded atoms.
-    for (const auto atom : source.template get_atoms_view<tyr::formalism::FluentTag>())
-        if (!target.test(atom))
-            delta.removed.fluent_atoms.push_back(atom);
-    for (const auto atom : target.template get_atoms_view<tyr::formalism::FluentTag>())
-        if (!source.test(atom))
-            delta.added.fluent_atoms.push_back(atom);
-    for (const auto atom : source.template get_atoms_view<tyr::formalism::DerivedTag>())
-        if (!target.test(atom))
-            delta.removed.derived_atoms.push_back(atom);
-    for (const auto atom : target.template get_atoms_view<tyr::formalism::DerivedTag>())
-        if (!source.test(atom))
-            delta.added.derived_atoms.push_back(atom);
+    append_only_in<tyr::formalism::FluentTag>(source, target, delta.removed.fluent_atoms);
+    append_only_in<tyr::formalism::FluentTag>(target, source, delta.added.fluent_atoms);
+    append_only_in<tyr::formalism::DerivedTag>(source, target, delta.removed.derived_atoms);
+    append_only_in<tyr::formalism::DerivedTag>(target, source, delta.added.derived_atoms);
 }
 }  // namespace detail
 
