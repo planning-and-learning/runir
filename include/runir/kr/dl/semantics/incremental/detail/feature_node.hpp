@@ -103,6 +103,7 @@ private:
                                             ScalarBinaryEvaluator<Family, Kind, Category, NumericalGeTag, NumericalTag>>;
     using NumericalOperations = ygg::TypeList<CountEvaluator<Family, Kind>,
                                               DistanceFeatureEvaluator<Family, Kind>,
+                                              GuidedDistanceEvaluator<Family, Kind>,
                                               ScalarBinaryEvaluator<Family, Kind, Category, AddTag, NumericalTag>,
                                               ScalarBinaryEvaluator<Family, Kind, Category, SubTag, NumericalTag>,
                                               ScalarBinaryEvaluator<Family, Kind, Category, MulTag, NumericalTag>,
@@ -145,7 +146,15 @@ private:
         else if constexpr (std::same_as<Tag, ArgumentTag<Category>>)
             return ArgumentEvaluator<Family, Kind, Category>(expression.get_argument().get_identifier());
         else if constexpr (std::same_as<Tag, DistanceTag>)
+        {
+            // Query edges can range over pair vertices; maintaining them would materialize every edge.
+            const auto query_edges = ygg::visit([]<typename Edges>(Edges)
+                                                { return !std::same_as<Edges, ygg::View<ygg::Index<Constructor<Family, RoleTag>>, C>>; },
+                                                expression.get_mid());
+            if (query_edges)
+                return GuidedDistanceEvaluator<Family, Kind>(expression, graph, m_dependencies);
             return DistanceFeatureEvaluator<Family, Kind>(expression, graph, m_dependencies);
+        }
         else if constexpr (std::same_as<Tag, CountTag>)
             return ygg::visit([&](auto child) -> Evaluators { return CountEvaluator<Family, Kind>(graph.prepare(child, m_dependencies)); },
                               expression.get_arg());

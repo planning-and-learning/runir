@@ -95,7 +95,7 @@ constexpr bool evaluation_policies_accept_borrowed_states()
     return kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::FullEvaluationPolicy<Family, Kind>, Family, Kind>
            && kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::DeltaEvaluationPolicy<Family, Kind>, Family, Kind>
            && kr::dl::semantics::EvaluationContextConcept<Inputs, Family, Kind>
-           && kr::dl::semantics::EvaluationContextConcept<kr::dl::semantics::DeltaEvaluationContext<Family, Kind, Inputs>, Family, Kind>;
+           && kr::dl::semantics::EvaluationContextConcept<kr::dl::semantics::incremental::StateEvaluation<Family, Kind, Inputs>, Family, Kind>;
 }
 static_assert(evaluation_policies_accept_borrowed_states<kr::BaseFamilyTag, tyr::GroundTag>());
 static_assert(evaluation_policies_accept_borrowed_states<kr::BaseFamilyTag, tyr::LiftedTag>());

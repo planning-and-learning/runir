@@ -335,8 +335,7 @@ void check_query_graph()
             EXPECT_TRUE(storage.get_caches().get_queries(true).empty());
             EXPECT_TRUE(storage.get_denotation_repository(true).get_relation_repository().empty());
         }
-        expect_empty_delta(evaluator);
-        EXPECT_EQ(evaluator.get_delta().memory_usage(), ygg::database::incremental::Delta<QueryValues>(query.get_schema().span()).memory_usage());
+        EXPECT_THROW(evaluator.get_delta(), std::logic_error);  // Initialized, not updated from a delta.
         compare_full(nodes.front().get_state());
         for (size_t i = 0; i < deltas.size(); ++i)
             update(deltas[i], nodes[i + 1].get_state());
@@ -357,7 +356,7 @@ void check_query_graph()
         expect_unpublished();
         EXPECT_TRUE(storage.get_caches().get_queries(true).empty());
         EXPECT_TRUE(storage.get_denotation_repository(true).get_relation_repository().empty());
-        expect_empty_delta(evaluator);
+        EXPECT_THROW(evaluator.get_delta(), std::logic_error);  // Initialized, not updated from a delta.
         compare_full(final_context.get_state());
     }
 

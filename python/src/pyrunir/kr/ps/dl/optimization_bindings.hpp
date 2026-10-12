@@ -6,6 +6,7 @@
 #include <runir/kr/dl/semantics/ext/evaluation.hpp>
 #include <runir/kr/ps/dl/optimization.hpp>
 #include <vector>
+#include <yggdrasil/python/diagnostics.hpp>
 
 namespace runir::kr::python
 {
@@ -34,12 +35,22 @@ void bind_ps_optimize(nanobind::class_<View>& cls)
         .def(
             "collect_query_statistics",
             [](const View& view, const std::vector<GroundContext*>& contexts)
-            { return runir::kr::ps::dl::collect_query_statistics<tyr::GroundTag>(view, contexts); },
+            {
+                auto warnings = ygg::diagnostics::Warnings();
+                auto statistics = runir::kr::ps::dl::collect_query_statistics<tyr::GroundTag>(view, contexts, warnings);
+                ygg::issue_warnings(warnings);
+                return statistics;
+            },
             nb::arg("contexts"))
         .def(
             "collect_query_statistics",
             [](const View& view, const std::vector<LiftedContext*>& contexts)
-            { return runir::kr::ps::dl::collect_query_statistics<tyr::LiftedTag>(view, contexts); },
+            {
+                auto warnings = ygg::diagnostics::Warnings();
+                auto statistics = runir::kr::ps::dl::collect_query_statistics<tyr::LiftedTag>(view, contexts, warnings);
+                ygg::issue_warnings(warnings);
+                return statistics;
+            },
             nb::arg("contexts"));
 }
 

@@ -37,6 +37,13 @@ namespace runir::kr::dl::semantics
 template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context, typename C>
 auto evaluate(ygg::View<ygg::Index<Query<Family>>, C> constructor, Context& context) -> QueryDenotationView;
 
+namespace detail
+{
+/// Defined in distance_evaluation.hpp.
+template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context, typename C>
+ygg::uint_t on_demand_distance(ygg::View<ygg::Index<FamilyNumerical<Family, DistanceTag>>, C> constructor, Context& context);
+}
+
 template<tyr::TaskKind Kind, FamilyTag Family, ConceptOrRoleTag Category, StateEvaluationContextConcept<Family, Kind> Context, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<QueryProjection<Family, Category>>, C> constructor, Context& context) -> DenotationView<Category>;
 
@@ -671,14 +678,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
     }
     else if constexpr (std::same_as<Tag, DistanceTag>)
     {
-        const auto& plan = constructor.get_data().plan;
-        const auto relation = [&](auto argument, auto columns)
-        { return ygg::visit([&](auto child) { return detail::evaluate_relation<Kind>(child, columns.span(), children); }, argument); };
-        const auto sources = relation(constructor.get_lhs(), plan.source_columns());
-        const auto edges = relation(constructor.get_mid(), plan.edge_columns());
-        const auto targets = relation(constructor.get_rhs(), plan.target_columns());
-        auto distances = context.get_builder().template get_builder<ygg::database::Relation<QueryValues>>(plan.output_columns().span());
-        result_value = ygg::database::min_distance(sources, edges, targets, plan, *distances, context.get_workspace().get_distance_workspace(plan));
+        result_value = detail::on_demand_distance<Kind>(constructor, context);
     }
     else if constexpr (std::same_as<Tag, NumericalConstantTag>)
     {
@@ -720,5 +720,6 @@ auto evaluate(FamilyConstructorView<Family, Category> constructor, Context& cont
 }
 
 #include "runir/kr/dl/semantics/query_evaluation.hpp"
+#include "runir/kr/dl/semantics/distance_evaluation.hpp"
 
 #endif

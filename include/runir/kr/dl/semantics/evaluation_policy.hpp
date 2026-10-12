@@ -33,28 +33,21 @@ public:
     }
 };
 
-/// Owns borrowed input views. First demand initializes its inactive dependencies;
-/// results already read in this state remain stable as other roots are evaluated.
-template<FamilyTag Family, tyr::TaskKind Kind, StateEvaluationContextConcept<Family, Kind> Context>
-struct DeltaEvaluationContext
-{
-    incremental::EvaluationGraph<Family, Kind>& graph;
-    Context inputs;
-};
-
+/// Evaluates in the graph of a DeltaEvaluationPolicy: first demand in a state brings a node up to date; results
+/// already read in this state remain stable as other roots are evaluated.
 template<tyr::TaskKind Kind, FamilyTag Family, runir::kr::dl::CategoryTag Category, StateEvaluationContextConcept<Family, Kind> Context>
-auto evaluate(runir::kr::dl::FamilyConstructorView<Family, Category> expression, DeltaEvaluationContext<Family, Kind, Context>& context)
+auto evaluate(runir::kr::dl::FamilyConstructorView<Family, Category> expression, incremental::StateEvaluation<Family, Kind, Context>& context)
 {
-    return context.graph.evaluate(context.graph.get_index(expression), context.inputs);
+    return context.evaluate(context.graph().get_index(expression));
 }
 
 template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context>
-auto evaluate(runir::kr::dl::FamilyQueryView<Family> expression, DeltaEvaluationContext<Family, Kind, Context>& context)
+auto evaluate(runir::kr::dl::FamilyQueryView<Family> expression, incremental::StateEvaluation<Family, Kind, Context>& context)
 {
-    return ygg::make_view(context.graph.evaluate(context.graph.get_index(expression), context.inputs), *context.inputs.get_state().get_task().get_repository());
+    return ygg::make_view(context.evaluate(context.graph().get_index(expression)), *context.context().get_state().get_task().get_repository());
 }
 
-/// Independent source and target graphs retain their input snapshots and result buffers.
+/// Independent source and target evaluations retain their input snapshots and result buffers.
 /// Differences are computed between evaluations, including backward search moves;
 /// invocation changes explicitly invalidate dynamic baselines.
 template<FamilyTag Family, tyr::TaskKind Kind>
@@ -63,47 +56,44 @@ class DeltaEvaluationPolicy
     class Evaluation
     {
         const tyr::planning::Task<Kind>& m_task;
-        incremental::EvaluationGraph<Family, Kind> m_graph;
+        incremental::IncrementalEvaluation<Family, Kind> m_evaluation;
         ygg::Builder<tyr::planning::State<Kind>> m_state;
         ygg::Data<RegisterValues> m_registers;
         incremental::Delta<Family> m_delta;
-        bool m_initialized = false;
-        bool m_ready = false;
+        bool m_initialized = false;  ///< m_state holds the previously entered state.
+        bool m_ready = false;        ///< The current state is entered.
 
     public:
-        Evaluation(const tyr::planning::Task<Kind>& task, std::span<const incremental::EvaluationRoot<Family>> roots) : m_task(task), m_graph(task, roots) {}
+        Evaluation(const tyr::planning::Task<Kind>& task, std::span<const incremental::EvaluationRoot<Family>> roots) : m_task(task), m_evaluation(task, roots) {}
         void reset() noexcept { m_ready = false; }
         void invalidate() noexcept { m_initialized = m_ready = false; }
 
         template<StateEvaluationContextConcept<Family, Kind> Context>
-        auto prepare(Context& context)
+        incremental::StateEvaluation<Family, Kind, Context> prepare(Context& context)
         {
             const auto& task = m_task;
             if (&context.get_state().get_task() != &task)
                 throw std::invalid_argument("Delta evaluation requires states from its planning task.");
-            const auto& repository = *task.get_repository();
-            if (!m_ready || !m_graph.is_valid())
+            if (m_ready)
+                return m_evaluation.resume(context, m_delta, context.get_workspace().get_database_workspace());
+            auto evaluation = [&]
             {
-                const auto initialized = std::exchange(m_initialized, false) && m_graph.is_valid();
-                if (initialized)
-                {
-                    if constexpr (std::same_as<Family, ExtFamilyTag>)
-                        m_delta.template assign<Kind>(ygg::make_view(m_state, task),
-                                                      ygg::make_view(m_registers, repository),
-                                                      context.get_state(),
-                                                      context.registers());
-                    else
-                        m_delta.template assign<Kind>(ygg::make_view(m_state, task), context.get_state());
-                    m_graph.advance(m_delta, context.get_workspace().get_database_workspace());
-                }
-                else
-                    m_graph.reset();
-                m_state = context.get_state().get_state_builder();
+                if (!std::exchange(m_initialized, false))
+                    return m_evaluation.enter(context);
                 if constexpr (std::same_as<Family, ExtFamilyTag>)
-                    assign(m_registers, context.registers());
-                m_initialized = m_ready = true;
-            }
-            return DeltaEvaluationContext<Family, Kind, Context> { m_graph, context };
+                    m_delta.template assign<Kind>(ygg::make_view(m_state, task),
+                                                  ygg::make_view(m_registers, *task.get_repository()),
+                                                  context.get_state(),
+                                                  context.registers());
+                else
+                    m_delta.template assign<Kind>(ygg::make_view(m_state, task), context.get_state());
+                return m_evaluation.enter(context, m_delta, context.get_workspace().get_database_workspace());
+            }();
+            m_state = context.get_state().get_state_builder();
+            if constexpr (std::same_as<Family, ExtFamilyTag>)
+                assign(m_registers, context.registers());
+            m_initialized = m_ready = true;
+            return evaluation;
         }
     };
 

@@ -58,7 +58,7 @@ private:
              ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,
              tyr::planning::StateViewConcept<Kind> PlanningState>
-    void check_action_effects(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
+    bool effects_hold(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                               State state,
                               const tyr::planning::Node<Kind, PlanningState>& candidate) const
     {
@@ -68,8 +68,7 @@ private:
                                                                          state.get_module_state().get_arguments(),
                                                                          state.get_module_state().get_registers(),
                                                                          state.get_module_state().get_registers());
-        if (!all_compatible<Kind>(m_rule.get_effects(), transition))
-            throw std::logic_error("Action rule: offered transition violates declared effects.");
+        return all_compatible<Kind>(m_rule.get_effects(), transition);
     }
 
 public:
@@ -99,7 +98,9 @@ public:
                 tyr::formalism::planning::ObjectSpanView(row.get_data().get_all(m_objects), *planning_state.get_formalism_repository()));
             require_applicable(offered.status);
             const auto candidate = context.storage.successor(planning_state, *offered.binding);
-            check_action_effects(context, state, candidate);
+            // Effects filter the offered transitions, as for Do rules.
+            if (!effects_hold(context, state, candidate))
+                continue;
             const auto labeled = tyr::planning::LabeledNode<Kind, PlanningState> { *offered.binding, candidate };
             if (!emit(detail::planning_step(context.storage, state, labeled, rule_variant, rule.get_target(), context.task_context)))
                 return false;
@@ -129,8 +130,7 @@ public:
         const auto node = tyr::planning::Node<Kind, PlanningState>(planning_state, 0);
         const auto status = generator.check_action_binding(node, candidate.label);
         require_applicable(status);
-        check_action_effects(context, state, candidate.node);
-        return true;
+        return effects_hold(context, state, candidate.node);
     }
 };
 

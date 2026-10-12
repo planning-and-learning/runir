@@ -29,7 +29,9 @@ using Object = ygg::Index<tyr::formalism::Object>;
 using QueryValues = kr::dl::QueryValues;
 
 template<typename Index>
-concept HasGraphDelta = requires(const kr::dl::semantics::incremental::EvaluationGraph<Ext, tyr::GroundTag>& graph, Index index) { graph.get_delta(index); };
+concept HasGraphDelta = requires(const kr::dl::semantics::incremental::IncrementalEvaluation<Ext, tyr::GroundTag>& evaluation, Index index) {
+    evaluation.get_delta(index);
+};
 
 template<typename Graph>
 concept HasPublicPreparation = requires(Graph& graph, kr::dl::FamilyConstructorView<Ext, kr::dl::ConceptTag> expression) { graph.prepare(expression); };
@@ -50,11 +52,11 @@ static_assert(HasGraphDelta<kr::dl::semantics::incremental::EvaluationIndex<kr::
 static_assert(HasGraphDelta<kr::dl::semantics::incremental::QueryEvaluationIndex>);
 static_assert(!HasGraphDelta<kr::dl::semantics::incremental::EvaluationIndex<kr::dl::NumericalTag>>);
 static_assert(!HasGraphDelta<kr::dl::semantics::incremental::EvaluationIndex<kr::dl::BooleanTag>>);
-static_assert(requires(const kr::dl::semantics::incremental::EvaluationGraph<Ext, tyr::GroundTag>& graph,
+static_assert(requires(const kr::dl::semantics::incremental::IncrementalEvaluation<Ext, tyr::GroundTag>& evaluation,
                        kr::dl::semantics::incremental::EvaluationIndex<kr::dl::ConceptTag> concept_index,
                        kr::dl::semantics::incremental::EvaluationIndex<kr::dl::RoleTag> role_index) {
-    { graph.get_result(concept_index) } -> std::same_as<kr::dl::semantics::BorrowedDenotationView<kr::dl::ConceptTag>>;
-    { graph.get_result(role_index) } -> std::same_as<kr::dl::semantics::BorrowedDenotationView<kr::dl::RoleTag>>;
+    { evaluation.get_result(concept_index) } -> std::same_as<kr::dl::semantics::BorrowedDenotationView<kr::dl::ConceptTag>>;
+    { evaluation.get_result(role_index) } -> std::same_as<kr::dl::semantics::BorrowedDenotationView<kr::dl::RoleTag>>;
 });
 
 template<kr::dl::ConceptOrRoleTag Category>
@@ -123,29 +125,30 @@ void check_planning_graph(tyr::planning::StateView<Kind> source, tyr::planning::
             auto count_data = ygg::Data<kr::dl::Numerical<Family, kr::dl::CountTag>>(query.get_index());
             auto count_wrapper = ygg::Data<kr::dl::Constructor<Family, kr::dl::NumericalTag>>(kr::dl::insert(*constructors, count_data).first.get_index());
             const auto count = kr::dl::insert(*constructors, count_wrapper).first;
-            auto graph = kr::dl::semantics::incremental::EvaluationGraph<Family, Kind>(task, { count });
-            const auto concept_id = graph.get_index(concept_);
-            const auto count_id = graph.get_index(count);
+            auto evaluation = kr::dl::semantics::incremental::IncrementalEvaluation<Family, Kind>(task, { count });
+            const auto concept_id = evaluation.graph().get_index(concept_);
+            const auto count_id = evaluation.graph().get_index(count);
             const auto compare = [&](auto state)
             {
                 storage.reset_dynamic();
                 auto context = kr::dl::semantics::StateEvaluationContext<Family, Kind>(state, builder, storage);
-                EXPECT_EQ(elements<kr::dl::ConceptTag>(graph.get_result(concept_id)),
+                EXPECT_EQ(elements<kr::dl::ConceptTag>(evaluation.get_result(concept_id)),
                           elements<kr::dl::ConceptTag>(kr::dl::semantics::evaluate<Kind>(concept_, context)));
-                EXPECT_EQ(graph.get_result(count_id).get(), kr::dl::semantics::evaluate<Kind>(count, context).get());
+                EXPECT_EQ(evaluation.get_result(count_id).get(), kr::dl::semantics::evaluate<Kind>(count, context).get());
             };
             storage.reset_all();
             auto context = kr::dl::semantics::StateEvaluationContext<Family, Kind>(source, builder, storage);
-            graph.initialize(context);
+            auto& workspace = builder.get_workspace().get_database_workspace();
+            evaluation.enter(context).evaluate(count_id);
             compare(source);
-            graph.update(delta, builder.get_workspace().get_database_workspace());
+            evaluation.enter(delta, workspace).evaluate(count_id);
             compare(target);
             auto reversed = delta;
             reversed.reverse();
-            graph.update(reversed, builder.get_workspace().get_database_workspace());
+            evaluation.enter(reversed, workspace).evaluate(count_id);
             compare(source);
-            graph.update(kr::dl::semantics::incremental::Delta<Family> {}, builder.get_workspace().get_database_workspace());
-            EXPECT_FALSE(graph.changed(count_id));
+            const auto empty = kr::dl::semantics::incremental::Delta<Family> {};
+            EXPECT_FALSE(evaluation.enter(empty, workspace).changed(count_id));
         }
     };
     check.template operator()<tyr::formalism::FluentTag>();
@@ -275,6 +278,14 @@ void check_incremental_evaluation()
             else
                 EXPECT_FALSE(evaluator.changed());
         };
+        // An initialized result has no delta; only an update from a delta has one.
+        const auto expect_no_delta = [&]
+        {
+            if constexpr (kr::dl::ConceptOrRoleTag<Category>)
+                EXPECT_THROW(evaluator.get_delta(), std::logic_error);
+            else
+                EXPECT_THROW(evaluator.changed(), std::logic_error);
+        };
         const auto compare_full = [&](auto& context)
         {
             const auto expected = kr::dl::semantics::evaluate<Kind>(expression, context);
@@ -297,7 +308,7 @@ void check_incremental_evaluation()
         const ygg::uint_t* blocks = nullptr;
         if constexpr (kr::dl::ConceptOrRoleTag<Category>)
             blocks = retained_view.get_handle().blocks.data();
-        expect_empty_delta();
+        expect_no_delta();
         expect_unpublished();
         compare_full(initial_context);
         const auto update = [&](const auto& delta, size_t i)
@@ -342,7 +353,7 @@ void check_incremental_evaluation()
         const auto borrowed_builder = nodes.back().get_state().get_state_builder();
         auto final_context = context_for(ygg::make_view(borrowed_builder, *search->task), 2, other_arguments);
         evaluator.initialize(final_context);
-        expect_empty_delta();
+        expect_no_delta();
         expect_unpublished();
         EXPECT_TRUE(storage.get_denotation_repository(true).get_vector_repository().empty());
         EXPECT_TRUE(storage.get_caches().template get<Category>(true).empty());
@@ -513,6 +524,9 @@ void check_incremental_evaluation()
         "(n_distance (q_concept x " + present_text + ") " + edge_text + " (c_register 1))",
         "(n_distance (q_role (x u) (r_identity (c_register 0))) (q_project (x u y v) (q_join (q_role (x y) " + edge_text + ") (q_role (u v) "
             + edge_text + "))) (q_role (x u) (r_identity (c_register 1))))",
+        // k = 2 edges filtered by a second dynamic leaf: the evaluator must notice either change.
+        "(n_distance (q_role (x u) (r_identity (c_register 0))) (q_project (x u y v) (q_join (q_join (q_role (x y) " + edge_text
+            + ") (q_role (u v) " + edge_text + ")) (q_concept y " + present_text + "))) (q_role (x u) (r_identity (c_register 1))))",
         "(n_distance (q_concept x (c_register 0)) (q_role (x y) (r_identity (c_bot))) (q_concept x (c_register 1)))",
         "(n_distance (q_concept x (c_register 0)) (q_role (x y) " + edge_text + ") (q_concept x (c_register 0)))",
     };
@@ -533,9 +547,10 @@ void check_incremental_evaluation()
     const auto query =
         query_count.get_variant().template get<ygg::Index<kr::dl::Numerical<Ext, kr::dl::CountTag>>>().get_arg().template get<ygg::Index<kr::dl::Query<Ext>>>();
     // Duplicate roots and explicitly requested shared children do not duplicate nodes.
-    auto graph = kr::dl::semantics::incremental::EvaluationGraph<Ext, Kind>(
+    auto evaluation = kr::dl::semantics::incremental::IncrementalEvaluation<Ext, Kind>(
         *search->task,
         { source_count, edge_count, distance_expression, self_distance, query_count, query, distance_expression, source, edge });
+    const auto& graph = evaluation.graph();
     const auto source_id = graph.get_index(source);
     const auto edge_id = graph.get_index(edge);
     const auto target_id = graph.get_index(target);  // A prepared child can be inspected without making it another root.
@@ -561,7 +576,7 @@ void check_incremental_evaluation()
     {
         auto values = std::array<ygg::uint_t, 5> {};
         for (size_t i = 0; i < values.size(); ++i)
-            values[i] = graph.get_result(scalar_ids[i]).get();
+            values[i] = evaluation.get_result(scalar_ids[i]).get();
         return values;
     };
     const auto query_rows = [](const auto& relation)
@@ -577,19 +592,28 @@ void check_incremental_evaluation()
         std::ranges::sort(result);
         return result;
     };
-    const auto compare_graph = [&](auto& context)
+    const auto demand_all = [&](auto& state)
     {
-        EXPECT_EQ(elements<kr::dl::ConceptTag>(graph.get_result(source_id)), elements<kr::dl::ConceptTag>(kr::dl::semantics::evaluate<Kind>(source, context)));
-        EXPECT_EQ(elements<kr::dl::ConceptTag>(graph.get_result(target_id)), elements<kr::dl::ConceptTag>(kr::dl::semantics::evaluate<Kind>(target, context)));
-        EXPECT_EQ(elements<kr::dl::RoleTag>(graph.get_result(edge_id)), elements<kr::dl::RoleTag>(kr::dl::semantics::evaluate<Kind>(edge, context)));
+        (void) state.evaluate(source_id);
+        (void) state.evaluate(target_id);
+        (void) state.evaluate(edge_id);
+        for (const auto id : scalar_ids)
+            (void) state.evaluate(id);
+        (void) state.evaluate(query_id);
+    };
+    const auto compare_graph = [&](auto& state, auto& context)
+    {
+        EXPECT_EQ(elements<kr::dl::ConceptTag>(state.evaluate(source_id)), elements<kr::dl::ConceptTag>(kr::dl::semantics::evaluate<Kind>(source, context)));
+        EXPECT_EQ(elements<kr::dl::ConceptTag>(state.evaluate(target_id)), elements<kr::dl::ConceptTag>(kr::dl::semantics::evaluate<Kind>(target, context)));
+        EXPECT_EQ(elements<kr::dl::RoleTag>(state.evaluate(edge_id)), elements<kr::dl::RoleTag>(kr::dl::semantics::evaluate<Kind>(edge, context)));
         for (size_t i = 0; i < scalar_ids.size(); ++i)
-            EXPECT_EQ(graph.get_result(scalar_ids[i]).get(), kr::dl::semantics::evaluate<Kind>(scalar_expressions[i], context).get());
-        EXPECT_EQ(query_rows(graph.get_result(query_id)), query_rows(kr::dl::semantics::evaluate<Kind>(query, context)));
+            EXPECT_EQ(state.evaluate(scalar_ids[i]).get(), kr::dl::semantics::evaluate<Kind>(scalar_expressions[i], context).get());
+        EXPECT_EQ(query_rows(state.evaluate(query_id)), query_rows(kr::dl::semantics::evaluate<Kind>(query, context)));
     };
     storage.reset_all();
     auto initial_context = context_for(nodes.front().get_state(), 0, arguments);
-    EXPECT_THROW(graph.get_result(source_id), std::logic_error);
-    EXPECT_THROW(graph.get_delta(query_id), std::logic_error);
+    EXPECT_THROW(evaluation.get_result(source_id), std::logic_error);
+    EXPECT_THROW(evaluation.get_delta(query_id), std::logic_error);
     // Copying the task preserves the formalism repository but changes task identity.
     const auto other_task = *search->task;
     const auto borrowed_builder = nodes.front().get_state().get_state_builder();
@@ -601,51 +625,54 @@ void check_incremental_evaluation()
     policy.reset_source();
     EXPECT_THROW(policy.make_source_context(foreign_context), std::invalid_argument);
     EXPECT_NO_THROW(policy.make_source_context(initial_context));
-    EXPECT_THROW(graph.initialize(foreign_context), std::invalid_argument);
-    EXPECT_THROW(graph.get_result(source_id), std::logic_error);
-    graph.initialize(initial_context);
-    EXPECT_THROW(graph.initialize(foreign_context), std::invalid_argument);
-    // Rejection must preserve the valid baseline and its prepared handles.
+    EXPECT_THROW(evaluation.enter(foreign_context), std::invalid_argument);
+    EXPECT_THROW(evaluation.get_result(source_id), std::logic_error);
+    auto initial = evaluation.enter(initial_context);
+    EXPECT_THROW(evaluation.enter(foreign_context), std::invalid_argument);
+    // Rejection must preserve the entered state and its prepared handles.
     EXPECT_EQ(graph.get_index(source), source_id);
+    demand_all(initial);
     expect_unpublished();
-    compare_graph(initial_context);
-    const auto source_view = graph.get_result(source_id);
-    const auto edge_view = graph.get_result(edge_id);
+    compare_graph(initial, initial_context);
+    const auto source_view = evaluation.get_result(source_id);
+    const auto edge_view = evaluation.get_result(edge_id);
     const auto* source_blocks = source_view.get_handle().blocks.data();
     const auto* edge_blocks = edge_view.get_handle().blocks.data();
     const auto update_graph = [&](const auto& delta, size_t i)
     {
         const auto before_source = elements<kr::dl::ConceptTag>(source_view);
         const auto before_edge = elements<kr::dl::RoleTag>(edge_view);
-        const auto before_query = query_rows(graph.get_result(query_id));
+        const auto before_query = query_rows(evaluation.get_result(query_id));
         const auto before_scalars = scalar_values();
         storage.reset_dynamic();
-        graph.update(delta, workspace);
+        auto context = context_for(nodes[i].get_state(), i, arguments);
+        auto state = evaluation.enter(context, delta, workspace);
+        demand_all(state);
         expect_unpublished();
         EXPECT_EQ(source_view.get_handle().blocks.data(), source_blocks);
         EXPECT_EQ(edge_view.get_handle().blocks.data(), edge_blocks);
         const auto after_source = elements<kr::dl::ConceptTag>(source_view);
         const auto after_edge = elements<kr::dl::RoleTag>(edge_view);
-        EXPECT_TRUE(std::ranges::is_permutation(graph.get_delta(source_id).added, difference(after_source, before_source)));
-        EXPECT_TRUE(std::ranges::is_permutation(graph.get_delta(source_id).removed, difference(before_source, after_source)));
-        EXPECT_TRUE(std::ranges::is_permutation(graph.get_delta(edge_id).added, difference(after_edge, before_edge)));
-        EXPECT_TRUE(std::ranges::is_permutation(graph.get_delta(edge_id).removed, difference(before_edge, after_edge)));
-        EXPECT_EQ(query_rows(graph.get_delta(query_id).added), difference(query_rows(graph.get_result(query_id)), before_query));
-        EXPECT_EQ(query_rows(graph.get_delta(query_id).removed), difference(before_query, query_rows(graph.get_result(query_id))));
+        EXPECT_TRUE(std::ranges::is_permutation(evaluation.get_delta(source_id).added, difference(after_source, before_source)));
+        EXPECT_TRUE(std::ranges::is_permutation(evaluation.get_delta(source_id).removed, difference(before_source, after_source)));
+        EXPECT_TRUE(std::ranges::is_permutation(evaluation.get_delta(edge_id).added, difference(after_edge, before_edge)));
+        EXPECT_TRUE(std::ranges::is_permutation(evaluation.get_delta(edge_id).removed, difference(before_edge, after_edge)));
+        EXPECT_EQ(query_rows(evaluation.get_delta(query_id).added), difference(query_rows(evaluation.get_result(query_id)), before_query));
+        EXPECT_EQ(query_rows(evaluation.get_delta(query_id).removed), difference(before_query, query_rows(evaluation.get_result(query_id))));
         for (size_t j = 0; j < scalar_ids.size(); ++j)
-            EXPECT_EQ(graph.changed(scalar_ids[j]), before_scalars[j] != scalar_values()[j]);
-        auto context = context_for(nodes[i].get_state(), i, arguments);
-        compare_graph(context);
+            EXPECT_EQ(evaluation.changed(scalar_ids[j]), before_scalars[j] != scalar_values()[j]);
+        compare_graph(state, context);
         const auto after_scalars = scalar_values();
-        graph.update(empty_delta, workspace);
-        EXPECT_TRUE(graph.get_delta(source_id).added.empty());
-        EXPECT_TRUE(graph.get_delta(source_id).removed.empty());
-        EXPECT_TRUE(graph.get_delta(edge_id).added.empty());
-        EXPECT_TRUE(graph.get_delta(edge_id).removed.empty());
-        EXPECT_TRUE(graph.get_delta(query_id).added.empty());
-        EXPECT_TRUE(graph.get_delta(query_id).removed.empty());
+        auto unchanged = evaluation.enter(context, empty_delta, workspace);
+        demand_all(unchanged);
+        EXPECT_TRUE(evaluation.get_delta(source_id).added.empty());
+        EXPECT_TRUE(evaluation.get_delta(source_id).removed.empty());
+        EXPECT_TRUE(evaluation.get_delta(edge_id).added.empty());
+        EXPECT_TRUE(evaluation.get_delta(edge_id).removed.empty());
+        EXPECT_TRUE(evaluation.get_delta(query_id).added.empty());
+        EXPECT_TRUE(evaluation.get_delta(query_id).removed.empty());
         for (const auto id : scalar_ids)
-            EXPECT_FALSE(graph.changed(id));
+            EXPECT_FALSE(evaluation.changed(id));
         EXPECT_EQ(scalar_values(), after_scalars);
     };
     for (size_t i = 0; i < deltas.size(); ++i)
@@ -658,60 +685,63 @@ void check_incremental_evaluation()
     }
     storage.reset_all();
     auto invocation_context = context_for(nodes.back().get_state(), 2, other_arguments);
-    graph.initialize(invocation_context);
+    auto invocation = evaluation.enter(invocation_context);
+    demand_all(invocation);
     expect_unpublished();
     for (const auto id : scalar_ids)
-        EXPECT_FALSE(graph.changed(id));
-    compare_graph(invocation_context);
+        EXPECT_THROW(evaluation.changed(id), std::logic_error);  // Initialized results have no delta.
+    compare_graph(invocation, invocation_context);
 
-    // This invocation has empty registers. A failed update invalidates every root,
-    // even those whose child results were already visited before the failure.
+    // This invocation has empty registers. A failed update leaves the failed node unevaluated; the state's inputs
+    // initialize it on its next demand.
     auto invalid_delta = kr::dl::semantics::incremental::Delta<Ext> {};
     invalid_delta.removed.concept_registers.emplace_back(kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(0), ygg::make_view(a, *search->task->get_repository()));
-    EXPECT_THROW(graph.update(invalid_delta, workspace), std::invalid_argument);
-    EXPECT_THROW(graph.get_result(source_id), std::logic_error);
-    EXPECT_THROW(graph.get_result(query_id), std::logic_error);
-    EXPECT_THROW(graph.update(empty_delta, workspace), std::logic_error);
-    graph.initialize(invocation_context);
-    compare_graph(invocation_context);
+    auto failed = evaluation.enter(invocation_context, invalid_delta, workspace);
+    EXPECT_THROW(failed.evaluate(source_id), std::invalid_argument);
+    EXPECT_THROW(evaluation.get_result(source_id), std::logic_error);
+    EXPECT_THROW(evaluation.get_result(query_id), std::logic_error);
+    EXPECT_THROW(evaluation.enter(empty_delta, workspace).evaluate(source_id), std::logic_error);
+    auto reentered = evaluation.enter(invocation_context);
+    compare_graph(reentered, invocation_context);
 
-    // Active roots stay current without demands; a later parent starts from its current child.
+    // Roots are evaluated on demand only; a later parent starts from its current child.
     storage.reset_all();
-    graph.reset();
-    EXPECT_THROW(graph.get_result(query_id), std::logic_error);
-    EXPECT_EQ(query_rows(graph.evaluate(query_id, initial_context)), query_rows(kr::dl::semantics::evaluate<Kind>(query, initial_context)));
-    EXPECT_EQ(graph.evaluate(edge_count_id, initial_context).get(), kr::dl::semantics::evaluate<Kind>(edge_count, initial_context).get());
-    EXPECT_THROW(graph.get_result(query_count_id), std::logic_error);
-    EXPECT_THROW(graph.get_result(distance_id), std::logic_error);  // Unrelated roots remain unmaterialized.
-    EXPECT_THROW(graph.get_delta(query_id), std::logic_error);      // Demand evaluation publishes results, not historical deltas.
+    auto demanded = evaluation.enter(initial_context);
+    EXPECT_THROW(evaluation.get_result(query_id), std::logic_error);
+    EXPECT_EQ(query_rows(demanded.evaluate(query_id)), query_rows(kr::dl::semantics::evaluate<Kind>(query, initial_context)));
+    EXPECT_EQ(demanded.evaluate(edge_count_id).get(), kr::dl::semantics::evaluate<Kind>(edge_count, initial_context).get());
+    EXPECT_THROW(evaluation.get_result(query_count_id), std::logic_error);
+    EXPECT_THROW(evaluation.get_result(distance_id), std::logic_error);  // Unrelated roots remain unmaterialized.
+    EXPECT_THROW(evaluation.get_delta(query_id), std::logic_error);      // Initialized results have no delta.
     size_t previous_state = 0;
     auto demand_delta = kr::dl::semantics::incremental::Delta<Ext> {};
     for (const auto i : { size_t(1), size_t(2), size_t(0) })
     {
         storage.reset_dynamic();
         demand_delta.template assign<Kind>(nodes[previous_state].get_state(), registers(previous_state), nodes[i].get_state(), registers(i));
-        graph.advance(demand_delta, workspace);
         auto context = context_for(nodes[i].get_state(), i, arguments);
-        EXPECT_EQ(query_rows(graph.evaluate(query_id, context)), query_rows(kr::dl::semantics::evaluate<Kind>(query, context)));
-        EXPECT_EQ(graph.get_result(edge_count_id).get(), kr::dl::semantics::evaluate<Kind>(edge_count, context).get());
-        EXPECT_THROW(graph.get_result(query_count_id), std::logic_error);
-        EXPECT_THROW(graph.get_result(distance_id), std::logic_error);
+        auto state = evaluation.enter(context, demand_delta, workspace);
+        EXPECT_EQ(query_rows(state.evaluate(query_id)), query_rows(kr::dl::semantics::evaluate<Kind>(query, context)));
+        EXPECT_NO_THROW(evaluation.get_delta(query_id));  // Updated from the delta.
+        EXPECT_EQ(state.evaluate(edge_count_id).get(), kr::dl::semantics::evaluate<Kind>(edge_count, context).get());
+        EXPECT_THROW(evaluation.get_result(query_count_id), std::logic_error);
+        EXPECT_THROW(evaluation.get_result(distance_id), std::logic_error);
         if (i == 0)
         {
-            EXPECT_EQ(graph.evaluate(query_count_id, context).get(), kr::dl::semantics::evaluate<Kind>(query_count, context).get());
-            const auto retained_rows = query_rows(graph.get_result(query_id));
+            EXPECT_EQ(state.evaluate(query_count_id).get(), kr::dl::semantics::evaluate<Kind>(query_count, context).get());
+            const auto retained_rows = query_rows(evaluation.get_result(query_id));
             for (size_t j = 0; j < scalar_ids.size(); ++j)
-                EXPECT_EQ(graph.evaluate(scalar_ids[j], context).get(), kr::dl::semantics::evaluate<Kind>(scalar_expressions[j], context).get());
-            EXPECT_EQ(query_rows(graph.get_result(query_id)), retained_rows);
+                EXPECT_EQ(state.evaluate(scalar_ids[j]).get(), kr::dl::semantics::evaluate<Kind>(scalar_expressions[j], context).get());
+            EXPECT_EQ(query_rows(evaluation.get_result(query_id)), retained_rows);
         }
         previous_state = i;
     }
-    graph.reset();
-    EXPECT_THROW(graph.get_result(query_id), std::logic_error);
-    EXPECT_THROW(graph.get_result(edge_count_id), std::logic_error);
+    EXPECT_THROW(demanded.evaluate(query_id), std::logic_error);  // A handle of an earlier state is stale.
+    auto fresh = evaluation.enter(invocation_context);
+    EXPECT_THROW(evaluation.get_result(query_id), std::logic_error);
+    EXPECT_THROW(evaluation.get_result(edge_count_id), std::logic_error);
     storage.reset_all();
-    EXPECT_EQ(graph.evaluate(query_count_id, invocation_context).get(), kr::dl::semantics::evaluate<Kind>(query_count, invocation_context).get());
-
+    EXPECT_EQ(fresh.evaluate(query_count_id).get(), kr::dl::semantics::evaluate<Kind>(query_count, invocation_context).get());
     const auto reject_multiple_values = [&]<kr::dl::ConceptOrRoleTag Category>(kr::dl::FamilyConstructorView<Ext, Category> expression)
     {
         auto evaluator = kr::dl::semantics::incremental::Evaluator<Ext, Kind, Category>(*search->task, expression);
@@ -731,24 +761,20 @@ void check_incremental_evaluation()
         evaluator.initialize(invocation_context);
         EXPECT_EQ(evaluator.size(), 0);
 
-        auto demand = kr::dl::semantics::incremental::EvaluationGraph<Ext, Kind>(*search->task, { expression });
-        const auto root = demand.get_index(expression);
-        demand.reset();
-        EXPECT_NO_THROW(demand.evaluate(root, invocation_context));
-        EXPECT_THROW(demand.advance(invalid, workspace), std::invalid_argument);
-        EXPECT_FALSE(demand.is_valid());
+        auto demand = kr::dl::semantics::incremental::IncrementalEvaluation<Ext, Kind>(*search->task, { expression });
+        const auto root = demand.graph().get_index(expression);
+        EXPECT_NO_THROW(demand.enter(invocation_context).evaluate(root));
+        auto failed = demand.enter(invocation_context, invalid, workspace);
+        EXPECT_THROW(failed.evaluate(root), std::invalid_argument);
         EXPECT_THROW(demand.get_result(root), std::logic_error);
-        EXPECT_THROW(demand.advance(empty_delta, workspace), std::logic_error);
-        demand.reset();
-        EXPECT_EQ(demand.evaluate(root, invocation_context).count(), 0);
-        demand.advance(empty_delta, workspace);
-        EXPECT_EQ(demand.get_result(root).count(), 0);
+        EXPECT_THROW(demand.enter(empty_delta, workspace).evaluate(root), std::logic_error);
+        EXPECT_EQ(demand.enter(invocation_context).evaluate(root).count(), 0);
+        EXPECT_EQ(demand.enter(empty_delta, workspace).evaluate(root).count(), 0);
 
         const auto roots = std::array<kr::dl::semantics::incremental::EvaluationRoot<Ext>, 1> { expression };
         auto policy = kr::dl::semantics::DeltaEvaluationPolicy<Ext, Kind>(*search->task, roots);
         auto context = policy.make_source_context(invocation_context);
         EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(expression, context).count(), 0);
-        EXPECT_THROW(context.graph.advance(invalid, workspace), std::invalid_argument);
         auto recovered = policy.make_source_context(invocation_context);
         EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(expression, recovered).count(), 0);
     };

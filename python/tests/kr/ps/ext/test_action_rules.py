@@ -255,13 +255,11 @@ def test_query_objects_iterators_and_renames_retain_owners(kind, access):
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
-def test_action_effect_contract_violation_is_an_exception(kind):
+def test_action_effects_filter_transitions(kind):
     task_context, program, expander, state, environment = _runtime(kind, _program(effects="(decreases count)"))
-    with pytest.raises(RuntimeError, match="offered transition violates declared effects"):
-        collect_steps(expander, state)
+    assert [step.status for step in collect_steps(expander, state)] == ["no_applicable_action"]
     options = getattr(ext, f"{kind.title()}ProgramSearchOptions")()
-    with pytest.raises(RuntimeError, match="offered transition violates declared effects"):
-        getattr(ext, f"find_{kind}_solution")(task_context, program, options)
+    assert not getattr(ext, f"find_{kind}_solution")(task_context, program, options).is_successful()
 
 
 @pytest.mark.parametrize("query", ['(q_atomic_state "at" (from))', '(q_project () (q_atomic_state "at" (from)))'])

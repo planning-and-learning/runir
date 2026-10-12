@@ -429,7 +429,8 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
     roots.emplace_back(
         kr::ps::ext::dl::parse_numerical(R"((n_add (n_distance (c_register 0) (r_atomic_state "edge") (c_register 1)) (n_const 1)))", domain, *repository));
 
-    auto graph = kr::dl::semantics::incremental::EvaluationGraph<Ext, tyr::GroundTag>(*search->task, roots);
+    auto evaluation = kr::dl::semantics::incremental::IncrementalEvaluation<Ext, tyr::GroundTag>(*search->task, roots);
+    const auto& graph = evaluation.graph();
     const auto source_id = graph.get_index(source);
     const auto edge_id = graph.get_index(edge);
     const auto source_count_id = graph.get_index(source_count);
@@ -492,7 +493,9 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
             evaluator.initialize(context);
         for (auto& evaluator : booleans)
             evaluator.initialize(context);
-        graph.initialize(context);
+        auto state = evaluation.enter(context);
+        for (const auto& root : roots)
+            std::visit([&](auto expression) { (void) state.evaluate(graph.get_index(expression)); }, root);
     };
     initialize();
     auto workspace = ygg::database::Workspace<QueryValues> {};
@@ -506,7 +509,7 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
             evaluator.update(delta, workspace);
         for (auto& evaluator : booleans)
             evaluator.update(delta, workspace);
-        graph.update(delta, workspace);
+        auto graph = evaluation.enter(delta, workspace);
         bool valid = concepts[0].size() == members && concepts[1].size() == members && concepts[2].size() == register_members && concepts[3].size() == 2
                      && roles[0].size() == members && roles[1].size() == members && roles[2].size() == register_members;
         for (size_t i = 0; i < numericals.size(); ++i)
@@ -518,14 +521,14 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
         const auto infinity = std::numeric_limits<ygg::uint_t>::max();
         const auto expected_distance = members == 2 ? ygg::uint_t(2) : members == 1 ? ygg::uint_t(0) : infinity;
         valid &= graph.size(source_id) == register_members && graph.size(edge_id) == members;
-        valid &= graph.get_result(source_count_id).get() == register_members;
-        valid &= graph.get_result(edge_count_id).get() == members;
-        valid &= graph.get_result(distance_id).get() == expected_distance;
-        valid &= graph.get_result(self_distance_id).get() == (register_members ? 0 : infinity);
+        valid &= graph.evaluate(source_count_id).get() == register_members;
+        valid &= graph.evaluate(edge_count_id).get() == members;
+        valid &= graph.evaluate(distance_id).get() == expected_distance;
+        valid &= graph.evaluate(self_distance_id).get() == (register_members ? 0 : infinity);
         valid &= graph.size(closure_id) == (members == 2 ? 3 : members);
-        valid &= graph.get_result(nonempty_id).get() == (members == 2);
+        valid &= graph.evaluate(nonempty_id).get() == (members == 2);
         valid &= graph.size(projected_id) == members && graph.size(projected_role_id) == members;
-        valid &= graph.get_result(query_count_id).get() == members;
+        valid &= graph.evaluate(query_count_id).get() == members;
         return valid;
     };
     const auto cycle = [&]

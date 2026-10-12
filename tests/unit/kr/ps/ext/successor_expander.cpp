@@ -1680,20 +1680,26 @@ void expect_query_action_contracts()
         const auto initial = expander.initial_state(planning_node.get_state());
         const auto rule = module_.get_memory_transitions()[0][0];
         auto lazy = std::vector<kr::ps::ext::detail::ProgramStep<Kind>> {};
-        if (scenario == 2 || scenario == 4)
+        if (scenario == 2)
+        {
+            // Effects filter Action transitions: no move decreases N, so none is offered or matched.
+            for (const auto first_only : { false, true })
+            {
+                const auto steps = collect_steps(expander, initial, first_only);
+                ASSERT_EQ(steps.size(), 1);
+                EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::NO_APPLICABLE_ACTION);
+            }
+            auto& search = *task_context->search_context;
+            const auto successors =
+                search.successor_generator->get_labeled_successor_nodes(planning_node, *search.state_repository, *search.axiom_evaluator);
+            ASSERT_FALSE(successors.empty());
+            EXPECT_FALSE(expander.matching_rule(initial, successors.front()).has_value());
+            continue;
+        }
+        if (scenario == 4)
         {
             EXPECT_THROW(collect_steps(expander, initial), std::logic_error);
             EXPECT_THROW(lazy = collect_steps(expander, initial, true), std::logic_error);
-            if (scenario == 2)
-            {
-                auto& search = *task_context->search_context;
-                const auto successors =
-                    search.successor_generator->get_labeled_successor_nodes(planning_node, *search.state_repository, *search.axiom_evaluator);
-                ASSERT_FALSE(successors.empty());
-                const auto& candidate = successors.front();
-                EXPECT_THROW(expander.matching_rule(initial, candidate), std::logic_error);
-                EXPECT_THROW(expander.apply(initial, rule, candidate), std::logic_error);
-            }
             continue;
         }
         if (scenario == 3)

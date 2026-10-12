@@ -1,7 +1,8 @@
 # Query features and Action rules
 
 Extended modules can declare named query features and use their complete rows
-as action parameter tuples. Every selected tuple must be applicable. A query
+as action parameter tuples. Every selected tuple must be applicable; effects
+filter the resulting transitions. A query
 can preserve relationships between parameters, such as an edge's source and target, without taking a Cartesian
 product of separate concept denotations.
 
@@ -43,28 +44,22 @@ An empty query selects no tuple. A query with no columns distinguishes false
 (no rows) from true (one empty row), allowing zero-parameter actions. Conditions
 and the current memory state must also match before an Action rule is used.
 
-## Effect contract
+## Effects and applicability
 
-The Action rule's `:effects` is an invariant over its selected applicable
-transitions. For every relevant source state and module register/argument
-valuation satisfying the rule's conditions, **every selected applicable tuple**
-must produce a successor satisfying the declared effects. Selected tuples must
-also satisfy the action's types and preconditions. Unmentioned features
-remain unconstrained. In the example, moving preserves the number of occupied
-positions.
+The Action rule's `:effects` filter its selected transitions, as for a Do rule:
+a selected tuple's successor is offered only if it satisfies the declared
+effects. Unmentioned features remain unconstrained. In the example, only moves
+that preserve the number of occupied positions are offered.
 
-Execution checks applicability and the effects on transitions it visits. It
-raises `std::logic_error` in C++ (`RuntimeError` in Python) if a visited tuple is
-inapplicable or its successor violates the declaration.
-A violation is an error, not an alternative to silently discard. Successful
-execution checks only the transitions actually visited; it does not verify the
-contract over all possible tasks, states, or query rows.
+Selected tuples must satisfy the action's types and preconditions. Execution
+checks applicability on the tuples it visits and raises `std::logic_error` in
+C++ (`RuntimeError` in Python) if a visited tuple is inapplicable. An
+inapplicable tuple is an error, not a binding to silently discard. Successful
+execution does not check unvisited query rows.
 
 Structural termination uses the same condition/effect abstraction as a Do rule
-with identical conditions, effects, and memory endpoints. A concrete forward
-termination guarantee for Action rules is conditional on their universal effect
-contract. Structural analysis does not prove the query/action-effect contract,
-and forward termination does not establish completeness of backtracking search.
+with identical conditions, effects, and memory endpoints. Forward termination
+does not establish completeness of backtracking search.
 
 ## Enumeration and search
 
@@ -93,8 +88,8 @@ outcome. Universal execution requires every ordinary outcome and one successful
 binding for each Choose rule. Rule occurrences retain their existing order.
 Action tuples follow their relation's iteration order, which can differ between
 full and incremental evaluation; Choose bindings follow their denotation order. Enumeration supports early termination.
-Action applicability and effect contracts are checked
-only for visited tuples, so unvisited invalid tuples remain unchecked.
+Action applicability is checked only for visited tuples, so unvisited
+inapplicable tuples remain unchecked.
 Query evaluation still materializes the selected relation.
 
 `statistics.num_generated` counts emitted extended successors, including caller

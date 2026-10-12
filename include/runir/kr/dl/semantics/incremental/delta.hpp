@@ -23,8 +23,42 @@ void assign_atom_delta(const Source& source, const Target& target, Changes& delt
     if (&source.get_task() != &target.get_task())
         throw std::invalid_argument("Feature delta requires states from the same task.");
     delta.clear();
-    // ponytail: compare dynamic state contents for now; capture changes during
-    // successor construction if this scan becomes a measured bottleneck.
+    if constexpr (std::same_as<Kind, tyr::LiftedTag>
+                  && requires {
+                         source.get_state_builder().template get_atom_storage<tyr::formalism::FluentTag>().indices;
+                         target.get_state_builder().template get_atom_storage<tyr::formalism::DerivedTag>().indices;
+                     })
+    {
+        // Lifted states store fluent facts and derived atoms as bitsets over ground atoms: compare the bits and
+        // decode only the atoms that changed.
+        const auto& repository = *target.get_formalism_repository();
+        const auto changed_bits = [](const auto& lhs, const auto& rhs, auto&& on_only_lhs)
+        {
+            for (auto bit = lhs.find_first(); bit != lhs.npos; bit = lhs.find_next(bit))
+                if (bit >= rhs.size() || !rhs.test(bit))
+                    on_only_lhs(bit);
+        };
+        const auto fluent_atom = [&](size_t bit)
+        {
+            const auto fact = ygg::Data<tyr::formalism::planning::FDRFact<tyr::formalism::FluentTag>> {
+                ygg::Index<tyr::formalism::planning::FDRVariable<tyr::formalism::FluentTag>> { static_cast<ygg::uint_t>(bit) },
+                tyr::formalism::planning::FDRValue { 1 }
+            };
+            return ygg::make_view(*ygg::make_view(fact, repository).get_atom_index(), repository);
+        };
+        const auto derived_atom = [&](size_t bit)
+        { return ygg::make_view(ygg::Index<tyr::formalism::planning::Atom<tyr::GroundTag, tyr::formalism::DerivedTag>>(static_cast<ygg::uint_t>(bit)), repository); };
+        const auto& source_fluent = source.get_state_builder().template get_atom_storage<tyr::formalism::FluentTag>().indices;
+        const auto& target_fluent = target.get_state_builder().template get_atom_storage<tyr::formalism::FluentTag>().indices;
+        changed_bits(source_fluent, target_fluent, [&](size_t bit) { delta.removed.fluent_atoms.push_back(fluent_atom(bit)); });
+        changed_bits(target_fluent, source_fluent, [&](size_t bit) { delta.added.fluent_atoms.push_back(fluent_atom(bit)); });
+        const auto& source_derived = source.get_state_builder().template get_atom_storage<tyr::formalism::DerivedTag>().indices;
+        const auto& target_derived = target.get_state_builder().template get_atom_storage<tyr::formalism::DerivedTag>().indices;
+        changed_bits(source_derived, target_derived, [&](size_t bit) { delta.removed.derived_atoms.push_back(derived_atom(bit)); });
+        changed_bits(target_derived, source_derived, [&](size_t bit) { delta.added.derived_atoms.push_back(derived_atom(bit)); });
+        return;
+    }
+    // Other states: compare decoded atoms.
     for (const auto atom : source.template get_atoms_view<tyr::formalism::FluentTag>())
         if (!target.test(atom))
             delta.removed.fluent_atoms.push_back(atom);

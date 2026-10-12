@@ -99,8 +99,8 @@ endif()
 
 # Dependencies
 
-set(RUNIR_YGGDRASIL_REQUIRED_VERSION 0.3.1)
-set(RUNIR_TYR_REQUIRED_VERSION 0.3.0)
+set(RUNIR_YGGDRASIL_REQUIRED_VERSION 0.3.2)
+set(RUNIR_TYR_REQUIRED_VERSION 0.3.1)
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
@@ -160,7 +160,7 @@ if(RUNIR_BUILD_TESTS OR RUNIR_BUILD_EXECUTABLES)
     if(NOT RUNIR_BENCHMARKS_RESULT EQUAL 0)
         message(
             FATAL_ERROR
-            "Could not resolve the benchmark data root; install 'pypddl-datasets>=0.0.9,<0.1' into the configuring Python (${Python_EXECUTABLE})."
+            "Could not resolve the benchmark data root; install 'pypddl-datasets>=0.0.17,<0.1' into the configuring Python (${Python_EXECUTABLE})."
         )
     endif()
     message(STATUS "Benchmark data: ${RUNIR_BENCHMARKS_DIR}")

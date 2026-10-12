@@ -6,26 +6,29 @@
 #include "runir/kr/dl/semantics/incremental/detail/query_node.hpp"
 
 #include <algorithm>
+#include <concepts>
+#include <cstdint>
 #include <initializer_list>
 #include <optional>
 #include <span>
 #include <stdexcept>
+#include <utility>
 #include <variant>
 #include <vector>
 
 namespace runir::kr::dl::semantics::incremental
 {
 
-/// Prepared dependency graph shared by any number of feature roots.
-/// Construction prepares all roots; children precede their consumers.
-/// The task and expression repositories must outlive this graph.
-/// Reinitialize on invocation changes, retaining task-static results and buffers.
-/// Indices belong to this graph. Result views borrow it and its task repository;
-/// mutation invalidates iterators, and moving the graph invalidates borrowed views.
-/// Ext input deltas must belong to the same module invocation.
+/// Prepared dependency graph shared by any number of feature roots: the interned nodes, which hold their results,
+/// in topological order (children precede their consumers), and the resources they share. It has no notion of
+/// states; IncrementalEvaluation schedules the nodes.
+/// The task and expression repositories must outlive this graph. Indices belong to this graph. Result views borrow
+/// it and its task repository; mutation invalidates iterators, and moving the graph invalidates borrowed views.
 template<FamilyTag Family, tyr::TaskKind Kind>
 class EvaluationGraph
 {
+    template<FamilyTag, tyr::TaskKind>
+    friend class IncrementalEvaluation;
     template<FamilyTag, tyr::TaskKind, CategoryTag>
     friend class detail::FeatureNode;
     template<FamilyTag, tyr::TaskKind>
@@ -53,6 +56,8 @@ class EvaluationGraph
     friend struct detail::NonemptyEvaluator;
     template<FamilyTag, tyr::TaskKind>
     friend struct detail::DistanceFeatureEvaluator;
+    template<FamilyTag, tyr::TaskKind>
+    friend struct detail::GuidedDistanceEvaluator;
     template<FamilyTag, tyr::TaskKind, CategoryTag>
     friend struct detail::ProjectionEvaluator;
     template<FamilyTag, tyr::TaskKind>
@@ -76,14 +81,6 @@ class EvaluationGraph
         m_nodes;
     detail::SetOperationWorkspace m_set_workspace;
     const tyr::planning::Task<Kind>& m_task;
-    enum class Mode
-    {
-        UNINITIALIZED,
-        EAGER,
-        DEMAND
-    };
-    Mode m_mode = Mode::UNINITIALIZED;
-    std::vector<bool> m_active;
 
     template<CategoryTag Category>
     const auto& node(EvaluationIndex<Category> index) const
@@ -96,7 +93,7 @@ class EvaluationGraph
     std::optional<EvaluationIndex<Category>> find_node(FamilyConstructorView<Family, Category> expression) const;
     std::optional<QueryEvaluationIndex> find_node(FamilyQueryView<Family> expression) const;
 
-    // Prepared evaluators read already updated children while the public baseline is invalid.
+    // Evaluators read their children, which are brought to the current state first.
     template<CategoryTag Category>
     BorrowedDenotationView<Category> result(EvaluationIndex<Category> index) const
     {
@@ -124,13 +121,6 @@ class EvaluationGraph
     const tyr::formalism::planning::Repository& repository() const { return *m_task.get_repository(); }
     detail::SetOperationWorkspace& set_workspace() noexcept { return m_set_workspace; }
 
-    void require_initialized() const;
-    void require_eager() const;
-    void require_ready(ygg::uint_t index) const;
-    template<StateEvaluationContextConcept<Family, Kind> Context>
-    void evaluate_node(ygg::uint_t index, Context& context);
-    template<StateEvaluationContextConcept<Family, Kind> Context>
-    void demand(ygg::uint_t index, Context& context);
     template<CategoryTag Category>
     EvaluationIndex<Category> prepare(FamilyConstructorView<Family, Category> expression);
     QueryEvaluationIndex prepare(FamilyQueryView<Family> expression);
@@ -143,7 +133,8 @@ class EvaluationGraph
     }
     /// The relation of a query, or of a concept or role lifted into the given columns. Identical
     /// lifts share one node.
-    QueryEvaluationIndex prepare_relation(FamilyQueryView<Family> expression, std::span<const ygg::database::ColumnLayout>, std::vector<ygg::uint_t>& dependencies)
+    QueryEvaluationIndex
+    prepare_relation(FamilyQueryView<Family> expression, std::span<const ygg::database::ColumnLayout>, std::vector<ygg::uint_t>& dependencies)
     {
         return prepare(expression, dependencies);
     }
@@ -182,224 +173,8 @@ public:
     EvaluationIndex<Category> get_index(FamilyConstructorView<Family, Category> expression) const;
     QueryEvaluationIndex get_index(FamilyQueryView<Family> expression) const;
 
-    template<StateEvaluationContextConcept<Family, Kind> Context>
-    void initialize(Context& context);
-    /// Failed updates invalidate the graph until initialize() replaces its baseline.
-    void update(const Delta<Family>& delta, ygg::database::Workspace<QueryValues>& workspace);
-
-    /// Start a demand-driven invocation, retaining buffers and task-static values.
-    void reset() noexcept;
-    /// Maintain previously demanded nodes in the next state; inactive nodes stay untouched.
-    /// A failed advance invalidates the graph until reset() starts a fresh invocation.
-    void advance(const Delta<Family>& delta, ygg::database::Workspace<QueryValues>& workspace);
-    /// Initialize a root and its inactive dependencies on first demand. Later states
-    /// maintain them through advance(); exact deltas are exposed only in eager mode.
-    template<CategoryTag Category, StateEvaluationContextConcept<Family, Kind> Context>
-    BorrowedDenotationView<Category> evaluate(EvaluationIndex<Category> index, Context& context)
-    {
-        demand(ygg::uint_t(index), context);
-        return get_result(index);
-    }
-    template<StateEvaluationContextConcept<Family, Kind> Context>
-    const auto& evaluate(QueryEvaluationIndex index, Context& context)
-    {
-        demand(ygg::uint_t(index), context);
-        return get_result(index);
-    }
-
-    template<CategoryTag Category>
-    BorrowedDenotationView<Category> get_result(EvaluationIndex<Category> index) const&
-    {
-        require_ready(ygg::uint_t(index));
-        return result(index);
-    }
-    template<CategoryTag Category>
-    BorrowedDenotationView<Category> get_result(EvaluationIndex<Category>) const&& = delete;
-    const auto& get_result(QueryEvaluationIndex index) const&
-    {
-        require_ready(ygg::uint_t(index));
-        return result(index);
-    }
-    const auto& get_result(QueryEvaluationIndex) const&& = delete;
-
-    template<ConceptOrRoleTag Category>
-    const DenotationDelta<Category>& get_delta(EvaluationIndex<Category> index) const&
-    {
-        require_eager();
-        return change(index);
-    }
-    template<ConceptOrRoleTag Category>
-    const DenotationDelta<Category>& get_delta(EvaluationIndex<Category>) const&& = delete;
-    const auto& get_delta(QueryEvaluationIndex index) const&
-    {
-        require_eager();
-        return change(index);
-    }
-    const auto& get_delta(QueryEvaluationIndex) const&& = delete;
-
-    template<ConceptOrRoleTag Category>
-    size_t size(EvaluationIndex<Category> index) const
-    {
-        require_ready(ygg::uint_t(index));
-        return cardinality(index);
-    }
-    size_t size(QueryEvaluationIndex index) const
-    {
-        require_ready(ygg::uint_t(index));
-        return cardinality(index);
-    }
-    template<BooleanOrNumericalTag Category>
-    bool changed(EvaluationIndex<Category> index) const
-    {
-        require_eager();
-        return node(index).changed();
-    }
     size_t node_count() const noexcept { return m_nodes.size(); }
-    /// False before initialization or after an evaluation failure.
-    bool is_valid() const noexcept { return m_mode != Mode::UNINITIALIZED; }
 };
-
-/// Convenience owner for one root. Use EvaluationGraph to share children across roots.
-template<FamilyTag Family, tyr::TaskKind Kind, CategoryTag Category>
-class Evaluator
-{
-    EvaluationGraph<Family, Kind> m_graph;
-    EvaluationIndex<Category> m_root;
-
-public:
-    Evaluator(const tyr::planning::Task<Kind>& task, FamilyConstructorView<Family, Category> expression) :
-        m_graph(task, { expression }),
-        m_root(m_graph.get_index(expression))
-    {
-    }
-    template<StateEvaluationContextConcept<Family, Kind> Context>
-    void initialize(Context& context)
-    {
-        m_graph.initialize(context);
-    }
-    void update(const Delta<Family>& delta, ygg::database::Workspace<QueryValues>& workspace) { m_graph.update(delta, workspace); }
-    auto get_result() const& { return m_graph.get_result(m_root); }
-    auto get_result() const&& = delete;
-    const auto& get_delta() const&
-        requires ConceptOrRoleTag<Category>
-    {
-        return m_graph.get_delta(m_root);
-    }
-    const auto& get_delta() const&& = delete;
-    size_t size() const
-        requires ConceptOrRoleTag<Category>
-    {
-        return m_graph.size(m_root);
-    }
-    bool changed() const
-        requires BooleanOrNumericalTag<Category>
-    {
-        return m_graph.changed(m_root);
-    }
-};
-
-template<FamilyTag Family, tyr::TaskKind Kind>
-class QueryEvaluator
-{
-    EvaluationGraph<Family, Kind> m_graph;
-    QueryEvaluationIndex m_root;
-
-public:
-    QueryEvaluator(const tyr::planning::Task<Kind>& task, FamilyQueryView<Family> expression) :
-        m_graph(task, { expression }),
-        m_root(m_graph.get_index(expression))
-    {
-    }
-    template<StateEvaluationContextConcept<Family, Kind> Context>
-    void initialize(Context& context)
-    {
-        m_graph.initialize(context);
-    }
-    void update(const Delta<Family>& delta, ygg::database::Workspace<QueryValues>& workspace) { m_graph.update(delta, workspace); }
-    const auto& get_result() const& { return m_graph.get_result(m_root); }
-    const auto& get_result() const&& = delete;
-    const auto& get_delta() const& { return m_graph.get_delta(m_root); }
-    const auto& get_delta() const&& = delete;
-};
-
-template<FamilyTag Family, tyr::TaskKind Kind>
-void EvaluationGraph<Family, Kind>::require_initialized() const
-{
-    if (m_mode == Mode::UNINITIALIZED)
-        throw std::logic_error("Incremental evaluation: initialize before reading or updating results.");
-}
-
-template<FamilyTag Family, tyr::TaskKind Kind>
-void EvaluationGraph<Family, Kind>::require_eager() const
-{
-    if (m_mode != Mode::EAGER)
-        throw std::logic_error("Incremental evaluation: exact deltas require initialize/update evaluation.");
-}
-
-template<FamilyTag Family, tyr::TaskKind Kind>
-void EvaluationGraph<Family, Kind>::require_ready(ygg::uint_t index) const
-{
-    require_initialized();
-    if (m_mode == Mode::DEMAND && !m_active.at(index))
-        throw std::logic_error("Incremental evaluation: demand this result before reading it.");
-}
-
-template<FamilyTag Family, tyr::TaskKind Kind>
-void EvaluationGraph<Family, Kind>::reset() noexcept
-{
-    std::fill(m_active.begin(), m_active.end(), false);
-    m_mode = Mode::DEMAND;
-}
-
-template<FamilyTag Family, tyr::TaskKind Kind>
-void EvaluationGraph<Family, Kind>::advance(const Delta<Family>& delta, ygg::database::Workspace<QueryValues>& workspace)
-{
-    if (m_mode != Mode::DEMAND)
-        throw std::logic_error("Incremental evaluation: reset before advancing demand evaluation.");
-    m_mode = Mode::UNINITIALIZED;
-    // Activated nodes include all their dependencies, which precede them in m_nodes.
-    for (size_t i = 0; i < m_nodes.size(); ++i)
-        if (m_active[i])
-            std::visit([&](auto& evaluator) { evaluator.update(*this, delta, workspace); }, m_nodes[i]);
-    m_mode = Mode::DEMAND;
-}
-
-template<FamilyTag Family, tyr::TaskKind Kind>
-template<StateEvaluationContextConcept<Family, Kind> Context>
-void EvaluationGraph<Family, Kind>::demand(ygg::uint_t index, Context& context)
-{
-    if (m_mode != Mode::DEMAND)
-        throw std::logic_error("Incremental evaluation: reset before demand evaluation.");
-    if (&context.get_state().get_task() != &m_task)
-        throw std::invalid_argument("Incremental evaluation: graph belongs to a different task.");
-    try
-    {
-        evaluate_node(index, context);
-    }
-    catch (...)
-    {
-        m_mode = Mode::UNINITIALIZED;
-        throw;
-    }
-}
-
-template<FamilyTag Family, tyr::TaskKind Kind>
-template<StateEvaluationContextConcept<Family, Kind> Context>
-void EvaluationGraph<Family, Kind>::evaluate_node(ygg::uint_t index, Context& context)
-{
-    if (m_active.at(index))
-        return;
-    std::visit(
-        [&](auto& evaluator)
-        {
-            // Finish children before borrowing the shared operation workspace.
-            for (const auto child : evaluator.get_dependencies())
-                evaluate_node(child, context);
-            evaluator.initialize(*this, context);
-        },
-        m_nodes.at(index));
-    m_active[index] = true;
-}
 
 template<FamilyTag Family, tyr::TaskKind Kind>
 EvaluationGraph<Family, Kind>::EvaluationGraph(const tyr::planning::Task<Kind>& task, std::span<const EvaluationRoot<Family>> roots) : m_task(task)
@@ -407,7 +182,6 @@ EvaluationGraph<Family, Kind>::EvaluationGraph(const tyr::planning::Task<Kind>& 
     m_set_workspace.initialize(ygg::to_uint_t(task.get_task().get_num_objects()));
     for (const auto& root : roots)
         std::visit([&](auto expression) { prepare(expression); }, root);
-    m_active.resize(m_nodes.size());
 }
 
 template<FamilyTag Family, tyr::TaskKind Kind>
@@ -477,28 +251,315 @@ QueryEvaluationIndex EvaluationGraph<Family, Kind>::prepare(FamilyQueryView<Fami
     return index;
 }
 
-template<FamilyTag Family, tyr::TaskKind Kind>
-template<StateEvaluationContextConcept<Family, Kind> Context>
-void EvaluationGraph<Family, Kind>::initialize(Context& context)
+/// The handle of one state's evaluation: the state's inputs (Context, or NoContext for an update without them) and
+/// the transition into it, which must outlive the handle. A handle is stale once its IncrementalEvaluation entered
+/// another state; moving that evaluation invalidates it.
+template<FamilyTag Family, tyr::TaskKind Kind, typename Context>
+class StateEvaluation;
+
+/// Inputs of an update that may only apply deltas.
+struct NoContext
 {
-    const auto* task = &context.get_state().get_task();
-    if (&m_task != task)
-        throw std::invalid_argument("Incremental evaluation: graph belongs to a different task.");
-    m_mode = Mode::UNINITIALIZED;
-    for (auto& node : m_nodes)
-        std::visit([&](auto& evaluator) { evaluator.initialize(*this, context); }, node);
-    m_mode = Mode::EAGER;
-}
+};
+
+/// Demand-driven, change-propagating evaluation of an EvaluationGraph over a sequence of states, as in adaptive
+/// computation (Acar, "Self-Adjusting Computation", PhD thesis, CMU 2005) and demanded computation graphs (Hammer
+/// et al., "Adapton: Composable, Demand-Driven Incremental Computation", PLDI 2014): each node records the state it
+/// was last evaluated in. Demanding a node in a state first brings its children up to date. A node evaluated in the
+/// previous state whose children all hold the exact delta of this transition is updated from that delta; otherwise
+/// it is initialized from the state's inputs. Nodes not demanded for two or more states are thus initialized again
+/// rather than replaying the skipped deltas. A node whose evaluation throws is initialized on its next demand.
+template<FamilyTag Family, tyr::TaskKind Kind>
+class IncrementalEvaluation
+{
+    template<FamilyTag, tyr::TaskKind, typename>
+    friend class StateEvaluation;
+
+    struct NodeState
+    {
+        uint64_t state = 0;  ///< The state the node was last evaluated in; 0 if never, or its last evaluation failed.
+        bool exact = false;  ///< Updated from the transition delta, so its delta is exact.
+    };
+
+    EvaluationGraph<Family, Kind> m_graph;
+    std::vector<NodeState> m_nodes;
+    uint64_t m_state = 0;
+    bool m_transition = false;  ///< m_state was entered from the previous state by a delta.
+
+    template<typename Context>
+    void require_task(const Context& context) const
+    {
+        if (&context.get_state().get_task() != &m_graph.m_task)
+            throw std::invalid_argument("Incremental evaluation: graph belongs to a different task.");
+    }
+    void require_current(ygg::uint_t index) const
+    {
+        if (m_state == 0 || m_nodes.at(index).state != m_state)
+            throw std::logic_error("Incremental evaluation: evaluate this result in the current state before reading it.");
+    }
+    void require_exact(ygg::uint_t index) const
+    {
+        require_current(index);
+        if (!m_nodes[index].exact)
+            throw std::logic_error("Incremental evaluation: exact deltas exist only for results updated from the state's delta.");
+    }
+    template<typename Context>
+    StateEvaluation<Family, Kind, Context> next(Context context, const Delta<Family>* delta, ygg::database::Workspace<QueryValues>* workspace)
+    {
+        ++m_state;
+        m_transition = delta != nullptr;
+        return StateEvaluation<Family, Kind, Context>(*this, std::move(context), delta, workspace);
+    }
+    template<typename Context>
+    void demand(ygg::uint_t index, Context& context, const Delta<Family>* delta, ygg::database::Workspace<QueryValues>* workspace);
+
+public:
+    IncrementalEvaluation(const tyr::planning::Task<Kind>& task, std::span<const EvaluationRoot<Family>> roots) :
+        m_graph(task, roots),
+        m_nodes(m_graph.node_count())
+    {
+    }
+    IncrementalEvaluation(const tyr::planning::Task<Kind>& task, std::initializer_list<EvaluationRoot<Family>> roots) :
+        IncrementalEvaluation(task, std::span<const EvaluationRoot<Family>>(roots.begin(), roots.size()))
+    {
+    }
+
+    const EvaluationGraph<Family, Kind>& graph() const noexcept { return m_graph; }
+
+    /// Enters a state unrelated to the previous one: every demanded node is initialized.
+    template<StateEvaluationContextConcept<Family, Kind> Context>
+    StateEvaluation<Family, Kind, Context> enter(Context context)
+    {
+        require_task(context);
+        return next(std::move(context), nullptr, nullptr);
+    }
+    /// Enters the state reached from the previous one by `delta`.
+    template<StateEvaluationContextConcept<Family, Kind> Context>
+    StateEvaluation<Family, Kind, Context> enter(Context context, const Delta<Family>& delta, ygg::database::Workspace<QueryValues>& workspace)
+    {
+        require_task(context);
+        return next(std::move(context), &delta, &workspace);
+    }
+    /// Enters the state reached by `delta` without its inputs; demanding a node that must be initialized throws.
+    StateEvaluation<Family, Kind, NoContext> enter(const Delta<Family>& delta, ygg::database::Workspace<QueryValues>& workspace)
+    {
+        return next(NoContext {}, &delta, &workspace);
+    }
+    /// Continues the current state, keeping what it evaluated. `delta` must be the one the state was entered by; it
+    /// is ignored if the state was entered without one.
+    template<StateEvaluationContextConcept<Family, Kind> Context>
+    StateEvaluation<Family, Kind, Context> resume(Context context, const Delta<Family>& delta, ygg::database::Workspace<QueryValues>& workspace)
+    {
+        require_task(context);
+        if (m_state == 0)
+            throw std::logic_error("Incremental evaluation: enter a state before resuming it.");
+        return StateEvaluation<Family, Kind, Context>(*this, std::move(context), m_transition ? &delta : nullptr, &workspace);
+    }
+
+    /// Results of nodes evaluated in the current state.
+    template<CategoryTag Category>
+    BorrowedDenotationView<Category> get_result(EvaluationIndex<Category> index) const&
+    {
+        require_current(ygg::uint_t(index));
+        return m_graph.result(index);
+    }
+    template<CategoryTag Category>
+    BorrowedDenotationView<Category> get_result(EvaluationIndex<Category>) const&& = delete;
+    const auto& get_result(QueryEvaluationIndex index) const&
+    {
+        require_current(ygg::uint_t(index));
+        return m_graph.result(index);
+    }
+    const auto& get_result(QueryEvaluationIndex) const&& = delete;
+    template<ConceptOrRoleTag Category>
+    size_t size(EvaluationIndex<Category> index) const
+    {
+        require_current(ygg::uint_t(index));
+        return m_graph.cardinality(index);
+    }
+    size_t size(QueryEvaluationIndex index) const
+    {
+        require_current(ygg::uint_t(index));
+        return m_graph.cardinality(index);
+    }
+    /// Changes of nodes updated from the transition into the current state.
+    template<ConceptOrRoleTag Category>
+    const DenotationDelta<Category>& get_delta(EvaluationIndex<Category> index) const&
+    {
+        require_exact(ygg::uint_t(index));
+        return m_graph.change(index);
+    }
+    template<ConceptOrRoleTag Category>
+    const DenotationDelta<Category>& get_delta(EvaluationIndex<Category>) const&& = delete;
+    const auto& get_delta(QueryEvaluationIndex index) const&
+    {
+        require_exact(ygg::uint_t(index));
+        return m_graph.change(index);
+    }
+    const auto& get_delta(QueryEvaluationIndex) const&& = delete;
+    template<BooleanOrNumericalTag Category>
+    bool changed(EvaluationIndex<Category> index) const
+    {
+        require_exact(ygg::uint_t(index));
+        return m_graph.node(index).changed();
+    }
+};
+
+template<FamilyTag Family, tyr::TaskKind Kind, typename Context>
+class StateEvaluation
+{
+    IncrementalEvaluation<Family, Kind>* m_evaluation;
+    uint64_t m_state;
+    Context m_context;
+    const Delta<Family>* m_delta;  ///< The transition into the state, if known.
+    ygg::database::Workspace<QueryValues>* m_workspace;
+
+    friend class IncrementalEvaluation<Family, Kind>;
+    StateEvaluation(IncrementalEvaluation<Family, Kind>& evaluation,
+                    Context context,
+                    const Delta<Family>* delta,
+                    ygg::database::Workspace<QueryValues>* workspace) :
+        m_evaluation(&evaluation),
+        m_state(evaluation.m_state),
+        m_context(std::move(context)),
+        m_delta(delta),
+        m_workspace(workspace)
+    {
+    }
+    IncrementalEvaluation<Family, Kind>& current(ygg::uint_t index)
+    {
+        if (m_state != m_evaluation->m_state)
+            throw std::logic_error("Incremental evaluation: this state evaluation is stale.");
+        m_evaluation->demand(index, m_context, m_delta, m_workspace);
+        return *m_evaluation;
+    }
+
+public:
+    const EvaluationGraph<Family, Kind>& graph() const noexcept { return m_evaluation->graph(); }
+    const Context& context() const noexcept { return m_context; }
+
+    template<CategoryTag Category>
+    BorrowedDenotationView<Category> evaluate(EvaluationIndex<Category> index)
+    {
+        return current(ygg::uint_t(index)).get_result(index);
+    }
+    const auto& evaluate(QueryEvaluationIndex index) { return current(ygg::uint_t(index)).get_result(index); }
+    template<ConceptOrRoleTag Category>
+    size_t size(EvaluationIndex<Category> index)
+    {
+        return current(ygg::uint_t(index)).size(index);
+    }
+    size_t size(QueryEvaluationIndex index) { return current(ygg::uint_t(index)).size(index); }
+    template<ConceptOrRoleTag Category>
+    const DenotationDelta<Category>& delta(EvaluationIndex<Category> index)
+    {
+        return current(ygg::uint_t(index)).get_delta(index);
+    }
+    const auto& delta(QueryEvaluationIndex index) { return current(ygg::uint_t(index)).get_delta(index); }
+    template<BooleanOrNumericalTag Category>
+    bool changed(EvaluationIndex<Category> index)
+    {
+        return current(ygg::uint_t(index)).changed(index);
+    }
+};
 
 template<FamilyTag Family, tyr::TaskKind Kind>
-void EvaluationGraph<Family, Kind>::update(const Delta<Family>& delta, ygg::database::Workspace<QueryValues>& workspace)
+template<typename Context>
+void IncrementalEvaluation<Family, Kind>::demand(ygg::uint_t index,
+                                                  Context& context,
+                                                  const Delta<Family>* delta,
+                                                  ygg::database::Workspace<QueryValues>* workspace)
 {
-    require_eager();
-    m_mode = Mode::UNINITIALIZED;
-    for (auto& node : m_nodes)
-        std::visit([&](auto& evaluator) { evaluator.update(*this, delta, workspace); }, node);
-    m_mode = Mode::EAGER;
+    if (m_nodes.at(index).state == m_state)
+        return;
+    std::visit(
+        [&](auto& evaluator)
+        {
+            // Finish children before borrowing the shared operation workspace.
+            auto children_exact = true;
+            for (const auto child : evaluator.get_dependencies())
+            {
+                demand(child, context, delta, workspace);
+                children_exact = children_exact && m_nodes[child].exact;
+            }
+            auto& node = m_nodes[index];
+            const auto update = delta && node.state != 0 && node.state + 1 == m_state && children_exact;
+            node = NodeState {};
+            if (update)
+                evaluator.update(m_graph, *delta, *workspace);
+            else if constexpr (std::same_as<Context, NoContext>)
+                throw std::logic_error("Incremental evaluation: initialize with the state's inputs before updating.");
+            else
+                evaluator.initialize(m_graph, context);
+            node = NodeState { m_state, update };
+        },
+        m_graph.m_nodes[index]);
 }
+
+/// Convenience owner for one root, evaluated eagerly in each state. Use IncrementalEvaluation to share children
+/// across roots.
+template<FamilyTag Family, tyr::TaskKind Kind, CategoryTag Category>
+class Evaluator
+{
+    IncrementalEvaluation<Family, Kind> m_evaluation;
+    EvaluationIndex<Category> m_root;
+
+public:
+    Evaluator(const tyr::planning::Task<Kind>& task, FamilyConstructorView<Family, Category> expression) :
+        m_evaluation(task, { expression }),
+        m_root(m_evaluation.graph().get_index(expression))
+    {
+    }
+    template<StateEvaluationContextConcept<Family, Kind> Context>
+    void initialize(Context& context)
+    {
+        m_evaluation.enter(context).evaluate(m_root);
+    }
+    /// Throws std::logic_error unless the root can be updated from the delta; then initialize() is required.
+    void update(const Delta<Family>& delta, ygg::database::Workspace<QueryValues>& workspace) { m_evaluation.enter(delta, workspace).evaluate(m_root); }
+    auto get_result() const& { return m_evaluation.get_result(m_root); }
+    auto get_result() const&& = delete;
+    const auto& get_delta() const&
+        requires ConceptOrRoleTag<Category>
+    {
+        return m_evaluation.get_delta(m_root);
+    }
+    const auto& get_delta() const&& = delete;
+    size_t size() const
+        requires ConceptOrRoleTag<Category>
+    {
+        return m_evaluation.size(m_root);
+    }
+    bool changed() const
+        requires BooleanOrNumericalTag<Category>
+    {
+        return m_evaluation.changed(m_root);
+    }
+};
+
+template<FamilyTag Family, tyr::TaskKind Kind>
+class QueryEvaluator
+{
+    IncrementalEvaluation<Family, Kind> m_evaluation;
+    QueryEvaluationIndex m_root;
+
+public:
+    QueryEvaluator(const tyr::planning::Task<Kind>& task, FamilyQueryView<Family> expression) :
+        m_evaluation(task, { expression }),
+        m_root(m_evaluation.graph().get_index(expression))
+    {
+    }
+    template<StateEvaluationContextConcept<Family, Kind> Context>
+    void initialize(Context& context)
+    {
+        m_evaluation.enter(context).evaluate(m_root);
+    }
+    void update(const Delta<Family>& delta, ygg::database::Workspace<QueryValues>& workspace) { m_evaluation.enter(delta, workspace).evaluate(m_root); }
+    const auto& get_result() const& { return m_evaluation.get_result(m_root); }
+    const auto& get_result() const&& = delete;
+    const auto& get_delta() const& { return m_evaluation.get_delta(m_root); }
+    const auto& get_delta() const&& = delete;
+};
 
 }  // namespace runir::kr::dl::semantics::incremental
 

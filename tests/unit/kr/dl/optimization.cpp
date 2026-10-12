@@ -79,10 +79,25 @@ void check_optimized_queries()
         "(n_count (q_generic_join (x y z) (x y z) " + triple + " " + fixed + "))",
     };
 
+    {
+        // A leaf empty in every sampled state keeps a size of zero and is reported.
+        const auto never = std::string(R"((q_atomic_state "missing" ()))");
+        const auto original = kr::ps::ext::dl::parse_numerical("(n_count (q_join " + triple + " " + never + "))", domain, *repository);
+        auto warnings = ygg::diagnostics::Warnings();
+        const auto statistics = kr::dl::collect_query_statistics<Kind>(original, context_pointers, warnings);
+        ASSERT_EQ(warnings.get().size(), 1);
+        EXPECT_NE(warnings.get()[0].message.find(never + " was empty in all"), std::string::npos) << warnings.get()[0].message;
+        const auto optimized = kr::dl::optimize(original, *repository, statistics);
+        for (auto* context : context_pointers)
+            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(optimized, *context).get(), kr::dl::semantics::evaluate<Kind>(original, *context).get());
+    }
+
     for (const auto& text : expressions)
     {
         const auto original = kr::ps::ext::dl::parse_numerical(text, domain, *repository);
-        const auto statistics = kr::dl::collect_query_statistics<Kind>(original, context_pointers);
+        auto warnings = ygg::diagnostics::Warnings();
+        const auto statistics = kr::dl::collect_query_statistics<Kind>(original, context_pointers, warnings);
+        EXPECT_TRUE(warnings.empty()) << text;
         EXPECT_TRUE(statistics.objects.has_value()) << text;
         EXPECT_FALSE(statistics.leaves.empty()) << text;
         for (const auto* mode : { &statistics, static_cast<const kr::dl::QueryStatistics<Ext>*>(nullptr) })

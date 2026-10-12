@@ -49,6 +49,70 @@ payloads in its destination. Stored relation records contain column/row-set
 indices and stored denotations contain vector indices; copying those records
 alone does not transfer the referenced storage.
 
+## Distance evaluation
+
+`n_distance` is evaluated by a multi-source breadth-first search that stops at the
+first level reaching a target. Its edges are never materialized: each level
+evaluates the edge query restricted to the current frontier (`BoundQueryEvaluator`
+in `semantics/distance_evaluation.hpp`). Bound columns are passed down through
+unions, differences, projections, renames, and selections; joins evaluate the side
+with more bound columns first and bind the other side to their shared columns.
+Concept and role leaves become membership tests and successor iteration in their
+bitsets, so identities and complements never become query rows. Other leaves are
+evaluated fully and filtered by the bound columns. Work and memory therefore scale
+with the explored region rather than with the size of the edge relation. The value
+equals `ygg::database::min_distance` over the fully evaluated arguments.
+
+For k > 1 query edges the search is a forward A*. Each vertex column i has a static
+abstraction: the edge query relaxed until it is static (dynamic leaves are dropped;
+differences and complements keep their left side) and projected onto columns (i, k + i). Every relaxation is a superset of the real
+edges in every state, so the backward distance table from the projected targets is an
+admissible and consistent heuristic, and the maximum over columns is too. The
+abstraction is built once per task and feature; its table is recomputed only when the
+projected targets change. Columns whose table is zero everywhere (e.g. targets that
+allow any value) are ignored. A source with an infinite estimate has distance ∞
+without search. k = 1 and role edges keep the blind breadth-first search.
+
+The relaxation eliminates variables existentially (bucket elimination): the conjuncts
+of a join are relaxed, Free ones are dropped, and conjuncts sharing a label are joined
+first, each result keeping only the labels needed above or by another conjunct. Static
+leaves over other vertex columns therefore still constrain a column (e.g. a cell behind
+a pushed object).
+
+Searches reuse a path tree across evaluations (Multipath Generalized Adaptive A*,
+Hernández, Asín & Baier 2015). Per distance feature it stores, for touched vertices,
+a learned distance to the targets (d − g after each search, an admissible and
+consistent estimate) and a pointer to the successor on a found path. A search stops
+at a stored vertex whose pointer chain still reaches a target with learned distances
+dropping by one per edge; each edge is checked against the current state. The tree is
+reset when the targets change. Between evaluations the edge query's dynamic leaves
+are compared with a snapshot: removed edges keep learned distances consistent, and
+added edges (a delta evaluation of the edge query with the changed leaf restricted to
+its new rows) lower learned distances by a Dijkstra-like repair over stored
+predecessors (Generalized Adaptive A*). Changes the delta evaluation cannot cover
+(leaves below generic joins, rows leaving the right side of a difference) reset the
+tree. Set RUNIR_DISTANCE_PROFILE to print search counters at exit and
+RUNIR_DISTANCE_LOG=<file> for one line per guided evaluation.
+
+The search is bidirectional: a backward breadth-first search from the targets, kept in
+the tree across evaluations, advances one level whenever its frontier is not larger
+than the forward open list (Pohl's cardinality comparison). Its vertices get exact
+distances and pointers. If it runs dry, its closure is complete and every source
+outside it is unreachable; added edges stop it and invalidate that closure.
+
+The edge query is compiled once per set of bound columns into a union of conjunctive
+branches over variable slots, ordered by estimated fanout from leaf sizes, and run
+without intermediate relations: concept leaves are bit tests, roles successor rows or
+cached predecessor lists of static roles, relations hash indexes on their bound
+columns, and dynamic atomic leaves are read from the state's atoms. Differences and
+generic joins fall back to the frontier-bound evaluation. Source queries use the same
+pipeline.
+
+Unchanged inputs are not re-evaluated. Targets and dynamic leaves are compared through
+the bits of their dynamic inputs; in incremental evaluation, the on-demand node also
+records which predicates and registers its state deltas changed and reuses the
+fingerprints of inputs whose dependencies they did not touch.
+
 ## Storage and lifetime
 
 `DenotationCaches<Family>` stores memoized views and owns no result payloads.

@@ -49,6 +49,22 @@ def test_base_sketch(gripper_planning_domain, ground_gripper_search_context):
     assert plain.optimize(domain.base_repository) == plain
 
 
+def test_statistics_warn_about_leaves_empty_in_every_sample(gripper_planning_domain, ground_gripper_search_context):
+    domain, task, state = _ground(gripper_planning_domain, ground_gripper_search_context)
+    context = semantics.GroundStateEvaluationContext(state, task.dl_builder, semantics.EvaluationStorage(task.dl_denotation_repository))
+    carried = '(q_atomic_state "carry" (ball gripper))'  # no ball is carried in the initial state
+    sketch = parse_sketch(
+        f"(:sketch (:features (:numerical (:symbol carried) (:expression (n_count (q_join {carried} (q_concept ball (c_atomic_state \"ball\"))))))) (:rules))",
+        gripper_planning_domain,
+        domain.base_repository,
+    )
+    with pytest.warns(UserWarning, match="was empty in all 1 samples"):
+        statistics = sketch.collect_query_statistics([context])
+    assert statistics.num_leaves() == 2
+    optimized = sketch.optimize(domain.base_repository, statistics)
+    assert optimized.get_numerical_features()[0].get_expression().evaluate(context).get() == 0
+
+
 def test_ext_program(gripper_planning_domain, ground_gripper_search_context):
     domain, task, state = _ground(gripper_planning_domain, ground_gripper_search_context)
     bindings = (

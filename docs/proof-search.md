@@ -43,6 +43,12 @@ does not retain deltas. Module, caller, or argument changes reinitialize dynamic
 results; task-static results remain reusable. Call arguments still use full
 evaluation and interning because their results must survive the caller.
 
+Distances whose edges are a query (`n_distance` over k-tuples) are not maintained
+from deltas: maintaining the edge relation would materialize every edge, which for
+pair vertices grows with |vertices| × degree. Such a node, and every node depending
+on it, is recomputed from the state when demanded, in private storage that publishes
+no dynamic result. Distances over role edges keep incremental maintenance.
+
 Query relations keep set semantics, but incremental row updates can change Action
 enumeration order. Plans, traversal statistics, and resource-limited outcomes may
 therefore differ from full evaluation.

@@ -72,18 +72,20 @@ RecordView<Family, RepositoryTypes, T> optimize(RecordView<Family, RepositoryTyp
     return optimizer.template optimize<T>(object);
 }
 
-/// Leaf statistics of every query in a ps record; contexts holds one state evaluation context per sample state.
+/// Leaf statistics of every query in a ps record; contexts holds one state evaluation context per sample state. Leaves
+/// empty in every sample are reported in warnings.
 template<tyr::TaskKind Kind,
          FamilyTag Family,
          typename T,
          typename RepositoryTypes,
          runir::kr::dl::semantics::StateEvaluationContextConcept<DlFamilyFor<Family>, Kind> Context>
 runir::kr::dl::QueryStatistics<DlFamilyFor<Family>> collect_query_statistics(RecordView<Family, RepositoryTypes, T> object,
-                                                                             const std::vector<Context*>& contexts)
+                                                                             const std::vector<Context*>& contexts,
+                                                                             ygg::diagnostics::Warnings& warnings)
 {
     auto collector = RecordCollector<Family, RepositoryTypes, FeatureStatisticsCollector<Family>>();
     collector.template add<T>(object);
-    return collector.get_leaves().get_collector().template measure<Kind>(contexts);
+    return collector.get_leaves().get_collector().template measure<Kind>(contexts, warnings);
 }
 
 }  // namespace runir::kr::ps::dl
