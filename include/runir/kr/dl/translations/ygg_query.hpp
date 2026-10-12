@@ -136,12 +136,12 @@ public:
         return insert(*out);
     }
 
-    /// The relaxation of a translated query whose input slots are known only where `known(slot)` holds
+    /// The relaxations of translated queries whose input slots are known only where `known(slot)` holds
     /// (ygg::database::relax); built in this translator's repository.
     template<std::predicate<size_t> Known>
-    ygg::database::Relaxation<QueryValues> relax(YggQuery query, Known&& known)
+    ygg::database::Relaxation<QueryValues> relax(std::span<const YggQuery> roots, Known&& known)
     {
-        return ygg::database::relax(query, std::forward<Known>(known), m_repository, m_builder);
+        return ygg::database::relax(roots, std::forward<Known>(known), m_repository, m_builder);
     }
 
     /// The expression of each input slot, by slot.
