@@ -20,7 +20,7 @@ namespace runir::kr::ps::icp
 namespace detail
 {
 
-template<tyr::TaskKind Kind, typename Unsolvability>
+template<tyr::TaskKind Kind, UnsolvabilityConcept<Kind> Unsolvability>
 auto search(TaskContextPtr<Kind> task, ProgramView program, const ProgramSearchOptions<Kind>& options, Unsolvability& classifier) -> ProgramProofResults<Kind>
 {
     auto result = ProgramProofResults<Kind> {};

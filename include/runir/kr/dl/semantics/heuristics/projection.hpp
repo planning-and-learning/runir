@@ -2,6 +2,7 @@
 #define RUNIR_KR_DL_SEMANTICS_HEURISTICS_PROJECTION_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/translations/ygg_query.hpp"
 
 #include <algorithm>
 #include <array>
@@ -15,6 +16,7 @@
 #include <yggdrasil/database/semantics/search/concepts.hpp>
 #include <yggdrasil/database/semantics/distance.hpp>
 #include <yggdrasil/database/semantics/operations.hpp>
+#include <yggdrasil/database/semantics/relation_view.hpp>
 #include <yggdrasil/database/syntax/copy.hpp>
 #include <yggdrasil/database/syntax/query.hpp>
 #include <yggdrasil/database/syntax/row.hpp>
@@ -66,7 +68,7 @@ public:
     }
 
     /// Recomputes the tables whose abstract targets changed. Callers that know the targets are unchanged skip it.
-    template<typename Targets>
+    template<ygg::database::RelationViewConcept<QueryValues> Targets>
     void update(const Targets& targets)
     {
         for (auto& database : m_databases)
@@ -96,7 +98,7 @@ private:
     std::vector<std::byte> m_vertex;  ///< The bound abstract vertex, kept to avoid allocations.
 
     /// A backward breadth-first search from α_i(T) in the abstract graph.
-    template<typename Targets>
+    template<ygg::database::RelationViewConcept<QueryValues> Targets>
     void update_table(PatternDatabase& database, const Targets& targets)
     {
         m_abstract_targets.assign(m_num_objects, false);
@@ -146,9 +148,11 @@ struct EdgeAbstraction
 };
 
 /// The abstraction of a translated edge query, or nullopt if no column is constrained at both ends (blind search).
-template<typename Translator>
+template<FamilyTag Family>
 std::optional<EdgeAbstraction>
-abstract_edges(Translator& translator, ygg::database::QueryView<QueryValues> edges, const ygg::database::DistancePlan<QueryValues>& plan)
+abstract_edges(dl::detail::QueryTranslator<Family>& translator,
+               ygg::database::QueryView<QueryValues> edges,
+               const ygg::database::DistancePlan<QueryValues>& plan)
 {
     const auto columns = plan.edge_columns().span();
     const auto k = plan.arity();
@@ -172,7 +176,7 @@ abstract_edges(Translator& translator, ygg::database::QueryView<QueryValues> edg
 }
 
 /// The pattern database heuristic of an abstraction; `slot_rows(slot)` returns a static slot's rows.
-template<typename SlotRows>
+template<ygg::database::SlotRelations<QueryValues> SlotRows>
 ProjectionHeuristic make_projection_heuristic(const EdgeAbstraction& abstraction,
                                              const ygg::database::DistancePlan<QueryValues>& plan,
                                              ygg::uint_t num_objects,

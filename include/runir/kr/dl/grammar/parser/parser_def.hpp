@@ -5,6 +5,7 @@
 #include "runir/kr/dl/grammar/ast/ast_adapted.hpp"
 #include "runir/kr/dl/grammar/parser/parsers.hpp"
 
+#include <boost/spirit/home/x3/support/traits/is_parser.hpp>
 #include <string>
 
 namespace runir::kr::dl::grammar::parser
@@ -25,6 +26,7 @@ template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, t
 inline constexpr bool has_ast_constructor_tag_v = ygg::InTypeList<Tag, runir::kr::dl::grammar::ast::AstConstructorTagsT<Family, Category>>;
 
 template<bool Enabled, typename Parser>
+    requires boost::spirit::x3::traits::is_parser<Parser>::value
 auto maybe(Parser parser)
 {
     if constexpr (Enabled)
@@ -93,6 +95,7 @@ inline auto bool_string_parser()
 }
 
 template<typename Choice>
+    requires boost::spirit::x3::traits::is_parser<Choice>::value && requires { typename Choice::attribute_type; }
 auto derivation_choices_parser(Choice choice)
 {
     const auto choices = boost::spirit::x3::rule<class DerivationChoiceList, std::vector<typename Choice::attribute_type>> { "constructor alternatives" } =
@@ -102,6 +105,7 @@ auto derivation_choices_parser(Choice choice)
 }
 
 template<typename Parser>
+    requires boost::spirit::x3::traits::is_parser<Parser>::value
 auto with_constructor_parentheses(Parser parser)
 {
     return lit("(") >> parser > lit(")");

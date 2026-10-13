@@ -45,7 +45,7 @@ public:
         {
             if (stop())
                 return false;
-            const auto target_registers = bound_registers(rule, state.get_module_state().get_registers(), value, *registers, context.storage);
+            const auto target_registers = bound_registers<Kind>(rule, state.get_module_state().get_registers(), value, *registers, context.storage);
             if (!binding_effects_match(rule, state, planning_state, target_registers, context.environment))
                 continue;
             const auto module_ = state.get_module_state();

@@ -68,7 +68,7 @@ private:
                                                                          state.get_module_state().get_arguments(),
                                                                          state.get_module_state().get_registers(),
                                                                          state.get_module_state().get_registers());
-        return all_compatible<Kind>(m_rule.get_effects(), transition);
+        return all_compatible<Kind, ExtFamilyTag>(m_rule.get_effects(), transition);
     }
 
 public:

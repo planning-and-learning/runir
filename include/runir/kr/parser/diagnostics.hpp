@@ -4,6 +4,8 @@
 #include "runir/kr/errors.hpp"
 #include "runir/kr/parser/error_handler.hpp"
 
+#include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
+#include <concepts>
 #include <functional>
 #include <optional>
 #include <string>
@@ -37,15 +39,15 @@ struct DiagnosticContext
         return error;
     }
 
-    template<typename Node, typename Error>
-    [[noreturn]] void throw_at(const Node& node, Error error) const
+    template<std::derived_from<SemanticError> Error>
+    [[noreturn]] void throw_at(const boost::spirit::x3::position_tagged& node, Error error) const
     {
         if (active)
             error.set_diagnostic(active->get().make_diagnostic(node, error.message()));
         throw error;
     }
 
-    template<typename Error>
+    template<std::derived_from<SemanticError> Error>
     [[noreturn]] void throw_at(Iterator position, Error error) const
     {
         if (active)

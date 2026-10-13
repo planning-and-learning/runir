@@ -54,8 +54,14 @@ class EvaluationGraph
     template<CategoryTag Category>
     EvaluationIndex<Category> prepare(FamilyConstructorView<Family, Category> expression);
     QueryEvaluationIndex prepare(FamilyQueryView<Family> expression);
-    template<typename Expression>
-    auto prepare(Expression expression, std::vector<ygg::uint_t>& dependencies)
+    template<CategoryTag Category>
+    EvaluationIndex<Category> prepare(FamilyConstructorView<Family, Category> expression, std::vector<ygg::uint_t>& dependencies)
+    {
+        const auto index = prepare(expression);
+        dependencies.push_back(ygg::uint_t(index));
+        return index;
+    }
+    QueryEvaluationIndex prepare(FamilyQueryView<Family> expression, std::vector<ygg::uint_t>& dependencies)
     {
         const auto index = prepare(expression);
         dependencies.push_back(ygg::uint_t(index));
@@ -148,18 +154,30 @@ class GraphBuilder
 public:
     explicit GraphBuilder(EvaluationGraph<Family, Kind>& graph) noexcept : m_graph(&graph) {}
 
-    template<typename Expression>
-    auto prepare(Expression expression)
+    template<CategoryTag Category>
+    EvaluationIndex<Category> prepare(FamilyConstructorView<Family, Category> expression)
     {
         return m_graph->prepare(expression);
     }
-    template<typename Expression>
-    auto prepare(Expression expression, std::vector<ygg::uint_t>& dependencies)
+    QueryEvaluationIndex prepare(FamilyQueryView<Family> expression) { return m_graph->prepare(expression); }
+    template<CategoryTag Category>
+    EvaluationIndex<Category> prepare(FamilyConstructorView<Family, Category> expression, std::vector<ygg::uint_t>& dependencies)
     {
         return m_graph->prepare(expression, dependencies);
     }
-    template<typename Expression>
-    QueryEvaluationIndex prepare_relation(Expression expression, std::span<const ygg::database::ColumnLayout> columns, std::vector<ygg::uint_t>& dependencies)
+    QueryEvaluationIndex prepare(FamilyQueryView<Family> expression, std::vector<ygg::uint_t>& dependencies)
+    {
+        return m_graph->prepare(expression, dependencies);
+    }
+    QueryEvaluationIndex
+    prepare_relation(FamilyQueryView<Family> expression, std::span<const ygg::database::ColumnLayout> columns, std::vector<ygg::uint_t>& dependencies)
+    {
+        return m_graph->prepare_relation(expression, columns, dependencies);
+    }
+    template<ConceptOrRoleTag Category>
+    QueryEvaluationIndex prepare_relation(FamilyConstructorView<Family, Category> expression,
+                                          std::span<const ygg::database::ColumnLayout> columns,
+                                          std::vector<ygg::uint_t>& dependencies)
     {
         return m_graph->prepare_relation(expression, columns, dependencies);
     }
@@ -243,16 +261,11 @@ QueryEvaluationIndex EvaluationGraph<Family, Kind>::prepare(FamilyQueryView<Fami
     return index;
 }
 
-/// The handle of one state's evaluation: the state's inputs (Context, or NoContext for an update without them) and
-/// the transition into it, which must outlive the handle. A handle is stale once its IncrementalEvaluation entered
+/// The handle of one state's evaluation, and the only way to read its results: the state's inputs (Context) and the
+/// transition into it, which must outlive the handle. A handle is stale once its IncrementalEvaluation entered
 /// another state; moving that evaluation invalidates it.
-template<FamilyTag Family, tyr::TaskKind Kind, typename Context>
+template<FamilyTag Family, tyr::TaskKind Kind, StateEvaluationContextConcept<Family, Kind> Context>
 class StateEvaluation;
-
-/// Inputs of an update that may only apply deltas.
-struct NoContext
-{
-};
 
 /// Demand-driven evaluation of an EvaluationGraph over a sequence of states. Each node records the epoch (entered
 /// state) it was last evaluated in, a verifying trace as in build systems (Mokhov, Mitchell & Peyton Jones, "Build
@@ -261,11 +274,12 @@ struct NoContext
 /// up to date. A node evaluated in the previous epoch whose children all hold the exact delta of this transition is
 /// updated from that delta (the evaluators' delta rules); otherwise it is initialized from the state's inputs. Nodes
 /// not demanded for two or more epochs are thus initialized again rather than replaying the skipped deltas. A node
-/// whose evaluation throws is initialized on its next demand.
+/// whose evaluation throws is initialized on its next demand. Whether a node was updated from the delta is observable:
+/// StateEvaluation::delta() and changed() throw otherwise.
 template<FamilyTag Family, tyr::TaskKind Kind>
 class IncrementalEvaluation
 {
-    template<FamilyTag, tyr::TaskKind, typename>
+    template<FamilyTag F, tyr::TaskKind K, StateEvaluationContextConcept<F, K> C>
     friend class StateEvaluation;
 
     struct NodeState
@@ -279,7 +293,7 @@ class IncrementalEvaluation
     uint64_t m_epoch = 0;
     bool m_transition = false;  ///< m_epoch was entered from the previous one by a delta.
 
-    template<typename Context>
+    template<StateEvaluationContextConcept<Family, Kind> Context>
     void require_task(const Context& context) const
     {
         if (&context.get_state().get_task() != m_graph.m_task)
@@ -296,14 +310,14 @@ class IncrementalEvaluation
         if (!m_nodes[index].has_delta)
             throw std::logic_error("Incremental evaluation: exact deltas exist only for results updated from the state's delta.");
     }
-    template<typename Context>
+    template<StateEvaluationContextConcept<Family, Kind> Context>
     StateEvaluation<Family, Kind, Context> next(Context context, const Delta<Family>* delta, ygg::database::Workspace<QueryValues>* workspace)
     {
         ++m_epoch;
         m_transition = delta != nullptr;
         return StateEvaluation<Family, Kind, Context>(*this, std::move(context), delta, workspace);
     }
-    template<typename Context>
+    template<StateEvaluationContextConcept<Family, Kind> Context>
     void demand(ygg::uint_t index, Context& context, const Delta<Family>* delta, ygg::database::Workspace<QueryValues>* workspace);
 
 public:
@@ -333,11 +347,6 @@ public:
         require_task(context);
         return next(std::move(context), &delta, &workspace);
     }
-    /// Enters the state reached by `delta` without its inputs; demanding a node that must be initialized throws.
-    StateEvaluation<Family, Kind, NoContext> enter(const Delta<Family>& delta, ygg::database::Workspace<QueryValues>& workspace)
-    {
-        return next(NoContext {}, &delta, &workspace);
-    }
     /// Continues the current state, keeping what it evaluated. `delta` must be the one the state was entered by; it
     /// is ignored if the state was entered without one.
     template<StateEvaluationContextConcept<Family, Kind> Context>
@@ -349,7 +358,8 @@ public:
         return StateEvaluation<Family, Kind, Context>(*this, std::move(context), m_transition ? &delta : nullptr, &workspace);
     }
 
-    /// Results of nodes evaluated in the current state.
+private:
+    /// Results of nodes evaluated in the current state, read through StateEvaluation.
     template<CategoryTag Category>
     BorrowedDenotationView<Category> get_result(EvaluationIndex<Category> index) const&
     {
@@ -398,7 +408,7 @@ public:
     }
 };
 
-template<FamilyTag Family, tyr::TaskKind Kind, typename Context>
+template<FamilyTag Family, tyr::TaskKind Kind, StateEvaluationContextConcept<Family, Kind> Context>
 class StateEvaluation
 {
     IncrementalEvaluation<Family, Kind>* m_evaluation;
@@ -457,7 +467,7 @@ public:
 };
 
 template<FamilyTag Family, tyr::TaskKind Kind>
-template<typename Context>
+template<StateEvaluationContextConcept<Family, Kind> Context>
 void IncrementalEvaluation<Family, Kind>::demand(ygg::uint_t index,
                                                   Context& context,
                                                   const Delta<Family>* delta,
@@ -480,8 +490,6 @@ void IncrementalEvaluation<Family, Kind>::demand(ygg::uint_t index,
             node = NodeState {};
             if (update)
                 evaluator.update(m_graph, *delta, *workspace);
-            else if constexpr (std::same_as<Context, NoContext>)
-                throw std::logic_error("Incremental evaluation: initialize with the state's inputs before updating.");
             else
                 evaluator.initialize(m_graph, context);
             node = NodeState { m_epoch, update };

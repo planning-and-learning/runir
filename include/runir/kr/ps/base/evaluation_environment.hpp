@@ -63,7 +63,7 @@ public:
 
     auto make_dl_transition_context(tyr::planning::StateView<Kind> source_state, tyr::planning::StateView<Kind> target_state)
     {
-        return make_evaluation_transition_context<BaseFamilyTag>(
+        return make_evaluation_transition_context<BaseFamilyTag, Kind>(
             make_dl_context(std::move(source_state)),
             m_policy.make_target_context(StateDlContext(std::move(target_state), m_dl_builder, m_target_storage)));
     }

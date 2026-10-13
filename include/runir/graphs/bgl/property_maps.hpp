@@ -4,6 +4,7 @@
 #include "runir/graphs/declarations.hpp"
 
 #include <boost/property_map/property_map.hpp>
+#include <concepts>
 #include <functional>
 #include <vector>
 
@@ -19,7 +20,7 @@ struct IdentityReadPropertyMap
     using category = boost::readable_property_map_tag;
 };
 
-template<std::unsigned_integral Key, typename Value>
+template<std::unsigned_integral Key, std::copyable Value>
 auto get(const IdentityReadPropertyMap<Key, Value>&, Key key) noexcept -> Value
 {
     return static_cast<Value>(key);
@@ -43,7 +44,7 @@ public:
     auto get_data() const noexcept -> const std::vector<Value>& { return m_data.get(); }
 };
 
-template<std::unsigned_integral Key, typename Value>
+template<std::unsigned_integral Key, std::copyable Value>
 auto get(const DenseReadPropertyMap<Key, Value>& map, Key key) -> const Value&
 {
     return map.get(key);
@@ -69,13 +70,13 @@ public:
     auto get_data() const noexcept -> const std::vector<Value>& { return m_data.get(); }
 };
 
-template<std::unsigned_integral Key, typename Value>
+template<std::unsigned_integral Key, std::copyable Value>
 auto get(const DenseReadWritePropertyMap<Key, Value>& map, Key key) -> const Value&
 {
     return map.get(key);
 }
 
-template<std::unsigned_integral Key, typename Value>
+template<std::unsigned_integral Key, std::copyable Value>
 void put(DenseReadWritePropertyMap<Key, Value>& map, Key key, const Value& value)
 {
     map.put(key, value);
@@ -99,7 +100,7 @@ public:
     auto get_data() const noexcept -> const ygg::UnorderedMap<Key, Value>& { return m_data.get(); }
 };
 
-template<std::unsigned_integral Key, typename Value>
+template<std::unsigned_integral Key, std::copyable Value>
 auto get(const SparseReadPropertyMap<Key, Value>& map, Key key) -> const Value&
 {
     return map.get(key);
@@ -125,13 +126,13 @@ public:
     auto get_data() const noexcept -> const ygg::UnorderedMap<Key, Value>& { return m_data.get(); }
 };
 
-template<std::unsigned_integral Key, typename Value>
+template<std::unsigned_integral Key, std::copyable Value>
 auto get(const SparseReadWritePropertyMap<Key, Value>& map, Key key) -> const Value&
 {
     return map.get(key);
 }
 
-template<std::unsigned_integral Key, typename Value>
+template<std::unsigned_integral Key, std::copyable Value>
 void put(SparseReadWritePropertyMap<Key, Value>& map, Key key, const Value& value)
 {
     map.put(key, value);

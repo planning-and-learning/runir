@@ -6,10 +6,18 @@
 #include "runir/kr/task_context.hpp"
 #include "runir/kr/uns/classify.hpp"
 
+#include <concepts>
+#include <tyr/planning/state_view.hpp>
 #include <vector>
 
 namespace runir::kr::ps
 {
+
+/// A dead-end detector: `u.is_unsolvable(state)` yields whether the planning state is provably unsolvable.
+template<typename U, typename Kind>
+concept UnsolvabilityConcept = tyr::TaskKind<Kind> && requires(U& u, const tyr::planning::StateView<Kind>& state) {
+    { u.is_unsolvable(state) } -> std::same_as<bool>;
+};
 
 template<tyr::TaskKind Kind>
 struct NoUnsolvability

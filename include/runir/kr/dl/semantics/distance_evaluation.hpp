@@ -10,6 +10,7 @@
 #include <span>
 #include <vector>
 #include <yggdrasil/database/semantics/min_distance.hpp>
+#include <yggdrasil/database/semantics/relation_view.hpp>
 
 /// n_distance over a DL edge query, evaluated by yggdrasil (ygg::database::MinDistance in full evaluation,
 /// ygg::database::incremental::MinDistance in incremental evaluation; see their method overviews). runir translates the
@@ -25,38 +26,38 @@ template<typename Edges, FamilyTag Family, typename C>
 inline constexpr bool is_role_edges_v = std::same_as<Edges, ygg::View<ygg::Index<Constructor<Family, RoleTag>>, C>>;
 
 /// The rows of an input slot in the current state.
-template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context, typename C>
-QueryDenotationView evaluate_slot(const QuerySlot& slot, const C& constructors, Context& context)
+template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context>
+QueryDenotationView evaluate_slot(const QuerySlot& slot, const ConstructorRepositoryFor<Family>& constructors, Context& context)
 {
     return visit_slot<Family>(slot, constructors, [&](auto expression) { return evaluate_relation<Kind>(expression, slot.columns, context); });
 }
 
-/// Translates a feature's edges and builds its min-distance evaluator; role edges are a relation of one slot.
-template<typename Distance, FamilyTag Family, typename C, typename Edges>
-DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePlan<QueryValues>& plan, Edges edges)
+/// Builds the min-distance evaluator of a feature with role edges, a relation of one slot.
+template<typename Distance, FamilyTag Family>
+DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePlan<QueryValues>& plan, FamilyConstructorView<Family, RoleTag> edges)
 {
-    if constexpr (is_role_edges_v<Edges, Family, C>)
-    {
-        const auto columns = plan.edge_columns().span();
-        return { { QuerySlot { QuerySlot::Kind::ROLE, ygg::uint_t(edges.get_index()), { columns.begin(), columns.end() }, edges.is_static() } },
-                 Distance(plan, edges.is_static()),
-                 std::nullopt };
-    }
-    else
-    {
-        auto translator = dl::detail::QueryTranslator<Family, C>(true);
-        const auto query = translator.translate(edges);
-        auto static_slots = std::vector<bool>();
-        for (const auto& slot : translator.get_slots())
-            static_slots.push_back(slot.is_static);
-        auto abstraction = plan.arity() > 1 ? heuristics::abstract_edges(translator, query, plan) : std::nullopt;
-        return { translator.get_slots(), Distance(query, plan, static_slots), std::move(abstraction) };
-    }
+    const auto columns = plan.edge_columns().span();
+    return { { QuerySlot { QuerySlot::Kind::ROLE, ygg::uint_t(edges.get_index()), { columns.begin(), columns.end() }, edges.is_static() } },
+             Distance(plan, edges.is_static()),
+             std::nullopt };
+}
+
+/// Translates a feature's query edges and builds its min-distance evaluator.
+template<typename Distance, FamilyTag Family>
+DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePlan<QueryValues>& plan, FamilyQueryView<Family> edges)
+{
+    auto translator = dl::detail::QueryTranslator<Family>(true);
+    const auto query = translator.translate(edges);
+    auto static_slots = std::vector<bool>();
+    for (const auto& slot : translator.get_slots())
+        static_slots.push_back(slot.is_static);
+    auto abstraction = plan.arity() > 1 ? heuristics::abstract_edges(translator, query, plan) : std::nullopt;
+    return { translator.get_slots(), Distance(query, plan, static_slots), std::move(abstraction) };
 }
 
 /// The heuristic of a feature: a pattern database heuristic if it has an abstraction, otherwise blind;
 /// `slot_rows(slot)` returns a static slot's rows.
-template<typename Distance, typename SlotRows>
+template<typename Distance, ygg::database::SlotRelations<QueryValues> SlotRows>
 heuristics::ProjectionHeuristic
 make_heuristic(const DistanceFeature<Distance>& feature, const ygg::database::DistancePlan<QueryValues>& plan, ygg::uint_t num_objects, const SlotRows& slot_rows)
 {
@@ -85,7 +86,7 @@ ygg::uint_t on_demand_distance(ygg::View<ygg::Index<FamilyNumerical<Family, Dist
                 ygg::uint_t(constructor.get_index()),
                 [&]
                 {
-                    auto feature = make_distance_feature<ygg::database::MinDistance<QueryValues, heuristics::ProjectionHeuristic>, Family, C>(plan, edges);
+                    auto feature = make_distance_feature<ygg::database::MinDistance<QueryValues, heuristics::ProjectionHeuristic>, Family>(plan, edges);
                     auto heuristic = make_heuristic(feature,
                                                     plan,
                                                     detail::num_objects<Kind, Family>(context),

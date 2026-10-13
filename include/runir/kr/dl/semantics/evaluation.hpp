@@ -270,7 +270,7 @@ constexpr ygg::uint_t apply_numerical_binary(ygg::uint_t lhs, ygg::uint_t rhs) n
 }
 
 /// Inserts a concept's objects or a role's pairs as rows of a 1- or 2-column relation.
-template<ConceptOrRoleTag Category, typename Denotation>
+template<ConceptOrRoleTag Category, DenotationViewConcept<Category> Denotation>
 void insert_denotation_rows(const Denotation& denotation, ygg::Builder<ygg::database::Relation<QueryValues>>& result)
 {
     for (const auto element : denotation.indices())

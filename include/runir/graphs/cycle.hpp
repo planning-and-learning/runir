@@ -39,7 +39,7 @@ public:
     const auto& get_cycle() const noexcept { return m_cycle; }
 };
 
-template<typename Graph>
+template<IsGraph Graph>
 auto find_cycle(const Graph& graph) -> VertexIndexList
 {
     auto visitor = CycleVisitor<Graph>(graph);
@@ -54,7 +54,7 @@ auto find_cycle(const Graph& graph) -> VertexIndexList
 
 /// An ordered closed path of edge indices; empty iff the graph is acyclic.
 /// Parallel edges are resolved to the first matching edge in graph order.
-template<typename Graph>
+template<IsGraph Graph>
 auto find_edge_cycle(const Graph& graph) -> EdgeIndexList
 {
     const auto vertices = find_cycle(graph);

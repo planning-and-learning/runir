@@ -7,11 +7,19 @@
 #include "runir/kr/ps/family_traits.hpp"
 #include "runir/kr/dl/semantics/evaluation_context.hpp"
 
+#include <concepts>
+#include <ranges>
 #include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/core/types.hpp>
 
 namespace runir::kr::ps
 {
+
+/// A context that conditions and effects of `Family` can be checked against: a state or a transition evaluation context.
+template<typename C, typename Family, typename Kind>
+concept CompatibilityContext =
+    runir::kr::FamilyTag<Family> && tyr::TaskKind<Kind>
+    && (runir::kr::dl::semantics::EvaluationContextConcept<C, DlFamilyFor<Family>, Kind> || runir::kr::ps::dl::TransitionEvaluationContextConcept<C, Family, Kind>);
 
 template<tyr::TaskKind Kind,
          runir::kr::FamilyTag Family,
@@ -67,7 +75,7 @@ bool is_compatible_with(ygg::View<ygg::Index<EffectVariant<Family>>, C> effect, 
     return ygg::visit([&](auto child) { return runir::kr::ps::is_compatible_with<Kind>(child, context); }, effect.get_variant());
 }
 
-template<tyr::TaskKind Kind, typename Range, typename Context>
+template<tyr::TaskKind Kind, runir::kr::FamilyTag Family, std::ranges::input_range Range, CompatibilityContext<Family, Kind> Context>
 bool all_compatible(const Range& values, Context& context)
 {
     for (const auto value : values)

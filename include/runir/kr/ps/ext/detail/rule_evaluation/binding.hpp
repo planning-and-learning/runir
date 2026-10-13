@@ -4,13 +4,18 @@
 #include "runir/kr/dl/semantics/interning.hpp"
 #include "runir/kr/ps/ext/compatibility.hpp"
 #include "runir/kr/ps/ext/evaluation_environment.hpp"
+#include "runir/kr/ps/ext/execution_storage.hpp"
 
 namespace runir::kr::ps::ext::detail
 {
 
 /// Load and Choose bind one register using caller-owned scratch.
-template<BindingRuleKind Tag, runir::kr::dl::semantics::RegisterValuesViewConcept R, typename Value, typename Storage>
-auto bound_registers(RuleView<Tag> rule, R source, const Value& value, ygg::Data<runir::kr::dl::semantics::RegisterValues>& registers, Storage& storage)
+template<tyr::TaskKind Kind, BindingRuleKind Tag, runir::kr::dl::semantics::RegisterValuesViewConcept R, ExecutionStorageConcept<Kind> Storage>
+auto bound_registers(RuleView<Tag> rule,
+                     R source,
+                     const runir::kr::dl::semantics::DenotationElementView<typename Tag::Category>& value,
+                     ygg::Data<runir::kr::dl::semantics::RegisterValues>& registers,
+                     Storage& storage)
 {
     runir::kr::dl::semantics::assign(registers, source);
     runir::kr::dl::semantics::assign_register(registers, rule.get_register().get_identifier(), value);

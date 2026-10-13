@@ -4,13 +4,16 @@
 #include "runir/kr/parser/diagnostics.hpp"
 #include "runir/kr/parser/parser.hpp"
 
+#include <boost/spirit/home/x3/support/traits/is_parser.hpp>
+#include <concepts>
 #include <sstream>
 #include <string>
 
 namespace runir::kr::dl::grammar::parser
 {
 
-template<typename Ast, typename Parser>
+template<std::default_initializable Ast, typename Parser>
+    requires boost::spirit::x3::traits::is_parser<Parser>::value
 void parse_ast(const std::string& description,
                const Parser& parser,
                Ast& result,
@@ -22,7 +25,8 @@ void parse_ast(const std::string& description,
         throw runir::kr::parser::DiagnosticContext::parse_error(error_handler, fallback_message, first);
 }
 
-template<typename Ast, typename Parser>
+template<std::default_initializable Ast, typename Parser>
+    requires boost::spirit::x3::traits::is_parser<Parser>::value
 Ast parse_ast(const std::string& description, const Parser& parser, const char* fallback_message)
 {
     auto errors = std::ostringstream {};

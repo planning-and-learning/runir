@@ -307,12 +307,12 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
     const auto arguments = kr::dl::semantics::insert(denotations, argument_data).first;
     const auto register_values = kr::dl::semantics::insert(denotations, registers).first;
     auto context = kr::dl::semantics::StateEvaluationContext<Ext, tyr::GroundTag>(initial.get_state(), builder, storage, arguments, register_values);
-    graph.initialize(context);
-    ASSERT_EQ(graph.get_result().size(), 2);
+    ASSERT_EQ(graph.initialize(context).get_result().size(), 2);
 
     // Build completed planning transitions before tracking evaluation allocations.
     auto changes = std::array<kr::dl::semantics::incremental::Delta<Ext>, 4> {};
     auto projected_sizes = std::array<size_t, 5> { 2 };
+    auto contexts = std::vector { context };  // The context of each state the changes pass through, built before tracking.
     auto current = initial;
     for (size_t i = 0; i < changes.size(); ++i)
     {
@@ -320,6 +320,7 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
         ASSERT_FALSE(successors.empty());
         const auto next = successors.front();
         changes[i].assign<tyr::GroundTag>(current.get_state(), register_view, next.get_state(), register_view);
+        contexts.push_back(kr::dl::semantics::StateEvaluationContext<Ext, tyr::GroundTag>(next.get_state(), builder, storage, arguments, register_values));
         auto objects = std::set<ObjectIndex> {};
         for (const auto atom : next.get_state().get_atoms_view(atomic.get_predicate()))
             objects.insert(atom.get_row().get_data()[0]);
@@ -337,28 +338,28 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
                 return false;
         return true;
     };
-    const auto apply = [&](const auto& change, size_t rows, size_t projected_rows, bool adding)
+    const auto apply = [&](const auto& change, size_t target, size_t rows, size_t projected_rows, bool adding)
     {
         const auto previous_size = projection.get_result().size();
         leaf.update(change.added.fluent_atoms, change.removed.fluent_atoms);
         const auto& delta = leaf.get_delta();
         projection.update(delta.change(), workspace);
-        graph.update(change, workspace);
+        auto graph_state = graph.update(contexts[target], change, workspace);
         const auto& projected_delta = projection.get_delta();
         return leaf.get_result().size() == rows && delta.added.size() == size_t(adding) && delta.removed.size() == size_t(!adding)
                && projection.get_result().size() == projected_rows && projected_delta.added.size() == (adding ? projected_rows - previous_size : 0)
-               && projected_delta.removed.size() == (adding ? 0 : previous_size - projected_rows) && same_rows(graph.get_result(), projection.get_result())
-               && same_rows(graph.get_delta().added, projected_delta.added) && same_rows(graph.get_delta().removed, projected_delta.removed);
+               && projected_delta.removed.size() == (adding ? 0 : previous_size - projected_rows) && same_rows(graph_state.get_result(), projection.get_result())
+               && same_rows(graph_state.get_delta().added, projected_delta.added) && same_rows(graph_state.get_delta().removed, projected_delta.removed);
     };
     const auto cycle = [&]
     {
         bool valid = true;
         for (size_t i = 0; i < changes.size(); ++i)
-            valid &= apply(changes[i], changes.size() - i - 1, projected_sizes[i + 1], false);
+            valid &= apply(changes[i], i + 1, changes.size() - i - 1, projected_sizes[i + 1], false);
         for (size_t i = changes.size(); i-- > 0;)
         {
             changes[i].reverse();
-            valid &= apply(changes[i], changes.size() - i, projected_sizes[i], true);
+            valid &= apply(changes[i], i, changes.size() - i, projected_sizes[i], true);
             changes[i].reverse();
         }
         return valid;
@@ -460,6 +461,7 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
     }
     auto changes = std::array<kr::dl::semantics::incremental::Delta<Ext>, 2> {};
     auto current = initial;
+    auto states = std::vector { initial.get_state() };
     for (size_t i = 0; i < changes.size(); ++i)
     {
         const auto successors = search->successor_generator->get_successor_nodes(current, *search->state_repository, *search->axiom_evaluator);
@@ -470,6 +472,7 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
                                           next.get_state(),
                                           ygg::make_view(registers[i + 1], *search->task->get_repository()));
         current = next;
+        states.push_back(next.get_state());
     }
 
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
@@ -477,13 +480,19 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
     auto builder = kr::dl::semantics::Builder {};
     auto argument_data = ygg::Data<kr::dl::semantics::CallArguments> {};
     const auto arguments = kr::dl::semantics::insert(denotations, argument_data).first;
-    auto context =
-        kr::dl::semantics::StateEvaluationContext<Ext, tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>, kr::dl::semantics::BorrowedRegisterValuesView>(
-            initial.get_state(),
-            builder,
-            storage,
-            arguments,
-            ygg::make_view(registers.front(), *search->task->get_repository()));
+    const auto context_for = [&](size_t i)
+    {
+        return kr::dl::semantics::
+            StateEvaluationContext<Ext, tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>, kr::dl::semantics::BorrowedRegisterValuesView>(
+                states[i],
+                builder,
+                storage,
+                arguments,
+                ygg::make_view(registers[i], *search->task->get_repository()));
+    };
+    // The inputs of each state of the cycle, built before the measured scope.
+    const auto contexts = std::array { context_for(0), context_for(1), context_for(2) };
+    const auto& context = contexts.front();
     const auto initialize = [&]
     {
         for (auto& evaluator : concepts)
@@ -500,25 +509,37 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
     };
     initialize();
     auto workspace = ygg::database::Workspace<QueryValues> {};
-    const auto apply = [&](const auto& delta, size_t members, size_t register_members)
+    // Enters state `target` by `delta`. Every read root is updated from the delta: get_delta(), delta() and changed()
+    // throw otherwise.
+    const auto apply = [&](const auto& delta, size_t target, size_t members, size_t register_members)
     {
-        for (auto& evaluator : concepts)
-            evaluator.update(delta, workspace);
-        for (auto& evaluator : roles)
-            evaluator.update(delta, workspace);
-        for (auto& evaluator : numericals)
-            evaluator.update(delta, workspace);
-        for (auto& evaluator : booleans)
-            evaluator.update(delta, workspace);
-        auto graph = evaluation.enter(delta, workspace);
-        bool valid = concepts[0].size() == members && concepts[1].size() == members && concepts[2].size() == register_members && concepts[3].size() == 2
-                     && roles[0].size() == members && roles[1].size() == members && roles[2].size() == register_members;
+        const auto& target_context = contexts[target];
+        const auto concept_sizes = std::array { members, members, register_members, size_t(2) };
+        const auto role_sizes = std::array { members, members, register_members };
+        bool valid = true;
+        for (size_t i = 0; i < concepts.size(); ++i)
+        {
+            auto state = concepts[i].update(target_context, delta, workspace);
+            (void) state.get_delta();
+            valid &= state.size() == concept_sizes[i];
+        }
+        for (size_t i = 0; i < roles.size(); ++i)
+        {
+            auto state = roles[i].update(target_context, delta, workspace);
+            (void) state.get_delta();
+            valid &= state.size() == role_sizes[i];
+        }
         for (size_t i = 0; i < numericals.size(); ++i)
         {
             const auto expected = i < 2 ? members : register_members;
-            valid &= numericals[i].get_result().get() == expected;
-            valid &= booleans[i].get_result().get() == (expected != 0);
+            auto numerical = numericals[i].update(target_context, delta, workspace);
+            auto boolean = booleans[i].update(target_context, delta, workspace);
+            (void) numerical.changed();
+            (void) boolean.changed();
+            valid &= numerical.get_result().get() == expected;
+            valid &= boolean.get_result().get() == (expected != 0);
         }
+        auto graph = evaluation.enter(target_context, delta, workspace);
         const auto infinity = std::numeric_limits<ygg::uint_t>::max();
         const auto expected_distance = members == 2 ? ygg::uint_t(2) : members == 1 ? ygg::uint_t(0) : infinity;
         valid &= graph.size(source_id) == register_members && graph.size(edge_id) == members;
@@ -530,17 +551,24 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
         valid &= graph.evaluate(nonempty_id).get() == (members == 2);
         valid &= graph.size(projected_id) == members && graph.size(projected_role_id) == members;
         valid &= graph.evaluate(query_count_id).get() == members;
+        for (const auto id : { source_count_id, edge_count_id, distance_id, self_distance_id, query_count_id })
+            (void) graph.changed(id);
+        (void) graph.changed(nonempty_id);
+        for (const auto id : { source_id, projected_id })
+            (void) graph.delta(id);
+        for (const auto id : { edge_id, closure_id, projected_role_id })
+            (void) graph.delta(id);
         return valid;
     };
     const auto cycle = [&]
     {
         bool valid = true;
         for (size_t i = 0; i < changes.size(); ++i)
-            valid &= apply(changes[i], changes.size() - i - 1, i == 0 ? 1 : 0);
+            valid &= apply(changes[i], i + 1, changes.size() - i - 1, i == 0 ? 1 : 0);
         for (size_t i = changes.size(); i-- > 0;)
         {
             changes[i].reverse();
-            valid &= apply(changes[i], changes.size() - i, 1);
+            valid &= apply(changes[i], i, changes.size() - i, 1);
             changes[i].reverse();
         }
         initialize();

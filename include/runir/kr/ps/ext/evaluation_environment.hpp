@@ -167,8 +167,8 @@ public:
         using StateDlContext = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, Kind, S, R>;
         auto source = StateDlContext(std::move(source_state), m_dl_builder, m_dl_storage, arguments, source_registers);
         auto target = StateDlContext(std::move(target_state), m_dl_builder, m_dl_target_storage, arguments, target_registers);
-        return make_evaluation_transition_context<ExtFamilyTag>(current_policy().make_source_context(std::move(source)),
-                                                                current_policy().make_target_context(std::move(target)));
+        return make_evaluation_transition_context<ExtFamilyTag, Kind>(current_policy().make_source_context(std::move(source)),
+                                                                      current_policy().make_target_context(std::move(target)));
     }
 };
 

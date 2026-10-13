@@ -27,13 +27,17 @@ namespace detail
 
 /// Evaluate terminating executions in postorder. The storage policy controls state
 /// admission, memoization and graph retention; AND/OR traversal is identical in every mode.
-template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, typename Expander, typename Storage, typename Unsolvability>
-ProgramProofStatus depth_first_search(Expander& expander,
+template<tyr::TaskKind Kind,
+         ExecutionStorageConcept<Kind> ExecutionStorage,
+         runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+         StateMemorization Memorization,
+         UnsolvabilityConcept<Kind> Unsolvability>
+ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>& expander,
                                       const tyr::planning::PackedStateView<Kind>& initial_state,
                                       const StorageStoredState<ExecutionStorage>& initial,
                                       const ProgramSearchOptions<Kind>& options,
                                       Unsolvability& classifier,
-                                      Storage& storage,
+                                      SearchStorage<Kind, Memorization>& storage,
                                       ProgramSearchStatistics& statistics,
                                       ygg::SharedObjectPool<SearchPath<Kind, ExecutionStorage>>& path_pool,
                                       ygg::SharedObjectPoolPtr<SearchPath<Kind, ExecutionStorage>>& first_goal,
@@ -286,15 +290,20 @@ ProgramProofStatus depth_first_search(Expander& expander,
 }
 
 /// Own the search lifetime, then construct its graph and optional execution plan.
-template<tyr::TaskKind Kind, StateMemorization Memorization, typename Expander, typename Unsolvability>
-ProgramProofResults<Kind>
-find_solution(Expander& expander, SearchStorage<Kind, Memorization>& storage, const ProgramSearchOptions<Kind>& options, Unsolvability& classifier)
+template<tyr::TaskKind Kind,
+         ExecutionStorageConcept<Kind> ExecutionStorage,
+         runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+         StateMemorization Memorization,
+         UnsolvabilityConcept<Kind> Unsolvability>
+ProgramProofResults<Kind> find_solution(SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>& expander,
+                                        SearchStorage<Kind, Memorization>& storage,
+                                        const ProgramSearchOptions<Kind>& options,
+                                        Unsolvability& classifier)
 {
     const auto& task_context = expander.get_task_context();
     auto& search = *task_context->search_context;
     const auto initial_node = search.successor_generator->get_packed_initial_node(*search.state_repository, *search.axiom_evaluator);
     const auto initial = expander.initial_state(initial_node.get_state().unpack());
-    using ExecutionStorage = typename Expander::StorageType;
     using PathPtr = ygg::SharedObjectPoolPtr<SearchPath<Kind, ExecutionStorage>>;
     auto statistics = ProgramSearchStatistics {};
     auto path_pool = ygg::SharedObjectPool<SearchPath<Kind, ExecutionStorage>> {};

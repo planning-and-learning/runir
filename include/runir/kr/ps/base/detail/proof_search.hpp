@@ -24,7 +24,7 @@ namespace detail
 
 /// Traverse permitted successors in depth-first order, expanding each reached state once.
 /// Report the first visited goal in ordinary execution; universal execution visits every permitted continuation.
-template<tyr::TaskKind Kind, typename Unsolvability>
+template<tyr::TaskKind Kind, UnsolvabilityConcept<Kind> Unsolvability>
 SketchProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
                                      SuccessorExpander<Kind>& expander,
                                      const tyr::planning::PackedStateView<Kind>& initial,
@@ -131,7 +131,7 @@ SketchProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
 }
 
 /// Own the search lifetime, then construct its graph and optional execution plan.
-template<tyr::TaskKind Kind, typename Unsolvability>
+template<tyr::TaskKind Kind, UnsolvabilityConcept<Kind> Unsolvability>
 auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options, Unsolvability& classifier)
     -> SketchProofResults<Kind>
 {

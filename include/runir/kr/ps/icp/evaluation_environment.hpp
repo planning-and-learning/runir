@@ -87,7 +87,7 @@ public:
                                     runir::kr::dl::semantics::RegisterValuesView source_registers,
                                     runir::kr::dl::semantics::RegisterValuesView target_registers)
     {
-        return make_evaluation_transition_context<IcpFamilyTag>(
+        return make_evaluation_transition_context<IcpFamilyTag, Kind>(
             make_dl_context(source, source_registers),
             m_policy.make_target_context(StateContext(target, m_task.dl_builder, m_target_storage, m_arguments, target_registers)));
     }

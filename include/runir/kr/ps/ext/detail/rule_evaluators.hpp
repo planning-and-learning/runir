@@ -28,6 +28,8 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <yggdrasil/core/concepts.hpp>
+#include <yggdrasil/core/type_list.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
@@ -39,15 +41,16 @@ class RuleEvaluators
 {
     using Concept = runir::kr::dl::ConceptTag;
     using Role = runir::kr::dl::RoleTag;
-    using Evaluator = std::variant<LoadRuleEvaluator<Kind, Concept>,
-                                   LoadRuleEvaluator<Kind, Role>,
-                                   SketchRuleEvaluator<Kind>,
-                                   DoRuleEvaluator<Kind>,
-                                   CallRuleEvaluator<Kind>,
-                                   ChooseRuleEvaluator<Kind, Concept>,
-                                   ChooseRuleEvaluator<Kind, Role>,
-                                   ActionRuleEvaluator<Kind>,
-                                   BacktrackRuleEvaluator<Kind>>;
+    using EvaluatorTypes = ygg::TypeList<LoadRuleEvaluator<Kind, Concept>,
+                                         LoadRuleEvaluator<Kind, Role>,
+                                         SketchRuleEvaluator<Kind>,
+                                         DoRuleEvaluator<Kind>,
+                                         CallRuleEvaluator<Kind>,
+                                         ChooseRuleEvaluator<Kind, Concept>,
+                                         ChooseRuleEvaluator<Kind, Role>,
+                                         ActionRuleEvaluator<Kind>,
+                                         BacktrackRuleEvaluator<Kind>>;
+    using Evaluator = ygg::ApplyTypeListT<std::variant, EvaluatorTypes>;
     runir::kr::TaskContextPtr<Kind> m_task_context;
     ProgramView m_program;
     EvaluationEnvironment<Kind, EvaluationPolicy> m_environment;
@@ -109,7 +112,7 @@ class RuleEvaluators
                                     { return std::visit([rule](const auto& concrete) { return concrete.get_variant() == rule; }, evaluator); });
     }
 
-    template<typename Function>
+    template<ygg::InvocableWithEach<EvaluatorTypes> Function>
     decltype(auto) with_rule(RuleVariantView rule, Function&& function)
     {
         if (const auto found = find_rule(rule); found != m_rules.end())

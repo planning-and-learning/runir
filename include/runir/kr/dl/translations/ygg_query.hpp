@@ -13,7 +13,9 @@
 #include <utility>
 #include <vector>
 #include <yggdrasil/containers/associative_containers.hpp>
+#include <yggdrasil/core/concepts.hpp>
 #include <yggdrasil/core/dependent_false.hpp>
+#include <yggdrasil/core/type_list.hpp>
 #include <yggdrasil/database/syntax/query.hpp>
 #include <yggdrasil/database/syntax/translations/relaxation.hpp>
 
@@ -37,8 +39,9 @@ struct QuerySlot
 };
 
 /// Calls f(expression) with the slot's expression as a view into `constructors`.
-template<FamilyTag Family, typename C, typename F>
-decltype(auto) visit_slot(const QuerySlot& slot, const C& constructors, F&& f)
+template<FamilyTag Family,
+         ygg::InvocableWithEach<ygg::TypeList<FamilyConstructorView<Family, ConceptTag>, FamilyConstructorView<Family, RoleTag>, FamilyQueryView<Family>>> F>
+auto visit_slot(const QuerySlot& slot, const ConstructorRepositoryFor<Family>& constructors, F&& f)
 {
     switch (slot.kind)
     {
@@ -67,7 +70,10 @@ template<FamilyTag Family, typename C>
 inline constexpr bool is_complement_view_v<ygg::View<ygg::Index<FamilyConcept<Family, NegationTag>>, C>> = true;
 
 /// Calls f(argument) if the query is a role or concept leaf over a complement (r_complement, c_not); returns whether.
-template<FamilyTag Family, typename C, typename F>
+template<FamilyTag Family,
+         typename C,
+         ygg::InvocableWithEach<
+             ygg::TypeList<ygg::View<ygg::Index<Constructor<Family, RoleTag>>, C>, ygg::View<ygg::Index<Constructor<Family, ConceptTag>>, C>>> F>
 bool visit_complement_argument(ygg::View<ygg::Index<Query<Family>>, C> query, F&& f)
 {
     return ygg::visit(

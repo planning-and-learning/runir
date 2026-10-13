@@ -27,7 +27,10 @@ public:
     auto& get_target_context() noexcept { return m_target; }
 };
 
-template<FamilyTag Family, typename SourceContext, typename TargetContext>
+template<FamilyTag Family,
+         tyr::TaskKind Kind,
+         runir::kr::dl::semantics::EvaluationContextConcept<DlFamilyFor<Family>, Kind> SourceContext,
+         runir::kr::dl::semantics::EvaluationContextConcept<DlFamilyFor<Family>, Kind> TargetContext>
 auto make_evaluation_transition_context(SourceContext source, TargetContext target)
 {
     return EvaluationTransitionContext<Family, SourceContext, TargetContext>(std::move(source), std::move(target));

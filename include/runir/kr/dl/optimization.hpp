@@ -22,6 +22,7 @@
 #include <vector>
 #include <yggdrasil/containers/associative_containers.hpp>
 #include <yggdrasil/core/children.hpp>
+#include <yggdrasil/core/concepts.hpp>
 #include <yggdrasil/core/dependent_false.hpp>
 #include <yggdrasil/core/type_list.hpp>
 #include <yggdrasil/database/optimization/optimization.hpp>
@@ -293,6 +294,8 @@ class QueryStatisticsCollector
 {
     template<typename T>
     using VisitedSet = ygg::UnorderedSet<FamilyRecordView<Family, T>>;
+    template<typename T>
+    using RecordView = FamilyRecordView<Family, T>;
 
 public:
     template<typename T>
@@ -342,7 +345,7 @@ private:
             collect_children(view);
     }
 
-    template<typename T, typename F>
+    template<typename T, ygg::InvocableWithEach<ygg::MapTypeListT<RecordView, FamilyConstructorRepositoryTypes<Family>>> F>
     static void for_each_child(FamilyRecordView<Family, T> view, F&& f)
     {
         ygg::for_each_child<FamilyConstructorRepositoryTypes<Family>>(view, std::forward<F>(f));

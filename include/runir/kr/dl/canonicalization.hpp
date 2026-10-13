@@ -6,7 +6,6 @@
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/role_data.hpp"
 
-#include <type_traits>
 #include <utility>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/semantics/comparison.hpp>
@@ -36,13 +35,14 @@ bool is_canonical(const ygg::Data<Query<Family, Tag>>&) noexcept
     return true;
 }
 
-template<typename Data>
-void canonicalize_commutative_binary(Data& data) noexcept
+/// Orders the two operands of a commutative binary constructor so that equal expressions get equal data.
+template<typename T>
+    requires requires(ygg::Data<T>& data) {
+        data.rhs < data.lhs;
+        std::swap(data.lhs, data.rhs);
+    }
+void canonicalize_commutative_binary(ygg::Data<T>& data) noexcept
 {
-    using Lhs = std::remove_cvref_t<decltype(data.lhs)>;
-    using Rhs = std::remove_cvref_t<decltype(data.rhs)>;
-    static_assert(std::same_as<Lhs, Rhs>);
-
     if (data.rhs < data.lhs)
         std::swap(data.lhs, data.rhs);
 }

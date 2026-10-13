@@ -15,6 +15,8 @@
 #include <boost/graph/floyd_warshall_shortest.hpp>
 #include <boost/graph/strong_components.hpp>
 #include <boost/graph/topological_sort.hpp>
+#include <concepts>
+#include <iterator>
 #include <limits>
 #include <queue>
 #include <type_traits>
@@ -109,7 +111,7 @@ auto make_vertex_index_map(const G& graph)
     }
 }
 
-template<IsGraph G, typename Value>
+template<IsGraph G, std::copyable Value>
 auto make_vertex_map_storage(const G& graph, const Value& value)
 {
     auto result = VertexMapStorage<G, Value>();
@@ -149,7 +151,8 @@ auto strong_components(const G& graph)
     }
 }
 
-template<IsGraph G, typename SourceInputIterator>
+template<IsGraph G, std::input_iterator SourceInputIterator>
+    requires std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
 auto breadth_first_visit(const G& graph, SourceInputIterator first, SourceInputIterator last, auto visitor)
 {
     using Vertex = VertexIndex;
@@ -163,7 +166,8 @@ auto breadth_first_visit(const G& graph, SourceInputIterator first, SourceInputI
     return colors;
 }
 
-template<IsGraph G, typename SourceInputIterator>
+template<IsGraph G, std::input_iterator SourceInputIterator>
+    requires std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
 auto breadth_first_visit(const G& graph, SourceInputIterator first, SourceInputIterator last, TraversalVisitor<G>& visitor)
 {
     return breadth_first_visit(graph, first, last, BoostTraversalVisitor<G>(visitor));
@@ -175,7 +179,8 @@ auto breadth_first_visit(const G& graph, const std::vector<VertexIndex>& sources
     return breadth_first_visit(graph, sources.begin(), sources.end(), visitor);
 }
 
-template<IsGraph G, typename SourceInputIterator>
+template<IsGraph G, std::input_iterator SourceInputIterator>
+    requires std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
 auto breadth_first_search(const G& graph, SourceInputIterator first, SourceInputIterator last)
 {
     using Vertex = VertexIndex;
@@ -223,7 +228,8 @@ auto breadth_first_search(const G& graph, const std::vector<VertexIndex>& source
     return breadth_first_search(graph, sources.begin(), sources.end());
 }
 
-template<IsGraph G, typename SourceInputIterator>
+template<IsGraph G, std::input_iterator SourceInputIterator>
+    requires std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
 auto depth_first_visit(const G& graph, SourceInputIterator first, SourceInputIterator last, auto visitor)
 {
     auto colors = make_vertex_map_storage(graph, boost::white_color);
@@ -236,7 +242,8 @@ auto depth_first_visit(const G& graph, SourceInputIterator first, SourceInputIte
     return colors;
 }
 
-template<IsGraph G, typename SourceInputIterator>
+template<IsGraph G, std::input_iterator SourceInputIterator>
+    requires std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
 auto depth_first_visit(const G& graph, SourceInputIterator first, SourceInputIterator last, TraversalVisitor<G>& visitor)
 {
     return depth_first_visit(graph, first, last, BoostTraversalVisitor<G>(visitor));
@@ -248,7 +255,8 @@ auto depth_first_visit(const G& graph, const std::vector<VertexIndex>& sources, 
     return depth_first_visit(graph, sources.begin(), sources.end(), visitor);
 }
 
-template<IsGraph G, typename SourceInputIterator>
+template<IsGraph G, std::input_iterator SourceInputIterator>
+    requires std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
 auto depth_first_search(const G& graph, SourceInputIterator first, SourceInputIterator last)
 {
     using Vertex = VertexIndex;
@@ -293,7 +301,8 @@ auto topological_sort(const G& graph)
     return result;
 }
 
-template<IsGraph G, typename Cost, typename SourceInputIterator>
+template<IsGraph G, typename Cost, std::input_iterator SourceInputIterator>
+    requires std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
 auto dijkstra_shortest_paths_impl(const G& graph, const EdgeMapStorage<G, Cost>& weights, SourceInputIterator first, SourceInputIterator last)
 {
     using Vertex = VertexIndex;
@@ -344,8 +353,8 @@ auto dijkstra_shortest_paths_impl(const G& graph, const EdgeMapStorage<G, Cost>&
     return std::make_tuple(predecessors, distances);
 }
 
-template<IsGraph G, typename Cost, typename SourceInputIterator>
-    requires IsDenseGraphV<G>
+template<IsGraph G, typename Cost, std::input_iterator SourceInputIterator>
+    requires IsDenseGraphV<G> && std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
 auto dijkstra_shortest_paths(const G& graph, const std::vector<Cost>& weights, SourceInputIterator first, SourceInputIterator last)
 {
     return dijkstra_shortest_paths_impl<G, Cost>(graph, weights, first, last);
@@ -358,8 +367,8 @@ auto dijkstra_shortest_paths(const G& graph, const std::vector<Cost>& weights, c
     return dijkstra_shortest_paths(graph, weights, sources.begin(), sources.end());
 }
 
-template<IsGraph G, typename Cost, typename SourceInputIterator>
-    requires(!IsDenseGraphV<G>)
+template<IsGraph G, typename Cost, std::input_iterator SourceInputIterator>
+    requires(!IsDenseGraphV<G>) && std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
 auto dijkstra_shortest_paths(const G& graph, const ygg::UnorderedMap<EdgeIndex, Cost>& weights, SourceInputIterator first, SourceInputIterator last)
 {
     return dijkstra_shortest_paths_impl<G, Cost>(graph, weights, first, last);

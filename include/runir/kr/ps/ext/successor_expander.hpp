@@ -79,7 +79,9 @@ public:
     /// Return true on exhaustion; emit returning false or stop returning true ends enumeration.
     /// Count applied successors and caller returns, not Choice descriptors or failure markers.
     /// Callbacks may materialize the source, but must not generate successors or apply choices. Apply choices after enumeration.
-    template<ProgramStateViewConcept<Kind> S, typename Emit, typename Stop>
+    template<ProgramStateViewConcept<Kind> S, typename Emit, StopConcept Stop>
+        requires EmitConcept<Emit, detail::ProgramStep<Kind, ExecutionStorage>> && EmitConcept<Emit, detail::Choice<runir::kr::dl::ConceptTag>>
+                 && EmitConcept<Emit, detail::Choice<runir::kr::dl::RoleTag>>
     bool for_each_successor(S state, ProgramSearchStatistics& statistics, Emit&& emit, Stop&& stop)
     {
         using Step = detail::ProgramStep<Kind, ExecutionStorage>;

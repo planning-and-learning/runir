@@ -21,14 +21,24 @@ struct ProjectionEvaluator
     DenotationState<Category> value;
 
     ProjectionEvaluator(QueryEvaluationIndex child, const ygg::database::ProjectionPlan<QueryValues>& plan) : child(child), operation(plan) {}
-    template<typename Builder>
-    static void set_row(Builder& builder, ygg::database::Row<QueryValues> row, bool present, auto&&... context)
+    static void set_row(ygg::Builder<Denotation<Category>>& builder, ygg::database::Row<QueryValues> row, bool present)
     {
         using ObjectIndex = ygg::Index<tyr::formalism::Object>;
         if constexpr (std::same_as<Category, ConceptTag>)
-            builder.set(row.get<ObjectIndex>(size_t { 0 }), present, context...);
+            builder.set(row.get<ObjectIndex>(size_t { 0 }), present);
         else
-            builder.set(row.get<ObjectIndex>(size_t { 0 }), row.get<ObjectIndex>(size_t { 1 }), present, context...);
+            builder.set(row.get<ObjectIndex>(size_t { 0 }), row.get<ObjectIndex>(size_t { 1 }), present);
+    }
+    static void set_row(DenotationState<Category>& state,
+                        ygg::database::Row<QueryValues> row,
+                        bool present,
+                        const tyr::formalism::planning::Repository& repository)
+    {
+        using ObjectIndex = ygg::Index<tyr::formalism::Object>;
+        if constexpr (std::same_as<Category, ConceptTag>)
+            state.set(row.get<ObjectIndex>(size_t { 0 }), present, repository);
+        else
+            state.set(row.get<ObjectIndex>(size_t { 0 }), row.get<ObjectIndex>(size_t { 1 }), present, repository);
     }
     template<StateEvaluationContextConcept<Family, Kind> Context>
     void initialize(EvaluationGraph<Family, Kind>& graph, Context& context)

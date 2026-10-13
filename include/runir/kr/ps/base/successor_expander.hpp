@@ -6,6 +6,7 @@
 #include "runir/kr/ps/base/sketch_view.hpp"
 #include "runir/kr/task_context.hpp"
 
+#include <concepts>
 #include <functional>
 #include <optional>
 #include <tyr/planning/declarations.hpp>
@@ -34,7 +35,7 @@ public:
     /// Increment statistics.num_generated for every generated successor, including rejected and duplicate targets.
     /// Return true if enumeration completed, false if stopped.
     /// Callbacks must not reenter this expander or its generator.
-    template<typename Emit, typename Stop>
+    template<std::predicate<LabeledNode, RuleView> Emit, StopConcept Stop>
     bool for_each_successor(const tyr::planning::StateView<Kind>& state, SketchSearchStatistics& statistics, Emit&& emit, Stop&& stop)
     {
         if (stop())

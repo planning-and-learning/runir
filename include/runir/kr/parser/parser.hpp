@@ -4,12 +4,15 @@
 #include "runir/kr/parser/config.hpp"
 
 #include <boost/spirit/home/x3.hpp>
+#include <boost/spirit/home/x3/support/traits/is_parser.hpp>
+#include <concepts>
 #include <functional>
 
 namespace runir::kr::parser
 {
 
-template<typename Parser, typename Ast>
+template<typename Parser, std::default_initializable Ast>
+    requires boost::spirit::x3::traits::is_parser<Parser>::value
 bool parse_full(Iterator& first, Iterator last, const Parser& parser, Ast& ast, ErrorHandlerType& error_handler)
 {
     error_handler.clear_error();

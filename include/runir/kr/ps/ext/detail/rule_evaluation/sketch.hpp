@@ -59,7 +59,7 @@ public:
                  State state,
                  const tyr::planning::LabeledNode<Kind, PlanningState, Binding>& candidate) const
     {
-        if (m_rule.get_effects().empty() || !ext::has_current_source(m_rule, state))
+        if (m_rule.get_effects().empty() || !ext::has_current_source<Kind>(m_rule, state))
             return false;
         auto transition = context.make_dl_transition_context(state, candidate);
         return is_compatible_with<Kind>(m_rule, transition);

@@ -37,7 +37,7 @@ public:
 
     /// Natural rule order for greedy execution; grouped action enumeration for universal search.
     /// Callbacks must not reenter this expander or the planning successor generator.
-    template<typename Emit, typename Stop>
+    template<EmitConcept<detail::ProgramStep<Kind>> Emit, StopConcept Stop>
     bool for_each_successor(ProgramStateView<Kind> state, ProgramSearchStatistics& statistics, Emit&& emit, Stop&& stop, bool grouped = false)
     {
         validate(state);

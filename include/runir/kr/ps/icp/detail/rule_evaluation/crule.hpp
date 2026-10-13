@@ -107,7 +107,7 @@ public:
             if (effect.get_operation() == EffectOperation::ENTER ? (before || !after) : (!before || after))
                 return false;
         }
-        return all_compatible<Kind>(m_rule.get_effects(), transition);
+        return all_compatible<Kind, IcpFamilyTag>(m_rule.get_effects(), transition);
     }
 
     /// Apply a match after the aggregate admits shared histories and publishes the binding.

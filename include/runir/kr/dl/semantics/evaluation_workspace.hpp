@@ -8,6 +8,8 @@
 #include <memory>
 #include <optional>
 #include <span>
+#include <type_traits>
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/distance/feature.hpp"
 #include "runir/kr/dl/semantics/heuristics/projection.hpp"
 
@@ -61,9 +63,10 @@ public:
     // ponytail: linear scan, and entries of dead repositories are kept; a constructor repository freed and replaced at
     // the same address with the same factory index over the same formalism would alias. Key by a repository-owned
     // cache if that happens.
-    template<typename Repository, std::invocable Make>
+    template<FamilyTag Family, std::invocable Make>
+        requires std::same_as<std::invoke_result_t<Make&>, FullDistanceFeature>
     FullDistanceFeature& get_distance_feature(const std::shared_ptr<tyr::formalism::planning::Repository>& formalism,
-                                              const Repository& constructors,
+                                              const ConstructorRepositoryFor<Family>& constructors,
                                               ygg::uint_t constructor,
                                               Make&& make)
     {

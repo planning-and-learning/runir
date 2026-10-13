@@ -58,7 +58,7 @@ public:
         auto target = context.storage.store(context.planning_state,
                                             module_.get_module(),
                                             rule.get_target(),
-                                            bound_registers(rule, module_.get_registers(), choice.current(), *registers, context.storage),
+                                            bound_registers<Kind>(rule, module_.get_registers(), choice.current(), *registers, context.storage),
                                             module_.get_arguments(),
                                             state.get_call_stack());
         return detail::applied<Kind, Storage>(std::move(target), choice.rule, context.task_context);
@@ -103,7 +103,7 @@ private:
             {
                 if (stop())
                     return false;
-                const auto target_registers = bound_registers(rule, state.get_module_state().get_registers(), value, *registers, context.storage);
+                const auto target_registers = bound_registers<Kind>(rule, state.get_module_state().get_registers(), value, *registers, context.storage);
                 if (binding_effects_match(rule, state, planning_state, target_registers, context.environment))
                     *admitted++ = value;
             }
@@ -123,7 +123,7 @@ private:
         {
             if (stop())
                 return false;
-            const auto target_registers = bound_registers(rule, state.get_module_state().get_registers(), value, *registers, context.storage);
+            const auto target_registers = bound_registers<Kind>(rule, state.get_module_state().get_registers(), value, *registers, context.storage);
             context.environment.reset_target();
             auto transition = context.environment.make_dl_transition_context(planning_state,
                                                                              planning_state,

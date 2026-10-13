@@ -18,24 +18,24 @@ namespace runir::kr::dl::semantics::incremental
 namespace detail
 {
 /// Appends the atoms of kind F true in `lhs` but not in `rhs`.
-template<tyr::formalism::FactKind F, typename Lhs, typename Rhs, typename Atoms>
-void append_only_in(const Lhs& lhs, const Rhs& rhs, Atoms& atoms)
+template<tyr::TaskKind Kind, tyr::formalism::FactKind F, tyr::planning::StateViewConcept<Kind> Lhs, tyr::planning::StateViewConcept<Kind> Rhs>
+void append_only_in(const Lhs& lhs, const Rhs& rhs, std::vector<tyr::formalism::planning::AtomView<tyr::GroundTag, F>>& atoms)
 {
     for (const auto atom : lhs.template get_atoms_view<F>())
         if (!rhs.test(atom))
             atoms.push_back(atom);
 }
 
-template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> Source, tyr::planning::StateViewConcept<Kind> Target, typename Changes>
-void assign_atom_delta(const Source& source, const Target& target, Changes& delta)
+template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> Source, tyr::planning::StateViewConcept<Kind> Target, FamilyTag Family>
+void assign_atom_delta(const Source& source, const Target& target, Delta<Family>& delta)
 {
     if (&source.get_task() != &target.get_task())
         throw std::invalid_argument("Feature delta requires states from the same task.");
     delta.clear();
-    append_only_in<tyr::formalism::FluentTag>(source, target, delta.removed.fluent_atoms);
-    append_only_in<tyr::formalism::FluentTag>(target, source, delta.added.fluent_atoms);
-    append_only_in<tyr::formalism::DerivedTag>(source, target, delta.removed.derived_atoms);
-    append_only_in<tyr::formalism::DerivedTag>(target, source, delta.added.derived_atoms);
+    append_only_in<Kind, tyr::formalism::FluentTag>(source, target, delta.removed.fluent_atoms);
+    append_only_in<Kind, tyr::formalism::FluentTag>(target, source, delta.added.fluent_atoms);
+    append_only_in<Kind, tyr::formalism::DerivedTag>(source, target, delta.removed.derived_atoms);
+    append_only_in<Kind, tyr::formalism::DerivedTag>(target, source, delta.added.derived_atoms);
 }
 }  // namespace detail
 

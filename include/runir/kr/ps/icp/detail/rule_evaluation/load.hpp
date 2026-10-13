@@ -56,7 +56,7 @@ public:
             const auto target_registers = insert(*task->dl_denotation_repository, *registers).first;
             environment.reset_target();
             auto transition = context.make_dl_transition_context(source, target_registers);
-            if (!runir::kr::ps::all_compatible<Kind>(m_rule.get_effects(), transition))
+            if (!runir::kr::ps::all_compatible<Kind, IcpFamilyTag>(m_rule.get_effects(), transition))
                 continue;
             const auto histories = workspace.update_histories(source, transition, std::nullopt, stop);
             if (!histories)

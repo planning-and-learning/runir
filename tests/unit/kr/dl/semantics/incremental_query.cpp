@@ -61,14 +61,14 @@ auto difference(const auto& lhs, const auto& rhs)
     return result;
 }
 
-void expect_net_delta(const auto& evaluator, const auto& before)
+void expect_net_delta(auto& evaluator, const auto& before)
 {
     const auto after = rows(evaluator.get_result());
     EXPECT_EQ(rows(evaluator.get_delta().added), difference(after, before));
     EXPECT_EQ(rows(evaluator.get_delta().removed), difference(before, after));
 }
 
-void expect_empty_delta(const auto& evaluator)
+void expect_empty_delta(auto& evaluator)
 {
     EXPECT_TRUE(evaluator.get_delta().added.empty());
     EXPECT_TRUE(evaluator.get_delta().removed.empty());
@@ -299,66 +299,74 @@ void check_query_graph()
         SCOPED_TRACE(expression);
         const auto query = parse_query(expression, domain, *constructors);
         auto evaluator = QueryRootEvaluator<Ext, Kind>(*search->task, query);
-        EXPECT_THROW(evaluator.update(empty_delta, workspace), std::logic_error);
         const auto expect_unpublished = [&]
         {
             EXPECT_TRUE(storage.get_caches().get_queries(false).empty());
             EXPECT_TRUE(storage.get_denotation_repository(false).get_relation_repository().empty());
         };
-        const auto compare_full = [&](auto state)
+        const auto compare_full = [&](auto& evaluated, auto state)
         {
             auto context = context_for(state);
-            EXPECT_EQ(rows(evaluator.get_result()), rows(kr::dl::semantics::evaluate<Kind>(query, context)));
+            EXPECT_EQ(rows(evaluated.get_result()), rows(kr::dl::semantics::evaluate<Kind>(query, context)));
         };
-        const auto update = [&](const auto& delta, const auto& state)
+        // Updates from the previous state, whose rows are `before`, and returns the rows of the reached state.
+        const auto update = [&](const auto& delta, const auto& state, const auto& before)
         {
-            const auto before = rows(evaluator.get_result());
             storage.reset_dynamic();
-            evaluator.update(delta, workspace);
+            auto context = context_for(state);
+            auto updated = evaluator.update(context, delta, workspace);
             expect_unpublished();
-            expect_net_delta(evaluator, before);
-            compare_full(state);
+            expect_net_delta(updated, before);  // Throws unless updated from the delta.
+            compare_full(updated, state);
 
-            const auto after = rows(evaluator.get_result());
-            evaluator.update(empty_delta, workspace);
-            expect_empty_delta(evaluator);
-            EXPECT_EQ(rows(evaluator.get_result()), after);
+            const auto after = rows(updated.get_result());
+            auto unchanged = evaluator.update(context, empty_delta, workspace);
+            expect_empty_delta(unchanged);
+            EXPECT_EQ(rows(unchanged.get_result()), after);
+            return after;
         };
 
         storage.reset_all();
         auto initial_context = context_for(nodes.front().get_state());
-        evaluator.initialize(initial_context);
+        // A fresh evaluator has no previous state: an update initializes it, so it has no delta.
+        auto fresh = evaluator.update(initial_context, empty_delta, workspace);
+        EXPECT_THROW(fresh.get_delta(), std::logic_error);
+        auto initial = evaluator.initialize(initial_context);
         expect_unpublished();
-        EXPECT_TRUE(std::ranges::equal(evaluator.get_result().columns().span(), query.get_schema().span()));
+        EXPECT_TRUE(std::ranges::equal(initial.get_result().columns().span(), query.get_schema().span()));
         if (expression == static_role)
         {
             // Its feature child may be interned; the static query root is owned here.
             EXPECT_TRUE(storage.get_caches().get_queries(true).empty());
             EXPECT_TRUE(storage.get_denotation_repository(true).get_relation_repository().empty());
         }
-        EXPECT_THROW(evaluator.get_delta(), std::logic_error);  // Initialized, not updated from a delta.
-        compare_full(nodes.front().get_state());
+        EXPECT_THROW(initial.get_delta(), std::logic_error);  // Initialized, not updated from a delta.
+        compare_full(initial, nodes.front().get_state());
+        auto current = rows(initial.get_result());
         for (size_t i = 0; i < deltas.size(); ++i)
-            update(deltas[i], nodes[i + 1].get_state());
+            current = update(deltas[i], nodes[i + 1].get_state(), current);
         for (size_t i = deltas.size(); i > 0; --i)
         {
             auto reversed = deltas[i - 1];
             reversed.reverse();
-            update(reversed, nodes[i - 1].get_state());
+            current = update(reversed, nodes[i - 1].get_state(), current);
         }
 
         // Static rows are owned by the evaluator, not the caches used to initialize them.
-        const auto before_reset = rows(evaluator.get_result());
+        auto last = evaluator.update(initial_context, empty_delta, workspace);
+        const auto& retained = last.get_result();
+        const auto before_reset = rows(retained);
+        EXPECT_EQ(before_reset, current);
         storage.reset_all();
-        EXPECT_EQ(rows(evaluator.get_result()), before_reset);
+        EXPECT_EQ(rows(retained), before_reset);
         const auto borrowed_builder = nodes.back().get_state().get_state_builder();
         auto final_context = context_for(ygg::make_view(borrowed_builder, *search->task));
-        evaluator.initialize(final_context);
+        auto final_state = evaluator.initialize(final_context);
         expect_unpublished();
         EXPECT_TRUE(storage.get_caches().get_queries(true).empty());
         EXPECT_TRUE(storage.get_denotation_repository(true).get_relation_repository().empty());
-        EXPECT_THROW(evaluator.get_delta(), std::logic_error);  // Initialized, not updated from a delta.
-        compare_full(final_context.get_state());
+        EXPECT_THROW(final_state.get_delta(), std::logic_error);  // Initialized, not updated from a delta.
+        compare_full(final_state, final_context.get_state());
     }
 
     const auto goal = parse_query(R"((q_atomic_goal "triple" true (x y z)))", domain, *constructors);
