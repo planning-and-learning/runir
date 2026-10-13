@@ -11,12 +11,13 @@
 #include <utility>
 #include <tyr/formalism/declarations.hpp>
 #include <vector>
-#include <yggdrasil/database/optimization/optimization.hpp>
+#include <yggdrasil/database/semantics/bound/query_evaluation.hpp>
 #include <yggdrasil/database/semantics/search/concepts.hpp>
 #include <yggdrasil/database/semantics/distance.hpp>
 #include <yggdrasil/database/semantics/operations.hpp>
-#include <yggdrasil/database/semantics/query_evaluation.hpp>
+#include <yggdrasil/database/syntax/copy.hpp>
 #include <yggdrasil/database/syntax/query.hpp>
+#include <yggdrasil/database/syntax/row.hpp>
 
 namespace runir::kr::dl::semantics::heuristics
 {
@@ -25,14 +26,21 @@ using Object = ygg::Index<tyr::formalism::Object>;
 using Row = ygg::database::Row<QueryValues>;
 
 /// The pattern database of one vertex column i, the pattern: the abstraction α_i(v) = v[i] maps the edges to a graph
-/// over objects, and h is its breadth-first distance table to the abstract targets α_i(T).
+/// over objects, and h is its breadth-first distance table to the abstract targets α_i(T). The abstract edges are not
+/// stored: the breadth-first search evaluates their query with v[i] bound, per vertex, as the distance search evaluates
+/// its edges.
 struct PatternDatabase
 {
-    size_t pattern = 0;                             ///< The vertex column i.
-    std::vector<ygg::uint_t> offsets;               ///< CSR: the abstract predecessors of o are at [offsets[o], offsets[o + 1]).
-    std::vector<ygg::uint_t> abstract_predecessors;
-    std::vector<bool> targets;                      ///< α_i(T), for which h was computed.
-    std::vector<ygg::uint_t> h;                     ///< Abstract distance to α_i(T); ygg::database::infinity if unreachable.
+    size_t pattern = 0;                                    ///< The vertex column i.
+    ygg::database::bound::QueryEvaluator<QueryValues> edges;  ///< The abstract edges (u[i], v[i]), over static inputs only.
+    size_t predecessors = 0;                               ///< The binding of edges with v[i] bound.
+    std::vector<bool> targets;                             ///< α_i(T), for which h was computed.
+    std::vector<ygg::uint_t> h;                            ///< Abstract distance to α_i(T); ygg::database::infinity if unreachable.
+
+    /// Whether h has been computed, for some abstract targets.
+    bool computed() const noexcept { return !h.empty(); }
+    /// Whether h must be computed for `abstract_targets`: it never was, or it was for other abstract targets.
+    bool targets_changed(const std::vector<bool>& abstract_targets) const { return !computed() || targets != abstract_targets; }
 };
 
 /// h(v) = max_i h_i(α_i(v)) over single-column pattern databases (Culberson & Schaeffer, "Pattern Databases",
@@ -85,6 +93,7 @@ private:
     ygg::uint_t m_num_objects = 0;
     std::vector<bool> m_abstract_targets;  ///< Scratch of update_table(), kept with m_queue to avoid allocations.
     std::vector<ygg::uint_t> m_queue;
+    std::vector<std::byte> m_vertex;  ///< The bound abstract vertex, kept to avoid allocations.
 
     /// A backward breadth-first search from α_i(T) in the abstract graph.
     template<typename Targets>
@@ -93,7 +102,7 @@ private:
         m_abstract_targets.assign(m_num_objects, false);
         for (size_t r = 0; r < targets.size(); ++r)
             m_abstract_targets[ygg::uint_t(Row(targets.row(r), m_target_columns).get<Object>(database.pattern))] = true;
-        if (!database.h.empty() && m_abstract_targets == database.targets)
+        if (!database.targets_changed(m_abstract_targets))
             return;
         std::swap(database.targets, m_abstract_targets);
         database.h.assign(m_num_objects, ygg::database::infinity);
@@ -107,43 +116,28 @@ private:
         for (size_t head = 0; head < m_queue.size(); ++head)
         {
             const auto o = m_queue[head];
-            for (auto i = database.offsets[o]; i < database.offsets[o + 1]; ++i)
-                if (const auto p = database.abstract_predecessors[i]; database.h[p] == ygg::database::infinity)
-                {
-                    database.h[p] = database.h[o] + 1;
-                    m_queue.push_back(p);
-                }
+            const auto vertex = ygg::database::encode_row<QueryValues, Object>(std::array { Object(o) }, m_vertex);
+            database.edges.evaluate(database.predecessors,
+                                    vertex,
+                                    [&](std::span<const std::byte> edge)
+                                    {
+                                        const auto p = ygg::uint_t(Row(edge, database.edges.columns()).get<Object>(0));
+                                        if (database.h[p] == ygg::database::infinity)
+                                        {
+                                            database.h[p] = database.h[o] + 1;
+                                            m_queue.push_back(p);
+                                        }
+                                        return true;
+                                    });
         }
     }
 };
 
-/// The pattern database of vertex column `pattern` from its abstract edges, the rows (u[i], v[i]): a CSR of the
-/// abstract predecessors of each object; the distance table is computed by ProjectionHeuristic::update().
-template<typename Relation>
-PatternDatabase pattern_database(size_t pattern, const Relation& abstract_edges, ygg::uint_t num_objects)
-{
-    auto database = PatternDatabase {};
-    database.pattern = pattern;
-    database.offsets.assign(num_objects + 1, 0);
-    const auto layout = abstract_edges.columns().span();
-    for (size_t e = 0; e < abstract_edges.size(); ++e)
-        ++database.offsets[ygg::uint_t(Row(abstract_edges.row(e), layout).get<Object>(1)) + 1];
-    for (size_t o = 0; o < num_objects; ++o)
-        database.offsets[o + 1] += database.offsets[o];
-    database.abstract_predecessors.resize(database.offsets.back());
-    auto fill = std::vector<ygg::uint_t>(database.offsets.begin(), database.offsets.end() - 1);
-    for (size_t e = 0; e < abstract_edges.size(); ++e)
-    {
-        const auto row = Row(abstract_edges.row(e), layout);
-        database.abstract_predecessors[fill[ygg::uint_t(row.get<Object>(1))]++] = ygg::uint_t(row.get<Object>(0));
-    }
-    return database;
-}
-
 /// The abstract edges of the pattern databases as queries, built once per feature from the translated edge query Q.
 /// For each vertex column i, the pattern, the projection π_(u[i], v[i])(Q) is relaxed with only the static slots
 /// known (ygg::database::relax). Relaxing the projection rather than Q eliminates the other variables early, as
-/// projections of pattern databases do, so no edge over all columns is ever built. Nothing is evaluated here.
+/// projections of pattern databases do, so no edge over all columns is ever built. Nothing is evaluated here, and the
+/// abstract edges are never materialized (PatternDatabase).
 struct EdgeAbstraction
 {
     ygg::database::QueryPlan<QueryValues> plan;  ///< Plan root r is the abstract edge query of column patterns[r].
@@ -184,22 +178,15 @@ ProjectionHeuristic make_projection_heuristic(const EdgeAbstraction& abstraction
                                              ygg::uint_t num_objects,
                                              const SlotRows& slot_rows)
 {
-    // The abstract edges, evaluated once over the static rows.
-    auto inputs = std::vector<ygg::Builder<ygg::database::Relation<QueryValues>>>();
-    for (const auto slot : abstraction.slots)
-    {
-        const auto& rows = slot_rows(slot);
-        ygg::database::assign(inputs.emplace_back(rows.columns().span()), rows);
-    }
-    auto roots = std::vector<ygg::database::QueryView<QueryValues>>();
-    for (const auto root : abstraction.plan.roots())
-        roots.push_back(abstraction.plan[root]);
-    auto evaluator = ygg::database::QueryEvaluator<QueryValues>(ygg::database::optimize<QueryValues>(roots, ygg::database::collect_statistics<QueryValues>(inputs)));
-    evaluator.evaluate(inputs);
-
     auto databases = std::vector<PatternDatabase>();
     for (size_t r = 0; r < abstraction.patterns.size(); ++r)
-        databases.push_back(pattern_database(abstraction.patterns[r], evaluator.get_result(r), num_objects));
+    {
+        const auto query = abstraction.plan[abstraction.plan.roots()[r]];
+        auto& database = databases.emplace_back(PatternDatabase { abstraction.patterns[r], ygg::database::bound::QueryEvaluator<QueryValues>(query) });
+        for (const auto slot : ygg::database::input_slots(std::span(&query, 1)))
+            database.edges.bind_slot(slot, slot_rows(abstraction.slots[slot]));
+        database.predecessors = database.edges.prepare({ 1 });
+    }
     return ProjectionHeuristic(std::move(databases), plan.source_columns().span(), plan.target_columns().span(), num_objects);
 }
 
