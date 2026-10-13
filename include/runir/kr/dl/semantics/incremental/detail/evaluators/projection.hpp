@@ -43,7 +43,7 @@ struct ProjectionEvaluator
     template<StateEvaluationContextConcept<Family, Kind> Context>
     void initialize(EvaluationGraph<Family, Kind>& graph, Context& context)
     {
-        auto& builder = value.initialize(semantics::detail::num_objects<Kind, Family>(context));
+        auto& builder = value.initialize(semantics::detail::num_objects<Family, Kind>(context));
         operation.initialize(graph.result(child), context.get_workspace().get_database_workspace());
         const auto& rows = operation.get_result();
         for (size_t i = 0; i < rows.size(); ++i)

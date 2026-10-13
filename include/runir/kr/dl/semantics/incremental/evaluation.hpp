@@ -299,14 +299,8 @@ class IncrementalEvaluation
         if (&context.get_state().get_task() != m_graph.m_task)
             throw std::invalid_argument("Incremental evaluation: graph belongs to a different task.");
     }
-    void require_current(ygg::uint_t index) const
-    {
-        if (m_epoch == 0 || m_nodes.at(index).epoch != m_epoch)
-            throw std::logic_error("Incremental evaluation: evaluate this result in the current state before reading it.");
-    }
     void require_exact(ygg::uint_t index) const
     {
-        require_current(index);
         if (!m_nodes[index].has_delta)
             throw std::logic_error("Incremental evaluation: exact deltas exist only for results updated from the state's delta.");
     }
@@ -359,47 +353,31 @@ public:
     }
 
 private:
-    /// Results of nodes evaluated in the current state, read through StateEvaluation.
+    /// Results of nodes evaluated in the current state, read through StateEvaluation, which demands them first.
     template<CategoryTag Category>
-    BorrowedDenotationView<Category> get_result(EvaluationIndex<Category> index) const&
+    BorrowedDenotationView<Category> get_result(EvaluationIndex<Category> index) const
     {
-        require_current(ygg::uint_t(index));
         return m_graph.result(index);
     }
-    template<CategoryTag Category>
-    BorrowedDenotationView<Category> get_result(EvaluationIndex<Category>) const&& = delete;
-    const auto& get_result(QueryEvaluationIndex index) const&
-    {
-        require_current(ygg::uint_t(index));
-        return m_graph.result(index);
-    }
-    const auto& get_result(QueryEvaluationIndex) const&& = delete;
+    const auto& get_result(QueryEvaluationIndex index) const { return m_graph.result(index); }
     template<ConceptOrRoleTag Category>
     size_t size(EvaluationIndex<Category> index) const
     {
-        require_current(ygg::uint_t(index));
         return m_graph.cardinality(index);
     }
-    size_t size(QueryEvaluationIndex index) const
-    {
-        require_current(ygg::uint_t(index));
-        return m_graph.cardinality(index);
-    }
+    size_t size(QueryEvaluationIndex index) const { return m_graph.cardinality(index); }
     /// Changes of nodes updated from the transition into the current state.
     template<ConceptOrRoleTag Category>
-    const DenotationDelta<Category>& get_delta(EvaluationIndex<Category> index) const&
+    const DenotationDelta<Category>& get_delta(EvaluationIndex<Category> index) const
     {
         require_exact(ygg::uint_t(index));
         return m_graph.change(index);
     }
-    template<ConceptOrRoleTag Category>
-    const DenotationDelta<Category>& get_delta(EvaluationIndex<Category>) const&& = delete;
-    const auto& get_delta(QueryEvaluationIndex index) const&
+    const auto& get_delta(QueryEvaluationIndex index) const
     {
         require_exact(ygg::uint_t(index));
         return m_graph.change(index);
     }
-    const auto& get_delta(QueryEvaluationIndex) const&& = delete;
     template<BooleanOrNumericalTag Category>
     bool changed(EvaluationIndex<Category> index) const
     {

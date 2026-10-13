@@ -134,6 +134,16 @@ private:
         return ProjectionEvaluator<Family, Kind, Category>(graph.prepare(expression.get_arg(), m_dependencies), expression.get_data().plan);
     }
 
+    Evaluators prepare_distance(FamilyNumericalView<Family, DistanceTag> expression, FamilyConstructorView<Family, RoleTag>, GraphBuilder<Family, Kind>& graph)
+    {
+        return RoleEdgeDistanceEvaluator<Family, Kind>(expression, graph, m_dependencies);
+    }
+    /// Query edges can range over pair vertices; maintaining them would materialize every edge.
+    Evaluators prepare_distance(FamilyNumericalView<Family, DistanceTag> expression, FamilyQueryView<Family> edges, GraphBuilder<Family, Kind>& graph)
+    {
+        return QueryEdgeDistanceEvaluator<Family, Kind>(expression, edges, graph, m_dependencies);
+    }
+
     template<template<typename, typename> typename Expression, typename Tag, typename C>
     Evaluators prepare(ygg::View<ygg::Index<Expression<Family, Tag>>, C> expression, GraphBuilder<Family, Kind>& graph)
     {
@@ -146,13 +156,7 @@ private:
         else if constexpr (std::same_as<Tag, ArgumentTag<Category>>)
             return ArgumentEvaluator<Family, Kind, Category>(expression.get_argument().get_identifier());
         else if constexpr (std::same_as<Tag, DistanceTag>)
-        {
-            // Query edges can range over pair vertices; maintaining them would materialize every edge.
-            const auto role_edges = ygg::visit([]<typename Edges>(Edges) { return semantics::detail::is_role_edges_v<Edges, Family, C>; }, expression.get_mid());
-            if (role_edges)
-                return RoleEdgeDistanceEvaluator<Family, Kind>(expression, graph, m_dependencies);
-            return QueryEdgeDistanceEvaluator<Family, Kind>(expression, graph, m_dependencies);
-        }
+            return ygg::visit([&](auto edges) { return prepare_distance(expression, edges, graph); }, expression.get_mid());
         else if constexpr (std::same_as<Tag, CountTag>)
             return ygg::visit([&](auto child) -> Evaluators { return CountEvaluator<Family, Kind>(graph.prepare(child, m_dependencies)); },
                               expression.get_arg());

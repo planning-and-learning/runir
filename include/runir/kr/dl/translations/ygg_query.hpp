@@ -70,14 +70,11 @@ template<FamilyTag Family, typename C>
 inline constexpr bool is_complement_view_v<ygg::View<ygg::Index<FamilyConcept<Family, NegationTag>>, C>> = true;
 
 /// Calls f(argument) if the query is a role or concept leaf over a complement (r_complement, c_not); returns whether.
-template<FamilyTag Family,
-         typename C,
-         ygg::InvocableWithEach<
-             ygg::TypeList<ygg::View<ygg::Index<Constructor<Family, RoleTag>>, C>, ygg::View<ygg::Index<Constructor<Family, ConceptTag>>, C>>> F>
-bool visit_complement_argument(ygg::View<ygg::Index<Query<Family>>, C> query, F&& f)
+template<FamilyTag Family, ygg::InvocableWithEach<ygg::TypeList<FamilyConstructorView<Family, RoleTag>, FamilyConstructorView<Family, ConceptTag>>> F>
+bool visit_complement_argument(FamilyQueryView<Family> query, F&& f)
 {
     return ygg::visit(
-        [&]<typename Tag>(ygg::View<ygg::Index<Query<Family, Tag>>, C> concrete)
+        [&]<typename Tag>(FamilyQueryView<Family, Tag> concrete)
         {
             if constexpr (std::same_as<Tag, QueryRoleTag> || std::same_as<Tag, QueryConceptTag>)
                 return ygg::visit(
@@ -99,8 +96,8 @@ bool visit_complement_argument(ygg::View<ygg::Index<Query<Family>>, C> query, F&
 }
 
 /// Whether a query is a role or concept leaf over a complement (r_complement, c_not).
-template<FamilyTag Family, typename C>
-bool is_complement_leaf(ygg::View<ygg::Index<Query<Family>>, C> query)
+template<FamilyTag Family>
+bool is_complement_leaf(FamilyQueryView<Family> query)
 {
     return visit_complement_argument(query, [](auto) {});
 }
@@ -111,10 +108,10 @@ bool is_complement_leaf(ygg::View<ygg::Index<Query<Family>>, C> query)
 /// antijoins: the join's conjuncts are flattened, P is the join of the others, and P ⋈ ¬R = P ▷ R, so the complement is
 /// never materialized. The result is projected onto the DL join's column order. A complement not covered this way is
 /// an ordinary leaf.
-template<FamilyTag Family, typename C = ConstructorRepositoryFor<Family>>
+template<FamilyTag Family>
 class QueryTranslator
 {
-    using DlQuery = ygg::View<ygg::Index<Query<Family>>, C>;
+    using DlQuery = FamilyQueryView<Family>;
     using YggQuery = ygg::database::QueryView<QueryValues>;
     using Label = ygg::Index<ygg::database::Column>;
 
@@ -129,7 +126,7 @@ public:
     {
         if (const auto it = m_translated.find(query); it != m_translated.end())
             return it->second;
-        const auto result = ygg::visit([&]<typename Tag>(ygg::View<ygg::Index<Query<Family, Tag>>, C> concrete) { return translate_concrete(query, concrete); },
+        const auto result = ygg::visit([&]<typename Tag>(FamilyQueryView<Family, Tag> concrete) { return translate_concrete(query, concrete); },
                                        query.get_variant());
         m_translated.emplace(query, result);
         return result;
@@ -155,7 +152,7 @@ public:
     /// The expression of each input slot, by slot.
     const std::vector<QuerySlot>& get_slots() const noexcept { return m_slots; }
     /// The DL leaf of each input slot; without complement rewriting, every slot is a leaf query.
-    std::vector<DlQuery> get_leaves(const C& constructors) const
+    std::vector<DlQuery> get_leaves(const ConstructorRepositoryFor<Family>& constructors) const
     {
         auto leaves = std::vector<DlQuery>();
         for (const auto& slot : m_slots)
@@ -206,7 +203,7 @@ private:
     static void flatten(DlQuery query, std::vector<DlQuery>& conjuncts)
     {
         ygg::visit(
-            [&]<typename Tag>(ygg::View<ygg::Index<Query<Family, Tag>>, C> concrete)
+            [&]<typename Tag>(FamilyQueryView<Family, Tag> concrete)
             {
                 if constexpr (std::same_as<Tag, QueryJoinTag>)
                 {
@@ -267,7 +264,7 @@ private:
         visit_complement_argument(complement,
                                   [&]<typename V>(V argument)
                                   {
-                                      constexpr auto role = std::same_as<V, ygg::View<ygg::Index<Constructor<Family, RoleTag>>, C>>;
+                                      constexpr auto role = std::same_as<V, FamilyConstructorView<Family, RoleTag>>;
                                       slot.kind = role ? QuerySlot::Kind::ROLE : QuerySlot::Kind::CONCEPT;
                                       slot.index = ygg::uint_t(argument.get_index());
                                   });
@@ -277,7 +274,7 @@ private:
     }
 
     template<typename Tag>
-    YggQuery translate_concrete(DlQuery query, ygg::View<ygg::Index<Query<Family, Tag>>, C> concrete)
+    YggQuery translate_concrete(DlQuery query, FamilyQueryView<Family, Tag> concrete)
     {
         const auto& data = concrete.get_data();
         if constexpr (is_query_leaf_tag_v<Tag>)

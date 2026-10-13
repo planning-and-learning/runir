@@ -36,7 +36,7 @@ struct AtomicEvaluator
         }
         else
         {
-            auto& builder = value.initialize(semantics::detail::num_objects<Kind, Family>(context));
+            auto& builder = value.initialize(semantics::detail::num_objects<Family, Kind>(context));
             for (const auto atom : context.get_state().get_atoms_view(predicate))
             {
                 const auto objects = atom.get_row().get_objects();

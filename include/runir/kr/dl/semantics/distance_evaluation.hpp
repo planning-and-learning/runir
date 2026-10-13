@@ -22,11 +22,8 @@
 namespace runir::kr::dl::semantics::detail
 {
 
-template<typename Edges, FamilyTag Family, typename C>
-inline constexpr bool is_role_edges_v = std::same_as<Edges, ygg::View<ygg::Index<Constructor<Family, RoleTag>>, C>>;
-
 /// The rows of an input slot in the current state.
-template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context>
+template<FamilyTag Family, tyr::TaskKind Kind, StateEvaluationContextConcept<Family, Kind> Context>
 QueryDenotationView evaluate_slot(const QuerySlot& slot, const ConstructorRepositoryFor<Family>& constructors, Context& context)
 {
     return visit_slot<Family>(slot, constructors, [&](auto expression) { return evaluate_relation<Kind>(expression, slot.columns, context); });
@@ -68,8 +65,8 @@ make_heuristic(const DistanceFeature<Distance>& feature, const ygg::database::Di
 
 /// Minimum distance from any source to any target, or uint_t's maximum if none is reachable, from the state alone
 /// (full evaluation): the arguments and the edge query's slots are evaluated in the state.
-template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context, typename C>
-ygg::uint_t on_demand_distance(ygg::View<ygg::Index<FamilyNumerical<Family, DistanceTag>>, C> constructor, Context& context)
+template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context>
+ygg::uint_t on_demand_distance(FamilyNumericalView<Family, DistanceTag> constructor, Context& context)
 {
     const auto& plan = constructor.get_data().plan;
     auto children = context.child_context();
@@ -89,12 +86,12 @@ ygg::uint_t on_demand_distance(ygg::View<ygg::Index<FamilyNumerical<Family, Dist
                     auto feature = make_distance_feature<ygg::database::MinDistance<QueryValues, heuristics::ProjectionHeuristic>, Family>(plan, edges);
                     auto heuristic = make_heuristic(feature,
                                                     plan,
-                                                    detail::num_objects<Kind, Family>(context),
-                                                    [&](size_t slot) { return evaluate_slot<Kind, Family>(feature.slots[slot], edges.get_context(), children); });
+                                                    detail::num_objects<Family, Kind>(context),
+                                                    [&](size_t slot) { return evaluate_slot<Family, Kind>(feature.slots[slot], edges.get_context(), children); });
                     return FullDistanceFeature { std::move(feature), std::move(heuristic) };
                 });
             feature.heuristic.update(targets);
-            const auto input = [&](size_t slot) { return evaluate_slot<Kind, Family>(feature.edges.slots[slot], edges.get_context(), children); };
+            const auto input = [&](size_t slot) { return evaluate_slot<Family, Kind>(feature.edges.slots[slot], edges.get_context(), children); };
             return feature.edges.distance.min_distance(input, sources, targets, feature.heuristic);
         },
         constructor.get_mid());

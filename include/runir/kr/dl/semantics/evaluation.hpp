@@ -40,8 +40,8 @@ auto evaluate(ygg::View<ygg::Index<Query<Family>>, C> constructor, Context& cont
 namespace detail
 {
 /// Defined in distance_evaluation.hpp.
-template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context, typename C>
-ygg::uint_t on_demand_distance(ygg::View<ygg::Index<FamilyNumerical<Family, DistanceTag>>, C> constructor, Context& context);
+template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context>
+ygg::uint_t on_demand_distance(FamilyNumericalView<Family, DistanceTag> constructor, Context& context);
 }
 
 template<tyr::TaskKind Kind, FamilyTag Family, ConceptOrRoleTag Category, StateEvaluationContextConcept<Family, Kind> Context, typename C>
@@ -72,7 +72,7 @@ auto evaluate(FamilyConstructorView<Family, Category> constructor, Context& cont
 namespace detail
 {
 
-template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context>
+template<FamilyTag Family, tyr::TaskKind Kind, StateEvaluationContextConcept<Family, Kind> Context>
 auto num_objects(const Context& context) noexcept -> ygg::uint_t
 {
     const auto task = context.get_state().get_task().get_task();
@@ -82,13 +82,13 @@ auto num_objects(const Context& context) noexcept -> ygg::uint_t
 template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context>
 auto make_concept_builder(Context& context)
 {
-    return context.get_builder().template get_builder<Denotation<ConceptTag>>(num_objects<Kind, Family>(context));
+    return context.get_builder().template get_builder<Denotation<ConceptTag>>(num_objects<Family, Kind>(context));
 }
 
 template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context>
 auto make_role_builder(Context& context)
 {
-    return context.get_builder().template get_builder<Denotation<RoleTag>>(num_objects<Kind, Family>(context));
+    return context.get_builder().template get_builder<Denotation<RoleTag>>(num_objects<Family, Kind>(context));
 }
 
 template<tyr::formalism::FactKind T>
@@ -102,7 +102,7 @@ void evaluate_atomic_state_concept(ygg::View<ygg::Index<FamilyConcept<Family, At
                                    Context& context,
                                    ygg::Builder<Denotation<ConceptTag>>& result)
 {
-    [[maybe_unused]] const auto num_objects = detail::num_objects<Kind, Family>(context);
+    [[maybe_unused]] const auto num_objects = detail::num_objects<Family, Kind>(context);
     auto bitset = result.get();
 
     const auto predicate = constructor.get_predicate();
@@ -122,7 +122,7 @@ void evaluate_atomic_goal_concept(ygg::View<ygg::Index<FamilyConcept<Family, Ato
                                   Context& context,
                                   ygg::Builder<Denotation<ConceptTag>>& result)
 {
-    [[maybe_unused]] const auto num_objects = detail::num_objects<Kind, Family>(context);
+    [[maybe_unused]] const auto num_objects = detail::num_objects<Family, Kind>(context);
     auto bitset = result.get();
 
     const auto predicate = constructor.get_predicate();
@@ -139,7 +139,7 @@ void evaluate_atomic_state_role(ygg::View<ygg::Index<FamilyRole<Family, AtomicSt
                                 Context& context,
                                 ygg::Builder<Denotation<RoleTag>>& result)
 {
-    [[maybe_unused]] const auto num_objects = detail::num_objects<Kind, Family>(context);
+    [[maybe_unused]] const auto num_objects = detail::num_objects<Family, Kind>(context);
 
     const auto predicate = constructor.get_predicate();
     for (const auto atom : context.get_state().get_atoms_view(predicate))
@@ -161,7 +161,7 @@ void evaluate_atomic_goal_role(ygg::View<ygg::Index<FamilyRole<Family, AtomicGoa
                                Context& context,
                                ygg::Builder<Denotation<RoleTag>>& result)
 {
-    [[maybe_unused]] const auto num_objects = detail::num_objects<Kind, Family>(context);
+    [[maybe_unused]] const auto num_objects = detail::num_objects<Family, Kind>(context);
 
     const auto predicate = constructor.get_predicate();
     for (const auto atom : context.get_state().get_task().get_task().get_goal().template get_atoms_view<T>(constructor.get_polarity(), predicate))
@@ -313,7 +313,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> construc
 {
     [[maybe_unused]] auto children = context.child_context();
     auto& repository = context.get_denotation_repository();
-    [[maybe_unused]] const auto num_objects = detail::num_objects<Kind, Family>(context);
+    [[maybe_unused]] const auto num_objects = detail::num_objects<Family, Kind>(context);
     auto result = detail::make_concept_builder<Kind, Family>(context);
     auto result_bitset = result->get();
 
@@ -494,7 +494,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
 {
     [[maybe_unused]] auto children = context.child_context();
     auto& repository = context.get_denotation_repository();
-    [[maybe_unused]] const auto num_objects = detail::num_objects<Kind, Family>(context);
+    [[maybe_unused]] const auto num_objects = detail::num_objects<Family, Kind>(context);
     auto result = detail::make_role_builder<Kind, Family>(context);
 
     if constexpr (std::same_as<Tag, UniversalTag>)

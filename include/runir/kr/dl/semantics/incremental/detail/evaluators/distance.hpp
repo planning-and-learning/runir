@@ -7,6 +7,7 @@
 #include "runir/kr/dl/semantics/incremental/detail/denotation_state.hpp"
 
 #include <algorithm>
+#include <concepts>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -19,8 +20,25 @@
 namespace runir::kr::dl::semantics::incremental::detail
 {
 
+template<FamilyTag Family>
+using VertexArgumentView = ygg::View<ygg::IndexVariant<ygg::VertexArgumentTypes<Family>>, ConstructorRepositoryFor<Family>>;
+template<FamilyTag Family>
+using EdgeArgumentView = ygg::View<ygg::IndexVariant<ygg::EdgeArgumentTypes<Family>>, ConstructorRepositoryFor<Family>>;
+
+/// The graph node of a distance argument (sources, edges or targets), lifted into `columns`.
+template<FamilyTag Family, tyr::TaskKind Kind, typename Argument>
+    requires(std::same_as<Argument, VertexArgumentView<Family>> || std::same_as<Argument, EdgeArgumentView<Family>>)
+QueryEvaluationIndex prepare_argument(Argument argument,
+                                      std::span<const ygg::database::ColumnLayout> columns,
+                                      GraphBuilder<Family, Kind>& graph,
+                                      std::vector<ygg::uint_t>& dependencies)
+{
+    return ygg::visit([&](auto child) { return graph.prepare_relation(child, columns, dependencies); }, argument);
+}
+
 /// Distances over role edges: every argument is a relation in the graph (a query, or a concept or role lifted by the
-/// graph), and yggdrasil maintains the minimum distance over the materialized edges (Ramalingam & Reps).
+/// graph), and yggdrasil maintains the minimum distance over the materialized edges (Ramalingam & Reps, "An
+/// Incremental Algorithm for a Generalization of the Shortest-Path Problem", J. Algorithms 21, 1996).
 template<FamilyTag Family, tyr::TaskKind Kind>
 struct RoleEdgeDistanceEvaluator
 {
@@ -33,9 +51,9 @@ struct RoleEdgeDistanceEvaluator
     RoleEdgeDistanceEvaluator(FamilyNumericalView<Family, DistanceTag> expression,
                               GraphBuilder<Family, Kind>& graph,
                               std::vector<ygg::uint_t>& dependencies) :
-        sources(prepare(expression.get_lhs(), expression.get_data().plan.source_columns().span(), graph, dependencies)),
-        edges(prepare(expression.get_mid(), expression.get_data().plan.edge_columns().span(), graph, dependencies)),
-        targets(prepare(expression.get_rhs(), expression.get_data().plan.target_columns().span(), graph, dependencies)),
+        sources(prepare_argument(expression.get_lhs(), expression.get_data().plan.source_columns().span(), graph, dependencies)),
+        edges(prepare_argument(expression.get_mid(), expression.get_data().plan.edge_columns().span(), graph, dependencies)),
+        targets(prepare_argument(expression.get_rhs(), expression.get_data().plan.target_columns().span(), graph, dependencies)),
         operation(expression.get_data().plan)
     {
     }
@@ -50,25 +68,6 @@ struct RoleEdgeDistanceEvaluator
         operation.update(graph.change(sources).change(), graph.change(edges).change(), graph.change(targets).change());
         value.set(operation.get_result());
     }
-
-private:
-    using VertexArgument = ygg::View<ygg::IndexVariant<ygg::VertexArgumentTypes<Family>>, ConstructorRepositoryFor<Family>>;
-    using EdgeArgument = ygg::View<ygg::IndexVariant<ygg::EdgeArgumentTypes<Family>>, ConstructorRepositoryFor<Family>>;
-
-    static QueryEvaluationIndex prepare(VertexArgument operand,
-                                        std::span<const ygg::database::ColumnLayout> columns,
-                                        GraphBuilder<Family, Kind>& graph,
-                                        std::vector<ygg::uint_t>& dependencies)
-    {
-        return ygg::visit([&](auto child) { return graph.prepare_relation(child, columns, dependencies); }, operand);
-    }
-    static QueryEvaluationIndex prepare(EdgeArgument operand,
-                                        std::span<const ygg::database::ColumnLayout> columns,
-                                        GraphBuilder<Family, Kind>& graph,
-                                        std::vector<ygg::uint_t>& dependencies)
-    {
-        return ygg::visit([&](auto child) { return graph.prepare_relation(child, columns, dependencies); }, operand);
-    }
 };
 
 /// Distances over query edges: the graph maintains the arguments and the edge query's input slots, and
@@ -77,11 +76,10 @@ private:
 template<FamilyTag Family, tyr::TaskKind Kind>
 struct QueryEdgeDistanceEvaluator
 {
-    using C = ConstructorRepositoryFor<Family>;
-    using Edges = ygg::View<ygg::Index<Query<Family>>, C>;
     using Distance = ygg::database::incremental::MinDistance<QueryValues, heuristics::ProjectionHeuristic>;
 
-    ygg::View<ygg::Index<FamilyNumerical<Family, DistanceTag>>, C> expression;
+    FamilyNumericalView<Family, DistanceTag> expression;
+    FamilyQueryView<Family> edges;  ///< The edge argument of expression.
     QueryEvaluationIndex sources;
     QueryEvaluationIndex targets;
     DistanceFeature<Distance> feature;
@@ -90,16 +88,19 @@ struct QueryEdgeDistanceEvaluator
     DenotationState<NumericalTag> value;
     std::vector<bool> slot_changed;  ///< Per slot, whether update()'s delta changed it; kept to avoid allocations.
 
-    QueryEdgeDistanceEvaluator(ygg::View<ygg::Index<FamilyNumerical<Family, DistanceTag>>, C> expression_,
+    /// `edges_` is the edge argument of `expression_`.
+    QueryEdgeDistanceEvaluator(FamilyNumericalView<Family, DistanceTag> expression_,
+                               FamilyQueryView<Family> edges_,
                                GraphBuilder<Family, Kind>& graph,
                                std::vector<ygg::uint_t>& dependencies) :
         expression(expression_),
-        sources(prepare(expression_.get_lhs(), expression_.get_data().plan.source_columns().span(), graph, dependencies)),
-        targets(prepare(expression_.get_rhs(), expression_.get_data().plan.target_columns().span(), graph, dependencies)),
-        feature(semantics::detail::make_distance_feature<Distance, Family>(expression_.get_data().plan, edges()))
+        edges(edges_),
+        sources(prepare_argument(expression_.get_lhs(), expression_.get_data().plan.source_columns().span(), graph, dependencies)),
+        targets(prepare_argument(expression_.get_rhs(), expression_.get_data().plan.target_columns().span(), graph, dependencies)),
+        feature(semantics::detail::make_distance_feature<Distance, Family>(expression_.get_data().plan, edges_))
     {
         for (const auto& slot : feature.slots)
-            slots.push_back(visit_slot<Family>(slot, edges().get_context(), [&](auto argument) { return graph.prepare_relation(argument, slot.columns, dependencies); }));
+            slots.push_back(visit_slot<Family>(slot, edges.get_context(), [&](auto argument) { return graph.prepare_relation(argument, slot.columns, dependencies); }));
     }
     template<StateEvaluationContextConcept<Family, Kind> Context>
     void initialize(EvaluationGraph<Family, Kind>& graph, Context& context)
@@ -108,7 +109,7 @@ struct QueryEdgeDistanceEvaluator
         if (!heuristic)
             heuristic = semantics::detail::make_heuristic(feature,
                                                           expression.get_data().plan,
-                                                          semantics::detail::num_objects<Kind, Family>(context),
+                                                          semantics::detail::num_objects<Family, Kind>(context),
                                                           [&](size_t slot) -> const ygg::Builder<ygg::database::Relation<QueryValues>>& { return feature.distance.input(slot); });
         set_targets(graph);
         evaluate(graph);
@@ -133,7 +134,6 @@ struct QueryEdgeDistanceEvaluator
     }
 
 private:
-    Edges edges() const { return expression.get_mid().template get<ygg::Index<Query<Family>>>(); }
     auto input(const EvaluationGraph<Family, Kind>& graph) const
     {
         return [this, &graph](size_t slot) -> const ygg::Builder<ygg::database::Relation<QueryValues>>& { return graph.result(slots[slot]); };
@@ -148,13 +148,6 @@ private:
         heuristic->update(graph.result(targets));
     }
     void evaluate(const EvaluationGraph<Family, Kind>& graph) { value.set(feature.distance.min_distance(graph.result(sources), *heuristic)); }
-    static QueryEvaluationIndex prepare(ygg::View<ygg::IndexVariant<ygg::VertexArgumentTypes<Family>>, ConstructorRepositoryFor<Family>> operand,
-                                        std::span<const ygg::database::ColumnLayout> columns,
-                                        GraphBuilder<Family, Kind>& graph,
-                                        std::vector<ygg::uint_t>& dependencies)
-    {
-        return ygg::visit([&](auto child) { return graph.prepare_relation(child, columns, dependencies); }, operand);
-    }
 };
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

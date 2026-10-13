@@ -721,8 +721,15 @@ void check_incremental_evaluation()
     EXPECT_THROW(after_failure.delta(query_id), std::logic_error);  // Neither the query nor its child were demanded.
     auto reentered = evaluation.enter(invocation_context);
     compare_graph(reentered, invocation_context);
+    // Reading a failed node again in the same state initializes it from the state's inputs. (Checked in a state of its
+    // own: in the state above, it would make source_id evaluated, so its delta would no longer throw after_failure.)
+    auto failed_again = evaluation.enter(invocation_context, invalid_delta, workspace);
+    EXPECT_THROW(failed_again.evaluate(source_id), std::invalid_argument);
+    EXPECT_EQ(elements<kr::dl::ConceptTag>(failed_again.evaluate(source_id)),
+              elements<kr::dl::ConceptTag>(kr::dl::semantics::evaluate<Kind>(source, invocation_context)));
 
-    // Roots are evaluated on demand only; a later parent starts from its current child.
+    // Roots are evaluated on demand only; a later parent starts from its current child. Whether an unrelated root
+    // stayed unevaluated in a state is not observable by design: every read demands its node first.
     storage.reset_all();
     auto demanded = evaluation.enter(initial_context);
     EXPECT_EQ(query_rows(demanded.evaluate(query_id)), query_rows(kr::dl::semantics::evaluate<Kind>(query, initial_context)));

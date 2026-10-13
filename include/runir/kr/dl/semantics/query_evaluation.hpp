@@ -150,7 +150,7 @@ auto evaluate_impl(ygg::View<ygg::Index<QueryProjection<Family, Category>>, C> c
     auto children = context.child_context();
     const auto relation = evaluate<Kind>(constructor.get_arg(), children);
     const auto position = [&](size_t i) { return relation.column_index(ygg::Index<ygg::database::Column>(columns[i].get_value())); };
-    auto result = context.get_builder().template get_builder<Denotation<Category>>(detail::num_objects<Kind, Family>(context));
+    auto result = context.get_builder().template get_builder<Denotation<Category>>(detail::num_objects<Family, Kind>(context));
     if constexpr (std::same_as<Category, ConceptTag>)
     {
         auto bits = result->get();

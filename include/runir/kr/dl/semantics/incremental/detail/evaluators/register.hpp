@@ -24,7 +24,7 @@ struct RegisterEvaluator
     template<StateEvaluationContextConcept<Family, Kind> Context>
     void initialize(EvaluationGraph<Family, Kind>&, Context& context)
     {
-        auto& builder = value.initialize(semantics::detail::num_objects<Kind, Family>(context));
+        auto& builder = value.initialize(semantics::detail::num_objects<Family, Kind>(context));
         const auto slot = context.registers().at(identifier);
         if (slot)
         {

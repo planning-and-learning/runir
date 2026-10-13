@@ -314,7 +314,7 @@ public:
         if (contexts.empty())
             return result;
         for (const auto* context : contexts)
-            result.objects = std::max(result.objects.value_or(0), static_cast<size_t>(semantics::detail::num_objects<Kind, Family>(*context)));
+            result.objects = std::max(result.objects.value_or(0), static_cast<size_t>(semantics::detail::num_objects<Family, Kind>(*context)));
         auto accumulator = ygg::database::StatisticsAccumulator<QueryValues, FamilyQueryView<Family>>();
         for (const auto leaf : m_leaves)
             for (auto* context : contexts)
