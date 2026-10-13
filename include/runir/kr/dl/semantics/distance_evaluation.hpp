@@ -58,7 +58,7 @@ DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePla
 /// `slot_rows(slot)` returns a static slot's rows.
 template<typename Distance, typename SlotRows>
 heuristics::ProjectionHeuristic
-make_heuristic(const DistanceFeature<Distance>& feature, const ygg::database::DistancePlan<QueryValues>& plan, ygg::uint_t num_objects, SlotRows&& slot_rows)
+make_heuristic(const DistanceFeature<Distance>& feature, const ygg::database::DistancePlan<QueryValues>& plan, ygg::uint_t num_objects, const SlotRows& slot_rows)
 {
     if (!feature.abstraction)
         return {};

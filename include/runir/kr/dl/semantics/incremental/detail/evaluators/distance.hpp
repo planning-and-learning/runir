@@ -6,6 +6,8 @@
 #include "runir/kr/dl/semantics/incremental/delta.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/denotation_state.hpp"
 
+#include <algorithm>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <span>
@@ -78,6 +80,7 @@ struct QueryEdgeDistanceEvaluator
     std::vector<QueryEvaluationIndex> slots;  ///< The graph node of each input slot.
     std::optional<heuristics::ProjectionHeuristic> heuristic;  ///< Built at the first initialize(), from the bound leaves.
     DenotationState<NumericalTag> value;
+    std::vector<bool> slot_changed;  ///< Per slot, whether update()'s delta changed it; kept to avoid allocations.
 
     QueryEdgeDistanceEvaluator(ygg::View<ygg::Index<FamilyNumerical<Family, DistanceTag>>, C> expression_,
                                GraphBuilder<Family, Kind>& graph,
@@ -99,14 +102,25 @@ struct QueryEdgeDistanceEvaluator
                                                           expression.get_data().plan,
                                                           semantics::detail::num_objects<Kind, Family>(context),
                                                           [&](size_t slot) -> const ygg::Builder<ygg::database::Relation<QueryValues>>& { return feature.distance.input(slot); });
+        set_targets(graph);
         evaluate(graph);
     }
+    /// The children's deltas are exact (IncrementalEvaluation): they are the slots' changes, unchanged arguments and
+    /// slots leave the distance unchanged, and unchanged targets leave the search and the heuristic's tables valid.
     void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<QueryValues>&)
     {
-        auto changed = std::vector<bool>();
+        slot_changed.clear();
         for (const auto slot : slots)
-            changed.push_back(!graph.change(slot).added.empty() || !graph.change(slot).removed.empty());
-        feature.distance.bind(input(graph), changed);
+            slot_changed.push_back(modified(graph, slot));
+        const auto targets_changed = modified(graph, targets);
+        if (!targets_changed && !modified(graph, sources) && std::ranges::none_of(slot_changed, std::identity {}))
+        {
+            value.clear_delta();
+            return;
+        }
+        feature.distance.update([&](size_t slot) -> const auto& { return graph.change(slots[slot]); }, slot_changed);
+        if (targets_changed)
+            set_targets(graph);
         evaluate(graph);
     }
 
@@ -116,11 +130,16 @@ private:
     {
         return [this, &graph](size_t slot) -> const ygg::Builder<ygg::database::Relation<QueryValues>>& { return graph.result(slots[slot]); };
     }
-    void evaluate(const EvaluationGraph<Family, Kind>& graph)
+    static bool modified(const EvaluationGraph<Family, Kind>& graph, QueryEvaluationIndex index)
     {
-        heuristic->update(graph.result(targets));
-        value.set(feature.distance.min_distance(graph.result(sources), graph.result(targets), *heuristic));
+        return !graph.change(index).added.empty() || !graph.change(index).removed.empty();
     }
+    void set_targets(const EvaluationGraph<Family, Kind>& graph)
+    {
+        feature.distance.set_targets(graph.result(targets));
+        heuristic->update(graph.result(targets));
+    }
+    void evaluate(const EvaluationGraph<Family, Kind>& graph) { value.set(feature.distance.min_distance(graph.result(sources), *heuristic)); }
     template<typename Operand>
     static QueryEvaluationIndex prepare(Operand operand,
                                         std::span<const ygg::database::ColumnLayout> columns,

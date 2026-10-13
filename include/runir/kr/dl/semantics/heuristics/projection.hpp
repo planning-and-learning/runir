@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <optional>
 #include <span>
+#include <utility>
 #include <tyr/formalism/declarations.hpp>
 #include <vector>
 #include <yggdrasil/database/optimization/optimization.hpp>
@@ -56,7 +57,7 @@ public:
     {
     }
 
-    /// Recomputes the tables whose abstract targets changed.
+    /// Recomputes the tables whose abstract targets changed. Callers that know the targets are unchanged skip it.
     template<typename Targets>
     void update(const Targets& targets)
     {
@@ -82,34 +83,35 @@ private:
     std::vector<ygg::database::ColumnLayout> m_vertex_columns;
     std::vector<ygg::database::ColumnLayout> m_target_columns;
     ygg::uint_t m_num_objects = 0;
+    std::vector<bool> m_abstract_targets;  ///< Scratch of update_table(), kept with m_queue to avoid allocations.
+    std::vector<ygg::uint_t> m_queue;
 
     /// A backward breadth-first search from α_i(T) in the abstract graph.
     template<typename Targets>
-    void update_table(PatternDatabase& database, const Targets& targets) const
+    void update_table(PatternDatabase& database, const Targets& targets)
     {
-        // ponytail: comparing the abstract targets costs O(|targets|) per evaluation.
-        auto abstract_targets = std::vector<bool>(m_num_objects, false);
+        m_abstract_targets.assign(m_num_objects, false);
         for (size_t r = 0; r < targets.size(); ++r)
-            abstract_targets[ygg::uint_t(Row(targets.row(r), m_target_columns).get<Object>(database.pattern))] = true;
-        if (!database.h.empty() && abstract_targets == database.targets)
+            m_abstract_targets[ygg::uint_t(Row(targets.row(r), m_target_columns).get<Object>(database.pattern))] = true;
+        if (!database.h.empty() && m_abstract_targets == database.targets)
             return;
-        database.targets = std::move(abstract_targets);
+        std::swap(database.targets, m_abstract_targets);
         database.h.assign(m_num_objects, ygg::database::infinity);
-        auto queue = std::vector<ygg::uint_t>();
+        m_queue.clear();
         for (ygg::uint_t o = 0; o < m_num_objects; ++o)
             if (database.targets[o])
             {
                 database.h[o] = 0;
-                queue.push_back(o);
+                m_queue.push_back(o);
             }
-        for (size_t head = 0; head < queue.size(); ++head)
+        for (size_t head = 0; head < m_queue.size(); ++head)
         {
-            const auto o = queue[head];
+            const auto o = m_queue[head];
             for (auto i = database.offsets[o]; i < database.offsets[o + 1]; ++i)
                 if (const auto p = database.abstract_predecessors[i]; database.h[p] == ygg::database::infinity)
                 {
                     database.h[p] = database.h[o] + 1;
-                    queue.push_back(p);
+                    m_queue.push_back(p);
                 }
         }
     }
@@ -180,7 +182,7 @@ template<typename SlotRows>
 ProjectionHeuristic make_projection_heuristic(const EdgeAbstraction& abstraction,
                                              const ygg::database::DistancePlan<QueryValues>& plan,
                                              ygg::uint_t num_objects,
-                                             SlotRows&& slot_rows)
+                                             const SlotRows& slot_rows)
 {
     // The abstract edges, evaluated once over the static rows.
     auto inputs = std::vector<ygg::Builder<ygg::database::Relation<QueryValues>>>();
