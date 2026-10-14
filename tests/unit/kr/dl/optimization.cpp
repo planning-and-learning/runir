@@ -68,6 +68,16 @@ void check_optimized_queries()
     const auto fixed = std::string(R"((q_atomic_state "fixed" (x y z)))");
     const auto edges = std::string(R"((r_or (r_atomic_state "edge") (r_inverse (r_atomic_state "edge"))))");
     const auto triangle = "(n_count (q_join (q_join (q_role (x y) " + edges + ") (q_role (y z) " + edges + ")) (q_role (x z) " + edges + ")))";
+    // Edges evaluated per vertex keep their joins: planning them for full evaluation would add semijoins.
+    const auto path = "(q_join (q_role (x z) " + edges + ") (q_join (q_role (z w) " + edges + ") (q_role (w y) " + edges + ")))";
+    const auto distance = "(n_distance (q_concept x (c_atomic_state \"marker\")) (q_project (x y) " + path + ") (q_concept y (c_atomic_state \"marker\")))";
+    const auto joins = [](const std::string& formatted)
+    {
+        size_t result = 0;
+        for (auto position = formatted.find("(q_join"); position != std::string::npos; position = formatted.find("(q_join", position + 1))
+            ++result;
+        return result;
+    };
     const auto expressions = std::vector<std::string> {
         triangle,
         R"((n_count (q_project (x) (q_join (q_atomic_state "assignment" (x y z w)) (q_atomic_state "required" (x y z))))))",
@@ -77,6 +87,7 @@ void check_optimized_queries()
         // A query nested inside a leaf's concept argument is optimized too.
         "(n_count (c_project x (q_join " + triple + " (q_concept x (c_project z (q_join " + triple + " " + fixed + "))))))",
         "(n_count (q_generic_join (x y z) (x y z) " + triple + " " + fixed + "))",
+        distance,
     };
 
     {
@@ -110,6 +121,8 @@ void check_optimized_queries()
                     << text << " => " << formatted;
             if (text == triangle)
                 EXPECT_NE(formatted.find("q_generic_join"), std::string::npos) << formatted;
+            if (text == distance)
+                EXPECT_EQ(joins(formatted), joins(text)) << formatted;
         }
     }
 }

@@ -251,11 +251,37 @@ private:
             view.get_arg());
     }
 
-    /// Optimizes a maximal query; with required labels, only those columns of its result are used.
-    FamilyQueryView<Family> optimize_root(FamilyQueryView<Family> root, const std::optional<Labels>& required)
+    /// The edges of a distance are evaluated per vertex, with the source or the target columns bound, never fully.
+    FamilyRecordView<Family, Numerical<Family, DistanceTag>> rewrite(FamilyRecordView<Family, Numerical<Family, DistanceTag>> view)
+    {
+        using Data = ygg::Data<Numerical<Family, DistanceTag>>;
+        auto data = Data(optimize_argument<typename Data::Vertex>(view.get_lhs(), ygg::database::Evaluation::full),
+                         optimize_argument<typename Data::Edge>(view.get_mid(), ygg::database::Evaluation::bound),
+                         optimize_argument<typename Data::Vertex>(view.get_rhs(), ygg::database::Evaluation::full));
+        return runir::kr::dl::insert(m_repository, data).first;
+    }
+
+    /// The index of an optimized argument that is a query evaluated as given or another record.
+    template<typename Result, typename Argument>
+    Result optimize_argument(const Argument& arg, ygg::database::Evaluation evaluation)
+    {
+        return ygg::visit(
+            [&]<typename V>(V child) -> Result
+            {
+                if constexpr (std::same_as<V, FamilyQueryView<Family>>)
+                    return Result(optimize_root(child, std::nullopt, evaluation).get_index());
+                else
+                    return Result(optimize(child).get_index());
+            },
+            arg);
+    }
+
+    /// Optimizes a maximal query for its evaluation; with required labels, only those columns of its result are used.
+    FamilyQueryView<Family>
+    optimize_root(FamilyQueryView<Family> root, const std::optional<Labels>& required, ygg::database::Evaluation evaluation = ygg::database::Evaluation::full)
     {
         const auto key = std::pair { root, required.value_or(Labels {}) };
-        auto& optimized = required ? m_projected : m_optimized;
+        auto& optimized = evaluation == ygg::database::Evaluation::bound ? m_bound : required ? m_projected : m_optimized;
         if (const auto it = optimized.find(key); it != optimized.end())
             return it->second;
         auto translator = detail::QueryTranslator<Family>();
@@ -274,7 +300,9 @@ private:
             // Leaves are not optimized themselves, but their concept/role arguments may hold queries.
             leaves.push_back(memoized(leaf));
         }
-        const auto plan = ygg::database::optimize(translated, statistics);
+        const auto plan = ygg::database::optimize<QueryValues>(std::span<const ygg::database::QueryView<QueryValues>>(&translated, 1),
+                                                               std::span<const ygg::database::Evaluation>(&evaluation, 1),
+                                                               statistics);
         const auto result = detail::lower<Family>(plan, leaves, m_repository).front();
         optimized.emplace(key, result);
         return result;
@@ -285,6 +313,7 @@ private:
     ygg::ApplyTypeListT<std::tuple, ygg::MapTypeListT<RewriteMap, FamilyConstructorRepositoryTypes<Family>>> m_rewritten;
     ygg::UnorderedMap<std::pair<FamilyQueryView<Family>, Labels>, FamilyQueryView<Family>> m_optimized;
     ygg::UnorderedMap<std::pair<FamilyQueryView<Family>, Labels>, FamilyQueryView<Family>> m_projected;
+    ygg::UnorderedMap<std::pair<FamilyQueryView<Family>, Labels>, FamilyQueryView<Family>> m_bound;
 };
 
 /// Measures the leaves of every maximal query reachable from the added expressions, including queries nested inside
