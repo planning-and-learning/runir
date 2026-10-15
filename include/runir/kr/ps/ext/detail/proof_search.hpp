@@ -230,6 +230,8 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
             {
                 if (*completed)
                     choices.pop_back();
+                else
+                    ++statistics.num_backtracks;
             }
             else
                 frame.succeeded &= *completed;

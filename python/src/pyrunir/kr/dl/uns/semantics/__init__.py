@@ -62,6 +62,7 @@ from ....._pyrunir.kr.dl.uns.semantics import (
     QueryEmptyIndex,
     QueryMustPassIndex,
     QueryStatistics,
+    QueryStatisticsSampler,
     ConceptProject,
     ConceptProjectData,
     ConceptProjectIndex,

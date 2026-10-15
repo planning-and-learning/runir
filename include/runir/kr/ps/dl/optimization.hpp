@@ -88,6 +88,15 @@ runir::kr::dl::QueryStatistics<DlFamilyFor<Family>> collect_query_statistics(Rec
     return collector.get_leaves().get_collector().template measure<Kind>(contexts, warnings);
 }
 
+/// A sampler for the query leaves of a ps record, to measure sample states one at a time with bounded memory.
+template<FamilyTag Family, typename T, typename RepositoryTypes>
+runir::kr::dl::QueryStatisticsSampler<DlFamilyFor<Family>> query_statistics_sampler(RecordView<Family, RepositoryTypes, T> object)
+{
+    auto collector = RecordCollector<Family, RepositoryTypes, FeatureStatisticsCollector<Family>>();
+    collector.template add<T>(object);
+    return collector.get_leaves().get_collector().sampler();
+}
+
 }  // namespace runir::kr::ps::dl
 
 #endif

@@ -84,7 +84,7 @@ def test_expander_rejects_foreign_states_programs_and_candidates(kind):
         statistics = ext.ProgramSearchStatistics()
         with pytest.raises(ValueError, match=message):
             expander.for_each_successor(wrong_state, statistics, lambda _: True, lambda: False)
-        assert statistics.num_generated == statistics.num_expanded == 0
+        assert statistics.num_generated == statistics.num_expanded == statistics.num_backtracks == 0
         with pytest.raises(ValueError, match=message):
             expander.matching_rule(wrong_state, successor)
         with pytest.raises(ValueError, match=message):

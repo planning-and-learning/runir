@@ -327,6 +327,43 @@ private:
     ygg::UnorderedMap<std::pair<FamilyQueryView<Family>, Labels>, FamilyQueryView<Family>> m_bound;
 };
 
+/// Measures fixed query leaves one sample state at a time. Each add evaluates every leaf in one state, so a caller may
+/// drop that state's evaluation context and storage right after it: memory stays bounded by one state however many are
+/// sampled. The statistics are means over samples and do not depend on their order.
+template<FamilyTag Family>
+class QueryStatisticsSampler
+{
+public:
+    explicit QueryStatisticsSampler(std::vector<FamilyQueryView<Family>> leaves) : m_leaves(std::move(leaves)) {}
+
+    /// Evaluates every leaf in the state of context and adds the sample.
+    template<tyr::TaskKind Kind, semantics::StateEvaluationContextConcept<Family, Kind> Context>
+    void add(Context& context)
+    {
+        m_objects = std::max(m_objects.value_or(0), static_cast<size_t>(semantics::detail::num_objects<Family, Kind>(context)));
+        for (const auto leaf : m_leaves)
+            m_accumulator.add(leaf, semantics::evaluate<Kind>(leaf, context));
+    }
+
+    /// Averages each leaf's row and per-column distinct counts over the added states. The plan is fixed across states,
+    /// so the statistics describe a typical state. Leaves empty in every sample keep a size of zero and are reported in
+    /// warnings; without samples, the statistics are empty.
+    QueryStatistics<Family> finish(ygg::diagnostics::Warnings& warnings) const
+    {
+        auto result = QueryStatistics<Family>();
+        if (!m_objects)
+            return result;
+        result.objects = m_objects;
+        result.leaves = m_accumulator.finish(warnings, [](FamilyQueryView<Family> leaf) { return fmt::format("{}", leaf); });
+        return result;
+    }
+
+private:
+    std::vector<FamilyQueryView<Family>> m_leaves;
+    ygg::database::StatisticsAccumulator<QueryValues, FamilyQueryView<Family>> m_accumulator;
+    std::optional<size_t> m_objects;
+};
+
 /// Measures the leaves of every maximal query reachable from the added expressions, including queries nested inside
 /// leaves, in sample states.
 template<FamilyTag Family>
@@ -344,23 +381,18 @@ public:
         collect<T>(expression);
     }
 
-    /// Averages each leaf's row and per-column distinct counts over contexts, one state evaluation context per sample
-    /// state. The plan is fixed across states, so the statistics describe a typical state. Leaves empty in every sample
-    /// keep a size of zero and are reported in warnings.
+    /// A sampler for the collected leaves, to measure sample states one at a time.
+    QueryStatisticsSampler<Family> sampler() const { return QueryStatisticsSampler<Family>(m_leaves); }
+
+    /// The statistics of the collected leaves over contexts, one state evaluation context per sample state, measured
+    /// state by state (see QueryStatisticsSampler).
     template<tyr::TaskKind Kind, semantics::StateEvaluationContextConcept<Family, Kind> Context>
     QueryStatistics<Family> measure(const std::vector<Context*>& contexts, ygg::diagnostics::Warnings& warnings) const
     {
-        auto result = QueryStatistics<Family>();
-        if (contexts.empty())
-            return result;
-        for (const auto* context : contexts)
-            result.objects = std::max(result.objects.value_or(0), static_cast<size_t>(semantics::detail::num_objects<Family, Kind>(*context)));
-        auto accumulator = ygg::database::StatisticsAccumulator<QueryValues, FamilyQueryView<Family>>();
-        for (const auto leaf : m_leaves)
-            for (auto* context : contexts)
-                accumulator.add(leaf, semantics::evaluate<Kind>(leaf, *context));
-        result.leaves = accumulator.finish(warnings, [](FamilyQueryView<Family> leaf) { return fmt::format("{}", leaf); });
-        return result;
+        auto sampler = this->sampler();
+        for (auto* context : contexts)
+            sampler.template add<Kind>(*context);
+        return sampler.finish(warnings);
     }
 
 private:

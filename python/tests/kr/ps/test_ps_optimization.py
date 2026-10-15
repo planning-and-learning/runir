@@ -92,6 +92,12 @@ def test_ext_program(gripper_planning_domain, ground_gripper_search_context):
         assert before == after
     module = program.get_entry_module()
     assert module.optimize(domain.ext_repository) != module
+    # Sampling one state at a time gives the statistics of the batch call.
+    sampler = program.query_statistics_sampler()
+    sampler.add(context)
+    sampled = sampler.finish()
+    assert sampled.num_leaves() == statistics.num_leaves()
+    assert program.optimize(domain.ext_repository, sampled) == program.optimize(domain.ext_repository, statistics)
 
 
 _ICP_PROGRAM = f"""(:program (:entry main)

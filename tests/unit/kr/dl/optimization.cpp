@@ -4,6 +4,7 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <memory>
+#include <ranges>
 #include <runir/kr/dl/optimization.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/evaluation.hpp>
@@ -111,6 +112,24 @@ void check_optimized_queries()
         EXPECT_TRUE(warnings.empty()) << text;
         EXPECT_TRUE(statistics.objects.has_value()) << text;
         EXPECT_FALSE(statistics.leaves.empty()) << text;
+        {
+            // Measuring one state at a time, in any order, gives the statistics of the batch.
+            auto collector = kr::dl::QueryStatisticsCollector<Ext>();
+            collector.add(original);
+            auto sampler = collector.sampler();
+            for (auto* context : std::views::reverse(context_pointers))
+                sampler.template add<Kind>(*context);
+            const auto sampled = sampler.finish(warnings);
+            EXPECT_EQ(sampled.objects, statistics.objects) << text;
+            ASSERT_EQ(sampled.leaves.size(), statistics.leaves.size()) << text;
+            for (const auto& [leaf, expected] : statistics.leaves)
+            {
+                const auto it = sampled.leaves.find(leaf);
+                ASSERT_NE(it, sampled.leaves.end()) << text;
+                EXPECT_EQ(it->second.rows, expected.rows) << text;
+                EXPECT_EQ(it->second.distinct, expected.distinct) << text;
+            }
+        }
         for (const auto* mode : { &statistics, static_cast<const kr::dl::QueryStatistics<Ext>*>(nullptr) })
         {
             const auto optimized = mode ? kr::dl::optimize(original, *repository, *mode) : kr::dl::optimize(original, *repository);

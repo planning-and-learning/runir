@@ -35,6 +35,30 @@ auto maybe(Parser parser)
         return boost::spirit::x3::eps(false);
 }
 
+/// Whether a dialect admits a constructor: SearchFreeDialectTag excludes transitive closures and searches.
+template<typename Dialect, typename Tag>
+inline constexpr bool dialect_allows_v =
+    std::same_as<Dialect, FullDialectTag>
+    || !(std::same_as<Tag, runir::kr::dl::TransitiveClosureTag> || std::same_as<Tag, runir::kr::dl::ReflexiveTransitiveClosureTag>
+         || std::same_as<Tag, runir::kr::dl::DistanceTag> || std::same_as<Tag, runir::kr::dl::QueryMustPassTag>);
+
+template<typename Tag>
+struct ForbiddenClass
+{
+};
+
+/// Fails with an expectation error at the keyword of a constructor the dialect excludes, instead of a generic one.
+template<typename Dialect, typename Tag>
+auto forbidden()
+{
+    if constexpr (dialect_allows_v<Dialect, Tag>)
+        return boost::spirit::x3::eps(false);
+    else
+        return lit("(") >> keyword(Tag::keyword)
+               > (boost::spirit::x3::rule<ForbiddenClass<Tag>> { "no transitive closure, n_distance or q_must_pass inside n_distance or q_must_pass" } =
+                      boost::spirit::x3::eps(false));
+}
+
 predicate_name_type const predicate_name = "predicate name";
 object_name_type const object_name = "object name";
 identifier_type const identifier = "identifier";
@@ -140,7 +164,7 @@ auto non_terminal_string_parser()
 
 // Try longer arity overloads first; their final operand below remains backtrackable.
 #define RUNIR_CONCEPT_CONSTRUCTORS(Family, prefix, X)                                                                                 \
-    X(Family, prefix, runir::kr::dl::ConceptTag, ProjectTag, concept_project) \
+    X(Family, prefix, runir::kr::dl::ConceptTag, ProjectTag, concept_project)                                                         \
     X(Family, prefix, runir::kr::dl::ConceptTag, BotTag, concept_bot)                                                                 \
     X(Family, prefix, runir::kr::dl::ConceptTag, TopTag, concept_top)                                                                 \
     X(Family, prefix, runir::kr::dl::ConceptTag, ConceptAtomicStateSyntaxTag, concept_atomic_state)                                   \
@@ -165,7 +189,7 @@ auto non_terminal_string_parser()
     X(Family, prefix, runir::kr::dl::ConceptTag, ArgumentTag<runir::kr::dl::ConceptTag>, concept_argument)
 
 #define RUNIR_ROLE_CONSTRUCTORS(Family, prefix, X)                                                              \
-    X(Family, prefix, runir::kr::dl::RoleTag, ProjectTag, role_project) \
+    X(Family, prefix, runir::kr::dl::RoleTag, ProjectTag, role_project)                                         \
     X(Family, prefix, runir::kr::dl::RoleTag, UniversalTag, role_universal)                                     \
     X(Family, prefix, runir::kr::dl::RoleTag, RoleAtomicStateSyntaxTag, role_atomic_state)                      \
     X(Family, prefix, runir::kr::dl::RoleTag, RoleAtomicGoalSyntaxTag, role_atomic_goal)                        \
@@ -216,52 +240,55 @@ auto non_terminal_string_parser()
     X(Family, prefix, runir::kr::dl::NumericalTag, ArgumentTag<runir::kr::dl::NumericalTag>, numerical_argument)
 
 #define RUNIR_DECLARE_CONSTRUCTOR_RULE(Family, prefix, Category, Tag, name) \
-    constructor_tag_type<Family, Category, runir::kr::dl::Tag> const prefix##_##name = #name;
+    constructor_tag_type<Family, Category, runir::kr::dl::Tag, prefix##_dialect> const prefix##_##name = #name;
 
-#define RUNIR_CONSTRUCTOR_ALTERNATIVE(Family, prefix, Category, Tag, name) \
-    | maybe<has_ast_constructor_tag_v<Family, Category, runir::kr::dl::Tag>>(constructor_context<runir::kr::dl::Tag>(#name)[prefix##_##name])
+#define RUNIR_CONSTRUCTOR_ALTERNATIVE(Family, prefix, Category, Tag, name)                                                              \
+    | maybe<has_ast_constructor_tag_v<Family, Category, runir::kr::dl::Tag> && dialect_allows_v<prefix##_dialect, runir::kr::dl::Tag>>( \
+        constructor_context<runir::kr::dl::Tag>(#name)[prefix##_##name])                                                                \
+        | maybe<has_ast_constructor_tag_v<Family, Category, runir::kr::dl::Tag>>(forbidden<prefix##_dialect, runir::kr::dl::Tag>())
 
-#define RUNIR_DEFINE_FAMILY_PARSER(Family, prefix)                                                                                                            \
-    query_atomic_state_type<Family> const prefix##_query_atomic_state = "query_atomic_state";                                                                 \
-    query_atomic_goal_type<Family> const prefix##_query_atomic_goal = "query_atomic_goal";                                                                    \
-    query_concept_type<Family> const prefix##_query_concept = "query_concept";                                                                                \
-    query_role_type<Family> const prefix##_query_role = "query_role";                                                                                         \
-    query_join_type<Family> const prefix##_query_join = "query_join";                                                                                         \
-    query_project_type<Family> const prefix##_query_project = "query_project";                                                                                \
-    query_rename_type<Family> const prefix##_query_rename = "query_rename";                                                                                   \
-    query_select_equal_type<Family> const prefix##_query_select_equal = "query_select_equal";                                                                 \
-    query_select_value_type<Family> const prefix##_query_select_value = "query_select_value";                                                                 \
-    query_union_type<Family> const prefix##_query_union = "query_union";                                                                                      \
-    query_difference_type<Family> const prefix##_query_difference = "query_difference";                                                                       \
-    query_generic_join_type<Family> const prefix##_query_generic_join = "query_generic_join";                                                                 \
-    query_empty_type<Family> const prefix##_query_empty = "query_empty";                                                                                      \
-    query_must_pass_type<Family> const prefix##_query_must_pass = "query_must_pass";                                                                          \
-    query_type<Family> const prefix##_query = "query";                                                                                                        \
-    constructor_type<Family, runir::kr::dl::ConceptTag> const prefix##_concept = "concept";                                                                   \
-    constructor_root_type<Family, runir::kr::dl::ConceptTag> const prefix##_concept_root = "concept_root";                                                    \
-    constructor_type<Family, runir::kr::dl::RoleTag> const prefix##_role = "role";                                                                            \
-    constructor_root_type<Family, runir::kr::dl::RoleTag> const prefix##_role_root = "role_root";                                                             \
-    constructor_type<Family, runir::kr::dl::BooleanTag> const prefix##_boolean = "boolean";                                                                   \
-    constructor_root_type<Family, runir::kr::dl::BooleanTag> const prefix##_boolean_root = "boolean_root";                                                    \
-    constructor_type<Family, runir::kr::dl::NumericalTag> const prefix##_numerical = "numerical";                                                             \
-    constructor_root_type<Family, runir::kr::dl::NumericalTag> const prefix##_numerical_root = "numerical_root";                                              \
-    non_terminal_type<Family, runir::kr::dl::ConceptTag> const prefix##_concept_non_terminal = "concept_non_terminal";                                        \
-    choice_type<Family, runir::kr::dl::ConceptTag> const prefix##_concept_choice = "concept_choice";                                                          \
-    non_terminal_type<Family, runir::kr::dl::RoleTag> const prefix##_role_non_terminal = "role_non_terminal";                                                 \
-    choice_type<Family, runir::kr::dl::RoleTag> const prefix##_role_choice = "role_choice";                                                                   \
-    non_terminal_type<Family, runir::kr::dl::BooleanTag> const prefix##_boolean_non_terminal = "boolean_non_terminal";                                        \
-    choice_type<Family, runir::kr::dl::BooleanTag> const prefix##_boolean_choice = "boolean_choice";                                                          \
-    non_terminal_type<Family, runir::kr::dl::NumericalTag> const prefix##_numerical_non_terminal = "numerical_non_terminal";                                  \
-    choice_type<Family, runir::kr::dl::NumericalTag> const prefix##_numerical_choice = "numerical_choice";                                                    \
-    constructor_or_non_terminal_variant_type<Family> const prefix##_constructor_or_non_terminal_variant = "constructor_or_non_terminal_variant";              \
-    derivation_rule_type<Family, runir::kr::dl::ConceptTag> const prefix##_concept_derivation_rule = "concept_derivation_rule";                               \
-    derivation_rule_type<Family, runir::kr::dl::RoleTag> const prefix##_role_derivation_rule = "role_derivation_rule";                                        \
-    derivation_rule_type<Family, runir::kr::dl::BooleanTag> const prefix##_boolean_derivation_rule = "boolean_derivation_rule";                               \
-    derivation_rule_type<Family, runir::kr::dl::NumericalTag> const prefix##_numerical_derivation_rule = "numerical_derivation_rule";                         \
-    derivation_rule_variant_type<Family> const prefix##_derivation_rule_variant = "derivation_rule_variant";                                                  \
-    grammar_body_type<Family> const prefix##_grammar_body = "grammar_body";                                                                                   \
-    grammar_type<Family> const prefix##_grammar = "grammar";                                                                                                  \
-    grammar_root_type<Family> const prefix##_grammar_root = "grammar_root";                                                                                   \
+#define RUNIR_DEFINE_FAMILY_PARSER(Family, prefix, Dialect, search_free)                                                                                      \
+    using prefix##_dialect = Dialect;                                                                                                                         \
+    query_atomic_state_type<Family, Dialect> const prefix##_query_atomic_state = "query_atomic_state";                                                        \
+    query_atomic_goal_type<Family, Dialect> const prefix##_query_atomic_goal = "query_atomic_goal";                                                           \
+    query_concept_type<Family, Dialect> const prefix##_query_concept = "query_concept";                                                                       \
+    query_role_type<Family, Dialect> const prefix##_query_role = "query_role";                                                                                \
+    query_join_type<Family, Dialect> const prefix##_query_join = "query_join";                                                                                \
+    query_project_type<Family, Dialect> const prefix##_query_project = "query_project";                                                                       \
+    query_rename_type<Family, Dialect> const prefix##_query_rename = "query_rename";                                                                          \
+    query_select_equal_type<Family, Dialect> const prefix##_query_select_equal = "query_select_equal";                                                        \
+    query_select_value_type<Family, Dialect> const prefix##_query_select_value = "query_select_value";                                                        \
+    query_union_type<Family, Dialect> const prefix##_query_union = "query_union";                                                                             \
+    query_difference_type<Family, Dialect> const prefix##_query_difference = "query_difference";                                                              \
+    query_generic_join_type<Family, Dialect> const prefix##_query_generic_join = "query_generic_join";                                                        \
+    query_empty_type<Family, Dialect> const prefix##_query_empty = "query_empty";                                                                             \
+    query_must_pass_type<Family, Dialect> const prefix##_query_must_pass = "query_must_pass";                                                                 \
+    query_type<Family, Dialect> const prefix##_query = "query";                                                                                               \
+    constructor_type<Family, runir::kr::dl::ConceptTag, Dialect> const prefix##_concept = "concept";                                                          \
+    constructor_root_type<Family, runir::kr::dl::ConceptTag, Dialect> const prefix##_concept_root = "concept_root";                                           \
+    constructor_type<Family, runir::kr::dl::RoleTag, Dialect> const prefix##_role = "role";                                                                   \
+    constructor_root_type<Family, runir::kr::dl::RoleTag, Dialect> const prefix##_role_root = "role_root";                                                    \
+    constructor_type<Family, runir::kr::dl::BooleanTag, Dialect> const prefix##_boolean = "boolean";                                                          \
+    constructor_root_type<Family, runir::kr::dl::BooleanTag, Dialect> const prefix##_boolean_root = "boolean_root";                                           \
+    constructor_type<Family, runir::kr::dl::NumericalTag, Dialect> const prefix##_numerical = "numerical";                                                    \
+    constructor_root_type<Family, runir::kr::dl::NumericalTag, Dialect> const prefix##_numerical_root = "numerical_root";                                     \
+    non_terminal_type<Family, runir::kr::dl::ConceptTag, Dialect> const prefix##_concept_non_terminal = "concept_non_terminal";                               \
+    choice_type<Family, runir::kr::dl::ConceptTag, Dialect> const prefix##_concept_choice = "concept_choice";                                                 \
+    non_terminal_type<Family, runir::kr::dl::RoleTag, Dialect> const prefix##_role_non_terminal = "role_non_terminal";                                        \
+    choice_type<Family, runir::kr::dl::RoleTag, Dialect> const prefix##_role_choice = "role_choice";                                                          \
+    non_terminal_type<Family, runir::kr::dl::BooleanTag, Dialect> const prefix##_boolean_non_terminal = "boolean_non_terminal";                               \
+    choice_type<Family, runir::kr::dl::BooleanTag, Dialect> const prefix##_boolean_choice = "boolean_choice";                                                 \
+    non_terminal_type<Family, runir::kr::dl::NumericalTag, Dialect> const prefix##_numerical_non_terminal = "numerical_non_terminal";                         \
+    choice_type<Family, runir::kr::dl::NumericalTag, Dialect> const prefix##_numerical_choice = "numerical_choice";                                           \
+    constructor_or_non_terminal_variant_type<Family, Dialect> const prefix##_constructor_or_non_terminal_variant = "constructor_or_non_terminal_variant";     \
+    derivation_rule_type<Family, runir::kr::dl::ConceptTag, Dialect> const prefix##_concept_derivation_rule = "concept_derivation_rule";                      \
+    derivation_rule_type<Family, runir::kr::dl::RoleTag, Dialect> const prefix##_role_derivation_rule = "role_derivation_rule";                               \
+    derivation_rule_type<Family, runir::kr::dl::BooleanTag, Dialect> const prefix##_boolean_derivation_rule = "boolean_derivation_rule";                      \
+    derivation_rule_type<Family, runir::kr::dl::NumericalTag, Dialect> const prefix##_numerical_derivation_rule = "numerical_derivation_rule";                \
+    derivation_rule_variant_type<Family, Dialect> const prefix##_derivation_rule_variant = "derivation_rule_variant";                                         \
+    grammar_body_type<Family, Dialect> const prefix##_grammar_body = "grammar_body";                                                                          \
+    grammar_type<Family, Dialect> const prefix##_grammar = "grammar";                                                                                         \
+    grammar_root_type<Family, Dialect> const prefix##_grammar_root = "grammar_root";                                                                          \
     RUNIR_CONCEPT_CONSTRUCTORS(Family, prefix, RUNIR_DECLARE_CONSTRUCTOR_RULE)                                                                                \
     RUNIR_ROLE_CONSTRUCTORS(Family, prefix, RUNIR_DECLARE_CONSTRUCTOR_RULE)                                                                                   \
     RUNIR_BOOLEAN_CONSTRUCTORS(Family, prefix, RUNIR_DECLARE_CONSTRUCTOR_RULE)                                                                                \
@@ -307,8 +334,9 @@ auto non_terminal_string_parser()
         with_constructor_parentheses(keyword(runir::kr::dl::QueryGenericJoinTag::keyword) > query_columns_parser() > query_columns_parser()                   \
                                      > boost::spirit::x3::repeat(2, boost::spirit::x3::inf)[prefix##_query]);                                                 \
     const auto prefix##_query_empty_def = with_constructor_parentheses(keyword(runir::kr::dl::QueryEmptyTag::keyword) > query_columns_parser());              \
-    const auto prefix##_query_must_pass_def = with_constructor_parentheses(keyword(runir::kr::dl::QueryMustPassTag::keyword) > query_columns_parser()         \
-                                                                           > prefix##_query > prefix##_query > prefix##_query > prefix##_query);              \
+    const auto prefix##_query_must_pass_def =                                                                                                                 \
+        with_constructor_parentheses(keyword(runir::kr::dl::QueryMustPassTag::keyword) > query_columns_parser() > search_free##_query > search_free##_query   \
+                                     > search_free##_query > search_free##_query);                                                                            \
     const auto prefix##_concept_project_def =                                                                                                                 \
         with_constructor_parentheses(keyword(runir::kr::dl::ConceptProjectSyntaxTag::keyword) > boost::spirit::x3::repeat(1)[identifier] > prefix##_query);   \
     const auto prefix##_role_project_def =                                                                                                                    \
@@ -316,7 +344,8 @@ auto non_terminal_string_parser()
     const auto prefix##_query_def = prefix##_query_atomic_state | prefix##_query_atomic_goal | prefix##_query_concept | prefix##_query_role                   \
                                     | prefix##_query_join | prefix##_query_project | prefix##_query_rename | prefix##_query_select_equal                      \
                                     | prefix##_query_select_value | prefix##_query_union | prefix##_query_difference | prefix##_query_generic_join            \
-                                    | prefix##_query_empty | prefix##_query_must_pass;                                                                        \
+                                    | prefix##_query_empty | maybe<dialect_allows_v<Dialect, runir::kr::dl::QueryMustPassTag>>(prefix##_query_must_pass)      \
+                                    | forbidden<Dialect, runir::kr::dl::QueryMustPassTag>();                                                                  \
     BOOST_SPIRIT_DEFINE(prefix##_query_atomic_state,                                                                                                          \
                         prefix##_query_atomic_goal,                                                                                                           \
                         prefix##_query_concept,                                                                                                               \
@@ -441,8 +470,8 @@ auto non_terminal_string_parser()
     const auto prefix##_numerical_count_def =                                                                                                                 \
         with_constructor_parentheses(keyword(runir::kr::dl::CountTag::keyword) > prefix##_constructor_or_non_terminal_variant);                               \
     const auto prefix##_numerical_distance_def =                                                                                                              \
-        with_constructor_parentheses(keyword(runir::kr::dl::DistanceTag::keyword) > (prefix##_concept_choice | prefix##_query)                                \
-                                     > (prefix##_role_choice | prefix##_query) > (prefix##_concept_choice | prefix##_query));                                 \
+        with_constructor_parentheses(keyword(runir::kr::dl::DistanceTag::keyword) > (search_free##_concept_choice | search_free##_query)                      \
+                                     > (search_free##_role_choice | search_free##_query) > (search_free##_concept_choice | search_free##_query));             \
     const auto prefix##_numerical_constant_def = with_constructor_parentheses(keyword(runir::kr::dl::NumericalConstantTag::keyword) > unsigned_integer);      \
     const auto prefix##_numerical_add_def =                                                                                                                   \
         with_constructor_parentheses(keyword(runir::kr::dl::AddTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                        \
@@ -563,9 +592,13 @@ auto non_terminal_string_parser()
                         prefix##_numerical_max,                                                                                                               \
                         prefix##_numerical_argument)
 
-RUNIR_DEFINE_FAMILY_PARSER(runir::kr::BaseFamilyTag, base_family)
-RUNIR_DEFINE_FAMILY_PARSER(runir::kr::ExtFamilyTag, ext_family)
-RUNIR_DEFINE_FAMILY_PARSER(runir::kr::UnsFamilyTag, uns_family)
+// The search-free instances come first: the full ones parse the arguments of n_distance and q_must_pass with them.
+RUNIR_DEFINE_FAMILY_PARSER(runir::kr::BaseFamilyTag, base_family_search_free, SearchFreeDialectTag, base_family_search_free)
+RUNIR_DEFINE_FAMILY_PARSER(runir::kr::ExtFamilyTag, ext_family_search_free, SearchFreeDialectTag, ext_family_search_free)
+RUNIR_DEFINE_FAMILY_PARSER(runir::kr::UnsFamilyTag, uns_family_search_free, SearchFreeDialectTag, uns_family_search_free)
+RUNIR_DEFINE_FAMILY_PARSER(runir::kr::BaseFamilyTag, base_family, FullDialectTag, base_family_search_free)
+RUNIR_DEFINE_FAMILY_PARSER(runir::kr::ExtFamilyTag, ext_family, FullDialectTag, ext_family_search_free)
+RUNIR_DEFINE_FAMILY_PARSER(runir::kr::UnsFamilyTag, uns_family, FullDialectTag, uns_family_search_free)
 
 #undef RUNIR_DEFINE_FAMILY_PARSER
 #undef RUNIR_CONSTRUCTOR_ALTERNATIVE

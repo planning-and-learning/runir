@@ -76,6 +76,9 @@ struct ProgramSearchStatistics
     /// Counts applied rules and caller returns, not rejected planning candidates or failure markers.
     /// The initial state is excluded; both counters retain work from abandoned branches and resource-limited searches.
     uint64_t num_generated = 0;
+    /// Choose bindings whose subtree failed, after which the search tried the next binding or failed the Choose.
+    /// Includes failures answered by memoization and work from abandoned branches and resource-limited searches.
+    uint64_t num_backtracks = 0;
 
     /// Non-singleton Choose count on the first discovered goal's predecessor path.
     /// Counts bindings after effect filtering and is zero unless the search succeeds.

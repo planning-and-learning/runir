@@ -361,6 +361,7 @@ void check_backtrack_execution()
             EXPECT_EQ(rejected.status, Status::FAILURE);
             EXPECT_EQ(rejected.statistics.num_generated, 0);
             EXPECT_EQ(rejected.statistics.num_expanded, 1);
+            EXPECT_EQ(rejected.statistics.num_backtracks, 0);
             ASSERT_TRUE(rejected.graph);
             EXPECT_EQ(rejected.graph->get_num_vertices(), 1);
             EXPECT_EQ(rejected.graph->get_num_edges(), 0);
@@ -373,6 +374,7 @@ void check_backtrack_execution()
             EXPECT_EQ(selected.statistics.num_generated, 5);
             EXPECT_EQ(selected.statistics.num_expanded, 5);
             EXPECT_EQ(selected.statistics.choice_depth, 1);
+            EXPECT_EQ(selected.statistics.num_backtracks, 1);  // The bad binding fails, then the good one succeeds.
             EXPECT_TRUE(selected.open_states.empty());
             if (mode == Mode::ALL)
             {
@@ -389,6 +391,7 @@ void check_backtrack_execution()
             const auto blocked = kr::ps::ext::find_solution(context, called, options);
             EXPECT_EQ(blocked.status, Status::FAILURE);
             EXPECT_EQ(blocked.statistics.num_generated, 3);  // Call, load, move; never return to the caller.
+            EXPECT_EQ(blocked.statistics.num_backtracks, 0);
             ASSERT_TRUE(blocked.graph);
             ASSERT_EQ(blocked.deadend_states.size(), 1);
             EXPECT_TRUE(blocked.open_states.empty());

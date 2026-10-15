@@ -21,6 +21,22 @@ void bind_query_statistics(nanobind::module_& m)
         .def(nb::init<>())
         .def_rw("objects", &Statistics::objects)
         .def("num_leaves", [](const Statistics& statistics) { return statistics.leaves.size(); });
+
+    // add(context) measures one sample state; its context and storage may be dropped right after, bounding memory.
+    using Sampler = runir::kr::dl::QueryStatisticsSampler<Family>;
+    using GroundContext = runir::kr::dl::semantics::StateEvaluationContext<Family, tyr::GroundTag>;
+    using LiftedContext = runir::kr::dl::semantics::StateEvaluationContext<Family, tyr::LiftedTag>;
+    nb::class_<Sampler>(m, "QueryStatisticsSampler")
+        .def("add", [](Sampler& sampler, GroundContext& context) { sampler.template add<tyr::GroundTag>(context); }, nb::arg("context"))
+        .def("add", [](Sampler& sampler, LiftedContext& context) { sampler.template add<tyr::LiftedTag>(context); }, nb::arg("context"))
+        .def("finish",
+             [](const Sampler& sampler)
+             {
+                 auto warnings = ygg::diagnostics::Warnings();
+                 auto statistics = sampler.finish(warnings);
+                 ygg::issue_warnings(warnings);
+                 return statistics;
+             });
 }
 
 /// optimize(repository[, statistics]) and collect_query_statistics(contexts) on a DL expression view.
@@ -62,7 +78,14 @@ void bind_optimize(nanobind::class_<View>& cls)
                 ygg::issue_warnings(warnings);
                 return statistics;
             },
-            nb::arg("contexts"));
+            nb::arg("contexts"))
+        .def("query_statistics_sampler",
+             [](const View& view)
+             {
+                 auto collector = runir::kr::dl::QueryStatisticsCollector<Family>();
+                 collector.add(view);
+                 return collector.sampler();
+             });
 }
 
 }  // namespace runir::kr::python

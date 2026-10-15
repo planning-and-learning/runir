@@ -51,7 +51,8 @@ void bind_ps_optimize(nanobind::class_<View>& cls)
                 ygg::issue_warnings(warnings);
                 return statistics;
             },
-            nb::arg("contexts"));
+            nb::arg("contexts"))
+        .def("query_statistics_sampler", [](const View& view) { return runir::kr::ps::dl::query_statistics_sampler(view); });
 }
 
 }  // namespace runir::kr::python

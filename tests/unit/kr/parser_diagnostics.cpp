@@ -146,6 +146,14 @@ void check_dl_expression_diagnostics()
     EXPECT_NO_THROW(parse("(c_nominal \"rooma\")"));
     EXPECT_NO_THROW(parse("(c_atomic_state ; outside quote\n \"room\")"));
 
+    using SearchFree = kr::dl::grammar::parser::SearchFreeDialectTag;
+    EXPECT_NO_THROW((kr::dl::grammar::parser::parse_role_ast<Family, SearchFree>("(r_inverse (r_atomic_state \"at\"))")));
+    EXPECT_NO_THROW((kr::dl::grammar::parser::parse_role_ast<Family>("(r_transitive_closure (r_atomic_state \"at\"))")));
+    EXPECT_THROW((kr::dl::grammar::parser::parse_role_ast<Family, SearchFree>("(r_transitive_closure (r_atomic_state \"at\"))")), kr::ParseError);
+    EXPECT_THROW((kr::dl::grammar::parser::parse_concept_ast<Family, SearchFree>("(c_some (r_reflexive_transitive_closure (r_universal)) (c_top))")),
+                 kr::ParseError);
+    EXPECT_THROW((kr::dl::grammar::parser::parse_numerical_ast<Family, SearchFree>("(n_distance (c_top) (r_universal) (c_top))")), kr::ParseError);
+
     const auto parse_grammar = [](const std::string& source) { return kr::dl::grammar::parser::parse_grammar_ast<Family>(source); };
     const auto empty_derivation = std::string("((c_0 ))");
     expect_diagnostic(parse_grammar, empty_derivation, "concept derivation", empty_derivation.find(')'), 1, "constructor or alternatives");
