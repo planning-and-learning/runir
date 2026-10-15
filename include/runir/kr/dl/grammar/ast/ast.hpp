@@ -190,6 +190,16 @@ struct QueryEmpty : boost::spirit::x3::position_tagged
 };
 
 template<runir::kr::dl::FamilyTag Family>
+struct QueryMustPass : boost::spirit::x3::position_tagged
+{
+    std::vector<Identifier> keys;
+    boost::spirit::x3::forward_ast<Query<Family>> sources;
+    boost::spirit::x3::forward_ast<Query<Family>> edges;
+    boost::spirit::x3::forward_ast<Query<Family>> targets;
+    boost::spirit::x3::forward_ast<Query<Family>> probes;
+};
+
+template<runir::kr::dl::FamilyTag Family>
 struct Query :
     PositionedVariant<QueryAtomicState<Family>,
                       QueryAtomicGoal<Family>,
@@ -203,7 +213,8 @@ struct Query :
                       QueryUnion<Family>,
                       QueryDifference<Family>,
                       QueryGenericJoin<Family>,
-                      QueryEmpty<Family>>
+                      QueryEmpty<Family>,
+                      QueryMustPass<Family>>
 {
     using Base = PositionedVariant<QueryAtomicState<Family>,
                                    QueryAtomicGoal<Family>,
@@ -217,7 +228,8 @@ struct Query :
                                    QueryUnion<Family>,
                                    QueryDifference<Family>,
                                    QueryGenericJoin<Family>,
-                                   QueryEmpty<Family>>;
+                                   QueryEmpty<Family>,
+                                   QueryMustPass<Family>>;
     using Base::Base;
     using Base::operator=;
 };

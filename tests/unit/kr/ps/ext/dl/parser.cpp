@@ -182,7 +182,8 @@ TEST(RunirTests, RelationalExpressionsRoundTripAndRejectGenerationGrammars)
                                                  R"((n_count (c_project Y (q_atomic_state "at" (X Y)))))",
                                                  R"((n_count (r_project Y X (q_atomic_state "at" (X Y)))))",
                                                  R"((n_count (q_generic_join (X Y) (Y X) (q_atomic_state "at" (X Y)) (q_concept X (c_top)))))",
-                                                 R"((n_count (q_empty (X Y))))" };
+                                                 R"((n_count (q_empty (X Y))))",
+                                                 R"((n_count (q_must_pass (X) (q_atomic_state "at" (X Y)) (q_project (X Y Z) (q_join (q_atomic_state "at" (X Y)) (q_rename (X Z) (q_atomic_state "at" (X Y))))) (q_atomic_state "at" (X Y)) (q_concept P (c_top)))))" };
     for (const auto& expression : expressions)
     {
         const auto parsed = kr::ps::ext::dl::parse_numerical(expression, domain, *repository);
@@ -192,6 +193,14 @@ TEST(RunirTests, RelationalExpressionsRoundTripAndRejectGenerationGrammars)
             [&] { kr::dl::grammar::parse_grammar("((n_0 " + expression + "))", domain, *grammar_repository); },
             "Relational expressions are not supported in generation grammars");
     }
+
+    expect_error_containing(
+        [&]
+        {
+            kr::ps::ext::dl::parse_numerical(
+                R"((n_count (q_must_pass (Y) (q_atomic_state "at" (X Y)) (q_atomic_state "at" (X Y)) (q_atomic_state "at" (X Y)) (q_concept P (c_top)))))", domain, *repository);
+        },
+        "q_must_pass: the sources must start with the key columns");
 
     const auto boolean = kr::ps::ext::dl::parse_boolean(
         "(b_nonempty (q_select_equal X Y (q_role (X Y) (r_identity (c_top)))))", domain, *repository);

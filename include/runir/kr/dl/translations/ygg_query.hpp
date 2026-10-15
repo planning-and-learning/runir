@@ -60,7 +60,8 @@ namespace detail
 
 template<typename Tag>
 inline constexpr bool is_query_leaf_tag_v =
-    is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag> || std::same_as<Tag, QueryConceptTag> || std::same_as<Tag, QueryRoleTag>;
+    is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag> || std::same_as<Tag, QueryConceptTag> || std::same_as<Tag, QueryRoleTag>
+    || std::same_as<Tag, QueryMustPassTag>;
 
 template<typename V>
 inline constexpr bool is_complement_view_v = false;

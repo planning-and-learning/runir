@@ -90,6 +90,9 @@ void def_query_data_constructors(Class& cls)
             .def(nb::init<const std::vector<QueryView>&, const ColumnViewList&, const ColumnViewList&>(), "args"_a, "variable_order"_a, "output_order"_a);
     else if constexpr (std::same_as<Tag, QueryEmptyTag>)
         cls.def(nb::init<ColumnIndexList>(), "columns"_a).def(nb::init<const ColumnViewList&>(), "columns"_a);
+    else if constexpr (std::same_as<Tag, QueryMustPassTag>)
+        cls.def(nb::init<ColumnIndexList, QueryIndex, QueryIndex, QueryIndex, QueryIndex>(), "keys"_a, "sources"_a, "edges"_a, "targets"_a, "probes"_a)
+            .def(nb::init<const ColumnViewList&, QueryView, QueryView, QueryView, QueryView>(), "keys"_a, "sources"_a, "edges"_a, "targets"_a, "probes"_a);
     else
         static_assert(ygg::dependent_false<Tag>::value);
 }
@@ -123,6 +126,8 @@ void bind_query(nb::module_& m, const char* name)
         data.def_rw("lhs_column", &Data::lhs_column).def_rw("rhs_column", &Data::rhs_column);
     if constexpr (requires(Data value) { value.column; })
         data.def_rw("column", &Data::column).def_rw("object", &Data::object);
+    if constexpr (requires(Data value) { value.keys; })
+        data.def_rw("keys", &Data::keys).def_rw("sources", &Data::sources).def_rw("edges", &Data::edges).def_rw("targets", &Data::targets).def_rw("probes", &Data::probes);
 
     auto view = nb::class_<View>(m, name).def("get_index", &View::get_index);
     ygg::add_print(view);
@@ -158,6 +163,14 @@ void bind_query(nb::module_& m, const char* name)
         view.def("get_lhs_column", &View::get_lhs_column, nb::keep_alive<0, 1>()).def("get_rhs_column", &View::get_rhs_column, nb::keep_alive<0, 1>());
     if constexpr (requires(View value) { value.get_column(); })
         view.def("get_column", &View::get_column, nb::keep_alive<0, 1>()).def("get_object", &View::get_object, nb::keep_alive<0, 1>());
+    if constexpr (requires(View value) { value.get_keys(); })
+    {
+        bind_view_list<ygg::View<ygg::Index<QueryColumn>, ConstructorRepositoryFor<Family>>>(view, "get_keys", [](const View& value) { return value.get_keys(); });
+        view.def("get_sources", &View::get_sources, nb::keep_alive<0, 1>())
+            .def("get_edges", &View::get_edges, nb::keep_alive<0, 1>())
+            .def("get_targets", &View::get_targets, nb::keep_alive<0, 1>())
+            .def("get_probes", &View::get_probes, nb::keep_alive<0, 1>());
+    }
 }
 
 template<FamilyTag Family, CategoryTag Category>
@@ -218,6 +231,7 @@ void bind_queries(nb::module_& m)
     bind_query<Family, QueryDifferenceTag>(m, "QueryDifference");
     bind_query<Family, QueryGenericJoinTag>(m, "QueryGenericJoin");
     bind_query<Family, QueryEmptyTag>(m, "QueryEmpty");
+    bind_query<Family, QueryMustPassTag>(m, "QueryMustPass");
 }
 
 }  // namespace runir::kr::dl::python

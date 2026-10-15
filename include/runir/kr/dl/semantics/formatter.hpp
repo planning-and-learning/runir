@@ -108,6 +108,8 @@ std::string query(ygg::View<ygg::Index<runir::kr::dl::Query<Family, Tag>>, C> vi
                            fmt::format("{}", fmt::join(view.get_args(), " ")));
     else if constexpr (std::same_as<Tag, runir::kr::dl::QueryEmptyTag>)
         return constructor(runir::kr::dl::QueryEmptyTag::keyword, query_columns(view.get_columns()));
+    else if constexpr (std::same_as<Tag, runir::kr::dl::QueryMustPassTag>)
+        return constructor(runir::kr::dl::QueryMustPassTag::keyword, query_columns(view.get_keys()), view.get_sources(), view.get_edges(), view.get_targets(), view.get_probes());
     else
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL query constructor tag");
 }

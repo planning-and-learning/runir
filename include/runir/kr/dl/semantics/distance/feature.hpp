@@ -5,6 +5,7 @@
 #include "runir/kr/dl/translations/ygg_query.hpp"
 
 #include <optional>
+#include <yggdrasil/database/semantics/must_pass.hpp>
 #include <vector>
 
 namespace runir::kr::dl::semantics
@@ -19,6 +20,19 @@ struct DistanceFeature
     std::vector<QuerySlot> slots;
     Distance distance;
     std::optional<heuristics::EdgeAbstraction> abstraction;
+};
+
+/// The edges of one q_must_pass: the input slots of its translated edge query, a yggdrasil must-pass evaluator over them
+/// (ygg::database::MustPass), and the abstraction of its keyed pattern database heuristic, built from the static slots at
+/// first use (heuristic).
+struct MustPassFeature
+{
+    using MustPass = ygg::database::MustPass<QueryValues, heuristics::KeyedProjectionHeuristic>;
+
+    std::vector<QuerySlot> slots;
+    MustPass must_pass;
+    std::optional<heuristics::EdgeAbstraction> abstraction;
+    std::optional<heuristics::KeyedProjectionHeuristic> heuristic;
 };
 
 }  // namespace runir::kr::dl::semantics

@@ -97,6 +97,76 @@ ygg::uint_t on_demand_distance(FamilyNumericalView<Family, DistanceTag> construc
         constructor.get_mid());
 }
 
+/// The vertex part of keyed columns, laid out on its own.
+inline ygg::Builder<ygg::database::Columns<QueryValues>> vertex_columns(std::span<const ygg::database::ColumnLayout> columns, size_t keys)
+{
+    auto result = ygg::Builder<ygg::database::Columns<QueryValues>>();
+    for (const auto& column : columns.subspan(keys))
+        result.push_back(column.label, column.type);
+    return result;
+}
+
+/// Translates a must-pass query's edges and builds its must-pass evaluator and the abstraction of its heuristic.
+template<FamilyTag Family>
+MustPassFeature make_must_pass_feature(const ygg::database::MustPassPlan<QueryValues>& plan, FamilyQueryView<Family> edges)
+{
+    auto translator = dl::detail::QueryTranslator<Family>(true);
+    const auto query = translator.translate(edges);
+    auto static_slots = std::vector<bool>();
+    for (const auto& slot : translator.get_slots())
+        static_slots.push_back(slot.is_static);
+    const auto columns = plan.edge_columns().span().subspan(plan.keys());
+    auto abstraction = heuristics::abstract_edges(translator, query, columns.first(plan.arity()), columns.subspan(plan.arity()));
+    return { translator.get_slots(), MustPassFeature::MustPass(query, plan, static_slots), std::move(abstraction), std::nullopt };
+}
+
+/// Builds a must-pass feature's heuristic at first use, from the static slots' rows (`slot_rows(slot)`), and sets its
+/// targets. Without an abstraction, the search is blind.
+template<ygg::database::SlotRelations<QueryValues> SlotRows, ygg::database::RelationViewConcept<QueryValues> Targets>
+heuristics::KeyedProjectionHeuristic&
+must_pass_heuristic(MustPassFeature& feature, ygg::uint_t num_objects, const SlotRows& slot_rows, const Targets& targets)
+{
+    if (!feature.heuristic)
+    {
+        const auto& plan = feature.must_pass.plan();
+        const auto vertices = vertex_columns(plan.source_columns().span(), plan.keys());
+        const auto ends = vertex_columns(plan.target_columns().span(), plan.keys());
+        const auto columns = plan.edge_columns().span().subspan(plan.keys());
+        auto heuristic = feature.abstraction ? heuristics::make_projection_heuristic(*feature.abstraction,
+                                                                                     columns.first(plan.arity()),
+                                                                                     columns.subspan(plan.arity()),
+                                                                                     vertices.span(),
+                                                                                     ends.span(),
+                                                                                     num_objects,
+                                                                                     slot_rows) :
+                                               heuristics::ProjectionHeuristic();
+        feature.heuristic.emplace(std::move(heuristic), plan.key_size(), ends.span());
+    }
+    feature.heuristic->update(targets);
+    return *feature.heuristic;
+}
+
+/// The must-pass probe objects of every key, from the state alone (full evaluation): sources, targets, probes and the
+/// edge query's slots are evaluated in the state, and the edges are explored on demand.
+template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context, typename C>
+void on_demand_must_pass(ygg::View<ygg::Index<Query<Family, QueryMustPassTag>>, C> constructor,
+                         Context& context,
+                         ygg::Builder<ygg::database::Relation<QueryValues>>& result)
+{
+    auto children = context.child_context();
+    const auto sources = evaluate<Kind>(constructor.get_sources(), children);
+    const auto targets = evaluate<Kind>(constructor.get_targets(), children);
+    const auto probes = evaluate<Kind>(constructor.get_probes(), children);
+    const auto edges = constructor.get_edges();
+    auto& feature = context.get_workspace().get_must_pass_feature(context.get_state().get_formalism_repository(),
+                                                                  constructor.get_context(),
+                                                                  ygg::uint_t(constructor.get_index()),
+                                                                  [&] { return make_must_pass_feature<Family>(constructor.get_data().plan, edges); });
+    const auto input = [&](size_t slot) { return evaluate_slot<Family, Kind>(feature.slots[slot], edges.get_context(), children); };
+    auto& heuristic = must_pass_heuristic(feature, detail::num_objects<Family, Kind>(context), input, targets);
+    feature.must_pass.must_pass(input, sources, targets, probes, result, heuristic);
+}
+
 }  // namespace runir::kr::dl::semantics::detail
 
 #endif

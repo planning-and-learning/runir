@@ -712,6 +712,11 @@ struct QueryEmptyTag
     static constexpr auto keyword = "q_empty";
 };
 
+struct QueryMustPassTag
+{
+    static constexpr auto keyword = "q_must_pass";
+};
+
 using QueryConstructorTags = ygg::TypeList<AtomicStateTag<tyr::formalism::StaticTag>,
                                            AtomicStateTag<tyr::formalism::FluentTag>,
                                            AtomicStateTag<tyr::formalism::DerivedTag>,
@@ -728,7 +733,8 @@ using QueryConstructorTags = ygg::TypeList<AtomicStateTag<tyr::formalism::Static
                                            QueryUnionTag,
                                            QueryDifferenceTag,
                                            QueryGenericJoinTag,
-                                           QueryEmptyTag>;
+                                           QueryEmptyTag,
+                                           QueryMustPassTag>;
 
 /// Column types of query relations: planning objects, plus uint_t for distance outputs.
 /// uint_t is last, so object columns keep their type code and labels-only schemas stay object-typed.

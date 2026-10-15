@@ -175,3 +175,8 @@ add_runir_test(runir_kr_dl_evaluation_storage unit/kr/dl/evaluation_storage.cpp 
 
 # Keep allocation replacements isolated from all other test executables.
 add_runir_test(runir_kr_dl_query_allocations unit/kr/dl/query_allocations.cpp runir::kr runir::datasets runir_test_planning_fixtures)
+
+# Profiles q_must_pass phase by phase; not a test. Optimized even in Debug builds so its timings mean something.
+add_executable(runir_must_pass_profile unit/kr/dl/must_pass_profile.cpp)
+target_compile_options(runir_must_pass_profile PRIVATE -O2 -DNDEBUG)
+target_link_libraries(runir_must_pass_profile PRIVATE runir::kr runir::datasets runir_test_planning_fixtures TBB::tbb runir_test_fixtures)

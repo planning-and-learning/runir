@@ -172,6 +172,17 @@ void check_queries()
                         (q_join (q_atomic_state "marker" (c)) (q_atomic_state "marker" (d)))))",
           16 },
         { "(q_concept x (c_project z " + triple + "))", 3 },
+        // Every path a -> b -> c passes all three objects; keyed by each marker (a, c), the same graph twice.
+        { R"((q_must_pass () (q_concept x (c_nominal "a")) (q_role (x y) (r_atomic_state "edge")) (q_concept x (c_nominal "c")) (q_concept p (c_top))))", 3 },
+        { R"((q_must_pass (k) (q_join (q_atomic_state "marker" (k)) (q_concept v (c_nominal "a")))
+                              (q_join (q_atomic_state "marker" (k)) (q_role (u v) (r_atomic_state "edge")))
+                              (q_join (q_atomic_state "marker" (k)) (q_concept v (c_nominal "c")))
+                              (q_concept p (c_top))))",
+          6 },
+        { R"((q_must_pass () (q_concept x (c_nominal "c")) (q_role (x y) (r_atomic_state "edge")) (q_concept x (c_nominal "a")) (q_concept p (c_top))))", 0 },
+        // Per key x of triple(x, y, z) as edges y -> z: key a has b -> b, b -> c, from {b} to {b, c}: only b; key b has
+        // c -> a, b -> b, from {c, b} to {a, b}: no object is on every path.
+        { "(q_must_pass (x) (q_project (x y) " + triple + ") " + triple + " (q_project (x z) " + triple + R"() (q_concept p (c_top))))", 1 },
     };
     // Reevaluate different schemas/arity and empty outputs using the retained workspace.
     for (int repeat = 0; repeat < 3; ++repeat)
@@ -1401,6 +1412,10 @@ TEST(RunirQueries, StaticnessIsInferredAndSerializedWithoutChangingIdentity)
     EXPECT_TRUE(kr::ps::ext::dl::parse_boolean("(b_nonempty (q_generic_join (x y z) (x y z) " + fixed + " " + fixed + "))", domain, *repository).is_static());
     EXPECT_FALSE(kr::ps::ext::dl::parse_boolean("(b_nonempty (q_generic_join (x y z) (x y z) " + fixed + " " + triple + "))", domain, *repository).is_static());
     EXPECT_TRUE(kr::ps::ext::dl::parse_boolean("(b_nonempty (q_empty (x)))", domain, *repository).is_static());
+    EXPECT_FALSE(kr::ps::ext::dl::parse_boolean("(b_nonempty (q_must_pass (x) (q_project (x y) " + triple + ") " + triple + " (q_project (x z) " + triple + R"() (q_concept p (c_top)))))",
+                                                domain,
+                                                *repository)
+                     .is_static());
     EXPECT_FALSE(kr::ps::ext::dl::parse_boolean("(b_nonempty " + triple + ")", domain, *repository).is_static());
 }
 

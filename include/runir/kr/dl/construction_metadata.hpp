@@ -22,6 +22,9 @@ bool infer_is_static(ygg::View<ygg::Index<Expression<Family, Tag>>, C> construct
         return true;
     else if constexpr (requires { constructor.get_register(); } || requires { constructor.get_argument(); })
         return false;
+    else if constexpr (std::same_as<Tag, QueryMustPassTag>)
+        return constructor.get_sources().is_static() && constructor.get_edges().is_static() && constructor.get_targets().is_static()
+               && constructor.get_probes().is_static();
     else if constexpr (requires { constructor.get_mid(); })
     {
         const auto is_static = [](auto argument) { return ygg::visit([](auto child) { return child.is_static(); }, argument); };

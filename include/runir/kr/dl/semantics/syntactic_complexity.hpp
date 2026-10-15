@@ -118,6 +118,9 @@ std::size_t syntactic_complexity(ygg::View<ygg::Index<runir::kr::dl::Query<Famil
 {
     if constexpr (std::same_as<Tag, void>)
         return ygg::visit([](auto child) { return syntactic_complexity(child); }, view.get_variant());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::QueryMustPassTag>)
+        return 1 + syntactic_complexity(view.get_sources()) + syntactic_complexity(view.get_edges()) + syntactic_complexity(view.get_targets())
+               + syntactic_complexity(view.get_probes());
     else if constexpr (requires { view.get_args(); })
     {
         auto result = std::size_t { 1 };

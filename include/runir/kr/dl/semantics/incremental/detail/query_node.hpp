@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_QUERY_NODE_HPP_
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_QUERY_NODE_HPP_
 
+#include "runir/kr/dl/semantics/incremental/detail/evaluators/must_pass.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/query.hpp"
 
 #include <algorithm>
@@ -54,7 +55,8 @@ private:
                                    QuerySetCombinationEvaluator<Family, Kind, QueryDifferenceTag>,
                                    QuerySelectionEvaluator<Family, Kind, QueryRenameTag>,
                                    QuerySelectionEvaluator<Family, Kind, QuerySelectEqualTag>,
-                                   QuerySelectionEvaluator<Family, Kind, QuerySelectValueTag>>;
+                                   QuerySelectionEvaluator<Family, Kind, QuerySelectValueTag>,
+                                   QueryMustPassEvaluator<Family, Kind>>;
 
     std::optional<FamilyQueryView<Family>> m_expression;
     std::vector<ygg::uint_t> m_dependencies;
@@ -131,6 +133,8 @@ auto QueryNode<Family, Kind>::prepare_operation(FamilyQueryView<Family> expressi
                                                                        concrete.get_schema().span());
             else if constexpr (std::same_as<Tag, QueryRenameTag> || std::same_as<Tag, QuerySelectEqualTag> || std::same_as<Tag, QuerySelectValueTag>)
                 return QuerySelectionEvaluator<Family, Kind, Tag>(graph.prepare(concrete.get_arg(), m_dependencies), concrete);
+            else if constexpr (std::same_as<Tag, QueryMustPassTag>)
+                return QueryMustPassEvaluator<Family, Kind>(concrete, graph, m_dependencies);
             else
                 throw std::logic_error("Incremental query: a static constructor was marked dynamic.");
         },

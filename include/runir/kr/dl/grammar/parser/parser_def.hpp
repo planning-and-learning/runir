@@ -235,6 +235,7 @@ auto non_terminal_string_parser()
     query_difference_type<Family> const prefix##_query_difference = "query_difference";                                                                       \
     query_generic_join_type<Family> const prefix##_query_generic_join = "query_generic_join";                                                                 \
     query_empty_type<Family> const prefix##_query_empty = "query_empty";                                                                                      \
+    query_must_pass_type<Family> const prefix##_query_must_pass = "query_must_pass";                                                                          \
     query_type<Family> const prefix##_query = "query";                                                                                                        \
     constructor_type<Family, runir::kr::dl::ConceptTag> const prefix##_concept = "concept";                                                                   \
     constructor_root_type<Family, runir::kr::dl::ConceptTag> const prefix##_concept_root = "concept_root";                                                    \
@@ -306,6 +307,8 @@ auto non_terminal_string_parser()
         with_constructor_parentheses(keyword(runir::kr::dl::QueryGenericJoinTag::keyword) > query_columns_parser() > query_columns_parser()                   \
                                      > boost::spirit::x3::repeat(2, boost::spirit::x3::inf)[prefix##_query]);                                                 \
     const auto prefix##_query_empty_def = with_constructor_parentheses(keyword(runir::kr::dl::QueryEmptyTag::keyword) > query_columns_parser());              \
+    const auto prefix##_query_must_pass_def = with_constructor_parentheses(keyword(runir::kr::dl::QueryMustPassTag::keyword) > query_columns_parser()         \
+                                                                           > prefix##_query > prefix##_query > prefix##_query > prefix##_query);              \
     const auto prefix##_concept_project_def =                                                                                                                 \
         with_constructor_parentheses(keyword(runir::kr::dl::ConceptProjectSyntaxTag::keyword) > boost::spirit::x3::repeat(1)[identifier] > prefix##_query);   \
     const auto prefix##_role_project_def =                                                                                                                    \
@@ -313,7 +316,7 @@ auto non_terminal_string_parser()
     const auto prefix##_query_def = prefix##_query_atomic_state | prefix##_query_atomic_goal | prefix##_query_concept | prefix##_query_role                   \
                                     | prefix##_query_join | prefix##_query_project | prefix##_query_rename | prefix##_query_select_equal                      \
                                     | prefix##_query_select_value | prefix##_query_union | prefix##_query_difference | prefix##_query_generic_join            \
-                                    | prefix##_query_empty;                                                                                                   \
+                                    | prefix##_query_empty | prefix##_query_must_pass;                                                                        \
     BOOST_SPIRIT_DEFINE(prefix##_query_atomic_state,                                                                                                          \
                         prefix##_query_atomic_goal,                                                                                                           \
                         prefix##_query_concept,                                                                                                               \
@@ -327,6 +330,7 @@ auto non_terminal_string_parser()
                         prefix##_query_difference,                                                                                                            \
                         prefix##_query_generic_join,                                                                                                          \
                         prefix##_query_empty,                                                                                                                 \
+                        prefix##_query_must_pass,                                                                                                             \
                         prefix##_query,                                                                                                                       \
                         prefix##_concept_project,                                                                                                             \
                         prefix##_role_project)                                                                                                                \

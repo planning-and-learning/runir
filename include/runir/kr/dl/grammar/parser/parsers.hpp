@@ -196,6 +196,9 @@ template<runir::kr::dl::FamilyTag Family>
 using query_empty_type = boost::spirit::x3::rule<QueryClass<ast::QueryEmpty<Family>>, ast::QueryEmpty<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
+using query_must_pass_type = boost::spirit::x3::rule<QueryClass<ast::QueryMustPass<Family>>, ast::QueryMustPass<Family>>;
+
+template<runir::kr::dl::FamilyTag Family>
 using query_type = boost::spirit::x3::rule<QueryClass<ast::Query<Family>>, ast::Query<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>

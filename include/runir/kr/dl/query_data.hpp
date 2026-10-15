@@ -16,6 +16,7 @@
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 #include <yggdrasil/database/semantics/generic_join.hpp>
+#include <yggdrasil/database/semantics/must_pass_plan.hpp>
 #include <yggdrasil/database/semantics/plans.hpp>
 
 namespace ygg
@@ -467,6 +468,65 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryGenericJoinTag>>
     auto cista_members() noexcept { return std::tie(index, args, variable_order, output_order, columns, plan); }
     auto cista_members() const noexcept { return std::tie(index, args, variable_order, output_order, columns, plan); }
     auto identifying_members() const noexcept { return std::tie(args, variable_order, output_order); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
+};
+
+/// q_must_pass (keys...) sources edges targets probes: per key, the probe objects that every path from the key's sources
+/// to its targets passes in some vertex. Sources, edges and targets start with the key columns; probes have one column.
+template<runir::kr::dl::FamilyTag Family>
+struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryMustPassTag>>
+{
+    Index<runir::kr::dl::Query<Family, runir::kr::dl::QueryMustPassTag>> index;
+    IndexList<runir::kr::dl::QueryColumn> keys {};
+    Index<runir::kr::dl::Query<Family>> sources {};
+    Index<runir::kr::dl::Query<Family>> edges {};
+    Index<runir::kr::dl::Query<Family>> targets {};
+    Index<runir::kr::dl::Query<Family>> probes {};
+    IndexList<runir::kr::dl::QueryColumn> columns {};
+    ygg::Builder<ygg::database::Columns<runir::kr::dl::QueryValues>> schema {};
+    ygg::database::MustPassPlan<runir::kr::dl::QueryValues> plan {};
+
+    Data() = default;
+    // columns, schema and plan are derived during insertion and therefore not constructor parameters.
+    Data(IndexList<runir::kr::dl::QueryColumn> keys_,
+         Index<runir::kr::dl::Query<Family>> sources_,
+         Index<runir::kr::dl::Query<Family>> edges_,
+         Index<runir::kr::dl::Query<Family>> targets_,
+         Index<runir::kr::dl::Query<Family>> probes_) :
+        index(),
+        keys(std::move(keys_)),
+        sources(sources_),
+        edges(edges_),
+        targets(targets_),
+        probes(probes_)
+    {
+    }
+    template<typename C>
+    Data(const std::vector<::ygg::View<Index<runir::kr::dl::QueryColumn>, C>>& keys_,
+         ::ygg::View<Index<runir::kr::dl::Query<Family>>, C> sources_,
+         ::ygg::View<Index<runir::kr::dl::Query<Family>>, C> edges_,
+         ::ygg::View<Index<runir::kr::dl::Query<Family>>, C> targets_,
+         ::ygg::View<Index<runir::kr::dl::Query<Family>>, C> probes_) :
+        index(),
+        keys(),
+        sources(),
+        edges(),
+        targets(),
+        probes()
+    {
+        set(keys_, keys);
+        set(sources_, sources);
+        set(edges_, edges);
+        set(targets_, targets);
+        set(probes_, probes);
+    }
+
+    auto cista_members() noexcept { return std::tie(index, keys, sources, edges, targets, probes, columns, schema, plan); }
+    auto cista_members() const noexcept { return std::tie(index, keys, sources, edges, targets, probes, columns, schema, plan); }
+    auto identifying_members() const noexcept { return std::tie(keys, sources, edges, targets, probes); }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());

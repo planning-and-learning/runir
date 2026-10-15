@@ -261,6 +261,17 @@ private:
         return runir::kr::dl::insert(m_repository, data).first;
     }
 
+    /// The edges of a must-pass query are explored per vertex, with the key and the source columns bound, never fully.
+    FamilyRecordView<Family, Query<Family, QueryMustPassTag>> rewrite(FamilyRecordView<Family, Query<Family, QueryMustPassTag>> view)
+    {
+        auto data = ygg::Data<Query<Family, QueryMustPassTag>>(view.get_data().keys,
+                                                               optimize_root(view.get_sources(), std::nullopt).get_index(),
+                                                               optimize_root(view.get_edges(), std::nullopt, ygg::database::Evaluation::bound).get_index(),
+                                                               optimize_root(view.get_targets(), std::nullopt).get_index(),
+                                                               optimize_root(view.get_probes(), std::nullopt).get_index());
+        return runir::kr::dl::insert(m_repository, data).first;
+    }
+
     /// The index of an optimized argument that is a query evaluated as given or another record.
     template<typename Result, typename Argument>
     Result optimize_argument(const Argument& arg, ygg::database::Evaluation evaluation)

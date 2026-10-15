@@ -42,6 +42,11 @@ namespace detail
 /// Defined in distance_evaluation.hpp.
 template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context>
 ygg::uint_t on_demand_distance(FamilyNumericalView<Family, DistanceTag> constructor, Context& context);
+/// Defined in distance_evaluation.hpp.
+template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context, typename C>
+void on_demand_must_pass(ygg::View<ygg::Index<Query<Family, QueryMustPassTag>>, C> constructor,
+                         Context& context,
+                         ygg::Builder<ygg::database::Relation<QueryValues>>& result);
 }
 
 template<tyr::TaskKind Kind, FamilyTag Family, ConceptOrRoleTag Category, StateEvaluationContextConcept<Family, Kind> Context, typename C>

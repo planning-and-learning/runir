@@ -79,6 +79,36 @@ public:
         return make_view(this->get_data().output_order, this->get_context());
     }
 
+    auto get_keys() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
+    {
+        return make_view(this->get_data().keys, this->get_context());
+    }
+
+    auto get_sources() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
+    {
+        return make_view(this->get_data().sources, this->get_context());
+    }
+
+    auto get_edges() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
+    {
+        return make_view(this->get_data().edges, this->get_context());
+    }
+
+    auto get_targets() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
+    {
+        return make_view(this->get_data().targets, this->get_context());
+    }
+
+    auto get_probes() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
+    {
+        return make_view(this->get_data().probes, this->get_context());
+    }
+
     auto get_columns() const noexcept
     {
         if constexpr (std::same_as<Tag, void>)

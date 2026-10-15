@@ -254,6 +254,22 @@ auto parse(const runir::kr::dl::grammar::ast::QueryEmpty<Family>& node, tyr::for
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Context>
+auto parse(const runir::kr::dl::grammar::ast::QueryMustPass<Family>& node, tyr::formalism::planning::DomainView domain, const Context& context)
+{
+    const auto sources = parse(node.sources.get(), domain, context).get_index();
+    const auto edges = parse(node.edges.get(), domain, context).get_index();
+    const auto targets = parse(node.targets.get(), domain, context).get_index();
+    const auto probes = parse(node.probes.get(), domain, context).get_index();
+    auto data = checkout<runir::kr::dl::Query<Family, runir::kr::dl::QueryMustPassTag>>(context);
+    data->keys = parse_columns(node.keys, context);
+    data->sources = sources;
+    data->edges = edges;
+    data->targets = targets;
+    data->probes = probes;
+    return intern_query(context, intern(context, *data).get_index());
+}
+
+template<runir::kr::dl::FamilyTag Family, typename Context>
 auto parse(const runir::kr::dl::grammar::ast::QuerySelectEqual<Family>& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
     const auto arg = parse(node.arg.get(), domain, context).get_index();

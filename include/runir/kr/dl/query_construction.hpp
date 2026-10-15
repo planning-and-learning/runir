@@ -14,6 +14,7 @@
 #include <vector>
 #include <yggdrasil/database/semantics/distance.hpp>
 #include <yggdrasil/database/semantics/generic_join.hpp>
+#include <yggdrasil/database/semantics/must_pass_plan.hpp>
 #include <yggdrasil/database/semantics/plans.hpp>
 #include <yggdrasil/database/syntax/columns.hpp>
 
@@ -108,6 +109,31 @@ void prepare(ygg::Data<Query<Family, Tag>>& data, const ConstructorRepositoryFor
         require_generic_join_order("output order", data.output_order, input_columns, repository);
         data.plan = ygg::database::GenericJoinPlan<QueryValues>(inputs, query_labels(data.variable_order), query_labels(data.output_order));
         data.columns = data.output_order;
+    }
+    else if constexpr (std::same_as<Tag, QueryMustPassTag>)
+    {
+        const auto column_name = [&](ygg::Index<QueryColumn> column) { return std::string(ygg::make_view(column, repository).get_name()); };
+        const auto require_keys = [&](std::string_view argument, ygg::Index<Query<Family>> query)
+        {
+            const auto& columns = get_query_columns(query, repository);
+            for (size_t i = 0; i < data.keys.size(); ++i)
+                if (i >= columns.size() || columns[i] != data.keys[i])
+                    throw std::invalid_argument("q_must_pass: the " + std::string(argument) + " must start with the key columns; column " + std::to_string(i + 1)
+                                                + " should be `" + column_name(data.keys[i]) + "`.");
+        };
+        require_keys("sources", data.sources);
+        require_keys("edges", data.edges);
+        require_keys("targets", data.targets);
+        const auto sources = ygg::make_view(data.sources, repository).get_schema();
+        const auto edges = ygg::make_view(data.edges, repository).get_schema();
+        const auto targets = ygg::make_view(data.targets, repository).get_schema();
+        const auto probes = ygg::make_view(data.probes, repository).get_schema();
+        if (probes.size() != 1)
+            throw std::invalid_argument("q_must_pass: the probes must have one column.");
+        data.plan = ygg::database::MustPassPlan<QueryValues>(sources.span(), edges.span(), targets.span(), probes.span(), data.keys.size());
+        data.columns = data.keys;
+        data.columns.push_back(get_query_columns(data.probes, repository).front());
+        data.schema.assign(data.plan.output_columns().span());
     }
     else
     {
