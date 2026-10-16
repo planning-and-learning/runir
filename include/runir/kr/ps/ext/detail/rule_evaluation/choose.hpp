@@ -99,7 +99,7 @@ private:
             auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(context.task_context->dl_builder);
             auto& bindings = choice.bindings();
             auto admitted = bindings.begin();
-            for (const auto value : bindings)
+            for (const auto& value : bindings)
             {
                 if (stop())
                     return false;
@@ -119,7 +119,7 @@ private:
         workspace.order_indices.clear();
         const auto width = rule.get_order().size();
         auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(context.task_context->dl_builder);
-        for (const auto value : choice.bindings())
+        for (const auto& value : choice.bindings())
         {
             if (stop())
                 return false;

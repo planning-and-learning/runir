@@ -41,8 +41,8 @@ struct PatternDatabase
     size_t u_position = 0;                                 ///< The position of u[i] in the columns of edges.
     size_t v_position = 0;                                 ///< The position of v[i] in the columns of edges.
     size_t predecessors = 0;                               ///< The binding of edges with v[i] bound.
-    std::vector<bool> targets;                             ///< α_i(T), for which h was computed.
-    std::vector<ygg::uint_t> h;                            ///< Abstract distance to α_i(T); ygg::database::infinity if unreachable.
+    std::vector<bool> targets {};                          ///< α_i(T), for which h was computed.
+    std::vector<ygg::uint_t> h {};                         ///< Abstract distance to α_i(T); ygg::database::infinity if unreachable.
 
     /// Whether h has been computed, for some abstract targets.
     bool computed() const noexcept { return !h.empty(); }

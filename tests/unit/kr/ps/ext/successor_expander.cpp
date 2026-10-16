@@ -600,7 +600,9 @@ void expect_control_only_steps_do_not_generate_planning_successors()
         ASSERT_TRUE(applied);
         EXPECT_EQ(applied->get_target().get_index(), step.get_target().get_index());
         if (step.get_target().get_module_state().get_memory_state().get_name() == "skipped")
+        {
             EXPECT_FALSE(expander.apply(step.get_target(), *step.rule));
+        }
     }
     EXPECT_EQ(states.num_states(), 1);
     for (const auto universal : { false, true })
@@ -893,7 +895,9 @@ TEST(RunirTests, ExtChoicesRetainBindingsAcrossChildEvaluationAndPoolReuse)
             EXPECT_EQ(next.front().current().get_name(), "start");
             EXPECT_NE(next.front().bindings().data(), parent_buffer);
             if (child_buffer)
+            {
                 EXPECT_EQ(next.front().bindings().data(), child_buffer);
+            }
             child_buffer = next.front().bindings().data();
         }
         EXPECT_EQ(parent.front().bindings().data(), parent_buffer);

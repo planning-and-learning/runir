@@ -70,7 +70,7 @@ auto parse_condition(Repository& repository,
                      const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     return boost::apply_visitor(
-        [&]<typename Observation>(const Observation& observation)
+        [&]<typename Observation>([[maybe_unused]] const Observation& observation)
         {
             if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Positive>)
             {
@@ -113,7 +113,7 @@ auto parse_effect(Repository& repository,
                   const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     return boost::apply_visitor(
-        [&]<typename Observation>(const Observation& observation)
+        [&]<typename Observation>([[maybe_unused]] const Observation& observation)
         {
             if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Positive>)
             {

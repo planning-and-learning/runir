@@ -134,7 +134,9 @@ void check_evaluation_policies()
                 EXPECT_EQ(actual[i].rule, expected[i].rule);
                 EXPECT_EQ(actual[i].planning_successor.has_value(), expected[i].planning_successor.has_value());
                 if (actual[i].planning_successor && expected[i].planning_successor)
+                {
                     EXPECT_EQ(actual[i].planning_successor->label, expected[i].planning_successor->label);
+                }
             }
             return expected;
         };

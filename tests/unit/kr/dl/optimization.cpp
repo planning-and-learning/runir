@@ -139,9 +139,13 @@ void check_optimized_queries()
                 EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(optimized, *context).get(), kr::dl::semantics::evaluate<Kind>(original, *context).get())
                     << text << " => " << formatted;
             if (text == triangle)
+            {
                 EXPECT_NE(formatted.find("q_generic_join"), std::string::npos) << formatted;
+            }
             if (text == distance)
+            {
                 EXPECT_EQ(joins(formatted), joins(text)) << formatted;
+            }
         }
     }
 }

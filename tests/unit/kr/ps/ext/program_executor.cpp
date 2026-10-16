@@ -1290,7 +1290,9 @@ void check_state_memorization()
             ASSERT_EQ(nested_called.status, Status::SUCCESS);
             EXPECT_EQ(nested_called.statistics.choice_width, 2);
             if (nested_called.plan)
+            {
                 EXPECT_EQ(nested_called.plan->get_length(), 2);
+            }
             auto grandchild_states = 0;
             for (const auto vertex : nested_called.graph->get_vertex_indices())
             {
@@ -1315,7 +1317,9 @@ void check_state_memorization()
             const auto recalled = run(repeated_call, options);
             ASSERT_EQ(recalled.status, Status::SUCCESS);
             if (recalled.plan)
+            {
                 EXPECT_EQ(recalled.plan->get_length(), 2);
+            }
             auto first_invocations = 0;
             auto second_invocations = 0;
             auto restored_callers = 0;

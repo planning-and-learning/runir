@@ -66,7 +66,9 @@ TEST(RunirTests, ExtStructuralTerminationBacktrackHasNoEdgesAndDoesNotPruneOther
         EXPECT_EQ(incomplete.is_terminating(), !cycle);
         ASSERT_EQ(incomplete.surviving_rules.size(), cycle ? 1 : 0);
         if (cycle)
+        {
             EXPECT_EQ(incomplete.surviving_rules.front().rule.get_symbol(), "loop");
+        }
         for (const auto preprocessing : { false, true })
         {
             SCOPED_TRACE(preprocessing);
