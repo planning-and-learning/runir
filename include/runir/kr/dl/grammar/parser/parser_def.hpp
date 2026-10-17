@@ -35,7 +35,8 @@ auto maybe(Parser parser)
         return boost::spirit::x3::eps(false);
 }
 
-/// Whether a dialect admits a constructor: SearchFreeDialectTag excludes transitive closures and searches.
+/// Whether a dialect admits a constructor: SearchFreeDialectTag, the dialect of the edges of n_distance and q_must_pass,
+/// excludes transitive closures and searches; the searches explore their edges themselves.
 template<typename Dialect, typename Tag>
 inline constexpr bool dialect_allows_v =
     std::same_as<Dialect, FullDialectTag>
@@ -55,7 +56,7 @@ auto forbidden()
         return boost::spirit::x3::eps(false);
     else
         return lit("(") >> keyword(Tag::keyword)
-               > (boost::spirit::x3::rule<ForbiddenClass<Tag>> { "no transitive closure, n_distance or q_must_pass inside n_distance or q_must_pass" } =
+               > (boost::spirit::x3::rule<ForbiddenClass<Tag>> { "no transitive closure, n_distance or q_must_pass in the edges of n_distance or q_must_pass" } =
                       boost::spirit::x3::eps(false));
 }
 
@@ -335,8 +336,8 @@ auto non_terminal_string_parser()
                                      > boost::spirit::x3::repeat(2, boost::spirit::x3::inf)[prefix##_query]);                                                 \
     const auto prefix##_query_empty_def = with_constructor_parentheses(keyword(runir::kr::dl::QueryEmptyTag::keyword) > query_columns_parser());              \
     const auto prefix##_query_must_pass_def =                                                                                                                 \
-        with_constructor_parentheses(keyword(runir::kr::dl::QueryMustPassTag::keyword) > query_columns_parser() > search_free##_query > search_free##_query   \
-                                     > search_free##_query > search_free##_query);                                                                            \
+        with_constructor_parentheses(keyword(runir::kr::dl::QueryMustPassTag::keyword) > query_columns_parser() > prefix##_query > search_free##_query        \
+                                     > prefix##_query > prefix##_query);                                                                                      \
     const auto prefix##_concept_project_def =                                                                                                                 \
         with_constructor_parentheses(keyword(runir::kr::dl::ConceptProjectSyntaxTag::keyword) > boost::spirit::x3::repeat(1)[identifier] > prefix##_query);   \
     const auto prefix##_role_project_def =                                                                                                                    \
@@ -470,8 +471,8 @@ auto non_terminal_string_parser()
     const auto prefix##_numerical_count_def =                                                                                                                 \
         with_constructor_parentheses(keyword(runir::kr::dl::CountTag::keyword) > prefix##_constructor_or_non_terminal_variant);                               \
     const auto prefix##_numerical_distance_def =                                                                                                              \
-        with_constructor_parentheses(keyword(runir::kr::dl::DistanceTag::keyword) > (search_free##_concept_choice | search_free##_query)                      \
-                                     > (search_free##_role_choice | search_free##_query) > (search_free##_concept_choice | search_free##_query));             \
+        with_constructor_parentheses(keyword(runir::kr::dl::DistanceTag::keyword) > (prefix##_concept_choice | prefix##_query)                                \
+                                     > (search_free##_role_choice | search_free##_query) > (prefix##_concept_choice | prefix##_query));                       \
     const auto prefix##_numerical_constant_def = with_constructor_parentheses(keyword(runir::kr::dl::NumericalConstantTag::keyword) > unsigned_integer);      \
     const auto prefix##_numerical_add_def =                                                                                                                   \
         with_constructor_parentheses(keyword(runir::kr::dl::AddTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                        \
@@ -592,7 +593,7 @@ auto non_terminal_string_parser()
                         prefix##_numerical_max,                                                                                                               \
                         prefix##_numerical_argument)
 
-// The search-free instances come first: the full ones parse the arguments of n_distance and q_must_pass with them.
+// The search-free instances come first: the full ones parse the edges of n_distance and q_must_pass with them.
 RUNIR_DEFINE_FAMILY_PARSER(runir::kr::BaseFamilyTag, base_family_search_free, SearchFreeDialectTag, base_family_search_free)
 RUNIR_DEFINE_FAMILY_PARSER(runir::kr::ExtFamilyTag, ext_family_search_free, SearchFreeDialectTag, ext_family_search_free)
 RUNIR_DEFINE_FAMILY_PARSER(runir::kr::UnsFamilyTag, uns_family_search_free, SearchFreeDialectTag, uns_family_search_free)

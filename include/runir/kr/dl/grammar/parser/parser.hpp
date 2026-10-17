@@ -15,8 +15,9 @@ struct FullDialectTag
 };
 
 /// The DL syntax without transitive closures and searches (r_transitive_closure, r_reflexive_transitive_closure,
-/// n_distance, q_must_pass). The arguments of n_distance and q_must_pass are parsed in it: a search evaluates them per
-/// state and its edges per expanded vertex, so a nested fixpoint or search would multiply its cost.
+/// n_distance, q_must_pass). The edges of n_distance and q_must_pass are parsed in it: a search evaluates its edges per
+/// expanded vertex and computes reachability itself, so a nested fixpoint or search would multiply its cost. Their
+/// sources, targets and probes are evaluated once per state, like any feature, and use the full syntax.
 struct SearchFreeDialectTag
 {
 };

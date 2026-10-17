@@ -532,6 +532,9 @@ void check_incremental_evaluation()
         "(n_const 0)",
         "(n_distance " + present_text + " " + edge_text + " (c_nominal \"c\"))",
         "(n_distance " + present_text + " " + edge_text + " " + present_text + ")",
+        // Sources and targets may use closures; only the edges are search-free.
+        "(n_distance (c_some (r_transitive_closure " + edge_text + ") " + present_text + ") " + edge_text + " (c_register 1))",
+        "(n_distance (c_register 0) " + edge_text + " (c_some (r_reflexive_transitive_closure " + edge_text + ") (c_register 1)))",
         distance,
         "(n_add " + distance + " (n_const 1))",
         "(n_div (n_count " + edge_text + ") " + count_present + ")",

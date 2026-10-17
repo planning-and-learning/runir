@@ -174,6 +174,12 @@ void check_queries()
         { "(q_concept x (c_project z " + triple + "))", 3 },
         // Every path a -> b -> c passes all three objects; keyed by each marker (a, c), the same graph twice.
         { R"((q_must_pass () (q_concept x (c_nominal "a")) (q_role (x y) (r_atomic_state "edge")) (q_concept x (c_nominal "c")) (q_concept p (c_top))))", 3 },
+        // Sources, targets and probes may use closures (only the edges are search-free): the same three objects.
+        { R"((q_must_pass () (q_concept x (c_and (c_nominal "a") (c_some (r_transitive_closure (r_atomic_state "edge")) (c_top))))
+                             (q_role (x y) (r_atomic_state "edge"))
+                             (q_concept x (c_and (c_nominal "c") (c_some (r_inverse (r_transitive_closure (r_atomic_state "edge"))) (c_top))))
+                             (q_concept p (c_some (r_reflexive_transitive_closure (r_atomic_state "edge")) (c_nominal "c")))))",
+          3 },
         { R"((q_must_pass (k) (q_join (q_atomic_state "marker" (k)) (q_concept v (c_nominal "a")))
                               (q_join (q_atomic_state "marker" (k)) (q_role (u v) (r_atomic_state "edge")))
                               (q_join (q_atomic_state "marker" (k)) (q_concept v (c_nominal "c")))
@@ -408,6 +414,10 @@ void check_distance_queries()
     EXPECT_EQ(number("(n_distance " + vertex("c") + " " + edges + " " + vertex("a") + ")"), infinity);
     EXPECT_EQ(number("(n_distance " + vertex("b") + " " + edges + " " + vertex("b") + ")"), 0);
     EXPECT_EQ(number("(n_distance (q_concept x (c_bot)) " + edges + " " + vertex("b") + ")"), infinity);
+    // Sources and targets may use closures (only the edges are search-free): the objects with a successor are {a, b},
+    // those reaching c are {a, b, c}.
+    EXPECT_EQ(number("(n_distance (c_some (r_transitive_closure " + edge + ") (c_top)) " + edges + " (c_nominal \"c\"))"), 1);
+    EXPECT_EQ(number("(n_distance (c_nominal \"a\") " + edge + " (c_some (r_reflexive_transitive_closure " + edge + ") (c_nominal \"c\")))"), 0);
 
     // k = 2: both tuple fields step along edges simultaneously, (x u) -> (y v).
     const auto pair_edges = "(q_project (x u y v) (q_join " + edges + " (q_role (u v) " + edge + ")))";

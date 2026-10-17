@@ -257,29 +257,38 @@ TEST(RunirTests, RelationalExpressionsRoundTripAndRejectGenerationGrammars)
     EXPECT_THROW(kr::ps::ext::dl::parse_numerical("(n_count (q_select_value X \"missing\" (q_concept X (c_top))))", domain, *repository), kr::UndefinedSymbolError);
 }
 
-TEST(RunirTests, SearchArgumentsRejectClosuresAndSearches)
+TEST(RunirTests, SearchEdgesRejectClosuresAndSearches)
 {
     const auto planning_domain = parse_gripper_domain();
     const auto domain = planning_domain.get_domain();
     auto repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
     const auto parse = [&](const std::string& expression) { return kr::ps::ext::dl::parse_numerical(expression, domain, *repository); };
-    const auto* const message = "no transitive closure, n_distance or q_must_pass inside n_distance or q_must_pass";
+    const auto* const message = "no transitive closure, n_distance or q_must_pass in the edges of n_distance or q_must_pass";
 
-    // Closures and searches are fine outside the arguments of a search.
-    EXPECT_NO_THROW(parse(R"((n_count (c_some (r_transitive_closure (r_atomic_state "at")) (c_top))))"));
-    EXPECT_NO_THROW(parse(
-        R"((n_add (n_distance (c_top) (r_atomic_state "at") (c_top)) (n_count (c_some (r_reflexive_transitive_closure (r_atomic_state "at")) (c_top)))))"));
-    EXPECT_NO_THROW(parse(R"((n_distance (c_top) (r_restriction (r_inverse (r_atomic_state "at")) (c_top)) (c_top)))"));
+    // Closures and searches are fine outside the edges of a search: sources, targets and probes are evaluated once per
+    // state like any feature.
+    for (const auto* expression :
+         { R"((n_count (c_some (r_transitive_closure (r_atomic_state "at")) (c_top))))",
+           R"((n_add (n_distance (c_top) (r_atomic_state "at") (c_top)) (n_count (c_some (r_reflexive_transitive_closure (r_atomic_state "at")) (c_top)))))",
+           R"((n_distance (c_top) (r_restriction (r_inverse (r_atomic_state "at")) (c_top)) (c_top)))",
+           R"((n_distance (c_some (r_transitive_closure (r_atomic_state "at")) (c_top)) (r_atomic_state "at") (c_top)))",
+           R"((n_distance (c_top) (r_atomic_state "at") (c_project X (q_must_pass (X) (q_atomic_state "at" (X Y)) (q_project (X Y Z) (q_join (q_atomic_state "at" (X Y)) (q_rename (X Z) (q_atomic_state "at" (X Y))))) (q_atomic_state "at" (X Y)) (q_concept P (c_top))))))",
+           R"((n_count (q_must_pass (X) (q_join (q_atomic_state "at" (X Y)) (q_concept X (c_some (r_transitive_closure (r_atomic_state "at")) (c_top)))) (q_project (X Y Z) (q_join (q_atomic_state "at" (X Y)) (q_rename (X Z) (q_atomic_state "at" (X Y))))) (q_atomic_state "at" (X Y)) (q_concept P (c_top)))))",
+           R"((n_count (q_must_pass (X) (q_atomic_state "at" (X Y)) (q_project (X Y Z) (q_join (q_atomic_state "at" (X Y)) (q_rename (X Z) (q_atomic_state "at" (X Y))))) (q_join (q_atomic_state "at" (X Y)) (q_concept Y (c_some (r_reflexive_transitive_closure (r_atomic_state "at")) (c_top)))) (q_concept P (c_top)))))",
+           R"((n_count (q_must_pass (X) (q_atomic_state "at" (X Y)) (q_project (X Y Z) (q_join (q_atomic_state "at" (X Y)) (q_rename (X Z) (q_atomic_state "at" (X Y))))) (q_atomic_state "at" (X Y)) (q_concept P (c_some (r_transitive_closure (r_atomic_state "at")) (c_top))))))",
+           R"((n_count (q_must_pass (X) (q_atomic_state "at" (X Y)) (q_project (X Y Z) (q_join (q_atomic_state "at" (X Y)) (q_rename (X Z) (q_atomic_state "at" (X Y))))) (q_atomic_state "at" (X Y)) (q_project (Q) (q_must_pass (P) (q_atomic_state "at" (P Y)) (q_project (P Y Z) (q_join (q_atomic_state "at" (P Y)) (q_rename (P Z) (q_atomic_state "at" (P Y))))) (q_atomic_state "at" (P Y)) (q_concept Q (c_top)))))))" })
+    {
+        SCOPED_TRACE(expression);
+        EXPECT_NO_THROW(parse(expression));
+    }
 
     for (const auto* expression :
          { R"((n_distance (c_top) (r_transitive_closure (r_atomic_state "at")) (c_top)))",
            R"((n_distance (c_top) (r_restriction (r_inverse (r_reflexive_transitive_closure (r_atomic_state "at"))) (c_top)) (c_top)))",
            R"((n_distance (q_concept X (c_top)) (q_role (X Y) (r_transitive_closure (r_atomic_state "at"))) (q_concept Y (c_top))))",
-           R"((n_distance (c_some (r_transitive_closure (r_atomic_state "at")) (c_top)) (r_atomic_state "at") (c_top)))",
-           R"((n_distance (c_top) (r_atomic_state "at") (c_project X (q_must_pass (X) (q_atomic_state "at" (X Y)) (q_atomic_state "at" (X Y)) (q_atomic_state "at" (X Y)) (q_concept P (c_top))))))",
+           R"((n_distance (c_top) (r_restriction (r_atomic_state "at") (c_some (r_transitive_closure (r_atomic_state "at")) (c_top))) (c_top)))",
            R"((n_count (q_must_pass (X) (q_atomic_state "at" (X Y)) (q_join (q_atomic_state "at" (X Y)) (q_role (Y Z) (r_transitive_closure (r_atomic_state "at")))) (q_atomic_state "at" (X Y)) (q_concept P (c_top)))))",
-           R"((n_count (q_must_pass (X) (q_atomic_state "at" (X Y)) (q_atomic_state "at" (X Y)) (q_atomic_state "at" (X Y)) (q_concept P (c_some (r_transitive_closure (r_atomic_state "at")) (c_top))))))",
-           R"((n_count (q_must_pass (X) (q_atomic_state "at" (X Y)) (q_atomic_state "at" (X Y)) (q_atomic_state "at" (X Y)) (q_must_pass (P) (q_atomic_state "at" (P Y)) (q_atomic_state "at" (P Y)) (q_atomic_state "at" (P Y)) (q_concept Q (c_top))))))" })
+           R"((n_count (q_must_pass (X) (q_atomic_state "at" (X Y)) (q_join (q_atomic_state "at" (X Y)) (q_must_pass (Y) (q_atomic_state "at" (Y Z)) (q_atomic_state "at" (Y Z)) (q_atomic_state "at" (Y Z)) (q_concept Z (c_top)))) (q_atomic_state "at" (X Y)) (q_concept P (c_top)))))" })
     {
         SCOPED_TRACE(expression);
         expect_error_containing([&] { parse(expression); }, message);

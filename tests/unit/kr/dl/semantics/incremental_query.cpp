@@ -295,6 +295,9 @@ void check_query_graph()
         "(q_role (x y) (r_project x y " + triple + "))",
         "(q_must_pass (x) (q_project (x y) " + triple + ") " + triple + " (q_project (x z) " + triple + R"() (q_concept p (c_top))))",
         "(q_must_pass (x) (q_project (x y) " + triple + ") " + copied + " (q_project (x z) " + fixed + ") (q_project (p) (q_rename (p q r) " + triple + ")))",
+        // Sources, targets and probes may use closures; only the edges are search-free.
+        "(q_must_pass (x) (q_project (x y) " + triple + ") " + triple + " (q_project (x z) " + triple
+            + R"() (q_concept p (c_some (r_reflexive_transitive_closure (r_project y z (q_atomic_state "triple" (x y z)))) (c_top)))))",
     };
     for (const auto& expression : expressions)
     {
