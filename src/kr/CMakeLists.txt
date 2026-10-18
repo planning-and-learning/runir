@@ -10,6 +10,12 @@ add_library(kr SHARED
     dl/semantics/evaluation_ext_lifted_state.cpp
     dl/semantics/evaluation_uns_ground.cpp
     dl/semantics/evaluation_uns_lifted.cpp
+    dl/semantics/incremental_evaluation_base_ground.cpp
+    dl/semantics/incremental_evaluation_base_lifted.cpp
+    dl/semantics/incremental_evaluation_ext_ground.cpp
+    dl/semantics/incremental_evaluation_ext_lifted.cpp
+    dl/semantics/incremental_evaluation_uns_ground.cpp
+    dl/semantics/incremental_evaluation_uns_lifted.cpp
     dl/cnf_grammar/constructor_repository.cpp
     dl/cnf_grammar/generate.cpp
     dl/cnf_grammar/repository_base.cpp
