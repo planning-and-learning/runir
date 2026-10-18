@@ -2,6 +2,14 @@ add_library(kr SHARED
     domain_context.cpp
     task_context.cpp
     dl/repository.cpp
+    dl/semantics/evaluation_base_ground.cpp
+    dl/semantics/evaluation_base_lifted.cpp
+    dl/semantics/evaluation_ext_ground_builder.cpp
+    dl/semantics/evaluation_ext_ground_state.cpp
+    dl/semantics/evaluation_ext_lifted_builder.cpp
+    dl/semantics/evaluation_ext_lifted_state.cpp
+    dl/semantics/evaluation_uns_ground.cpp
+    dl/semantics/evaluation_uns_lifted.cpp
     dl/cnf_grammar/constructor_repository.cpp
     dl/cnf_grammar/generate.cpp
     dl/cnf_grammar/translate.cpp

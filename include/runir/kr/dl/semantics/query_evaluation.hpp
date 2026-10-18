@@ -13,19 +13,6 @@
 namespace runir::kr::dl::semantics
 {
 
-template<tyr::TaskKind Kind, FamilyTag Family, typename C, StateEvaluationContextConcept<Family, Kind> Context>
-auto evaluate_impl(ygg::View<ygg::Index<Query<Family, QueryRenameTag>>, C> constructor, Context& context) -> QueryDenotationView
-{
-    // Keep rows in their owning output partition, even when a low-level query
-    // wrapper conservatively marks a static child as dynamic.
-    const auto child = evaluate<Kind>(constructor.get_arg(), context);
-    auto static_output = context.for_result(true);
-    auto dynamic_output = context.for_result(false);
-    auto& static_results = static_output.get_denotation_repository().get_relation_repository();
-    auto& results = &child.get_context() == &static_results ? static_results : dynamic_output.get_denotation_repository().get_relation_repository();
-    return results.rename(child, constructor.get_schema().span());
-}
-
 namespace detail
 {
 
@@ -123,54 +110,6 @@ void evaluate_query(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor,
 }
 
 }  // namespace detail
-
-template<tyr::TaskKind Kind, FamilyTag Family, typename Tag, typename C, StateEvaluationContextConcept<Family, Kind> Context>
-    requires(!std::same_as<Tag, void> && !std::same_as<Tag, QueryRenameTag>)
-auto evaluate_impl(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor, Context& context) -> QueryDenotationView
-{
-    auto result = context.get_builder().template get_builder<ygg::database::Relation<QueryValues>>(constructor.get_schema().span());
-    detail::evaluate_query<Kind>(constructor, context, *result);
-    return insert(context.get_denotation_repository(), *result).first;
-}
-
-template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context, typename C>
-auto evaluate(ygg::View<ygg::Index<Query<Family>>, C> constructor, Context& context) -> QueryDenotationView
-{
-    auto& cache = context.get_caches().get_queries(constructor.is_static());
-    if (const auto it = cache.find(constructor); it != cache.end())
-        return it->second;
-
-    auto output = context.for_result(constructor.is_static());
-    const auto result = ygg::visit([&](auto child) { return evaluate_impl<Kind>(child, output); }, constructor.get_variant());
-    return cache.emplace(constructor, result).first->second;
-}
-
-template<tyr::TaskKind Kind, FamilyTag Family, ConceptOrRoleTag Category, StateEvaluationContextConcept<Family, Kind> Context, typename C>
-auto evaluate_impl(ygg::View<ygg::Index<QueryProjection<Family, Category>>, C> constructor, Context& context) -> DenotationView<Category>
-{
-    const auto& columns = constructor.get_data().columns;
-    auto children = context.child_context();
-    const auto relation = evaluate<Kind>(constructor.get_arg(), children);
-    const auto position = [&](size_t i) { return relation.column_index(ygg::Index<ygg::database::Column>(columns[i].get_value())); };
-    auto result = context.get_builder().template get_builder<Denotation<Category>>(detail::num_objects<Family, Kind>(context));
-    if constexpr (std::same_as<Category, ConceptTag>)
-    {
-        auto bits = result->get();
-        const auto object = position(0);
-        for (const auto row : relation)
-            bits.set(row.template get<ygg::Index<tyr::formalism::Object>>(object).get_value());
-    }
-    else
-    {
-        static_assert(std::same_as<Category, RoleTag>);
-        const auto source = position(0);
-        const auto target = position(1);
-        for (const auto row : relation)
-            result->get(row.template get<ygg::Index<tyr::formalism::Object>>(source).get_value())
-                .set(row.template get<ygg::Index<tyr::formalism::Object>>(target).get_value());
-    }
-    return insert(context.get_denotation_repository(), *result, context.get_builder()).first;
-}
 
 }  // namespace runir::kr::dl::semantics
 

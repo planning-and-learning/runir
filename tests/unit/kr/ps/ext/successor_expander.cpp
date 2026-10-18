@@ -10,6 +10,7 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/detail/evaluation_impl.hpp>
 #include <runir/kr/ps/ext/detail/rule_evaluation/context.hpp>
 #include <runir/kr/ps/ext/detail/successor_expander_impl.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
