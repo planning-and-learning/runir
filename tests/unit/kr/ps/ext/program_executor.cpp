@@ -10,7 +10,6 @@
 #include <gtest/gtest.h>
 #include <limits>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <runir/kr/dl/semantics/detail/evaluation_impl.hpp>
 #include <runir/kr/dl/semantics/evaluation.hpp>
 #include <runir/kr/ps/ext/detail/search_path.hpp>
 #include <runir/kr/ps/ext/detail/successor_expander_impl.hpp>

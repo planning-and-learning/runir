@@ -14,5 +14,6 @@ template EvaluationIndex<NumericalTag> EvaluationGraph<runir::kr::ExtFamilyTag, 
 
 template void IncrementalEvaluation<runir::kr::ExtFamilyTag, tyr::LiftedTag>::demand<StateEvaluationContext<runir::kr::ExtFamilyTag, tyr::LiftedTag>>(ygg::uint_t, StateEvaluationContext<runir::kr::ExtFamilyTag, tyr::LiftedTag>&, const Delta<runir::kr::ExtFamilyTag>*, ygg::database::Workspace<QueryValues>*);
 template void IncrementalEvaluation<runir::kr::ExtFamilyTag, tyr::LiftedTag>::demand<StateEvaluationContext<runir::kr::ExtFamilyTag, tyr::LiftedTag, tyr::planning::BuilderStateView<tyr::LiftedTag>, BorrowedRegisterValuesView>>(ygg::uint_t, StateEvaluationContext<runir::kr::ExtFamilyTag, tyr::LiftedTag, tyr::planning::BuilderStateView<tyr::LiftedTag>, BorrowedRegisterValuesView>&, const Delta<runir::kr::ExtFamilyTag>*, ygg::database::Workspace<QueryValues>*);
+template void IncrementalEvaluation<runir::kr::ExtFamilyTag, tyr::LiftedTag>::demand<StateEvaluationContext<runir::kr::ExtFamilyTag, tyr::LiftedTag, tyr::planning::StateView<tyr::LiftedTag>, BorrowedRegisterValuesView>>(ygg::uint_t, StateEvaluationContext<runir::kr::ExtFamilyTag, tyr::LiftedTag, tyr::planning::StateView<tyr::LiftedTag>, BorrowedRegisterValuesView>&, const Delta<runir::kr::ExtFamilyTag>*, ygg::database::Workspace<QueryValues>*);
 
 }  // namespace runir::kr::dl::semantics::incremental

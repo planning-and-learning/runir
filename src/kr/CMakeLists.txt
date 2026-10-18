@@ -5,8 +5,10 @@ add_library(kr SHARED
     dl/semantics/evaluation_base_ground.cpp
     dl/semantics/evaluation_base_lifted.cpp
     dl/semantics/evaluation_ext_ground_builder.cpp
+    dl/semantics/evaluation_ext_ground_borrowed.cpp
     dl/semantics/evaluation_ext_ground_state.cpp
     dl/semantics/evaluation_ext_lifted_builder.cpp
+    dl/semantics/evaluation_ext_lifted_borrowed.cpp
     dl/semantics/evaluation_ext_lifted_state.cpp
     dl/semantics/evaluation_uns_ground.cpp
     dl/semantics/evaluation_uns_lifted.cpp
