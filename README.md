@@ -104,6 +104,10 @@ pytest python/tests
 `pyrunir.serialization` exposes the native serializers with caller-selected
 dictionary tables shared with Tyr. See the [serialization output reference](docs/serialization/index.md).
 
+## Template and include rules
+
+Headers and templates follow the [template and include rules](https://github.com/planning-and-learning/yggdrasil/blob/main/docs/TEMPLATE_RULES.md) maintained in yggdrasil.
+
 ## CMake Integration
 
 This section covers `pyrunir`-specific paths and targets; the general pattern for
