@@ -71,10 +71,11 @@ public:
 
     const auto& get_index() const noexcept { return m_index; }
     auto get_factory() const noexcept { return m_factory; }
-    const auto& get_formalism_repository() const noexcept
+    const tyr::formalism::planning::Repository& get_formalism_repository() const noexcept
     {
         assert(m_formalism_repository);
-        return *m_formalism_repository;
+        // Dereference the raw pointer: operator* on the shared_ptr would complete the repository type for its lookup.
+        return *m_formalism_repository.get();
     }
     const auto& get_formalism_repository_ptr() const noexcept { return m_formalism_repository; }
 

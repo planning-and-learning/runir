@@ -11,7 +11,7 @@
 #include <tuple>
 #include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/object_view.hpp>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/planning/declarations.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/types.hpp>
@@ -75,15 +75,17 @@ struct Data<runir::kr::dl::semantics::RegisterValues>
 namespace runir::kr::dl::semantics
 {
 
-inline void assign_register(ygg::Data<RegisterValues>& data, RegisterIdentifier<ConceptTag> identifier, tyr::formalism::planning::ObjectView value)
+template<typename C>
+void assign_register(ygg::Data<RegisterValues>& data, RegisterIdentifier<ConceptTag> identifier, ygg::View<ygg::Index<tyr::formalism::Object>, C> value)
 {
     data.concept_values.at(static_cast<size_t>(ygg::uint_t(identifier))) = value.get_index();
     ygg::clear(data.index);
 }
 
-inline void assign_register(ygg::Data<RegisterValues>& data,
-                            RegisterIdentifier<RoleTag> identifier,
-                            const std::pair<tyr::formalism::planning::ObjectView, tyr::formalism::planning::ObjectView>& value)
+template<typename C>
+void assign_register(ygg::Data<RegisterValues>& data,
+                     RegisterIdentifier<RoleTag> identifier,
+                     const std::pair<ygg::View<ygg::Index<tyr::formalism::Object>, C>, ygg::View<ygg::Index<tyr::formalism::Object>, C>>& value)
 {
     data.role_values.at(static_cast<size_t>(ygg::uint_t(identifier))) = ::cista::pair(value.first.get_index(), value.second.get_index());
     ygg::clear(data.index);

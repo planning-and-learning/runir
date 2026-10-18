@@ -4,6 +4,7 @@
 #include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
 #include <runir/kr/dl/cnf_grammar/grammar_data.hpp>
 #include <runir/kr/dl/cnf_grammar/grammar_view.hpp>
+#include <tyr/formalism/planning/repository.hpp>
 #include <utility>
 #include <yggdrasil/core/concepts.hpp>
 #include <yggdrasil/core/types.hpp>

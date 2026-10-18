@@ -5,7 +5,7 @@
 
 #include <cassert>
 #include <memory>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/planning/declarations.hpp>
 #include <utility>
 #include <yggdrasil/core/type_list.hpp>
 #include <yggdrasil/core/types.hpp>
@@ -40,10 +40,11 @@ public:
     ConstructorRepository& operator=(ConstructorRepository&&) = delete;
 
     const auto& get_index() const noexcept { return m_index; }
-    const auto& get_planning_repository() const noexcept
+    const tyr::formalism::planning::Repository& get_planning_repository() const noexcept
     {
         assert(m_planning_repository);
-        return *m_planning_repository;
+        // Dereference the raw pointer: operator* on the shared_ptr would complete the repository type for its lookup.
+        return *m_planning_repository.get();
     }
     const auto& get_planning_repository_ptr() const noexcept { return m_planning_repository; }
 
