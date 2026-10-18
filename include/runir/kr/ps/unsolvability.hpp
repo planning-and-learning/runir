@@ -5,9 +5,10 @@
 #include "runir/kr/dl/semantics/evaluation_policy.hpp"
 #include "runir/kr/task_context.hpp"
 #include "runir/kr/uns/classify.hpp"
+#include "runir/kr/uns/repository.hpp"
 
 #include <concepts>
-#include <tyr/planning/state_view.hpp>
+#include <tyr/planning/state_view_concepts.hpp>
 #include <vector>
 
 namespace runir::kr::ps

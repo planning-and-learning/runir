@@ -10,7 +10,7 @@
 #include <concepts>
 #include <cstddef>
 #include <optional>
-#include <tyr/planning/state_view.hpp>
+#include <tyr/planning/declarations.hpp>
 #include <vector>
 #include <yggdrasil/core/dependent_false.hpp>
 

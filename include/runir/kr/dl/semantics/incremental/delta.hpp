@@ -8,7 +8,7 @@
 #include <cstddef>
 #include <optional>
 #include <stdexcept>
-#include <tyr/planning/state_view.hpp>
+#include <tyr/planning/state_view_concepts.hpp>
 #include <utility>
 #include <vector>
 

@@ -2,9 +2,10 @@
 #define RUNIR_KR_PS_DECLARATIONS_HPP_
 
 #include "runir/kr/declarations.hpp"
-#include "runir/kr/dl/semantics/register_values_view.hpp"
+#include "runir/kr/dl/semantics/declarations.hpp"
+#include "runir/kr/dl/semantics/register_values_view_concepts.hpp"
 
-#include <tyr/planning/state_view.hpp>
+#include <tyr/planning/state_view_concepts.hpp>
 
 namespace runir::kr::ps
 {

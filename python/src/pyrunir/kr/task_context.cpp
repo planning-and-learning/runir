@@ -3,6 +3,8 @@
 #include <nanobind/stl/shared_ptr.h>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/domain_context.hpp>
+#include <runir/kr/ps/ext/execution_repository.hpp>
+#include <runir/kr/ps/icp/execution_repository.hpp>
 #include <runir/kr/task_context.hpp>
 
 namespace runir::kr

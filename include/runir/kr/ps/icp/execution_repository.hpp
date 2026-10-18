@@ -5,6 +5,7 @@
 #include "runir/kr/dl/semantics/declarations.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/ps/icp/execution_data.hpp"
+#include "runir/kr/ps/icp/execution_repository_types.hpp"
 #include "runir/kr/ps/icp/repository.hpp"
 
 #include <cassert>
@@ -19,12 +20,6 @@
 
 namespace runir::kr::ps::icp
 {
-
-template<tyr::TaskKind Kind>
-using ExecutionRepositoryTypes = ygg::TypeList<Histories, ProgramState<Kind>>;
-
-template<tyr::TaskKind Kind>
-using ExecutionBuilder = ygg::ApplyTypeListT<ygg::formalism::BuilderStorage, ExecutionRepositoryTypes<Kind>>;
 
 template<tyr::TaskKind Kind>
 class ExecutionRepository : public ygg::formalism::SymbolRepositoryBase<ExecutionRepository<Kind>, ExecutionRepositoryTypes<Kind>>

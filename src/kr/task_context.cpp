@@ -4,6 +4,7 @@
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/ext/execution_repository.hpp"
+#include "runir/kr/ps/icp/execution_repository.hpp"
 
 #include <stdexcept>
 #include <tyr/planning/ground/task.hpp>

@@ -4,11 +4,11 @@
 #include "runir/datasets/task_class.hpp"
 #include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/declarations.hpp"
-#include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/domain_context.hpp"
 #include "runir/kr/ps/ext/execution_declarations.hpp"
-#include "runir/kr/ps/ext/execution_repository.hpp"
-#include "runir/kr/ps/icp/execution_repository.hpp"
+#include "runir/kr/ps/ext/execution_repository_types.hpp"
+#include "runir/kr/ps/icp/execution_declarations.hpp"
+#include "runir/kr/ps/icp/execution_repository_types.hpp"
 
 #include <memory>
 
