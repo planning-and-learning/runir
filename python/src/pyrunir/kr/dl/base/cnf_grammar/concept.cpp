@@ -5,6 +5,7 @@
 #include <runir/kr/dl/cnf_grammar/concept_view.hpp>
 #include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
 #include <runir/kr/dl/cnf_grammar/formatter.hpp>
+#include <tyr/formalism/planning/repository.hpp>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 

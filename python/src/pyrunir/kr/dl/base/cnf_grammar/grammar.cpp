@@ -4,6 +4,7 @@
 #include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
 #include <runir/kr/dl/cnf_grammar/formatter.hpp>
 #include <runir/kr/dl/cnf_grammar/grammar_view.hpp>
+#include <tyr/formalism/planning/repository.hpp>
 #include <yggdrasil/python/bindings.hpp>
 
 namespace runir::kr::dl::base

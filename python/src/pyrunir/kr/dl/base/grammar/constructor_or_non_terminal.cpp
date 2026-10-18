@@ -4,6 +4,7 @@
 #include <runir/kr/dl/grammar/constructor_or_non_terminal_view.hpp>
 #include <runir/kr/dl/grammar/constructor_repository.hpp>
 #include <runir/kr/dl/grammar/formatter.hpp>
+#include <tyr/formalism/planning/repository.hpp>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 

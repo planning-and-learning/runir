@@ -3,6 +3,7 @@
 #include <nanobind/stl/string.h>
 #include <runir/kr/dl/grammar/constructor_repository.hpp>
 #include <runir/kr/dl/grammar/parser.hpp>
+#include <tyr/formalism/planning/repository.hpp>
 
 namespace runir::kr::dl::base
 {
