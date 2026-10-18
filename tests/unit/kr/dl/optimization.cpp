@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include <ranges>
+#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
 #include <runir/kr/dl/optimization.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/evaluation.hpp>
