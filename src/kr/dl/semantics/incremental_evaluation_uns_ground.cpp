@@ -1,5 +1,5 @@
-#include "runir/kr/dl/semantics/ext/evaluation.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/evaluation_impl.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
 namespace runir::kr::dl::semantics::incremental
 {
