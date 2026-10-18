@@ -2,6 +2,7 @@
 #define RUNIR_KR_PS_BASE_EVALUATION_ENVIRONMENT_HPP_
 
 #include "runir/kr/dl/semantics/evaluation_storage.hpp"
+#include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/base/sketch_view.hpp"
 #include "runir/kr/ps/dl/transition_evaluation_context.hpp"
 #include "runir/kr/dl/semantics/evaluation_policy.hpp"
