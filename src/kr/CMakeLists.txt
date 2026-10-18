@@ -12,6 +12,9 @@ add_library(kr SHARED
     dl/semantics/evaluation_uns_lifted.cpp
     dl/cnf_grammar/constructor_repository.cpp
     dl/cnf_grammar/generate.cpp
+    dl/cnf_grammar/repository_base.cpp
+    dl/cnf_grammar/repository_ext.cpp
+    dl/cnf_grammar/repository_uns.cpp
     dl/cnf_grammar/translate.cpp
     dl/cnf_grammar/translate_ext.cpp
     dl/cnf_grammar/translate_uns.cpp
@@ -20,6 +23,12 @@ add_library(kr SHARED
     dl/grammar/base/parser.cpp
     dl/grammar/parser/parser.cpp
     dl/grammar/parser/parser_instantiations.cpp
+    dl/grammar/repository_base.cpp
+    dl/grammar/repository_ext.cpp
+    dl/grammar/repository_uns.cpp
+    dl/repository_base.cpp
+    dl/repository_ext.cpp
+    dl/repository_uns.cpp
     ps/base/dl/parser.cpp
     ps/base/dl/parser/parser.cpp
     ps/base/dl/parser/parser_instantiations.cpp
@@ -44,6 +53,7 @@ add_library(kr SHARED
     ps/icp/dl/parser.cpp
     ps/icp/dl/parser/parser.cpp
     ps/icp/program_executor.cpp
+    ps/repository.cpp
     ps/structural_termination.cpp
     ps/structural_termination/incomplete.cpp
     ps/structural_termination/policy_graph.cpp

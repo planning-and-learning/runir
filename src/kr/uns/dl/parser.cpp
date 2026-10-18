@@ -2,10 +2,12 @@
 
 #include "kr/parser/constructors.hpp"
 #include "kr/parser/resolution.hpp"
+#include "runir/kr/dl/detail/repository_instantiations_uns.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/parser/diagnostics.hpp"
 #include "runir/kr/parser/parser.hpp"
+#include "runir/kr/uns/detail/repository_instantiations.hpp"
 #include "runir/kr/uns/dl/parser/parser.hpp"
 #include "runir/kr/uns/dl/parser/parsers.hpp"
 #include "runir/kr/uns/repository.hpp"

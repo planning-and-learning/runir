@@ -2,7 +2,9 @@
 
 #include "kr/parser/ext_constructors.hpp"
 #include "kr/parser/observations.hpp"
+#include "runir/kr/dl/detail/repository_instantiations_ext.hpp"
 #include "runir/kr/ps/icp/canonicalization.hpp"
+#include "runir/kr/ps/icp/detail/repository_instantiations.hpp"
 #include "runir/kr/ps/icp/dl/parser/parser.hpp"
 #include "runir/kr/ps/icp/repository.hpp"
 
