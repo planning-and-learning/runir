@@ -1,34 +1,20 @@
 #ifndef RUNIR_KR_PS_EXT_SUCCESSOR_EXPANDER_HPP_
 #define RUNIR_KR_PS_EXT_SUCCESSOR_EXPANDER_HPP_
 
-#include "runir/datasets/state_graph.hpp"
-#include "runir/kr/ps/dl/evaluation.hpp"
-#include "runir/kr/ps/ext/compatibility.hpp"
+#include "runir/kr/declarations.hpp"
+#include "runir/kr/dl/semantics/evaluation_policy.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
-#include "runir/kr/ps/ext/detail/rule_evaluation/context.hpp"
 #include "runir/kr/ps/ext/detail/rule_evaluators.hpp"
 #include "runir/kr/ps/ext/evaluation_environment.hpp"
 #include "runir/kr/ps/ext/execution_storage.hpp"
 #include "runir/kr/ps/ext/program_view.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
-#include "runir/kr/task_context.hpp"
+#include "runir/kr/ps/rule_evaluator_concepts.hpp"
 
-#include <algorithm>
-#include <concepts>
-#include <cstddef>
-#include <functional>
 #include <optional>
-#include <span>
-#include <stdexcept>
-#include <type_traits>
-#include <tyr/formalism/planning/action_view.hpp>
 #include <tyr/planning/declarations.hpp>
-#include <tyr/planning/node.hpp>
-#include <tyr/planning/state_view.hpp>
-#include <utility>
-#include <variant>
-#include <vector>
-#include <yggdrasil/containers/variant.hpp>
+#include <tyr/planning/node_concepts.hpp>
+#include <tyr/planning/state_view_concepts.hpp>
 
 namespace runir::kr::ps::ext
 {
@@ -43,36 +29,21 @@ class SuccessorExpander
 public:
     using StorageType = ExecutionStorage;
     using StoredState = StorageStoredState<ExecutionStorage>;
+    using Step = detail::ProgramStep<Kind, ExecutionStorage>;
 
-    SuccessorExpander(runir::kr::TaskContextPtr<Kind> task_context, ProgramView program) :
-        m_task_context(task_context ? std::move(task_context) : throw std::invalid_argument("SuccessorExpander requires a task context.")),
-        m_program(program),
-        m_storage(m_task_context, m_program),
-        m_rule_evaluators(m_task_context, m_program)
-    {
-        if (&m_program.get_context() != m_task_context->domain_context->ext_repository.get())
-            throw std::invalid_argument("SuccessorExpander requires a program from the domain context repository.");
-    }
+    SuccessorExpander(runir::kr::TaskContextPtr<Kind> task_context, ProgramView program);
 
-    const auto& get_task_context() const noexcept { return m_task_context; }
-    auto& get_environment() noexcept { return m_rule_evaluators.get_environment(); }
+    const runir::kr::TaskContextPtr<Kind>& get_task_context() const noexcept { return m_task_context; }
+    EvaluationEnvironment<Kind, EvaluationPolicy>& get_environment() noexcept { return m_rule_evaluators.get_environment(); }
 
-    auto view(const StoredState& state) const { return m_storage.view(state); }
+    StorageStateView<ExecutionStorage> view(const StoredState& state) const { return m_storage.view(state); }
 
     /// Create the entry module with empty registers and arguments, and no caller.
-    auto initial_state(const tyr::planning::StateView<Kind>& state)
-    {
-        validate_planning_state(state);
-        return m_storage.initial_state(state);
-    }
+    StoredState initial_state(const tyr::planning::StateView<Kind>& state);
 
     /// Intern selected output states and, in CHOICE mode, sources with Choose obligations.
     template<ProgramStateViewConcept<Kind> S>
-    ProgramStateView<Kind> materialize(const S& state)
-    {
-        validate_source(state);
-        return m_storage.materialize(state);
-    }
+    ProgramStateView<Kind> materialize(const S& state);
 
     /// Emit a program step or a compact Choose obligation in natural rule and binding order.
     /// A matching Backtrack emits only failure; effectful Sketch rules are batched after other ordinary rules.
@@ -82,110 +53,33 @@ public:
     template<ProgramStateViewConcept<Kind> S, typename Emit, StopConcept Stop>
         requires EmitConcept<Emit, detail::ProgramStep<Kind, ExecutionStorage>> && EmitConcept<Emit, detail::Choice<runir::kr::dl::ConceptTag>>
                  && EmitConcept<Emit, detail::Choice<runir::kr::dl::RoleTag>>
-    bool for_each_successor(S state, ProgramSearchStatistics& statistics, Emit&& emit, Stop&& stop)
-    {
-        using Step = detail::ProgramStep<Kind, ExecutionStorage>;
-        if (stop())
-            return false;
-        validate_source(state);
-        get_environment().reset_source();
-        get_environment().select_source(state);
-        bool emitted = false;
-        const auto emit_expansion = [&]<typename Expansion>(Expansion expansion)
-        {
-            emitted = true;
-            if constexpr (std::same_as<Expansion, Step>)
-                statistics.num_generated += expansion.status == detail::ProgramOutcome::APPLIED || expansion.status == detail::ProgramOutcome::RESTORED_CALLER;
-            return emit(std::move(expansion));
-        };
-        auto context = m_rule_evaluators.make_context(m_storage, state.get_state());
-        if (!m_rule_evaluators.for_each_successor(context, state, emit_expansion, stop))
-            return false;
-        if (stop())
-            return false;
-        return emitted || emit_expansion(fallback(state, context.planning_state));
-    }
+    bool for_each_successor(S state, ProgramSearchStatistics& statistics, Emit&& emit, Stop&& stop);
 
     /// Apply the current admitted binding without advancing its cursor; an exhausted choice reports FAILURE.
     template<runir::kr::dl::CategoryTag Category, ProgramStateViewConcept<Kind> S>
-    auto apply_choice(S state, const detail::Choice<Category>& choice, ProgramSearchStatistics& statistics)
-    {
-        validate_source(state);
-        auto context = m_rule_evaluators.make_context(m_storage, state.get_state());
-        auto step = m_rule_evaluators.apply_choice(context, state, choice);
-        statistics.num_generated += step.status == detail::ProgramOutcome::APPLIED;
-        return step;
-    }
+    Step apply_choice(S state, const detail::Choice<Category>& choice, ProgramSearchStatistics& statistics);
 
     /// Find the first rule that admits this planning successor; control-only rules do not match planning actions.
-    std::optional<RuleVariantView> matching_rule(ProgramStateView<Kind> state, const tyr::planning::LabeledNode<Kind>& candidate)
-    {
-        validate_source(state);
-        validate_planning_state(candidate.node.get_state());
-        get_environment().reset_source();
-        get_environment().select_source(state);
-        get_environment().reset_target();
-        auto context = m_rule_evaluators.make_context(m_storage, state.get_state());
-        return m_rule_evaluators.matching_rule(context, state, candidate);
-    }
+    std::optional<RuleVariantView> matching_rule(ProgramStateView<Kind> state, const tyr::planning::LabeledNode<Kind>& candidate);
 
     /// Apply one rule, using a supplied planning successor for Do, Action, or a Sketch with effects.
     /// Load, Choose, Call, and empty-effect Sketch rules derive their own control transition.
     /// Backtrack emits failure without requiring a planning successor.
-    std::optional<detail::ProgramStep<Kind, ExecutionStorage>>
-    apply(StorageStateView<ExecutionStorage> state, RuleVariantView rule, std::optional<tyr::planning::LabeledNode<Kind>> candidate = std::nullopt)
-    {
-        validate_source(state);
-        if (candidate)
-            validate_planning_state(candidate->node.get_state());
-        get_environment().reset_source();
-        get_environment().select_source(state);
-        get_environment().reset_target();
-        auto context = m_rule_evaluators.make_context(m_storage, state.get_state());
-        return m_rule_evaluators.apply(context, state, rule, candidate);
-    }
+    std::optional<Step>
+    apply(StorageStateView<ExecutionStorage> state, RuleVariantView rule, std::optional<tyr::planning::LabeledNode<Kind>> candidate = std::nullopt);
 
 private:
     // Validate borrowed views before evaluating features or modifying the execution repository.
     template<tyr::planning::StateViewConcept<Kind> S>
-    void validate_planning_state(const S& state) const
-    {
-        if constexpr (requires { state.get_state_repository(); })
-        {
-            if (state.get_state_repository().get() != m_task_context->search_context->state_repository.get())
-                throw std::invalid_argument("SuccessorExpander requires a planning state from the selected task's state repository.");
-        }
-        else if (&state.get_task() != m_task_context->search_context->task.get())
-            throw std::invalid_argument("SuccessorExpander requires a planning state from the selected task.");
-    }
+    void validate_planning_state(const S& state) const;
 
     template<ProgramStateViewConcept<Kind> S>
-    void validate_source(S state) const
-    {
-        if (&state.get_context() != m_task_context->execution_repository.get())
-            throw std::invalid_argument("SuccessorExpander requires an execution state from the selected task.");
-        const auto program = state.get_program();
-        if (&program.get_context() != &m_program.get_context() || program != m_program)
-            throw std::invalid_argument("SuccessorExpander requires an execution state from the selected program.");
-    }
+    void validate_source(S state) const;
 
     /// With no emitted rule outcome, return to the caller or report an open top-level state.
     /// Restore caller control and bindings while retaining the planning state reached by the callee.
     template<ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
-    auto fallback(S state, const PS& planning_state)
-    {
-        if (const auto caller = state.get_call_stack())
-        {
-            auto target = m_storage.store(planning_state,
-                                          caller->get_module(),
-                                          caller->get_return_memory_state(),
-                                          caller->get_registers(),
-                                          caller->get_arguments(),
-                                          caller->get_caller());
-            return detail::make_step<Kind, ExecutionStorage>(detail::ProgramOutcome::RESTORED_CALLER, std::move(target), m_task_context);
-        }
-        return detail::make_step<Kind, ExecutionStorage>(detail::ProgramOutcome::NO_APPLICABLE_ACTION, m_storage.retain(state), m_task_context);
-    }
+    Step fallback(S state, const PS& planning_state);
 
     runir::kr::TaskContextPtr<Kind> m_task_context;
     ProgramView m_program;
@@ -204,12 +98,12 @@ extern template class SuccessorExpander<tyr::LiftedTag>;
 extern template ProgramStateView<tyr::GroundTag>
 SuccessorExpander<tyr::GroundTag>::materialize<ProgramStateView<tyr::GroundTag>>(const ProgramStateView<tyr::GroundTag>&);
 
-extern template auto
+extern template detail::ProgramStep<tyr::GroundTag, InternedExecutionStorage<tyr::GroundTag>>
 SuccessorExpander<tyr::GroundTag>::apply_choice<runir::kr::dl::ConceptTag, ProgramStateView<tyr::GroundTag>>(ProgramStateView<tyr::GroundTag>,
                                                                                                              const detail::Choice<runir::kr::dl::ConceptTag>&,
                                                                                                              ProgramSearchStatistics&);
 
-extern template auto
+extern template detail::ProgramStep<tyr::GroundTag, InternedExecutionStorage<tyr::GroundTag>>
 SuccessorExpander<tyr::GroundTag>::apply_choice<runir::kr::dl::RoleTag, ProgramStateView<tyr::GroundTag>>(ProgramStateView<tyr::GroundTag>,
                                                                                                           const detail::Choice<runir::kr::dl::RoleTag>&,
                                                                                                           ProgramSearchStatistics&);
@@ -218,13 +112,13 @@ extern template ProgramStateView<tyr::GroundTag>
 SuccessorExpander<tyr::GroundTag, TransientExecutionStorage<tyr::GroundTag>>::materialize<BuilderProgramStateView<tyr::GroundTag>>(
     const BuilderProgramStateView<tyr::GroundTag>&);
 
-extern template auto
+extern template detail::ProgramStep<tyr::GroundTag, TransientExecutionStorage<tyr::GroundTag>>
 SuccessorExpander<tyr::GroundTag, TransientExecutionStorage<tyr::GroundTag>>::apply_choice<runir::kr::dl::ConceptTag, BuilderProgramStateView<tyr::GroundTag>>(
     BuilderProgramStateView<tyr::GroundTag>,
     const detail::Choice<runir::kr::dl::ConceptTag>&,
     ProgramSearchStatistics&);
 
-extern template auto
+extern template detail::ProgramStep<tyr::GroundTag, TransientExecutionStorage<tyr::GroundTag>>
 SuccessorExpander<tyr::GroundTag, TransientExecutionStorage<tyr::GroundTag>>::apply_choice<runir::kr::dl::RoleTag, BuilderProgramStateView<tyr::GroundTag>>(
     BuilderProgramStateView<tyr::GroundTag>,
     const detail::Choice<runir::kr::dl::RoleTag>&,
@@ -233,12 +127,12 @@ SuccessorExpander<tyr::GroundTag, TransientExecutionStorage<tyr::GroundTag>>::ap
 extern template ProgramStateView<tyr::LiftedTag>
 SuccessorExpander<tyr::LiftedTag>::materialize<ProgramStateView<tyr::LiftedTag>>(const ProgramStateView<tyr::LiftedTag>&);
 
-extern template auto
+extern template detail::ProgramStep<tyr::LiftedTag, InternedExecutionStorage<tyr::LiftedTag>>
 SuccessorExpander<tyr::LiftedTag>::apply_choice<runir::kr::dl::ConceptTag, ProgramStateView<tyr::LiftedTag>>(ProgramStateView<tyr::LiftedTag>,
                                                                                                              const detail::Choice<runir::kr::dl::ConceptTag>&,
                                                                                                              ProgramSearchStatistics&);
 
-extern template auto
+extern template detail::ProgramStep<tyr::LiftedTag, InternedExecutionStorage<tyr::LiftedTag>>
 SuccessorExpander<tyr::LiftedTag>::apply_choice<runir::kr::dl::RoleTag, ProgramStateView<tyr::LiftedTag>>(ProgramStateView<tyr::LiftedTag>,
                                                                                                           const detail::Choice<runir::kr::dl::RoleTag>&,
                                                                                                           ProgramSearchStatistics&);
@@ -247,13 +141,13 @@ extern template ProgramStateView<tyr::LiftedTag>
 SuccessorExpander<tyr::LiftedTag, TransientExecutionStorage<tyr::LiftedTag>>::materialize<BuilderProgramStateView<tyr::LiftedTag>>(
     const BuilderProgramStateView<tyr::LiftedTag>&);
 
-extern template auto
+extern template detail::ProgramStep<tyr::LiftedTag, TransientExecutionStorage<tyr::LiftedTag>>
 SuccessorExpander<tyr::LiftedTag, TransientExecutionStorage<tyr::LiftedTag>>::apply_choice<runir::kr::dl::ConceptTag, BuilderProgramStateView<tyr::LiftedTag>>(
     BuilderProgramStateView<tyr::LiftedTag>,
     const detail::Choice<runir::kr::dl::ConceptTag>&,
     ProgramSearchStatistics&);
 
-extern template auto
+extern template detail::ProgramStep<tyr::LiftedTag, TransientExecutionStorage<tyr::LiftedTag>>
 SuccessorExpander<tyr::LiftedTag, TransientExecutionStorage<tyr::LiftedTag>>::apply_choice<runir::kr::dl::RoleTag, BuilderProgramStateView<tyr::LiftedTag>>(
     BuilderProgramStateView<tyr::LiftedTag>,
     const detail::Choice<runir::kr::dl::RoleTag>&,
@@ -262,5 +156,9 @@ SuccessorExpander<tyr::LiftedTag, TransientExecutionStorage<tyr::LiftedTag>>::ap
 #endif
 
 }  // namespace runir::kr::ps::ext
+
+#ifdef RUNIR_HEADER_INSTANTIATION
+#include "runir/kr/ps/ext/detail/successor_expander_impl.hpp"
+#endif
 
 #endif

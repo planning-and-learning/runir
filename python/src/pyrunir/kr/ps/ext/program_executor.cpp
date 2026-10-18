@@ -17,10 +17,10 @@
 #include <runir/kr/dl/semantics/ext/evaluation.hpp>
 #include <runir/kr/ps/dl/declarations.hpp>
 #include <runir/kr/ps/dl/evaluation.hpp>
+#include <runir/kr/ps/ext/detail/successor_expander_impl.hpp>
 #include <runir/kr/ps/ext/evaluation_environment.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/program_executor.hpp>
-#include <runir/kr/ps/ext/successor_expander.hpp>
 #include <runir/kr/task_context.hpp>
 #include <string>
 #include <tyr/planning/declarations.hpp>

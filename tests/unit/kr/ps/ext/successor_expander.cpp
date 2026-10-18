@@ -11,13 +11,13 @@
 #include <gtest/gtest.h>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/ext/detail/rule_evaluation/context.hpp>
+#include <runir/kr/ps/ext/detail/successor_expander_impl.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <runir/kr/ps/ext/execution_repository.hpp>
 #include <runir/kr/ps/ext/execution_storage.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/program_executor.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
-#include <runir/kr/ps/ext/successor_expander.hpp>
 #include <runir/kr/ps/rule_evaluator_concepts.hpp>
 #include <runir/kr/task_context.hpp>
 #include <set>

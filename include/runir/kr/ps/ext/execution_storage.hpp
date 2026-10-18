@@ -71,7 +71,7 @@ public:
 
     InternedExecutionStorage(runir::kr::TaskContextPtr<Kind> context, ProgramView program) : m_context(std::move(context)), m_program(program) {}
 
-    auto registers(ygg::Data<runir::kr::dl::semantics::RegisterValues>& data) { return insert(*m_context->dl_denotation_repository, data).first; }
+    runir::kr::dl::semantics::RegisterValuesView registers(ygg::Data<runir::kr::dl::semantics::RegisterValues>& data) { return insert(*m_context->dl_denotation_repository, data).first; }
 
     StateView view(StoredState state) const noexcept { return state; }
     StoredState retain(StateView state) const noexcept { return state; }
@@ -105,7 +105,7 @@ public:
 
     ProgramStateView<Kind> materialize(ProgramStateView<Kind> state) { return state; }
 
-    auto save_caller(ProgramStateView<Kind> state, MemoryStateView return_state)
+    CallStackView<Kind> save_caller(ProgramStateView<Kind> state, MemoryStateView return_state)
     {
         const auto& module_ = state.get_module_state().get_data();
         auto saved = ygg::Data<CallStack>(module_.module_, return_state.get_index(), module_.registers, module_.arguments, state.get_data().call_stack);
@@ -149,7 +149,7 @@ public:
         *result = state.get_data();
         return result;
     }
-    auto registers(const ygg::Data<runir::kr::dl::semantics::RegisterValues>& data)
+    runir::kr::dl::semantics::BorrowedRegisterValuesView registers(const ygg::Data<runir::kr::dl::semantics::RegisterValues>& data)
     {
         return ygg::make_view(data, *m_context->search_context->task->get_repository());
     }
@@ -201,7 +201,7 @@ public:
         return insert(*m_context->execution_repository, program).first;
     }
 
-    auto save_caller(BuilderProgramStateView<Kind> state, MemoryStateView return_state)
+    CallStackView<Kind> save_caller(BuilderProgramStateView<Kind> state, MemoryStateView return_state)
     {
         const auto module_ = state.get_module_state();
         const auto registers = copy(module_.get_registers(), { *m_context->dl_denotation_repository, m_context->dl_builder }).first;

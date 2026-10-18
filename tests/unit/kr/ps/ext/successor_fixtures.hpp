@@ -3,7 +3,7 @@
 
 #include <concepts>
 #include <functional>
-#include <runir/kr/ps/ext/successor_expander.hpp>
+#include <runir/kr/ps/ext/detail/successor_expander_impl.hpp>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
 #include <utility>
 #include <variant>
