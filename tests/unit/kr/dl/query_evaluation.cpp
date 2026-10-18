@@ -7,6 +7,9 @@
 #include <gtest/gtest.h>
 #include <limits>
 #include <optional>
+#include <runir/kr/dl/detail/repository_instantiations_base.hpp>
+#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
+#include <runir/kr/dl/detail/repository_instantiations_uns.hpp>
 #include <runir/kr/dl/query_data.hpp>
 #include <runir/kr/dl/query_view.hpp>
 #include <runir/kr/dl/repository.hpp>

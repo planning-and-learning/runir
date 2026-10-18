@@ -1,5 +1,8 @@
 #include <concepts>
 #include <gtest/gtest.h>
+#include <runir/kr/dl/detail/repository_instantiations_base.hpp>
+#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
+#include <runir/kr/dl/detail/repository_instantiations_uns.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <utility>
