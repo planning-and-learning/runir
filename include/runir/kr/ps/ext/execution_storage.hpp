@@ -101,8 +101,8 @@ public:
     {
         const auto entry = m_program.get_entry_module();
         auto empty = checkout<runir::kr::dl::semantics::RegisterValues>(m_context->dl_builder);
-        empty->concept_values.resize(entry.template get_registers<runir::kr::dl::ConceptTag>().size());
-        empty->role_values.resize(entry.template get_registers<runir::kr::dl::RoleTag>().size());
+        empty->concept_values.resize(entry.get_data().concept_registers.size());
+        empty->role_values.resize(entry.get_data().role_registers.size());
         auto arguments = checkout<runir::kr::dl::semantics::CallArguments>(m_context->dl_builder);
         return store(state, entry, entry.get_entry_memory_state(), registers(*empty), insert(*m_context->dl_denotation_repository, *arguments).first, {});
     }
@@ -182,8 +182,8 @@ public:
     {
         const auto entry = m_program.get_entry_module();
         auto empty = checkout<runir::kr::dl::semantics::RegisterValues>(m_context->dl_builder);
-        empty->concept_values.resize(entry.template get_registers<runir::kr::dl::ConceptTag>().size());
-        empty->role_values.resize(entry.template get_registers<runir::kr::dl::RoleTag>().size());
+        empty->concept_values.resize(entry.get_data().concept_registers.size());
+        empty->role_values.resize(entry.get_data().role_registers.size());
         auto arguments = checkout<runir::kr::dl::semantics::CallArguments>(m_context->dl_builder);
         return store(state, entry, entry.get_entry_memory_state(), registers(*empty), insert(*m_context->dl_denotation_repository, *arguments).first, {});
     }

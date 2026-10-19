@@ -1,7 +1,9 @@
+// declarations.hpp includes this header in its middle; including it first, before the guard, lets this header
+// also compile on its own.
+#include "runir/kr/dl/declarations.hpp"
+
 #ifndef RUNIR_KR_DL_FAMILY_TRAITS_HPP_
 #define RUNIR_KR_DL_FAMILY_TRAITS_HPP_
-
-#include "runir/kr/dl/declarations.hpp"
 
 namespace runir::kr::dl
 {
