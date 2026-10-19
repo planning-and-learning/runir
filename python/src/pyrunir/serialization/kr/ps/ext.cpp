@@ -1,5 +1,10 @@
 #include "pyrunir/serialization/binding_utils.hpp"
 
+#include <runir/kr/ps/ext/formatter.hpp>
+#include <runir/serialization/kr/ps/ext/program_view.hpp>
+#include <runir/serialization/types/ps_ext.hpp>
+#include <yggdrasil/serialization/dictionaries.hpp>
+
 namespace runir::serialization
 {
 

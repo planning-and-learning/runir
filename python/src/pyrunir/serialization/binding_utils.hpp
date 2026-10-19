@@ -3,8 +3,8 @@
 
 #include "module.hpp"
 
-#include <runir/serialization/serialization.hpp>
-#include <runir/serialization/types.hpp>
+#include <runir/kr/dl/declarations.hpp>
+#include <runir/serialization/types/views.hpp>
 #include <yggdrasil/python/serialization.hpp>
 
 namespace runir::serialization

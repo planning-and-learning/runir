@@ -1,5 +1,8 @@
 #include "pyrunir/serialization/binding_utils.hpp"
 
+#include <runir/kr/dl/repository.hpp>
+#include <runir/serialization/kr/dl/semantics/constructor_view.hpp>
+
 namespace runir::serialization
 {
 
