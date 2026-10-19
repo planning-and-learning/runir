@@ -99,7 +99,7 @@ program_root_type const program_root = "program_root";
 const auto identifier_def = boost::spirit::x3::rule<IdentifierText, std::string> { "identifier_text" } =
     raw[lexeme[(alpha | char_('_')) >> *(alnum | char_('_') | char_('-'))]];
 const auto quoted_string_def = boost::spirit::x3::rule<QuotedStringText, std::string> { "quoted_string_text" } =
-    lexeme[context("quoted string")[lit('"') >> *((lit('\\') >> char_) | (char_ - '"')) > lit('"')]];
+    lexeme[context("quoted string")[(lit('"') >> *((lit('\\') >> char_) | (char_ - '"'))) > lit('"')]];
 
 const auto symbol_section_def = context(":symbol")[(lit("(") >> keyword(":symbol")) > identifier > lit(")")];
 const auto source_memory_section_def = context(":source-memory")[(lit("(") >> keyword(":source-memory")) > identifier > lit(")")];
