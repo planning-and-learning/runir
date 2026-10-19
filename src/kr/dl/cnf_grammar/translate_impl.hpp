@@ -35,7 +35,8 @@ struct TranslationContext
         builder(),
         data(runir::kr::dl::cnf_grammar::checkout<Grammar<Family>>(builder))
     {
-        assert(repository.get_planning_repository_ptr() == source.get_context().get_planning_repository_ptr());
+        // Compare raw pointers: operator== on the shared_ptrs would complete the planning repository type.
+        assert(repository.get_planning_repository_ptr().get() == source.get_context().get_planning_repository_ptr().get());
         data->domain = source.get_data().domain;
     }
 };

@@ -52,18 +52,12 @@ class DenotationRepository : public ygg::formalism::SymbolRepositoryBase<Denotat
     DenotationRepositoryFactory m_factory;
     size_t m_index;
 
-    DenotationRepository(size_t index, DenotationRepositoryFactory factory, std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository) :
-        m_vector_repository(),
-        m_relation_repository(factory.m_relation_factory.create()),
-        m_formalism_repository(std::move(formalism_repository)),
-        m_factory(std::move(factory)),
-        m_index(index)
-    {
-        assert(m_formalism_repository);
-        this->clear();
-    }
+    // Constructor, destructor and factory functions are defined in the library (template rule 7): inline ones
+    // would construct and destroy every symbol pool in each caller, and those pools are instantiated there.
+    DenotationRepository(size_t index, DenotationRepositoryFactory factory, std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository);
 
 public:
+    ~DenotationRepository();
     DenotationRepository(const DenotationRepository&) = delete;
     DenotationRepository& operator=(const DenotationRepository&) = delete;
     DenotationRepository(DenotationRepository&&) = delete;
@@ -106,16 +100,6 @@ public:
     const auto& get_relation_repository() const noexcept { return m_relation_repository; }
     auto& get_relation_repository() noexcept { return m_relation_repository; }
 };
-
-inline DenotationRepository DenotationRepositoryFactory::create(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository)
-{
-    return DenotationRepository((*m_next_index)++, *this, std::move(formalism_repository));
-}
-
-inline DenotationRepositoryPtr DenotationRepositoryFactory::create_shared(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository)
-{
-    return DenotationRepositoryPtr(new DenotationRepository((*m_next_index)++, *this, std::move(formalism_repository)));
-}
 
 /// A repository owns the records viewed through it.
 inline const DenotationRepository& get_repository(const DenotationRepository& repository) noexcept { return repository; }

@@ -72,10 +72,9 @@ private:
 public:
     using Repository = BasicRepository<Family, RepositoryTypes>;
     using DlRepositoryPtr = typename Repository::DlRepositoryPtr;
-    std::shared_ptr<Repository> create(DlRepositoryPtr dl_repository)
-    {
-        return std::shared_ptr<Repository>(new Repository(m_next_index++, std::move(dl_repository)));
-    }
+    /// Defined in detail/repository_impl.hpp: an in-class definition would construct and destroy every symbol pool
+    /// in each caller (template rule 7).
+    std::shared_ptr<Repository> create(DlRepositoryPtr dl_repository);
 };
 
 template<FamilyTag Family, typename RepositoryTypes>
@@ -91,5 +90,9 @@ inline BasicRepository<Family, RepositoryTypes>& get_repository(BasicRepository<
 }
 
 }  // namespace runir::kr::ps
+
+#ifdef RUNIR_HEADER_INSTANTIATION
+#include "runir/kr/ps/detail/repository_impl.hpp"
+#endif
 
 #endif
