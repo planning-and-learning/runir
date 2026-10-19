@@ -413,7 +413,7 @@ private:
             collect_children(view);
     }
 
-    template<typename T, ygg::InvocableWithEach<ygg::MapTypeListT<RecordView, FamilyConstructorRepositoryTypes<Family>>> F>
+    template<typename T, typename F>
     static void for_each_child(FamilyRecordView<Family, T> view, F&& f)
     {
         ygg::for_each_child<FamilyConstructorRepositoryTypes<Family>>(view, std::forward<F>(f));
