@@ -1,5 +1,6 @@
 #include "runir/kr/ps/ext/program_executor.hpp"
 
+#include "runir/kr/dl/semantics/detail/repository_instantiations.hpp"
 #include "runir/kr/ps/ext/detail/proof_search.hpp"
 
 namespace runir::kr::ps::ext

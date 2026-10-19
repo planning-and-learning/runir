@@ -7,6 +7,7 @@
 #include <runir/kr/dl/grammar/constructor_repository.hpp>
 #include <runir/kr/dl/grammar/parser.hpp>
 #include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <runir/kr/errors.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>

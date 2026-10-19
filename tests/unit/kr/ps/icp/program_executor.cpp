@@ -6,6 +6,7 @@
 #include <chrono>
 #include <filesystem>
 #include <gtest/gtest.h>
+#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/icp/detail/rule_evaluation/context.hpp>
 #include <runir/kr/ps/icp/dl/parser.hpp>
 #include <runir/kr/ps/icp/program_executor.hpp>
