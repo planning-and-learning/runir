@@ -19,6 +19,7 @@
 #include <cstddef>
 #include <fmt/format.h>
 #include <iostream>
+#include <loki/loki.hpp>
 #include <runir/datasets/formatter.hpp>
 #include <runir/datasets/state_graph.hpp>
 #include <stdexcept>
