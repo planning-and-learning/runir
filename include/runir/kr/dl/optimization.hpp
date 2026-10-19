@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_DL_OPTIMIZATION_HPP_
 #define RUNIR_KR_DL_OPTIMIZATION_HPP_
 
+#include "runir/kr/detail/record_key.hpp"
 #include "runir/kr/dl/query_construction.hpp"
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/dl/semantics/formatter.hpp"
@@ -173,9 +174,6 @@ using FamilyRecordView = ygg::View<ygg::Index<T>, ConstructorRepositoryFor<Famil
 template<FamilyTag Family>
 class QueryOptimizer
 {
-    template<typename T>
-    using RewriteMap = ygg::UnorderedMap<FamilyRecordView<Family, T>, FamilyRecordView<Family, T>>;
-
 public:
     /// statistics must outlive the optimizer; empty statistics plan every join block structurally.
     QueryOptimizer(ConstructorRepositoryFor<Family>& repository, const QueryStatistics<Family>& statistics) : m_repository(repository), m_statistics(statistics)
@@ -197,11 +195,11 @@ private:
     template<typename T>
     FamilyRecordView<Family, T> memoized(FamilyRecordView<Family, T> view)
     {
-        auto& rewritten = std::get<RewriteMap<T>>(m_rewritten);
-        if (const auto it = rewritten.find(view); it != rewritten.end())
-            return it->second;
+        const auto key = runir::kr::detail::record_key<FamilyConstructorRepositoryTypes<Family>>(view);
+        if (const auto it = m_rewritten.find(key); it != m_rewritten.end())
+            return ygg::make_view(ygg::Index<T>(it->second), m_repository);
         const auto result = rewrite(view);
-        rewritten.emplace(view, result);
+        m_rewritten.emplace(key, result.get_index().get_value());
         return result;
     }
 
@@ -321,7 +319,7 @@ private:
 
     ConstructorRepositoryFor<Family>& m_repository;
     const QueryStatistics<Family>& m_statistics;
-    ygg::ApplyTypeListT<std::tuple, ygg::MapTypeListT<RewriteMap, FamilyConstructorRepositoryTypes<Family>>> m_rewritten;
+    ygg::UnorderedMap<runir::kr::detail::RecordKey, ygg::uint_t> m_rewritten;  ///< Rewritten record index by record.
     ygg::UnorderedMap<std::pair<FamilyQueryView<Family>, Labels>, FamilyQueryView<Family>> m_optimized;
     ygg::UnorderedMap<std::pair<FamilyQueryView<Family>, Labels>, FamilyQueryView<Family>> m_projected;
     ygg::UnorderedMap<std::pair<FamilyQueryView<Family>, Labels>, FamilyQueryView<Family>> m_bound;
@@ -370,8 +368,6 @@ template<FamilyTag Family>
 class QueryStatisticsCollector
 {
     template<typename T>
-    using VisitedSet = ygg::UnorderedSet<FamilyRecordView<Family, T>>;
-    template<typename T>
     using RecordView = FamilyRecordView<Family, T>;
 
 public:
@@ -399,7 +395,7 @@ private:
     template<typename T>
     void collect(FamilyRecordView<Family, T> view)
     {
-        if (!std::get<VisitedSet<T>>(m_visited).insert(view).second)
+        if (!m_visited.insert(runir::kr::detail::record_key<FamilyConstructorRepositoryTypes<Family>>(view)).second)
             return;
         if constexpr (std::same_as<T, Query<Family>>)
         {
@@ -429,7 +425,7 @@ private:
         for_each_child(view, [&]<typename U>(FamilyRecordView<Family, U> child) { collect<U>(child); });
     }
 
-    ygg::ApplyTypeListT<std::tuple, ygg::MapTypeListT<VisitedSet, FamilyConstructorRepositoryTypes<Family>>> m_visited;
+    ygg::UnorderedSet<runir::kr::detail::RecordKey> m_visited;
     std::vector<FamilyQueryView<Family>> m_leaves;
 };
 

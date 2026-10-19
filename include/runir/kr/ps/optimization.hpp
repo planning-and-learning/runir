@@ -1,9 +1,9 @@
 #ifndef RUNIR_KR_PS_OPTIMIZATION_HPP_
 #define RUNIR_KR_PS_OPTIMIZATION_HPP_
 
+#include "runir/kr/detail/record_key.hpp"
 #include "runir/kr/ps/repository.hpp"
 
-#include <tuple>
 #include <yggdrasil/containers/associative_containers.hpp>
 #include <yggdrasil/core/children.hpp>
 #include <yggdrasil/core/type_list.hpp>
@@ -25,8 +25,6 @@ class RecordOptimizer
 {
     template<typename T>
     using View = RecordView<Family, RepositoryTypes, T>;
-    template<typename T>
-    using RewriteMap = ygg::UnorderedMap<View<T>, View<T>>;
 
 public:
     RecordOptimizer(BasicRepository<Family, RepositoryTypes>& repository, Leaves leaves) : m_repository(repository), m_leaves(std::move(leaves)) {}
@@ -34,11 +32,11 @@ public:
     template<typename T>
     View<T> optimize(View<T> view)
     {
-        auto& rewritten = std::get<RewriteMap<T>>(m_rewritten);
-        if (const auto it = rewritten.find(view); it != rewritten.end())
-            return it->second;
+        const auto key = runir::kr::detail::record_key<RepositoryTypes>(view);
+        if (const auto it = m_rewritten.find(key); it != m_rewritten.end())
+            return ygg::make_view(ygg::Index<T>(it->second), m_repository);
         const auto result = rewrite(view);
-        rewritten.emplace(view, result);
+        m_rewritten.emplace(key, result.get_index().get_value());
         return result;
     }
 
@@ -57,7 +55,7 @@ private:
 
     BasicRepository<Family, RepositoryTypes>& m_repository;
     Leaves m_leaves;
-    ygg::ApplyTypeListT<std::tuple, ygg::MapTypeListT<RewriteMap, RepositoryTypes>> m_rewritten;
+    ygg::UnorderedMap<runir::kr::detail::RecordKey, ygg::uint_t> m_rewritten;  ///< Rewritten record index by record.
 };
 
 /// Visits every record reachable from the added records once and hands those the leaf policy accepts
@@ -67,14 +65,12 @@ class RecordCollector
 {
     template<typename T>
     using View = RecordView<Family, RepositoryTypes, T>;
-    template<typename T>
-    using VisitedSet = ygg::UnorderedSet<View<T>>;
 
 public:
     template<typename T>
     void add(View<T> view)
     {
-        if (!std::get<VisitedSet<T>>(m_visited).insert(view).second)
+        if (!m_visited.insert(runir::kr::detail::record_key<RepositoryTypes>(view)).second)
             return;
         if constexpr (requires { m_leaves.add(view); })
             m_leaves.add(view);
@@ -86,7 +82,7 @@ public:
 
 private:
     Leaves m_leaves;
-    ygg::ApplyTypeListT<std::tuple, ygg::MapTypeListT<VisitedSet, RepositoryTypes>> m_visited;
+    ygg::UnorderedSet<runir::kr::detail::RecordKey> m_visited;
 };
 
 }  // namespace runir::kr::ps
