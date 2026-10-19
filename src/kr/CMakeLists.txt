@@ -19,7 +19,9 @@ add_library(kr SHARED
     dl/grammar/base/grammar_factory.cpp
     dl/grammar/base/parser.cpp
     dl/grammar/parser/parser.cpp
-    dl/grammar/parser/parser_instantiations.cpp
+    dl/grammar/parser/parser_instantiations_base.cpp
+    dl/grammar/parser/parser_instantiations_ext.cpp
+    dl/grammar/parser/parser_instantiations_uns.cpp
     dl/grammar/repository_base.cpp
     dl/grammar/repository_ext.cpp
     dl/grammar/repository_uns.cpp
