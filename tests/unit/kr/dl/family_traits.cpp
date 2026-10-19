@@ -1,14 +1,4 @@
-#include <concepts>
-#include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
-#include <runir/kr/dl/cnf_grammar/generate.hpp>
-#include <runir/kr/dl/grammar/constructor_repository.hpp>
-#include <runir/kr/dl/repository.hpp>
-#include <runir/kr/ps/base/repository.hpp>
-#include <runir/kr/ps/ext/execution_repository.hpp>
-#include <runir/kr/ps/ext/execution_view.hpp>
-#include <runir/kr/ps/icp/execution_repository.hpp>
-#include <runir/kr/ps/icp/execution_view.hpp>
-#include <runir/kr/uns/repository.hpp>
+#include "family_traits_fixtures.hpp"
 
 namespace runir::tests
 {
@@ -32,37 +22,6 @@ static_assert(distinct_repository_contexts<kr::BaseFamilyTag>());
 static_assert(distinct_repository_contexts<kr::ExtFamilyTag>());
 static_assert(distinct_repository_contexts<kr::UnsFamilyTag>());
 
-template<typename Repository, typename T>
-concept InternsData = requires(Repository& repository, ygg::Data<T>& data) {
-    { ygg::formalism::insert(repository, data) } -> std::same_as<std::pair<ygg::View<ygg::Index<T>, Repository>, bool>>;
-};
-
-template<typename Repository, typename T>
-consteval bool rejects_symbol()
-{
-    return !ygg::formalism::SupportsSymbol<Repository, T> && !InternsData<Repository, T>
-           && !requires(Repository& repository, ygg::Data<T>& data) { repository.insert(data); }
-           && !requires(const Repository& repository, const ygg::Data<T>& data) { repository.find(data); }
-           && !requires(const Repository& repository, ygg::Index<T> index) { repository[index]; }
-           && !requires(const Repository& repository) { repository.template size<T>(); };
-}
-
-template<kr::dl::FamilyTag Family>
-consteval bool constructor_interning_contracts()
-{
-    using Semantic = kr::dl::Concept<Family, kr::dl::TopTag>;
-    using Grammar = kr::dl::grammar::Concept<Family, kr::dl::TopTag>;
-    using Cnf = kr::dl::cnf_grammar::Concept<Family, kr::dl::TopTag>;
-    using SemanticRepository = kr::dl::ConstructorRepositoryFor<Family>;
-    using GrammarRepository = kr::dl::grammar::ConstructorRepositoryFor<Family>;
-    using CnfRepository = kr::dl::cnf_grammar::ConstructorRepositoryFor<Family>;
-    return InternsData<SemanticRepository, Semantic> && InternsData<GrammarRepository, Grammar> && InternsData<CnfRepository, Cnf>
-           && rejects_symbol<SemanticRepository, Grammar>() && rejects_symbol<GrammarRepository, Cnf>() && rejects_symbol<CnfRepository, Semantic>();
-}
-
-static_assert(constructor_interning_contracts<kr::BaseFamilyTag>());
-static_assert(constructor_interning_contracts<kr::ExtFamilyTag>());
-static_assert(constructor_interning_contracts<kr::UnsFamilyTag>());
 static_assert(InternsData<kr::dl::semantics::DenotationRepository, kr::dl::semantics::RegisterValues>);
 static_assert(rejects_symbol<kr::dl::semantics::DenotationRepository, kr::dl::QueryColumn>());
 static_assert(InternsData<kr::ps::base::Repository, kr::ps::base::Sketch>);

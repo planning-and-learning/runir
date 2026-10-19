@@ -37,6 +37,9 @@ set(RUNIR_KR_DL_TYPE_TEST_SOURCES
     unit/kr/dl/concept.cpp
     unit/kr/dl/constructor.cpp
     unit/kr/dl/family_traits.cpp
+    unit/kr/dl/family_traits_base.cpp
+    unit/kr/dl/family_traits_ext.cpp
+    unit/kr/dl/family_traits_uns.cpp
     unit/kr/dl/numerical.cpp
     unit/kr/dl/register.cpp
     unit/kr/dl/role.cpp
