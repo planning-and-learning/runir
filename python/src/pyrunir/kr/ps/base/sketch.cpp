@@ -3,8 +3,11 @@
 #include "pyrunir/kr/ps/dl/optimization_bindings.hpp"
 
 #include <nanobind/stl/vector.h>
+#include <runir/kr/dl/detail/repository_instantiations_base.hpp>
 #include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/base/compatibility.hpp>
+#include <runir/kr/ps/base/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/sketch_data.hpp>

@@ -8,12 +8,15 @@
 #include <optional>
 #include <pyrunir/kr/binding_utils.hpp>
 #include <pyrunir/kr/dl/evaluation_bindings.hpp>
+#include <runir/kr/dl/detail/repository_instantiations_base.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/call_arguments_view.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <runir/kr/dl/semantics/register_values_view.hpp>
+#include <runir/kr/ps/base/detail/repository_instantiations.hpp>
 #include <tyr/formalism/planning/planning_domain.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/task.hpp>

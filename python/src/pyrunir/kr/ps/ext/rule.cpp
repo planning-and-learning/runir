@@ -4,6 +4,9 @@
 #include <nanobind/stl/list.h>
 #include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
+#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
+#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/ps/ext/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/rule_data.hpp>

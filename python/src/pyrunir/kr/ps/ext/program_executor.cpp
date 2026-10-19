@@ -13,10 +13,13 @@
 #include <optional>
 #include <pyrunir/graphs/graph.hpp>
 #include <pyrunir/kr/binding_utils.hpp>
+#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
+#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/evaluation_policy.hpp>
 #include <runir/kr/dl/semantics/ext/evaluation.hpp>
 #include <runir/kr/ps/dl/declarations.hpp>
 #include <runir/kr/ps/dl/evaluation.hpp>
+#include <runir/kr/ps/ext/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/ext/detail/successor_expander_impl.hpp>
 #include <runir/kr/ps/ext/evaluation_environment.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>

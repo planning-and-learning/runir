@@ -1,6 +1,9 @@
 #include "bindings.hpp"
 #include "pyrunir/kr/ps/dl/binding_utils.hpp"
 
+#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
+#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/ps/icp/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/icp/repository.hpp>
 
 namespace runir::kr::ps::icp::dl

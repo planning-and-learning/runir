@@ -2,6 +2,9 @@
 #include "pyrunir/kr/binding_utils.hpp"
 #include "pyrunir/kr/ps/dl/optimization_bindings.hpp"
 
+#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
+#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/ps/icp/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/icp/formatter.hpp>
 #include <runir/kr/ps/icp/program_data.hpp>
 #include <runir/kr/ps/icp/program_view.hpp>

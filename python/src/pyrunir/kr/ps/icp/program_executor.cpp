@@ -12,10 +12,13 @@
 #include <nanobind/stl/vector.h>
 #include <optional>
 #include <pyrunir/graphs/graph.hpp>
+#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
+#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/evaluation_policy.hpp>
 #include <runir/kr/dl/semantics/ext/evaluation.hpp>
 #include <runir/kr/ps/dl/declarations.hpp>
 #include <runir/kr/ps/dl/evaluation.hpp>
+#include <runir/kr/ps/icp/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/icp/evaluation_environment.hpp>
 #include <runir/kr/ps/icp/formatter.hpp>
 #include <runir/kr/ps/icp/program_executor.hpp>

@@ -1,5 +1,8 @@
 #include "../../query_bindings.hpp"
 #include "bindings.hpp"
+#include <runir/kr/dl/detail/repository_instantiations_uns.hpp>
+#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/uns/detail/repository_instantiations.hpp>
 
 namespace runir::kr::dl::uns
 {

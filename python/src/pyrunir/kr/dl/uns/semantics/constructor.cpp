@@ -3,10 +3,13 @@
 #include <nanobind/stl/variant.h>
 #include <pyrunir/kr/dl/evaluation_bindings.hpp>
 #include <pyrunir/kr/dl/optimization_bindings.hpp>
+#include <runir/kr/dl/detail/repository_instantiations_uns.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/constructor_view.hpp>
+#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
+#include <runir/kr/uns/detail/repository_instantiations.hpp>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
