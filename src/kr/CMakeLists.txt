@@ -1,6 +1,9 @@
 add_library(kr SHARED
     domain_context.cpp
     task_context.cpp
+    dl/optimization_base.cpp
+    dl/optimization_ext.cpp
+    dl/optimization_uns.cpp
     dl/repository.cpp
     dl/semantics/evaluation_base.cpp
     dl/semantics/evaluation_uns.cpp
