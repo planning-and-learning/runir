@@ -11,7 +11,6 @@
 #include <gtest/gtest.h>
 #include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/detail/evaluation_impl.hpp>
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/ext/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/ext/detail/rule_evaluation/context.hpp>

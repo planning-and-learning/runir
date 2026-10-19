@@ -42,6 +42,10 @@ template auto evaluate<tyr::LiftedTag>(FamilyConstructorView<runir::kr::ExtFamil
 template auto evaluate<tyr::LiftedTag>(FamilyConstructorView<runir::kr::ExtFamilyTag, NumericalTag>, StateEvaluationContext<runir::kr::ExtFamilyTag, tyr::LiftedTag, tyr::planning::StateView<tyr::LiftedTag>, BorrowedRegisterValuesView>&) -> DenotationView<NumericalTag>;
 template auto evaluate<tyr::LiftedTag>(FamilyQueryView<runir::kr::ExtFamilyTag>, StateEvaluationContext<runir::kr::ExtFamilyTag, tyr::LiftedTag, tyr::planning::StateView<tyr::LiftedTag>, BorrowedRegisterValuesView>&) -> QueryDenotationView;
 
+/// Queries over builder states with interned register values, which the successor expander tests evaluate.
+template auto evaluate<tyr::GroundTag>(FamilyQueryView<runir::kr::ExtFamilyTag>, StateEvaluationContext<runir::kr::ExtFamilyTag, tyr::GroundTag, tyr::planning::BuilderStateView<tyr::GroundTag>>&) -> QueryDenotationView;
+template auto evaluate<tyr::LiftedTag>(FamilyQueryView<runir::kr::ExtFamilyTag>, StateEvaluationContext<runir::kr::ExtFamilyTag, tyr::LiftedTag, tyr::planning::BuilderStateView<tyr::LiftedTag>>&) -> QueryDenotationView;
+
 }  // namespace runir::kr::dl::semantics
 
 namespace runir::kr::dl::semantics::incremental
