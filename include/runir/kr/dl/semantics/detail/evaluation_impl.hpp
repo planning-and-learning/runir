@@ -3,7 +3,7 @@
 
 #include "runir/kr/dl/semantics/detail/evaluation_helpers.hpp"
 #include "runir/kr/dl/semantics/distance_evaluation.hpp"
-#include "runir/kr/dl/semantics/evaluation.hpp"
+#include "runir/kr/dl/semantics/evaluation_decl.hpp"
 #include "runir/kr/dl/semantics/evaluation_storage.hpp"
 #include "runir/kr/dl/semantics/ext/evaluation.hpp"
 #include "runir/kr/dl/semantics/query_evaluation.hpp"

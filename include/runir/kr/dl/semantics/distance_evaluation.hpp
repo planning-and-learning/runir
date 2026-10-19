@@ -4,7 +4,7 @@
 #include "runir/kr/dl/query_view.hpp"
 #include "runir/kr/dl/semantics/detail/evaluation_helpers.hpp"
 #include "runir/kr/dl/semantics/distance/feature.hpp"
-#include "runir/kr/dl/semantics/evaluation.hpp"
+#include "runir/kr/dl/semantics/evaluation_decl.hpp"
 #include "runir/kr/dl/semantics/heuristics/projection.hpp"
 #include "runir/kr/dl/translations/ygg_query.hpp"
 

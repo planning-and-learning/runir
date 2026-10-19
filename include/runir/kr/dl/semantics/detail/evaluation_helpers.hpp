@@ -8,7 +8,7 @@
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/dl/semantics/denotation_caches.hpp"
 #include "runir/kr/dl/semantics/denotations.hpp"
-#include "runir/kr/dl/semantics/evaluation.hpp"
+#include "runir/kr/dl/semantics/evaluation_decl.hpp"
 #include "runir/kr/dl/semantics/evaluation_workspace.hpp"
 #include "runir/kr/dl/semantics/interning.hpp"
 
