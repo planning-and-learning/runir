@@ -1,5 +1,3 @@
-#include "runir/kr/dl/cnf_grammar/detail/repository_instantiations_uns.hpp"
-#include "runir/kr/dl/grammar/detail/repository_instantiations_uns.hpp"
 #include "translate_impl.hpp"
 
 namespace runir::kr::dl::cnf_grammar
