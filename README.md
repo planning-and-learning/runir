@@ -27,9 +27,9 @@ The native CMake package exports `runir::core` as the aggregate target and compo
 ## Dependencies
 
 - Python 3.11 or newer.
-- `pyyggdrasil >= 0.4.0, < 0.5` for shared third-party native dependencies.
-- `pytyr >= 0.4.2, < 0.5` for Tyr planning, formalism, search, and C++ headers/libraries.
-- `pypddl >= 1.4.0, < 1.5` through Tyr/PDDL parsing infrastructure.
+- `pyyggdrasil >= 0.4.1, < 0.5` for shared third-party native dependencies.
+- `pytyr >= 0.4.3, < 0.5` for Tyr planning, formalism, search, and C++ headers/libraries.
+- `pypddl >= 1.4.1, < 1.5` through Tyr/PDDL parsing infrastructure.
 - `pypddl-datasets >= 0.0.17, < 0.1` for the PDDL benchmark data used by the C++ test and profiling fixtures (resolved from its cache at CMake configure time).
 - `scikit-build-core` for Python wheel builds.
 
@@ -44,7 +44,7 @@ Install Runir's native dependency providers into the active Python environment,
 then configure CMake with their native prefixes:
 
 ```console
-python -m pip install 'pyyggdrasil>=0.4.0,<0.5' 'pypddl>=1.4.0,<1.5' 'pytyr>=0.4.2,<0.5' 'pypddl-datasets>=0.0.17,<0.1'
+python -m pip install 'pyyggdrasil>=0.4.1,<0.5' 'pypddl>=1.4.1,<1.5' 'pytyr>=0.4.3,<0.5' 'pypddl-datasets>=0.0.17,<0.1'
 
 cmake -S . -B build
 
