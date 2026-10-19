@@ -1,4 +1,6 @@
 #include "runir/kr/dl/cnf_grammar/constructor_repository.hpp"
+#include "runir/kr/detail/interning_contracts.hpp"
+#include "runir/kr/dl/declarations.hpp"
 
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::cnf_grammar::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::BotTag>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::cnf_grammar::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::TopTag>>;
@@ -79,3 +81,6 @@ template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::cnf_grammar:
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::cnf_grammar::Grammar<runir::kr::ExtFamilyTag>>;
+
+static_assert(runir::kr::detail::InternsData<runir::kr::dl::cnf_grammar::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>, runir::kr::dl::cnf_grammar::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::TopTag>>);
+static_assert(runir::kr::detail::rejects_symbol<runir::kr::dl::cnf_grammar::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>, runir::kr::dl::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::TopTag>>());
