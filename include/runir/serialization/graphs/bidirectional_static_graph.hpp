@@ -16,10 +16,9 @@ void describe_fields(Archive& ar, std::type_identity<::runir::graphs::Bidirectio
 }
 
 template<::runir::graphs::Property VP, ::runir::graphs::Property EP>
-void tag_invoke(boost::json::value_from_tag, boost::json::value& result,
-                const ::runir::graphs::BidirectionalStaticGraph<VP, EP>& value, Dictionaries* dictionaries)
+const auto& serialize_as(Dictionaries&, const ::runir::graphs::BidirectionalStaticGraph<VP, EP>& value)
 {
-    result = boost::json::value_from(value.get_forward_graph(), dictionaries);
+    return value.get_forward_graph();
 }
 
 }
