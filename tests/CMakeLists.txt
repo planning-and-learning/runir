@@ -172,7 +172,7 @@ add_runir_test(runir_kr_uns_classifier
     runir_test_planning_fixtures
 )
 
-add_runir_test(runir_kr_dl_query_evaluation unit/kr/dl/query_evaluation.cpp runir::kr runir::datasets runir_test_planning_fixtures)
+add_runir_test(runir_kr_dl_query_evaluation "unit/kr/dl/query_evaluation.cpp;unit/kr/dl/query_distance.cpp;unit/kr/dl/query_cache.cpp;unit/kr/dl/query_cache_families.cpp;unit/kr/dl/query_identity.cpp" runir::kr runir::datasets runir_test_planning_fixtures)
 add_runir_test(runir_kr_dl_optimization unit/kr/dl/optimization.cpp runir::kr runir::datasets runir_test_planning_fixtures)
 add_runir_test(runir_kr_dl_evaluation_storage unit/kr/dl/evaluation_storage.cpp runir::kr runir::datasets runir_test_planning_fixtures)
 
