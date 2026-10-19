@@ -2,8 +2,9 @@
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_EVALUATION_HPP_
 
 #include "runir/kr/dl/semantics/incremental/declarations.hpp"
-#include "runir/kr/dl/semantics/incremental/detail/feature_node.hpp"
-#include "runir/kr/dl/semantics/incremental/detail/query_node.hpp"
+#include "runir/kr/dl/semantics/incremental/denotation_delta.hpp"
+#include "runir/kr/dl/semantics/incremental/detail/set_operation_workspace.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
 #include <algorithm>
 #include <concepts>
@@ -15,6 +16,9 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <tyr/planning/declarations.hpp>
+#include <yggdrasil/database/semantics/incremental/delta.hpp>
+#include <yggdrasil/database/semantics/relation_builder.hpp>
 
 namespace runir::kr::dl::semantics::incremental
 {
@@ -103,35 +107,26 @@ public:
     ~EvaluationGraph();
     EvaluationGraph(const EvaluationGraph&) = delete;
     EvaluationGraph& operator=(const EvaluationGraph&) = delete;
-    EvaluationGraph(EvaluationGraph&&) = default;
-    EvaluationGraph& operator=(EvaluationGraph&&) = default;
+    EvaluationGraph(EvaluationGraph&&) noexcept;
+    EvaluationGraph& operator=(EvaluationGraph&&) noexcept;
 
     /// Resolve a prepared root or shared child once; retain its index for evaluation.
     template<CategoryTag Category>
     EvaluationIndex<Category> get_index(FamilyConstructorView<Family, Category> expression) const;
     QueryEvaluationIndex get_index(FamilyQueryView<Family> expression) const;
 
-    size_t node_count() const noexcept { return m_nodes.size(); }
+    size_t node_count() const noexcept;
 
     /// The results and changes of nodes, read by evaluators from their children (brought to the current state first,
     /// see IncrementalEvaluation).
     template<CategoryTag Category>
-    BorrowedDenotationView<Category> result(EvaluationIndex<Category> index) const
-    {
-        return node(index).get_result(repository());
-    }
-    const auto& result(QueryEvaluationIndex index) const { return node(index).get_result(); }
+    BorrowedDenotationView<Category> result(EvaluationIndex<Category> index) const;
+    const ygg::Builder<ygg::database::Relation<QueryValues>>& result(QueryEvaluationIndex index) const;
     template<ConceptOrRoleTag Category>
-    const DenotationDelta<Category>& change(EvaluationIndex<Category> index) const
-    {
-        return node(index).get_delta();
-    }
-    const auto& change(QueryEvaluationIndex index) const { return node(index).get_delta(); }
+    const DenotationDelta<Category>& change(EvaluationIndex<Category> index) const;
+    const ygg::database::incremental::Delta<QueryValues>& change(QueryEvaluationIndex index) const;
     template<ConceptOrRoleTag Category>
-    size_t cardinality(EvaluationIndex<Category> index) const
-    {
-        return node(index).size();
-    }
+    size_t cardinality(EvaluationIndex<Category> index) const;
     size_t cardinality(QueryEvaluationIndex index) const { return result(index).size(); }
     template<ConceptOrRoleTag Category>
     bool nonempty(EvaluationIndex<Category> index) const
@@ -184,49 +179,6 @@ public:
     }
 };
 }  // namespace detail
-
-template<FamilyTag Family, tyr::TaskKind Kind>
-template<CategoryTag Category>
-EvaluationIndex<Category> EvaluationGraph<Family, Kind>::get_index(FamilyConstructorView<Family, Category> expression) const
-{
-    if (const auto index = find_node(expression))
-        return *index;
-    throw std::invalid_argument("Incremental evaluation: expression is not prepared in this graph.");
-}
-
-template<FamilyTag Family, tyr::TaskKind Kind>
-QueryEvaluationIndex EvaluationGraph<Family, Kind>::get_index(FamilyQueryView<Family> expression) const
-{
-    if (const auto index = find_node(expression))
-        return *index;
-    throw std::invalid_argument("Incremental evaluation: expression is not prepared in this graph.");
-}
-
-template<FamilyTag Family, tyr::TaskKind Kind>
-template<CategoryTag Category>
-std::optional<EvaluationIndex<Category>> EvaluationGraph<Family, Kind>::find_node(FamilyConstructorView<Family, Category> expression) const
-{
-    // ponytail: linear preparation/root lookup; add a lookup table only if large graphs make it costly.
-    for (size_t i = 0; i < m_nodes.size(); ++i)
-    {
-        const auto* candidate = std::get_if<detail::FeatureNode<Family, Kind, Category>>(&m_nodes[i]);
-        if (candidate && candidate->get_expression() == expression)
-            return EvaluationIndex<Category>(ygg::to_uint_t(i));
-    }
-    return std::nullopt;
-}
-
-template<FamilyTag Family, tyr::TaskKind Kind>
-std::optional<QueryEvaluationIndex> EvaluationGraph<Family, Kind>::find_node(FamilyQueryView<Family> expression) const
-{
-    for (size_t i = 0; i < m_nodes.size(); ++i)
-    {
-        const auto* candidate = std::get_if<detail::QueryNode<Family, Kind>>(&m_nodes[i]);
-        if (candidate && candidate->get_expression() == expression)
-            return QueryEvaluationIndex(ygg::to_uint_t(i));
-    }
-    return std::nullopt;
-}
 
 /// The handle of one state's evaluation, and the only way to read its results: the state's inputs (Context) and the
 /// transition into it, which must outlive the handle. A handle is stale once its IncrementalEvaluation entered
@@ -329,7 +281,7 @@ private:
     {
         return m_graph.result(index);
     }
-    const auto& get_result(QueryEvaluationIndex index) const { return m_graph.result(index); }
+    const ygg::Builder<ygg::database::Relation<QueryValues>>& get_result(QueryEvaluationIndex index) const { return m_graph.result(index); }
     template<ConceptOrRoleTag Category>
     size_t size(EvaluationIndex<Category> index) const
     {
@@ -343,17 +295,13 @@ private:
         require_exact(ygg::uint_t(index));
         return m_graph.change(index);
     }
-    const auto& get_delta(QueryEvaluationIndex index) const
+    const ygg::database::incremental::Delta<QueryValues>& get_delta(QueryEvaluationIndex index) const
     {
         require_exact(ygg::uint_t(index));
         return m_graph.change(index);
     }
     template<BooleanOrNumericalTag Category>
-    bool changed(EvaluationIndex<Category> index) const
-    {
-        require_exact(ygg::uint_t(index));
-        return m_graph.node(index).changed();
-    }
+    bool changed(EvaluationIndex<Category> index) const;
 };
 
 template<FamilyTag Family, tyr::TaskKind Kind, StateEvaluationContextConcept<Family, Kind> Context>
@@ -394,7 +342,10 @@ public:
     {
         return current(ygg::uint_t(index)).get_result(index);
     }
-    const auto& evaluate(QueryEvaluationIndex index) { return current(ygg::uint_t(index)).get_result(index); }
+    const ygg::Builder<ygg::database::Relation<QueryValues>>& evaluate(QueryEvaluationIndex index)
+    {
+        return current(ygg::uint_t(index)).get_result(index);
+    }
     template<ConceptOrRoleTag Category>
     size_t size(EvaluationIndex<Category> index)
     {
@@ -406,7 +357,10 @@ public:
     {
         return current(ygg::uint_t(index)).get_delta(index);
     }
-    const auto& delta(QueryEvaluationIndex index) { return current(ygg::uint_t(index)).get_delta(index); }
+    const ygg::database::incremental::Delta<QueryValues>& delta(QueryEvaluationIndex index)
+    {
+        return current(ygg::uint_t(index)).get_delta(index);
+    }
     template<BooleanOrNumericalTag Category>
     bool changed(EvaluationIndex<Category> index)
     {

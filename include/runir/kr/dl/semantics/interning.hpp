@@ -16,19 +16,6 @@ struct CopyContext
     Builder& builder;
 };
 
-/// Replace mutable values while retaining buffers and invalidating published identity.
-template<RegisterValuesViewConcept R>
-ygg::Data<RegisterValues>& assign(ygg::Data<RegisterValues>& data, R source)
-{
-    if (&data != &source.get_data())
-    {
-        data.concept_values = source.get_data().concept_values;
-        data.role_values = source.get_data().role_values;
-    }
-    ygg::clear(data.index);
-    return data;
-}
-
 template<CategoryTag Category>
 ygg::Builder<Denotation<Category>>& assign(ygg::Builder<Denotation<Category>>& destination, DenotationView<Category> source)
 {

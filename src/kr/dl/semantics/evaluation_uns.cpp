@@ -55,6 +55,21 @@ template EvaluationIndex<RoleTag> EvaluationGraph<runir::kr::UnsFamilyTag, tyr::
 template EvaluationIndex<BooleanTag> EvaluationGraph<runir::kr::UnsFamilyTag, tyr::GroundTag>::prepare<BooleanTag>(FamilyConstructorView<runir::kr::UnsFamilyTag, BooleanTag>);
 template EvaluationIndex<NumericalTag> EvaluationGraph<runir::kr::UnsFamilyTag, tyr::GroundTag>::prepare<NumericalTag>(FamilyConstructorView<runir::kr::UnsFamilyTag, NumericalTag>);
 
+template EvaluationIndex<ConceptTag> EvaluationGraph<runir::kr::UnsFamilyTag, tyr::GroundTag>::get_index<ConceptTag>(FamilyConstructorView<runir::kr::UnsFamilyTag, ConceptTag>) const;
+template EvaluationIndex<RoleTag> EvaluationGraph<runir::kr::UnsFamilyTag, tyr::GroundTag>::get_index<RoleTag>(FamilyConstructorView<runir::kr::UnsFamilyTag, RoleTag>) const;
+template EvaluationIndex<BooleanTag> EvaluationGraph<runir::kr::UnsFamilyTag, tyr::GroundTag>::get_index<BooleanTag>(FamilyConstructorView<runir::kr::UnsFamilyTag, BooleanTag>) const;
+template EvaluationIndex<NumericalTag> EvaluationGraph<runir::kr::UnsFamilyTag, tyr::GroundTag>::get_index<NumericalTag>(FamilyConstructorView<runir::kr::UnsFamilyTag, NumericalTag>) const;
+template BorrowedDenotationView<ConceptTag> EvaluationGraph<runir::kr::UnsFamilyTag, tyr::GroundTag>::result<ConceptTag>(EvaluationIndex<ConceptTag>) const;
+template BorrowedDenotationView<RoleTag> EvaluationGraph<runir::kr::UnsFamilyTag, tyr::GroundTag>::result<RoleTag>(EvaluationIndex<RoleTag>) const;
+template BorrowedDenotationView<BooleanTag> EvaluationGraph<runir::kr::UnsFamilyTag, tyr::GroundTag>::result<BooleanTag>(EvaluationIndex<BooleanTag>) const;
+template BorrowedDenotationView<NumericalTag> EvaluationGraph<runir::kr::UnsFamilyTag, tyr::GroundTag>::result<NumericalTag>(EvaluationIndex<NumericalTag>) const;
+template const DenotationDelta<ConceptTag>& EvaluationGraph<runir::kr::UnsFamilyTag, tyr::GroundTag>::change<ConceptTag>(EvaluationIndex<ConceptTag>) const;
+template const DenotationDelta<RoleTag>& EvaluationGraph<runir::kr::UnsFamilyTag, tyr::GroundTag>::change<RoleTag>(EvaluationIndex<RoleTag>) const;
+template size_t EvaluationGraph<runir::kr::UnsFamilyTag, tyr::GroundTag>::cardinality<ConceptTag>(EvaluationIndex<ConceptTag>) const;
+template size_t EvaluationGraph<runir::kr::UnsFamilyTag, tyr::GroundTag>::cardinality<RoleTag>(EvaluationIndex<RoleTag>) const;
+template bool IncrementalEvaluation<runir::kr::UnsFamilyTag, tyr::GroundTag>::changed<BooleanTag>(EvaluationIndex<BooleanTag>) const;
+template bool IncrementalEvaluation<runir::kr::UnsFamilyTag, tyr::GroundTag>::changed<NumericalTag>(EvaluationIndex<NumericalTag>) const;
+
 template void IncrementalEvaluation<runir::kr::UnsFamilyTag, tyr::GroundTag>::demand<StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::GroundTag>>(ygg::uint_t, StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::GroundTag>&, const Delta<runir::kr::UnsFamilyTag>*, ygg::database::Workspace<QueryValues>*);
 template void IncrementalEvaluation<runir::kr::UnsFamilyTag, tyr::GroundTag>::demand<StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::GroundTag, tyr::planning::BuilderStateView<tyr::GroundTag>>>(ygg::uint_t, StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::GroundTag, tyr::planning::BuilderStateView<tyr::GroundTag>>&, const Delta<runir::kr::UnsFamilyTag>*, ygg::database::Workspace<QueryValues>*);
 
@@ -65,6 +80,21 @@ template EvaluationIndex<ConceptTag> EvaluationGraph<runir::kr::UnsFamilyTag, ty
 template EvaluationIndex<RoleTag> EvaluationGraph<runir::kr::UnsFamilyTag, tyr::LiftedTag>::prepare<RoleTag>(FamilyConstructorView<runir::kr::UnsFamilyTag, RoleTag>);
 template EvaluationIndex<BooleanTag> EvaluationGraph<runir::kr::UnsFamilyTag, tyr::LiftedTag>::prepare<BooleanTag>(FamilyConstructorView<runir::kr::UnsFamilyTag, BooleanTag>);
 template EvaluationIndex<NumericalTag> EvaluationGraph<runir::kr::UnsFamilyTag, tyr::LiftedTag>::prepare<NumericalTag>(FamilyConstructorView<runir::kr::UnsFamilyTag, NumericalTag>);
+
+template EvaluationIndex<ConceptTag> EvaluationGraph<runir::kr::UnsFamilyTag, tyr::LiftedTag>::get_index<ConceptTag>(FamilyConstructorView<runir::kr::UnsFamilyTag, ConceptTag>) const;
+template EvaluationIndex<RoleTag> EvaluationGraph<runir::kr::UnsFamilyTag, tyr::LiftedTag>::get_index<RoleTag>(FamilyConstructorView<runir::kr::UnsFamilyTag, RoleTag>) const;
+template EvaluationIndex<BooleanTag> EvaluationGraph<runir::kr::UnsFamilyTag, tyr::LiftedTag>::get_index<BooleanTag>(FamilyConstructorView<runir::kr::UnsFamilyTag, BooleanTag>) const;
+template EvaluationIndex<NumericalTag> EvaluationGraph<runir::kr::UnsFamilyTag, tyr::LiftedTag>::get_index<NumericalTag>(FamilyConstructorView<runir::kr::UnsFamilyTag, NumericalTag>) const;
+template BorrowedDenotationView<ConceptTag> EvaluationGraph<runir::kr::UnsFamilyTag, tyr::LiftedTag>::result<ConceptTag>(EvaluationIndex<ConceptTag>) const;
+template BorrowedDenotationView<RoleTag> EvaluationGraph<runir::kr::UnsFamilyTag, tyr::LiftedTag>::result<RoleTag>(EvaluationIndex<RoleTag>) const;
+template BorrowedDenotationView<BooleanTag> EvaluationGraph<runir::kr::UnsFamilyTag, tyr::LiftedTag>::result<BooleanTag>(EvaluationIndex<BooleanTag>) const;
+template BorrowedDenotationView<NumericalTag> EvaluationGraph<runir::kr::UnsFamilyTag, tyr::LiftedTag>::result<NumericalTag>(EvaluationIndex<NumericalTag>) const;
+template const DenotationDelta<ConceptTag>& EvaluationGraph<runir::kr::UnsFamilyTag, tyr::LiftedTag>::change<ConceptTag>(EvaluationIndex<ConceptTag>) const;
+template const DenotationDelta<RoleTag>& EvaluationGraph<runir::kr::UnsFamilyTag, tyr::LiftedTag>::change<RoleTag>(EvaluationIndex<RoleTag>) const;
+template size_t EvaluationGraph<runir::kr::UnsFamilyTag, tyr::LiftedTag>::cardinality<ConceptTag>(EvaluationIndex<ConceptTag>) const;
+template size_t EvaluationGraph<runir::kr::UnsFamilyTag, tyr::LiftedTag>::cardinality<RoleTag>(EvaluationIndex<RoleTag>) const;
+template bool IncrementalEvaluation<runir::kr::UnsFamilyTag, tyr::LiftedTag>::changed<BooleanTag>(EvaluationIndex<BooleanTag>) const;
+template bool IncrementalEvaluation<runir::kr::UnsFamilyTag, tyr::LiftedTag>::changed<NumericalTag>(EvaluationIndex<NumericalTag>) const;
 
 template void IncrementalEvaluation<runir::kr::UnsFamilyTag, tyr::LiftedTag>::demand<StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::LiftedTag>>(ygg::uint_t, StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::LiftedTag>&, const Delta<runir::kr::UnsFamilyTag>*, ygg::database::Workspace<QueryValues>*);
 template void IncrementalEvaluation<runir::kr::UnsFamilyTag, tyr::LiftedTag>::demand<StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::LiftedTag, tyr::planning::BuilderStateView<tyr::LiftedTag>>>(ygg::uint_t, StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::LiftedTag, tyr::planning::BuilderStateView<tyr::LiftedTag>>&, const Delta<runir::kr::UnsFamilyTag>*, ygg::database::Workspace<QueryValues>*);

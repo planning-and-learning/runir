@@ -2,15 +2,24 @@
 #define RUNIR_KR_DL_SEMANTICS_EVALUATION_POLICY_HPP_
 
 #include "runir/kr/dl/semantics/evaluation_context.hpp"
+#include "runir/kr/dl/semantics/incremental/delta.hpp"
 #include "runir/kr/dl/semantics/incremental/evaluation.hpp"
+#include "runir/kr/dl/semantics/register_values_data.hpp"
 
 #include <concepts>
 #include <span>
 #include <stdexcept>
+#include <tyr/planning/state_data.hpp>
 #include <utility>
 
 namespace runir::kr::dl::semantics
 {
+
+namespace detail
+{
+/// Defined in the library, so that the policy does not need the definition of EvaluationWorkspace.
+ygg::database::Workspace<QueryValues>& get_database_workspace(EvaluationWorkspace& workspace) noexcept;
+}
 
 /// Preserve the ordinary memoized, interned evaluation contexts.
 template<FamilyTag Family, tyr::TaskKind Kind>
@@ -75,7 +84,7 @@ class DeltaEvaluationPolicy
             if (&context.get_state().get_task() != &task)
                 throw std::invalid_argument("Delta evaluation requires states from its planning task.");
             if (m_entered)
-                return m_evaluation.resume(context, m_delta, context.get_workspace().get_database_workspace());
+                return m_evaluation.resume(context, m_delta, detail::get_database_workspace(context.get_workspace()));
             auto evaluation = [&]
             {
                 if (!std::exchange(m_has_previous, false))
@@ -87,7 +96,7 @@ class DeltaEvaluationPolicy
                                                   context.registers());
                 else
                     m_delta.template assign<Kind>(ygg::make_view(m_state, task), context.get_state());
-                return m_evaluation.enter(context, m_delta, context.get_workspace().get_database_workspace());
+                return m_evaluation.enter(context, m_delta, detail::get_database_workspace(context.get_workspace()));
             }();
             m_state = context.get_state().get_state_builder();
             if constexpr (std::same_as<Family, ExtFamilyTag>)

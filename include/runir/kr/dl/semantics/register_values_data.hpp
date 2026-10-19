@@ -2,6 +2,7 @@
 #define RUNIR_KR_DL_SEMANTICS_REGISTER_VALUES_DATA_HPP_
 
 #include "runir/kr/dl/semantics/declarations.hpp"
+#include "runir/kr/dl/semantics/register_values_view_concepts.hpp"
 
 #include <cista/containers/optional.h>
 #include <cista/containers/pair.h>
@@ -89,6 +90,19 @@ void assign_register(ygg::Data<RegisterValues>& data,
 {
     data.role_values.at(static_cast<size_t>(ygg::uint_t(identifier))) = ::cista::pair(value.first.get_index(), value.second.get_index());
     ygg::clear(data.index);
+}
+
+/// Replace mutable values while retaining buffers and invalidating published identity.
+template<RegisterValuesViewConcept R>
+ygg::Data<RegisterValues>& assign(ygg::Data<RegisterValues>& data, R source)
+{
+    if (&data != &source.get_data())
+    {
+        data.concept_values = source.get_data().concept_values;
+        data.role_values = source.get_data().role_values;
+    }
+    ygg::clear(data.index);
+    return data;
 }
 
 }  // namespace runir::kr::dl::semantics

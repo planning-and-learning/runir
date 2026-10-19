@@ -8,6 +8,7 @@
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/family_traits.hpp>
 #include <runir/kr/ps/icp/repository.hpp>
+#include <tyr/planning/state_view.hpp>
 #include <utility>
 
 namespace runir::tests
