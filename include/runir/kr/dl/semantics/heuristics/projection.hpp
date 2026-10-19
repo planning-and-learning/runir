@@ -276,6 +276,13 @@ struct EdgeAbstraction
     std::vector<size_t> slots;                   ///< The edge query's slot of each input of the plan.
 };
 
+namespace detail
+{
+/// Defined in the library: the call in abstract_edges() does not depend on its template parameter, so an inline
+/// definition would instantiate the query compiler in every includer (template rule 4).
+ygg::database::QueryPlan<QueryValues> compile_edge_plan(const std::vector<ygg::database::QueryView<QueryValues>>& roots);
+}
+
 /// The abstraction of a translated edge query, or nullopt if no column is constrained at both ends (blind search).
 /// `from` and `to` are the edge columns of the two vertices of an edge, in vertex order.
 template<FamilyTag Family>
@@ -301,7 +308,7 @@ std::optional<EdgeAbstraction> abstract_edges(dl::detail::QueryTranslator<Family
         }
     if (roots.empty())
         return std::nullopt;
-    return EdgeAbstraction { ygg::database::compile(roots), std::move(patterns), relaxation.slots };
+    return EdgeAbstraction { detail::compile_edge_plan(roots), std::move(patterns), relaxation.slots };
 }
 
 template<FamilyTag Family>

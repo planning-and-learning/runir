@@ -43,8 +43,9 @@ public:
     BasicRepository& operator=(BasicRepository&&) = delete;
 
     const auto& get_index() const noexcept { return m_index; }
-    auto& get_dl_repository() noexcept { return *m_dl_repository; }
-    const auto& get_dl_repository() const noexcept { return *m_dl_repository; }
+    // Dereference the raw pointer: operator* on the shared_ptr would complete the DL repository type for its lookup.
+    auto& get_dl_repository() noexcept { return *m_dl_repository.get(); }
+    const auto& get_dl_repository() const noexcept { return *m_dl_repository.get(); }
     const auto& get_dl_repository_ptr() const noexcept { return m_dl_repository; }
 
     template<typename T>

@@ -5,6 +5,7 @@ add_library(kr SHARED
     dl/semantics/evaluation_base.cpp
     dl/semantics/evaluation_uns.cpp
     dl/semantics/evaluation_ext.cpp
+    dl/semantics/heuristics/projection.cpp
     dl/semantics/repository.cpp
     dl/semantics/state_evaluation_context.cpp
     dl/cnf_grammar/constructor_repository.cpp

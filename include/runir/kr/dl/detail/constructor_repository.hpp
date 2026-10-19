@@ -73,11 +73,9 @@ private:
 public:
     ConstructorRepositoryFactory() : m_next_index(0) {}
 
-    std::shared_ptr<ConstructorRepository<Family, RepositoryTypes>> create(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository)
-    {
-        return std::shared_ptr<ConstructorRepository<Family, RepositoryTypes>>(
-            new ConstructorRepository<Family, RepositoryTypes>(m_next_index++, std::move(planning_repository)));
-    }
+    /// Defined in detail/constructor_repository_impl.hpp: an in-class definition would construct and destroy every
+    /// symbol pool in each caller (template rule 7).
+    std::shared_ptr<ConstructorRepository<Family, RepositoryTypes>> create(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository);
 };
 
 template<FamilyTag Family, typename RepositoryTypes>
@@ -93,5 +91,9 @@ inline ConstructorRepository<Family, RepositoryTypes>& get_repository(Constructo
 }
 
 }  // namespace runir::kr::dl::detail
+
+#ifdef RUNIR_HEADER_INSTANTIATION
+#include "runir/kr/dl/detail/constructor_repository_impl.hpp"
+#endif
 
 #endif
