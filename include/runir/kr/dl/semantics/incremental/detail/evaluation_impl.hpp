@@ -6,6 +6,13 @@
 namespace runir::kr::dl::semantics::incremental
 {
 
+/// Defined out of class so that only the library destroys the evaluation nodes and their evaluators.
+template<FamilyTag Family, tyr::TaskKind Kind>
+EvaluationGraph<Family, Kind>::~EvaluationGraph() = default;
+
+template<FamilyTag Family, tyr::TaskKind Kind>
+IncrementalEvaluation<Family, Kind>::~IncrementalEvaluation() = default;
+
 template<FamilyTag Family, tyr::TaskKind Kind>
 EvaluationGraph<Family, Kind>::EvaluationGraph(const tyr::planning::Task<Kind>& task, std::span<const EvaluationRoot<Family>> roots) : m_task(&task)
 {

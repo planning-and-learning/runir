@@ -100,6 +100,7 @@ public:
     {
     }
 
+    ~EvaluationGraph();
     EvaluationGraph(const EvaluationGraph&) = delete;
     EvaluationGraph& operator=(const EvaluationGraph&) = delete;
     EvaluationGraph(EvaluationGraph&&) = default;
@@ -290,6 +291,9 @@ public:
         IncrementalEvaluation(task, std::span<const EvaluationRoot<Family>>(roots.begin(), roots.size()))
     {
     }
+    ~IncrementalEvaluation();
+    IncrementalEvaluation(IncrementalEvaluation&&) = default;
+    IncrementalEvaluation& operator=(IncrementalEvaluation&&) = default;
 
     const EvaluationGraph<Family, Kind>& graph() const noexcept { return m_graph; }
 
