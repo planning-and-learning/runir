@@ -2,6 +2,7 @@
 
 #include "runir/kr/dl/canonicalization.hpp"
 #include "runir/kr/dl/cnf_grammar/constructor_repository.hpp"
+#include "runir/kr/dl/cnf_grammar/detail/repository_instantiations_base.hpp"
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/detail/repository_instantiations_base.hpp"
 #include "runir/kr/dl/repository.hpp"
