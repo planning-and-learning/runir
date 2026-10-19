@@ -6,9 +6,12 @@
 #include <concepts>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
+#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
 #include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <runir/kr/errors.hpp>
+#include <runir/kr/ps/ext/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/ext/dl/module_factory.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <runir/kr/ps/ext/dl/parser/parser.hpp>

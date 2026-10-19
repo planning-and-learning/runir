@@ -2,8 +2,11 @@
 
 #include <fmt/format.h>
 #include <gtest/gtest.h>
+#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
 #include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/errors.hpp>
+#include <runir/kr/ps/icp/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/icp/dl/parser.hpp>
 #include <runir/kr/ps/icp/formatter.hpp>
 #include <runir/kr/ps/icp/repository.hpp>

@@ -1,7 +1,9 @@
 #include "fixtures.hpp"
 
 #include <gtest/gtest.h>
+#include <runir/kr/dl/detail/repository_instantiations_uns.hpp>
 #include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <tyr/formalism/planning/parser.hpp>
 

@@ -1,6 +1,9 @@
 #include "runir/kr/ps/icp/program_executor.hpp"
 
+#include "runir/kr/dl/detail/repository_instantiations_ext.hpp"
+#include "runir/kr/dl/semantics/detail/repository_instantiations.hpp"
 #include "runir/kr/ps/icp/detail/proof_search.hpp"
+#include "runir/kr/ps/icp/detail/repository_instantiations.hpp"
 
 namespace runir::kr::ps::icp
 {

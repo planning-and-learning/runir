@@ -2,10 +2,13 @@
 #include "planning_fixtures.hpp"
 
 #include <gtest/gtest.h>
+#include <runir/kr/dl/detail/repository_instantiations_uns.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/unsolvability.hpp>
 #include <runir/kr/uns/classify.hpp>
+#include <runir/kr/uns/detail/repository_instantiations.hpp>
 #include <runir/kr/uns/dl/parser.hpp>
 #include <runir/kr/uns/repository.hpp>
 

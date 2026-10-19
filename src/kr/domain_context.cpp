@@ -1,6 +1,10 @@
 #include "runir/kr/domain_context.hpp"
 
+#include "runir/kr/dl/detail/repository_instantiations_base.hpp"
+#include "runir/kr/dl/detail/repository_instantiations_ext.hpp"
+#include "runir/kr/dl/detail/repository_instantiations_uns.hpp"
 #include "runir/kr/dl/repository.hpp"
+#include "runir/kr/dl/semantics/detail/repository_instantiations.hpp"
 #include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
 #include "runir/kr/ps/icp/repository.hpp"

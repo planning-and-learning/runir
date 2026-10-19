@@ -4,7 +4,10 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <runir/graphs/cycle.hpp>
+#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
 #include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/ps/ext/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/ext/dl/incomplete_structural_termination.hpp>
 #include <runir/kr/ps/ext/dl/module_factory.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
