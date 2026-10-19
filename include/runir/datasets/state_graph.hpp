@@ -30,7 +30,10 @@
 #include <memory>
 #include <optional>
 #include <tuple>
-#include <tyr/planning/algorithms/utils.hpp>
+#include <tyr/formalism/binding_view.hpp>
+#include <tyr/formalism/planning/declarations.hpp>
+#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/planning/algorithms/declarations.hpp>
 #include <utility>
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/semantics/comparison.hpp>

@@ -10,6 +10,7 @@
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/task_context.hpp>
 #include <string>
+#include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/ground/task.hpp>
 
 namespace runir::tests

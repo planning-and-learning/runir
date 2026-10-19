@@ -16,6 +16,8 @@
 #include <runir/kr/ps/base/sketch_executor.hpp>
 #include <runir/kr/ps/base/successor_expander.hpp>
 #include <tyr/planning/factory.hpp>
+#include <tyr/planning/ground/successor_generator.hpp>
+#include <tyr/planning/lifted/successor_generator.hpp>
 #include <tyr/planning/state_repository.hpp>
 #include <vector>
 

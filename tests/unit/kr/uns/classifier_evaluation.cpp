@@ -11,6 +11,8 @@
 #include <runir/kr/uns/detail/repository_instantiations.hpp>
 #include <runir/kr/uns/dl/parser.hpp>
 #include <runir/kr/uns/repository.hpp>
+#include <tyr/planning/ground/successor_generator.hpp>
+#include <tyr/planning/lifted/successor_generator.hpp>
 
 namespace runir::tests
 {

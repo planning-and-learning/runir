@@ -10,6 +10,8 @@
 #include <cstddef>
 #include <optional>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
+#include <tyr/planning/ground/successor_generator.hpp>
+#include <tyr/planning/lifted/successor_generator.hpp>
 #include <unordered_map>
 #include <vector>
 #include <yggdrasil/core/chrono.hpp>

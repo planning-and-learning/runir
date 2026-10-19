@@ -16,6 +16,8 @@
 #include <tuple>
 #include <type_traits>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
+#include <tyr/planning/ground/successor_generator.hpp>
+#include <tyr/planning/lifted/successor_generator.hpp>
 #include <variant>
 #include <vector>
 #include <yggdrasil/core/chrono.hpp>

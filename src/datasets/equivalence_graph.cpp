@@ -30,7 +30,9 @@
 #include <tyr/planning/algorithms/astar_eager.hpp>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
 #include <tyr/planning/algorithms/strategies/pruning.hpp>
+#include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/heuristics/blind.hpp>
+#include <tyr/planning/lifted/successor_generator.hpp>
 #include <utility>
 #include <vector>
 

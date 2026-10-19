@@ -7,6 +7,7 @@
 #include "runir/kr/ps/icp/detail/execution_step.hpp"
 #include "runir/kr/ps/icp/evaluation_environment.hpp"
 #include "runir/kr/ps/rule_evaluator_concepts.hpp"
+#include "tyr/planning/successor_generator_concepts.hpp"
 
 #include <unordered_map>
 #include <vector>

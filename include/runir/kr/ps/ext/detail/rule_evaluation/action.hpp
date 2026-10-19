@@ -13,7 +13,9 @@
 #include <cstddef>
 #include <stdexcept>
 #include <tyr/formalism/planning/repository.hpp>
+#include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/ground/task.hpp>
+#include <tyr/planning/lifted/successor_generator.hpp>
 #include <tyr/planning/lifted/task.hpp>
 #include <tyr/planning/node.hpp>
 #include <tyr/planning/state_view.hpp>

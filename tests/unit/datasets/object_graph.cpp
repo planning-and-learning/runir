@@ -6,6 +6,7 @@
 #include <runir/datasets/formatter.hpp>
 #include <runir/datasets/object_graph.hpp>
 #include <runir/graphs/properties.hpp>
+#include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/ground/task.hpp>
 
 namespace runir::tests

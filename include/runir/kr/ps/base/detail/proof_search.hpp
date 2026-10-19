@@ -11,6 +11,8 @@
 
 #include <optional>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
+#include <tyr/planning/ground/successor_generator.hpp>
+#include <tyr/planning/lifted/successor_generator.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/containers/segmented_vector.hpp>

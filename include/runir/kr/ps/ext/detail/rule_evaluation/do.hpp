@@ -11,6 +11,8 @@
 #include <concepts>
 #include <functional>
 #include <tyr/formalism/planning/action_view.hpp>
+#include <tyr/planning/ground/successor_generator.hpp>
+#include <tyr/planning/lifted/successor_generator.hpp>
 #include <tyr/planning/node.hpp>
 #include <utility>
 #include <vector>

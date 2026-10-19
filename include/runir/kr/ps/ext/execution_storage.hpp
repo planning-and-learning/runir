@@ -8,9 +8,13 @@
 #include "runir/kr/ps/ext/execution_view.hpp"
 #include "runir/kr/ps/ext/program_view.hpp"
 #include "runir/kr/task_context.hpp"
+#include "tyr/formalism/binding_view.hpp"
+#include "tyr/planning/successor_generator_concepts.hpp"
 
 #include <concepts>
 #include <optional>
+#include <tyr/planning/ground/successor_generator.hpp>
+#include <tyr/planning/lifted/successor_generator.hpp>
 #include <tyr/planning/node.hpp>
 #include <utility>
 #include <yggdrasil/containers/shared_object_pool.hpp>

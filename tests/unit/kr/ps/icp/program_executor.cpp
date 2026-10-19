@@ -12,6 +12,8 @@
 #include <runir/kr/ps/icp/program_executor.hpp>
 #include <runir/kr/ps/icp/successor_expander.hpp>
 #include <runir/kr/task_context.hpp>
+#include <tyr/planning/ground/successor_generator.hpp>
+#include <tyr/planning/lifted/successor_generator.hpp>
 
 namespace runir::tests
 {

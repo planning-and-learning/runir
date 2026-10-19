@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <functional>
 #include <span>
+#include <tyr/planning/ground/successor_generator.hpp>
+#include <tyr/planning/lifted/successor_generator.hpp>
 #include <variant>
 #include <vector>
 

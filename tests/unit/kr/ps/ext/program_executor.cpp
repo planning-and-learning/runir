@@ -26,6 +26,8 @@
 #include <runir/kr/uns/repository.hpp>
 #include <set>
 #include <stdexcept>
+#include <tyr/planning/ground/successor_generator.hpp>
+#include <tyr/planning/lifted/successor_generator.hpp>
 #include <utility>
 #include <yggdrasil/containers/shared_object_pool.hpp>
 #include <yggdrasil/serialization/json.hpp>

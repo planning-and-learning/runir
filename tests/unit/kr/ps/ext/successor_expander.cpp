@@ -27,6 +27,8 @@
 #include <stdexcept>
 #include <string>
 #include <type_traits>
+#include <tyr/planning/ground/successor_generator.hpp>
+#include <tyr/planning/lifted/successor_generator.hpp>
 #include <utility>
 
 namespace runir::tests

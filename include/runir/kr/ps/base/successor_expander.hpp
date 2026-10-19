@@ -10,8 +10,10 @@
 #include <functional>
 #include <optional>
 #include <tyr/planning/declarations.hpp>
+#include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/node.hpp>
 #include <tyr/planning/state_view.hpp>
+#include <tyr/planning/successor_generator_concepts.hpp>
 
 namespace runir::kr::ps::base
 {
