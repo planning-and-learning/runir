@@ -9,12 +9,22 @@
 #include <concepts>
 #include <stdexcept>
 #include <type_traits>
+#include <tyr/formalism/planning/declarations.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/state_view_concepts.hpp>
 #include <utility>
 
 namespace runir::kr::dl::semantics
 {
+
+namespace detail
+{
+
+/// Defined in the library, so that the contexts need only declarations of their resources.
+EvaluationWorkspace& get_workspace(Builder& builder) noexcept;
+const tyr::formalism::planning::Repository* get_formalism_repository(const DenotationRepository& repository) noexcept;
+
+}  // namespace detail
 
 /// Evaluation reads state contents; it does not require registered state identity.
 template<typename Context, typename Family, typename Kind>
@@ -85,7 +95,7 @@ public:
                                EvaluationStorage<Family>& intermediates) :
         BaseStateEvaluationContext(std::move(state), builder, intermediates)
     {
-        if (repository.get_formalism_repository_ptr() != m_state.get_formalism_repository())
+        if (detail::get_formalism_repository(repository) != m_state.get_formalism_repository().get())
             throw std::invalid_argument("Evaluation requires a result repository for the same planning task.");
         m_caches = &caches;
         m_denotations = { &repository, &repository };
@@ -95,7 +105,7 @@ public:
     Builder& get_builder() noexcept { return m_builder; }
     DenotationRepository& get_denotation_repository(bool is_static) const noexcept { return *m_denotations[is_static]; }
     DenotationRepository& get_denotation_repository() const noexcept { return get_denotation_repository(m_result_is_static); }
-    EvaluationWorkspace& get_workspace() noexcept { return m_builder.get_workspace(); }
+    EvaluationWorkspace& get_workspace() noexcept { return detail::get_workspace(m_builder); }
     DenotationCaches<Family>& get_caches() noexcept { return *m_caches; }
 
     /// Copies only borrowed views and references; result payloads stay put.
