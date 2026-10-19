@@ -4,6 +4,8 @@
 #include <chrono>
 #include <gtest/gtest.h>
 #include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include <runir/kr/ps/base/dl/parser.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/sketch_executor.hpp>
@@ -11,6 +13,7 @@
 #include <runir/kr/uns/classify.hpp>
 #include <runir/kr/uns/dl/parser.hpp>
 #include <runir/kr/uns/repository.hpp>
+#include <tyr/planning/state_view.hpp>
 
 namespace runir::tests
 {

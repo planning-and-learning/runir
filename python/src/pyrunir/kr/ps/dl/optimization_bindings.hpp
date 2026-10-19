@@ -3,8 +3,12 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/vector.h>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include <runir/kr/dl/semantics/ext/evaluation.hpp>
+#include <runir/kr/dl/semantics/register_values_view.hpp>
 #include <runir/kr/ps/dl/optimization.hpp>
+#include <tyr/planning/state_view.hpp>
 #include <vector>
 #include <yggdrasil/python/diagnostics.hpp>
 

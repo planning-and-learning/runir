@@ -2,6 +2,7 @@
 #define RUNIR_KR_DL_SEMANTICS_DISTANCE_EVALUATION_HPP_
 
 #include "runir/kr/dl/query_view.hpp"
+#include "runir/kr/dl/semantics/detail/evaluation_helpers.hpp"
 #include "runir/kr/dl/semantics/distance/feature.hpp"
 #include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/heuristics/projection.hpp"

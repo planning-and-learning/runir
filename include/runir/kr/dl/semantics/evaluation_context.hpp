@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_EVALUATION_CONTEXT_HPP_
 #define RUNIR_KR_DL_SEMANTICS_EVALUATION_CONTEXT_HPP_
 
+#include "runir/kr/dl/semantics/denotation_view.hpp"
 #include "runir/kr/dl/semantics/evaluation.hpp"
 
 #include <yggdrasil/database/semantics/relation_view.hpp>

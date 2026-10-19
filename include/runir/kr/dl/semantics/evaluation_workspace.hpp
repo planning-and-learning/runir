@@ -15,6 +15,7 @@
 #include "runir/kr/dl/semantics/heuristics/projection.hpp"
 
 #include <tyr/formalism/declarations.hpp>
+#include <tyr/formalism/planning/declarations.hpp>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/database/semantics/distance.hpp>

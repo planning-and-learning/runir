@@ -13,6 +13,7 @@
 #include <runir/kr/dl/detail/repository_instantiations_uns.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_policy.hpp>
+#include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include <runir/kr/dl/semantics/ext/evaluation.hpp>
 #include <runir/kr/dl/semantics/incremental/evaluation.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>

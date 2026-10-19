@@ -1,7 +1,10 @@
 #include "bindings.hpp"
 
+#include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_caches.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <runir/kr/dl/semantics/evaluation_storage.hpp>
+#include <runir/kr/dl/semantics/register_values_view.hpp>
 #include <runir/kr/ps/dl/transition_evaluation_context.hpp>
 #include <tyr/planning/state_view.hpp>
 

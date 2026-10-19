@@ -5,6 +5,7 @@
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include <runir/kr/dl/semantics/ext/evaluation.hpp>
+#include <runir/kr/dl/semantics/register_values_view.hpp>
 #include <tyr/planning/state_view.hpp>
 
 namespace runir::kr::python

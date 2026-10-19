@@ -2,20 +2,15 @@
 #define RUNIR_KR_DL_SEMANTICS_STATE_EVALUATION_CONTEXT_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
-#include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/declarations.hpp"
-#include "runir/kr/dl/semantics/denotation_caches.hpp"
-#include "runir/kr/dl/semantics/denotation_repository.hpp"
-#include "runir/kr/dl/semantics/evaluation_storage.hpp"
-#include "runir/kr/dl/semantics/evaluation_workspace.hpp"
-#include "runir/kr/dl/semantics/register_values_view.hpp"
+#include "runir/kr/dl/semantics/register_values_view_concepts.hpp"
 
 #include <array>
 #include <concepts>
 #include <stdexcept>
 #include <type_traits>
 #include <tyr/planning/declarations.hpp>
-#include <tyr/planning/state_view.hpp>
+#include <tyr/planning/state_view_concepts.hpp>
 #include <utility>
 
 namespace runir::kr::dl::semantics
@@ -96,15 +91,15 @@ public:
         m_denotations = { &repository, &repository };
     }
 
-    const auto& get_state() const noexcept { return m_state; }
-    auto& get_builder() noexcept { return m_builder; }
-    auto& get_denotation_repository(bool is_static) const noexcept { return *m_denotations[is_static]; }
-    auto& get_denotation_repository() const noexcept { return get_denotation_repository(m_result_is_static); }
-    auto& get_workspace() noexcept { return m_builder.get_workspace(); }
-    auto& get_caches() noexcept { return *m_caches; }
+    const S& get_state() const noexcept { return m_state; }
+    Builder& get_builder() noexcept { return m_builder; }
+    DenotationRepository& get_denotation_repository(bool is_static) const noexcept { return *m_denotations[is_static]; }
+    DenotationRepository& get_denotation_repository() const noexcept { return get_denotation_repository(m_result_is_static); }
+    EvaluationWorkspace& get_workspace() noexcept { return m_builder.get_workspace(); }
+    DenotationCaches<Family>& get_caches() noexcept { return *m_caches; }
 
     /// Copies only borrowed views and references; result payloads stay put.
-    auto for_result(bool is_static) const noexcept
+    BaseStateEvaluationContext for_result(bool is_static) const noexcept
     {
         auto result = *this;
         result.select_result(is_static);
@@ -112,7 +107,7 @@ public:
     }
 
     /// Recursive results use the reusable intermediate caches and repositories.
-    auto child_context() const noexcept
+    BaseStateEvaluationContext child_context() const noexcept
     {
         auto result = *this;
         result.select_children();

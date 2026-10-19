@@ -3,12 +3,16 @@
 
 #include <nanobind/stl/vector.h>
 #include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <runir/kr/dl/semantics/evaluation_storage.hpp>
+#include <runir/kr/dl/semantics/register_values_view.hpp>
 #include <runir/kr/ps/base/compatibility.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/rule_data.hpp>
 #include <runir/kr/ps/base/rule_view.hpp>
 #include <runir/kr/ps/dl/transition_evaluation_context.hpp>
+#include <tyr/planning/state_view.hpp>
 #include <vector>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>

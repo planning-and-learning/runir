@@ -1,11 +1,15 @@
 #include <concepts>
 #include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <runir/kr/dl/semantics/evaluation_storage.hpp>
+#include <runir/kr/dl/semantics/register_values_view.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/compatibility.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/uns/repository.hpp>
 #include <type_traits>
+#include <tyr/planning/state_view.hpp>
 
 namespace runir::tests
 {
