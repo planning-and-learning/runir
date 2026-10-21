@@ -12,6 +12,7 @@ from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext import dl
 from pyrunir.serialization import register_table, serialize, table
 from pytyr.formalism.planning import Object, ObjectIndex, Parser
+from pyyggdrasil import database
 from pytyr.planning import lifted
 from pyyggdrasil.execution import ExecutionContext
 from pyyggdrasil.serialization import Dictionaries
@@ -151,19 +152,19 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
 
     dl_context = environment.make_dl_context(state)
     relation = ext.evaluate(features["selected"], dl_context)
-    assert isinstance(relation, base_semantics.QueryDenotation)
+    assert isinstance(relation, database.RelationView)
     assert relation == features["selected"].get_expression().evaluate(dl_context)
     assert len(relation) == 2
     assert relation.arity() == 2
     assert len(relation.columns()) == 2
     assert relation == ext.evaluate(features["selected"], dl_context)
     assert len({relation, ext.evaluate(features["selected"], dl_context)}) == 1
-    assert all(isinstance(row, base_semantics.QueryDenotationRow) and len(row) == 2 for row in relation)
+    assert all(isinstance(row, database.RelationRow) and len(row) == 2 for row in relation)
     rows = {tuple(row) for row in relation}
-    assert all(isinstance(value, ObjectIndex) for row in rows for value in row)
+    assert all(isinstance(value, int) for row in rows for value in row)
     objects = task_context.dl_denotation_repository
-    assert all(isinstance(objects.get_object(value), Object) for row in rows for value in row)
-    assert {tuple(objects.get_object(value).get_name() for value in row) for row in rows} == {("start", "bad"), ("start", "good")}
+    assert all(isinstance(objects.get_object(ObjectIndex(value)), Object) for row in rows for value in row)
+    assert {tuple(objects.get_object(ObjectIndex(value)).get_name() for value in row) for row in rows} == {("start", "bad"), ("start", "good")}
     assert relation[-1][-1] == relation.at(len(relation) - 1)[relation.arity() - 1]
     with pytest.raises(IndexError):
         relation[len(relation)]
@@ -183,7 +184,7 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
     steps = collect_steps(expander, state)
     assert len(steps) == 2
     assert rows == {
-        tuple(object_.get_index() for object_ in step.state_transition.action.get_objects())
+        tuple(int(object_.get_index()) for object_ in step.state_transition.action.get_objects())
         for step in steps
     }
     for step in steps:
@@ -233,7 +234,7 @@ def test_query_objects_iterators_and_renames_retain_owners(kind, access):
             return iter(relation), expected
         columns = list(relation.columns())[::-1]
         renamed = repository.get_relation_repository().rename(relation, columns)
-        assert isinstance(renamed, base_semantics.QueryDenotation)
+        assert isinstance(renamed, database.RelationView)
         assert list(renamed.columns()) == columns
         return renamed, expected
 
@@ -250,7 +251,7 @@ def test_query_objects_iterators_and_renames_retain_owners(kind, access):
         del row
     del value
     gc.collect()
-    assert isinstance(object_, ObjectIndex)
+    assert isinstance(object_, int)
     assert object_ == expected[0]
 
 
@@ -350,7 +351,7 @@ def test_query_features_follow_module_arguments_and_registers_in_the_same_state(
     assert len(choices) == 2
     assert choices[0].state == choices[1].state == initial.state
     features = {feature.get_symbol(): feature for feature in child.module_state.module.get_query_features()}
-    expected = [((state.module_state.registers.concept_values[0].get_index(),),) for state in choices]
+    expected = [((int(state.module_state.registers.concept_values[0].get_index()),),) for state in choices]
     all_candidates = {row for selected in expected for row in selected}
     assert expected[0] != expected[1]
 
