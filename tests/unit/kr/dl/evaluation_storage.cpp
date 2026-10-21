@@ -34,10 +34,6 @@ struct InvalidResultContext : GroundExtContext
 {
     int for_result(bool) const;
 };
-struct MissingExtInputs : GroundExtContext
-{
-    kr::dl::semantics::BaseStateEvaluationContext<Ext, tyr::GroundTag> child_context() const;
-};
 struct WrongFamilyContext : GroundExtContext
 {
     kr::dl::semantics::StateEvaluationContext<kr::BaseFamilyTag, tyr::GroundTag> child_context() const;
@@ -53,7 +49,6 @@ static_assert(kr::dl::semantics::StateEvaluationContextConcept<kr::dl::semantics
 static_assert(kr::dl::semantics::
                   StateEvaluationContextConcept<kr::dl::semantics::StateEvaluationContext<kr::UnsFamilyTag, tyr::GroundTag>, kr::UnsFamilyTag, tyr::GroundTag>);
 static_assert(!kr::dl::semantics::StateEvaluationContextConcept<InvalidResultContext, Ext, tyr::GroundTag>);
-static_assert(!kr::dl::semantics::StateEvaluationContextConcept<MissingExtInputs, Ext, tyr::GroundTag>);
 static_assert(!kr::dl::semantics::StateEvaluationContextConcept<WrongFamilyContext, Ext, tyr::GroundTag>);
 static_assert(!kr::dl::semantics::StateEvaluationContextConcept<WrongKindContext, Ext, tyr::GroundTag>);
 
@@ -439,8 +434,7 @@ TEST(RunirEvaluationStorage, DurableRootsDoNotReuseTransientRootEntries)
     registers_data.concept_values[0] = search->task->get_domain().get_domain().get_constants()[0].get_index();
     const auto arguments = kr::dl::semantics::insert(persistent, arguments_data).first;
     const auto registers = ygg::make_view(registers_data, *search->task->get_repository());
-    using Context =
-        kr::dl::semantics::StateEvaluationContext<Ext, tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>, kr::dl::semantics::BorrowedRegisterValuesView>;
+    using Context = kr::dl::semantics::StateEvaluationContext<Ext, tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>>;
     auto transient = Context(initial.get_state(), builder, storage, arguments, registers);
     auto durable = Context(initial.get_state(), builder, root_caches, persistent, storage, arguments, registers);
     const auto expression =
@@ -584,7 +578,7 @@ TEST(RunirEvaluationStorage, ExtContextsValidateInputTasksForBorrowedAndIndexedR
     const auto foreign_arguments = kr::dl::semantics::insert(foreign_repository, arguments_data).first;
     const auto check = [&](auto registers, auto foreign_registers)
     {
-        using Context = kr::dl::semantics::StateEvaluationContext<Ext, tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>, decltype(registers)>;
+        using Context = kr::dl::semantics::StateEvaluationContext<Ext, tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>>;
         EXPECT_NO_THROW(Context(initial.get_state(), builder, storage, arguments, registers));
         EXPECT_NO_THROW(Context(initial.get_state(), builder, caches, repository, storage, arguments, registers));
         EXPECT_THROW(Context(initial.get_state(), builder, storage, foreign_arguments, registers), std::invalid_argument);

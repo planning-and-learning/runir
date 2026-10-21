@@ -39,46 +39,7 @@ void assign_atom_delta(const Source& source, const Target& target, Delta<Family>
 }
 }  // namespace detail
 
-/// Changes to fluent and derived atoms. Static facts, goals and the object universe
-/// are task constants; planning numeric values are not current DL inputs.
-/// The task repository must outlive the delta; state buffers need not.
-template<FamilyTag Family>
-struct Delta
-{
-    struct Values
-    {
-        std::vector<tyr::formalism::planning::AtomView<tyr::GroundTag, tyr::formalism::FluentTag>> fluent_atoms;
-        std::vector<tyr::formalism::planning::AtomView<tyr::GroundTag, tyr::formalism::DerivedTag>> derived_atoms;
-
-        void clear() noexcept
-        {
-            fluent_atoms.clear();
-            derived_atoms.clear();
-        }
-    };
-
-    Values added;
-    Values removed;
-
-    template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> Source, tyr::planning::StateViewConcept<Kind> Target>
-    void assign(const Source& source, const Target& target)
-    {
-        detail::assign_atom_delta<Kind>(source, target, *this);
-    }
-
-    void clear() noexcept
-    {
-        added.clear();
-        removed.clear();
-    }
-    bool empty() const noexcept
-    {
-        return added.fluent_atoms.empty() && removed.fluent_atoms.empty() && added.derived_atoms.empty() && removed.derived_atoms.empty();
-    }
-    void reverse() noexcept { std::swap(added, removed); }
-};
-
-/// Changes to Ext feature inputs within one module invocation.
+/// Changes to the feature inputs: fluent and derived atoms, and the registers within one module invocation.
 /// Calls, returns and backtracking across invocations require reinitializing
 /// dynamic feature results from the destination context; task-static results stay reusable.
 /// Arguments are fixed within an invocation and have no delta representation.
@@ -87,8 +48,8 @@ struct Delta
 /// this delta does not describe an entire planning or program state.
 /// The task formalism repository must outlive the delta. State and register
 /// buffers need not: each stored view identifies an immutable repository object.
-template<>
-struct Delta<runir::kr::ExtFamilyTag>
+template<FamilyTag Family>
+struct Delta
 {
     struct Values
     {
@@ -110,7 +71,14 @@ struct Delta<runir::kr::ExtFamilyTag>
     Values added;
     Values removed;
 
-    /// Refill retained buffers from completed states, including their derived atoms.
+    /// Refill retained buffers with the atom changes between completed states.
+    template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> Source, tyr::planning::StateViewConcept<Kind> Target>
+    void assign(const Source& source, const Target& target)
+    {
+        detail::assign_atom_delta<Kind>(source, target, *this);
+    }
+
+    /// Refill retained buffers from completed states, including their derived atoms, and their registers.
     /// Both endpoints must belong to the same module invocation.
     template<tyr::TaskKind Kind,
              tyr::planning::StateViewConcept<Kind> Source,
@@ -171,12 +139,13 @@ void assign_register_delta(Source source,
 }
 }  // namespace detail
 
+template<FamilyTag Family>
 template<tyr::TaskKind Kind,
          tyr::planning::StateViewConcept<Kind> Source,
          RegisterValuesViewConcept SourceRegisters,
          tyr::planning::StateViewConcept<Kind> Target,
          RegisterValuesViewConcept TargetRegisters>
-void Delta<runir::kr::ExtFamilyTag>::assign(const Source& source, SourceRegisters source_registers, const Target& target, TargetRegisters target_registers)
+void Delta<Family>::assign(const Source& source, SourceRegisters source_registers, const Target& target, TargetRegisters target_registers)
 {
     const auto* repository = source.get_formalism_repository().get();
     if (&source_registers.get_formalism_repository() != repository || &target_registers.get_formalism_repository() != repository)

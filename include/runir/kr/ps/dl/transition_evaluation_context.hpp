@@ -2,7 +2,7 @@
 #define RUNIR_KR_PS_DL_TRANSITION_EVALUATION_CONTEXT_HPP_
 
 #include "runir/kr/dl/semantics/evaluation_context.hpp"
-#include "runir/kr/dl/semantics/ext/state_evaluation_context.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include "runir/kr/ps/family_traits.hpp"
 
@@ -56,7 +56,7 @@ public:
     using DlFamily = DlFamilyFor<Family>;
 
 private:
-    using DlContext = runir::kr::dl::semantics::StateEvaluationContext<DlFamily, Kind, S, R>;
+    using DlContext = runir::kr::dl::semantics::StateEvaluationContext<DlFamily, Kind, S>;
 
     DlContext m_source_context;
     DlContext m_target_context;

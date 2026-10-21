@@ -125,7 +125,7 @@ void check_atomic_projection()
     const auto compare_full = [&](auto state)
     {
         storage.reset_dynamic();
-        auto context = kr::dl::semantics::StateEvaluationContext<Ext, Kind, decltype(state), std::remove_cvref_t<decltype(registers)>>(state,
+        auto context = kr::dl::semantics::StateEvaluationContext<Ext, Kind, decltype(state)>(state,
                                                                                                                                        builder,
                                                                                                                                        storage,
                                                                                                                                        arguments,
@@ -250,7 +250,7 @@ void check_query_graph()
     const auto arguments = denotations.insert(argument_data).first;
     const auto context_for = [&](auto state)
     {
-        return kr::dl::semantics::StateEvaluationContext<Ext, Kind, decltype(state), std::remove_cvref_t<decltype(registers)>>(state,
+        return kr::dl::semantics::StateEvaluationContext<Ext, Kind, decltype(state)>(state,
                                                                                                                                builder,
                                                                                                                                storage,
                                                                                                                                arguments,
@@ -387,7 +387,7 @@ void check_query_graph()
     const auto other_registers = ygg::make_view(register_data, *other->task->get_repository());
     auto other_argument_data = ygg::Data<kr::dl::semantics::CallArguments> {};
     const auto other_arguments = other_denotations.insert(other_argument_data).first;
-    auto other_context = kr::dl::semantics::StateEvaluationContext<Ext, Kind, tyr::planning::StateView<Kind>, std::remove_cvref_t<decltype(other_registers)>>(
+    auto other_context = kr::dl::semantics::StateEvaluationContext<Ext, Kind, tyr::planning::StateView<Kind>>(
         other_initial.get_state(),
         builder,
         other_storage,

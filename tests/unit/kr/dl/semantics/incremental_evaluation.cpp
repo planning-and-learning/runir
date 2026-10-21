@@ -35,10 +35,7 @@ namespace
 using Ext = kr::ExtFamilyTag;
 using Object = ygg::Index<tyr::formalism::Object>;
 
-using GroundContext = kr::dl::semantics::StateEvaluationContext<Ext,
-                                                                tyr::GroundTag,
-                                                                tyr::planning::StateView<tyr::GroundTag>,
-                                                                kr::dl::semantics::BorrowedRegisterValuesView>;
+using GroundContext = kr::dl::semantics::StateEvaluationContext<Ext, tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>>;
 using GroundStateEvaluation = kr::dl::semantics::incremental::StateEvaluation<Ext, tyr::GroundTag, GroundContext>;
 
 template<typename Index>
@@ -241,7 +238,7 @@ void check_incremental_evaluation()
     const auto other_arguments = kr::dl::semantics::insert(denotations, argument_data).first;
     const auto context_for = [&](auto state, size_t i, kr::dl::semantics::CallArgumentsView invocation)
     {
-        return kr::dl::semantics::StateEvaluationContext<Ext, Kind, decltype(state), kr::dl::semantics::BorrowedRegisterValuesView>(state,
+        return kr::dl::semantics::StateEvaluationContext<Ext, Kind, decltype(state)>(state,
                                                                                                                                     builder,
                                                                                                                                     storage,
                                                                                                                                     invocation,

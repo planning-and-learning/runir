@@ -19,7 +19,7 @@ struct ArgumentEvaluator
     template<StateEvaluationContextConcept<Family, Kind> Context>
     void initialize(EvaluationGraph<Family, Kind>&, Context& context)
     {
-        value.assign(context.arguments().at(identifier));
+        value.assign(argument_value(context, identifier));
     }
     void update(EvaluationGraph<Family, Kind>&, const Delta<Family>&, ygg::database::Workspace&) {}
 };

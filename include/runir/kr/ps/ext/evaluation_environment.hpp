@@ -3,7 +3,7 @@
 
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/dl/semantics/evaluation_storage.hpp"
-#include "runir/kr/dl/semantics/ext/state_evaluation_context.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include "runir/kr/ps/dl/transition_evaluation_context.hpp"
 #include "runir/kr/dl/semantics/evaluation_policy.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
@@ -144,7 +144,7 @@ public:
     template<tyr::planning::StateViewConcept<Kind> S, runir::kr::dl::semantics::RegisterValuesViewConcept R>
     auto make_dl_context(S state, runir::kr::dl::semantics::CallArgumentsView arguments, R registers)
     {
-        using StateDlContext = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, Kind, S, R>;
+        using StateDlContext = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, Kind, S>;
         auto context = StateDlContext(std::move(state), m_dl_builder, m_dl_storage, arguments, registers);
         return current_policy().make_source_context(std::move(context));
     }
@@ -156,7 +156,7 @@ public:
     {
         if (&arguments.get_context() != &m_dl_denotation_repository)
             throw std::invalid_argument("Call argument evaluation requires arguments from the selected task repository.");
-        using StateDlContext = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, Kind, S, R>;
+        using StateDlContext = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, Kind, S>;
         return StateDlContext(std::move(state), m_dl_builder, m_call_caches, m_dl_denotation_repository, m_dl_storage, arguments, registers);
     }
 
@@ -164,7 +164,7 @@ public:
     auto
     make_dl_transition_context(S source_state, S target_state, runir::kr::dl::semantics::CallArgumentsView arguments, R source_registers, R target_registers)
     {
-        using StateDlContext = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, Kind, S, R>;
+        using StateDlContext = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, Kind, S>;
         auto source = StateDlContext(std::move(source_state), m_dl_builder, m_dl_storage, arguments, source_registers);
         auto target = StateDlContext(std::move(target_state), m_dl_builder, m_dl_target_storage, arguments, target_registers);
         return make_evaluation_transition_context<ExtFamilyTag, Kind>(current_policy().make_source_context(std::move(source)),

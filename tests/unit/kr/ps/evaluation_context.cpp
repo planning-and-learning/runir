@@ -93,8 +93,7 @@ constexpr bool evaluation_policies_accept_borrowed_states()
 {
     using Inputs = kr::dl::semantics::StateEvaluationContext<Family,
                                                          Kind,
-                                                         tyr::planning::BuilderStateView<Kind>,
-                                                         kr::dl::semantics::BorrowedRegisterValuesView>;
+                                                         tyr::planning::BuilderStateView<Kind>>;
     return kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::FullEvaluationPolicy<Family, Kind>, Family, Kind>
            && kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::DeltaEvaluationPolicy<Family, Kind>, Family, Kind>
            && kr::dl::semantics::EvaluationContextConcept<Inputs, Family, Kind>

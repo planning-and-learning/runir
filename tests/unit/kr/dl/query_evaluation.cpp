@@ -101,8 +101,7 @@ auto persistent_context(Context& source,
 {
     return kr::dl::semantics::StateEvaluationContext<Ext,
                                                      typename Context::KindType,
-                                                     std::remove_cvref_t<decltype(source.get_state())>,
-                                                     std::remove_cvref_t<decltype(source.registers())>>(source.get_state(),
+                                                     std::remove_cvref_t<decltype(source.get_state())>>(source.get_state(),
                                                                                                         source.get_builder(),
                                                                                                         caches,
                                                                                                         repository,
@@ -281,7 +280,13 @@ void check_queries()
                                                                                  kr::dl::semantics::insert(denotations, registers).first);
     const auto argument_count = kr::ps::ext::dl::parse_numerical("(n_count (q_join " + triple + " (q_concept x (c_argument 0))))", domain, *repository);
     // An invalid Ext argument must propagate through DL/query variant dispatch, not terminate.
-    EXPECT_THROW(kr::dl::semantics::evaluate<Kind>(argument_count, context), std::out_of_range);
+    EXPECT_THROW(kr::dl::semantics::evaluate<Kind>(argument_count, context), std::invalid_argument);
+    // A context that binds no arguments or registers rejects both.
+    auto unbound_context = kr::dl::semantics::StateEvaluationContext<Ext, Kind>(initial.get_state(), builder, storage);
+    EXPECT_FALSE(unbound_context.has_arguments());
+    EXPECT_THROW(kr::dl::semantics::evaluate<Kind>(argument_count, unbound_context), std::invalid_argument);
+    EXPECT_THROW(kr::dl::semantics::evaluate<Kind>(kr::ps::ext::dl::parse_concept("(c_register 0)", domain, *repository), unbound_context),
+                 std::invalid_argument);
     storage.reset_dynamic();
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(argument_count, argument_context).get(), 2);
     const auto argument = kr::ps::ext::dl::parse_concept("(c_argument 0)", domain, *repository);
@@ -321,7 +326,7 @@ void check_queries()
         const auto arguments = kr::dl::semantics::insert(denotations, argument_data).first;
         const auto planning_state = initial.get_state();
         auto borrowed_context =
-            kr::dl::semantics::StateEvaluationContext<Ext, Kind, tyr::planning::BuilderStateView<Kind>, kr::dl::semantics::BorrowedRegisterValuesView>(
+            kr::dl::semantics::StateEvaluationContext<Ext, Kind, tyr::planning::BuilderStateView<Kind>>(
                 tyr::planning::BuilderStateView<Kind>(planning_state.get_state_builder(), *search->task),
                 builder,
                 storage,

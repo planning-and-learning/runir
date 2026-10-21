@@ -32,8 +32,8 @@ concept HasRegisterChanges = requires(Changes delta) {
     delta.added.role_registers;
 };
 
-static_assert(!HasRegisterChanges<kr::dl::semantics::incremental::Delta<kr::BaseFamilyTag>>);
-static_assert(!HasRegisterChanges<kr::dl::semantics::incremental::Delta<kr::UnsFamilyTag>>);
+static_assert(HasRegisterChanges<kr::dl::semantics::incremental::Delta<kr::BaseFamilyTag>>);
+static_assert(HasRegisterChanges<kr::dl::semantics::incremental::Delta<kr::UnsFamilyTag>>);
 static_assert(HasRegisterChanges<Delta>);
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind Fact, typename State>

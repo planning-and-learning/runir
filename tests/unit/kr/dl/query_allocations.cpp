@@ -483,7 +483,7 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
     const auto context_for = [&](size_t i)
     {
         return kr::dl::semantics::
-            StateEvaluationContext<Ext, tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>, kr::dl::semantics::BorrowedRegisterValuesView>(
+            StateEvaluationContext<Ext, tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>>(
                 states[i],
                 builder,
                 storage,

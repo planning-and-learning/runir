@@ -26,7 +26,7 @@ struct RegisterEvaluator
     void initialize(EvaluationGraph<Family, Kind>&, Context& context)
     {
         auto& builder = value.initialize(semantics::detail::num_objects<Family, Kind>(context));
-        const auto slot = context.registers().at(identifier);
+        const auto slot = register_value(context, identifier);
         if (slot)
         {
             if constexpr (std::same_as<Category, ConceptTag>)

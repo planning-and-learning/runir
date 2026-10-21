@@ -488,7 +488,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<runir::kr::ExtFamilyTag, R
     auto result = detail::make_concept_builder<Kind, runir::kr::ExtFamilyTag>(context);
     auto result_bitset = result->get();
 
-    const auto object = context.registers().at(constructor.get_register().get_identifier());
+    const auto object = register_value(context, constructor.get_register().get_identifier());
     if (object)
         result_bitset.set(ygg::uint_t(object.value().get_index()));
 
@@ -500,7 +500,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, Regi
 {
     auto result = detail::make_role_builder<Kind, runir::kr::ExtFamilyTag>(context);
 
-    const auto value = context.registers().at(constructor.get_register().get_identifier());
+    const auto value = register_value(context, constructor.get_register().get_identifier());
     if (value)
     {
         const auto pair = value.value();
@@ -514,27 +514,27 @@ template<tyr::TaskKind Kind, StateEvaluationContextConcept<runir::kr::ExtFamilyT
 auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<runir::kr::ExtFamilyTag, ArgumentTag<ConceptTag>>>, C> constructor,
                    Context& context) -> DenotationView<ConceptTag>
 {
-    return context.arguments().at(constructor.get_argument().get_identifier());
+    return argument_value(context, constructor.get_argument().get_identifier());
 }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<runir::kr::ExtFamilyTag, Kind> Context, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, ArgumentTag<RoleTag>>>, C> constructor, Context& context) -> DenotationView<RoleTag>
 {
-    return context.arguments().at(constructor.get_argument().get_identifier());
+    return argument_value(context, constructor.get_argument().get_identifier());
 }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<runir::kr::ExtFamilyTag, Kind> Context, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<runir::kr::ExtFamilyTag, ArgumentTag<BooleanTag>>>, C> constructor,
                    Context& context) -> DenotationView<BooleanTag>
 {
-    return context.arguments().at(constructor.get_argument().get_identifier());
+    return argument_value(context, constructor.get_argument().get_identifier());
 }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<runir::kr::ExtFamilyTag, Kind> Context, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<runir::kr::ExtFamilyTag, ArgumentTag<NumericalTag>>>, C> constructor,
                    Context& context) -> DenotationView<NumericalTag>
 {
-    return context.arguments().at(constructor.get_argument().get_identifier());
+    return argument_value(context, constructor.get_argument().get_identifier());
 }
 
 }  // namespace runir::kr::dl::semantics
