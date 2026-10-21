@@ -34,7 +34,7 @@ public:
     auto get_property_index() const noexcept -> PropertyIndexType { return m_property; }
     auto get_property() const noexcept -> const P& { return get_parent().get_vertex_property(m_property); }
 
-    auto identifying_members() const noexcept { return std::tie(m_index, m_property); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Vertex::m_index, &Vertex::m_property> {}; }
 };
 
 }  // namespace runir::graphs

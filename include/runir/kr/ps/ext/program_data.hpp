@@ -38,7 +38,7 @@ struct Data<runir::kr::ps::ext::Program>
 
     auto cista_members() noexcept { return std::tie(index, entry_module, modules); }
     auto cista_members() const noexcept { return std::tie(index, entry_module, modules); }
-    auto identifying_members() const noexcept { return std::tie(entry_module, modules); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::entry_module, &Data::modules> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());

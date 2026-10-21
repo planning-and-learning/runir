@@ -162,23 +162,23 @@ struct Data<runir::kr::ps::ext::Module>
                         memory_states,
                         memory_transitions);
     }
-    auto identifying_members() const noexcept
+    static constexpr auto identifying_members() noexcept
     {
-        return std::tie(symbol,
-                        concept_arguments,
-                        role_arguments,
-                        boolean_arguments,
-                        numerical_arguments,
-                        concept_registers,
-                        role_registers,
-                        concept_features,
-                        role_features,
-                        boolean_features,
-                        numerical_features,
-                        query_features,
-                        entry_memory_state,
-                        memory_states,
-                        memory_transitions);
+        return ygg::Members<&Data::symbol,
+                            &Data::concept_arguments,
+                            &Data::role_arguments,
+                            &Data::boolean_arguments,
+                            &Data::numerical_arguments,
+                            &Data::concept_registers,
+                            &Data::role_registers,
+                            &Data::concept_features,
+                            &Data::role_features,
+                            &Data::boolean_features,
+                            &Data::numerical_features,
+                            &Data::query_features,
+                            &Data::entry_memory_state,
+                            &Data::memory_states,
+                            &Data::memory_transitions> {};
     }
     void clear() noexcept
     {

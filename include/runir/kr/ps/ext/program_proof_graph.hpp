@@ -53,7 +53,7 @@ struct ProgramProofEdgeLabel : ygg::comparison::Mixin<ProgramProofEdgeLabel>
     }
 
     auto cista_members() noexcept { return std::tie(action, rule); }
-    auto identifying_members() const noexcept { return std::tie(action, rule); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&ProgramProofEdgeLabel::action, &ProgramProofEdgeLabel::rule> {}; }
 };
 
 template<tyr::TaskKind Kind>

@@ -28,7 +28,8 @@ struct Builder<runir::kr::ps::ext::ModuleState<Kind>>
     Data<runir::kr::dl::semantics::RegisterValues> registers;
     Index<runir::kr::dl::semantics::CallArguments> arguments;
 
-    auto identifying_members() const noexcept { return std::tie(state, module_, memory_state, registers, arguments); }
+    static constexpr auto identifying_members() noexcept
+    { return ygg::Members<&Builder::state, &Builder::module_, &Builder::memory_state, &Builder::registers, &Builder::arguments> {}; }
 };
 
 /// Owns mutable module values and references an interned caller chain.
@@ -40,7 +41,7 @@ struct Builder<runir::kr::ps::ext::ProgramState<Kind>>
     Builder<runir::kr::ps::ext::ModuleState<Kind>> module_state;
     ::cista::optional<Index<runir::kr::ps::ext::CallStack>> call_stack;
 
-    auto identifying_members() const noexcept { return std::tie(program, module_state, call_stack); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Builder::program, &Builder::module_state, &Builder::call_stack> {}; }
 };
 
 }  // namespace ygg

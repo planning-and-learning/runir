@@ -24,7 +24,7 @@ struct ResetPair
 
     auto cista_members() noexcept { return std::tie(before, after); }
     auto cista_members() const noexcept { return std::tie(before, after); }
-    auto identifying_members() const noexcept { return std::tie(before, after); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&ResetPair::before, &ResetPair::after> {}; }
     bool operator==(const ResetPair&) const = default;
     bool operator<(const ResetPair& other) const noexcept { return std::tie(before, after) < std::tie(other.before, other.after); }
 };

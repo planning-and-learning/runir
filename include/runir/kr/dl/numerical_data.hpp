@@ -38,7 +38,7 @@ struct Data<runir::kr::dl::Numerical<Family, runir::kr::dl::CountTag>>
 
     auto cista_members() noexcept { return std::tie(index, arg); }
     auto cista_members() const noexcept { return std::tie(index, arg); }
-    auto identifying_members() const noexcept { return std::tie(arg); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -74,7 +74,7 @@ struct Data<runir::kr::dl::Numerical<Family, runir::kr::dl::DistanceTag>>
 
     auto cista_members() noexcept { return std::tie(index, lhs, mid, rhs, plan); }
     auto cista_members() const noexcept { return std::tie(index, lhs, mid, rhs, plan); }
-    auto identifying_members() const noexcept { return std::tie(lhs, mid, rhs); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::lhs, &Data::mid, &Data::rhs> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());

@@ -35,7 +35,7 @@ struct Signature : ygg::comparison::Mixin<Signature<K>>
     Signature(Color color_, ColorTupleList<K> neighbor_colors_) : color(color_), neighbor_colors(std::move(neighbor_colors_)) {}
 
     auto cista_members() noexcept { return std::tie(color, neighbor_colors); }
-    auto identifying_members() const noexcept { return std::tie(color, neighbor_colors); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Signature::color, &Signature::neighbor_colors> {}; }
 };
 
 template<std::size_t K>
@@ -59,7 +59,7 @@ public:
     auto get_round_summaries() const noexcept -> const RoundSummaryList& { return m_round_summaries; }
     auto get_colors() const noexcept -> const TupleColorAssignmentList& { return m_colors; }
 
-    auto identifying_members() const noexcept { return std::tie(m_colors, m_round_summaries); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Certificate::m_colors, &Certificate::m_round_summaries> {}; }
 };
 
 template<std::size_t K>
@@ -190,14 +190,11 @@ auto compute_certificate(const G& graph)
         }
 
         // Canonicalize tuple order based on signature.
-        std::sort(tuple_signatures.begin(),
-                  tuple_signatures.end(),
-                  [](const auto& lhs, const auto& rhs)
-                  {
-                      const auto lhs_members = lhs.second.identifying_members();
-                      const auto rhs_members = rhs.second.identifying_members();
-                      return std::tie(lhs_members, lhs.first) < std::tie(rhs_members, rhs.first);
-                  });
+        std::sort(
+            tuple_signatures.begin(),
+            tuple_signatures.end(),
+            [](const auto& lhs, const auto& rhs)
+            { return std::tie(lhs.second.color, lhs.second.neighbor_colors, lhs.first) < std::tie(rhs.second.color, rhs.second.neighbor_colors, rhs.first); });
 
         auto round_summary = typename Certificate<K>::RoundSummary();
         for (const auto& [_, signature] : tuple_signatures)

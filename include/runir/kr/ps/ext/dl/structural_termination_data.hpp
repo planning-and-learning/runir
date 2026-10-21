@@ -41,7 +41,12 @@ struct ModulePolicyGraphVertexLabel : ygg::comparison::Mixin<ModulePolicyGraphVe
     }
 
     auto cista_members() noexcept { return std::tie(boolean_values, numerical_values, memory_state); }
-    auto identifying_members() const noexcept { return std::tie(boolean_values, numerical_values, memory_state); }
+    static constexpr auto identifying_members() noexcept
+    {
+        return ygg::Members<&ModulePolicyGraphVertexLabel::boolean_values,
+                            &ModulePolicyGraphVertexLabel::numerical_values,
+                            &ModulePolicyGraphVertexLabel::memory_state> {};
+    }
 };
 
 using ModulePolicyGraphBuilder = graphs::StaticGraphBuilder<ModulePolicyGraphVertexLabel, RuleVariantView>;

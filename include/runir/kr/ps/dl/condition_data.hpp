@@ -35,7 +35,7 @@ struct Data<runir::kr::ps::ConcreteConditionVariant<Family, runir::kr::DlTag>>
 
     auto cista_members() noexcept { return std::tie(index, variant); }
     auto cista_members() const noexcept { return std::tie(index, variant); }
-    auto identifying_members() const noexcept { return std::tie(variant); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::variant> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -58,7 +58,7 @@ struct Data<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTa
 
     auto cista_members() noexcept { return std::tie(index, feature); }
     auto cista_members() const noexcept { return std::tie(index, feature); }
-    auto identifying_members() const noexcept { return std::tie(feature); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::feature> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());

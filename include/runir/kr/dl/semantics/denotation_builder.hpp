@@ -34,7 +34,7 @@ struct Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>>
 
     auto get() noexcept -> bool& { return value; }
     auto get() const noexcept -> const bool& { return value; }
-    auto identifying_members() const noexcept { return std::tie(value); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Builder::value> {}; }
 };
 
 template<>
@@ -54,7 +54,7 @@ struct Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>
 
     auto get() noexcept -> ygg::uint_t& { return value; }
     auto get() const noexcept -> const ygg::uint_t& { return value; }
-    auto identifying_members() const noexcept { return std::tie(value); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Builder::value> {}; }
 };
 
 template<>
@@ -97,7 +97,7 @@ public:
 
     auto get() noexcept -> Bitset { return Bitset(blocks.data(), num_bits(num_objects)); }
     auto get() const noexcept -> ConstBitset { return ConstBitset(blocks.data(), num_bits(num_objects)); }
-    auto identifying_members() const noexcept { return std::tie(num_objects, blocks); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Builder::num_objects, &Builder::blocks> {}; }
 
     bool contains(Index<tyr::formalism::Object> object) const noexcept { return get().test(ygg::uint_t(object)); }
 
@@ -187,7 +187,7 @@ public:
     auto get(ygg::uint_t object) noexcept -> Bitset { return get(ygg::Index<tyr::formalism::Object>(object)); }
     auto get(ygg::uint_t object) const noexcept -> ConstBitset { return get(ygg::Index<tyr::formalism::Object>(object)); }
     auto get_num_objects() const noexcept { return num_objects; }
-    auto identifying_members() const noexcept { return std::tie(num_objects, blocks); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Builder::num_objects, &Builder::blocks> {}; }
 
     bool contains(Index<tyr::formalism::Object> source, Index<tyr::formalism::Object> target) const noexcept { return get(source).test(ygg::uint_t(target)); }
 

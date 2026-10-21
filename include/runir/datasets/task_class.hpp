@@ -40,7 +40,7 @@ struct TaskClass : ygg::comparison::Mixin<TaskClass<Kind>>
     explicit TaskClass(std::vector<tyr::planning::TaskPtr<Kind>> tasks_) : tasks(std::move(tasks_)) {}
 
     auto cista_members() noexcept { return std::tie(tasks); }
-    auto identifying_members() const noexcept { return std::tie(tasks); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&TaskClass::tasks> {}; }
 };
 
 template<tyr::TaskKind Kind>

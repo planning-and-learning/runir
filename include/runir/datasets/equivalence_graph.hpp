@@ -52,7 +52,8 @@ struct EquivalenceVertexLabel : ygg::comparison::Mixin<EquivalenceVertexLabel>
     }
 
     auto cista_members() noexcept { return std::tie(state_graph_index, state_vertex_index); }
-    constexpr auto identifying_members() const noexcept { return std::tie(state_graph_index, state_vertex_index); }
+    static constexpr auto identifying_members() noexcept
+    { return ygg::Members<&EquivalenceVertexLabel::state_graph_index, &EquivalenceVertexLabel::state_vertex_index> {}; }
 };
 
 struct AnnotatedEquivalenceVertexLabel : ygg::comparison::Mixin<AnnotatedEquivalenceVertexLabel>
@@ -85,9 +86,15 @@ struct AnnotatedEquivalenceVertexLabel : ygg::comparison::Mixin<AnnotatedEquival
 
     auto cista_members() noexcept { return std::tie(state_graph_index, state_vertex_index, goal_distance, is_initial, is_goal, is_alive, is_unsolvable); }
 
-    auto identifying_members() const noexcept
+    static constexpr auto identifying_members() noexcept
     {
-        return std::tie(state_graph_index, state_vertex_index, goal_distance, is_initial, is_goal, is_alive, is_unsolvable);
+        return ygg::Members<&AnnotatedEquivalenceVertexLabel::state_graph_index,
+                            &AnnotatedEquivalenceVertexLabel::state_vertex_index,
+                            &AnnotatedEquivalenceVertexLabel::goal_distance,
+                            &AnnotatedEquivalenceVertexLabel::is_initial,
+                            &AnnotatedEquivalenceVertexLabel::is_goal,
+                            &AnnotatedEquivalenceVertexLabel::is_alive,
+                            &AnnotatedEquivalenceVertexLabel::is_unsolvable> {};
     }
 };
 
@@ -104,7 +111,8 @@ struct EquivalenceEdgeLabel : ygg::comparison::Mixin<EquivalenceEdgeLabel>
     }
 
     auto cista_members() noexcept { return std::tie(state_graph_index, state_edge_index); }
-    constexpr auto identifying_members() const noexcept { return std::tie(state_graph_index, state_edge_index); }
+    static constexpr auto identifying_members() noexcept
+    { return ygg::Members<&EquivalenceEdgeLabel::state_graph_index, &EquivalenceEdgeLabel::state_edge_index> {}; }
 };
 
 using EquivalenceGraphBuilder = graphs::StaticGraphBuilder<EquivalenceVertexLabel, EquivalenceEdgeLabel>;

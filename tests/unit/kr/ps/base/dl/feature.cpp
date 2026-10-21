@@ -27,7 +27,7 @@ concept FeatureContract = IndexedDataView<Entity> && std::same_as<typename ygg::
                                  data.variant;
                                  data.clear();
                                  { std::as_const(data).cista_members() } -> std::same_as<std::tuple<const ygg::Index<Entity>&, const typename ygg::Data<Entity>::Variant&>>;
-                                 { data.identifying_members() } -> std::same_as<std::tuple<const typename ygg::Data<Entity>::Variant&>>;
+                                 requires std::same_as<ygg::IdentifyingMember<ygg::Data<Entity>, 0>, typename ygg::Data<Entity>::Variant>;
                                  view.get_index();
                                  view.get_variant();
                                  view.get_symbol();
@@ -45,7 +45,8 @@ concept ConcreteFeatureContract =
            data.clear();
            { data.feature } -> std::same_as<ygg::Index<Expression>&>;
            { std::as_const(data).cista_members() } -> std::same_as<std::tuple<const ygg::Index<Entity>&, const ygg::Index<Expression>&, const ::cista::offset::string&>>;
-           { data.identifying_members() } -> std::same_as<std::tuple<const ygg::Index<Expression>&, const ::cista::offset::string&>>;
+           requires std::same_as<ygg::IdentifyingMember<ygg::Data<Entity>, 0>, ygg::Index<Expression>>;
+           requires std::same_as<ygg::IdentifyingMember<ygg::Data<Entity>, 1>, ::cista::offset::string>;
            view.get_index();
            view.get_expression();
            view.get_feature();

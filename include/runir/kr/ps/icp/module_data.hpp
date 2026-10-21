@@ -140,20 +140,20 @@ struct Data<runir::kr::ps::icp::Module>
                         memory_transitions,
                         reset_pairs);
     }
-    auto identifying_members() const noexcept
+    static constexpr auto identifying_members() noexcept
     {
-        return std::tie(symbol,
-                        concept_registers,
-                        role_registers,
-                        concept_features,
-                        role_features,
-                        boolean_features,
-                        numerical_features,
-                        query_features,
-                        entry_memory_state,
-                        memory_states,
-                        memory_transitions,
-                        reset_pairs);
+        return ygg::Members<&Data::symbol,
+                            &Data::concept_registers,
+                            &Data::role_registers,
+                            &Data::concept_features,
+                            &Data::role_features,
+                            &Data::boolean_features,
+                            &Data::numerical_features,
+                            &Data::query_features,
+                            &Data::entry_memory_state,
+                            &Data::memory_states,
+                            &Data::memory_transitions,
+                            &Data::reset_pairs> {};
     }
     void clear() noexcept
     {

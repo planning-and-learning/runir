@@ -49,7 +49,7 @@ struct StateGraphVertexLabel : ygg::comparison::Mixin<StateGraphVertexLabel<Kind
     explicit StateGraphVertexLabel(tyr::planning::PackedStateView<Kind> state_) noexcept : state(std::move(state_)) {}
 
     auto cista_members() noexcept { return std::tie(state); }
-    auto identifying_members() const noexcept { return std::tie(state); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&StateGraphVertexLabel::state> {}; }
 };
 
 template<tyr::TaskKind Kind>
@@ -78,7 +78,15 @@ struct AnnotatedStateGraphVertexLabel : ygg::comparison::Mixin<AnnotatedStateGra
     }
 
     auto cista_members() noexcept { return std::tie(state, goal_distance, is_initial, is_goal, is_alive, is_unsolvable); }
-    auto identifying_members() const noexcept { return std::tie(state, goal_distance, is_initial, is_goal, is_alive, is_unsolvable); }
+    static constexpr auto identifying_members() noexcept
+    {
+        return ygg::Members<&AnnotatedStateGraphVertexLabel::state,
+                            &AnnotatedStateGraphVertexLabel::goal_distance,
+                            &AnnotatedStateGraphVertexLabel::is_initial,
+                            &AnnotatedStateGraphVertexLabel::is_goal,
+                            &AnnotatedStateGraphVertexLabel::is_alive,
+                            &AnnotatedStateGraphVertexLabel::is_unsolvable> {};
+    }
 };
 
 struct StateGraphEdgeLabel : ygg::comparison::Mixin<StateGraphEdgeLabel>

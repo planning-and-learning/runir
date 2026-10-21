@@ -38,7 +38,7 @@ struct Data<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, Category>>
 
     auto cista_members() noexcept { return std::tie(index, lhs, rhs); }
     auto cista_members() const noexcept { return std::tie(index, lhs, rhs); }
-    auto identifying_members() const noexcept { return std::tie(lhs, rhs); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::lhs, &Data::rhs> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());

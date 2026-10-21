@@ -38,7 +38,7 @@ public:
     auto get_round_summaries() const noexcept -> const RoundSummaryList& { return m_round_summaries; }
     auto get_colors() const noexcept -> const ColorAssignmentList& { return m_colors; }
 
-    auto identifying_members() const noexcept { return std::tie(m_colors, m_round_summaries); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Certificate::m_colors, &Certificate::m_round_summaries> {}; }
 };
 
 template<typename Signature>

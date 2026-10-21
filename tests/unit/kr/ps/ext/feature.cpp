@@ -25,7 +25,7 @@ concept FeatureContract =
            data.variant;
            data.clear();
            { std::as_const(data).cista_members() } -> std::same_as<std::tuple<const ygg::Index<Entity>&, const typename ygg::Data<Entity>::Variant&>>;
-           { data.identifying_members() } -> std::same_as<std::tuple<const typename ygg::Data<Entity>::Variant&>>;
+           requires std::same_as<ygg::IdentifyingMember<ygg::Data<Entity>, 0>, typename ygg::Data<Entity>::Variant>;
            view.get_index();
            view.get_variant();
            view.get_symbol();

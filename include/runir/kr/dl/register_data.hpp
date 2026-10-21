@@ -25,7 +25,7 @@ struct Data<runir::kr::dl::Register<Category>>
 
     auto cista_members() noexcept { return std::tie(index, name, identifier); }
     auto cista_members() const noexcept { return std::tie(index, name, identifier); }
-    auto identifying_members() const noexcept { return std::tie(name, identifier); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::name, &Data::identifier> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());

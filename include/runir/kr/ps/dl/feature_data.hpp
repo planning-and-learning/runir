@@ -54,7 +54,7 @@ struct Data<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>
 
     auto cista_members() noexcept { return std::tie(index, feature, symbol); }
     auto cista_members() const noexcept { return std::tie(index, feature, symbol); }
-    auto identifying_members() const noexcept { return std::tie(feature, symbol); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::feature, &Data::symbol> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());

@@ -27,7 +27,8 @@ concept ConcreteFeatureContract =
            data.clear();
            { data.feature } -> std::same_as<ygg::Index<Expression>&>;
            { std::as_const(data).cista_members() } -> std::same_as<std::tuple<const ygg::Index<Entity>&, const ygg::Index<Expression>&, const ::cista::offset::string&>>;
-           { data.identifying_members() } -> std::same_as<std::tuple<const ygg::Index<Expression>&, const ::cista::offset::string&>>;
+           requires std::same_as<ygg::IdentifyingMember<ygg::Data<Entity>, 0>, ygg::Index<Expression>>;
+           requires std::same_as<ygg::IdentifyingMember<ygg::Data<Entity>, 1>, ::cista::offset::string>;
            view.get_index();
            view.get_expression();
            view.get_feature();

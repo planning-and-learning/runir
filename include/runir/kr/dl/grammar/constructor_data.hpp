@@ -83,7 +83,7 @@ struct Data<runir::kr::dl::grammar::Constructor<Family, Category>>
 
     auto cista_members() noexcept { return std::tie(index, variant); }
     auto cista_members() const noexcept { return std::tie(index, variant); }
-    auto identifying_members() const noexcept { return std::tie(variant); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::variant> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());

@@ -220,21 +220,21 @@ struct Data<runir::kr::dl::cnf_grammar::Grammar<Family>>
                         numerical_substitution_rules,
                         domain);
     }
-    auto identifying_members() const noexcept
+    static constexpr auto identifying_members() noexcept
     {
-        return std::tie(concept_start,
-                        role_start,
-                        boolean_start,
-                        numerical_start,
-                        concept_derivation_rules,
-                        role_derivation_rules,
-                        boolean_derivation_rules,
-                        numerical_derivation_rules,
-                        concept_substitution_rules,
-                        role_substitution_rules,
-                        boolean_substitution_rules,
-                        numerical_substitution_rules,
-                        domain);
+        return ygg::Members<&Data::concept_start,
+                            &Data::role_start,
+                            &Data::boolean_start,
+                            &Data::numerical_start,
+                            &Data::concept_derivation_rules,
+                            &Data::role_derivation_rules,
+                            &Data::boolean_derivation_rules,
+                            &Data::numerical_derivation_rules,
+                            &Data::concept_substitution_rules,
+                            &Data::role_substitution_rules,
+                            &Data::boolean_substitution_rules,
+                            &Data::numerical_substitution_rules,
+                            &Data::domain> {};
     }
     void clear() noexcept
     {

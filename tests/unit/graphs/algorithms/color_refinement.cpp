@@ -29,7 +29,7 @@ struct VertexColor : ygg::comparison::Mixin<VertexColor>
     VertexColor() = default;
     explicit VertexColor(ygg::uint_t value_) : value(value_) {}
 
-    auto identifying_members() const noexcept { return std::tie(value); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&VertexColor::value> {}; }
 };
 
 using GraphBuilder = graphs::StaticGraphBuilder<VertexColor>;

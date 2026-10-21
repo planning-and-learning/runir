@@ -26,7 +26,7 @@ struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>>
 
     auto cista_members() noexcept { return std::tie(index, value); }
     auto cista_members() const noexcept { return std::tie(index, value); }
-    auto identifying_members() const noexcept { return std::tie(value); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::value> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -47,7 +47,7 @@ struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>>
 
     auto cista_members() noexcept { return std::tie(index, value); }
     auto cista_members() const noexcept { return std::tie(index, value); }
-    auto identifying_members() const noexcept { return std::tie(value); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::value> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -66,7 +66,7 @@ struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>
 
     auto cista_members() noexcept { return std::tie(index, num_objects, vec_index); }
     auto cista_members() const noexcept { return std::tie(index, num_objects, vec_index); }
-    auto identifying_members() const noexcept { return std::tie(num_objects, vec_index); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::num_objects, &Data::vec_index> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -85,7 +85,7 @@ struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>
 
     auto cista_members() noexcept { return std::tie(index, num_objects, vec_index); }
     auto cista_members() const noexcept { return std::tie(index, num_objects, vec_index); }
-    auto identifying_members() const noexcept { return std::tie(num_objects, vec_index); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::num_objects, &Data::vec_index> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());

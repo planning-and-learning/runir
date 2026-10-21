@@ -35,7 +35,7 @@ struct Data<runir::kr::ps::icp::Histories>
 
     auto cista_members() noexcept { return std::tie(index, concepts); }
     auto cista_members() const noexcept { return std::tie(index, concepts); }
-    auto identifying_members() const noexcept { return std::tie(concepts); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::concepts> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -89,7 +89,8 @@ struct Data<runir::kr::ps::icp::ProgramState<Kind>>
 
     auto cista_members() noexcept { return std::tie(index, program, memory_state, registers, histories, state); }
     auto cista_members() const noexcept { return std::tie(index, program, memory_state, registers, histories, state); }
-    auto identifying_members() const noexcept { return std::tie(program, memory_state, registers, histories, state); }
+    static constexpr auto identifying_members() noexcept
+    { return ygg::Members<&Data::program, &Data::memory_state, &Data::registers, &Data::histories, &Data::state> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());

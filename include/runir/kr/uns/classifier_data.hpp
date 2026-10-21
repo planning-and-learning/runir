@@ -43,7 +43,7 @@ struct Data<runir::kr::uns::ClassifierLiteral>
 
     auto cista_members() noexcept { return std::tie(index, variant, polarity); }
     auto cista_members() const noexcept { return std::tie(index, variant, polarity); }
-    auto identifying_members() const noexcept { return std::tie(variant, polarity); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::variant, &Data::polarity> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -67,7 +67,7 @@ struct Data<runir::kr::uns::ClassifierClause>
 
     auto cista_members() noexcept { return std::tie(index, literals); }
     auto cista_members() const noexcept { return std::tie(index, literals); }
-    auto identifying_members() const noexcept { return std::tie(literals); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::literals> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -108,7 +108,7 @@ struct Data<runir::kr::uns::Classifier>
 
     auto cista_members() noexcept { return std::tie(index, symbol, features, clauses); }
     auto cista_members() const noexcept { return std::tie(index, symbol, features, clauses); }
-    auto identifying_members() const noexcept { return std::tie(symbol, features, clauses); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::symbol, &Data::features, &Data::clauses> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());

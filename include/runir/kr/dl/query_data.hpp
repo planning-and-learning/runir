@@ -35,7 +35,7 @@ struct Data<runir::kr::dl::QueryColumn>
 
     auto cista_members() noexcept { return std::tie(index, name); }
     auto cista_members() const noexcept { return std::tie(index, name); }
-    auto identifying_members() const noexcept { return std::tie(name); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::name> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -68,7 +68,7 @@ public:
 
     auto cista_members() noexcept { return std::tie(index, variant, is_static); }
     auto cista_members() const noexcept { return std::tie(index, variant, is_static); }
-    auto identifying_members() const noexcept { return std::tie(variant); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::variant> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -103,7 +103,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::AtomicStateTag<T>>>
 
     auto cista_members() noexcept { return std::tie(index, predicate, columns, schema); }
     auto cista_members() const noexcept { return std::tie(index, predicate, columns, schema); }
-    auto identifying_members() const noexcept { return std::tie(predicate, columns); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::predicate, &Data::columns> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -143,7 +143,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::AtomicGoalTag<T>>>
 
     auto cista_members() noexcept { return std::tie(index, predicate, polarity, columns, schema); }
     auto cista_members() const noexcept { return std::tie(index, predicate, polarity, columns, schema); }
-    auto identifying_members() const noexcept { return std::tie(predicate, polarity, columns); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::predicate, &Data::polarity, &Data::columns> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -179,7 +179,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryConceptTag>>
 
     auto cista_members() noexcept { return std::tie(index, arg, columns, schema); }
     auto cista_members() const noexcept { return std::tie(index, arg, columns, schema); }
-    auto identifying_members() const noexcept { return std::tie(arg, columns); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg, &Data::columns> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -215,7 +215,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryRoleTag>>
 
     auto cista_members() noexcept { return std::tie(index, arg, columns, schema); }
     auto cista_members() const noexcept { return std::tie(index, arg, columns, schema); }
-    auto identifying_members() const noexcept { return std::tie(arg, columns); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg, &Data::columns> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -243,7 +243,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryJoinTag>>
 
     auto cista_members() noexcept { return std::tie(index, lhs, rhs, columns, plan); }
     auto cista_members() const noexcept { return std::tie(index, lhs, rhs, columns, plan); }
-    auto identifying_members() const noexcept { return std::tie(lhs, rhs); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::lhs, &Data::rhs> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -272,7 +272,7 @@ struct Data<runir::kr::dl::Query<Family, Tag>>
 
     auto cista_members() noexcept { return std::tie(index, lhs, rhs, columns, schema); }
     auto cista_members() const noexcept { return std::tie(index, lhs, rhs, columns, schema); }
-    auto identifying_members() const noexcept { return std::tie(lhs, rhs); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::lhs, &Data::rhs> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -304,7 +304,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryProjectTag>>
 
     auto cista_members() noexcept { return std::tie(index, arg, columns, plan); }
     auto cista_members() const noexcept { return std::tie(index, arg, columns, plan); }
-    auto identifying_members() const noexcept { return std::tie(arg, columns); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg, &Data::columns> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -336,7 +336,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryRenameTag>>
 
     auto cista_members() noexcept { return std::tie(index, arg, columns, schema); }
     auto cista_members() const noexcept { return std::tie(index, arg, columns, schema); }
-    auto identifying_members() const noexcept { return std::tie(arg, columns); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg, &Data::columns> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -380,7 +380,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QuerySelectEqualTag>>
 
     auto cista_members() noexcept { return std::tie(index, arg, lhs_column, rhs_column, columns, schema, lhs_position, rhs_position); }
     auto cista_members() const noexcept { return std::tie(index, arg, lhs_column, rhs_column, columns, schema, lhs_position, rhs_position); }
-    auto identifying_members() const noexcept { return std::tie(arg, lhs_column, rhs_column); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg, &Data::lhs_column, &Data::rhs_column> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -423,7 +423,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QuerySelectValueTag>>
 
     auto cista_members() noexcept { return std::tie(index, arg, column, object, columns, schema, position); }
     auto cista_members() const noexcept { return std::tie(index, arg, column, object, columns, schema, position); }
-    auto identifying_members() const noexcept { return std::tie(arg, column, object); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg, &Data::column, &Data::object> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -467,7 +467,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryGenericJoinTag>>
 
     auto cista_members() noexcept { return std::tie(index, args, variable_order, output_order, columns, plan); }
     auto cista_members() const noexcept { return std::tie(index, args, variable_order, output_order, columns, plan); }
-    auto identifying_members() const noexcept { return std::tie(args, variable_order, output_order); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::args, &Data::variable_order, &Data::output_order> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -526,7 +526,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryMustPassTag>>
 
     auto cista_members() noexcept { return std::tie(index, keys, sources, edges, targets, probes, columns, schema, plan); }
     auto cista_members() const noexcept { return std::tie(index, keys, sources, edges, targets, probes, columns, schema, plan); }
-    auto identifying_members() const noexcept { return std::tie(keys, sources, edges, targets, probes); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::keys, &Data::sources, &Data::edges, &Data::targets, &Data::probes> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -551,7 +551,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryEmptyTag>>
 
     auto cista_members() noexcept { return std::tie(index, columns, schema); }
     auto cista_members() const noexcept { return std::tie(index, columns, schema); }
-    auto identifying_members() const noexcept { return std::tie(columns); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::columns> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -583,7 +583,7 @@ struct Data<runir::kr::dl::QueryProjection<Family, Category>>
 
     auto cista_members() noexcept { return std::tie(index, arg, columns, plan); }
     auto cista_members() const noexcept { return std::tie(index, arg, columns, plan); }
-    auto identifying_members() const noexcept { return std::tie(arg, columns); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg, &Data::columns> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());

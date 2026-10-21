@@ -36,7 +36,8 @@ static_assert(requires(Data& data) {
     data.clear();
     { data.feature } -> std::same_as<ExpressionIndex&>;
     { std::as_const(data).cista_members() } -> std::same_as<std::tuple<const Index&, const ExpressionIndex&, const ::cista::offset::string&>>;
-    { data.identifying_members() } -> std::same_as<std::tuple<const ExpressionIndex&, const ::cista::offset::string&>>;
+    requires std::same_as<ygg::IdentifyingMember<Data, 0>, ExpressionIndex>;
+    requires std::same_as<ygg::IdentifyingMember<Data, 1>, ::cista::offset::string>;
     { canonicalize(data) } -> std::same_as<void>;
     { is_canonical(data) } -> std::same_as<bool>;
 });

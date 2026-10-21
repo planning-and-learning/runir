@@ -35,7 +35,7 @@ struct Data<runir::graphs::VertexProperty<P>>
 
     auto cista_members() noexcept { return std::tie(value); }
     auto cista_members() const noexcept { return std::tie(value); }
-    auto identifying_members() const noexcept { return std::tie(value); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::value> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -52,7 +52,7 @@ struct Data<runir::graphs::EdgeProperty<P>>
 
     auto cista_members() noexcept { return std::tie(value); }
     auto cista_members() const noexcept { return std::tie(value); }
-    auto identifying_members() const noexcept { return std::tie(value); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::value> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());

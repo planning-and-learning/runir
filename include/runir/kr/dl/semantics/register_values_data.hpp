@@ -64,7 +64,7 @@ struct Data<runir::kr::dl::semantics::RegisterValues>
 
     auto cista_members() noexcept { return std::tie(index, concept_values, role_values); }
     auto cista_members() const noexcept { return std::tie(index, concept_values, role_values); }
-    auto identifying_members() const noexcept { return std::tie(concept_values, role_values); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::concept_values, &Data::role_values> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());

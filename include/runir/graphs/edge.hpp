@@ -45,7 +45,7 @@ public:
     auto get_property_index() const noexcept -> PropertyIndexType { return m_property; }
     auto get_property() const noexcept -> const P& { return get_parent().get_edge_property(m_property); }
 
-    auto identifying_members() const noexcept { return std::tie(m_index, m_source, m_target, m_property); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Edge::m_index, &Edge::m_source, &Edge::m_target, &Edge::m_property> {}; }
 };
 
 }  // namespace runir::graphs

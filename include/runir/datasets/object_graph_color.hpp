@@ -100,7 +100,7 @@ struct Data<runir::datasets::PredicateColor<T>>
 
     auto cista_members() noexcept { return std::tie(index, predicate, argument_position, context); }
     auto cista_members() const noexcept { return std::tie(index, predicate, argument_position, context); }
-    auto identifying_members() const noexcept { return std::tie(predicate, argument_position, context); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::predicate, &Data::argument_position, &Data::context> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
@@ -134,7 +134,7 @@ struct Data<runir::datasets::Color>
 
     auto cista_members() noexcept { return std::tie(index, values); }
     auto cista_members() const noexcept { return std::tie(index, values); }
-    auto identifying_members() const noexcept { return std::tie(values); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::values> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());

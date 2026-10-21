@@ -48,7 +48,7 @@ struct Data<runir::kr::ps::base::Sketch>
 
     auto cista_members() noexcept { return std::tie(index, boolean_features, numerical_features, rules); }
     auto cista_members() const noexcept { return std::tie(index, boolean_features, numerical_features, rules); }
-    auto identifying_members() const noexcept { return std::tie(boolean_features, numerical_features, rules); }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::boolean_features, &Data::numerical_features, &Data::rules> {}; }
     void clear() noexcept
     {
         std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
