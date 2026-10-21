@@ -20,6 +20,7 @@
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <tyr/planning/state_repository.hpp>
 #include <vector>
+#include <yggdrasil/execution/onetbb.hpp>
 
 namespace runir::tests
 {
