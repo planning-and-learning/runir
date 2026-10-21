@@ -10,7 +10,7 @@
 #include <variant>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
-#include <yggdrasil/database/semantics/distance.hpp>
+#include <yggdrasil/database/semantics/distance_plan.hpp>
 
 namespace ygg
 {

@@ -15,7 +15,7 @@
 #include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
-#include <yggdrasil/database/semantics/generic_join.hpp>
+#include <yggdrasil/database/semantics/generic_join_plan.hpp>
 #include <yggdrasil/database/semantics/must_pass_plan.hpp>
 #include <yggdrasil/database/semantics/plans.hpp>
 
