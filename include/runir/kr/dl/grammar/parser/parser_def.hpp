@@ -593,13 +593,21 @@ auto non_terminal_string_parser()
                         prefix##_numerical_max,                                                                                                               \
                         prefix##_numerical_argument)
 
+// Each instantiation source defines the rules of one family (RUNIR_DL_GRAMMAR_PARSER_BASE, _EXT or _UNS) before
+// including this header: the rule definitions alone are most of a source's cost, and it instantiates one family.
 // The search-free instances come first: the full ones parse the edges of n_distance and q_must_pass with them.
+#if defined(RUNIR_DL_GRAMMAR_PARSER_BASE)
 RUNIR_DEFINE_FAMILY_PARSER(runir::kr::BaseFamilyTag, base_family_search_free, SearchFreeDialectTag, base_family_search_free)
-RUNIR_DEFINE_FAMILY_PARSER(runir::kr::ExtFamilyTag, ext_family_search_free, SearchFreeDialectTag, ext_family_search_free)
-RUNIR_DEFINE_FAMILY_PARSER(runir::kr::UnsFamilyTag, uns_family_search_free, SearchFreeDialectTag, uns_family_search_free)
 RUNIR_DEFINE_FAMILY_PARSER(runir::kr::BaseFamilyTag, base_family, FullDialectTag, base_family_search_free)
+#elif defined(RUNIR_DL_GRAMMAR_PARSER_EXT)
+RUNIR_DEFINE_FAMILY_PARSER(runir::kr::ExtFamilyTag, ext_family_search_free, SearchFreeDialectTag, ext_family_search_free)
 RUNIR_DEFINE_FAMILY_PARSER(runir::kr::ExtFamilyTag, ext_family, FullDialectTag, ext_family_search_free)
+#elif defined(RUNIR_DL_GRAMMAR_PARSER_UNS)
+RUNIR_DEFINE_FAMILY_PARSER(runir::kr::UnsFamilyTag, uns_family_search_free, SearchFreeDialectTag, uns_family_search_free)
 RUNIR_DEFINE_FAMILY_PARSER(runir::kr::UnsFamilyTag, uns_family, FullDialectTag, uns_family_search_free)
+#else
+#error "Define RUNIR_DL_GRAMMAR_PARSER_BASE, RUNIR_DL_GRAMMAR_PARSER_EXT or RUNIR_DL_GRAMMAR_PARSER_UNS before including parser_def.hpp."
+#endif
 
 #undef RUNIR_DEFINE_FAMILY_PARSER
 #undef RUNIR_CONSTRUCTOR_ALTERNATIVE

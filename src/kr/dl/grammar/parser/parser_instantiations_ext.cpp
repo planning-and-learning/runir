@@ -1,3 +1,4 @@
+#define RUNIR_DL_GRAMMAR_PARSER_EXT
 #include "runir/kr/dl/grammar/parser/parser_def.hpp"
 
 namespace runir::kr::dl::grammar::parser
