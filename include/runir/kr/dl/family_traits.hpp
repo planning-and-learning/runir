@@ -62,7 +62,6 @@ using BaseNumericalConstructorTags = ygg::TypeList<CountTag, DistanceTag>;
 
 using ExtConceptConstructorTags = ygg::ConcatTypeListsT<BaseConceptConstructorTags, ygg::TypeList<RegisterTag, ArgumentTag<ConceptTag>>>;
 using ExtRoleConstructorTags = ygg::ConcatTypeListsT<BaseRoleConstructorTags, ygg::TypeList<RegisterTag, ArgumentTag<RoleTag>>>;
-using ExtBooleanConstructorTags = ygg::ConcatTypeListsT<BaseBooleanConstructorTags, ygg::TypeList<ArgumentTag<BooleanTag>>>;
 using NumericalBinaryConstructorTags = ygg::TypeList<AddTag, SubTag, MulTag, DivTag, MinTag, MaxTag>;
 using ArithmeticConstructorTags = ygg::ConcatTypeListsT<ygg::TypeList<NumericalConstantTag>, NumericalBinaryConstructorTags>;
 using ExtNumericalConstructorTags = ygg::ConcatTypeListsT<BaseNumericalConstructorTags, ArithmeticConstructorTags, ygg::TypeList<ArgumentTag<NumericalTag>>>;
@@ -88,6 +87,9 @@ using UnsBooleanConstructorTags = ygg::ConcatTypeListsT<
     BaseBooleanConstructorTags,
     ygg::ConcatTypeListsT<UnsComparisonConstructorTags, ygg::ConcatTypeListsT<ygg::TypeList<BooleanConstantTag>, UnsLogicalConstructorTags>>>;
 using UnsNumericalConstructorTags = ygg::ConcatTypeListsT<BaseNumericalConstructorTags, ArithmeticConstructorTags>;
+
+/// Ext programs use every constructor: the Uns comparisons, constants and connectives too.
+using ExtBooleanConstructorTags = ygg::ConcatTypeListsT<UnsBooleanConstructorTags, ygg::TypeList<ArgumentTag<BooleanTag>>>;
 
 template<>
 struct DlFamilyTraits<runir::kr::BaseFamilyTag>

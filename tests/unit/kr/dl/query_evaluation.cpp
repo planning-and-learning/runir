@@ -287,6 +287,12 @@ void check_queries()
     EXPECT_THROW(kr::dl::semantics::evaluate<Kind>(argument_count, unbound_context), std::invalid_argument);
     EXPECT_THROW(kr::dl::semantics::evaluate<Kind>(kr::ps::ext::dl::parse_concept("(c_register 0)", domain, *repository), unbound_context),
                  std::invalid_argument);
+    // Ext programs also use the comparisons, constants and connectives.
+    const auto parse_boolean = [&](const std::string& description) { return kr::ps::ext::dl::parse_boolean(description, domain, *repository); };
+    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(parse_boolean("(b_and (b_const true) (b_not (n_lt (n_const 2) (n_const 1))))"), unbound_context).get());
+    EXPECT_FALSE(kr::dl::semantics::evaluate<Kind>(parse_boolean("(b_or (b_const false) (n_eq (n_add (n_const 1) (n_const 1)) (n_const 3)))"), unbound_context)
+                     .get());
+    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(parse_boolean("(b_neq (b_nonempty (c_top)) (b_const false))"), unbound_context).get());
     storage.reset_dynamic();
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(argument_count, argument_context).get(), 2);
     const auto argument = kr::ps::ext::dl::parse_concept("(c_argument 0)", domain, *repository);
