@@ -29,6 +29,10 @@ extern template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::Concr
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>;
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::base::Sketch>;
 
+#else
+
+#include <yggdrasil/formalism/detail/basic_symbol_repository_impl.hpp>
+
 #endif
 
 #endif

@@ -33,6 +33,10 @@ extern template class ygg::formalism::BasicSymbolRepository<ygg::database::Query
 extern template class ygg::formalism::BasicSymbolRepository<ygg::database::Query<ygg::TypeList<ygg::Index<ygg::formalism::Object<tyr::formalism::ObjectTag> >, unsigned int>, ygg::database::QuerySemijoinTag>>;
 extern template class ygg::formalism::BasicSymbolRepository<ygg::database::Query<ygg::TypeList<ygg::Index<ygg::formalism::Object<tyr::formalism::ObjectTag> >, unsigned int>, ygg::database::QueryAntijoinTag>>;
 
+#else
+
+#include <yggdrasil/formalism/detail/basic_symbol_repository_impl.hpp>
+
 #endif
 
 #endif

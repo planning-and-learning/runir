@@ -68,6 +68,10 @@ extern template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ext::
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ext::Program>;
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ext::OrderTerm>;
 
+#else
+
+#include <yggdrasil/formalism/detail/basic_symbol_repository_impl.hpp>
+
 #endif
 
 #endif

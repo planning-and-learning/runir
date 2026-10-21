@@ -2,6 +2,8 @@
 #include "runir/kr/detail/interning_contracts.hpp"
 #include "runir/kr/dl/grammar/declarations.hpp"
 
+#include <yggdrasil/formalism/detail/basic_symbol_repository_impl.hpp>
+
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Concept<runir::kr::UnsFamilyTag, runir::kr::dl::BotTag>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Concept<runir::kr::UnsFamilyTag, runir::kr::dl::TopTag>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Concept<runir::kr::UnsFamilyTag, runir::kr::dl::AtomicStateTag<tyr::formalism::StaticTag> >>;

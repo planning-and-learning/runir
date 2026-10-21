@@ -26,6 +26,7 @@
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/types.hpp>
+#include <yggdrasil/formalism/detail/basic_symbol_repository_impl.hpp>
 
 namespace runir::datasets
 {
@@ -170,3 +171,8 @@ template auto create_object_graph<tyr::GroundTag>(tyr::planning::StateView<tyr::
 template auto create_object_graph<tyr::LiftedTag>(tyr::planning::StateView<tyr::LiftedTag>, ColorRepository&) -> std::unique_ptr<ObjectGraph>;
 
 }  // namespace runir::datasets
+
+// Tests intern these records too; their insertion path needs basic_symbol_repository_impl.hpp.
+template class ygg::formalism::BasicSymbolRepository<runir::datasets::PredicateColor<tyr::formalism::StaticTag>, true>;
+template class ygg::formalism::BasicSymbolRepository<runir::datasets::PredicateColor<tyr::formalism::FluentTag>, true>;
+template class ygg::formalism::BasicSymbolRepository<runir::datasets::Color, true>;

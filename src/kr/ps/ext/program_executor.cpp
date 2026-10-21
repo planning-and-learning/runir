@@ -3,6 +3,8 @@
 #include "runir/kr/dl/semantics/detail/repository_instantiations.hpp"
 #include "runir/kr/ps/ext/detail/proof_search.hpp"
 
+#include <yggdrasil/formalism/detail/basic_symbol_repository_impl.hpp>
+
 namespace runir::kr::ps::ext
 {
 
@@ -81,3 +83,10 @@ template auto find_solution<tyr::LiftedTag>(runir::kr::TaskContextPtr<tyr::Lifte
                                             const ProgramSearchOptions<tyr::LiftedTag>& options) -> ProgramProofResults<tyr::LiftedTag>;
 
 }  // namespace runir::kr::ps::ext
+
+// Tests intern these records too; their insertion path needs basic_symbol_repository_impl.hpp.
+template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ext::CallStack>;
+template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ext::ModuleState<tyr::GroundTag>>;
+template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ext::ModuleState<tyr::LiftedTag>>;
+template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ext::ProgramState<tyr::GroundTag>>;
+template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ext::ProgramState<tyr::LiftedTag>>;

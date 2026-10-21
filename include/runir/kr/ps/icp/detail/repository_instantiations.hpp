@@ -43,6 +43,10 @@ extern template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::icp::
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::icp::XCondition>;
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::icp::XEffect>;
 
+#else
+
+#include <yggdrasil/formalism/detail/basic_symbol_repository_impl.hpp>
+
 #endif
 
 #endif

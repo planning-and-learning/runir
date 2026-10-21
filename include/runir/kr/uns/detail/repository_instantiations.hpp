@@ -14,6 +14,10 @@ extern template class ygg::formalism::BasicSymbolRepository<runir::kr::uns::Clas
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::uns::ClassifierClause>;
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::uns::Classifier>;
 
+#else
+
+#include <yggdrasil/formalism/detail/basic_symbol_repository_impl.hpp>
+
 #endif
 
 #endif

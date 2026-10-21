@@ -98,6 +98,10 @@ extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::gramm
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::grammar::DerivationRule<runir::kr::UnsFamilyTag, runir::kr::dl::NumericalTag>>;
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::grammar::GrammarTag<runir::kr::UnsFamilyTag>>;
 
+#else
+
+#include <yggdrasil/formalism/detail/basic_symbol_repository_impl.hpp>
+
 #endif
 
 #endif

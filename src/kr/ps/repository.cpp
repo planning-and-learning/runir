@@ -4,6 +4,8 @@
 #include "runir/kr/ps/icp/repository.hpp"
 #include "runir/kr/uns/repository.hpp"
 
+#include <yggdrasil/formalism/detail/basic_symbol_repository_impl.hpp>
+
 template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>>;

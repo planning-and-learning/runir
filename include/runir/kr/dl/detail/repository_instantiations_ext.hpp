@@ -103,6 +103,10 @@ extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Query
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::QueryProjection<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>;
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::QueryProjection<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>;
 
+#else
+
+#include <yggdrasil/formalism/detail/basic_symbol_repository_impl.hpp>
+
 #endif
 
 #endif
