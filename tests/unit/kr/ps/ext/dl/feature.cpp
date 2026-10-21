@@ -6,6 +6,7 @@
 #include <runir/kr/ps/ext/repository.hpp>
 #include <utility>
 #include <yggdrasil/core/types.hpp>
+#include <cista/reflection/to_tuple.h>
 
 namespace runir::tests
 {
@@ -26,7 +27,7 @@ concept ConcreteFeatureContract =
            data.symbol;
            data.clear();
            { data.feature } -> std::same_as<ygg::Index<Expression>&>;
-           { std::as_const(data).cista_members() } -> std::same_as<std::tuple<const ygg::Index<Entity>&, const ygg::Index<Expression>&, const ::cista::offset::string&>>;
+           { ::cista::to_tuple(std::as_const(data)) } -> std::same_as<std::tuple<const ygg::Index<Entity>&, const ygg::Index<Expression>&, const ::cista::offset::string&>>;
            requires std::same_as<ygg::IdentifyingMember<ygg::Data<Entity>, 0>, ygg::Index<Expression>>;
            requires std::same_as<ygg::IdentifyingMember<ygg::Data<Entity>, 1>, ::cista::offset::string>;
            view.get_index();

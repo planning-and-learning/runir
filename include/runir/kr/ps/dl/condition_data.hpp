@@ -33,12 +33,11 @@ struct Data<runir::kr::ps::ConcreteConditionVariant<Family, runir::kr::DlTag>>
     {
     }
 
-    auto cista_members() noexcept { return std::tie(index, variant); }
-    auto cista_members() const noexcept { return std::tie(index, variant); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::variant> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::variant> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -56,12 +55,11 @@ struct Data<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTa
         set(feature_, feature);
     }
 
-    auto cista_members() noexcept { return std::tie(index, feature); }
-    auto cista_members() const noexcept { return std::tie(index, feature); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::feature> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::feature> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 

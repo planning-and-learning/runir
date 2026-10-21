@@ -33,12 +33,11 @@ struct Data<runir::kr::ps::icp::Histories>
         set(concepts_, concepts);
     }
 
-    auto cista_members() noexcept { return std::tie(index, concepts); }
-    auto cista_members() const noexcept { return std::tie(index, concepts); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::concepts> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::concepts> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -87,13 +86,12 @@ struct Data<runir::kr::ps::icp::ProgramState<Kind>>
         set(state_, state);
     }
 
-    auto cista_members() noexcept { return std::tie(index, program, memory_state, registers, histories, state); }
-    auto cista_members() const noexcept { return std::tie(index, program, memory_state, registers, histories, state); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::program, &Data::memory_state, &Data::registers, &Data::histories, &Data::state> {}; }
     static constexpr auto identifying_members() noexcept
     { return ygg::Members<&Data::program, &Data::memory_state, &Data::registers, &Data::histories, &Data::state> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 

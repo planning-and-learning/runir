@@ -24,12 +24,11 @@ struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>>
     auto get_data() noexcept -> bool& { return value; }
     auto get_data() const noexcept -> const bool& { return value; }
 
-    auto cista_members() noexcept { return std::tie(index, value); }
-    auto cista_members() const noexcept { return std::tie(index, value); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::value> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::value> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -45,12 +44,11 @@ struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>>
     auto get_data() noexcept -> ygg::uint_t& { return value; }
     auto get_data() const noexcept -> const ygg::uint_t& { return value; }
 
-    auto cista_members() noexcept { return std::tie(index, value); }
-    auto cista_members() const noexcept { return std::tie(index, value); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::value> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::value> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -64,12 +62,11 @@ struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>
     Data() = default;
     Data(ygg::uint_t num_objects_, ygg::uint_t vec_index_) noexcept : num_objects(num_objects_), vec_index(vec_index_) {}
 
-    auto cista_members() noexcept { return std::tie(index, num_objects, vec_index); }
-    auto cista_members() const noexcept { return std::tie(index, num_objects, vec_index); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::num_objects, &Data::vec_index> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::num_objects, &Data::vec_index> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -83,12 +80,11 @@ struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>
     Data() = default;
     Data(ygg::uint_t num_objects_, ygg::uint_t vec_index_) noexcept : num_objects(num_objects_), vec_index(vec_index_) {}
 
-    auto cista_members() noexcept { return std::tie(index, num_objects, vec_index); }
-    auto cista_members() const noexcept { return std::tie(index, num_objects, vec_index); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::num_objects, &Data::vec_index> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::num_objects, &Data::vec_index> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 

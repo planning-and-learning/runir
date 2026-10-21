@@ -52,12 +52,11 @@ struct Data<runir::kr::dl::Boolean<Family, runir::kr::dl::NonemptyTag>>
     {
     }
 
-    auto cista_members() noexcept { return std::tie(index, arg); }
-    auto cista_members() const noexcept { return std::tie(index, arg); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::arg> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 

@@ -108,38 +108,7 @@ struct Data<runir::kr::ps::icp::Module>
         }
     }
 
-    auto cista_members() noexcept
-    {
-        return std::tie(index,
-                        symbol,
-                        concept_registers,
-                        role_registers,
-                        concept_features,
-                        role_features,
-                        boolean_features,
-                        numerical_features,
-                        query_features,
-                        entry_memory_state,
-                        memory_states,
-                        memory_transitions,
-                        reset_pairs);
-    }
-    auto cista_members() const noexcept
-    {
-        return std::tie(index,
-                        symbol,
-                        concept_registers,
-                        role_registers,
-                        concept_features,
-                        role_features,
-                        boolean_features,
-                        numerical_features,
-                        query_features,
-                        entry_memory_state,
-                        memory_states,
-                        memory_transitions,
-                        reset_pairs);
-    }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::symbol, &Data::concept_registers, &Data::role_registers, &Data::concept_features, &Data::role_features, &Data::boolean_features, &Data::numerical_features, &Data::query_features, &Data::entry_memory_state, &Data::memory_states, &Data::memory_transitions, &Data::reset_pairs> {}; }
     static constexpr auto identifying_members() noexcept
     {
         return ygg::Members<&Data::symbol,
@@ -157,7 +126,7 @@ struct Data<runir::kr::ps::icp::Module>
     }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 

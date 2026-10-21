@@ -37,12 +37,11 @@ struct Data<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>>
     {
     }
 
-    auto cista_members() noexcept { return std::tie(index, symbol, variant); }
-    auto cista_members() const noexcept { return std::tie(index, symbol, variant); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::symbol, &Data::variant> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::symbol, &Data::variant> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 

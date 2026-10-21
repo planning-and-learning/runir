@@ -68,13 +68,12 @@ struct Data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::LoadTag<Category>>>
         set(effects_, effects);
     }
 
-    auto cista_members() noexcept { return std::tie(index, source, target, conditions, feature, reg, effects); }
-    auto cista_members() const noexcept { return std::tie(index, source, target, conditions, feature, reg, effects); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::feature, &Data::reg, &Data::effects> {}; }
     static constexpr auto identifying_members() noexcept
     { return ygg::Members<&Data::source, &Data::target, &Data::conditions, &Data::feature, &Data::reg, &Data::effects> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -138,8 +137,7 @@ struct Data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>>
         set(xeffects_, xeffects);
     }
 
-    auto cista_members() noexcept { return std::tie(index, source, target, conditions, effects, action_name, argument_names, xconditions, xeffects); }
-    auto cista_members() const noexcept { return std::tie(index, source, target, conditions, effects, action_name, argument_names, xconditions, xeffects); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::effects, &Data::action_name, &Data::argument_names, &Data::xconditions, &Data::xeffects> {}; }
     static constexpr auto identifying_members() noexcept
     {
         return ygg::Members<&Data::source,
@@ -153,7 +151,7 @@ struct Data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>>
     }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 

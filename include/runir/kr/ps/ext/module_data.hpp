@@ -124,44 +124,7 @@ struct Data<runir::kr::ps::ext::Module>
         }
     }
 
-    auto cista_members() noexcept
-    {
-        return std::tie(index,
-                        symbol,
-                        concept_arguments,
-                        role_arguments,
-                        boolean_arguments,
-                        numerical_arguments,
-                        concept_registers,
-                        role_registers,
-                        concept_features,
-                        role_features,
-                        boolean_features,
-                        numerical_features,
-                        query_features,
-                        entry_memory_state,
-                        memory_states,
-                        memory_transitions);
-    }
-    auto cista_members() const noexcept
-    {
-        return std::tie(index,
-                        symbol,
-                        concept_arguments,
-                        role_arguments,
-                        boolean_arguments,
-                        numerical_arguments,
-                        concept_registers,
-                        role_registers,
-                        concept_features,
-                        role_features,
-                        boolean_features,
-                        numerical_features,
-                        query_features,
-                        entry_memory_state,
-                        memory_states,
-                        memory_transitions);
-    }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::symbol, &Data::concept_arguments, &Data::role_arguments, &Data::boolean_arguments, &Data::numerical_arguments, &Data::concept_registers, &Data::role_registers, &Data::concept_features, &Data::role_features, &Data::boolean_features, &Data::numerical_features, &Data::query_features, &Data::entry_memory_state, &Data::memory_states, &Data::memory_transitions> {}; }
     static constexpr auto identifying_members() noexcept
     {
         return ygg::Members<&Data::symbol,
@@ -182,7 +145,7 @@ struct Data<runir::kr::ps::ext::Module>
     }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 

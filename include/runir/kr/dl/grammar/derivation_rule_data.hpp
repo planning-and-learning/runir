@@ -38,12 +38,11 @@ struct Data<runir::kr::dl::grammar::DerivationRule<Family, Category>>
         set(rhs_, rhs);
     }
 
-    auto cista_members() noexcept { return std::tie(index, lhs, rhs); }
-    auto cista_members() const noexcept { return std::tie(index, lhs, rhs); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::lhs, &Data::rhs> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::lhs, &Data::rhs> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 

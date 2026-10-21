@@ -6,6 +6,7 @@
 #include <runir/kr/ps/dl/feature_view.hpp>
 #include <utility>
 #include <yggdrasil/core/types.hpp>
+#include <cista/reflection/to_tuple.h>
 
 namespace runir::tests
 {
@@ -26,7 +27,7 @@ concept FeatureContract = IndexedDataView<Entity> && std::same_as<typename ygg::
                                  data.index;
                                  data.variant;
                                  data.clear();
-                                 { std::as_const(data).cista_members() } -> std::same_as<std::tuple<const ygg::Index<Entity>&, const typename ygg::Data<Entity>::Variant&>>;
+                                 { ::cista::to_tuple(std::as_const(data)) } -> std::same_as<std::tuple<const ygg::Index<Entity>&, const typename ygg::Data<Entity>::Variant&>>;
                                  requires std::same_as<ygg::IdentifyingMember<ygg::Data<Entity>, 0>, typename ygg::Data<Entity>::Variant>;
                                  view.get_index();
                                  view.get_variant();
@@ -44,7 +45,7 @@ concept ConcreteFeatureContract =
            data.symbol;
            data.clear();
            { data.feature } -> std::same_as<ygg::Index<Expression>&>;
-           { std::as_const(data).cista_members() } -> std::same_as<std::tuple<const ygg::Index<Entity>&, const ygg::Index<Expression>&, const ::cista::offset::string&>>;
+           { ::cista::to_tuple(std::as_const(data)) } -> std::same_as<std::tuple<const ygg::Index<Entity>&, const ygg::Index<Expression>&, const ::cista::offset::string&>>;
            requires std::same_as<ygg::IdentifyingMember<ygg::Data<Entity>, 0>, ygg::Index<Expression>>;
            requires std::same_as<ygg::IdentifyingMember<ygg::Data<Entity>, 1>, ::cista::offset::string>;
            view.get_index();

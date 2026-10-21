@@ -37,12 +37,11 @@ struct Data<runir::kr::ps::ext::OrderTerm>
     {
     }
 
-    auto cista_members() noexcept { return std::tie(index, direction, feature); }
-    auto cista_members() const noexcept { return std::tie(index, direction, feature); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::direction, &Data::feature> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::direction, &Data::feature> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 

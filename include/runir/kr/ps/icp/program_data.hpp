@@ -25,12 +25,11 @@ struct Data<runir::kr::ps::icp::Program>
         set(module_, module);
     }
 
-    auto cista_members() noexcept { return std::tie(index, module); }
-    auto cista_members() const noexcept { return std::tie(index, module); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::module> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::module> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 

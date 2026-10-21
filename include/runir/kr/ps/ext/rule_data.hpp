@@ -80,13 +80,12 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<Category>>>
         set(effects_, effects);
     }
 
-    auto cista_members() noexcept { return std::tie(index, source, target, conditions, feature, reg, effects); }
-    auto cista_members() const noexcept { return std::tie(index, source, target, conditions, feature, reg, effects); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::feature, &Data::reg, &Data::effects> {}; }
     static constexpr auto identifying_members() noexcept
     { return ygg::Members<&Data::source, &Data::target, &Data::conditions, &Data::feature, &Data::reg, &Data::effects> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -148,13 +147,12 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ChooseTag<Category>>>
         set(order_, order);
     }
 
-    auto cista_members() noexcept { return std::tie(index, source, target, conditions, feature, reg, effects, order); }
-    auto cista_members() const noexcept { return std::tie(index, source, target, conditions, feature, reg, effects, order); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::feature, &Data::reg, &Data::effects, &Data::order> {}; }
     static constexpr auto identifying_members() noexcept
     { return ygg::Members<&Data::source, &Data::target, &Data::conditions, &Data::feature, &Data::reg, &Data::effects, &Data::order> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -196,12 +194,11 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>>
         set(effects_, effects);
     }
 
-    auto cista_members() noexcept { return std::tie(index, source, target, conditions, effects); }
-    auto cista_members() const noexcept { return std::tie(index, source, target, conditions, effects); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::effects> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::source, &Data::target, &Data::conditions, &Data::effects> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -254,13 +251,12 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>
         set(arguments_, arguments);
     }
 
-    auto cista_members() noexcept { return std::tie(index, source, target, conditions, effects, action_name, arguments); }
-    auto cista_members() const noexcept { return std::tie(index, source, target, conditions, effects, action_name, arguments); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::effects, &Data::action_name, &Data::arguments> {}; }
     static constexpr auto identifying_members() noexcept
     { return ygg::Members<&Data::source, &Data::target, &Data::conditions, &Data::effects, &Data::action_name, &Data::arguments> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -313,13 +309,12 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>>
         set(query_feature_, query_feature);
     }
 
-    auto cista_members() noexcept { return std::tie(index, source, target, conditions, effects, action_name, query_feature); }
-    auto cista_members() const noexcept { return std::tie(index, source, target, conditions, effects, action_name, query_feature); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::effects, &Data::action_name, &Data::query_feature> {}; }
     static constexpr auto identifying_members() noexcept
     { return ygg::Members<&Data::source, &Data::target, &Data::conditions, &Data::effects, &Data::action_name, &Data::query_feature> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -366,13 +361,12 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>>
         set(callee_, callee);
     }
 
-    auto cista_members() noexcept { return std::tie(index, source, target, conditions, callee, arguments); }
-    auto cista_members() const noexcept { return std::tie(index, source, target, conditions, callee, arguments); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::callee, &Data::arguments> {}; }
     static constexpr auto identifying_members() noexcept
     { return ygg::Members<&Data::source, &Data::target, &Data::conditions, &Data::callee, &Data::arguments> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -401,12 +395,11 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::BacktrackTag>>
         set(conditions_, conditions);
     }
 
-    auto cista_members() noexcept { return std::tie(index, source, conditions); }
-    auto cista_members() const noexcept { return std::tie(index, source, conditions); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::source, &Data::conditions> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::source, &Data::conditions> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 

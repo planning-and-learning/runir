@@ -66,13 +66,12 @@ struct Data<runir::kr::ps::ext::ModuleState<Kind>>
         set(arguments_, arguments);
     }
 
-    auto cista_members() noexcept { return std::tie(index, state, module_, memory_state, registers, arguments); }
-    auto cista_members() const noexcept { return std::tie(index, state, module_, memory_state, registers, arguments); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::state, &Data::module_, &Data::memory_state, &Data::registers, &Data::arguments> {}; }
     static constexpr auto identifying_members() noexcept
     { return ygg::Members<&Data::state, &Data::module_, &Data::memory_state, &Data::registers, &Data::arguments> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -121,13 +120,12 @@ struct Data<runir::kr::ps::ext::CallStack>
         set(caller_, caller);
     }
 
-    auto cista_members() noexcept { return std::tie(index, module_, return_memory_state, registers, arguments, caller); }
-    auto cista_members() const noexcept { return std::tie(index, module_, return_memory_state, registers, arguments, caller); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::module_, &Data::return_memory_state, &Data::registers, &Data::arguments, &Data::caller> {}; }
     static constexpr auto identifying_members() noexcept
     { return ygg::Members<&Data::module_, &Data::return_memory_state, &Data::registers, &Data::arguments, &Data::caller> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -164,12 +162,11 @@ struct Data<runir::kr::ps::ext::ProgramState<Kind>>
         set(call_stack_, call_stack);
     }
 
-    auto cista_members() noexcept { return std::tie(index, program, module_state, call_stack); }
-    auto cista_members() const noexcept { return std::tie(index, program, module_state, call_stack); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::program, &Data::module_state, &Data::call_stack> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::program, &Data::module_state, &Data::call_stack> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 

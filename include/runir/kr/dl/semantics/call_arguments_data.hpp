@@ -53,13 +53,12 @@ struct Data<runir::kr::dl::semantics::CallArguments>
         set(numerical_arguments_, numerical_arguments);
     }
 
-    auto cista_members() noexcept { return std::tie(index, concept_arguments, role_arguments, boolean_arguments, numerical_arguments); }
-    auto cista_members() const noexcept { return std::tie(index, concept_arguments, role_arguments, boolean_arguments, numerical_arguments); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::concept_arguments, &Data::role_arguments, &Data::boolean_arguments, &Data::numerical_arguments> {}; }
     static constexpr auto identifying_members() noexcept
     { return ygg::Members<&Data::concept_arguments, &Data::role_arguments, &Data::boolean_arguments, &Data::numerical_arguments> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 

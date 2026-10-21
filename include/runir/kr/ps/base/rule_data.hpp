@@ -46,12 +46,11 @@ struct Data<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>
         set(effects_, effects);
     }
 
-    auto cista_members() noexcept { return std::tie(index, symbol, conditions, effects); }
-    auto cista_members() const noexcept { return std::tie(index, symbol, conditions, effects); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::symbol, &Data::conditions, &Data::effects> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::symbol, &Data::conditions, &Data::effects> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 

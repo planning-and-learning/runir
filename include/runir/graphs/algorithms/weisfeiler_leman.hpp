@@ -34,7 +34,7 @@ struct Signature : ygg::comparison::Mixin<Signature<K>>
     Signature() = default;
     Signature(Color color_, ColorTupleList<K> neighbor_colors_) : color(color_), neighbor_colors(std::move(neighbor_colors_)) {}
 
-    auto cista_members() noexcept { return std::tie(color, neighbor_colors); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Signature::color, &Signature::neighbor_colors> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Signature::color, &Signature::neighbor_colors> {}; }
 };
 

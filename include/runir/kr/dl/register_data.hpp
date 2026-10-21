@@ -23,12 +23,11 @@ struct Data<runir::kr::dl::Register<Category>>
     Data() = default;
     Data(::cista::offset::string name_, runir::kr::dl::RegisterIdentifier<Category> identifier_) : index(), name(std::move(name_)), identifier(identifier_) {}
 
-    auto cista_members() noexcept { return std::tie(index, name, identifier); }
-    auto cista_members() const noexcept { return std::tie(index, name, identifier); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::name, &Data::identifier> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::name, &Data::identifier> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 

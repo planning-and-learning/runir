@@ -52,12 +52,11 @@ struct Data<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>
         set(feature_, feature);
     }
 
-    auto cista_members() noexcept { return std::tie(index, feature, symbol); }
-    auto cista_members() const noexcept { return std::tie(index, feature, symbol); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::feature, &Data::symbol> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::feature, &Data::symbol> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 

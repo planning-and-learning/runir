@@ -41,12 +41,11 @@ struct Data<runir::kr::uns::ClassifierLiteral>
     {
     }
 
-    auto cista_members() noexcept { return std::tie(index, variant, polarity); }
-    auto cista_members() const noexcept { return std::tie(index, variant, polarity); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::variant, &Data::polarity> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::variant, &Data::polarity> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -65,12 +64,11 @@ struct Data<runir::kr::uns::ClassifierClause>
         set(literals_, literals);
     }
 
-    auto cista_members() noexcept { return std::tie(index, literals); }
-    auto cista_members() const noexcept { return std::tie(index, literals); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::literals> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::literals> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -106,12 +104,11 @@ struct Data<runir::kr::uns::Classifier>
         set(clauses_, clauses);
     }
 
-    auto cista_members() noexcept { return std::tie(index, symbol, features, clauses); }
-    auto cista_members() const noexcept { return std::tie(index, symbol, features, clauses); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::symbol, &Data::features, &Data::clauses> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::symbol, &Data::features, &Data::clauses> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 

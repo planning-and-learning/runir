@@ -22,12 +22,11 @@ struct NullaryData : ygg::comparison::Mixin<NullaryData<Self>>
 
     NullaryData() = default;
 
-    auto cista_members() noexcept { return std::tie(index); }
-    auto cista_members() const noexcept { return std::tie(index); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&NullaryData::index> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -40,12 +39,11 @@ struct IdentifierData : ygg::comparison::Mixin<IdentifierData<Self, Identifier>>
     IdentifierData() = default;
     explicit IdentifierData(Identifier identifier_) : index(), identifier(std::move(identifier_)) {}
 
-    auto cista_members() noexcept { return std::tie(index, identifier); }
-    auto cista_members() const noexcept { return std::tie(index, identifier); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&IdentifierData::index, &IdentifierData::identifier> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&IdentifierData::identifier> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -77,12 +75,11 @@ struct ReferenceData : ygg::comparison::Mixin<ReferenceData<Self, Reference>>
         ygg::set(reference_, reference);
     }
 
-    auto cista_members() noexcept { return std::tie(index, reference); }
-    auto cista_members() const noexcept { return std::tie(index, reference); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&ReferenceData::index, &ReferenceData::reference> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&ReferenceData::reference> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -100,12 +97,11 @@ struct UnaryData : ygg::comparison::Mixin<UnaryData<Self, Arg>>
         ygg::set(arg_, arg);
     }
 
-    auto cista_members() noexcept { return std::tie(index, arg); }
-    auto cista_members() const noexcept { return std::tie(index, arg); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&UnaryData::index, &UnaryData::arg> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&UnaryData::arg> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -125,12 +121,11 @@ struct BinaryData : ygg::comparison::Mixin<BinaryData<Self, Lhs, Rhs>>
         ygg::set(rhs_, rhs);
     }
 
-    auto cista_members() noexcept { return std::tie(index, lhs, rhs); }
-    auto cista_members() const noexcept { return std::tie(index, lhs, rhs); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&BinaryData::index, &BinaryData::lhs, &BinaryData::rhs> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&BinaryData::lhs, &BinaryData::rhs> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -156,12 +151,11 @@ struct TernaryData : ygg::comparison::Mixin<TernaryData<Self, Lhs, Mid, Rhs>>
         ygg::set(rhs_, rhs);
     }
 
-    auto cista_members() noexcept { return std::tie(index, lhs, mid, rhs); }
-    auto cista_members() const noexcept { return std::tie(index, lhs, mid, rhs); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&TernaryData::index, &TernaryData::lhs, &TernaryData::mid, &TernaryData::rhs> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&TernaryData::lhs, &TernaryData::mid, &TernaryData::rhs> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -180,12 +174,11 @@ struct PredicateData : ygg::comparison::Mixin<PredicateData<Self, T>>
         ygg::set(predicate_, predicate);
     }
 
-    auto cista_members() noexcept { return std::tie(index, predicate, polarity); }
-    auto cista_members() const noexcept { return std::tie(index, predicate, polarity); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&PredicateData::index, &PredicateData::predicate, &PredicateData::polarity> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&PredicateData::predicate, &PredicateData::polarity> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -203,12 +196,11 @@ struct ObjectData : ygg::comparison::Mixin<ObjectData<Self>>
         ygg::set(object_, object);
     }
 
-    auto cista_members() noexcept { return std::tie(index, object); }
-    auto cista_members() const noexcept { return std::tie(index, object); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&ObjectData::index, &ObjectData::object> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&ObjectData::object> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -227,12 +219,11 @@ struct NumberRestrictionData : ygg::comparison::Mixin<NumberRestrictionData<Self
         ygg::set(role_, role);
     }
 
-    auto cista_members() noexcept { return std::tie(index, n, role); }
-    auto cista_members() const noexcept { return std::tie(index, n, role); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&NumberRestrictionData::index, &NumberRestrictionData::n, &NumberRestrictionData::role> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&NumberRestrictionData::n, &NumberRestrictionData::role> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -263,13 +254,12 @@ struct QualifiedNumberRestrictionData : ygg::comparison::Mixin<QualifiedNumberRe
         ygg::set(concept__, concept_);
     }
 
-    auto cista_members() noexcept { return std::tie(index, n, role, concept_); }
-    auto cista_members() const noexcept { return std::tie(index, n, role, concept_); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&QualifiedNumberRestrictionData::index, &QualifiedNumberRestrictionData::n, &QualifiedNumberRestrictionData::role, &QualifiedNumberRestrictionData::concept_> {}; }
     static constexpr auto identifying_members() noexcept
     { return ygg::Members<&QualifiedNumberRestrictionData::n, &QualifiedNumberRestrictionData::role, &QualifiedNumberRestrictionData::concept_> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -293,12 +283,11 @@ struct RoleFillersData : ygg::comparison::Mixin<RoleFillersData<Self, Role>>
         ygg::set(objects_, objects);
     }
 
-    auto cista_members() noexcept { return std::tie(index, role, objects); }
-    auto cista_members() const noexcept { return std::tie(index, role, objects); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&RoleFillersData::index, &RoleFillersData::role, &RoleFillersData::objects> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&RoleFillersData::role, &RoleFillersData::objects> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 
@@ -316,12 +305,11 @@ struct ObjectListData : ygg::comparison::Mixin<ObjectListData<Self>>
         ygg::set(objects_, objects);
     }
 
-    auto cista_members() noexcept { return std::tie(index, objects); }
-    auto cista_members() const noexcept { return std::tie(index, objects); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&ObjectListData::index, &ObjectListData::objects> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&ObjectListData::objects> {}; }
     void clear() noexcept
     {
-        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+        ygg::clear_members(*this);
     }
 };
 

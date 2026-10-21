@@ -46,7 +46,7 @@ struct StateGraphVertexRef : ygg::comparison::Mixin<StateGraphVertexRef>
     {
     }
 
-    auto cista_members() noexcept { return std::tie(state_graph_index, state_vertex_index); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&StateGraphVertexRef::state_graph_index, &StateGraphVertexRef::state_vertex_index> {}; }
     static constexpr auto identifying_members() noexcept
     { return ygg::Members<&StateGraphVertexRef::state_graph_index, &StateGraphVertexRef::state_vertex_index> {}; }
 };
@@ -63,7 +63,7 @@ struct StateGraphVertexCandidate : ygg::comparison::Mixin<StateGraphVertexCandid
     {
     }
 
-    auto cista_members() noexcept { return std::tie(state_graph_index, state); }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&StateGraphVertexCandidate::state_graph_index, &StateGraphVertexCandidate::state> {}; }
     static constexpr auto identifying_members() noexcept
     { return ygg::Members<&StateGraphVertexCandidate::state_graph_index, &StateGraphVertexCandidate::state> {}; }
 };

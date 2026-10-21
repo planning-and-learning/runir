@@ -12,6 +12,7 @@
 #include <tyr/planning/state_view.hpp>
 #include <utility>
 #include <yggdrasil/core/types.hpp>
+#include <cista/reflection/to_tuple.h>
 
 namespace runir::tests
 {
@@ -35,7 +36,7 @@ static_assert(requires(Data& data) {
     data.symbol;
     data.clear();
     { data.feature } -> std::same_as<ExpressionIndex&>;
-    { std::as_const(data).cista_members() } -> std::same_as<std::tuple<const Index&, const ExpressionIndex&, const ::cista::offset::string&>>;
+    { ::cista::to_tuple(std::as_const(data)) } -> std::same_as<std::tuple<const Index&, const ExpressionIndex&, const ::cista::offset::string&>>;
     requires std::same_as<ygg::IdentifyingMember<Data, 0>, ExpressionIndex>;
     requires std::same_as<ygg::IdentifyingMember<Data, 1>, ::cista::offset::string>;
     { canonicalize(data) } -> std::same_as<void>;
