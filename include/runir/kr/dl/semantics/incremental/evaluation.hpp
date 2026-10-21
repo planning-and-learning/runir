@@ -121,10 +121,10 @@ public:
     /// see IncrementalEvaluation).
     template<CategoryTag Category>
     BorrowedDenotationView<Category> result(EvaluationIndex<Category> index) const;
-    const ygg::Builder<ygg::database::Relation<QueryValues>>& result(QueryEvaluationIndex index) const;
+    const ygg::Builder<ygg::database::Relation>& result(QueryEvaluationIndex index) const;
     template<ConceptOrRoleTag Category>
     const DenotationDelta<Category>& change(EvaluationIndex<Category> index) const;
-    const ygg::database::incremental::Delta<QueryValues>& change(QueryEvaluationIndex index) const;
+    const ygg::database::incremental::Delta& change(QueryEvaluationIndex index) const;
     template<ConceptOrRoleTag Category>
     size_t cardinality(EvaluationIndex<Category> index) const;
     size_t cardinality(QueryEvaluationIndex index) const { return result(index).size(); }
@@ -224,14 +224,14 @@ class IncrementalEvaluation
             throw std::logic_error("Incremental evaluation: exact deltas exist only for results updated from the state's delta.");
     }
     template<StateEvaluationContextConcept<Family, Kind> Context>
-    StateEvaluation<Family, Kind, Context> next(Context context, const Delta<Family>* delta, ygg::database::Workspace<QueryValues>* workspace)
+    StateEvaluation<Family, Kind, Context> next(Context context, const Delta<Family>* delta, ygg::database::Workspace* workspace)
     {
         ++m_epoch;
         m_transition = delta != nullptr;
         return StateEvaluation<Family, Kind, Context>(*this, std::move(context), delta, workspace);
     }
     template<StateEvaluationContextConcept<Family, Kind> Context>
-    void demand(ygg::uint_t index, Context& context, const Delta<Family>* delta, ygg::database::Workspace<QueryValues>* workspace);
+    void demand(ygg::uint_t index, Context& context, const Delta<Family>* delta, ygg::database::Workspace* workspace);
 
 public:
     IncrementalEvaluation(const tyr::planning::Task<Kind>& task, std::span<const EvaluationRoot<Family>> roots) :
@@ -258,7 +258,7 @@ public:
     }
     /// Enters the state reached from the previous one by `delta`.
     template<StateEvaluationContextConcept<Family, Kind> Context>
-    StateEvaluation<Family, Kind, Context> enter(Context context, const Delta<Family>& delta, ygg::database::Workspace<QueryValues>& workspace)
+    StateEvaluation<Family, Kind, Context> enter(Context context, const Delta<Family>& delta, ygg::database::Workspace& workspace)
     {
         require_task(context);
         return next(std::move(context), &delta, &workspace);
@@ -266,7 +266,7 @@ public:
     /// Continues the current state, keeping what it evaluated. `delta` must be the one the state was entered by; it
     /// is ignored if the state was entered without one.
     template<StateEvaluationContextConcept<Family, Kind> Context>
-    StateEvaluation<Family, Kind, Context> resume(Context context, const Delta<Family>& delta, ygg::database::Workspace<QueryValues>& workspace)
+    StateEvaluation<Family, Kind, Context> resume(Context context, const Delta<Family>& delta, ygg::database::Workspace& workspace)
     {
         require_task(context);
         if (m_epoch == 0)
@@ -281,7 +281,7 @@ private:
     {
         return m_graph.result(index);
     }
-    const ygg::Builder<ygg::database::Relation<QueryValues>>& get_result(QueryEvaluationIndex index) const { return m_graph.result(index); }
+    const ygg::Builder<ygg::database::Relation>& get_result(QueryEvaluationIndex index) const { return m_graph.result(index); }
     template<ConceptOrRoleTag Category>
     size_t size(EvaluationIndex<Category> index) const
     {
@@ -295,7 +295,7 @@ private:
         require_exact(ygg::uint_t(index));
         return m_graph.change(index);
     }
-    const ygg::database::incremental::Delta<QueryValues>& get_delta(QueryEvaluationIndex index) const
+    const ygg::database::incremental::Delta& get_delta(QueryEvaluationIndex index) const
     {
         require_exact(ygg::uint_t(index));
         return m_graph.change(index);
@@ -311,13 +311,13 @@ class StateEvaluation
     uint64_t m_epoch;
     Context m_context;
     const Delta<Family>* m_delta;  ///< The transition into the state, if known.
-    ygg::database::Workspace<QueryValues>* m_workspace;
+    ygg::database::Workspace* m_workspace;
 
     friend class IncrementalEvaluation<Family, Kind>;
     StateEvaluation(IncrementalEvaluation<Family, Kind>& evaluation,
                     Context context,
                     const Delta<Family>* delta,
-                    ygg::database::Workspace<QueryValues>* workspace) :
+                    ygg::database::Workspace* workspace) :
         m_evaluation(&evaluation),
         m_epoch(evaluation.m_epoch),
         m_context(std::move(context)),
@@ -342,7 +342,7 @@ public:
     {
         return current(ygg::uint_t(index)).get_result(index);
     }
-    const ygg::Builder<ygg::database::Relation<QueryValues>>& evaluate(QueryEvaluationIndex index)
+    const ygg::Builder<ygg::database::Relation>& evaluate(QueryEvaluationIndex index)
     {
         return current(ygg::uint_t(index)).get_result(index);
     }
@@ -357,7 +357,7 @@ public:
     {
         return current(ygg::uint_t(index)).get_delta(index);
     }
-    const ygg::database::incremental::Delta<QueryValues>& delta(QueryEvaluationIndex index)
+    const ygg::database::incremental::Delta& delta(QueryEvaluationIndex index)
     {
         return current(ygg::uint_t(index)).get_delta(index);
     }

@@ -58,7 +58,7 @@ struct Data<runir::kr::dl::Numerical<Family, runir::kr::dl::DistanceTag>>
     Edge mid;
     Vertex rhs;
     /// Derived on insertion from the argument schemas; not identifying.
-    database::DistancePlan<runir::kr::dl::QueryValues> plan;
+    database::DistancePlan plan;
 
     Data() = default;
     Data(Vertex lhs_, Edge mid_, Vertex rhs_) : index(), lhs(std::move(lhs_)), mid(std::move(mid_)), rhs(std::move(rhs_)), plan() {}

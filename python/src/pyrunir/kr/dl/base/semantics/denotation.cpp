@@ -61,10 +61,10 @@ void bind_denotation_view(nb::module_& m, const char* name)
 void bind_query_denotation(nb::module_& m)
 {
     using ObjectIndex = ygg::Index<tyr::formalism::Object>;
-    using Type = ygg::database::Relation<QueryValues>;
+    using Type = ygg::database::Relation;
     using View = semantics::QueryDenotationView;
-    using Repository = ygg::database::RelationRepository<QueryValues>;
-    using Row = ygg::View<ygg::database::Row<QueryValues>, Repository>;
+    using Repository = ygg::database::RelationRepository;
+    using Row = ygg::View<ygg::database::Row, Repository>;
 
     ygg::bind_index<ygg::Index<Type>>(m, "QueryDenotationIndex");
     nb::class_<Row>(m, "QueryDenotationRow", "Read-only borrowed row of raw object indices; keeps its query result alive.")
@@ -76,7 +76,7 @@ void bind_query_denotation(nb::module_& m)
                      index += static_cast<std::ptrdiff_t>(row.size());
                  if (index < 0 || static_cast<std::size_t>(index) >= row.size())
                      throw nb::index_error();
-                 return row.template get<ObjectIndex>(static_cast<std::size_t>(index));
+                 return ObjectIndex(row.template get<ygg::uint_t>(static_cast<std::size_t>(index)));
              })
         .def("__iter__",
              [](const Row& row)
@@ -85,7 +85,7 @@ void bind_query_denotation(nb::module_& m)
                  auto values = std::vector<ObjectIndex> {};
                  values.reserve(row.size());
                  for (std::size_t i = 0; i < row.size(); ++i)
-                     values.push_back(row.template get<ObjectIndex>(i));
+                     values.push_back(ObjectIndex(row.template get<ygg::uint_t>(i)));
                  return nb::borrow<nb::typed<nb::iterator, ObjectIndex>>(nb::iter(nb::cast(std::move(values))));
              });
 

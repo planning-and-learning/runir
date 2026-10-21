@@ -27,8 +27,7 @@
 namespace runir::kr::dl::semantics::heuristics
 {
 
-using Object = ygg::Index<tyr::formalism::Object>;
-using Row = ygg::database::Row<QueryValues>;
+using Row = ygg::database::Row;
 
 /// The pattern database of one vertex column i, the pattern: the abstraction α_i(v) = v[i] maps the edges to a graph
 /// over objects, and h is its breadth-first distance table to the abstract targets α_i(T). The abstract edges are not
@@ -37,7 +36,7 @@ using Row = ygg::database::Row<QueryValues>;
 struct PatternDatabase
 {
     size_t pattern = 0;                                    ///< The vertex column i.
-    ygg::database::bound::QueryEvaluator<QueryValues> edges;  ///< The abstract edges (u[i], v[i]), over static inputs only.
+    ygg::database::bound::QueryEvaluator edges;  ///< The abstract edges (u[i], v[i]), over static inputs only.
     size_t u_position = 0;                                 ///< The position of u[i] in the columns of edges.
     size_t v_position = 0;                                 ///< The position of v[i] in the columns of edges.
     size_t predecessors = 0;                               ///< The binding of edges with v[i] bound.
@@ -74,7 +73,7 @@ public:
 
     /// Recomputes the tables whose abstract targets changed. Callers that know the targets are unchanged skip it, but
     /// update() must have been called once before estimate().
-    template<ygg::database::RelationViewConcept<QueryValues> Targets>
+    template<ygg::database::RelationViewConcept Targets>
     void update(const Targets& targets)
     {
         for (auto& database : m_databases)
@@ -88,7 +87,7 @@ public:
         for (const auto& database : m_databases)
         {
             assert(database.computed());
-            const auto entry = database.h[ygg::uint_t(Row(vertex, m_vertex_columns).get<Object>(database.pattern))];
+            const auto entry = database.h[Row(vertex, m_vertex_columns).get<ygg::uint_t>(database.pattern)];
             if (entry == ygg::database::infinity)
                 return entry;
             value = std::max(value, entry);
@@ -98,7 +97,7 @@ public:
 
     /// The tables of every pattern database for other targets, without changing this heuristic's own.
     using Tables = std::vector<std::vector<ygg::uint_t>>;
-    template<ygg::database::RelationViewConcept<QueryValues> Targets>
+    template<ygg::database::RelationViewConcept Targets>
     Tables tables(const Targets& targets)
     {
         auto result = Tables();
@@ -115,7 +114,7 @@ public:
         ygg::uint_t value = 0;
         for (size_t d = 0; d < m_databases.size(); ++d)
         {
-            const auto entry = tables[d][ygg::uint_t(Row(vertex, m_vertex_columns).get<Object>(m_databases[d].pattern))];
+            const auto entry = tables[d][Row(vertex, m_vertex_columns).get<ygg::uint_t>(m_databases[d].pattern)];
             if (entry == ygg::database::infinity)
                 return entry;
             value = std::max(value, entry);
@@ -135,7 +134,7 @@ private:
 
     /// A backward breadth-first search from α_i(T) in the abstract graph. The table is built aside and committed with
     /// its targets only when the search succeeds: a throw leaves computed() false, so the next update() rebuilds it.
-    template<ygg::database::RelationViewConcept<QueryValues> Targets>
+    template<ygg::database::RelationViewConcept Targets>
     void update_table(PatternDatabase& database, const Targets& targets)
     {
         abstract_targets(database, targets);
@@ -148,12 +147,12 @@ private:
         std::swap(database.targets, m_abstract_targets);
     }
     /// α_i(T) into m_abstract_targets.
-    template<ygg::database::RelationViewConcept<QueryValues> Targets>
+    template<ygg::database::RelationViewConcept Targets>
     void abstract_targets(const PatternDatabase& database, const Targets& targets)
     {
         m_abstract_targets.assign(m_num_objects, false);
         for (size_t r = 0; r < targets.size(); ++r)
-            m_abstract_targets[ygg::uint_t(Row(targets.row(r), m_target_columns).get<Object>(database.pattern))] = true;
+            m_abstract_targets[Row(targets.row(r), m_target_columns).get<ygg::uint_t>(database.pattern)] = true;
     }
     std::vector<ygg::uint_t> breadth_first(PatternDatabase& database)
     {
@@ -175,12 +174,12 @@ private:
         for (size_t head = 0; head < m_queue.size(); ++head)
         {
             const auto o = m_queue[head];
-            const auto vertex = ygg::database::encode_row<QueryValues, Object>(std::array { Object(o) }, m_vertex);
+            const auto vertex = ygg::database::encode_row<ygg::uint_t>(std::array { o }, m_vertex);
             database.edges.evaluate(database.predecessors,
                                     vertex,
                                     [&](std::span<const std::byte> edge)
                                     {
-                                        const auto p = ygg::uint_t(Row(edge, database.edges.columns()).get<Object>(database.u_position));
+                                        const auto p = Row(edge, database.edges.columns()).get<ygg::uint_t>(database.u_position);
                                         if (h[p] == ygg::database::infinity)
                                         {
                                             h[p] = h[o] + 1;
@@ -207,7 +206,7 @@ public:
     }
 
     /// Sets the targets (key columns, then a vertex) of every key.
-    template<ygg::database::RelationViewConcept<QueryValues> Targets>
+    template<ygg::database::RelationViewConcept Targets>
     void update(const Targets& targets)
     {
         if (m_heuristic.blind())
@@ -231,7 +230,7 @@ public:
             auto& entry = m_keys[key];
             if (entry.tables.empty() || entry.targets != rows)
             {
-                auto relation = ygg::Builder<ygg::database::Relation<QueryValues>>(std::span<const ygg::database::ColumnLayout>(m_target_columns));
+                auto relation = ygg::Builder<ygg::database::Relation>(std::span<const ygg::database::ColumnLayout>(m_target_columns));
                 for (const auto& vertex : rows)
                     relation.insert(std::span<const std::byte>(vertex));
                 entry.tables = m_heuristic.tables(relation);
@@ -271,7 +270,7 @@ private:
 /// abstract edges are never materialized (PatternDatabase).
 struct EdgeAbstraction
 {
-    ygg::database::QueryPlan<QueryValues> plan;  ///< Plan root r is the abstract edge query of column patterns[r].
+    ygg::database::QueryPlan plan;  ///< Plan root r is the abstract edge query of column patterns[r].
     std::vector<size_t> patterns;
     std::vector<size_t> slots;                   ///< The edge query's slot of each input of the plan.
 };
@@ -280,25 +279,25 @@ namespace detail
 {
 /// Defined in the library: the call in abstract_edges() does not depend on its template parameter, so an inline
 /// definition would instantiate the query compiler in every includer (template rule 4).
-ygg::database::QueryPlan<QueryValues> compile_edge_plan(const std::vector<ygg::database::QueryView<QueryValues>>& roots);
+ygg::database::QueryPlan compile_edge_plan(const std::vector<ygg::database::QueryView<>>& roots);
 }
 
 /// The abstraction of a translated edge query, or nullopt if no column is constrained at both ends (blind search).
 /// `from` and `to` are the edge columns of the two vertices of an edge, in vertex order.
 template<FamilyTag Family>
 std::optional<EdgeAbstraction> abstract_edges(dl::detail::QueryTranslator<Family>& translator,
-                                              ygg::database::QueryView<QueryValues> edges,
+                                              ygg::database::QueryView<> edges,
                                               std::span<const ygg::database::ColumnLayout> from,
                                               std::span<const ygg::database::ColumnLayout> to)
 {
     const auto k = from.size();
-    auto projections = std::vector<ygg::database::QueryView<QueryValues>>();
+    auto projections = std::vector<ygg::database::QueryView<>>();
     for (size_t i = 0; i < k; ++i)
         projections.push_back(translator.project(edges, std::array { from[i].label, to[i].label }));
     const auto& slots = translator.get_slots();
     const auto relaxation = translator.relax(projections, [&](size_t slot) { return slots[slot].is_static; });
 
-    auto roots = std::vector<ygg::database::QueryView<QueryValues>>();
+    auto roots = std::vector<ygg::database::QueryView<>>();
     auto patterns = std::vector<size_t>();
     for (size_t i = 0; i < k; ++i)
         if (const auto& relaxed = relaxation.queries[i]; relaxed && relaxed->columns().size() == 2)
@@ -314,8 +313,8 @@ std::optional<EdgeAbstraction> abstract_edges(dl::detail::QueryTranslator<Family
 template<FamilyTag Family>
 std::optional<EdgeAbstraction>
 abstract_edges(dl::detail::QueryTranslator<Family>& translator,
-               ygg::database::QueryView<QueryValues> edges,
-               const ygg::database::DistancePlan<QueryValues>& plan)
+               ygg::database::QueryView<> edges,
+               const ygg::database::DistancePlan& plan)
 {
     const auto columns = plan.edge_columns().span();
     return abstract_edges(translator, edges, columns.first(plan.arity()), columns.subspan(plan.arity()));
@@ -325,7 +324,7 @@ abstract_edges(dl::detail::QueryTranslator<Family>& translator,
 /// u[i] and v[i] are found in each abstract edge query by label.
 /// `from` and `to` are the edge columns of an edge's two vertices; `vertices` and `targets` the columns of the vertices
 /// estimated and of the targets.
-template<ygg::database::SlotRelations<QueryValues> SlotRows>
+template<ygg::database::SlotRelations SlotRows>
 ProjectionHeuristic make_projection_heuristic(const EdgeAbstraction& abstraction,
                                              std::span<const ygg::database::ColumnLayout> from,
                                              std::span<const ygg::database::ColumnLayout> to,
@@ -339,7 +338,7 @@ ProjectionHeuristic make_projection_heuristic(const EdgeAbstraction& abstraction
     {
         const auto i = abstraction.patterns[r];
         const auto query = abstraction.plan[abstraction.plan.roots()[r]];
-        auto& database = databases.emplace_back(PatternDatabase { i, ygg::database::bound::QueryEvaluator<QueryValues>(query) });
+        auto& database = databases.emplace_back(PatternDatabase { i, ygg::database::bound::QueryEvaluator(query) });
         database.u_position = ygg::database::column_index(query.columns(), from[i].label);
         database.v_position = ygg::database::column_index(query.columns(), to[i].label);
         for (const auto slot : ygg::database::input_slots(std::span(&query, 1)))
@@ -349,9 +348,9 @@ ProjectionHeuristic make_projection_heuristic(const EdgeAbstraction& abstraction
     return ProjectionHeuristic(std::move(databases), vertices, targets, num_objects);
 }
 
-template<ygg::database::SlotRelations<QueryValues> SlotRows>
+template<ygg::database::SlotRelations SlotRows>
 ProjectionHeuristic make_projection_heuristic(const EdgeAbstraction& abstraction,
-                                             const ygg::database::DistancePlan<QueryValues>& plan,
+                                             const ygg::database::DistancePlan& plan,
                                              ygg::uint_t num_objects,
                                              const SlotRows& slot_rows)
 {

@@ -238,16 +238,16 @@ constexpr ygg::uint_t apply_numerical_binary(ygg::uint_t lhs, ygg::uint_t rhs) n
 
 /// Inserts a concept's objects or a role's pairs as rows of a 1- or 2-column relation.
 template<ConceptOrRoleTag Category, DenotationViewConcept<Category> Denotation>
-void insert_denotation_rows(const Denotation& denotation, ygg::Builder<ygg::database::Relation<QueryValues>>& result)
+void insert_denotation_rows(const Denotation& denotation, ygg::Builder<ygg::database::Relation>& result)
 {
     for (const auto element : denotation.indices())
     {
         if constexpr (std::same_as<Category, ConceptTag>)
-            result.insert(std::tuple { element });
+            result.insert(std::tuple { element.get_value() });
         else
         {
             const auto [source, target] = element;
-            result.insert(std::tuple { source, target });
+            result.insert(std::tuple { source.get_value(), target.get_value() });
         }
     }
 }
@@ -267,7 +267,7 @@ auto evaluate_relation(ygg::View<ygg::Index<Constructor<Family, Category>>, C> a
                        Context& context) -> QueryDenotationView
 {
     const auto denotation = evaluate<Kind>(argument, context);
-    auto result = context.get_builder().template get_builder<ygg::database::Relation<QueryValues>>(columns);
+    auto result = context.get_builder().template get_builder<ygg::database::Relation>(columns);
     insert_denotation_rows<Category>(denotation, *result);
     return insert(context.get_denotation_repository(), *result).first;
 }

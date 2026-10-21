@@ -18,7 +18,7 @@ namespace runir::kr::dl::semantics
 namespace detail
 {
 /// Defined in the library, so that the policy does not need the definition of EvaluationWorkspace.
-ygg::database::Workspace<QueryValues>& get_database_workspace(EvaluationWorkspace& workspace) noexcept;
+ygg::database::Workspace& get_database_workspace(EvaluationWorkspace& workspace) noexcept;
 }
 
 /// Preserve the ordinary memoized, interned evaluation contexts.

@@ -736,10 +736,6 @@ using QueryConstructorTags = ygg::TypeList<AtomicStateTag<tyr::formalism::Static
                                            QueryEmptyTag,
                                            QueryMustPassTag>;
 
-/// Column types of query relations: planning objects, plus uint_t for distance outputs.
-/// uint_t is last, so object columns keep their type code and labels-only schemas stay object-typed.
-using QueryValues = ygg::TypeList<ygg::Index<tyr::formalism::Object>, ygg::uint_t>;
-
 template<FamilyTag Family>
 struct DlFamilyTraits;
 

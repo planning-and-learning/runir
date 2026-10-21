@@ -28,7 +28,7 @@ struct QueryMustPassEvaluator : QueryValue
     QueryEvaluationIndex probes;
     MustPassFeature feature;
     std::vector<QueryEvaluationIndex> slots;  ///< The graph node of each input slot.
-    ygg::Builder<ygg::database::Relation<QueryValues>> computed;  ///< The recomputed result; kept to avoid allocations.
+    ygg::Builder<ygg::database::Relation> computed;  ///< The recomputed result; kept to avoid allocations.
     std::vector<std::byte> removed;                                ///< Rows of the previous result that are gone.
 
     QueryMustPassEvaluator(FamilyQueryView<Family, QueryMustPassTag> expression, GraphBuilder<Family, Kind>& graph, std::vector<ygg::uint_t>& dependencies) :
@@ -52,7 +52,7 @@ struct QueryMustPassEvaluator : QueryValue
     }
     /// The children's deltas are exact (IncrementalEvaluation), so unchanged sources, targets and slots leave the
     /// result unchanged.
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<QueryValues>&)
+    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace&)
     {
         this->delta.clear();
         if (!modified(graph, sources) && !modified(graph, targets) && !modified(graph, probes) && std::ranges::none_of(slots, [&](auto slot) { return modified(graph, slot); }))
@@ -73,14 +73,14 @@ struct QueryMustPassEvaluator : QueryValue
 private:
     ygg::uint_t num_objects = 0;
 
-    void compute(EvaluationGraph<Family, Kind>& graph, ygg::Builder<ygg::database::Relation<QueryValues>>& out)
+    void compute(EvaluationGraph<Family, Kind>& graph, ygg::Builder<ygg::database::Relation>& out)
     {
         auto& heuristic = semantics::detail::must_pass_heuristic(feature, num_objects, input(graph), graph.result(targets));
         feature.must_pass.must_pass(input(graph), graph.result(sources), graph.result(targets), graph.result(probes), out, heuristic);
     }
     auto input(const EvaluationGraph<Family, Kind>& graph) const
     {
-        return [this, &graph](size_t slot) -> const ygg::Builder<ygg::database::Relation<QueryValues>>& { return graph.result(slots[slot]); };
+        return [this, &graph](size_t slot) -> const ygg::Builder<ygg::database::Relation>& { return graph.result(slots[slot]); };
     }
     static bool modified(const EvaluationGraph<Family, Kind>& graph, QueryEvaluationIndex index)
     {

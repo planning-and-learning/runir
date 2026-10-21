@@ -35,7 +35,6 @@ using Ext = kr::ExtFamilyTag;
 using Fluent = tyr::formalism::FluentTag;
 using Derived = tyr::formalism::DerivedTag;
 using Object = ygg::Index<tyr::formalism::Object>;
-using QueryValues = kr::dl::QueryValues;
 
 auto parse_query(const std::string& expression, tyr::formalism::planning::DomainView domain, kr::dl::ConstructorRepositoryFor<Ext>& repository)
 {
@@ -48,10 +47,10 @@ auto rows(const auto& relation)
     auto result = std::vector<std::vector<Object>> {};
     for (size_t i = 0; i < relation.size(); ++i)
     {
-        const auto row = ygg::database::Row<QueryValues>(relation.row(i), relation.columns().span());
+        const auto row = ygg::database::Row(relation.row(i), relation.columns().span());
         auto& values = result.emplace_back();
         for (size_t j = 0; j < row.size(); ++j)
-            values.push_back(row.get<Object>(j));
+            values.push_back(Object(row.get<ygg::uint_t>(j)));
     }
     std::ranges::sort(result);
     return result;
@@ -110,11 +109,11 @@ void check_atomic_projection()
         copied.get_variant().template get<ygg::Index<kr::dl::Query<Ext, kr::dl::AtomicStateTag<Derived>>>>());
     auto ready_leaf = kr::dl::semantics::incremental::detail::AtomicQueryEvaluator<Fluent>(
         ready.get_variant().template get<ygg::Index<kr::dl::Query<Ext, kr::dl::AtomicStateTag<Fluent>>>>());
-    auto triple_projection = ygg::database::incremental::ProjectionEvaluator<QueryValues>(
+    auto triple_projection = ygg::database::incremental::ProjectionEvaluator(
         projected_triple.get_variant().template get<ygg::Index<kr::dl::Query<Ext, kr::dl::QueryProjectTag>>>().get_data().plan);
-    auto copied_projection = ygg::database::incremental::ProjectionEvaluator<QueryValues>(
+    auto copied_projection = ygg::database::incremental::ProjectionEvaluator(
         projected_copied.get_variant().template get<ygg::Index<kr::dl::Query<Ext, kr::dl::QueryProjectTag>>>().get_data().plan);
-    auto workspace = ygg::database::Workspace<QueryValues> {};
+    auto workspace = ygg::database::Workspace {};
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage<Ext>(denotations);
     auto builder = kr::dl::semantics::Builder {};
@@ -190,21 +189,21 @@ void check_atomic_projection()
     EXPECT_EQ(triple_leaf.get_delta().removed.size(), 1);
     EXPECT_EQ(ready_leaf.get_delta().removed.size(), 1);
     EXPECT_TRUE(ready_leaf.get_delta().removed.contains(std::tuple<> {}));
-    EXPECT_TRUE(triple_projection.get_result().contains(std::tuple { a }));
+    EXPECT_TRUE(triple_projection.get_result().contains(std::tuple { a.get_value() }));
     expect_empty_delta(triple_projection);
     expect_empty_delta(copied_projection);
 
     auto second_delta = kr::dl::semantics::incremental::Delta<Ext> {};
     second_delta.template assign<Kind>(first->node.get_state(), registers, second->node.get_state(), registers);
     update(second_delta, second->node.get_state());
-    EXPECT_FALSE(triple_projection.get_result().contains(std::tuple { a }));
-    EXPECT_TRUE(triple_projection.get_delta().removed.contains(std::tuple { a }));
-    EXPECT_TRUE(copied_projection.get_delta().removed.contains(std::tuple { a }));
+    EXPECT_FALSE(triple_projection.get_result().contains(std::tuple { a.get_value() }));
+    EXPECT_TRUE(triple_projection.get_delta().removed.contains(std::tuple { a.get_value() }));
+    EXPECT_TRUE(copied_projection.get_delta().removed.contains(std::tuple { a.get_value() }));
     expect_empty_delta(ready_leaf);
 
     second_delta.reverse();
     update(second_delta, first->node.get_state());
-    EXPECT_TRUE(triple_projection.get_delta().added.contains(std::tuple { a }));
+    EXPECT_TRUE(triple_projection.get_delta().added.contains(std::tuple { a.get_value() }));
     first_delta.reverse();
     update(first_delta, initial.get_state());
     expect_empty_delta(triple_projection);
@@ -215,7 +214,7 @@ void check_atomic_projection()
     const auto borrowed_builder = second->node.get_state().get_state_builder();
     initialize(ygg::make_view(borrowed_builder, *search->task));
     EXPECT_EQ(triple_leaf.get_result().size(), 2);
-    EXPECT_FALSE(triple_projection.get_result().contains(std::tuple { a }));
+    EXPECT_FALSE(triple_projection.get_result().contains(std::tuple { a.get_value() }));
     EXPECT_TRUE(ready_leaf.get_result().empty());
     EXPECT_TRUE(denotations.get_relation_repository().empty());
 }
@@ -260,7 +259,7 @@ void check_query_graph()
     auto deltas = std::vector<kr::dl::semantics::incremental::Delta<Ext>>(4);
     for (size_t i = 0; i < deltas.size(); ++i)
         deltas[i].template assign<Kind>(nodes[i].get_state(), registers, nodes[i + 1].get_state(), registers);
-    auto workspace = ygg::database::Workspace<QueryValues> {};
+    auto workspace = ygg::database::Workspace {};
     const auto empty_delta = kr::dl::semantics::incremental::Delta<Ext> {};
     const auto triple = std::string(R"((q_atomic_state "triple" (x y z)))");
     const auto copied = std::string(R"((q_atomic_state "copied" (x y z)))");

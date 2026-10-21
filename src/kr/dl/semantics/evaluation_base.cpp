@@ -58,7 +58,7 @@ template size_t EvaluationGraph<runir::kr::BaseFamilyTag, tyr::GroundTag>::cardi
 template bool IncrementalEvaluation<runir::kr::BaseFamilyTag, tyr::GroundTag>::changed<BooleanTag>(EvaluationIndex<BooleanTag>) const;
 template bool IncrementalEvaluation<runir::kr::BaseFamilyTag, tyr::GroundTag>::changed<NumericalTag>(EvaluationIndex<NumericalTag>) const;
 
-template void IncrementalEvaluation<runir::kr::BaseFamilyTag, tyr::GroundTag>::demand<StateEvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>>(ygg::uint_t, StateEvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>&, const Delta<runir::kr::BaseFamilyTag>*, ygg::database::Workspace<QueryValues>*);
+template void IncrementalEvaluation<runir::kr::BaseFamilyTag, tyr::GroundTag>::demand<StateEvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>>(ygg::uint_t, StateEvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>&, const Delta<runir::kr::BaseFamilyTag>*, ygg::database::Workspace*);
 
 template class EvaluationGraph<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
 template class IncrementalEvaluation<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
@@ -83,6 +83,6 @@ template size_t EvaluationGraph<runir::kr::BaseFamilyTag, tyr::LiftedTag>::cardi
 template bool IncrementalEvaluation<runir::kr::BaseFamilyTag, tyr::LiftedTag>::changed<BooleanTag>(EvaluationIndex<BooleanTag>) const;
 template bool IncrementalEvaluation<runir::kr::BaseFamilyTag, tyr::LiftedTag>::changed<NumericalTag>(EvaluationIndex<NumericalTag>) const;
 
-template void IncrementalEvaluation<runir::kr::BaseFamilyTag, tyr::LiftedTag>::demand<StateEvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>>(ygg::uint_t, StateEvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>&, const Delta<runir::kr::BaseFamilyTag>*, ygg::database::Workspace<QueryValues>*);
+template void IncrementalEvaluation<runir::kr::BaseFamilyTag, tyr::LiftedTag>::demand<StateEvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>>(ygg::uint_t, StateEvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>&, const Delta<runir::kr::BaseFamilyTag>*, ygg::database::Workspace*);
 
 }  // namespace runir::kr::dl::semantics::incremental

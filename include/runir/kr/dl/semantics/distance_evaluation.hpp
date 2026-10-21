@@ -32,7 +32,7 @@ QueryDenotationView evaluate_slot(const QuerySlot& slot, const ConstructorReposi
 
 /// Builds the min-distance evaluator of a feature with role edges, a relation of one slot.
 template<typename Distance, FamilyTag Family>
-DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePlan<QueryValues>& plan, FamilyConstructorView<Family, RoleTag> edges)
+DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePlan& plan, FamilyConstructorView<Family, RoleTag> edges)
 {
     const auto columns = plan.edge_columns().span();
     return { { QuerySlot { QuerySlot::Kind::ROLE, ygg::uint_t(edges.get_index()), { columns.begin(), columns.end() }, edges.is_static() } },
@@ -42,7 +42,7 @@ DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePla
 
 /// Translates a feature's query edges and builds its min-distance evaluator.
 template<typename Distance, FamilyTag Family>
-DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePlan<QueryValues>& plan, FamilyQueryView<Family> edges)
+DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePlan& plan, FamilyQueryView<Family> edges)
 {
     auto translator = dl::detail::QueryTranslator<Family>(true);
     const auto query = translator.translate(edges);
@@ -55,9 +55,9 @@ DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePla
 
 /// The heuristic of a feature: a pattern database heuristic if it has an abstraction, otherwise blind;
 /// `slot_rows(slot)` returns a static slot's rows.
-template<typename Distance, ygg::database::SlotRelations<QueryValues> SlotRows>
+template<typename Distance, ygg::database::SlotRelations SlotRows>
 heuristics::ProjectionHeuristic
-make_heuristic(const DistanceFeature<Distance>& feature, const ygg::database::DistancePlan<QueryValues>& plan, ygg::uint_t num_objects, const SlotRows& slot_rows)
+make_heuristic(const DistanceFeature<Distance>& feature, const ygg::database::DistancePlan& plan, ygg::uint_t num_objects, const SlotRows& slot_rows)
 {
     if (!feature.abstraction)
         return {};
@@ -84,7 +84,7 @@ ygg::uint_t on_demand_distance(FamilyNumericalView<Family, DistanceTag> construc
                 ygg::uint_t(constructor.get_index()),
                 [&]
                 {
-                    auto feature = make_distance_feature<ygg::database::MinDistance<QueryValues, heuristics::ProjectionHeuristic>, Family>(plan, edges);
+                    auto feature = make_distance_feature<ygg::database::MinDistance<heuristics::ProjectionHeuristic>, Family>(plan, edges);
                     auto heuristic = make_heuristic(feature,
                                                     plan,
                                                     detail::num_objects<Family, Kind>(context),
@@ -99,9 +99,9 @@ ygg::uint_t on_demand_distance(FamilyNumericalView<Family, DistanceTag> construc
 }
 
 /// The vertex part of keyed columns, laid out on its own.
-inline ygg::Builder<ygg::database::Columns<QueryValues>> vertex_columns(std::span<const ygg::database::ColumnLayout> columns, size_t keys)
+inline ygg::Builder<ygg::database::Columns> vertex_columns(std::span<const ygg::database::ColumnLayout> columns, size_t keys)
 {
-    auto result = ygg::Builder<ygg::database::Columns<QueryValues>>();
+    auto result = ygg::Builder<ygg::database::Columns>();
     for (const auto& column : columns.subspan(keys))
         result.push_back(column.label, column.type);
     return result;
@@ -109,7 +109,7 @@ inline ygg::Builder<ygg::database::Columns<QueryValues>> vertex_columns(std::spa
 
 /// Translates a must-pass query's edges and builds its must-pass evaluator and the abstraction of its heuristic.
 template<FamilyTag Family>
-MustPassFeature make_must_pass_feature(const ygg::database::MustPassPlan<QueryValues>& plan, FamilyQueryView<Family> edges)
+MustPassFeature make_must_pass_feature(const ygg::database::MustPassPlan& plan, FamilyQueryView<Family> edges)
 {
     auto translator = dl::detail::QueryTranslator<Family>(true);
     const auto query = translator.translate(edges);
@@ -123,7 +123,7 @@ MustPassFeature make_must_pass_feature(const ygg::database::MustPassPlan<QueryVa
 
 /// Builds a must-pass feature's heuristic at first use, from the static slots' rows (`slot_rows(slot)`), and sets its
 /// targets. Without an abstraction, the search is blind.
-template<ygg::database::SlotRelations<QueryValues> SlotRows, ygg::database::RelationViewConcept<QueryValues> Targets>
+template<ygg::database::SlotRelations SlotRows, ygg::database::RelationViewConcept Targets>
 heuristics::KeyedProjectionHeuristic&
 must_pass_heuristic(MustPassFeature& feature, ygg::uint_t num_objects, const SlotRows& slot_rows, const Targets& targets)
 {
@@ -152,7 +152,7 @@ must_pass_heuristic(MustPassFeature& feature, ygg::uint_t num_objects, const Slo
 template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context, typename C>
 void on_demand_must_pass(ygg::View<ygg::Index<Query<Family, QueryMustPassTag>>, C> constructor,
                          Context& context,
-                         ygg::Builder<ygg::database::Relation<QueryValues>>& result)
+                         ygg::Builder<ygg::database::Relation>& result)
 {
     auto children = context.child_context();
     const auto sources = evaluate<Kind>(constructor.get_sources(), children);

@@ -70,8 +70,8 @@ template size_t EvaluationGraph<runir::kr::UnsFamilyTag, tyr::GroundTag>::cardin
 template bool IncrementalEvaluation<runir::kr::UnsFamilyTag, tyr::GroundTag>::changed<BooleanTag>(EvaluationIndex<BooleanTag>) const;
 template bool IncrementalEvaluation<runir::kr::UnsFamilyTag, tyr::GroundTag>::changed<NumericalTag>(EvaluationIndex<NumericalTag>) const;
 
-template void IncrementalEvaluation<runir::kr::UnsFamilyTag, tyr::GroundTag>::demand<StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::GroundTag>>(ygg::uint_t, StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::GroundTag>&, const Delta<runir::kr::UnsFamilyTag>*, ygg::database::Workspace<QueryValues>*);
-template void IncrementalEvaluation<runir::kr::UnsFamilyTag, tyr::GroundTag>::demand<StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::GroundTag, tyr::planning::BuilderStateView<tyr::GroundTag>>>(ygg::uint_t, StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::GroundTag, tyr::planning::BuilderStateView<tyr::GroundTag>>&, const Delta<runir::kr::UnsFamilyTag>*, ygg::database::Workspace<QueryValues>*);
+template void IncrementalEvaluation<runir::kr::UnsFamilyTag, tyr::GroundTag>::demand<StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::GroundTag>>(ygg::uint_t, StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::GroundTag>&, const Delta<runir::kr::UnsFamilyTag>*, ygg::database::Workspace*);
+template void IncrementalEvaluation<runir::kr::UnsFamilyTag, tyr::GroundTag>::demand<StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::GroundTag, tyr::planning::BuilderStateView<tyr::GroundTag>>>(ygg::uint_t, StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::GroundTag, tyr::planning::BuilderStateView<tyr::GroundTag>>&, const Delta<runir::kr::UnsFamilyTag>*, ygg::database::Workspace*);
 
 template class EvaluationGraph<runir::kr::UnsFamilyTag, tyr::LiftedTag>;
 template class IncrementalEvaluation<runir::kr::UnsFamilyTag, tyr::LiftedTag>;
@@ -96,7 +96,7 @@ template size_t EvaluationGraph<runir::kr::UnsFamilyTag, tyr::LiftedTag>::cardin
 template bool IncrementalEvaluation<runir::kr::UnsFamilyTag, tyr::LiftedTag>::changed<BooleanTag>(EvaluationIndex<BooleanTag>) const;
 template bool IncrementalEvaluation<runir::kr::UnsFamilyTag, tyr::LiftedTag>::changed<NumericalTag>(EvaluationIndex<NumericalTag>) const;
 
-template void IncrementalEvaluation<runir::kr::UnsFamilyTag, tyr::LiftedTag>::demand<StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::LiftedTag>>(ygg::uint_t, StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::LiftedTag>&, const Delta<runir::kr::UnsFamilyTag>*, ygg::database::Workspace<QueryValues>*);
-template void IncrementalEvaluation<runir::kr::UnsFamilyTag, tyr::LiftedTag>::demand<StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::LiftedTag, tyr::planning::BuilderStateView<tyr::LiftedTag>>>(ygg::uint_t, StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::LiftedTag, tyr::planning::BuilderStateView<tyr::LiftedTag>>&, const Delta<runir::kr::UnsFamilyTag>*, ygg::database::Workspace<QueryValues>*);
+template void IncrementalEvaluation<runir::kr::UnsFamilyTag, tyr::LiftedTag>::demand<StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::LiftedTag>>(ygg::uint_t, StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::LiftedTag>&, const Delta<runir::kr::UnsFamilyTag>*, ygg::database::Workspace*);
+template void IncrementalEvaluation<runir::kr::UnsFamilyTag, tyr::LiftedTag>::demand<StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::LiftedTag, tyr::planning::BuilderStateView<tyr::LiftedTag>>>(ygg::uint_t, StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::LiftedTag, tyr::planning::BuilderStateView<tyr::LiftedTag>>&, const Delta<runir::kr::UnsFamilyTag>*, ygg::database::Workspace*);
 
 }  // namespace runir::kr::dl::semantics::incremental

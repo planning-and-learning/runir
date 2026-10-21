@@ -29,7 +29,7 @@ namespace runir::kr::dl::semantics
 /// One n_distance in full evaluation: its edges and its heuristic, built at first use.
 struct FullDistanceFeature
 {
-    DistanceFeature<ygg::database::MinDistance<QueryValues, heuristics::ProjectionHeuristic>> edges;
+    DistanceFeature<ygg::database::MinDistance<heuristics::ProjectionHeuristic>> edges;
     heuristics::ProjectionHeuristic heuristic;
 };
 
@@ -48,8 +48,8 @@ private:
     };
     std::deque<KeyedFeature<FullDistanceFeature>> m_distance_features;  ///< A deque keeps references stable.
     std::deque<KeyedFeature<MustPassFeature>> m_must_pass_features;
-    std::vector<ygg::database::GenericJoinWorkspace<QueryValues>> m_generic_join_workspaces;  ///< One per generic join plan.
-    ygg::database::Workspace<QueryValues> m_database_workspace;
+    std::vector<ygg::database::GenericJoinWorkspace> m_generic_join_workspaces;  ///< One per generic join plan.
+    ygg::database::Workspace m_database_workspace;
 
     // ponytail: linear scan, and entries of dead repositories are kept; a constructor repository freed and replaced at
     // the same address with the same factory index over the same formalism would alias. Key by a repository-owned
@@ -75,7 +75,7 @@ public:
     EvaluationWorkspace() = default;
 
     // ponytail: linear scan over distinct plans; key by query index if features carry many generic joins.
-    auto& get_generic_join_workspace(const ygg::database::GenericJoinPlan<QueryValues>& plan)
+    auto& get_generic_join_workspace(const ygg::database::GenericJoinPlan& plan)
     {
         for (auto& workspace : m_generic_join_workspaces)
             if (workspace.matches(plan))

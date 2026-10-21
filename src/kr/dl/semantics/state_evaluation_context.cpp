@@ -9,7 +9,7 @@ namespace runir::kr::dl::semantics::detail
 
 EvaluationWorkspace& get_workspace(Builder& builder) noexcept { return builder.get_workspace(); }
 
-ygg::database::Workspace<QueryValues>& get_database_workspace(EvaluationWorkspace& workspace) noexcept { return workspace.get_database_workspace(); }
+ygg::database::Workspace& get_database_workspace(EvaluationWorkspace& workspace) noexcept { return workspace.get_database_workspace(); }
 
 const tyr::formalism::planning::Repository* get_formalism_repository(const DenotationRepository& repository) noexcept
 {

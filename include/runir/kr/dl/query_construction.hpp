@@ -30,9 +30,9 @@ inline std::vector<ygg::Index<ygg::database::Column>> query_labels(const ygg::In
     return labels;
 }
 
-inline ygg::Builder<ygg::database::Columns<QueryValues>> query_columns(const ygg::IndexList<QueryColumn>& columns)
+inline ygg::Builder<ygg::database::Columns> query_columns(const ygg::IndexList<QueryColumn>& columns)
 {
-    return ygg::Builder<ygg::database::Columns<QueryValues>>(std::span<const ygg::Index<ygg::database::Column>>(query_labels(columns)));
+    return ygg::Builder<ygg::database::Columns>(std::span<const ygg::Index<ygg::database::Column>>(query_labels(columns)));
 }
 
 inline void require_query_arity(size_t actual, size_t expected)
@@ -80,7 +80,7 @@ void prepare(ygg::Data<Query<Family, Tag>>& data, const ConstructorRepositoryFor
     {
         const auto lhs = ygg::make_view(data.lhs, repository).get_schema();
         const auto rhs = ygg::make_view(data.rhs, repository).get_schema();
-        data.plan = ygg::database::JoinPlan<QueryValues>(lhs.span(), rhs.span());
+        data.plan = ygg::database::JoinPlan(lhs.span(), rhs.span());
         data.columns.clear();
         data.columns.reserve(data.plan.output_columns().size());
         for (const auto column : data.plan.output_columns())
@@ -89,7 +89,7 @@ void prepare(ygg::Data<Query<Family, Tag>>& data, const ConstructorRepositoryFor
     else if constexpr (std::same_as<Tag, QueryProjectTag>)
     {
         const auto arg = ygg::make_view(data.arg, repository).get_schema();
-        data.plan = ygg::database::ProjectionPlan<QueryValues>(arg.span(), query_labels(data.columns));
+        data.plan = ygg::database::ProjectionPlan(arg.span(), query_labels(data.columns));
     }
     else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
     {
@@ -107,7 +107,7 @@ void prepare(ygg::Data<Query<Family, Tag>>& data, const ConstructorRepositoryFor
         }
         require_generic_join_order("variable order", data.variable_order, input_columns, repository);
         require_generic_join_order("output order", data.output_order, input_columns, repository);
-        data.plan = ygg::database::GenericJoinPlan<QueryValues>(inputs, query_labels(data.variable_order), query_labels(data.output_order));
+        data.plan = ygg::database::GenericJoinPlan(inputs, query_labels(data.variable_order), query_labels(data.output_order));
         data.columns = data.output_order;
     }
     else if constexpr (std::same_as<Tag, QueryMustPassTag>)
@@ -130,7 +130,7 @@ void prepare(ygg::Data<Query<Family, Tag>>& data, const ConstructorRepositoryFor
         const auto probes = ygg::make_view(data.probes, repository).get_schema();
         if (probes.size() != 1)
             throw std::invalid_argument("q_must_pass: the probes must have one column.");
-        data.plan = ygg::database::MustPassPlan<QueryValues>(sources.span(), edges.span(), targets.span(), probes.span(), data.keys.size());
+        data.plan = ygg::database::MustPassPlan(sources.span(), edges.span(), targets.span(), probes.span(), data.keys.size());
         data.columns = data.keys;
         data.columns.push_back(get_query_columns(data.probes, repository).front());
         data.schema.assign(data.plan.output_columns().span());
@@ -177,18 +177,18 @@ void prepare(ygg::Data<QueryProjection<Family, Category>>& data, const Construct
     const auto columns = query_columns(data.columns);
     require_query_arity(columns.size(), std::same_as<Category, ConceptTag> ? 1 : 2);
     const auto arg = ygg::make_view(data.arg, repository).get_schema();
-    data.plan = ygg::database::ProjectionPlan<QueryValues>(arg.span(), query_labels(data.columns));
+    data.plan = ygg::database::ProjectionPlan(arg.span(), query_labels(data.columns));
 }
 
 /// The distance plan's output column; interned query column labels never reach the maximum.
 inline constexpr auto distance_column = ygg::Index<ygg::database::Column>::max();
 
 /// A concept (k = 1) or role (k = 2) lifted into a relation: object columns labeled 0..k-1.
-inline ygg::Builder<ygg::database::Columns<QueryValues>> lifted_columns(size_t arity)
+inline ygg::Builder<ygg::database::Columns> lifted_columns(size_t arity)
 {
-    ygg::Builder<ygg::database::Columns<QueryValues>> columns;
+    ygg::Builder<ygg::database::Columns> columns;
     for (size_t i = 0; i < arity; ++i)
-        columns.template push_back<ygg::Index<tyr::formalism::Object>>(ygg::Index<ygg::database::Column>(i));
+        columns.template push_back<ygg::uint_t>(ygg::Index<ygg::database::Column>(i));
     return columns;
 }
 
@@ -199,10 +199,10 @@ void prepare(ygg::Data<Numerical<Family, DistanceTag>>& data, const ConstructorR
     const auto columns = [&](const auto& argument)
     {
         return std::visit(
-            [&]<typename T>(ygg::Index<T> index) -> ygg::Builder<ygg::database::Columns<QueryValues>>
+            [&]<typename T>(ygg::Index<T> index) -> ygg::Builder<ygg::database::Columns>
             {
                 if constexpr (std::same_as<T, Query<Family>>)
-                    return ygg::Builder<ygg::database::Columns<QueryValues>>(ygg::make_view(index, repository).get_schema().span());
+                    return ygg::Builder<ygg::database::Columns>(ygg::make_view(index, repository).get_schema().span());
                 else
                     return lifted_columns(std::same_as<T, Constructor<Family, ConceptTag>> ? 1 : 2);
             },
@@ -211,7 +211,7 @@ void prepare(ygg::Data<Numerical<Family, DistanceTag>>& data, const ConstructorR
     const auto sources = columns(data.lhs);
     const auto edges = columns(data.mid);
     const auto targets = columns(data.rhs);
-    data.plan = ygg::database::DistancePlan<QueryValues>(sources.span(), edges.span(), targets.span(), distance_column);
+    data.plan = ygg::database::DistancePlan(sources.span(), edges.span(), targets.span(), distance_column);
 }
 
 }  // namespace runir::kr::dl::detail

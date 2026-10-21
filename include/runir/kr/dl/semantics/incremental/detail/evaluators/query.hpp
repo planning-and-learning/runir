@@ -23,9 +23,9 @@ namespace runir::kr::dl::semantics::incremental::detail
 using ObjectIndex = ygg::Index<tyr::formalism::Object>;
 
 /// A maintained query result with the last update's exact delta.
-struct QueryValue : ygg::database::incremental::detail::QueryValue<QueryValues>
+struct QueryValue : ygg::database::incremental::detail::QueryValue
 {
-    using ygg::database::incremental::detail::QueryValue<QueryValues>::QueryValue;
+    using ygg::database::incremental::detail::QueryValue::QueryValue;
     auto& clear() noexcept
     {
         result.clear();
@@ -53,7 +53,7 @@ struct QueryStaticEvaluator : QueryValue
         }
         this->delta.clear();
     }
-    void update(EvaluationGraph<Family, Kind>&, const Delta<Family>&, ygg::database::Workspace<QueryValues>&) {}
+    void update(EvaluationGraph<Family, Kind>&, const Delta<Family>&, ygg::database::Workspace&) {}
 };
 
 template<FamilyTag Family, tyr::TaskKind Kind, tyr::formalism::FactKind Fact>
@@ -65,7 +65,7 @@ struct QueryAtomicEvaluator : AtomicQueryEvaluator<Fact>
     {
         AtomicQueryEvaluator<Fact>::template initialize<Kind>(context.get_state());
     }
-    void update(EvaluationGraph<Family, Kind>&, const Delta<Family>& delta, ygg::database::Workspace<QueryValues>&)
+    void update(EvaluationGraph<Family, Kind>&, const Delta<Family>& delta, ygg::database::Workspace&)
     {
         if constexpr (std::same_as<Fact, tyr::formalism::FluentTag>)
             AtomicQueryEvaluator<Fact>::update(delta.added.fluent_atoms, delta.removed.fluent_atoms);
@@ -75,35 +75,35 @@ struct QueryAtomicEvaluator : AtomicQueryEvaluator<Fact>
 };
 
 template<FamilyTag Family, tyr::TaskKind Kind>
-struct QueryProjectionEvaluator : ygg::database::incremental::ProjectionEvaluator<QueryValues>
+struct QueryProjectionEvaluator : ygg::database::incremental::ProjectionEvaluator
 {
     QueryEvaluationIndex argument;
 
-    QueryProjectionEvaluator(QueryEvaluationIndex argument, const ygg::database::ProjectionPlan<QueryValues>& plan) :
-        ygg::database::incremental::ProjectionEvaluator<QueryValues>(plan),
+    QueryProjectionEvaluator(QueryEvaluationIndex argument, const ygg::database::ProjectionPlan& plan) :
+        ygg::database::incremental::ProjectionEvaluator(plan),
         argument(argument)
     {
     }
     template<StateEvaluationContextConcept<Family, Kind> Context>
     void initialize(EvaluationGraph<Family, Kind>& graph, Context& context)
     {
-        ygg::database::incremental::ProjectionEvaluator<QueryValues>::initialize(graph.result(argument),
+        ygg::database::incremental::ProjectionEvaluator::initialize(graph.result(argument),
                                                                                                         context.get_workspace().get_database_workspace());
     }
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<QueryValues>& workspace)
+    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace& workspace)
     {
-        ygg::database::incremental::ProjectionEvaluator<QueryValues>::update(graph.change(argument).change(), workspace);
+        ygg::database::incremental::ProjectionEvaluator::update(graph.change(argument).change(), workspace);
     }
 };
 
 template<FamilyTag Family, tyr::TaskKind Kind>
-struct QueryJoinEvaluator : ygg::database::incremental::JoinEvaluator<QueryValues>
+struct QueryJoinEvaluator : ygg::database::incremental::JoinEvaluator
 {
     QueryEvaluationIndex lhs;
     QueryEvaluationIndex rhs;
 
-    QueryJoinEvaluator(QueryEvaluationIndex lhs, QueryEvaluationIndex rhs, const ygg::database::JoinPlan<QueryValues>& plan) :
-        ygg::database::incremental::JoinEvaluator<QueryValues>(plan),
+    QueryJoinEvaluator(QueryEvaluationIndex lhs, QueryEvaluationIndex rhs, const ygg::database::JoinPlan& plan) :
+        ygg::database::incremental::JoinEvaluator(plan),
         lhs(lhs),
         rhs(rhs)
     {
@@ -111,35 +111,35 @@ struct QueryJoinEvaluator : ygg::database::incremental::JoinEvaluator<QueryValue
     template<StateEvaluationContextConcept<Family, Kind> Context>
     void initialize(EvaluationGraph<Family, Kind>& graph, Context& context)
     {
-        ygg::database::incremental::JoinEvaluator<QueryValues>::initialize(graph.result(lhs),
+        ygg::database::incremental::JoinEvaluator::initialize(graph.result(lhs),
                                                                                                   graph.result(rhs),
                                                                                                   context.get_workspace().get_database_workspace());
     }
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<QueryValues>& workspace)
+    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace& workspace)
     {
-        ygg::database::incremental::JoinEvaluator<QueryValues>::update(graph.change(lhs).change(), graph.change(rhs).change(), workspace);
+        ygg::database::incremental::JoinEvaluator::update(graph.change(lhs).change(), graph.change(rhs).change(), workspace);
     }
 };
 
 template<FamilyTag Family, tyr::TaskKind Kind>
-struct QueryGenericJoinEvaluator : ygg::database::incremental::GenericJoinEvaluator<QueryValues>
+struct QueryGenericJoinEvaluator : ygg::database::incremental::GenericJoinEvaluator
 {
     std::vector<QueryEvaluationIndex> args;
 
-    QueryGenericJoinEvaluator(std::vector<QueryEvaluationIndex> args, const ygg::database::GenericJoinPlan<QueryValues>& plan) :
-        ygg::database::incremental::GenericJoinEvaluator<QueryValues>(plan),
+    QueryGenericJoinEvaluator(std::vector<QueryEvaluationIndex> args, const ygg::database::GenericJoinPlan& plan) :
+        ygg::database::incremental::GenericJoinEvaluator(plan),
         args(std::move(args))
     {
     }
     template<StateEvaluationContextConcept<Family, Kind> Context>
     void initialize(EvaluationGraph<Family, Kind>& graph, Context&)
     {
-        ygg::database::incremental::GenericJoinEvaluator<QueryValues>::initialize(
+        ygg::database::incremental::GenericJoinEvaluator::initialize(
             args | std::views::transform([&](QueryEvaluationIndex arg) -> const auto& { return graph.result(arg); }));
     }
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<QueryValues>&)
+    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace&)
     {
-        ygg::database::incremental::GenericJoinEvaluator<QueryValues>::update(
+        ygg::database::incremental::GenericJoinEvaluator::update(
             args | std::views::transform([&](QueryEvaluationIndex arg) { return graph.change(arg).change(); }));
     }
 };
@@ -158,16 +158,16 @@ struct QueryFromDenotationEvaluator : QueryValue
     {
         const auto columns = this->result.columns().span();
         if constexpr (std::same_as<Category, ConceptTag>)
-            this->set(ygg::database::encode_row<QueryValues>(std::tuple { element.get_index() }, columns), present);
+            this->set(ygg::database::encode_row(std::tuple { element.get_index().get_value() }, columns), present);
         else
-            this->set(ygg::database::encode_row<QueryValues>(std::tuple { element.first.get_index(), element.second.get_index() }, columns), present);
+            this->set(ygg::database::encode_row(std::tuple { element.first.get_index().get_value(), element.second.get_index().get_value() }, columns), present);
     }
     template<StateEvaluationContextConcept<Family, Kind> Context>
     void initialize(EvaluationGraph<Family, Kind>& graph, Context&)
     {
         semantics::detail::insert_denotation_rows<Category>(graph.result(argument), this->clear());
     }
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<QueryValues>&)
+    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace&)
     {
         this->delta.clear();
         const auto& delta = graph.change(argument);
@@ -190,7 +190,7 @@ struct QuerySetCombinationEvaluator : QueryValue
         rhs(rhs)
     {
     }
-    template<ygg::database::RelationViewConcept<QueryValues> Rows,
+    template<ygg::database::RelationViewConcept Rows,
              std::invocable<std::span<const std::byte>, bool> Emit>
     void evaluate_rows(EvaluationGraph<Family, Kind>& graph, const Rows& rows, Emit emit)
     {
@@ -218,7 +218,7 @@ struct QuerySetCombinationEvaluator : QueryValue
         if constexpr (std::same_as<Tag, QueryUnionTag>)
             evaluate_rows(graph, graph.result(rhs), emit);
     }
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<QueryValues>&)
+    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace&)
     {
         this->delta.clear();
         const auto& left = graph.change(lhs);
@@ -243,22 +243,22 @@ struct QuerySelectionEvaluator : QueryValue
         expression(expression)
     {
     }
-    template<ygg::database::RelationViewConcept<QueryValues> Rows,
+    template<ygg::database::RelationViewConcept Rows,
              std::invocable<std::span<const std::byte>> Emit>
     void evaluate_rows(const Rows& rows, Emit emit)
     {
         for (size_t i = 0; i < rows.size(); ++i)
         {
             const auto row = rows.row(i);
-            const auto typed = ygg::database::Row<QueryValues>(row, rows.columns().span());
+            const auto typed = ygg::database::Row(row, rows.columns().span());
             if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
             {
-                if (typed.get<ObjectIndex>(expression.get_data().lhs_position) != typed.get<ObjectIndex>(expression.get_data().rhs_position))
+                if (ObjectIndex(typed.template get<ygg::uint_t>(expression.get_data().lhs_position)) != ObjectIndex(typed.template get<ygg::uint_t>(expression.get_data().rhs_position)))
                     continue;
             }
             else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
             {
-                if (typed.get<ObjectIndex>(expression.get_data().position) != expression.get_data().object)
+                if (ObjectIndex(typed.template get<ygg::uint_t>(expression.get_data().position)) != expression.get_data().object)
                     continue;
             }
             emit(row);
@@ -270,7 +270,7 @@ struct QuerySelectionEvaluator : QueryValue
         auto& output = this->clear();
         evaluate_rows(graph.result(argument), [&output](auto row) { output.insert(row); });
     }
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<QueryValues>&)
+    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace&)
     {
         this->delta.clear();
         const auto& delta = graph.change(argument);

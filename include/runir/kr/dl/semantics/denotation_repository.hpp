@@ -29,7 +29,7 @@ class DenotationRepositoryFactory
 private:
     // Copies share identity sequences, including factories retained by repositories.
     std::shared_ptr<size_t> m_next_index;
-    ygg::database::RelationRepositoryFactory<QueryValues> m_relation_factory;
+    ygg::database::RelationRepositoryFactory m_relation_factory;
 
 public:
     DenotationRepositoryFactory() : m_next_index(std::make_shared<size_t>(0)) {}
@@ -47,7 +47,7 @@ class DenotationRepository : public ygg::formalism::SymbolRepositoryBase<Denotat
     using VectorRepository = ygg::RawVectorSet<ygg::uint_t, ygg::uint_t>;
 
     VectorRepository m_vector_repository;
-    ygg::database::RelationRepository<QueryValues> m_relation_repository;
+    ygg::database::RelationRepository m_relation_repository;
     std::shared_ptr<const tyr::formalism::planning::Repository> m_formalism_repository;
     DenotationRepositoryFactory m_factory;
     size_t m_index;

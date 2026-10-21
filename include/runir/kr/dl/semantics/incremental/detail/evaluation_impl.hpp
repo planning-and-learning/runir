@@ -35,7 +35,7 @@ BorrowedDenotationView<Category> EvaluationGraph<Family, Kind>::result(Evaluatio
 }
 
 template<FamilyTag Family, tyr::TaskKind Kind>
-const ygg::Builder<ygg::database::Relation<QueryValues>>& EvaluationGraph<Family, Kind>::result(QueryEvaluationIndex index) const
+const ygg::Builder<ygg::database::Relation>& EvaluationGraph<Family, Kind>::result(QueryEvaluationIndex index) const
 {
     return node(index).get_result();
 }
@@ -48,7 +48,7 @@ const DenotationDelta<Category>& EvaluationGraph<Family, Kind>::change(Evaluatio
 }
 
 template<FamilyTag Family, tyr::TaskKind Kind>
-const ygg::database::incremental::Delta<QueryValues>& EvaluationGraph<Family, Kind>::change(QueryEvaluationIndex index) const
+const ygg::database::incremental::Delta& EvaluationGraph<Family, Kind>::change(QueryEvaluationIndex index) const
 {
     return node(index).get_delta();
 }
@@ -150,7 +150,7 @@ template<StateEvaluationContextConcept<Family, Kind> Context>
 void IncrementalEvaluation<Family, Kind>::demand(ygg::uint_t index,
                                                   Context& context,
                                                   const Delta<Family>* delta,
-                                                  ygg::database::Workspace<QueryValues>* workspace)
+                                                  ygg::database::Workspace* workspace)
 {
     if (m_nodes.at(index).epoch == m_epoch)
         return;

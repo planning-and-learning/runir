@@ -37,10 +37,10 @@ public:
     }
     template<StateEvaluationContextConcept<Family, Kind> Context>
     void initialize(EvaluationGraph<Family, Kind>& graph, Context& context);
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>& delta, ygg::database::Workspace<QueryValues>& workspace);
+    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>& delta, ygg::database::Workspace& workspace);
     std::span<const ygg::uint_t> get_dependencies() const noexcept { return m_dependencies; }
-    const ygg::Builder<ygg::database::Relation<QueryValues>>& get_result() const;
-    const ygg::database::incremental::Delta<QueryValues>& get_delta() const;
+    const ygg::Builder<ygg::database::Relation>& get_result() const;
+    const ygg::database::incremental::Delta& get_delta() const;
 
 private:
     using Operation = std::variant<QueryStaticEvaluator<Family, Kind>,
@@ -81,19 +81,19 @@ void QueryNode<Family, Kind>::initialize(EvaluationGraph<Family, Kind>& graph, C
 template<FamilyTag Family, tyr::TaskKind Kind>
 void QueryNode<Family, Kind>::update(EvaluationGraph<Family, Kind>& graph,
                                      const Delta<Family>& delta,
-                                     ygg::database::Workspace<QueryValues>& workspace)
+                                     ygg::database::Workspace& workspace)
 {
     std::visit([&](auto& operation) { operation.update(graph, delta, workspace); }, m_operation);
 }
 
 template<FamilyTag Family, tyr::TaskKind Kind>
-const ygg::Builder<ygg::database::Relation<QueryValues>>& QueryNode<Family, Kind>::get_result() const
+const ygg::Builder<ygg::database::Relation>& QueryNode<Family, Kind>::get_result() const
 {
     return std::visit([](const auto& operation) -> const auto& { return operation.get_result(); }, m_operation);
 }
 
 template<FamilyTag Family, tyr::TaskKind Kind>
-const ygg::database::incremental::Delta<QueryValues>& QueryNode<Family, Kind>::get_delta() const
+const ygg::database::incremental::Delta& QueryNode<Family, Kind>::get_delta() const
 {
     return std::visit([](const auto& operation) -> const auto& { return operation.get_delta(); }, m_operation);
 }

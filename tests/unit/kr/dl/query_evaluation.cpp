@@ -10,6 +10,7 @@
 #include <runir/kr/dl/detail/repository_instantiations_base.hpp>
 #include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
 #include <runir/kr/dl/detail/repository_instantiations_uns.hpp>
+#include <runir/kr/dl/object_rows.hpp>
 #include <runir/kr/dl/query_data.hpp>
 #include <runir/kr/dl/query_view.hpp>
 #include <runir/kr/dl/repository.hpp>
@@ -40,7 +41,6 @@ namespace
 {
 using Ext = kr::ExtFamilyTag;
 using ObjectIndex = ygg::Index<tyr::formalism::Object>;
-using QueryValues = kr::dl::QueryValues;
 using ColumnIndex = ygg::Index<ygg::database::Column>;
 
 /// The raw object indices of a relation row.
@@ -48,7 +48,7 @@ std::vector<ObjectIndex> object_values(const auto& row)
 {
     auto result = std::vector<ObjectIndex> {};
     for (size_t i = 0; i < row.size(); ++i)
-        result.push_back(row.template get<ObjectIndex>(i));
+        result.push_back(ObjectIndex(row.template get<ygg::uint_t>(i)));
     return result;
 }
 
@@ -393,8 +393,8 @@ void check_distance_queries()
                     const auto sources = relation(concrete.get_lhs(), plan.source_columns());
                     const auto edges = relation(concrete.get_mid(), plan.edge_columns());
                     const auto targets = relation(concrete.get_rhs(), plan.target_columns());
-                    auto distances = ygg::Builder<ygg::database::Relation<kr::dl::QueryValues>>(plan.output_columns().span());
-                    auto workspace = ygg::database::DistanceWorkspace<kr::dl::QueryValues>(plan);
+                    auto distances = ygg::Builder<ygg::database::Relation>(plan.output_columns().span());
+                    auto workspace = ygg::database::DistanceWorkspace(plan);
                     return ygg::database::min_distance(sources, edges, targets, plan, distances, workspace);
                 }
                 else
@@ -636,15 +636,15 @@ void check_cached_queries()
     check_relocated_data(join_data,
                          [&](const auto& decoded)
                          {
-                             ygg::Builder<ygg::database::Relation<QueryValues>> lhs(decoded.plan.lhs_columns().span()),
+                             ygg::Builder<ygg::database::Relation> lhs(decoded.plan.lhs_columns().span()),
                                  rhs(decoded.plan.rhs_columns().span()), result(decoded.plan.output_columns().span());
-                             lhs.insert(std::tuple { ObjectIndex(10), ObjectIndex(20) });
-                             lhs.insert(std::tuple { ObjectIndex(30), ObjectIndex(40) });
-                             rhs.insert(std::tuple { ObjectIndex(20) });
-                             ygg::database::Workspace<QueryValues> scratch;
+                             lhs.insert(std::tuple { ygg::uint_t(10), ygg::uint_t(20) });
+                             lhs.insert(std::tuple { ygg::uint_t(30), ygg::uint_t(40) });
+                             rhs.insert(std::tuple { ygg::uint_t(20) });
+                             ygg::database::Workspace scratch;
                              ygg::database::join(lhs, rhs, decoded.plan, result, scratch);
                              EXPECT_EQ(result.size(), 1);
-                             EXPECT_TRUE(result.contains(std::tuple { ObjectIndex(10), ObjectIndex(20) }));
+                             EXPECT_TRUE(result.contains(std::tuple { ygg::uint_t(10), ygg::uint_t(20) }));
                          });
     const auto slice_position = [](const ygg::database::ColumnSlice& slice) { return slice.offset / sizeof(ygg::uint_t); };
     const auto check_projection_plan = [&](auto& data, auto positions)
@@ -654,18 +654,18 @@ void check_cached_queries()
                              [&](const auto& decoded)
                              {
                                  EXPECT_TRUE(std::ranges::equal(decoded.plan.positions(), positions, {}, slice_position));
-                                 ygg::Builder<ygg::database::Relation<QueryValues>> input(decoded.plan.input_columns().span()),
+                                 ygg::Builder<ygg::database::Relation> input(decoded.plan.input_columns().span()),
                                      result(decoded.plan.output_columns().span());
                                  std::vector<ObjectIndex> row;
                                  for (size_t i = 0; i < input.arity(); ++i)
                                      row.emplace_back(10 + i);
                                  std::vector<std::byte> bytes;
-                                 input.insert(ygg::database::encode_row<QueryValues, ObjectIndex>(row, bytes));
-                                 ygg::database::Workspace<QueryValues> scratch;
+                                 input.insert(kr::dl::encode_object_row(row, bytes));
+                                 ygg::database::Workspace scratch;
                                  ygg::database::project(input, decoded.plan, result, scratch);
                                  ASSERT_EQ(result.size(), 1);
                                  for (size_t i = 0; i < positions.size(); ++i)
-                                     EXPECT_EQ(result[0].get<ObjectIndex>(i), ObjectIndex(10 + positions[i]));
+                                     EXPECT_EQ(ObjectIndex(result[0].template get<ygg::uint_t>(i)), ObjectIndex(10 + positions[i]));
                              });
         auto stale = data;
         stale.plan = {};
@@ -823,7 +823,9 @@ void check_query_cache_across_states()
     const auto count = kr::ps::ext::dl::parse_numerical(R"((n_count (q_atomic_state "triple" (x y z))))", domain, *repository);
     const auto fixed_count = kr::ps::ext::dl::parse_numerical(R"((n_count (q_atomic_state "fixed" (x y z))))", domain, *repository);
     const auto matching_row =
-        std::tuple { domain.get_constants()[0].get_index(), domain.get_constants()[1].get_index(), domain.get_constants()[2].get_index() };
+        std::tuple { domain.get_constants()[0].get_index().get_value(),
+                     domain.get_constants()[1].get_index().get_value(),
+                     domain.get_constants()[2].get_index().get_value() };
     const auto check_mixed_joins = [&](auto& target)
     {
         const auto matches = kr::dl::semantics::evaluate<Kind>(triple, target).contains(matching_row);
@@ -986,7 +988,7 @@ void check_query_cache_across_bindings()
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(role_register, bound).size(), 1);
     const auto rhs_rows = kr::dl::semantics::evaluate<Kind>(register_rhs, bound);
     EXPECT_EQ(rhs_rows.size(), 1);
-    EXPECT_TRUE(rhs_rows.contains(std::tuple { a.get_index(), c.get_index(), b.get_index() }));
+    EXPECT_TRUE(rhs_rows.contains(std::tuple { a.get_index().get_value(), c.get_index().get_value(), b.get_index().get_value() }));
     EXPECT_TRUE(std::ranges::equal(rhs_rows.columns(), register_rhs.get_schema()));
     EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(role_register_rhs, bound).empty());
     registers.concept_values[0] = b.get_index();
@@ -1002,7 +1004,7 @@ void check_query_cache_across_bindings()
     // Reordered shared columns are matched by label, not by their position in either operand.
     const auto rhs_role_rows = kr::dl::semantics::evaluate<Kind>(role_register_rhs, rebound);
     EXPECT_EQ(rhs_role_rows.size(), 1);
-    EXPECT_TRUE(rhs_role_rows.contains(std::tuple { b.get_index(), c.get_index(), a.get_index() }));
+    EXPECT_TRUE(rhs_role_rows.contains(std::tuple { b.get_index().get_value(), c.get_index().get_value(), a.get_index().get_value() }));
     EXPECT_TRUE(std::ranges::equal(rhs_role_rows.columns(), role_register_rhs.get_schema()));
     EXPECT_TRUE(caches.template get<kr::dl::NumericalTag>(false).contains(register_count));
     EXPECT_FALSE(caches.template get<kr::dl::NumericalTag>(true).contains(register_count));
@@ -1161,9 +1163,9 @@ void check_query_object_views()
     EXPECT_EQ(&result.get_context(), &storage.get_denotation_repository(true).get_relation_repository());
     // Rows hold raw object indices; the relation repository cannot resolve them.
     const auto row = result[0];
-    static_assert(std::same_as<decltype(row.template get<ObjectIndex>(size_t { 0 })), ObjectIndex>);
+    static_assert(std::same_as<decltype(row.template get<ygg::uint_t>(size_t { 0 })), ygg::uint_t>);
     EXPECT_EQ(object_values(row), raw);
-    EXPECT_TRUE(result.contains(std::tuple { constant.get_index(), local.get_index() }));
+    EXPECT_TRUE(result.contains(std::tuple { constant.get_index().get_value(), local.get_index().get_value() }));
 
     storage.reset_dynamic();
     EXPECT_EQ(object_values(row), raw);
@@ -1235,23 +1237,23 @@ void check_multiword_bit_evaluation()
     const auto selected = query("(q_concept x " + marked + ")");
     ASSERT_EQ(selected.size(), 4);
     for (const auto i : { ygg::uint_t(0), word_bits - 1, word_bits, last })
-        EXPECT_TRUE(selected.contains(std::tuple { ObjectIndex(i) }));
+        EXPECT_TRUE(selected.contains(std::tuple { ygg::uint_t(i) }));
     EXPECT_EQ(query("(q_concept x (c_top))").size(), num_objects);
     EXPECT_TRUE(query("(q_concept x (c_bot))").empty());
     const auto identity = query("(q_role (x y) (r_identity (c_top)))");
     EXPECT_EQ(identity.size(), num_objects);
-    EXPECT_TRUE(identity.contains(std::tuple { ObjectIndex(last), ObjectIndex(last) }));
+    EXPECT_TRUE(identity.contains(std::tuple { ygg::uint_t(last), ygg::uint_t(last) }));
     EXPECT_TRUE(query("(q_role (x y) (r_identity (c_bot)))").empty());
 
     const auto inverse = query("(q_role (x y) (r_inverse " + edge + "))");
     ASSERT_EQ(inverse.size(), 4);
-    EXPECT_TRUE(inverse.contains(std::tuple { ObjectIndex(word_bits - 1), ObjectIndex(0) }));
-    EXPECT_TRUE(inverse.contains(std::tuple { ObjectIndex(word_bits), ObjectIndex(0) }));
-    EXPECT_TRUE(inverse.contains(std::tuple { ObjectIndex(last), ObjectIndex(word_bits - 1) }));
-    EXPECT_TRUE(inverse.contains(std::tuple { ObjectIndex(last), ObjectIndex(word_bits) }));
+    EXPECT_TRUE(inverse.contains(std::tuple { ygg::uint_t(word_bits - 1), ygg::uint_t(0) }));
+    EXPECT_TRUE(inverse.contains(std::tuple { ygg::uint_t(word_bits), ygg::uint_t(0) }));
+    EXPECT_TRUE(inverse.contains(std::tuple { ygg::uint_t(last), ygg::uint_t(word_bits - 1) }));
+    EXPECT_TRUE(inverse.contains(std::tuple { ygg::uint_t(last), ygg::uint_t(word_bits) }));
     const auto composition = query("(q_role (x y) (r_composition " + edge + " " + edge + "))");
     ASSERT_EQ(composition.size(), 1);
-    EXPECT_TRUE(composition.contains(std::tuple { ObjectIndex(0), ObjectIndex(last) }));
+    EXPECT_TRUE(composition.contains(std::tuple { ygg::uint_t(0), ygg::uint_t(last) }));
     EXPECT_TRUE(query("(q_role (x y) (r_composition " + edge + " (r_identity (c_bot))))").empty());
 
     const auto at_least = concept_value("(c_at_least 2 " + edge + " " + marked + ")").get();
@@ -1298,8 +1300,8 @@ ygg::uint_t reference_distance(kr::dl::FamilyConstructorView<Ext, kr::dl::Numeri
                 const auto sources = relation(concrete.get_lhs(), plan.source_columns());
                 const auto edges = relation(concrete.get_mid(), plan.edge_columns());
                 const auto targets = relation(concrete.get_rhs(), plan.target_columns());
-                auto distances = ygg::Builder<ygg::database::Relation<kr::dl::QueryValues>>(plan.output_columns().span());
-                auto workspace = ygg::database::DistanceWorkspace<kr::dl::QueryValues>(plan);
+                auto distances = ygg::Builder<ygg::database::Relation>(plan.output_columns().span());
+                auto workspace = ygg::database::DistanceWorkspace(plan);
                 return ygg::database::min_distance(sources, edges, targets, plan, distances, workspace);
             }
             else
@@ -1530,9 +1532,9 @@ TEST(RunirQueries, QueryResultIdentityIncludesOrderedSchemaAndUnorderedRows)
     using Row = std::array<ObjectIndex, 2>;
     const auto intern = [&](std::array<ColumnIndex, 2> columns, std::array<Row, 2> rows)
     {
-        auto result = builder.get_builder<ygg::database::Relation<QueryValues>>(columns);
+        auto result = builder.get_builder<ygg::database::Relation>(columns);
         for (const auto& row : rows)
-            result->insert(std::tuple { row[0], row[1] });
+            result->insert(std::tuple { row[0].get_value(), row[1].get_value() });
         return ygg::database::insert(repository, *result).first;
     };
     const auto columns = std::array<ColumnIndex, 2> { ColumnIndex(0), ColumnIndex(1) };

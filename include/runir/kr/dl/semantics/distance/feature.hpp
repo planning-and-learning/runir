@@ -27,7 +27,7 @@ struct DistanceFeature
 /// first use (heuristic).
 struct MustPassFeature
 {
-    using MustPass = ygg::database::MustPass<QueryValues, heuristics::KeyedProjectionHeuristic>;
+    using MustPass = ygg::database::MustPass<heuristics::KeyedProjectionHeuristic>;
 
     std::vector<QuerySlot> slots;
     MustPass must_pass;

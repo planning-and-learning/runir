@@ -101,7 +101,7 @@ int main(int argc, char** argv)
                                                                                input,
                                                                                targets);
         const auto heuristic_time = seconds_since(start);
-        auto out = ygg::Builder<ygg::database::Relation<runir::kr::dl::QueryValues>>(must_pass.get_schema().span());
+        auto out = ygg::Builder<ygg::database::Relation>(must_pass.get_schema().span());
         const auto before = feature->must_pass.statistics();
         start = std::chrono::steady_clock::now();
         feature->must_pass.must_pass(input, sources, targets, probes, out, heuristic);

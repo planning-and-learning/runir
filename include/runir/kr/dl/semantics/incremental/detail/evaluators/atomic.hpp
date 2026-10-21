@@ -50,7 +50,7 @@ struct AtomicEvaluator
                 builder.flip();
         }
     }
-    void update(EvaluationGraph<Family, Kind>&, const Delta<Family>& delta, ygg::database::Workspace<QueryValues>&)
+    void update(EvaluationGraph<Family, Kind>&, const Delta<Family>& delta, ygg::database::Workspace&)
     {
         if constexpr (std::same_as<Fact, tyr::formalism::FluentTag>)
             update_atoms(delta.added.fluent_atoms, delta.removed.fluent_atoms);

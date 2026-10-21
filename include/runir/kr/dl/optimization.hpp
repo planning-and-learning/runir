@@ -64,16 +64,16 @@ FamilyQueryView<Family> insert_query(ConstructorRepositoryFor<Family>& repositor
 /// Inserts the runir counterparts of a plan's nodes; input slots map back to leaves. Returns the roots in plan order.
 template<FamilyTag Family>
 std::vector<FamilyQueryView<Family>>
-lower(const ygg::database::QueryPlan<QueryValues>& plan, std::span<const FamilyQueryView<Family>> leaves, ConstructorRepositoryFor<Family>& repository)
+lower(const ygg::database::QueryPlan& plan, std::span<const FamilyQueryView<Family>> leaves, ConstructorRepositoryFor<Family>& repository)
 {
-    using YggIndex = ygg::Index<ygg::database::Query<QueryValues>>;
+    using YggIndex = ygg::Index<ygg::database::Query<>>;
     std::vector<std::optional<FamilyQueryView<Family>>> lowered(plan.node_count());
     const auto lowered_at = [&](YggIndex index) { return lowered.at(index.get_value()).value(); };
-    const auto child = [&](ygg::database::QueryView<QueryValues> node) { return lowered_at(node.get_index()); };
+    const auto child = [&](ygg::database::QueryView<> node) { return lowered_at(node.get_index()); };
     for (size_t i = 0; i < plan.node_count(); ++i)
     {
         lowered[i] = ygg::visit(
-            [&]<typename Tag>(ygg::database::QueryView<QueryValues, Tag> node) -> FamilyQueryView<Family>
+            [&]<typename Tag>(ygg::database::QueryView<Tag> node) -> FamilyQueryView<Family>
             {
                 if constexpr (std::same_as<Tag, ygg::database::QueryInputTag>)
                     return leaves[node.get_input_slot()];
@@ -114,7 +114,7 @@ lower(const ygg::database::QueryPlan<QueryValues>& plan, std::span<const FamilyQ
                     auto data = ygg::Data<Query<Family, QuerySelectValueTag>>(
                         child(node.get_arg()).get_index(),
                         ygg::Index<QueryColumn>(node.get_column().get_value()),
-                        ygg::database::ColumnCodec<ygg::Index<tyr::formalism::Object>>::decode(node.get_constant()));
+                        ygg::Index<tyr::formalism::Object>(ygg::ByteCodec<ygg::uint_t>::decode(node.get_constant())));
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, ygg::database::QueryGenericJoinTag>)
@@ -144,7 +144,7 @@ lower(const ygg::database::QueryPlan<QueryValues>& plan, std::span<const FamilyQ
                     ygg::IndexList<QueryColumn> columns;
                     for (const auto column : node.columns())
                     {
-                        if (column.type != ygg::database::column_type<QueryValues, ygg::Index<tyr::formalism::Object>>)
+                        if (column.type != ygg::type_id<ygg::uint_t>)
                             throw std::logic_error("Query optimization: an empty relation has a non-object column.");
                         columns.push_back(ygg::Index<QueryColumn>(column.label.get_value()));
                     }
@@ -297,7 +297,7 @@ private:
         auto translated = translator.translate(root);
         if (required)
             translated = translator.project(translated, *required);
-        auto statistics = ygg::database::Statistics<QueryValues>();
+        auto statistics = ygg::database::Statistics();
         statistics.objects = m_statistics.objects;
         const auto slot_leaves = translator.get_leaves(root.get_context());
         auto leaves = std::vector<FamilyQueryView<Family>>();
@@ -309,7 +309,7 @@ private:
             // Leaves are not optimized themselves, but their concept/role arguments may hold queries.
             leaves.push_back(memoized(leaf));
         }
-        const auto plan = ygg::database::optimize<QueryValues>(std::span<const ygg::database::QueryView<QueryValues>>(&translated, 1),
+        const auto plan = ygg::database::optimize(std::span<const ygg::database::QueryView<>>(&translated, 1),
                                                                std::span<const ygg::database::Evaluation>(&evaluation, 1),
                                                                statistics);
         const auto result = detail::lower<Family>(plan, leaves, m_repository).front();
@@ -358,7 +358,7 @@ public:
 
 private:
     std::vector<FamilyQueryView<Family>> m_leaves;
-    ygg::database::StatisticsAccumulator<QueryValues, FamilyQueryView<Family>> m_accumulator;
+    ygg::database::StatisticsAccumulator<FamilyQueryView<Family>> m_accumulator;
     std::optional<size_t> m_objects;
 };
 

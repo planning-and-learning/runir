@@ -113,7 +113,7 @@ template<FamilyTag Family>
 class QueryTranslator
 {
     using DlQuery = FamilyQueryView<Family>;
-    using YggQuery = ygg::database::QueryView<QueryValues>;
+    using YggQuery = ygg::database::QueryView<>;
     using Label = ygg::Index<ygg::database::Column>;
 
 public:
@@ -136,7 +136,7 @@ public:
     /// The projection of a translated query onto labels, so the optimizer can push a parent's projection down.
     YggQuery project(YggQuery query, std::span<const Label> labels)
     {
-        auto out = ygg::database::checkout<ygg::database::Query<QueryValues, ygg::database::QueryProjectTag>>(m_builder);
+        auto out = ygg::database::checkout<ygg::database::Query<ygg::database::QueryProjectTag>>(m_builder);
         out->arg = query.get_index();
         out->labels.set(labels.begin(), labels.end());
         return insert(*out);
@@ -145,7 +145,7 @@ public:
     /// The relaxations of translated queries whose input slots are known only where `known(slot)` holds
     /// (ygg::database::relax); built in this translator's repository.
     template<std::predicate<size_t> Known>
-    ygg::database::Relaxation<QueryValues> relax(std::span<const YggQuery> roots, Known&& known)
+    ygg::database::Relaxation relax(std::span<const YggQuery> roots, Known&& known)
     {
         return ygg::database::relax(roots, std::forward<Known>(known), m_repository, m_builder);
     }
@@ -167,14 +167,14 @@ public:
 
 private:
     template<typename Tag>
-    YggQuery insert(ygg::Data<ygg::database::Query<QueryValues, Tag>>& data)
+    YggQuery insert(ygg::Data<ygg::database::Query<Tag>>& data)
     {
         return ygg::database::insert_query(m_repository, m_builder, data);
     }
     template<typename Tag>
     YggQuery binary(YggQuery lhs, YggQuery rhs)
     {
-        auto out = ygg::database::checkout<ygg::database::Query<QueryValues, Tag>>(m_builder);
+        auto out = ygg::database::checkout<ygg::database::Query<Tag>>(m_builder);
         out->lhs = lhs.get_index();
         out->rhs = rhs.get_index();
         return insert(*out);
@@ -182,14 +182,14 @@ private:
     template<typename Tag>
     YggQuery unary(YggQuery arg, std::span<const Label> labels)
     {
-        auto out = ygg::database::checkout<ygg::database::Query<QueryValues, Tag>>(m_builder);
+        auto out = ygg::database::checkout<ygg::database::Query<Tag>>(m_builder);
         out->arg = arg.get_index();
         out->labels.set(labels.begin(), labels.end());
         return insert(*out);
     }
     YggQuery input(QuerySlot slot)
     {
-        auto out = ygg::database::checkout<ygg::database::Query<QueryValues, ygg::database::QueryInputTag>>(m_builder);
+        auto out = ygg::database::checkout<ygg::database::Query<ygg::database::QueryInputTag>>(m_builder);
         out->input_slot = m_slots.size();
         out->columns.set(slot.columns.begin(), slot.columns.end());
         m_slots.push_back(std::move(slot));
@@ -300,7 +300,7 @@ private:
             return unary<ygg::database::QueryRenameTag>(translate(concrete.get_arg()), query_labels(data.columns));
         else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
         {
-            auto out = ygg::database::checkout<ygg::database::Query<QueryValues, ygg::database::QuerySelectEqualTag>>(m_builder);
+            auto out = ygg::database::checkout<ygg::database::Query<ygg::database::QuerySelectEqualTag>>(m_builder);
             out->arg = translate(concrete.get_arg()).get_index();
             out->lhs_column = Label(data.lhs_column.get_value());
             out->rhs_column = Label(data.rhs_column.get_value());
@@ -308,14 +308,14 @@ private:
         }
         else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
         {
-            auto out = ygg::Data<ygg::database::Query<QueryValues, ygg::database::QuerySelectValueTag>>(translate(concrete.get_arg()).get_index(),
+            auto out = ygg::Data<ygg::database::Query<ygg::database::QuerySelectValueTag>>(translate(concrete.get_arg()).get_index(),
                                                                                                        Label(data.column.get_value()),
-                                                                                                       data.object);
+                                                                                                       data.object.get_value());
             return insert(out);
         }
         else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
         {
-            auto out = ygg::database::checkout<ygg::database::Query<QueryValues, ygg::database::QueryGenericJoinTag>>(m_builder);
+            auto out = ygg::database::checkout<ygg::database::Query<ygg::database::QueryGenericJoinTag>>(m_builder);
             for (const auto arg : concrete.get_args())
                 out->inputs.push_back(translate(arg).get_index());
             const auto variable_order = query_labels(data.variable_order);
@@ -326,7 +326,7 @@ private:
         }
         else if constexpr (std::same_as<Tag, QueryEmptyTag>)
         {
-            auto out = ygg::database::checkout<ygg::database::Query<QueryValues, ygg::database::QueryEmptyTag>>(m_builder);
+            auto out = ygg::database::checkout<ygg::database::Query<ygg::database::QueryEmptyTag>>(m_builder);
             const auto columns = concrete.get_schema().span();
             out->columns.set(columns.begin(), columns.end());
             return insert(*out);
@@ -335,9 +335,9 @@ private:
             static_assert(ygg::dependent_false<Tag>::value, "unhandled DL query constructor");
     }
 
-    ygg::database::QueryRepositoryFactory<QueryValues> m_factory;
-    ygg::database::QueryRepository<QueryValues> m_repository;
-    ygg::database::QueryBuilder<QueryValues> m_builder;
+    ygg::database::QueryRepositoryFactory m_factory;
+    ygg::database::QueryRepository m_repository;
+    ygg::database::QueryBuilder m_builder;
     bool m_rewrite_complements;
     ygg::UnorderedMap<DlQuery, YggQuery> m_translated;
     ygg::UnorderedMap<DlQuery, YggQuery> m_arguments;  ///< The slot of each complemented leaf's argument.

@@ -62,7 +62,7 @@ public:
     /// it can be, otherwise initialized; its get_delta() / changed() throw std::logic_error in the latter case.
     template<kr::dl::semantics::StateEvaluationContextConcept<Family, Kind> Context>
     RootState<Family, Kind, Category, Context>
-    update(const Context& context, const kr::dl::semantics::incremental::Delta<Family>& delta, ygg::database::Workspace<kr::dl::QueryValues>& workspace)
+    update(const Context& context, const kr::dl::semantics::incremental::Delta<Family>& delta, ygg::database::Workspace& workspace)
     {
         return evaluated(m_evaluation.enter(context, delta, workspace));
     }
@@ -109,7 +109,7 @@ public:
     }
     template<kr::dl::semantics::StateEvaluationContextConcept<Family, Kind> Context>
     QueryRootState<Family, Kind, Context>
-    update(const Context& context, const kr::dl::semantics::incremental::Delta<Family>& delta, ygg::database::Workspace<kr::dl::QueryValues>& workspace)
+    update(const Context& context, const kr::dl::semantics::incremental::Delta<Family>& delta, ygg::database::Workspace& workspace)
     {
         return evaluated(m_evaluation.enter(context, delta, workspace));
     }

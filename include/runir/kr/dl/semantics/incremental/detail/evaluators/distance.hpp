@@ -46,7 +46,7 @@ struct RoleEdgeDistanceEvaluator
     QueryEvaluationIndex sources;
     QueryEvaluationIndex edges;
     QueryEvaluationIndex targets;
-    ygg::database::incremental::SourceMinDistance<QueryValues> operation;
+    ygg::database::incremental::SourceMinDistance operation;
     DenotationState<NumericalTag> value;
 
     RoleEdgeDistanceEvaluator(FamilyNumericalView<Family, DistanceTag> expression,
@@ -64,7 +64,7 @@ struct RoleEdgeDistanceEvaluator
         operation.initialize(graph.result(sources), graph.result(edges), graph.result(targets));
         value.set(operation.get_result());
     }
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<QueryValues>&)
+    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace&)
     {
         operation.update(graph.change(sources).change(), graph.change(edges).change(), graph.change(targets).change());
         value.set(operation.get_result());
@@ -77,7 +77,7 @@ struct RoleEdgeDistanceEvaluator
 template<FamilyTag Family, tyr::TaskKind Kind>
 struct QueryEdgeDistanceEvaluator
 {
-    using Distance = ygg::database::incremental::MinDistance<QueryValues, heuristics::ProjectionHeuristic>;
+    using Distance = ygg::database::incremental::MinDistance<heuristics::ProjectionHeuristic>;
 
     FamilyNumericalView<Family, DistanceTag> expression;
     FamilyQueryView<Family> edges;  ///< The edge argument of expression.
@@ -111,13 +111,13 @@ struct QueryEdgeDistanceEvaluator
             heuristic = semantics::detail::make_heuristic(feature,
                                                           expression.get_data().plan,
                                                           semantics::detail::num_objects<Family, Kind>(context),
-                                                          [&](size_t slot) -> const ygg::Builder<ygg::database::Relation<QueryValues>>& { return feature.distance.input(slot); });
+                                                          [&](size_t slot) -> const ygg::Builder<ygg::database::Relation>& { return feature.distance.input(slot); });
         set_targets(graph);
         evaluate(graph);
     }
     /// The children's deltas are exact (IncrementalEvaluation): they are the slots' changes, unchanged arguments and
     /// slots leave the distance unchanged, and unchanged targets leave the search and the heuristic's tables valid.
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<QueryValues>&)
+    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace&)
     {
         slot_changed.clear();
         for (const auto slot : slots)
@@ -137,7 +137,7 @@ struct QueryEdgeDistanceEvaluator
 private:
     auto input(const EvaluationGraph<Family, Kind>& graph) const
     {
-        return [this, &graph](size_t slot) -> const ygg::Builder<ygg::database::Relation<QueryValues>>& { return graph.result(slots[slot]); };
+        return [this, &graph](size_t slot) -> const ygg::Builder<ygg::database::Relation>& { return graph.result(slots[slot]); };
     }
     static bool modified(const EvaluationGraph<Family, Kind>& graph, QueryEvaluationIndex index)
     {

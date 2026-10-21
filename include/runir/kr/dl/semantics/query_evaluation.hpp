@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_QUERY_EVALUATION_HPP_
 #define RUNIR_KR_DL_SEMANTICS_QUERY_EVALUATION_HPP_
 
+#include "runir/kr/dl/object_rows.hpp"
 #include "runir/kr/dl/query_view.hpp"
 #include "runir/kr/dl/semantics/detail/evaluation_helpers.hpp"
 #include "runir/kr/dl/semantics/evaluation_decl.hpp"
@@ -22,7 +23,7 @@ template<tyr::TaskKind Kind, FamilyTag Family, typename Tag, typename C, StateEv
     requires(!std::same_as<Tag, void>)
 void evaluate_query(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor,
                     Context& context,
-                    ygg::Builder<ygg::database::Relation<QueryValues>>& result)
+                    ygg::Builder<ygg::database::Relation>& result)
 {
     const auto& data = constructor.get_data();
     auto children = context.child_context();
@@ -37,7 +38,7 @@ void evaluate_query(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor,
         auto& row = context.get_workspace().get_database_workspace().row;
         const auto predicate = constructor.get_predicate();
         for (const auto atom : context.get_state().get_atoms_view(predicate))
-            result.insert(ygg::database::encode_row<QueryValues, ygg::Index<tyr::formalism::Object>>(atom.get_row().get_data(), row));
+            result.insert(encode_object_row(atom.get_row().get_data(), row));
     }
     else if constexpr (is_atomic_goal_tag_v<Tag>)
     {
@@ -45,7 +46,7 @@ void evaluate_query(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor,
         const auto predicate = constructor.get_predicate();
         for (const auto atom :
              context.get_state().get_task().get_task().get_goal().template get_atoms_view<TagFactKind<Tag>>(constructor.get_polarity(), predicate))
-            result.insert(ygg::database::encode_row<QueryValues, ygg::Index<tyr::formalism::Object>>(atom.get_row().get_data(), row));
+            result.insert(encode_object_row(atom.get_row().get_data(), row));
     }
     else if constexpr (std::same_as<Tag, QueryConceptTag>)
         insert_denotation_rows<ConceptTag>(evaluate<Kind>(constructor.get_arg(), children), result);
@@ -89,14 +90,14 @@ void evaluate_query(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor,
     else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
     {
         const auto child = evaluate<Kind>(constructor.get_arg(), children);
-        ygg::database::select_equal_value(child, ygg::Index<ygg::database::Column>(data.column.get_value()), data.object, result);
+        ygg::database::select_equal_value(child, ygg::Index<ygg::database::Column>(data.column.get_value()), data.object.get_value(), result);
     }
     else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
     {
         std::vector<QueryDenotationView> inputs;
         for (const auto arg : constructor.get_args())
             inputs.push_back(evaluate<Kind>(arg, children));
-        ygg::database::generic_join<QueryValues>(inputs, data.plan, result, context.get_workspace().get_generic_join_workspace(data.plan));
+        ygg::database::generic_join(inputs, data.plan, result, context.get_workspace().get_generic_join_workspace(data.plan));
     }
     else if constexpr (std::same_as<Tag, QueryEmptyTag>)
     {

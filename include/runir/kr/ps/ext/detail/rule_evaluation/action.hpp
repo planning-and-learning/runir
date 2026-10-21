@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_PS_EXT_DETAIL_RULE_EVALUATION_ACTION_HPP_
 #define RUNIR_KR_PS_EXT_DETAIL_RULE_EVALUATION_ACTION_HPP_
 
+#include "runir/kr/dl/object_rows.hpp"
 #include "runir/kr/ps/dl/evaluation.hpp"
 #include "runir/kr/ps/ext/compatibility.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
@@ -33,6 +34,7 @@ class ActionRuleEvaluator
     RuleVariantView m_variant;
     tyr::formalism::planning::ActionView<tyr::LiftedTag> m_action;
     // Retained scratch for decoding query rows; each use completes before any callback.
+    mutable std::vector<ygg::uint_t> m_values;
     mutable std::vector<ygg::Index<tyr::formalism::Object>> m_objects;
     mutable std::vector<std::byte> m_row;
 
@@ -93,11 +95,14 @@ public:
         {
             if (stop())
                 return false;
+            m_objects.clear();
+            for (const auto value : row.get_data().get_all(m_values))
+                m_objects.emplace_back(value);
             // Policy applicability has no carried path metric.
             const auto offered = context.task_context->search_context->successor_generator->try_get_applicable_action_binding(
                 tyr::planning::Node<Kind, PlanningState>(planning_state, 0),
                 m_action,
-                tyr::formalism::planning::ObjectSpanView(row.get_data().get_all(m_objects), *planning_state.get_formalism_repository()));
+                tyr::formalism::planning::ObjectSpanView(std::span<const ygg::Index<tyr::formalism::Object>>(m_objects), *planning_state.get_formalism_repository()));
             require_applicable(offered.status);
             const auto candidate = context.storage.successor(planning_state, *offered.binding);
             // Effects filter the offered transitions, as for Do rules.
@@ -126,7 +131,7 @@ public:
         auto state_context = context.make_dl_context(state);
         const auto query = evaluate<Kind>(rule.get_query_feature(), state_context);
         const auto objects = candidate.label.get_objects();
-        if (objects.size() != query.arity() || !query.contains(ygg::database::encode_row<runir::kr::dl::QueryValues, ygg::Index<tyr::formalism::Object>>(objects.get_data(), m_row)))
+        if (objects.size() != query.arity() || !query.contains(runir::kr::dl::encode_object_row(objects.get_data(), m_row)))
             return false;
         auto& generator = *context.task_context->search_context->successor_generator;
         const auto node = tyr::planning::Node<Kind, PlanningState>(planning_state, 0);

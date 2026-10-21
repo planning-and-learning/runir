@@ -28,7 +28,6 @@ namespace
 {
 using Ext = kr::ExtFamilyTag;
 using ObjectIndex = ygg::Index<tyr::formalism::Object>;
-using QueryValues = kr::dl::QueryValues;
 
 using GroundExtContext = kr::dl::semantics::StateEvaluationContext<Ext, tyr::GroundTag>;
 struct InvalidResultContext : GroundExtContext
@@ -61,7 +60,7 @@ static_assert(!kr::dl::semantics::StateEvaluationContextConcept<WrongKindContext
 constexpr auto acquires_builder = []<typename T, typename... Args>()
 { return requires(kr::dl::semantics::Builder& builder, Args&&... args) { builder.template get_builder<T>(std::forward<Args>(args)...); }; };
 static_assert(acquires_builder.template operator()<kr::dl::semantics::Denotation<kr::dl::ConceptTag>, ygg::uint_t>());
-static_assert(acquires_builder.template operator()<ygg::database::Relation<QueryValues>, std::span<const ygg::Index<ygg::database::Column>>>());
+static_assert(acquires_builder.template operator()<ygg::database::Relation, std::span<const ygg::Index<ygg::database::Column>>>());
 static_assert(!acquires_builder.template operator()<int>());
 static_assert(!acquires_builder.template operator()<kr::dl::semantics::Denotation<kr::dl::ConceptTag>, std::string>());
 
@@ -655,7 +654,7 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     EXPECT_EQ(results.size(), 2);
 
     {
-        auto direct = builder.get_builder<ygg::database::Relation<QueryValues>>(columns);
+        auto direct = builder.get_builder<ygg::database::Relation>(columns);
         for (size_t i = 0; i < left_result.size(); ++i)
             direct->insert(left_result.row(i));
         const auto [interned, inserted] = kr::dl::semantics::insert(persistent, *direct);
@@ -669,7 +668,7 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     first_repository.reset();
     second_repository.reset();
     EXPECT_EQ(left_result.size(), 9);
-    EXPECT_TRUE(left_result.contains(std::tuple { ObjectIndex(0), ObjectIndex(2) }));
+    EXPECT_TRUE(left_result.contains(std::tuple { ygg::uint_t(0), ygg::uint_t(2) }));
     EXPECT_EQ(ygg::database::column_labels(renamed_left.columns().span()), std::vector<ColumnIndex>(reversed_columns.begin(), reversed_columns.end()));
     auto fresh_repository = factory.create(search->task->get_repository());
     const auto fresh = query("(q_role (fresh_source fresh_target) (r_universal))", *fresh_repository);

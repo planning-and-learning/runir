@@ -3,7 +3,7 @@
 namespace runir::kr::dl::semantics::heuristics::detail
 {
 
-ygg::database::QueryPlan<QueryValues> compile_edge_plan(const std::vector<ygg::database::QueryView<QueryValues>>& roots)
+ygg::database::QueryPlan compile_edge_plan(const std::vector<ygg::database::QueryView<>>& roots)
 {
     return ygg::database::compile(roots);
 }

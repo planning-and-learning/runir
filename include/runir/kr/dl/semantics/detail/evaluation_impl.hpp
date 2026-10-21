@@ -438,7 +438,7 @@ template<tyr::TaskKind Kind, FamilyTag Family, typename Tag, typename C, StateEv
     requires(!std::same_as<Tag, void> && !std::same_as<Tag, QueryRenameTag>)
 auto evaluate_impl(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor, Context& context) -> QueryDenotationView
 {
-    auto result = context.get_builder().template get_builder<ygg::database::Relation<QueryValues>>(constructor.get_schema().span());
+    auto result = context.get_builder().template get_builder<ygg::database::Relation>(constructor.get_schema().span());
     detail::evaluate_query<Kind>(constructor, context, *result);
     return insert(context.get_denotation_repository(), *result).first;
 }
@@ -468,7 +468,7 @@ auto evaluate_impl(ygg::View<ygg::Index<QueryProjection<Family, Category>>, C> c
         auto bits = result->get();
         const auto object = position(0);
         for (const auto row : relation)
-            bits.set(row.template get<ygg::Index<tyr::formalism::Object>>(object).get_value());
+            bits.set(row.template get<ygg::uint_t>(object));
     }
     else
     {
@@ -476,8 +476,8 @@ auto evaluate_impl(ygg::View<ygg::Index<QueryProjection<Family, Category>>, C> c
         const auto source = position(0);
         const auto target = position(1);
         for (const auto row : relation)
-            result->get(row.template get<ygg::Index<tyr::formalism::Object>>(source).get_value())
-                .set(row.template get<ygg::Index<tyr::formalism::Object>>(target).get_value());
+            result->get(row.template get<ygg::uint_t>(source))
+                .set(row.template get<ygg::uint_t>(target));
     }
     return insert(context.get_denotation_repository(), *result, context.get_builder()).first;
 }

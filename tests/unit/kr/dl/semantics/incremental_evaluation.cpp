@@ -34,7 +34,6 @@ namespace
 {
 using Ext = kr::ExtFamilyTag;
 using Object = ygg::Index<tyr::formalism::Object>;
-using QueryValues = kr::dl::QueryValues;
 
 using GroundContext = kr::dl::semantics::StateEvaluationContext<Ext,
                                                                 tyr::GroundTag,
@@ -201,7 +200,7 @@ void check_incremental_evaluation()
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage<Ext>(denotations);
     auto builder = kr::dl::semantics::Builder {};
-    auto workspace = ygg::database::Workspace<QueryValues> {};
+    auto workspace = ygg::database::Workspace {};
     auto register_data = std::array<ygg::Data<kr::dl::semantics::RegisterValues>, 3> {};
     for (auto& data : register_data)
     {
@@ -611,10 +610,10 @@ void check_incremental_evaluation()
         auto result = std::vector<std::vector<Object>> {};
         for (size_t i = 0; i < relation.size(); ++i)
         {
-            const auto row = ygg::database::Row<QueryValues>(relation.row(i), relation.columns().span());
+            const auto row = ygg::database::Row(relation.row(i), relation.columns().span());
             auto& values = result.emplace_back();
             for (size_t j = 0; j < row.size(); ++j)
-                values.push_back(row.get<Object>(j));
+                values.push_back(Object(row.get<ygg::uint_t>(j)));
         }
         std::ranges::sort(result);
         return result;
