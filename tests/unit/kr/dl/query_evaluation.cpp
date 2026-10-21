@@ -26,6 +26,7 @@
 #include <string>
 #include <tuple>
 #include <type_traits>
+#include <tyr/formalism/planning/interning.hpp>
 #include <tyr/formalism/planning/parser.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
