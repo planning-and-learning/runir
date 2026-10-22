@@ -8,6 +8,7 @@
 #include <array>
 #include <cassert>
 #include <cstddef>
+#include <cstring>
 #include <map>
 #include <optional>
 #include <span>
@@ -191,6 +192,22 @@ private:
     }
 };
 
+namespace detail
+{
+/// Byte strings in std::vector's order. The comparison is spelled out because GCC 13 and 14 report the memcmp inlined
+/// from std::vector's operator< as an overread (-Wstringop-overread).
+struct ByteStringLess
+{
+    bool operator()(std::span<const std::byte> lhs, std::span<const std::byte> rhs) const noexcept
+    {
+        const auto size = std::min(lhs.size(), rhs.size());
+        if (const auto order = size == 0 ? 0 : std::memcmp(lhs.data(), rhs.data(), size); order != 0)
+            return order < 0;
+        return lhs.size() < rhs.size();
+    }
+};
+}
+
 /// A ProjectionHeuristic for keyed vertices (ygg::database::MustPass): estimates from a key followed by a vertex, with
 /// tables per key for the key's targets. The abstract edges ignore the key, a superset of every key's projected edges,
 /// so the estimates stay consistent for each key. Tables are kept per key and recomputed only when its targets change.
@@ -218,7 +235,7 @@ public:
         if (m_rows == m_previous)
             return;
         std::swap(m_rows, m_previous);
-        auto grouped = std::map<std::vector<std::byte>, std::vector<std::vector<std::byte>>>();
+        auto grouped = std::map<std::vector<std::byte>, std::vector<std::vector<std::byte>>, detail::ByteStringLess>();
         for (size_t r = 0; r < targets.size(); ++r)
         {
             const auto row = targets.row(r);
@@ -226,7 +243,7 @@ public:
         }
         for (auto& [key, rows] : grouped)
         {
-            std::ranges::sort(rows);
+            std::ranges::sort(rows, detail::ByteStringLess {});
             auto& entry = m_keys[key];
             if (entry.tables.empty() || entry.targets != rows)
             {
@@ -257,7 +274,7 @@ private:
     ProjectionHeuristic m_heuristic;
     size_t m_key_size = 0;
     std::vector<ygg::database::ColumnLayout> m_target_columns;  ///< The vertex columns of a target, without the key.
-    std::map<std::vector<std::byte>, Key> m_keys;
+    std::map<std::vector<std::byte>, Key, detail::ByteStringLess> m_keys;
     mutable std::vector<std::byte> m_key;  ///< Scratch of estimate().
     std::vector<std::byte> m_previous;     ///< The rows of the targets of the last update().
     std::vector<std::byte> m_rows;         ///< Scratch of update().
