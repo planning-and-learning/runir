@@ -23,10 +23,10 @@ concept IndexedDataView =
 template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
 {
-    return (IndexedDataView<Ts, kr::dl::ConstructorRepositoryFor> && ...);
+    return (IndexedDataView<Ts, kr::dl::ConstructorRepository> && ...);
 }
 
-static_assert(indexed_data_views<>(kr::dl::FamilyBooleanTypes {}));
+static_assert(indexed_data_views<>(kr::dl::BooleanTypes {}));
 
 using PredicateTags = ygg::TypeList<kr::dl::AtomicStateTag<tyr::formalism::StaticTag>,
                                     kr::dl::AtomicStateTag<tyr::formalism::FluentTag>,
@@ -41,15 +41,15 @@ consteval bool boolean_data_view()
 {
     using Entity = kr::dl::Boolean<Tag>;
     using Data = ygg::Data<Entity>;
-    using View = ygg::View<ygg::Index<Entity>, kr::dl::ConstructorRepositoryFor>;
+    using View = ygg::View<ygg::Index<Entity>, kr::dl::ConstructorRepository>;
 
-    static_assert(std::same_as<View, kr::dl::FamilyBooleanView<Tag>>);
+    static_assert(std::same_as<View, kr::dl::BooleanView<Tag>>);
     if constexpr (false)
-        static_assert(std::same_as<View, kr::dl::BaseBooleanView<Tag>>);
+        static_assert(std::same_as<View, kr::dl::BooleanView<Tag>>);
     else if constexpr (true)
-        static_assert(std::same_as<View, kr::dl::ExtBooleanView<Tag>>);
+        static_assert(std::same_as<View, kr::dl::BooleanView<Tag>>);
     else
-        static_assert(std::same_as<View, kr::dl::UnsBooleanView<Tag>>);
+        static_assert(std::same_as<View, kr::dl::BooleanView<Tag>>);
 
     if constexpr (ygg::InTypeList<Tag, PredicateTags>)
         return requires(Data& data, const View& view) {
@@ -68,7 +68,7 @@ consteval bool boolean_data_view()
             data.arg;
             view.get_arg();
         };
-    else if constexpr (ygg::InTypeList<Tag, kr::dl::UnsComparisonConstructorTags> || ygg::InTypeList<Tag, LogicalBinaryTags>)
+    else if constexpr (ygg::InTypeList<Tag, kr::dl::ComparisonConstructorTags> || ygg::InTypeList<Tag, LogicalBinaryTags>)
         return requires(Data& data, const View& view) {
             data.lhs;
             data.rhs;
@@ -90,7 +90,7 @@ consteval bool boolean_data_views(ygg::TypeList<Tags...>)
     return (boolean_data_view<Tags>() && ...);
 }
 
-static_assert(boolean_data_views<>(kr::dl::FamilyBooleanConstructorTags {}));
+static_assert(boolean_data_views<>(kr::dl::BooleanConstructorTags {}));
 
 }  // namespace
 
@@ -98,7 +98,7 @@ TEST(RunirKrDlBoolean, RoutesConstantUnaryAndBinaryData)
 {
     using Constructor = kr::dl::Constructor<kr::dl::BooleanTag>;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-    auto repository = kr::dl::ExtConstructorRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_repository);
 
     auto constant_data = ygg::Data<kr::dl::Boolean<kr::dl::BooleanConstantTag>>(true);
     const auto constant = repository->insert(constant_data).first;

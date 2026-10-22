@@ -12,7 +12,7 @@ namespace ygg::serialization
 {
 
 template<typename Archive, typename Tag, typename C>
-    requires runir::kr::dl::FamilyBooleanConstructorTag<Tag>
+    requires runir::kr::dl::BooleanConstructorTag<Tag>
 void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Boolean<Tag>>, C>>)
 {
     using Value = View<Index<runir::kr::dl::Boolean<Tag>>, C>;

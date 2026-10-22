@@ -12,10 +12,10 @@
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
-#include <runir/kr/dl/semantics/ext/evaluation.hpp>
 #include <runir/kr/dl/semantics/incremental/delta.hpp>
 #include <runir/kr/dl/semantics/incremental/detail/atomic_query.hpp>
 #include <runir/kr/dl/semantics/incremental/evaluation.hpp>
+#include <runir/kr/dl/semantics/state_evaluation.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <string>
 #include <tuple>
@@ -35,7 +35,7 @@ using Fluent = tyr::formalism::FluentTag;
 using Derived = tyr::formalism::DerivedTag;
 using Object = ygg::Index<tyr::formalism::Object>;
 
-auto parse_query(const std::string& expression, tyr::formalism::planning::DomainView domain, kr::dl::ConstructorRepositoryFor& repository)
+auto parse_query(const std::string& expression, tyr::formalism::planning::DomainView domain, kr::dl::ConstructorRepository& repository)
 {
     const auto count = kr::ps::ext::dl::parse_numerical("(n_count " + expression + ")", domain, repository);
     return count.get_variant().template get<ygg::Index<kr::dl::Numerical<kr::dl::CountTag>>>().get_arg().template get<ygg::Index<kr::dl::Query<>>>();
@@ -96,7 +96,7 @@ void check_atomic_projection()
     const auto second = std::ranges::find_if(second_candidates, [&](const auto& candidate) { return candidate.label.get_objects()[0].get_index() == a; });
     ASSERT_NE(second, second_candidates.end());
 
-    auto constructors = kr::dl::ConstructorRepositoryFactoryFor().create(search->task->get_repository());
+    auto constructors = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
     const auto triple = parse_query(R"((q_atomic_state "triple" (x y z)))", domain, *constructors);
     const auto copied = parse_query(R"((q_atomic_state "copied" (x y z)))", domain, *constructors);
     const auto ready = parse_query(R"((q_atomic_state "ready" ()))", domain, *constructors);
@@ -234,7 +234,7 @@ void check_query_graph()
         nodes.push_back(successors.front().node);
     }
 
-    auto constructors = kr::dl::ConstructorRepositoryFactoryFor().create(search->task->get_repository());
+    auto constructors = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
     const auto domain = search->task->get_domain().get_domain();
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);

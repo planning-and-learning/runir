@@ -23,25 +23,25 @@ concept IndexedDataView =
 template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
 {
-    return (IndexedDataView<Ts, kr::dl::ConstructorRepositoryFor> && ...);
+    return (IndexedDataView<Ts, kr::dl::ConstructorRepository> && ...);
 }
 
-static_assert(indexed_data_views<>(kr::dl::FamilyNumericalTypes {}));
+static_assert(indexed_data_views<>(kr::dl::NumericalTypes {}));
 
 template<typename Tag>
 consteval bool numerical_data_view()
 {
     using Entity = kr::dl::Numerical<Tag>;
     using Data = ygg::Data<Entity>;
-    using View = ygg::View<ygg::Index<Entity>, kr::dl::ConstructorRepositoryFor>;
+    using View = ygg::View<ygg::Index<Entity>, kr::dl::ConstructorRepository>;
 
-    static_assert(std::same_as<View, kr::dl::FamilyNumericalView<Tag>>);
+    static_assert(std::same_as<View, kr::dl::NumericalView<Tag>>);
     if constexpr (false)
-        static_assert(std::same_as<View, kr::dl::BaseNumericalView<Tag>>);
+        static_assert(std::same_as<View, kr::dl::NumericalView<Tag>>);
     else if constexpr (true)
-        static_assert(std::same_as<View, kr::dl::ExtNumericalView<Tag>>);
+        static_assert(std::same_as<View, kr::dl::NumericalView<Tag>>);
     else
-        static_assert(std::same_as<View, kr::dl::UnsNumericalView<Tag>>);
+        static_assert(std::same_as<View, kr::dl::NumericalView<Tag>>);
 
     if constexpr (std::same_as<Tag, kr::dl::CountTag>)
         return requires(Data& data, const View& view) {
@@ -84,7 +84,7 @@ consteval bool numerical_data_views(ygg::TypeList<Tags...>)
     return (numerical_data_view<Tags>() && ...);
 }
 
-static_assert(numerical_data_views<>(kr::dl::FamilyNumericalConstructorTags {}));
+static_assert(numerical_data_views<>(kr::dl::NumericalConstructorTags {}));
 
 }  // namespace
 
@@ -94,7 +94,7 @@ TEST(RunirKrDlNumerical, RoutesValueBinaryAndDistanceData)
     using Role = kr::dl::Constructor<kr::dl::RoleTag>;
     using Numerical = kr::dl::Constructor<kr::dl::NumericalTag>;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-    auto repository = kr::dl::ExtConstructorRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_repository);
 
     auto constant_data = ygg::Data<kr::dl::Numerical<kr::dl::NumericalConstantTag>>(7);
     EXPECT_EQ(repository->insert(constant_data).first.get_value(), 7);

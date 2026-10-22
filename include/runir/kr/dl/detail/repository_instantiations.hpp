@@ -1,7 +1,7 @@
-#ifndef RUNIR_KR_DL_DETAIL_REPOSITORY_INSTANTIATIONS_EXT_HPP_
-#define RUNIR_KR_DL_DETAIL_REPOSITORY_INSTANTIATIONS_EXT_HPP_
+#ifndef RUNIR_KR_DL_DETAIL_REPOSITORY_INSTANTIATIONS_HPP_
+#define RUNIR_KR_DL_DETAIL_REPOSITORY_INSTANTIATIONS_HPP_
 
-/// Extern declarations of the symbol storage of every dl ext symbol type, instantiated in the library.
+/// Extern declarations of the symbol storage of every dl symbol type, instantiated in the library.
 /// Include only from sources that intern many of these types; see yggdrasil's docs/TEMPLATE_RULES.md.
 
 #include "runir/kr/dl/repository.hpp"

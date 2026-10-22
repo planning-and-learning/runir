@@ -21,7 +21,7 @@ class BasicRepository : public ygg::formalism::SymbolRepositoryBase<BasicReposit
     using Base = ygg::formalism::SymbolRepositoryBase<BasicRepository<Family, RepositoryTypes>, RepositoryTypes>;
 
 public:
-    using DlRepositoryPtr = runir::kr::dl::ConstructorRepositoryPtrFor;
+    using DlRepositoryPtr = runir::kr::dl::ConstructorRepositoryPtr;
 
 private:
     template<FamilyTag, typename>

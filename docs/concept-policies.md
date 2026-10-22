@@ -2,8 +2,8 @@
 
 `runir::kr::ps::icp` and `pyrunir.kr.ps.icp` implement a separate policy family
 with one module, memory states, registers, Load rules, and concept rules.
-Features use the complete Ext DL language, including concept and role registers
-and queries. Standard Boolean/numerical conditions and effects have the same
+Features use the DL language with concept and role registers and queries; the
+parser rejects call arguments. Standard Boolean/numerical conditions and effects have the same
 meaning as in Ext. Structural termination analysis is not implemented.
 
 ## Rules

@@ -24,7 +24,7 @@ void bind_numerical_data(nb::module_& m, const char* name)
                                             ygg::Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::ConceptTag>>,
                                             ygg::Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>>,
                                             ygg::Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::NumericalTag>>,
-                                            runir::kr::dl::grammar::ConstructorRepositoryFor>(cls);
+                                            runir::kr::dl::grammar::ConstructorRepository>(cls);
 
     if constexpr (std::same_as<Tag, CountTag>)
         cls.def_rw("arg", &Data::arg);
@@ -36,7 +36,7 @@ template<typename Tag>
 void bind_numerical_view(nb::module_& m, const char* name)
 {
     using Type = runir::kr::dl::grammar::Numerical<Tag>;
-    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::grammar::ConstructorRepositoryFor>;
+    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::grammar::ConstructorRepository>;
     auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index);
     ygg::add_print(cls);
     ygg::add_comparison(cls);

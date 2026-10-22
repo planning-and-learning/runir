@@ -4,7 +4,7 @@
 namespace runir::tests
 {
 
-TEST(RunirTests, UnsFamilyGrammarParserAcceptsComparisonsAndConstants)
+TEST(RunirTests, DlParserAcceptsComparisonsAndConstants)
 {
     // Valid expressions for the new constructors parse without error.
     EXPECT_NO_THROW(runir::kr::dl::grammar::parser::parse_numerical_ast<>("(n_const 3)"));
@@ -16,7 +16,7 @@ TEST(RunirTests, UnsFamilyGrammarParserAcceptsComparisonsAndConstants)
     EXPECT_NO_THROW(runir::kr::dl::grammar::parser::parse_boolean_ast<>("(b_eq (b_const true) (b_const false))"));
     EXPECT_NO_THROW(runir::kr::dl::grammar::parser::parse_boolean_ast<>("(b_neq (b_nonempty (c_top)) (b_const true))"));
 
-    // Base constructors still parse under the uns grammar.
+    // The other constructors still parse.
     EXPECT_NO_THROW(runir::kr::dl::grammar::parser::parse_numerical_ast<>("(n_count (c_top))"));
     EXPECT_NO_THROW(runir::kr::dl::grammar::parser::parse_boolean_ast<>("(b_nonempty (c_top))"));
 

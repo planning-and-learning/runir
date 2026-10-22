@@ -37,10 +37,10 @@ struct QueryValue : ygg::database::incremental::detail::QueryValue
 template<tyr::TaskKind Kind>
 struct QueryStaticEvaluator : QueryValue
 {
-    FamilyQueryView<> expression;
+    QueryView<> expression;
     bool initialized = false;
 
-    explicit QueryStaticEvaluator(FamilyQueryView<> expression) : QueryValue(expression.get_schema().span()), expression(expression) {}
+    explicit QueryStaticEvaluator(QueryView<> expression) : QueryValue(expression.get_schema().span()), expression(expression) {}
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>&, Context& context)
     {
@@ -59,7 +59,7 @@ struct QueryStaticEvaluator : QueryValue
 template<tyr::TaskKind Kind, tyr::formalism::FactKind Fact>
 struct QueryAtomicEvaluator : AtomicQueryEvaluator<Fact>
 {
-    explicit QueryAtomicEvaluator(FamilyQueryView<AtomicStateTag<Fact>> expression) : AtomicQueryEvaluator<Fact>(expression) {}
+    explicit QueryAtomicEvaluator(QueryView<AtomicStateTag<Fact>> expression) : AtomicQueryEvaluator<Fact>(expression) {}
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>&, Context& context)
     {
@@ -234,9 +234,9 @@ template<tyr::TaskKind Kind, typename Tag>
 struct QuerySelectionEvaluator : QueryValue
 {
     QueryEvaluationIndex argument;
-    FamilyQueryView<Tag> expression;
+    QueryView<Tag> expression;
 
-    QuerySelectionEvaluator(QueryEvaluationIndex argument, FamilyQueryView<Tag> expression) :
+    QuerySelectionEvaluator(QueryEvaluationIndex argument, QueryView<Tag> expression) :
         QueryValue(expression.get_schema().span()),
         argument(argument),
         expression(expression)

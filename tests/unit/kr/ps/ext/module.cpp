@@ -19,8 +19,8 @@ static_assert(std::totally_ordered<Index>);
 static_assert(std::totally_ordered<Data>);
 static_assert(std::totally_ordered<View>);
 static_assert(std::same_as<View, kr::ps::ext::ModuleView>);
-static_assert(std::same_as<kr::ps::ext::ConceptRegisterView, ygg::View<ygg::Index<kr::dl::Register<kr::dl::ConceptTag>>, kr::dl::ExtConstructorRepository>>);
-static_assert(std::same_as<kr::ps::ext::RoleRegisterView, ygg::View<ygg::Index<kr::dl::Register<kr::dl::RoleTag>>, kr::dl::ExtConstructorRepository>>);
+static_assert(std::same_as<kr::ps::ext::ConceptRegisterView, ygg::View<ygg::Index<kr::dl::Register<kr::dl::ConceptTag>>, kr::dl::ConstructorRepository>>);
+static_assert(std::same_as<kr::ps::ext::RoleRegisterView, ygg::View<ygg::Index<kr::dl::Register<kr::dl::RoleTag>>, kr::dl::ConstructorRepository>>);
 static_assert(requires(Data& data) {
     data.index;
     data.symbol;

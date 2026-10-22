@@ -740,76 +740,44 @@ using QueryConstructorTags = ygg::TypeList<AtomicStateTag<tyr::formalism::Static
 namespace runir::kr::dl
 {
 
-using FamilyConceptConstructorTags = ExtConceptConstructorTags;
-
-using FamilyRoleConstructorTags = ExtRoleConstructorTags;
-
-using FamilyBooleanConstructorTags = ExtBooleanConstructorTags;
-
-using FamilyNumericalConstructorTags = ExtNumericalConstructorTags;
+template<typename T>
+concept ConceptConstructorTag = ygg::InTypeList<T, ConceptConstructorTags>;
 
 template<typename T>
-concept FamilyConceptConstructorTag = ygg::InTypeList<T, FamilyConceptConstructorTags>;
+concept RoleConstructorTag = ygg::InTypeList<T, RoleConstructorTags>;
 
 template<typename T>
-concept FamilyRoleConstructorTag = ygg::InTypeList<T, FamilyRoleConstructorTags>;
+concept BooleanConstructorTag = ygg::InTypeList<T, BooleanConstructorTags>;
 
 template<typename T>
-concept FamilyBooleanConstructorTag = ygg::InTypeList<T, FamilyBooleanConstructorTags>;
+concept NumericalConstructorTag = ygg::InTypeList<T, NumericalConstructorTags>;
 
 template<typename T>
-concept FamilyNumericalConstructorTag = ygg::InTypeList<T, FamilyNumericalConstructorTags>;
+concept BaseConceptConstructorTag = ygg::InTypeList<T, BaseConceptConstructorTags>;
 
 template<typename T>
-concept BaseConceptConstructorTag = FamilyConceptConstructorTag<T>;
+concept BaseRoleConstructorTag = ygg::InTypeList<T, BaseRoleConstructorTags>;
 
 template<typename T>
-concept BaseRoleConstructorTag = FamilyRoleConstructorTag<T>;
+concept BaseBooleanConstructorTag = ygg::InTypeList<T, BaseBooleanConstructorTags>;
 
 template<typename T>
-concept BaseBooleanConstructorTag = FamilyBooleanConstructorTag<T>;
-
-template<typename T>
-concept BaseNumericalConstructorTag = FamilyNumericalConstructorTag<T>;
-
-template<typename T>
-concept ExtConceptConstructorTag = FamilyConceptConstructorTag<T>;
-
-template<typename T>
-concept ExtRoleConstructorTag = FamilyRoleConstructorTag<T>;
-
-template<typename T>
-concept ExtBooleanConstructorTag = FamilyBooleanConstructorTag<T>;
-
-template<typename T>
-concept ExtNumericalConstructorTag = FamilyNumericalConstructorTag<T>;
-
-template<typename T>
-concept UnsConceptConstructorTag = FamilyConceptConstructorTag<T>;
-
-template<typename T>
-concept UnsRoleConstructorTag = FamilyRoleConstructorTag<T>;
-
-template<typename T>
-concept UnsBooleanConstructorTag = FamilyBooleanConstructorTag<T>;
-
-template<typename T>
-concept UnsNumericalConstructorTag = FamilyNumericalConstructorTag<T>;
+concept BaseNumericalConstructorTag = ygg::InTypeList<T, BaseNumericalConstructorTags>;
 
 template<typename Tag>
-    requires FamilyConceptConstructorTag<Tag>
+    requires ConceptConstructorTag<Tag>
 struct Concept;
 
 template<typename Tag>
-    requires FamilyRoleConstructorTag<Tag>
+    requires RoleConstructorTag<Tag>
 struct Role;
 
 template<typename Tag>
-    requires FamilyBooleanConstructorTag<Tag>
+    requires BooleanConstructorTag<Tag>
 struct Boolean;
 
 template<typename Tag>
-    requires FamilyNumericalConstructorTag<Tag>
+    requires NumericalConstructorTag<Tag>
 struct Numerical;
 
 template<CategoryTag Category>
@@ -819,145 +787,72 @@ namespace detail
 {
 
 template<typename RepositoryTypes>
-class ConstructorRepository;
+class BasicConstructorRepository;
 
 template<typename RepositoryTypes>
-class ConstructorRepositoryFactory;
+class BasicConstructorRepositoryFactory;
 
 }  // namespace detail
 
-using FamilyConceptTypes = ygg::MapTypeListT<Concept, FamilyConceptConstructorTags>;
+using ConceptTypes = ygg::MapTypeListT<Concept, ConceptConstructorTags>;
 
-using FamilyRoleTypes = ygg::MapTypeListT<Role, FamilyRoleConstructorTags>;
+using RoleTypes = ygg::MapTypeListT<Role, RoleConstructorTags>;
 
-using FamilyBooleanTypes = ygg::MapTypeListT<Boolean, FamilyBooleanConstructorTags>;
+using BooleanTypes = ygg::MapTypeListT<Boolean, BooleanConstructorTags>;
 
-using FamilyNumericalTypes = ygg::MapTypeListT<Numerical, FamilyNumericalConstructorTags>;
+using NumericalTypes = ygg::MapTypeListT<Numerical, NumericalConstructorTags>;
 
-using FamilyConstructorTypes = ygg::MapTypeListT<Constructor, CategoryTags>;
+using ConstructorTypes = ygg::MapTypeListT<Constructor, CategoryTags>;
 
-using FamilyQueryTypes = ygg::MapTypeListT<Query, QueryConstructorTags>;
+using QueryTypes = ygg::MapTypeListT<Query, QueryConstructorTags>;
 
-using FamilyReferenceTypes = std::conditional_t<
+using ReferenceTypes = std::conditional_t<
     true,
     ygg::TypeList<Argument<ConceptTag>, Argument<RoleTag>, Argument<BooleanTag>, Argument<NumericalTag>, Register<ConceptTag>, Register<RoleTag>>,
     ygg::TypeList<>>;
 
-using FamilyConstructorRepositoryTypes = ygg::ConcatTypeListsT<FamilyConceptTypes,
-                                                               FamilyRoleTypes,
-                                                               FamilyBooleanTypes,
-                                                               FamilyNumericalTypes,
-                                                               FamilyConstructorTypes,
-                                                               FamilyReferenceTypes,
-                                                               FamilyQueryTypes,
-                                                               ygg::TypeList<Query<>, QueryColumn, QueryProjection<ConceptTag>, QueryProjection<RoleTag>>>;
+using ConstructorRepositoryTypes = ygg::ConcatTypeListsT<ConceptTypes,
+                                                         RoleTypes,
+                                                         BooleanTypes,
+                                                         NumericalTypes,
+                                                         ConstructorTypes,
+                                                         ReferenceTypes,
+                                                         QueryTypes,
+                                                         ygg::TypeList<Query<>, QueryColumn, QueryProjection<ConceptTag>, QueryProjection<RoleTag>>>;
 
-using BasicConstructorRepository = runir::kr::dl::detail::ConstructorRepository<FamilyConstructorRepositoryTypes>;
+using ConstructorRepository = runir::kr::dl::detail::BasicConstructorRepository<ConstructorRepositoryTypes>;
 
-using BasicConstructorRepositoryFactory = runir::kr::dl::detail::ConstructorRepositoryFactory<FamilyConstructorRepositoryTypes>;
+using ConstructorRepositoryPtr = std::shared_ptr<ConstructorRepository>;
 
-using ConstructorRepositoryFor = BasicConstructorRepository;
-
-using ConstructorRepositoryPtrFor = std::shared_ptr<ConstructorRepositoryFor>;
-
-using ConstructorRepositoryFactoryFor = BasicConstructorRepositoryFactory;
+using ConstructorRepositoryFactory = runir::kr::dl::detail::BasicConstructorRepositoryFactory<ConstructorRepositoryTypes>;
 
 template<typename Tag>
-    requires FamilyConceptConstructorTag<Tag>
-using FamilyConceptView = ygg::View<ygg::Index<Concept<Tag>>, ConstructorRepositoryFor>;
+    requires ConceptConstructorTag<Tag>
+using ConceptView = ygg::View<ygg::Index<Concept<Tag>>, ConstructorRepository>;
 
 template<typename Tag>
-    requires FamilyRoleConstructorTag<Tag>
-using FamilyRoleView = ygg::View<ygg::Index<Role<Tag>>, ConstructorRepositoryFor>;
+    requires RoleConstructorTag<Tag>
+using RoleView = ygg::View<ygg::Index<Role<Tag>>, ConstructorRepository>;
 
 template<typename Tag>
-    requires FamilyBooleanConstructorTag<Tag>
-using FamilyBooleanView = ygg::View<ygg::Index<Boolean<Tag>>, ConstructorRepositoryFor>;
+    requires BooleanConstructorTag<Tag>
+using BooleanView = ygg::View<ygg::Index<Boolean<Tag>>, ConstructorRepository>;
 
 template<typename Tag>
-    requires FamilyNumericalConstructorTag<Tag>
-using FamilyNumericalView = ygg::View<ygg::Index<Numerical<Tag>>, ConstructorRepositoryFor>;
+    requires NumericalConstructorTag<Tag>
+using NumericalView = ygg::View<ygg::Index<Numerical<Tag>>, ConstructorRepository>;
 
 template<CategoryTag Category>
-using FamilyConstructorView = ygg::View<ygg::Index<Constructor<Category>>, ConstructorRepositoryFor>;
+using ConstructorView = ygg::View<ygg::Index<Constructor<Category>>, ConstructorRepository>;
 
 template<typename Tag = void>
-using FamilyQueryView = ygg::View<ygg::Index<Query<Tag>>, ConstructorRepositoryFor>;
-
-using BaseConstructorRepository = ConstructorRepositoryFor;
-using BaseConstructorRepositoryPtr = ConstructorRepositoryPtrFor;
-using BaseConstructorRepositoryFactory = ConstructorRepositoryFactoryFor;
-
-using ExtConstructorRepository = ConstructorRepositoryFor;
-using ExtConstructorRepositoryPtr = ConstructorRepositoryPtrFor;
-using ExtConstructorRepositoryFactory = ConstructorRepositoryFactoryFor;
+using QueryView = ygg::View<ygg::Index<Query<Tag>>, ConstructorRepository>;
 
 template<CategoryTag Category>
-using ArgumentView = ygg::View<ygg::Index<Argument<Category>>, ExtConstructorRepository>;
+using ArgumentView = ygg::View<ygg::Index<Argument<Category>>, ConstructorRepository>;
 
 template<ConceptOrRoleTag Category>
-using RegisterView = ygg::View<ygg::Index<Register<Category>>, ExtConstructorRepository>;
-
-using UnsConstructorRepository = ConstructorRepositoryFor;
-using UnsConstructorRepositoryPtr = ConstructorRepositoryPtrFor;
-using UnsConstructorRepositoryFactory = ConstructorRepositoryFactoryFor;
-
-template<typename Tag>
-    requires FamilyConceptConstructorTag<Tag>
-using BaseConceptView = FamilyConceptView<Tag>;
-
-template<typename Tag>
-    requires FamilyRoleConstructorTag<Tag>
-using BaseRoleView = FamilyRoleView<Tag>;
-
-template<typename Tag>
-    requires FamilyBooleanConstructorTag<Tag>
-using BaseBooleanView = FamilyBooleanView<Tag>;
-
-template<typename Tag>
-    requires FamilyNumericalConstructorTag<Tag>
-using BaseNumericalView = FamilyNumericalView<Tag>;
-
-template<CategoryTag Category>
-using BaseConstructorView = FamilyConstructorView<Category>;
-
-template<typename Tag>
-    requires FamilyConceptConstructorTag<Tag>
-using ExtConceptView = FamilyConceptView<Tag>;
-
-template<typename Tag>
-    requires FamilyRoleConstructorTag<Tag>
-using ExtRoleView = FamilyRoleView<Tag>;
-
-template<typename Tag>
-    requires FamilyBooleanConstructorTag<Tag>
-using ExtBooleanView = FamilyBooleanView<Tag>;
-
-template<typename Tag>
-    requires FamilyNumericalConstructorTag<Tag>
-using ExtNumericalView = FamilyNumericalView<Tag>;
-
-template<CategoryTag Category>
-using ExtConstructorView = FamilyConstructorView<Category>;
-
-template<typename Tag>
-    requires FamilyConceptConstructorTag<Tag>
-using UnsConceptView = FamilyConceptView<Tag>;
-
-template<typename Tag>
-    requires FamilyRoleConstructorTag<Tag>
-using UnsRoleView = FamilyRoleView<Tag>;
-
-template<typename Tag>
-    requires FamilyBooleanConstructorTag<Tag>
-using UnsBooleanView = FamilyBooleanView<Tag>;
-
-template<typename Tag>
-    requires FamilyNumericalConstructorTag<Tag>
-using UnsNumericalView = FamilyNumericalView<Tag>;
-
-template<CategoryTag Category>
-using UnsConstructorView = FamilyConstructorView<Category>;
+using RegisterView = ygg::View<ygg::Index<Register<Category>>, ConstructorRepository>;
 }
 
 #endif

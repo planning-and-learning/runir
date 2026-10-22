@@ -3,7 +3,7 @@
 All DL expressions use `evaluate<Kind>(expression, context)` in C++, or
 `expression.evaluate(context)` in Python. Policy features use
 `evaluate<Kind>(feature, context)`. The caller supplies the task kind explicitly
-(`tyr::GroundTag` or `tyr::LiftedTag`); the expression determines its family.
+(`tyr::GroundTag` or `tyr::LiftedTag`).
 The context selects result repositories and memoization; an additional
 repository argument is no longer part of evaluation.
 Concept, role, Boolean, and numerical results are interned denotation views.
@@ -103,11 +103,11 @@ order. `incremental::IncrementalEvaluation` schedules them over a sequence of st
 
 ## Storage and lifetime
 
-`DenotationCaches<Family>` stores memoized views and owns no result payloads.
+`DenotationCaches` stores memoized views and owns no result payloads.
 Cache instances belong to one evaluation configuration;
 do not reuse cached entries with different result repositories.
 
-`EvaluationStorage<Family>` owns reusable static and dynamic result repositories
+`EvaluationStorage` owns reusable static and dynamic result repositories
 and their matching caches. Construct it with a prototype denotation
 repository: `EvaluationStorage(prototype)` in Python. Pass the storage directly
 to the context; roots and children use its caches and repositories.
@@ -134,18 +134,19 @@ context = semantics.GroundStateEvaluationContext(
 value = expression.evaluate(context)
 ```
 
-Use the corresponding `LiftedStateEvaluationContext` for lifted states. Base
-and Uns contexts omit `arguments` and `registers`. C++ context constructors
-use the same argument order.
+Use the corresponding `LiftedStateEvaluationContext` for lifted states. Contexts
+for sketches and classifiers omit `arguments` and `registers`; evaluating a
+register or argument expression in such a context throws. C++ context
+constructors use the same argument order.
 
-The Ext specialization of `StateEvaluationContext` carries argument and register
-views alongside the shared evaluation state. `for_result(is_static)` returns
+`StateEvaluationContext` carries argument and register views alongside the
+shared evaluation state. `for_result(is_static)` returns
 a context selecting the current result's static or dynamic repository.
 `child_context()` returns a context using the intermediate storage's caches and
 repositories. Both retain borrowed inputs without changing the original context
 or copying result payloads.
-Both Ext constructors require arguments and registers from the state's planning
-repository. They may belong to different denotation repositories for that same
+The constructors taking them require arguments and registers from the state's
+planning repository. They may belong to different denotation repositories for that same
 planning repository. The check runs when constructing the context, not when
 copying it for child or result evaluation.
 
@@ -241,11 +242,10 @@ directly without a separate evaluator-conformance concept.
 `EmitConcept<Emit, Result>` requires a mutable callback returning whether to
 continue; `StopConcept` requires a mutable callback returning whether to stop.
 Rule contexts are specialized by PS family and task kind. Ext and ICP remain
-distinct PS families even though both use Ext DL resources.
+distinct PS families even though both use the same DL resources.
 Feature evaluation and compatibility checks use the DL contract
-`StateEvaluationContextConcept<Context, DlFamilyFor<Family>, Kind>` directly.
-`DlFamilyFor` centralizes the mapping to DL families: ICP uses Ext DL resources.
-The DL resource, navigation, and context concepts take family and task kind
+`StateEvaluationContextConcept<Context, Kind>` directly.
+The DL resource, navigation, and context concepts take the task kind
 explicitly and validate the state and cache types without inferring them from
 context aliases. C++ compatibility and classification calls likewise supply
 `Kind`: `is_compatible_with<Kind>`, `all_compatible<Kind>`, and `classify<Kind>`.

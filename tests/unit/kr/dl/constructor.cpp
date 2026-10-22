@@ -1,6 +1,6 @@
 #include <concepts>
 #include <gtest/gtest.h>
-#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
+#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <utility>
@@ -27,21 +27,21 @@ concept IndexedDataView =
 template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
 {
-    return (IndexedDataView<Ts, kr::dl::ConstructorRepositoryFor> && ...);
+    return (IndexedDataView<Ts, kr::dl::ConstructorRepository> && ...);
 }
 
 template<typename Category>
 consteval bool view_alias()
 {
     using Entity = kr::dl::Constructor<Category>;
-    using View = ygg::View<ygg::Index<Entity>, kr::dl::ConstructorRepositoryFor>;
-    static_assert(std::same_as<View, kr::dl::FamilyConstructorView<Category>>);
+    using View = ygg::View<ygg::Index<Entity>, kr::dl::ConstructorRepository>;
+    static_assert(std::same_as<View, kr::dl::ConstructorView<Category>>);
     if constexpr (false)
-        return std::same_as<View, kr::dl::BaseConstructorView<Category>>;
+        return std::same_as<View, kr::dl::ConstructorView<Category>>;
     else if constexpr (true)
-        return std::same_as<View, kr::dl::ExtConstructorView<Category>>;
+        return std::same_as<View, kr::dl::ConstructorView<Category>>;
     else
-        return std::same_as<View, kr::dl::UnsConstructorView<Category>>;
+        return std::same_as<View, kr::dl::ConstructorView<Category>>;
 }
 
 template<typename... Categories>
@@ -54,7 +54,7 @@ template<typename Category>
 consteval bool query_projection_contract()
 {
     using Entity = kr::dl::QueryProjection<Category>;
-    using Repository = kr::dl::ConstructorRepositoryFor;
+    using Repository = kr::dl::ConstructorRepository;
     using View = ygg::View<ygg::Index<Entity>, Repository>;
     return ygg::ViewConcept<ygg::Index<Entity>, Repository> && requires(ygg::Data<Entity>& data, const View& view) {
         data.arg;
@@ -67,7 +67,7 @@ consteval bool query_projection_contract()
 template<typename... Tags>
 consteval bool query_view_contracts(ygg::TypeList<Tags...>)
 {
-    using Repository = kr::dl::ConstructorRepositoryFor;
+    using Repository = kr::dl::ConstructorRepository;
     return ygg::ViewConcept<ygg::Index<kr::dl::QueryColumn>, Repository> && ygg::ViewConcept<ygg::Index<kr::dl::Query<>>, Repository>
            && query_projection_contract<kr::dl::ConceptTag>() && query_projection_contract<kr::dl::RoleTag>()
            && (ygg::ViewConcept<ygg::Index<kr::dl::Query<Tags>>, Repository> && ...);
@@ -75,7 +75,7 @@ consteval bool query_view_contracts(ygg::TypeList<Tags...>)
 
 static_assert(query_view_contracts<>(kr::dl::QueryConstructorTags {}));
 
-static_assert(indexed_data_views<>(kr::dl::FamilyConstructorTypes {}));
+static_assert(indexed_data_views<>(kr::dl::ConstructorTypes {}));
 static_assert(view_aliases<>(kr::dl::CategoryTags {}));
 
 }  // namespace
@@ -85,7 +85,7 @@ TEST(RunirKrDlConstructor, PreservesConcreteVariant)
     using Concrete = kr::dl::Concept<kr::dl::TopTag>;
     using Constructor = kr::dl::Constructor<kr::dl::ConceptTag>;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-    auto repository = kr::dl::ExtConstructorRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_repository);
     auto data = ygg::Data<Constructor>(ygg::Index<Concrete>(6));
     const auto constructor = repository->insert(data).first;
 
@@ -98,7 +98,7 @@ TEST(RunirKrDlConstructor, SharedInterningCanonicalizesAndPrepares)
     const auto check = []()
     {
         auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-        auto repository = kr::dl::ConstructorRepositoryFactoryFor().create(planning_repository);
+        auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_repository);
         auto top = ygg::Data<kr::dl::Concept<kr::dl::TopTag>>();
         auto bot = ygg::Data<kr::dl::Concept<kr::dl::BotTag>>();
         auto first_data = ygg::Data<kr::dl::Constructor<kr::dl::ConceptTag>>(ygg::formalism::insert(*repository, top).first.get_index());

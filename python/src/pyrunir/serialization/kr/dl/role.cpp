@@ -6,6 +6,6 @@
 namespace runir::serialization
 {
 
-void bind_kr_dl_role(nb::module_& m) { bind_entity_types(m, DlComponentViews<kr::dl::FamilyRoleTypes> {}); }
+void bind_kr_dl_role(nb::module_& m) { bind_entity_types(m, DlComponentViews<kr::dl::RoleTypes> {}); }
 
 }  // namespace runir::serialization

@@ -13,7 +13,7 @@ namespace ygg::serialization
 {
 
 template<typename Archive, typename Tag, typename C>
-    requires runir::kr::dl::FamilyRoleConstructorTag<Tag>
+    requires runir::kr::dl::RoleConstructorTag<Tag>
 void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Role<Tag>>, C>>)
 {
     using Value = View<Index<runir::kr::dl::Role<Tag>>, C>;

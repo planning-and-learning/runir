@@ -2,9 +2,9 @@
 
 #include "runir/kr/dl/canonicalization.hpp"
 #include "runir/kr/dl/cnf_grammar/constructor_repository.hpp"
-#include "runir/kr/dl/cnf_grammar/detail/repository_instantiations_base.hpp"
+#include "runir/kr/dl/cnf_grammar/detail/repository_instantiations.hpp"
 #include "runir/kr/dl/datas.hpp"
-#include "runir/kr/dl/detail/repository_instantiations_ext.hpp"
+#include "runir/kr/dl/detail/repository_instantiations.hpp"
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/denotation_caches.hpp"
@@ -78,7 +78,7 @@ private:
 
 public:
     template<runir::kr::dl::CategoryTag Category>
-    ConstructorIndices<Category>& get(FamilyNonTerminalView<Category> nonterminal, size_t complexity)
+    ConstructorIndices<Category>& get(NonTerminalView<Category> nonterminal, size_t complexity)
     {
         auto& by_complexity = get_map<Category>()[static_cast<std::uint64_t>(ygg::uint_t(nonterminal.get_index()))];
         if (complexity >= by_complexity.size())
@@ -87,7 +87,7 @@ public:
     }
 
     template<runir::kr::dl::CategoryTag Category>
-    const ConstructorIndices<Category>& get(FamilyNonTerminalView<Category> nonterminal, size_t complexity) const
+    const ConstructorIndices<Category>& get(NonTerminalView<Category> nonterminal, size_t complexity) const
     {
         const auto& map = get_map<Category>();
         const auto it = map.find(static_cast<std::uint64_t>(ygg::uint_t(nonterminal.get_index())));
@@ -111,9 +111,9 @@ public:
 template<runir::kr::dl::CategoryTag Category>
 struct SeenDenotationsFor
 {
-    using Constructor = runir::kr::dl::FamilyConstructorView<Category>;
+    using Constructor = runir::kr::dl::ConstructorView<Category>;
     using Denotation = runir::kr::dl::semantics::DenotationView<Category>;
-    using NonTerminal = FamilyNonTerminalView<Category>;
+    using NonTerminal = NonTerminalView<Category>;
 
     ygg::RawArraySet<Denotation> vectors;
     ygg::UnorderedSet<std::pair<NonTerminal, ygg::uint_t>> signatures;
@@ -170,7 +170,7 @@ public:
     }
 
     template<runir::kr::dl::CategoryTag Category>
-    bool should_prune(FamilyNonTerminalView<Category> lhs, runir::kr::dl::FamilyConstructorView<Category> constructor)
+    bool should_prune(NonTerminalView<Category> lhs, runir::kr::dl::ConstructorView<Category> constructor)
     {
         auto& seen = m_seen_denotations.template get<Category>();
         if (m_states.empty())
@@ -206,9 +206,9 @@ template<tyr::TaskKind Kind>
 class Generator
 {
 private:
-    FamilyGrammarView m_grammar;
+    GrammarView m_grammar;
     const std::vector<tyr::planning::PackedStateView<Kind>>& m_states;
-    runir::kr::dl::ConstructorRepositoryFor& m_output_repository;
+    runir::kr::dl::ConstructorRepository& m_output_repository;
     const GenerateOptions& m_options;
     runir::kr::dl::Builder m_builder;
     GenerateResultsFor m_result;
@@ -273,13 +273,13 @@ private:
     }
 
     template<runir::kr::dl::CategoryTag Category>
-    void keep(FamilyNonTerminalView<Category> lhs, ygg::Index<runir::kr::dl::Constructor<Category>> constructor)
+    void keep(NonTerminalView<Category> lhs, ygg::Index<runir::kr::dl::Constructor<Category>> constructor)
     {
         m_sentences.get(lhs, m_complexity).push_back(constructor);
     }
 
     template<runir::kr::dl::CategoryTag Category>
-    bool maybe_keep(FamilyNonTerminalView<Category> lhs, runir::kr::dl::FamilyConstructorView<Category> constructor)
+    bool maybe_keep(NonTerminalView<Category> lhs, runir::kr::dl::ConstructorView<Category> constructor)
     {
         ++m_result.statistics.num_generated;
 
@@ -295,7 +295,7 @@ private:
     }
 
     template<runir::kr::dl::CategoryTag Category, typename F>
-    bool generate_nullary(FamilyNonTerminalView<Category> lhs, F&& make)
+    bool generate_nullary(NonTerminalView<Category> lhs, F&& make)
     {
         if (m_complexity != 1)
             return true;
@@ -305,7 +305,7 @@ private:
     }
 
     template<runir::kr::dl::CategoryTag Category, typename ChildCategory, typename F>
-    bool generate_unary(FamilyNonTerminalView<Category> lhs, FamilyNonTerminalView<ChildCategory> arg, F&& make)
+    bool generate_unary(NonTerminalView<Category> lhs, NonTerminalView<ChildCategory> arg, F&& make)
     {
         if (m_complexity < 2)
             return true;
@@ -321,11 +321,8 @@ private:
     }
 
     template<runir::kr::dl::CategoryTag Category, typename LhsCategory, typename RhsCategory, typename F>
-    bool generate_binary(FamilyNonTerminalView<Category> lhs,
-                         FamilyNonTerminalView<LhsCategory> child_lhs,
-                         FamilyNonTerminalView<RhsCategory> child_rhs,
-                         bool commutative,
-                         F&& make)
+    bool
+    generate_binary(NonTerminalView<Category> lhs, NonTerminalView<LhsCategory> child_lhs, NonTerminalView<RhsCategory> child_rhs, bool commutative, F&& make)
     {
         if (m_complexity < 3)
             return true;
@@ -359,10 +356,10 @@ private:
     }
 
     template<typename F>
-    bool generate_ternary(FamilyNonTerminalView<runir::kr::dl::NumericalTag> lhs,
-                          FamilyNonTerminalView<runir::kr::dl::ConceptTag> child_lhs,
-                          FamilyNonTerminalView<runir::kr::dl::RoleTag> child_mid,
-                          FamilyNonTerminalView<runir::kr::dl::ConceptTag> child_rhs,
+    bool generate_ternary(NonTerminalView<runir::kr::dl::NumericalTag> lhs,
+                          NonTerminalView<runir::kr::dl::ConceptTag> child_lhs,
+                          NonTerminalView<runir::kr::dl::RoleTag> child_mid,
+                          NonTerminalView<runir::kr::dl::ConceptTag> child_rhs,
                           F&& make)
     {
         if (m_complexity < 4)
@@ -393,13 +390,13 @@ private:
     }
 
     template<runir::kr::dl::CategoryTag Category>
-    bool generate_rule(FamilyDerivationRuleView<Category> rule)
+    bool generate_rule(DerivationRuleView<Category> rule)
     {
         return ygg::visit([&](auto constructor) { return generate_constructor(rule.get_lhs(), constructor); }, rule.get_rhs().get_variant());
     }
 
     template<runir::kr::dl::CategoryTag Category>
-    bool propagate(FamilySubstitutionRuleView<Category> rule, bool& changed)
+    bool propagate(SubstitutionRuleView<Category> rule, bool& changed)
     {
         if (rule.get_lhs() == rule.get_rhs())
             return !out_of_time();
@@ -407,7 +404,7 @@ private:
         const auto& source = m_sentences.get(rule.get_rhs(), m_complexity);
         for (auto constructor : source)
         {
-            auto view = runir::kr::dl::FamilyConstructorView<Category>(constructor, m_output_repository);
+            auto view = runir::kr::dl::ConstructorView<Category>(constructor, m_output_repository);
             if (!m_pruning.should_prune(rule.get_lhs(), view))
             {
                 keep(rule.get_lhs(), constructor);
@@ -422,7 +419,7 @@ private:
     }
 
     template<tyr::formalism::FactKind T>
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::ConceptTag> lhs, FamilyConceptView<runir::kr::dl::AtomicStateTag<T>> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::AtomicStateTag<T>> constructor)
     {
         return generate_nullary(lhs,
                                 [&]
@@ -434,7 +431,7 @@ private:
     }
 
     template<tyr::formalism::FactKind T>
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::ConceptTag> lhs, FamilyConceptView<runir::kr::dl::AtomicGoalTag<T>> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::AtomicGoalTag<T>> constructor)
     {
         return generate_nullary(lhs,
                                 [&]
@@ -445,17 +442,17 @@ private:
                                 });
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::ConceptTag> lhs, FamilyConceptView<runir::kr::dl::BotTag>)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::BotTag>)
     {
         return generate_nullary(lhs, [&] { return intern_nullary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::BotTag>>(); });
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::ConceptTag> lhs, FamilyConceptView<runir::kr::dl::TopTag>)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::TopTag>)
     {
         return generate_nullary(lhs, [&] { return intern_nullary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::TopTag>>(); });
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::ConceptTag> lhs, FamilyConceptView<runir::kr::dl::NominalTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::NominalTag> constructor)
     {
         return generate_nullary(lhs,
                                 [&]
@@ -465,7 +462,7 @@ private:
                                 });
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::ConceptTag> lhs, FamilyConceptView<runir::kr::dl::IntersectionTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::IntersectionTag> constructor)
     {
         return generate_binary(
             lhs,
@@ -476,7 +473,7 @@ private:
             { return intern_binary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::IntersectionTag>>(child_lhs, child_rhs); });
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::ConceptTag> lhs, FamilyConceptView<runir::kr::dl::UnionTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::UnionTag> constructor)
     {
         return generate_binary(lhs,
                                constructor.get_lhs(),
@@ -486,14 +483,14 @@ private:
                                { return intern_binary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::UnionTag>>(child_lhs, child_rhs); });
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::ConceptTag> lhs, FamilyConceptView<runir::kr::dl::NegationTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::NegationTag> constructor)
     {
         return generate_unary(lhs,
                               constructor.get_arg(),
                               [&](auto arg) { return intern_unary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::NegationTag>>(arg); });
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::ConceptTag> lhs, FamilyConceptView<runir::kr::dl::ValueRestrictionTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::ValueRestrictionTag> constructor)
     {
         return generate_binary(
             lhs,
@@ -504,7 +501,7 @@ private:
             { return intern_binary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::ValueRestrictionTag>>(child_lhs, child_rhs); });
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::ConceptTag> lhs, FamilyConceptView<runir::kr::dl::ExistentialQuantificationTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::ExistentialQuantificationTag> constructor)
     {
         return generate_binary(
             lhs,
@@ -516,7 +513,7 @@ private:
     }
 
     template<typename Tag>
-    bool generate_number_restriction(FamilyNonTerminalView<runir::kr::dl::ConceptTag> lhs, FamilyConceptView<Tag> constructor)
+    bool generate_number_restriction(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<Tag> constructor)
     {
         return generate_unary(lhs,
                               constructor.get_role(),
@@ -531,23 +528,23 @@ private:
                               });
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::ConceptTag> lhs, FamilyConceptView<runir::kr::dl::AtLeastNumberRestrictionTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::AtLeastNumberRestrictionTag> constructor)
     {
         return generate_number_restriction(lhs, constructor);
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::ConceptTag> lhs, FamilyConceptView<runir::kr::dl::AtMostNumberRestrictionTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::AtMostNumberRestrictionTag> constructor)
     {
         return generate_number_restriction(lhs, constructor);
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::ConceptTag> lhs, FamilyConceptView<runir::kr::dl::ExactNumberRestrictionTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::ExactNumberRestrictionTag> constructor)
     {
         return generate_number_restriction(lhs, constructor);
     }
 
     template<typename Tag>
-    bool generate_qualified_number_restriction(FamilyNonTerminalView<runir::kr::dl::ConceptTag> lhs, FamilyConceptView<Tag> constructor)
+    bool generate_qualified_number_restriction(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<Tag> constructor)
     {
         return generate_binary(lhs,
                                constructor.get_role(),
@@ -565,25 +562,22 @@ private:
                                });
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::ConceptTag> lhs,
-                              FamilyConceptView<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag> constructor)
     {
         return generate_qualified_number_restriction(lhs, constructor);
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::ConceptTag> lhs,
-                              FamilyConceptView<runir::kr::dl::QualifiedAtMostNumberRestrictionTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::QualifiedAtMostNumberRestrictionTag> constructor)
     {
         return generate_qualified_number_restriction(lhs, constructor);
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::ConceptTag> lhs,
-                              FamilyConceptView<runir::kr::dl::QualifiedExactNumberRestrictionTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::QualifiedExactNumberRestrictionTag> constructor)
     {
         return generate_qualified_number_restriction(lhs, constructor);
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::ConceptTag> lhs, FamilyConceptView<runir::kr::dl::RoleValueMapTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::RoleValueMapTag> constructor)
     {
         return generate_binary(
             lhs,
@@ -594,7 +588,7 @@ private:
             { return intern_binary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::RoleValueMapTag>>(child_lhs, child_rhs); });
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::ConceptTag> lhs, FamilyConceptView<runir::kr::dl::AgreementTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::AgreementTag> constructor)
     {
         return generate_binary(lhs,
                                constructor.get_lhs(),
@@ -604,7 +598,7 @@ private:
                                { return intern_binary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::AgreementTag>>(child_lhs, child_rhs); });
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::ConceptTag> lhs, FamilyConceptView<runir::kr::dl::RoleFillersTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::RoleFillersTag> constructor)
     {
         return generate_unary(lhs,
                               constructor.get_role(),
@@ -620,7 +614,7 @@ private:
                               });
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::ConceptTag> lhs, FamilyConceptView<runir::kr::dl::OneOfTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::OneOfTag> constructor)
     {
         return generate_nullary(lhs,
                                 [&]()
@@ -635,7 +629,7 @@ private:
     }
 
     template<tyr::formalism::FactKind T>
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::RoleTag> lhs, FamilyRoleView<runir::kr::dl::AtomicStateTag<T>> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::RoleTag> lhs, RoleView<runir::kr::dl::AtomicStateTag<T>> constructor)
     {
         return generate_nullary(lhs,
                                 [&]
@@ -647,7 +641,7 @@ private:
     }
 
     template<tyr::formalism::FactKind T>
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::RoleTag> lhs, FamilyRoleView<runir::kr::dl::AtomicGoalTag<T>> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::RoleTag> lhs, RoleView<runir::kr::dl::AtomicGoalTag<T>> constructor)
     {
         return generate_nullary(lhs,
                                 [&]
@@ -658,12 +652,12 @@ private:
                                 });
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::RoleTag> lhs, FamilyRoleView<runir::kr::dl::UniversalTag>)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::RoleTag> lhs, RoleView<runir::kr::dl::UniversalTag>)
     {
         return generate_nullary(lhs, [&] { return intern_nullary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::UniversalTag>>(); });
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::RoleTag> lhs, FamilyRoleView<runir::kr::dl::IntersectionTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::RoleTag> lhs, RoleView<runir::kr::dl::IntersectionTag> constructor)
     {
         return generate_binary(lhs,
                                constructor.get_lhs(),
@@ -673,7 +667,7 @@ private:
                                { return intern_binary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::IntersectionTag>>(child_lhs, child_rhs); });
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::RoleTag> lhs, FamilyRoleView<runir::kr::dl::UnionTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::RoleTag> lhs, RoleView<runir::kr::dl::UnionTag> constructor)
     {
         return generate_binary(lhs,
                                constructor.get_lhs(),
@@ -683,21 +677,21 @@ private:
                                { return intern_binary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::UnionTag>>(child_lhs, child_rhs); });
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::RoleTag> lhs, FamilyRoleView<runir::kr::dl::ComplementTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::RoleTag> lhs, RoleView<runir::kr::dl::ComplementTag> constructor)
     {
         return generate_unary(lhs,
                               constructor.get_arg(),
                               [&](auto arg) { return intern_unary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::ComplementTag>>(arg); });
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::RoleTag> lhs, FamilyRoleView<runir::kr::dl::InverseTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::RoleTag> lhs, RoleView<runir::kr::dl::InverseTag> constructor)
     {
         return generate_unary(lhs,
                               constructor.get_arg(),
                               [&](auto arg) { return intern_unary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::InverseTag>>(arg); });
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::RoleTag> lhs, FamilyRoleView<runir::kr::dl::CompositionTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::RoleTag> lhs, RoleView<runir::kr::dl::CompositionTag> constructor)
     {
         return generate_binary(lhs,
                                constructor.get_lhs(),
@@ -707,14 +701,14 @@ private:
                                { return intern_binary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::CompositionTag>>(child_lhs, child_rhs); });
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::RoleTag> lhs, FamilyRoleView<runir::kr::dl::TransitiveClosureTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::RoleTag> lhs, RoleView<runir::kr::dl::TransitiveClosureTag> constructor)
     {
         return generate_unary(lhs,
                               constructor.get_arg(),
                               [&](auto arg) { return intern_unary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::TransitiveClosureTag>>(arg); });
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::RoleTag> lhs, FamilyRoleView<runir::kr::dl::ReflexiveTransitiveClosureTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::RoleTag> lhs, RoleView<runir::kr::dl::ReflexiveTransitiveClosureTag> constructor)
     {
         return generate_unary(lhs,
                               constructor.get_arg(),
@@ -722,7 +716,7 @@ private:
                               { return intern_unary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::ReflexiveTransitiveClosureTag>>(arg); });
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::RoleTag> lhs, FamilyRoleView<runir::kr::dl::RestrictionTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::RoleTag> lhs, RoleView<runir::kr::dl::RestrictionTag> constructor)
     {
         return generate_binary(lhs,
                                constructor.get_lhs(),
@@ -732,7 +726,7 @@ private:
                                { return intern_binary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::RestrictionTag>>(child_lhs, child_rhs); });
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::RoleTag> lhs, FamilyRoleView<runir::kr::dl::IdentityTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::RoleTag> lhs, RoleView<runir::kr::dl::IdentityTag> constructor)
     {
         return generate_unary(lhs,
                               constructor.get_arg(),
@@ -740,7 +734,7 @@ private:
     }
 
     template<tyr::formalism::FactKind T>
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::BooleanTag> lhs, FamilyBooleanView<runir::kr::dl::AtomicStateTag<T>> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::BooleanTag> lhs, BooleanView<runir::kr::dl::AtomicStateTag<T>> constructor)
     {
         return generate_nullary(lhs,
                                 [&]
@@ -752,7 +746,7 @@ private:
     }
 
     template<tyr::formalism::FactKind T>
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::BooleanTag> lhs, FamilyBooleanView<runir::kr::dl::AtomicGoalTag<T>> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::BooleanTag> lhs, BooleanView<runir::kr::dl::AtomicGoalTag<T>> constructor)
     {
         return generate_nullary(lhs,
                                 [&]
@@ -763,7 +757,7 @@ private:
                                 });
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::BooleanTag> lhs, FamilyBooleanView<runir::kr::dl::NonemptyTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::BooleanTag> lhs, BooleanView<runir::kr::dl::NonemptyTag> constructor)
     {
         return ygg::visit(
             [&](auto arg)
@@ -776,7 +770,7 @@ private:
             constructor.get_arg());
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::NumericalTag> lhs, FamilyNumericalView<runir::kr::dl::CountTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::NumericalTag> lhs, NumericalView<runir::kr::dl::CountTag> constructor)
     {
         return ygg::visit(
             [&](auto arg)
@@ -789,7 +783,7 @@ private:
             constructor.get_arg());
     }
 
-    bool generate_constructor(FamilyNonTerminalView<runir::kr::dl::NumericalTag> lhs, FamilyNumericalView<runir::kr::dl::DistanceTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::NumericalTag> lhs, NumericalView<runir::kr::dl::DistanceTag> constructor)
     {
         return generate_ternary(lhs,
                                 constructor.get_lhs(),
@@ -842,9 +836,9 @@ private:
     }
 
 public:
-    Generator(FamilyGrammarView grammar,
+    Generator(GrammarView grammar,
               const std::vector<tyr::planning::PackedStateView<Kind>>& states,
-              runir::kr::dl::ConstructorRepositoryFor& output_repository,
+              runir::kr::dl::ConstructorRepository& output_repository,
               runir::kr::dl::semantics::DenotationRepository& denotation_repository,
               const GenerateOptions& options) :
         m_grammar(grammar),
@@ -890,9 +884,9 @@ public:
 
 }  // namespace
 template<tyr::TaskKind Kind>
-GenerateResultsFor generate(FamilyGrammarView grammar,
+GenerateResultsFor generate(GrammarView grammar,
                             const std::vector<tyr::planning::PackedStateView<Kind>>& states,
-                            runir::kr::dl::ConstructorRepositoryFor& output_repository,
+                            runir::kr::dl::ConstructorRepository& output_repository,
                             runir::kr::dl::semantics::DenotationRepository& denotation_repository,
                             const GenerateOptions& options)
 {
@@ -912,15 +906,15 @@ GenerateResultsFor generate(FamilyGrammarView grammar,
     return Generator<Kind>(grammar, states, output_repository, denotation_repository, options).run();
 }
 
-template GenerateResultsFor generate<tyr::GroundTag>(FamilyGrammarView,
+template GenerateResultsFor generate<tyr::GroundTag>(GrammarView,
                                                      const std::vector<tyr::planning::PackedStateView<tyr::GroundTag>>&,
-                                                     runir::kr::dl::ConstructorRepositoryFor&,
+                                                     runir::kr::dl::ConstructorRepository&,
                                                      runir::kr::dl::semantics::DenotationRepository&,
                                                      const GenerateOptions&);
 
-template GenerateResultsFor generate<tyr::LiftedTag>(FamilyGrammarView,
+template GenerateResultsFor generate<tyr::LiftedTag>(GrammarView,
                                                      const std::vector<tyr::planning::PackedStateView<tyr::LiftedTag>>&,
-                                                     runir::kr::dl::ConstructorRepositoryFor&,
+                                                     runir::kr::dl::ConstructorRepository&,
                                                      runir::kr::dl::semantics::DenotationRepository&,
                                                      const GenerateOptions&);
 }

@@ -27,10 +27,10 @@ concept IndexedDataView =
 template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
 {
-    return (IndexedDataView<Ts, kr::dl::grammar::ConstructorRepositoryFor> && ...);
+    return (IndexedDataView<Ts, kr::dl::grammar::ConstructorRepository> && ...);
 }
 
-static_assert(indexed_data_views<>(kr::dl::grammar::FamilyBooleanTypes {}));
+static_assert(indexed_data_views<>(kr::dl::grammar::BooleanTypes {}));
 
 using PredicateTags = ygg::TypeList<kr::dl::AtomicStateTag<tyr::formalism::StaticTag>,
                                     kr::dl::AtomicStateTag<tyr::formalism::FluentTag>,
@@ -45,11 +45,11 @@ consteval bool boolean_data_view()
 {
     using Entity = kr::dl::grammar::Boolean<Tag>;
     using Data = ygg::Data<Entity>;
-    using View = ygg::View<ygg::Index<Entity>, kr::dl::grammar::ConstructorRepositoryFor>;
+    using View = ygg::View<ygg::Index<Entity>, kr::dl::grammar::ConstructorRepository>;
 
-    static_assert(std::same_as<View, kr::dl::grammar::FamilyBooleanView<Tag>>);
+    static_assert(std::same_as<View, kr::dl::grammar::BooleanView<Tag>>);
     if constexpr (false)
-        static_assert(std::same_as<View, kr::dl::grammar::BaseBooleanView<Tag>>);
+        static_assert(std::same_as<View, kr::dl::grammar::BooleanView<Tag>>);
 
     if constexpr (ygg::InTypeList<Tag, PredicateTags>)
         return requires(Data& data, const View& view) {
@@ -68,7 +68,7 @@ consteval bool boolean_data_view()
             data.arg;
             view.get_arg();
         };
-    else if constexpr (ygg::InTypeList<Tag, kr::dl::UnsComparisonConstructorTags> || ygg::InTypeList<Tag, LogicalBinaryTags>)
+    else if constexpr (ygg::InTypeList<Tag, kr::dl::ComparisonConstructorTags> || ygg::InTypeList<Tag, LogicalBinaryTags>)
         return requires(Data& data, const View& view) {
             data.lhs;
             data.rhs;

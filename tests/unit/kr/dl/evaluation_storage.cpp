@@ -11,8 +11,8 @@
 #include <runir/kr/dl/semantics/denotation_view.hpp>
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
-#include <runir/kr/dl/semantics/ext/evaluation.hpp>
 #include <runir/kr/dl/semantics/interning.hpp>
+#include <runir/kr/dl/semantics/state_evaluation.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <span>
 #include <stdexcept>
@@ -412,7 +412,7 @@ TEST(RunirEvaluationStorage, DurableRootsDoNotReuseTransientRootEntries)
 {
     const auto search = query_search();
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
-    auto repository = kr::dl::ConstructorRepositoryFactoryFor().create(search->task->get_repository());
+    auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();
     auto persistent = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(persistent);
@@ -483,7 +483,7 @@ TEST(RunirEvaluationStorage, DynamicResetPreservesStaticRowsAndJoinIndexes)
     const auto search = query_search();
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     const auto domain = search->task->get_domain().get_domain();
-    auto constructors = kr::dl::ConstructorRepositoryFactoryFor().create(search->task->get_repository());
+    auto constructors = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();
     auto prototype = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(prototype);
@@ -580,7 +580,7 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
 {
     const auto search = query_search();
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
-    auto factory = kr::dl::ConstructorRepositoryFactoryFor();
+    auto factory = kr::dl::ConstructorRepositoryFactory();
     auto first_repository = factory.create(search->task->get_repository());
     auto second_repository = factory.create(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();

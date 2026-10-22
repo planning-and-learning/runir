@@ -257,40 +257,40 @@ using numerical_root_type = constructor_root_type<runir::kr::dl::NumericalTag, D
     using Prefix##_query_type = query_type<Dialect>;                                                  \
     using Prefix##_grammar_root_type = grammar_root_type<Dialect>;
 
-RUNIR_DECLARE_RULE_ALIASES(ext_family, FullDialectTag)
-RUNIR_DECLARE_RULE_ALIASES(ext_family_search_free, SearchFreeDialectTag)
+RUNIR_DECLARE_RULE_ALIASES(dl, FullDialectTag)
+RUNIR_DECLARE_RULE_ALIASES(dl_search_free, SearchFreeDialectTag)
 
 #undef RUNIR_DECLARE_RULE_ALIASES
 
-BOOST_SPIRIT_DECLARE(ext_family_concept_root_type,
-                     ext_family_role_root_type,
-                     ext_family_boolean_root_type,
-                     ext_family_numerical_root_type,
-                     ext_family_concept_type,
-                     ext_family_role_type,
-                     ext_family_boolean_type,
-                     ext_family_numerical_type,
-                     ext_family_concept_choice_type,
-                     ext_family_role_choice_type,
-                     ext_family_boolean_choice_type,
-                     ext_family_numerical_choice_type,
-                     ext_family_query_type,
-                     ext_family_grammar_root_type)
+BOOST_SPIRIT_DECLARE(dl_concept_root_type,
+                     dl_role_root_type,
+                     dl_boolean_root_type,
+                     dl_numerical_root_type,
+                     dl_concept_type,
+                     dl_role_type,
+                     dl_boolean_type,
+                     dl_numerical_type,
+                     dl_concept_choice_type,
+                     dl_role_choice_type,
+                     dl_boolean_choice_type,
+                     dl_numerical_choice_type,
+                     dl_query_type,
+                     dl_grammar_root_type)
 
-BOOST_SPIRIT_DECLARE(ext_family_search_free_concept_root_type,
-                     ext_family_search_free_role_root_type,
-                     ext_family_search_free_boolean_root_type,
-                     ext_family_search_free_numerical_root_type,
-                     ext_family_search_free_concept_type,
-                     ext_family_search_free_role_type,
-                     ext_family_search_free_boolean_type,
-                     ext_family_search_free_numerical_type,
-                     ext_family_search_free_concept_choice_type,
-                     ext_family_search_free_role_choice_type,
-                     ext_family_search_free_boolean_choice_type,
-                     ext_family_search_free_numerical_choice_type,
-                     ext_family_search_free_query_type,
-                     ext_family_search_free_grammar_root_type)
+BOOST_SPIRIT_DECLARE(dl_search_free_concept_root_type,
+                     dl_search_free_role_root_type,
+                     dl_search_free_boolean_root_type,
+                     dl_search_free_numerical_root_type,
+                     dl_search_free_concept_type,
+                     dl_search_free_role_type,
+                     dl_search_free_boolean_type,
+                     dl_search_free_numerical_type,
+                     dl_search_free_concept_choice_type,
+                     dl_search_free_role_choice_type,
+                     dl_search_free_boolean_choice_type,
+                     dl_search_free_numerical_choice_type,
+                     dl_search_free_query_type,
+                     dl_search_free_grammar_root_type)
 
 template<typename Dialect = FullDialectTag>
 concept_type<Dialect> const& concept_parser();

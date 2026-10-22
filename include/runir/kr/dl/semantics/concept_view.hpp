@@ -3,7 +3,7 @@
 
 #include "runir/kr/dl/argument_view.hpp"
 #include "runir/kr/dl/concept_data.hpp"
-#include "runir/kr/dl/constructors.hpp"
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/register_view.hpp"
 
 #include <concepts>
@@ -16,12 +16,12 @@
 namespace ygg
 {
 
-template<typename Tag, formalism::SymbolContextFor<runir::kr::dl::FamilyConcept<Tag>> C>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Tag>
-class View<Index<runir::kr::dl::FamilyConcept<Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::FamilyConcept<Tag>, C>
+template<typename Tag, formalism::SymbolContextFor<runir::kr::dl::Concept<Tag>> C>
+    requires runir::kr::dl::ConceptConstructorTag<Tag>
+class View<Index<runir::kr::dl::Concept<Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::Concept<Tag>, C>
 {
 public:
-    using ygg::IndexViewBase<runir::kr::dl::FamilyConcept<Tag>, C>::IndexViewBase;
+    using ygg::IndexViewBase<runir::kr::dl::Concept<Tag>, C>::IndexViewBase;
 
     auto get_predicate() const noexcept
         requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)

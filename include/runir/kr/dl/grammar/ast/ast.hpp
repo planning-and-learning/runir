@@ -113,22 +113,18 @@ using BaseAstBooleanConstructorTags =
 
 using BaseAstNumericalConstructorTags = ygg::TypeList<runir::kr::dl::CountTag, runir::kr::dl::DistanceTag>;
 
-using ExtAstConceptConstructorTags =
+using AstConceptConstructorTags =
     ygg::ConcatTypeListsT<BaseAstConceptConstructorTags, ygg::TypeList<runir::kr::dl::RegisterTag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>>;
-using ExtAstRoleConstructorTags =
+using AstRoleConstructorTags =
     ygg::ConcatTypeListsT<BaseAstRoleConstructorTags, ygg::TypeList<runir::kr::dl::RegisterTag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>>;
-using ExtAstNumericalConstructorTags = ygg::ConcatTypeListsT<BaseAstNumericalConstructorTags,
-                                                             runir::kr::dl::ArithmeticConstructorTags,
-                                                             ygg::TypeList<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>>;
-
-using UnsAstBooleanConstructorTags = ygg::ConcatTypeListsT<
-    BaseAstBooleanConstructorTags,
-    ygg::ConcatTypeListsT<runir::kr::dl::UnsComparisonConstructorTags,
-                          ygg::ConcatTypeListsT<ygg::TypeList<runir::kr::dl::BooleanConstantTag>, runir::kr::dl::UnsLogicalConstructorTags>>>;
-using UnsAstNumericalConstructorTags =
-    ygg::ConcatTypeListsT<BaseAstNumericalConstructorTags,
-                          ygg::ConcatTypeListsT<ygg::TypeList<runir::kr::dl::NumericalConstantTag>, runir::kr::dl::NumericalBinaryConstructorTags>>;
-using ExtAstBooleanConstructorTags = ygg::ConcatTypeListsT<UnsAstBooleanConstructorTags, ygg::TypeList<runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>>;
+using AstBooleanConstructorTags = ygg::ConcatTypeListsT<BaseAstBooleanConstructorTags,
+                                                        runir::kr::dl::ComparisonConstructorTags,
+                                                        ygg::TypeList<runir::kr::dl::BooleanConstantTag>,
+                                                        runir::kr::dl::LogicalConstructorTags,
+                                                        ygg::TypeList<runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>>;
+using AstNumericalConstructorTags = ygg::ConcatTypeListsT<BaseAstNumericalConstructorTags,
+                                                          runir::kr::dl::ArithmeticConstructorTags,
+                                                          ygg::TypeList<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>>;
 
 template<runir::kr::dl::CategoryTag Category>
 struct AstConstructorTags;
@@ -136,25 +132,25 @@ struct AstConstructorTags;
 template<>
 struct AstConstructorTags<runir::kr::dl::ConceptTag>
 {
-    using Type = ExtAstConceptConstructorTags;
+    using Type = AstConceptConstructorTags;
 };
 
 template<>
 struct AstConstructorTags<runir::kr::dl::RoleTag>
 {
-    using Type = ExtAstRoleConstructorTags;
+    using Type = AstRoleConstructorTags;
 };
 
 template<>
 struct AstConstructorTags<runir::kr::dl::BooleanTag>
 {
-    using Type = ExtAstBooleanConstructorTags;
+    using Type = AstBooleanConstructorTags;
 };
 
 template<>
 struct AstConstructorTags<runir::kr::dl::NumericalTag>
 {
-    using Type = ExtAstNumericalConstructorTags;
+    using Type = AstNumericalConstructorTags;
 };
 
 template<runir::kr::dl::CategoryTag Category>

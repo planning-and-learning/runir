@@ -1,7 +1,7 @@
 #include "../query_bindings.hpp"
 #include "bindings.hpp"
 
-#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
+#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/ext/detail/repository_instantiations.hpp>
 

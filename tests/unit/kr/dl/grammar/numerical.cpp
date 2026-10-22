@@ -28,21 +28,21 @@ concept IndexedDataView =
 template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
 {
-    return (IndexedDataView<Ts, kr::dl::grammar::ConstructorRepositoryFor> && ...);
+    return (IndexedDataView<Ts, kr::dl::grammar::ConstructorRepository> && ...);
 }
 
-static_assert(indexed_data_views<>(kr::dl::grammar::FamilyNumericalTypes {}));
+static_assert(indexed_data_views<>(kr::dl::grammar::NumericalTypes {}));
 
 template<typename Tag>
 consteval bool numerical_data_view()
 {
     using Entity = kr::dl::grammar::Numerical<Tag>;
     using Data = ygg::Data<Entity>;
-    using View = ygg::View<ygg::Index<Entity>, kr::dl::grammar::ConstructorRepositoryFor>;
+    using View = ygg::View<ygg::Index<Entity>, kr::dl::grammar::ConstructorRepository>;
 
-    static_assert(std::same_as<View, kr::dl::grammar::FamilyNumericalView<Tag>>);
+    static_assert(std::same_as<View, kr::dl::grammar::NumericalView<Tag>>);
     if constexpr (false)
-        static_assert(std::same_as<View, kr::dl::grammar::BaseNumericalView<Tag>>);
+        static_assert(std::same_as<View, kr::dl::grammar::NumericalView<Tag>>);
 
     if constexpr (std::same_as<Tag, kr::dl::CountTag>)
         return requires(Data& data, const View& view) {
@@ -92,7 +92,7 @@ static_assert(numerical_data_views(kr::dl::GenerationNumericalConstructorTags {}
 TEST(RunirKrDlGrammarNumerical, ExposesDistanceOperands)
 {
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-    auto repository = kr::dl::grammar::ConstructorRepositoryFactoryFor().create(planning_repository);
+    auto repository = kr::dl::grammar::ConstructorRepositoryFactory().create(planning_repository);
 
     auto source_data = ygg::Data<kr::dl::grammar::NonTerminal<kr::dl::ConceptTag>>(std::string("source"));
     auto role_data = ygg::Data<kr::dl::grammar::NonTerminal<kr::dl::RoleTag>>(std::string("role"));

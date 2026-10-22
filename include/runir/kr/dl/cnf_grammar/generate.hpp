@@ -50,10 +50,10 @@ struct GenerateResultsFor
 {
     GenerateStatistics statistics;
     GenerateStatus status = GenerateStatus::COMPLETED;
-    std::vector<runir::kr::dl::FamilyConstructorView<runir::kr::dl::ConceptTag>> concepts;
-    std::vector<runir::kr::dl::FamilyConstructorView<runir::kr::dl::RoleTag>> roles;
-    std::vector<runir::kr::dl::FamilyConstructorView<runir::kr::dl::BooleanTag>> booleans;
-    std::vector<runir::kr::dl::FamilyConstructorView<runir::kr::dl::NumericalTag>> numericals;
+    std::vector<runir::kr::dl::ConstructorView<runir::kr::dl::ConceptTag>> concepts;
+    std::vector<runir::kr::dl::ConstructorView<runir::kr::dl::RoleTag>> roles;
+    std::vector<runir::kr::dl::ConstructorView<runir::kr::dl::BooleanTag>> booleans;
+    std::vector<runir::kr::dl::ConstructorView<runir::kr::dl::NumericalTag>> numericals;
 
     template<runir::kr::dl::CategoryTag Category>
     auto& get_constructors() noexcept
@@ -74,9 +74,9 @@ struct GenerateResultsFor
 };
 
 template<tyr::TaskKind Kind>
-GenerateResultsFor generate(FamilyGrammarView grammar,
+GenerateResultsFor generate(GrammarView grammar,
                             const std::vector<tyr::planning::PackedStateView<Kind>>& states,
-                            runir::kr::dl::ConstructorRepositoryFor& output_repository,
+                            runir::kr::dl::ConstructorRepository& output_repository,
                             runir::kr::dl::semantics::DenotationRepository& denotation_repository,
                             const GenerateOptions& options);
 }

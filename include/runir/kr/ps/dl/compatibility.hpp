@@ -1,13 +1,13 @@
 #ifndef RUNIR_KR_PS_DL_COMPATIBILITY_HPP_
 #define RUNIR_KR_PS_DL_COMPATIBILITY_HPP_
 
-#include "runir/kr/dl/semantics/ext/evaluation.hpp"
+#include "runir/kr/dl/semantics/evaluation_context.hpp"
+#include "runir/kr/dl/semantics/state_evaluation.hpp"
 #include "runir/kr/ps/dl/condition_view.hpp"
 #include "runir/kr/ps/dl/effect_view.hpp"
 #include "runir/kr/ps/dl/evaluation.hpp"
 #include "runir/kr/ps/dl/transition_evaluation_context.hpp"
 #include "runir/kr/ps/family_traits.hpp"
-#include "runir/kr/dl/semantics/evaluation_context.hpp"
 
 #include <concepts>
 #include <tyr/planning/declarations.hpp>

@@ -17,8 +17,8 @@ namespace
 {
 
 using IcpFactory = kr::ps::icp::RepositoryFactory;
-using ExtConstructors = kr::dl::ConstructorRepositoryPtrFor;
-using UnsConstructors = kr::dl::ConstructorRepositoryPtrFor;
+using ExtConstructors = kr::dl::ConstructorRepositoryPtr;
+using UnsConstructors = kr::dl::ConstructorRepositoryPtr;
 
 // ICP shares Ext expressions, while policy indices remain distinct.
 static_assert(std::same_as<kr::ps::icp::Repository::DlRepositoryPtr, ExtConstructors>);

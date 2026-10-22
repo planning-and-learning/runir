@@ -48,10 +48,10 @@ consteval bool identifiers(ygg::TypeList<Ts...>)
 template<typename... Categories>
 consteval bool view_aliases(ygg::TypeList<Categories...>)
 {
-    return (std::same_as<kr::dl::ArgumentView<Categories>, ygg::View<ygg::Index<kr::dl::Argument<Categories>>, kr::dl::ExtConstructorRepository>> && ...);
+    return (std::same_as<kr::dl::ArgumentView<Categories>, ygg::View<ygg::Index<kr::dl::Argument<Categories>>, kr::dl::ConstructorRepository>> && ...);
 }
 
-static_assert(indexed_data_views<kr::dl::ExtConstructorRepository>(ArgumentTypes {}));
+static_assert(indexed_data_views<kr::dl::ConstructorRepository>(ArgumentTypes {}));
 static_assert(identifiers(ArgumentIdentifierTypes {}));
 static_assert(view_aliases(kr::dl::CategoryTags {}));
 
@@ -60,7 +60,7 @@ static_assert(view_aliases(kr::dl::CategoryTags {}));
 TEST(RunirKrDlArgument, ExposesNameAndIdentifier)
 {
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-    auto repository = kr::dl::ExtConstructorRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_repository);
     auto data = ygg::Data<kr::dl::Argument<kr::dl::ConceptTag>>(std::string("source"), kr::dl::ArgumentIdentifier<kr::dl::ConceptTag>(3));
     const auto argument = repository->insert(data).first;
 

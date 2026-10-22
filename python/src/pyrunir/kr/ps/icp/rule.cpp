@@ -62,7 +62,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     ygg::bind_index<ygg::Index<ConceptLoad>>(m, "ConceptLoadRuleIndex");
     ygg::bind_index<ygg::Index<RoleLoad>>(m, "RoleLoadRuleIndex");
     ygg::bind_index<ygg::Index<Crule>>(m, "CruleRuleIndex");
-    using DlRepository = runir::kr::dl::ConstructorRepositoryFor;
+    using DlRepository = runir::kr::dl::ConstructorRepository;
     using MemoryStateIndex = ygg::Index<MemoryState>;
     using MemoryStateView = ygg::View<ygg::Index<MemoryState>, Repository>;
     using ConditionIndexList = ygg::IndexList<runir::kr::ps::ConditionVariant<runir::kr::IcpFamilyTag>>;

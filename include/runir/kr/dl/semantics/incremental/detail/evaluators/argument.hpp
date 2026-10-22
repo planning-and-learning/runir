@@ -1,10 +1,10 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_EVALUATORS_ARGUMENT_HPP_
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_EVALUATORS_ARGUMENT_HPP_
 
-#include "runir/kr/dl/semantics/ext/evaluation.hpp"
 #include "runir/kr/dl/semantics/incremental/declarations.hpp"
 #include "runir/kr/dl/semantics/incremental/delta.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/denotation_state.hpp"
+#include "runir/kr/dl/semantics/state_evaluation.hpp"
 
 namespace runir::kr::dl::semantics::incremental::detail
 {

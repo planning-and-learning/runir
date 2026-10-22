@@ -5,7 +5,7 @@
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/vector.h>
 #include <runir/kr/dl/optimization.hpp>
-#include <runir/kr/dl/semantics/ext/evaluation.hpp>
+#include <runir/kr/dl/semantics/state_evaluation.hpp>
 #include <vector>
 #include <yggdrasil/python/diagnostics.hpp>
 
@@ -43,7 +43,7 @@ template<typename View>
 void bind_optimize(nanobind::class_<View>& cls)
 {
     namespace nb = nanobind;
-    using Repository = runir::kr::dl::ConstructorRepositoryFor;
+    using Repository = runir::kr::dl::ConstructorRepository;
     using Statistics = runir::kr::dl::QueryStatistics;
     using GroundContext = runir::kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
     using LiftedContext = runir::kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>;

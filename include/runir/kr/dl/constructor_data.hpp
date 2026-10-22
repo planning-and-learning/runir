@@ -22,7 +22,7 @@ struct ConstructorDataTraits;
 template<>
 struct ConstructorDataTraits<ConceptTag>
 {
-    using Tags = FamilyConceptConstructorTags;
+    using Tags = ConceptConstructorTags;
 
     template<typename Tag>
     using Index = ygg::Index<Concept<Tag>>;
@@ -33,7 +33,7 @@ struct ConstructorDataTraits<ConceptTag>
 template<>
 struct ConstructorDataTraits<RoleTag>
 {
-    using Tags = FamilyRoleConstructorTags;
+    using Tags = RoleConstructorTags;
 
     template<typename Tag>
     using Index = ygg::Index<Role<Tag>>;
@@ -44,7 +44,7 @@ struct ConstructorDataTraits<RoleTag>
 template<>
 struct ConstructorDataTraits<BooleanTag>
 {
-    using Tags = FamilyBooleanConstructorTags;
+    using Tags = BooleanConstructorTags;
 
     template<typename Tag>
     using Index = ygg::Index<Boolean<Tag>>;
@@ -55,7 +55,7 @@ struct ConstructorDataTraits<BooleanTag>
 template<>
 struct ConstructorDataTraits<NumericalTag>
 {
-    using Tags = FamilyNumericalConstructorTags;
+    using Tags = NumericalConstructorTags;
 
     template<typename Tag>
     using Index = ygg::Index<Numerical<Tag>>;

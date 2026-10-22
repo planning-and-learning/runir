@@ -20,7 +20,7 @@ void bind_constructor_data(nb::module_& m, const char* name)
     auto cls = nb::class_<Data>(m, name)
                    .def(nb::init<>())
                    .def(nb::init<DataVariant<Data>>(), nb::arg("variant"))
-                   .def(nb::init<DataViewVariant<Data, runir::kr::dl::cnf_grammar::ConstructorRepositoryFor>>(), nb::arg("variant"))
+                   .def(nb::init<DataViewVariant<Data, runir::kr::dl::cnf_grammar::ConstructorRepository>>(), nb::arg("variant"))
                    .def_rw("index", &Data::index)
                    .def_rw("variant", &Data::variant);
     ygg::add_comparison(cls);
@@ -30,7 +30,7 @@ template<CategoryTag Category>
 void bind_constructor_view(nb::module_& m, const char* name)
 {
     using Type = runir::kr::dl::cnf_grammar::Constructor<Category>;
-    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::cnf_grammar::ConstructorRepositoryFor>;
+    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::cnf_grammar::ConstructorRepository>;
     auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index).def("get_variant", &View::get_variant);
     ygg::add_print(cls);
     ygg::add_comparison(cls);

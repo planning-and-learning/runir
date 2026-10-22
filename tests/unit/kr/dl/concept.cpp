@@ -23,10 +23,10 @@ concept IndexedDataView =
 template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
 {
-    return (IndexedDataView<Ts, kr::dl::ConstructorRepositoryFor> && ...);
+    return (IndexedDataView<Ts, kr::dl::ConstructorRepository> && ...);
 }
 
-static_assert(indexed_data_views<>(kr::dl::FamilyConceptTypes {}));
+static_assert(indexed_data_views<>(kr::dl::ConceptTypes {}));
 
 using NullaryTags = ygg::TypeList<kr::dl::BotTag, kr::dl::TopTag>;
 using PredicateTags = ygg::TypeList<kr::dl::AtomicStateTag<tyr::formalism::StaticTag>,
@@ -50,17 +50,17 @@ consteval bool concept_data_view()
 {
     using Entity = kr::dl::Concept<Tag>;
     using Data = ygg::Data<Entity>;
-    using View = ygg::View<ygg::Index<Entity>, kr::dl::ConstructorRepositoryFor>;
+    using View = ygg::View<ygg::Index<Entity>, kr::dl::ConstructorRepository>;
 
     static_assert(!requires(const View& view) { view.get_columns(); });
     static_assert(!requires(const View& view) { view.get_plan(); });
-    static_assert(std::same_as<View, kr::dl::FamilyConceptView<Tag>>);
+    static_assert(std::same_as<View, kr::dl::ConceptView<Tag>>);
     if constexpr (false)
-        static_assert(std::same_as<View, kr::dl::BaseConceptView<Tag>>);
+        static_assert(std::same_as<View, kr::dl::ConceptView<Tag>>);
     else if constexpr (true)
-        static_assert(std::same_as<View, kr::dl::ExtConceptView<Tag>>);
+        static_assert(std::same_as<View, kr::dl::ConceptView<Tag>>);
     else
-        static_assert(std::same_as<View, kr::dl::UnsConceptView<Tag>>);
+        static_assert(std::same_as<View, kr::dl::ConceptView<Tag>>);
 
     if constexpr (ygg::InTypeList<Tag, NullaryTags>)
         return requires(Data& data, const View& view) {
@@ -139,7 +139,7 @@ consteval bool concept_data_views(ygg::TypeList<Tags...>)
     return (concept_data_view<Tags>() && ...);
 }
 
-static_assert(concept_data_views<>(kr::dl::FamilyConceptConstructorTags {}));
+static_assert(concept_data_views<>(kr::dl::ConceptConstructorTags {}));
 
 }  // namespace
 
@@ -148,7 +148,7 @@ TEST(RunirKrDlConcept, RoutesUnaryBinaryAndNumberRestrictionData)
     using Concept = kr::dl::Constructor<kr::dl::ConceptTag>;
     using Role = kr::dl::Constructor<kr::dl::RoleTag>;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-    auto repository = kr::dl::ExtConstructorRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_repository);
 
     auto unary_data = ygg::Data<kr::dl::Concept<kr::dl::NegationTag>>(ygg::Index<Concept>(3));
     const auto unary = repository->insert(unary_data).first;

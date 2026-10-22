@@ -15,17 +15,17 @@ namespace runir::kr::dl::detail
 {
 
 template<typename RepositoryTypes>
-class ConstructorRepository : public ygg::formalism::SymbolRepositoryBase<ConstructorRepository<RepositoryTypes>, RepositoryTypes>
+class BasicConstructorRepository : public ygg::formalism::SymbolRepositoryBase<BasicConstructorRepository<RepositoryTypes>, RepositoryTypes>
 {
-    using Base = ygg::formalism::SymbolRepositoryBase<ConstructorRepository<RepositoryTypes>, RepositoryTypes>;
+    using Base = ygg::formalism::SymbolRepositoryBase<BasicConstructorRepository<RepositoryTypes>, RepositoryTypes>;
 
-    friend class ConstructorRepositoryFactory<RepositoryTypes>;
+    friend class BasicConstructorRepositoryFactory<RepositoryTypes>;
 
 private:
     std::shared_ptr<const tyr::formalism::planning::Repository> m_planning_repository;
     size_t m_index;
 
-    ConstructorRepository(size_t index, std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository) :
+    BasicConstructorRepository(size_t index, std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository) :
         m_planning_repository(std::move(planning_repository)),
         m_index(index)
     {
@@ -34,10 +34,10 @@ private:
     }
 
 public:
-    ConstructorRepository(const ConstructorRepository&) = delete;
-    ConstructorRepository& operator=(const ConstructorRepository&) = delete;
-    ConstructorRepository(ConstructorRepository&&) = delete;
-    ConstructorRepository& operator=(ConstructorRepository&&) = delete;
+    BasicConstructorRepository(const BasicConstructorRepository&) = delete;
+    BasicConstructorRepository& operator=(const BasicConstructorRepository&) = delete;
+    BasicConstructorRepository(BasicConstructorRepository&&) = delete;
+    BasicConstructorRepository& operator=(BasicConstructorRepository&&) = delete;
 
     const auto& get_index() const noexcept { return m_index; }
     const tyr::formalism::planning::Repository& get_planning_repository() const noexcept
@@ -49,7 +49,7 @@ public:
     const auto& get_planning_repository_ptr() const noexcept { return m_planning_repository; }
 
     template<typename T>
-        requires ygg::formalism::SupportsSymbol<ConstructorRepository, T>
+        requires ygg::formalism::SupportsSymbol<BasicConstructorRepository, T>
     const ygg::Data<T>& operator[](ygg::Index<T> index) const noexcept
     {
         assert(this->template is_local<T>(index));
@@ -57,35 +57,35 @@ public:
     }
 
     template<typename T>
-        requires ygg::formalism::SupportsSymbol<ConstructorRepository, T>
-    const ConstructorRepository& get_canonical_context(ygg::Index<T>) const noexcept
+        requires ygg::formalism::SupportsSymbol<BasicConstructorRepository, T>
+    const BasicConstructorRepository& get_canonical_context(ygg::Index<T>) const noexcept
     {
         return *this;
     }
 };
 
 template<typename RepositoryTypes>
-class ConstructorRepositoryFactory
+class BasicConstructorRepositoryFactory
 {
 private:
     size_t m_next_index;
 
 public:
-    ConstructorRepositoryFactory() : m_next_index(0) {}
+    BasicConstructorRepositoryFactory() : m_next_index(0) {}
 
     /// Defined in detail/constructor_repository_impl.hpp: an in-class definition would construct and destroy every
     /// symbol pool in each caller (template rule 7).
-    std::shared_ptr<ConstructorRepository<RepositoryTypes>> create(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository);
+    std::shared_ptr<BasicConstructorRepository<RepositoryTypes>> create(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository);
 };
 
 template<typename RepositoryTypes>
-inline const ConstructorRepository<RepositoryTypes>& get_repository(const ConstructorRepository<RepositoryTypes>& repository) noexcept
+inline const BasicConstructorRepository<RepositoryTypes>& get_repository(const BasicConstructorRepository<RepositoryTypes>& repository) noexcept
 {
     return repository;
 }
 
 template<typename RepositoryTypes>
-inline ConstructorRepository<RepositoryTypes>& get_repository(ConstructorRepository<RepositoryTypes>& repository) noexcept
+inline BasicConstructorRepository<RepositoryTypes>& get_repository(BasicConstructorRepository<RepositoryTypes>& repository) noexcept
 {
     return repository;
 }

@@ -10,10 +10,11 @@ namespace runir::kr::dl::detail
 {
 
 template<typename RepositoryTypes>
-std::shared_ptr<ConstructorRepository<RepositoryTypes>>
-ConstructorRepositoryFactory<RepositoryTypes>::create(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository)
+std::shared_ptr<BasicConstructorRepository<RepositoryTypes>>
+BasicConstructorRepositoryFactory<RepositoryTypes>::create(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository)
 {
-    return std::shared_ptr<ConstructorRepository<RepositoryTypes>>(new ConstructorRepository<RepositoryTypes>(m_next_index++, std::move(planning_repository)));
+    return std::shared_ptr<BasicConstructorRepository<RepositoryTypes>>(
+        new BasicConstructorRepository<RepositoryTypes>(m_next_index++, std::move(planning_repository)));
 }
 
 }  // namespace runir::kr::dl::detail

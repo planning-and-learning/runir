@@ -19,8 +19,7 @@ template<FamilyTag Family>
 class FeatureOptimizer
 {
 public:
-    FeatureOptimizer(runir::kr::dl::ConstructorRepositoryFor& repository, const runir::kr::dl::QueryStatistics& statistics) :
-        m_optimizer(repository, statistics)
+    FeatureOptimizer(runir::kr::dl::ConstructorRepository& repository, const runir::kr::dl::QueryStatistics& statistics) : m_optimizer(repository, statistics)
     {
     }
 

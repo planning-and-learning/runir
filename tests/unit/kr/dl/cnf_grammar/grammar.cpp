@@ -54,19 +54,16 @@ concept IndexedDataView =
 template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
 {
-    return (IndexedDataView<Ts, kr::dl::cnf_grammar::ConstructorRepositoryFor> && ...);
+    return (IndexedDataView<Ts, kr::dl::cnf_grammar::ConstructorRepository> && ...);
 }
 
-static_assert(indexed_data_views<>(kr::dl::cnf_grammar::FamilyGrammarTypes {}));
-static_assert(
-    std::same_as<kr::dl::cnf_grammar::FamilyGrammarView, ygg::View<ygg::Index<kr::dl::cnf_grammar::Grammar>, kr::dl::cnf_grammar::BaseConstructorRepository>>);
-static_assert(
-    std::same_as<kr::dl::cnf_grammar::FamilyGrammarView, ygg::View<ygg::Index<kr::dl::cnf_grammar::Grammar>, kr::dl::cnf_grammar::ExtConstructorRepository>>);
-static_assert(
-    std::same_as<kr::dl::cnf_grammar::FamilyGrammarView, ygg::View<ygg::Index<kr::dl::cnf_grammar::Grammar>, kr::dl::cnf_grammar::UnsConstructorRepository>>);
-static_assert(std::same_as<kr::dl::cnf_grammar::FamilyGrammarView, kr::dl::cnf_grammar::BaseGrammarView>);
-static_assert(std::same_as<kr::dl::cnf_grammar::FamilyGrammarView, kr::dl::cnf_grammar::ExtGrammarView>);
-static_assert(std::same_as<kr::dl::cnf_grammar::FamilyGrammarView, kr::dl::cnf_grammar::UnsGrammarView>);
+static_assert(indexed_data_views<>(kr::dl::cnf_grammar::GrammarTypes {}));
+static_assert(std::same_as<kr::dl::cnf_grammar::GrammarView, ygg::View<ygg::Index<kr::dl::cnf_grammar::Grammar>, kr::dl::cnf_grammar::ConstructorRepository>>);
+static_assert(std::same_as<kr::dl::cnf_grammar::GrammarView, ygg::View<ygg::Index<kr::dl::cnf_grammar::Grammar>, kr::dl::cnf_grammar::ConstructorRepository>>);
+static_assert(std::same_as<kr::dl::cnf_grammar::GrammarView, ygg::View<ygg::Index<kr::dl::cnf_grammar::Grammar>, kr::dl::cnf_grammar::ConstructorRepository>>);
+static_assert(std::same_as<kr::dl::cnf_grammar::GrammarView, kr::dl::cnf_grammar::GrammarView>);
+static_assert(std::same_as<kr::dl::cnf_grammar::GrammarView, kr::dl::cnf_grammar::GrammarView>);
+static_assert(std::same_as<kr::dl::cnf_grammar::GrammarView, kr::dl::cnf_grammar::GrammarView>);
 
 template<typename Category>
 consteval bool data_accessors()

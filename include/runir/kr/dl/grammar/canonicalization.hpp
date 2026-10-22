@@ -12,28 +12,28 @@ namespace runir::kr::dl::grammar
 {
 
 template<typename Tag>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Tag>
+    requires runir::kr::dl::ConceptConstructorTag<Tag>
 bool is_canonical(const ygg::Data<Concept<Tag>>&) noexcept
 {
     return true;
 }
 
 template<typename Tag>
-    requires runir::kr::dl::FamilyRoleConstructorTag<Tag>
+    requires runir::kr::dl::RoleConstructorTag<Tag>
 bool is_canonical(const ygg::Data<Role<Tag>>&) noexcept
 {
     return true;
 }
 
 template<typename Tag>
-    requires runir::kr::dl::FamilyBooleanConstructorTag<Tag>
+    requires runir::kr::dl::BooleanConstructorTag<Tag>
 bool is_canonical(const ygg::Data<Boolean<Tag>>&) noexcept
 {
     return true;
 }
 
 template<typename Tag>
-    requires runir::kr::dl::FamilyNumericalConstructorTag<Tag>
+    requires runir::kr::dl::NumericalConstructorTag<Tag>
 bool is_canonical(const ygg::Data<Numerical<Tag>>&) noexcept
 {
     return true;
@@ -68,25 +68,25 @@ inline bool is_canonical(const ygg::Data<Role<runir::kr::dl::IntersectionTag>>& 
 inline bool is_canonical(const ygg::Data<Role<runir::kr::dl::UnionTag>>& data) noexcept { return data.lhs <= data.rhs; }
 
 template<typename Tag>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Tag>
+    requires runir::kr::dl::ConceptConstructorTag<Tag>
 void canonicalize(ygg::Data<Concept<Tag>>&) noexcept
 {
 }
 
 template<typename Tag>
-    requires runir::kr::dl::FamilyRoleConstructorTag<Tag>
+    requires runir::kr::dl::RoleConstructorTag<Tag>
 void canonicalize(ygg::Data<Role<Tag>>&) noexcept
 {
 }
 
 template<typename Tag>
-    requires runir::kr::dl::FamilyBooleanConstructorTag<Tag>
+    requires runir::kr::dl::BooleanConstructorTag<Tag>
 void canonicalize(ygg::Data<Boolean<Tag>>&) noexcept
 {
 }
 
 template<typename Tag>
-    requires runir::kr::dl::FamilyNumericalConstructorTag<Tag>
+    requires runir::kr::dl::NumericalConstructorTag<Tag>
 void canonicalize(ygg::Data<Numerical<Tag>>&) noexcept
 {
 }

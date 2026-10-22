@@ -11,10 +11,10 @@
 #include <new>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
-#include <runir/kr/dl/semantics/ext/evaluation.hpp>
 #include <runir/kr/dl/semantics/incremental/delta.hpp>
 #include <runir/kr/dl/semantics/incremental/detail/atomic_query.hpp>
 #include <runir/kr/dl/semantics/incremental/evaluation.hpp>
+#include <runir/kr/dl/semantics/state_evaluation.hpp>
 #include <runir/kr/ps/ext/detail/proof_search.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <runir/kr/ps/ext/program_executor.hpp>
@@ -200,7 +200,7 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/dl/query";
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
-    auto repository = kr::dl::ConstructorRepositoryFactoryFor().create(search->task->get_repository());
+    auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
@@ -267,7 +267,7 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/dl/query";
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
-    auto repository = kr::dl::ConstructorRepositoryFactoryFor().create(search->task->get_repository());
+    auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
     const auto count = kr::ps::ext::dl::parse_numerical(R"((n_count (q_project (x) (q_atomic_state "triple" (x y z)))))",
                                                         search->task->get_domain().get_domain(),
                                                         *repository);
@@ -377,7 +377,7 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     const auto domain = search->task->get_domain().get_domain();
-    auto repository = kr::dl::ConstructorRepositoryFactoryFor().create(search->task->get_repository());
+    auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
     auto concepts = std::vector<RootEvaluator<tyr::GroundTag, kr::dl::ConceptTag>> {};
     auto roles = std::vector<RootEvaluator<tyr::GroundTag, kr::dl::RoleTag>> {};
     auto numericals = std::vector<RootEvaluator<tyr::GroundTag, kr::dl::NumericalTag>> {};

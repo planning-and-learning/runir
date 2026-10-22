@@ -1,7 +1,7 @@
-#ifndef RUNIR_KR_DL_CNF_GRAMMAR_DETAIL_REPOSITORY_INSTANTIATIONS_BASE_HPP_
-#define RUNIR_KR_DL_CNF_GRAMMAR_DETAIL_REPOSITORY_INSTANTIATIONS_BASE_HPP_
+#ifndef RUNIR_KR_DL_CNF_GRAMMAR_DETAIL_REPOSITORY_INSTANTIATIONS_HPP_
+#define RUNIR_KR_DL_CNF_GRAMMAR_DETAIL_REPOSITORY_INSTANTIATIONS_HPP_
 
-/// Extern declarations of the symbol storage of every cnf base symbol type, instantiated in the library.
+/// Extern declarations of the symbol storage of every generation CNF grammar symbol type, instantiated in the library.
 /// Include only from sources that intern many of these types; see yggdrasil's docs/TEMPLATE_RULES.md.
 
 #include "runir/kr/dl/cnf_grammar/constructor_repository.hpp"

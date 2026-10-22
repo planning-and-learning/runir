@@ -8,7 +8,7 @@ namespace runir::serialization
 
 void bind_kr_dl_constructor(nb::module_& m)
 {
-    using Types = ygg::ConcatTypeListsT<kr::dl::FamilyConstructorTypes, kr::dl::FamilyReferenceTypes>;
+    using Types = ygg::ConcatTypeListsT<kr::dl::ConstructorTypes, kr::dl::ReferenceTypes>;
     bind_entity_types(m, DlComponentViews<Types> {});
 }
 

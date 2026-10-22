@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_DL_TRANSLATIONS_YGG_QUERY_HPP_
 #define RUNIR_KR_DL_TRANSLATIONS_YGG_QUERY_HPP_
 
-#include "runir/kr/dl/constructors.hpp"
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/query_construction.hpp"
 #include "runir/kr/dl/query_view.hpp"
 #include "runir/kr/dl/repository.hpp"
@@ -40,8 +40,8 @@ struct QuerySlot
 };
 
 /// Calls f(expression) with the slot's expression as a view into `constructors`.
-template<ygg::InvocableWithEach<ygg::TypeList<FamilyConstructorView<ConceptTag>, FamilyConstructorView<RoleTag>, FamilyQueryView<>>> F>
-auto visit_slot(const QuerySlot& slot, const ConstructorRepositoryFor& constructors, F&& f)
+template<ygg::InvocableWithEach<ygg::TypeList<ConstructorView<ConceptTag>, ConstructorView<RoleTag>, QueryView<>>> F>
+auto visit_slot(const QuerySlot& slot, const ConstructorRepository& constructors, F&& f)
 {
     switch (slot.kind)
     {
@@ -66,16 +66,16 @@ inline constexpr bool is_query_leaf_tag_v =
 template<typename V>
 inline constexpr bool is_complement_view_v = false;
 template<typename C>
-inline constexpr bool is_complement_view_v<ygg::View<ygg::Index<FamilyRole<ComplementTag>>, C>> = true;
+inline constexpr bool is_complement_view_v<ygg::View<ygg::Index<Role<ComplementTag>>, C>> = true;
 template<typename C>
-inline constexpr bool is_complement_view_v<ygg::View<ygg::Index<FamilyConcept<NegationTag>>, C>> = true;
+inline constexpr bool is_complement_view_v<ygg::View<ygg::Index<Concept<NegationTag>>, C>> = true;
 
 /// Calls f(argument) if the query is a role or concept leaf over a complement (r_complement, c_not); returns whether.
-template<ygg::InvocableWithEach<ygg::TypeList<FamilyConstructorView<RoleTag>, FamilyConstructorView<ConceptTag>>> F>
-bool visit_complement_argument(FamilyQueryView<> query, F&& f)
+template<ygg::InvocableWithEach<ygg::TypeList<ConstructorView<RoleTag>, ConstructorView<ConceptTag>>> F>
+bool visit_complement_argument(QueryView<> query, F&& f)
 {
     return ygg::visit(
-        [&]<typename Tag>(FamilyQueryView<Tag> concrete)
+        [&]<typename Tag>(QueryView<Tag> concrete)
         {
             if constexpr (std::same_as<Tag, QueryRoleTag> || std::same_as<Tag, QueryConceptTag>)
                 return ygg::visit(
@@ -97,7 +97,7 @@ bool visit_complement_argument(FamilyQueryView<> query, F&& f)
 }
 
 /// Whether a query is a role or concept leaf over a complement (r_complement, c_not).
-inline bool is_complement_leaf(FamilyQueryView<> query)
+inline bool is_complement_leaf(QueryView<> query)
 {
     return visit_complement_argument(query, [](auto) {});
 }
@@ -110,7 +110,7 @@ inline bool is_complement_leaf(FamilyQueryView<> query)
 /// an ordinary leaf.
 class QueryTranslator
 {
-    using DlQuery = FamilyQueryView<>;
+    using DlQuery = QueryView<>;
     using YggQuery = ygg::database::QueryView<>;
     using Label = ygg::Index<ygg::database::Column>;
 
@@ -137,7 +137,7 @@ public:
     /// The expression of each input slot, by slot.
     const std::vector<QuerySlot>& get_slots() const noexcept { return m_slots; }
     /// The DL leaf of each input slot; without complement rewriting, every slot is a leaf query.
-    std::vector<DlQuery> get_leaves(const ConstructorRepositoryFor& constructors) const;
+    std::vector<DlQuery> get_leaves(const ConstructorRepository& constructors) const;
 
 private:
     template<typename Tag>
@@ -174,7 +174,7 @@ private:
     YggQuery complement_argument(DlQuery complement);
 
     template<typename Tag>
-    YggQuery translate_concrete(DlQuery query, FamilyQueryView<Tag> concrete);
+    YggQuery translate_concrete(DlQuery query, QueryView<Tag> concrete);
 
     ygg::database::QueryRepositoryFactory m_factory;
     ygg::database::QueryRepository m_repository;

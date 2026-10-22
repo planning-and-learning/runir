@@ -2,29 +2,28 @@
 
 Runir separates the policy representation from the language used to express its
 features. A policy family selects the policy vocabulary and its execution
-semantics; a DL family selects the available feature constructors. These choices
-are connected by traits, rather than forming an unrestricted Cartesian product.
+semantics. All policy families share one DL constructor set; each language's
+parser rejects the constructors it does not support.
 
 ## Policy family and feature language
 
 The tags are declared in [declarations.hpp](declarations.hpp).
 [PsFamilyTraits](ps/family_traits.hpp) specifies each policy family's feature
-categories, condition/effect types, and associated `DlFamily`.
+categories and condition/effect types.
 
-| Policy family | Representation | `DlFamily` | Named feature categories |
-| --- | --- | --- | --- |
-| `BaseFamilyTag` | Sketches (`ps::base`) | `BaseFamilyTag` | Boolean, numerical |
-| `ExtFamilyTag` | Module programs (`ps::ext`) | `ExtFamilyTag` | Concept, role, Boolean, numerical, query |
-| `IcpFamilyTag` | Indexical concept policies (`ps::icp`) | `ExtFamilyTag` | Concept, role, Boolean, numerical, query |
-| `UnsFamilyTag` | Unsolvability classifiers (`uns`) | `UnsFamilyTag` | Boolean |
+| Policy family | Representation | Named feature categories |
+| --- | --- | --- |
+| `BaseFamilyTag` | Sketches (`ps::base`) | Boolean, numerical |
+| `ExtFamilyTag` | Module programs (`ps::ext`) | Concept, role, Boolean, numerical, query |
+| `IcpFamilyTag` | Indexical concept policies (`ps::icp`) | Concept, role, Boolean, numerical, query |
+| `UnsFamilyTag` | Unsolvability classifiers (`uns`) | Boolean |
 
 `UnsFamilyTag` participates in the shared feature infrastructure but does not
 define another policy executor. Its condition and effect inventories are empty.
 Its Boolean features may contain numerical, concept, and role expressions.
 
-ICP reuses the Ext feature language while retaining its own policy types,
-repository, rules, and execution history. Consequently, `IcpFamilyTag` satisfies
-`kr::FamilyTag` but not `kr::dl::FamilyTag`. Sharing a DL family does not imply
+ICP shares the Ext feature categories while retaining its own policy types,
+repository, rules, and execution history. Sharing DL expressions does not imply
 sharing an execution model or a particular repository instance.
 
 At the policy layer, the main feature types are:
@@ -38,79 +37,85 @@ ps::ConcreteFeature<Family, LanguageTag, FeatureTag>
 only implemented `LanguageTag`; its expressions include DL constructors and
 relational queries. There is no second interchangeable feature language today.
 
-[FeatureExpression](ps/dl/feature_data.hpp) maps a concrete feature to an expression
-in `DlFamilyFor<Family>`:
+[FeatureExpression](ps/dl/feature_data.hpp) maps a concrete feature to an expression:
 
 | Policy `FeatureTag` | Expression type in `kr::dl` |
 | --- | --- |
-| `kr::dl::ConceptTag` | `Constructor<DlFamily, ConceptTag>` |
-| `kr::dl::RoleTag` | `Constructor<DlFamily, RoleTag>` |
-| `kr::dl::BooleanTag` | `Constructor<DlFamily, BooleanTag>` |
-| `kr::dl::NumericalTag` | `Constructor<DlFamily, NumericalTag>` |
-| `ps::dl::QueryFeature` | `Query<DlFamily>` |
+| `kr::dl::ConceptTag` | `Constructor<ConceptTag>` |
+| `kr::dl::RoleTag` | `Constructor<RoleTag>` |
+| `kr::dl::BooleanTag` | `Constructor<BooleanTag>` |
+| `kr::dl::NumericalTag` | `Constructor<NumericalTag>` |
+| `ps::dl::QueryFeature` | `Query<>` |
 
 This mapping describes expression types; the policy family inventory determines
 which named features belong in its default repository. Generic records and views
 are constrained by their semantics, not by that inventory. For example, a Base
 role feature or an Uns numerical feature can be stored in a custom repository
-with the corresponding DL repository. DL feature categories and valid
-condition/effect observation pairs have explicit concepts; the storage context
-`C` remains generic.
+with the DL repository. DL feature categories and valid condition/effect
+observation pairs have explicit concepts; the storage context `C` remains
+generic.
 
-## DL family, category, and constructor
+## Category and constructor
 
-[DlFamilyTraits](dl/family_traits.hpp) lists the concrete constructor tags for
-each DL family and category.
+[family_traits.hpp](dl/family_traits.hpp) lists the constructor tags of each
+category: atomic state/goal expressions, concept and role operations, Boolean
+nonemptiness, numerical count and distance, concept/role registers, typed call
+arguments, numerical constants and arithmetic, and Boolean constants, logic and
+comparisons.
 
-| DL family | Constructor vocabulary |
-| --- | --- |
-| Base | Atomic state/goal expressions, concept and role operations, Boolean nonemptiness, numerical count and distance |
-| Ext | Base plus concept/role registers, typed call arguments, numerical constants and arithmetic |
-| Uns | Base plus Boolean constants, logic and comparisons, numerical constants and arithmetic |
+| Language | Registers | Call arguments |
+| --- | --- | --- |
+| Module programs (`ps::ext`) | yes | yes |
+| Indexical concept policies (`ps::icp`) | yes | no |
+| Sketches (`ps::base`) | no | no |
+| Unsolvability classifiers (`uns`) | no | no |
+
+Every language accepts the other constructors. A rejected constructor is a parse
+error at its source position.
 
 The four denotation categories are `ConceptTag`, `RoleTag`, `BooleanTag`, and
-`NumericalTag`. `Concept<Family, Tag>`, `Role<Family, Tag>`,
-`Boolean<Family, Tag>`, and `Numerical<Family, Tag>` identify concrete operators;
-`Constructor<Family, Category>` wraps the alternatives for a category.
-The `Family*ConstructorTag` concepts check membership in the corresponding
-inventory.
+`NumericalTag`. `Concept<Tag>`, `Role<Tag>`, `Boolean<Tag>`, and `Numerical<Tag>`
+identify concrete operators; `Constructor<Category>` wraps the alternatives for a
+category. The `*ConstructorTag` concepts check membership in the corresponding
+list.
 
-`Query<Family, Tag>` represents a relational operator, and `Query<Family>` wraps
-the query alternatives. A query evaluates to a relation, not a fifth DL
-denotation category. Queries can embed family-specific DL expressions; query
-projections produce concepts or roles. `ConceptOrRoleTag` restricts projection
-and register types to these two categories.
+`Query<Tag>` represents a relational operator, and `Query<>` wraps the query
+alternatives. A query evaluates to a relation, not a fifth DL denotation
+category. Queries can embed DL expressions; query projections produce concepts
+or roles. `ConceptOrRoleTag` restricts projection and register types to these
+two categories.
 
 The `dl::grammar` and `dl::cnf_grammar` namespaces represent generation grammars,
-separately from evaluable expressions. Their vocabularies exclude relational
-queries and projections. The compiled `cnf_grammar::generate` implementation is
-currently available for Base with both task kinds.
+separately from evaluable expressions. They contain the `Generation*ConstructorTags`
+only: no registers, arguments, arithmetic, Boolean operators, relational queries,
+or projections; the grammar parser rejects these. `cnf_grammar::generate` writes
+the generated constructors into the DL repository.
 
 ## Evaluation and storage
 
-State evaluation uses the **DL family**, while transition evaluation uses the
-**policy family** and derives its DL family through `ps::DlFamilyFor<Family>`:
+State evaluation is independent of the policy family; transition evaluation uses
+the policy family:
 
 ```cpp
 // Type composition for a lifted ICP numerical feature.
 namespace kr = runir::kr;
 using Family = kr::IcpFamilyTag;
-using DlFamily = kr::ps::DlFamilyFor<Family>;  // ExtFamilyTag
 
 using Feature = kr::ps::ConcreteFeature<Family, kr::DlTag,
                                       kr::dl::NumericalTag>;
-using StateContext = kr::dl::semantics::StateEvaluationContext<DlFamily, tyr::LiftedTag>;
+using StateContext = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>;
 using TransitionContext = kr::ps::dl::TransitionEvaluationContext<Family, tyr::LiftedTag>;
 ```
 
-`DenotationCaches<DlFamily>` follows the expression family as well.
 [TransitionEvaluationContext](ps/dl/transition_evaluation_context.hpp) contains
-source and target state contexts borrowing separate caches. Ext DL contexts also
-carry register values and call arguments; this applies to both Ext and ICP
-policies. ICP history belongs to policy execution, not to the DL context.
+source and target state contexts borrowing separate caches. A state context can
+carry register values and call arguments; evaluating a register or argument
+expression without them throws. ICP history belongs to policy execution, not to
+the DL context.
 
-[BasicRepository](ps/repository.hpp) derives its DL repository type from the same
-mapping. Its policy storage combines the shared family inventory with the
+[BasicRepository](ps/repository.hpp) refers to a DL repository; a
+[DomainContext](domain_context.hpp) shares one DL repository between all
+languages. Its policy storage combines the shared feature inventory with the
 family's rules and program types.
 
 The index/data/view pattern is a separate representation choice:
@@ -131,7 +136,7 @@ or feature-language dimension.
 | `ObservationTag` | Selects Boolean or numerical conditions/effects, such as `Positive`, `EqualZero`, or `Decreases`. Valid pairs depend on the feature category and condition/effect inventory. |
 | Rule tag | Selects a family's concrete rule body. Shared feature types do not imply shared rule semantics. |
 
-Shared code should derive the expression family through `ps::DlFamilyFor<Family>`. Use the
-weakest constraint required by the implementation: a default repository's
-inventory does not define every valid generic instantiation. Family-specific
-data and execution behavior remain specialized where their semantics differ.
+Use the weakest constraint required by the implementation: a default
+repository's inventory does not define every valid generic instantiation.
+Family-specific data and execution behavior remain specialized where their
+semantics differ.

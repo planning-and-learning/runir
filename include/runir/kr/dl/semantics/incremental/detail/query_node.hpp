@@ -19,7 +19,7 @@ template<tyr::TaskKind Kind>
 class QueryNode
 {
 public:
-    QueryNode(FamilyQueryView<> expression, GraphBuilder<Kind>& graph);
+    QueryNode(QueryView<> expression, GraphBuilder<Kind>& graph);
     /// A concept or role lifted into a relation with the given columns; it has no query expression.
     template<ConceptOrRoleTag Category>
     QueryNode(EvaluationIndex<Category> argument, std::span<const ygg::database::ColumnLayout> columns) :
@@ -27,7 +27,7 @@ public:
         m_operation(QueryFromDenotationEvaluator<Kind, Category>(argument, columns))
     {
     }
-    std::optional<FamilyQueryView<>> get_expression() const noexcept { return m_expression; }
+    std::optional<QueryView<>> get_expression() const noexcept { return m_expression; }
     /// Whether this node lifts argument into a relation with exactly these columns.
     template<ConceptOrRoleTag Category>
     bool lifts(EvaluationIndex<Category> argument, std::span<const ygg::database::ColumnLayout> columns) const
@@ -58,16 +58,14 @@ private:
                                    QuerySelectionEvaluator<Kind, QuerySelectValueTag>,
                                    QueryMustPassEvaluator<Kind>>;
 
-    std::optional<FamilyQueryView<>> m_expression;
+    std::optional<QueryView<>> m_expression;
     std::vector<ygg::uint_t> m_dependencies;
     Operation m_operation;
-    Operation prepare_operation(FamilyQueryView<> expression, GraphBuilder<Kind>& graph);
+    Operation prepare_operation(QueryView<> expression, GraphBuilder<Kind>& graph);
 };
 
 template<tyr::TaskKind Kind>
-QueryNode<Kind>::QueryNode(FamilyQueryView<> expression, GraphBuilder<Kind>& graph) :
-    m_expression(expression),
-    m_operation(prepare_operation(expression, graph))
+QueryNode<Kind>::QueryNode(QueryView<> expression, GraphBuilder<Kind>& graph) : m_expression(expression), m_operation(prepare_operation(expression, graph))
 {
 }
 
@@ -97,12 +95,12 @@ const ygg::database::incremental::Delta& QueryNode<Kind>::get_delta() const
 }
 
 template<tyr::TaskKind Kind>
-auto QueryNode<Kind>::prepare_operation(FamilyQueryView<> expression, GraphBuilder<Kind>& graph) -> Operation
+auto QueryNode<Kind>::prepare_operation(QueryView<> expression, GraphBuilder<Kind>& graph) -> Operation
 {
     if (expression.is_static())
         return QueryStaticEvaluator<Kind>(expression);
     return ygg::visit(
-        [&]<typename Tag>(FamilyQueryView<Tag> concrete) -> Operation
+        [&]<typename Tag>(QueryView<Tag> concrete) -> Operation
         {
             if constexpr (std::same_as<Tag, AtomicStateTag<tyr::formalism::FluentTag>>)
                 return QueryAtomicEvaluator<Kind, tyr::formalism::FluentTag>(concrete);

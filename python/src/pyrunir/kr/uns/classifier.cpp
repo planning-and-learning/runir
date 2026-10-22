@@ -2,7 +2,7 @@
 #include "pyrunir/kr/ps/dl/optimization_bindings.hpp"
 #include "runir/kr/uns/declarations.hpp"
 
-#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
+#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>

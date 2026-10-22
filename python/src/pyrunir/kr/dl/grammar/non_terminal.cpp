@@ -27,7 +27,7 @@ template<CategoryTag Category>
 void bind_non_terminal_view(nb::module_& m, const char* name)
 {
     using Type = runir::kr::dl::grammar::NonTerminal<Category>;
-    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::grammar::ConstructorRepositoryFor>;
+    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::grammar::ConstructorRepository>;
     auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index).def("get_name", &View::get_name);
     ygg::add_print(cls);
     ygg::add_comparison(cls);

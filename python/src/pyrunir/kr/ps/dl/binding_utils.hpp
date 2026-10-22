@@ -70,7 +70,7 @@ auto bind_feature(nb::module_& m, nb::class_<Repository>& repository, const std:
     const auto concrete_name = "Concrete" + name;
     ygg::bind_index<ygg::Index<ConcreteFeature>>(m, (concrete_name + "Index").c_str());
     using ExpressionIndex = ygg::Index<typename Data::Expression>;
-    using DlRepository = runir::kr::dl::ConstructorRepositoryFor;
+    using DlRepository = runir::kr::dl::ConstructorRepository;
     auto data = nb::class_<Data>(m, (concrete_name + "Data").c_str())
                     .def(nb::init<>())
                     .def(nb::init<ExpressionIndex, ::cista::offset::string>(), nb::arg("feature"), nb::arg("symbol"))

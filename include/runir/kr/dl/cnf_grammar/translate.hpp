@@ -7,7 +7,7 @@
 namespace runir::kr::dl::cnf_grammar
 {
 
-FamilyGrammarView translate(const runir::kr::dl::grammar::FamilyGrammarView& grammar, ConstructorRepositoryFor& repository);
+GrammarView translate(const runir::kr::dl::grammar::GrammarView& grammar, ConstructorRepository& repository);
 
 }  // namespace runir::kr::dl::cnf_grammar
 

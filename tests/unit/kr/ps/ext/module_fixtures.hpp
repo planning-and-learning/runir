@@ -24,7 +24,7 @@ auto create_program(kr::ps::ext::Repository& repository,
                            kr::ps::ext::ModuleView entry,
                            std::initializer_list<kr::ps::ext::ModuleView> modules) -> kr::ps::ext::ProgramView;
 
-auto create_top_concept(kr::dl::ExtConstructorRepository& repository) -> kr::dl::ExtConstructorView<kr::dl::ConceptTag>;
+auto create_top_concept(kr::dl::ConstructorRepository& repository) -> kr::dl::ConstructorView<kr::dl::ConceptTag>;
 
 }  // namespace runir::tests
 

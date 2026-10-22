@@ -53,20 +53,20 @@ class EvaluationGraph
     const auto& node(QueryEvaluationIndex index) const { return std::get<detail::QueryNode<Kind>>(m_nodes.at(ygg::uint_t(index))); }
 
     template<CategoryTag Category>
-    std::optional<EvaluationIndex<Category>> find_node(FamilyConstructorView<Category> expression) const;
-    std::optional<QueryEvaluationIndex> find_node(FamilyQueryView<> expression) const;
+    std::optional<EvaluationIndex<Category>> find_node(ConstructorView<Category> expression) const;
+    std::optional<QueryEvaluationIndex> find_node(QueryView<> expression) const;
 
     template<CategoryTag Category>
-    EvaluationIndex<Category> prepare(FamilyConstructorView<Category> expression);
-    QueryEvaluationIndex prepare(FamilyQueryView<> expression);
+    EvaluationIndex<Category> prepare(ConstructorView<Category> expression);
+    QueryEvaluationIndex prepare(QueryView<> expression);
     template<CategoryTag Category>
-    EvaluationIndex<Category> prepare(FamilyConstructorView<Category> expression, std::vector<ygg::uint_t>& dependencies)
+    EvaluationIndex<Category> prepare(ConstructorView<Category> expression, std::vector<ygg::uint_t>& dependencies)
     {
         const auto index = prepare(expression);
         dependencies.push_back(ygg::uint_t(index));
         return index;
     }
-    QueryEvaluationIndex prepare(FamilyQueryView<> expression, std::vector<ygg::uint_t>& dependencies)
+    QueryEvaluationIndex prepare(QueryView<> expression, std::vector<ygg::uint_t>& dependencies)
     {
         const auto index = prepare(expression);
         dependencies.push_back(ygg::uint_t(index));
@@ -74,13 +74,13 @@ class EvaluationGraph
     }
     /// The relation of a query, or of a concept or role lifted into the given columns. Identical
     /// lifts share one node.
-    QueryEvaluationIndex prepare_relation(FamilyQueryView<> expression, std::span<const ygg::database::ColumnLayout>, std::vector<ygg::uint_t>& dependencies)
+    QueryEvaluationIndex prepare_relation(QueryView<> expression, std::span<const ygg::database::ColumnLayout>, std::vector<ygg::uint_t>& dependencies)
     {
         return prepare(expression, dependencies);
     }
     template<ConceptOrRoleTag Category>
     QueryEvaluationIndex
-    prepare_relation(FamilyConstructorView<Category> expression, std::span<const ygg::database::ColumnLayout> columns, std::vector<ygg::uint_t>& dependencies)
+    prepare_relation(ConstructorView<Category> expression, std::span<const ygg::database::ColumnLayout> columns, std::vector<ygg::uint_t>& dependencies)
     {
         const auto argument = prepare(expression);
         auto index = std::optional<QueryEvaluationIndex> {};
@@ -111,8 +111,8 @@ public:
 
     /// Resolve a prepared root or shared child once; retain its index for evaluation.
     template<CategoryTag Category>
-    EvaluationIndex<Category> get_index(FamilyConstructorView<Category> expression) const;
-    QueryEvaluationIndex get_index(FamilyQueryView<> expression) const;
+    EvaluationIndex<Category> get_index(ConstructorView<Category> expression) const;
+    QueryEvaluationIndex get_index(QueryView<> expression) const;
 
     size_t node_count() const noexcept;
 
@@ -150,25 +150,24 @@ public:
     explicit GraphBuilder(EvaluationGraph<Kind>& graph) noexcept : m_graph(&graph) {}
 
     template<CategoryTag Category>
-    EvaluationIndex<Category> prepare(FamilyConstructorView<Category> expression)
+    EvaluationIndex<Category> prepare(ConstructorView<Category> expression)
     {
         return m_graph->prepare(expression);
     }
-    QueryEvaluationIndex prepare(FamilyQueryView<> expression) { return m_graph->prepare(expression); }
+    QueryEvaluationIndex prepare(QueryView<> expression) { return m_graph->prepare(expression); }
     template<CategoryTag Category>
-    EvaluationIndex<Category> prepare(FamilyConstructorView<Category> expression, std::vector<ygg::uint_t>& dependencies)
+    EvaluationIndex<Category> prepare(ConstructorView<Category> expression, std::vector<ygg::uint_t>& dependencies)
     {
         return m_graph->prepare(expression, dependencies);
     }
-    QueryEvaluationIndex prepare(FamilyQueryView<> expression, std::vector<ygg::uint_t>& dependencies) { return m_graph->prepare(expression, dependencies); }
-    QueryEvaluationIndex
-    prepare_relation(FamilyQueryView<> expression, std::span<const ygg::database::ColumnLayout> columns, std::vector<ygg::uint_t>& dependencies)
+    QueryEvaluationIndex prepare(QueryView<> expression, std::vector<ygg::uint_t>& dependencies) { return m_graph->prepare(expression, dependencies); }
+    QueryEvaluationIndex prepare_relation(QueryView<> expression, std::span<const ygg::database::ColumnLayout> columns, std::vector<ygg::uint_t>& dependencies)
     {
         return m_graph->prepare_relation(expression, columns, dependencies);
     }
     template<ConceptOrRoleTag Category>
     QueryEvaluationIndex
-    prepare_relation(FamilyConstructorView<Category> expression, std::span<const ygg::database::ColumnLayout> columns, std::vector<ygg::uint_t>& dependencies)
+    prepare_relation(ConstructorView<Category> expression, std::span<const ygg::database::ColumnLayout> columns, std::vector<ygg::uint_t>& dependencies)
     {
         return m_graph->prepare_relation(expression, columns, dependencies);
     }

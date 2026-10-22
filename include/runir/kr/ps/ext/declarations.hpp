@@ -116,8 +116,8 @@ using Repository = runir::kr::ps::BasicRepository<runir::kr::ExtFamilyTag, Repos
 using RepositoryPtr = std::shared_ptr<Repository>;
 using RepositoryFactory = runir::kr::ps::BasicRepositoryFactory<runir::kr::ExtFamilyTag, RepositoryTypes>;
 
-using ConceptRegisterView = ygg::View<ygg::Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>, runir::kr::dl::ExtConstructorRepository>;
-using RoleRegisterView = ygg::View<ygg::Index<runir::kr::dl::Register<runir::kr::dl::RoleTag>>, runir::kr::dl::ExtConstructorRepository>;
+using ConceptRegisterView = ygg::View<ygg::Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>, runir::kr::dl::ConstructorRepository>;
+using RoleRegisterView = ygg::View<ygg::Index<runir::kr::dl::Register<runir::kr::dl::RoleTag>>, runir::kr::dl::ConstructorRepository>;
 using OrderTermView = ygg::View<ygg::Index<OrderTerm>, Repository>;
 using MemoryStateView = ygg::View<ygg::Index<MemoryState>, Repository>;
 using ModuleSymbolView = ygg::View<ygg::Index<ModuleSymbol>, Repository>;

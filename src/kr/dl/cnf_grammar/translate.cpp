@@ -1,11 +1,11 @@
-#include "runir/kr/dl/cnf_grammar/detail/repository_instantiations_base.hpp"
-#include "runir/kr/dl/grammar/detail/repository_instantiations_base.hpp"
+#include "runir/kr/dl/cnf_grammar/detail/repository_instantiations.hpp"
+#include "runir/kr/dl/grammar/detail/repository_instantiations.hpp"
 #include "translate_impl.hpp"
 
 namespace runir::kr::dl::cnf_grammar
 {
 
-FamilyGrammarView translate(const runir::kr::dl::grammar::FamilyGrammarView& grammar, ConstructorRepositoryFor& repository)
+GrammarView translate(const runir::kr::dl::grammar::GrammarView& grammar, ConstructorRepository& repository)
 {
     return detail::translate_impl(grammar, repository);
 }

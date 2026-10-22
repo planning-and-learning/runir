@@ -8,7 +8,7 @@
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <runir/datasets/state_graph.hpp>
-#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
+#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/base/dl/parser.hpp>
 #include <runir/kr/ps/base/dl/sketch_factory.hpp>

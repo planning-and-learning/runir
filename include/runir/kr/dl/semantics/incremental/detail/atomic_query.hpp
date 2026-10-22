@@ -3,7 +3,7 @@
 
 #include "runir/kr/dl/object_rows.hpp"
 #include "runir/kr/dl/query_view.hpp"
-#include "runir/kr/dl/semantics/ext/evaluation.hpp"
+#include "runir/kr/dl/semantics/state_evaluation.hpp"
 
 #include <algorithm>
 #include <concepts>

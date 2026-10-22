@@ -14,7 +14,7 @@ namespace ygg
 {
 
 template<typename Tag, formalism::SymbolContextFor<runir::kr::dl::grammar::Boolean<Tag>> C>
-    requires runir::kr::dl::FamilyBooleanConstructorTag<Tag>
+    requires runir::kr::dl::BooleanConstructorTag<Tag>
 class View<Index<runir::kr::dl::grammar::Boolean<Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::grammar::Boolean<Tag>, C>
 {
 public:

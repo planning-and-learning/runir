@@ -3,7 +3,6 @@
 
 /// Building blocks of the evaluator definitions, shared with the distance, query and incremental evaluators.
 
-#include "runir/kr/dl/constructors.hpp"
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/dl/semantics/denotation_caches.hpp"
@@ -65,7 +64,7 @@ auto object_index(tyr::formalism::planning::AtomView<::tyr::GroundTag, T> atom, 
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-void evaluate_atomic_state_concept(ygg::View<ygg::Index<FamilyConcept<AtomicStateTag<T>>>, C> constructor,
+void evaluate_atomic_state_concept(ygg::View<ygg::Index<Concept<AtomicStateTag<T>>>, C> constructor,
                                    Context& context,
                                    ygg::Builder<Denotation<ConceptTag>>& result)
 {
@@ -85,7 +84,7 @@ void evaluate_atomic_state_concept(ygg::View<ygg::Index<FamilyConcept<AtomicStat
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-void evaluate_atomic_goal_concept(ygg::View<ygg::Index<FamilyConcept<AtomicGoalTag<T>>>, C> constructor,
+void evaluate_atomic_goal_concept(ygg::View<ygg::Index<Concept<AtomicGoalTag<T>>>, C> constructor,
                                   Context& context,
                                   ygg::Builder<Denotation<ConceptTag>>& result)
 {
@@ -102,9 +101,7 @@ void evaluate_atomic_goal_concept(ygg::View<ygg::Index<FamilyConcept<AtomicGoalT
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-void evaluate_atomic_state_role(ygg::View<ygg::Index<FamilyRole<AtomicStateTag<T>>>, C> constructor,
-                                Context& context,
-                                ygg::Builder<Denotation<RoleTag>>& result)
+void evaluate_atomic_state_role(ygg::View<ygg::Index<Role<AtomicStateTag<T>>>, C> constructor, Context& context, ygg::Builder<Denotation<RoleTag>>& result)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
 
@@ -124,7 +121,7 @@ void evaluate_atomic_state_role(ygg::View<ygg::Index<FamilyRole<AtomicStateTag<T
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-void evaluate_atomic_goal_role(ygg::View<ygg::Index<FamilyRole<AtomicGoalTag<T>>>, C> constructor, Context& context, ygg::Builder<Denotation<RoleTag>>& result)
+void evaluate_atomic_goal_role(ygg::View<ygg::Index<Role<AtomicGoalTag<T>>>, C> constructor, Context& context, ygg::Builder<Denotation<RoleTag>>& result)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
 
@@ -140,7 +137,7 @@ void evaluate_atomic_goal_role(ygg::View<ygg::Index<FamilyRole<AtomicGoalTag<T>>
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-bool evaluate_atomic_state_boolean(ygg::View<ygg::Index<FamilyBoolean<AtomicStateTag<T>>>, C> constructor, Context& context)
+bool evaluate_atomic_state_boolean(ygg::View<ygg::Index<Boolean<AtomicStateTag<T>>>, C> constructor, Context& context)
 {
     auto atoms = context.get_state().get_atoms_view(constructor.get_predicate());
     const auto value = atoms.begin() != atoms.end();
@@ -148,7 +145,7 @@ bool evaluate_atomic_state_boolean(ygg::View<ygg::Index<FamilyBoolean<AtomicStat
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-bool evaluate_atomic_goal_boolean(ygg::View<ygg::Index<FamilyBoolean<AtomicGoalTag<T>>>, C> constructor, Context& context)
+bool evaluate_atomic_goal_boolean(ygg::View<ygg::Index<Boolean<AtomicGoalTag<T>>>, C> constructor, Context& context)
 {
     auto atoms = context.get_state().get_task().get_task().get_goal().template get_atoms_view<T>(constructor.get_polarity(), constructor.get_predicate());
     return atoms.begin() != atoms.end();

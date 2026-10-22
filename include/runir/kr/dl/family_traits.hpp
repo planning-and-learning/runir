@@ -60,42 +60,39 @@ using BaseBooleanConstructorTags = ygg::TypeList<AtomicStateTag<tyr::formalism::
 
 using BaseNumericalConstructorTags = ygg::TypeList<CountTag, DistanceTag>;
 
-using ExtConceptConstructorTags = ygg::ConcatTypeListsT<BaseConceptConstructorTags, ygg::TypeList<RegisterTag, ArgumentTag<ConceptTag>>>;
-using ExtRoleConstructorTags = ygg::ConcatTypeListsT<BaseRoleConstructorTags, ygg::TypeList<RegisterTag, ArgumentTag<RoleTag>>>;
 using NumericalBinaryConstructorTags = ygg::TypeList<AddTag, SubTag, MulTag, DivTag, MinTag, MaxTag>;
 using ArithmeticConstructorTags = ygg::ConcatTypeListsT<ygg::TypeList<NumericalConstantTag>, NumericalBinaryConstructorTags>;
-using ExtNumericalConstructorTags = ygg::ConcatTypeListsT<BaseNumericalConstructorTags, ArithmeticConstructorTags, ygg::TypeList<ArgumentTag<NumericalTag>>>;
 
-using UnsComparisonConstructorTags = ygg::TypeList<EqTag<BooleanTag>,
-                                                   NeqTag<BooleanTag>,
-                                                   LtTag<BooleanTag>,
-                                                   LeTag<BooleanTag>,
-                                                   GtTag<BooleanTag>,
-                                                   GeTag<BooleanTag>,
-                                                   EqTag<NumericalTag>,
-                                                   NeqTag<NumericalTag>,
-                                                   LtTag<NumericalTag>,
-                                                   LeTag<NumericalTag>,
-                                                   GtTag<NumericalTag>,
-                                                   GeTag<NumericalTag>>;
+using ComparisonConstructorTags = ygg::TypeList<EqTag<BooleanTag>,
+                                                NeqTag<BooleanTag>,
+                                                LtTag<BooleanTag>,
+                                                LeTag<BooleanTag>,
+                                                GtTag<BooleanTag>,
+                                                GeTag<BooleanTag>,
+                                                EqTag<NumericalTag>,
+                                                NeqTag<NumericalTag>,
+                                                LtTag<NumericalTag>,
+                                                LeTag<NumericalTag>,
+                                                GtTag<NumericalTag>,
+                                                GeTag<NumericalTag>>;
 
-using UnsLogicalConstructorTags = ygg::TypeList<AndTag, OrTag, NotTag>;
+using LogicalConstructorTags = ygg::TypeList<AndTag, OrTag, NotTag>;
 
-using UnsConceptConstructorTags = BaseConceptConstructorTags;
-using UnsRoleConstructorTags = BaseRoleConstructorTags;
-using UnsBooleanConstructorTags = ygg::ConcatTypeListsT<
-    BaseBooleanConstructorTags,
-    ygg::ConcatTypeListsT<UnsComparisonConstructorTags, ygg::ConcatTypeListsT<ygg::TypeList<BooleanConstantTag>, UnsLogicalConstructorTags>>>;
-using UnsNumericalConstructorTags = ygg::ConcatTypeListsT<BaseNumericalConstructorTags, ArithmeticConstructorTags>;
+/// Every language shares one constructor set; a language's parser rejects what it does not support.
+using ConceptConstructorTags = ygg::ConcatTypeListsT<BaseConceptConstructorTags, ygg::TypeList<RegisterTag, ArgumentTag<ConceptTag>>>;
+using RoleConstructorTags = ygg::ConcatTypeListsT<BaseRoleConstructorTags, ygg::TypeList<RegisterTag, ArgumentTag<RoleTag>>>;
+using BooleanConstructorTags = ygg::ConcatTypeListsT<BaseBooleanConstructorTags,
+                                                     ComparisonConstructorTags,
+                                                     ygg::TypeList<BooleanConstantTag>,
+                                                     LogicalConstructorTags,
+                                                     ygg::TypeList<ArgumentTag<BooleanTag>>>;
+using NumericalConstructorTags = ygg::ConcatTypeListsT<BaseNumericalConstructorTags, ArithmeticConstructorTags, ygg::TypeList<ArgumentTag<NumericalTag>>>;
 
 /// Feature generation grammars and their CNF build only these constructors.
 using GenerationConceptConstructorTags = BaseConceptConstructorTags;
 using GenerationRoleConstructorTags = BaseRoleConstructorTags;
 using GenerationBooleanConstructorTags = BaseBooleanConstructorTags;
 using GenerationNumericalConstructorTags = BaseNumericalConstructorTags;
-
-/// Ext programs use every constructor: the Uns comparisons, constants and connectives too.
-using ExtBooleanConstructorTags = ygg::ConcatTypeListsT<UnsBooleanConstructorTags, ygg::TypeList<ArgumentTag<BooleanTag>>>;
 
 }  // namespace runir::kr::dl
 

@@ -49,7 +49,7 @@ TEST(RunirTests, PolicyExtParserNegativeFixtures)
 {
     const auto planning_domain = parse_gripper_domain();
     const auto domain = planning_domain.get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
     const auto suite = load_fixture_json("kr/ps/parser_negative.json");
     const auto& cases = ygg::common::as_array(ygg::common::require_member(ygg::common::as_object(suite, "suite"), "cases", "suite"), "suite.cases");
@@ -81,7 +81,7 @@ TEST(RunirTests, ExtendedModuleFormatterPreservesAlternativeRuleGrouping)
 {
     const auto planning_domain = parse_gripper_domain();
     const auto domain = planning_domain.get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
     const auto module_ = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/parser/alternative_rules.module"), domain, *repository);
 
@@ -102,7 +102,7 @@ TEST(RunirTests, ExtendedBacktrackRulesRoundTripWithoutTargetOrEffects)
 {
     const auto planning_domain = parse_gripper_domain();
     const auto domain = planning_domain.get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
     const auto description = R"((:module
       (:symbol pruning)
@@ -149,7 +149,7 @@ TEST(RunirTests, ExtendedBacktrackRulesRejectInvalidTargetsAndConditions)
 {
     const auto planning_domain = parse_gripper_domain();
     const auto domain = planning_domain.get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
     const auto parse = [&](const std::string& expression)
     {
@@ -172,8 +172,8 @@ TEST(RunirTests, RelationalExpressionsRoundTripAndRejectGenerationGrammars)
 {
     const auto planning_domain = parse_gripper_domain();
     const auto domain = planning_domain.get_domain();
-    auto repository = kr::dl::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
-    auto grammar_repository = kr::dl::grammar::BaseConstructorRepositoryFactory().create(planning_domain.get_repository());
+    auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
+    auto grammar_repository = kr::dl::grammar::ConstructorRepositoryFactory().create(planning_domain.get_repository());
 
     const std::vector<std::string> expressions { R"((n_count (q_project () (q_atomic_state "at" (X Y)))))",
                                                  R"((n_count (q_atomic_goal "at" false (X Y))))",
@@ -272,7 +272,7 @@ TEST(RunirTests, SearchEdgesRejectClosuresAndSearches)
 {
     const auto planning_domain = parse_gripper_domain();
     const auto domain = planning_domain.get_domain();
-    auto repository = kr::dl::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
+    auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
     const auto parse = [&](const std::string& expression) { return kr::ps::ext::dl::parse_numerical(expression, domain, *repository); };
     const auto* const message = "no transitive closure, n_distance or q_must_pass in the edges of n_distance or q_must_pass";
 
@@ -310,7 +310,7 @@ TEST(RunirTests, ExtendedQueryFeatureActionRuleRoundTrip)
 {
     const auto planning_domain = parse_gripper_domain();
     const auto domain = planning_domain.get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
     const auto description = R"((:module
       (:symbol query_actions)
@@ -372,7 +372,7 @@ TEST(RunirTests, ExtendedQueryActionRuleRejectsInvalidReferencesAndArity)
 {
     const auto planning_domain = parse_gripper_domain();
     const auto domain = planning_domain.get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
     const auto parse = [&](const std::string& action, const std::string& query, const std::string& features)
     {
@@ -419,7 +419,7 @@ TEST(RunirTests, ExtendedQueryActionRuleUsesNormalizedActionArity)
     const auto domain = planning_domain.get_domain();
     ASSERT_EQ(domain.get_actions().size(), 1);
     EXPECT_EQ(domain.get_actions().front().get_arity(), 2);
-    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
     const auto parse = [&](const std::string& query)
     {

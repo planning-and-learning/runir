@@ -13,7 +13,7 @@ namespace ygg
 {
 
 template<typename Tag, formalism::SymbolContextFor<runir::kr::dl::grammar::Numerical<Tag>> C>
-    requires runir::kr::dl::FamilyNumericalConstructorTag<Tag>
+    requires runir::kr::dl::NumericalConstructorTag<Tag>
 class View<Index<runir::kr::dl::grammar::Numerical<Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::grammar::Numerical<Tag>, C>
 {
 public:

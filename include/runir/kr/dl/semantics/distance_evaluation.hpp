@@ -25,14 +25,14 @@ namespace runir::kr::dl::semantics::detail
 
 /// The rows of an input slot in the current state.
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
-QueryDenotationView evaluate_slot(const QuerySlot& slot, const ConstructorRepositoryFor& constructors, Context& context)
+QueryDenotationView evaluate_slot(const QuerySlot& slot, const ConstructorRepository& constructors, Context& context)
 {
     return visit_slot<>(slot, constructors, [&](auto expression) { return evaluate_relation<Kind>(expression, slot.columns, context); });
 }
 
 /// Builds the min-distance evaluator of a feature with role edges, a relation of one slot.
 template<typename Distance>
-DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePlan& plan, FamilyConstructorView<RoleTag> edges)
+DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePlan& plan, ConstructorView<RoleTag> edges)
 {
     const auto columns = plan.edge_columns().span();
     return { { QuerySlot { QuerySlot::Kind::ROLE, ygg::uint_t(edges.get_index()), { columns.begin(), columns.end() }, edges.is_static() } },
@@ -42,7 +42,7 @@ DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePla
 
 /// Translates a feature's query edges and builds its min-distance evaluator.
 template<typename Distance>
-DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePlan& plan, FamilyQueryView<> edges)
+DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePlan& plan, QueryView<> edges)
 {
     auto translator = dl::detail::QueryTranslator(true);
     const auto query = translator.translate(edges);
@@ -67,7 +67,7 @@ make_heuristic(const DistanceFeature<Distance>& feature, const ygg::database::Di
 /// Minimum distance from any source to any target, or uint_t's maximum if none is reachable, from the state alone
 /// (full evaluation): the arguments and the edge query's slots are evaluated in the state.
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
-ygg::uint_t on_demand_distance(FamilyNumericalView<DistanceTag> constructor, Context& context)
+ygg::uint_t on_demand_distance(NumericalView<DistanceTag> constructor, Context& context)
 {
     const auto& plan = constructor.get_data().plan;
     auto children = context.child_context();
@@ -108,7 +108,7 @@ inline ygg::Builder<ygg::database::Columns> vertex_columns(std::span<const ygg::
 }
 
 /// Translates a must-pass query's edges and builds its must-pass evaluator and the abstraction of its heuristic.
-inline MustPassFeature make_must_pass_feature(const ygg::database::MustPassPlan& plan, FamilyQueryView<> edges)
+inline MustPassFeature make_must_pass_feature(const ygg::database::MustPassPlan& plan, QueryView<> edges)
 {
     auto translator = dl::detail::QueryTranslator(true);
     const auto query = translator.translate(edges);

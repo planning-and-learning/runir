@@ -8,7 +8,7 @@
 #include <optional>
 #include <pyrunir/kr/binding_utils.hpp>
 #include <pyrunir/kr/dl/evaluation_bindings.hpp>
-#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
+#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/call_arguments_view.hpp>
@@ -32,7 +32,7 @@ namespace
 {
 
 template<typename... Types>
-void bind_constructors(nb::class_<ExtConstructorRepository>& repository, ygg::TypeList<Types...>)
+void bind_constructors(nb::class_<ConstructorRepository>& repository, ygg::TypeList<Types...>)
 {
     (runir::kr::python::bind_insert<Types>(repository), ...);
 }
@@ -158,25 +158,25 @@ void bind_semantics_repositories(nb::module_& m)
     runir::kr::python::bind_state_evaluation_context<tyr::GroundTag>(m, "GroundStateEvaluationContext");
     runir::kr::python::bind_state_evaluation_context<tyr::LiftedTag>(m, "LiftedStateEvaluationContext");
 
-    auto repository = nb::class_<runir::kr::dl::ExtConstructorRepository>(m, "ConstructorRepository");
-    repository.def("clear", &runir::kr::dl::ExtConstructorRepository::clear).def("get_index", &runir::kr::dl::ExtConstructorRepository::get_index);
-    bind_constructors(repository, FamilyConstructorRepositoryTypes {});
+    auto repository = nb::class_<runir::kr::dl::ConstructorRepository>(m, "ConstructorRepository");
+    repository.def("clear", &runir::kr::dl::ConstructorRepository::clear).def("get_index", &runir::kr::dl::ConstructorRepository::get_index);
+    bind_constructors(repository, ConstructorRepositoryTypes {});
 
-    auto factory = nb::class_<runir::kr::dl::ExtConstructorRepositoryFactory>(m, "ConstructorRepositoryFactory");
+    auto factory = nb::class_<runir::kr::dl::ConstructorRepositoryFactory>(m, "ConstructorRepositoryFactory");
     factory.def(nb::init<>())
         .def(
             "create",
-            [](runir::kr::dl::ExtConstructorRepositoryFactory& self, tyr::formalism::planning::PlanningDomain planning_domain)
+            [](runir::kr::dl::ConstructorRepositoryFactory& self, tyr::formalism::planning::PlanningDomain planning_domain)
             { return self.create(planning_domain.get_repository()); },
             nb::arg("planning_domain"))
         .def(
             "create",
-            [](runir::kr::dl::ExtConstructorRepositoryFactory& self, const tyr::planning::Task<tyr::GroundTag>& task)
+            [](runir::kr::dl::ConstructorRepositoryFactory& self, const tyr::planning::Task<tyr::GroundTag>& task)
             { return self.create(task.get_repository()); },
             nb::arg("ground_task"))
         .def(
             "create",
-            [](runir::kr::dl::ExtConstructorRepositoryFactory& self, const tyr::planning::Task<tyr::LiftedTag>& task)
+            [](runir::kr::dl::ConstructorRepositoryFactory& self, const tyr::planning::Task<tyr::LiftedTag>& task)
             { return self.create(task.get_repository()); },
             nb::arg("lifted_task"));
 }

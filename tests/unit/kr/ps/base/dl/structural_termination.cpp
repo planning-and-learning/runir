@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 #include <runir/graphs/cycle.hpp>
-#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
+#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/base/detail/repository_instantiations.hpp>
@@ -47,7 +47,7 @@ auto sketch_rules(kr::ps::base::SketchView sketch) -> std::set<ygg::Index<kr::ps
 TEST(RunirTests, BaseStructuralTerminationFixturesMatch)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     const auto suite = load_fixture_json("kr/ps/structural_termination.json");
     const auto& cases = ygg::common::as_array(ygg::common::require_member(ygg::common::as_object(suite, "suite"), "base", "suite"), "suite.base");
@@ -65,7 +65,7 @@ TEST(RunirTests, BaseStructuralTerminationFixturesMatch)
 TEST(RunirTests, StructuralTerminationEmptySketchIsTerminating)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     const auto sketch = kr::ps::base::dl::SketchFactory::create_empty(*repository);
 
@@ -86,7 +86,7 @@ TEST(RunirTests, StructuralTerminationEmptySketchIsTerminating)
 TEST(RunirTests, StructuralTerminationBooleanOscillatorCounterexample)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     const auto sketch = kr::ps::base::dl::parse_sketch(read_fixture("kr/ps/base/dl/oscillator.sketch"), planning_domain.get_domain(), *repository);
 
@@ -109,7 +109,7 @@ TEST(RunirTests, StructuralTerminationBooleanOscillatorCounterexample)
 TEST(RunirTests, StructuralTerminationNumericalCycleCounterexample)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     const auto sketch = kr::ps::base::dl::parse_sketch(read_fixture("kr/ps/base/dl/numerical_cycle.sketch"), planning_domain.get_domain(), *repository);
 
@@ -129,7 +129,7 @@ TEST(RunirTests, StructuralTerminationNumericalCycleCounterexample)
 TEST(RunirTests, StructuralTerminationSurvivingRulesIncludeDisjointCycles)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     const auto sketch = kr::ps::base::dl::parse_sketch(R"((:sketch
         (:features (:boolean (:symbol b) (:expression (b_nonempty (c_atomic_state "at-robby")))))
@@ -160,7 +160,7 @@ TEST(RunirTests, StructuralTerminationSurvivingRulesIncludeDisjointCycles)
 TEST(RunirTests, StructuralTerminationTppDetails)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     const auto sketch = kr::ps::base::dl::parse_sketch(read_fixture("kr/ps/base/dl/tpp.sketch"), planning_domain.get_domain(), *repository);
 
@@ -181,7 +181,7 @@ TEST(RunirTests, StructuralTerminationTppDetails)
 TEST(RunirTests, StructuralTerminationGripperFactorySketchIsTerminating)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     const auto sketch = kr::ps::base::dl::SketchFactory::create(kr::ps::base::dl::SketchSpecification::GRIPPER_FRANCE_ET_AL_AAAI2021,
                                                                 planning_domain.get_domain(),

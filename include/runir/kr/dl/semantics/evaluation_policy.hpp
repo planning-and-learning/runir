@@ -45,13 +45,13 @@ public:
 /// Evaluates in the graph of a DeltaEvaluationPolicy: first demand in a state brings a node up to date; results
 /// already read in this state remain stable as other roots are evaluated.
 template<tyr::TaskKind Kind, runir::kr::dl::CategoryTag Category, StateEvaluationContextConcept<Kind> Context>
-auto evaluate(runir::kr::dl::FamilyConstructorView<Category> expression, incremental::StateEvaluation<Kind, Context>& context)
+auto evaluate(runir::kr::dl::ConstructorView<Category> expression, incremental::StateEvaluation<Kind, Context>& context)
 {
     return context.evaluate(context.graph().get_index(expression));
 }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
-auto evaluate(runir::kr::dl::FamilyQueryView<> expression, incremental::StateEvaluation<Kind, Context>& context)
+auto evaluate(runir::kr::dl::QueryView<> expression, incremental::StateEvaluation<Kind, Context>& context)
 {
     return ygg::make_view(context.evaluate(context.graph().get_index(expression)), *context.context().get_state().get_task().get_repository());
 }

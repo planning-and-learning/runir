@@ -4,21 +4,21 @@ add_library(kr SHARED
     dl/query_construction.cpp
     dl/repository.cpp
     dl/translations/ygg_query.cpp
-    dl/semantics/evaluation_ext.cpp
+    dl/semantics/evaluation.cpp
     dl/semantics/heuristics/projection.cpp
     dl/semantics/repository.cpp
     dl/semantics/state_evaluation_context.cpp
     dl/cnf_grammar/constructor_repository.cpp
     dl/cnf_grammar/generate.cpp
-    dl/cnf_grammar/repository_base.cpp
+    dl/cnf_grammar/symbol_repositories.cpp
     dl/cnf_grammar/translate.cpp
     dl/grammar/constructor_repository.cpp
     dl/grammar/base/grammar_factory.cpp
     dl/grammar/base/parser.cpp
     dl/grammar/parser/parser.cpp
-    dl/grammar/parser/parser_instantiations_ext.cpp
-    dl/grammar/repository_base.cpp
-    dl/repository_ext.cpp
+    dl/grammar/parser/parser_instantiations.cpp
+    dl/grammar/symbol_repositories.cpp
+    dl/symbol_repositories.cpp
     ps/base/dl/parser.cpp
     ps/base/dl/parser/parser.cpp
     ps/base/dl/parser/parser_instantiations.cpp

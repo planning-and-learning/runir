@@ -30,8 +30,8 @@ template<tyr::TaskKind Kind, CategoryTag Category>
 class FeatureNode
 {
 public:
-    FeatureNode(FamilyConstructorView<Category> expression, GraphBuilder<Kind>& graph);
-    FamilyConstructorView<Category> get_expression() const noexcept { return m_expression; }
+    FeatureNode(ConstructorView<Category> expression, GraphBuilder<Kind>& graph);
+    ConstructorView<Category> get_expression() const noexcept { return m_expression; }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context);
     void update(EvaluationGraph<Kind>& graph, const Delta& delta, ygg::database::Workspace& workspace);
@@ -123,7 +123,7 @@ private:
     using Evaluators =
         ygg::ApplyTypeListT<std::variant, ygg::ConcatTypeListsT<ygg::TypeList<StaticEvaluator<Kind, Category>>, Operations, InvocationOperations>>;
 
-    FamilyConstructorView<Category> m_expression;
+    ConstructorView<Category> m_expression;
     std::vector<ygg::uint_t> m_dependencies;
     Evaluators m_evaluator;
 
@@ -133,12 +133,12 @@ private:
         return ProjectionEvaluator<Kind, Category>(graph.prepare(expression.get_arg(), m_dependencies), expression.get_data().plan);
     }
 
-    Evaluators prepare_distance(FamilyNumericalView<DistanceTag> expression, FamilyConstructorView<RoleTag>, GraphBuilder<Kind>& graph)
+    Evaluators prepare_distance(NumericalView<DistanceTag> expression, ConstructorView<RoleTag>, GraphBuilder<Kind>& graph)
     {
         return RoleEdgeDistanceEvaluator<Kind>(expression, graph, m_dependencies);
     }
     /// Query edges can range over pair vertices; maintaining them would materialize every edge.
-    Evaluators prepare_distance(FamilyNumericalView<DistanceTag> expression, FamilyQueryView<> edges, GraphBuilder<Kind>& graph)
+    Evaluators prepare_distance(NumericalView<DistanceTag> expression, QueryView<> edges, GraphBuilder<Kind>& graph)
     {
         return QueryEdgeDistanceEvaluator<Kind>(expression, edges, graph, m_dependencies);
     }
@@ -206,7 +206,7 @@ private:
 };
 
 template<tyr::TaskKind Kind, CategoryTag Category>
-FeatureNode<Kind, Category>::FeatureNode(FamilyConstructorView<Category> expression, GraphBuilder<Kind>& graph) :
+FeatureNode<Kind, Category>::FeatureNode(ConstructorView<Category> expression, GraphBuilder<Kind>& graph) :
     m_expression(expression),
     m_evaluator(expression.is_static() ? Evaluators(StaticEvaluator<Kind, Category>(expression)) :
                                          ygg::visit([&](auto concrete) { return prepare(concrete, graph); }, expression.get_variant()))

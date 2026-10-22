@@ -9,7 +9,7 @@ namespace runir::kr::dl::detail
 void require_generic_join_order(std::string_view name,
                                 const ygg::IndexList<QueryColumn>& order,
                                 const std::vector<ygg::Index<QueryColumn>>& input_columns,
-                                const ConstructorRepositoryFor& repository)
+                                const ConstructorRepository& repository)
 {
     const auto column_name = [&](ygg::Index<QueryColumn> column) { return std::string(ygg::make_view(column, repository).get_name()); };
     for (size_t i = 0; i < order.size(); ++i)
@@ -24,17 +24,17 @@ void require_generic_join_order(std::string_view name,
             throw std::invalid_argument("q_generic_join: " + std::string(name) + " is missing column `" + column_name(column) + "`.");
 }
 
-const ygg::IndexList<QueryColumn>& get_query_columns(ygg::Index<Query<>> index, const ConstructorRepositoryFor& repository)
+const ygg::IndexList<QueryColumn>& get_query_columns(ygg::Index<Query<>> index, const ConstructorRepository& repository)
 {
     return std::visit([&](auto concrete) -> const ygg::IndexList<QueryColumn>& { return repository[concrete].columns; }, repository[index].variant);
 }
 
-void prepare(ygg::Data<Query<>>& data, const ConstructorRepositoryFor& repository)
+void prepare(ygg::Data<Query<>>& data, const ConstructorRepository& repository)
 {
     data.is_static = std::visit([&](auto index) { return infer_is_static(ygg::make_view(index, repository)); }, data.variant);
 }
 
-void prepare(ygg::Data<Numerical<DistanceTag>>& data, const ConstructorRepositoryFor& repository)
+void prepare(ygg::Data<Numerical<DistanceTag>>& data, const ConstructorRepository& repository)
 {
     const auto columns = [&](const auto& argument)
     {

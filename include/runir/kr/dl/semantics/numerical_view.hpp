@@ -2,7 +2,6 @@
 #define RUNIR_SEMANTICS_NUMERICAL_VIEW_HPP_
 
 #include "runir/kr/dl/argument_view.hpp"
-#include "runir/kr/dl/constructors.hpp"
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/numerical_data.hpp"
 
@@ -15,12 +14,12 @@
 namespace ygg
 {
 
-template<typename Tag, formalism::SymbolContextFor<runir::kr::dl::FamilyNumerical<Tag>> C>
-    requires runir::kr::dl::FamilyNumericalConstructorTag<Tag>
-class View<Index<runir::kr::dl::FamilyNumerical<Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::FamilyNumerical<Tag>, C>
+template<typename Tag, formalism::SymbolContextFor<runir::kr::dl::Numerical<Tag>> C>
+    requires runir::kr::dl::NumericalConstructorTag<Tag>
+class View<Index<runir::kr::dl::Numerical<Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::Numerical<Tag>, C>
 {
 public:
-    using ygg::IndexViewBase<runir::kr::dl::FamilyNumerical<Tag>, C>::IndexViewBase;
+    using ygg::IndexViewBase<runir::kr::dl::Numerical<Tag>, C>::IndexViewBase;
 
     auto get_argument() const noexcept
         requires std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>

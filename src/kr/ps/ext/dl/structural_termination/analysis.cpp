@@ -15,7 +15,7 @@ using RegisterConstructor = std::conditional_t<std::same_as<Category, runir::kr:
                                                runir::kr::dl::Role<runir::kr::dl::RegisterTag>>;
 
 template<runir::kr::dl::CategoryTag Category>
-using RegisterConstructorView = ygg::View<ygg::Index<RegisterConstructor<Category>>, runir::kr::dl::ExtConstructorRepository>;
+using RegisterConstructorView = ygg::View<ygg::Index<RegisterConstructor<Category>>, runir::kr::dl::ConstructorRepository>;
 
 template<runir::kr::dl::CategoryTag Category, typename VariantView>
 bool variant_references_register(VariantView view, runir::kr::dl::RegisterIdentifier<Category> reg);

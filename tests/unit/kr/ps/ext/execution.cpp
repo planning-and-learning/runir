@@ -23,7 +23,7 @@ constexpr bool flat_view_is_nothrow = noexcept(ygg::make_view(std::declval<ygg::
 template<typename Repository, typename Entity>
 constexpr bool indexed_access_is_nothrow = noexcept(std::declval<const Repository&>()[std::declval<ygg::Index<Entity>>()]);
 
-using Constructors = kr::dl::ExtConstructorRepository;
+using Constructors = kr::dl::ConstructorRepository;
 using Register = kr::dl::Register<kr::dl::ConceptTag>;
 using Denotations = kr::dl::semantics::DenotationRepository;
 using Registers = kr::dl::semantics::RegisterValues;

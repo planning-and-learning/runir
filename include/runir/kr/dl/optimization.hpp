@@ -37,7 +37,7 @@ namespace runir::kr::dl
 struct QueryStatistics
 {
     std::optional<size_t> objects;
-    ygg::UnorderedMap<FamilyQueryView<>, ygg::database::RelationStatistics> leaves;
+    ygg::UnorderedMap<QueryView<>, ygg::database::RelationStatistics> leaves;
 };
 
 namespace detail
@@ -52,7 +52,7 @@ inline ygg::IndexList<QueryColumn> query_columns_from_labels(std::span<const ygg
 }
 
 template<typename Tag>
-FamilyQueryView<> insert_query(ConstructorRepositoryFor& repository, ygg::Data<Query<Tag>>& data)
+QueryView<> insert_query(ConstructorRepository& repository, ygg::Data<Query<Tag>>& data)
 {
     const auto concrete = runir::kr::dl::insert(repository, data).first;
     auto wrapper = ygg::Data<Query<>>();
@@ -61,17 +61,16 @@ FamilyQueryView<> insert_query(ConstructorRepositoryFor& repository, ygg::Data<Q
 }
 
 /// Inserts the runir counterparts of a plan's nodes; input slots map back to leaves. Returns the roots in plan order.
-inline std::vector<FamilyQueryView<>>
-lower(const ygg::database::QueryPlan& plan, std::span<const FamilyQueryView<>> leaves, ConstructorRepositoryFor& repository)
+inline std::vector<QueryView<>> lower(const ygg::database::QueryPlan& plan, std::span<const QueryView<>> leaves, ConstructorRepository& repository)
 {
     using YggIndex = ygg::Index<ygg::database::Query<>>;
-    std::vector<std::optional<FamilyQueryView<>>> lowered(plan.node_count());
+    std::vector<std::optional<QueryView<>>> lowered(plan.node_count());
     const auto lowered_at = [&](YggIndex index) { return lowered.at(index.get_value()).value(); };
     const auto child = [&](ygg::database::QueryView<> node) { return lowered_at(node.get_index()); };
     for (size_t i = 0; i < plan.node_count(); ++i)
     {
         lowered[i] = ygg::visit(
-            [&]<typename Tag>(ygg::database::QueryView<Tag> node) -> FamilyQueryView<>
+            [&]<typename Tag>(ygg::database::QueryView<Tag> node) -> QueryView<>
             {
                 if constexpr (std::same_as<Tag, ygg::database::QueryInputTag>)
                     return leaves[node.get_input_slot()];
@@ -153,7 +152,7 @@ lower(const ygg::database::QueryPlan& plan, std::span<const FamilyQueryView<>> l
             },
             plan[YggIndex(static_cast<ygg::uint_t>(i))].get_variant());
     }
-    std::vector<FamilyQueryView<>> roots;
+    std::vector<QueryView<>> roots;
     for (const auto root : plan.roots())
         roots.push_back(lowered.at(root.get_value()).value());
     return roots;
@@ -162,7 +161,7 @@ lower(const ygg::database::QueryPlan& plan, std::span<const FamilyQueryView<>> l
 }  // namespace detail
 
 template<typename T>
-using FamilyRecordView = ygg::View<ygg::Index<T>, ConstructorRepositoryFor>;
+using RecordView = ygg::View<ygg::Index<T>, ConstructorRepository>;
 
 /// Optimizes the queries of DL expressions with yggdrasil's optimizer. It rebuilds records bottom-up, replacing every
 /// maximal query (one reached from a non-query record) by its optimized form; records whose children are unchanged keep
@@ -172,10 +171,10 @@ class QueryOptimizer
 {
 public:
     /// statistics must outlive the optimizer; empty statistics plan every join block structurally.
-    QueryOptimizer(ConstructorRepositoryFor& repository, const QueryStatistics& statistics) : m_repository(repository), m_statistics(statistics) {}
+    QueryOptimizer(ConstructorRepository& repository, const QueryStatistics& statistics) : m_repository(repository), m_statistics(statistics) {}
 
     template<typename T>
-    FamilyRecordView<T> optimize(FamilyRecordView<T> view)
+    RecordView<T> optimize(RecordView<T> view)
     {
         if constexpr (std::same_as<T, Query<>>)
             return optimize_root(view, std::nullopt);
@@ -187,9 +186,9 @@ private:
     using Labels = std::vector<ygg::Index<ygg::database::Column>>;
 
     template<typename T>
-    FamilyRecordView<T> memoized(FamilyRecordView<T> view)
+    RecordView<T> memoized(RecordView<T> view)
     {
-        const auto key = runir::kr::detail::record_key<FamilyConstructorRepositoryTypes>(view);
+        const auto key = runir::kr::detail::record_key<ConstructorRepositoryTypes>(view);
         if (const auto it = m_rewritten.find(key); it != m_rewritten.end())
             return ygg::make_view(ygg::Index<T>(it->second), m_repository);
         const auto result = rewrite(view);
@@ -198,20 +197,20 @@ private:
     }
 
     template<typename T>
-    FamilyRecordView<T> rewrite(FamilyRecordView<T> view)
+    RecordView<T> rewrite(RecordView<T> view)
     {
-        auto data = ygg::map_children<FamilyConstructorRepositoryTypes>(view, [&]<typename U>(FamilyRecordView<U> child) { return optimize<U>(child); });
+        auto data = ygg::map_children<ConstructorRepositoryTypes>(view, [&]<typename U>(RecordView<U> child) { return optimize<U>(child); });
         return runir::kr::dl::insert(m_repository, data).first;
     }
 
     /// Only the projected columns of the query are used, so the optimizer may drop the others early. The projection
     /// itself stays with this record: a top projection onto the same columns is unwrapped.
     template<ConceptOrRoleTag Category>
-    FamilyRecordView<QueryProjection<Category>> rewrite(FamilyRecordView<QueryProjection<Category>> view)
+    RecordView<QueryProjection<Category>> rewrite(RecordView<QueryProjection<Category>> view)
     {
         auto root = optimize_root(view.get_arg(), detail::query_labels(view.get_data().columns));
         root = ygg::visit(
-            [&]<typename Tag>(FamilyQueryView<Tag> concrete) -> FamilyQueryView<>
+            [&]<typename Tag>(QueryView<Tag> concrete) -> QueryView<>
             {
                 if constexpr (std::same_as<Tag, QueryProjectTag>)
                     if (std::ranges::equal(concrete.get_columns(), view.get_columns()))
@@ -224,12 +223,12 @@ private:
     }
 
     /// Only emptiness matters, so the optimizer may project the query onto no columns.
-    FamilyRecordView<Boolean<NonemptyTag>> rewrite(FamilyRecordView<Boolean<NonemptyTag>> view)
+    RecordView<Boolean<NonemptyTag>> rewrite(RecordView<Boolean<NonemptyTag>> view)
     {
         return ygg::visit(
-            [&]<typename V>(V arg) -> FamilyRecordView<Boolean<NonemptyTag>>
+            [&]<typename V>(V arg) -> RecordView<Boolean<NonemptyTag>>
             {
-                if constexpr (std::same_as<V, FamilyQueryView<>>)
+                if constexpr (std::same_as<V, QueryView<>>)
                 {
                     auto data = ygg::Data<Boolean<NonemptyTag>>();
                     data.arg = optimize_root(arg, Labels {}).get_index();
@@ -242,7 +241,7 @@ private:
     }
 
     /// The edges of a distance are evaluated per vertex, with the source or the target columns bound, never fully.
-    FamilyRecordView<Numerical<DistanceTag>> rewrite(FamilyRecordView<Numerical<DistanceTag>> view)
+    RecordView<Numerical<DistanceTag>> rewrite(RecordView<Numerical<DistanceTag>> view)
     {
         using Data = ygg::Data<Numerical<DistanceTag>>;
         auto data = Data(optimize_argument<typename Data::Vertex>(view.get_lhs(), ygg::database::Evaluation::full),
@@ -252,7 +251,7 @@ private:
     }
 
     /// The edges of a must-pass query are explored per vertex, with the key and the source columns bound, never fully.
-    FamilyRecordView<Query<QueryMustPassTag>> rewrite(FamilyRecordView<Query<QueryMustPassTag>> view)
+    RecordView<Query<QueryMustPassTag>> rewrite(RecordView<Query<QueryMustPassTag>> view)
     {
         auto data = ygg::Data<Query<QueryMustPassTag>>(view.get_data().keys,
                                                        optimize_root(view.get_sources(), std::nullopt).get_index(),
@@ -269,7 +268,7 @@ private:
         return ygg::visit(
             [&]<typename V>(V child) -> Result
             {
-                if constexpr (std::same_as<V, FamilyQueryView<>>)
+                if constexpr (std::same_as<V, QueryView<>>)
                     return Result(optimize_root(child, std::nullopt, evaluation).get_index());
                 else
                     return Result(optimize(child).get_index());
@@ -278,8 +277,7 @@ private:
     }
 
     /// Optimizes a maximal query for its evaluation; with required labels, only those columns of its result are used.
-    FamilyQueryView<>
-    optimize_root(FamilyQueryView<> root, const std::optional<Labels>& required, ygg::database::Evaluation evaluation = ygg::database::Evaluation::full)
+    QueryView<> optimize_root(QueryView<> root, const std::optional<Labels>& required, ygg::database::Evaluation evaluation = ygg::database::Evaluation::full)
     {
         const auto key = std::pair { root, required.value_or(Labels {}) };
         auto& optimized = evaluation == ygg::database::Evaluation::bound ? m_bound : required ? m_projected : m_optimized;
@@ -292,7 +290,7 @@ private:
         auto statistics = ygg::database::Statistics();
         statistics.objects = m_statistics.objects;
         const auto slot_leaves = translator.get_leaves(root.get_context());
-        auto leaves = std::vector<FamilyQueryView<>>();
+        auto leaves = std::vector<QueryView<>>();
         for (size_t slot = 0; slot < slot_leaves.size(); ++slot)
         {
             const auto leaf = slot_leaves[slot];
@@ -309,12 +307,12 @@ private:
         return result;
     }
 
-    ConstructorRepositoryFor& m_repository;
+    ConstructorRepository& m_repository;
     const QueryStatistics& m_statistics;
     ygg::UnorderedMap<runir::kr::detail::RecordKey, ygg::uint_t> m_rewritten;  ///< Rewritten record index by record.
-    ygg::UnorderedMap<std::pair<FamilyQueryView<>, Labels>, FamilyQueryView<>> m_optimized;
-    ygg::UnorderedMap<std::pair<FamilyQueryView<>, Labels>, FamilyQueryView<>> m_projected;
-    ygg::UnorderedMap<std::pair<FamilyQueryView<>, Labels>, FamilyQueryView<>> m_bound;
+    ygg::UnorderedMap<std::pair<QueryView<>, Labels>, QueryView<>> m_optimized;
+    ygg::UnorderedMap<std::pair<QueryView<>, Labels>, QueryView<>> m_projected;
+    ygg::UnorderedMap<std::pair<QueryView<>, Labels>, QueryView<>> m_bound;
 };
 
 /// Measures fixed query leaves one sample state at a time. Each add evaluates every leaf in one state, so a caller may
@@ -323,7 +321,7 @@ private:
 class QueryStatisticsSampler
 {
 public:
-    explicit QueryStatisticsSampler(std::vector<FamilyQueryView<>> leaves) : m_leaves(std::move(leaves)) {}
+    explicit QueryStatisticsSampler(std::vector<QueryView<>> leaves) : m_leaves(std::move(leaves)) {}
 
     /// Evaluates every leaf in the state of context and adds the sample.
     template<tyr::TaskKind Kind, semantics::StateEvaluationContextConcept<Kind> Context>
@@ -343,13 +341,13 @@ public:
         if (!m_objects)
             return result;
         result.objects = m_objects;
-        result.leaves = m_accumulator.finish(warnings, [](FamilyQueryView<> leaf) { return fmt::format("{}", leaf); });
+        result.leaves = m_accumulator.finish(warnings, [](QueryView<> leaf) { return fmt::format("{}", leaf); });
         return result;
     }
 
 private:
-    std::vector<FamilyQueryView<>> m_leaves;
-    ygg::database::StatisticsAccumulator<FamilyQueryView<>> m_accumulator;
+    std::vector<QueryView<>> m_leaves;
+    ygg::database::StatisticsAccumulator<QueryView<>> m_accumulator;
     std::optional<size_t> m_objects;
 };
 
@@ -357,12 +355,9 @@ private:
 /// leaves, in sample states.
 class QueryStatisticsCollector
 {
-    template<typename T>
-    using RecordView = FamilyRecordView<T>;
-
 public:
     template<typename T>
-    void add(FamilyRecordView<T> expression)
+    void add(RecordView<T> expression)
     {
         collect<T>(expression);
     }
@@ -383,9 +378,9 @@ public:
 
 private:
     template<typename T>
-    void collect(FamilyRecordView<T> view)
+    void collect(RecordView<T> view)
     {
-        if (!m_visited.insert(runir::kr::detail::record_key<FamilyConstructorRepositoryTypes>(view)).second)
+        if (!m_visited.insert(runir::kr::detail::record_key<ConstructorRepositoryTypes>(view)).second)
             return;
         if constexpr (std::same_as<T, Query<>>)
         {
@@ -396,7 +391,7 @@ private:
                 {
                     m_leaves.push_back(leaf);
                     // A leaf wrapper's concrete leaf: walk its concept/role argument.
-                    for_each_child(leaf, [&]<typename U>(FamilyRecordView<U> concrete) { collect_children(concrete); });
+                    for_each_child(leaf, [&]<typename U>(RecordView<U> concrete) { collect_children(concrete); });
                 }
         }
         else
@@ -404,27 +399,27 @@ private:
     }
 
     template<typename T, typename F>
-    static void for_each_child(FamilyRecordView<T> view, F&& f)
+    static void for_each_child(RecordView<T> view, F&& f)
     {
-        ygg::for_each_child<FamilyConstructorRepositoryTypes>(view, std::forward<F>(f));
+        ygg::for_each_child<ConstructorRepositoryTypes>(view, std::forward<F>(f));
     }
 
     template<typename T>
-    void collect_children(FamilyRecordView<T> view)
+    void collect_children(RecordView<T> view)
     {
-        for_each_child(view, [&]<typename U>(FamilyRecordView<U> child) { collect<U>(child); });
+        for_each_child(view, [&]<typename U>(RecordView<U> child) { collect<U>(child); });
     }
 
     ygg::UnorderedSet<runir::kr::detail::RecordKey> m_visited;
-    std::vector<FamilyQueryView<>> m_leaves;
+    std::vector<QueryView<>> m_leaves;
 };
 
 /// Optimizes every query inside a DL expression (any constructor or query) with yggdrasil's optimizer and returns the
 /// rewritten expression in the same repository. Without statistics, join blocks are planned structurally (Yannakakis or
 /// generic join); with statistics for all leaves of a block, they are planned by cost.
 template<typename T>
-ygg::View<ygg::Index<T>, ConstructorRepositoryFor>
-optimize(ygg::View<ygg::Index<T>, ConstructorRepositoryFor> expression, ConstructorRepositoryFor& repository, const QueryStatistics& statistics = {})
+ygg::View<ygg::Index<T>, ConstructorRepository>
+optimize(ygg::View<ygg::Index<T>, ConstructorRepository> expression, ConstructorRepository& repository, const QueryStatistics& statistics = {})
 {
     if (&expression.get_context() != &repository)
         throw std::invalid_argument("optimize: the expression belongs to another repository.");
@@ -435,7 +430,7 @@ optimize(ygg::View<ygg::Index<T>, ConstructorRepositoryFor> expression, Construc
 /// contexts holds one state evaluation context per sample state. The plan is fixed across states, so the statistics
 /// describe a typical state.
 template<tyr::TaskKind Kind, typename T, semantics::StateEvaluationContextConcept<Kind> Context>
-QueryStatistics collect_query_statistics(ygg::View<ygg::Index<T>, ConstructorRepositoryFor> expression,
+QueryStatistics collect_query_statistics(ygg::View<ygg::Index<T>, ConstructorRepository> expression,
                                          const std::vector<Context*>& contexts,
                                          ygg::diagnostics::Warnings& warnings)
 {

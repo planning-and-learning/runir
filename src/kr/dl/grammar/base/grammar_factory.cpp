@@ -247,7 +247,7 @@ void add_category_rules(std::stringstream& rule_out,
 
 }  // namespace
 
-FamilyGrammarView GrammarFactory::create(GrammarSpecification specification, tyr::formalism::planning::DomainView domain, ConstructorRepositoryFor& repository)
+GrammarView GrammarFactory::create(GrammarSpecification specification, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
 {
     return runir::kr::dl::grammar::parse_grammar(create_description(specification, domain), domain, repository);
 }
@@ -263,7 +263,7 @@ std::string GrammarFactory::create_description(GrammarSpecification specificatio
     throw std::runtime_error(fmt::format("Unknown grammar specification: {}.", static_cast<int>(specification)));
 }
 
-FamilyGrammarView GrammarFactory::create_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain, ConstructorRepositoryFor& repository)
+GrammarView GrammarFactory::create_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
 {
     return runir::kr::dl::grammar::parse_grammar(create_france_et_al_aaai2021_description(domain), domain, repository);
 }

@@ -6,6 +6,6 @@
 namespace runir::serialization
 {
 
-void bind_kr_dl_boolean(nb::module_& m) { bind_entity_types(m, DlComponentViews<kr::dl::FamilyBooleanTypes> {}); }
+void bind_kr_dl_boolean(nb::module_& m) { bind_entity_types(m, DlComponentViews<kr::dl::BooleanTypes> {}); }
 
 }  // namespace runir::serialization

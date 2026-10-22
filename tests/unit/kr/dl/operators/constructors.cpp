@@ -1,7 +1,7 @@
 #include "fixtures.hpp"
 
 #include <gtest/gtest.h>
-#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
+#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
@@ -12,13 +12,13 @@ namespace runir::tests
 namespace
 {
 
-auto wrap_concept(runir::kr::dl::ConstructorRepositoryFor& repository, auto value)
+auto wrap_concept(runir::kr::dl::ConstructorRepository& repository, auto value)
 {
     auto data = ygg::Data<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>(value.get_index());
     return repository.insert(data).first;
 }
 
-auto wrap_role(runir::kr::dl::ConstructorRepositoryFor& repository, auto role)
+auto wrap_role(runir::kr::dl::ConstructorRepository& repository, auto role)
 {
     auto data = ygg::Data<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>(role.get_index());
     return repository.insert(data).first;
@@ -29,7 +29,7 @@ auto wrap_role(runir::kr::dl::ConstructorRepositoryFor& repository, auto role)
 TEST(RunirTests, SyntacticComplexityRecursesIntoConceptChildren)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto repository = runir::kr::dl::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
+    auto repository = runir::kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
     auto& repo = *repository;
 
     auto universal_data = ygg::Data<runir::kr::dl::Role<runir::kr::dl::UniversalTag>>();

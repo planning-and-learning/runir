@@ -156,8 +156,8 @@ add_runir_test(
     runir::kr
 )
 add_runir_test(
-    runir_kr_dl_uns_constructors
-    "unit/kr/dl/uns/constructors.cpp;unit/kr/dl/uns/parser.cpp;unit/kr/dl/uns/evaluation.cpp"
+    runir_kr_dl_operators
+    "unit/kr/dl/operators/constructors.cpp;unit/kr/dl/operators/parser.cpp;unit/kr/dl/operators/evaluation.cpp"
     runir::datasets
     runir::kr
     runir_test_planning_fixtures

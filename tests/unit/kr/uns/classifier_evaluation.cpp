@@ -2,7 +2,7 @@
 #include "planning_fixtures.hpp"
 
 #include <gtest/gtest.h>
-#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
+#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
@@ -20,7 +20,7 @@ namespace runir::tests
 TEST(RunirTests, UnsClassifierClassifies)
 {
     auto search = make_gripper_ground_context();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor().create(search->task->get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
     auto repository = kr::uns::RepositoryFactory().create(dl_repository);
     const auto classifier = kr::uns::dl::parse_classifier(read_fixture("kr/uns/positive.classifier"), search->task->get_domain().get_domain(), *repository);
 

@@ -13,7 +13,7 @@ namespace ygg
 {
 
 template<typename Tag, formalism::SymbolContextFor<runir::kr::dl::cnf_grammar::Role<Tag>> C>
-    requires runir::kr::dl::FamilyRoleConstructorTag<Tag>
+    requires runir::kr::dl::RoleConstructorTag<Tag>
 class View<Index<runir::kr::dl::cnf_grammar::Role<Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::cnf_grammar::Role<Tag>, C>
 {
 public:

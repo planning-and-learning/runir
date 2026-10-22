@@ -9,7 +9,7 @@
 #include <filesystem>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
-#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
+#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/ext/detail/repository_instantiations.hpp>
@@ -121,7 +121,7 @@ auto create_register(kr::ps::ext::Repository& repository, const std::string& nam
 }
 
 template<typename FeatureTag, kr::dl::CategoryTag Category>
-auto create_feature(kr::ps::ext::Repository& repository, ygg::Index<kr::dl::FamilyConstructor<Category>> expression, const std::string& name)
+auto create_feature(kr::ps::ext::Repository& repository, ygg::Index<kr::dl::Constructor<Category>> expression, const std::string& name)
 {
     auto concrete_data = ygg::Data<kr::ps::ConcreteFeature<kr::ExtFamilyTag, kr::DlTag, FeatureTag>>(expression, name);
     const auto concrete = repository.insert(concrete_data).first;
@@ -129,7 +129,7 @@ auto create_feature(kr::ps::ext::Repository& repository, ygg::Index<kr::dl::Fami
     return repository.insert(feature_data).first;
 }
 
-auto create_concept_feature(kr::ps::ext::Repository& repository, ygg::Index<kr::dl::FamilyConstructor<kr::dl::ConceptTag>> expression, const std::string& name)
+auto create_concept_feature(kr::ps::ext::Repository& repository, ygg::Index<kr::dl::Constructor<kr::dl::ConceptTag>> expression, const std::string& name)
 {
     return create_feature<kr::dl::ConceptTag>(repository, expression, name);
 }

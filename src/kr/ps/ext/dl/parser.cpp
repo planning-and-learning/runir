@@ -4,7 +4,7 @@
 #include "kr/parser/observations.hpp"
 #include "kr/parser/resolution.hpp"
 #include "runir/kr/dl/canonicalization.hpp"
-#include "runir/kr/dl/detail/repository_instantiations_ext.hpp"
+#include "runir/kr/dl/detail/repository_instantiations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/grammar/parser/parser.hpp"
 #include "runir/kr/dl/repository.hpp"
@@ -58,27 +58,27 @@ auto intern(Repository& repository, ygg::Data<T>& data)
 
 auto parse_concept(const std::string& description,
                    tyr::formalism::planning::DomainView domain,
-                   runir::kr::dl::ConstructorRepositoryFor& repository,
+                   runir::kr::dl::ConstructorRepository& repository,
                    runir::kr::dl::Builder& builder,
-                   runir::kr::parser::DiagnosticContext& diagnostics) -> runir::kr::dl::FamilyConstructorView<runir::kr::dl::ConceptTag>;
+                   runir::kr::parser::DiagnosticContext& diagnostics) -> runir::kr::dl::ConstructorView<runir::kr::dl::ConceptTag>;
 
 auto parse_role(const std::string& description,
                 tyr::formalism::planning::DomainView domain,
-                runir::kr::dl::ConstructorRepositoryFor& repository,
+                runir::kr::dl::ConstructorRepository& repository,
                 runir::kr::dl::Builder& builder,
-                runir::kr::parser::DiagnosticContext& diagnostics) -> runir::kr::dl::FamilyConstructorView<runir::kr::dl::RoleTag>;
+                runir::kr::parser::DiagnosticContext& diagnostics) -> runir::kr::dl::ConstructorView<runir::kr::dl::RoleTag>;
 
 auto parse_boolean(const std::string& description,
                    tyr::formalism::planning::DomainView domain,
-                   runir::kr::dl::ConstructorRepositoryFor& repository,
+                   runir::kr::dl::ConstructorRepository& repository,
                    runir::kr::dl::Builder& builder,
-                   runir::kr::parser::DiagnosticContext& diagnostics) -> runir::kr::dl::FamilyConstructorView<runir::kr::dl::BooleanTag>;
+                   runir::kr::parser::DiagnosticContext& diagnostics) -> runir::kr::dl::ConstructorView<runir::kr::dl::BooleanTag>;
 
 auto parse_numerical(const std::string& description,
                      tyr::formalism::planning::DomainView domain,
-                     runir::kr::dl::ConstructorRepositoryFor& repository,
+                     runir::kr::dl::ConstructorRepository& repository,
                      runir::kr::dl::Builder& builder,
-                     runir::kr::parser::DiagnosticContext& diagnostics) -> runir::kr::dl::FamilyConstructorView<runir::kr::dl::NumericalTag>;
+                     runir::kr::parser::DiagnosticContext& diagnostics) -> runir::kr::dl::ConstructorView<runir::kr::dl::NumericalTag>;
 
 template<typename T>
 struct AstCategory
@@ -703,11 +703,11 @@ auto parse_rule(
 namespace
 {
 
-runir::kr::dl::FamilyConstructorView<runir::kr::dl::ConceptTag> parse_concept(const std::string& description,
-                                                                              tyr::formalism::planning::DomainView domain,
-                                                                              runir::kr::dl::ConstructorRepositoryFor& repository,
-                                                                              runir::kr::dl::Builder& builder,
-                                                                              runir::kr::parser::DiagnosticContext& diagnostics)
+runir::kr::dl::ConstructorView<runir::kr::dl::ConceptTag> parse_concept(const std::string& description,
+                                                                        tyr::formalism::planning::DomainView domain,
+                                                                        runir::kr::dl::ConstructorRepository& repository,
+                                                                        runir::kr::dl::Builder& builder,
+                                                                        runir::kr::parser::DiagnosticContext& diagnostics)
 {
     auto diagnostic_output = std::ostringstream {};
     auto error_handler = runir::kr::parser::ErrorHandlerType(description.cbegin(), description.cend(), diagnostic_output);
@@ -717,11 +717,11 @@ runir::kr::dl::FamilyConstructorView<runir::kr::dl::ConceptTag> parse_concept(co
     return parse_constructor(result, domain, ConstructorContext { repository, builder, diagnostics, nullptr });
 }
 
-runir::kr::dl::FamilyConstructorView<runir::kr::dl::RoleTag> parse_role(const std::string& description,
-                                                                        tyr::formalism::planning::DomainView domain,
-                                                                        runir::kr::dl::ConstructorRepositoryFor& repository,
-                                                                        runir::kr::dl::Builder& builder,
-                                                                        runir::kr::parser::DiagnosticContext& diagnostics)
+runir::kr::dl::ConstructorView<runir::kr::dl::RoleTag> parse_role(const std::string& description,
+                                                                  tyr::formalism::planning::DomainView domain,
+                                                                  runir::kr::dl::ConstructorRepository& repository,
+                                                                  runir::kr::dl::Builder& builder,
+                                                                  runir::kr::parser::DiagnosticContext& diagnostics)
 {
     auto diagnostic_output = std::ostringstream {};
     auto error_handler = runir::kr::parser::ErrorHandlerType(description.cbegin(), description.cend(), diagnostic_output);
@@ -731,11 +731,11 @@ runir::kr::dl::FamilyConstructorView<runir::kr::dl::RoleTag> parse_role(const st
     return parse_constructor(result, domain, ConstructorContext { repository, builder, diagnostics, nullptr });
 }
 
-runir::kr::dl::FamilyConstructorView<runir::kr::dl::BooleanTag> parse_boolean(const std::string& description,
-                                                                              tyr::formalism::planning::DomainView domain,
-                                                                              runir::kr::dl::ConstructorRepositoryFor& repository,
-                                                                              runir::kr::dl::Builder& builder,
-                                                                              runir::kr::parser::DiagnosticContext& diagnostics)
+runir::kr::dl::ConstructorView<runir::kr::dl::BooleanTag> parse_boolean(const std::string& description,
+                                                                        tyr::formalism::planning::DomainView domain,
+                                                                        runir::kr::dl::ConstructorRepository& repository,
+                                                                        runir::kr::dl::Builder& builder,
+                                                                        runir::kr::parser::DiagnosticContext& diagnostics)
 {
     auto diagnostic_output = std::ostringstream {};
     auto error_handler = runir::kr::parser::ErrorHandlerType(description.cbegin(), description.cend(), diagnostic_output);
@@ -745,11 +745,11 @@ runir::kr::dl::FamilyConstructorView<runir::kr::dl::BooleanTag> parse_boolean(co
     return parse_constructor(result, domain, ConstructorContext { repository, builder, diagnostics, nullptr });
 }
 
-runir::kr::dl::FamilyConstructorView<runir::kr::dl::NumericalTag> parse_numerical(const std::string& description,
-                                                                                  tyr::formalism::planning::DomainView domain,
-                                                                                  runir::kr::dl::ConstructorRepositoryFor& repository,
-                                                                                  runir::kr::dl::Builder& builder,
-                                                                                  runir::kr::parser::DiagnosticContext& diagnostics)
+runir::kr::dl::ConstructorView<runir::kr::dl::NumericalTag> parse_numerical(const std::string& description,
+                                                                            tyr::formalism::planning::DomainView domain,
+                                                                            runir::kr::dl::ConstructorRepository& repository,
+                                                                            runir::kr::dl::Builder& builder,
+                                                                            runir::kr::parser::DiagnosticContext& diagnostics)
 {
     auto diagnostic_output = std::ostringstream {};
     auto error_handler = runir::kr::parser::ErrorHandlerType(description.cbegin(), description.cend(), diagnostic_output);
@@ -761,32 +761,32 @@ runir::kr::dl::FamilyConstructorView<runir::kr::dl::NumericalTag> parse_numerica
 
 }  // namespace
 
-runir::kr::dl::FamilyConstructorView<runir::kr::dl::ConceptTag>
-parse_concept(const std::string& description, tyr::formalism::planning::DomainView domain, runir::kr::dl::ConstructorRepositoryFor& repository)
+runir::kr::dl::ConstructorView<runir::kr::dl::ConceptTag>
+parse_concept(const std::string& description, tyr::formalism::planning::DomainView domain, runir::kr::dl::ConstructorRepository& repository)
 {
     auto diagnostics = runir::kr::parser::DiagnosticContext {};
     auto builder = runir::kr::dl::Builder {};
     return parse_concept(description, domain, repository, builder, diagnostics);
 }
 
-runir::kr::dl::FamilyConstructorView<runir::kr::dl::RoleTag>
-parse_role(const std::string& description, tyr::formalism::planning::DomainView domain, runir::kr::dl::ConstructorRepositoryFor& repository)
+runir::kr::dl::ConstructorView<runir::kr::dl::RoleTag>
+parse_role(const std::string& description, tyr::formalism::planning::DomainView domain, runir::kr::dl::ConstructorRepository& repository)
 {
     auto diagnostics = runir::kr::parser::DiagnosticContext {};
     auto builder = runir::kr::dl::Builder {};
     return parse_role(description, domain, repository, builder, diagnostics);
 }
 
-runir::kr::dl::FamilyConstructorView<runir::kr::dl::BooleanTag>
-parse_boolean(const std::string& description, tyr::formalism::planning::DomainView domain, runir::kr::dl::ConstructorRepositoryFor& repository)
+runir::kr::dl::ConstructorView<runir::kr::dl::BooleanTag>
+parse_boolean(const std::string& description, tyr::formalism::planning::DomainView domain, runir::kr::dl::ConstructorRepository& repository)
 {
     auto diagnostics = runir::kr::parser::DiagnosticContext {};
     auto builder = runir::kr::dl::Builder {};
     return parse_boolean(description, domain, repository, builder, diagnostics);
 }
 
-runir::kr::dl::FamilyConstructorView<runir::kr::dl::NumericalTag>
-parse_numerical(const std::string& description, tyr::formalism::planning::DomainView domain, runir::kr::dl::ConstructorRepositoryFor& repository)
+runir::kr::dl::ConstructorView<runir::kr::dl::NumericalTag>
+parse_numerical(const std::string& description, tyr::formalism::planning::DomainView domain, runir::kr::dl::ConstructorRepository& repository)
 {
     auto diagnostics = runir::kr::parser::DiagnosticContext {};
     auto builder = runir::kr::dl::Builder {};

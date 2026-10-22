@@ -62,7 +62,7 @@ size_t EvaluationGraph<Kind>::cardinality(EvaluationIndex<Category> index) const
 
 template<tyr::TaskKind Kind>
 template<CategoryTag Category>
-EvaluationIndex<Category> EvaluationGraph<Kind>::get_index(FamilyConstructorView<Category> expression) const
+EvaluationIndex<Category> EvaluationGraph<Kind>::get_index(ConstructorView<Category> expression) const
 {
     if (const auto index = find_node(expression))
         return *index;
@@ -70,7 +70,7 @@ EvaluationIndex<Category> EvaluationGraph<Kind>::get_index(FamilyConstructorView
 }
 
 template<tyr::TaskKind Kind>
-QueryEvaluationIndex EvaluationGraph<Kind>::get_index(FamilyQueryView<> expression) const
+QueryEvaluationIndex EvaluationGraph<Kind>::get_index(QueryView<> expression) const
 {
     if (const auto index = find_node(expression))
         return *index;
@@ -79,7 +79,7 @@ QueryEvaluationIndex EvaluationGraph<Kind>::get_index(FamilyQueryView<> expressi
 
 template<tyr::TaskKind Kind>
 template<CategoryTag Category>
-std::optional<EvaluationIndex<Category>> EvaluationGraph<Kind>::find_node(FamilyConstructorView<Category> expression) const
+std::optional<EvaluationIndex<Category>> EvaluationGraph<Kind>::find_node(ConstructorView<Category> expression) const
 {
     // ponytail: linear preparation/root lookup; add a lookup table only if large graphs make it costly.
     for (size_t i = 0; i < m_nodes.size(); ++i)
@@ -92,7 +92,7 @@ std::optional<EvaluationIndex<Category>> EvaluationGraph<Kind>::find_node(Family
 }
 
 template<tyr::TaskKind Kind>
-std::optional<QueryEvaluationIndex> EvaluationGraph<Kind>::find_node(FamilyQueryView<> expression) const
+std::optional<QueryEvaluationIndex> EvaluationGraph<Kind>::find_node(QueryView<> expression) const
 {
     for (size_t i = 0; i < m_nodes.size(); ++i)
     {
@@ -121,7 +121,7 @@ EvaluationGraph<Kind>::EvaluationGraph(const tyr::planning::Task<Kind>& task, st
 
 template<tyr::TaskKind Kind>
 template<CategoryTag Category>
-EvaluationIndex<Category> EvaluationGraph<Kind>::prepare(FamilyConstructorView<Category> expression)
+EvaluationIndex<Category> EvaluationGraph<Kind>::prepare(ConstructorView<Category> expression)
 {
     if (const auto existing = find_node(expression))
         return *existing;
@@ -134,7 +134,7 @@ EvaluationIndex<Category> EvaluationGraph<Kind>::prepare(FamilyConstructorView<C
 }
 
 template<tyr::TaskKind Kind>
-QueryEvaluationIndex EvaluationGraph<Kind>::prepare(FamilyQueryView<> expression)
+QueryEvaluationIndex EvaluationGraph<Kind>::prepare(QueryView<> expression)
 {
     if (const auto existing = find_node(expression))
         return *existing;

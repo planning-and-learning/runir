@@ -13,11 +13,11 @@ namespace runir::kr::dl::semantics
 template<typename Context, typename Kind>
 concept EvaluationContextConcept = tyr::TaskKind<Kind>
                                    && requires(Context& context,
-                                               FamilyConstructorView<BooleanTag> boolean,
-                                               FamilyConstructorView<NumericalTag> numerical,
-                                               FamilyConstructorView<ConceptTag> concept_,
-                                               FamilyConstructorView<RoleTag> role,
-                                               FamilyQueryView<> query) {
+                                               ConstructorView<BooleanTag> boolean,
+                                               ConstructorView<NumericalTag> numerical,
+                                               ConstructorView<ConceptTag> concept_,
+                                               ConstructorView<RoleTag> role,
+                                               QueryView<> query) {
                                           { evaluate<Kind>(boolean, context) } -> DenotationViewConcept<BooleanTag>;
                                           { evaluate<Kind>(numerical, context) } -> DenotationViewConcept<NumericalTag>;
                                           { evaluate<Kind>(concept_, context) } -> DenotationViewConcept<ConceptTag>;

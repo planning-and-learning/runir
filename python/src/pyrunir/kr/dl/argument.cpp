@@ -32,7 +32,7 @@ template<CategoryTag Category>
 void bind_argument_view(nb::module_& m, const char* name)
 {
     using Type = Argument<Category>;
-    using View = ygg::View<ygg::Index<Type>, ExtConstructorRepository>;
+    using View = ygg::View<ygg::Index<Type>, ConstructorRepository>;
     auto view = nb::class_<View>(m, name).def("get_index", &View::get_index).def("get_name", &View::get_name).def("get_identifier", &View::get_identifier);
     ygg::add_print(view);
     ygg::add_comparison(view);

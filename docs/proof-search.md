@@ -26,12 +26,11 @@ successors and Choose obligations in reverse order. Storage policies preserve
 ## Feature evaluation
 
 `RUNIR_DELTA_EVALUATION` defaults to `ON`, selecting
-`DeltaEvaluationPolicy<Family, Kind>` for Base, Ext, and ICP proof search and UNS
+`DeltaEvaluationPolicy<Kind>` for Base, Ext, and ICP proof search and UNS
 classification during search. Configure with `-DRUNIR_DELTA_EVALUATION=OFF` to use
-`FullEvaluationPolicy<Family, Kind>` and the existing memoized, interned results.
+`FullEvaluationPolicy<Kind>` and the existing memoized, interned results.
 Both live in `runir::kr::dl::semantics` and satisfy
-`EvaluationPolicyConcept<Policy, Family, Kind>`. Their family is the DL family;
-ICP uses `ExtFamilyTag`.
+`EvaluationPolicyConcept<Policy, Kind>`.
 C++ expanders can select an explicit policy; their default follows the flag.
 
 Delta evaluation prepares separate source and target graphs from the sketch,

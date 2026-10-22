@@ -23,7 +23,7 @@ void bind_concept_data(nb::module_& m, const char* name)
     python::def_concept_data_constructors<Tag,
                                           ygg::Index<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>,
                                           ygg::Index<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>,
-                                          runir::kr::dl::ExtConstructorRepository>(cls);
+                                          runir::kr::dl::ConstructorRepository>(cls);
 
     if constexpr (is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag>)
         cls.def_rw("predicate", &Data::predicate).def_rw("polarity", &Data::polarity);
@@ -52,7 +52,7 @@ template<typename Tag>
 void bind_concept_view(nb::module_& m, const char* name)
 {
     using Type = Concept<Tag>;
-    using View = ygg::View<ygg::Index<Type>, ExtConstructorRepository>;
+    using View = ygg::View<ygg::Index<Type>, ConstructorRepository>;
     auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index);
     ygg::add_print(cls);
     ygg::add_comparison(cls);

@@ -17,11 +17,11 @@ enum class GrammarSpecification
 class GrammarFactory
 {
 public:
-    static FamilyGrammarView create(GrammarSpecification specification, tyr::formalism::planning::DomainView domain, ConstructorRepositoryFor& repository);
+    static GrammarView create(GrammarSpecification specification, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository);
 
     static std::string create_description(GrammarSpecification specification, tyr::formalism::planning::DomainView domain);
 
-    static FamilyGrammarView create_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain, ConstructorRepositoryFor& repository);
+    static GrammarView create_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain, ConstructorRepository& repository);
 
     static std::string create_france_et_al_aaai2021_description(tyr::formalism::planning::DomainView domain);
 };

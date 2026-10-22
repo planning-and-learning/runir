@@ -59,13 +59,13 @@ struct ResultContext
 };
 
 template<tyr::TaskKind Kind, typename ConceptResult, typename RoleResult>
-ConceptResult evaluate(kr::dl::FamilyConstructorView<kr::dl::ConceptTag>, ResultContext<ConceptResult, RoleResult>&);
+ConceptResult evaluate(kr::dl::ConstructorView<kr::dl::ConceptTag>, ResultContext<ConceptResult, RoleResult>&);
 template<tyr::TaskKind Kind, typename ConceptResult, typename RoleResult>
-RoleResult evaluate(kr::dl::FamilyConstructorView<kr::dl::RoleTag>, ResultContext<ConceptResult, RoleResult>&);
+RoleResult evaluate(kr::dl::ConstructorView<kr::dl::RoleTag>, ResultContext<ConceptResult, RoleResult>&);
 template<tyr::TaskKind Kind, kr::dl::BooleanOrNumericalTag Category, typename ConceptResult, typename RoleResult>
-kr::dl::semantics::DenotationView<Category> evaluate(kr::dl::FamilyConstructorView<Category>, ResultContext<ConceptResult, RoleResult>&);
+kr::dl::semantics::DenotationView<Category> evaluate(kr::dl::ConstructorView<Category>, ResultContext<ConceptResult, RoleResult>&);
 template<tyr::TaskKind Kind, typename ConceptResult, typename RoleResult>
-kr::dl::semantics::QueryDenotationView evaluate(kr::dl::FamilyQueryView<>, ResultContext<ConceptResult, RoleResult>&);
+kr::dl::semantics::QueryDenotationView evaluate(kr::dl::QueryView<>, ResultContext<ConceptResult, RoleResult>&);
 
 using ConceptResult = kr::dl::semantics::DenotationView<kr::dl::ConceptTag>;
 using RoleResult = kr::dl::semantics::DenotationView<kr::dl::RoleTag>;

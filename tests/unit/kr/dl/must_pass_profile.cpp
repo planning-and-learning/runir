@@ -14,7 +14,7 @@
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/distance_evaluation.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
-#include <runir/kr/dl/semantics/ext/evaluation.hpp>
+#include <runir/kr/dl/semantics/state_evaluation.hpp>
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <string>
@@ -56,7 +56,7 @@ int main(int argc, char** argv)
     const auto text = must_pass_text(std::string(std::istreambuf_iterator<char>(file), {}));
     const auto search = runir::tests::make_lifted_context(argv[1], argv[2]);
     const auto domain = search->task->get_domain().get_domain();
-    auto repository = runir::kr::dl::ConstructorRepositoryFactoryFor().create(search->task->get_repository());
+    auto repository = runir::kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
     const auto count = runir::kr::ps::ext::dl::parse_numerical("(n_count " + text + ")", domain, *repository);
     const auto query = count.get_variant()
                            .template get<ygg::Index<runir::kr::dl::Numerical<runir::kr::dl::CountTag>>>()

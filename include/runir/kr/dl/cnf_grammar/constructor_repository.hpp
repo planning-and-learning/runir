@@ -16,20 +16,16 @@
 namespace runir::kr::dl::cnf_grammar
 {
 
-using FamilyConstructorSymbolRepository = ygg::ApplyTypeListT<ygg::formalism::SymbolRepository, FamilyConstructorRepositoryTypes>;
+using ConstructorSymbolRepository = ygg::ApplyTypeListT<ygg::formalism::SymbolRepository, ConstructorRepositoryTypes>;
 
-using Builder = ygg::ApplyTypeListT<ygg::formalism::BuilderStorage, FamilyConstructorRepositoryTypes>;
-
-using BaseBuilder = Builder;
-using ExtBuilder = Builder;
-using UnsBuilder = Builder;
+using Builder = ygg::ApplyTypeListT<ygg::formalism::BuilderStorage, ConstructorRepositoryTypes>;
 
 using runir::kr::dl::detail::get_repository;
 using ygg::formalism::checkout;
 
 template<typename T>
-    requires ygg::formalism::SupportsSymbol<BasicConstructorRepository, T>
-void prepare_for_insert(BasicConstructorRepository&, ygg::Data<T>& data)
+    requires ygg::formalism::SupportsSymbol<ConstructorRepository, T>
+void prepare_for_insert(ConstructorRepository&, ygg::Data<T>& data)
 {
     canonicalize(data);
 }
@@ -41,9 +37,7 @@ using ygg::formalism::insert;
 namespace runir::kr::dl::detail
 {
 
-extern template class ConstructorRepositoryFactory<runir::kr::dl::cnf_grammar::FamilyConstructorRepositoryTypes>;
-extern template class ConstructorRepositoryFactory<runir::kr::dl::cnf_grammar::FamilyConstructorRepositoryTypes>;
-extern template class ConstructorRepositoryFactory<runir::kr::dl::cnf_grammar::FamilyConstructorRepositoryTypes>;
+extern template class BasicConstructorRepositoryFactory<runir::kr::dl::cnf_grammar::ConstructorRepositoryTypes>;
 
 }  // namespace runir::kr::dl::detail
 #endif

@@ -2,7 +2,7 @@
 
 #include "kr/parser/ext_constructors.hpp"
 #include "kr/parser/resolution.hpp"
-#include "runir/kr/dl/detail/repository_instantiations_ext.hpp"
+#include "runir/kr/dl/detail/repository_instantiations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/parser/diagnostics.hpp"

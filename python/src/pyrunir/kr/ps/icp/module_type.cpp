@@ -20,7 +20,7 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
     using Data = ygg::Data<T>;
     using View = ygg::View<ygg::Index<T>, Repository>;
     ygg::bind_index<ygg::Index<T>>(m, "ModuleIndex");
-    using DlRepository = runir::kr::dl::ConstructorRepositoryFor;
+    using DlRepository = runir::kr::dl::ConstructorRepository;
     auto data =
         nb::class_<Data>(m, "ModuleData")
             .def(nb::init<>())

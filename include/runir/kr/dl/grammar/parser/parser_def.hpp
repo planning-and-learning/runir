@@ -593,8 +593,8 @@ auto non_terminal_string_parser()
                         prefix##_numerical_argument)
 
 // The search-free instances come first: the full ones parse the edges of n_distance and q_must_pass with them.
-RUNIR_DEFINE_PARSER(ext_family_search_free, SearchFreeDialectTag, ext_family_search_free)
-RUNIR_DEFINE_PARSER(ext_family, FullDialectTag, ext_family_search_free)
+RUNIR_DEFINE_PARSER(dl_search_free, SearchFreeDialectTag, dl_search_free)
+RUNIR_DEFINE_PARSER(dl, FullDialectTag, dl_search_free)
 
 #undef RUNIR_DEFINE_PARSER
 #undef RUNIR_CONSTRUCTOR_ALTERNATIVE

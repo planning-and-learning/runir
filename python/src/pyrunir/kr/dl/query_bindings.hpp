@@ -42,14 +42,14 @@ void bind_view_list(nb::class_<View>& cls, const char* name, Getter getter)
 template<typename View>
 void bind_query_columns(nb::class_<View>& cls)
 {
-    bind_view_list<ygg::View<ygg::Index<QueryColumn>, ConstructorRepositoryFor>>(cls, "get_columns", [](const View& value) { return value.get_columns(); });
+    bind_view_list<ygg::View<ygg::Index<QueryColumn>, ConstructorRepository>>(cls, "get_columns", [](const View& value) { return value.get_columns(); });
 }
 
 template<typename Tag, typename Class>
 void def_query_data_constructors(Class& cls)
 {
     using namespace nb::literals;
-    using Repository = ConstructorRepositoryFor;
+    using Repository = ConstructorRepository;
     using ColumnIndexList = ygg::IndexList<QueryColumn>;
     using ColumnViewList = std::vector<ygg::View<ygg::Index<QueryColumn>, Repository>>;
     using QueryIndex = ygg::Index<Query<>>;
@@ -99,7 +99,7 @@ void bind_query(nb::module_& m, const char* name)
 {
     using Type = Query<Tag>;
     using Data = ygg::Data<Type>;
-    using View = ygg::View<ygg::Index<Type>, ConstructorRepositoryFor>;
+    using View = ygg::View<ygg::Index<Type>, ConstructorRepository>;
 
     ygg::bind_index<ygg::Index<Type>>(m, (std::string(name) + "Index").c_str());
     auto data = nb::class_<Data>(m, (std::string(name) + "Data").c_str()).def(nb::init<>()).def_rw("index", &Data::index);
@@ -147,8 +147,8 @@ void bind_query(nb::module_& m, const char* name)
         view.def("get_arg", &View::get_arg, nb::keep_alive<0, 1>());
     if constexpr (requires(View value) { value.get_args(); })
     {
-        using ColumnView = ygg::View<ygg::Index<QueryColumn>, ConstructorRepositoryFor>;
-        bind_view_list<ygg::View<ygg::Index<Query<>>, ConstructorRepositoryFor>>(view, "get_args", [](const View& value) { return value.get_args(); });
+        using ColumnView = ygg::View<ygg::Index<QueryColumn>, ConstructorRepository>;
+        bind_view_list<ygg::View<ygg::Index<Query<>>, ConstructorRepository>>(view, "get_args", [](const View& value) { return value.get_args(); });
         bind_view_list<ColumnView>(view, "get_variable_order", [](const View& value) { return value.get_variable_order(); });
         bind_view_list<ColumnView>(view, "get_output_order", [](const View& value) { return value.get_output_order(); });
     }
@@ -160,7 +160,7 @@ void bind_query(nb::module_& m, const char* name)
         view.def("get_column", &View::get_column, nb::keep_alive<0, 1>()).def("get_object", &View::get_object, nb::keep_alive<0, 1>());
     if constexpr (requires(View value) { value.get_keys(); })
     {
-        bind_view_list<ygg::View<ygg::Index<QueryColumn>, ConstructorRepositoryFor>>(view, "get_keys", [](const View& value) { return value.get_keys(); });
+        bind_view_list<ygg::View<ygg::Index<QueryColumn>, ConstructorRepository>>(view, "get_keys", [](const View& value) { return value.get_keys(); });
         view.def("get_sources", &View::get_sources, nb::keep_alive<0, 1>())
             .def("get_edges", &View::get_edges, nb::keep_alive<0, 1>())
             .def("get_targets", &View::get_targets, nb::keep_alive<0, 1>())
@@ -173,13 +173,13 @@ void bind_query_projection(nb::module_& m, const char* name)
 {
     using Type = QueryProjection<Category>;
     using Data = ygg::Data<Type>;
-    using View = ygg::View<ygg::Index<Type>, ConstructorRepositoryFor>;
+    using View = ygg::View<ygg::Index<Type>, ConstructorRepository>;
     ygg::bind_index<ygg::Index<Type>>(m, (std::string(name) + "Index").c_str());
     auto data = nb::class_<Data>(m, (std::string(name) + "Data").c_str())
                     .def(nb::init<>())
                     .def(nb::init<ygg::Index<Query<>>, ygg::IndexList<QueryColumn>>(), nb::arg("arg"), nb::arg("columns"))
-                    .def(nb::init<ygg::View<ygg::Index<Query<>>, ConstructorRepositoryFor>,
-                                  const std::vector<ygg::View<ygg::Index<QueryColumn>, ConstructorRepositoryFor>>&>(),
+                    .def(nb::init<ygg::View<ygg::Index<Query<>>, ConstructorRepository>,
+                                  const std::vector<ygg::View<ygg::Index<QueryColumn>, ConstructorRepository>>&>(),
                          nb::arg("arg"),
                          nb::arg("columns"))
                     .def_rw("index", &Data::index)
@@ -198,7 +198,7 @@ void bind_query_projection(nb::module_& m, const char* name)
 
 inline void bind_queries(nb::module_& m)
 {
-    using ColumnView = ygg::View<ygg::Index<QueryColumn>, ConstructorRepositoryFor>;
+    using ColumnView = ygg::View<ygg::Index<QueryColumn>, ConstructorRepository>;
     auto column = nb::class_<ColumnView>(m, "QueryColumn").def("get_index", &ColumnView::get_index).def("get_name", &ColumnView::get_name);
     ygg::add_print(column);
     ygg::add_comparison(column);

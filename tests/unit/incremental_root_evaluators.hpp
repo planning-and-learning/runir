@@ -47,7 +47,7 @@ class RootEvaluator
     }
 
 public:
-    RootEvaluator(const tyr::planning::Task<Kind>& task, kr::dl::FamilyConstructorView<Category> expression) :
+    RootEvaluator(const tyr::planning::Task<Kind>& task, kr::dl::ConstructorView<Category> expression) :
         m_evaluation(task, { expression }),
         m_root(m_evaluation.graph().get_index(expression))
     {
@@ -96,7 +96,7 @@ class QueryRootEvaluator
     }
 
 public:
-    QueryRootEvaluator(const tyr::planning::Task<Kind>& task, kr::dl::FamilyQueryView<> expression) :
+    QueryRootEvaluator(const tyr::planning::Task<Kind>& task, kr::dl::QueryView<> expression) :
         m_evaluation(task, { expression }),
         m_root(m_evaluation.graph().get_index(expression))
     {

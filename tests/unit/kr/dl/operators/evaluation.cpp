@@ -20,59 +20,59 @@ namespace runir::tests
 namespace
 {
 
-auto wrap_boolean(runir::kr::dl::ConstructorRepositoryFor& repository, auto boolean)
+auto wrap_boolean(runir::kr::dl::ConstructorRepository& repository, auto boolean)
 {
     auto data = ygg::Data<runir::kr::dl::Constructor<runir::kr::dl::BooleanTag>>(boolean.get_index());
     return repository.insert(data).first;
 }
 
-auto wrap_numerical(runir::kr::dl::ConstructorRepositoryFor& repository, auto numerical)
+auto wrap_numerical(runir::kr::dl::ConstructorRepository& repository, auto numerical)
 {
     auto data = ygg::Data<runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>>(numerical.get_index());
     return repository.insert(data).first;
 }
 
-auto boolean_constant(runir::kr::dl::ConstructorRepositoryFor& repository, bool value)
+auto boolean_constant(runir::kr::dl::ConstructorRepository& repository, bool value)
 {
     auto data = ygg::Data<runir::kr::dl::Boolean<runir::kr::dl::BooleanConstantTag>>(value);
     return wrap_boolean(repository, repository.insert(data).first);
 }
 
-auto numerical_constant(runir::kr::dl::ConstructorRepositoryFor& repository, ygg::uint_t value)
+auto numerical_constant(runir::kr::dl::ConstructorRepository& repository, ygg::uint_t value)
 {
     auto data = ygg::Data<runir::kr::dl::Numerical<runir::kr::dl::NumericalConstantTag>>(value);
     return wrap_numerical(repository, repository.insert(data).first);
 }
 
 template<runir::kr::dl::ComparisonTag Tag>
-auto numerical_comparison(runir::kr::dl::ConstructorRepositoryFor& repository, auto lhs, auto rhs)
+auto numerical_comparison(runir::kr::dl::ConstructorRepository& repository, auto lhs, auto rhs)
 {
     auto data = ygg::Data<runir::kr::dl::Boolean<Tag>>(lhs.get_index(), rhs.get_index());
     return wrap_boolean(repository, repository.insert(data).first);
 }
 
 template<runir::kr::dl::ComparisonTag Tag>
-auto boolean_comparison(runir::kr::dl::ConstructorRepositoryFor& repository, auto lhs, auto rhs)
+auto boolean_comparison(runir::kr::dl::ConstructorRepository& repository, auto lhs, auto rhs)
 {
     auto data = ygg::Data<runir::kr::dl::Boolean<Tag>>(lhs.get_index(), rhs.get_index());
     return wrap_boolean(repository, repository.insert(data).first);
 }
 
 template<runir::kr::dl::NumericalBinaryTag Tag>
-auto numerical_binary(runir::kr::dl::ConstructorRepositoryFor& repository, auto lhs, auto rhs)
+auto numerical_binary(runir::kr::dl::ConstructorRepository& repository, auto lhs, auto rhs)
 {
     auto data = ygg::Data<runir::kr::dl::Numerical<Tag>>(lhs.get_index(), rhs.get_index());
     return wrap_numerical(repository, repository.insert(data).first);
 }
 
 template<runir::kr::dl::LogicalBinaryTag Tag>
-auto logical_binary(runir::kr::dl::ConstructorRepositoryFor& repository, auto lhs, auto rhs)
+auto logical_binary(runir::kr::dl::ConstructorRepository& repository, auto lhs, auto rhs)
 {
     auto data = ygg::Data<runir::kr::dl::Boolean<Tag>>(lhs.get_index(), rhs.get_index());
     return wrap_boolean(repository, repository.insert(data).first);
 }
 
-auto logical_not(runir::kr::dl::ConstructorRepositoryFor& repository, auto boolean)
+auto logical_not(runir::kr::dl::ConstructorRepository& repository, auto boolean)
 {
     auto data = ygg::Data<runir::kr::dl::Boolean<runir::kr::dl::NotTag>>(boolean.get_index());
     return wrap_boolean(repository, repository.insert(data).first);
@@ -80,13 +80,13 @@ auto logical_not(runir::kr::dl::ConstructorRepositoryFor& repository, auto boole
 
 }  // namespace
 
-TEST(RunirTests, UnsFamilyComparisonsAndConstantsEvaluateAndFormat)
+TEST(RunirTests, ComparisonsAndConstantsEvaluateAndFormat)
 {
     auto search = make_gripper_ground_context();
     const auto& task = search->task;
     const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
 
-    auto repository = runir::kr::dl::ConstructorRepositoryFactoryFor().create(task->get_repository());
+    auto repository = runir::kr::dl::ConstructorRepositoryFactory().create(task->get_repository());
     auto& repo = *repository;
 
     // c_top -> n_count(c_top)
@@ -169,13 +169,13 @@ TEST(RunirTests, UnsFamilyComparisonsAndConstantsEvaluateAndFormat)
     EXPECT_NE(b_formatted.find("b_const"), std::string::npos) << b_formatted;
 }
 
-TEST(RunirTests, UnsFamilyArithmeticLogicalOperatorsEvaluateAndFormat)
+TEST(RunirTests, ArithmeticAndLogicalOperatorsEvaluateAndFormat)
 {
     auto search = make_gripper_ground_context();
     const auto& task = search->task;
     const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
 
-    auto repository = runir::kr::dl::ConstructorRepositoryFactoryFor().create(task->get_repository());
+    auto repository = runir::kr::dl::ConstructorRepositoryFactory().create(task->get_repository());
     auto& repo = *repository;
 
     auto builder = runir::kr::dl::semantics::Builder();

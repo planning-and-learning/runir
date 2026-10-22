@@ -2,10 +2,10 @@
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_EVALUATORS_DISTANCE_HPP_
 
 #include "runir/kr/dl/semantics/distance_evaluation.hpp"
-#include "runir/kr/dl/semantics/ext/evaluation.hpp"
 #include "runir/kr/dl/semantics/incremental/declarations.hpp"
 #include "runir/kr/dl/semantics/incremental/delta.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/denotation_state.hpp"
+#include "runir/kr/dl/semantics/state_evaluation.hpp"
 
 #include <algorithm>
 #include <concepts>
@@ -21,8 +21,8 @@
 namespace runir::kr::dl::semantics::incremental::detail
 {
 
-using VertexArgumentView = ygg::View<ygg::IndexVariant<ygg::VertexArgumentTypes>, ConstructorRepositoryFor>;
-using EdgeArgumentView = ygg::View<ygg::IndexVariant<ygg::EdgeArgumentTypes>, ConstructorRepositoryFor>;
+using VertexArgumentView = ygg::View<ygg::IndexVariant<ygg::VertexArgumentTypes>, ConstructorRepository>;
+using EdgeArgumentView = ygg::View<ygg::IndexVariant<ygg::EdgeArgumentTypes>, ConstructorRepository>;
 
 /// The graph node of a distance argument (sources, edges or targets), lifted into `columns`.
 template<tyr::TaskKind Kind, typename Argument>
@@ -45,7 +45,7 @@ struct RoleEdgeDistanceEvaluator
     ygg::database::incremental::SourceMinDistance operation;
     DenotationState<NumericalTag> value;
 
-    RoleEdgeDistanceEvaluator(FamilyNumericalView<DistanceTag> expression, GraphBuilder<Kind>& graph, std::vector<ygg::uint_t>& dependencies) :
+    RoleEdgeDistanceEvaluator(NumericalView<DistanceTag> expression, GraphBuilder<Kind>& graph, std::vector<ygg::uint_t>& dependencies) :
         sources(prepare_argument(expression.get_lhs(), expression.get_data().plan.source_columns().span(), graph, dependencies)),
         edges(prepare_argument(expression.get_mid(), expression.get_data().plan.edge_columns().span(), graph, dependencies)),
         targets(prepare_argument(expression.get_rhs(), expression.get_data().plan.target_columns().span(), graph, dependencies)),
@@ -73,8 +73,8 @@ struct QueryEdgeDistanceEvaluator
 {
     using Distance = ygg::database::incremental::MinDistance<heuristics::ProjectionHeuristic>;
 
-    FamilyNumericalView<DistanceTag> expression;
-    FamilyQueryView<> edges;  ///< The edge argument of expression.
+    NumericalView<DistanceTag> expression;
+    QueryView<> edges;  ///< The edge argument of expression.
     QueryEvaluationIndex sources;
     QueryEvaluationIndex targets;
     DistanceFeature<Distance> feature;
@@ -84,10 +84,7 @@ struct QueryEdgeDistanceEvaluator
     std::vector<bool> slot_changed;  ///< Per slot, whether update()'s delta changed it; kept to avoid allocations.
 
     /// `edges_` is the edge argument of `expression_`.
-    QueryEdgeDistanceEvaluator(FamilyNumericalView<DistanceTag> expression_,
-                               FamilyQueryView<> edges_,
-                               GraphBuilder<Kind>& graph,
-                               std::vector<ygg::uint_t>& dependencies) :
+    QueryEdgeDistanceEvaluator(NumericalView<DistanceTag> expression_, QueryView<> edges_, GraphBuilder<Kind>& graph, std::vector<ygg::uint_t>& dependencies) :
         expression(expression_),
         edges(edges_),
         sources(prepare_argument(expression_.get_lhs(), expression_.get_data().plan.source_columns().span(), graph, dependencies)),

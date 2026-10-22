@@ -7,7 +7,7 @@ QueryTranslator::YggQuery QueryTranslator::translate(DlQuery query)
 {
     if (const auto it = m_translated.find(query); it != m_translated.end())
         return it->second;
-    const auto result = ygg::visit([&]<typename Tag>(FamilyQueryView<Tag> concrete) { return translate_concrete(query, concrete); }, query.get_variant());
+    const auto result = ygg::visit([&]<typename Tag>(QueryView<Tag> concrete) { return translate_concrete(query, concrete); }, query.get_variant());
     m_translated.emplace(query, result);
     return result;
 }
@@ -20,7 +20,7 @@ QueryTranslator::YggQuery QueryTranslator::project(YggQuery query, std::span<con
     return insert(*out);
 }
 
-std::vector<QueryTranslator::DlQuery> QueryTranslator::get_leaves(const ConstructorRepositoryFor& constructors) const
+std::vector<QueryTranslator::DlQuery> QueryTranslator::get_leaves(const ConstructorRepository& constructors) const
 {
     auto leaves = std::vector<DlQuery>();
     for (const auto& slot : m_slots)
@@ -49,7 +49,7 @@ std::span<const ygg::database::ColumnLayout> QueryTranslator::schema(DlQuery que
 void QueryTranslator::flatten(DlQuery query, std::vector<DlQuery>& conjuncts)
 {
     ygg::visit(
-        [&]<typename Tag>(FamilyQueryView<Tag> concrete)
+        [&]<typename Tag>(QueryView<Tag> concrete)
         {
             if constexpr (std::same_as<Tag, QueryJoinTag>)
             {
@@ -108,7 +108,7 @@ QueryTranslator::YggQuery QueryTranslator::complement_argument(DlQuery complemen
     visit_complement_argument(complement,
                               [&]<typename V>(V argument)
                               {
-                                  constexpr auto role = std::same_as<V, FamilyConstructorView<RoleTag>>;
+                                  constexpr auto role = std::same_as<V, ConstructorView<RoleTag>>;
                                   slot.kind = role ? QuerySlot::Kind::ROLE : QuerySlot::Kind::CONCEPT;
                                   slot.index = ygg::uint_t(argument.get_index());
                               });
@@ -118,7 +118,7 @@ QueryTranslator::YggQuery QueryTranslator::complement_argument(DlQuery complemen
 }
 
 template<typename Tag>
-QueryTranslator::YggQuery QueryTranslator::translate_concrete(DlQuery query, FamilyQueryView<Tag> concrete)
+QueryTranslator::YggQuery QueryTranslator::translate_concrete(DlQuery query, QueryView<Tag> concrete)
 {
     const auto& data = concrete.get_data();
     if constexpr (is_query_leaf_tag_v<Tag>)

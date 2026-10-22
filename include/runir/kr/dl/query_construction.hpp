@@ -45,9 +45,9 @@ inline void require_query_arity(size_t actual, size_t expected)
 void require_generic_join_order(std::string_view name,
                                 const ygg::IndexList<QueryColumn>& order,
                                 const std::vector<ygg::Index<QueryColumn>>& input_columns,
-                                const ConstructorRepositoryFor& repository);
+                                const ConstructorRepository& repository);
 
-const ygg::IndexList<QueryColumn>& get_query_columns(ygg::Index<Query<>> index, const ConstructorRepositoryFor& repository);
+const ygg::IndexList<QueryColumn>& get_query_columns(ygg::Index<Query<>> index, const ConstructorRepository& repository);
 
 template<typename T, typename Repository>
 void prepare(ygg::Data<T>&, const Repository&)
@@ -176,7 +176,7 @@ inline ygg::Builder<ygg::database::Columns> lifted_columns(size_t arity)
 }
 
 /// Constructing the plan rejects arguments whose arities are not k, 2k, k.
-void prepare(ygg::Data<Numerical<DistanceTag>>& data, const ConstructorRepositoryFor& repository);
+void prepare(ygg::Data<Numerical<DistanceTag>>& data, const ConstructorRepository& repository);
 
 }  // namespace runir::kr::dl::detail
 

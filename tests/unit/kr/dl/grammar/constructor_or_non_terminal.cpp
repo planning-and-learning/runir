@@ -28,17 +28,17 @@ concept IndexedDataView =
 template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
 {
-    return (IndexedDataView<Ts, kr::dl::grammar::ConstructorRepositoryFor> && ...);
+    return (IndexedDataView<Ts, kr::dl::grammar::ConstructorRepository> && ...);
 }
 
 template<typename Category>
 consteval bool view_alias()
 {
     using Entity = kr::dl::grammar::ConstructorOrNonTerminal<Category>;
-    using View = ygg::View<ygg::Index<Entity>, kr::dl::grammar::ConstructorRepositoryFor>;
-    static_assert(std::same_as<View, kr::dl::grammar::FamilyConstructorOrNonTerminalView<Category>>);
+    using View = ygg::View<ygg::Index<Entity>, kr::dl::grammar::ConstructorRepository>;
+    static_assert(std::same_as<View, kr::dl::grammar::ConstructorOrNonTerminalView<Category>>);
     if constexpr (false)
-        return std::same_as<View, kr::dl::grammar::BaseConstructorOrNonTerminalView<Category>>;
+        return std::same_as<View, kr::dl::grammar::ConstructorOrNonTerminalView<Category>>;
     else
         return true;
 }
@@ -49,7 +49,7 @@ consteval bool view_aliases(ygg::TypeList<Categories...>)
     return (view_alias<Categories>() && ...);
 }
 
-static_assert(indexed_data_views<>(kr::dl::grammar::FamilyConstructorOrNonTerminalTypes {}));
+static_assert(indexed_data_views<>(kr::dl::grammar::ConstructorOrNonTerminalTypes {}));
 static_assert(view_aliases<>(kr::dl::CategoryTags {}));
 
 }  // namespace

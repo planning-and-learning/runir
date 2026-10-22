@@ -23,10 +23,10 @@ concept IndexedDataView =
 template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
 {
-    return (IndexedDataView<Ts, kr::dl::ConstructorRepositoryFor> && ...);
+    return (IndexedDataView<Ts, kr::dl::ConstructorRepository> && ...);
 }
 
-static_assert(indexed_data_views<>(kr::dl::FamilyRoleTypes {}));
+static_assert(indexed_data_views<>(kr::dl::RoleTypes {}));
 
 using PredicateTags = ygg::TypeList<kr::dl::AtomicStateTag<tyr::formalism::StaticTag>,
                                     kr::dl::AtomicStateTag<tyr::formalism::FluentTag>,
@@ -43,17 +43,17 @@ consteval bool role_data_view()
 {
     using Entity = kr::dl::Role<Tag>;
     using Data = ygg::Data<Entity>;
-    using View = ygg::View<ygg::Index<Entity>, kr::dl::ConstructorRepositoryFor>;
+    using View = ygg::View<ygg::Index<Entity>, kr::dl::ConstructorRepository>;
 
     static_assert(!requires(const View& view) { view.get_columns(); });
     static_assert(!requires(const View& view) { view.get_plan(); });
-    static_assert(std::same_as<View, kr::dl::FamilyRoleView<Tag>>);
+    static_assert(std::same_as<View, kr::dl::RoleView<Tag>>);
     if constexpr (false)
-        static_assert(std::same_as<View, kr::dl::BaseRoleView<Tag>>);
+        static_assert(std::same_as<View, kr::dl::RoleView<Tag>>);
     else if constexpr (true)
-        static_assert(std::same_as<View, kr::dl::ExtRoleView<Tag>>);
+        static_assert(std::same_as<View, kr::dl::RoleView<Tag>>);
     else
-        static_assert(std::same_as<View, kr::dl::UnsRoleView<Tag>>);
+        static_assert(std::same_as<View, kr::dl::RoleView<Tag>>);
 
     if constexpr (std::same_as<Tag, kr::dl::UniversalTag>)
         return requires(Data& data, const View& view) {
@@ -99,7 +99,7 @@ consteval bool role_data_views(ygg::TypeList<Tags...>)
     return (role_data_view<Tags>() && ...);
 }
 
-static_assert(role_data_views<>(kr::dl::FamilyRoleConstructorTags {}));
+static_assert(role_data_views<>(kr::dl::RoleConstructorTags {}));
 
 }  // namespace
 
@@ -108,7 +108,7 @@ TEST(RunirKrDlRole, RoutesUnaryAndMixedBinaryData)
     using Concept = kr::dl::Constructor<kr::dl::ConceptTag>;
     using Role = kr::dl::Constructor<kr::dl::RoleTag>;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-    auto repository = kr::dl::ExtConstructorRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_repository);
 
     auto unary_data = ygg::Data<kr::dl::Role<kr::dl::InverseTag>>(ygg::Index<Role>(3));
     const auto unary = repository->insert(unary_data).first;

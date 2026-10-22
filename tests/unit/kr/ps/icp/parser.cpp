@@ -2,7 +2,7 @@
 
 #include <fmt/format.h>
 #include <gtest/gtest.h>
-#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
+#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/errors.hpp>
@@ -59,7 +59,7 @@ std::string replaced(std::string value, const std::string& from, const std::stri
 TEST(RunirTests, IcpParserRoundTripAndValidation)
 {
     const auto planning = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto constructors = kr::dl::ConstructorRepositoryFactoryFor().create(planning.get_repository());
+    auto constructors = kr::dl::ConstructorRepositoryFactory().create(planning.get_repository());
     auto repository = kr::ps::icp::RepositoryFactory().create(constructors);
     const auto parse = [&](const std::string& text) { return kr::ps::icp::dl::parse_module(text, planning.get_domain(), *repository); };
     const auto module = parse(policy);

@@ -27,10 +27,10 @@ concept IndexedDataView =
 template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
 {
-    return (IndexedDataView<Ts, kr::dl::cnf_grammar::ConstructorRepositoryFor> && ...);
+    return (IndexedDataView<Ts, kr::dl::cnf_grammar::ConstructorRepository> && ...);
 }
 
-static_assert(indexed_data_views<>(kr::dl::cnf_grammar::FamilyRoleTypes {}));
+static_assert(indexed_data_views<>(kr::dl::cnf_grammar::RoleTypes {}));
 
 using PredicateTags = ygg::TypeList<kr::dl::AtomicStateTag<tyr::formalism::StaticTag>,
                                     kr::dl::AtomicStateTag<tyr::formalism::FluentTag>,
@@ -47,11 +47,11 @@ consteval bool role_data_view()
 {
     using Entity = kr::dl::cnf_grammar::Role<Tag>;
     using Data = ygg::Data<Entity>;
-    using View = ygg::View<ygg::Index<Entity>, kr::dl::cnf_grammar::ConstructorRepositoryFor>;
+    using View = ygg::View<ygg::Index<Entity>, kr::dl::cnf_grammar::ConstructorRepository>;
 
-    static_assert(std::same_as<View, kr::dl::cnf_grammar::FamilyRoleView<Tag>>);
+    static_assert(std::same_as<View, kr::dl::cnf_grammar::RoleView<Tag>>);
     if constexpr (false)
-        static_assert(std::same_as<View, kr::dl::cnf_grammar::BaseRoleView<Tag>>);
+        static_assert(std::same_as<View, kr::dl::cnf_grammar::RoleView<Tag>>);
 
     if constexpr (std::same_as<Tag, kr::dl::UniversalTag>)
         return requires(Data& data, const View& view) {

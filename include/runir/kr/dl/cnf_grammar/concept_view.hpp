@@ -14,7 +14,7 @@ namespace ygg
 {
 
 template<typename Tag, formalism::SymbolContextFor<runir::kr::dl::cnf_grammar::Concept<Tag>> C>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Tag>
+    requires runir::kr::dl::ConceptConstructorTag<Tag>
 class View<Index<runir::kr::dl::cnf_grammar::Concept<Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::cnf_grammar::Concept<Tag>, C>
 {
 public:

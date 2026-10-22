@@ -58,7 +58,7 @@ private:
         requires std::same_as<std::invoke_result_t<Make&>, Feature>
     static Feature& find_or_make(std::deque<KeyedFeature<Feature>>& features,
                                  const std::shared_ptr<tyr::formalism::planning::Repository>& formalism,
-                                 const ConstructorRepositoryFor& constructors,
+                                 const ConstructorRepository& constructors,
                                  ygg::uint_t constructor,
                                  Make&& make)
     {
@@ -88,7 +88,7 @@ public:
     template<std::invocable Make>
         requires std::same_as<std::invoke_result_t<Make&>, FullDistanceFeature>
     FullDistanceFeature& get_distance_feature(const std::shared_ptr<tyr::formalism::planning::Repository>& formalism,
-                                              const ConstructorRepositoryFor& constructors,
+                                              const ConstructorRepository& constructors,
                                               ygg::uint_t constructor,
                                               Make&& make)
     {
@@ -98,7 +98,7 @@ public:
     template<std::invocable Make>
         requires std::same_as<std::invoke_result_t<Make&>, MustPassFeature>
     MustPassFeature& get_must_pass_feature(const std::shared_ptr<tyr::formalism::planning::Repository>& formalism,
-                                           const ConstructorRepositoryFor& constructors,
+                                           const ConstructorRepository& constructors,
                                            ygg::uint_t query,
                                            Make&& make)
     {

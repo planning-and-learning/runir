@@ -7,7 +7,7 @@
 #include <gtest/gtest.h>
 #include <limits>
 #include <optional>
-#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
+#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/object_rows.hpp>
 #include <runir/kr/dl/query_data.hpp>
 #include <runir/kr/dl/query_view.hpp>
@@ -17,7 +17,7 @@
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/evaluation.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
-#include <runir/kr/dl/semantics/ext/evaluation.hpp>
+#include <runir/kr/dl/semantics/state_evaluation.hpp>
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <stdexcept>
@@ -68,7 +68,7 @@ auto query_search_context()
         return make_lifted_context(directory / "domain.pddl", directory / "task.pddl");
 }
 
-auto parse_query(const std::string& expression, tyr::formalism::planning::DomainView domain, kr::dl::ConstructorRepositoryFor& repository)
+auto parse_query(const std::string& expression, tyr::formalism::planning::DomainView domain, kr::dl::ConstructorRepository& repository)
 {
     const auto count = kr::ps::ext::dl::parse_numerical("(n_count " + expression + ")", domain, repository);
     return count.get_variant().template get<ygg::Index<kr::dl::Numerical<kr::dl::CountTag>>>().get_arg().template get<ygg::Index<kr::dl::Query<>>>();
@@ -111,7 +111,7 @@ void check_queries()
     const auto search = query_search_context<Kind>();
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     const auto domain = search->task->get_domain().get_domain();
-    auto repository = kr::dl::ConstructorRepositoryFactoryFor().create(search->task->get_repository());
+    auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
@@ -372,7 +372,7 @@ void check_distance_queries()
     const auto search = query_search_context<Kind>();
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     const auto domain = search->task->get_domain().get_domain();
-    auto repository = kr::dl::ConstructorRepositoryFactoryFor().create(search->task->get_repository());
+    auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
@@ -500,7 +500,7 @@ void check_cached_queries()
 {
     const auto search = query_search_context<tyr::GroundTag>();
     const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
-    auto factory = kr::dl::ConstructorRepositoryFactoryFor();
+    auto factory = kr::dl::ConstructorRepositoryFactory();
     auto repository = factory.create(search->task->get_repository());
     auto other_repository = factory.create(search->task->get_repository());
     auto& repo = *repository;
@@ -803,7 +803,7 @@ void check_query_cache_across_states()
     const auto search = query_search_context<Kind>();
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     const auto domain = search->task->get_domain().get_domain();
-    auto repository = kr::dl::ConstructorRepositoryFactoryFor().create(search->task->get_repository());
+    auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
@@ -945,7 +945,7 @@ void check_query_cache_across_bindings()
     const auto search = query_search_context<Kind>();
     const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
     const auto domain = search->task->get_domain().get_domain();
-    auto repository = kr::dl::ConstructorRepositoryFactoryFor().create(search->task->get_repository());
+    auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
@@ -1077,7 +1077,7 @@ void check_predicate_repository_identity()
         ASSERT_NE(other, predicate);
         EXPECT_EQ(ygg::make_view(predicate.get_index(), *task->get_repository()), predicate);
     }
-    auto constructor_factory = kr::dl::ConstructorRepositoryFactoryFor();
+    auto constructor_factory = kr::dl::ConstructorRepositoryFactory();
     for (const auto& planning_repository : { domain.get_repository(), task->get_repository(), foreign })
     {
         const auto expected = planning_repository != foreign;
@@ -1146,7 +1146,7 @@ void check_query_object_views()
     ASSERT_TRUE(task);
     const auto search = datasets::TaskSearchContext<Kind>::create(task, execution);
     const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
-    auto constructors = kr::dl::ConstructorRepositoryFactoryFor().create(task->get_repository());
+    auto constructors = kr::dl::ConstructorRepositoryFactory().create(task->get_repository());
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(task->get_repository());
     auto builder = kr::dl::semantics::Builder {};
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
@@ -1219,7 +1219,7 @@ void check_multiword_bit_evaluation()
         ASSERT_EQ(domain.get_constants()[i].get_name(), name(i));
         ASSERT_EQ(ygg::uint_t(domain.get_constants()[i].get_index()), i);
     }
-    auto repository = kr::dl::ConstructorRepositoryFactoryFor().create(task->get_repository());
+    auto repository = kr::dl::ConstructorRepositoryFactory().create(task->get_repository());
     kr::dl::semantics::Builder builder;
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(task->get_repository());
     kr::dl::semantics::EvaluationStorage storage(denotations);
@@ -1290,7 +1290,7 @@ TEST(RunirQueries, GroundRelationsAndMutableBindings) { check_queries<tyr::Groun
 TEST(RunirQueries, LiftedRelationsAndMutableBindings) { check_queries<tyr::LiftedTag>(); }
 /// The previous evaluation: min_distance over fully evaluated sources, edges, and targets.
 template<tyr::TaskKind Kind, typename Context>
-ygg::uint_t reference_distance(kr::dl::FamilyConstructorView<kr::dl::NumericalTag> numerical, Context& context)
+ygg::uint_t reference_distance(kr::dl::ConstructorView<kr::dl::NumericalTag> numerical, Context& context)
 {
     return ygg::visit(
         [&]<typename Concrete>(Concrete concrete) -> ygg::uint_t
@@ -1324,7 +1324,7 @@ void check_distance_reuse_across_states()
     const auto successors = search->successor_generator->get_labeled_successor_nodes(initial, *search->state_repository, *search->axiom_evaluator);
     ASSERT_FALSE(successors.empty());
     const auto domain = search->task->get_domain().get_domain();
-    auto repository = kr::dl::ConstructorRepositoryFactoryFor().create(search->task->get_repository());
+    auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
@@ -1345,7 +1345,7 @@ void check_distance_reuse_across_states()
         "(n_distance " + pair("b") + " " + with_triple("c") + " " + pair("c") + ")",
         "(n_distance " + pair("a") + " (q_union " + with_triple("b") + " " + with_triple("c") + ") " + pair("c") + ")",
     };
-    auto numericals = std::vector<kr::dl::FamilyConstructorView<kr::dl::NumericalTag>>();
+    auto numericals = std::vector<kr::dl::ConstructorView<kr::dl::NumericalTag>>();
     for (const auto& expression : expressions)
         numericals.push_back(kr::ps::ext::dl::parse_numerical(expression, domain, *repository));
 
@@ -1379,7 +1379,7 @@ TEST(RunirQueries, StaticnessIsInferredAndSerializedWithoutChangingIdentity)
 {
     const auto search = query_search_context<tyr::GroundTag>();
     const auto domain = search->task->get_domain().get_domain();
-    auto repository = kr::dl::ConstructorRepositoryFactoryFor().create(search->task->get_repository());
+    auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
     const auto fixed = std::string(R"((q_atomic_state "fixed" (x y z)))");
     const auto triple = std::string(R"((q_atomic_state "triple" (x y z)))");
     const auto cases = std::vector<std::pair<std::string, bool>> {
@@ -1445,7 +1445,7 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     const auto search = query_search_context<tyr::GroundTag>();
     const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
     const auto domain = search->task->get_domain().get_domain();
-    auto repository = kr::dl::ConstructorRepositoryFactoryFor().create(search->task->get_repository());
+    auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
@@ -1562,7 +1562,7 @@ TEST(RunirQueries, PersistentRenameSurvivesIntermediateResetAndConstructorReleas
     const auto search = query_search_context<tyr::GroundTag>();
     const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
     const auto domain = search->task->get_domain().get_domain();
-    auto constructors = kr::dl::ConstructorRepositoryFactoryFor().create(search->task->get_repository());
+    auto constructors = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder {};
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto intermediates = kr::dl::semantics::EvaluationStorage(denotations);

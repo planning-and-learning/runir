@@ -26,11 +26,8 @@ using EvaluationIndex = ygg::Index<Evaluation<Category>>;
 using QueryEvaluationIndex = ygg::Index<QueryEvaluation>;
 
 /// Borrowed feature or query expression supplied when constructing a graph.
-using EvaluationRoot = std::variant<FamilyConstructorView<ConceptTag>,
-                                    FamilyConstructorView<RoleTag>,
-                                    FamilyConstructorView<BooleanTag>,
-                                    FamilyConstructorView<NumericalTag>,
-                                    FamilyQueryView<>>;
+using EvaluationRoot =
+    std::variant<ConstructorView<ConceptTag>, ConstructorView<RoleTag>, ConstructorView<BooleanTag>, ConstructorView<NumericalTag>, QueryView<>>;
 
 template<tyr::TaskKind Kind>
 class EvaluationGraph;

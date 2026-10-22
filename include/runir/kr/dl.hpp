@@ -7,7 +7,6 @@
 #include "runir/kr/dl/cnf_grammar/generate.hpp"
 #include "runir/kr/dl/cnf_grammar/grammar.hpp"
 #include "runir/kr/dl/cnf_grammar/views.hpp"
-#include "runir/kr/dl/constructors.hpp"
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/grammar/declarations.hpp"
 #include "runir/kr/dl/grammar/grammar.hpp"

@@ -186,7 +186,7 @@ TEST(RunirTests, LookupErrorsPreserveIdentifierSpansAcrossLanguages)
     const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
     const auto domain = planning_domain.get_domain();
     const auto context = kr::DomainContext::create(planning_domain);
-    const auto grammar_repository = kr::dl::grammar::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
+    const auto grammar_repository = kr::dl::grammar::ConstructorRepositoryFactory().create(planning_domain.get_repository());
     const auto prefix = std::string("; UTF-8 é\n");
     for (const auto& [expression, name, message] : {
              std::tuple { "(c_atomic_state \"missing\")", "missing", "Undefined predicate: missing" },

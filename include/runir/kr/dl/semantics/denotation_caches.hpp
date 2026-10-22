@@ -20,9 +20,9 @@ namespace runir::kr::dl::semantics
 class DenotationCaches
 {
     template<CategoryTag Category>
-    using Cache = ygg::UnorderedMap<FamilyConstructorView<Category>, DenotationView<Category>>;
+    using Cache = ygg::UnorderedMap<ConstructorView<Category>, DenotationView<Category>>;
 
-    using QueryCache = ygg::UnorderedMap<FamilyQueryView<>, QueryDenotationView>;
+    using QueryCache = ygg::UnorderedMap<QueryView<>, QueryDenotationView>;
 
     struct Partition
     {

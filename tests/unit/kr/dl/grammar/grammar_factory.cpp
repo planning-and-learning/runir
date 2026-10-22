@@ -43,7 +43,7 @@ TEST(RunirTests, GrammarFactoryFixturesMatch)
         const auto& test_case = ygg::common::as_object(value, "case");
         const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path(ygg::common::as_string(test_case, "domain_file", "case"))).get_domain();
         const auto domain = planning_domain.get_domain();
-        auto repository = kr::dl::grammar::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
+        auto repository = kr::dl::grammar::ConstructorRepositoryFactory().create(planning_domain.get_repository());
         const auto grammar = kr::dl::grammar::GrammarFactory::create(kr::dl::grammar::GrammarSpecification::FRANCE_ET_AL_AAAI2021, domain, *repository);
         const auto formatted = fmt::format("{}", grammar);
         EXPECT_EQ(formatted, read_fixture(ygg::common::as_string(test_case, "grammar_file", "case")));
@@ -53,7 +53,7 @@ TEST(RunirTests, GrammarFactoryFixturesMatch)
         EXPECT_EQ(reparsed_grammar.get_index(), grammar.get_index());
         EXPECT_EQ(grammar.get_context().template size<GrammarTag>(), 1);
 
-        auto cnf_repository = kr::dl::cnf_grammar::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
+        auto cnf_repository = kr::dl::cnf_grammar::ConstructorRepositoryFactory().create(planning_domain.get_repository());
         const auto cnf = kr::dl::cnf_grammar::translate(grammar, *cnf_repository);
         const auto cnf_formatted = fmt::format("{}", cnf);
         EXPECT_EQ(cnf_formatted, read_fixture(ygg::common::as_string(test_case, "cnf_file", "case")));
@@ -68,7 +68,7 @@ TEST(RunirTests, GrammarFactoryHandlesBooleanPrimitivePredicates)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/ferry/domain.pddl")).get_domain();
     const auto domain = planning_domain.get_domain();
-    auto repository = kr::dl::grammar::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
+    auto repository = kr::dl::grammar::ConstructorRepositoryFactory().create(planning_domain.get_repository());
     const auto grammar = kr::dl::grammar::GrammarFactory::create(kr::dl::grammar::GrammarSpecification::FRANCE_ET_AL_AAAI2021, domain, *repository);
     const auto formatted = fmt::format("{}", grammar);
 
@@ -76,7 +76,7 @@ TEST(RunirTests, GrammarFactoryHandlesBooleanPrimitivePredicates)
     EXPECT_NE(formatted.find("(b_atomic_state \"empty-ferry\" false)"), std::string::npos);
     EXPECT_EQ(grammar, kr::dl::grammar::parse_grammar(formatted, domain, *repository));
 
-    auto cnf_repository = kr::dl::cnf_grammar::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
+    auto cnf_repository = kr::dl::cnf_grammar::ConstructorRepositoryFactory().create(planning_domain.get_repository());
     const auto cnf = kr::dl::cnf_grammar::translate(grammar, *cnf_repository);
     const auto cnf_formatted = fmt::format("{}", cnf);
     const auto reparsed = kr::dl::grammar::parse_grammar(cnf_formatted, domain, *repository);

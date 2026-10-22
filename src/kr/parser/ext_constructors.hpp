@@ -48,7 +48,7 @@ struct ConstructorContext
 {
     using Target = runir::kr::parser::constructors::SemanticTarget;
 
-    runir::kr::dl::ConstructorRepositoryFor& repository;
+    runir::kr::dl::ConstructorRepository& repository;
     runir::kr::dl::Builder& builder;
     const runir::kr::parser::DiagnosticContext& diagnostics;
     const ModuleReferences* references;
@@ -74,10 +74,10 @@ void require_arguments(const Node& node, const ConstructorContext& context)
 template<runir::kr::dl::CategoryTag Category>
 inline auto parse(const runir::kr::dl::grammar::ast::ConstructorOrNonTerminal<Category>& node,
                   tyr::formalism::planning::DomainView domain,
-                  const ConstructorContext& context) -> runir::kr::dl::FamilyConstructorView<Category>
+                  const ConstructorContext& context) -> runir::kr::dl::ConstructorView<Category>
 {
     return boost::apply_visitor(
-        [&]<typename Value>(const Value& value) -> runir::kr::dl::FamilyConstructorView<Category>
+        [&]<typename Value>(const Value& value) -> runir::kr::dl::ConstructorView<Category>
         {
             const auto& unwrapped = unwrap(value);
             if constexpr (std::same_as<Unwrapped<Value>, runir::kr::dl::grammar::ast::NonTerminal<Category>>)

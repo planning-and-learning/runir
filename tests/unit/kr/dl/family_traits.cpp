@@ -19,9 +19,9 @@ namespace
 
 consteval bool distinct_repository_contexts()
 {
-    return !std::same_as<kr::dl::ConstructorRepositoryFor, kr::dl::grammar::ConstructorRepositoryFor>
-           && !std::same_as<kr::dl::ConstructorRepositoryFor, kr::dl::cnf_grammar::ConstructorRepositoryFor>
-           && !std::same_as<kr::dl::grammar::ConstructorRepositoryFor, kr::dl::cnf_grammar::ConstructorRepositoryFor>;
+    return !std::same_as<kr::dl::ConstructorRepository, kr::dl::grammar::ConstructorRepository>
+           && !std::same_as<kr::dl::ConstructorRepository, kr::dl::cnf_grammar::ConstructorRepository>
+           && !std::same_as<kr::dl::grammar::ConstructorRepository, kr::dl::cnf_grammar::ConstructorRepository>;
 }
 
 static_assert(distinct_repository_contexts());
@@ -74,17 +74,17 @@ static_assert(!QueryProjectionCategory<kr::dl::BooleanTag> && !QueryProjectionCa
 
 template<typename Kind>
 concept GeneratesConstructors =
-    requires(kr::dl::cnf_grammar::FamilyGrammarView grammar,
+    requires(kr::dl::cnf_grammar::GrammarView grammar,
              const std::vector<tyr::planning::PackedStateView<Kind>>& states,
-             kr::dl::ConstructorRepositoryFor& constructors,
+             kr::dl::ConstructorRepository& constructors,
              kr::dl::semantics::DenotationRepository& denotations,
              const kr::dl::cnf_grammar::GenerateOptions& options) { kr::dl::cnf_grammar::generate<Kind>(grammar, states, constructors, denotations, options); };
 
 static_assert(GeneratesConstructors<tyr::GroundTag>);
 static_assert(GeneratesConstructors<tyr::LiftedTag>);
 
-static_assert(kr::dl::FamilyNumericalConstructorTag<kr::dl::AddTag>);
-static_assert(kr::dl::FamilyConceptConstructorTag<kr::dl::RegisterTag>);
+static_assert(kr::dl::NumericalConstructorTag<kr::dl::AddTag>);
+static_assert(kr::dl::ConceptConstructorTag<kr::dl::RegisterTag>);
 
 consteval bool can_checkout_constructors()
 {
@@ -100,8 +100,8 @@ static_assert(can_checkout_constructors());
 template<typename B>
 concept SemanticCheckout = requires(B& builder) { kr::dl::checkout<kr::dl::Concept<kr::dl::TopTag>>(builder); };
 
-static_assert(!SemanticCheckout<kr::dl::grammar::BaseBuilder>);
-static_assert(!SemanticCheckout<kr::dl::cnf_grammar::BaseBuilder>);
+static_assert(!SemanticCheckout<kr::dl::grammar::Builder>);
+static_assert(!SemanticCheckout<kr::dl::cnf_grammar::Builder>);
 
 }  // namespace
 }  // namespace runir::tests

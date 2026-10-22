@@ -2,7 +2,7 @@
 #define RUNIR_SEMANTICS_ROLE_VIEW_HPP_
 
 #include "runir/kr/dl/argument_view.hpp"
-#include "runir/kr/dl/constructors.hpp"
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/register_view.hpp"
 #include "runir/kr/dl/role_data.hpp"
 
@@ -15,12 +15,12 @@
 namespace ygg
 {
 
-template<typename Tag, formalism::SymbolContextFor<runir::kr::dl::FamilyRole<Tag>> C>
-    requires runir::kr::dl::FamilyRoleConstructorTag<Tag>
-class View<Index<runir::kr::dl::FamilyRole<Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::FamilyRole<Tag>, C>
+template<typename Tag, formalism::SymbolContextFor<runir::kr::dl::Role<Tag>> C>
+    requires runir::kr::dl::RoleConstructorTag<Tag>
+class View<Index<runir::kr::dl::Role<Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::Role<Tag>, C>
 {
 public:
-    using ygg::IndexViewBase<runir::kr::dl::FamilyRole<Tag>, C>::IndexViewBase;
+    using ygg::IndexViewBase<runir::kr::dl::Role<Tag>, C>::IndexViewBase;
 
     auto get_predicate() const noexcept
         requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)

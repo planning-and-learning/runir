@@ -114,6 +114,6 @@ template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Query<void>>
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::QueryProjection<runir::kr::dl::ConceptTag>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::QueryProjection<runir::kr::dl::RoleTag>>;
 
-static_assert(runir::kr::detail::InternsData<runir::kr::dl::ConstructorRepositoryFor, runir::kr::dl::Concept<runir::kr::dl::TopTag>>);
-static_assert(runir::kr::detail::rejects_symbol<runir::kr::dl::ConstructorRepositoryFor, runir::kr::dl::grammar::Concept<runir::kr::dl::TopTag>>());
+static_assert(runir::kr::detail::InternsData<runir::kr::dl::ConstructorRepository, runir::kr::dl::Concept<runir::kr::dl::TopTag>>);
+static_assert(runir::kr::detail::rejects_symbol<runir::kr::dl::ConstructorRepository, runir::kr::dl::grammar::Concept<runir::kr::dl::TopTag>>());
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::QueryColumn>;

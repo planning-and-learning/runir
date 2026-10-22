@@ -62,7 +62,7 @@ void prepare(ygg::Data<Constructor<Category>>& data, const Repository& repositor
     data.is_static = std::visit([&](auto index) { return infer_is_static(ygg::make_view(index, repository)); }, data.variant);
 }
 
-void prepare(ygg::Data<Query<>>& data, const ConstructorRepositoryFor& repository);
+void prepare(ygg::Data<Query<>>& data, const ConstructorRepository& repository);
 
 }  // namespace runir::kr::dl::detail
 

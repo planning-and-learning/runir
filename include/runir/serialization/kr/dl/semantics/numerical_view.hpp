@@ -11,7 +11,7 @@ namespace ygg::serialization
 {
 
 template<typename Archive, typename Tag, typename C>
-    requires runir::kr::dl::FamilyNumericalConstructorTag<Tag>
+    requires runir::kr::dl::NumericalConstructorTag<Tag>
 void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Numerical<Tag>>, C>>)
 {
     using Value = View<Index<runir::kr::dl::Numerical<Tag>>, C>;

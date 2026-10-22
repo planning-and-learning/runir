@@ -6,6 +6,6 @@
 namespace runir::serialization
 {
 
-void bind_kr_dl_concept(nb::module_& m) { bind_entity_types(m, DlComponentViews<kr::dl::FamilyConceptTypes> {}); }
+void bind_kr_dl_concept(nb::module_& m) { bind_entity_types(m, DlComponentViews<kr::dl::ConceptTypes> {}); }
 
 }  // namespace runir::serialization

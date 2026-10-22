@@ -3,7 +3,7 @@
 #include "pyrunir/kr/ps/dl/optimization_bindings.hpp"
 
 #include <nanobind/stl/vector.h>
-#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
+#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/ext/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
@@ -24,7 +24,7 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
     using Data = ygg::Data<T>;
     using View = ygg::View<ygg::Index<T>, Repository>;
     ygg::bind_index<ygg::Index<T>>(m, "ModuleIndex");
-    using DlRepository = runir::kr::dl::ConstructorRepositoryFor;
+    using DlRepository = runir::kr::dl::ConstructorRepository;
     auto data =
         nb::class_<Data>(m, "ModuleData")
             .def(nb::init<>())

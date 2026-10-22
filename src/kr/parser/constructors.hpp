@@ -34,7 +34,7 @@ struct SemanticTarget
     using Constructor = runir::kr::dl::Constructor<Category>;
 
     template<runir::kr::dl::CategoryTag Category>
-    using ConstructorView = runir::kr::dl::FamilyConstructorView<Category>;
+    using ConstructorView = runir::kr::dl::ConstructorView<Category>;
 };
 
 struct GrammarTarget
@@ -55,7 +55,7 @@ struct GrammarTarget
     using Constructor = runir::kr::dl::grammar::Constructor<Category>;
 
     template<runir::kr::dl::CategoryTag Category>
-    using ConstructorView = runir::kr::dl::grammar::FamilyConstructorView<Category>;
+    using ConstructorView = runir::kr::dl::grammar::ConstructorView<Category>;
 };
 
 template<typename Context, typename Tag>
@@ -122,7 +122,7 @@ template<runir::kr::dl::CategoryTag Category, typename Context>
 auto parse_constructor(const runir::kr::dl::grammar::ast::Constructor<Category>& node, tyr::formalism::planning::DomainView domain, const Context& context) ->
     typename Context::Target::template ConstructorView<Category>;
 
-using QueryView = runir::kr::dl::FamilyQueryView<>;
+using QueryView = runir::kr::dl::QueryView<>;
 
 template<typename Tag, typename Context>
 auto intern_query(const Context& context, ygg::Index<runir::kr::dl::Query<Tag>> index)

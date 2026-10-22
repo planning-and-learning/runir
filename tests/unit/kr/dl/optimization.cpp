@@ -5,14 +5,14 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include <ranges>
-#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
+#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/optimization.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/evaluation.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
-#include <runir/kr/dl/semantics/ext/evaluation.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
+#include <runir/kr/dl/semantics/state_evaluation.hpp>
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <string>
@@ -37,7 +37,7 @@ void check_optimized_queries()
             return make_lifted_context(directory / "domain.pddl", directory / "task.pddl");
     }();
     const auto domain = search->task->get_domain().get_domain();
-    auto repository = kr::dl::ConstructorRepositoryFactoryFor().create(search->task->get_repository());
+    auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
 
     // Sample states: the initial state and its successors (removing triples).
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);

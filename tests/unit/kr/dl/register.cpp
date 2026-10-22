@@ -42,10 +42,10 @@ consteval bool identifiers(ygg::TypeList<Ts...>)
 template<typename... Categories>
 consteval bool view_aliases(ygg::TypeList<Categories...>)
 {
-    return (std::same_as<kr::dl::RegisterView<Categories>, ygg::View<ygg::Index<kr::dl::Register<Categories>>, kr::dl::ExtConstructorRepository>> && ...);
+    return (std::same_as<kr::dl::RegisterView<Categories>, ygg::View<ygg::Index<kr::dl::Register<Categories>>, kr::dl::ConstructorRepository>> && ...);
 }
 
-static_assert(indexed_data_views<kr::dl::ExtConstructorRepository>(RegisterTypes {}));
+static_assert(indexed_data_views<kr::dl::ConstructorRepository>(RegisterTypes {}));
 static_assert(identifiers(RegisterIdentifierTypes {}));
 static_assert(view_aliases(ygg::TypeList<kr::dl::ConceptTag, kr::dl::RoleTag> {}));
 
@@ -54,7 +54,7 @@ static_assert(view_aliases(ygg::TypeList<kr::dl::ConceptTag, kr::dl::RoleTag> {}
 TEST(RunirKrDlRegister, ExposesNameAndUnboundedIdentifier)
 {
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-    auto repository = kr::dl::ExtConstructorRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_repository);
     auto data = ygg::Data<kr::dl::Register<kr::dl::RoleTag>>(std::string("target"), kr::dl::RegisterIdentifier<kr::dl::RoleTag>(1024));
     const auto reg = repository->insert(data).first;
 

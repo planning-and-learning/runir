@@ -2,10 +2,10 @@
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_EVALUATORS_MUST_PASS_HPP_
 
 #include "runir/kr/dl/semantics/distance_evaluation.hpp"
-#include "runir/kr/dl/semantics/ext/evaluation.hpp"
 #include "runir/kr/dl/semantics/incremental/declarations.hpp"
 #include "runir/kr/dl/semantics/incremental/delta.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/query.hpp"
+#include "runir/kr/dl/semantics/state_evaluation.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -31,7 +31,7 @@ struct QueryMustPassEvaluator : QueryValue
     ygg::Builder<ygg::database::Relation> computed;  ///< The recomputed result; kept to avoid allocations.
     std::vector<std::byte> removed;                                ///< Rows of the previous result that are gone.
 
-    QueryMustPassEvaluator(FamilyQueryView<QueryMustPassTag> expression, GraphBuilder<Kind>& graph, std::vector<ygg::uint_t>& dependencies) :
+    QueryMustPassEvaluator(QueryView<QueryMustPassTag> expression, GraphBuilder<Kind>& graph, std::vector<ygg::uint_t>& dependencies) :
         QueryValue(expression.get_schema().span()),
         sources(graph.prepare(expression.get_sources(), dependencies)),
         targets(graph.prepare(expression.get_targets(), dependencies)),

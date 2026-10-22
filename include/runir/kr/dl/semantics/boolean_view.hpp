@@ -3,7 +3,6 @@
 
 #include "runir/kr/dl/argument_view.hpp"
 #include "runir/kr/dl/boolean_data.hpp"
-#include "runir/kr/dl/constructors.hpp"
 #include "runir/kr/dl/declarations.hpp"
 
 #include <concepts>
@@ -16,12 +15,12 @@
 namespace ygg
 {
 
-template<typename Tag, formalism::SymbolContextFor<runir::kr::dl::FamilyBoolean<Tag>> C>
-    requires runir::kr::dl::FamilyBooleanConstructorTag<Tag>
-class View<Index<runir::kr::dl::FamilyBoolean<Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::FamilyBoolean<Tag>, C>
+template<typename Tag, formalism::SymbolContextFor<runir::kr::dl::Boolean<Tag>> C>
+    requires runir::kr::dl::BooleanConstructorTag<Tag>
+class View<Index<runir::kr::dl::Boolean<Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::Boolean<Tag>, C>
 {
 public:
-    using ygg::IndexViewBase<runir::kr::dl::FamilyBoolean<Tag>, C>::IndexViewBase;
+    using ygg::IndexViewBase<runir::kr::dl::Boolean<Tag>, C>::IndexViewBase;
 
     auto get_predicate() const noexcept
         requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)

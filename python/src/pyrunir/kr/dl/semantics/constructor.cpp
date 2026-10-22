@@ -3,7 +3,7 @@
 #include <nanobind/stl/variant.h>
 #include <pyrunir/kr/dl/evaluation_bindings.hpp>
 #include <pyrunir/kr/dl/optimization_bindings.hpp>
-#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
+#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/constructor_view.hpp>
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
@@ -25,7 +25,7 @@ void bind_constructor_data(nb::module_& m, const char* name)
     auto cls = nb::class_<Data>(m, name)
                    .def(nb::init<>())
                    .def(nb::init<DataVariant<Data>>(), nb::arg("variant"))
-                   .def(nb::init<DataViewVariant<Data, runir::kr::dl::ExtConstructorRepository>>(), nb::arg("variant"))
+                   .def(nb::init<DataViewVariant<Data, runir::kr::dl::ConstructorRepository>>(), nb::arg("variant"))
                    .def_rw("index", &Data::index)
                    .def_rw("variant", &Data::variant)
                    .def_rw("is_static", &Data::is_static);
@@ -36,7 +36,7 @@ template<CategoryTag Category>
 void bind_constructor_view(nb::module_& m, const char* name)
 {
     using Type = Constructor<Category>;
-    using View = ygg::View<ygg::Index<Type>, ExtConstructorRepository>;
+    using View = ygg::View<ygg::Index<Type>, ConstructorRepository>;
     auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index).def("get_variant", &View::get_variant, nb::keep_alive<0, 1>());
     ygg::add_print(cls);
     ygg::add_comparison(cls);
