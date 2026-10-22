@@ -6,9 +6,9 @@ from typing import TypedDict, cast
 
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
-from pyrunir.kr.dl import base
-from pyrunir.kr.dl.base import cnf_grammar
-from pyrunir.kr.dl.base.grammar import ConstructorRepositoryFactory, GrammarFactory, GrammarSpecification
+from pyrunir.kr.dl.grammar import parse_grammar
+from pyrunir.kr.dl import cnf_grammar
+from pyrunir.kr.dl.grammar import ConstructorRepositoryFactory, GrammarFactory, GrammarSpecification
 from pytyr.formalism.planning import Parser
 
 
@@ -38,7 +38,7 @@ def main() -> None:
         (ROOT / "tests/fixtures" / case["grammar_file"]).write_text(grammar_text, encoding="utf-8")
 
         cnf_repository = cnf_grammar.ConstructorRepositoryFactory().create(planning_domain)
-        cnf_text = str(cnf_grammar.translate(base.parse_grammar(grammar_text, domain, repository), cnf_repository))
+        cnf_text = str(cnf_grammar.translate(parse_grammar(grammar_text, domain, repository), cnf_repository))
         (ROOT / "tests/fixtures" / case["cnf_file"]).write_text(cnf_text, encoding="utf-8")
 
 

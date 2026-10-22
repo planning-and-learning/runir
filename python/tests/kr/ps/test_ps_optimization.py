@@ -7,9 +7,7 @@ from pyyggdrasil.execution import ExecutionContext
 
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext, LiftedTaskContext
-from pyrunir.kr.dl.base import semantics
-from pyrunir.kr.dl.ext import semantics as ext_semantics
-from pyrunir.kr.dl.uns import semantics as uns_semantics
+from pyrunir.kr.dl import semantics
 from pyrunir.kr.ps import icp
 from pyrunir.kr.ps.base.dl import parse_sketch
 from pyrunir.kr.ps.ext.dl import parse_program
@@ -71,8 +69,8 @@ def test_ext_program(gripper_planning_domain, ground_gripper_search_context):
         task.dl_denotation_repository.insert(semantics.CallArgumentsData())[0],
         task.dl_denotation_repository.insert(semantics.RegisterValuesData())[0],
     )
-    context = ext_semantics.GroundStateEvaluationContext(
-        state, task.dl_builder, ext_semantics.EvaluationStorage(task.dl_denotation_repository), *bindings
+    context = semantics.GroundStateEvaluationContext(
+        state, task.dl_builder, semantics.EvaluationStorage(task.dl_denotation_repository), *bindings
     )
     source = (
         "(:program (:entry root) (:module (:symbol root) (:arguments) (:registers) (:entry m0) (:memory m0) "
@@ -156,8 +154,8 @@ def test_icp_program(kind):
 
 def test_uns_classifier(gripper_planning_domain, ground_gripper_search_context):
     domain, task, state = _ground(gripper_planning_domain, ground_gripper_search_context)
-    context = uns_semantics.GroundStateEvaluationContext(
-        state, task.dl_builder, uns_semantics.EvaluationStorage(task.dl_denotation_repository)
+    context = semantics.GroundStateEvaluationContext(
+        state, task.dl_builder, semantics.EvaluationStorage(task.dl_denotation_repository)
     )
     source = (
         f"(:classifier (:symbol root) (:features (:boolean (:symbol located) (:expression (b_nonempty {_LOCATED})))) "

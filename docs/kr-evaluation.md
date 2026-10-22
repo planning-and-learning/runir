@@ -122,13 +122,13 @@ Ext and ICP execution builders. The semantic builder exposes raw `Data`
 acquisition as `get_data<T>()`; its `get_builder<T>(...)` initializes mutable
 denotation or relation builders instead.
 
-For example, Python Ext evaluation with scratch ownership is:
+For example, Python evaluation of a module expression with scratch ownership is:
 
 ```python
-from pyrunir.kr.dl.ext import semantics as ext_sem
+from pyrunir.kr.dl import semantics
 
-scratch = ext_sem.EvaluationStorage(denotation_repository)
-context = ext_sem.GroundStateEvaluationContext(
+scratch = semantics.EvaluationStorage(denotation_repository)
+context = semantics.GroundStateEvaluationContext(
     state, builder, scratch, arguments, registers
 )
 value = expression.evaluate(context)
@@ -183,10 +183,10 @@ retaining every intermediate result. Pass separate root caches, the durable
 repository, and intermediate storage directly:
 
 ```python
-from pyrunir.kr.dl.ext import semantics as ext_sem
+from pyrunir.kr.dl import semantics
 
-root_memo = ext_sem.DenotationCaches()
-context = ext_sem.GroundStateEvaluationContext(
+root_memo = semantics.DenotationCaches()
+context = semantics.GroundStateEvaluationContext(
     state, builder, root_memo, denotation_repository, scratch, arguments, registers
 )
 value = expression.evaluate(context)
@@ -211,9 +211,8 @@ Other child results can remain in scratch storage.
 
 `DenotationRepository::get_relation_repository()` exposes its Yggdrasil relation
 storage of typed object indices. Python exposes it as
-`pyrunir.kr.dl.base.semantics.QueryDenotationRepository`;
-`rename(query, columns)` returns a `QueryDenotation` with the same planning and
-storage context, retaining both Python owners. Query result identity consists of
+`pyyggdrasil.database.RelationRepository`, and query results as
+`pyyggdrasil.database.RelationView`. Query result identity consists of
 the ordered numeric column schema and row set. Equal schemas and rows share a result even when different constructor
 repositories produced them; variable names remain on the query expressions.
 Inserting the same rows in another order produces the same identity. Canonical

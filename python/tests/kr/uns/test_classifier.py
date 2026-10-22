@@ -5,7 +5,7 @@ import pytest
 
 from fixture_utils import load_fixture, read_fixture
 from pyrunir.kr import DomainContext, GroundTaskContext, SemanticError
-from pyrunir.kr.dl.uns import semantics
+from pyrunir.kr.dl import semantics
 from pyrunir.kr.uns import classify
 from pyrunir.kr.uns.dl import BooleanFeature, ConcreteBooleanFeature, parse_classifier
 from pytyr.formalism.planning import PlanningDomain

@@ -2,9 +2,7 @@ import gc
 import pytest
 
 from pyrunir.kr import DomainContext, GroundTaskContext, UndefinedSymbolError
-from pyrunir.kr.dl.base import semantics
-from pyrunir.kr.dl.ext import semantics as ext_semantics
-from pyrunir.kr.dl.uns import semantics as uns_semantics
+from pyrunir.kr.dl import semantics
 from pyrunir.kr.ps.base.dl import parse_sketch
 from pyrunir.kr.ps.ext.dl import parse_program
 from pyrunir.kr.uns.dl import parse_classifier
@@ -48,7 +46,7 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
             context.ext_repository,
         )
         expression = owner.get_entry_module().get_boolean_features()[0].get_expression()
-        module = ext_semantics
+        module = semantics
     else:
         owner = parse_classifier(
             f"(:classifier (:symbol root) (:features {feature}) (:expression (or (and value))))",
@@ -56,7 +54,7 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
             context.uns_repository,
         )
         expression = owner.get_features()[0].get_expression()
-        module = uns_semantics
+        module = semantics
 
     task = GroundTaskContext(context, ground_gripper_search_context)
     state = ground_gripper_search_context.state_repository.get_initial_state(ground_gripper_search_context.axiom_evaluator)
@@ -199,7 +197,7 @@ def test_query_program_round_trip_preserves_named_references(gripper_planning_do
     query = worker.get_concept_features()[0].get_expression().get_variant().get_arg()
     assert [column.get_name() for column in query.get_columns()] == ["ball", "room"]
     assert [column.get_name() for column in query.get_variant().get_columns()] == ["ball", "room"]
-    assert list(ext_semantics.QueryJoin.Fields.__members__) == ["columns", "lhs", "rhs"]
+    assert list(semantics.QueryJoin.Fields.__members__) == ["columns", "lhs", "rhs"]
 
 
 @pytest.mark.parametrize("reference, missing, kind", [
@@ -316,7 +314,7 @@ def test_concept_and_role_projection_bindings(gripper_planning_domain, ground_gr
     assert saved_boolean.get() is True
 
 
-@pytest.mark.parametrize("module", [semantics, ext_semantics, uns_semantics], ids=["base", "ext", "uns"])
+@pytest.mark.parametrize("module", [semantics], ids=["dl"])
 @pytest.mark.parametrize("owner_kind", ["query", "concrete", "concept", "role"])
 def test_query_column_retains_owner_after_list_and_repository_scope(gripper_planning_domain, module, owner_kind):
     def column_after_owner_scope():
@@ -376,28 +374,28 @@ def test_native_ext_query_construction_derives_schema_and_evaluates(
     )
     expression = program.get_entry_module().get_numerical_features()[0].get_expression()
     original = expression.get_variant().get_arg().get_variant()
-    join_data = ext_semantics.QueryJoinData()
+    join_data = semantics.QueryJoinData()
     join_data.lhs = original.get_rhs().get_index()
     join_data.rhs = original.get_lhs().get_index()
     joined = repository.insert(join_data)[0]
     assert [column.get_name() for column in joined.get_columns()] == ["room", "ball"]
-    query_data = ext_semantics.QueryData()
+    query_data = semantics.QueryData()
     query_data.variant = joined.get_index()
     query = repository.insert(query_data)[0]
-    count_data = ext_semantics.NumericalCountData()
+    count_data = semantics.NumericalCountData()
     count_data.arg = query.get_index()
     count = repository.insert(count_data)[0]
-    numerical_data = ext_semantics.NumericalData()
+    numerical_data = semantics.NumericalData()
     numerical_data.variant = count.get_index()
     rewritten = repository.insert(numerical_data)[0]
 
     search = ground_gripper_search_context
     task = GroundTaskContext(domain, search)
     state = search.state_repository.get_initial_state(search.axiom_evaluator)
-    storage = ext_semantics.EvaluationStorage(task.dl_denotation_repository)
+    storage = semantics.EvaluationStorage(task.dl_denotation_repository)
     arguments = task.dl_denotation_repository.insert(semantics.CallArgumentsData())[0]
     registers = task.dl_denotation_repository.insert(semantics.RegisterValuesData())[0]
-    context = ext_semantics.GroundStateEvaluationContext(
+    context = semantics.GroundStateEvaluationContext(
         state, task.dl_builder, storage, arguments, registers
     )
     assert rewritten.evaluate(context).get() == expression.evaluate(context).get() == 2

@@ -37,7 +37,7 @@ TEST(RunirTests, PolicyBaseParserNegativeFixtures)
 {
     const auto planning_domain = parse_gripper_domain();
     const auto domain = planning_domain.get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     const auto suite = load_fixture_json("kr/ps/parser_negative.json");
     const auto& cases = ygg::common::as_array(ygg::common::require_member(ygg::common::as_object(suite, "suite"), "cases", "suite"), "suite.cases");
@@ -58,7 +58,7 @@ TEST(RunirTests, PolicyParserSemanticErrorPointsAtExactIdentifier)
 {
     const auto planning_domain = parse_gripper_domain();
     const auto domain = planning_domain.get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     const auto description = read_fixture("kr/ps/parser/base_duplicate_feature.sketch");
     const auto first_same = description.find("same");
@@ -83,6 +83,29 @@ TEST(RunirTests, PolicyParserSemanticErrorPointsAtExactIdentifier)
         EXPECT_EQ(error.diagnostic().location->begin(), second_same);
         EXPECT_EQ(error.diagnostic().location->end(), second_same + 4);
         EXPECT_EQ(error.diagnostic().location->column(), column + 1);
+    }
+}
+
+TEST(RunirTests, PolicyBaseParserRejectsRegistersAndArguments)
+{
+    const auto planning_domain = parse_gripper_domain();
+    const auto domain = planning_domain.get_domain();
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
+    auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
+
+    for (const auto* expression : { "(b_nonempty (c_register 0))", "(b_argument 0)" })
+    {
+        const auto description = std::string("(:sketch (:features (:boolean (:symbol a) (:expression ") + expression + "))) (:rules))";
+        try
+        {
+            static_cast<void>(kr::ps::base::dl::parse_sketch(description, domain, *repository));
+            FAIL() << "Expected a sketch with " << expression << " to fail.";
+        }
+        catch (const kr::InvalidExpressionError& error)
+        {
+            EXPECT_NE(std::string(error.what()).find("not supported in sketches"), std::string::npos) << error.what();
+            EXPECT_TRUE(error.diagnostic().location.has_value());
+        }
     }
 }
 

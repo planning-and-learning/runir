@@ -169,17 +169,15 @@ feature = module.get_query_features()[0]
 columns = tuple(column.get_name() for column in feature.get_expression().get_columns())
 state_context = environment.make_dl_context(program_state)
 relation = ext.evaluate(feature, state_context)
-snapshot = tuple(tuple(int(object_.get_index()) for object_ in row) for row in relation)
+snapshot = tuple(tuple(row) for row in relation)
 ```
 
-`relation` is an interned `pyrunir.kr.dl.base.semantics.QueryDenotation`,
-shared by all DL families. Import shared query result types and
-`QueryColumnData`/`QueryColumnIndex` from `pyrunir.kr.dl.base.semantics`.
-The relation exposes `get_index()`, iteration, row access, and
-shape operations directly. Each `QueryDenotationRow` lazily yields the existing
-`pytyr.formalism.planning.Object` views, with values ordered by `columns`.
-Use `object_.get_name()` to inspect a value or `int(object_.get_index())` for an
-independent numeric snapshot, as above.
+`relation` is an interned `pyyggdrasil.database.RelationView`.
+Import `QueryColumnData`/`QueryColumnIndex` from `pyrunir.kr.dl.semantics`.
+The relation exposes `get_index()`, `columns()`, `arity()`, `at()`, and
+iteration. Each `pyyggdrasil.database.RelationRow` yields object indices as
+integers, ordered by `columns`; wrap a value in `pytyr.formalism.planning.ObjectIndex`
+to look the object up, as in `denotation_repository.get_object(ObjectIndex(value))`.
 Interning preserves column order; rows form a canonical set whose iteration
 order follows interned row identities rather than insertion order.
 Repeated evaluation in an unchanged context reuses the cached query identity.
@@ -194,10 +192,12 @@ owned result repositories while preserving static results. Context creation
 alone does not reset anything. Each Python context retains its execution state
 and environment; constructor repositories must also stay alive and unchanged.
 
-Low-level `pyrunir.kr.dl.ext.semantics` contexts take
+Low-level `pyrunir.kr.dl.semantics` contexts take
 `(state, builder, storage, arguments, registers)`, or
 `(state, builder, caches, denotation_repository, intermediates, arguments, registers)`
-when the final result needs different ownership from its children. Construct a
+when the final result needs different ownership from its children. Both forms
+also exist without `arguments` and `registers`; evaluating a register or argument
+expression in such a context raises an error. Construct a
 reusable `EvaluationStorage(denotation_repository)` and pass it directly for
 ordinary evaluation. The builder owns the shared DL evaluation workspace.
 Every expression uses `expression.evaluate(context)`;
@@ -207,7 +207,7 @@ rules.
 
 `CallArgumentsData` holds the four lists of denotation indices;
 `RegisterValuesData` holds optional object indices or pairs of indices. Both are
-defined in `pyrunir.kr.dl.base.semantics`. Evaluate call-argument roots with
+defined in `pyrunir.kr.dl.semantics`. Evaluate call-argument roots with
 separate caches and the task's durable denotation repository, then intern each
 bundle with `arguments, inserted = denotation_repository.insert(data)`. Pass the resulting
 `CallArguments` and `RegisterValues` views to the context. Argument expressions

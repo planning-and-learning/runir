@@ -20,8 +20,8 @@ from pyrunir.kr import (
     SemanticError,
     UndefinedSymbolError,
 )
-from pyrunir.kr.dl import ext as dl_ext
-from pyrunir.kr.dl.base.semantics import CallArguments, RegisterValues
+from pyrunir.kr.dl import ConstructorRepositoryFactory as DlRepositoryFactory
+from pyrunir.kr.dl.semantics import CallArguments, RegisterValues
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext import dl
 from pyrunir.kr.uns.dl import parse_classifier
@@ -118,7 +118,7 @@ def _terminating_context_and_program():
 
 def _repositories() -> tuple[PlanningDomain, ext.Repository]:
     planning_domain = Parser(_blocksworld_data_dir() / "domain.pddl", ParserOptions()).get_domain()
-    dl_repository = dl_ext.ConstructorRepositoryFactory().create(planning_domain)
+    dl_repository = DlRepositoryFactory().create(planning_domain)
     repository = ext.RepositoryFactory().create(dl_repository)
     return planning_domain, repository
 

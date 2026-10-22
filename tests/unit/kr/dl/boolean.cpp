@@ -100,10 +100,10 @@ static_assert(boolean_data_views<kr::UnsFamilyTag>(kr::dl::FamilyBooleanConstruc
 
 TEST(RunirKrDlBoolean, RoutesConstantUnaryAndBinaryData)
 {
-    using Family = kr::UnsFamilyTag;
+    using Family = kr::ExtFamilyTag;
     using Constructor = kr::dl::Constructor<Family, kr::dl::BooleanTag>;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-    auto repository = kr::dl::UnsConstructorRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::ExtConstructorRepositoryFactory().create(planning_repository);
 
     auto constant_data = ygg::Data<kr::dl::Boolean<Family, kr::dl::BooleanConstantTag>>(true);
     const auto constant = repository->insert(constant_data).first;

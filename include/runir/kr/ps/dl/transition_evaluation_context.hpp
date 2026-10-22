@@ -3,7 +3,6 @@
 
 #include "runir/kr/dl/semantics/evaluation_context.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
-#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include "runir/kr/ps/family_traits.hpp"
 
 #include <concepts>
@@ -67,7 +66,6 @@ public:
                                 runir::kr::dl::semantics::Builder& dl_builder,
                                 runir::kr::dl::semantics::EvaluationStorage<DlFamily>& source,
                                 runir::kr::dl::semantics::EvaluationStorage<DlFamily>& target)
-        requires(!std::same_as<DlFamily, runir::kr::ExtFamilyTag>)
         :
         m_source_context(std::move(source_state), dl_builder, source),  //
         m_target_context(std::move(target_state), dl_builder, target)
@@ -82,7 +80,6 @@ public:
                                 runir::kr::dl::semantics::CallArgumentsView arguments,
                                 R source_registers,
                                 R target_registers)
-        requires std::same_as<DlFamily, runir::kr::ExtFamilyTag>
         :
         m_source_context(std::move(source_state), dl_builder, source, arguments, source_registers),
         m_target_context(std::move(target_state), dl_builder, target, arguments, target_registers)

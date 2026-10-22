@@ -19,15 +19,14 @@ namespace
 using IcpFactory = kr::ps::icp::RepositoryFactory;
 using ExtConstructors = kr::dl::ConstructorRepositoryPtrFor<kr::ExtFamilyTag>;
 using BaseConstructors = kr::dl::ConstructorRepositoryPtrFor<kr::BaseFamilyTag>;
-using UnsConstructors = kr::dl::ConstructorRepositoryPtrFor<kr::UnsFamilyTag>;
+using UnsConstructors = kr::dl::ConstructorRepositoryPtrFor<kr::ExtFamilyTag>;
 
 // ICP shares Ext expressions, while policy indices remain distinct.
 static_assert(std::same_as<kr::ps::icp::Repository::DlRepositoryPtr, ExtConstructors>);
-static_assert(std::same_as<kr::ps::base::Repository::DlRepositoryPtr, BaseConstructors>);
+static_assert(std::same_as<kr::ps::base::Repository::DlRepositoryPtr, ExtConstructors>);
 static_assert(std::same_as<kr::uns::Repository::DlRepositoryPtr, UnsConstructors>);
 static_assert(std::is_invocable_v<decltype(&IcpFactory::create), IcpFactory&, ExtConstructors>);
 static_assert(!std::is_invocable_v<decltype(&IcpFactory::create), IcpFactory&, BaseConstructors>);
-static_assert(!std::is_invocable_v<decltype(&IcpFactory::create), IcpFactory&, UnsConstructors>);
 static_assert(
     !std::same_as<ygg::Index<kr::ps::Feature<kr::IcpFamilyTag, kr::dl::ConceptTag>>, ygg::Index<kr::ps::Feature<kr::ExtFamilyTag, kr::dl::ConceptTag>>>);
 
@@ -96,8 +95,8 @@ struct BaseFeatureStorage
 template<typename Type, typename Repository, typename Context>
 concept CanEvaluate = StoredType<Type> && requires(ygg::View<ygg::Index<Type>, Repository>& view, Context& context) { kr::ps::evaluate<tyr::GroundTag>(view, context); };
 
-using BaseStateContext = kr::dl::semantics::StateEvaluationContext<kr::BaseFamilyTag, tyr::GroundTag>;
-using UnsStateContext = kr::dl::semantics::StateEvaluationContext<kr::UnsFamilyTag, tyr::GroundTag>;
+using BaseStateContext = kr::dl::semantics::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>;
+using UnsStateContext = kr::dl::semantics::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>;
 using ExtStateContext = kr::dl::semantics::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>;
 using BaseBoolean = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::DlTag, kr::dl::BooleanTag>;
 using UnsBoolean = kr::ps::ConcreteFeature<kr::UnsFamilyTag, kr::DlTag, kr::dl::BooleanTag>;
@@ -109,8 +108,6 @@ static_assert(CanEvaluate<BaseRole, BaseFeatureStorage, BaseStateContext>);
 static_assert(CanEvaluate<kr::ps::Feature<kr::BaseFamilyTag, kr::dl::RoleTag>, BaseFeatureStorage, BaseStateContext>);
 static_assert(CanEvaluate<UnsNumerical, UnsCustomRepository, UnsStateContext>);
 static_assert(CanEvaluate<IcpQuery, kr::ps::icp::Repository, ExtStateContext>);
-static_assert(!CanEvaluate<BaseBoolean, kr::ps::base::Repository, UnsStateContext>);
-static_assert(!CanEvaluate<UnsBoolean, kr::uns::Repository, BaseStateContext>);
 
 // Invalid semantic categories and observation pairs still fail substitution.
 using InvalidFeature = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::DlTag, int>;

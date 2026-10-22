@@ -94,12 +94,8 @@ runir::kr::dl::grammar::ast::Grammar<Family> parse_grammar_ast(const std::string
     template void parse_grammar_ast<Family, Dialect>(const std::string&, ast::Grammar<Family>&, runir::kr::parser::ErrorHandlerType&);                \
     template ast::Grammar<Family> parse_grammar_ast<Family, Dialect>(const std::string&);
 
-RUNIR_INSTANTIATE_AST_PARSERS(runir::kr::BaseFamilyTag, FullDialectTag)
 RUNIR_INSTANTIATE_AST_PARSERS(runir::kr::ExtFamilyTag, FullDialectTag)
-RUNIR_INSTANTIATE_AST_PARSERS(runir::kr::UnsFamilyTag, FullDialectTag)
-RUNIR_INSTANTIATE_AST_PARSERS(runir::kr::BaseFamilyTag, SearchFreeDialectTag)
 RUNIR_INSTANTIATE_AST_PARSERS(runir::kr::ExtFamilyTag, SearchFreeDialectTag)
-RUNIR_INSTANTIATE_AST_PARSERS(runir::kr::UnsFamilyTag, SearchFreeDialectTag)
 
 #undef RUNIR_INSTANTIATE_AST_PARSERS
 

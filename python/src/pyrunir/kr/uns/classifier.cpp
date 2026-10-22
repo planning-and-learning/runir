@@ -2,7 +2,7 @@
 #include "pyrunir/kr/ps/dl/optimization_bindings.hpp"
 #include "runir/kr/uns/declarations.hpp"
 
-#include <runir/kr/dl/detail/repository_instantiations_uns.hpp>
+#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
@@ -39,13 +39,13 @@ void bind_classifier(nb::module_& m)
 
     m.def(
         "classify",
-        [](const ClassifierView& classifier, runir::kr::dl::semantics::StateEvaluationContext<Family, tyr::GroundTag>& context)
+        [](const ClassifierView& classifier, runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, tyr::GroundTag>& context)
         { return runir::kr::uns::classify<tyr::GroundTag>(classifier, context); },
         "classifier"_a,
         "context"_a);
     m.def(
         "classify",
-        [](const ClassifierView& classifier, runir::kr::dl::semantics::StateEvaluationContext<Family, tyr::LiftedTag>& context)
+        [](const ClassifierView& classifier, runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, tyr::LiftedTag>& context)
         { return runir::kr::uns::classify<tyr::LiftedTag>(classifier, context); },
         "classifier"_a,
         "context"_a);

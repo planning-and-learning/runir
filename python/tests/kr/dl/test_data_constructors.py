@@ -1,8 +1,8 @@
-from pyrunir.kr.dl import base
+from pyrunir.kr import dl
 
 
 def test_value_and_view_constructors_build_equal_data(gripper_planning_domain):
-    semantics = base.semantics
+    semantics = dl.semantics
     repository = semantics.ConstructorRepositoryFactory().create(gripper_planning_domain)
 
     top = repository.insert(semantics.ConceptTopData())[0]
@@ -23,7 +23,7 @@ def test_value_and_view_constructors_build_equal_data(gripper_planning_domain):
 
 
 def test_view_variant_constructor_builds_equal_data(gripper_planning_domain):
-    semantics = base.semantics
+    semantics = dl.semantics
     repository = semantics.ConstructorRepositoryFactory().create(gripper_planning_domain)
 
     top = repository.insert(semantics.ConceptTopData())[0]

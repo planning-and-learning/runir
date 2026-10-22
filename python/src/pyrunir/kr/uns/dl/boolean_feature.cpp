@@ -1,7 +1,7 @@
 #include "bindings.hpp"
 #include "pyrunir/kr/ps/dl/binding_utils.hpp"
 
-#include <runir/kr/dl/detail/repository_instantiations_uns.hpp>
+#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/ps/dl/evaluation.hpp>
@@ -13,8 +13,8 @@ namespace runir::kr::uns::dl
 
 void bind_boolean_feature(nb::module_& m, RepositoryBinding& repository)
 {
-    using GroundContext = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::GroundTag>;
-    using LiftedContext = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::LiftedTag>;
+    using GroundContext = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, tyr::GroundTag>;
+    using LiftedContext = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, tyr::LiftedTag>;
     auto [feature, concrete] = runir::kr::python::bind_feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>(m, repository, "BooleanFeature");
     const auto bind_evaluate = []<typename View>(nb::class_<View>& cls)
     {

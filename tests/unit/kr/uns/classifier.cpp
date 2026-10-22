@@ -66,12 +66,12 @@ static_assert(IndexedDataView<Classifier> && std::same_as<View<Classifier>, kr::
 struct Fixture
 {
     tyr::formalism::planning::PlanningDomain planning_domain;
-    kr::dl::ConstructorRepositoryPtrFor<kr::UnsFamilyTag> dl_repository;
+    kr::dl::ConstructorRepositoryPtrFor<kr::ExtFamilyTag> dl_repository;
     kr::uns::RepositoryPtr repository;
 
     Fixture() :
         planning_domain(tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain()),
-        dl_repository(kr::dl::ConstructorRepositoryFactoryFor<kr::UnsFamilyTag>().create(planning_domain.get_repository())),
+        dl_repository(kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository())),
         repository(kr::uns::RepositoryFactory().create(dl_repository))
     {
     }
@@ -151,6 +151,27 @@ TEST(RunirTests, UnsClassifierRejectsUnknownFeatureSymbol)
         ASSERT_TRUE(error.diagnostic().location.has_value());
         EXPECT_EQ(error.diagnostic().location->column(), 22);
         EXPECT_EQ(error.diagnostic().location->end() - error.diagnostic().location->begin(), 1);
+    }
+}
+
+TEST(RunirTests, UnsClassifierRejectsRegistersAndArguments)
+{
+    Fixture fixture;
+
+    for (const auto* expression : { "(b_nonempty (c_register 0))", "(b_argument 0)" })
+    {
+        const auto description =
+            std::string("(:classifier (:symbol c0) (:features (:boolean (:symbol a) (:expression ") + expression + "))) (:expression (or (and a))))";
+        try
+        {
+            (void) kr::uns::dl::parse_classifier(description, fixture.domain(), *fixture.repository);
+            FAIL() << "Expected a classifier with " << expression << " to fail.";
+        }
+        catch (const kr::InvalidExpressionError& error)
+        {
+            EXPECT_NE(std::string(error.what()).find("not supported in classifiers"), std::string::npos) << error.what();
+            EXPECT_TRUE(error.diagnostic().location.has_value());
+        }
     }
 }
 

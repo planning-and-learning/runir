@@ -2,8 +2,6 @@ add_library(kr SHARED
     domain_context.cpp
     task_context.cpp
     dl/repository.cpp
-    dl/semantics/evaluation_base.cpp
-    dl/semantics/evaluation_uns.cpp
     dl/semantics/evaluation_ext.cpp
     dl/semantics/heuristics/projection.cpp
     dl/semantics/repository.cpp
@@ -11,24 +9,14 @@ add_library(kr SHARED
     dl/cnf_grammar/constructor_repository.cpp
     dl/cnf_grammar/generate.cpp
     dl/cnf_grammar/repository_base.cpp
-    dl/cnf_grammar/repository_ext.cpp
-    dl/cnf_grammar/repository_uns.cpp
     dl/cnf_grammar/translate.cpp
-    dl/cnf_grammar/translate_ext.cpp
-    dl/cnf_grammar/translate_uns.cpp
     dl/grammar/constructor_repository.cpp
     dl/grammar/base/grammar_factory.cpp
     dl/grammar/base/parser.cpp
     dl/grammar/parser/parser.cpp
-    dl/grammar/parser/parser_instantiations_base.cpp
     dl/grammar/parser/parser_instantiations_ext.cpp
-    dl/grammar/parser/parser_instantiations_uns.cpp
     dl/grammar/repository_base.cpp
-    dl/grammar/repository_ext.cpp
-    dl/grammar/repository_uns.cpp
-    dl/repository_base.cpp
     dl/repository_ext.cpp
-    dl/repository_uns.cpp
     ps/base/dl/parser.cpp
     ps/base/dl/parser/parser.cpp
     ps/base/dl/parser/parser_instantiations.cpp

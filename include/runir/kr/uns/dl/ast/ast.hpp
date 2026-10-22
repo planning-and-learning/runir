@@ -23,7 +23,7 @@ struct PositionedVariant : boost::spirit::x3::position_tagged, boost::spirit::x3
 struct BooleanFeature : boost::spirit::x3::position_tagged
 {
     runir::kr::parser::ast::Identifier symbol;
-    runir::kr::dl::grammar::ast::Constructor<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag> feature;
+    runir::kr::dl::grammar::ast::Constructor<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag> feature;
 };
 
 struct PositiveLiteral : boost::spirit::x3::position_tagged

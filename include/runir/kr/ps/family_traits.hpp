@@ -51,7 +51,7 @@ struct PsFamilyTraits;
 template<>
 struct PsFamilyTraits<runir::kr::BaseFamilyTag>
 {
-    using DlFamily = runir::kr::BaseFamilyTag;
+    using DlFamily = runir::kr::ExtFamilyTag;
     using FeatureCategories = ygg::TypeList<runir::kr::dl::BooleanTag, runir::kr::dl::NumericalTag>;
 
     using FeatureTypes = detail::PsFeatureTypes<runir::kr::BaseFamilyTag, FeatureCategories>;
@@ -94,7 +94,7 @@ struct PsFamilyTraits<runir::kr::IcpFamilyTag>
 template<>
 struct PsFamilyTraits<runir::kr::UnsFamilyTag>
 {
-    using DlFamily = runir::kr::UnsFamilyTag;
+    using DlFamily = runir::kr::ExtFamilyTag;
     using FeatureCategories = ygg::TypeList<runir::kr::dl::BooleanTag>;
     using FeatureTypes = detail::PsFeatureTypes<runir::kr::UnsFamilyTag, FeatureCategories>;
     using ConditionTypes = ygg::TypeList<>;

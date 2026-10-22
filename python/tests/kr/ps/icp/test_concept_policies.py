@@ -11,7 +11,7 @@ from pytyr.planning import lifted
 
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext, LiftedTaskContext
-from pyrunir.kr.dl.base.semantics import ConceptDenotation
+from pyrunir.kr.dl.semantics import ConceptDenotation
 from pyrunir.kr.ps import icp
 from pyrunir.serialization import register_table, serialize, table
 

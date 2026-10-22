@@ -94,12 +94,12 @@ static_assert(numerical_data_views<kr::UnsFamilyTag>(kr::dl::FamilyNumericalCons
 
 TEST(RunirKrDlNumerical, RoutesValueBinaryAndDistanceData)
 {
-    using Family = kr::UnsFamilyTag;
+    using Family = kr::ExtFamilyTag;
     using Concept = kr::dl::Constructor<Family, kr::dl::ConceptTag>;
     using Role = kr::dl::Constructor<Family, kr::dl::RoleTag>;
     using Numerical = kr::dl::Constructor<Family, kr::dl::NumericalTag>;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-    auto repository = kr::dl::UnsConstructorRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::ExtConstructorRepositoryFactory().create(planning_repository);
 
     auto constant_data = ygg::Data<kr::dl::Numerical<Family, kr::dl::NumericalConstantTag>>(7);
     EXPECT_EQ(repository->insert(constant_data).first.get_value(), 7);

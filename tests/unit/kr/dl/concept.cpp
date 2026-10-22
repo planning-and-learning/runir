@@ -149,11 +149,11 @@ static_assert(concept_data_views<kr::UnsFamilyTag>(kr::dl::FamilyConceptConstruc
 
 TEST(RunirKrDlConcept, RoutesUnaryBinaryAndNumberRestrictionData)
 {
-    using Family = kr::BaseFamilyTag;
+    using Family = kr::ExtFamilyTag;
     using Concept = kr::dl::Constructor<Family, kr::dl::ConceptTag>;
     using Role = kr::dl::Constructor<Family, kr::dl::RoleTag>;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-    auto repository = kr::dl::BaseConstructorRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::ExtConstructorRepositoryFactory().create(planning_repository);
 
     auto unary_data = ygg::Data<kr::dl::Concept<Family, kr::dl::NegationTag>>(ygg::Index<Concept>(3));
     const auto unary = repository->insert(unary_data).first;

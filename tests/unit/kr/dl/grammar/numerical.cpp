@@ -93,26 +93,28 @@ static_assert(numerical_data_views<kr::UnsFamilyTag>(kr::dl::FamilyNumericalCons
 
 }  // namespace
 
-TEST(RunirKrDlGrammarNumerical, ExposesArithmeticOperandsAndConstants)
+TEST(RunirKrDlGrammarNumerical, ExposesDistanceOperands)
 {
-    using Family = kr::ExtFamilyTag;
+    using Family = kr::BaseFamilyTag;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     auto repository = kr::dl::grammar::ConstructorRepositoryFactoryFor<Family>().create(planning_repository);
 
-    auto lhs_data = ygg::Data<kr::dl::grammar::NonTerminal<Family, kr::dl::NumericalTag>>(std::string("left"));
-    auto rhs_data = ygg::Data<kr::dl::grammar::NonTerminal<Family, kr::dl::NumericalTag>>(std::string("right"));
-    const auto lhs = repository->insert(lhs_data).first;
-    const auto rhs = repository->insert(rhs_data).first;
-    auto lhs_choice_data = ygg::Data<kr::dl::grammar::ConstructorOrNonTerminal<Family, kr::dl::NumericalTag>>(lhs.get_index());
-    auto rhs_choice_data = ygg::Data<kr::dl::grammar::ConstructorOrNonTerminal<Family, kr::dl::NumericalTag>>(rhs.get_index());
-    const auto lhs_choice = repository->insert(lhs_choice_data).first;
-    const auto rhs_choice = repository->insert(rhs_choice_data).first;
-    auto difference_data = ygg::Data<kr::dl::grammar::Numerical<Family, kr::dl::SubTag>>(lhs_choice.get_index(), rhs_choice.get_index());
-    const auto difference = repository->insert(difference_data).first;
+    auto source_data = ygg::Data<kr::dl::grammar::NonTerminal<Family, kr::dl::ConceptTag>>(std::string("source"));
+    auto role_data = ygg::Data<kr::dl::grammar::NonTerminal<Family, kr::dl::RoleTag>>(std::string("role"));
+    auto target_data = ygg::Data<kr::dl::grammar::NonTerminal<Family, kr::dl::ConceptTag>>(std::string("target"));
+    auto source_choice_data =
+        ygg::Data<kr::dl::grammar::ConstructorOrNonTerminal<Family, kr::dl::ConceptTag>>(repository->insert(source_data).first.get_index());
+    auto role_choice_data = ygg::Data<kr::dl::grammar::ConstructorOrNonTerminal<Family, kr::dl::RoleTag>>(repository->insert(role_data).first.get_index());
+    auto target_choice_data =
+        ygg::Data<kr::dl::grammar::ConstructorOrNonTerminal<Family, kr::dl::ConceptTag>>(repository->insert(target_data).first.get_index());
+    const auto source = repository->insert(source_choice_data).first;
+    const auto role = repository->insert(role_choice_data).first;
+    const auto target = repository->insert(target_choice_data).first;
+    auto distance_data = ygg::Data<kr::dl::grammar::Numerical<Family, kr::dl::DistanceTag>>(source.get_index(), role.get_index(), target.get_index());
+    const auto distance = repository->insert(distance_data).first;
 
-    EXPECT_EQ(difference.get_lhs(), lhs_choice);
-    EXPECT_EQ(difference.get_rhs(), rhs_choice);
-    auto constant_data = ygg::Data<kr::dl::grammar::Numerical<Family, kr::dl::NumericalConstantTag>>(42);
-    EXPECT_EQ(repository->insert(constant_data).first.get_value(), 42);
+    EXPECT_EQ(distance.get_lhs(), source);
+    EXPECT_EQ(distance.get_mid(), role);
+    EXPECT_EQ(distance.get_rhs(), target);
 }
 }

@@ -138,7 +138,11 @@ ModuleView lower_module(const ast::Module& module,
     auto booleans = std::unordered_map<std::string, ygg::Index<ps::Feature<IcpFamilyTag, runir::kr::dl::BooleanTag>>> {};
     auto numericals = std::unordered_map<std::string, ygg::Index<ps::Feature<IcpFamilyTag, runir::kr::dl::NumericalTag>>> {};
     auto feature_names = std::unordered_set<std::string> {};
-    const auto context = ConstructorContext { repository.get_dl_repository(), dl_builder, diagnostics, &references };
+    const auto context = ConstructorContext { repository.get_dl_repository(),
+                                              dl_builder,
+                                              diagnostics,
+                                              &references,
+                                              runir::kr::parser::ext_constructors::LanguageCapabilities { "ICP programs", true, false } };
     for (const auto& feature : module.features)
         boost::apply_visitor(
             [&]<typename Concrete>(const Concrete& concrete)

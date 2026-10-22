@@ -1,7 +1,7 @@
 import pytest
 
 from pyrunir.kr import DomainContext, GroundTaskContext
-from pyrunir.kr.dl.base import semantics
+from pyrunir.kr.dl import semantics
 from pyrunir.kr.ps.base.dl import parse_sketch
 
 _AT = '(q_atomic_state "at" (ball room))'

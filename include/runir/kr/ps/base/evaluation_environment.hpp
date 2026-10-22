@@ -14,20 +14,22 @@
 namespace runir::kr::ps::base
 {
 
-template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<BaseFamilyTag, Kind> EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<BaseFamilyTag, Kind>>
+template<tyr::TaskKind Kind,
+         runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy =
+             runir::kr::dl::semantics::DefaultEvaluationPolicy<ExtFamilyTag, Kind>>
 class EvaluationEnvironment
 {
 private:
-    using StateDlContext = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::BaseFamilyTag, Kind>;
+    using StateDlContext = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, Kind>;
 
     runir::kr::dl::semantics::Builder& m_dl_builder;
-    runir::kr::dl::semantics::EvaluationStorage<runir::kr::BaseFamilyTag> m_source_storage;
-    runir::kr::dl::semantics::EvaluationStorage<runir::kr::BaseFamilyTag> m_target_storage;
+    runir::kr::dl::semantics::EvaluationStorage<runir::kr::ExtFamilyTag> m_source_storage;
+    runir::kr::dl::semantics::EvaluationStorage<runir::kr::ExtFamilyTag> m_target_storage;
     EvaluationPolicy m_policy;
 
     static auto roots(SketchView sketch)
     {
-        auto result = std::vector<runir::kr::dl::semantics::incremental::EvaluationRoot<BaseFamilyTag>> {};
+        auto result = std::vector<runir::kr::dl::semantics::incremental::EvaluationRoot<ExtFamilyTag>> {};
         for (const auto feature : sketch.get_features<runir::kr::dl::BooleanTag>())
             result.emplace_back(feature.get_expression());
         for (const auto feature : sketch.get_features<runir::kr::dl::NumericalTag>())

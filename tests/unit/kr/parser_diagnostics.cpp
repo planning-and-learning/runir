@@ -293,14 +293,14 @@ TEST(RunirTests, ParserDiagnosticsNameRequiredModuleListsAndDelimiters)
 TEST(RunirTests, ParserDiagnosticsNameConstantScalars)
 {
     const auto boolean = std::string("(b_const invalid)");
-    expect_diagnostic([](const std::string& source) { return kr::dl::grammar::parser::parse_boolean_ast<kr::UnsFamilyTag>(source); },
+    expect_diagnostic([](const std::string& source) { return kr::dl::grammar::parser::parse_boolean_ast<kr::ExtFamilyTag>(source); },
                       boolean,
                       "b_const",
                       boolean.find("invalid"),
                       0,
                       "true or false");
     const auto numerical = std::string("(n_const invalid)");
-    expect_diagnostic([](const std::string& source) { return kr::dl::grammar::parser::parse_numerical_ast<kr::UnsFamilyTag>(source); },
+    expect_diagnostic([](const std::string& source) { return kr::dl::grammar::parser::parse_numerical_ast<kr::ExtFamilyTag>(source); },
                       numerical,
                       "n_const",
                       numerical.find("invalid"),
@@ -308,12 +308,7 @@ TEST(RunirTests, ParserDiagnosticsNameConstantScalars)
                       "unsigned integer");
 }
 
-TEST(RunirTests, ParserDiagnosticsRequireDelimitedConstructorsInEveryDlFamily)
-{
-    check_dl_expression_diagnostics<kr::BaseFamilyTag>();
-    check_dl_expression_diagnostics<kr::ExtFamilyTag>();
-    check_dl_expression_diagnostics<kr::UnsFamilyTag>();
-}
+TEST(RunirTests, ParserDiagnosticsRequireDelimitedConstructorsInEveryDlFamily) { check_dl_expression_diagnostics<kr::ExtFamilyTag>(); }
 
 TEST(RunirTests, ParserDiagnosticOutlivesInputAndErrorHandler)
 {

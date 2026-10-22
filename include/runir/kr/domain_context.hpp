@@ -14,8 +14,9 @@ namespace runir::kr
 
 struct DomainContext
 {
-    const runir::kr::ps::base::RepositoryPtr base_repository;
+    /// Declared first: every language shares its DL constructor repository.
     const runir::kr::ps::ext::RepositoryPtr ext_repository;
+    const runir::kr::ps::base::RepositoryPtr base_repository;
     const runir::kr::ps::icp::RepositoryPtr icp_repository;
     const runir::kr::uns::RepositoryPtr uns_repository;
 

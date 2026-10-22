@@ -13,7 +13,7 @@ from pyyggdrasil.serialization import Dictionaries
 
 from pyrunir.datasets import StateGraphEdgeLabel
 from pyrunir.kr import DomainContext, GroundTaskContext
-from pyrunir.kr.dl.base import semantics
+from pyrunir.kr.dl import semantics
 from pyrunir.kr.ps import base, ext
 from pyrunir.kr.ps.base.dl import parse_sketch
 from pyrunir.kr.ps.ext.dl import parse_program

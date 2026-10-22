@@ -17,7 +17,7 @@ public:
 
     auto get_rule() const noexcept { return m_rule; }
 
-    template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<BaseFamilyTag, Kind> EvaluationPolicy>
+    template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy>
     bool matches(RuleEvaluationContext<BaseFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy>& context,
                  tyr::planning::StateView<Kind> source,
                  tyr::planning::StateView<Kind> target) const

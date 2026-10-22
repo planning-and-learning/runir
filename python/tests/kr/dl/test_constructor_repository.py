@@ -4,14 +4,13 @@ import sys
 import pytest
 
 from pyrunir.kr import DomainContext, GroundTaskContext
-from pyrunir.kr.dl import base, ext, uns
+from pyrunir.kr import dl
 
 
-@pytest.mark.parametrize("family", [base, ext, uns], ids=["base", "ext", "uns"])
-def test_insert_returns_creation_flag_and_retains_owner_on_view(gripper_planning_domain, family):
+def test_insert_returns_creation_flag_and_retains_owner_on_view(gripper_planning_domain):
     def create_view():
-        repository = family.semantics.ConstructorRepositoryFactory().create(gripper_planning_domain)
-        data = base.semantics.QueryColumnData()
+        repository = dl.semantics.ConstructorRepositoryFactory().create(gripper_planning_domain)
+        data = dl.semantics.QueryColumnData()
         data.name = "retained"
         before = sys.getrefcount(repository)
         result = repository.insert(data)
@@ -29,18 +28,17 @@ def test_insert_returns_creation_flag_and_retains_owner_on_view(gripper_planning
     assert view.get_name() == "retained"
 
 
-@pytest.mark.parametrize("family", [base, uns], ids=["base", "uns"])
 @pytest.mark.parametrize("category, leaf, names", [
     ("Concept", "ConceptTop", ["object"]),
     ("Role", "RoleUniversal", ["left", "right"]),
 ])
 def test_repository_constructs_queries_and_semantic_wrappers(
-    gripper_planning_domain, ground_gripper_search_context, family, category, leaf, names
+    gripper_planning_domain, ground_gripper_search_context, category, leaf, names
 ):
-    semantics = family.semantics
+    semantics = dl.semantics
     repository = semantics.ConstructorRepositoryFactory().create(gripper_planning_domain)
-    assert family.ConstructorRepositoryFactory is semantics.ConstructorRepositoryFactory
-    assert family.ConstructorRepository is semantics.ConstructorRepository
+    assert dl.ConstructorRepositoryFactory is semantics.ConstructorRepositoryFactory
+    assert dl.ConstructorRepository is semantics.ConstructorRepository
 
     def create(type_name, **fields):
         data = getattr(semantics, f"{type_name}Data")()
@@ -53,7 +51,7 @@ def test_repository_constructs_queries_and_semantic_wrappers(
     constructor = create(category, variant=create(leaf).get_index())
     columns = []
     for name in names:
-        data = base.semantics.QueryColumnData()
+        data = dl.semantics.QueryColumnData()
         data.name = name
         columns.append(repository.insert(data)[0].get_index())
     atom = create(f"Query{category}", columns=columns, arg=constructor.get_index())
@@ -86,13 +84,13 @@ def test_repository_constructs_queries_and_semantic_wrappers(
     "ConceptArgument", "RoleArgument", "BooleanArgument", "NumericalArgument",
     "ConceptRegister", "RoleRegister",
 ])
-def test_ext_repository_constructs_references(gripper_planning_domain, type_name):
-    assert ext.ConstructorRepositoryFactory is ext.semantics.ConstructorRepositoryFactory
-    assert ext.ConstructorRepository is ext.semantics.ConstructorRepository
-    repository = ext.semantics.ConstructorRepositoryFactory().create(gripper_planning_domain)
-    data = getattr(ext, f"{type_name}Data")()
+def test_repository_constructs_references(gripper_planning_domain, type_name):
+    assert dl.ConstructorRepositoryFactory is dl.semantics.ConstructorRepositoryFactory
+    assert dl.ConstructorRepository is dl.semantics.ConstructorRepository
+    repository = dl.semantics.ConstructorRepositoryFactory().create(gripper_planning_domain)
+    data = getattr(dl, f"{type_name}Data")()
     data.name = "reference"
-    data.identifier = getattr(ext, f"{type_name}Identifier")(3)
+    data.identifier = getattr(dl, f"{type_name}Identifier")(3)
     reference = repository.insert(data)[0]
     assert reference.get_name() == data.name
     assert reference.get_identifier() == data.identifier

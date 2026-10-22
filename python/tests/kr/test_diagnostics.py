@@ -3,7 +3,7 @@ import gc
 import pytest
 
 from pyrunir.kr import DuplicateDefinitionError, ParseError, SemanticError
-from pyrunir.kr.dl.base.semantics import ConstructorRepositoryFactory
+from pyrunir.kr.dl.semantics import ConstructorRepositoryFactory
 from pyrunir.kr.ps.base import RepositoryFactory
 from pyrunir.kr.ps.base.dl import parse_sketch
 from pytyr.formalism.planning import PlanningDomain

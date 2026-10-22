@@ -1,9 +1,9 @@
 #include "runir/kr/ps/base/dl/parser.hpp"
 
-#include "kr/parser/constructors.hpp"
+#include "kr/parser/ext_constructors.hpp"
 #include "kr/parser/observations.hpp"
 #include "kr/parser/resolution.hpp"
-#include "runir/kr/dl/detail/repository_instantiations_base.hpp"
+#include "runir/kr/dl/detail/repository_instantiations_ext.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/parser/diagnostics.hpp"
@@ -29,51 +29,25 @@ namespace runir::kr::ps::base::dl
 namespace
 {
 
-struct ConstructorContext
-{
-    using Target = runir::kr::parser::constructors::SemanticTarget<runir::kr::BaseFamilyTag>;
-
-    runir::kr::dl::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository;
-    runir::kr::dl::Builder<runir::kr::BaseFamilyTag>& builder;
-    const runir::kr::parser::DiagnosticContext& diagnostics;
-};
-
 struct Builders
 {
-    runir::kr::dl::Builder<runir::kr::BaseFamilyTag>& dl;
+    runir::kr::dl::Builder<runir::kr::ExtFamilyTag>& dl;
     runir::kr::ps::base::Builder& ps;
 };
 
 using runir::kr::parser::constructors::intern;
 using runir::kr::parser::constructors::intern_constructor;
-using runir::kr::parser::constructors::parse;
 using runir::kr::parser::constructors::parse_constructor;
-using runir::kr::parser::constructors::unwrap;
-using runir::kr::parser::constructors::Unwrapped;
+using runir::kr::parser::ext_constructors::ConstructorContext;
+using runir::kr::parser::ext_constructors::LanguageCapabilities;
+using runir::kr::parser::ext_constructors::parse;
+
+inline constexpr auto sketch_capabilities = LanguageCapabilities { "sketches", false, false };
 
 template<typename T>
 auto intern(runir::kr::ps::base::Repository& repository, ygg::Data<T>& data)
 {
     return runir::kr::ps::base::insert(repository, data).first;
-}
-
-template<runir::kr::dl::CategoryTag Category>
-auto parse(const runir::kr::dl::grammar::ast::ConstructorOrNonTerminal<runir::kr::BaseFamilyTag, Category>& node,
-           tyr::formalism::planning::DomainView domain,
-           const ConstructorContext& context) -> runir::kr::dl::FamilyConstructorView<runir::kr::BaseFamilyTag, Category>
-{
-    return boost::apply_visitor(
-        [&]<typename Value>(const Value& value) -> runir::kr::dl::FamilyConstructorView<runir::kr::BaseFamilyTag, Category>
-        {
-            const auto& unwrapped = unwrap(value);
-            if constexpr (std::same_as<Unwrapped<Value>, runir::kr::dl::grammar::ast::NonTerminal<runir::kr::BaseFamilyTag, Category>>)
-                context.diagnostics.throw_at(unwrapped.name,
-                                             runir::kr::InvalidExpressionError("General-sketch DL features cannot "
-                                                                               "reference grammar nonterminals."));
-            else
-                return parse_constructor(unwrapped, domain, context);
-        },
-        node.get());
 }
 
 auto parse_feature(
@@ -86,7 +60,8 @@ auto parse_feature(
     ygg::Data<runir::kr::ps::base::Sketch>& sketch_data,
     const runir::kr::parser::DiagnosticContext& diagnostics)
 {
-    const auto constructor = parse_constructor(node.feature, domain, ConstructorContext { repository.get_dl_repository(), builders.dl, diagnostics });
+    const auto constructor =
+        parse_constructor(node.feature, domain, ConstructorContext { repository.get_dl_repository(), builders.dl, diagnostics, nullptr, sketch_capabilities });
     auto concrete_data =
         runir::kr::ps::base::checkout<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>>(
             builders.ps);
@@ -110,7 +85,8 @@ auto parse_feature(
     ygg::Data<runir::kr::ps::base::Sketch>& sketch_data,
     const runir::kr::parser::DiagnosticContext& diagnostics)
 {
-    const auto constructor = parse_constructor(node.feature, domain, ConstructorContext { repository.get_dl_repository(), builders.dl, diagnostics });
+    const auto constructor =
+        parse_constructor(node.feature, domain, ConstructorContext { repository.get_dl_repository(), builders.dl, diagnostics, nullptr, sketch_capabilities });
     auto concrete_data =
         runir::kr::ps::base::checkout<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::dl::NumericalTag>>(
             builders.ps);
@@ -161,7 +137,7 @@ SketchView parse_sketch(const std::string& description, tyr::formalism::planning
         throw runir::kr::parser::DiagnosticContext::parse_error(error_handler, "Failed to parse DL general sketch description.", first);
     auto diagnostics = runir::kr::parser::DiagnosticContext {};
     const auto scope = runir::kr::parser::DiagnosticContext::Scope(diagnostics, error_handler);
-    auto dl_builder = runir::kr::dl::Builder<runir::kr::BaseFamilyTag> {};
+    auto dl_builder = runir::kr::dl::Builder<runir::kr::ExtFamilyTag> {};
     auto ps_builder = runir::kr::ps::base::Builder {};
     auto builders = Builders { dl_builder, ps_builder };
 

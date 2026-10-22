@@ -2,7 +2,7 @@
 
 #include <fmt/format.h>
 #include <gtest/gtest.h>
-#include <runir/kr/dl/detail/repository_instantiations_base.hpp>
+#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
@@ -34,7 +34,7 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesParse)
         { "classical/tests/delivery/domain.pddl", kr::ps::base::dl::SketchSpecification::DELIVERY_FRANCE_ET_AL_AAAI2021 },
     };
 
-    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::base::RepositoryFactory();
     for (const auto& test_case : cases)
     {
@@ -65,7 +65,7 @@ TEST(RunirTests, RejectsUnknownSketchFactorySpecification)
 TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
 
     const auto sketch = kr::ps::base::dl::parse_sketch(read_fixture("kr/dl/grammar/policy_parser.sketch"), planning_domain.get_domain(), *repository);

@@ -152,7 +152,7 @@ add_runir_test(
 )
 add_runir_test(
     runir_kr_grammar_factory
-    "unit/kr/ps/base/dl/sketch_factory.cpp;unit/kr/dl/grammar/grammar_factory.cpp;unit/kr/dl/grammar/ext_formatter.cpp;unit/kr/dl/cnf_grammar/ext_formatter.cpp"
+    "unit/kr/ps/base/dl/sketch_factory.cpp;unit/kr/dl/grammar/grammar_factory.cpp"
     runir::kr
 )
 add_runir_test(

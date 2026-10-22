@@ -8,9 +8,7 @@
 #include <gtest/gtest.h>
 #include <iterator>
 #include <ranges>
-#include <runir/kr/dl/detail/repository_instantiations_base.hpp>
 #include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
-#include <runir/kr/dl/detail/repository_instantiations_uns.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
@@ -187,8 +185,7 @@ void check_incremental_evaluation()
         ASSERT_FALSE(successors.empty());
         nodes.push_back(successors.front().node);
     }
-    check_planning_graph<kr::BaseFamilyTag, Kind>(nodes.front().get_state(), nodes.back().get_state());
-    check_planning_graph<kr::UnsFamilyTag, Kind>(nodes.front().get_state(), nodes.back().get_state());
+    check_planning_graph<kr::ExtFamilyTag, Kind>(nodes.front().get_state(), nodes.back().get_state());
     const auto domain = search->task->get_domain().get_domain();
     const auto a = domain.get_constants()[0].get_index();
     const auto b = domain.get_constants()[1].get_index();

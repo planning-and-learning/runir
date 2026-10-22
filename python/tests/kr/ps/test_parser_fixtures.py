@@ -4,8 +4,7 @@ import pytest
 
 from fixture_utils import load_fixture, read_fixture
 from pyrunir.kr import SemanticError
-from pyrunir.kr.dl import ext as dl_ext
-from pyrunir.kr.dl.base.semantics import ConstructorRepositoryFactory as BaseDlRepositoryFactory
+from pyrunir.kr.dl import ConstructorRepositoryFactory as DlRepositoryFactory
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.base import RepositoryFactory as BaseRepositoryFactory
 from pyrunir.kr.ps.base.dl import parse_sketch
@@ -30,10 +29,10 @@ def test_parser_negative_fixture(case: ParserFixture, gripper_planning_domain: P
 
     with pytest.raises(SemanticError, match=case["error"]):
         if case["parser"] == "base_sketch":
-            base_dl_repository = BaseDlRepositoryFactory().create(gripper_planning_domain)
+            base_dl_repository = DlRepositoryFactory().create(gripper_planning_domain)
             parse_sketch(description, gripper_planning_domain, BaseRepositoryFactory().create(base_dl_repository))
         else:
-            ext_dl_repository = dl_ext.ConstructorRepositoryFactory().create(gripper_planning_domain)
+            ext_dl_repository = DlRepositoryFactory().create(gripper_planning_domain)
             repository = ext.RepositoryFactory().create(ext_dl_repository)
             if case["parser"] == "ext_module":
                 dl.parse_module(description, gripper_planning_domain, repository)

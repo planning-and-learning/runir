@@ -7,9 +7,7 @@
 #include <gtest/gtest.h>
 #include <limits>
 #include <optional>
-#include <runir/kr/dl/detail/repository_instantiations_base.hpp>
 #include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
-#include <runir/kr/dl/detail/repository_instantiations_uns.hpp>
 #include <runir/kr/dl/object_rows.hpp>
 #include <runir/kr/dl/query_data.hpp>
 #include <runir/kr/dl/query_view.hpp>
@@ -1040,7 +1038,7 @@ void check_query_cache_across_bindings()
 template<tyr::TaskKind Kind>
 void check_predicate_repository_identity()
 {
-    using Family = kr::BaseFamilyTag;
+    using Family = kr::ExtFamilyTag;
     using Fact = tyr::formalism::FluentTag;
     using Predicate = tyr::formalism::Predicate<Fact>;
     const auto domain_source = std::string(R"(
@@ -1377,8 +1375,7 @@ TEST(RunirQueries, GroundDistanceOverQueries) { check_distance_queries<tyr::Grou
 TEST(RunirQueries, LiftedDistanceOverQueries) { check_distance_queries<tyr::LiftedTag>(); }
 TEST(RunirQueries, GroundDistanceReuseAcrossStates) { check_distance_reuse_across_states<tyr::GroundTag>(); }
 TEST(RunirQueries, LiftedDistanceReuseAcrossStates) { check_distance_reuse_across_states<tyr::LiftedTag>(); }
-TEST(RunirQueries, BaseCachingAndBorrowedRenameLifetime) { check_cached_queries<kr::BaseFamilyTag>(); }
-TEST(RunirQueries, UnsInheritsQueryEvaluation) { check_cached_queries<kr::UnsFamilyTag>(); }
+TEST(RunirQueries, CachingAndBorrowedRenameLifetime) { check_cached_queries<kr::ExtFamilyTag>(); }
 TEST(RunirQueries, GroundQueryCachePreservesStaticResultsAcrossStates) { check_query_cache_across_states<tyr::GroundTag>(); }
 TEST(RunirQueries, LiftedQueryCachePreservesStaticResultsAcrossStates) { check_query_cache_across_states<tyr::LiftedTag>(); }
 TEST(RunirQueries, GroundQueryCacheInvalidatesRegistersAndArguments) { check_query_cache_across_bindings<tyr::GroundTag>(); }

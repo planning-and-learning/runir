@@ -6,7 +6,7 @@ from typing import TypedDict, cast
 
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
-from pyrunir.kr.dl import ext as dl_ext
+from pyrunir.kr.dl import ConstructorRepositoryFactory as DlRepositoryFactory
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext import dl
 from pytyr.formalism.planning import Parser
@@ -40,7 +40,7 @@ class Suite(TypedDict):
 def main() -> None:
     suite = cast(Suite, json.loads(SUITE.read_text(encoding="utf-8")))
     planning_domain = Parser(Path(data_root()) / suite["domain_file"], ParserOptions()).get_domain()
-    dl_repository = dl_ext.ConstructorRepositoryFactory().create(planning_domain)
+    dl_repository = DlRepositoryFactory().create(planning_domain)
     repository = ext.RepositoryFactory().create(dl_repository)
     modules = dl.ModuleFactory.create_bonet_et_al_icaps2024_modules(planning_domain, repository)
     suite["modules"] = [

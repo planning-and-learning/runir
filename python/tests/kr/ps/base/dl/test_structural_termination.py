@@ -5,7 +5,7 @@ from typing import TypedDict, cast
 import pytest
 
 from fixture_utils import load_fixture, read_fixture
-from pyrunir.kr.dl.base.semantics import ConstructorRepositoryFactory
+from pyrunir.kr.dl.semantics import ConstructorRepositoryFactory
 from pyrunir.kr.ps.base import Repository, RepositoryFactory
 from pyrunir.kr.ps.base.dl import (
     BooleanFeature,

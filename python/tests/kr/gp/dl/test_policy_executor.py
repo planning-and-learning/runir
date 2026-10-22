@@ -8,7 +8,7 @@ from pytyr.formalism.planning import ActionBinding, PlanningDomain
 from pytyr.planning.ground import PackedState
 
 from pyrunir.kr import DomainContext, GroundTaskContext
-from pyrunir.kr.dl.base.semantics import (
+from pyrunir.kr.dl.semantics import (
     ConstructorRepositoryFactory,
     EvaluationStorage,
     GroundStateEvaluationContext,

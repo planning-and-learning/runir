@@ -1,7 +1,7 @@
 #include "fixtures.hpp"
 
 #include <gtest/gtest.h>
-#include <runir/kr/dl/detail/repository_instantiations_uns.hpp>
+#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
@@ -12,15 +12,15 @@ namespace runir::tests
 namespace
 {
 
-using Uns = runir::kr::UnsFamilyTag;
+using Uns = runir::kr::ExtFamilyTag;
 
-auto wrap_concept(runir::kr::dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repository, auto value)
+auto wrap_concept(runir::kr::dl::ConstructorRepositoryFor<kr::ExtFamilyTag>& repository, auto value)
 {
     auto data = ygg::Data<runir::kr::dl::Constructor<Uns, runir::kr::dl::ConceptTag>>(value.get_index());
     return repository.insert(data).first;
 }
 
-auto wrap_role(runir::kr::dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repository, auto role)
+auto wrap_role(runir::kr::dl::ConstructorRepositoryFor<kr::ExtFamilyTag>& repository, auto role)
 {
     auto data = ygg::Data<runir::kr::dl::Constructor<Uns, runir::kr::dl::RoleTag>>(role.get_index());
     return repository.insert(data).first;
@@ -31,7 +31,7 @@ auto wrap_role(runir::kr::dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& reposi
 TEST(RunirTests, SyntacticComplexityRecursesIntoConceptChildren)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto repository = runir::kr::dl::ConstructorRepositoryFactoryFor<kr::UnsFamilyTag>().create(planning_domain.get_repository());
+    auto repository = runir::kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
     auto& repo = *repository;
 
     auto universal_data = ygg::Data<runir::kr::dl::Role<Uns, runir::kr::dl::UniversalTag>>();

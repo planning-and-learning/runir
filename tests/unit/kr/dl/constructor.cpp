@@ -1,8 +1,6 @@
 #include <concepts>
 #include <gtest/gtest.h>
-#include <runir/kr/dl/detail/repository_instantiations_base.hpp>
 #include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
-#include <runir/kr/dl/detail/repository_instantiations_uns.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <utility>
@@ -90,11 +88,11 @@ static_assert(view_aliases<kr::UnsFamilyTag>(kr::dl::CategoryTags {}));
 
 TEST(RunirKrDlConstructor, PreservesConcreteVariant)
 {
-    using Family = kr::BaseFamilyTag;
+    using Family = kr::ExtFamilyTag;
     using Concrete = kr::dl::Concept<Family, kr::dl::TopTag>;
     using Constructor = kr::dl::Constructor<Family, kr::dl::ConceptTag>;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-    auto repository = kr::dl::BaseConstructorRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::ExtConstructorRepositoryFactory().create(planning_repository);
     auto data = ygg::Data<Constructor>(ygg::Index<Concrete>(6));
     const auto constructor = repository->insert(data).first;
 
@@ -128,9 +126,7 @@ TEST(RunirKrDlConstructor, SharedInterningCanonicalizesAndPrepares)
         EXPECT_FALSE(duplicate_created);
         EXPECT_EQ(same.get_index(), intersection.get_index());
     };
-    check.template operator()<kr::BaseFamilyTag>();
     check.template operator()<kr::ExtFamilyTag>();
-    check.template operator()<kr::UnsFamilyTag>();
 }
 
 }

@@ -30,13 +30,15 @@ struct NoUnsolvability
     }
 };
 
-template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<runir::kr::UnsFamilyTag, Kind> Policy = runir::kr::dl::semantics::DefaultEvaluationPolicy<runir::kr::UnsFamilyTag, Kind>>
+template<tyr::TaskKind Kind,
+         runir::kr::dl::semantics::EvaluationPolicyConcept<runir::kr::ExtFamilyTag, Kind> Policy =
+             runir::kr::dl::semantics::DefaultEvaluationPolicy<runir::kr::ExtFamilyTag, Kind>>
 class ClassifierUnsolvability
 {
 private:
     runir::kr::TaskContext<Kind>& m_task_context;
     runir::kr::uns::ClassifierView m_classifier;
-    runir::kr::dl::semantics::EvaluationStorage<runir::kr::UnsFamilyTag> m_storage;
+    runir::kr::dl::semantics::EvaluationStorage<runir::kr::ExtFamilyTag> m_storage;
     Policy m_policy;
 
 public:
@@ -47,7 +49,7 @@ public:
         m_policy(*task_context.search_context->task,
                  [&]
                  {
-                     auto roots = std::vector<runir::kr::dl::semantics::incremental::EvaluationRoot<runir::kr::UnsFamilyTag>> {};
+                     auto roots = std::vector<runir::kr::dl::semantics::incremental::EvaluationRoot<runir::kr::ExtFamilyTag>> {};
                      for (const auto feature : classifier.get_features())
                          roots.emplace_back(feature.get_expression());
                      return roots;
@@ -61,7 +63,7 @@ public:
         m_storage.reset_dynamic();
         m_policy.reset_source();
         auto context = m_policy.make_source_context(
-            runir::kr::dl::semantics::StateEvaluationContext<runir::kr::UnsFamilyTag, Kind, State>(state, m_task_context.dl_builder, m_storage));
+            runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, Kind, State>(state, m_task_context.dl_builder, m_storage));
         return runir::kr::uns::classify<Kind>(m_classifier, context);
     }
 };

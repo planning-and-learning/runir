@@ -115,7 +115,6 @@ struct NameOnlyContext
 using BaseContext = kr::ps::dl::TransitionEvaluationContext<kr::BaseFamilyTag, tyr::GroundTag>;
 using ExtContext = kr::ps::dl::TransitionEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>;
 using IcpContext = kr::ps::dl::TransitionEvaluationContext<kr::IcpFamilyTag, tyr::GroundTag>;
-using BaseStateContext = kr::dl::semantics::StateEvaluationContext<kr::BaseFamilyTag, tyr::GroundTag>;
 using ExtStateContext = kr::dl::semantics::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>;
 
 // The returned resources identify the task kind; the PS family still distinguishes ICP from Ext.
@@ -136,18 +135,12 @@ static_assert(!kr::ps::dl::TransitionEvaluationContextConcept<IcpResourceContext
 static_assert(!kr::ps::dl::TransitionEvaluationContextConcept<IcpResourceContext, kr::ExtFamilyTag, tyr::GroundTag>);
 
 static_assert(kr::dl::semantics::StateEvaluationContextConcept<ExtStateContext, kr::ps::DlFamilyFor<kr::IcpFamilyTag>, tyr::GroundTag>);
-static_assert(!kr::dl::semantics::StateEvaluationContextConcept<BaseStateContext, kr::ps::DlFamilyFor<kr::IcpFamilyTag>, tyr::GroundTag>);
-static_assert(!kr::dl::semantics::StateEvaluationContextConcept<ExtStateContext, kr::BaseFamilyTag, tyr::GroundTag>);
 static_assert(!kr::dl::semantics::StateEvaluationContextConcept<ExtStateContext, kr::ExtFamilyTag, tyr::LiftedTag>);
 static_assert(!kr::dl::semantics::StateEvaluationContextConcept<const ExtStateContext&, kr::ExtFamilyTag, tyr::GroundTag>);
 static_assert(!kr::dl::semantics::StateEvaluationContextConcept<ExtStateContext, int, tyr::GroundTag>);
 static_assert(!kr::dl::semantics::StateEvaluationContextConcept<ExtStateContext, kr::ExtFamilyTag, int>);
 static_assert(!kr::dl::semantics::StateEvaluationContextConcept<NameOnlyContext, kr::ExtFamilyTag, tyr::GroundTag>);
 
-static_assert(kr::dl::semantics::StateEvaluationContextConcept<BaseStateContext&, kr::BaseFamilyTag, tyr::GroundTag>);
-static_assert(!kr::dl::semantics::StateEvaluationContextConcept<const BaseStateContext&, kr::BaseFamilyTag, tyr::GroundTag>);
-static_assert(!kr::dl::semantics::StateEvaluationContextConcept<BaseStateContext, kr::BaseFamilyTag, tyr::LiftedTag>);
-static_assert(!kr::dl::semantics::StateEvaluationContextConcept<BaseStateContext, kr::ExtFamilyTag, tyr::GroundTag>);
 static_assert(kr::ps::dl::TransitionEvaluationContextConcept<IcpContext, kr::IcpFamilyTag, tyr::GroundTag>);
 static_assert(!kr::ps::dl::TransitionEvaluationContextConcept<IcpContext, kr::IcpFamilyTag, tyr::LiftedTag>);
 
@@ -164,15 +157,13 @@ concept CanCheckCompatibility = requires(Value value, Context& context) {
     { is_compatible_with<Kind>(value, context) } -> std::same_as<bool>;
 };
 
-static_assert(CanCheckCompatibility<tyr::GroundTag, BaseCondition, BaseContext> && CanCheckCompatibility<tyr::GroundTag, BaseCondition, BaseStateContext>);
+static_assert(CanCheckCompatibility<tyr::GroundTag, BaseCondition, BaseContext> && CanCheckCompatibility<tyr::GroundTag, BaseCondition, ExtStateContext>);
 static_assert(CanCheckCompatibility<tyr::GroundTag, ExtCondition, ExtContext> && CanCheckCompatibility<tyr::GroundTag, ExtCondition, ExtStateContext>);
 static_assert(CanCheckCompatibility<tyr::GroundTag, IcpCondition, IcpContext> && CanCheckCompatibility<tyr::GroundTag, IcpCondition, ExtStateContext>);
-static_assert(!CanCheckCompatibility<tyr::GroundTag, BaseCondition, ExtStateContext>);
-static_assert(!CanCheckCompatibility<tyr::GroundTag, ExtCondition, BaseStateContext>);
 static_assert(!CanCheckCompatibility<tyr::GroundTag, IcpCondition, ExtContext>);
 static_assert(!CanCheckCompatibility<tyr::GroundTag, ExtCondition, IcpContext>);
 static_assert(!CanCheckCompatibility<tyr::GroundTag, BaseCondition, NameOnlyContext>);
-static_assert(!CanCheckCompatibility<tyr::LiftedTag, BaseCondition, BaseStateContext>);
+static_assert(!CanCheckCompatibility<tyr::LiftedTag, BaseCondition, ExtStateContext>);
 static_assert(!CanCheckCompatibility<tyr::LiftedTag, BaseCondition, BaseContext>);
 
 static_assert(CanCheckCompatibility<tyr::GroundTag, IcpCondition, IcpResourceContext>);

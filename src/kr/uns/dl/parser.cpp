@@ -1,8 +1,8 @@
 #include "runir/kr/uns/dl/parser.hpp"
 
-#include "kr/parser/constructors.hpp"
+#include "kr/parser/ext_constructors.hpp"
 #include "kr/parser/resolution.hpp"
-#include "runir/kr/dl/detail/repository_instantiations_uns.hpp"
+#include "runir/kr/dl/detail/repository_instantiations_ext.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/parser/diagnostics.hpp"
@@ -26,21 +26,10 @@ namespace runir::kr::uns::dl
 namespace
 {
 
-struct ConstructorContext
-{
-    using Target = runir::kr::parser::constructors::SemanticTarget<runir::kr::UnsFamilyTag>;
-
-    runir::kr::dl::ConstructorRepositoryFor<runir::kr::UnsFamilyTag>& repository;
-    runir::kr::dl::Builder<runir::kr::UnsFamilyTag>& builder;
-    const runir::kr::parser::DiagnosticContext& diagnostics;
-};
-
-using runir::kr::parser::constructors::intern;
-using runir::kr::parser::constructors::intern_constructor;
-using runir::kr::parser::constructors::parse;
 using runir::kr::parser::constructors::parse_constructor;
-using runir::kr::parser::constructors::unwrap;
-using runir::kr::parser::constructors::Unwrapped;
+using runir::kr::parser::ext_constructors::ConstructorContext;
+using runir::kr::parser::ext_constructors::LanguageCapabilities;
+using runir::kr::parser::ext_constructors::parse;
 
 template<typename T>
 auto intern(runir::kr::uns::Repository& repository, ygg::Data<T>& data)
@@ -48,32 +37,15 @@ auto intern(runir::kr::uns::Repository& repository, ygg::Data<T>& data)
     return runir::kr::uns::insert(repository, data).first;
 }
 
-template<runir::kr::dl::CategoryTag Category>
-auto parse(const runir::kr::dl::grammar::ast::ConstructorOrNonTerminal<runir::kr::UnsFamilyTag, Category>& node,
-           tyr::formalism::planning::DomainView domain,
-           const ConstructorContext& context) -> runir::kr::dl::FamilyConstructorView<runir::kr::UnsFamilyTag, Category>
-{
-    return boost::apply_visitor(
-        [&]<typename Value>(const Value& value) -> runir::kr::dl::FamilyConstructorView<runir::kr::UnsFamilyTag, Category>
-        {
-            const auto& unwrapped = unwrap(value);
-            if constexpr (std::same_as<Unwrapped<Value>, runir::kr::dl::grammar::ast::NonTerminal<runir::kr::UnsFamilyTag, Category>>)
-                context.diagnostics.throw_at(unwrapped.name,
-                                             runir::kr::InvalidExpressionError("Classifier DL features cannot reference grammar nonterminals."));
-            else
-                return parse_constructor(unwrapped, domain, context);
-        },
-        node.get());
-}
-
 auto parse_feature(const runir::kr::uns::dl::ast::BooleanFeature& node,
                    tyr::formalism::planning::DomainView domain,
                    Repository& repository,
-                   runir::kr::dl::Builder<runir::kr::UnsFamilyTag>& dl_builder,
+                   runir::kr::dl::Builder<runir::kr::ExtFamilyTag>& dl_builder,
                    runir::kr::uns::Builder& builder,
                    const runir::kr::parser::DiagnosticContext& diagnostics)
 {
-    const auto context = ConstructorContext { repository.get_dl_repository(), dl_builder, diagnostics };
+    const auto context =
+        ConstructorContext { repository.get_dl_repository(), dl_builder, diagnostics, nullptr, LanguageCapabilities { "classifiers", false, false } };
     const auto feature = parse_constructor(node.feature, domain, context);
     auto concrete_data =
         runir::kr::uns::checkout<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>>(builder);
@@ -90,7 +62,7 @@ auto parse_feature(const runir::kr::uns::dl::ast::BooleanFeature& node,
 
 ClassifierView parse_classifier(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository)
 {
-    auto dl_builder = runir::kr::dl::Builder<runir::kr::UnsFamilyTag> {};
+    auto dl_builder = runir::kr::dl::Builder<runir::kr::ExtFamilyTag> {};
     auto builder = runir::kr::uns::Builder {};
     auto first = description.cbegin();
     const auto last = description.cend();

@@ -1,0 +1,59 @@
+#include "bindings.hpp"
+
+#include <nanobind/stl/chrono.h>
+#include <nanobind/stl/optional.h>
+#include <nanobind/stl/vector.h>
+#include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
+#include <runir/kr/dl/cnf_grammar/generate.hpp>
+#include <runir/kr/dl/datas.hpp>
+#include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <tyr/planning/state_view.hpp>
+
+namespace runir::kr::dl
+{
+
+void bind_cnf_grammar_generate(nb::module_& m)
+{
+    nb::class_<runir::kr::dl::cnf_grammar::GenerateStatistics>(m, "GenerateStatistics")
+        .def_ro("num_generated", &runir::kr::dl::cnf_grammar::GenerateStatistics::num_generated)
+        .def_ro("num_pruned", &runir::kr::dl::cnf_grammar::GenerateStatistics::num_pruned)
+        .def_ro("num_kept", &runir::kr::dl::cnf_grammar::GenerateStatistics::num_kept)
+        .def_ro("total_time", &runir::kr::dl::cnf_grammar::GenerateStatistics::total_time);
+
+    nb::class_<runir::kr::dl::cnf_grammar::GenerateOptions>(m, "GenerateOptions")
+        .def(nb::init<>())
+        .def_rw("max_syntactic_complexity", &runir::kr::dl::cnf_grammar::GenerateOptions::max_syntactic_complexity)
+        .def_rw("max_time", &runir::kr::dl::cnf_grammar::GenerateOptions::max_time);
+
+    nb::enum_<runir::kr::dl::cnf_grammar::GenerateStatus>(m, "GenerateStatus")
+        .value("COMPLETED", runir::kr::dl::cnf_grammar::GenerateStatus::COMPLETED)
+        .value("OUT_OF_TIME", runir::kr::dl::cnf_grammar::GenerateStatus::OUT_OF_TIME);
+
+    nb::class_<runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::ExtFamilyTag>>(m, "GenerateResults")
+        .def_ro("statistics", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::ExtFamilyTag>::statistics)
+        .def_ro("status", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::ExtFamilyTag>::status)
+        .def_ro("concepts", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::ExtFamilyTag>::concepts)
+        .def_ro("roles", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::ExtFamilyTag>::roles)
+        .def_ro("booleans", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::ExtFamilyTag>::booleans)
+        .def_ro("numericals", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::ExtFamilyTag>::numericals);
+
+    m.def("generate_ground",
+          &runir::kr::dl::cnf_grammar::generate<runir::kr::BaseFamilyTag, tyr::GroundTag>,
+          nb::arg("grammar"),
+          nb::arg("states"),
+          nb::arg("output_repository"),
+          nb::arg("denotation_repository"),
+          nb::arg("options"),
+          nb::keep_alive<0, 3>());
+    m.def("generate_lifted",
+          &runir::kr::dl::cnf_grammar::generate<runir::kr::BaseFamilyTag, tyr::LiftedTag>,
+          nb::arg("grammar"),
+          nb::arg("states"),
+          nb::arg("output_repository"),
+          nb::arg("denotation_repository"),
+          nb::arg("options"),
+          nb::keep_alive<0, 3>());
+}
+
+}  // namespace runir::kr::dl

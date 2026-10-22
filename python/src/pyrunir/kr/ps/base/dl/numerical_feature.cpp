@@ -1,7 +1,7 @@
 #include "bindings.hpp"
 #include "pyrunir/kr/ps/dl/binding_utils.hpp"
 
-#include <runir/kr/dl/detail/repository_instantiations_base.hpp>
+#include <runir/kr/dl/detail/repository_instantiations_ext.hpp>
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/ps/base/detail/repository_instantiations.hpp>
@@ -13,8 +13,8 @@ namespace runir::kr::ps::base::dl
 
 void bind_numerical_feature(nb::module_& m, RepositoryBinding& repository)
 {
-    using GroundContext = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>;
-    using LiftedContext = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
+    using GroundContext = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, tyr::GroundTag>;
+    using LiftedContext = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, tyr::LiftedTag>;
     auto [feature, concrete] =
         runir::kr::python::bind_feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>(m, repository, "NumericalFeature");
     const auto bind_evaluate = []<typename View>(nb::class_<View>& cls)

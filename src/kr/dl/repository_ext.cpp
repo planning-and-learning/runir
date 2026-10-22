@@ -116,3 +116,4 @@ template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::QueryProject
 
 static_assert(runir::kr::detail::InternsData<runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>, runir::kr::dl::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::TopTag>>);
 static_assert(runir::kr::detail::rejects_symbol<runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>, runir::kr::dl::grammar::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::TopTag>>());
+template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::QueryColumn>;

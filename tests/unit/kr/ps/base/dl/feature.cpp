@@ -61,8 +61,8 @@ using ConcreteNumericalFeature = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::
 
 static_assert(FeatureContract<BooleanFeature, ConcreteBooleanFeature>);
 static_assert(FeatureContract<NumericalFeature, ConcreteNumericalFeature>);
-static_assert(ConcreteFeatureContract<ConcreteBooleanFeature, kr::dl::Constructor<kr::BaseFamilyTag, kr::dl::BooleanTag>>);
-static_assert(ConcreteFeatureContract<ConcreteNumericalFeature, kr::dl::Constructor<kr::BaseFamilyTag, kr::dl::NumericalTag>>);
+static_assert(ConcreteFeatureContract<ConcreteBooleanFeature, kr::dl::Constructor<kr::ExtFamilyTag, kr::dl::BooleanTag>>);
+static_assert(ConcreteFeatureContract<ConcreteNumericalFeature, kr::dl::Constructor<kr::ExtFamilyTag, kr::dl::NumericalTag>>);
 static_assert(std::same_as<View<BooleanFeature>, kr::ps::base::dl::BooleanFeatureView>);
 static_assert(std::same_as<View<NumericalFeature>, kr::ps::base::dl::NumericalFeatureView>);
 

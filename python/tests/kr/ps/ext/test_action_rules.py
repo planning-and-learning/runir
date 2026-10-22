@@ -6,8 +6,7 @@ from fixture_utils import FIXTURE_ROOT
 from pypddl.formalism import ParserOptions
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
 from pyrunir.kr import ArityMismatchError, DomainContext, GroundTaskContext, LiftedTaskContext, UndefinedSymbolError
-from pyrunir.kr.dl.base import semantics as base_semantics
-from pyrunir.kr.dl.ext import semantics
+from pyrunir.kr.dl import semantics
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext import dl
 from pyrunir.serialization import register_table, serialize, table

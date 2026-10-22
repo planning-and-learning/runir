@@ -4,6 +4,7 @@
 #include "kr/parser/constructors.hpp"
 #include "runir/kr/parser/diagnostics.hpp"
 
+#include <string>
 #include <unordered_map>
 
 namespace runir::kr::parser::ext_constructors
@@ -33,6 +34,16 @@ struct ModuleReferences
     ReferenceTable<runir::kr::dl::Register<runir::kr::dl::RoleTag>> role_registers;
 };
 
+/// What a language binds: sketches and classifiers bind neither registers nor arguments, ICP programs only registers.
+struct LanguageCapabilities
+{
+    const char* language;
+    bool registers;
+    bool arguments;
+};
+
+inline constexpr auto all_capabilities = LanguageCapabilities { "Ext module DL expressions", true, true };
+
 struct ConstructorContext
 {
     using Target = runir::kr::parser::constructors::SemanticTarget<runir::kr::ExtFamilyTag>;
@@ -41,7 +52,24 @@ struct ConstructorContext
     runir::kr::dl::Builder<runir::kr::ExtFamilyTag>& builder;
     const runir::kr::parser::DiagnosticContext& diagnostics;
     const ModuleReferences* references;
+    LanguageCapabilities capabilities = all_capabilities;
 };
+
+template<typename Node>
+void require_registers(const Node& node, const ConstructorContext& context)
+{
+    if (!context.capabilities.registers)
+        context.diagnostics.throw_at(node,
+                                     runir::kr::InvalidExpressionError(std::string("Registers are not supported in ") + context.capabilities.language + "."));
+}
+
+template<typename Node>
+void require_arguments(const Node& node, const ConstructorContext& context)
+{
+    if (!context.capabilities.arguments)
+        context.diagnostics.throw_at(node,
+                                     runir::kr::InvalidExpressionError(std::string("Arguments are not supported in ") + context.capabilities.language + "."));
+}
 
 template<runir::kr::dl::CategoryTag Category>
 inline auto parse(const runir::kr::dl::grammar::ast::ConstructorOrNonTerminal<runir::kr::ExtFamilyTag, Category>& node,
@@ -53,9 +81,9 @@ inline auto parse(const runir::kr::dl::grammar::ast::ConstructorOrNonTerminal<ru
         {
             const auto& unwrapped = unwrap(value);
             if constexpr (std::same_as<Unwrapped<Value>, runir::kr::dl::grammar::ast::NonTerminal<runir::kr::ExtFamilyTag, Category>>)
-                context.diagnostics.throw_at(unwrapped.name,
-                                             runir::kr::InvalidExpressionError("Ext module DL expressions cannot reference "
-                                                                               "grammar nonterminals."));
+                context.diagnostics.throw_at(
+                    unwrapped.name,
+                    runir::kr::InvalidExpressionError(std::string(context.capabilities.language) + " cannot reference grammar nonterminals."));
             else
                 return parse_constructor(unwrapped, domain, context);
         },
@@ -109,6 +137,7 @@ inline auto parse(const runir::kr::dl::grammar::ast::ConceptRegister<runir::kr::
                   tyr::formalism::planning::DomainView,
                   const ConstructorContext& context)
 {
+    require_registers(node, context);
     auto data = runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::RegisterTag>>(context.builder);
     data->reference = resolve_reference<runir::kr::dl::Register<runir::kr::dl::ConceptTag>, runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>(
         node.reference,
@@ -122,6 +151,7 @@ inline auto parse(const runir::kr::dl::grammar::ast::ConceptArgument<runir::kr::
                   tyr::formalism::planning::DomainView,
                   const ConstructorContext& context)
 {
+    require_arguments(node, context);
     auto data =
         runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>>(context.builder);
     data->reference = resolve_reference<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>, runir::kr::dl::ArgumentIdentifier<runir::kr::dl::ConceptTag>>(
@@ -135,6 +165,7 @@ inline auto parse(const runir::kr::dl::grammar::ast::ConceptArgument<runir::kr::
 inline auto
 parse(const runir::kr::dl::grammar::ast::RoleRegister<runir::kr::ExtFamilyTag>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
+    require_registers(node, context);
     auto data = runir::kr::dl::checkout<runir::kr::dl::Role<runir::kr::ExtFamilyTag, runir::kr::dl::RegisterTag>>(context.builder);
     data->reference = resolve_reference<runir::kr::dl::Register<runir::kr::dl::RoleTag>, runir::kr::dl::RegisterIdentifier<runir::kr::dl::RoleTag>>(
         node.reference,
@@ -147,6 +178,7 @@ parse(const runir::kr::dl::grammar::ast::RoleRegister<runir::kr::ExtFamilyTag>& 
 inline auto
 parse(const runir::kr::dl::grammar::ast::RoleArgument<runir::kr::ExtFamilyTag>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
+    require_arguments(node, context);
     auto data = runir::kr::dl::checkout<runir::kr::dl::Role<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>>(context.builder);
     data->reference = resolve_reference<runir::kr::dl::Argument<runir::kr::dl::RoleTag>, runir::kr::dl::ArgumentIdentifier<runir::kr::dl::RoleTag>>(
         node.reference,
@@ -160,6 +192,7 @@ inline auto parse(const runir::kr::dl::grammar::ast::BooleanArgument<runir::kr::
                   tyr::formalism::planning::DomainView,
                   const ConstructorContext& context)
 {
+    require_arguments(node, context);
     auto data =
         runir::kr::dl::checkout<runir::kr::dl::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>>(context.builder);
     data->reference = resolve_reference<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>, runir::kr::dl::ArgumentIdentifier<runir::kr::dl::BooleanTag>>(
@@ -174,6 +207,7 @@ inline auto parse(const runir::kr::dl::grammar::ast::NumericalArgument<runir::kr
                   tyr::formalism::planning::DomainView,
                   const ConstructorContext& context)
 {
+    require_arguments(node, context);
     auto data =
         runir::kr::dl::checkout<runir::kr::dl::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>>(context.builder);
     data->reference = resolve_reference<runir::kr::dl::Argument<runir::kr::dl::NumericalTag>, runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>(

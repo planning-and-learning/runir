@@ -10,8 +10,8 @@ from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext, LiftedTaskContext
-from pyrunir.kr.dl.base.semantics import CallArguments, CallArgumentsData, RegisterValues, RegisterValuesData
-from pyrunir.kr.dl.ext import semantics
+from pyrunir.kr.dl.semantics import CallArguments, CallArgumentsData, RegisterValues, RegisterValuesData
+from pyrunir.kr.dl import semantics
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext.dl import parse_program
 from pyrunir.kr.uns.dl import parse_classifier

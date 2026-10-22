@@ -6,9 +6,9 @@ from pytyr.formalism.planning import Parser
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext, LiftedTaskContext
-from pyrunir.kr.dl import base
-from pyrunir.kr.dl.base import cnf_grammar, semantics
-from pyrunir.kr.dl.base.grammar import ConstructorRepositoryFactory
+from pyrunir.kr.dl.grammar import parse_grammar
+from pyrunir.kr.dl import cnf_grammar, semantics
+from pyrunir.kr.dl.grammar import ConstructorRepositoryFactory
 
 
 def _make_gripper_context(gripper_data_dir):
@@ -26,7 +26,7 @@ def _make_gripper_context(gripper_data_dir):
 
 def _generate(grammar_description, states, planning_domain, task_context, max_syntactic_complexity):
     grammar_repository = ConstructorRepositoryFactory().create(planning_domain)
-    grammar = base.parse_grammar(grammar_description, planning_domain.get_domain(), grammar_repository)
+    grammar = parse_grammar(grammar_description, planning_domain.get_domain(), grammar_repository)
     cnf_repository = cnf_grammar.ConstructorRepositoryFactory().create(planning_domain)
     cnf = cnf_grammar.translate(grammar, cnf_repository)
     options = cnf_grammar.GenerateOptions()
@@ -80,7 +80,7 @@ def test_generate_lifted_uses_domain_constructors_and_task_denotations(gripper_d
     state = search.state_repository.get_initial_state(search.axiom_evaluator).pack()
     output_repository = task_context.domain_context.base_repository.get_dl_repository()
     grammar_repository = ConstructorRepositoryFactory().create(planning_domain)
-    grammar = base.parse_grammar(
+    grammar = parse_grammar(
         "((c_0 (c_top))(n_0 (n_count c_0)))", planning_domain.get_domain(), grammar_repository
     )
     cnf_repository = cnf_grammar.ConstructorRepositoryFactory().create(planning_domain)

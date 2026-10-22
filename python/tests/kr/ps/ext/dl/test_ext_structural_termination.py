@@ -4,7 +4,7 @@ import sys
 import pytest
 
 from fixture_utils import read_fixture
-from pyrunir.kr.dl import ext as dl_ext
+from pyrunir.kr.dl import ConstructorRepositoryFactory as DlRepositoryFactory
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext import dl
 from pytyr.formalism.planning import PlanningDomain
@@ -16,7 +16,7 @@ PROJECTED_COMPONENTS_MODULE = read_fixture("kr/ps/ext/dl/projected_components.mo
 
 
 def _repository(planning_domain: PlanningDomain) -> ext.Repository:
-    dl_repository = dl_ext.ConstructorRepositoryFactory().create(planning_domain)
+    dl_repository = DlRepositoryFactory().create(planning_domain)
     return ext.RepositoryFactory().create(dl_repository)
 
 

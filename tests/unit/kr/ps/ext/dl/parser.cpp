@@ -217,6 +217,16 @@ TEST(RunirTests, RelationalExpressionsRoundTripAndRejectGenerationGrammars)
             [&] { kr::dl::grammar::parse_grammar(grammar, domain, *grammar_repository); },
             "Relational expressions are not supported in generation grammars");
 
+    // Generation grammars accept only what generation enumerates.
+    for (const auto& [grammar, expected] : std::vector<std::pair<std::string, std::string>> {
+             { "((c_0 (c_register 0)))", "Registers are not supported in generation grammars" },
+             { "((b_0 (b_argument 0)))", "Arguments are not supported in generation grammars" },
+             { "((b_0 (b_and (b_nonempty (c_top)) (b_nonempty (c_bot)))))", "Boolean comparisons and connectives are not supported in generation grammars" },
+             { "((b_0 (n_lt (n_count (c_top)) (n_count (c_bot)))))", "Boolean comparisons and connectives are not supported in generation grammars" },
+             { "((b_0 (b_const true)))", "Boolean constants are not supported in generation grammars" },
+             { "((n_0 (n_add (n_count (c_top)) (n_const 1))))", "Arithmetic expressions are not supported in generation grammars" } })
+        expect_error_containing([&] { kr::dl::grammar::parse_grammar(grammar, domain, *grammar_repository); }, expected);
+
     EXPECT_THROW(kr::ps::ext::dl::parse_numerical("(n_count (q_atomic_state \"at\" (X X)))", domain, *repository), kr::InvalidExpressionError);
     EXPECT_THROW(kr::ps::ext::dl::parse_numerical("(n_count (q_project (missing) (q_concept X (c_top))))", domain, *repository), kr::InvalidExpressionError);
     for (const auto& expression : {

@@ -86,12 +86,9 @@ yggdrasil_install_python_files(
         pyrunir/graphs/__init__.py
         pyrunir/kr/__init__.py
         pyrunir/kr/dl/__init__.py
-        pyrunir/kr/dl/base/__init__.py
-        pyrunir/kr/dl/ext/__init__.py
-        pyrunir/kr/dl/ext/semantics/__init__.py
-        pyrunir/kr/dl/base/semantics/__init__.py
-        pyrunir/kr/dl/base/grammar/__init__.py
-        pyrunir/kr/dl/base/cnf_grammar/__init__.py
+        pyrunir/kr/dl/semantics/__init__.py
+        pyrunir/kr/dl/grammar/__init__.py
+        pyrunir/kr/dl/cnf_grammar/__init__.py
         pyrunir/kr/ps/__init__.py
         pyrunir/kr/ps/base/__init__.py
         pyrunir/kr/ps/icp/__init__.py
@@ -99,8 +96,6 @@ yggdrasil_install_python_files(
         pyrunir/kr/ps/ext/__init__.py
         pyrunir/kr/ps/ext/dl/__init__.py
         pyrunir/kr/ps/base/dl/__init__.py
-        pyrunir/kr/dl/uns/__init__.py
-        pyrunir/kr/dl/uns/semantics/__init__.py
         pyrunir/kr/uns/__init__.py
         pyrunir/kr/uns/dl/__init__.py
         pyrunir/serialization/__init__.py

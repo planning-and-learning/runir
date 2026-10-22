@@ -82,7 +82,7 @@ static_assert(!QueryProjectionCategory<kr::dl::BooleanTag> && !QueryProjectionCa
 template<typename Family, typename Kind>
 concept GeneratesConstructors = requires(kr::dl::cnf_grammar::FamilyGrammarView<Family> grammar,
                                          const std::vector<tyr::planning::PackedStateView<Kind>>& states,
-                                         kr::dl::ConstructorRepositoryFor<Family>& constructors,
+                                         kr::dl::ConstructorRepositoryFor<kr::ExtFamilyTag>& constructors,
                                          kr::dl::semantics::DenotationRepository& denotations,
                                          const kr::dl::cnf_grammar::GenerateOptions& options) {
     kr::dl::cnf_grammar::generate<Family, Kind>(grammar, states, constructors, denotations, options);
@@ -90,10 +90,6 @@ concept GeneratesConstructors = requires(kr::dl::cnf_grammar::FamilyGrammarView<
 
 static_assert(GeneratesConstructors<kr::BaseFamilyTag, tyr::GroundTag>);
 static_assert(GeneratesConstructors<kr::BaseFamilyTag, tyr::LiftedTag>);
-static_assert(!GeneratesConstructors<kr::ExtFamilyTag, tyr::GroundTag>);
-static_assert(!GeneratesConstructors<kr::ExtFamilyTag, tyr::LiftedTag>);
-static_assert(!GeneratesConstructors<kr::UnsFamilyTag, tyr::GroundTag>);
-static_assert(!GeneratesConstructors<kr::UnsFamilyTag, tyr::LiftedTag>);
 
 static_assert(kr::dl::FamilyNumericalConstructorTag<kr::ExtFamilyTag, kr::dl::AddTag>);
 static_assert(kr::dl::FamilyNumericalConstructorTag<kr::UnsFamilyTag, kr::dl::AddTag>);
