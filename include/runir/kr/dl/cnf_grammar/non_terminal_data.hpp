@@ -13,10 +13,10 @@
 namespace ygg
 {
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-struct Data<runir::kr::dl::cnf_grammar::NonTerminal<Family, Category>>
+template<runir::kr::dl::CategoryTag Category>
+struct Data<runir::kr::dl::cnf_grammar::NonTerminal<Category>>
 {
-    Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, Category>> index;
+    Index<runir::kr::dl::cnf_grammar::NonTerminal<Category>> index;
     ::cista::offset::string name;
 
     Data() = default;

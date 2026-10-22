@@ -12,13 +12,12 @@
 namespace ygg
 {
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, formalism::SymbolContextFor<runir::kr::dl::cnf_grammar::Numerical<Family, Tag>> C>
-    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
-class View<Index<runir::kr::dl::cnf_grammar::Numerical<Family, Tag>>, C> :
-    public ygg::IndexViewBase<runir::kr::dl::cnf_grammar::Numerical<Family, Tag>, C>
+template<typename Tag, formalism::SymbolContextFor<runir::kr::dl::cnf_grammar::Numerical<Tag>> C>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Tag>
+class View<Index<runir::kr::dl::cnf_grammar::Numerical<Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::cnf_grammar::Numerical<Tag>, C>
 {
 public:
-    using ygg::IndexViewBase<runir::kr::dl::cnf_grammar::Numerical<Family, Tag>, C>::IndexViewBase;
+    using ygg::IndexViewBase<runir::kr::dl::cnf_grammar::Numerical<Tag>, C>::IndexViewBase;
 
     auto get_identifier() const noexcept
         requires std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>

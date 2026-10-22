@@ -20,27 +20,25 @@ concept IndexedDataView =
            view.get_index();
        };
 
-template<typename Family, typename... Ts>
+template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
 {
-    return (IndexedDataView<Ts, kr::dl::ConstructorRepositoryFor<Family>> && ...);
+    return (IndexedDataView<Ts, kr::dl::ConstructorRepositoryFor> && ...);
 }
 
-static_assert(indexed_data_views<kr::BaseFamilyTag>(kr::dl::FamilyNumericalTypes<kr::BaseFamilyTag> {}));
-static_assert(indexed_data_views<kr::ExtFamilyTag>(kr::dl::FamilyNumericalTypes<kr::ExtFamilyTag> {}));
-static_assert(indexed_data_views<kr::UnsFamilyTag>(kr::dl::FamilyNumericalTypes<kr::UnsFamilyTag> {}));
+static_assert(indexed_data_views<>(kr::dl::FamilyNumericalTypes {}));
 
-template<typename Family, typename Tag>
+template<typename Tag>
 consteval bool numerical_data_view()
 {
-    using Entity = kr::dl::Numerical<Family, Tag>;
+    using Entity = kr::dl::Numerical<Tag>;
     using Data = ygg::Data<Entity>;
-    using View = ygg::View<ygg::Index<Entity>, kr::dl::ConstructorRepositoryFor<Family>>;
+    using View = ygg::View<ygg::Index<Entity>, kr::dl::ConstructorRepositoryFor>;
 
-    static_assert(std::same_as<View, kr::dl::FamilyNumericalView<Family, Tag>>);
-    if constexpr (std::same_as<Family, kr::BaseFamilyTag>)
+    static_assert(std::same_as<View, kr::dl::FamilyNumericalView<Tag>>);
+    if constexpr (false)
         static_assert(std::same_as<View, kr::dl::BaseNumericalView<Tag>>);
-    else if constexpr (std::same_as<Family, kr::ExtFamilyTag>)
+    else if constexpr (true)
         static_assert(std::same_as<View, kr::dl::ExtNumericalView<Tag>>);
     else
         static_assert(std::same_as<View, kr::dl::UnsNumericalView<Tag>>);
@@ -80,38 +78,35 @@ consteval bool numerical_data_view()
         return false;
 }
 
-template<typename Family, typename... Tags>
+template<typename... Tags>
 consteval bool numerical_data_views(ygg::TypeList<Tags...>)
 {
-    return (numerical_data_view<Family, Tags>() && ...);
+    return (numerical_data_view<Tags>() && ...);
 }
 
-static_assert(numerical_data_views<kr::BaseFamilyTag>(kr::dl::FamilyNumericalConstructorTags<kr::BaseFamilyTag> {}));
-static_assert(numerical_data_views<kr::ExtFamilyTag>(kr::dl::FamilyNumericalConstructorTags<kr::ExtFamilyTag> {}));
-static_assert(numerical_data_views<kr::UnsFamilyTag>(kr::dl::FamilyNumericalConstructorTags<kr::UnsFamilyTag> {}));
+static_assert(numerical_data_views<>(kr::dl::FamilyNumericalConstructorTags {}));
 
 }  // namespace
 
 TEST(RunirKrDlNumerical, RoutesValueBinaryAndDistanceData)
 {
-    using Family = kr::ExtFamilyTag;
-    using Concept = kr::dl::Constructor<Family, kr::dl::ConceptTag>;
-    using Role = kr::dl::Constructor<Family, kr::dl::RoleTag>;
-    using Numerical = kr::dl::Constructor<Family, kr::dl::NumericalTag>;
+    using Concept = kr::dl::Constructor<kr::dl::ConceptTag>;
+    using Role = kr::dl::Constructor<kr::dl::RoleTag>;
+    using Numerical = kr::dl::Constructor<kr::dl::NumericalTag>;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     auto repository = kr::dl::ExtConstructorRepositoryFactory().create(planning_repository);
 
-    auto constant_data = ygg::Data<kr::dl::Numerical<Family, kr::dl::NumericalConstantTag>>(7);
+    auto constant_data = ygg::Data<kr::dl::Numerical<kr::dl::NumericalConstantTag>>(7);
     EXPECT_EQ(repository->insert(constant_data).first.get_value(), 7);
 
-    auto binary_data = ygg::Data<kr::dl::Numerical<Family, kr::dl::AddTag>>(ygg::Index<Numerical>(1), ygg::Index<Numerical>(2));
+    auto binary_data = ygg::Data<kr::dl::Numerical<kr::dl::AddTag>>(ygg::Index<Numerical>(1), ygg::Index<Numerical>(2));
     const auto binary = repository->insert(binary_data).first;
     EXPECT_EQ(binary.get_lhs().get_index(), ygg::Index<Numerical>(1));
     EXPECT_EQ(binary.get_rhs().get_index(), ygg::Index<Numerical>(2));
 
     // Vertices are concept-or-query and edges role-or-query variants.
-    using Query = kr::dl::Query<Family>;
-    using DistanceData = ygg::Data<kr::dl::Numerical<Family, kr::dl::DistanceTag>>;
+    using Query = kr::dl::Query<>;
+    using DistanceData = ygg::Data<kr::dl::Numerical<kr::dl::DistanceTag>>;
     static_assert(std::same_as<DistanceData::Vertex, ygg::IndexVariant<ygg::TypeList<Concept, Query>>>);
     static_assert(std::same_as<DistanceData::Edge, ygg::IndexVariant<ygg::TypeList<Role, Query>>>);
     auto distance_data = DistanceData(ygg::Index<Concept>(3), ygg::Index<Query>(4), ygg::Index<Query>(5));

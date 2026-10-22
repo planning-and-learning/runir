@@ -12,12 +12,12 @@
 namespace ygg
 {
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, formalism::SymbolContextFor<runir::kr::dl::grammar::Role<Family, Tag>> C>
-    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
-class View<Index<runir::kr::dl::grammar::Role<Family, Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::grammar::Role<Family, Tag>, C>
+template<typename Tag, formalism::SymbolContextFor<runir::kr::dl::grammar::Role<Tag>> C>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Tag>
+class View<Index<runir::kr::dl::grammar::Role<Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::grammar::Role<Tag>, C>
 {
 public:
-    using ygg::IndexViewBase<runir::kr::dl::grammar::Role<Family, Tag>, C>::IndexViewBase;
+    using ygg::IndexViewBase<runir::kr::dl::grammar::Role<Tag>, C>::IndexViewBase;
 
     auto get_identifier() const noexcept
         requires(std::same_as<Tag, runir::kr::dl::RegisterTag> || std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>)

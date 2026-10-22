@@ -15,7 +15,7 @@ namespace runir::kr::uns
 // Classify a state by evaluating each literal's boolean feature, then the DNF over the literals.
 // The DNF is an OR over clauses of an AND over literals: an empty OR evaluates to false and an
 // empty AND evaluates to true.
-template<tyr::TaskKind Kind, typename C, runir::kr::dl::semantics::EvaluationContextConcept<runir::kr::ExtFamilyTag, Kind> Context>
+template<tyr::TaskKind Kind, typename C, runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context>
 bool classify(ygg::View<ygg::Index<runir::kr::uns::Classifier>, C> classifier, Context& context)
 {
     for (auto clause : classifier.get_clauses())

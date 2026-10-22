@@ -31,7 +31,7 @@ namespace detail
 /// admission, memoization and graph retention; AND/OR traversal is identical in every mode.
 template<tyr::TaskKind Kind,
          ExecutionStorageConcept<Kind> ExecutionStorage,
-         runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+         runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
          StateMemorization Memorization,
          UnsolvabilityConcept<Kind> Unsolvability>
 ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>& expander,
@@ -296,7 +296,7 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
 /// Own the search lifetime, then construct its graph and optional execution plan.
 template<tyr::TaskKind Kind,
          ExecutionStorageConcept<Kind> ExecutionStorage,
-         runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+         runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
          StateMemorization Memorization,
          UnsolvabilityConcept<Kind> Unsolvability>
 ProgramProofResults<Kind> find_solution(SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>& expander,
@@ -375,7 +375,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner,
         auto classifier = NoUnsolvability<Kind> {};
         return detail::find_solution<Kind>(expander, storage, options, classifier);
     };
-    using EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<ExtFamilyTag, Kind>;
+    using EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<Kind>;
     // Validate the task and program before constructing a classifier that borrows the task context.
     switch (options.state_memorization)
     {

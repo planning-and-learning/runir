@@ -18,8 +18,7 @@ template<FamilyTag Family,
          tyr::TaskKind Kind,
          typename Storage = void,
          tyr::planning::StateViewConcept<Kind> PlanningState = tyr::planning::StateView<Kind>,
-         runir::kr::dl::semantics::EvaluationPolicyConcept<DlFamilyFor<Family>, Kind> EvaluationPolicy =
-             runir::kr::dl::semantics::DefaultEvaluationPolicy<DlFamilyFor<Family>, Kind>>
+         runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<Kind>>
 struct RuleEvaluationContext;
 
 /// Consume a result; false requests early termination. The callback may mutate search state.

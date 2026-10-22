@@ -40,7 +40,7 @@ auto intern(runir::kr::uns::Repository& repository, ygg::Data<T>& data)
 auto parse_feature(const runir::kr::uns::dl::ast::BooleanFeature& node,
                    tyr::formalism::planning::DomainView domain,
                    Repository& repository,
-                   runir::kr::dl::Builder<runir::kr::ExtFamilyTag>& dl_builder,
+                   runir::kr::dl::Builder& dl_builder,
                    runir::kr::uns::Builder& builder,
                    const runir::kr::parser::DiagnosticContext& diagnostics)
 {
@@ -62,7 +62,7 @@ auto parse_feature(const runir::kr::uns::dl::ast::BooleanFeature& node,
 
 ClassifierView parse_classifier(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository)
 {
-    auto dl_builder = runir::kr::dl::Builder<runir::kr::ExtFamilyTag> {};
+    auto dl_builder = runir::kr::dl::Builder {};
     auto builder = runir::kr::uns::Builder {};
     auto first = description.cbegin();
     const auto last = description.cend();

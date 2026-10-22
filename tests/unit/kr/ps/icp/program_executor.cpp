@@ -84,14 +84,14 @@ auto program(const kr::TaskContextPtr<Kind>& context, const std::string& text)
                                           *context->domain_context->icp_repository);
 }
 
-template<tyr::TaskKind Kind, kr::dl::semantics::EvaluationPolicyConcept<kr::ExtFamilyTag, Kind> EvaluationPolicy>
+template<tyr::TaskKind Kind, kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
 auto initial(kr::ps::icp::SuccessorExpander<Kind, EvaluationPolicy>& expander)
 {
     auto& search = *expander.get_task_context()->search_context;
     return expander.initial_state(search.successor_generator->get_initial_node(*search.state_repository, *search.axiom_evaluator).get_state());
 }
 
-template<tyr::TaskKind Kind, kr::dl::semantics::EvaluationPolicyConcept<kr::ExtFamilyTag, Kind> EvaluationPolicy>
+template<tyr::TaskKind Kind, kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
 auto successors(kr::ps::icp::SuccessorExpander<Kind, EvaluationPolicy>& expander, kr::ps::icp::ProgramStateView<Kind> source, bool grouped = false)
 {
     auto result = std::vector<typename kr::ps::icp::SuccessorExpander<Kind, EvaluationPolicy>::Step> {};
@@ -117,8 +117,8 @@ void check_evaluation_policies()
                                 module(rule("load-bad", "m0", "m1", load("Candidates", "r0", "(positive Bad)"))
                                        + rule("load-good", "m0", "m1", load("Candidates", "r0", "(negative Bad)"))
                                        + rule("move", "m1", "m2", move("R")) + rule("finish", "m2", "m3", move("Goal"))));
-    auto full = kr::ps::icp::SuccessorExpander<Kind, kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, Kind>>(context, policy);
-    auto delta = kr::ps::icp::SuccessorExpander<Kind, kr::dl::semantics::DeltaEvaluationPolicy<kr::ExtFamilyTag, Kind>>(context, policy);
+    auto full = kr::ps::icp::SuccessorExpander<Kind, kr::dl::semantics::FullEvaluationPolicy<Kind>>(context, policy);
+    auto delta = kr::ps::icp::SuccessorExpander<Kind, kr::dl::semantics::DeltaEvaluationPolicy<Kind>>(context, policy);
     const auto source = initial(full);
     EXPECT_EQ(initial(delta), source);
 

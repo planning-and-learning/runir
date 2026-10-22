@@ -1,4 +1,3 @@
-#define RUNIR_DL_GRAMMAR_PARSER_EXT
 #include "runir/kr/dl/grammar/parser/parser_def.hpp"
 
 namespace runir::kr::dl::grammar::parser
@@ -38,60 +37,60 @@ RUNIR_INSTANTIATE_ALIAS(ext_family_search_free_grammar_root_type)
 
 #undef RUNIR_INSTANTIATE_ALIAS
 
-#define RUNIR_DEFINE_PARSER_ACCESSORS(Family, Dialect, Prefix)                           \
-    template<>                                                                           \
-    concept_type<Family, Dialect> const& concept_parser<Family, Dialect>()               \
-    {                                                                                    \
-        return Prefix##_concept;                                                         \
-    }                                                                                    \
-    template<>                                                                           \
-    concept_root_type<Family, Dialect> const& concept_root_parser<Family, Dialect>()     \
-    {                                                                                    \
-        return Prefix##_concept_root;                                                    \
-    }                                                                                    \
-    template<>                                                                           \
-    role_type<Family, Dialect> const& role_parser<Family, Dialect>()                     \
-    {                                                                                    \
-        return Prefix##_role;                                                            \
-    }                                                                                    \
-    template<>                                                                           \
-    role_root_type<Family, Dialect> const& role_root_parser<Family, Dialect>()           \
-    {                                                                                    \
-        return Prefix##_role_root;                                                       \
-    }                                                                                    \
-    template<>                                                                           \
-    boolean_type<Family, Dialect> const& boolean_parser<Family, Dialect>()               \
-    {                                                                                    \
-        return Prefix##_boolean;                                                         \
-    }                                                                                    \
-    template<>                                                                           \
-    boolean_root_type<Family, Dialect> const& boolean_root_parser<Family, Dialect>()     \
-    {                                                                                    \
-        return Prefix##_boolean_root;                                                    \
-    }                                                                                    \
-    template<>                                                                           \
-    numerical_type<Family, Dialect> const& numerical_parser<Family, Dialect>()           \
-    {                                                                                    \
-        return Prefix##_numerical;                                                       \
-    }                                                                                    \
-    template<>                                                                           \
-    numerical_root_type<Family, Dialect> const& numerical_root_parser<Family, Dialect>() \
-    {                                                                                    \
-        return Prefix##_numerical_root;                                                  \
-    }                                                                                    \
-    template<>                                                                           \
-    query_type<Family, Dialect> const& query_parser<Family, Dialect>()                   \
-    {                                                                                    \
-        return Prefix##_query;                                                           \
-    }                                                                                    \
-    template<>                                                                           \
-    grammar_root_type<Family, Dialect> const& grammar_root_parser<Family, Dialect>()     \
-    {                                                                                    \
-        return Prefix##_grammar_root;                                                    \
+#define RUNIR_DEFINE_PARSER_ACCESSORS(Dialect, Prefix)                   \
+    template<>                                                           \
+    concept_type<Dialect> const& concept_parser<Dialect>()               \
+    {                                                                    \
+        return Prefix##_concept;                                         \
+    }                                                                    \
+    template<>                                                           \
+    concept_root_type<Dialect> const& concept_root_parser<Dialect>()     \
+    {                                                                    \
+        return Prefix##_concept_root;                                    \
+    }                                                                    \
+    template<>                                                           \
+    role_type<Dialect> const& role_parser<Dialect>()                     \
+    {                                                                    \
+        return Prefix##_role;                                            \
+    }                                                                    \
+    template<>                                                           \
+    role_root_type<Dialect> const& role_root_parser<Dialect>()           \
+    {                                                                    \
+        return Prefix##_role_root;                                       \
+    }                                                                    \
+    template<>                                                           \
+    boolean_type<Dialect> const& boolean_parser<Dialect>()               \
+    {                                                                    \
+        return Prefix##_boolean;                                         \
+    }                                                                    \
+    template<>                                                           \
+    boolean_root_type<Dialect> const& boolean_root_parser<Dialect>()     \
+    {                                                                    \
+        return Prefix##_boolean_root;                                    \
+    }                                                                    \
+    template<>                                                           \
+    numerical_type<Dialect> const& numerical_parser<Dialect>()           \
+    {                                                                    \
+        return Prefix##_numerical;                                       \
+    }                                                                    \
+    template<>                                                           \
+    numerical_root_type<Dialect> const& numerical_root_parser<Dialect>() \
+    {                                                                    \
+        return Prefix##_numerical_root;                                  \
+    }                                                                    \
+    template<>                                                           \
+    query_type<Dialect> const& query_parser<Dialect>()                   \
+    {                                                                    \
+        return Prefix##_query;                                           \
+    }                                                                    \
+    template<>                                                           \
+    grammar_root_type<Dialect> const& grammar_root_parser<Dialect>()     \
+    {                                                                    \
+        return Prefix##_grammar_root;                                    \
     }
 
-RUNIR_DEFINE_PARSER_ACCESSORS(runir::kr::ExtFamilyTag, FullDialectTag, ext_family)
-RUNIR_DEFINE_PARSER_ACCESSORS(runir::kr::ExtFamilyTag, SearchFreeDialectTag, ext_family_search_free)
+RUNIR_DEFINE_PARSER_ACCESSORS(FullDialectTag, ext_family)
+RUNIR_DEFINE_PARSER_ACCESSORS(SearchFreeDialectTag, ext_family_search_free)
 
 #undef RUNIR_DEFINE_PARSER_ACCESSORS
 

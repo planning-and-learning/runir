@@ -23,7 +23,7 @@ namespace runir::kr::ps
 template<tyr::TaskKind Kind,
          ext::ExecutionStorageConcept<Kind> Storage,
          tyr::planning::StateViewConcept<Kind> PlanningState,
-         runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy>
+         runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
 struct RuleEvaluationContext<runir::kr::ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>
 {
     using FamilyType = runir::kr::ExtFamilyTag;

@@ -39,23 +39,23 @@ namespace runir::kr::dl::semantics
 namespace detail
 {
 
-template<FamilyTag Family, tyr::TaskKind Kind, StateEvaluationContextConcept<Family, Kind> Context>
+template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
 auto num_objects(const Context& context) noexcept -> ygg::uint_t
 {
     const auto task = context.get_state().get_task().get_task();
     return static_cast<ygg::uint_t>(task.get_num_objects());
 }
 
-template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context>
+template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
 auto make_concept_builder(Context& context)
 {
-    return context.get_builder().template get_builder<Denotation<ConceptTag>>(num_objects<Family, Kind>(context));
+    return context.get_builder().template get_builder<Denotation<ConceptTag>>(num_objects<Kind>(context));
 }
 
-template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context>
+template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
 auto make_role_builder(Context& context)
 {
-    return context.get_builder().template get_builder<Denotation<RoleTag>>(num_objects<Family, Kind>(context));
+    return context.get_builder().template get_builder<Denotation<RoleTag>>(num_objects<Kind>(context));
 }
 
 template<tyr::formalism::FactKind T>
@@ -64,12 +64,12 @@ auto object_index(tyr::formalism::planning::AtomView<::tyr::GroundTag, T> atom, 
     return atom.get_row().get_objects()[position].get_index();
 }
 
-template<tyr::TaskKind Kind, FamilyTag Family, tyr::formalism::FactKind T, StateEvaluationContextConcept<Family, Kind> Context, typename C>
-void evaluate_atomic_state_concept(ygg::View<ygg::Index<FamilyConcept<Family, AtomicStateTag<T>>>, C> constructor,
+template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
+void evaluate_atomic_state_concept(ygg::View<ygg::Index<FamilyConcept<AtomicStateTag<T>>>, C> constructor,
                                    Context& context,
                                    ygg::Builder<Denotation<ConceptTag>>& result)
 {
-    [[maybe_unused]] const auto num_objects = detail::num_objects<Family, Kind>(context);
+    [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
     auto bitset = result.get();
 
     const auto predicate = constructor.get_predicate();
@@ -84,12 +84,12 @@ void evaluate_atomic_state_concept(ygg::View<ygg::Index<FamilyConcept<Family, At
         bitset.flip();
 }
 
-template<tyr::TaskKind Kind, FamilyTag Family, tyr::formalism::FactKind T, StateEvaluationContextConcept<Family, Kind> Context, typename C>
-void evaluate_atomic_goal_concept(ygg::View<ygg::Index<FamilyConcept<Family, AtomicGoalTag<T>>>, C> constructor,
+template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
+void evaluate_atomic_goal_concept(ygg::View<ygg::Index<FamilyConcept<AtomicGoalTag<T>>>, C> constructor,
                                   Context& context,
                                   ygg::Builder<Denotation<ConceptTag>>& result)
 {
-    [[maybe_unused]] const auto num_objects = detail::num_objects<Family, Kind>(context);
+    [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
     auto bitset = result.get();
 
     const auto predicate = constructor.get_predicate();
@@ -101,12 +101,12 @@ void evaluate_atomic_goal_concept(ygg::View<ygg::Index<FamilyConcept<Family, Ato
     }
 }
 
-template<tyr::TaskKind Kind, FamilyTag Family, tyr::formalism::FactKind T, StateEvaluationContextConcept<Family, Kind> Context, typename C>
-void evaluate_atomic_state_role(ygg::View<ygg::Index<FamilyRole<Family, AtomicStateTag<T>>>, C> constructor,
+template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
+void evaluate_atomic_state_role(ygg::View<ygg::Index<FamilyRole<AtomicStateTag<T>>>, C> constructor,
                                 Context& context,
                                 ygg::Builder<Denotation<RoleTag>>& result)
 {
-    [[maybe_unused]] const auto num_objects = detail::num_objects<Family, Kind>(context);
+    [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
 
     const auto predicate = constructor.get_predicate();
     for (const auto atom : context.get_state().get_atoms_view(predicate))
@@ -123,12 +123,10 @@ void evaluate_atomic_state_role(ygg::View<ygg::Index<FamilyRole<Family, AtomicSt
             result.get(object).flip();
 }
 
-template<tyr::TaskKind Kind, FamilyTag Family, tyr::formalism::FactKind T, StateEvaluationContextConcept<Family, Kind> Context, typename C>
-void evaluate_atomic_goal_role(ygg::View<ygg::Index<FamilyRole<Family, AtomicGoalTag<T>>>, C> constructor,
-                               Context& context,
-                               ygg::Builder<Denotation<RoleTag>>& result)
+template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
+void evaluate_atomic_goal_role(ygg::View<ygg::Index<FamilyRole<AtomicGoalTag<T>>>, C> constructor, Context& context, ygg::Builder<Denotation<RoleTag>>& result)
 {
-    [[maybe_unused]] const auto num_objects = detail::num_objects<Family, Kind>(context);
+    [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
 
     const auto predicate = constructor.get_predicate();
     for (const auto atom : context.get_state().get_task().get_task().get_goal().template get_atoms_view<T>(constructor.get_polarity(), predicate))
@@ -141,16 +139,16 @@ void evaluate_atomic_goal_role(ygg::View<ygg::Index<FamilyRole<Family, AtomicGoa
     }
 }
 
-template<tyr::TaskKind Kind, FamilyTag Family, tyr::formalism::FactKind T, StateEvaluationContextConcept<Family, Kind> Context, typename C>
-bool evaluate_atomic_state_boolean(ygg::View<ygg::Index<FamilyBoolean<Family, AtomicStateTag<T>>>, C> constructor, Context& context)
+template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
+bool evaluate_atomic_state_boolean(ygg::View<ygg::Index<FamilyBoolean<AtomicStateTag<T>>>, C> constructor, Context& context)
 {
     auto atoms = context.get_state().get_atoms_view(constructor.get_predicate());
     const auto value = atoms.begin() != atoms.end();
     return constructor.get_polarity() ? value : !value;
 }
 
-template<tyr::TaskKind Kind, FamilyTag Family, tyr::formalism::FactKind T, StateEvaluationContextConcept<Family, Kind> Context, typename C>
-bool evaluate_atomic_goal_boolean(ygg::View<ygg::Index<FamilyBoolean<Family, AtomicGoalTag<T>>>, C> constructor, Context& context)
+template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
+bool evaluate_atomic_goal_boolean(ygg::View<ygg::Index<FamilyBoolean<AtomicGoalTag<T>>>, C> constructor, Context& context)
 {
     auto atoms = context.get_state().get_task().get_task().get_goal().template get_atoms_view<T>(constructor.get_polarity(), constructor.get_predicate());
     return atoms.begin() != atoms.end();
@@ -253,18 +251,16 @@ void insert_denotation_rows(const Denotation& denotation, ygg::Builder<ygg::data
 }
 
 /// A distance argument as a relation over the plan's columns for it.
-template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context, typename C>
-auto evaluate_relation(ygg::View<ygg::Index<Query<Family>>, C> argument, std::span<const ygg::database::ColumnLayout>, Context& context)
-    -> QueryDenotationView
+template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
+auto evaluate_relation(ygg::View<ygg::Index<Query<>>, C> argument, std::span<const ygg::database::ColumnLayout>, Context& context) -> QueryDenotationView
 {
     return evaluate<Kind>(argument, context);
 }
 
 /// Concepts and roles are lifted, so all argument forms share one distance evaluation.
-template<tyr::TaskKind Kind, FamilyTag Family, ConceptOrRoleTag Category, StateEvaluationContextConcept<Family, Kind> Context, typename C>
-auto evaluate_relation(ygg::View<ygg::Index<Constructor<Family, Category>>, C> argument,
-                       std::span<const ygg::database::ColumnLayout> columns,
-                       Context& context) -> QueryDenotationView
+template<tyr::TaskKind Kind, ConceptOrRoleTag Category, StateEvaluationContextConcept<Kind> Context, typename C>
+auto evaluate_relation(ygg::View<ygg::Index<Constructor<Category>>, C> argument, std::span<const ygg::database::ColumnLayout> columns, Context& context)
+    -> QueryDenotationView
 {
     const auto denotation = evaluate<Kind>(argument, context);
     auto result = context.get_builder().template get_builder<ygg::database::Relation>(columns);

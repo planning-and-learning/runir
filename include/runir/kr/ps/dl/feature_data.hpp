@@ -21,13 +21,13 @@ namespace runir::kr::ps::dl
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag>
 struct FeatureExpression
 {
-    using Type = runir::kr::dl::Constructor<runir::kr::ps::DlFamilyFor<Family>, FeatureTag>;
+    using Type = runir::kr::dl::Constructor<FeatureTag>;
 };
 
 template<runir::kr::FamilyTag Family>
 struct FeatureExpression<Family, QueryFeature>
 {
-    using Type = runir::kr::dl::Query<runir::kr::ps::DlFamilyFor<Family>>;
+    using Type = runir::kr::dl::Query<>;
 };
 
 }  // namespace runir::kr::ps::dl

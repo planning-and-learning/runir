@@ -14,11 +14,11 @@
 namespace ygg
 {
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-struct Data<runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, Category>>
+template<runir::kr::dl::CategoryTag Category>
+struct Data<runir::kr::dl::grammar::ConstructorOrNonTerminal<Category>>
 {
-    using Variant = ::ygg::IndexVariant<ygg::TypeList<runir::kr::dl::grammar::Constructor<Family, Category>, runir::kr::dl::grammar::NonTerminal<Family, Category>>>;
-    Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, Category>> index;
+    using Variant = ::ygg::IndexVariant<ygg::TypeList<runir::kr::dl::grammar::Constructor<Category>, runir::kr::dl::grammar::NonTerminal<Category>>>;
+    Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<Category>> index;
     Variant variant;
     Data() = default;
     explicit Data(Variant variant_) : index(), variant(std::move(variant_)) {}

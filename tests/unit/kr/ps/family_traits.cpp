@@ -17,21 +17,19 @@ namespace
 {
 
 using IcpFactory = kr::ps::icp::RepositoryFactory;
-using ExtConstructors = kr::dl::ConstructorRepositoryPtrFor<kr::ExtFamilyTag>;
-using BaseConstructors = kr::dl::ConstructorRepositoryPtrFor<kr::BaseFamilyTag>;
-using UnsConstructors = kr::dl::ConstructorRepositoryPtrFor<kr::ExtFamilyTag>;
+using ExtConstructors = kr::dl::ConstructorRepositoryPtrFor;
+using UnsConstructors = kr::dl::ConstructorRepositoryPtrFor;
 
 // ICP shares Ext expressions, while policy indices remain distinct.
 static_assert(std::same_as<kr::ps::icp::Repository::DlRepositoryPtr, ExtConstructors>);
 static_assert(std::same_as<kr::ps::base::Repository::DlRepositoryPtr, ExtConstructors>);
 static_assert(std::same_as<kr::uns::Repository::DlRepositoryPtr, UnsConstructors>);
 static_assert(std::is_invocable_v<decltype(&IcpFactory::create), IcpFactory&, ExtConstructors>);
-static_assert(!std::is_invocable_v<decltype(&IcpFactory::create), IcpFactory&, BaseConstructors>);
 static_assert(
     !std::same_as<ygg::Index<kr::ps::Feature<kr::IcpFamilyTag, kr::dl::ConceptTag>>, ygg::Index<kr::ps::Feature<kr::ExtFamilyTag, kr::dl::ConceptTag>>>);
 
 using IcpQuery = kr::ps::ConcreteFeature<kr::IcpFamilyTag, kr::DlTag, kr::ps::dl::QueryFeature>;
-static_assert(std::same_as<typename ygg::Data<IcpQuery>::Expression, kr::dl::Query<kr::ExtFamilyTag>>);
+static_assert(std::same_as<typename ygg::Data<IcpQuery>::Expression, kr::dl::Query<>>);
 
 // Classifiers expose Boolean features, without acquiring policy conditions or effects.
 static_assert(std::same_as<kr::ps::PsConditionTypes<kr::UnsFamilyTag>, ygg::TypeList<>>);
@@ -95,9 +93,9 @@ struct BaseFeatureStorage
 template<typename Type, typename Repository, typename Context>
 concept CanEvaluate = StoredType<Type> && requires(ygg::View<ygg::Index<Type>, Repository>& view, Context& context) { kr::ps::evaluate<tyr::GroundTag>(view, context); };
 
-using BaseStateContext = kr::dl::semantics::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>;
-using UnsStateContext = kr::dl::semantics::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>;
-using ExtStateContext = kr::dl::semantics::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>;
+using BaseStateContext = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
+using UnsStateContext = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
+using ExtStateContext = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
 using BaseBoolean = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::DlTag, kr::dl::BooleanTag>;
 using UnsBoolean = kr::ps::ConcreteFeature<kr::UnsFamilyTag, kr::DlTag, kr::dl::BooleanTag>;
 static_assert(CanEvaluate<BaseBoolean, kr::ps::base::Repository, BaseStateContext>);

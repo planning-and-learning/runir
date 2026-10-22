@@ -88,35 +88,14 @@ using UnsBooleanConstructorTags = ygg::ConcatTypeListsT<
     ygg::ConcatTypeListsT<UnsComparisonConstructorTags, ygg::ConcatTypeListsT<ygg::TypeList<BooleanConstantTag>, UnsLogicalConstructorTags>>>;
 using UnsNumericalConstructorTags = ygg::ConcatTypeListsT<BaseNumericalConstructorTags, ArithmeticConstructorTags>;
 
+/// Feature generation grammars and their CNF build only these constructors.
+using GenerationConceptConstructorTags = BaseConceptConstructorTags;
+using GenerationRoleConstructorTags = BaseRoleConstructorTags;
+using GenerationBooleanConstructorTags = BaseBooleanConstructorTags;
+using GenerationNumericalConstructorTags = BaseNumericalConstructorTags;
+
 /// Ext programs use every constructor: the Uns comparisons, constants and connectives too.
 using ExtBooleanConstructorTags = ygg::ConcatTypeListsT<UnsBooleanConstructorTags, ygg::TypeList<ArgumentTag<BooleanTag>>>;
-
-template<>
-struct DlFamilyTraits<runir::kr::BaseFamilyTag>
-{
-    using ConceptConstructorTags = BaseConceptConstructorTags;
-    using RoleConstructorTags = BaseRoleConstructorTags;
-    using BooleanConstructorTags = BaseBooleanConstructorTags;
-    using NumericalConstructorTags = BaseNumericalConstructorTags;
-};
-
-template<>
-struct DlFamilyTraits<runir::kr::ExtFamilyTag>
-{
-    using ConceptConstructorTags = ExtConceptConstructorTags;
-    using RoleConstructorTags = ExtRoleConstructorTags;
-    using BooleanConstructorTags = ExtBooleanConstructorTags;
-    using NumericalConstructorTags = ExtNumericalConstructorTags;
-};
-
-template<>
-struct DlFamilyTraits<runir::kr::UnsFamilyTag>
-{
-    using ConceptConstructorTags = UnsConceptConstructorTags;
-    using RoleConstructorTags = UnsRoleConstructorTags;
-    using BooleanConstructorTags = UnsBooleanConstructorTags;
-    using NumericalConstructorTags = UnsNumericalConstructorTags;
-};
 
 }  // namespace runir::kr::dl
 

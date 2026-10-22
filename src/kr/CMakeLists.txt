@@ -1,7 +1,9 @@
 add_library(kr SHARED
     domain_context.cpp
     task_context.cpp
+    dl/query_construction.cpp
     dl/repository.cpp
+    dl/translations/ygg_query.cpp
     dl/semantics/evaluation_ext.cpp
     dl/semantics/heuristics/projection.cpp
     dl/semantics/repository.cpp

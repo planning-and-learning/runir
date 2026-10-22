@@ -39,12 +39,12 @@ concept ConcreteFeatureContract =
 template<typename Feature>
 using ConcreteFeature = kr::ps::ConcreteFeature<kr::ExtFamilyTag, kr::DlTag, Feature>;
 
-static_assert(ConcreteFeatureContract<ConcreteFeature<kr::dl::ConceptTag>, kr::dl::Constructor<kr::ExtFamilyTag, kr::dl::ConceptTag>>);
-static_assert(ConcreteFeatureContract<ConcreteFeature<kr::dl::RoleTag>, kr::dl::Constructor<kr::ExtFamilyTag, kr::dl::RoleTag>>);
-static_assert(ConcreteFeatureContract<ConcreteFeature<kr::dl::BooleanTag>, kr::dl::Constructor<kr::ExtFamilyTag, kr::dl::BooleanTag>>);
-static_assert(ConcreteFeatureContract<ConcreteFeature<kr::dl::NumericalTag>, kr::dl::Constructor<kr::ExtFamilyTag, kr::dl::NumericalTag>>);
+static_assert(ConcreteFeatureContract<ConcreteFeature<kr::dl::ConceptTag>, kr::dl::Constructor<kr::dl::ConceptTag>>);
+static_assert(ConcreteFeatureContract<ConcreteFeature<kr::dl::RoleTag>, kr::dl::Constructor<kr::dl::RoleTag>>);
+static_assert(ConcreteFeatureContract<ConcreteFeature<kr::dl::BooleanTag>, kr::dl::Constructor<kr::dl::BooleanTag>>);
+static_assert(ConcreteFeatureContract<ConcreteFeature<kr::dl::NumericalTag>, kr::dl::Constructor<kr::dl::NumericalTag>>);
 
-static_assert(ConcreteFeatureContract<ConcreteFeature<kr::ps::dl::QueryFeature>, kr::dl::Query<kr::ExtFamilyTag>>);
+static_assert(ConcreteFeatureContract<ConcreteFeature<kr::ps::dl::QueryFeature>, kr::dl::Query<>>);
 
 }  // namespace
 

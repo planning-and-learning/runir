@@ -15,61 +15,61 @@
 namespace runir::kr::dl::cnf_grammar::detail
 {
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+template<runir::kr::dl::CategoryTag Category>
 struct ConstructorDataTraits;
 
-template<runir::kr::dl::FamilyTag Family>
-struct ConstructorDataTraits<Family, runir::kr::dl::ConceptTag>
+template<>
+struct ConstructorDataTraits<runir::kr::dl::ConceptTag>
 {
-    using Tags = runir::kr::dl::FamilyConceptConstructorTags<Family>;
+    using Tags = runir::kr::dl::GenerationConceptConstructorTags;
 
     template<typename Tag>
-    using Index = ygg::Index<Concept<Family, Tag>>;
+    using Index = ygg::Index<Concept<Tag>>;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct ConstructorDataTraits<Family, runir::kr::dl::RoleTag>
+template<>
+struct ConstructorDataTraits<runir::kr::dl::RoleTag>
 {
-    using Tags = runir::kr::dl::FamilyRoleConstructorTags<Family>;
+    using Tags = runir::kr::dl::GenerationRoleConstructorTags;
 
     template<typename Tag>
-    using Index = ygg::Index<Role<Family, Tag>>;
+    using Index = ygg::Index<Role<Tag>>;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct ConstructorDataTraits<Family, runir::kr::dl::BooleanTag>
+template<>
+struct ConstructorDataTraits<runir::kr::dl::BooleanTag>
 {
-    using Tags = runir::kr::dl::FamilyBooleanConstructorTags<Family>;
+    using Tags = runir::kr::dl::GenerationBooleanConstructorTags;
 
     template<typename Tag>
-    using Index = ygg::Index<Boolean<Family, Tag>>;
+    using Index = ygg::Index<Boolean<Tag>>;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct ConstructorDataTraits<Family, runir::kr::dl::NumericalTag>
+template<>
+struct ConstructorDataTraits<runir::kr::dl::NumericalTag>
 {
-    using Tags = runir::kr::dl::FamilyNumericalConstructorTags<Family>;
+    using Tags = runir::kr::dl::GenerationNumericalConstructorTags;
 
     template<typename Tag>
-    using Index = ygg::Index<Numerical<Family, Tag>>;
+    using Index = ygg::Index<Numerical<Tag>>;
 };
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+template<runir::kr::dl::CategoryTag Category>
 using ConstructorDataVariant =
     ygg::ApplyTypeListT<::cista::offset::variant,
-                        ygg::MapTypeListT<ConstructorDataTraits<Family, Category>::template Index, typename ConstructorDataTraits<Family, Category>::Tags>>;
+                        ygg::MapTypeListT<ConstructorDataTraits<Category>::template Index, typename ConstructorDataTraits<Category>::Tags>>;
 
 }  // namespace runir::kr::dl::cnf_grammar::detail
 
 namespace ygg
 {
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-struct Data<runir::kr::dl::cnf_grammar::Constructor<Family, Category>>
+template<runir::kr::dl::CategoryTag Category>
+struct Data<runir::kr::dl::cnf_grammar::Constructor<Category>>
 {
-    using Variant = runir::kr::dl::cnf_grammar::detail::ConstructorDataVariant<Family, Category>;
+    using Variant = runir::kr::dl::cnf_grammar::detail::ConstructorDataVariant<Category>;
 
-    Index<runir::kr::dl::cnf_grammar::Constructor<Family, Category>> index;
+    Index<runir::kr::dl::cnf_grammar::Constructor<Category>> index;
     Variant variant;
 
     Data() = default;

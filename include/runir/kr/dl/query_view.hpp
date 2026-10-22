@@ -21,11 +21,11 @@ public:
 
 };
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-class View<Index<runir::kr::dl::Query<Family, Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::Query<Family, Tag>, C>
+template<typename Tag, typename C>
+class View<Index<runir::kr::dl::Query<Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::Query<Tag>, C>
 {
 public:
-    using ygg::IndexViewBase<runir::kr::dl::Query<Family, Tag>, C>::IndexViewBase;
+    using ygg::IndexViewBase<runir::kr::dl::Query<Tag>, C>::IndexViewBase;
 
     auto get_variant() const noexcept
         requires std::same_as<Tag, void>
@@ -167,11 +167,11 @@ public:
 
 };
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::ConceptOrRoleTag Category, typename C>
-class View<Index<runir::kr::dl::QueryProjection<Family, Category>>, C> : public ygg::IndexViewBase<runir::kr::dl::QueryProjection<Family, Category>, C>
+template<runir::kr::dl::ConceptOrRoleTag Category, typename C>
+class View<Index<runir::kr::dl::QueryProjection<Category>>, C> : public ygg::IndexViewBase<runir::kr::dl::QueryProjection<Category>, C>
 {
 public:
-    using ygg::IndexViewBase<runir::kr::dl::QueryProjection<Family, Category>, C>::IndexViewBase;
+    using ygg::IndexViewBase<runir::kr::dl::QueryProjection<Category>, C>::IndexViewBase;
 
     auto get_arg() const noexcept { return make_view(this->get_data().arg, this->get_context()); }
     auto get_columns() const noexcept { return make_view(this->get_data().columns, this->get_context()); }

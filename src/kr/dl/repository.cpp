@@ -4,6 +4,6 @@
 namespace runir::kr::dl::detail
 {
 
-template class ConstructorRepositoryFactory<runir::kr::ExtFamilyTag, runir::kr::dl::FamilyConstructorRepositoryTypes<runir::kr::ExtFamilyTag>>;
+template class ConstructorRepositoryFactory<runir::kr::dl::FamilyConstructorRepositoryTypes>;
 
 }  // namespace runir::kr::dl::detail

@@ -10,8 +10,8 @@
 namespace runir::serialization
 {
 
-template<kr::dl::FamilyTag Family, typename Types>
-using DlComponentViews = ygg::MapTypeListSecondT<IndexView, kr::dl::ConstructorRepositoryFor<Family>, Types>;
+template<typename Types>
+using DlComponentViews = ygg::MapTypeListSecondT<IndexView, kr::dl::ConstructorRepositoryFor, Types>;
 
 template<typename... Ts>
 void bind_serialized_types(nb::module_& m, ygg::TypeList<Ts...> types)

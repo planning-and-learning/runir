@@ -20,15 +20,13 @@ concept IndexedDataView =
            view.get_index();
        };
 
-template<typename Family, typename... Ts>
+template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
 {
-    return (IndexedDataView<Ts, kr::dl::ConstructorRepositoryFor<Family>> && ...);
+    return (IndexedDataView<Ts, kr::dl::ConstructorRepositoryFor> && ...);
 }
 
-static_assert(indexed_data_views<kr::BaseFamilyTag>(kr::dl::FamilyRoleTypes<kr::BaseFamilyTag> {}));
-static_assert(indexed_data_views<kr::ExtFamilyTag>(kr::dl::FamilyRoleTypes<kr::ExtFamilyTag> {}));
-static_assert(indexed_data_views<kr::UnsFamilyTag>(kr::dl::FamilyRoleTypes<kr::UnsFamilyTag> {}));
+static_assert(indexed_data_views<>(kr::dl::FamilyRoleTypes {}));
 
 using PredicateTags = ygg::TypeList<kr::dl::AtomicStateTag<tyr::formalism::StaticTag>,
                                     kr::dl::AtomicStateTag<tyr::formalism::FluentTag>,
@@ -40,19 +38,19 @@ using BinaryTags = ygg::TypeList<kr::dl::IntersectionTag, kr::dl::UnionTag, kr::
 using UnaryTags =
     ygg::TypeList<kr::dl::ComplementTag, kr::dl::InverseTag, kr::dl::TransitiveClosureTag, kr::dl::ReflexiveTransitiveClosureTag, kr::dl::IdentityTag>;
 
-template<typename Family, typename Tag>
+template<typename Tag>
 consteval bool role_data_view()
 {
-    using Entity = kr::dl::Role<Family, Tag>;
+    using Entity = kr::dl::Role<Tag>;
     using Data = ygg::Data<Entity>;
-    using View = ygg::View<ygg::Index<Entity>, kr::dl::ConstructorRepositoryFor<Family>>;
+    using View = ygg::View<ygg::Index<Entity>, kr::dl::ConstructorRepositoryFor>;
 
     static_assert(!requires(const View& view) { view.get_columns(); });
     static_assert(!requires(const View& view) { view.get_plan(); });
-    static_assert(std::same_as<View, kr::dl::FamilyRoleView<Family, Tag>>);
-    if constexpr (std::same_as<Family, kr::BaseFamilyTag>)
+    static_assert(std::same_as<View, kr::dl::FamilyRoleView<Tag>>);
+    if constexpr (false)
         static_assert(std::same_as<View, kr::dl::BaseRoleView<Tag>>);
-    else if constexpr (std::same_as<Family, kr::ExtFamilyTag>)
+    else if constexpr (true)
         static_assert(std::same_as<View, kr::dl::ExtRoleView<Tag>>);
     else
         static_assert(std::same_as<View, kr::dl::UnsRoleView<Tag>>);
@@ -95,31 +93,28 @@ consteval bool role_data_view()
         return false;
 }
 
-template<typename Family, typename... Tags>
+template<typename... Tags>
 consteval bool role_data_views(ygg::TypeList<Tags...>)
 {
-    return (role_data_view<Family, Tags>() && ...);
+    return (role_data_view<Tags>() && ...);
 }
 
-static_assert(role_data_views<kr::BaseFamilyTag>(kr::dl::FamilyRoleConstructorTags<kr::BaseFamilyTag> {}));
-static_assert(role_data_views<kr::ExtFamilyTag>(kr::dl::FamilyRoleConstructorTags<kr::ExtFamilyTag> {}));
-static_assert(role_data_views<kr::UnsFamilyTag>(kr::dl::FamilyRoleConstructorTags<kr::UnsFamilyTag> {}));
+static_assert(role_data_views<>(kr::dl::FamilyRoleConstructorTags {}));
 
 }  // namespace
 
 TEST(RunirKrDlRole, RoutesUnaryAndMixedBinaryData)
 {
-    using Family = kr::ExtFamilyTag;
-    using Concept = kr::dl::Constructor<Family, kr::dl::ConceptTag>;
-    using Role = kr::dl::Constructor<Family, kr::dl::RoleTag>;
+    using Concept = kr::dl::Constructor<kr::dl::ConceptTag>;
+    using Role = kr::dl::Constructor<kr::dl::RoleTag>;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     auto repository = kr::dl::ExtConstructorRepositoryFactory().create(planning_repository);
 
-    auto unary_data = ygg::Data<kr::dl::Role<Family, kr::dl::InverseTag>>(ygg::Index<Role>(3));
+    auto unary_data = ygg::Data<kr::dl::Role<kr::dl::InverseTag>>(ygg::Index<Role>(3));
     const auto unary = repository->insert(unary_data).first;
     EXPECT_EQ(unary.get_arg().get_index(), ygg::Index<Role>(3));
 
-    auto binary_data = ygg::Data<kr::dl::Role<Family, kr::dl::RestrictionTag>>(ygg::Index<Role>(1), ygg::Index<Concept>(2));
+    auto binary_data = ygg::Data<kr::dl::Role<kr::dl::RestrictionTag>>(ygg::Index<Role>(1), ygg::Index<Concept>(2));
     const auto binary = repository->insert(binary_data).first;
     EXPECT_EQ(binary.get_lhs().get_index(), ygg::Index<Role>(1));
     EXPECT_EQ(binary.get_rhs().get_index(), ygg::Index<Concept>(2));

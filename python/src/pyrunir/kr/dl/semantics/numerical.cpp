@@ -17,13 +17,13 @@ namespace
 template<typename Tag>
 void bind_numerical_data(nb::module_& m, const char* name)
 {
-    using Data = ygg::Data<Numerical<runir::kr::ExtFamilyTag, Tag>>;
+    using Data = ygg::Data<Numerical<Tag>>;
     auto cls = nb::class_<Data>(m, name).def(nb::init<>()).def_rw("index", &Data::index);
     ygg::add_comparison(cls);
     python::def_numerical_data_constructors<Tag,
-                                            ygg::Index<runir::kr::dl::Constructor<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>,
-                                            ygg::Index<runir::kr::dl::Constructor<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>,
-                                            ygg::Index<runir::kr::dl::Constructor<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>,
+                                            ygg::Index<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>,
+                                            ygg::Index<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>,
+                                            ygg::Index<runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>>,
                                             runir::kr::dl::ExtConstructorRepository>(cls);
 
     if constexpr (std::same_as<Tag, CountTag>)
@@ -41,7 +41,7 @@ void bind_numerical_data(nb::module_& m, const char* name)
 template<typename Tag>
 void bind_numerical_view(nb::module_& m, const char* name)
 {
-    using Type = Numerical<runir::kr::ExtFamilyTag, Tag>;
+    using Type = Numerical<Tag>;
     using View = ygg::View<ygg::Index<Type>, ExtConstructorRepository>;
     auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index);
     ygg::add_print(cls);
@@ -67,37 +67,37 @@ void bind_numerical_view(nb::module_& m, const char* name)
 
 void bind_semantics_numerical(nb::module_& m)
 {
-    ygg::bind_index<ygg::Index<Numerical<runir::kr::ExtFamilyTag, NumericalConstantTag>>>(m, "NumericalConstantIndex");
+    ygg::bind_index<ygg::Index<Numerical<NumericalConstantTag>>>(m, "NumericalConstantIndex");
     bind_numerical_data<NumericalConstantTag>(m, "NumericalConstantData");
     bind_numerical_view<NumericalConstantTag>(m, "NumericalConstant");
 
-    ygg::bind_index<ygg::Index<Numerical<runir::kr::ExtFamilyTag, AddTag>>>(m, "NumericalAddIndex");
+    ygg::bind_index<ygg::Index<Numerical<AddTag>>>(m, "NumericalAddIndex");
     bind_numerical_data<AddTag>(m, "NumericalAddData");
     bind_numerical_view<AddTag>(m, "NumericalAdd");
 
-    ygg::bind_index<ygg::Index<Numerical<runir::kr::ExtFamilyTag, SubTag>>>(m, "NumericalSubIndex");
+    ygg::bind_index<ygg::Index<Numerical<SubTag>>>(m, "NumericalSubIndex");
     bind_numerical_data<SubTag>(m, "NumericalSubData");
     bind_numerical_view<SubTag>(m, "NumericalSub");
 
-    ygg::bind_index<ygg::Index<Numerical<runir::kr::ExtFamilyTag, MulTag>>>(m, "NumericalMulIndex");
+    ygg::bind_index<ygg::Index<Numerical<MulTag>>>(m, "NumericalMulIndex");
     bind_numerical_data<MulTag>(m, "NumericalMulData");
     bind_numerical_view<MulTag>(m, "NumericalMul");
 
-    ygg::bind_index<ygg::Index<Numerical<runir::kr::ExtFamilyTag, DivTag>>>(m, "NumericalDivIndex");
+    ygg::bind_index<ygg::Index<Numerical<DivTag>>>(m, "NumericalDivIndex");
     bind_numerical_data<DivTag>(m, "NumericalDivData");
     bind_numerical_view<DivTag>(m, "NumericalDiv");
 
-    ygg::bind_index<ygg::Index<Numerical<runir::kr::ExtFamilyTag, MinTag>>>(m, "NumericalMinIndex");
+    ygg::bind_index<ygg::Index<Numerical<MinTag>>>(m, "NumericalMinIndex");
     bind_numerical_data<MinTag>(m, "NumericalMinData");
     bind_numerical_view<MinTag>(m, "NumericalMin");
 
-    ygg::bind_index<ygg::Index<Numerical<runir::kr::ExtFamilyTag, MaxTag>>>(m, "NumericalMaxIndex");
+    ygg::bind_index<ygg::Index<Numerical<MaxTag>>>(m, "NumericalMaxIndex");
     bind_numerical_data<MaxTag>(m, "NumericalMaxData");
     bind_numerical_view<MaxTag>(m, "NumericalMax");
 
-    using Count = Numerical<runir::kr::ExtFamilyTag, CountTag>;
-    using Distance = Numerical<runir::kr::ExtFamilyTag, DistanceTag>;
-    using ArgumentReference = Numerical<runir::kr::ExtFamilyTag, ArgumentTag<NumericalTag>>;
+    using Count = Numerical<CountTag>;
+    using Distance = Numerical<DistanceTag>;
+    using ArgumentReference = Numerical<ArgumentTag<NumericalTag>>;
 
     ygg::bind_index<ygg::Index<Count>>(m, "NumericalCountIndex");
     ygg::bind_index<ygg::Index<Distance>>(m, "NumericalDistanceIndex");

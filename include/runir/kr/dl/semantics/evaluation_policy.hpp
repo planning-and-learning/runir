@@ -22,20 +22,20 @@ ygg::database::Workspace& get_database_workspace(EvaluationWorkspace& workspace)
 }
 
 /// Preserve the ordinary memoized, interned evaluation contexts.
-template<FamilyTag Family, tyr::TaskKind Kind>
+template<tyr::TaskKind Kind>
 class FullEvaluationPolicy
 {
 public:
-    FullEvaluationPolicy(const tyr::planning::Task<Kind>&, std::span<const incremental::EvaluationRoot<Family>>) noexcept {}
+    FullEvaluationPolicy(const tyr::planning::Task<Kind>&, std::span<const incremental::EvaluationRoot>) noexcept {}
     void reset_source() noexcept {}
     void reset_target() noexcept {}
     void invalidate() noexcept {}
-    template<StateEvaluationContextConcept<Family, Kind> Context>
+    template<StateEvaluationContextConcept<Kind> Context>
     auto make_source_context(Context context)
     {
         return context;
     }
-    template<StateEvaluationContextConcept<Family, Kind> Context>
+    template<StateEvaluationContextConcept<Kind> Context>
     auto make_target_context(Context context)
     {
         return context;
@@ -44,14 +44,14 @@ public:
 
 /// Evaluates in the graph of a DeltaEvaluationPolicy: first demand in a state brings a node up to date; results
 /// already read in this state remain stable as other roots are evaluated.
-template<tyr::TaskKind Kind, FamilyTag Family, runir::kr::dl::CategoryTag Category, StateEvaluationContextConcept<Family, Kind> Context>
-auto evaluate(runir::kr::dl::FamilyConstructorView<Family, Category> expression, incremental::StateEvaluation<Family, Kind, Context>& context)
+template<tyr::TaskKind Kind, runir::kr::dl::CategoryTag Category, StateEvaluationContextConcept<Kind> Context>
+auto evaluate(runir::kr::dl::FamilyConstructorView<Category> expression, incremental::StateEvaluation<Kind, Context>& context)
 {
     return context.evaluate(context.graph().get_index(expression));
 }
 
-template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context>
-auto evaluate(runir::kr::dl::FamilyQueryView<Family> expression, incremental::StateEvaluation<Family, Kind, Context>& context)
+template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
+auto evaluate(runir::kr::dl::FamilyQueryView<> expression, incremental::StateEvaluation<Kind, Context>& context)
 {
     return ygg::make_view(context.evaluate(context.graph().get_index(expression)), *context.context().get_state().get_task().get_repository());
 }
@@ -59,26 +59,26 @@ auto evaluate(runir::kr::dl::FamilyQueryView<Family> expression, incremental::St
 /// Independent source and target evaluations retain their input snapshots and result buffers.
 /// Differences are computed between evaluations, including backward search moves;
 /// invocation changes explicitly invalidate dynamic baselines.
-template<FamilyTag Family, tyr::TaskKind Kind>
+template<tyr::TaskKind Kind>
 class DeltaEvaluationPolicy
 {
     class Evaluation
     {
         const tyr::planning::Task<Kind>* m_task;
-        incremental::IncrementalEvaluation<Family, Kind> m_evaluation;
+        incremental::IncrementalEvaluation<Kind> m_evaluation;
         ygg::Builder<tyr::planning::State<Kind>> m_state;
         ygg::Data<RegisterValues> m_registers;
-        incremental::Delta<Family> m_delta;
+        incremental::Delta m_delta;
         bool m_has_previous = false;  ///< m_state holds the previously entered state.
         bool m_entered = false;       ///< The current state is entered.
 
     public:
-        Evaluation(const tyr::planning::Task<Kind>& task, std::span<const incremental::EvaluationRoot<Family>> roots) : m_task(&task), m_evaluation(task, roots) {}
+        Evaluation(const tyr::planning::Task<Kind>& task, std::span<const incremental::EvaluationRoot> roots) : m_task(&task), m_evaluation(task, roots) {}
         void reset() noexcept { m_entered = false; }
         void invalidate() noexcept { m_has_previous = m_entered = false; }
 
-        template<StateEvaluationContextConcept<Family, Kind> Context>
-        incremental::StateEvaluation<Family, Kind, Context> prepare(Context& context)
+        template<StateEvaluationContextConcept<Kind> Context>
+        incremental::StateEvaluation<Kind, Context> prepare(Context& context)
         {
             const auto& task = *m_task;
             if (&context.get_state().get_task() != &task)
@@ -106,7 +106,7 @@ class DeltaEvaluationPolicy
     Evaluation m_target;
 
 public:
-    DeltaEvaluationPolicy(const tyr::planning::Task<Kind>& task, std::span<const incremental::EvaluationRoot<Family>> roots) :
+    DeltaEvaluationPolicy(const tyr::planning::Task<Kind>& task, std::span<const incremental::EvaluationRoot> roots) :
         m_source(task, roots),
         m_target(task, roots)
     {
@@ -123,12 +123,12 @@ public:
         m_source.invalidate();
         m_target.invalidate();
     }
-    template<StateEvaluationContextConcept<Family, Kind> Context>
+    template<StateEvaluationContextConcept<Kind> Context>
     auto make_source_context(Context context)
     {
         return m_source.prepare(context);
     }
-    template<StateEvaluationContextConcept<Family, Kind> Context>
+    template<StateEvaluationContextConcept<Kind> Context>
     auto make_target_context(Context context)
     {
         return m_target.prepare(context);
@@ -136,22 +136,22 @@ public:
 };
 
 /// Provide source and target feature contexts while retaining reusable evaluation storage.
-template<typename Policy, typename Family, typename Kind>
-concept EvaluationPolicyConcept = FamilyTag<Family> && tyr::TaskKind<Kind>
-                                  && std::constructible_from<Policy, const tyr::planning::Task<Kind>&, std::span<const incremental::EvaluationRoot<Family>>>
-                                  && requires(Policy& policy, StateEvaluationContext<Family, Kind> context) {
-                                         { policy.reset_source() } noexcept -> std::same_as<void>;
-                                         { policy.reset_target() } noexcept -> std::same_as<void>;
-                                         { policy.invalidate() } noexcept -> std::same_as<void>;
-                                         { policy.make_source_context(context) } -> EvaluationContextConcept<Family, Kind>;
-                                         { policy.make_target_context(context) } -> EvaluationContextConcept<Family, Kind>;
-                                     };
+template<typename Policy, typename Kind>
+concept EvaluationPolicyConcept =
+    tyr::TaskKind<Kind> && std::constructible_from<Policy, const tyr::planning::Task<Kind>&, std::span<const incremental::EvaluationRoot>>
+    && requires(Policy& policy, StateEvaluationContext<Kind> context) {
+           { policy.reset_source() } noexcept -> std::same_as<void>;
+           { policy.reset_target() } noexcept -> std::same_as<void>;
+           { policy.invalidate() } noexcept -> std::same_as<void>;
+           { policy.make_source_context(context) } -> EvaluationContextConcept<Kind>;
+           { policy.make_target_context(context) } -> EvaluationContextConcept<Kind>;
+       };
 
-template<FamilyTag Family, tyr::TaskKind Kind>
+template<tyr::TaskKind Kind>
 #if RUNIR_DELTA_EVALUATION
-using DefaultEvaluationPolicy = DeltaEvaluationPolicy<Family, Kind>;
+using DefaultEvaluationPolicy = DeltaEvaluationPolicy<Kind>;
 #else
-using DefaultEvaluationPolicy = FullEvaluationPolicy<Family, Kind>;
+using DefaultEvaluationPolicy = FullEvaluationPolicy<Kind>;
 #endif
 
 }  // namespace runir::kr::dl::semantics

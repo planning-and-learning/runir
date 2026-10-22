@@ -21,7 +21,7 @@ using Entity = kr::ps::ConcreteFeature<kr::UnsFamilyTag, kr::DlTag, kr::dl::Bool
 using Index = ygg::Index<Entity>;
 using Data = ygg::Data<Entity>;
 using View = ygg::View<Index, kr::uns::Repository>;
-using ExpressionIndex = ygg::Index<kr::dl::Constructor<kr::ExtFamilyTag, kr::dl::BooleanTag>>;
+using ExpressionIndex = ygg::Index<kr::dl::Constructor<kr::dl::BooleanTag>>;
 
 static_assert(std::constructible_from<Index, ygg::uint_t>);
 static_assert(std::totally_ordered<Index>);
@@ -49,10 +49,10 @@ static_assert(requires(const View& view) {
     view.get_symbol();
 });
 
-static_assert(requires(View feature, kr::dl::semantics::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>& context) {
+static_assert(requires(View feature, kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>& context) {
     { kr::ps::evaluate<tyr::GroundTag>(feature, context) } -> std::same_as<kr::dl::semantics::DenotationView<kr::dl::BooleanTag>>;
 });
-static_assert(requires(View feature, kr::dl::semantics::StateEvaluationContext<kr::ExtFamilyTag, tyr::LiftedTag>& context) {
+static_assert(requires(View feature, kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>& context) {
     { kr::ps::evaluate<tyr::LiftedTag>(feature, context) } -> std::same_as<kr::dl::semantics::DenotationView<kr::dl::BooleanTag>>;
 });
 }

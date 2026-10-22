@@ -69,407 +69,8 @@ struct RegisterReference : PositionedVariant<NumericReference, Identifier>
     using Base::operator=;
 };
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename Tag = void>
+template<runir::kr::dl::CategoryTag Category, typename Tag = void>
 struct Constructor;
-
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-struct NonTerminal : boost::spirit::x3::position_tagged
-{
-    Identifier name;
-};
-
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-struct ConstructorOrNonTerminal : PositionedVariant<NonTerminal<Family, Category>, Constructor<Family, Category>>
-{
-    using Base = PositionedVariant<NonTerminal<Family, Category>, Constructor<Family, Category>>;
-    using Base::Base;
-    using Base::operator=;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-using ConceptChoice = ConstructorOrNonTerminal<Family, runir::kr::dl::ConceptTag>;
-
-template<runir::kr::dl::FamilyTag Family>
-using RoleChoice = ConstructorOrNonTerminal<Family, runir::kr::dl::RoleTag>;
-
-template<runir::kr::dl::FamilyTag Family>
-using BooleanChoice = ConstructorOrNonTerminal<Family, runir::kr::dl::BooleanTag>;
-
-template<runir::kr::dl::FamilyTag Family>
-using NumericalChoice = ConstructorOrNonTerminal<Family, runir::kr::dl::NumericalTag>;
-
-template<runir::kr::dl::FamilyTag Family>
-struct Query;
-
-template<runir::kr::dl::FamilyTag Family>
-struct QueryAtomicState : boost::spirit::x3::position_tagged
-{
-    Identifier predicate_name;
-    std::vector<Identifier> columns;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct QueryAtomicGoal : boost::spirit::x3::position_tagged
-{
-    Identifier predicate_name;
-    bool polarity;
-    std::vector<Identifier> columns;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct QueryConcept : boost::spirit::x3::position_tagged
-{
-    std::vector<Identifier> columns;
-    ConceptChoice<Family> arg;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct QueryRole : boost::spirit::x3::position_tagged
-{
-    std::vector<Identifier> columns;
-    RoleChoice<Family> arg;
-};
-
-template<runir::kr::dl::FamilyTag Family, typename Tag>
-struct QueryBinary : boost::spirit::x3::position_tagged
-{
-    boost::spirit::x3::forward_ast<Query<Family>> lhs;
-    boost::spirit::x3::forward_ast<Query<Family>> rhs;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-using QueryJoin = QueryBinary<Family, runir::kr::dl::QueryJoinTag>;
-
-template<runir::kr::dl::FamilyTag Family>
-using QueryUnion = QueryBinary<Family, runir::kr::dl::QueryUnionTag>;
-
-template<runir::kr::dl::FamilyTag Family>
-using QueryDifference = QueryBinary<Family, runir::kr::dl::QueryDifferenceTag>;
-
-template<runir::kr::dl::FamilyTag Family, typename Tag>
-struct QueryColumns : boost::spirit::x3::position_tagged
-{
-    std::vector<Identifier> columns;
-    boost::spirit::x3::forward_ast<Query<Family>> arg;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-using QueryProject = QueryColumns<Family, runir::kr::dl::QueryProjectTag>;
-
-template<runir::kr::dl::FamilyTag Family>
-using QueryRename = QueryColumns<Family, runir::kr::dl::QueryRenameTag>;
-
-template<runir::kr::dl::FamilyTag Family>
-struct QuerySelectEqual : boost::spirit::x3::position_tagged
-{
-    Identifier lhs_column;
-    Identifier rhs_column;
-    boost::spirit::x3::forward_ast<Query<Family>> arg;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct QuerySelectValue : boost::spirit::x3::position_tagged
-{
-    Identifier column;
-    Identifier object_name;
-    boost::spirit::x3::forward_ast<Query<Family>> arg;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct QueryGenericJoin : boost::spirit::x3::position_tagged
-{
-    std::vector<Identifier> variable_order;
-    std::vector<Identifier> output_order;
-    std::vector<boost::spirit::x3::forward_ast<Query<Family>>> args;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct QueryEmpty : boost::spirit::x3::position_tagged
-{
-    std::vector<Identifier> columns;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct QueryMustPass : boost::spirit::x3::position_tagged
-{
-    std::vector<Identifier> keys;
-    boost::spirit::x3::forward_ast<Query<Family>> sources;
-    boost::spirit::x3::forward_ast<Query<Family>> edges;
-    boost::spirit::x3::forward_ast<Query<Family>> targets;
-    boost::spirit::x3::forward_ast<Query<Family>> probes;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Query :
-    PositionedVariant<QueryAtomicState<Family>,
-                      QueryAtomicGoal<Family>,
-                      boost::spirit::x3::forward_ast<QueryConcept<Family>>,
-                      boost::spirit::x3::forward_ast<QueryRole<Family>>,
-                      QueryJoin<Family>,
-                      QueryProject<Family>,
-                      QueryRename<Family>,
-                      QuerySelectEqual<Family>,
-                      QuerySelectValue<Family>,
-                      QueryUnion<Family>,
-                      QueryDifference<Family>,
-                      QueryGenericJoin<Family>,
-                      QueryEmpty<Family>,
-                      QueryMustPass<Family>>
-{
-    using Base = PositionedVariant<QueryAtomicState<Family>,
-                                   QueryAtomicGoal<Family>,
-                                   boost::spirit::x3::forward_ast<QueryConcept<Family>>,
-                                   boost::spirit::x3::forward_ast<QueryRole<Family>>,
-                                   QueryJoin<Family>,
-                                   QueryProject<Family>,
-                                   QueryRename<Family>,
-                                   QuerySelectEqual<Family>,
-                                   QuerySelectValue<Family>,
-                                   QueryUnion<Family>,
-                                   QueryDifference<Family>,
-                                   QueryGenericJoin<Family>,
-                                   QueryEmpty<Family>,
-                                   QueryMustPass<Family>>;
-    using Base::Base;
-    using Base::operator=;
-};
-
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-struct Constructor<Family, Category, runir::kr::dl::ProjectTag> : boost::spirit::x3::position_tagged
-{
-    std::vector<Identifier> columns;
-    Query<Family> arg;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-using ConceptProject = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ProjectTag>;
-
-template<runir::kr::dl::FamilyTag Family>
-using RoleProject = Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::ProjectTag>;
-
-template<runir::kr::dl::FamilyTag Family>
-struct ConstructorOrNonTerminalVariant : PositionedVariant<ConceptChoice<Family>, RoleChoice<Family>, Query<Family>>
-{
-    using Base = PositionedVariant<ConceptChoice<Family>, RoleChoice<Family>, Query<Family>>;
-    using Base::Base;
-    using Base::operator=;
-};
-
-/// Distance vertices (sources/targets): a concept or a query.
-template<runir::kr::dl::FamilyTag Family>
-struct ConceptOrQueryVariant : PositionedVariant<ConceptChoice<Family>, Query<Family>>
-{
-    using Base = PositionedVariant<ConceptChoice<Family>, Query<Family>>;
-    using Base::Base;
-    using Base::operator=;
-};
-
-/// Distance edges: a role or a query.
-template<runir::kr::dl::FamilyTag Family>
-struct RoleOrQueryVariant : PositionedVariant<RoleChoice<Family>, Query<Family>>
-{
-    using Base = PositionedVariant<RoleChoice<Family>, Query<Family>>;
-    using Base::Base;
-    using Base::operator=;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::BotTag> : boost::spirit::x3::position_tagged
-{
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::TopTag> : boost::spirit::x3::position_tagged
-{
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptAtomicStateSyntaxTag> : boost::spirit::x3::position_tagged
-{
-    Identifier predicate_name;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptAtomicGoalSyntaxTag> : boost::spirit::x3::position_tagged
-{
-    Identifier predicate_name;
-    bool polarity;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptIntersectionSyntaxTag> : boost::spirit::x3::position_tagged
-{
-    ConceptChoice<Family> lhs;
-    ConceptChoice<Family> rhs;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptUnionSyntaxTag> : boost::spirit::x3::position_tagged
-{
-    ConceptChoice<Family> lhs;
-    ConceptChoice<Family> rhs;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::NegationTag> : boost::spirit::x3::position_tagged
-{
-    ConceptChoice<Family> arg;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ValueRestrictionTag> : boost::spirit::x3::position_tagged
-{
-    RoleChoice<Family> lhs;
-    ConceptChoice<Family> rhs;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ExistentialQuantificationTag> : boost::spirit::x3::position_tagged
-{
-    RoleChoice<Family> lhs;
-    ConceptChoice<Family> rhs;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::AtLeastNumberRestrictionTag> : boost::spirit::x3::position_tagged
-{
-    ygg::uint_t n;
-    RoleChoice<Family> role;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::AtMostNumberRestrictionTag> : boost::spirit::x3::position_tagged
-{
-    ygg::uint_t n;
-    RoleChoice<Family> role;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ExactNumberRestrictionTag> : boost::spirit::x3::position_tagged
-{
-    ygg::uint_t n;
-    RoleChoice<Family> role;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag> : boost::spirit::x3::position_tagged
-{
-    ygg::uint_t n;
-    RoleChoice<Family> role;
-    ConceptChoice<Family> concept_;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAtMostNumberRestrictionTag> : boost::spirit::x3::position_tagged
-{
-    ygg::uint_t n;
-    RoleChoice<Family> role;
-    ConceptChoice<Family> concept_;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedExactNumberRestrictionTag> : boost::spirit::x3::position_tagged
-{
-    ygg::uint_t n;
-    RoleChoice<Family> role;
-    ConceptChoice<Family> concept_;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RoleValueMapTag> : boost::spirit::x3::position_tagged
-{
-    RoleChoice<Family> lhs;
-    RoleChoice<Family> rhs;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::AgreementTag> : boost::spirit::x3::position_tagged
-{
-    RoleChoice<Family> lhs;
-    RoleChoice<Family> rhs;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RoleFillersTag> : boost::spirit::x3::position_tagged
-{
-    RoleChoice<Family> role;
-    std::vector<Identifier> object_names;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::OneOfTag> : boost::spirit::x3::position_tagged
-{
-    std::vector<Identifier> object_names;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::NominalTag> : boost::spirit::x3::position_tagged
-{
-    Identifier object_name;
-};
-
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-struct Constructor<Family, Category, runir::kr::dl::ArgumentTag<Category>> : boost::spirit::x3::position_tagged
-{
-    ArgumentReference<Category> reference;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RegisterTag> : boost::spirit::x3::position_tagged
-{
-    RegisterReference<runir::kr::dl::ConceptTag> reference;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RegisterTag> : boost::spirit::x3::position_tagged
-{
-    RegisterReference<runir::kr::dl::RoleTag> reference;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-using ConceptBot = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::BotTag>;
-template<runir::kr::dl::FamilyTag Family>
-using ConceptTop = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::TopTag>;
-template<runir::kr::dl::FamilyTag Family>
-using ConceptAtomicState = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptAtomicStateSyntaxTag>;
-template<runir::kr::dl::FamilyTag Family>
-using ConceptAtomicGoal = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptAtomicGoalSyntaxTag>;
-template<runir::kr::dl::FamilyTag Family>
-using ConceptIntersection = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptIntersectionSyntaxTag>;
-template<runir::kr::dl::FamilyTag Family>
-using ConceptUnion = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptUnionSyntaxTag>;
-template<runir::kr::dl::FamilyTag Family>
-using ConceptNegation = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::NegationTag>;
-template<runir::kr::dl::FamilyTag Family>
-using ConceptValueRestriction = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ValueRestrictionTag>;
-template<runir::kr::dl::FamilyTag Family>
-using ConceptExistentialQuantification = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ExistentialQuantificationTag>;
-template<runir::kr::dl::FamilyTag Family>
-using ConceptAtLeastNumberRestriction = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::AtLeastNumberRestrictionTag>;
-template<runir::kr::dl::FamilyTag Family>
-using ConceptAtMostNumberRestriction = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::AtMostNumberRestrictionTag>;
-template<runir::kr::dl::FamilyTag Family>
-using ConceptExactNumberRestriction = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ExactNumberRestrictionTag>;
-template<runir::kr::dl::FamilyTag Family>
-using ConceptQualifiedAtLeastNumberRestriction = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>;
-template<runir::kr::dl::FamilyTag Family>
-using ConceptQualifiedAtMostNumberRestriction = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAtMostNumberRestrictionTag>;
-template<runir::kr::dl::FamilyTag Family>
-using ConceptQualifiedExactNumberRestriction = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedExactNumberRestrictionTag>;
-template<runir::kr::dl::FamilyTag Family>
-using ConceptRoleValueMap = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RoleValueMapTag>;
-template<runir::kr::dl::FamilyTag Family>
-using ConceptAgreement = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::AgreementTag>;
-template<runir::kr::dl::FamilyTag Family>
-using ConceptRoleFillers = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RoleFillersTag>;
-template<runir::kr::dl::FamilyTag Family>
-using ConceptOneOf = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::OneOfTag>;
-template<runir::kr::dl::FamilyTag Family>
-using ConceptNominal = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::NominalTag>;
-template<runir::kr::dl::FamilyTag Family>
-using ConceptRegister = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RegisterTag>;
-template<runir::kr::dl::FamilyTag Family>
-using ConceptArgument = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>;
 
 using BaseAstConceptConstructorTags = ygg::TypeList<runir::kr::dl::BotTag,
                                                     runir::kr::dl::TopTag,
@@ -529,385 +130,639 @@ using UnsAstNumericalConstructorTags =
                           ygg::ConcatTypeListsT<ygg::TypeList<runir::kr::dl::NumericalConstantTag>, runir::kr::dl::NumericalBinaryConstructorTags>>;
 using ExtAstBooleanConstructorTags = ygg::ConcatTypeListsT<UnsAstBooleanConstructorTags, ygg::TypeList<runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>>;
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+template<runir::kr::dl::CategoryTag Category>
 struct AstConstructorTags;
 
 template<>
-struct AstConstructorTags<runir::kr::BaseFamilyTag, runir::kr::dl::ConceptTag>
-{
-    using Type = BaseAstConceptConstructorTags;
-};
-
-template<>
-struct AstConstructorTags<runir::kr::BaseFamilyTag, runir::kr::dl::RoleTag>
-{
-    using Type = BaseAstRoleConstructorTags;
-};
-
-template<>
-struct AstConstructorTags<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>
-{
-    using Type = BaseAstBooleanConstructorTags;
-};
-
-template<>
-struct AstConstructorTags<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>
-{
-    using Type = BaseAstNumericalConstructorTags;
-};
-
-template<>
-struct AstConstructorTags<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>
+struct AstConstructorTags<runir::kr::dl::ConceptTag>
 {
     using Type = ExtAstConceptConstructorTags;
 };
 
 template<>
-struct AstConstructorTags<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>
+struct AstConstructorTags<runir::kr::dl::RoleTag>
 {
     using Type = ExtAstRoleConstructorTags;
 };
 
 template<>
-struct AstConstructorTags<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>
+struct AstConstructorTags<runir::kr::dl::BooleanTag>
 {
     using Type = ExtAstBooleanConstructorTags;
 };
 
 template<>
-struct AstConstructorTags<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>
+struct AstConstructorTags<runir::kr::dl::NumericalTag>
 {
     using Type = ExtAstNumericalConstructorTags;
 };
 
-template<>
-struct AstConstructorTags<runir::kr::UnsFamilyTag, runir::kr::dl::ConceptTag>
-{
-    using Type = BaseAstConceptConstructorTags;
-};
+template<runir::kr::dl::CategoryTag Category>
+using AstConstructorTagsT = typename AstConstructorTags<Category>::Type;
 
-template<>
-struct AstConstructorTags<runir::kr::UnsFamilyTag, runir::kr::dl::RoleTag>
-{
-    using Type = BaseAstRoleConstructorTags;
-};
-
-template<>
-struct AstConstructorTags<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>
-{
-    using Type = UnsAstBooleanConstructorTags;
-};
-
-template<>
-struct AstConstructorTags<runir::kr::UnsFamilyTag, runir::kr::dl::NumericalTag>
-{
-    using Type = UnsAstNumericalConstructorTags;
-};
-
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-using AstConstructorTagsT = typename AstConstructorTags<Family, Category>::Type;
-
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+template<runir::kr::dl::CategoryTag Category>
 struct AstConstructorAlternative
 {
     template<typename Tag>
-    using Type = boost::spirit::x3::forward_ast<Constructor<Family, Category, Tag>>;
+    using Type = boost::spirit::x3::forward_ast<Constructor<Category, Tag>>;
 };
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+template<runir::kr::dl::CategoryTag Category>
 using ConstructorVariantBase =
-    ygg::ApplyTypeListT<PositionedVariant,
-                        ygg::MapTypeListT<AstConstructorAlternative<Family, Category>::template Type, AstConstructorTagsT<Family, Category>>>;
+    ygg::ApplyTypeListT<PositionedVariant, ygg::MapTypeListT<AstConstructorAlternative<Category>::template Type, AstConstructorTagsT<Category>>>;
 
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::UniversalTag> : boost::spirit::x3::position_tagged
+/// Defined before the constructors so that they can hold choices by value.
+template<runir::kr::dl::CategoryTag Category>
+struct Constructor<Category, void> : ConstructorVariantBase<Category>
+{
+    using Base = ConstructorVariantBase<Category>;
+    using Base::Base;
+    using Base::operator=;
+};
+
+template<runir::kr::dl::CategoryTag Category>
+struct NonTerminal : boost::spirit::x3::position_tagged
+{
+    Identifier name;
+};
+
+template<runir::kr::dl::CategoryTag Category>
+struct ConstructorOrNonTerminal : PositionedVariant<NonTerminal<Category>, Constructor<Category>>
+{
+    using Base = PositionedVariant<NonTerminal<Category>, Constructor<Category>>;
+    using Base::Base;
+    using Base::operator=;
+};
+
+using ConceptChoice = ConstructorOrNonTerminal<runir::kr::dl::ConceptTag>;
+
+using RoleChoice = ConstructorOrNonTerminal<runir::kr::dl::RoleTag>;
+
+using BooleanChoice = ConstructorOrNonTerminal<runir::kr::dl::BooleanTag>;
+
+using NumericalChoice = ConstructorOrNonTerminal<runir::kr::dl::NumericalTag>;
+
+struct Query;
+
+struct QueryAtomicState : boost::spirit::x3::position_tagged
+{
+    Identifier predicate_name;
+    std::vector<Identifier> columns;
+};
+
+struct QueryAtomicGoal : boost::spirit::x3::position_tagged
+{
+    Identifier predicate_name;
+    bool polarity;
+    std::vector<Identifier> columns;
+};
+
+struct QueryConcept : boost::spirit::x3::position_tagged
+{
+    std::vector<Identifier> columns;
+    ConceptChoice arg;
+};
+
+struct QueryRole : boost::spirit::x3::position_tagged
+{
+    std::vector<Identifier> columns;
+    RoleChoice arg;
+};
+
+template<typename Tag>
+struct QueryBinary : boost::spirit::x3::position_tagged
+{
+    boost::spirit::x3::forward_ast<Query> lhs;
+    boost::spirit::x3::forward_ast<Query> rhs;
+};
+
+using QueryJoin = QueryBinary<runir::kr::dl::QueryJoinTag>;
+
+using QueryUnion = QueryBinary<runir::kr::dl::QueryUnionTag>;
+
+using QueryDifference = QueryBinary<runir::kr::dl::QueryDifferenceTag>;
+
+template<typename Tag>
+struct QueryColumns : boost::spirit::x3::position_tagged
+{
+    std::vector<Identifier> columns;
+    boost::spirit::x3::forward_ast<Query> arg;
+};
+
+using QueryProject = QueryColumns<runir::kr::dl::QueryProjectTag>;
+
+using QueryRename = QueryColumns<runir::kr::dl::QueryRenameTag>;
+
+struct QuerySelectEqual : boost::spirit::x3::position_tagged
+{
+    Identifier lhs_column;
+    Identifier rhs_column;
+    boost::spirit::x3::forward_ast<Query> arg;
+};
+
+struct QuerySelectValue : boost::spirit::x3::position_tagged
+{
+    Identifier column;
+    Identifier object_name;
+    boost::spirit::x3::forward_ast<Query> arg;
+};
+
+struct QueryGenericJoin : boost::spirit::x3::position_tagged
+{
+    std::vector<Identifier> variable_order;
+    std::vector<Identifier> output_order;
+    std::vector<boost::spirit::x3::forward_ast<Query>> args;
+};
+
+struct QueryEmpty : boost::spirit::x3::position_tagged
+{
+    std::vector<Identifier> columns;
+};
+
+struct QueryMustPass : boost::spirit::x3::position_tagged
+{
+    std::vector<Identifier> keys;
+    boost::spirit::x3::forward_ast<Query> sources;
+    boost::spirit::x3::forward_ast<Query> edges;
+    boost::spirit::x3::forward_ast<Query> targets;
+    boost::spirit::x3::forward_ast<Query> probes;
+};
+
+struct Query :
+    PositionedVariant<QueryAtomicState,
+                      QueryAtomicGoal,
+                      boost::spirit::x3::forward_ast<QueryConcept>,
+                      boost::spirit::x3::forward_ast<QueryRole>,
+                      QueryJoin,
+                      QueryProject,
+                      QueryRename,
+                      QuerySelectEqual,
+                      QuerySelectValue,
+                      QueryUnion,
+                      QueryDifference,
+                      QueryGenericJoin,
+                      QueryEmpty,
+                      QueryMustPass>
+{
+    using Base = PositionedVariant<QueryAtomicState,
+                                   QueryAtomicGoal,
+                                   boost::spirit::x3::forward_ast<QueryConcept>,
+                                   boost::spirit::x3::forward_ast<QueryRole>,
+                                   QueryJoin,
+                                   QueryProject,
+                                   QueryRename,
+                                   QuerySelectEqual,
+                                   QuerySelectValue,
+                                   QueryUnion,
+                                   QueryDifference,
+                                   QueryGenericJoin,
+                                   QueryEmpty,
+                                   QueryMustPass>;
+    using Base::Base;
+    using Base::operator=;
+};
+
+template<runir::kr::dl::CategoryTag Category>
+struct Constructor<Category, runir::kr::dl::ProjectTag> : boost::spirit::x3::position_tagged
+{
+    std::vector<Identifier> columns;
+    Query arg;
+};
+
+using ConceptProject = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ProjectTag>;
+
+using RoleProject = Constructor<runir::kr::dl::RoleTag, runir::kr::dl::ProjectTag>;
+
+struct ConstructorOrNonTerminalVariant : PositionedVariant<ConceptChoice, RoleChoice, Query>
+{
+    using Base = PositionedVariant<ConceptChoice, RoleChoice, Query>;
+    using Base::Base;
+    using Base::operator=;
+};
+
+/// Distance vertices (sources/targets): a concept or a query.
+struct ConceptOrQueryVariant : PositionedVariant<ConceptChoice, Query>
+{
+    using Base = PositionedVariant<ConceptChoice, Query>;
+    using Base::Base;
+    using Base::operator=;
+};
+
+/// Distance edges: a role or a query.
+struct RoleOrQueryVariant : PositionedVariant<RoleChoice, Query>
+{
+    using Base = PositionedVariant<RoleChoice, Query>;
+    using Base::Base;
+    using Base::operator=;
+};
+
+template<>
+struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::BotTag> : boost::spirit::x3::position_tagged
 {
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleAtomicStateSyntaxTag> : boost::spirit::x3::position_tagged
+template<>
+struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::TopTag> : boost::spirit::x3::position_tagged
+{
+};
+
+template<>
+struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ConceptAtomicStateSyntaxTag> : boost::spirit::x3::position_tagged
 {
     Identifier predicate_name;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleAtomicGoalSyntaxTag> : boost::spirit::x3::position_tagged
+template<>
+struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ConceptAtomicGoalSyntaxTag> : boost::spirit::x3::position_tagged
 {
     Identifier predicate_name;
     bool polarity;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleIntersectionSyntaxTag> : boost::spirit::x3::position_tagged
+template<>
+struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ConceptIntersectionSyntaxTag> : boost::spirit::x3::position_tagged
 {
-    RoleChoice<Family> lhs;
-    RoleChoice<Family> rhs;
+    ConceptChoice lhs;
+    ConceptChoice rhs;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleUnionSyntaxTag> : boost::spirit::x3::position_tagged
+template<>
+struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ConceptUnionSyntaxTag> : boost::spirit::x3::position_tagged
 {
-    RoleChoice<Family> lhs;
-    RoleChoice<Family> rhs;
+    ConceptChoice lhs;
+    ConceptChoice rhs;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::ComplementTag> : boost::spirit::x3::position_tagged
+template<>
+struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::NegationTag> : boost::spirit::x3::position_tagged
 {
-    RoleChoice<Family> arg;
+    ConceptChoice arg;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::InverseTag> : boost::spirit::x3::position_tagged
+template<>
+struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ValueRestrictionTag> : boost::spirit::x3::position_tagged
 {
-    RoleChoice<Family> arg;
+    RoleChoice lhs;
+    ConceptChoice rhs;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::CompositionTag> : boost::spirit::x3::position_tagged
+template<>
+struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ExistentialQuantificationTag> : boost::spirit::x3::position_tagged
 {
-    RoleChoice<Family> lhs;
-    RoleChoice<Family> rhs;
+    RoleChoice lhs;
+    ConceptChoice rhs;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::TransitiveClosureTag> : boost::spirit::x3::position_tagged
+template<>
+struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::AtLeastNumberRestrictionTag> : boost::spirit::x3::position_tagged
 {
-    RoleChoice<Family> arg;
+    ygg::uint_t n;
+    RoleChoice role;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::ReflexiveTransitiveClosureTag> : boost::spirit::x3::position_tagged
+template<>
+struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::AtMostNumberRestrictionTag> : boost::spirit::x3::position_tagged
 {
-    RoleChoice<Family> arg;
+    ygg::uint_t n;
+    RoleChoice role;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RestrictionTag> : boost::spirit::x3::position_tagged
+template<>
+struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ExactNumberRestrictionTag> : boost::spirit::x3::position_tagged
 {
-    RoleChoice<Family> lhs;
-    ConceptChoice<Family> rhs;
+    ygg::uint_t n;
+    RoleChoice role;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::IdentityTag> : boost::spirit::x3::position_tagged
+template<>
+struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag> : boost::spirit::x3::position_tagged
 {
-    ConceptChoice<Family> arg;
+    ygg::uint_t n;
+    RoleChoice role;
+    ConceptChoice concept_;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-using RoleUniversal = Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::UniversalTag>;
-template<runir::kr::dl::FamilyTag Family>
-using RoleAtomicState = Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleAtomicStateSyntaxTag>;
-template<runir::kr::dl::FamilyTag Family>
-using RoleAtomicGoal = Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleAtomicGoalSyntaxTag>;
-template<runir::kr::dl::FamilyTag Family>
-using RoleIntersection = Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleIntersectionSyntaxTag>;
-template<runir::kr::dl::FamilyTag Family>
-using RoleUnion = Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleUnionSyntaxTag>;
-template<runir::kr::dl::FamilyTag Family>
-using RoleComplement = Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::ComplementTag>;
-template<runir::kr::dl::FamilyTag Family>
-using RoleInverse = Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::InverseTag>;
-template<runir::kr::dl::FamilyTag Family>
-using RoleComposition = Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::CompositionTag>;
-template<runir::kr::dl::FamilyTag Family>
-using RoleTransitiveClosure = Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::TransitiveClosureTag>;
-template<runir::kr::dl::FamilyTag Family>
-using RoleReflexiveTransitiveClosure = Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::ReflexiveTransitiveClosureTag>;
-template<runir::kr::dl::FamilyTag Family>
-using RoleRestriction = Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RestrictionTag>;
-template<runir::kr::dl::FamilyTag Family>
-using RoleIdentity = Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::IdentityTag>;
-template<runir::kr::dl::FamilyTag Family>
-using RoleRegister = Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RegisterTag>;
-template<runir::kr::dl::FamilyTag Family>
-using RoleArgument = Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>;
+template<>
+struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAtMostNumberRestrictionTag> : boost::spirit::x3::position_tagged
+{
+    ygg::uint_t n;
+    RoleChoice role;
+    ConceptChoice concept_;
+};
 
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicStateSyntaxTag> : boost::spirit::x3::position_tagged
+template<>
+struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedExactNumberRestrictionTag> : boost::spirit::x3::position_tagged
+{
+    ygg::uint_t n;
+    RoleChoice role;
+    ConceptChoice concept_;
+};
+
+template<>
+struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::RoleValueMapTag> : boost::spirit::x3::position_tagged
+{
+    RoleChoice lhs;
+    RoleChoice rhs;
+};
+
+template<>
+struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::AgreementTag> : boost::spirit::x3::position_tagged
+{
+    RoleChoice lhs;
+    RoleChoice rhs;
+};
+
+template<>
+struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::RoleFillersTag> : boost::spirit::x3::position_tagged
+{
+    RoleChoice role;
+    std::vector<Identifier> object_names;
+};
+
+template<>
+struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::OneOfTag> : boost::spirit::x3::position_tagged
+{
+    std::vector<Identifier> object_names;
+};
+
+template<>
+struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::NominalTag> : boost::spirit::x3::position_tagged
+{
+    Identifier object_name;
+};
+
+template<runir::kr::dl::CategoryTag Category>
+struct Constructor<Category, runir::kr::dl::ArgumentTag<Category>> : boost::spirit::x3::position_tagged
+{
+    ArgumentReference<Category> reference;
+};
+
+template<>
+struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::RegisterTag> : boost::spirit::x3::position_tagged
+{
+    RegisterReference<runir::kr::dl::ConceptTag> reference;
+};
+
+template<>
+struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::RegisterTag> : boost::spirit::x3::position_tagged
+{
+    RegisterReference<runir::kr::dl::RoleTag> reference;
+};
+
+using ConceptBot = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::BotTag>;
+using ConceptTop = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::TopTag>;
+using ConceptAtomicState = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ConceptAtomicStateSyntaxTag>;
+using ConceptAtomicGoal = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ConceptAtomicGoalSyntaxTag>;
+using ConceptIntersection = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ConceptIntersectionSyntaxTag>;
+using ConceptUnion = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ConceptUnionSyntaxTag>;
+using ConceptNegation = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::NegationTag>;
+using ConceptValueRestriction = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ValueRestrictionTag>;
+using ConceptExistentialQuantification = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ExistentialQuantificationTag>;
+using ConceptAtLeastNumberRestriction = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::AtLeastNumberRestrictionTag>;
+using ConceptAtMostNumberRestriction = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::AtMostNumberRestrictionTag>;
+using ConceptExactNumberRestriction = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ExactNumberRestrictionTag>;
+using ConceptQualifiedAtLeastNumberRestriction = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>;
+using ConceptQualifiedAtMostNumberRestriction = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAtMostNumberRestrictionTag>;
+using ConceptQualifiedExactNumberRestriction = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedExactNumberRestrictionTag>;
+using ConceptRoleValueMap = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::RoleValueMapTag>;
+using ConceptAgreement = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::AgreementTag>;
+using ConceptRoleFillers = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::RoleFillersTag>;
+using ConceptOneOf = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::OneOfTag>;
+using ConceptNominal = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::NominalTag>;
+using ConceptRegister = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::RegisterTag>;
+using ConceptArgument = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>;
+
+template<>
+struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::UniversalTag> : boost::spirit::x3::position_tagged
+{
+};
+
+template<>
+struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::RoleAtomicStateSyntaxTag> : boost::spirit::x3::position_tagged
+{
+    Identifier predicate_name;
+};
+
+template<>
+struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::RoleAtomicGoalSyntaxTag> : boost::spirit::x3::position_tagged
 {
     Identifier predicate_name;
     bool polarity;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicGoalSyntaxTag> : boost::spirit::x3::position_tagged
+template<>
+struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::RoleIntersectionSyntaxTag> : boost::spirit::x3::position_tagged
+{
+    RoleChoice lhs;
+    RoleChoice rhs;
+};
+
+template<>
+struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::RoleUnionSyntaxTag> : boost::spirit::x3::position_tagged
+{
+    RoleChoice lhs;
+    RoleChoice rhs;
+};
+
+template<>
+struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::ComplementTag> : boost::spirit::x3::position_tagged
+{
+    RoleChoice arg;
+};
+
+template<>
+struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::InverseTag> : boost::spirit::x3::position_tagged
+{
+    RoleChoice arg;
+};
+
+template<>
+struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::CompositionTag> : boost::spirit::x3::position_tagged
+{
+    RoleChoice lhs;
+    RoleChoice rhs;
+};
+
+template<>
+struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::TransitiveClosureTag> : boost::spirit::x3::position_tagged
+{
+    RoleChoice arg;
+};
+
+template<>
+struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::ReflexiveTransitiveClosureTag> : boost::spirit::x3::position_tagged
+{
+    RoleChoice arg;
+};
+
+template<>
+struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::RestrictionTag> : boost::spirit::x3::position_tagged
+{
+    RoleChoice lhs;
+    ConceptChoice rhs;
+};
+
+template<>
+struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::IdentityTag> : boost::spirit::x3::position_tagged
+{
+    ConceptChoice arg;
+};
+
+using RoleUniversal = Constructor<runir::kr::dl::RoleTag, runir::kr::dl::UniversalTag>;
+using RoleAtomicState = Constructor<runir::kr::dl::RoleTag, runir::kr::dl::RoleAtomicStateSyntaxTag>;
+using RoleAtomicGoal = Constructor<runir::kr::dl::RoleTag, runir::kr::dl::RoleAtomicGoalSyntaxTag>;
+using RoleIntersection = Constructor<runir::kr::dl::RoleTag, runir::kr::dl::RoleIntersectionSyntaxTag>;
+using RoleUnion = Constructor<runir::kr::dl::RoleTag, runir::kr::dl::RoleUnionSyntaxTag>;
+using RoleComplement = Constructor<runir::kr::dl::RoleTag, runir::kr::dl::ComplementTag>;
+using RoleInverse = Constructor<runir::kr::dl::RoleTag, runir::kr::dl::InverseTag>;
+using RoleComposition = Constructor<runir::kr::dl::RoleTag, runir::kr::dl::CompositionTag>;
+using RoleTransitiveClosure = Constructor<runir::kr::dl::RoleTag, runir::kr::dl::TransitiveClosureTag>;
+using RoleReflexiveTransitiveClosure = Constructor<runir::kr::dl::RoleTag, runir::kr::dl::ReflexiveTransitiveClosureTag>;
+using RoleRestriction = Constructor<runir::kr::dl::RoleTag, runir::kr::dl::RestrictionTag>;
+using RoleIdentity = Constructor<runir::kr::dl::RoleTag, runir::kr::dl::IdentityTag>;
+using RoleRegister = Constructor<runir::kr::dl::RoleTag, runir::kr::dl::RegisterTag>;
+using RoleArgument = Constructor<runir::kr::dl::RoleTag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>;
+
+template<>
+struct Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicStateSyntaxTag> : boost::spirit::x3::position_tagged
 {
     Identifier predicate_name;
     bool polarity;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NonemptyTag> : boost::spirit::x3::position_tagged
+template<>
+struct Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicGoalSyntaxTag> : boost::spirit::x3::position_tagged
 {
-    ConstructorOrNonTerminalVariant<Family> arg;
+    Identifier predicate_name;
+    bool polarity;
 };
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::ComparisonTag Tag>
-struct Constructor<Family, runir::kr::dl::BooleanTag, Tag> : boost::spirit::x3::position_tagged
+template<>
+struct Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::NonemptyTag> : boost::spirit::x3::position_tagged
 {
-    ConstructorOrNonTerminal<Family, typename Tag::OperandCategory> lhs;
-    ConstructorOrNonTerminal<Family, typename Tag::OperandCategory> rhs;
+    ConstructorOrNonTerminalVariant arg;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanConstantTag> : boost::spirit::x3::position_tagged
+template<runir::kr::dl::ComparisonTag Tag>
+struct Constructor<runir::kr::dl::BooleanTag, Tag> : boost::spirit::x3::position_tagged
+{
+    ConstructorOrNonTerminal<typename Tag::OperandCategory> lhs;
+    ConstructorOrNonTerminal<typename Tag::OperandCategory> rhs;
+};
+
+template<>
+struct Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::BooleanConstantTag> : boost::spirit::x3::position_tagged
 {
     bool value;
 };
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::LogicalBinaryTag Tag>
-struct Constructor<Family, runir::kr::dl::BooleanTag, Tag> : boost::spirit::x3::position_tagged
+template<runir::kr::dl::LogicalBinaryTag Tag>
+struct Constructor<runir::kr::dl::BooleanTag, Tag> : boost::spirit::x3::position_tagged
 {
-    BooleanChoice<Family> lhs;
-    BooleanChoice<Family> rhs;
+    BooleanChoice lhs;
+    BooleanChoice rhs;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NotTag> : boost::spirit::x3::position_tagged
+template<>
+struct Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::NotTag> : boost::spirit::x3::position_tagged
 {
-    BooleanChoice<Family> arg;
+    BooleanChoice arg;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-using BooleanAtomicState = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicStateSyntaxTag>;
-template<runir::kr::dl::FamilyTag Family>
-using BooleanAtomicGoal = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicGoalSyntaxTag>;
-template<runir::kr::dl::FamilyTag Family>
-using BooleanNonempty = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NonemptyTag>;
-template<runir::kr::dl::FamilyTag Family>
-using BooleanEq = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanEqTag>;
-template<runir::kr::dl::FamilyTag Family>
-using BooleanNeq = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanNeTag>;
-template<runir::kr::dl::FamilyTag Family>
-using BooleanLt = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanLtTag>;
-template<runir::kr::dl::FamilyTag Family>
-using BooleanLe = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanLeTag>;
-template<runir::kr::dl::FamilyTag Family>
-using BooleanGt = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanGtTag>;
-template<runir::kr::dl::FamilyTag Family>
-using BooleanGe = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanGeTag>;
-template<runir::kr::dl::FamilyTag Family>
-using NumericalEq = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NumericalEqTag>;
-template<runir::kr::dl::FamilyTag Family>
-using NumericalNeq = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NumericalNeTag>;
-template<runir::kr::dl::FamilyTag Family>
-using NumericalLt = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NumericalLtTag>;
-template<runir::kr::dl::FamilyTag Family>
-using NumericalLe = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NumericalLeTag>;
-template<runir::kr::dl::FamilyTag Family>
-using NumericalGt = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NumericalGtTag>;
-template<runir::kr::dl::FamilyTag Family>
-using NumericalGe = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NumericalGeTag>;
-template<runir::kr::dl::FamilyTag Family>
-using BooleanConstant = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanConstantTag>;
-template<runir::kr::dl::FamilyTag Family>
-using BooleanAnd = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::AndTag>;
-template<runir::kr::dl::FamilyTag Family>
-using BooleanOr = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::OrTag>;
-template<runir::kr::dl::FamilyTag Family>
-using BooleanNot = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NotTag>;
-template<runir::kr::dl::FamilyTag Family>
-using BooleanArgument = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>;
+using BooleanAtomicState = Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicStateSyntaxTag>;
+using BooleanAtomicGoal = Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicGoalSyntaxTag>;
+using BooleanNonempty = Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::NonemptyTag>;
+using BooleanEq = Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::BooleanEqTag>;
+using BooleanNeq = Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::BooleanNeTag>;
+using BooleanLt = Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::BooleanLtTag>;
+using BooleanLe = Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::BooleanLeTag>;
+using BooleanGt = Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::BooleanGtTag>;
+using BooleanGe = Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::BooleanGeTag>;
+using NumericalEq = Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::NumericalEqTag>;
+using NumericalNeq = Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::NumericalNeTag>;
+using NumericalLt = Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::NumericalLtTag>;
+using NumericalLe = Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::NumericalLeTag>;
+using NumericalGt = Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::NumericalGtTag>;
+using NumericalGe = Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::NumericalGeTag>;
+using BooleanConstant = Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::BooleanConstantTag>;
+using BooleanAnd = Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::AndTag>;
+using BooleanOr = Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::OrTag>;
+using BooleanNot = Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::NotTag>;
+using BooleanArgument = Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>;
 
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::CountTag> : boost::spirit::x3::position_tagged
+template<>
+struct Constructor<runir::kr::dl::NumericalTag, runir::kr::dl::CountTag> : boost::spirit::x3::position_tagged
 {
-    ConstructorOrNonTerminalVariant<Family> arg;
+    ConstructorOrNonTerminalVariant arg;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::DistanceTag> : boost::spirit::x3::position_tagged
+template<>
+struct Constructor<runir::kr::dl::NumericalTag, runir::kr::dl::DistanceTag> : boost::spirit::x3::position_tagged
 {
-    ConceptOrQueryVariant<Family> lhs;
-    RoleOrQueryVariant<Family> mid;
-    ConceptOrQueryVariant<Family> rhs;
+    ConceptOrQueryVariant lhs;
+    RoleOrQueryVariant mid;
+    ConceptOrQueryVariant rhs;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::NumericalConstantTag> : boost::spirit::x3::position_tagged
+template<>
+struct Constructor<runir::kr::dl::NumericalTag, runir::kr::dl::NumericalConstantTag> : boost::spirit::x3::position_tagged
 {
     ygg::uint_t value;
 };
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalBinaryTag Tag>
-struct Constructor<Family, runir::kr::dl::NumericalTag, Tag> : boost::spirit::x3::position_tagged
+template<runir::kr::dl::NumericalBinaryTag Tag>
+struct Constructor<runir::kr::dl::NumericalTag, Tag> : boost::spirit::x3::position_tagged
 {
-    NumericalChoice<Family> lhs;
-    NumericalChoice<Family> rhs;
+    NumericalChoice lhs;
+    NumericalChoice rhs;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-using NumericalCount = Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::CountTag>;
-template<runir::kr::dl::FamilyTag Family>
-using NumericalDistance = Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::DistanceTag>;
-template<runir::kr::dl::FamilyTag Family>
-using NumericalConstant = Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::NumericalConstantTag>;
-template<runir::kr::dl::FamilyTag Family>
-using NumericalAdd = Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::AddTag>;
-template<runir::kr::dl::FamilyTag Family>
-using NumericalSub = Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::SubTag>;
-template<runir::kr::dl::FamilyTag Family>
-using NumericalMul = Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::MulTag>;
-template<runir::kr::dl::FamilyTag Family>
-using NumericalDiv = Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::DivTag>;
-template<runir::kr::dl::FamilyTag Family>
-using NumericalMin = Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::MinTag>;
-template<runir::kr::dl::FamilyTag Family>
-using NumericalMax = Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::MaxTag>;
-template<runir::kr::dl::FamilyTag Family>
-using NumericalArgument = Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>;
+using NumericalCount = Constructor<runir::kr::dl::NumericalTag, runir::kr::dl::CountTag>;
+using NumericalDistance = Constructor<runir::kr::dl::NumericalTag, runir::kr::dl::DistanceTag>;
+using NumericalConstant = Constructor<runir::kr::dl::NumericalTag, runir::kr::dl::NumericalConstantTag>;
+using NumericalAdd = Constructor<runir::kr::dl::NumericalTag, runir::kr::dl::AddTag>;
+using NumericalSub = Constructor<runir::kr::dl::NumericalTag, runir::kr::dl::SubTag>;
+using NumericalMul = Constructor<runir::kr::dl::NumericalTag, runir::kr::dl::MulTag>;
+using NumericalDiv = Constructor<runir::kr::dl::NumericalTag, runir::kr::dl::DivTag>;
+using NumericalMin = Constructor<runir::kr::dl::NumericalTag, runir::kr::dl::MinTag>;
+using NumericalMax = Constructor<runir::kr::dl::NumericalTag, runir::kr::dl::MaxTag>;
+using NumericalArgument = Constructor<runir::kr::dl::NumericalTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>;
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-struct Constructor<Family, Category, void> : ConstructorVariantBase<Family, Category>
-{
-    using Base = ConstructorVariantBase<Family, Category>;
-    using Base::Base;
-    using Base::operator=;
-};
-
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+template<runir::kr::dl::CategoryTag Category>
 struct DerivationRule : boost::spirit::x3::position_tagged
 {
     using CategoryTag = Category;
 
-    NonTerminal<Family, Category> lhs;
-    std::vector<ConstructorOrNonTerminal<Family, Category>> rhs;
+    NonTerminal<Category> lhs;
+    std::vector<ConstructorOrNonTerminal<Category>> rhs;
 };
 
-template<runir::kr::dl::FamilyTag Family>
 struct DerivationRuleVariant :
-    PositionedVariant<DerivationRule<Family, runir::kr::dl::ConceptTag>,
-                      DerivationRule<Family, runir::kr::dl::RoleTag>,
-                      DerivationRule<Family, runir::kr::dl::BooleanTag>,
-                      DerivationRule<Family, runir::kr::dl::NumericalTag>>
+    PositionedVariant<DerivationRule<runir::kr::dl::ConceptTag>,
+                      DerivationRule<runir::kr::dl::RoleTag>,
+                      DerivationRule<runir::kr::dl::BooleanTag>,
+                      DerivationRule<runir::kr::dl::NumericalTag>>
 {
-    using Base = PositionedVariant<DerivationRule<Family, runir::kr::dl::ConceptTag>,
-                                   DerivationRule<Family, runir::kr::dl::RoleTag>,
-                                   DerivationRule<Family, runir::kr::dl::BooleanTag>,
-                                   DerivationRule<Family, runir::kr::dl::NumericalTag>>;
+    using Base = PositionedVariant<DerivationRule<runir::kr::dl::ConceptTag>,
+                                   DerivationRule<runir::kr::dl::RoleTag>,
+                                   DerivationRule<runir::kr::dl::BooleanTag>,
+                                   DerivationRule<runir::kr::dl::NumericalTag>>;
     using Base::Base;
     using Base::operator=;
 };
 
-template<runir::kr::dl::FamilyTag Family>
 struct Grammar : boost::spirit::x3::position_tagged
 {
-    std::vector<DerivationRuleVariant<Family>> rules;
+    std::vector<DerivationRuleVariant> rules;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-using ConceptConstructor = Constructor<Family, runir::kr::dl::ConceptTag>;
+using ConceptConstructor = Constructor<runir::kr::dl::ConceptTag>;
 
-template<runir::kr::dl::FamilyTag Family>
-using RoleConstructor = Constructor<Family, runir::kr::dl::RoleTag>;
+using RoleConstructor = Constructor<runir::kr::dl::RoleTag>;
 
-template<runir::kr::dl::FamilyTag Family>
-using BooleanConstructor = Constructor<Family, runir::kr::dl::BooleanTag>;
+using BooleanConstructor = Constructor<runir::kr::dl::BooleanTag>;
 
-template<runir::kr::dl::FamilyTag Family>
-using NumericalConstructor = Constructor<Family, runir::kr::dl::NumericalTag>;
+using NumericalConstructor = Constructor<runir::kr::dl::NumericalTag>;
 
 }  // namespace runir::kr::dl::grammar::ast
 

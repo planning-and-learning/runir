@@ -11,14 +11,14 @@
 namespace runir::kr::dl::semantics
 {
 
-template<tyr::TaskKind Kind, FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family, Kind> Context, typename C>
-    requires FamilyConceptConstructorTag<Family, Tag>
-auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> constructor, Context& context) -> DenotationView<ConceptTag>
+template<tyr::TaskKind Kind, typename Tag, StateEvaluationContextConcept<Kind> Context, typename C>
+    requires FamilyConceptConstructorTag<Tag>
+auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Tag>>, C> constructor, Context& context) -> DenotationView<ConceptTag>
 {
     [[maybe_unused]] auto children = context.child_context();
     auto& repository = context.get_denotation_repository();
-    [[maybe_unused]] const auto num_objects = detail::num_objects<Family, Kind>(context);
-    auto result = detail::make_concept_builder<Kind, Family>(context);
+    [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
+    auto result = detail::make_concept_builder<Kind>(context);
     auto result_bitset = result->get();
 
     if constexpr (std::same_as<Tag, BotTag>) {}
@@ -192,14 +192,14 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> construc
     return insert(repository, *result, context.get_builder()).first;
 }
 
-template<tyr::TaskKind Kind, FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family, Kind> Context, typename C>
-    requires FamilyRoleConstructorTag<Family, Tag>
-auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor, Context& context) -> DenotationView<RoleTag>
+template<tyr::TaskKind Kind, typename Tag, StateEvaluationContextConcept<Kind> Context, typename C>
+    requires FamilyRoleConstructorTag<Tag>
+auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Tag>>, C> constructor, Context& context) -> DenotationView<RoleTag>
 {
     [[maybe_unused]] auto children = context.child_context();
     auto& repository = context.get_denotation_repository();
-    [[maybe_unused]] const auto num_objects = detail::num_objects<Family, Kind>(context);
-    auto result = detail::make_role_builder<Kind, Family>(context);
+    [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
+    auto result = detail::make_role_builder<Kind>(context);
 
     if constexpr (std::same_as<Tag, UniversalTag>)
     {
@@ -317,9 +317,9 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
     return insert(repository, *result, context.get_builder()).first;
 }
 
-template<tyr::TaskKind Kind, FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family, Kind> Context, typename C>
-    requires FamilyBooleanConstructorTag<Family, Tag>
-auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> constructor, Context& context) -> DenotationView<BooleanTag>
+template<tyr::TaskKind Kind, typename Tag, StateEvaluationContextConcept<Kind> Context, typename C>
+    requires FamilyBooleanConstructorTag<Tag>
+auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Tag>>, C> constructor, Context& context) -> DenotationView<BooleanTag>
 {
     [[maybe_unused]] auto children = context.child_context();
     auto& repository = context.get_denotation_repository();
@@ -368,9 +368,9 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> construc
     return insert(repository, *result, context.get_builder()).first;
 }
 
-template<tyr::TaskKind Kind, FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family, Kind> Context, typename C>
-    requires FamilyNumericalConstructorTag<Family, Tag>
-auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constructor, Context& context) -> DenotationView<NumericalTag>
+template<tyr::TaskKind Kind, typename Tag, StateEvaluationContextConcept<Kind> Context, typename C>
+    requires FamilyNumericalConstructorTag<Tag>
+auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Tag>>, C> constructor, Context& context) -> DenotationView<NumericalTag>
 {
     [[maybe_unused]] auto children = context.child_context();
     auto& repository = context.get_denotation_repository();
@@ -403,14 +403,14 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
     return insert(repository, *result, context.get_builder()).first;
 }
 
-template<tyr::TaskKind Kind, FamilyTag Family, CategoryTag Category, StateEvaluationContextConcept<Family, Kind> Context>
-auto evaluate_impl(FamilyConstructorView<Family, Category> constructor, Context& context) -> DenotationView<Category>
+template<tyr::TaskKind Kind, CategoryTag Category, StateEvaluationContextConcept<Kind> Context>
+auto evaluate_impl(FamilyConstructorView<Category> constructor, Context& context) -> DenotationView<Category>
 {
     return ygg::visit([&](auto child) { return evaluate_impl<Kind>(child, context); }, constructor.get_variant());
 }
 
-template<tyr::TaskKind Kind, FamilyTag Family, CategoryTag Category, StateEvaluationContextConcept<Family, Kind> Context>
-auto evaluate(FamilyConstructorView<Family, Category> constructor, Context& context) -> DenotationView<Category>
+template<tyr::TaskKind Kind, CategoryTag Category, StateEvaluationContextConcept<Kind> Context>
+auto evaluate(FamilyConstructorView<Category> constructor, Context& context) -> DenotationView<Category>
 {
     const auto is_static = constructor.is_static();
     auto& cache = context.get_caches().template get<Category>(is_static);
@@ -421,8 +421,8 @@ auto evaluate(FamilyConstructorView<Family, Category> constructor, Context& cont
     return cache.emplace(constructor, evaluate_impl<Kind>(constructor, result_context)).first->second;
 }
 
-template<tyr::TaskKind Kind, FamilyTag Family, typename C, StateEvaluationContextConcept<Family, Kind> Context>
-auto evaluate_impl(ygg::View<ygg::Index<Query<Family, QueryRenameTag>>, C> constructor, Context& context) -> QueryDenotationView
+template<tyr::TaskKind Kind, typename C, StateEvaluationContextConcept<Kind> Context>
+auto evaluate_impl(ygg::View<ygg::Index<Query<QueryRenameTag>>, C> constructor, Context& context) -> QueryDenotationView
 {
     // Keep rows in their owning output partition, even when a low-level query
     // wrapper conservatively marks a static child as dynamic.
@@ -434,17 +434,17 @@ auto evaluate_impl(ygg::View<ygg::Index<Query<Family, QueryRenameTag>>, C> const
     return results.rename(child, constructor.get_schema().span());
 }
 
-template<tyr::TaskKind Kind, FamilyTag Family, typename Tag, typename C, StateEvaluationContextConcept<Family, Kind> Context>
+template<tyr::TaskKind Kind, typename Tag, typename C, StateEvaluationContextConcept<Kind> Context>
     requires(!std::same_as<Tag, void> && !std::same_as<Tag, QueryRenameTag>)
-auto evaluate_impl(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor, Context& context) -> QueryDenotationView
+auto evaluate_impl(ygg::View<ygg::Index<Query<Tag>>, C> constructor, Context& context) -> QueryDenotationView
 {
     auto result = context.get_builder().template get_builder<ygg::database::Relation>(constructor.get_schema().span());
     detail::evaluate_query<Kind>(constructor, context, *result);
     return insert(context.get_denotation_repository(), *result).first;
 }
 
-template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context, typename C>
-auto evaluate(ygg::View<ygg::Index<Query<Family>>, C> constructor, Context& context) -> QueryDenotationView
+template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
+auto evaluate(ygg::View<ygg::Index<Query<>>, C> constructor, Context& context) -> QueryDenotationView
 {
     auto& cache = context.get_caches().get_queries(constructor.is_static());
     if (const auto it = cache.find(constructor); it != cache.end())
@@ -455,14 +455,14 @@ auto evaluate(ygg::View<ygg::Index<Query<Family>>, C> constructor, Context& cont
     return cache.emplace(constructor, result).first->second;
 }
 
-template<tyr::TaskKind Kind, FamilyTag Family, ConceptOrRoleTag Category, StateEvaluationContextConcept<Family, Kind> Context, typename C>
-auto evaluate_impl(ygg::View<ygg::Index<QueryProjection<Family, Category>>, C> constructor, Context& context) -> DenotationView<Category>
+template<tyr::TaskKind Kind, ConceptOrRoleTag Category, StateEvaluationContextConcept<Kind> Context, typename C>
+auto evaluate_impl(ygg::View<ygg::Index<QueryProjection<Category>>, C> constructor, Context& context) -> DenotationView<Category>
 {
     const auto& columns = constructor.get_data().columns;
     auto children = context.child_context();
     const auto relation = evaluate<Kind>(constructor.get_arg(), children);
     const auto position = [&](size_t i) { return relation.column_index(ygg::Index<ygg::database::Column>(columns[i].get_value())); };
-    auto result = context.get_builder().template get_builder<Denotation<Category>>(detail::num_objects<Family, Kind>(context));
+    auto result = context.get_builder().template get_builder<Denotation<Category>>(detail::num_objects<Kind>(context));
     if constexpr (std::same_as<Category, ConceptTag>)
     {
         auto bits = result->get();
@@ -482,10 +482,10 @@ auto evaluate_impl(ygg::View<ygg::Index<QueryProjection<Family, Category>>, C> c
     return insert(context.get_denotation_repository(), *result, context.get_builder()).first;
 }
 
-template<tyr::TaskKind Kind, StateEvaluationContextConcept<runir::kr::ExtFamilyTag, Kind> Context, typename C>
-auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<runir::kr::ExtFamilyTag, RegisterTag>>, C> constructor, Context& context) -> DenotationView<ConceptTag>
+template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
+auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<RegisterTag>>, C> constructor, Context& context) -> DenotationView<ConceptTag>
 {
-    auto result = detail::make_concept_builder<Kind, runir::kr::ExtFamilyTag>(context);
+    auto result = detail::make_concept_builder<Kind>(context);
     auto result_bitset = result->get();
 
     const auto object = register_value(context, constructor.get_register().get_identifier());
@@ -495,10 +495,10 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<runir::kr::ExtFamilyTag, R
     return insert(context.get_denotation_repository(), *result, context.get_builder()).first;
 }
 
-template<tyr::TaskKind Kind, StateEvaluationContextConcept<runir::kr::ExtFamilyTag, Kind> Context, typename C>
-auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, RegisterTag>>, C> constructor, Context& context) -> DenotationView<RoleTag>
+template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
+auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<RegisterTag>>, C> constructor, Context& context) -> DenotationView<RoleTag>
 {
-    auto result = detail::make_role_builder<Kind, runir::kr::ExtFamilyTag>(context);
+    auto result = detail::make_role_builder<Kind>(context);
 
     const auto value = register_value(context, constructor.get_register().get_identifier());
     if (value)
@@ -510,29 +510,26 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, Regi
     return insert(context.get_denotation_repository(), *result, context.get_builder()).first;
 }
 
-template<tyr::TaskKind Kind, StateEvaluationContextConcept<runir::kr::ExtFamilyTag, Kind> Context, typename C>
-auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<runir::kr::ExtFamilyTag, ArgumentTag<ConceptTag>>>, C> constructor,
-                   Context& context) -> DenotationView<ConceptTag>
+template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
+auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<ArgumentTag<ConceptTag>>>, C> constructor, Context& context) -> DenotationView<ConceptTag>
 {
     return argument_value(context, constructor.get_argument().get_identifier());
 }
 
-template<tyr::TaskKind Kind, StateEvaluationContextConcept<runir::kr::ExtFamilyTag, Kind> Context, typename C>
-auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, ArgumentTag<RoleTag>>>, C> constructor, Context& context) -> DenotationView<RoleTag>
+template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
+auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<ArgumentTag<RoleTag>>>, C> constructor, Context& context) -> DenotationView<RoleTag>
 {
     return argument_value(context, constructor.get_argument().get_identifier());
 }
 
-template<tyr::TaskKind Kind, StateEvaluationContextConcept<runir::kr::ExtFamilyTag, Kind> Context, typename C>
-auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<runir::kr::ExtFamilyTag, ArgumentTag<BooleanTag>>>, C> constructor,
-                   Context& context) -> DenotationView<BooleanTag>
+template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
+auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<ArgumentTag<BooleanTag>>>, C> constructor, Context& context) -> DenotationView<BooleanTag>
 {
     return argument_value(context, constructor.get_argument().get_identifier());
 }
 
-template<tyr::TaskKind Kind, StateEvaluationContextConcept<runir::kr::ExtFamilyTag, Kind> Context, typename C>
-auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<runir::kr::ExtFamilyTag, ArgumentTag<NumericalTag>>>, C> constructor,
-                   Context& context) -> DenotationView<NumericalTag>
+template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
+auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<ArgumentTag<NumericalTag>>>, C> constructor, Context& context) -> DenotationView<NumericalTag>
 {
     return argument_value(context, constructor.get_argument().get_identifier());
 }

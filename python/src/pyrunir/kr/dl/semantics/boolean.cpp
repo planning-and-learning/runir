@@ -17,12 +17,12 @@ namespace
 template<typename Tag>
 void bind_boolean_data(nb::module_& m, const char* name)
 {
-    using Data = ygg::Data<Boolean<runir::kr::ExtFamilyTag, Tag>>;
+    using Data = ygg::Data<Boolean<Tag>>;
     auto cls = nb::class_<Data>(m, name).def(nb::init<>()).def_rw("index", &Data::index);
     ygg::add_comparison(cls);
     python::def_boolean_data_constructors<Tag,
-                                          ygg::Index<runir::kr::dl::Constructor<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>,
-                                          ygg::Index<runir::kr::dl::Constructor<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>,
+                                          ygg::Index<runir::kr::dl::Constructor<runir::kr::dl::BooleanTag>>,
+                                          ygg::Index<runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>>,
                                           runir::kr::dl::ExtConstructorRepository>(cls);
 
     if constexpr (is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag>)
@@ -40,7 +40,7 @@ void bind_boolean_data(nb::module_& m, const char* name)
 template<typename Tag>
 void bind_boolean_view(nb::module_& m, const char* name)
 {
-    using Type = Boolean<runir::kr::ExtFamilyTag, Tag>;
+    using Type = Boolean<Tag>;
     using View = ygg::View<ygg::Index<Type>, ExtConstructorRepository>;
     auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index);
     ygg::add_print(cls);
@@ -64,15 +64,14 @@ void bind_boolean_view(nb::module_& m, const char* name)
 
 void bind_semantics_boolean(nb::module_& m)
 {
-    using Family = runir::kr::ExtFamilyTag;
-    using StaticState = Boolean<Family, AtomicStateTag<tyr::formalism::StaticTag>>;
-    using FluentState = Boolean<Family, AtomicStateTag<tyr::formalism::FluentTag>>;
-    using DerivedState = Boolean<Family, AtomicStateTag<tyr::formalism::DerivedTag>>;
-    using StaticGoal = Boolean<Family, AtomicGoalTag<tyr::formalism::StaticTag>>;
-    using FluentGoal = Boolean<Family, AtomicGoalTag<tyr::formalism::FluentTag>>;
-    using DerivedGoal = Boolean<Family, AtomicGoalTag<tyr::formalism::DerivedTag>>;
-    using Nonempty = Boolean<Family, NonemptyTag>;
-    using ArgumentReference = Boolean<Family, ArgumentTag<BooleanTag>>;
+    using StaticState = Boolean<AtomicStateTag<tyr::formalism::StaticTag>>;
+    using FluentState = Boolean<AtomicStateTag<tyr::formalism::FluentTag>>;
+    using DerivedState = Boolean<AtomicStateTag<tyr::formalism::DerivedTag>>;
+    using StaticGoal = Boolean<AtomicGoalTag<tyr::formalism::StaticTag>>;
+    using FluentGoal = Boolean<AtomicGoalTag<tyr::formalism::FluentTag>>;
+    using DerivedGoal = Boolean<AtomicGoalTag<tyr::formalism::DerivedTag>>;
+    using Nonempty = Boolean<NonemptyTag>;
+    using ArgumentReference = Boolean<ArgumentTag<BooleanTag>>;
 
     ygg::bind_index<ygg::Index<StaticState>>(m, "BooleanAtomicStateStaticIndex");
     ygg::bind_index<ygg::Index<FluentState>>(m, "BooleanAtomicStateFluentIndex");
@@ -82,22 +81,22 @@ void bind_semantics_boolean(nb::module_& m)
     ygg::bind_index<ygg::Index<DerivedGoal>>(m, "BooleanAtomicGoalDerivedIndex");
     ygg::bind_index<ygg::Index<Nonempty>>(m, "BooleanNonemptyIndex");
     ygg::bind_index<ygg::Index<ArgumentReference>>(m, "BooleanArgumentIndex");
-    ygg::bind_index<ygg::Index<Boolean<Family, EqTag<BooleanTag>>>>(m, "BooleanEqIndex");
-    ygg::bind_index<ygg::Index<Boolean<Family, NeqTag<BooleanTag>>>>(m, "BooleanNeqIndex");
-    ygg::bind_index<ygg::Index<Boolean<Family, LtTag<BooleanTag>>>>(m, "BooleanLtIndex");
-    ygg::bind_index<ygg::Index<Boolean<Family, LeTag<BooleanTag>>>>(m, "BooleanLeIndex");
-    ygg::bind_index<ygg::Index<Boolean<Family, GtTag<BooleanTag>>>>(m, "BooleanGtIndex");
-    ygg::bind_index<ygg::Index<Boolean<Family, GeTag<BooleanTag>>>>(m, "BooleanGeIndex");
-    ygg::bind_index<ygg::Index<Boolean<Family, EqTag<NumericalTag>>>>(m, "NumericalEqIndex");
-    ygg::bind_index<ygg::Index<Boolean<Family, NeqTag<NumericalTag>>>>(m, "NumericalNeqIndex");
-    ygg::bind_index<ygg::Index<Boolean<Family, LtTag<NumericalTag>>>>(m, "NumericalLtIndex");
-    ygg::bind_index<ygg::Index<Boolean<Family, LeTag<NumericalTag>>>>(m, "NumericalLeIndex");
-    ygg::bind_index<ygg::Index<Boolean<Family, GtTag<NumericalTag>>>>(m, "NumericalGtIndex");
-    ygg::bind_index<ygg::Index<Boolean<Family, GeTag<NumericalTag>>>>(m, "NumericalGeIndex");
-    ygg::bind_index<ygg::Index<Boolean<Family, BooleanConstantTag>>>(m, "BooleanConstantIndex");
-    ygg::bind_index<ygg::Index<Boolean<Family, AndTag>>>(m, "BooleanAndIndex");
-    ygg::bind_index<ygg::Index<Boolean<Family, OrTag>>>(m, "BooleanOrIndex");
-    ygg::bind_index<ygg::Index<Boolean<Family, NotTag>>>(m, "BooleanNotIndex");
+    ygg::bind_index<ygg::Index<Boolean<EqTag<BooleanTag>>>>(m, "BooleanEqIndex");
+    ygg::bind_index<ygg::Index<Boolean<NeqTag<BooleanTag>>>>(m, "BooleanNeqIndex");
+    ygg::bind_index<ygg::Index<Boolean<LtTag<BooleanTag>>>>(m, "BooleanLtIndex");
+    ygg::bind_index<ygg::Index<Boolean<LeTag<BooleanTag>>>>(m, "BooleanLeIndex");
+    ygg::bind_index<ygg::Index<Boolean<GtTag<BooleanTag>>>>(m, "BooleanGtIndex");
+    ygg::bind_index<ygg::Index<Boolean<GeTag<BooleanTag>>>>(m, "BooleanGeIndex");
+    ygg::bind_index<ygg::Index<Boolean<EqTag<NumericalTag>>>>(m, "NumericalEqIndex");
+    ygg::bind_index<ygg::Index<Boolean<NeqTag<NumericalTag>>>>(m, "NumericalNeqIndex");
+    ygg::bind_index<ygg::Index<Boolean<LtTag<NumericalTag>>>>(m, "NumericalLtIndex");
+    ygg::bind_index<ygg::Index<Boolean<LeTag<NumericalTag>>>>(m, "NumericalLeIndex");
+    ygg::bind_index<ygg::Index<Boolean<GtTag<NumericalTag>>>>(m, "NumericalGtIndex");
+    ygg::bind_index<ygg::Index<Boolean<GeTag<NumericalTag>>>>(m, "NumericalGeIndex");
+    ygg::bind_index<ygg::Index<Boolean<BooleanConstantTag>>>(m, "BooleanConstantIndex");
+    ygg::bind_index<ygg::Index<Boolean<AndTag>>>(m, "BooleanAndIndex");
+    ygg::bind_index<ygg::Index<Boolean<OrTag>>>(m, "BooleanOrIndex");
+    ygg::bind_index<ygg::Index<Boolean<NotTag>>>(m, "BooleanNotIndex");
 
     bind_boolean_data<AtomicStateTag<tyr::formalism::StaticTag>>(m, "BooleanAtomicStateStaticData");
     bind_boolean_data<AtomicStateTag<tyr::formalism::FluentTag>>(m, "BooleanAtomicStateFluentData");

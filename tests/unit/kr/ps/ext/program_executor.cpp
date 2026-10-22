@@ -970,14 +970,8 @@ TEST(RunirTests, ExtBacktrackRulesUseFullAndDeltaEvaluation)
     const auto bindings = collect_steps(expander, expander.initial_state(initial_planning_node(expander).get_state()));
     ASSERT_EQ(bindings.size(), 2);
     ASSERT_EQ(bindings.front().target.get_module_state().get_registers().template get<kr::dl::ConceptTag>()[0].value().get_name(), "bad");
-    check_backtrack_evaluation_policy<kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, Kind>>(context,
-                                                                                                       program,
-                                                                                                       bindings[0].target,
-                                                                                                       bindings[1].target);
-    check_backtrack_evaluation_policy<kr::dl::semantics::DeltaEvaluationPolicy<kr::ExtFamilyTag, Kind>>(context,
-                                                                                                        program,
-                                                                                                        bindings[0].target,
-                                                                                                        bindings[1].target);
+    check_backtrack_evaluation_policy<kr::dl::semantics::FullEvaluationPolicy<Kind>>(context, program, bindings[0].target, bindings[1].target);
+    check_backtrack_evaluation_policy<kr::dl::semantics::DeltaEvaluationPolicy<Kind>>(context, program, bindings[0].target, bindings[1].target);
 }
 
 TEST(RunirTests, ExtChooseBacktracksInGroundExecution) { check_choice_execution<tyr::GroundTag>(); }

@@ -30,16 +30,16 @@ void bind_cnf_grammar_generate(nb::module_& m)
         .value("COMPLETED", runir::kr::dl::cnf_grammar::GenerateStatus::COMPLETED)
         .value("OUT_OF_TIME", runir::kr::dl::cnf_grammar::GenerateStatus::OUT_OF_TIME);
 
-    nb::class_<runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::ExtFamilyTag>>(m, "GenerateResults")
-        .def_ro("statistics", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::ExtFamilyTag>::statistics)
-        .def_ro("status", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::ExtFamilyTag>::status)
-        .def_ro("concepts", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::ExtFamilyTag>::concepts)
-        .def_ro("roles", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::ExtFamilyTag>::roles)
-        .def_ro("booleans", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::ExtFamilyTag>::booleans)
-        .def_ro("numericals", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::ExtFamilyTag>::numericals);
+    nb::class_<runir::kr::dl::cnf_grammar::GenerateResultsFor>(m, "GenerateResults")
+        .def_ro("statistics", &runir::kr::dl::cnf_grammar::GenerateResultsFor::statistics)
+        .def_ro("status", &runir::kr::dl::cnf_grammar::GenerateResultsFor::status)
+        .def_ro("concepts", &runir::kr::dl::cnf_grammar::GenerateResultsFor::concepts)
+        .def_ro("roles", &runir::kr::dl::cnf_grammar::GenerateResultsFor::roles)
+        .def_ro("booleans", &runir::kr::dl::cnf_grammar::GenerateResultsFor::booleans)
+        .def_ro("numericals", &runir::kr::dl::cnf_grammar::GenerateResultsFor::numericals);
 
     m.def("generate_ground",
-          &runir::kr::dl::cnf_grammar::generate<runir::kr::BaseFamilyTag, tyr::GroundTag>,
+          &runir::kr::dl::cnf_grammar::generate<tyr::GroundTag>,
           nb::arg("grammar"),
           nb::arg("states"),
           nb::arg("output_repository"),
@@ -47,7 +47,7 @@ void bind_cnf_grammar_generate(nb::module_& m)
           nb::arg("options"),
           nb::keep_alive<0, 3>());
     m.def("generate_lifted",
-          &runir::kr::dl::cnf_grammar::generate<runir::kr::BaseFamilyTag, tyr::LiftedTag>,
+          &runir::kr::dl::cnf_grammar::generate<tyr::LiftedTag>,
           nb::arg("grammar"),
           nb::arg("states"),
           nb::arg("output_repository"),

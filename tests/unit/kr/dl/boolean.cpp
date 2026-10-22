@@ -20,15 +20,13 @@ concept IndexedDataView =
            view.get_index();
        };
 
-template<typename Family, typename... Ts>
+template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
 {
-    return (IndexedDataView<Ts, kr::dl::ConstructorRepositoryFor<Family>> && ...);
+    return (IndexedDataView<Ts, kr::dl::ConstructorRepositoryFor> && ...);
 }
 
-static_assert(indexed_data_views<kr::BaseFamilyTag>(kr::dl::FamilyBooleanTypes<kr::BaseFamilyTag> {}));
-static_assert(indexed_data_views<kr::ExtFamilyTag>(kr::dl::FamilyBooleanTypes<kr::ExtFamilyTag> {}));
-static_assert(indexed_data_views<kr::UnsFamilyTag>(kr::dl::FamilyBooleanTypes<kr::UnsFamilyTag> {}));
+static_assert(indexed_data_views<>(kr::dl::FamilyBooleanTypes {}));
 
 using PredicateTags = ygg::TypeList<kr::dl::AtomicStateTag<tyr::formalism::StaticTag>,
                                     kr::dl::AtomicStateTag<tyr::formalism::FluentTag>,
@@ -38,17 +36,17 @@ using PredicateTags = ygg::TypeList<kr::dl::AtomicStateTag<tyr::formalism::Stati
                                     kr::dl::AtomicGoalTag<tyr::formalism::DerivedTag>>;
 using LogicalBinaryTags = ygg::TypeList<kr::dl::AndTag, kr::dl::OrTag>;
 
-template<typename Family, typename Tag>
+template<typename Tag>
 consteval bool boolean_data_view()
 {
-    using Entity = kr::dl::Boolean<Family, Tag>;
+    using Entity = kr::dl::Boolean<Tag>;
     using Data = ygg::Data<Entity>;
-    using View = ygg::View<ygg::Index<Entity>, kr::dl::ConstructorRepositoryFor<Family>>;
+    using View = ygg::View<ygg::Index<Entity>, kr::dl::ConstructorRepositoryFor>;
 
-    static_assert(std::same_as<View, kr::dl::FamilyBooleanView<Family, Tag>>);
-    if constexpr (std::same_as<Family, kr::BaseFamilyTag>)
+    static_assert(std::same_as<View, kr::dl::FamilyBooleanView<Tag>>);
+    if constexpr (false)
         static_assert(std::same_as<View, kr::dl::BaseBooleanView<Tag>>);
-    else if constexpr (std::same_as<Family, kr::ExtFamilyTag>)
+    else if constexpr (true)
         static_assert(std::same_as<View, kr::dl::ExtBooleanView<Tag>>);
     else
         static_assert(std::same_as<View, kr::dl::UnsBooleanView<Tag>>);
@@ -86,34 +84,31 @@ consteval bool boolean_data_view()
         return false;
 }
 
-template<typename Family, typename... Tags>
+template<typename... Tags>
 consteval bool boolean_data_views(ygg::TypeList<Tags...>)
 {
-    return (boolean_data_view<Family, Tags>() && ...);
+    return (boolean_data_view<Tags>() && ...);
 }
 
-static_assert(boolean_data_views<kr::BaseFamilyTag>(kr::dl::FamilyBooleanConstructorTags<kr::BaseFamilyTag> {}));
-static_assert(boolean_data_views<kr::ExtFamilyTag>(kr::dl::FamilyBooleanConstructorTags<kr::ExtFamilyTag> {}));
-static_assert(boolean_data_views<kr::UnsFamilyTag>(kr::dl::FamilyBooleanConstructorTags<kr::UnsFamilyTag> {}));
+static_assert(boolean_data_views<>(kr::dl::FamilyBooleanConstructorTags {}));
 
 }  // namespace
 
 TEST(RunirKrDlBoolean, RoutesConstantUnaryAndBinaryData)
 {
-    using Family = kr::ExtFamilyTag;
-    using Constructor = kr::dl::Constructor<Family, kr::dl::BooleanTag>;
+    using Constructor = kr::dl::Constructor<kr::dl::BooleanTag>;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     auto repository = kr::dl::ExtConstructorRepositoryFactory().create(planning_repository);
 
-    auto constant_data = ygg::Data<kr::dl::Boolean<Family, kr::dl::BooleanConstantTag>>(true);
+    auto constant_data = ygg::Data<kr::dl::Boolean<kr::dl::BooleanConstantTag>>(true);
     const auto constant = repository->insert(constant_data).first;
     EXPECT_TRUE(constant.get_value());
 
-    auto unary_data = ygg::Data<kr::dl::Boolean<Family, kr::dl::NotTag>>(ygg::Index<Constructor>(4));
+    auto unary_data = ygg::Data<kr::dl::Boolean<kr::dl::NotTag>>(ygg::Index<Constructor>(4));
     const auto unary = repository->insert(unary_data).first;
     EXPECT_EQ(unary.get_arg().get_index(), ygg::Index<Constructor>(4));
 
-    auto binary_data = ygg::Data<kr::dl::Boolean<Family, kr::dl::AndTag>>(ygg::Index<Constructor>(1), ygg::Index<Constructor>(2));
+    auto binary_data = ygg::Data<kr::dl::Boolean<kr::dl::AndTag>>(ygg::Index<Constructor>(1), ygg::Index<Constructor>(2));
     const auto binary = repository->insert(binary_data).first;
     EXPECT_EQ(binary.get_lhs().get_index(), ygg::Index<Constructor>(1));
     EXPECT_EQ(binary.get_rhs().get_index(), ygg::Index<Constructor>(2));

@@ -25,25 +25,23 @@ concept IndexedDataView =
            view.get_index();
        };
 
-template<typename Family, typename... Ts>
+template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
 {
-    return (IndexedDataView<Ts, kr::dl::cnf_grammar::ConstructorRepositoryFor<Family>> && ...);
+    return (IndexedDataView<Ts, kr::dl::cnf_grammar::ConstructorRepositoryFor> && ...);
 }
 
-static_assert(indexed_data_views<kr::BaseFamilyTag>(kr::dl::cnf_grammar::FamilyNumericalTypes<kr::BaseFamilyTag> {}));
-static_assert(indexed_data_views<kr::ExtFamilyTag>(kr::dl::cnf_grammar::FamilyNumericalTypes<kr::ExtFamilyTag> {}));
-static_assert(indexed_data_views<kr::UnsFamilyTag>(kr::dl::cnf_grammar::FamilyNumericalTypes<kr::UnsFamilyTag> {}));
+static_assert(indexed_data_views<>(kr::dl::cnf_grammar::FamilyNumericalTypes {}));
 
-template<typename Family, typename Tag>
+template<typename Tag>
 consteval bool numerical_data_view()
 {
-    using Entity = kr::dl::cnf_grammar::Numerical<Family, Tag>;
+    using Entity = kr::dl::cnf_grammar::Numerical<Tag>;
     using Data = ygg::Data<Entity>;
-    using View = ygg::View<ygg::Index<Entity>, kr::dl::cnf_grammar::ConstructorRepositoryFor<Family>>;
+    using View = ygg::View<ygg::Index<Entity>, kr::dl::cnf_grammar::ConstructorRepositoryFor>;
 
-    static_assert(std::same_as<View, kr::dl::cnf_grammar::FamilyNumericalView<Family, Tag>>);
-    if constexpr (std::same_as<Family, kr::BaseFamilyTag>)
+    static_assert(std::same_as<View, kr::dl::cnf_grammar::FamilyNumericalView<Tag>>);
+    if constexpr (false)
         static_assert(std::same_as<View, kr::dl::cnf_grammar::BaseNumericalView<Tag>>);
 
     if constexpr (std::same_as<Tag, kr::dl::CountTag>)
@@ -81,31 +79,28 @@ consteval bool numerical_data_view()
         return false;
 }
 
-template<typename Family, typename... Tags>
+template<typename... Tags>
 consteval bool numerical_data_views(ygg::TypeList<Tags...>)
 {
-    return (numerical_data_view<Family, Tags>() && ...);
+    return (numerical_data_view<Tags>() && ...);
 }
 
-static_assert(numerical_data_views<kr::BaseFamilyTag>(kr::dl::FamilyNumericalConstructorTags<kr::BaseFamilyTag> {}));
-static_assert(numerical_data_views<kr::ExtFamilyTag>(kr::dl::FamilyNumericalConstructorTags<kr::ExtFamilyTag> {}));
-static_assert(numerical_data_views<kr::UnsFamilyTag>(kr::dl::FamilyNumericalConstructorTags<kr::UnsFamilyTag> {}));
+static_assert(numerical_data_views(kr::dl::GenerationNumericalConstructorTags {}));
 
 }  // namespace
 
 TEST(RunirKrDlCnfGrammarNumerical, ExposesDistanceOperands)
 {
-    using Family = kr::BaseFamilyTag;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-    auto repository = kr::dl::cnf_grammar::ConstructorRepositoryFactoryFor<Family>().create(planning_repository);
+    auto repository = kr::dl::cnf_grammar::ConstructorRepositoryFactoryFor().create(planning_repository);
 
-    auto source_data = ygg::Data<kr::dl::cnf_grammar::NonTerminal<Family, kr::dl::ConceptTag>>(std::string("source"));
-    auto role_data = ygg::Data<kr::dl::cnf_grammar::NonTerminal<Family, kr::dl::RoleTag>>(std::string("role"));
-    auto target_data = ygg::Data<kr::dl::cnf_grammar::NonTerminal<Family, kr::dl::ConceptTag>>(std::string("target"));
+    auto source_data = ygg::Data<kr::dl::cnf_grammar::NonTerminal<kr::dl::ConceptTag>>(std::string("source"));
+    auto role_data = ygg::Data<kr::dl::cnf_grammar::NonTerminal<kr::dl::RoleTag>>(std::string("role"));
+    auto target_data = ygg::Data<kr::dl::cnf_grammar::NonTerminal<kr::dl::ConceptTag>>(std::string("target"));
     const auto source = repository->insert(source_data).first;
     const auto role = repository->insert(role_data).first;
     const auto target = repository->insert(target_data).first;
-    auto distance_data = ygg::Data<kr::dl::cnf_grammar::Numerical<Family, kr::dl::DistanceTag>>(source.get_index(), role.get_index(), target.get_index());
+    auto distance_data = ygg::Data<kr::dl::cnf_grammar::Numerical<kr::dl::DistanceTag>>(source.get_index(), role.get_index(), target.get_index());
     const auto distance = repository->insert(distance_data).first;
 
     EXPECT_EQ(distance.get_lhs(), source);

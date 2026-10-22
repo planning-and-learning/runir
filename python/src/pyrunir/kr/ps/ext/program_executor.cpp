@@ -45,7 +45,7 @@ void bind_feature_evaluation(nb::module_& m)
 {
     using namespace nb::literals;
     using FeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, Repository>;
-    using Context = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, Kind>;
+    using Context = runir::kr::dl::semantics::StateEvaluationContext<Kind>;
 
     m.def(
         "evaluate",
@@ -110,7 +110,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     using Step = detail::ProgramStep<Kind>;
     using Expander = SuccessorExpander<Kind>;
     // Standalone Python evaluation returns the registered contexts with interned results.
-    using Environment = EvaluationEnvironment<Kind, runir::kr::dl::semantics::FullEvaluationPolicy<runir::kr::ExtFamilyTag, Kind>>;
+    using Environment = EvaluationEnvironment<Kind, runir::kr::dl::semantics::FullEvaluationPolicy<Kind>>;
     // Callback results may outlive the expander that owns their binding pool.
     const auto retain_expander = ygg::python::make_owner_retainer();
 

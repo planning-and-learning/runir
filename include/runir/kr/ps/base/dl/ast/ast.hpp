@@ -52,21 +52,21 @@ template<runir::kr::FamilyTag Family>
 struct Concept : boost::spirit::x3::position_tagged
 {
     runir::kr::parser::ast::Identifier symbol;
-    runir::kr::dl::grammar::ast::Constructor<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag> feature;
+    runir::kr::dl::grammar::ast::Constructor<runir::kr::dl::ConceptTag> feature;
 };
 
 template<runir::kr::FamilyTag Family>
 struct BooleanFeature : boost::spirit::x3::position_tagged
 {
     runir::kr::parser::ast::Identifier symbol;
-    runir::kr::dl::grammar::ast::Constructor<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag> feature;
+    runir::kr::dl::grammar::ast::Constructor<runir::kr::dl::BooleanTag> feature;
 };
 
 template<runir::kr::FamilyTag Family>
 struct NumericalFeature : boost::spirit::x3::position_tagged
 {
     runir::kr::parser::ast::Identifier symbol;
-    runir::kr::dl::grammar::ast::Constructor<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag> feature;
+    runir::kr::dl::grammar::ast::Constructor<runir::kr::dl::NumericalTag> feature;
 };
 
 template<runir::kr::FamilyTag Family>

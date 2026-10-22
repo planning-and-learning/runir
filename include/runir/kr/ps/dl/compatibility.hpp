@@ -21,7 +21,7 @@ template<tyr::TaskKind Kind,
          runir::kr::ps::dl::FeatureTag FeatureTag,
          runir::kr::ps::dl::ConditionObservationTag<FeatureTag> ObservationTag,
          typename C,
-         runir::kr::dl::semantics::EvaluationContextConcept<DlFamilyFor<Family>, Kind> Context>
+         runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context>
 bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition,
                         Context& context)
 {

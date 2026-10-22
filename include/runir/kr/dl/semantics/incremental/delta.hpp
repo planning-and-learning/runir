@@ -26,8 +26,9 @@ void append_only_in(const Lhs& lhs, const Rhs& rhs, std::vector<tyr::formalism::
             atoms.push_back(atom);
 }
 
-template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> Source, tyr::planning::StateViewConcept<Kind> Target, FamilyTag Family>
-void assign_atom_delta(const Source& source, const Target& target, Delta<Family>& delta)
+/// `DeltaType` is Delta, which is defined below.
+template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> Source, tyr::planning::StateViewConcept<Kind> Target, typename DeltaType>
+void assign_atom_delta(const Source& source, const Target& target, DeltaType& delta)
 {
     if (&source.get_task() != &target.get_task())
         throw std::invalid_argument("Feature delta requires states from the same task.");
@@ -48,7 +49,6 @@ void assign_atom_delta(const Source& source, const Target& target, Delta<Family>
 /// this delta does not describe an entire planning or program state.
 /// The task formalism repository must outlive the delta. State and register
 /// buffers need not: each stored view identifies an immutable repository object.
-template<FamilyTag Family>
 struct Delta
 {
     struct Values
@@ -139,13 +139,12 @@ void assign_register_delta(Source source,
 }
 }  // namespace detail
 
-template<FamilyTag Family>
 template<tyr::TaskKind Kind,
          tyr::planning::StateViewConcept<Kind> Source,
          RegisterValuesViewConcept SourceRegisters,
          tyr::planning::StateViewConcept<Kind> Target,
          RegisterValuesViewConcept TargetRegisters>
-void Delta<Family>::assign(const Source& source, SourceRegisters source_registers, const Target& target, TargetRegisters target_registers)
+void Delta::assign(const Source& source, SourceRegisters source_registers, const Target& target, TargetRegisters target_registers)
 {
     const auto* repository = source.get_formalism_repository().get();
     if (&source_registers.get_formalism_repository() != repository || &target_registers.get_formalism_repository() != repository)

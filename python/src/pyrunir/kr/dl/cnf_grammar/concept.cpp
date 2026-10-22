@@ -17,13 +17,13 @@ namespace
 template<typename Tag>
 void bind_concept_data(nb::module_& m, const char* name)
 {
-    using Data = ygg::Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, Tag>>;
+    using Data = ygg::Data<runir::kr::dl::cnf_grammar::Concept<Tag>>;
     auto cls = nb::class_<Data>(m, name).def(nb::init<>()).def_rw("index", &Data::index);
     ygg::add_comparison(cls);
     python::def_concept_data_constructors<Tag,
-                                          ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::BaseFamilyTag, runir::kr::dl::ConceptTag>>,
-                                          ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::BaseFamilyTag, runir::kr::dl::RoleTag>>,
-                                          runir::kr::dl::cnf_grammar::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>>(cls);
+                                          ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>,
+                                          ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>,
+                                          runir::kr::dl::cnf_grammar::ConstructorRepositoryFor>(cls);
 
     if constexpr (is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag>)
         cls.def_rw("predicate", &Data::predicate).def_rw("polarity", &Data::polarity);
@@ -49,8 +49,8 @@ void bind_concept_data(nb::module_& m, const char* name)
 template<typename Tag>
 void bind_concept_view(nb::module_& m, const char* name)
 {
-    using Type = runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, Tag>;
-    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::cnf_grammar::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>>;
+    using Type = runir::kr::dl::cnf_grammar::Concept<Tag>;
+    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::cnf_grammar::ConstructorRepositoryFor>;
     auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index);
     ygg::add_print(cls);
     ygg::add_comparison(cls);
@@ -81,55 +81,30 @@ void bind_concept_view(nb::module_& m, const char* name)
 
 void bind_cnf_grammar_concept(nb::module_& m)
 {
-    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, BotTag>>>(m, "ConceptBotIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, TopTag>>>(m, "ConceptTopIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, AtomicStateTag<tyr::formalism::StaticTag>>>>(
-        m,
-        "ConceptAtomicStateStaticIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, AtomicStateTag<tyr::formalism::FluentTag>>>>(
-        m,
-        "ConceptAtomicStateFluentIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, AtomicStateTag<tyr::formalism::DerivedTag>>>>(
-        m,
-        "ConceptAtomicStateDerivedIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, AtomicGoalTag<tyr::formalism::StaticTag>>>>(
-        m,
-        "ConceptAtomicGoalStaticIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, AtomicGoalTag<tyr::formalism::FluentTag>>>>(
-        m,
-        "ConceptAtomicGoalFluentIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, AtomicGoalTag<tyr::formalism::DerivedTag>>>>(
-        m,
-        "ConceptAtomicGoalDerivedIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, IntersectionTag>>>(m, "ConceptIntersectionIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, UnionTag>>>(m, "ConceptUnionIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, NegationTag>>>(m, "ConceptNegationIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, ValueRestrictionTag>>>(m, "ConceptValueRestrictionIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, ExistentialQuantificationTag>>>(
-        m,
-        "ConceptExistentialQuantificationIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, AtLeastNumberRestrictionTag>>>(
-        m,
-        "ConceptAtLeastNumberRestrictionIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, AtMostNumberRestrictionTag>>>(
-        m,
-        "ConceptAtMostNumberRestrictionIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, ExactNumberRestrictionTag>>>(m,
-                                                                                                                          "ConceptExactNumberRestrictionIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, QualifiedAtLeastNumberRestrictionTag>>>(
-        m,
-        "ConceptQualifiedAtLeastNumberRestrictionIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, QualifiedAtMostNumberRestrictionTag>>>(
-        m,
-        "ConceptQualifiedAtMostNumberRestrictionIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, QualifiedExactNumberRestrictionTag>>>(
-        m,
-        "ConceptQualifiedExactNumberRestrictionIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, RoleValueMapTag>>>(m, "ConceptRoleValueMapIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, AgreementTag>>>(m, "ConceptAgreementIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, RoleFillersTag>>>(m, "ConceptRoleFillersIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, OneOfTag>>>(m, "ConceptOneOfIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, NominalTag>>>(m, "ConceptNominalIndex");
+    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<BotTag>>>(m, "ConceptBotIndex");
+    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<TopTag>>>(m, "ConceptTopIndex");
+    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<AtomicStateTag<tyr::formalism::StaticTag>>>>(m, "ConceptAtomicStateStaticIndex");
+    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<AtomicStateTag<tyr::formalism::FluentTag>>>>(m, "ConceptAtomicStateFluentIndex");
+    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<AtomicStateTag<tyr::formalism::DerivedTag>>>>(m, "ConceptAtomicStateDerivedIndex");
+    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<AtomicGoalTag<tyr::formalism::StaticTag>>>>(m, "ConceptAtomicGoalStaticIndex");
+    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<AtomicGoalTag<tyr::formalism::FluentTag>>>>(m, "ConceptAtomicGoalFluentIndex");
+    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<AtomicGoalTag<tyr::formalism::DerivedTag>>>>(m, "ConceptAtomicGoalDerivedIndex");
+    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<IntersectionTag>>>(m, "ConceptIntersectionIndex");
+    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<UnionTag>>>(m, "ConceptUnionIndex");
+    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<NegationTag>>>(m, "ConceptNegationIndex");
+    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<ValueRestrictionTag>>>(m, "ConceptValueRestrictionIndex");
+    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<ExistentialQuantificationTag>>>(m, "ConceptExistentialQuantificationIndex");
+    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<AtLeastNumberRestrictionTag>>>(m, "ConceptAtLeastNumberRestrictionIndex");
+    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<AtMostNumberRestrictionTag>>>(m, "ConceptAtMostNumberRestrictionIndex");
+    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<ExactNumberRestrictionTag>>>(m, "ConceptExactNumberRestrictionIndex");
+    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<QualifiedAtLeastNumberRestrictionTag>>>(m, "ConceptQualifiedAtLeastNumberRestrictionIndex");
+    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<QualifiedAtMostNumberRestrictionTag>>>(m, "ConceptQualifiedAtMostNumberRestrictionIndex");
+    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<QualifiedExactNumberRestrictionTag>>>(m, "ConceptQualifiedExactNumberRestrictionIndex");
+    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<RoleValueMapTag>>>(m, "ConceptRoleValueMapIndex");
+    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<AgreementTag>>>(m, "ConceptAgreementIndex");
+    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<RoleFillersTag>>>(m, "ConceptRoleFillersIndex");
+    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<OneOfTag>>>(m, "ConceptOneOfIndex");
+    ygg::bind_index<ygg::Index<runir::kr::dl::cnf_grammar::Concept<NominalTag>>>(m, "ConceptNominalIndex");
 
     bind_concept_data<BotTag>(m, "ConceptBotData");
     bind_concept_data<TopTag>(m, "ConceptTopData");

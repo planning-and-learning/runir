@@ -10,7 +10,7 @@ namespace runir::kr::ps
 {
 
 /// Borrows shared scratch and retains the source planning view for one expansion.
-template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy>
+template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
 struct RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy>
 {
     using FamilyType = IcpFamilyTag;

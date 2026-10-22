@@ -39,7 +39,7 @@ public:
 
     /// Resume a retained choice after child search; emit() only enumerates and prepares its alternatives.
     /// Bind a register and move memory while preserving the planning state and caller stack.
-    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              ExecutionStateViewConcept<Storage> State,
              tyr::planning::StateViewConcept<Kind> PlanningState>
@@ -74,7 +74,7 @@ private:
             return detail::Choice<Category>(rule, denotation, workspace.role_bindings);
     }
     /// Ordering is evaluated after binding, and only rearranges the admitted values.
-    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              EmitConcept<Choice<Category>> Emit,
              StopConcept Stop,
@@ -175,7 +175,7 @@ private:
     }
 
 public:
-    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              EmitConcept<Choice<Category>> Emit,
              StopConcept Stop,

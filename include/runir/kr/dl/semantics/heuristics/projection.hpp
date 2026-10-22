@@ -284,11 +284,10 @@ ygg::database::QueryPlan compile_edge_plan(const std::vector<ygg::database::Quer
 
 /// The abstraction of a translated edge query, or nullopt if no column is constrained at both ends (blind search).
 /// `from` and `to` are the edge columns of the two vertices of an edge, in vertex order.
-template<FamilyTag Family>
-std::optional<EdgeAbstraction> abstract_edges(dl::detail::QueryTranslator<Family>& translator,
-                                              ygg::database::QueryView<> edges,
-                                              std::span<const ygg::database::ColumnLayout> from,
-                                              std::span<const ygg::database::ColumnLayout> to)
+inline std::optional<EdgeAbstraction> abstract_edges(dl::detail::QueryTranslator& translator,
+                                                     ygg::database::QueryView<> edges,
+                                                     std::span<const ygg::database::ColumnLayout> from,
+                                                     std::span<const ygg::database::ColumnLayout> to)
 {
     const auto k = from.size();
     auto projections = std::vector<ygg::database::QueryView<>>();
@@ -310,11 +309,8 @@ std::optional<EdgeAbstraction> abstract_edges(dl::detail::QueryTranslator<Family
     return EdgeAbstraction { detail::compile_edge_plan(roots), std::move(patterns), relaxation.slots };
 }
 
-template<FamilyTag Family>
-std::optional<EdgeAbstraction>
-abstract_edges(dl::detail::QueryTranslator<Family>& translator,
-               ygg::database::QueryView<> edges,
-               const ygg::database::DistancePlan& plan)
+inline std::optional<EdgeAbstraction>
+abstract_edges(dl::detail::QueryTranslator& translator, ygg::database::QueryView<> edges, const ygg::database::DistancePlan& plan)
 {
     const auto columns = plan.edge_columns().span();
     return abstract_edges(translator, edges, columns.first(plan.arity()), columns.subspan(plan.arity()));

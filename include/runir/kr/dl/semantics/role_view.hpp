@@ -15,12 +15,12 @@
 namespace ygg
 {
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, formalism::SymbolContextFor<runir::kr::dl::FamilyRole<Family, Tag>> C>
-    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
-class View<Index<runir::kr::dl::FamilyRole<Family, Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::FamilyRole<Family, Tag>, C>
+template<typename Tag, formalism::SymbolContextFor<runir::kr::dl::FamilyRole<Tag>> C>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Tag>
+class View<Index<runir::kr::dl::FamilyRole<Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::FamilyRole<Tag>, C>
 {
 public:
-    using ygg::IndexViewBase<runir::kr::dl::FamilyRole<Family, Tag>, C>::IndexViewBase;
+    using ygg::IndexViewBase<runir::kr::dl::FamilyRole<Tag>, C>::IndexViewBase;
 
     auto get_predicate() const noexcept
         requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)

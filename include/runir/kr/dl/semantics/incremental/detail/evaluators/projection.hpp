@@ -14,7 +14,7 @@
 namespace runir::kr::dl::semantics::incremental::detail
 {
 
-template<FamilyTag Family, tyr::TaskKind Kind, CategoryTag Category>
+template<tyr::TaskKind Kind, CategoryTag Category>
 struct ProjectionEvaluator
 {
     QueryEvaluationIndex child;
@@ -41,16 +41,16 @@ struct ProjectionEvaluator
         else
             state.set(ObjectIndex(row.template get<ygg::uint_t>(size_t { 0 })), ObjectIndex(row.template get<ygg::uint_t>(size_t { 1 })), present, repository);
     }
-    template<StateEvaluationContextConcept<Family, Kind> Context>
-    void initialize(EvaluationGraph<Family, Kind>& graph, Context& context)
+    template<StateEvaluationContextConcept<Kind> Context>
+    void initialize(EvaluationGraph<Kind>& graph, Context& context)
     {
-        auto& builder = value.initialize(semantics::detail::num_objects<Family, Kind>(context));
+        auto& builder = value.initialize(semantics::detail::num_objects<Kind>(context));
         operation.initialize(graph.result(child), context.get_workspace().get_database_workspace());
         const auto& rows = operation.get_result();
         for (size_t i = 0; i < rows.size(); ++i)
             set_row(builder, rows[i], true);
     }
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace& workspace)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace& workspace)
     {
         operation.update(graph.change(child).change(), workspace);
         const auto& change = operation.get_delta();

@@ -10,11 +10,11 @@
 namespace ygg::serialization
 {
 
-template<typename Archive, runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
-void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Numerical<Family, Tag>>, C>>)
+template<typename Archive, typename Tag, typename C>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Tag>
+void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Numerical<Tag>>, C>>)
 {
-    using Value = View<Index<runir::kr::dl::Numerical<Family, Tag>>, C>;
+    using Value = View<Index<runir::kr::dl::Numerical<Tag>>, C>;
 
     if constexpr (requires(const Value& value) { value.get_argument(); })
         ar.field("argument", [](const auto& value) -> decltype(auto) { return (value.get_argument()); });

@@ -46,7 +46,7 @@ const auto identifier_def = boost::spirit::x3::rule<IdentifierText, std::string>
 const auto symbol_value_def = identifier;
 const auto symbol_section_def = context(":symbol")[(lit("(") >> keyword(":symbol")) > symbol_value_def > lit(")")];
 const auto boolean_expression_section_def =
-    context(":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::boolean_parser<runir::kr::ExtFamilyTag>() > lit(")")];
+    context(":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::boolean_parser<>() > lit(")")];
 
 const auto boolean_feature_def =
     context("boolean feature")[(lit("(") >> lit(":") >> keyword("boolean")) > symbol_section_def > boolean_expression_section_def > lit(")")];

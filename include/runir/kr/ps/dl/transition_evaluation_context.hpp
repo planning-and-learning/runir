@@ -28,8 +28,8 @@ public:
 
 template<FamilyTag Family,
          tyr::TaskKind Kind,
-         runir::kr::dl::semantics::EvaluationContextConcept<DlFamilyFor<Family>, Kind> SourceContext,
-         runir::kr::dl::semantics::EvaluationContextConcept<DlFamilyFor<Family>, Kind> TargetContext>
+         runir::kr::dl::semantics::EvaluationContextConcept<Kind> SourceContext,
+         runir::kr::dl::semantics::EvaluationContextConcept<Kind> TargetContext>
 auto make_evaluation_transition_context(SourceContext source, TargetContext target)
 {
     return EvaluationTransitionContext<Family, SourceContext, TargetContext>(std::move(source), std::move(target));
@@ -43,8 +43,8 @@ namespace runir::kr::ps::dl
 template<typename Context, typename Family, typename Kind>
 concept TransitionEvaluationContextConcept = runir::kr::FamilyTag<Family> && tyr::TaskKind<Kind> && requires(Context& context) {
     requires std::same_as<typename Context::FamilyType, Family>;
-    { context.get_source_context() } -> runir::kr::dl::semantics::EvaluationContextConcept<DlFamilyFor<Family>, Kind>;
-    { context.get_target_context() } -> runir::kr::dl::semantics::EvaluationContextConcept<DlFamilyFor<Family>, Kind>;
+    { context.get_source_context() } -> runir::kr::dl::semantics::EvaluationContextConcept<Kind>;
+    { context.get_target_context() } -> runir::kr::dl::semantics::EvaluationContextConcept<Kind>;
 };
 
 template<runir::kr::FamilyTag Family, tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> S, runir::kr::dl::semantics::RegisterValuesViewConcept R>
@@ -52,10 +52,9 @@ class TransitionEvaluationContext
 {
 public:
     using FamilyType = Family;
-    using DlFamily = DlFamilyFor<Family>;
 
 private:
-    using DlContext = runir::kr::dl::semantics::StateEvaluationContext<DlFamily, Kind, S>;
+    using DlContext = runir::kr::dl::semantics::StateEvaluationContext<Kind, S>;
 
     DlContext m_source_context;
     DlContext m_target_context;
@@ -64,9 +63,8 @@ public:
     TransitionEvaluationContext(S source_state,
                                 S target_state,
                                 runir::kr::dl::semantics::Builder& dl_builder,
-                                runir::kr::dl::semantics::EvaluationStorage<DlFamily>& source,
-                                runir::kr::dl::semantics::EvaluationStorage<DlFamily>& target)
-        :
+                                runir::kr::dl::semantics::EvaluationStorage& source,
+                                runir::kr::dl::semantics::EvaluationStorage& target) :
         m_source_context(std::move(source_state), dl_builder, source),  //
         m_target_context(std::move(target_state), dl_builder, target)
     {
@@ -75,12 +73,11 @@ public:
     TransitionEvaluationContext(S source_state,
                                 S target_state,
                                 runir::kr::dl::semantics::Builder& dl_builder,
-                                runir::kr::dl::semantics::EvaluationStorage<DlFamily>& source,
-                                runir::kr::dl::semantics::EvaluationStorage<DlFamily>& target,
+                                runir::kr::dl::semantics::EvaluationStorage& source,
+                                runir::kr::dl::semantics::EvaluationStorage& target,
                                 runir::kr::dl::semantics::CallArgumentsView arguments,
                                 R source_registers,
-                                R target_registers)
-        :
+                                R target_registers) :
         m_source_context(std::move(source_state), dl_builder, source, arguments, source_registers),
         m_target_context(std::move(target_state), dl_builder, target, arguments, target_registers)
     {

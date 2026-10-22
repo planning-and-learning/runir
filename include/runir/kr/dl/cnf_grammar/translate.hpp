@@ -7,12 +7,7 @@
 namespace runir::kr::dl::cnf_grammar
 {
 
-template<runir::kr::dl::FamilyTag Family>
-FamilyGrammarView<Family> translate(const runir::kr::dl::grammar::FamilyGrammarView<runir::kr::BaseFamilyTag>& grammar,
-                                    ConstructorRepositoryFor<Family>& repository);
-
-FamilyGrammarView<runir::kr::BaseFamilyTag> translate(const runir::kr::dl::grammar::FamilyGrammarView<runir::kr::BaseFamilyTag>& grammar,
-                                                      ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository);
+FamilyGrammarView translate(const runir::kr::dl::grammar::FamilyGrammarView& grammar, ConstructorRepositoryFor& repository);
 
 }  // namespace runir::kr::dl::cnf_grammar
 

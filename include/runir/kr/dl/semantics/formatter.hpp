@@ -68,8 +68,8 @@ std::string query_columns(Columns columns)
     return fmt::format("({})", fmt::join(columns, " "));
 }
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-std::string query(ygg::View<ygg::Index<runir::kr::dl::Query<Family, Tag>>, C> view)
+template<typename Tag, typename C>
+std::string query(ygg::View<ygg::Index<runir::kr::dl::Query<Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, void>)
         return fmt::format("{}", view.get_variant());
@@ -114,8 +114,8 @@ std::string query(ygg::View<ygg::Index<runir::kr::dl::Query<Family, Tag>>, C> vi
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL query constructor tag");
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::ConceptOrRoleTag Category, typename C>
-std::string query_projection(ygg::View<ygg::Index<runir::kr::dl::QueryProjection<Family, Category>>, C> view)
+template<runir::kr::dl::ConceptOrRoleTag Category, typename C>
+std::string query_projection(ygg::View<ygg::Index<runir::kr::dl::QueryProjection<Category>>, C> view)
 {
     auto columns = view.get_columns();
     auto it = columns.begin();
@@ -154,9 +154,9 @@ std::string denotation(ygg::View<ygg::Index<runir::kr::dl::semantics::Denotation
     }
 }
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
-std::string concept_constructor(ygg::View<ygg::Index<runir::kr::dl::FamilyConcept<Family, Tag>>, C> view)
+template<typename Tag, typename C>
+    requires runir::kr::dl::FamilyConceptConstructorTag<Tag>
+std::string concept_constructor(ygg::View<ygg::Index<runir::kr::dl::FamilyConcept<Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::BotTag>)
         return constructor(runir::kr::dl::BotTag::keyword);
@@ -210,9 +210,9 @@ std::string concept_constructor(ygg::View<ygg::Index<runir::kr::dl::FamilyConcep
     }
 }
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
-std::string role(ygg::View<ygg::Index<runir::kr::dl::FamilyRole<Family, Tag>>, C> view)
+template<typename Tag, typename C>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Tag>
+std::string role(ygg::View<ygg::Index<runir::kr::dl::FamilyRole<Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::UniversalTag>)
         return constructor(runir::kr::dl::UniversalTag::keyword);
@@ -250,9 +250,9 @@ std::string role(ygg::View<ygg::Index<runir::kr::dl::FamilyRole<Family, Tag>>, C
     }
 }
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
-std::string boolean_constructor(ygg::View<ygg::Index<runir::kr::dl::FamilyBoolean<Family, Tag>>, C> view)
+template<typename Tag, typename C>
+    requires runir::kr::dl::FamilyBooleanConstructorTag<Tag>
+std::string boolean_constructor(ygg::View<ygg::Index<runir::kr::dl::FamilyBoolean<Tag>>, C> view)
 {
     if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
         return constructor(runir::kr::dl::BooleanAtomicStateSyntaxTag::keyword,
@@ -280,9 +280,9 @@ std::string boolean_constructor(ygg::View<ygg::Index<runir::kr::dl::FamilyBoolea
     }
 }
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
-std::string numerical(ygg::View<ygg::Index<runir::kr::dl::FamilyNumerical<Family, Tag>>, C> view)
+template<typename Tag, typename C>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Tag>
+std::string numerical(ygg::View<ygg::Index<runir::kr::dl::FamilyNumerical<Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::CountTag>)
         return constructor(runir::kr::dl::CountTag::keyword, view.get_arg());
@@ -316,17 +316,17 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::QueryColumn>, C>> : fm
     }
 };
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::Query<Family, Tag>>, C>> : fmt::formatter<std::string_view>
+template<typename Tag, typename C>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::Query<Tag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::dl::Query<Family, Tag>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::dl::Query<Tag>>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::query(view), ctx); }
 };
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::ConceptOrRoleTag Category, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::QueryProjection<Family, Category>>, C>> : fmt::formatter<std::string_view>
+template<runir::kr::dl::ConceptOrRoleTag Category, typename C>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::QueryProjection<Category>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::dl::QueryProjection<Family, Category>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::dl::QueryProjection<Category>>, C>;
     auto format(View view, format_context& ctx) const
     {
         return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::query_projection(view), ctx);
@@ -351,48 +351,48 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::Register<Category>>, C
     }
 };
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::FamilyConcept<Family, Tag>>, C>> : fmt::formatter<std::string_view>
+template<typename Tag, typename C>
+    requires runir::kr::dl::FamilyConceptConstructorTag<Tag>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::FamilyConcept<Tag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::dl::FamilyConcept<Family, Tag>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::dl::FamilyConcept<Tag>>, C>;
     auto format(View view, format_context& ctx) const
     {
         return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::concept_constructor(view), ctx);
     }
 };
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::FamilyRole<Family, Tag>>, C>> : fmt::formatter<std::string_view>
+template<typename Tag, typename C>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Tag>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::FamilyRole<Tag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::dl::FamilyRole<Family, Tag>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::dl::FamilyRole<Tag>>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::role(view), ctx); }
 };
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::FamilyBoolean<Family, Tag>>, C>> : fmt::formatter<std::string_view>
+template<typename Tag, typename C>
+    requires runir::kr::dl::FamilyBooleanConstructorTag<Tag>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::FamilyBoolean<Tag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::dl::FamilyBoolean<Family, Tag>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::dl::FamilyBoolean<Tag>>, C>;
     auto format(View view, format_context& ctx) const
     {
         return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::boolean_constructor(view), ctx);
     }
 };
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::FamilyNumerical<Family, Tag>>, C>> : fmt::formatter<std::string_view>
+template<typename Tag, typename C>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Tag>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::FamilyNumerical<Tag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::dl::FamilyNumerical<Family, Tag>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::dl::FamilyNumerical<Tag>>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::numerical(view), ctx); }
 };
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::FamilyConstructor<Family, Category>>, C>> : fmt::formatter<std::string_view>
+template<runir::kr::dl::CategoryTag Category, typename C>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::FamilyConstructor<Category>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::dl::FamilyConstructor<Family, Category>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::dl::FamilyConstructor<Category>>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(fmt::format("{}", view.get_variant()), ctx); }
 };
 

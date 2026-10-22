@@ -19,22 +19,20 @@
 namespace runir::kr::dl
 {
 
-template<FamilyTag Family>
-using FamilyConstructorSymbolRepository = ygg::ApplyTypeListT<ygg::formalism::SymbolRepository, FamilyConstructorRepositoryTypes<Family>>;
+using FamilyConstructorSymbolRepository = ygg::ApplyTypeListT<ygg::formalism::SymbolRepository, FamilyConstructorRepositoryTypes>;
 
-template<FamilyTag Family>
-using Builder = ygg::ApplyTypeListT<ygg::formalism::BuilderStorage, FamilyConstructorRepositoryTypes<Family>>;
+using Builder = ygg::ApplyTypeListT<ygg::formalism::BuilderStorage, FamilyConstructorRepositoryTypes>;
 
-using BaseBuilder = Builder<runir::kr::BaseFamilyTag>;
-using ExtBuilder = Builder<runir::kr::ExtFamilyTag>;
-using UnsBuilder = Builder<runir::kr::UnsFamilyTag>;
+using BaseBuilder = Builder;
+using ExtBuilder = Builder;
+using UnsBuilder = Builder;
 
 using runir::kr::dl::detail::get_repository;
 using ygg::formalism::checkout;
 
-template<FamilyTag Family, typename T>
-    requires ygg::formalism::SupportsSymbol<BasicConstructorRepository<Family>, T>
-void prepare_for_insert(BasicConstructorRepository<Family>& repository, ygg::Data<T>& data)
+template<typename T>
+    requires ygg::formalism::SupportsSymbol<BasicConstructorRepository, T>
+void prepare_for_insert(BasicConstructorRepository& repository, ygg::Data<T>& data)
 {
     canonicalize(data);
     detail::prepare(data, repository);
@@ -47,9 +45,9 @@ using ygg::formalism::insert;
 namespace runir::kr::dl::detail
 {
 
-extern template class ConstructorRepositoryFactory<runir::kr::BaseFamilyTag, runir::kr::dl::FamilyConstructorRepositoryTypes<runir::kr::BaseFamilyTag>>;
-extern template class ConstructorRepositoryFactory<runir::kr::ExtFamilyTag, runir::kr::dl::FamilyConstructorRepositoryTypes<runir::kr::ExtFamilyTag>>;
-extern template class ConstructorRepositoryFactory<runir::kr::UnsFamilyTag, runir::kr::dl::FamilyConstructorRepositoryTypes<runir::kr::UnsFamilyTag>>;
+extern template class ConstructorRepositoryFactory<runir::kr::dl::FamilyConstructorRepositoryTypes>;
+extern template class ConstructorRepositoryFactory<runir::kr::dl::FamilyConstructorRepositoryTypes>;
+extern template class ConstructorRepositoryFactory<runir::kr::dl::FamilyConstructorRepositoryTypes>;
 
 }  // namespace runir::kr::dl::detail
 #endif

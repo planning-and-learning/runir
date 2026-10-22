@@ -9,19 +9,19 @@
 namespace runir::kr::dl::semantics::incremental::detail
 {
 
-template<FamilyTag Family, tyr::TaskKind Kind, CategoryTag Category>
+template<tyr::TaskKind Kind, CategoryTag Category>
 struct ArgumentEvaluator
 {
     ArgumentIdentifier<Category> identifier;
     DenotationState<Category> value;
 
     explicit ArgumentEvaluator(ArgumentIdentifier<Category> identifier) : identifier(identifier) {}
-    template<StateEvaluationContextConcept<Family, Kind> Context>
-    void initialize(EvaluationGraph<Family, Kind>&, Context& context)
+    template<StateEvaluationContextConcept<Kind> Context>
+    void initialize(EvaluationGraph<Kind>&, Context& context)
     {
         value.assign(argument_value(context, identifier));
     }
-    void update(EvaluationGraph<Family, Kind>&, const Delta<Family>&, ygg::database::Workspace&) {}
+    void update(EvaluationGraph<Kind>&, const Delta&, ygg::database::Workspace&) {}
 };
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

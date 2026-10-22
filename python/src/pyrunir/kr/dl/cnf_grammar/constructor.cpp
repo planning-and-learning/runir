@@ -16,11 +16,11 @@ namespace
 template<CategoryTag Category>
 void bind_constructor_data(nb::module_& m, const char* name)
 {
-    using Data = ygg::Data<runir::kr::dl::cnf_grammar::Constructor<runir::kr::BaseFamilyTag, Category>>;
+    using Data = ygg::Data<runir::kr::dl::cnf_grammar::Constructor<Category>>;
     auto cls = nb::class_<Data>(m, name)
                    .def(nb::init<>())
                    .def(nb::init<DataVariant<Data>>(), nb::arg("variant"))
-                   .def(nb::init<DataViewVariant<Data, runir::kr::dl::cnf_grammar::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>>>(), nb::arg("variant"))
+                   .def(nb::init<DataViewVariant<Data, runir::kr::dl::cnf_grammar::ConstructorRepositoryFor>>(), nb::arg("variant"))
                    .def_rw("index", &Data::index)
                    .def_rw("variant", &Data::variant);
     ygg::add_comparison(cls);
@@ -29,8 +29,8 @@ void bind_constructor_data(nb::module_& m, const char* name)
 template<CategoryTag Category>
 void bind_constructor_view(nb::module_& m, const char* name)
 {
-    using Type = runir::kr::dl::cnf_grammar::Constructor<runir::kr::BaseFamilyTag, Category>;
-    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::cnf_grammar::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>>;
+    using Type = runir::kr::dl::cnf_grammar::Constructor<Category>;
+    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::cnf_grammar::ConstructorRepositoryFor>;
     auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index).def("get_variant", &View::get_variant);
     ygg::add_print(cls);
     ygg::add_comparison(cls);
@@ -41,10 +41,10 @@ void bind_constructor_view(nb::module_& m, const char* name)
 
 void bind_cnf_grammar_constructor(nb::module_& m)
 {
-    using Concept = runir::kr::dl::cnf_grammar::Constructor<runir::kr::BaseFamilyTag, ConceptTag>;
-    using Role = runir::kr::dl::cnf_grammar::Constructor<runir::kr::BaseFamilyTag, RoleTag>;
-    using Boolean = runir::kr::dl::cnf_grammar::Constructor<runir::kr::BaseFamilyTag, BooleanTag>;
-    using Numerical = runir::kr::dl::cnf_grammar::Constructor<runir::kr::BaseFamilyTag, NumericalTag>;
+    using Concept = runir::kr::dl::cnf_grammar::Constructor<ConceptTag>;
+    using Role = runir::kr::dl::cnf_grammar::Constructor<RoleTag>;
+    using Boolean = runir::kr::dl::cnf_grammar::Constructor<BooleanTag>;
+    using Numerical = runir::kr::dl::cnf_grammar::Constructor<NumericalTag>;
 
     ygg::bind_index<ygg::Index<Concept>>(m, "ConceptIndex");
     ygg::bind_index<ygg::Index<Role>>(m, "RoleIndex");

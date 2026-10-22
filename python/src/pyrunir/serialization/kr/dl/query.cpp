@@ -8,13 +8,10 @@ namespace runir::serialization
 
 void bind_kr_dl_query(nb::module_& m)
 {
-    using Family = kr::ExtFamilyTag;
-    using Types = ygg::ConcatTypeListsT<kr::dl::FamilyQueryTypes<Family>,
-                                        ygg::TypeList<kr::dl::Query<Family>,
-                                                      kr::dl::QueryColumn,
-                                                      kr::dl::QueryProjection<Family, kr::dl::ConceptTag>,
-                                                      kr::dl::QueryProjection<Family, kr::dl::RoleTag>>>;
-    bind_entity_types(m, DlComponentViews<Family, Types> {});
+    using Types = ygg::ConcatTypeListsT<
+        kr::dl::FamilyQueryTypes,
+        ygg::TypeList<kr::dl::Query<>, kr::dl::QueryColumn, kr::dl::QueryProjection<kr::dl::ConceptTag>, kr::dl::QueryProjection<kr::dl::RoleTag>>>;
+    bind_entity_types(m, DlComponentViews<Types> {});
 }
 
 }  // namespace runir::serialization

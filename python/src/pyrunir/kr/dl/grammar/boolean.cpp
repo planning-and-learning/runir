@@ -17,13 +17,13 @@ namespace
 template<typename Tag>
 void bind_boolean_data(nb::module_& m, const char* name)
 {
-    using Data = ygg::Data<runir::kr::dl::grammar::Boolean<runir::kr::BaseFamilyTag, Tag>>;
+    using Data = ygg::Data<runir::kr::dl::grammar::Boolean<Tag>>;
     auto cls = nb::class_<Data>(m, name).def(nb::init<>()).def_rw("index", &Data::index);
     ygg::add_comparison(cls);
     python::def_boolean_data_constructors<Tag,
-                                          ygg::Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>,
-                                          ygg::Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>,
-                                          runir::kr::dl::grammar::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>>(cls);
+                                          ygg::Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::BooleanTag>>,
+                                          ygg::Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::NumericalTag>>,
+                                          runir::kr::dl::grammar::ConstructorRepositoryFor>(cls);
 
     if constexpr (is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag>)
         cls.def_rw("predicate", &Data::predicate).def_rw("polarity", &Data::polarity);
@@ -34,8 +34,8 @@ void bind_boolean_data(nb::module_& m, const char* name)
 template<typename Tag>
 void bind_boolean_view(nb::module_& m, const char* name)
 {
-    using Type = runir::kr::dl::grammar::Boolean<runir::kr::BaseFamilyTag, Tag>;
-    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::grammar::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>>;
+    using Type = runir::kr::dl::grammar::Boolean<Tag>;
+    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::grammar::ConstructorRepositoryFor>;
     auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index);
     ygg::add_print(cls);
     ygg::add_comparison(cls);
@@ -51,13 +51,13 @@ void bind_boolean_view(nb::module_& m, const char* name)
 
 void bind_grammar_boolean(nb::module_& m)
 {
-    using StaticState = runir::kr::dl::grammar::Boolean<runir::kr::BaseFamilyTag, AtomicStateTag<tyr::formalism::StaticTag>>;
-    using FluentState = runir::kr::dl::grammar::Boolean<runir::kr::BaseFamilyTag, AtomicStateTag<tyr::formalism::FluentTag>>;
-    using DerivedState = runir::kr::dl::grammar::Boolean<runir::kr::BaseFamilyTag, AtomicStateTag<tyr::formalism::DerivedTag>>;
-    using StaticGoal = runir::kr::dl::grammar::Boolean<runir::kr::BaseFamilyTag, AtomicGoalTag<tyr::formalism::StaticTag>>;
-    using FluentGoal = runir::kr::dl::grammar::Boolean<runir::kr::BaseFamilyTag, AtomicGoalTag<tyr::formalism::FluentTag>>;
-    using DerivedGoal = runir::kr::dl::grammar::Boolean<runir::kr::BaseFamilyTag, AtomicGoalTag<tyr::formalism::DerivedTag>>;
-    using Nonempty = runir::kr::dl::grammar::Boolean<runir::kr::BaseFamilyTag, NonemptyTag>;
+    using StaticState = runir::kr::dl::grammar::Boolean<AtomicStateTag<tyr::formalism::StaticTag>>;
+    using FluentState = runir::kr::dl::grammar::Boolean<AtomicStateTag<tyr::formalism::FluentTag>>;
+    using DerivedState = runir::kr::dl::grammar::Boolean<AtomicStateTag<tyr::formalism::DerivedTag>>;
+    using StaticGoal = runir::kr::dl::grammar::Boolean<AtomicGoalTag<tyr::formalism::StaticTag>>;
+    using FluentGoal = runir::kr::dl::grammar::Boolean<AtomicGoalTag<tyr::formalism::FluentTag>>;
+    using DerivedGoal = runir::kr::dl::grammar::Boolean<AtomicGoalTag<tyr::formalism::DerivedTag>>;
+    using Nonempty = runir::kr::dl::grammar::Boolean<NonemptyTag>;
 
     ygg::bind_index<ygg::Index<StaticState>>(m, "BooleanAtomicStateStaticIndex");
     ygg::bind_index<ygg::Index<FluentState>>(m, "BooleanAtomicStateFluentIndex");

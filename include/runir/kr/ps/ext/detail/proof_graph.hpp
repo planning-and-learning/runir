@@ -71,7 +71,7 @@ void build_proof_graph(ProgramProofResults<Kind>& result,
 }
 
 /// Materialize only a selected reached path; it is diagnostic, not a complete AND/OR proof.
-template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy>
+template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
 void build_witness_graph(ProgramProofResults<Kind>& result,
                          SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>& expander,
                          ygg::SharedObjectPoolPtr<SearchPath<Kind, ExecutionStorage>> witness)

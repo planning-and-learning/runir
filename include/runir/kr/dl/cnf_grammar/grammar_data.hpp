@@ -15,37 +15,37 @@
 namespace ygg
 {
 
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::cnf_grammar::Grammar<Family>>
+template<>
+struct Data<runir::kr::dl::cnf_grammar::Grammar>
 {
-    Index<runir::kr::dl::cnf_grammar::Grammar<Family>> index;
-    ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>> concept_start;
-    ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>>> role_start;
-    ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>>> boolean_start;
-    ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::NumericalTag>>> numerical_start;
-    IndexList<runir::kr::dl::cnf_grammar::DerivationRule<Family, runir::kr::dl::ConceptTag>> concept_derivation_rules;
-    IndexList<runir::kr::dl::cnf_grammar::DerivationRule<Family, runir::kr::dl::RoleTag>> role_derivation_rules;
-    IndexList<runir::kr::dl::cnf_grammar::DerivationRule<Family, runir::kr::dl::BooleanTag>> boolean_derivation_rules;
-    IndexList<runir::kr::dl::cnf_grammar::DerivationRule<Family, runir::kr::dl::NumericalTag>> numerical_derivation_rules;
-    IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, runir::kr::dl::ConceptTag>> concept_substitution_rules;
-    IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, runir::kr::dl::RoleTag>> role_substitution_rules;
-    IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, runir::kr::dl::BooleanTag>> boolean_substitution_rules;
-    IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, runir::kr::dl::NumericalTag>> numerical_substitution_rules;
+    Index<runir::kr::dl::cnf_grammar::Grammar> index;
+    ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>> concept_start;
+    ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>> role_start;
+    ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::BooleanTag>>> boolean_start;
+    ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::NumericalTag>>> numerical_start;
+    IndexList<runir::kr::dl::cnf_grammar::DerivationRule<runir::kr::dl::ConceptTag>> concept_derivation_rules;
+    IndexList<runir::kr::dl::cnf_grammar::DerivationRule<runir::kr::dl::RoleTag>> role_derivation_rules;
+    IndexList<runir::kr::dl::cnf_grammar::DerivationRule<runir::kr::dl::BooleanTag>> boolean_derivation_rules;
+    IndexList<runir::kr::dl::cnf_grammar::DerivationRule<runir::kr::dl::NumericalTag>> numerical_derivation_rules;
+    IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::ConceptTag>> concept_substitution_rules;
+    IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::RoleTag>> role_substitution_rules;
+    IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::BooleanTag>> boolean_substitution_rules;
+    IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::NumericalTag>> numerical_substitution_rules;
     Index<::tyr::formalism::planning::Domain> domain;
 
     Data() = default;
-    Data(::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>> concept_start_,
-         ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>>> role_start_,
-         ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>>> boolean_start_,
-         ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::NumericalTag>>> numerical_start_,
-         IndexList<runir::kr::dl::cnf_grammar::DerivationRule<Family, runir::kr::dl::ConceptTag>> concept_derivation_rules_,
-         IndexList<runir::kr::dl::cnf_grammar::DerivationRule<Family, runir::kr::dl::RoleTag>> role_derivation_rules_,
-         IndexList<runir::kr::dl::cnf_grammar::DerivationRule<Family, runir::kr::dl::BooleanTag>> boolean_derivation_rules_,
-         IndexList<runir::kr::dl::cnf_grammar::DerivationRule<Family, runir::kr::dl::NumericalTag>> numerical_derivation_rules_,
-         IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, runir::kr::dl::ConceptTag>> concept_substitution_rules_,
-         IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, runir::kr::dl::RoleTag>> role_substitution_rules_,
-         IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, runir::kr::dl::BooleanTag>> boolean_substitution_rules_,
-         IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, runir::kr::dl::NumericalTag>> numerical_substitution_rules_,
+    Data(::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>> concept_start_,
+         ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>> role_start_,
+         ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::BooleanTag>>> boolean_start_,
+         ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::NumericalTag>>> numerical_start_,
+         IndexList<runir::kr::dl::cnf_grammar::DerivationRule<runir::kr::dl::ConceptTag>> concept_derivation_rules_,
+         IndexList<runir::kr::dl::cnf_grammar::DerivationRule<runir::kr::dl::RoleTag>> role_derivation_rules_,
+         IndexList<runir::kr::dl::cnf_grammar::DerivationRule<runir::kr::dl::BooleanTag>> boolean_derivation_rules_,
+         IndexList<runir::kr::dl::cnf_grammar::DerivationRule<runir::kr::dl::NumericalTag>> numerical_derivation_rules_,
+         IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::ConceptTag>> concept_substitution_rules_,
+         IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::RoleTag>> role_substitution_rules_,
+         IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::BooleanTag>> boolean_substitution_rules_,
+         IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::NumericalTag>> numerical_substitution_rules_,
          Index<::tyr::formalism::planning::Domain> domain_) :
         index(),
         concept_start(std::move(concept_start_)),
@@ -64,19 +64,18 @@ struct Data<runir::kr::dl::cnf_grammar::Grammar<Family>>
     {
     }
     template<typename C, typename P>
-    Data(const std::optional<::ygg::View<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>, C>>& concept_start_,
-         const std::optional<::ygg::View<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>>, C>>& role_start_,
-         const std::optional<::ygg::View<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>>, C>>& boolean_start_,
-         const std::optional<::ygg::View<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::NumericalTag>>, C>>& numerical_start_,
-         const std::vector<::ygg::View<Index<runir::kr::dl::cnf_grammar::DerivationRule<Family, runir::kr::dl::ConceptTag>>, C>>& concept_derivation_rules_,
-         const std::vector<::ygg::View<Index<runir::kr::dl::cnf_grammar::DerivationRule<Family, runir::kr::dl::RoleTag>>, C>>& role_derivation_rules_,
-         const std::vector<::ygg::View<Index<runir::kr::dl::cnf_grammar::DerivationRule<Family, runir::kr::dl::BooleanTag>>, C>>& boolean_derivation_rules_,
-         const std::vector<::ygg::View<Index<runir::kr::dl::cnf_grammar::DerivationRule<Family, runir::kr::dl::NumericalTag>>, C>>& numerical_derivation_rules_,
-         const std::vector<::ygg::View<Index<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, runir::kr::dl::ConceptTag>>, C>>& concept_substitution_rules_,
-         const std::vector<::ygg::View<Index<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, runir::kr::dl::RoleTag>>, C>>& role_substitution_rules_,
-         const std::vector<::ygg::View<Index<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, runir::kr::dl::BooleanTag>>, C>>& boolean_substitution_rules_,
-         const std::vector<::ygg::View<Index<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, runir::kr::dl::NumericalTag>>, C>>&
-             numerical_substitution_rules_,
+    Data(const std::optional<::ygg::View<Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>, C>>& concept_start_,
+         const std::optional<::ygg::View<Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>, C>>& role_start_,
+         const std::optional<::ygg::View<Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::BooleanTag>>, C>>& boolean_start_,
+         const std::optional<::ygg::View<Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::NumericalTag>>, C>>& numerical_start_,
+         const std::vector<::ygg::View<Index<runir::kr::dl::cnf_grammar::DerivationRule<runir::kr::dl::ConceptTag>>, C>>& concept_derivation_rules_,
+         const std::vector<::ygg::View<Index<runir::kr::dl::cnf_grammar::DerivationRule<runir::kr::dl::RoleTag>>, C>>& role_derivation_rules_,
+         const std::vector<::ygg::View<Index<runir::kr::dl::cnf_grammar::DerivationRule<runir::kr::dl::BooleanTag>>, C>>& boolean_derivation_rules_,
+         const std::vector<::ygg::View<Index<runir::kr::dl::cnf_grammar::DerivationRule<runir::kr::dl::NumericalTag>>, C>>& numerical_derivation_rules_,
+         const std::vector<::ygg::View<Index<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::ConceptTag>>, C>>& concept_substitution_rules_,
+         const std::vector<::ygg::View<Index<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::RoleTag>>, C>>& role_substitution_rules_,
+         const std::vector<::ygg::View<Index<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::BooleanTag>>, C>>& boolean_substitution_rules_,
+         const std::vector<::ygg::View<Index<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::NumericalTag>>, C>>& numerical_substitution_rules_,
          ::ygg::View<Index<::tyr::formalism::planning::Domain>, P> domain_) :
         index(),
         concept_start(),

@@ -22,7 +22,6 @@
 
 namespace
 {
-using Ext = runir::kr::ExtFamilyTag;
 using Kind = tyr::LiftedTag;
 
 double seconds_since(std::chrono::steady_clock::time_point start)
@@ -57,10 +56,13 @@ int main(int argc, char** argv)
     const auto text = must_pass_text(std::string(std::istreambuf_iterator<char>(file), {}));
     const auto search = runir::tests::make_lifted_context(argv[1], argv[2]);
     const auto domain = search->task->get_domain().get_domain();
-    auto repository = runir::kr::dl::ConstructorRepositoryFactoryFor<Ext>().create(search->task->get_repository());
+    auto repository = runir::kr::dl::ConstructorRepositoryFactoryFor().create(search->task->get_repository());
     const auto count = runir::kr::ps::ext::dl::parse_numerical("(n_count " + text + ")", domain, *repository);
-    const auto query = count.get_variant().template get<ygg::Index<runir::kr::dl::Numerical<Ext, runir::kr::dl::CountTag>>>().get_arg().template get<ygg::Index<runir::kr::dl::Query<Ext>>>();
-    const auto must_pass = query.get_variant().template get<ygg::Index<runir::kr::dl::Query<Ext, runir::kr::dl::QueryMustPassTag>>>();
+    const auto query = count.get_variant()
+                           .template get<ygg::Index<runir::kr::dl::Numerical<runir::kr::dl::CountTag>>>()
+                           .get_arg()
+                           .template get<ygg::Index<runir::kr::dl::Query<>>>();
+    const auto must_pass = query.get_variant().template get<ygg::Index<runir::kr::dl::Query<runir::kr::dl::QueryMustPassTag>>>();
 
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     auto builder = runir::kr::dl::semantics::Builder();
@@ -75,8 +77,8 @@ int main(int argc, char** argv)
     auto feature = std::optional<runir::kr::dl::semantics::MustPassFeature>();
     for (size_t repeat = 0; repeat < repeats; ++repeat)
     {
-        auto storage = runir::kr::dl::semantics::EvaluationStorage<Ext>(denotations);
-        auto context = runir::kr::dl::semantics::StateEvaluationContext<Ext, Kind>(initial.get_state(), builder, storage, arguments, registers);
+        auto storage = runir::kr::dl::semantics::EvaluationStorage(denotations);
+        auto context = runir::kr::dl::semantics::StateEvaluationContext<Kind>(initial.get_state(), builder, storage, arguments, registers);
         auto start = std::chrono::steady_clock::now();
         const auto sources = runir::kr::dl::semantics::evaluate<Kind>(must_pass.get_sources(), context);
         const auto targets = runir::kr::dl::semantics::evaluate<Kind>(must_pass.get_targets(), context);
@@ -84,22 +86,20 @@ int main(int argc, char** argv)
         const auto arguments_time = seconds_since(start);
         start = std::chrono::steady_clock::now();
         if (!feature)
-            feature.emplace(runir::kr::dl::semantics::detail::make_must_pass_feature<Ext>(must_pass.get_data().plan, must_pass.get_edges()));
+            feature.emplace(runir::kr::dl::semantics::detail::make_must_pass_feature(must_pass.get_data().plan, must_pass.get_edges()));
         const auto translate_time = seconds_since(start);
         const auto edges = must_pass.get_edges();
         auto slot_time = 0.0;
         const auto input = [&](size_t slot)
         {
             const auto begin = std::chrono::steady_clock::now();
-            const auto rows = runir::kr::dl::semantics::detail::evaluate_slot<Ext, Kind>(feature->slots[slot], edges.get_context(), context);
+            const auto rows = runir::kr::dl::semantics::detail::evaluate_slot<Kind>(feature->slots[slot], edges.get_context(), context);
             slot_time += seconds_since(begin);
             return rows;
         };
         start = std::chrono::steady_clock::now();
-        auto& heuristic = runir::kr::dl::semantics::detail::must_pass_heuristic(*feature,
-                                                                               runir::kr::dl::semantics::detail::num_objects<Ext, Kind>(context),
-                                                                               input,
-                                                                               targets);
+        auto& heuristic =
+            runir::kr::dl::semantics::detail::must_pass_heuristic(*feature, runir::kr::dl::semantics::detail::num_objects<Kind>(context), input, targets);
         const auto heuristic_time = seconds_since(start);
         auto out = ygg::Builder<ygg::database::Relation>(must_pass.get_schema().span());
         const auto before = feature->must_pass.statistics();

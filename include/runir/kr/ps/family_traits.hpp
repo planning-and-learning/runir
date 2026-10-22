@@ -51,7 +51,6 @@ struct PsFamilyTraits;
 template<>
 struct PsFamilyTraits<runir::kr::BaseFamilyTag>
 {
-    using DlFamily = runir::kr::ExtFamilyTag;
     using FeatureCategories = ygg::TypeList<runir::kr::dl::BooleanTag, runir::kr::dl::NumericalTag>;
 
     using FeatureTypes = detail::PsFeatureTypes<runir::kr::BaseFamilyTag, FeatureCategories>;
@@ -64,7 +63,6 @@ struct PsFamilyTraits<runir::kr::BaseFamilyTag>
 template<>
 struct PsFamilyTraits<runir::kr::ExtFamilyTag>
 {
-    using DlFamily = runir::kr::ExtFamilyTag;
     using FeatureCategories = ygg::TypeList<runir::kr::dl::ConceptTag,
                                             runir::kr::dl::RoleTag,
                                             runir::kr::dl::BooleanTag,
@@ -81,7 +79,6 @@ struct PsFamilyTraits<runir::kr::ExtFamilyTag>
 template<>
 struct PsFamilyTraits<runir::kr::IcpFamilyTag>
 {
-    using DlFamily = runir::kr::ExtFamilyTag;
     using FeatureCategories = PsFamilyTraits<runir::kr::ExtFamilyTag>::FeatureCategories;
 
     using FeatureTypes = detail::PsFeatureTypes<runir::kr::IcpFamilyTag, FeatureCategories>;
@@ -94,16 +91,11 @@ struct PsFamilyTraits<runir::kr::IcpFamilyTag>
 template<>
 struct PsFamilyTraits<runir::kr::UnsFamilyTag>
 {
-    using DlFamily = runir::kr::ExtFamilyTag;
     using FeatureCategories = ygg::TypeList<runir::kr::dl::BooleanTag>;
     using FeatureTypes = detail::PsFeatureTypes<runir::kr::UnsFamilyTag, FeatureCategories>;
     using ConditionTypes = ygg::TypeList<>;
     using EffectTypes = ygg::TypeList<>;
 };
-
-/// DL expression family used by a policy family.
-template<runir::kr::FamilyTag Family>
-using DlFamilyFor = typename PsFamilyTraits<Family>::DlFamily;
 
 template<runir::kr::FamilyTag Family>
 using PsFeatureTypes = typename PsFamilyTraits<Family>::FeatureTypes;

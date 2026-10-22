@@ -63,24 +63,23 @@ void expect_diagnostic(Parse parse,
     EXPECT_EQ(error->what(), ygg::diagnostics::format_diagnostic(diagnostic));
 }
 
-template<kr::dl::FamilyTag Family>
 void check_dl_expression_diagnostics()
 {
-    const auto parse = [](const std::string& source) { return kr::dl::grammar::parser::parse_concept_ast<Family>(source); };
+    const auto parse = [](const std::string& source) { return kr::dl::grammar::parser::parse_concept_ast<>(source); };
     EXPECT_THROW(parse("c_top"), kr::ParseError);
     EXPECT_NO_THROW(parse("(c_top)"));
     EXPECT_NO_THROW(parse("(c_and (c_top) (c_bot))"));
     EXPECT_NO_THROW(parse("(c_and c_0 c_1)"));
     const auto one_of = parse("(c_one_of \"a\" \"b\")");
-    using OneOf = boost::spirit::x3::forward_ast<kr::dl::grammar::ast::ConceptOneOf<Family>>;
+    using OneOf = boost::spirit::x3::forward_ast<kr::dl::grammar::ast::ConceptOneOf>;
     const auto& object_names = boost::get<OneOf>(one_of.get()).get().object_names;
     ASSERT_EQ(object_names.size(), 2);
     EXPECT_EQ(object_names[0].text, "a");
     EXPECT_EQ(object_names[1].text, "b");
     EXPECT_NO_THROW(parse("(c_fillers (r_universal) \"a\" \"b\")"));
-    EXPECT_THROW(kr::dl::grammar::parser::parse_role_ast<Family>("r_universal"), kr::ParseError);
-    EXPECT_THROW(kr::dl::grammar::parser::parse_boolean_ast<Family>("b_nonempty (c_top)"), kr::ParseError);
-    EXPECT_THROW(kr::dl::grammar::parser::parse_numerical_ast<Family>("n_count (c_top)"), kr::ParseError);
+    EXPECT_THROW(kr::dl::grammar::parser::parse_role_ast<>("r_universal"), kr::ParseError);
+    EXPECT_THROW(kr::dl::grammar::parser::parse_boolean_ast<>("b_nonempty (c_top)"), kr::ParseError);
+    EXPECT_THROW(kr::dl::grammar::parser::parse_numerical_ast<>("n_count (c_top)"), kr::ParseError);
     for (const auto* keyword : { "c_at_least", "c_at_most", "c_exactly" })
     {
         SCOPED_TRACE(keyword);
@@ -110,10 +109,10 @@ void check_dl_expression_diagnostics()
     const auto nested_close = std::string("(c_and (c_top) (c_at_least 1 (r_universal)");
     expect_diagnostic(parse, nested_close, "c_at_least", nested_close.size(), nested_close.find("(c_at_least"), "\")\"");
 
-    const auto grammar = kr::dl::grammar::parser::parse_grammar_ast<Family>("((c_0 (c_top))(c_1 ((c_top) or (c_bot)))(c_2 (c_0 or c_1))(c_3 (c_and c_0 c_1))"
-                                                                            "(r_0 (r_universal))(b_0 (b_nonempty c_0))(n_0 (n_count c_0)))");
+    const auto grammar = kr::dl::grammar::parser::parse_grammar_ast<>("((c_0 (c_top))(c_1 ((c_top) or (c_bot)))(c_2 (c_0 or c_1))(c_3 (c_and c_0 c_1))"
+                                                                      "(r_0 (r_universal))(b_0 (b_nonempty c_0))(n_0 (n_count c_0)))");
     ASSERT_EQ(grammar.rules.size(), 7);
-    using ConceptDerivation = kr::dl::grammar::ast::DerivationRule<Family, kr::dl::ConceptTag>;
+    using ConceptDerivation = kr::dl::grammar::ast::DerivationRule<kr::dl::ConceptTag>;
     EXPECT_EQ(boost::get<ConceptDerivation>(grammar.rules[0].get()).rhs.size(), 1);
     EXPECT_EQ(boost::get<ConceptDerivation>(grammar.rules[1].get()).rhs.size(), 2);
     EXPECT_EQ(boost::get<ConceptDerivation>(grammar.rules[2].get()).rhs.size(), 2);
@@ -147,14 +146,13 @@ void check_dl_expression_diagnostics()
     EXPECT_NO_THROW(parse("(c_atomic_state ; outside quote\n \"room\")"));
 
     using SearchFree = kr::dl::grammar::parser::SearchFreeDialectTag;
-    EXPECT_NO_THROW((kr::dl::grammar::parser::parse_role_ast<Family, SearchFree>("(r_inverse (r_atomic_state \"at\"))")));
-    EXPECT_NO_THROW((kr::dl::grammar::parser::parse_role_ast<Family>("(r_transitive_closure (r_atomic_state \"at\"))")));
-    EXPECT_THROW((kr::dl::grammar::parser::parse_role_ast<Family, SearchFree>("(r_transitive_closure (r_atomic_state \"at\"))")), kr::ParseError);
-    EXPECT_THROW((kr::dl::grammar::parser::parse_concept_ast<Family, SearchFree>("(c_some (r_reflexive_transitive_closure (r_universal)) (c_top))")),
-                 kr::ParseError);
-    EXPECT_THROW((kr::dl::grammar::parser::parse_numerical_ast<Family, SearchFree>("(n_distance (c_top) (r_universal) (c_top))")), kr::ParseError);
+    EXPECT_NO_THROW((kr::dl::grammar::parser::parse_role_ast<SearchFree>("(r_inverse (r_atomic_state \"at\"))")));
+    EXPECT_NO_THROW((kr::dl::grammar::parser::parse_role_ast<>("(r_transitive_closure (r_atomic_state \"at\"))")));
+    EXPECT_THROW((kr::dl::grammar::parser::parse_role_ast<SearchFree>("(r_transitive_closure (r_atomic_state \"at\"))")), kr::ParseError);
+    EXPECT_THROW((kr::dl::grammar::parser::parse_concept_ast<SearchFree>("(c_some (r_reflexive_transitive_closure (r_universal)) (c_top))")), kr::ParseError);
+    EXPECT_THROW((kr::dl::grammar::parser::parse_numerical_ast<SearchFree>("(n_distance (c_top) (r_universal) (c_top))")), kr::ParseError);
 
-    const auto parse_grammar = [](const std::string& source) { return kr::dl::grammar::parser::parse_grammar_ast<Family>(source); };
+    const auto parse_grammar = [](const std::string& source) { return kr::dl::grammar::parser::parse_grammar_ast<>(source); };
     const auto empty_derivation = std::string("((c_0 ))");
     expect_diagnostic(parse_grammar, empty_derivation, "concept derivation", empty_derivation.find(')'), 1, "constructor or alternatives");
     const auto empty_alternatives = std::string("((c_0 ()))");
@@ -188,7 +186,7 @@ TEST(RunirTests, LookupErrorsPreserveIdentifierSpansAcrossLanguages)
     const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
     const auto domain = planning_domain.get_domain();
     const auto context = kr::DomainContext::create(planning_domain);
-    const auto grammar_repository = kr::dl::grammar::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(planning_domain.get_repository());
+    const auto grammar_repository = kr::dl::grammar::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
     const auto prefix = std::string("; UTF-8 é\n");
     for (const auto& [expression, name, message] : {
              std::tuple { "(c_atomic_state \"missing\")", "missing", "Undefined predicate: missing" },
@@ -293,14 +291,14 @@ TEST(RunirTests, ParserDiagnosticsNameRequiredModuleListsAndDelimiters)
 TEST(RunirTests, ParserDiagnosticsNameConstantScalars)
 {
     const auto boolean = std::string("(b_const invalid)");
-    expect_diagnostic([](const std::string& source) { return kr::dl::grammar::parser::parse_boolean_ast<kr::ExtFamilyTag>(source); },
+    expect_diagnostic([](const std::string& source) { return kr::dl::grammar::parser::parse_boolean_ast<>(source); },
                       boolean,
                       "b_const",
                       boolean.find("invalid"),
                       0,
                       "true or false");
     const auto numerical = std::string("(n_const invalid)");
-    expect_diagnostic([](const std::string& source) { return kr::dl::grammar::parser::parse_numerical_ast<kr::ExtFamilyTag>(source); },
+    expect_diagnostic([](const std::string& source) { return kr::dl::grammar::parser::parse_numerical_ast<>(source); },
                       numerical,
                       "n_const",
                       numerical.find("invalid"),
@@ -308,7 +306,7 @@ TEST(RunirTests, ParserDiagnosticsNameConstantScalars)
                       "unsigned integer");
 }
 
-TEST(RunirTests, ParserDiagnosticsRequireDelimitedConstructorsInEveryDlFamily) { check_dl_expression_diagnostics<kr::ExtFamilyTag>(); }
+TEST(RunirTests, ParserDiagnosticsRequireDelimitedConstructors) { check_dl_expression_diagnostics(); }
 
 TEST(RunirTests, ParserDiagnosticOutlivesInputAndErrorHandler)
 {

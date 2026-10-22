@@ -26,31 +26,20 @@ namespace runir::tests
 {
 namespace
 {
-using Ext = kr::ExtFamilyTag;
 using ObjectIndex = ygg::Index<tyr::formalism::Object>;
 
-using GroundExtContext = kr::dl::semantics::StateEvaluationContext<Ext, tyr::GroundTag>;
-struct InvalidResultContext : GroundExtContext
+using GroundContext = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
+struct InvalidResultContext : GroundContext
 {
     int for_result(bool) const;
 };
-struct WrongFamilyContext : GroundExtContext
+struct WrongKindContext : GroundContext
 {
-    kr::dl::semantics::StateEvaluationContext<kr::BaseFamilyTag, tyr::GroundTag> child_context() const;
+    kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag> child_context() const;
 };
-struct WrongKindContext : GroundExtContext
-{
-    kr::dl::semantics::StateEvaluationContext<Ext, tyr::LiftedTag> child_context() const;
-};
-static_assert(kr::dl::semantics::StateEvaluationContextConcept<GroundExtContext, Ext, tyr::GroundTag>);
-static_assert(kr::dl::semantics::StateEvaluationContextConcept<kr::dl::semantics::StateEvaluationContext<kr::BaseFamilyTag, tyr::GroundTag>,
-                                                               kr::BaseFamilyTag,
-                                                               tyr::GroundTag>);
-static_assert(kr::dl::semantics::
-                  StateEvaluationContextConcept<kr::dl::semantics::StateEvaluationContext<kr::UnsFamilyTag, tyr::GroundTag>, kr::UnsFamilyTag, tyr::GroundTag>);
-static_assert(!kr::dl::semantics::StateEvaluationContextConcept<InvalidResultContext, Ext, tyr::GroundTag>);
-static_assert(!kr::dl::semantics::StateEvaluationContextConcept<WrongFamilyContext, Ext, tyr::GroundTag>);
-static_assert(!kr::dl::semantics::StateEvaluationContextConcept<WrongKindContext, Ext, tyr::GroundTag>);
+static_assert(kr::dl::semantics::StateEvaluationContextConcept<GroundContext, tyr::GroundTag>);
+static_assert(!kr::dl::semantics::StateEvaluationContextConcept<InvalidResultContext, tyr::GroundTag>);
+static_assert(!kr::dl::semantics::StateEvaluationContextConcept<WrongKindContext, tyr::GroundTag>);
 
 constexpr auto acquires_builder = []<typename T, typename... Args>()
 { return requires(kr::dl::semantics::Builder& builder, Args&&... args) { builder.template get_builder<T>(std::forward<Args>(args)...); }; };
@@ -423,18 +412,18 @@ TEST(RunirEvaluationStorage, DurableRootsDoNotReuseTransientRootEntries)
 {
     const auto search = query_search();
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
-    auto repository = kr::dl::ConstructorRepositoryFactoryFor<Ext>().create(search->task->get_repository());
+    auto repository = kr::dl::ConstructorRepositoryFactoryFor().create(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();
     auto persistent = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
-    auto storage = kr::dl::semantics::EvaluationStorage<Ext>(persistent);
-    auto root_caches = kr::dl::semantics::DenotationCaches<Ext>();
+    auto storage = kr::dl::semantics::EvaluationStorage(persistent);
+    auto root_caches = kr::dl::semantics::DenotationCaches();
     auto arguments_data = ygg::Data<kr::dl::semantics::CallArguments>();
     auto registers_data = ygg::Data<kr::dl::semantics::RegisterValues>();
     registers_data.concept_values.resize(1);
     registers_data.concept_values[0] = search->task->get_domain().get_domain().get_constants()[0].get_index();
     const auto arguments = kr::dl::semantics::insert(persistent, arguments_data).first;
     const auto registers = ygg::make_view(registers_data, *search->task->get_repository());
-    using Context = kr::dl::semantics::StateEvaluationContext<Ext, tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>>;
+    using Context = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>>;
     auto transient = Context(initial.get_state(), builder, storage, arguments, registers);
     auto durable = Context(initial.get_state(), builder, root_caches, persistent, storage, arguments, registers);
     const auto expression =
@@ -494,24 +483,21 @@ TEST(RunirEvaluationStorage, DynamicResetPreservesStaticRowsAndJoinIndexes)
     const auto search = query_search();
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     const auto domain = search->task->get_domain().get_domain();
-    auto constructors = kr::dl::ConstructorRepositoryFactoryFor<Ext>().create(search->task->get_repository());
+    auto constructors = kr::dl::ConstructorRepositoryFactoryFor().create(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();
     auto prototype = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
-    auto storage = kr::dl::semantics::EvaluationStorage<Ext>(prototype);
+    auto storage = kr::dl::semantics::EvaluationStorage(prototype);
     auto arguments = ygg::Data<kr::dl::semantics::CallArguments>();
     auto registers = ygg::Data<kr::dl::semantics::RegisterValues>();
-    auto context = kr::dl::semantics::StateEvaluationContext<Ext, tyr::GroundTag>(initial.get_state(),
-                                                                                  builder,
-                                                                                  storage,
-                                                                                  kr::dl::semantics::insert(prototype, arguments).first,
-                                                                                  kr::dl::semantics::insert(prototype, registers).first);
+    auto context = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>(initial.get_state(),
+                                                                             builder,
+                                                                             storage,
+                                                                             kr::dl::semantics::insert(prototype, arguments).first,
+                                                                             kr::dl::semantics::insert(prototype, registers).first);
     const auto query = [&](const std::string& expression)
     {
         const auto count = kr::ps::ext::dl::parse_numerical("(n_count " + expression + ")", domain, *constructors);
-        return count.get_variant()
-            .template get<ygg::Index<kr::dl::Numerical<Ext, kr::dl::CountTag>>>()
-            .get_arg()
-            .template get<ygg::Index<kr::dl::Query<Ext>>>();
+        return count.get_variant().template get<ygg::Index<kr::dl::Numerical<kr::dl::CountTag>>>().get_arg().template get<ygg::Index<kr::dl::Query<>>>();
     };
     const auto fixed_query = query(R"((q_atomic_state "fixed" (x y z)))");
     const auto renamed_query = query(R"((q_rename (a b c) (q_atomic_state "fixed" (x y z))))");
@@ -550,10 +536,10 @@ TEST(RunirEvaluationStorage, PreparedContextsRejectForeignTaskRepositories)
     auto builder = kr::dl::semantics::Builder();
     auto prototype = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto foreign_prototype = kr::dl::semantics::DenotationRepositoryFactory().create(foreign_search->task->get_repository());
-    auto storage = kr::dl::semantics::EvaluationStorage<kr::BaseFamilyTag>(prototype);
-    auto foreign_storage = kr::dl::semantics::EvaluationStorage<kr::BaseFamilyTag>(foreign_prototype);
-    using Context = kr::dl::semantics::StateEvaluationContext<kr::BaseFamilyTag, tyr::GroundTag>;
-    auto caches = kr::dl::semantics::DenotationCaches<kr::BaseFamilyTag>();
+    auto storage = kr::dl::semantics::EvaluationStorage(prototype);
+    auto foreign_storage = kr::dl::semantics::EvaluationStorage(foreign_prototype);
+    using Context = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
+    auto caches = kr::dl::semantics::DenotationCaches();
     EXPECT_NO_THROW(Context(initial.get_state(), builder, storage));
     EXPECT_NO_THROW(Context(initial.get_state(), builder, caches, prototype, storage));
     EXPECT_THROW(Context(initial.get_state(), builder, foreign_storage), std::invalid_argument);
@@ -570,15 +556,15 @@ TEST(RunirEvaluationStorage, ExtContextsValidateInputTasksForBorrowedAndIndexedR
     auto repository = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto input_repository = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto foreign_repository = kr::dl::semantics::DenotationRepositoryFactory().create(foreign_search->task->get_repository());
-    auto storage = kr::dl::semantics::EvaluationStorage<Ext>(repository);
-    auto caches = kr::dl::semantics::DenotationCaches<Ext>();
+    auto storage = kr::dl::semantics::EvaluationStorage(repository);
+    auto caches = kr::dl::semantics::DenotationCaches();
     auto arguments_data = ygg::Data<kr::dl::semantics::CallArguments>();
     auto registers_data = ygg::Data<kr::dl::semantics::RegisterValues>();
     const auto arguments = kr::dl::semantics::insert(input_repository, arguments_data).first;
     const auto foreign_arguments = kr::dl::semantics::insert(foreign_repository, arguments_data).first;
     const auto check = [&](auto registers, auto foreign_registers)
     {
-        using Context = kr::dl::semantics::StateEvaluationContext<Ext, tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>>;
+        using Context = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>>;
         EXPECT_NO_THROW(Context(initial.get_state(), builder, storage, arguments, registers));
         EXPECT_NO_THROW(Context(initial.get_state(), builder, caches, repository, storage, arguments, registers));
         EXPECT_THROW(Context(initial.get_state(), builder, storage, foreign_arguments, registers), std::invalid_argument);
@@ -594,29 +580,26 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
 {
     const auto search = query_search();
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
-    auto factory = kr::dl::ConstructorRepositoryFactoryFor<Ext>();
+    auto factory = kr::dl::ConstructorRepositoryFactoryFor();
     auto first_repository = factory.create(search->task->get_repository());
     auto second_repository = factory.create(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();
     auto persistent = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
-    auto storage = kr::dl::semantics::EvaluationStorage<Ext>(persistent);
-    auto caches = kr::dl::semantics::DenotationCaches<Ext>();
+    auto storage = kr::dl::semantics::EvaluationStorage(persistent);
+    auto caches = kr::dl::semantics::DenotationCaches();
     auto arguments_data = ygg::Data<kr::dl::semantics::CallArguments>();
     auto registers_data = ygg::Data<kr::dl::semantics::RegisterValues>();
-    auto context = kr::dl::semantics::StateEvaluationContext<Ext, tyr::GroundTag>(initial.get_state(),
-                                                                                  builder,
-                                                                                  caches,
-                                                                                  persistent,
-                                                                                  storage,
-                                                                                  kr::dl::semantics::insert(persistent, arguments_data).first,
-                                                                                  kr::dl::semantics::insert(persistent, registers_data).first);
+    auto context = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>(initial.get_state(),
+                                                                             builder,
+                                                                             caches,
+                                                                             persistent,
+                                                                             storage,
+                                                                             kr::dl::semantics::insert(persistent, arguments_data).first,
+                                                                             kr::dl::semantics::insert(persistent, registers_data).first);
     const auto query = [&](const std::string& expression, auto& repository)
     {
         const auto count = kr::ps::ext::dl::parse_numerical("(n_count " + expression + ")", search->task->get_domain().get_domain(), repository);
-        return count.get_variant()
-            .template get<ygg::Index<kr::dl::Numerical<Ext, kr::dl::CountTag>>>()
-            .get_arg()
-            .template get<ygg::Index<kr::dl::Query<Ext>>>();
+        return count.get_variant().template get<ygg::Index<kr::dl::Numerical<kr::dl::CountTag>>>().get_arg().template get<ygg::Index<kr::dl::Query<>>>();
     };
     const auto left = query("(q_role (left_source left_target) (r_universal))", *first_repository);
     const auto right = query("(q_role (right_source right_target) (r_universal))", *second_repository);

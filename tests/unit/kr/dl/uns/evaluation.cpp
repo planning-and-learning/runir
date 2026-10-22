@@ -20,63 +20,61 @@ namespace runir::tests
 namespace
 {
 
-using Uns = runir::kr::ExtFamilyTag;
-
-auto wrap_boolean(runir::kr::dl::ConstructorRepositoryFor<kr::ExtFamilyTag>& repository, auto boolean)
+auto wrap_boolean(runir::kr::dl::ConstructorRepositoryFor& repository, auto boolean)
 {
-    auto data = ygg::Data<runir::kr::dl::Constructor<Uns, runir::kr::dl::BooleanTag>>(boolean.get_index());
+    auto data = ygg::Data<runir::kr::dl::Constructor<runir::kr::dl::BooleanTag>>(boolean.get_index());
     return repository.insert(data).first;
 }
 
-auto wrap_numerical(runir::kr::dl::ConstructorRepositoryFor<kr::ExtFamilyTag>& repository, auto numerical)
+auto wrap_numerical(runir::kr::dl::ConstructorRepositoryFor& repository, auto numerical)
 {
-    auto data = ygg::Data<runir::kr::dl::Constructor<Uns, runir::kr::dl::NumericalTag>>(numerical.get_index());
+    auto data = ygg::Data<runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>>(numerical.get_index());
     return repository.insert(data).first;
 }
 
-auto boolean_constant(runir::kr::dl::ConstructorRepositoryFor<kr::ExtFamilyTag>& repository, bool value)
+auto boolean_constant(runir::kr::dl::ConstructorRepositoryFor& repository, bool value)
 {
-    auto data = ygg::Data<runir::kr::dl::Boolean<Uns, runir::kr::dl::BooleanConstantTag>>(value);
+    auto data = ygg::Data<runir::kr::dl::Boolean<runir::kr::dl::BooleanConstantTag>>(value);
     return wrap_boolean(repository, repository.insert(data).first);
 }
 
-auto numerical_constant(runir::kr::dl::ConstructorRepositoryFor<kr::ExtFamilyTag>& repository, ygg::uint_t value)
+auto numerical_constant(runir::kr::dl::ConstructorRepositoryFor& repository, ygg::uint_t value)
 {
-    auto data = ygg::Data<runir::kr::dl::Numerical<Uns, runir::kr::dl::NumericalConstantTag>>(value);
+    auto data = ygg::Data<runir::kr::dl::Numerical<runir::kr::dl::NumericalConstantTag>>(value);
     return wrap_numerical(repository, repository.insert(data).first);
 }
 
 template<runir::kr::dl::ComparisonTag Tag>
-auto numerical_comparison(runir::kr::dl::ConstructorRepositoryFor<kr::ExtFamilyTag>& repository, auto lhs, auto rhs)
+auto numerical_comparison(runir::kr::dl::ConstructorRepositoryFor& repository, auto lhs, auto rhs)
 {
-    auto data = ygg::Data<runir::kr::dl::Boolean<Uns, Tag>>(lhs.get_index(), rhs.get_index());
+    auto data = ygg::Data<runir::kr::dl::Boolean<Tag>>(lhs.get_index(), rhs.get_index());
     return wrap_boolean(repository, repository.insert(data).first);
 }
 
 template<runir::kr::dl::ComparisonTag Tag>
-auto boolean_comparison(runir::kr::dl::ConstructorRepositoryFor<kr::ExtFamilyTag>& repository, auto lhs, auto rhs)
+auto boolean_comparison(runir::kr::dl::ConstructorRepositoryFor& repository, auto lhs, auto rhs)
 {
-    auto data = ygg::Data<runir::kr::dl::Boolean<Uns, Tag>>(lhs.get_index(), rhs.get_index());
+    auto data = ygg::Data<runir::kr::dl::Boolean<Tag>>(lhs.get_index(), rhs.get_index());
     return wrap_boolean(repository, repository.insert(data).first);
 }
 
 template<runir::kr::dl::NumericalBinaryTag Tag>
-auto numerical_binary(runir::kr::dl::ConstructorRepositoryFor<kr::ExtFamilyTag>& repository, auto lhs, auto rhs)
+auto numerical_binary(runir::kr::dl::ConstructorRepositoryFor& repository, auto lhs, auto rhs)
 {
-    auto data = ygg::Data<runir::kr::dl::Numerical<Uns, Tag>>(lhs.get_index(), rhs.get_index());
+    auto data = ygg::Data<runir::kr::dl::Numerical<Tag>>(lhs.get_index(), rhs.get_index());
     return wrap_numerical(repository, repository.insert(data).first);
 }
 
 template<runir::kr::dl::LogicalBinaryTag Tag>
-auto logical_binary(runir::kr::dl::ConstructorRepositoryFor<kr::ExtFamilyTag>& repository, auto lhs, auto rhs)
+auto logical_binary(runir::kr::dl::ConstructorRepositoryFor& repository, auto lhs, auto rhs)
 {
-    auto data = ygg::Data<runir::kr::dl::Boolean<Uns, Tag>>(lhs.get_index(), rhs.get_index());
+    auto data = ygg::Data<runir::kr::dl::Boolean<Tag>>(lhs.get_index(), rhs.get_index());
     return wrap_boolean(repository, repository.insert(data).first);
 }
 
-auto logical_not(runir::kr::dl::ConstructorRepositoryFor<kr::ExtFamilyTag>& repository, auto boolean)
+auto logical_not(runir::kr::dl::ConstructorRepositoryFor& repository, auto boolean)
 {
-    auto data = ygg::Data<runir::kr::dl::Boolean<Uns, runir::kr::dl::NotTag>>(boolean.get_index());
+    auto data = ygg::Data<runir::kr::dl::Boolean<runir::kr::dl::NotTag>>(boolean.get_index());
     return wrap_boolean(repository, repository.insert(data).first);
 }
 
@@ -88,24 +86,24 @@ TEST(RunirTests, UnsFamilyComparisonsAndConstantsEvaluateAndFormat)
     const auto& task = search->task;
     const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
 
-    auto repository = runir::kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(task->get_repository());
+    auto repository = runir::kr::dl::ConstructorRepositoryFactoryFor().create(task->get_repository());
     auto& repo = *repository;
 
     // c_top -> n_count(c_top)
-    auto top_data = ygg::Data<runir::kr::dl::Concept<Uns, runir::kr::dl::TopTag>>();
+    auto top_data = ygg::Data<runir::kr::dl::Concept<runir::kr::dl::TopTag>>();
     auto top = repo.insert(top_data).first;
-    auto top_ctor_data = ygg::Data<runir::kr::dl::Constructor<Uns, runir::kr::dl::ConceptTag>>(top.get_index());
+    auto top_ctor_data = ygg::Data<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>(top.get_index());
     auto top_ctor = repo.insert(top_ctor_data).first;
 
-    auto count_data = ygg::Data<runir::kr::dl::Numerical<Uns, runir::kr::dl::CountTag>>(top_ctor.get_index());
+    auto count_data = ygg::Data<runir::kr::dl::Numerical<runir::kr::dl::CountTag>>(top_ctor.get_index());
     auto count = repo.insert(count_data).first;
     auto count_ctor = wrap_numerical(repo, count);
 
     // Evaluation context over the initial state.
     auto builder = runir::kr::dl::semantics::Builder();
     auto denotation_repository = runir::kr::dl::semantics::DenotationRepositoryFactory().create(task->get_repository());
-    auto storage = runir::kr::dl::semantics::EvaluationStorage<Uns>(denotation_repository);
-    auto context = runir::kr::dl::semantics::StateEvaluationContext<Uns, tyr::GroundTag>(state, builder, storage);
+    auto storage = runir::kr::dl::semantics::EvaluationStorage(denotation_repository);
+    auto context = runir::kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>(state, builder, storage);
 
     // |c_top| is the number of objects; build n_const with exactly that value.
     const auto num_objects = runir::kr::dl::semantics::evaluate<tyr::GroundTag>(count_ctor, context).get();
@@ -177,13 +175,13 @@ TEST(RunirTests, UnsFamilyArithmeticLogicalOperatorsEvaluateAndFormat)
     const auto& task = search->task;
     const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
 
-    auto repository = runir::kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(task->get_repository());
+    auto repository = runir::kr::dl::ConstructorRepositoryFactoryFor().create(task->get_repository());
     auto& repo = *repository;
 
     auto builder = runir::kr::dl::semantics::Builder();
     auto denotation_repository = runir::kr::dl::semantics::DenotationRepositoryFactory().create(task->get_repository());
-    auto storage = runir::kr::dl::semantics::EvaluationStorage<Uns>(denotation_repository);
-    auto context = runir::kr::dl::semantics::StateEvaluationContext<Uns, tyr::GroundTag>(state, builder, storage);
+    auto storage = runir::kr::dl::semantics::EvaluationStorage(denotation_repository);
+    auto context = runir::kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>(state, builder, storage);
 
     constexpr auto inf = std::numeric_limits<ygg::uint_t>::max();
     auto two = numerical_constant(repo, 2);

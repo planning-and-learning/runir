@@ -23,7 +23,7 @@ public:
     auto get_rule() const noexcept { return m_rule; }
     auto get_variant() const noexcept { return m_variant; }
 
-    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              EmitConcept<ProgramStep<Kind, Storage>> Emit,
              StopConcept Stop,

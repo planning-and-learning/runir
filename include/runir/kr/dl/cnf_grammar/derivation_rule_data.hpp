@@ -11,23 +11,23 @@
 namespace ygg
 {
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-struct Data<runir::kr::dl::cnf_grammar::DerivationRule<Family, Category>>
+template<runir::kr::dl::CategoryTag Category>
+struct Data<runir::kr::dl::cnf_grammar::DerivationRule<Category>>
 {
-    Index<runir::kr::dl::cnf_grammar::DerivationRule<Family, Category>> index;
-    Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, Category>> lhs;
-    Index<runir::kr::dl::cnf_grammar::Constructor<Family, Category>> rhs;
+    Index<runir::kr::dl::cnf_grammar::DerivationRule<Category>> index;
+    Index<runir::kr::dl::cnf_grammar::NonTerminal<Category>> lhs;
+    Index<runir::kr::dl::cnf_grammar::Constructor<Category>> rhs;
 
     Data() = default;
-    Data(Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, Category>> lhs_, Index<runir::kr::dl::cnf_grammar::Constructor<Family, Category>> rhs_) :
+    Data(Index<runir::kr::dl::cnf_grammar::NonTerminal<Category>> lhs_, Index<runir::kr::dl::cnf_grammar::Constructor<Category>> rhs_) :
         index(),
         lhs(std::move(lhs_)),
         rhs(std::move(rhs_))
     {
     }
     template<typename C>
-    Data(::ygg::View<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, Category>>, C> lhs_,
-         ::ygg::View<Index<runir::kr::dl::cnf_grammar::Constructor<Family, Category>>, C> rhs_) :
+    Data(::ygg::View<Index<runir::kr::dl::cnf_grammar::NonTerminal<Category>>, C> lhs_,
+         ::ygg::View<Index<runir::kr::dl::cnf_grammar::Constructor<Category>>, C> rhs_) :
         index(),
         lhs(),
         rhs()

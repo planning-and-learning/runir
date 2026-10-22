@@ -16,22 +16,15 @@ namespace runir::tests
 namespace
 {
 
-static_assert(kr::dl::FamilyTag<kr::BaseFamilyTag>);
-static_assert(kr::dl::FamilyTag<kr::ExtFamilyTag>);
-static_assert(kr::dl::FamilyTag<kr::UnsFamilyTag>);
-static_assert(!kr::dl::FamilyTag<kr::IcpFamilyTag>);
 
-template<kr::dl::FamilyTag Family>
 consteval bool distinct_repository_contexts()
 {
-    return !std::same_as<kr::dl::ConstructorRepositoryFor<Family>, kr::dl::grammar::ConstructorRepositoryFor<Family>>
-           && !std::same_as<kr::dl::ConstructorRepositoryFor<Family>, kr::dl::cnf_grammar::ConstructorRepositoryFor<Family>>
-           && !std::same_as<kr::dl::grammar::ConstructorRepositoryFor<Family>, kr::dl::cnf_grammar::ConstructorRepositoryFor<Family>>;
+    return !std::same_as<kr::dl::ConstructorRepositoryFor, kr::dl::grammar::ConstructorRepositoryFor>
+           && !std::same_as<kr::dl::ConstructorRepositoryFor, kr::dl::cnf_grammar::ConstructorRepositoryFor>
+           && !std::same_as<kr::dl::grammar::ConstructorRepositoryFor, kr::dl::cnf_grammar::ConstructorRepositoryFor>;
 }
 
-static_assert(distinct_repository_contexts<kr::BaseFamilyTag>());
-static_assert(distinct_repository_contexts<kr::ExtFamilyTag>());
-static_assert(distinct_repository_contexts<kr::UnsFamilyTag>());
+static_assert(distinct_repository_contexts());
 
 // The interning contracts of the semantic, grammar and CNF constructor repositories are checked in the library
 // sources that instantiate them (src/kr/dl/{,grammar/,cnf_grammar/}repository_*.cpp).
@@ -69,9 +62,9 @@ concept RegisterCategory = requires {
 
 template<typename Category>
 concept QueryProjectionCategory = requires {
-    typename kr::dl::QueryProjection<kr::BaseFamilyTag, Category>;
-    typename kr::dl::QueryProjection<kr::ExtFamilyTag, Category>;
-    typename kr::dl::QueryProjection<kr::UnsFamilyTag, Category>;
+    typename kr::dl::QueryProjection<Category>;
+    typename kr::dl::QueryProjection<Category>;
+    typename kr::dl::QueryProjection<Category>;
 };
 
 static_assert(RegisterCategory<kr::dl::ConceptTag> && RegisterCategory<kr::dl::RoleTag>);
@@ -79,41 +72,33 @@ static_assert(!RegisterCategory<kr::dl::BooleanTag> && !RegisterCategory<kr::dl:
 static_assert(QueryProjectionCategory<kr::dl::ConceptTag> && QueryProjectionCategory<kr::dl::RoleTag>);
 static_assert(!QueryProjectionCategory<kr::dl::BooleanTag> && !QueryProjectionCategory<kr::dl::NumericalTag>);
 
-template<typename Family, typename Kind>
-concept GeneratesConstructors = requires(kr::dl::cnf_grammar::FamilyGrammarView<Family> grammar,
-                                         const std::vector<tyr::planning::PackedStateView<Kind>>& states,
-                                         kr::dl::ConstructorRepositoryFor<kr::ExtFamilyTag>& constructors,
-                                         kr::dl::semantics::DenotationRepository& denotations,
-                                         const kr::dl::cnf_grammar::GenerateOptions& options) {
-    kr::dl::cnf_grammar::generate<Family, Kind>(grammar, states, constructors, denotations, options);
-};
+template<typename Kind>
+concept GeneratesConstructors =
+    requires(kr::dl::cnf_grammar::FamilyGrammarView grammar,
+             const std::vector<tyr::planning::PackedStateView<Kind>>& states,
+             kr::dl::ConstructorRepositoryFor& constructors,
+             kr::dl::semantics::DenotationRepository& denotations,
+             const kr::dl::cnf_grammar::GenerateOptions& options) { kr::dl::cnf_grammar::generate<Kind>(grammar, states, constructors, denotations, options); };
 
-static_assert(GeneratesConstructors<kr::BaseFamilyTag, tyr::GroundTag>);
-static_assert(GeneratesConstructors<kr::BaseFamilyTag, tyr::LiftedTag>);
+static_assert(GeneratesConstructors<tyr::GroundTag>);
+static_assert(GeneratesConstructors<tyr::LiftedTag>);
 
-static_assert(kr::dl::FamilyNumericalConstructorTag<kr::ExtFamilyTag, kr::dl::AddTag>);
-static_assert(kr::dl::FamilyNumericalConstructorTag<kr::UnsFamilyTag, kr::dl::AddTag>);
-static_assert(!kr::dl::FamilyNumericalConstructorTag<kr::BaseFamilyTag, kr::dl::AddTag>);
-static_assert(kr::dl::FamilyConceptConstructorTag<kr::ExtFamilyTag, kr::dl::RegisterTag>);
-static_assert(!kr::dl::FamilyConceptConstructorTag<kr::BaseFamilyTag, kr::dl::RegisterTag>);
-static_assert(!kr::dl::FamilyConceptConstructorTag<kr::UnsFamilyTag, kr::dl::RegisterTag>);
+static_assert(kr::dl::FamilyNumericalConstructorTag<kr::dl::AddTag>);
+static_assert(kr::dl::FamilyConceptConstructorTag<kr::dl::RegisterTag>);
 
-template<kr::dl::FamilyTag Family>
 consteval bool can_checkout_constructors()
 {
-    return requires(kr::dl::Builder<Family>& builder, kr::dl::grammar::Builder<Family>& grammar_builder, kr::dl::cnf_grammar::Builder<Family>& cnf_builder) {
-        kr::dl::checkout<kr::dl::Concept<Family, kr::dl::TopTag>>(builder);
-        kr::dl::grammar::checkout<kr::dl::grammar::Concept<Family, kr::dl::TopTag>>(grammar_builder);
-        kr::dl::cnf_grammar::checkout<kr::dl::cnf_grammar::Concept<Family, kr::dl::TopTag>>(cnf_builder);
+    return requires(kr::dl::Builder& builder, kr::dl::grammar::Builder& grammar_builder, kr::dl::cnf_grammar::Builder& cnf_builder) {
+        kr::dl::checkout<kr::dl::Concept<kr::dl::TopTag>>(builder);
+        kr::dl::grammar::checkout<kr::dl::grammar::Concept<kr::dl::TopTag>>(grammar_builder);
+        kr::dl::cnf_grammar::checkout<kr::dl::cnf_grammar::Concept<kr::dl::TopTag>>(cnf_builder);
     };
 }
 
-static_assert(can_checkout_constructors<kr::BaseFamilyTag>());
-static_assert(can_checkout_constructors<kr::ExtFamilyTag>());
-static_assert(can_checkout_constructors<kr::UnsFamilyTag>());
+static_assert(can_checkout_constructors());
 
 template<typename B>
-concept SemanticCheckout = requires(B& builder) { kr::dl::checkout<kr::dl::Concept<kr::BaseFamilyTag, kr::dl::TopTag>>(builder); };
+concept SemanticCheckout = requires(B& builder) { kr::dl::checkout<kr::dl::Concept<kr::dl::TopTag>>(builder); };
 
 static_assert(!SemanticCheckout<kr::dl::grammar::BaseBuilder>);
 static_assert(!SemanticCheckout<kr::dl::cnf_grammar::BaseBuilder>);

@@ -15,12 +15,12 @@
 namespace ygg
 {
 
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::CountTag>>
+template<>
+struct Data<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::CountTag>>
 {
-    using Arg = ::ygg::IndexVariant<::ygg::MapTypeListSecondT<runir::kr::dl::cnf_grammar::NonTerminal, Family, runir::kr::dl::ConceptOrRoleTags>>;
+    using Arg = ::ygg::IndexVariant<::ygg::MapTypeListT<runir::kr::dl::cnf_grammar::NonTerminal, runir::kr::dl::ConceptOrRoleTags>>;
 
-    Index<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::CountTag>> index;
+    Index<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::CountTag>> index;
     Arg arg;
 
     Data() = default;
@@ -40,48 +40,47 @@ struct Data<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::CountTa
     }
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::DistanceTag>> :
-    runir::kr::dl::TernaryData<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::DistanceTag>,
-                               runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>,
-                               runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>,
-                               runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>
+template<>
+struct Data<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::DistanceTag>> :
+    runir::kr::dl::TernaryData<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::DistanceTag>,
+                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>,
+                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>,
+                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>
 {
-    using Base = runir::kr::dl::TernaryData<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::DistanceTag>,
-                                            runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>,
-                                            runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>,
-                                            runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>;
+    using Base = runir::kr::dl::TernaryData<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::DistanceTag>,
+                                            runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>,
+                                            runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>,
+                                            runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>;
     using Base::Base;
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>> :
-    runir::kr::dl::ArgumentData<runir::kr::dl::cnf_grammar::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
+struct Data<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>> :
+    runir::kr::dl::ArgumentData<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
                                 runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>
 {
-    using Base =
-        runir::kr::dl::ArgumentData<runir::kr::dl::cnf_grammar::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
-                                    runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>;
+    using Base = runir::kr::dl::ArgumentData<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
+                                             runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>;
     using Base::Base;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::NumericalConstantTag>> :
-    runir::kr::dl::IdentifierData<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::NumericalConstantTag>, ygg::uint_t>
+template<>
+struct Data<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::NumericalConstantTag>> :
+    runir::kr::dl::IdentifierData<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::NumericalConstantTag>, ygg::uint_t>
 {
-    using Base = runir::kr::dl::IdentifierData<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::NumericalConstantTag>, ygg::uint_t>;
+    using Base = runir::kr::dl::IdentifierData<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::NumericalConstantTag>, ygg::uint_t>;
     using Base::Base;
 };
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalBinaryTag Tag>
-struct Data<runir::kr::dl::cnf_grammar::Numerical<Family, Tag>> :
-    runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Numerical<Family, Tag>,
-                              runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::NumericalTag>,
-                              runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::NumericalTag>>
+template<runir::kr::dl::NumericalBinaryTag Tag>
+struct Data<runir::kr::dl::cnf_grammar::Numerical<Tag>> :
+    runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Numerical<Tag>,
+                              runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::NumericalTag>,
+                              runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::NumericalTag>>
 {
-    using Base = runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Numerical<Family, Tag>,
-                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::NumericalTag>,
-                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::NumericalTag>>;
+    using Base = runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Numerical<Tag>,
+                                           runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::NumericalTag>,
+                                           runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::NumericalTag>>;
     using Base::Base;
 };
 

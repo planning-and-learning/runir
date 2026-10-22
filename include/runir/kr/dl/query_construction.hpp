@@ -42,39 +42,22 @@ inline void require_query_arity(size_t actual, size_t expected)
 }
 
 /// Rejects an order that does not list every input column exactly once, naming the offending column.
-template<FamilyTag Family>
 void require_generic_join_order(std::string_view name,
                                 const ygg::IndexList<QueryColumn>& order,
                                 const std::vector<ygg::Index<QueryColumn>>& input_columns,
-                                const ConstructorRepositoryFor<Family>& repository)
-{
-    const auto column_name = [&](ygg::Index<QueryColumn> column) { return std::string(ygg::make_view(column, repository).get_name()); };
-    for (size_t i = 0; i < order.size(); ++i)
-    {
-        if (std::ranges::find(input_columns, order[i]) == input_columns.end())
-            throw std::invalid_argument("q_generic_join: " + std::string(name) + " lists column `" + column_name(order[i]) + "`, which no input has.");
-        if (std::ranges::find(order.begin(), order.begin() + i, order[i]) != order.begin() + i)
-            throw std::invalid_argument("q_generic_join: " + std::string(name) + " lists column `" + column_name(order[i]) + "` twice.");
-    }
-    for (const auto column : input_columns)
-        if (std::ranges::find(order, column) == order.end())
-            throw std::invalid_argument("q_generic_join: " + std::string(name) + " is missing column `" + column_name(column) + "`.");
-}
+                                const ConstructorRepositoryFor& repository);
 
-template<FamilyTag Family>
-const ygg::IndexList<QueryColumn>& get_query_columns(ygg::Index<Query<Family>> index, const ConstructorRepositoryFor<Family>& repository)
-{
-    return std::visit([&](auto concrete) -> const ygg::IndexList<QueryColumn>& { return repository[concrete].columns; }, repository[index].variant);
-}
+const ygg::IndexList<QueryColumn>& get_query_columns(ygg::Index<Query<>> index, const ConstructorRepositoryFor& repository);
 
-template<typename T, FamilyTag Family>
-void prepare(ygg::Data<T>&, const ConstructorRepositoryFor<Family>&)
+template<typename T, typename Repository>
+void prepare(ygg::Data<T>&, const Repository&)
 {
 }
 
-template<FamilyTag Family, typename Tag>
+/// The repository is a template parameter so that the body is checked once the repository is complete.
+template<typename Tag, typename Repository>
     requires(!std::same_as<Tag, void>)
-void prepare(ygg::Data<Query<Family, Tag>>& data, const ConstructorRepositoryFor<Family>& repository)
+void prepare(ygg::Data<Query<Tag>>& data, const Repository& repository)
 {
     if constexpr (std::same_as<Tag, QueryJoinTag>)
     {
@@ -113,7 +96,7 @@ void prepare(ygg::Data<Query<Family, Tag>>& data, const ConstructorRepositoryFor
     else if constexpr (std::same_as<Tag, QueryMustPassTag>)
     {
         const auto column_name = [&](ygg::Index<QueryColumn> column) { return std::string(ygg::make_view(column, repository).get_name()); };
-        const auto require_keys = [&](std::string_view argument, ygg::Index<Query<Family>> query)
+        const auto require_keys = [&](std::string_view argument, ygg::Index<Query<>> query)
         {
             const auto& columns = get_query_columns(query, repository);
             for (size_t i = 0; i < data.keys.size(); ++i)
@@ -171,8 +154,8 @@ void prepare(ygg::Data<Query<Family, Tag>>& data, const ConstructorRepositoryFor
     }
 }
 
-template<FamilyTag Family, ConceptOrRoleTag Category>
-void prepare(ygg::Data<QueryProjection<Family, Category>>& data, const ConstructorRepositoryFor<Family>& repository)
+template<ConceptOrRoleTag Category, typename Repository>
+void prepare(ygg::Data<QueryProjection<Category>>& data, const Repository& repository)
 {
     const auto columns = query_columns(data.columns);
     require_query_arity(columns.size(), std::same_as<Category, ConceptTag> ? 1 : 2);
@@ -193,26 +176,7 @@ inline ygg::Builder<ygg::database::Columns> lifted_columns(size_t arity)
 }
 
 /// Constructing the plan rejects arguments whose arities are not k, 2k, k.
-template<FamilyTag Family>
-void prepare(ygg::Data<Numerical<Family, DistanceTag>>& data, const ConstructorRepositoryFor<Family>& repository)
-{
-    const auto columns = [&](const auto& argument)
-    {
-        return std::visit(
-            [&]<typename T>(ygg::Index<T> index) -> ygg::Builder<ygg::database::Columns>
-            {
-                if constexpr (std::same_as<T, Query<Family>>)
-                    return ygg::Builder<ygg::database::Columns>(ygg::make_view(index, repository).get_schema().span());
-                else
-                    return lifted_columns(std::same_as<T, Constructor<Family, ConceptTag>> ? 1 : 2);
-            },
-            argument);
-    };
-    const auto sources = columns(data.lhs);
-    const auto edges = columns(data.mid);
-    const auto targets = columns(data.rhs);
-    data.plan = ygg::database::DistancePlan(sources.span(), edges.span(), targets.span(), distance_column);
-}
+void prepare(ygg::Data<Numerical<DistanceTag>>& data, const ConstructorRepositoryFor& repository);
 
 }  // namespace runir::kr::dl::detail
 

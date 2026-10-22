@@ -39,13 +39,13 @@ void bind_classifier(nb::module_& m)
 
     m.def(
         "classify",
-        [](const ClassifierView& classifier, runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, tyr::GroundTag>& context)
+        [](const ClassifierView& classifier, runir::kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>& context)
         { return runir::kr::uns::classify<tyr::GroundTag>(classifier, context); },
         "classifier"_a,
         "context"_a);
     m.def(
         "classify",
-        [](const ClassifierView& classifier, runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, tyr::LiftedTag>& context)
+        [](const ClassifierView& classifier, runir::kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>& context)
         { return runir::kr::uns::classify<tyr::LiftedTag>(classifier, context); },
         "classifier"_a,
         "context"_a);

@@ -21,7 +21,7 @@ namespace runir::tests
 {
 namespace
 {
-using Delta = kr::dl::semantics::incremental::Delta<kr::ExtFamilyTag>;
+using Delta = kr::dl::semantics::incremental::Delta;
 using Object = ygg::Index<tyr::formalism::Object>;
 using ConceptRegister = kr::dl::RegisterIdentifier<kr::dl::ConceptTag>;
 using RoleRegister = kr::dl::RegisterIdentifier<kr::dl::RoleTag>;
@@ -32,8 +32,7 @@ concept HasRegisterChanges = requires(Changes delta) {
     delta.added.role_registers;
 };
 
-static_assert(HasRegisterChanges<kr::dl::semantics::incremental::Delta<kr::BaseFamilyTag>>);
-static_assert(HasRegisterChanges<kr::dl::semantics::incremental::Delta<kr::UnsFamilyTag>>);
+static_assert(HasRegisterChanges<kr::dl::semantics::incremental::Delta>);
 static_assert(HasRegisterChanges<Delta>);
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind Fact, typename State>
@@ -70,10 +69,10 @@ void expect_same_side(const Side& lhs, const Side& rhs)
     EXPECT_EQ(lhs.role_registers, rhs.role_registers);
 }
 
-template<kr::dl::FamilyTag Family, tyr::TaskKind Kind>
+template<tyr::TaskKind Kind>
 void check_state_delta(tyr::planning::StateView<Kind> source, tyr::planning::StateView<Kind> target)
 {
-    auto delta = kr::dl::semantics::incremental::Delta<Family> {};
+    auto delta = kr::dl::semantics::incremental::Delta {};
     const auto source_builder = source.get_state_builder();
     const auto target_builder = target.get_state_builder();
     const auto borrowed_source = ygg::make_view(source_builder, source.get_task());
@@ -134,8 +133,8 @@ void check_delta()
     ASSERT_FALSE((atoms<Kind, tyr::formalism::StaticTag>(source).empty()));
     ASSERT_FALSE(source_derived.empty());
     ASSERT_LT(target_derived.size(), source_derived.size());
-    check_state_delta<kr::BaseFamilyTag, Kind>(source, target);
-    check_state_delta<kr::UnsFamilyTag, Kind>(source, target);
+    check_state_delta<Kind>(source, target);
+    check_state_delta<Kind>(source, target);
 
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto source_registers = ygg::Data<kr::dl::semantics::RegisterValues> {};

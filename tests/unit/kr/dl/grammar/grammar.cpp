@@ -42,24 +42,19 @@ concept IndexedDataView =
            view.get_domain();
        };
 
-template<typename Family, typename... Ts>
+template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
 {
-    return (IndexedDataView<Ts, kr::dl::grammar::ConstructorRepositoryFor<Family>> && ...);
+    return (IndexedDataView<Ts, kr::dl::grammar::ConstructorRepositoryFor> && ...);
 }
 
-static_assert(indexed_data_views<kr::BaseFamilyTag>(kr::dl::grammar::FamilyGrammarTypes<kr::BaseFamilyTag> {}));
-static_assert(indexed_data_views<kr::ExtFamilyTag>(kr::dl::grammar::FamilyGrammarTypes<kr::ExtFamilyTag> {}));
-static_assert(indexed_data_views<kr::UnsFamilyTag>(kr::dl::grammar::FamilyGrammarTypes<kr::UnsFamilyTag> {}));
-static_assert(std::same_as<kr::dl::grammar::FamilyGrammarView<kr::BaseFamilyTag>,
-                           ygg::View<ygg::Index<kr::dl::grammar::GrammarTag<kr::BaseFamilyTag>>, kr::dl::grammar::BaseConstructorRepository>>);
-static_assert(std::same_as<kr::dl::grammar::FamilyGrammarView<kr::ExtFamilyTag>,
-                           ygg::View<ygg::Index<kr::dl::grammar::GrammarTag<kr::ExtFamilyTag>>, kr::dl::grammar::ExtConstructorRepository>>);
-static_assert(std::same_as<kr::dl::grammar::FamilyGrammarView<kr::UnsFamilyTag>,
-                           ygg::View<ygg::Index<kr::dl::grammar::GrammarTag<kr::UnsFamilyTag>>, kr::dl::grammar::UnsConstructorRepository>>);
-static_assert(std::same_as<kr::dl::grammar::FamilyGrammarView<kr::BaseFamilyTag>, kr::dl::grammar::BaseGrammarView>);
-static_assert(std::same_as<kr::dl::grammar::FamilyGrammarView<kr::ExtFamilyTag>, kr::dl::grammar::ExtGrammarView>);
-static_assert(std::same_as<kr::dl::grammar::FamilyGrammarView<kr::UnsFamilyTag>, kr::dl::grammar::UnsGrammarView>);
+static_assert(indexed_data_views<>(kr::dl::grammar::FamilyGrammarTypes {}));
+static_assert(std::same_as<kr::dl::grammar::FamilyGrammarView, ygg::View<ygg::Index<kr::dl::grammar::GrammarTag>, kr::dl::grammar::BaseConstructorRepository>>);
+static_assert(std::same_as<kr::dl::grammar::FamilyGrammarView, ygg::View<ygg::Index<kr::dl::grammar::GrammarTag>, kr::dl::grammar::ExtConstructorRepository>>);
+static_assert(std::same_as<kr::dl::grammar::FamilyGrammarView, ygg::View<ygg::Index<kr::dl::grammar::GrammarTag>, kr::dl::grammar::UnsConstructorRepository>>);
+static_assert(std::same_as<kr::dl::grammar::FamilyGrammarView, kr::dl::grammar::BaseGrammarView>);
+static_assert(std::same_as<kr::dl::grammar::FamilyGrammarView, kr::dl::grammar::ExtGrammarView>);
+static_assert(std::same_as<kr::dl::grammar::FamilyGrammarView, kr::dl::grammar::UnsGrammarView>);
 
 }  // namespace
 

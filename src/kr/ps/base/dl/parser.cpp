@@ -31,7 +31,7 @@ namespace
 
 struct Builders
 {
-    runir::kr::dl::Builder<runir::kr::ExtFamilyTag>& dl;
+    runir::kr::dl::Builder& dl;
     runir::kr::ps::base::Builder& ps;
 };
 
@@ -137,7 +137,7 @@ SketchView parse_sketch(const std::string& description, tyr::formalism::planning
         throw runir::kr::parser::DiagnosticContext::parse_error(error_handler, "Failed to parse DL general sketch description.", first);
     auto diagnostics = runir::kr::parser::DiagnosticContext {};
     const auto scope = runir::kr::parser::DiagnosticContext::Scope(diagnostics, error_handler);
-    auto dl_builder = runir::kr::dl::Builder<runir::kr::ExtFamilyTag> {};
+    auto dl_builder = runir::kr::dl::Builder {};
     auto ps_builder = runir::kr::ps::base::Builder {};
     auto builders = Builders { dl_builder, ps_builder };
 

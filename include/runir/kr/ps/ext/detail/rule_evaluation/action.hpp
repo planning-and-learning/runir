@@ -58,13 +58,13 @@ public:
     auto get_variant() const noexcept { return m_variant; }
 
 private:
-    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,
              tyr::planning::StateViewConcept<Kind> PlanningState>
     bool effects_hold(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
-                              State state,
-                              const tyr::planning::Node<Kind, PlanningState>& candidate) const
+                      State state,
+                      const tyr::planning::Node<Kind, PlanningState>& candidate) const
     {
         context.environment.reset_target();
         auto transition = context.environment.make_dl_transition_context(context.planning_state,
@@ -76,7 +76,7 @@ private:
     }
 
 public:
-    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              EmitConcept<ProgramStep<Kind, Storage>> Emit,
              StopConcept Stop,
@@ -114,7 +114,7 @@ public:
         }
         return true;
     }
-    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,

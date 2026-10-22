@@ -15,11 +15,11 @@
 namespace ygg
 {
 
-template<runir::kr::dl::FamilyTag Family, formalism::SymbolContextFor<runir::kr::dl::grammar::GrammarTag<Family>> C>
-class View<Index<runir::kr::dl::grammar::GrammarTag<Family>>, C> : public ygg::IndexViewBase<runir::kr::dl::grammar::GrammarTag<Family>, C>
+template<formalism::SymbolContextFor<runir::kr::dl::grammar::GrammarTag> C>
+class View<Index<runir::kr::dl::grammar::GrammarTag>, C> : public ygg::IndexViewBase<runir::kr::dl::grammar::GrammarTag, C>
 {
 public:
-    using ygg::IndexViewBase<runir::kr::dl::grammar::GrammarTag<Family>, C>::IndexViewBase;
+    using ygg::IndexViewBase<runir::kr::dl::grammar::GrammarTag, C>::IndexViewBase;
 
     auto get_domain() const noexcept { return make_view(this->get_data().domain, this->get_context().get_planning_repository()); }
 

@@ -6,6 +6,6 @@
 namespace runir::serialization
 {
 
-void bind_kr_dl_numerical(nb::module_& m) { bind_entity_types(m, DlComponentViews<kr::ExtFamilyTag, kr::dl::FamilyNumericalTypes<kr::ExtFamilyTag>> {}); }
+void bind_kr_dl_numerical(nb::module_& m) { bind_entity_types(m, DlComponentViews<kr::dl::FamilyNumericalTypes> {}); }
 
 }  // namespace runir::serialization

@@ -17,13 +17,12 @@ namespace runir::kr::dl::semantics
 /// repositories own every stored view and must outlive these entries. Reset
 /// dynamic entries before changing state, registers, or arguments. Reset all
 /// entries before releasing static rows or changing the repository factory.
-template<FamilyTag Family>
 class DenotationCaches
 {
     template<CategoryTag Category>
-    using Cache = ygg::UnorderedMap<FamilyConstructorView<Family, Category>, DenotationView<Category>>;
+    using Cache = ygg::UnorderedMap<FamilyConstructorView<Category>, DenotationView<Category>>;
 
-    using QueryCache = ygg::UnorderedMap<FamilyQueryView<Family>, QueryDenotationView>;
+    using QueryCache = ygg::UnorderedMap<FamilyQueryView<>, QueryDenotationView>;
 
     struct Partition
     {

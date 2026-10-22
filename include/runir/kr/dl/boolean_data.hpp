@@ -15,36 +15,34 @@
 namespace ygg
 {
 
-template<runir::kr::dl::FamilyTag Family, tyr::formalism::FactKind T>
-struct Data<runir::kr::dl::Boolean<Family, runir::kr::dl::AtomicStateTag<T>>> :
-    runir::kr::dl::PredicateData<runir::kr::dl::Boolean<Family, runir::kr::dl::AtomicStateTag<T>>, T>
+template<tyr::formalism::FactKind T>
+struct Data<runir::kr::dl::Boolean<runir::kr::dl::AtomicStateTag<T>>> :
+    runir::kr::dl::PredicateData<runir::kr::dl::Boolean<runir::kr::dl::AtomicStateTag<T>>, T>
 {
-    using Base = runir::kr::dl::PredicateData<runir::kr::dl::Boolean<Family, runir::kr::dl::AtomicStateTag<T>>, T>;
+    using Base = runir::kr::dl::PredicateData<runir::kr::dl::Boolean<runir::kr::dl::AtomicStateTag<T>>, T>;
     using Base::Base;
 };
 
-template<runir::kr::dl::FamilyTag Family, tyr::formalism::FactKind T>
-struct Data<runir::kr::dl::Boolean<Family, runir::kr::dl::AtomicGoalTag<T>>> :
-    runir::kr::dl::PredicateData<runir::kr::dl::Boolean<Family, runir::kr::dl::AtomicGoalTag<T>>, T>
+template<tyr::formalism::FactKind T>
+struct Data<runir::kr::dl::Boolean<runir::kr::dl::AtomicGoalTag<T>>> : runir::kr::dl::PredicateData<runir::kr::dl::Boolean<runir::kr::dl::AtomicGoalTag<T>>, T>
 {
-    using Base = runir::kr::dl::PredicateData<runir::kr::dl::Boolean<Family, runir::kr::dl::AtomicGoalTag<T>>, T>;
+    using Base = runir::kr::dl::PredicateData<runir::kr::dl::Boolean<runir::kr::dl::AtomicGoalTag<T>>, T>;
     using Base::Base;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::Boolean<Family, runir::kr::dl::NonemptyTag>>
+template<>
+struct Data<runir::kr::dl::Boolean<runir::kr::dl::NonemptyTag>>
 {
-    using ConstructorVariant = ::ygg::IndexVariant<DlArgumentTypes<Family>>;
+    using ConstructorVariant = ::ygg::IndexVariant<DlArgumentTypes>;
     using Arg = ConstructorVariant;
 
-    Index<runir::kr::dl::Boolean<Family, runir::kr::dl::NonemptyTag>> index;
+    Index<runir::kr::dl::Boolean<runir::kr::dl::NonemptyTag>> index;
     ConstructorVariant arg;
 
     Data() = default;
     explicit Data(ConstructorVariant arg_) : index(), arg(std::move(arg_)) {}
     template<typename C>
-    using ViewVariant =
-        std::variant<::ygg::View<Index<DlConcept<Family>>, C>, ::ygg::View<Index<DlRole<Family>>, C>, ::ygg::View<Index<runir::kr::dl::Query<Family>>, C>>;
+    using ViewVariant = std::variant<::ygg::View<Index<DlConcept>, C>, ::ygg::View<Index<DlRole>, C>, ::ygg::View<Index<runir::kr::dl::Query<>>, C>>;
     template<typename C>
     explicit Data(ViewVariant<C> arg_) :
         index(),
@@ -61,55 +59,53 @@ struct Data<runir::kr::dl::Boolean<Family, runir::kr::dl::NonemptyTag>>
 };
 
 template<>
-struct Data<runir::kr::dl::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>> :
-    runir::kr::dl::ReferenceData<runir::kr::dl::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>,
+struct Data<runir::kr::dl::Boolean<runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>> :
+    runir::kr::dl::ReferenceData<runir::kr::dl::Boolean<runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>,
                                  runir::kr::dl::Argument<runir::kr::dl::BooleanTag>>
 {
-    using Base = runir::kr::dl::ReferenceData<runir::kr::dl::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>,
+    using Base = runir::kr::dl::ReferenceData<runir::kr::dl::Boolean<runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>,
                                               runir::kr::dl::Argument<runir::kr::dl::BooleanTag>>;
     using Base::Base;
 };
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::ComparisonTag Tag>
-struct Data<runir::kr::dl::Boolean<Family, Tag>> :
-    runir::kr::dl::BinaryData<runir::kr::dl::Boolean<Family, Tag>,
-                              runir::kr::dl::Constructor<Family, runir::kr::dl::comparison_operand_t<Tag>>,
-                              runir::kr::dl::Constructor<Family, runir::kr::dl::comparison_operand_t<Tag>>>
+template<runir::kr::dl::ComparisonTag Tag>
+struct Data<runir::kr::dl::Boolean<Tag>> :
+    runir::kr::dl::BinaryData<runir::kr::dl::Boolean<Tag>,
+                              runir::kr::dl::Constructor<runir::kr::dl::comparison_operand_t<Tag>>,
+                              runir::kr::dl::Constructor<runir::kr::dl::comparison_operand_t<Tag>>>
 {
-    using Base = runir::kr::dl::BinaryData<runir::kr::dl::Boolean<Family, Tag>,
-                                           runir::kr::dl::Constructor<Family, runir::kr::dl::comparison_operand_t<Tag>>,
-                                           runir::kr::dl::Constructor<Family, runir::kr::dl::comparison_operand_t<Tag>>>;
+    using Base = runir::kr::dl::BinaryData<runir::kr::dl::Boolean<Tag>,
+                                           runir::kr::dl::Constructor<runir::kr::dl::comparison_operand_t<Tag>>,
+                                           runir::kr::dl::Constructor<runir::kr::dl::comparison_operand_t<Tag>>>;
     using Base::Base;
 };
 
 // Boolean constant.
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::Boolean<Family, runir::kr::dl::BooleanConstantTag>> :
-    runir::kr::dl::IdentifierData<runir::kr::dl::Boolean<Family, runir::kr::dl::BooleanConstantTag>, bool>
+template<>
+struct Data<runir::kr::dl::Boolean<runir::kr::dl::BooleanConstantTag>> :
+    runir::kr::dl::IdentifierData<runir::kr::dl::Boolean<runir::kr::dl::BooleanConstantTag>, bool>
 {
-    using Base = runir::kr::dl::IdentifierData<runir::kr::dl::Boolean<Family, runir::kr::dl::BooleanConstantTag>, bool>;
+    using Base = runir::kr::dl::IdentifierData<runir::kr::dl::Boolean<runir::kr::dl::BooleanConstantTag>, bool>;
     using Base::Base;
 };
 
 // Binary logical operators (and/or): a Boolean over two Boolean operands.
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::LogicalBinaryTag Tag>
-struct Data<runir::kr::dl::Boolean<Family, Tag>> :
-    runir::kr::dl::BinaryData<runir::kr::dl::Boolean<Family, Tag>,
-                              runir::kr::dl::Constructor<Family, runir::kr::dl::BooleanTag>,
-                              runir::kr::dl::Constructor<Family, runir::kr::dl::BooleanTag>>
+template<runir::kr::dl::LogicalBinaryTag Tag>
+struct Data<runir::kr::dl::Boolean<Tag>> :
+    runir::kr::dl::
+        BinaryData<runir::kr::dl::Boolean<Tag>, runir::kr::dl::Constructor<runir::kr::dl::BooleanTag>, runir::kr::dl::Constructor<runir::kr::dl::BooleanTag>>
 {
-    using Base = runir::kr::dl::BinaryData<runir::kr::dl::Boolean<Family, Tag>,
-                                           runir::kr::dl::Constructor<Family, runir::kr::dl::BooleanTag>,
-                                           runir::kr::dl::Constructor<Family, runir::kr::dl::BooleanTag>>;
+    using Base = runir::kr::dl::
+        BinaryData<runir::kr::dl::Boolean<Tag>, runir::kr::dl::Constructor<runir::kr::dl::BooleanTag>, runir::kr::dl::Constructor<runir::kr::dl::BooleanTag>>;
     using Base::Base;
 };
 
 // Unary logical operator (not): a Boolean over one Boolean operand.
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::Boolean<Family, runir::kr::dl::NotTag>> :
-    runir::kr::dl::UnaryData<runir::kr::dl::Boolean<Family, runir::kr::dl::NotTag>, runir::kr::dl::Constructor<Family, runir::kr::dl::BooleanTag>>
+template<>
+struct Data<runir::kr::dl::Boolean<runir::kr::dl::NotTag>> :
+    runir::kr::dl::UnaryData<runir::kr::dl::Boolean<runir::kr::dl::NotTag>, runir::kr::dl::Constructor<runir::kr::dl::BooleanTag>>
 {
-    using Base = runir::kr::dl::UnaryData<runir::kr::dl::Boolean<Family, runir::kr::dl::NotTag>, runir::kr::dl::Constructor<Family, runir::kr::dl::BooleanTag>>;
+    using Base = runir::kr::dl::UnaryData<runir::kr::dl::Boolean<runir::kr::dl::NotTag>, runir::kr::dl::Constructor<runir::kr::dl::BooleanTag>>;
     using Base::Base;
 };
 

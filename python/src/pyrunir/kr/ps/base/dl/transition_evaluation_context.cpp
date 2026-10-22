@@ -18,7 +18,7 @@ template<tyr::TaskKind Kind>
 void bind_transition_evaluation_context(nb::module_& m, const char* name)
 {
     using Context = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, Kind>;
-    using Storage = runir::kr::dl::semantics::EvaluationStorage<runir::kr::ExtFamilyTag>;
+    using Storage = runir::kr::dl::semantics::EvaluationStorage;
 
     nb::class_<Context>(m, name)
         .def(nb::new_([](tyr::planning::StateView<Kind> source_state,

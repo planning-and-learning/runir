@@ -9,8 +9,7 @@
 namespace runir::kr::dl::grammar
 {
 
-FamilyGrammarView<runir::kr::BaseFamilyTag>
-parse_grammar(const std::string& description, tyr::formalism::planning::DomainView domain, ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository);
+FamilyGrammarView parse_grammar(const std::string& description, tyr::formalism::planning::DomainView domain, ConstructorRepositoryFor& repository);
 
 }  // namespace runir::kr::dl::grammar
 

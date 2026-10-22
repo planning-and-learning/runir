@@ -21,7 +21,7 @@ namespace
 template<CategoryTag Category>
 void bind_constructor_data(nb::module_& m, const char* name)
 {
-    using Data = ygg::Data<Constructor<runir::kr::ExtFamilyTag, Category>>;
+    using Data = ygg::Data<Constructor<Category>>;
     auto cls = nb::class_<Data>(m, name)
                    .def(nb::init<>())
                    .def(nb::init<DataVariant<Data>>(), nb::arg("variant"))
@@ -35,14 +35,14 @@ void bind_constructor_data(nb::module_& m, const char* name)
 template<CategoryTag Category>
 void bind_constructor_view(nb::module_& m, const char* name)
 {
-    using Type = Constructor<runir::kr::ExtFamilyTag, Category>;
+    using Type = Constructor<Category>;
     using View = ygg::View<ygg::Index<Type>, ExtConstructorRepository>;
     auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index).def("get_variant", &View::get_variant, nb::keep_alive<0, 1>());
     ygg::add_print(cls);
     ygg::add_comparison(cls);
     ygg::add_hash(cls);
-    runir::kr::python::bind_evaluate<runir::kr::ExtFamilyTag>(cls);
-    runir::kr::python::bind_optimize<runir::kr::ExtFamilyTag>(cls);
+    runir::kr::python::bind_evaluate(cls);
+    runir::kr::python::bind_optimize(cls);
     cls.def("syntactic_complexity", [](View view) { return semantics::syntactic_complexity(view); });
     m.def("syntactic_complexity", [](View view) { return semantics::syntactic_complexity(view); }, nb::arg("constructor"));
 }
@@ -51,10 +51,10 @@ void bind_constructor_view(nb::module_& m, const char* name)
 
 void bind_semantics_constructor(nb::module_& m)
 {
-    ygg::bind_index<ygg::Index<Constructor<runir::kr::ExtFamilyTag, ConceptTag>>>(m, "ConceptIndex");
-    ygg::bind_index<ygg::Index<Constructor<runir::kr::ExtFamilyTag, RoleTag>>>(m, "RoleIndex");
-    ygg::bind_index<ygg::Index<Constructor<runir::kr::ExtFamilyTag, BooleanTag>>>(m, "BooleanIndex");
-    ygg::bind_index<ygg::Index<Constructor<runir::kr::ExtFamilyTag, NumericalTag>>>(m, "NumericalIndex");
+    ygg::bind_index<ygg::Index<Constructor<ConceptTag>>>(m, "ConceptIndex");
+    ygg::bind_index<ygg::Index<Constructor<RoleTag>>>(m, "RoleIndex");
+    ygg::bind_index<ygg::Index<Constructor<BooleanTag>>>(m, "BooleanIndex");
+    ygg::bind_index<ygg::Index<Constructor<NumericalTag>>>(m, "NumericalIndex");
 
     bind_constructor_data<ConceptTag>(m, "ConceptData");
     bind_constructor_data<RoleTag>(m, "RoleData");

@@ -58,11 +58,8 @@ template<typename Storage, tyr::TaskKind Kind, bool Expected>
 constexpr bool execution_storage_constraints_match =
     (kr::ps::ext::ExecutionStorageConcept<Storage, Kind> == Expected)
     && ((requires {
-            sizeof(kr::ps::RuleEvaluationContext<kr::ExtFamilyTag,
-                                                 Kind,
-                                                 Storage,
-                                                 tyr::planning::StateView<Kind>,
-                                                 kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, Kind>>);
+            sizeof(
+                kr::ps::RuleEvaluationContext<kr::ExtFamilyTag, Kind, Storage, tyr::planning::StateView<Kind>, kr::dl::semantics::FullEvaluationPolicy<Kind>>);
         }) == Expected) && ((requires { typename kr::ps::ext::SuccessorExpander<Kind, Storage>; }) == Expected);
 
 static_assert(execution_storage_constraints_match<kr::ps::ext::InternedExecutionStorage<tyr::GroundTag>, tyr::GroundTag, true>);
@@ -108,7 +105,7 @@ static_assert(
                                                       tyr::GroundTag,
                                                       Storage,
                                                       tyr::planning::StateView<tyr::GroundTag>,
-                                                      kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, tyr::GroundTag>>;
+                                                      kr::dl::semantics::FullEvaluationPolicy<tyr::GroundTag>>;
         using Step = kr::ps::ext::detail::ProgramStep<tyr::GroundTag, Storage>;
         return !requires(const kr::ps::ext::detail::ActionRuleEvaluator<tyr::GroundTag>& evaluator,
                          Context& context,
@@ -124,7 +121,7 @@ auto create_register(kr::ps::ext::Repository& repository, const std::string& nam
 }
 
 template<typename FeatureTag, kr::dl::CategoryTag Category>
-auto create_feature(kr::ps::ext::Repository& repository, ygg::Index<kr::dl::FamilyConstructor<kr::ExtFamilyTag, Category>> expression, const std::string& name)
+auto create_feature(kr::ps::ext::Repository& repository, ygg::Index<kr::dl::FamilyConstructor<Category>> expression, const std::string& name)
 {
     auto concrete_data = ygg::Data<kr::ps::ConcreteFeature<kr::ExtFamilyTag, kr::DlTag, FeatureTag>>(expression, name);
     const auto concrete = repository.insert(concrete_data).first;
@@ -132,9 +129,7 @@ auto create_feature(kr::ps::ext::Repository& repository, ygg::Index<kr::dl::Fami
     return repository.insert(feature_data).first;
 }
 
-auto create_concept_feature(kr::ps::ext::Repository& repository,
-                            ygg::Index<kr::dl::FamilyConstructor<kr::ExtFamilyTag, kr::dl::ConceptTag>> expression,
-                            const std::string& name)
+auto create_concept_feature(kr::ps::ext::Repository& repository, ygg::Index<kr::dl::FamilyConstructor<kr::dl::ConceptTag>> expression, const std::string& name)
 {
     return create_feature<kr::dl::ConceptTag>(repository, expression, name);
 }
@@ -277,7 +272,7 @@ void expect_borrowed_query_evaluation()
     auto expander = kr::ps::ext::SuccessorExpander<Kind>(task_context, program);
     const auto planning_node = initial_planning_node(expander);
     const auto state = expander.initial_state(planning_node.get_state());
-    auto environment = kr::ps::ext::EvaluationEnvironment<Kind, kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, Kind>>(*task_context, program);
+    auto environment = kr::ps::ext::EvaluationEnvironment<Kind, kr::dl::semantics::FullEvaluationPolicy<Kind>>(*task_context, program);
     auto state_context = environment.make_dl_context(state);
     const auto feature = module_.get_query_features()[0];
     const auto query = feature.get_expression();
@@ -308,7 +303,7 @@ void expect_borrowed_query_evaluation()
             const auto prepared_source = ygg::make_view(planning_node.get_state().get_state_builder(), *search.task);
             const auto prepared_target = ygg::make_view(successors.front().node.get_state().get_state_builder(), *search.task);
             auto storage = kr::ps::ext::InternedExecutionStorage<Kind>(task_context, program);
-            auto evaluators = kr::ps::ext::detail::RuleEvaluators<Kind, kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, Kind>>(task_context, program);
+            auto evaluators = kr::ps::ext::detail::RuleEvaluators<Kind, kr::dl::semantics::FullEvaluationPolicy<Kind>>(task_context, program);
             auto context = evaluators.make_context(storage, prepared_source);
             auto prepared_context = context.make_dl_context(state);
             static_assert(std::same_as<std::remove_cvref_t<decltype(prepared_context.get_state())>, tyr::planning::BuilderStateView<Kind>>);
@@ -1257,7 +1252,7 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     EXPECT_GT(numerical_arguments[0].get(), 0);
 
     // Contexts borrow the persistent data; preparing another context does not replace it.
-    auto environment = kr::ps::ext::EvaluationEnvironment<tyr::GroundTag, kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, tyr::GroundTag>>(*task_context, program);
+    auto environment = kr::ps::ext::EvaluationEnvironment<tyr::GroundTag, kr::dl::semantics::FullEvaluationPolicy<tyr::GroundTag>>(*task_context, program);
     auto evaluation_context = environment.make_dl_context(call_target);
     const auto initial_context = environment.make_dl_context(initial_state);
     EXPECT_TRUE(initial_context.arguments().template get<kr::dl::ConceptTag>().empty());

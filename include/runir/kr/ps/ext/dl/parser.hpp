@@ -11,25 +11,17 @@
 namespace runir::kr::ps::ext::dl
 {
 
-runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>
-parse_concept(const std::string& description,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository);
+runir::kr::dl::FamilyConstructorView<runir::kr::dl::ConceptTag>
+parse_concept(const std::string& description, tyr::formalism::planning::DomainView domain, runir::kr::dl::ConstructorRepositoryFor& repository);
 
-runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>
-parse_role(const std::string& description,
-           tyr::formalism::planning::DomainView domain,
-           runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository);
+runir::kr::dl::FamilyConstructorView<runir::kr::dl::RoleTag>
+parse_role(const std::string& description, tyr::formalism::planning::DomainView domain, runir::kr::dl::ConstructorRepositoryFor& repository);
 
-runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>
-parse_boolean(const std::string& description,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository);
+runir::kr::dl::FamilyConstructorView<runir::kr::dl::BooleanTag>
+parse_boolean(const std::string& description, tyr::formalism::planning::DomainView domain, runir::kr::dl::ConstructorRepositoryFor& repository);
 
-runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>
-parse_numerical(const std::string& description,
-                tyr::formalism::planning::DomainView domain,
-                runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository);
+runir::kr::dl::FamilyConstructorView<runir::kr::dl::NumericalTag>
+parse_numerical(const std::string& description, tyr::formalism::planning::DomainView domain, runir::kr::dl::ConstructorRepositoryFor& repository);
 
 ModuleView parse_module(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository);
 

@@ -24,7 +24,6 @@ namespace runir::tests
 {
 namespace
 {
-using Ext = kr::ExtFamilyTag;
 
 template<tyr::TaskKind Kind>
 void check_optimized_queries()
@@ -38,7 +37,7 @@ void check_optimized_queries()
             return make_lifted_context(directory / "domain.pddl", directory / "task.pddl");
     }();
     const auto domain = search->task->get_domain().get_domain();
-    auto repository = kr::dl::ConstructorRepositoryFactoryFor<Ext>().create(search->task->get_repository());
+    auto repository = kr::dl::ConstructorRepositoryFactoryFor().create(search->task->get_repository());
 
     // Sample states: the initial state and its successors (removing triples).
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
@@ -46,7 +45,7 @@ void check_optimized_queries()
     for (const auto& successor : search->successor_generator->get_labeled_successor_nodes(initial, *search->state_repository, *search->axiom_evaluator))
         states.push_back(successor.node.get_state());
 
-    using Context = kr::dl::semantics::StateEvaluationContext<Ext, Kind>;
+    using Context = kr::dl::semantics::StateEvaluationContext<Kind>;
     auto builder = kr::dl::semantics::Builder();
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto empty_arguments = ygg::Data<kr::dl::semantics::CallArguments>();
@@ -56,11 +55,11 @@ void check_optimized_queries()
     const auto arguments = kr::dl::semantics::insert(denotations, empty_arguments).first;
     const auto registers = kr::dl::semantics::insert(denotations, register_data).first;
     // One storage per state, so dynamic results are never shared across states.
-    auto storages = std::vector<std::unique_ptr<kr::dl::semantics::EvaluationStorage<Ext>>>();
+    auto storages = std::vector<std::unique_ptr<kr::dl::semantics::EvaluationStorage>>();
     auto contexts = std::vector<std::unique_ptr<Context>>();
     for (const auto& state : states)
     {
-        storages.push_back(std::make_unique<kr::dl::semantics::EvaluationStorage<Ext>>(denotations));
+        storages.push_back(std::make_unique<kr::dl::semantics::EvaluationStorage>(denotations));
         contexts.push_back(std::make_unique<Context>(state, builder, *storages.back(), arguments, registers));
     }
     auto context_pointers = std::vector<Context*>();
@@ -116,7 +115,7 @@ void check_optimized_queries()
         EXPECT_FALSE(statistics.leaves.empty()) << text;
         {
             // Measuring one state at a time, in any order, gives the statistics of the batch.
-            auto collector = kr::dl::QueryStatisticsCollector<Ext>();
+            auto collector = kr::dl::QueryStatisticsCollector();
             collector.add(original);
             auto sampler = collector.sampler();
             for (auto* context : std::views::reverse(context_pointers))
@@ -132,7 +131,7 @@ void check_optimized_queries()
                 EXPECT_EQ(it->second.distinct, expected.distinct) << text;
             }
         }
-        for (const auto* mode : { &statistics, static_cast<const kr::dl::QueryStatistics<Ext>*>(nullptr) })
+        for (const auto* mode : { &statistics, static_cast<const kr::dl::QueryStatistics*>(nullptr) })
         {
             const auto optimized = mode ? kr::dl::optimize(original, *repository, *mode) : kr::dl::optimize(original, *repository);
             const auto formatted = fmt::format("{}", optimized);

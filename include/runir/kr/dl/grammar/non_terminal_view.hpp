@@ -10,14 +10,11 @@
 namespace ygg
 {
 
-template<runir::kr::dl::FamilyTag Family,
-         runir::kr::dl::CategoryTag Category,
-         formalism::SymbolContextFor<runir::kr::dl::grammar::NonTerminal<Family, Category>> C>
-class View<Index<runir::kr::dl::grammar::NonTerminal<Family, Category>>, C> :
-    public ygg::IndexViewBase<runir::kr::dl::grammar::NonTerminal<Family, Category>, C>
+template<runir::kr::dl::CategoryTag Category, formalism::SymbolContextFor<runir::kr::dl::grammar::NonTerminal<Category>> C>
+class View<Index<runir::kr::dl::grammar::NonTerminal<Category>>, C> : public ygg::IndexViewBase<runir::kr::dl::grammar::NonTerminal<Category>, C>
 {
 public:
-    using ygg::IndexViewBase<runir::kr::dl::grammar::NonTerminal<Family, Category>, C>::IndexViewBase;
+    using ygg::IndexViewBase<runir::kr::dl::grammar::NonTerminal<Category>, C>::IndexViewBase;
 
     const auto& get_name() const noexcept { return this->get_data().name; }
 };

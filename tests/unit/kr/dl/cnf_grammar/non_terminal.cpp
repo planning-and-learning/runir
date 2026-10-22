@@ -25,36 +25,32 @@ concept IndexedDataView =
            view.get_name();
        };
 
-template<typename Family, typename... Ts>
+template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
 {
-    return (IndexedDataView<Ts, kr::dl::cnf_grammar::ConstructorRepositoryFor<Family>> && ...);
+    return (IndexedDataView<Ts, kr::dl::cnf_grammar::ConstructorRepositoryFor> && ...);
 }
 
-template<typename Family, typename Category>
+template<typename Category>
 consteval bool view_alias()
 {
-    using Entity = kr::dl::cnf_grammar::NonTerminal<Family, Category>;
-    using View = ygg::View<ygg::Index<Entity>, kr::dl::cnf_grammar::ConstructorRepositoryFor<Family>>;
-    static_assert(std::same_as<View, kr::dl::cnf_grammar::FamilyNonTerminalView<Family, Category>>);
-    if constexpr (std::same_as<Family, kr::BaseFamilyTag>)
+    using Entity = kr::dl::cnf_grammar::NonTerminal<Category>;
+    using View = ygg::View<ygg::Index<Entity>, kr::dl::cnf_grammar::ConstructorRepositoryFor>;
+    static_assert(std::same_as<View, kr::dl::cnf_grammar::FamilyNonTerminalView<Category>>);
+    if constexpr (false)
         return std::same_as<View, kr::dl::cnf_grammar::BaseNonTerminalView<Category>>;
     else
         return true;
 }
 
-template<typename Family, typename... Categories>
+template<typename... Categories>
 consteval bool view_aliases(ygg::TypeList<Categories...>)
 {
-    return (view_alias<Family, Categories>() && ...);
+    return (view_alias<Categories>() && ...);
 }
 
-static_assert(indexed_data_views<kr::BaseFamilyTag>(kr::dl::cnf_grammar::FamilyNonTerminalTypes<kr::BaseFamilyTag> {}));
-static_assert(indexed_data_views<kr::ExtFamilyTag>(kr::dl::cnf_grammar::FamilyNonTerminalTypes<kr::ExtFamilyTag> {}));
-static_assert(indexed_data_views<kr::UnsFamilyTag>(kr::dl::cnf_grammar::FamilyNonTerminalTypes<kr::UnsFamilyTag> {}));
-static_assert(view_aliases<kr::BaseFamilyTag>(kr::dl::CategoryTags {}));
-static_assert(view_aliases<kr::ExtFamilyTag>(kr::dl::CategoryTags {}));
-static_assert(view_aliases<kr::UnsFamilyTag>(kr::dl::CategoryTags {}));
+static_assert(indexed_data_views<>(kr::dl::cnf_grammar::FamilyNonTerminalTypes {}));
+static_assert(view_aliases<>(kr::dl::CategoryTags {}));
 
 }  // namespace
 

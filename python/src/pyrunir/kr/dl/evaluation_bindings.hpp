@@ -11,12 +11,12 @@
 namespace runir::kr::python
 {
 
-template<runir::kr::FamilyTag Family, typename View>
+template<typename View>
 void bind_evaluate(nanobind::class_<View>& cls)
 {
     namespace nb = nanobind;
-    using GroundContext = runir::kr::dl::semantics::StateEvaluationContext<Family, tyr::GroundTag>;
-    using LiftedContext = runir::kr::dl::semantics::StateEvaluationContext<Family, tyr::LiftedTag>;
+    using GroundContext = runir::kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
+    using LiftedContext = runir::kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>;
     cls.def(
            "evaluate",
            [](const View& view, GroundContext& context) { return runir::kr::dl::semantics::evaluate<tyr::GroundTag>(view, context); },
@@ -29,13 +29,13 @@ void bind_evaluate(nanobind::class_<View>& cls)
             nb::keep_alive<0, 2>());
 }
 
-template<runir::kr::FamilyTag Family, tyr::TaskKind Kind>
+template<tyr::TaskKind Kind>
 void bind_state_evaluation_context(nanobind::module_& m, const char* name)
 {
     namespace nb = nanobind;
-    using Context = runir::kr::dl::semantics::StateEvaluationContext<Family, Kind>;
-    using Storage = runir::kr::dl::semantics::EvaluationStorage<Family>;
-    using Caches = runir::kr::dl::semantics::DenotationCaches<Family>;
+    using Context = runir::kr::dl::semantics::StateEvaluationContext<Kind>;
+    using Storage = runir::kr::dl::semantics::EvaluationStorage;
+    using Caches = runir::kr::dl::semantics::DenotationCaches;
     auto cls = nb::class_<Context>(m, name);
     // Programs bind arguments and registers; other languages evaluate without them.
     cls.def(nb::new_([](tyr::planning::StateView<Kind> state, runir::kr::dl::semantics::Builder& builder, Storage& storage)
@@ -101,12 +101,11 @@ void bind_state_evaluation_context(nanobind::module_& m, const char* name)
     cls.def("get_state", &Context::get_state, nb::rv_policy::copy, nb::keep_alive<0, 1>());
 }
 
-template<runir::kr::FamilyTag Family>
-void bind_evaluation_storage(nanobind::module_& m)
+inline void bind_evaluation_storage(nanobind::module_& m)
 {
     namespace nb = nanobind;
-    using Caches = runir::kr::dl::semantics::DenotationCaches<Family>;
-    using Storage = runir::kr::dl::semantics::EvaluationStorage<Family>;
+    using Caches = runir::kr::dl::semantics::DenotationCaches;
+    using Storage = runir::kr::dl::semantics::EvaluationStorage;
     nb::class_<Caches>(m, "DenotationCaches", "Memoized interned views; does not own result storage.")
         .def(nb::init<>())
         .def("reset_dynamic", &Caches::reset_dynamic)

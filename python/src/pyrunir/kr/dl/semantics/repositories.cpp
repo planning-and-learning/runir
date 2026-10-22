@@ -154,13 +154,13 @@ void bind_semantics_repositories(nb::module_& m)
             { return self.create_shared(planning_domain.get_repository()); },
             nb::arg("planning_domain"));
 
-    runir::kr::python::bind_evaluation_storage<runir::kr::ExtFamilyTag>(m);
-    runir::kr::python::bind_state_evaluation_context<runir::kr::ExtFamilyTag, tyr::GroundTag>(m, "GroundStateEvaluationContext");
-    runir::kr::python::bind_state_evaluation_context<runir::kr::ExtFamilyTag, tyr::LiftedTag>(m, "LiftedStateEvaluationContext");
+    runir::kr::python::bind_evaluation_storage(m);
+    runir::kr::python::bind_state_evaluation_context<tyr::GroundTag>(m, "GroundStateEvaluationContext");
+    runir::kr::python::bind_state_evaluation_context<tyr::LiftedTag>(m, "LiftedStateEvaluationContext");
 
     auto repository = nb::class_<runir::kr::dl::ExtConstructorRepository>(m, "ConstructorRepository");
     repository.def("clear", &runir::kr::dl::ExtConstructorRepository::clear).def("get_index", &runir::kr::dl::ExtConstructorRepository::get_index);
-    bind_constructors(repository, FamilyConstructorRepositoryTypes<runir::kr::ExtFamilyTag> {});
+    bind_constructors(repository, FamilyConstructorRepositoryTypes {});
 
     auto factory = nb::class_<runir::kr::dl::ExtConstructorRepositoryFactory>(m, "ConstructorRepositoryFactory");
     factory.def(nb::init<>())

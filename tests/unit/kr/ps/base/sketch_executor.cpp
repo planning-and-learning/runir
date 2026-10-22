@@ -109,8 +109,7 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         EXPECT_TRUE(terminal.is_goal);
         EXPECT_EQ(replay.get_state().get_index(), terminal.state.get_index());
 
-        auto expander =
-            kr::ps::base::SuccessorExpander<tyr::GroundTag, kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, tyr::GroundTag>>(*task_context, sketch);
+        auto expander = kr::ps::base::SuccessorExpander<tyr::GroundTag, kr::dl::semantics::FullEvaluationPolicy<tyr::GroundTag>>(*task_context, sketch);
         const auto state = context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator).get_state();
         auto dl_context = expander.get_environment().make_dl_context(state);
         EXPECT_EQ(task_context->search_context.get(), context.get());
@@ -408,8 +407,8 @@ TEST(RunirTests, BaseSketchTransitionsRefreshDynamicQueriesAndReuseStaticQueries
             search->task->get_domain().get_domain(),
             *task_context->domain_context->base_repository);
 
-        auto expander = kr::ps::base::SuccessorExpander<Kind, kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, Kind>>(*task_context, sketch);
-        auto incremental = kr::ps::base::SuccessorExpander<Kind, kr::dl::semantics::DeltaEvaluationPolicy<kr::ExtFamilyTag, Kind>>(*task_context, sketch);
+        auto expander = kr::ps::base::SuccessorExpander<Kind, kr::dl::semantics::FullEvaluationPolicy<Kind>>(*task_context, sketch);
+        auto incremental = kr::ps::base::SuccessorExpander<Kind, kr::dl::semantics::DeltaEvaluationPolicy<Kind>>(*task_context, sketch);
         const auto matches = [&](const auto& source, const auto& target)
         {
             const auto full = expander.matching_rule(source, target);

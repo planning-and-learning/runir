@@ -12,19 +12,19 @@
 namespace runir::kr::dl::semantics::incremental::detail
 {
 
-template<FamilyTag Family, tyr::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct CountEvaluator
 {
     std::variant<EvaluationIndex<ConceptTag>, EvaluationIndex<RoleTag>, QueryEvaluationIndex> child;
     DenotationState<NumericalTag> value;
 
     explicit CountEvaluator(std::variant<EvaluationIndex<ConceptTag>, EvaluationIndex<RoleTag>, QueryEvaluationIndex> child) : child(child) {}
-    template<StateEvaluationContextConcept<Family, Kind> Context>
-    void initialize(EvaluationGraph<Family, Kind>& graph, Context&)
+    template<StateEvaluationContextConcept<Kind> Context>
+    void initialize(EvaluationGraph<Kind>& graph, Context&)
     {
         value.set(ygg::to_uint_t(std::visit([&](auto index) { return graph.cardinality(index); }, child)));
     }
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
     {
         value.set(std::visit(
             [&](auto index)

@@ -17,10 +17,10 @@ void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Q
     ar.field("name", [](const auto& value) -> decltype(auto) { return (value.get_name()); });
 }
 
-template<typename Archive, runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Query<Family, Tag>>, C>>)
+template<typename Archive, typename Tag, typename C>
+void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Query<Tag>>, C>>)
 {
-    using Value = View<Index<runir::kr::dl::Query<Family, Tag>>, C>;
+    using Value = View<Index<runir::kr::dl::Query<Tag>>, C>;
 
     if constexpr (std::same_as<Tag, void>)
         ar.variant([](const auto& value) -> decltype(auto) { return (value.get_variant()); });
@@ -54,8 +54,8 @@ void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Q
     }
 }
 
-template<typename Archive, runir::kr::dl::FamilyTag Family, runir::kr::dl::ConceptOrRoleTag Category, typename C>
-void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::QueryProjection<Family, Category>>, C>>)
+template<typename Archive, runir::kr::dl::ConceptOrRoleTag Category, typename C>
+void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::QueryProjection<Category>>, C>>)
 {
     ar.field("columns", [](const auto& value) -> decltype(auto) { return (value.get_columns()); });
     ar.field("arg", [](const auto& value) -> decltype(auto) { return (value.get_arg()); });

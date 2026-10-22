@@ -9,12 +9,11 @@
 namespace runir::kr::dl::detail
 {
 
-template<FamilyTag Family, typename RepositoryTypes>
-std::shared_ptr<ConstructorRepository<Family, RepositoryTypes>>
-ConstructorRepositoryFactory<Family, RepositoryTypes>::create(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository)
+template<typename RepositoryTypes>
+std::shared_ptr<ConstructorRepository<RepositoryTypes>>
+ConstructorRepositoryFactory<RepositoryTypes>::create(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository)
 {
-    return std::shared_ptr<ConstructorRepository<Family, RepositoryTypes>>(
-        new ConstructorRepository<Family, RepositoryTypes>(m_next_index++, std::move(planning_repository)));
+    return std::shared_ptr<ConstructorRepository<RepositoryTypes>>(new ConstructorRepository<RepositoryTypes>(m_next_index++, std::move(planning_repository)));
 }
 
 }  // namespace runir::kr::dl::detail

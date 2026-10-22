@@ -30,9 +30,9 @@ std::vector<std::string> quoted_object_names(Objects objects)
     return result;
 }
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
-std::string concept_constructor(ygg::View<ygg::Index<Concept<Family, Tag>>, C> view)
+template<typename Tag, typename C>
+    requires runir::kr::dl::FamilyConceptConstructorTag<Tag>
+std::string concept_constructor(ygg::View<ygg::Index<Concept<Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::BotTag>)
         return fmt::format("{}", runir::kr::dl::BotTag::keyword);
@@ -89,9 +89,9 @@ std::string concept_constructor(ygg::View<ygg::Index<Concept<Family, Tag>>, C> v
     }
 }
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
-std::string role(ygg::View<ygg::Index<Role<Family, Tag>>, C> view)
+template<typename Tag, typename C>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Tag>
+std::string role(ygg::View<ygg::Index<Role<Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::UniversalTag>)
         return fmt::format("{}", runir::kr::dl::UniversalTag::keyword);
@@ -130,9 +130,9 @@ std::string role(ygg::View<ygg::Index<Role<Family, Tag>>, C> view)
     }
 }
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
-std::string boolean_constructor(ygg::View<ygg::Index<Boolean<Family, Tag>>, C> view)
+template<typename Tag, typename C>
+    requires runir::kr::dl::FamilyBooleanConstructorTag<Tag>
+std::string boolean_constructor(ygg::View<ygg::Index<Boolean<Tag>>, C> view)
 {
     if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
         return fmt::format("{} {} {}",
@@ -154,9 +154,9 @@ std::string boolean_constructor(ygg::View<ygg::Index<Boolean<Family, Tag>>, C> v
     }
 }
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
-std::string numerical(ygg::View<ygg::Index<Numerical<Family, Tag>>, C> view)
+template<typename Tag, typename C>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Tag>
+std::string numerical(ygg::View<ygg::Index<Numerical<Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::CountTag>)
         return fmt::format("{} {}", runir::kr::dl::CountTag::keyword, view.get_arg());
@@ -170,48 +170,48 @@ std::string numerical(ygg::View<ygg::Index<Numerical<Family, Tag>>, C> view)
     }
 }
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
-std::string constructor_body(ygg::View<ygg::Index<Concept<Family, Tag>>, C> view)
+template<typename Tag, typename C>
+    requires runir::kr::dl::FamilyConceptConstructorTag<Tag>
+std::string constructor_body(ygg::View<ygg::Index<Concept<Tag>>, C> view)
 {
     return concept_constructor(view);
 }
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
-std::string constructor_body(ygg::View<ygg::Index<Role<Family, Tag>>, C> view)
+template<typename Tag, typename C>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Tag>
+std::string constructor_body(ygg::View<ygg::Index<Role<Tag>>, C> view)
 {
     return role(view);
 }
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
-std::string constructor_body(ygg::View<ygg::Index<Boolean<Family, Tag>>, C> view)
+template<typename Tag, typename C>
+    requires runir::kr::dl::FamilyBooleanConstructorTag<Tag>
+std::string constructor_body(ygg::View<ygg::Index<Boolean<Tag>>, C> view)
 {
     return boolean_constructor(view);
 }
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
-std::string constructor_body(ygg::View<ygg::Index<Numerical<Family, Tag>>, C> view)
+template<typename Tag, typename C>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Tag>
+std::string constructor_body(ygg::View<ygg::Index<Numerical<Tag>>, C> view)
 {
     return numerical(view);
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
-std::string constructor_body(ygg::View<ygg::Index<Constructor<Family, Category>>, C> view)
+template<runir::kr::dl::CategoryTag Category, typename C>
+std::string constructor_body(ygg::View<ygg::Index<Constructor<Category>>, C> view)
 {
     return ygg::visit([](auto arg) { return constructor_body(arg); }, view.get_variant());
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
-std::string rule(ygg::View<ygg::Index<DerivationRule<Family, Category>>, C> view)
+template<runir::kr::dl::CategoryTag Category, typename C>
+std::string rule(ygg::View<ygg::Index<DerivationRule<Category>>, C> view)
 {
     return fmt::format("({} ({}))", view.get_lhs(), constructor_body(view.get_rhs()));
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
-std::string rule(ygg::View<ygg::Index<SubstitutionRule<Family, Category>>, C> view)
+template<runir::kr::dl::CategoryTag Category, typename C>
+std::string rule(ygg::View<ygg::Index<SubstitutionRule<Category>>, C> view)
 {
     return fmt::format("({} ({}))", view.get_lhs(), view.get_rhs());
 }
@@ -241,11 +241,11 @@ std::string grammar(View view)
 
 }  // namespace runir::kr::dl::cnf_grammar
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Concept<Family, Tag>>, C>> : fmt::formatter<std::string_view>
+template<typename Tag, typename C>
+    requires runir::kr::dl::FamilyConceptConstructorTag<Tag>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Concept<Tag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Concept<Family, Tag>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Concept<Tag>>, C>;
     auto format(View view, format_context& ctx) const
     {
         const auto text = fmt::format("({})", runir::kr::dl::cnf_grammar::concept_constructor(view));
@@ -253,11 +253,11 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Concept<F
     }
 };
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Role<Family, Tag>>, C>> : fmt::formatter<std::string_view>
+template<typename Tag, typename C>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Tag>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Role<Tag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Role<Family, Tag>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Role<Tag>>, C>;
     auto format(View view, format_context& ctx) const
     {
         const auto text = fmt::format("({})", runir::kr::dl::cnf_grammar::role(view));
@@ -265,11 +265,11 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Role<Fami
     }
 };
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Boolean<Family, Tag>>, C>> : fmt::formatter<std::string_view>
+template<typename Tag, typename C>
+    requires runir::kr::dl::FamilyBooleanConstructorTag<Tag>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Boolean<Tag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Boolean<Family, Tag>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Boolean<Tag>>, C>;
     auto format(View view, format_context& ctx) const
     {
         const auto text = fmt::format("({})", runir::kr::dl::cnf_grammar::boolean_constructor(view));
@@ -277,11 +277,11 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Boolean<F
     }
 };
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Numerical<Family, Tag>>, C>> : fmt::formatter<std::string_view>
+template<typename Tag, typename C>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Tag>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Numerical<Tag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Numerical<Family, Tag>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Numerical<Tag>>, C>;
     auto format(View view, format_context& ctx) const
     {
         const auto text = fmt::format("({})", runir::kr::dl::cnf_grammar::numerical(view));
@@ -289,10 +289,10 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Numerical
     }
 };
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Constructor<Family, Category>>, C>> : fmt::formatter<std::string_view>
+template<runir::kr::dl::CategoryTag Category, typename C>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Constructor<Category>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Constructor<Family, Category>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Constructor<Category>>, C>;
     auto format(View view, format_context& ctx) const
     {
         const auto text = fmt::format("({})", runir::kr::dl::cnf_grammar::constructor_body(view));
@@ -300,31 +300,31 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Construct
     }
 };
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, Category>>, C>> : fmt::formatter<std::string_view>
+template<runir::kr::dl::CategoryTag Category, typename C>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<Category>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, Category>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<Category>>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(view.get_name().str(), ctx); }
 };
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::DerivationRule<Family, Category>>, C>> : fmt::formatter<std::string_view>
+template<runir::kr::dl::CategoryTag Category, typename C>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::DerivationRule<Category>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::DerivationRule<Family, Category>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::DerivationRule<Category>>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::cnf_grammar::rule(view), ctx); }
 };
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, Category>>, C>> : fmt::formatter<std::string_view>
+template<runir::kr::dl::CategoryTag Category, typename C>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, Category>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::cnf_grammar::rule(view), ctx); }
 };
 
-template<runir::kr::dl::FamilyTag Family, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Grammar<Family>>, C>> : fmt::formatter<std::string_view>
+template<typename C>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Grammar>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Grammar<Family>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Grammar>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::cnf_grammar::grammar(view), ctx); }
 };
 

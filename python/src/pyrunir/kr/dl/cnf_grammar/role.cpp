@@ -17,13 +17,13 @@ namespace
 template<typename Tag>
 void bind_role_data(nb::module_& m, const char* name)
 {
-    using Data = ygg::Data<runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, Tag>>;
+    using Data = ygg::Data<runir::kr::dl::cnf_grammar::Role<Tag>>;
     auto cls = nb::class_<Data>(m, name).def(nb::init<>()).def_rw("index", &Data::index);
     ygg::add_comparison(cls);
     python::def_role_data_constructors<Tag,
-                                       ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::BaseFamilyTag, runir::kr::dl::ConceptTag>>,
-                                       ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::BaseFamilyTag, runir::kr::dl::RoleTag>>,
-                                       runir::kr::dl::cnf_grammar::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>>(cls);
+                                       ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>,
+                                       ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>,
+                                       runir::kr::dl::cnf_grammar::ConstructorRepositoryFor>(cls);
 
     if constexpr (is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag>)
         cls.def_rw("predicate", &Data::predicate).def_rw("polarity", &Data::polarity);
@@ -37,8 +37,8 @@ void bind_role_data(nb::module_& m, const char* name)
 template<typename Tag>
 void bind_role_view(nb::module_& m, const char* name)
 {
-    using Type = runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, Tag>;
-    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::cnf_grammar::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>>;
+    using Type = runir::kr::dl::cnf_grammar::Role<Tag>;
+    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::cnf_grammar::ConstructorRepositoryFor>;
     auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index);
     ygg::add_print(cls);
     ygg::add_comparison(cls);
@@ -57,22 +57,22 @@ void bind_role_view(nb::module_& m, const char* name)
 
 void bind_cnf_grammar_role(nb::module_& m)
 {
-    using Universal = runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, UniversalTag>;
-    using StaticState = runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, AtomicStateTag<tyr::formalism::StaticTag>>;
-    using FluentState = runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, AtomicStateTag<tyr::formalism::FluentTag>>;
-    using DerivedState = runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, AtomicStateTag<tyr::formalism::DerivedTag>>;
-    using StaticGoal = runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, AtomicGoalTag<tyr::formalism::StaticTag>>;
-    using FluentGoal = runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, AtomicGoalTag<tyr::formalism::FluentTag>>;
-    using DerivedGoal = runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, AtomicGoalTag<tyr::formalism::DerivedTag>>;
-    using Intersection = runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, IntersectionTag>;
-    using Union = runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, UnionTag>;
-    using Complement = runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, ComplementTag>;
-    using Inverse = runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, InverseTag>;
-    using Composition = runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, CompositionTag>;
-    using TransitiveClosure = runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, TransitiveClosureTag>;
-    using ReflexiveTransitiveClosure = runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, ReflexiveTransitiveClosureTag>;
-    using Restriction = runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, RestrictionTag>;
-    using Identity = runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, IdentityTag>;
+    using Universal = runir::kr::dl::cnf_grammar::Role<UniversalTag>;
+    using StaticState = runir::kr::dl::cnf_grammar::Role<AtomicStateTag<tyr::formalism::StaticTag>>;
+    using FluentState = runir::kr::dl::cnf_grammar::Role<AtomicStateTag<tyr::formalism::FluentTag>>;
+    using DerivedState = runir::kr::dl::cnf_grammar::Role<AtomicStateTag<tyr::formalism::DerivedTag>>;
+    using StaticGoal = runir::kr::dl::cnf_grammar::Role<AtomicGoalTag<tyr::formalism::StaticTag>>;
+    using FluentGoal = runir::kr::dl::cnf_grammar::Role<AtomicGoalTag<tyr::formalism::FluentTag>>;
+    using DerivedGoal = runir::kr::dl::cnf_grammar::Role<AtomicGoalTag<tyr::formalism::DerivedTag>>;
+    using Intersection = runir::kr::dl::cnf_grammar::Role<IntersectionTag>;
+    using Union = runir::kr::dl::cnf_grammar::Role<UnionTag>;
+    using Complement = runir::kr::dl::cnf_grammar::Role<ComplementTag>;
+    using Inverse = runir::kr::dl::cnf_grammar::Role<InverseTag>;
+    using Composition = runir::kr::dl::cnf_grammar::Role<CompositionTag>;
+    using TransitiveClosure = runir::kr::dl::cnf_grammar::Role<TransitiveClosureTag>;
+    using ReflexiveTransitiveClosure = runir::kr::dl::cnf_grammar::Role<ReflexiveTransitiveClosureTag>;
+    using Restriction = runir::kr::dl::cnf_grammar::Role<RestrictionTag>;
+    using Identity = runir::kr::dl::cnf_grammar::Role<IdentityTag>;
 
     ygg::bind_index<ygg::Index<Universal>>(m, "RoleUniversalIndex");
     ygg::bind_index<ygg::Index<StaticState>>(m, "RoleAtomicStateStaticIndex");

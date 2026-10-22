@@ -54,11 +54,11 @@ private:
     // ponytail: linear scan, and entries of dead repositories are kept; a constructor repository freed and replaced at
     // the same address with the same factory index over the same formalism would alias. Key by a repository-owned
     // cache if that happens.
-    template<typename Feature, FamilyTag Family, std::invocable Make>
+    template<typename Feature, std::invocable Make>
         requires std::same_as<std::invoke_result_t<Make&>, Feature>
     static Feature& find_or_make(std::deque<KeyedFeature<Feature>>& features,
                                  const std::shared_ptr<tyr::formalism::planning::Repository>& formalism,
-                                 const ConstructorRepositoryFor<Family>& constructors,
+                                 const ConstructorRepositoryFor& constructors,
                                  ygg::uint_t constructor,
                                  Make&& make)
     {
@@ -85,24 +85,24 @@ public:
     auto& get_database_workspace() noexcept { return m_database_workspace; }
     /// The feature of a distance constructor of a constructor repository over a formalism repository, made by
     /// make() at first use. References stay valid while this workspace lives.
-    template<FamilyTag Family, std::invocable Make>
+    template<std::invocable Make>
         requires std::same_as<std::invoke_result_t<Make&>, FullDistanceFeature>
     FullDistanceFeature& get_distance_feature(const std::shared_ptr<tyr::formalism::planning::Repository>& formalism,
-                                              const ConstructorRepositoryFor<Family>& constructors,
+                                              const ConstructorRepositoryFor& constructors,
                                               ygg::uint_t constructor,
                                               Make&& make)
     {
-        return find_or_make<FullDistanceFeature, Family>(m_distance_features, formalism, constructors, constructor, std::forward<Make>(make));
+        return find_or_make<FullDistanceFeature>(m_distance_features, formalism, constructors, constructor, std::forward<Make>(make));
     }
     /// The feature of a must-pass query, like get_distance_feature().
-    template<FamilyTag Family, std::invocable Make>
+    template<std::invocable Make>
         requires std::same_as<std::invoke_result_t<Make&>, MustPassFeature>
     MustPassFeature& get_must_pass_feature(const std::shared_ptr<tyr::formalism::planning::Repository>& formalism,
-                                           const ConstructorRepositoryFor<Family>& constructors,
+                                           const ConstructorRepositoryFor& constructors,
                                            ygg::uint_t query,
                                            Make&& make)
     {
-        return find_or_make<MustPassFeature, Family>(m_must_pass_features, formalism, constructors, query, std::forward<Make>(make));
+        return find_or_make<MustPassFeature>(m_must_pass_features, formalism, constructors, query, std::forward<Make>(make));
     }
 };
 

@@ -19,23 +19,16 @@ namespace runir::kr::ps
 template<typename C, typename Family, typename Kind>
 concept CompatibilityContext =
     runir::kr::FamilyTag<Family> && tyr::TaskKind<Kind>
-    && (runir::kr::dl::semantics::EvaluationContextConcept<C, DlFamilyFor<Family>, Kind> || runir::kr::ps::dl::TransitionEvaluationContextConcept<C, Family, Kind>);
+    && (runir::kr::dl::semantics::EvaluationContextConcept<C, Kind> || runir::kr::ps::dl::TransitionEvaluationContextConcept<C, Family, Kind>);
 
-template<tyr::TaskKind Kind,
-         runir::kr::FamilyTag Family,
-         typename LanguageTag,
-         typename C,
-         runir::kr::dl::semantics::EvaluationContextConcept<DlFamilyFor<Family>, Kind> Context>
+template<tyr::TaskKind Kind, runir::kr::FamilyTag Family, typename LanguageTag, typename C, runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context>
     requires std::same_as<LanguageTag, runir::kr::DlTag>
 bool is_compatible_with(ygg::View<ygg::Index<ConcreteConditionVariant<Family, LanguageTag>>, C> condition, Context& context)
 {
     return ygg::visit([&](auto child) { return runir::kr::ps::is_compatible_with<Kind>(child, context); }, condition.get_variant());
 }
 
-template<tyr::TaskKind Kind,
-         runir::kr::FamilyTag Family,
-         typename C,
-         runir::kr::dl::semantics::EvaluationContextConcept<DlFamilyFor<Family>, Kind> Context>
+template<tyr::TaskKind Kind, runir::kr::FamilyTag Family, typename C, runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context>
 bool is_compatible_with(ygg::View<ygg::Index<ConditionVariant<Family>>, C> condition, Context& context)
 {
     return ygg::visit([&](auto child) { return runir::kr::ps::is_compatible_with<Kind>(child, context); }, condition.get_variant());

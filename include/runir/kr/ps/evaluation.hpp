@@ -15,7 +15,7 @@ template<tyr::TaskKind Kind,
          runir::kr::FamilyTag Family,
          runir::kr::ps::dl::FeatureTag FeatureTag,
          typename C,
-         runir::kr::dl::semantics::EvaluationContextConcept<DlFamilyFor<Family>, Kind> Context>
+         runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context>
 auto evaluate(ygg::View<ygg::Index<Feature<Family, FeatureTag>>, C> feature, Context& context)
 {
     return ygg::visit([&](auto child) { return evaluate<Kind>(child, context); }, feature.get_variant());

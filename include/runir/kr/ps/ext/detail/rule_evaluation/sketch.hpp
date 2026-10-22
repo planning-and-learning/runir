@@ -27,7 +27,7 @@ public:
     auto get_variant() const noexcept { return m_variant; }
 
     /// Emit a control-only rule; effectful rules must use matches() on the shared successor batch.
-    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              EmitConcept<ProgramStep<Kind, Storage>> Emit,
              StopConcept Stop,
@@ -50,7 +50,7 @@ public:
         return emit(detail::applied<Kind, Storage>(std::move(target), m_variant, context.task_context));
     }
 
-    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,

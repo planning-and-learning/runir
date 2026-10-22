@@ -9,16 +9,15 @@
 namespace runir::kr::dl::grammar
 {
 
-template<runir::kr::dl::FamilyTag Family, typename Self>
-using NumberRestrictionData = runir::kr::dl::NumberRestrictionData<Self, ConstructorOrNonTerminal<Family, RoleTag>>;
+template<typename Self>
+using NumberRestrictionData = runir::kr::dl::NumberRestrictionData<Self, ConstructorOrNonTerminal<RoleTag>>;
 
-template<runir::kr::dl::FamilyTag Family, typename Self>
+template<typename Self>
 using QualifiedNumberRestrictionData =
-    runir::kr::dl::QualifiedNumberRestrictionData<Self, ConstructorOrNonTerminal<Family, RoleTag>, ConstructorOrNonTerminal<Family, ConceptTag>>;
+    runir::kr::dl::QualifiedNumberRestrictionData<Self, ConstructorOrNonTerminal<RoleTag>, ConstructorOrNonTerminal<ConceptTag>>;
 
-template<runir::kr::dl::FamilyTag Family, typename Self>
-using RoleFillersData = runir::kr::dl::RoleFillersData<Self, ConstructorOrNonTerminal<Family, RoleTag>>;
-
+template<typename Self>
+using RoleFillersData = runir::kr::dl::RoleFillersData<Self, ConstructorOrNonTerminal<RoleTag>>;
 }
 
 #endif

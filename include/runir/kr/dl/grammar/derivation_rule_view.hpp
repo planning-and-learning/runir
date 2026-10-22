@@ -13,14 +13,11 @@
 namespace ygg
 {
 
-template<runir::kr::dl::FamilyTag Family,
-         runir::kr::dl::CategoryTag Category,
-         formalism::SymbolContextFor<runir::kr::dl::grammar::DerivationRule<Family, Category>> C>
-class View<Index<runir::kr::dl::grammar::DerivationRule<Family, Category>>, C> :
-    public ygg::IndexViewBase<runir::kr::dl::grammar::DerivationRule<Family, Category>, C>
+template<runir::kr::dl::CategoryTag Category, formalism::SymbolContextFor<runir::kr::dl::grammar::DerivationRule<Category>> C>
+class View<Index<runir::kr::dl::grammar::DerivationRule<Category>>, C> : public ygg::IndexViewBase<runir::kr::dl::grammar::DerivationRule<Category>, C>
 {
 public:
-    using ygg::IndexViewBase<runir::kr::dl::grammar::DerivationRule<Family, Category>, C>::IndexViewBase;
+    using ygg::IndexViewBase<runir::kr::dl::grammar::DerivationRule<Category>, C>::IndexViewBase;
 
     auto get_lhs() const noexcept { return make_view(this->get_data().lhs, this->get_context()); }
     auto get_rhs() const noexcept { return make_view(this->get_data().rhs, this->get_context()); }

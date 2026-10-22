@@ -24,15 +24,13 @@ concept IndexedDataView =
            view.get_index();
        };
 
-template<typename Family, typename... Ts>
+template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
 {
-    return (IndexedDataView<Ts, kr::dl::cnf_grammar::ConstructorRepositoryFor<Family>> && ...);
+    return (IndexedDataView<Ts, kr::dl::cnf_grammar::ConstructorRepositoryFor> && ...);
 }
 
-static_assert(indexed_data_views<kr::BaseFamilyTag>(kr::dl::cnf_grammar::FamilyRoleTypes<kr::BaseFamilyTag> {}));
-static_assert(indexed_data_views<kr::ExtFamilyTag>(kr::dl::cnf_grammar::FamilyRoleTypes<kr::ExtFamilyTag> {}));
-static_assert(indexed_data_views<kr::UnsFamilyTag>(kr::dl::cnf_grammar::FamilyRoleTypes<kr::UnsFamilyTag> {}));
+static_assert(indexed_data_views<>(kr::dl::cnf_grammar::FamilyRoleTypes {}));
 
 using PredicateTags = ygg::TypeList<kr::dl::AtomicStateTag<tyr::formalism::StaticTag>,
                                     kr::dl::AtomicStateTag<tyr::formalism::FluentTag>,
@@ -44,15 +42,15 @@ using BinaryTags = ygg::TypeList<kr::dl::IntersectionTag, kr::dl::UnionTag, kr::
 using UnaryTags =
     ygg::TypeList<kr::dl::ComplementTag, kr::dl::InverseTag, kr::dl::TransitiveClosureTag, kr::dl::ReflexiveTransitiveClosureTag, kr::dl::IdentityTag>;
 
-template<typename Family, typename Tag>
+template<typename Tag>
 consteval bool role_data_view()
 {
-    using Entity = kr::dl::cnf_grammar::Role<Family, Tag>;
+    using Entity = kr::dl::cnf_grammar::Role<Tag>;
     using Data = ygg::Data<Entity>;
-    using View = ygg::View<ygg::Index<Entity>, kr::dl::cnf_grammar::ConstructorRepositoryFor<Family>>;
+    using View = ygg::View<ygg::Index<Entity>, kr::dl::cnf_grammar::ConstructorRepositoryFor>;
 
-    static_assert(std::same_as<View, kr::dl::cnf_grammar::FamilyRoleView<Family, Tag>>);
-    if constexpr (std::same_as<Family, kr::BaseFamilyTag>)
+    static_assert(std::same_as<View, kr::dl::cnf_grammar::FamilyRoleView<Tag>>);
+    if constexpr (false)
         static_assert(std::same_as<View, kr::dl::cnf_grammar::BaseRoleView<Tag>>);
 
     if constexpr (std::same_as<Tag, kr::dl::UniversalTag>)
@@ -88,15 +86,13 @@ consteval bool role_data_view()
         return false;
 }
 
-template<typename Family, typename... Tags>
+template<typename... Tags>
 consteval bool role_data_views(ygg::TypeList<Tags...>)
 {
-    return (role_data_view<Family, Tags>() && ...);
+    return (role_data_view<Tags>() && ...);
 }
 
-static_assert(role_data_views<kr::BaseFamilyTag>(kr::dl::FamilyRoleConstructorTags<kr::BaseFamilyTag> {}));
-static_assert(role_data_views<kr::ExtFamilyTag>(kr::dl::FamilyRoleConstructorTags<kr::ExtFamilyTag> {}));
-static_assert(role_data_views<kr::UnsFamilyTag>(kr::dl::FamilyRoleConstructorTags<kr::UnsFamilyTag> {}));
+static_assert(role_data_views(kr::dl::GenerationRoleConstructorTags {}));
 
 }  // namespace
 

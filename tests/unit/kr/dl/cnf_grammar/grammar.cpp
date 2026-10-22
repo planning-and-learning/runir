@@ -51,29 +51,27 @@ concept IndexedDataView =
            view.get_domain();
        };
 
-template<typename Family, typename... Ts>
+template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
 {
-    return (IndexedDataView<Ts, kr::dl::cnf_grammar::ConstructorRepositoryFor<Family>> && ...);
+    return (IndexedDataView<Ts, kr::dl::cnf_grammar::ConstructorRepositoryFor> && ...);
 }
 
-static_assert(indexed_data_views<kr::BaseFamilyTag>(kr::dl::cnf_grammar::FamilyGrammarTypes<kr::BaseFamilyTag> {}));
-static_assert(indexed_data_views<kr::ExtFamilyTag>(kr::dl::cnf_grammar::FamilyGrammarTypes<kr::ExtFamilyTag> {}));
-static_assert(indexed_data_views<kr::UnsFamilyTag>(kr::dl::cnf_grammar::FamilyGrammarTypes<kr::UnsFamilyTag> {}));
-static_assert(std::same_as<kr::dl::cnf_grammar::FamilyGrammarView<kr::BaseFamilyTag>,
-                           ygg::View<ygg::Index<kr::dl::cnf_grammar::Grammar<kr::BaseFamilyTag>>, kr::dl::cnf_grammar::BaseConstructorRepository>>);
-static_assert(std::same_as<kr::dl::cnf_grammar::FamilyGrammarView<kr::ExtFamilyTag>,
-                           ygg::View<ygg::Index<kr::dl::cnf_grammar::Grammar<kr::ExtFamilyTag>>, kr::dl::cnf_grammar::ExtConstructorRepository>>);
-static_assert(std::same_as<kr::dl::cnf_grammar::FamilyGrammarView<kr::UnsFamilyTag>,
-                           ygg::View<ygg::Index<kr::dl::cnf_grammar::Grammar<kr::UnsFamilyTag>>, kr::dl::cnf_grammar::UnsConstructorRepository>>);
-static_assert(std::same_as<kr::dl::cnf_grammar::FamilyGrammarView<kr::BaseFamilyTag>, kr::dl::cnf_grammar::BaseGrammarView>);
-static_assert(std::same_as<kr::dl::cnf_grammar::FamilyGrammarView<kr::ExtFamilyTag>, kr::dl::cnf_grammar::ExtGrammarView>);
-static_assert(std::same_as<kr::dl::cnf_grammar::FamilyGrammarView<kr::UnsFamilyTag>, kr::dl::cnf_grammar::UnsGrammarView>);
+static_assert(indexed_data_views<>(kr::dl::cnf_grammar::FamilyGrammarTypes {}));
+static_assert(
+    std::same_as<kr::dl::cnf_grammar::FamilyGrammarView, ygg::View<ygg::Index<kr::dl::cnf_grammar::Grammar>, kr::dl::cnf_grammar::BaseConstructorRepository>>);
+static_assert(
+    std::same_as<kr::dl::cnf_grammar::FamilyGrammarView, ygg::View<ygg::Index<kr::dl::cnf_grammar::Grammar>, kr::dl::cnf_grammar::ExtConstructorRepository>>);
+static_assert(
+    std::same_as<kr::dl::cnf_grammar::FamilyGrammarView, ygg::View<ygg::Index<kr::dl::cnf_grammar::Grammar>, kr::dl::cnf_grammar::UnsConstructorRepository>>);
+static_assert(std::same_as<kr::dl::cnf_grammar::FamilyGrammarView, kr::dl::cnf_grammar::BaseGrammarView>);
+static_assert(std::same_as<kr::dl::cnf_grammar::FamilyGrammarView, kr::dl::cnf_grammar::ExtGrammarView>);
+static_assert(std::same_as<kr::dl::cnf_grammar::FamilyGrammarView, kr::dl::cnf_grammar::UnsGrammarView>);
 
-template<typename Family, typename Category>
+template<typename Category>
 consteval bool data_accessors()
 {
-    using Data = ygg::Data<kr::dl::cnf_grammar::Grammar<Family>>;
+    using Data = ygg::Data<kr::dl::cnf_grammar::Grammar>;
     using Mutable = Data&;
     using Const = const Data&;
 
@@ -125,15 +123,13 @@ consteval bool data_accessors()
         return false;
 }
 
-template<typename Family, typename... Categories>
+template<typename... Categories>
 consteval bool data_accessors(ygg::TypeList<Categories...>)
 {
-    return (data_accessors<Family, Categories>() && ...);
+    return (data_accessors<Categories>() && ...);
 }
 
-static_assert(data_accessors<kr::BaseFamilyTag>(kr::dl::CategoryTags {}));
-static_assert(data_accessors<kr::ExtFamilyTag>(kr::dl::CategoryTags {}));
-static_assert(data_accessors<kr::UnsFamilyTag>(kr::dl::CategoryTags {}));
+static_assert(data_accessors<>(kr::dl::CategoryTags {}));
 
 }  // namespace
 

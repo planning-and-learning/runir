@@ -20,15 +20,13 @@ concept IndexedDataView =
            view.get_index();
        };
 
-template<typename Family, typename... Ts>
+template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
 {
-    return (IndexedDataView<Ts, kr::dl::ConstructorRepositoryFor<Family>> && ...);
+    return (IndexedDataView<Ts, kr::dl::ConstructorRepositoryFor> && ...);
 }
 
-static_assert(indexed_data_views<kr::BaseFamilyTag>(kr::dl::FamilyConceptTypes<kr::BaseFamilyTag> {}));
-static_assert(indexed_data_views<kr::ExtFamilyTag>(kr::dl::FamilyConceptTypes<kr::ExtFamilyTag> {}));
-static_assert(indexed_data_views<kr::UnsFamilyTag>(kr::dl::FamilyConceptTypes<kr::UnsFamilyTag> {}));
+static_assert(indexed_data_views<>(kr::dl::FamilyConceptTypes {}));
 
 using NullaryTags = ygg::TypeList<kr::dl::BotTag, kr::dl::TopTag>;
 using PredicateTags = ygg::TypeList<kr::dl::AtomicStateTag<tyr::formalism::StaticTag>,
@@ -47,19 +45,19 @@ using NumberRestrictionTags = ygg::TypeList<kr::dl::AtLeastNumberRestrictionTag,
 using QualifiedNumberRestrictionTags =
     ygg::TypeList<kr::dl::QualifiedAtLeastNumberRestrictionTag, kr::dl::QualifiedAtMostNumberRestrictionTag, kr::dl::QualifiedExactNumberRestrictionTag>;
 
-template<typename Family, typename Tag>
+template<typename Tag>
 consteval bool concept_data_view()
 {
-    using Entity = kr::dl::Concept<Family, Tag>;
+    using Entity = kr::dl::Concept<Tag>;
     using Data = ygg::Data<Entity>;
-    using View = ygg::View<ygg::Index<Entity>, kr::dl::ConstructorRepositoryFor<Family>>;
+    using View = ygg::View<ygg::Index<Entity>, kr::dl::ConstructorRepositoryFor>;
 
     static_assert(!requires(const View& view) { view.get_columns(); });
     static_assert(!requires(const View& view) { view.get_plan(); });
-    static_assert(std::same_as<View, kr::dl::FamilyConceptView<Family, Tag>>);
-    if constexpr (std::same_as<Family, kr::BaseFamilyTag>)
+    static_assert(std::same_as<View, kr::dl::FamilyConceptView<Tag>>);
+    if constexpr (false)
         static_assert(std::same_as<View, kr::dl::BaseConceptView<Tag>>);
-    else if constexpr (std::same_as<Family, kr::ExtFamilyTag>)
+    else if constexpr (true)
         static_assert(std::same_as<View, kr::dl::ExtConceptView<Tag>>);
     else
         static_assert(std::same_as<View, kr::dl::UnsConceptView<Tag>>);
@@ -135,36 +133,33 @@ consteval bool concept_data_view()
         return false;
 }
 
-template<typename Family, typename... Tags>
+template<typename... Tags>
 consteval bool concept_data_views(ygg::TypeList<Tags...>)
 {
-    return (concept_data_view<Family, Tags>() && ...);
+    return (concept_data_view<Tags>() && ...);
 }
 
-static_assert(concept_data_views<kr::BaseFamilyTag>(kr::dl::FamilyConceptConstructorTags<kr::BaseFamilyTag> {}));
-static_assert(concept_data_views<kr::ExtFamilyTag>(kr::dl::FamilyConceptConstructorTags<kr::ExtFamilyTag> {}));
-static_assert(concept_data_views<kr::UnsFamilyTag>(kr::dl::FamilyConceptConstructorTags<kr::UnsFamilyTag> {}));
+static_assert(concept_data_views<>(kr::dl::FamilyConceptConstructorTags {}));
 
 }  // namespace
 
 TEST(RunirKrDlConcept, RoutesUnaryBinaryAndNumberRestrictionData)
 {
-    using Family = kr::ExtFamilyTag;
-    using Concept = kr::dl::Constructor<Family, kr::dl::ConceptTag>;
-    using Role = kr::dl::Constructor<Family, kr::dl::RoleTag>;
+    using Concept = kr::dl::Constructor<kr::dl::ConceptTag>;
+    using Role = kr::dl::Constructor<kr::dl::RoleTag>;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     auto repository = kr::dl::ExtConstructorRepositoryFactory().create(planning_repository);
 
-    auto unary_data = ygg::Data<kr::dl::Concept<Family, kr::dl::NegationTag>>(ygg::Index<Concept>(3));
+    auto unary_data = ygg::Data<kr::dl::Concept<kr::dl::NegationTag>>(ygg::Index<Concept>(3));
     const auto unary = repository->insert(unary_data).first;
     EXPECT_EQ(unary.get_arg().get_index(), ygg::Index<Concept>(3));
 
-    auto binary_data = ygg::Data<kr::dl::Concept<Family, kr::dl::ValueRestrictionTag>>(ygg::Index<Role>(1), ygg::Index<Concept>(2));
+    auto binary_data = ygg::Data<kr::dl::Concept<kr::dl::ValueRestrictionTag>>(ygg::Index<Role>(1), ygg::Index<Concept>(2));
     const auto binary = repository->insert(binary_data).first;
     EXPECT_EQ(binary.get_lhs().get_index(), ygg::Index<Role>(1));
     EXPECT_EQ(binary.get_rhs().get_index(), ygg::Index<Concept>(2));
 
-    auto restriction_data = ygg::Data<kr::dl::Concept<Family, kr::dl::AtLeastNumberRestrictionTag>>(5, ygg::Index<Role>(4));
+    auto restriction_data = ygg::Data<kr::dl::Concept<kr::dl::AtLeastNumberRestrictionTag>>(5, ygg::Index<Role>(4));
     const auto restriction = repository->insert(restriction_data).first;
     EXPECT_EQ(restriction.get_n(), 5);
     EXPECT_EQ(restriction.get_role().get_index(), ygg::Index<Role>(4));

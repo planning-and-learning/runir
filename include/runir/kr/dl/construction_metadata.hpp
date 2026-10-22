@@ -13,8 +13,8 @@ namespace runir::kr::dl::detail
 {
 
 // Static means constant for a fixed task, including its goal and object universe.
-template<template<typename, typename> typename Expression, FamilyTag Family, typename Tag, typename C>
-bool infer_is_static(ygg::View<ygg::Index<Expression<Family, Tag>>, C> constructor)
+template<template<typename> typename Expression, typename Tag, typename C>
+bool infer_is_static(ygg::View<ygg::Index<Expression<Tag>>, C> constructor)
 {
     if constexpr (is_atomic_state_tag_v<Tag>)
         return std::same_as<TagFactKind<Tag>, tyr::formalism::StaticTag>;
@@ -56,17 +56,13 @@ bool infer_is_static(ygg::View<ygg::Index<Expression<Family, Tag>>, C> construct
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL constructor staticness");
 }
 
-template<FamilyTag Family, CategoryTag Category>
-void prepare(ygg::Data<Constructor<Family, Category>>& data, const ConstructorRepositoryFor<Family>& repository)
+template<CategoryTag Category, typename Repository>
+void prepare(ygg::Data<Constructor<Category>>& data, const Repository& repository)
 {
     data.is_static = std::visit([&](auto index) { return infer_is_static(ygg::make_view(index, repository)); }, data.variant);
 }
 
-template<FamilyTag Family>
-void prepare(ygg::Data<Query<Family>>& data, const ConstructorRepositoryFor<Family>& repository)
-{
-    data.is_static = std::visit([&](auto index) { return infer_is_static(ygg::make_view(index, repository)); }, data.variant);
-}
+void prepare(ygg::Data<Query<>>& data, const ConstructorRepositoryFor& repository);
 
 }  // namespace runir::kr::dl::detail
 

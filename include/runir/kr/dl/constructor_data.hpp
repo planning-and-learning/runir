@@ -16,67 +16,67 @@
 namespace runir::kr::dl::detail
 {
 
-template<FamilyTag Family, CategoryTag Category>
+template<CategoryTag Category>
 struct ConstructorDataTraits;
 
-template<FamilyTag Family>
-struct ConstructorDataTraits<Family, ConceptTag>
+template<>
+struct ConstructorDataTraits<ConceptTag>
 {
-    using Tags = FamilyConceptConstructorTags<Family>;
+    using Tags = FamilyConceptConstructorTags;
 
     template<typename Tag>
-    using Index = ygg::Index<Concept<Family, Tag>>;
+    using Index = ygg::Index<Concept<Tag>>;
 
-    using Indices = ygg::ConcatTypeListsT<ygg::MapTypeListT<Index, Tags>, ygg::TypeList<ygg::Index<QueryProjection<Family, ConceptTag>>>>;
+    using Indices = ygg::ConcatTypeListsT<ygg::MapTypeListT<Index, Tags>, ygg::TypeList<ygg::Index<QueryProjection<ConceptTag>>>>;
 };
 
-template<FamilyTag Family>
-struct ConstructorDataTraits<Family, RoleTag>
+template<>
+struct ConstructorDataTraits<RoleTag>
 {
-    using Tags = FamilyRoleConstructorTags<Family>;
+    using Tags = FamilyRoleConstructorTags;
 
     template<typename Tag>
-    using Index = ygg::Index<Role<Family, Tag>>;
+    using Index = ygg::Index<Role<Tag>>;
 
-    using Indices = ygg::ConcatTypeListsT<ygg::MapTypeListT<Index, Tags>, ygg::TypeList<ygg::Index<QueryProjection<Family, RoleTag>>>>;
+    using Indices = ygg::ConcatTypeListsT<ygg::MapTypeListT<Index, Tags>, ygg::TypeList<ygg::Index<QueryProjection<RoleTag>>>>;
 };
 
-template<FamilyTag Family>
-struct ConstructorDataTraits<Family, BooleanTag>
+template<>
+struct ConstructorDataTraits<BooleanTag>
 {
-    using Tags = FamilyBooleanConstructorTags<Family>;
+    using Tags = FamilyBooleanConstructorTags;
 
     template<typename Tag>
-    using Index = ygg::Index<Boolean<Family, Tag>>;
+    using Index = ygg::Index<Boolean<Tag>>;
 
     using Indices = ygg::MapTypeListT<Index, Tags>;
 };
 
-template<FamilyTag Family>
-struct ConstructorDataTraits<Family, NumericalTag>
+template<>
+struct ConstructorDataTraits<NumericalTag>
 {
-    using Tags = FamilyNumericalConstructorTags<Family>;
+    using Tags = FamilyNumericalConstructorTags;
 
     template<typename Tag>
-    using Index = ygg::Index<Numerical<Family, Tag>>;
+    using Index = ygg::Index<Numerical<Tag>>;
 
     using Indices = ygg::MapTypeListT<Index, Tags>;
 };
 
-template<FamilyTag Family, CategoryTag Category>
-using ConstructorDataVariant = ygg::ApplyTypeListT<::cista::offset::variant, typename ConstructorDataTraits<Family, Category>::Indices>;
+template<CategoryTag Category>
+using ConstructorDataVariant = ygg::ApplyTypeListT<::cista::offset::variant, typename ConstructorDataTraits<Category>::Indices>;
 
 }  // namespace runir::kr::dl::detail
 
 namespace ygg
 {
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-struct Data<runir::kr::dl::Constructor<Family, Category>>
+template<runir::kr::dl::CategoryTag Category>
+struct Data<runir::kr::dl::Constructor<Category>>
 {
-    using Variant = runir::kr::dl::detail::ConstructorDataVariant<Family, Category>;
+    using Variant = runir::kr::dl::detail::ConstructorDataVariant<Category>;
 
-    Index<runir::kr::dl::Constructor<Family, Category>> index;
+    Index<runir::kr::dl::Constructor<Category>> index;
     Variant variant;
     bool is_static = false;
 

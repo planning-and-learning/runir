@@ -4,6 +4,7 @@
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/call_arguments_view.hpp"
 #include "runir/kr/dl/semantics/declarations.hpp"
+#include "runir/kr/dl/semantics/evaluation_storage.hpp"
 #include "runir/kr/dl/semantics/register_values_view.hpp"
 #include "runir/kr/dl/semantics/register_values_view_concepts.hpp"
 
@@ -35,31 +36,31 @@ const ygg::Data<RegisterValues>& empty_register_values() noexcept;
 }  // namespace detail
 
 /// Evaluation reads state contents; it does not require registered state identity.
-template<typename Context, typename Family, typename Kind>
-concept StateEvaluationResourcesConcept = FamilyTag<Family> && tyr::TaskKind<Kind> && requires(Context& context, const Context& const_context) {
+template<typename Context, typename Kind>
+concept StateEvaluationResourcesConcept = tyr::TaskKind<Kind> && requires(Context& context, const Context& const_context) {
     { const_context.get_state() } -> tyr::planning::StateViewConcept<Kind>;
     { context.get_builder() } -> std::same_as<Builder&>;
     { context.get_denotation_repository() } -> std::same_as<DenotationRepository&>;
     { context.get_workspace() } -> std::same_as<EvaluationWorkspace&>;
-    { context.get_caches() } -> std::same_as<DenotationCaches<Family>&>;
+    { context.get_caches() } -> std::same_as<DenotationCaches&>;
     { const_context.registers() } -> std::same_as<BorrowedRegisterValuesView>;
     { const_context.has_arguments() } -> std::same_as<bool>;
     { const_context.arguments() } -> std::same_as<CallArgumentsView>;
 };
 
 /// Recursive contexts retain their family, task kind, resources, and navigation.
-template<typename Context, typename Family, typename Kind>
-concept StateEvaluationNavigationConcept = StateEvaluationResourcesConcept<Context, Family, Kind> && requires(const Context& context) {
+template<typename Context, typename Kind>
+concept StateEvaluationNavigationConcept = StateEvaluationResourcesConcept<Context, Kind> && requires(const Context& context) {
     { context.for_result(false) } -> std::same_as<Context>;
     { context.child_context() } -> std::same_as<Context>;
 };
 
-template<typename Context, typename Family, typename Kind>
-concept StateEvaluationContextConcept = StateEvaluationResourcesConcept<std::remove_reference_t<Context>, Family, Kind>
-                                       && requires(const std::remove_reference_t<Context>& context) {
-                                              { context.for_result(false) } -> StateEvaluationNavigationConcept<Family, Kind>;
-                                              { context.child_context() } -> StateEvaluationNavigationConcept<Family, Kind>;
-                                          };
+template<typename Context, typename Kind>
+concept StateEvaluationContextConcept =
+    StateEvaluationResourcesConcept<std::remove_reference_t<Context>, Kind> && requires(const std::remove_reference_t<Context>& context) {
+        { context.for_result(false) } -> StateEvaluationNavigationConcept<Kind>;
+        { context.child_context() } -> StateEvaluationNavigationConcept<Kind>;
+    };
 
 /// Registers in the borrowed form, which interned registers provide without copying.
 template<RegisterValuesViewConcept R>
@@ -70,15 +71,15 @@ BorrowedRegisterValuesView borrow_registers(R registers) noexcept
 
 /// Every context carries registers and call arguments. Registers are empty and arguments absent unless a program binds
 /// them; evaluating a register or an argument that the context does not bind throws.
-template<FamilyTag Family, tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> S = tyr::planning::StateView<Kind>>
+template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> S = tyr::planning::StateView<Kind>>
 class StateEvaluationContext
 {
 private:
     S m_state;
     Builder& m_builder;
-    DenotationCaches<Family>* m_caches;
+    DenotationCaches* m_caches;
     std::array<DenotationRepository*, 2> m_denotations;
-    EvaluationStorage<Family>& m_intermediates;
+    EvaluationStorage& m_intermediates;
     BorrowedRegisterValuesView m_registers;
     std::optional<CallArgumentsView> m_arguments;
     bool m_result_is_static = false;
@@ -100,10 +101,9 @@ private:
     }
 
 public:
-    using FamilyType = Family;
     using KindType = Kind;
 
-    StateEvaluationContext(S state, Builder& builder, EvaluationStorage<Family>& storage) :
+    StateEvaluationContext(S state, Builder& builder, EvaluationStorage& storage) :
         m_state(std::move(state)),
         m_builder(builder),
         m_caches(&storage.get_caches()),
@@ -116,11 +116,7 @@ public:
     }
 
     /// Retain computed roots in an existing repository while children use reusable storage.
-    StateEvaluationContext(S state,
-                           Builder& builder,
-                           DenotationCaches<Family>& caches,
-                           DenotationRepository& repository,
-                           EvaluationStorage<Family>& intermediates) :
+    StateEvaluationContext(S state, Builder& builder, DenotationCaches& caches, DenotationRepository& repository, EvaluationStorage& intermediates) :
         StateEvaluationContext(std::move(state), builder, intermediates)
     {
         if (detail::get_formalism_repository(repository) != m_state.get_formalism_repository().get())
@@ -130,7 +126,7 @@ public:
     }
 
     template<RegisterValuesViewConcept R>
-    StateEvaluationContext(S state, Builder& builder, EvaluationStorage<Family>& storage, CallArgumentsView arguments, R registers) :
+    StateEvaluationContext(S state, Builder& builder, EvaluationStorage& storage, CallArgumentsView arguments, R registers) :
         StateEvaluationContext(std::move(state), builder, storage)
     {
         m_registers = borrow_registers(registers);
@@ -141,9 +137,9 @@ public:
     template<RegisterValuesViewConcept R>
     StateEvaluationContext(S state,
                            Builder& builder,
-                           DenotationCaches<Family>& caches,
+                           DenotationCaches& caches,
                            DenotationRepository& repository,
-                           EvaluationStorage<Family>& intermediates,
+                           EvaluationStorage& intermediates,
                            CallArgumentsView arguments,
                            R registers) :
         StateEvaluationContext(std::move(state), builder, caches, repository, intermediates)
@@ -158,7 +154,7 @@ public:
     DenotationRepository& get_denotation_repository(bool is_static) const noexcept { return *m_denotations[is_static]; }
     DenotationRepository& get_denotation_repository() const noexcept { return get_denotation_repository(m_result_is_static); }
     EvaluationWorkspace& get_workspace() noexcept { return detail::get_workspace(m_builder); }
-    DenotationCaches<Family>& get_caches() noexcept { return *m_caches; }
+    DenotationCaches& get_caches() noexcept { return *m_caches; }
 
     BorrowedRegisterValuesView registers() const noexcept { return m_registers; }
     bool has_arguments() const noexcept { return m_arguments.has_value(); }

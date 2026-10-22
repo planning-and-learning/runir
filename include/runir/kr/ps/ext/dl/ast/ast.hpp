@@ -56,13 +56,13 @@ template<runir::kr::dl::CategoryTag Category>
 struct Feature : boost::spirit::x3::position_tagged
 {
     Identifier symbol;
-    runir::kr::dl::grammar::ast::Constructor<runir::kr::ExtFamilyTag, Category> expression;
+    runir::kr::dl::grammar::ast::Constructor<Category> expression;
 };
 
 struct QueryFeature : boost::spirit::x3::position_tagged
 {
     Identifier symbol;
-    runir::kr::dl::grammar::ast::Query<runir::kr::ExtFamilyTag> expression;
+    runir::kr::dl::grammar::ast::Query expression;
 };
 
 using FeatureVariant = PositionedVariant<Feature<runir::kr::dl::ConceptTag>,

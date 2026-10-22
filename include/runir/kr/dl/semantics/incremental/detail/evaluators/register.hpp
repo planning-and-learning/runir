@@ -15,17 +15,17 @@
 namespace runir::kr::dl::semantics::incremental::detail
 {
 
-template<FamilyTag Family, tyr::TaskKind Kind, CategoryTag Category>
+template<tyr::TaskKind Kind, CategoryTag Category>
 struct RegisterEvaluator
 {
     RegisterIdentifier<Category> identifier;
     DenotationState<Category> value;
 
     explicit RegisterEvaluator(RegisterIdentifier<Category> identifier) : identifier(identifier) {}
-    template<StateEvaluationContextConcept<Family, Kind> Context>
-    void initialize(EvaluationGraph<Family, Kind>&, Context& context)
+    template<StateEvaluationContextConcept<Kind> Context>
+    void initialize(EvaluationGraph<Kind>&, Context& context)
     {
-        auto& builder = value.initialize(semantics::detail::num_objects<Family, Kind>(context));
+        auto& builder = value.initialize(semantics::detail::num_objects<Kind>(context));
         const auto slot = register_value(context, identifier);
         if (slot)
         {
@@ -35,7 +35,7 @@ struct RegisterEvaluator
                 builder.set(slot.value().get_first().get_index(), slot.value().get_second().get_index(), true);
         }
     }
-    void update(EvaluationGraph<Family, Kind>&, const Delta<Family>& delta, ygg::database::Workspace&)
+    void update(EvaluationGraph<Kind>&, const Delta& delta, ygg::database::Workspace&)
     {
         if constexpr (std::same_as<Category, ConceptTag>)
             update_values(delta.added.concept_registers, delta.removed.concept_registers);

@@ -57,14 +57,14 @@ public:
     /// The aggregate groups rules by their resolved action before generating candidates.
     auto get_action() const noexcept { return m_action; }
     /// Skip disabled rules before action enumeration; matches() also checks this for direct callers.
-    template<runir::kr::dl::semantics::EvaluationContextConcept<ExtFamilyTag, Kind> Context>
+    template<runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context>
     bool is_applicable(Context& context) const
     {
         return conditions_are_compatible<Kind>(m_rule, context);
     }
 
     /// Reject a binding before generating its target; matches() also checks this for direct callers.
-    template<runir::kr::dl::semantics::EvaluationContextConcept<ExtFamilyTag, Kind> Context,
+    template<runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context,
              ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
     bool xconditions_match(Context& context, ProgramStateView<Kind> state, Binding binding) const
     {
@@ -82,7 +82,7 @@ public:
 
     /// Match a supplied candidate independently of the aggregate's early binding filter.
     /// History admission remains shared by the aggregate across matching rules.
-    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
     bool matches(runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy>& context,
                  ProgramStateView<Kind> state,
@@ -111,7 +111,7 @@ public:
     }
 
     /// Apply a match after the aggregate admits shared histories and publishes the binding.
-    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy>
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
     ProgramStep<Kind> apply(RuleEvaluationWorkspace<Kind, EvaluationPolicy>& workspace,
                             ProgramStateView<Kind> source,
                             const tyr::planning::LabeledNode<Kind>& candidate,

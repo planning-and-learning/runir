@@ -9,16 +9,16 @@
 namespace runir::kr::dl::semantics::incremental::detail
 {
 
-template<FamilyTag Family, tyr::TaskKind Kind, CategoryTag Category>
+template<tyr::TaskKind Kind, CategoryTag Category>
 struct StaticEvaluator
 {
-    FamilyConstructorView<Family, Category> expression;
+    FamilyConstructorView<Category> expression;
     DenotationState<Category> value;
     bool initialized = false;
 
-    explicit StaticEvaluator(FamilyConstructorView<Family, Category> expression) : expression(expression) {}
-    template<StateEvaluationContextConcept<Family, Kind> Context>
-    void initialize(EvaluationGraph<Family, Kind>&, Context& context)
+    explicit StaticEvaluator(FamilyConstructorView<Category> expression) : expression(expression) {}
+    template<StateEvaluationContextConcept<Kind> Context>
+    void initialize(EvaluationGraph<Kind>&, Context& context)
     {
         if (!initialized)
         {
@@ -26,7 +26,7 @@ struct StaticEvaluator
             initialized = true;
         }
     }
-    void update(EvaluationGraph<Family, Kind>&, const Delta<Family>&, ygg::database::Workspace&) {}
+    void update(EvaluationGraph<Kind>&, const Delta&, ygg::database::Workspace&) {}
 };
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

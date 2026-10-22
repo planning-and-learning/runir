@@ -41,17 +41,17 @@ struct Data<runir::kr::dl::QueryColumn>
     }
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::Query<Family>>
+template<>
+struct Data<runir::kr::dl::Query<>>
 {
 private:
     template<typename Tag>
-    using AlternativeIndex = ygg::Index<runir::kr::dl::Query<Family, Tag>>;
+    using AlternativeIndex = ygg::Index<runir::kr::dl::Query<Tag>>;
 
 public:
     using Variant = ygg::ApplyTypeListT<cista::offset::variant, ygg::MapTypeListT<AlternativeIndex, runir::kr::dl::QueryConstructorTags>>;
 
-    Index<runir::kr::dl::Query<Family>> index;
+    Index<runir::kr::dl::Query<>> index;
     Variant variant;
     bool is_static = false;
 
@@ -73,10 +73,10 @@ public:
     }
 };
 
-template<runir::kr::dl::FamilyTag Family, tyr::formalism::FactKind T>
-struct Data<runir::kr::dl::Query<Family, runir::kr::dl::AtomicStateTag<T>>>
+template<tyr::formalism::FactKind T>
+struct Data<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>>
 {
-    Index<runir::kr::dl::Query<Family, runir::kr::dl::AtomicStateTag<T>>> index;
+    Index<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>> index;
     Index<tyr::formalism::Predicate<T>> predicate {};
     IndexList<runir::kr::dl::QueryColumn> columns {};
     ygg::Builder<ygg::database::Columns> schema {};
@@ -107,10 +107,10 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::AtomicStateTag<T>>>
     }
 };
 
-template<runir::kr::dl::FamilyTag Family, tyr::formalism::FactKind T>
-struct Data<runir::kr::dl::Query<Family, runir::kr::dl::AtomicGoalTag<T>>>
+template<tyr::formalism::FactKind T>
+struct Data<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>>
 {
-    Index<runir::kr::dl::Query<Family, runir::kr::dl::AtomicGoalTag<T>>> index;
+    Index<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>> index;
     Index<tyr::formalism::Predicate<T>> predicate {};
     bool polarity {};
     IndexList<runir::kr::dl::QueryColumn> columns {};
@@ -146,24 +146,24 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::AtomicGoalTag<T>>>
     }
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryConceptTag>>
+template<>
+struct Data<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>>
 {
-    Index<runir::kr::dl::Query<Family, runir::kr::dl::QueryConceptTag>> index;
-    Index<runir::kr::dl::Constructor<Family, runir::kr::dl::ConceptTag>> arg {};
+    Index<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>> index;
+    Index<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>> arg {};
     IndexList<runir::kr::dl::QueryColumn> columns {};
     ygg::Builder<ygg::database::Columns> schema {};
 
     Data() = default;
     // schema is derived during insertion and therefore not a constructor parameter.
-    Data(Index<runir::kr::dl::Constructor<Family, runir::kr::dl::ConceptTag>> arg_, IndexList<runir::kr::dl::QueryColumn> columns_) :
+    Data(Index<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>> arg_, IndexList<runir::kr::dl::QueryColumn> columns_) :
         index(),
         arg(std::move(arg_)),
         columns(std::move(columns_))
     {
     }
     template<typename C>
-    Data(::ygg::View<Index<runir::kr::dl::Constructor<Family, runir::kr::dl::ConceptTag>>, C> arg_,
+    Data(::ygg::View<Index<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>, C> arg_,
          const std::vector<::ygg::View<Index<runir::kr::dl::QueryColumn>, C>>& columns_) :
         index(),
         arg(),
@@ -181,24 +181,24 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryConceptTag>>
     }
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryRoleTag>>
+template<>
+struct Data<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>>
 {
-    Index<runir::kr::dl::Query<Family, runir::kr::dl::QueryRoleTag>> index;
-    Index<runir::kr::dl::Constructor<Family, runir::kr::dl::RoleTag>> arg {};
+    Index<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>> index;
+    Index<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>> arg {};
     IndexList<runir::kr::dl::QueryColumn> columns {};
     ygg::Builder<ygg::database::Columns> schema {};
 
     Data() = default;
     // schema is derived during insertion and therefore not a constructor parameter.
-    Data(Index<runir::kr::dl::Constructor<Family, runir::kr::dl::RoleTag>> arg_, IndexList<runir::kr::dl::QueryColumn> columns_) :
+    Data(Index<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>> arg_, IndexList<runir::kr::dl::QueryColumn> columns_) :
         index(),
         arg(std::move(arg_)),
         columns(std::move(columns_))
     {
     }
     template<typename C>
-    Data(::ygg::View<Index<runir::kr::dl::Constructor<Family, runir::kr::dl::RoleTag>>, C> arg_,
+    Data(::ygg::View<Index<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>, C> arg_,
          const std::vector<::ygg::View<Index<runir::kr::dl::QueryColumn>, C>>& columns_) :
         index(),
         arg(),
@@ -216,20 +216,20 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryRoleTag>>
     }
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryJoinTag>>
+template<>
+struct Data<runir::kr::dl::Query<runir::kr::dl::QueryJoinTag>>
 {
-    Index<runir::kr::dl::Query<Family, runir::kr::dl::QueryJoinTag>> index;
-    Index<runir::kr::dl::Query<Family>> lhs {};
-    Index<runir::kr::dl::Query<Family>> rhs {};
+    Index<runir::kr::dl::Query<runir::kr::dl::QueryJoinTag>> index;
+    Index<runir::kr::dl::Query<>> lhs {};
+    Index<runir::kr::dl::Query<>> rhs {};
     IndexList<runir::kr::dl::QueryColumn> columns {};
     ygg::database::JoinPlan plan {};
 
     Data() = default;
     // columns and plan are derived during insertion and therefore not constructor parameters.
-    Data(Index<runir::kr::dl::Query<Family>> lhs_, Index<runir::kr::dl::Query<Family>> rhs_) : index(), lhs(std::move(lhs_)), rhs(std::move(rhs_)) {}
+    Data(Index<runir::kr::dl::Query<>> lhs_, Index<runir::kr::dl::Query<>> rhs_) : index(), lhs(std::move(lhs_)), rhs(std::move(rhs_)) {}
     template<typename C>
-    Data(::ygg::View<Index<runir::kr::dl::Query<Family>>, C> lhs_, ::ygg::View<Index<runir::kr::dl::Query<Family>>, C> rhs_) : index(), lhs(), rhs()
+    Data(::ygg::View<Index<runir::kr::dl::Query<>>, C> lhs_, ::ygg::View<Index<runir::kr::dl::Query<>>, C> rhs_) : index(), lhs(), rhs()
     {
         set(lhs_, lhs);
         set(rhs_, rhs);
@@ -243,21 +243,21 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryJoinTag>>
     }
 };
 
-template<runir::kr::dl::FamilyTag Family, typename Tag>
+template<typename Tag>
     requires(std::same_as<Tag, runir::kr::dl::QueryUnionTag> || std::same_as<Tag, runir::kr::dl::QueryDifferenceTag>)
-struct Data<runir::kr::dl::Query<Family, Tag>>
+struct Data<runir::kr::dl::Query<Tag>>
 {
-    Index<runir::kr::dl::Query<Family, Tag>> index;
-    Index<runir::kr::dl::Query<Family>> lhs {};
-    Index<runir::kr::dl::Query<Family>> rhs {};
+    Index<runir::kr::dl::Query<Tag>> index;
+    Index<runir::kr::dl::Query<>> lhs {};
+    Index<runir::kr::dl::Query<>> rhs {};
     IndexList<runir::kr::dl::QueryColumn> columns {};
     ygg::Builder<ygg::database::Columns> schema {};
 
     Data() = default;
     // columns and schema are derived during insertion and therefore not constructor parameters.
-    Data(Index<runir::kr::dl::Query<Family>> lhs_, Index<runir::kr::dl::Query<Family>> rhs_) : index(), lhs(std::move(lhs_)), rhs(std::move(rhs_)) {}
+    Data(Index<runir::kr::dl::Query<>> lhs_, Index<runir::kr::dl::Query<>> rhs_) : index(), lhs(std::move(lhs_)), rhs(std::move(rhs_)) {}
     template<typename C>
-    Data(::ygg::View<Index<runir::kr::dl::Query<Family>>, C> lhs_, ::ygg::View<Index<runir::kr::dl::Query<Family>>, C> rhs_) : index(), lhs(), rhs()
+    Data(::ygg::View<Index<runir::kr::dl::Query<>>, C> lhs_, ::ygg::View<Index<runir::kr::dl::Query<>>, C> rhs_) : index(), lhs(), rhs()
     {
         set(lhs_, lhs);
         set(rhs_, rhs);
@@ -271,21 +271,19 @@ struct Data<runir::kr::dl::Query<Family, Tag>>
     }
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryProjectTag>>
+template<>
+struct Data<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>>
 {
-    Index<runir::kr::dl::Query<Family, runir::kr::dl::QueryProjectTag>> index;
-    Index<runir::kr::dl::Query<Family>> arg {};
+    Index<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>> index;
+    Index<runir::kr::dl::Query<>> arg {};
     IndexList<runir::kr::dl::QueryColumn> columns {};
     ygg::database::ProjectionPlan plan {};
 
     Data() = default;
     // plan is derived during insertion and therefore not a constructor parameter.
-    Data(Index<runir::kr::dl::Query<Family>> arg_, IndexList<runir::kr::dl::QueryColumn> columns_) : index(), arg(std::move(arg_)), columns(std::move(columns_))
-    {
-    }
+    Data(Index<runir::kr::dl::Query<>> arg_, IndexList<runir::kr::dl::QueryColumn> columns_) : index(), arg(std::move(arg_)), columns(std::move(columns_)) {}
     template<typename C>
-    Data(::ygg::View<Index<runir::kr::dl::Query<Family>>, C> arg_, const std::vector<::ygg::View<Index<runir::kr::dl::QueryColumn>, C>>& columns_) :
+    Data(::ygg::View<Index<runir::kr::dl::Query<>>, C> arg_, const std::vector<::ygg::View<Index<runir::kr::dl::QueryColumn>, C>>& columns_) :
         index(),
         arg(),
         columns()
@@ -302,21 +300,19 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryProjectTag>>
     }
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryRenameTag>>
+template<>
+struct Data<runir::kr::dl::Query<runir::kr::dl::QueryRenameTag>>
 {
-    Index<runir::kr::dl::Query<Family, runir::kr::dl::QueryRenameTag>> index;
-    Index<runir::kr::dl::Query<Family>> arg {};
+    Index<runir::kr::dl::Query<runir::kr::dl::QueryRenameTag>> index;
+    Index<runir::kr::dl::Query<>> arg {};
     IndexList<runir::kr::dl::QueryColumn> columns {};
     ygg::Builder<ygg::database::Columns> schema {};
 
     Data() = default;
     // schema is derived during insertion and therefore not a constructor parameter.
-    Data(Index<runir::kr::dl::Query<Family>> arg_, IndexList<runir::kr::dl::QueryColumn> columns_) : index(), arg(std::move(arg_)), columns(std::move(columns_))
-    {
-    }
+    Data(Index<runir::kr::dl::Query<>> arg_, IndexList<runir::kr::dl::QueryColumn> columns_) : index(), arg(std::move(arg_)), columns(std::move(columns_)) {}
     template<typename C>
-    Data(::ygg::View<Index<runir::kr::dl::Query<Family>>, C> arg_, const std::vector<::ygg::View<Index<runir::kr::dl::QueryColumn>, C>>& columns_) :
+    Data(::ygg::View<Index<runir::kr::dl::Query<>>, C> arg_, const std::vector<::ygg::View<Index<runir::kr::dl::QueryColumn>, C>>& columns_) :
         index(),
         arg(),
         columns()
@@ -333,11 +329,11 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryRenameTag>>
     }
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QuerySelectEqualTag>>
+template<>
+struct Data<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>>
 {
-    Index<runir::kr::dl::Query<Family, runir::kr::dl::QuerySelectEqualTag>> index;
-    Index<runir::kr::dl::Query<Family>> arg {};
+    Index<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>> index;
+    Index<runir::kr::dl::Query<>> arg {};
     Index<runir::kr::dl::QueryColumn> lhs_column {};
     Index<runir::kr::dl::QueryColumn> rhs_column {};
     IndexList<runir::kr::dl::QueryColumn> columns {};
@@ -347,7 +343,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QuerySelectEqualTag>>
 
     Data() = default;
     // columns, schema and positions are derived during insertion and therefore not constructor parameters.
-    Data(Index<runir::kr::dl::Query<Family>> arg_, Index<runir::kr::dl::QueryColumn> lhs_column_, Index<runir::kr::dl::QueryColumn> rhs_column_) :
+    Data(Index<runir::kr::dl::Query<>> arg_, Index<runir::kr::dl::QueryColumn> lhs_column_, Index<runir::kr::dl::QueryColumn> rhs_column_) :
         index(),
         arg(std::move(arg_)),
         lhs_column(std::move(lhs_column_)),
@@ -355,7 +351,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QuerySelectEqualTag>>
     {
     }
     template<typename C>
-    Data(::ygg::View<Index<runir::kr::dl::Query<Family>>, C> arg_,
+    Data(::ygg::View<Index<runir::kr::dl::Query<>>, C> arg_,
          ::ygg::View<Index<runir::kr::dl::QueryColumn>, C> lhs_column_,
          ::ygg::View<Index<runir::kr::dl::QueryColumn>, C> rhs_column_) :
         index(),
@@ -376,11 +372,11 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QuerySelectEqualTag>>
     }
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QuerySelectValueTag>>
+template<>
+struct Data<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>>
 {
-    Index<runir::kr::dl::Query<Family, runir::kr::dl::QuerySelectValueTag>> index;
-    Index<runir::kr::dl::Query<Family>> arg {};
+    Index<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>> index;
+    Index<runir::kr::dl::Query<>> arg {};
     Index<runir::kr::dl::QueryColumn> column {};
     Index<tyr::formalism::Object> object {};
     IndexList<runir::kr::dl::QueryColumn> columns {};
@@ -389,7 +385,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QuerySelectValueTag>>
 
     Data() = default;
     // columns, schema and position are derived during insertion and therefore not constructor parameters.
-    Data(Index<runir::kr::dl::Query<Family>> arg_, Index<runir::kr::dl::QueryColumn> column_, Index<tyr::formalism::Object> object_) :
+    Data(Index<runir::kr::dl::Query<>> arg_, Index<runir::kr::dl::QueryColumn> column_, Index<tyr::formalism::Object> object_) :
         index(),
         arg(std::move(arg_)),
         column(std::move(column_)),
@@ -397,7 +393,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QuerySelectValueTag>>
     {
     }
     template<typename C, typename P>
-    Data(::ygg::View<Index<runir::kr::dl::Query<Family>>, C> arg_,
+    Data(::ygg::View<Index<runir::kr::dl::Query<>>, C> arg_,
          ::ygg::View<Index<runir::kr::dl::QueryColumn>, C> column_,
          ::ygg::View<Index<tyr::formalism::Object>, P> object_) :
         index(),
@@ -418,11 +414,11 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QuerySelectValueTag>>
     }
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryGenericJoinTag>>
+template<>
+struct Data<runir::kr::dl::Query<runir::kr::dl::QueryGenericJoinTag>>
 {
-    Index<runir::kr::dl::Query<Family, runir::kr::dl::QueryGenericJoinTag>> index;
-    IndexList<runir::kr::dl::Query<Family>> args {};
+    Index<runir::kr::dl::Query<runir::kr::dl::QueryGenericJoinTag>> index;
+    IndexList<runir::kr::dl::Query<>> args {};
     IndexList<runir::kr::dl::QueryColumn> variable_order {};
     IndexList<runir::kr::dl::QueryColumn> output_order {};
     IndexList<runir::kr::dl::QueryColumn> columns {};
@@ -430,9 +426,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryGenericJoinTag>>
 
     Data() = default;
     // columns and plan are derived during insertion and therefore not constructor parameters.
-    Data(IndexList<runir::kr::dl::Query<Family>> args_,
-         IndexList<runir::kr::dl::QueryColumn> variable_order_,
-         IndexList<runir::kr::dl::QueryColumn> output_order_) :
+    Data(IndexList<runir::kr::dl::Query<>> args_, IndexList<runir::kr::dl::QueryColumn> variable_order_, IndexList<runir::kr::dl::QueryColumn> output_order_) :
         index(),
         args(std::move(args_)),
         variable_order(std::move(variable_order_)),
@@ -440,7 +434,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryGenericJoinTag>>
     {
     }
     template<typename C>
-    Data(const std::vector<::ygg::View<Index<runir::kr::dl::Query<Family>>, C>>& args_,
+    Data(const std::vector<::ygg::View<Index<runir::kr::dl::Query<>>, C>>& args_,
          const std::vector<::ygg::View<Index<runir::kr::dl::QueryColumn>, C>>& variable_order_,
          const std::vector<::ygg::View<Index<runir::kr::dl::QueryColumn>, C>>& output_order_) :
         index(),
@@ -463,15 +457,15 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryGenericJoinTag>>
 
 /// q_must_pass (keys...) sources edges targets probes: per key, the probe objects that every path from the key's sources
 /// to its targets passes in some vertex. Sources, edges and targets start with the key columns; probes have one column.
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryMustPassTag>>
+template<>
+struct Data<runir::kr::dl::Query<runir::kr::dl::QueryMustPassTag>>
 {
-    Index<runir::kr::dl::Query<Family, runir::kr::dl::QueryMustPassTag>> index;
+    Index<runir::kr::dl::Query<runir::kr::dl::QueryMustPassTag>> index;
     IndexList<runir::kr::dl::QueryColumn> keys {};
-    Index<runir::kr::dl::Query<Family>> sources {};
-    Index<runir::kr::dl::Query<Family>> edges {};
-    Index<runir::kr::dl::Query<Family>> targets {};
-    Index<runir::kr::dl::Query<Family>> probes {};
+    Index<runir::kr::dl::Query<>> sources {};
+    Index<runir::kr::dl::Query<>> edges {};
+    Index<runir::kr::dl::Query<>> targets {};
+    Index<runir::kr::dl::Query<>> probes {};
     IndexList<runir::kr::dl::QueryColumn> columns {};
     ygg::Builder<ygg::database::Columns> schema {};
     ygg::database::MustPassPlan plan {};
@@ -479,10 +473,10 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryMustPassTag>>
     Data() = default;
     // columns, schema and plan are derived during insertion and therefore not constructor parameters.
     Data(IndexList<runir::kr::dl::QueryColumn> keys_,
-         Index<runir::kr::dl::Query<Family>> sources_,
-         Index<runir::kr::dl::Query<Family>> edges_,
-         Index<runir::kr::dl::Query<Family>> targets_,
-         Index<runir::kr::dl::Query<Family>> probes_) :
+         Index<runir::kr::dl::Query<>> sources_,
+         Index<runir::kr::dl::Query<>> edges_,
+         Index<runir::kr::dl::Query<>> targets_,
+         Index<runir::kr::dl::Query<>> probes_) :
         index(),
         keys(std::move(keys_)),
         sources(sources_),
@@ -493,10 +487,10 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryMustPassTag>>
     }
     template<typename C>
     Data(const std::vector<::ygg::View<Index<runir::kr::dl::QueryColumn>, C>>& keys_,
-         ::ygg::View<Index<runir::kr::dl::Query<Family>>, C> sources_,
-         ::ygg::View<Index<runir::kr::dl::Query<Family>>, C> edges_,
-         ::ygg::View<Index<runir::kr::dl::Query<Family>>, C> targets_,
-         ::ygg::View<Index<runir::kr::dl::Query<Family>>, C> probes_) :
+         ::ygg::View<Index<runir::kr::dl::Query<>>, C> sources_,
+         ::ygg::View<Index<runir::kr::dl::Query<>>, C> edges_,
+         ::ygg::View<Index<runir::kr::dl::Query<>>, C> targets_,
+         ::ygg::View<Index<runir::kr::dl::Query<>>, C> probes_) :
         index(),
         keys(),
         sources(),
@@ -519,10 +513,10 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryMustPassTag>>
     }
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryEmptyTag>>
+template<>
+struct Data<runir::kr::dl::Query<runir::kr::dl::QueryEmptyTag>>
 {
-    Index<runir::kr::dl::Query<Family, runir::kr::dl::QueryEmptyTag>> index;
+    Index<runir::kr::dl::Query<runir::kr::dl::QueryEmptyTag>> index;
     IndexList<runir::kr::dl::QueryColumn> columns {};
     ygg::Builder<ygg::database::Columns> schema {};
 
@@ -543,21 +537,19 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryEmptyTag>>
     }
 };
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::ConceptOrRoleTag Category>
-struct Data<runir::kr::dl::QueryProjection<Family, Category>>
+template<runir::kr::dl::ConceptOrRoleTag Category>
+struct Data<runir::kr::dl::QueryProjection<Category>>
 {
-    Index<runir::kr::dl::QueryProjection<Family, Category>> index;
-    Index<runir::kr::dl::Query<Family>> arg {};
+    Index<runir::kr::dl::QueryProjection<Category>> index;
+    Index<runir::kr::dl::Query<>> arg {};
     IndexList<runir::kr::dl::QueryColumn> columns {};
     ygg::database::ProjectionPlan plan {};
 
     Data() = default;
     // plan is derived during insertion and therefore not a constructor parameter.
-    Data(Index<runir::kr::dl::Query<Family>> arg_, IndexList<runir::kr::dl::QueryColumn> columns_) : index(), arg(std::move(arg_)), columns(std::move(columns_))
-    {
-    }
+    Data(Index<runir::kr::dl::Query<>> arg_, IndexList<runir::kr::dl::QueryColumn> columns_) : index(), arg(std::move(arg_)), columns(std::move(columns_)) {}
     template<typename C>
-    Data(::ygg::View<Index<runir::kr::dl::Query<Family>>, C> arg_, const std::vector<::ygg::View<Index<runir::kr::dl::QueryColumn>, C>>& columns_) :
+    Data(::ygg::View<Index<runir::kr::dl::Query<>>, C> arg_, const std::vector<::ygg::View<Index<runir::kr::dl::QueryColumn>, C>>& columns_) :
         index(),
         arg(),
         columns()

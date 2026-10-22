@@ -44,7 +44,7 @@ public:
     auto get_variant() const noexcept { return m_variant; }
 
 private:
-    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,
              tyr::planning::StateViewConcept<Kind> PlanningState>
@@ -77,7 +77,7 @@ private:
         return true;
     }
 
-    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,
              tyr::planning::StateViewConcept<Kind> PlanningState>
@@ -95,7 +95,7 @@ private:
         return is_compatible_with<Kind>(rule, transition);
     }
 
-    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
@@ -115,7 +115,7 @@ private:
     }
 
 public:
-    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              EmitConcept<ProgramStep<Kind, Storage>> Emit,
              StopConcept Stop,
@@ -154,7 +154,7 @@ public:
                                                                                        std::ref(visit),
                                                                                        std::ref(stop));
     }
-    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,

@@ -8,12 +8,11 @@ namespace runir::kr::dl::semantics
 {
 
 /// Owns reusable static/dynamic result repositories and matching memoization.
-template<FamilyTag Family>
 class EvaluationStorage
 {
     DenotationRepositoryPtr m_static_denotations;
     DenotationRepositoryPtr m_dynamic_denotations;
-    DenotationCaches<Family> m_caches;
+    DenotationCaches m_caches;
 
 public:
     explicit EvaluationStorage(const DenotationRepository& prototype) :

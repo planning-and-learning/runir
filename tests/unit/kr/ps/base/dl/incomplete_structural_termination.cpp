@@ -15,7 +15,7 @@ namespace runir::tests
 TEST(RunirTests, IncompleteStructuralTerminationBarmanSketchIsTerminating)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     const auto sketch = kr::ps::base::dl::parse_sketch(read_fixture("kr/ps/base/dl/barman.sketch"), planning_domain.get_domain(), *repository);
 
@@ -25,7 +25,7 @@ TEST(RunirTests, IncompleteStructuralTerminationBarmanSketchIsTerminating)
 TEST(RunirTests, IncompleteStructuralTerminationRequiresR3MarkedComplementaryConditions)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     const auto sketch = kr::ps::base::dl::parse_sketch(read_fixture("kr/ps/base/dl/r3_complementary.sketch"), planning_domain.get_domain(), *repository);
 
@@ -35,7 +35,7 @@ TEST(RunirTests, IncompleteStructuralTerminationRequiresR3MarkedComplementaryCon
 TEST(RunirTests, IncompleteStructuralTerminationBooleanOscillatorReportsBlockingReasons)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     const auto sketch = kr::ps::base::dl::parse_sketch(read_fixture("kr/ps/base/dl/oscillator.sketch"), planning_domain.get_domain(), *repository);
 
@@ -58,7 +58,7 @@ TEST(RunirTests, IncompleteStructuralTerminationBooleanOscillatorReportsBlocking
 TEST(RunirTests, IncompleteStructuralTerminationEmptySketchIsTerminating)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     const auto sketch = kr::ps::base::dl::SketchFactory::create_empty(*repository);
 

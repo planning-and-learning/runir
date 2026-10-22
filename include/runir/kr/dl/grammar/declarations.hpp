@@ -9,160 +9,143 @@
 namespace runir::kr::dl::grammar
 {
 
-template<runir::kr::dl::FamilyTag Family, typename Tag>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
+template<typename Tag>
+    requires runir::kr::dl::FamilyConceptConstructorTag<Tag>
 struct Concept;
 
-template<runir::kr::dl::FamilyTag Family, typename Tag>
-    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
+template<typename Tag>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Tag>
 struct Role;
 
-template<runir::kr::dl::FamilyTag Family, typename Tag>
-    requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
+template<typename Tag>
+    requires runir::kr::dl::FamilyBooleanConstructorTag<Tag>
 struct Boolean;
 
-template<runir::kr::dl::FamilyTag Family, typename Tag>
-    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
+template<typename Tag>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Tag>
 struct Numerical;
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+template<runir::kr::dl::CategoryTag Category>
 struct Constructor;
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+template<runir::kr::dl::CategoryTag Category>
 struct NonTerminal;
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+template<runir::kr::dl::CategoryTag Category>
 struct ConstructorOrNonTerminal;
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+template<runir::kr::dl::CategoryTag Category>
 struct DerivationRule;
 
-template<runir::kr::dl::FamilyTag Family>
 struct GrammarTag;
 
-template<runir::kr::dl::FamilyTag Family>
-using FamilyConceptTypes = ygg::MapTypeListSecondT<Concept, Family, runir::kr::dl::FamilyConceptConstructorTags<Family>>;
+using FamilyConceptTypes = ygg::MapTypeListT<Concept, runir::kr::dl::GenerationConceptConstructorTags>;
 
-template<runir::kr::dl::FamilyTag Family>
-using FamilyRoleTypes = ygg::MapTypeListSecondT<Role, Family, runir::kr::dl::FamilyRoleConstructorTags<Family>>;
+using FamilyRoleTypes = ygg::MapTypeListT<Role, runir::kr::dl::GenerationRoleConstructorTags>;
 
-template<runir::kr::dl::FamilyTag Family>
-using FamilyBooleanTypes = ygg::MapTypeListSecondT<Boolean, Family, runir::kr::dl::FamilyBooleanConstructorTags<Family>>;
+using FamilyBooleanTypes = ygg::MapTypeListT<Boolean, runir::kr::dl::GenerationBooleanConstructorTags>;
 
-template<runir::kr::dl::FamilyTag Family>
-using FamilyNumericalTypes = ygg::MapTypeListSecondT<Numerical, Family, runir::kr::dl::FamilyNumericalConstructorTags<Family>>;
+using FamilyNumericalTypes = ygg::MapTypeListT<Numerical, runir::kr::dl::GenerationNumericalConstructorTags>;
 
-template<runir::kr::dl::FamilyTag Family>
-using FamilyConstructorTypes = ygg::MapTypeListSecondT<Constructor, Family, runir::kr::dl::CategoryTags>;
+using FamilyConstructorTypes = ygg::MapTypeListT<Constructor, runir::kr::dl::CategoryTags>;
 
-template<runir::kr::dl::FamilyTag Family>
-using FamilyConstructorOrNonTerminalTypes = ygg::MapTypeListSecondT<ConstructorOrNonTerminal, Family, runir::kr::dl::CategoryTags>;
+using FamilyConstructorOrNonTerminalTypes = ygg::MapTypeListT<ConstructorOrNonTerminal, runir::kr::dl::CategoryTags>;
 
-template<runir::kr::dl::FamilyTag Family>
-using FamilyNonTerminalTypes = ygg::MapTypeListSecondT<NonTerminal, Family, runir::kr::dl::CategoryTags>;
+using FamilyNonTerminalTypes = ygg::MapTypeListT<NonTerminal, runir::kr::dl::CategoryTags>;
 
-template<runir::kr::dl::FamilyTag Family>
-using FamilyDerivationRuleTypes = ygg::MapTypeListSecondT<DerivationRule, Family, runir::kr::dl::CategoryTags>;
+using FamilyDerivationRuleTypes = ygg::MapTypeListT<DerivationRule, runir::kr::dl::CategoryTags>;
 
-template<runir::kr::dl::FamilyTag Family>
-using FamilyGrammarTypes = ygg::TypeList<GrammarTag<Family>>;
+using FamilyGrammarTypes = ygg::TypeList<GrammarTag>;
 
-template<runir::kr::dl::FamilyTag Family>
-using FamilyConstructorRepositoryTypes = ygg::ConcatTypeListsT<FamilyConceptTypes<Family>,
-                                                               FamilyRoleTypes<Family>,
-                                                               FamilyBooleanTypes<Family>,
-                                                               FamilyNumericalTypes<Family>,
-                                                               FamilyConstructorTypes<Family>,
-                                                               FamilyConstructorOrNonTerminalTypes<Family>,
-                                                               FamilyNonTerminalTypes<Family>,
-                                                               FamilyDerivationRuleTypes<Family>,
-                                                               FamilyGrammarTypes<Family>>;
+using FamilyConstructorRepositoryTypes = ygg::ConcatTypeListsT<FamilyConceptTypes,
+                                                               FamilyRoleTypes,
+                                                               FamilyBooleanTypes,
+                                                               FamilyNumericalTypes,
+                                                               FamilyConstructorTypes,
+                                                               FamilyConstructorOrNonTerminalTypes,
+                                                               FamilyNonTerminalTypes,
+                                                               FamilyDerivationRuleTypes,
+                                                               FamilyGrammarTypes>;
 
-template<runir::kr::dl::FamilyTag Family>
-using BasicConstructorRepository = runir::kr::dl::detail::ConstructorRepository<Family, FamilyConstructorRepositoryTypes<Family>>;
+using BasicConstructorRepository = runir::kr::dl::detail::ConstructorRepository<FamilyConstructorRepositoryTypes>;
 
-template<runir::kr::dl::FamilyTag Family>
-using BasicConstructorRepositoryFactory = runir::kr::dl::detail::ConstructorRepositoryFactory<Family, FamilyConstructorRepositoryTypes<Family>>;
+using BasicConstructorRepositoryFactory = runir::kr::dl::detail::ConstructorRepositoryFactory<FamilyConstructorRepositoryTypes>;
 
-template<runir::kr::dl::FamilyTag Family>
-using ConstructorRepositoryFor = BasicConstructorRepository<Family>;
+using ConstructorRepositoryFor = BasicConstructorRepository;
 
-template<runir::kr::dl::FamilyTag Family>
-using ConstructorRepositoryPtrFor = std::shared_ptr<ConstructorRepositoryFor<Family>>;
+using ConstructorRepositoryPtrFor = std::shared_ptr<ConstructorRepositoryFor>;
 
-template<runir::kr::dl::FamilyTag Family>
-using ConstructorRepositoryFactoryFor = BasicConstructorRepositoryFactory<Family>;
-
-template<runir::kr::dl::FamilyTag Family, typename Tag>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
-using FamilyConceptView = ygg::View<ygg::Index<Concept<Family, Tag>>, ConstructorRepositoryFor<Family>>;
-
-template<runir::kr::dl::FamilyTag Family, typename Tag>
-    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
-using FamilyRoleView = ygg::View<ygg::Index<Role<Family, Tag>>, ConstructorRepositoryFor<Family>>;
-
-template<runir::kr::dl::FamilyTag Family, typename Tag>
-    requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
-using FamilyBooleanView = ygg::View<ygg::Index<Boolean<Family, Tag>>, ConstructorRepositoryFor<Family>>;
-
-template<runir::kr::dl::FamilyTag Family, typename Tag>
-    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
-using FamilyNumericalView = ygg::View<ygg::Index<Numerical<Family, Tag>>, ConstructorRepositoryFor<Family>>;
-
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-using FamilyConstructorView = ygg::View<ygg::Index<Constructor<Family, Category>>, ConstructorRepositoryFor<Family>>;
-
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-using FamilyConstructorOrNonTerminalView = ygg::View<ygg::Index<ConstructorOrNonTerminal<Family, Category>>, ConstructorRepositoryFor<Family>>;
-
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-using FamilyNonTerminalView = ygg::View<ygg::Index<NonTerminal<Family, Category>>, ConstructorRepositoryFor<Family>>;
-
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-using FamilyDerivationRuleView = ygg::View<ygg::Index<DerivationRule<Family, Category>>, ConstructorRepositoryFor<Family>>;
-
-template<runir::kr::dl::FamilyTag Family>
-using FamilyGrammarView = ygg::View<ygg::Index<GrammarTag<Family>>, ConstructorRepositoryFor<Family>>;
-
-using BaseConstructorRepository = ConstructorRepositoryFor<runir::kr::BaseFamilyTag>;
-using BaseConstructorRepositoryFactory = ConstructorRepositoryFactoryFor<runir::kr::BaseFamilyTag>;
-using BaseGrammarView = FamilyGrammarView<runir::kr::BaseFamilyTag>;
-
-using ExtConstructorRepository = ConstructorRepositoryFor<runir::kr::ExtFamilyTag>;
-using ExtConstructorRepositoryFactory = ConstructorRepositoryFactoryFor<runir::kr::ExtFamilyTag>;
-using ExtGrammarView = FamilyGrammarView<runir::kr::ExtFamilyTag>;
-
-using UnsConstructorRepository = ConstructorRepositoryFor<runir::kr::UnsFamilyTag>;
-using UnsConstructorRepositoryFactory = ConstructorRepositoryFactoryFor<runir::kr::UnsFamilyTag>;
-using UnsGrammarView = FamilyGrammarView<runir::kr::UnsFamilyTag>;
+using ConstructorRepositoryFactoryFor = BasicConstructorRepositoryFactory;
 
 template<typename Tag>
-    requires runir::kr::dl::FamilyConceptConstructorTag<runir::kr::BaseFamilyTag, Tag>
-using BaseConceptView = FamilyConceptView<runir::kr::BaseFamilyTag, Tag>;
+    requires runir::kr::dl::FamilyConceptConstructorTag<Tag>
+using FamilyConceptView = ygg::View<ygg::Index<Concept<Tag>>, ConstructorRepositoryFor>;
 
 template<typename Tag>
-    requires runir::kr::dl::FamilyRoleConstructorTag<runir::kr::BaseFamilyTag, Tag>
-using BaseRoleView = FamilyRoleView<runir::kr::BaseFamilyTag, Tag>;
+    requires runir::kr::dl::FamilyRoleConstructorTag<Tag>
+using FamilyRoleView = ygg::View<ygg::Index<Role<Tag>>, ConstructorRepositoryFor>;
 
 template<typename Tag>
-    requires runir::kr::dl::FamilyBooleanConstructorTag<runir::kr::BaseFamilyTag, Tag>
-using BaseBooleanView = FamilyBooleanView<runir::kr::BaseFamilyTag, Tag>;
+    requires runir::kr::dl::FamilyBooleanConstructorTag<Tag>
+using FamilyBooleanView = ygg::View<ygg::Index<Boolean<Tag>>, ConstructorRepositoryFor>;
 
 template<typename Tag>
-    requires runir::kr::dl::FamilyNumericalConstructorTag<runir::kr::BaseFamilyTag, Tag>
-using BaseNumericalView = FamilyNumericalView<runir::kr::BaseFamilyTag, Tag>;
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Tag>
+using FamilyNumericalView = ygg::View<ygg::Index<Numerical<Tag>>, ConstructorRepositoryFor>;
 
 template<runir::kr::dl::CategoryTag Category>
-using BaseConstructorView = FamilyConstructorView<runir::kr::BaseFamilyTag, Category>;
+using FamilyConstructorView = ygg::View<ygg::Index<Constructor<Category>>, ConstructorRepositoryFor>;
 
 template<runir::kr::dl::CategoryTag Category>
-using BaseConstructorOrNonTerminalView = FamilyConstructorOrNonTerminalView<runir::kr::BaseFamilyTag, Category>;
+using FamilyConstructorOrNonTerminalView = ygg::View<ygg::Index<ConstructorOrNonTerminal<Category>>, ConstructorRepositoryFor>;
 
 template<runir::kr::dl::CategoryTag Category>
-using BaseNonTerminalView = FamilyNonTerminalView<runir::kr::BaseFamilyTag, Category>;
+using FamilyNonTerminalView = ygg::View<ygg::Index<NonTerminal<Category>>, ConstructorRepositoryFor>;
 
 template<runir::kr::dl::CategoryTag Category>
-using BaseDerivationRuleView = FamilyDerivationRuleView<runir::kr::BaseFamilyTag, Category>;
+using FamilyDerivationRuleView = ygg::View<ygg::Index<DerivationRule<Category>>, ConstructorRepositoryFor>;
+
+using FamilyGrammarView = ygg::View<ygg::Index<GrammarTag>, ConstructorRepositoryFor>;
+
+using BaseConstructorRepository = ConstructorRepositoryFor;
+using BaseConstructorRepositoryFactory = ConstructorRepositoryFactoryFor;
+using BaseGrammarView = FamilyGrammarView;
+
+using ExtConstructorRepository = ConstructorRepositoryFor;
+using ExtConstructorRepositoryFactory = ConstructorRepositoryFactoryFor;
+using ExtGrammarView = FamilyGrammarView;
+
+using UnsConstructorRepository = ConstructorRepositoryFor;
+using UnsConstructorRepositoryFactory = ConstructorRepositoryFactoryFor;
+using UnsGrammarView = FamilyGrammarView;
+
+template<typename Tag>
+    requires runir::kr::dl::FamilyConceptConstructorTag<Tag>
+using BaseConceptView = FamilyConceptView<Tag>;
+
+template<typename Tag>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Tag>
+using BaseRoleView = FamilyRoleView<Tag>;
+
+template<typename Tag>
+    requires runir::kr::dl::FamilyBooleanConstructorTag<Tag>
+using BaseBooleanView = FamilyBooleanView<Tag>;
+
+template<typename Tag>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Tag>
+using BaseNumericalView = FamilyNumericalView<Tag>;
+
+template<runir::kr::dl::CategoryTag Category>
+using BaseConstructorView = FamilyConstructorView<Category>;
+
+template<runir::kr::dl::CategoryTag Category>
+using BaseConstructorOrNonTerminalView = FamilyConstructorOrNonTerminalView<Category>;
+
+template<runir::kr::dl::CategoryTag Category>
+using BaseNonTerminalView = FamilyNonTerminalView<Category>;
+
+template<runir::kr::dl::CategoryTag Category>
+using BaseDerivationRuleView = FamilyDerivationRuleView<Category>;
 
 }  // namespace runir::kr::dl::grammar
 

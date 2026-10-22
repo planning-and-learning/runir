@@ -14,12 +14,12 @@
 namespace runir::kr::dl::detail
 {
 
-template<FamilyTag Family, typename RepositoryTypes>
-class ConstructorRepository : public ygg::formalism::SymbolRepositoryBase<ConstructorRepository<Family, RepositoryTypes>, RepositoryTypes>
+template<typename RepositoryTypes>
+class ConstructorRepository : public ygg::formalism::SymbolRepositoryBase<ConstructorRepository<RepositoryTypes>, RepositoryTypes>
 {
-    using Base = ygg::formalism::SymbolRepositoryBase<ConstructorRepository<Family, RepositoryTypes>, RepositoryTypes>;
+    using Base = ygg::formalism::SymbolRepositoryBase<ConstructorRepository<RepositoryTypes>, RepositoryTypes>;
 
-    friend class ConstructorRepositoryFactory<Family, RepositoryTypes>;
+    friend class ConstructorRepositoryFactory<RepositoryTypes>;
 
 private:
     std::shared_ptr<const tyr::formalism::planning::Repository> m_planning_repository;
@@ -64,7 +64,7 @@ public:
     }
 };
 
-template<FamilyTag Family, typename RepositoryTypes>
+template<typename RepositoryTypes>
 class ConstructorRepositoryFactory
 {
 private:
@@ -75,17 +75,17 @@ public:
 
     /// Defined in detail/constructor_repository_impl.hpp: an in-class definition would construct and destroy every
     /// symbol pool in each caller (template rule 7).
-    std::shared_ptr<ConstructorRepository<Family, RepositoryTypes>> create(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository);
+    std::shared_ptr<ConstructorRepository<RepositoryTypes>> create(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository);
 };
 
-template<FamilyTag Family, typename RepositoryTypes>
-inline const ConstructorRepository<Family, RepositoryTypes>& get_repository(const ConstructorRepository<Family, RepositoryTypes>& repository) noexcept
+template<typename RepositoryTypes>
+inline const ConstructorRepository<RepositoryTypes>& get_repository(const ConstructorRepository<RepositoryTypes>& repository) noexcept
 {
     return repository;
 }
 
-template<FamilyTag Family, typename RepositoryTypes>
-inline ConstructorRepository<Family, RepositoryTypes>& get_repository(ConstructorRepository<Family, RepositoryTypes>& repository) noexcept
+template<typename RepositoryTypes>
+inline ConstructorRepository<RepositoryTypes>& get_repository(ConstructorRepository<RepositoryTypes>& repository) noexcept
 {
     return repository;
 }

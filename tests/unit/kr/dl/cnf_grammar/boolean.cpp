@@ -24,15 +24,13 @@ concept IndexedDataView =
            view.get_index();
        };
 
-template<typename Family, typename... Ts>
+template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
 {
-    return (IndexedDataView<Ts, kr::dl::cnf_grammar::ConstructorRepositoryFor<Family>> && ...);
+    return (IndexedDataView<Ts, kr::dl::cnf_grammar::ConstructorRepositoryFor> && ...);
 }
 
-static_assert(indexed_data_views<kr::BaseFamilyTag>(kr::dl::cnf_grammar::FamilyBooleanTypes<kr::BaseFamilyTag> {}));
-static_assert(indexed_data_views<kr::ExtFamilyTag>(kr::dl::cnf_grammar::FamilyBooleanTypes<kr::ExtFamilyTag> {}));
-static_assert(indexed_data_views<kr::UnsFamilyTag>(kr::dl::cnf_grammar::FamilyBooleanTypes<kr::UnsFamilyTag> {}));
+static_assert(indexed_data_views<>(kr::dl::cnf_grammar::FamilyBooleanTypes {}));
 
 using PredicateTags = ygg::TypeList<kr::dl::AtomicStateTag<tyr::formalism::StaticTag>,
                                     kr::dl::AtomicStateTag<tyr::formalism::FluentTag>,
@@ -42,15 +40,15 @@ using PredicateTags = ygg::TypeList<kr::dl::AtomicStateTag<tyr::formalism::Stati
                                     kr::dl::AtomicGoalTag<tyr::formalism::DerivedTag>>;
 using LogicalBinaryTags = ygg::TypeList<kr::dl::AndTag, kr::dl::OrTag>;
 
-template<typename Family, typename Tag>
+template<typename Tag>
 consteval bool boolean_data_view()
 {
-    using Entity = kr::dl::cnf_grammar::Boolean<Family, Tag>;
+    using Entity = kr::dl::cnf_grammar::Boolean<Tag>;
     using Data = ygg::Data<Entity>;
-    using View = ygg::View<ygg::Index<Entity>, kr::dl::cnf_grammar::ConstructorRepositoryFor<Family>>;
+    using View = ygg::View<ygg::Index<Entity>, kr::dl::cnf_grammar::ConstructorRepositoryFor>;
 
-    static_assert(std::same_as<View, kr::dl::cnf_grammar::FamilyBooleanView<Family, Tag>>);
-    if constexpr (std::same_as<Family, kr::BaseFamilyTag>)
+    static_assert(std::same_as<View, kr::dl::cnf_grammar::FamilyBooleanView<Tag>>);
+    if constexpr (false)
         static_assert(std::same_as<View, kr::dl::cnf_grammar::BaseBooleanView<Tag>>);
 
     if constexpr (ygg::InTypeList<Tag, PredicateTags>)
@@ -86,15 +84,13 @@ consteval bool boolean_data_view()
         return false;
 }
 
-template<typename Family, typename... Tags>
+template<typename... Tags>
 consteval bool boolean_data_views(ygg::TypeList<Tags...>)
 {
-    return (boolean_data_view<Family, Tags>() && ...);
+    return (boolean_data_view<Tags>() && ...);
 }
 
-static_assert(boolean_data_views<kr::BaseFamilyTag>(kr::dl::FamilyBooleanConstructorTags<kr::BaseFamilyTag> {}));
-static_assert(boolean_data_views<kr::ExtFamilyTag>(kr::dl::FamilyBooleanConstructorTags<kr::ExtFamilyTag> {}));
-static_assert(boolean_data_views<kr::UnsFamilyTag>(kr::dl::FamilyBooleanConstructorTags<kr::UnsFamilyTag> {}));
+static_assert(boolean_data_views(kr::dl::GenerationBooleanConstructorTags {}));
 
 }  // namespace
 

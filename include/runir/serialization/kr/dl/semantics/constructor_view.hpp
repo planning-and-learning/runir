@@ -14,8 +14,8 @@
 namespace ygg::serialization
 {
 
-template<typename Archive, runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
-void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Constructor<Family, Category>>, C>>)
+template<typename Archive, runir::kr::dl::CategoryTag Category, typename C>
+void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Constructor<Category>>, C>>)
 {
     ar.variant([](const auto& value) -> decltype(auto) { return (value.get_variant()); });
 }

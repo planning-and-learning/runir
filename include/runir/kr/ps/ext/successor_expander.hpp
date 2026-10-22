@@ -23,7 +23,7 @@ namespace runir::kr::ps::ext
 /// With TransientExecutionStorage, returned states and steps must not outlive it either.
 template<tyr::TaskKind Kind,
          ExecutionStorageConcept<Kind> ExecutionStorage = InternedExecutionStorage<Kind>,
-         runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<ExtFamilyTag, Kind>>
+         runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<Kind>>
 class SuccessorExpander
 {
 public:

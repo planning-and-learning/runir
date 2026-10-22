@@ -10,14 +10,14 @@ namespace runir::kr::dl::semantics
 {
 
 /// Evaluate DL expressions without requiring their results to own or intern storage.
-template<typename Context, typename Family, typename Kind>
-concept EvaluationContextConcept = FamilyTag<Family> && tyr::TaskKind<Kind>
+template<typename Context, typename Kind>
+concept EvaluationContextConcept = tyr::TaskKind<Kind>
                                    && requires(Context& context,
-                                               FamilyConstructorView<Family, BooleanTag> boolean,
-                                               FamilyConstructorView<Family, NumericalTag> numerical,
-                                               FamilyConstructorView<Family, ConceptTag> concept_,
-                                               FamilyConstructorView<Family, RoleTag> role,
-                                               FamilyQueryView<Family> query) {
+                                               FamilyConstructorView<BooleanTag> boolean,
+                                               FamilyConstructorView<NumericalTag> numerical,
+                                               FamilyConstructorView<ConceptTag> concept_,
+                                               FamilyConstructorView<RoleTag> role,
+                                               FamilyQueryView<> query) {
                                           { evaluate<Kind>(boolean, context) } -> DenotationViewConcept<BooleanTag>;
                                           { evaluate<Kind>(numerical, context) } -> DenotationViewConcept<NumericalTag>;
                                           { evaluate<Kind>(concept_, context) } -> DenotationViewConcept<ConceptTag>;

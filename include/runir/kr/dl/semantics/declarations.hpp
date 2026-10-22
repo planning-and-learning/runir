@@ -39,9 +39,7 @@ class DenotationRepository;
 class DenotationRepositoryFactory;
 class EvaluationWorkspace;
 
-template<FamilyTag Family>
 class DenotationCaches;
-template<FamilyTag Family>
 class EvaluationStorage;
 
 using RegisterValuesView = ygg::View<ygg::Index<RegisterValues>, DenotationRepository>;

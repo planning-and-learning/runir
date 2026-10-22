@@ -12,7 +12,7 @@
 namespace runir::kr::dl::semantics::incremental::detail
 {
 
-template<FamilyTag Family, tyr::TaskKind Kind, CategoryTag Category, typename Tag, BooleanOrNumericalTag Input>
+template<tyr::TaskKind Kind, CategoryTag Category, typename Tag, BooleanOrNumericalTag Input>
 struct ScalarBinaryEvaluator
 {
     EvaluationIndex<Input> lhs;
@@ -20,7 +20,7 @@ struct ScalarBinaryEvaluator
     DenotationState<Category> value;
 
     ScalarBinaryEvaluator(EvaluationIndex<Input> lhs, EvaluationIndex<Input> rhs) : lhs(lhs), rhs(rhs) {}
-    void refresh(EvaluationGraph<Family, Kind>& graph)
+    void refresh(EvaluationGraph<Kind>& graph)
     {
         if constexpr (NumericalBinaryTag<Tag>)
             value.set(semantics::detail::apply_numerical_binary<Tag>(graph.result(lhs).get(), graph.result(rhs).get()));
@@ -29,30 +29,27 @@ struct ScalarBinaryEvaluator
         else
             value.set(semantics::detail::apply_comparison<Tag>(graph.result(lhs).get(), graph.result(rhs).get()));
     }
-    template<StateEvaluationContextConcept<Family, Kind> Context>
-    void initialize(EvaluationGraph<Family, Kind>& graph, Context&)
+    template<StateEvaluationContextConcept<Kind> Context>
+    void initialize(EvaluationGraph<Kind>& graph, Context&)
     {
         refresh(graph);
     }
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace&) { refresh(graph); }
+    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&) { refresh(graph); }
 };
 
-template<FamilyTag Family, tyr::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct LogicalNotEvaluator
 {
     EvaluationIndex<BooleanTag> child;
     DenotationState<BooleanTag> value;
 
     explicit LogicalNotEvaluator(EvaluationIndex<BooleanTag> child) : child(child) {}
-    template<StateEvaluationContextConcept<Family, Kind> Context>
-    void initialize(EvaluationGraph<Family, Kind>& graph, Context&)
+    template<StateEvaluationContextConcept<Kind> Context>
+    void initialize(EvaluationGraph<Kind>& graph, Context&)
     {
         value.set(!graph.result(child).get());
     }
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace&)
-    {
-        value.set(!graph.result(child).get());
-    }
+    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&) { value.set(!graph.result(child).get()); }
 };
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

@@ -13,24 +13,24 @@
 namespace runir::kr::dl
 {
 
-template<FamilyTag Family, ConceptOrRoleTag Category>
-void canonicalize(ygg::Data<QueryProjection<Family, Category>>&) noexcept
+template<ConceptOrRoleTag Category>
+void canonicalize(ygg::Data<QueryProjection<Category>>&) noexcept
 {
 }
-template<FamilyTag Family, ConceptOrRoleTag Category>
-bool is_canonical(const ygg::Data<QueryProjection<Family, Category>>&) noexcept
+template<ConceptOrRoleTag Category>
+bool is_canonical(const ygg::Data<QueryProjection<Category>>&) noexcept
 {
     return true;
 }
 
 inline void canonicalize(ygg::Data<QueryColumn>&) noexcept {}
 inline bool is_canonical(const ygg::Data<QueryColumn>&) noexcept { return true; }
-template<FamilyTag Family, typename Tag>
-void canonicalize(ygg::Data<Query<Family, Tag>>&) noexcept
+template<typename Tag>
+void canonicalize(ygg::Data<Query<Tag>>&) noexcept
 {
 }
-template<FamilyTag Family, typename Tag>
-bool is_canonical(const ygg::Data<Query<Family, Tag>>&) noexcept
+template<typename Tag>
+bool is_canonical(const ygg::Data<Query<Tag>>&) noexcept
 {
     return true;
 }
@@ -47,36 +47,36 @@ void canonicalize_commutative_binary(ygg::Data<T>& data) noexcept
         std::swap(data.lhs, data.rhs);
 }
 
-template<FamilyTag Family, typename Tag>
-    requires FamilyConceptConstructorTag<Family, Tag>
-bool is_canonical(const ygg::Data<FamilyConcept<Family, Tag>>&) noexcept
+template<typename Tag>
+    requires FamilyConceptConstructorTag<Tag>
+bool is_canonical(const ygg::Data<FamilyConcept<Tag>>&) noexcept
 {
     return true;
 }
 
-template<FamilyTag Family, typename Tag>
-    requires FamilyRoleConstructorTag<Family, Tag>
-bool is_canonical(const ygg::Data<FamilyRole<Family, Tag>>&) noexcept
+template<typename Tag>
+    requires FamilyRoleConstructorTag<Tag>
+bool is_canonical(const ygg::Data<FamilyRole<Tag>>&) noexcept
 {
     return true;
 }
 
-template<FamilyTag Family, typename Tag>
-    requires FamilyBooleanConstructorTag<Family, Tag>
-bool is_canonical(const ygg::Data<FamilyBoolean<Family, Tag>>&) noexcept
+template<typename Tag>
+    requires FamilyBooleanConstructorTag<Tag>
+bool is_canonical(const ygg::Data<FamilyBoolean<Tag>>&) noexcept
 {
     return true;
 }
 
-template<FamilyTag Family, typename Tag>
-    requires FamilyNumericalConstructorTag<Family, Tag>
-bool is_canonical(const ygg::Data<FamilyNumerical<Family, Tag>>&) noexcept
+template<typename Tag>
+    requires FamilyNumericalConstructorTag<Tag>
+bool is_canonical(const ygg::Data<FamilyNumerical<Tag>>&) noexcept
 {
     return true;
 }
 
-template<FamilyTag Family, CategoryTag Category>
-bool is_canonical(const ygg::Data<FamilyConstructor<Family, Category>>&) noexcept
+template<CategoryTag Category>
+bool is_canonical(const ygg::Data<FamilyConstructor<Category>>&) noexcept
 {
     return true;
 }
@@ -93,36 +93,36 @@ bool is_canonical(const ygg::Data<Register<Category>>&) noexcept
     return true;
 }
 
-template<FamilyTag Family, typename Tag>
-    requires FamilyConceptConstructorTag<Family, Tag>
-void canonicalize(ygg::Data<FamilyConcept<Family, Tag>>&) noexcept
+template<typename Tag>
+    requires FamilyConceptConstructorTag<Tag>
+void canonicalize(ygg::Data<FamilyConcept<Tag>>&) noexcept
 {
     // Trivially canonical
 }
 
-template<FamilyTag Family, typename Tag>
-    requires FamilyRoleConstructorTag<Family, Tag>
-void canonicalize(ygg::Data<FamilyRole<Family, Tag>>&) noexcept
+template<typename Tag>
+    requires FamilyRoleConstructorTag<Tag>
+void canonicalize(ygg::Data<FamilyRole<Tag>>&) noexcept
 {
     // Trivially canonical
 }
 
-template<FamilyTag Family, typename Tag>
-    requires FamilyBooleanConstructorTag<Family, Tag>
-void canonicalize(ygg::Data<FamilyBoolean<Family, Tag>>&) noexcept
+template<typename Tag>
+    requires FamilyBooleanConstructorTag<Tag>
+void canonicalize(ygg::Data<FamilyBoolean<Tag>>&) noexcept
 {
     // Trivially canonical
 }
 
-template<FamilyTag Family, typename Tag>
-    requires FamilyNumericalConstructorTag<Family, Tag>
-void canonicalize(ygg::Data<FamilyNumerical<Family, Tag>>&) noexcept
+template<typename Tag>
+    requires FamilyNumericalConstructorTag<Tag>
+void canonicalize(ygg::Data<FamilyNumerical<Tag>>&) noexcept
 {
     // Trivially canonical
 }
 
-template<FamilyTag Family, CategoryTag Category>
-void canonicalize(ygg::Data<FamilyConstructor<Family, Category>>&) noexcept
+template<CategoryTag Category>
+void canonicalize(ygg::Data<FamilyConstructor<Category>>&) noexcept
 {
     // Trivially canonical
 }
@@ -139,65 +139,25 @@ void canonicalize(ygg::Data<Register<Category>>&) noexcept
     // Trivially canonical
 }
 
-template<FamilyTag Family>
-inline bool is_canonical(const ygg::Data<FamilyConcept<Family, IntersectionTag>>& data) noexcept
-{
-    return data.lhs <= data.rhs;
-}
+inline bool is_canonical(const ygg::Data<FamilyConcept<IntersectionTag>>& data) noexcept { return data.lhs <= data.rhs; }
 
-template<FamilyTag Family>
-inline bool is_canonical(const ygg::Data<FamilyConcept<Family, UnionTag>>& data) noexcept
-{
-    return data.lhs <= data.rhs;
-}
+inline bool is_canonical(const ygg::Data<FamilyConcept<UnionTag>>& data) noexcept { return data.lhs <= data.rhs; }
 
-template<FamilyTag Family>
-inline bool is_canonical(const ygg::Data<FamilyConcept<Family, AgreementTag>>& data) noexcept
-{
-    return data.lhs <= data.rhs;
-}
+inline bool is_canonical(const ygg::Data<FamilyConcept<AgreementTag>>& data) noexcept { return data.lhs <= data.rhs; }
 
-template<FamilyTag Family>
-inline bool is_canonical(const ygg::Data<FamilyRole<Family, IntersectionTag>>& data) noexcept
-{
-    return data.lhs <= data.rhs;
-}
+inline bool is_canonical(const ygg::Data<FamilyRole<IntersectionTag>>& data) noexcept { return data.lhs <= data.rhs; }
 
-template<FamilyTag Family>
-inline bool is_canonical(const ygg::Data<FamilyRole<Family, UnionTag>>& data) noexcept
-{
-    return data.lhs <= data.rhs;
-}
+inline bool is_canonical(const ygg::Data<FamilyRole<UnionTag>>& data) noexcept { return data.lhs <= data.rhs; }
 
-template<FamilyTag Family>
-inline void canonicalize(ygg::Data<FamilyConcept<Family, IntersectionTag>>& data) noexcept
-{
-    canonicalize_commutative_binary(data);
-}
+inline void canonicalize(ygg::Data<FamilyConcept<IntersectionTag>>& data) noexcept { canonicalize_commutative_binary(data); }
 
-template<FamilyTag Family>
-inline void canonicalize(ygg::Data<FamilyConcept<Family, UnionTag>>& data) noexcept
-{
-    canonicalize_commutative_binary(data);
-}
+inline void canonicalize(ygg::Data<FamilyConcept<UnionTag>>& data) noexcept { canonicalize_commutative_binary(data); }
 
-template<FamilyTag Family>
-inline void canonicalize(ygg::Data<FamilyConcept<Family, AgreementTag>>& data) noexcept
-{
-    canonicalize_commutative_binary(data);
-}
+inline void canonicalize(ygg::Data<FamilyConcept<AgreementTag>>& data) noexcept { canonicalize_commutative_binary(data); }
 
-template<FamilyTag Family>
-inline void canonicalize(ygg::Data<FamilyRole<Family, IntersectionTag>>& data) noexcept
-{
-    canonicalize_commutative_binary(data);
-}
+inline void canonicalize(ygg::Data<FamilyRole<IntersectionTag>>& data) noexcept { canonicalize_commutative_binary(data); }
 
-template<FamilyTag Family>
-inline void canonicalize(ygg::Data<FamilyRole<Family, UnionTag>>& data) noexcept
-{
-    canonicalize_commutative_binary(data);
-}
+inline void canonicalize(ygg::Data<FamilyRole<UnionTag>>& data) noexcept { canonicalize_commutative_binary(data); }
 
 }  // namespace runir
 

@@ -24,15 +24,13 @@ concept IndexedDataView =
            view.get_index();
        };
 
-template<typename Family, typename... Ts>
+template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
 {
-    return (IndexedDataView<Ts, kr::dl::grammar::ConstructorRepositoryFor<Family>> && ...);
+    return (IndexedDataView<Ts, kr::dl::grammar::ConstructorRepositoryFor> && ...);
 }
 
-static_assert(indexed_data_views<kr::BaseFamilyTag>(kr::dl::grammar::FamilyConceptTypes<kr::BaseFamilyTag> {}));
-static_assert(indexed_data_views<kr::ExtFamilyTag>(kr::dl::grammar::FamilyConceptTypes<kr::ExtFamilyTag> {}));
-static_assert(indexed_data_views<kr::UnsFamilyTag>(kr::dl::grammar::FamilyConceptTypes<kr::UnsFamilyTag> {}));
+static_assert(indexed_data_views<>(kr::dl::grammar::FamilyConceptTypes {}));
 
 using NullaryTags = ygg::TypeList<kr::dl::BotTag, kr::dl::TopTag>;
 using PredicateTags = ygg::TypeList<kr::dl::AtomicStateTag<tyr::formalism::StaticTag>,
@@ -51,15 +49,15 @@ using NumberRestrictionTags = ygg::TypeList<kr::dl::AtLeastNumberRestrictionTag,
 using QualifiedNumberRestrictionTags =
     ygg::TypeList<kr::dl::QualifiedAtLeastNumberRestrictionTag, kr::dl::QualifiedAtMostNumberRestrictionTag, kr::dl::QualifiedExactNumberRestrictionTag>;
 
-template<typename Family, typename Tag>
+template<typename Tag>
 consteval bool concept_data_view()
 {
-    using Entity = kr::dl::grammar::Concept<Family, Tag>;
+    using Entity = kr::dl::grammar::Concept<Tag>;
     using Data = ygg::Data<Entity>;
-    using View = ygg::View<ygg::Index<Entity>, kr::dl::grammar::ConstructorRepositoryFor<Family>>;
+    using View = ygg::View<ygg::Index<Entity>, kr::dl::grammar::ConstructorRepositoryFor>;
 
-    static_assert(std::same_as<View, kr::dl::grammar::FamilyConceptView<Family, Tag>>);
-    if constexpr (std::same_as<Family, kr::BaseFamilyTag>)
+    static_assert(std::same_as<View, kr::dl::grammar::FamilyConceptView<Tag>>);
+    if constexpr (false)
         static_assert(std::same_as<View, kr::dl::grammar::BaseConceptView<Tag>>);
 
     if constexpr (ygg::InTypeList<Tag, NullaryTags>)
@@ -128,15 +126,13 @@ consteval bool concept_data_view()
         return false;
 }
 
-template<typename Family, typename... Tags>
+template<typename... Tags>
 consteval bool concept_data_views(ygg::TypeList<Tags...>)
 {
-    return (concept_data_view<Family, Tags>() && ...);
+    return (concept_data_view<Tags>() && ...);
 }
 
-static_assert(concept_data_views<kr::BaseFamilyTag>(kr::dl::FamilyConceptConstructorTags<kr::BaseFamilyTag> {}));
-static_assert(concept_data_views<kr::ExtFamilyTag>(kr::dl::FamilyConceptConstructorTags<kr::ExtFamilyTag> {}));
-static_assert(concept_data_views<kr::UnsFamilyTag>(kr::dl::FamilyConceptConstructorTags<kr::UnsFamilyTag> {}));
+static_assert(concept_data_views(kr::dl::GenerationConceptConstructorTags {}));
 
 }  // namespace
 

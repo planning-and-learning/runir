@@ -122,28 +122,22 @@ const auto registers_section_def = context(":registers")[(lit("(") >> keyword(":
 
 const auto concept_feature_def =
     context("concept feature")[keyword("(:concept") > symbol_section
-                               > context(":expression")[(lit("(") >> keyword(":expression"))
-                                                        > runir::kr::dl::grammar::parser::concept_parser<runir::kr::ExtFamilyTag>() > lit(")")]
+                               > context(":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::concept_parser<>() > lit(")")]
                                > lit(")")];
 const auto role_feature_def = context(
-    "role feature")[keyword("(:role") > symbol_section > context(
-                        ":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::role_parser<runir::kr::ExtFamilyTag>() > lit(")")]
-                    > lit(")")];
+    "role feature")[keyword("(:role") > symbol_section
+                    > context(":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::role_parser<>() > lit(")")] > lit(")")];
 const auto boolean_feature_def =
     context("boolean feature")[keyword("(:boolean") > symbol_section
-                               > context(":expression")[(lit("(") >> keyword(":expression"))
-                                                        > runir::kr::dl::grammar::parser::boolean_parser<runir::kr::ExtFamilyTag>() > lit(")")]
+                               > context(":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::boolean_parser<>() > lit(")")]
                                > lit(")")];
-const auto numerical_feature_def =
-    context("numerical feature")[keyword("(:numerical") > symbol_section
-                                 > context(":expression")[(lit("(") >> keyword(":expression"))
-                                                          > runir::kr::dl::grammar::parser::numerical_parser<runir::kr::ExtFamilyTag>() > lit(")")]
-                                 > lit(")")];
-const auto query_feature_def =
-    context("query feature")[keyword("(:query") > symbol_section
-                             > context(":expression")[(lit("(") >> keyword(":expression"))
-                                                      > runir::kr::dl::grammar::parser::query_parser<runir::kr::ExtFamilyTag>() > lit(")")]
-                             > lit(")")];
+const auto numerical_feature_def = context(
+    "numerical feature")[keyword("(:numerical") > symbol_section
+                         > context(":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::numerical_parser<>() > lit(")")]
+                         > lit(")")];
+const auto query_feature_def = context(
+    "query feature")[keyword("(:query") > symbol_section
+                     > context(":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::query_parser<>() > lit(")")] > lit(")")];
 const auto feature_def = concept_feature | role_feature | boolean_feature | numerical_feature | query_feature;
 const auto features_section_def = context(":features")[(lit("(") >> keyword(":features")) > *feature > lit(")")];
 

@@ -11,19 +11,19 @@
 namespace runir::kr::dl::semantics::incremental::detail
 {
 
-template<FamilyTag Family, tyr::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct NonemptyEvaluator
 {
     std::variant<EvaluationIndex<ConceptTag>, EvaluationIndex<RoleTag>, QueryEvaluationIndex> child;
     DenotationState<BooleanTag> value;
 
     explicit NonemptyEvaluator(std::variant<EvaluationIndex<ConceptTag>, EvaluationIndex<RoleTag>, QueryEvaluationIndex> child) : child(child) {}
-    template<StateEvaluationContextConcept<Family, Kind> Context>
-    void initialize(EvaluationGraph<Family, Kind>& graph, Context&)
+    template<StateEvaluationContextConcept<Kind> Context>
+    void initialize(EvaluationGraph<Kind>& graph, Context&)
     {
         value.set(std::visit([&](auto index) { return graph.nonempty(index); }, child));
     }
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
     {
         value.set(std::visit(
             [&](auto index)

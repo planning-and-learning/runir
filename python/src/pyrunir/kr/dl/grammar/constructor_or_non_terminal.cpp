@@ -16,11 +16,11 @@ namespace
 template<CategoryTag Category>
 void bind_choice_data(nb::module_& m, const char* name)
 {
-    using Data = ygg::Data<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::BaseFamilyTag, Category>>;
+    using Data = ygg::Data<runir::kr::dl::grammar::ConstructorOrNonTerminal<Category>>;
     auto cls = nb::class_<Data>(m, name)
                    .def(nb::init<>())
                    .def(nb::init<DataVariant<Data>>(), nb::arg("variant"))
-                   .def(nb::init<DataViewVariant<Data, runir::kr::dl::grammar::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>>>(), nb::arg("variant"))
+                   .def(nb::init<DataViewVariant<Data, runir::kr::dl::grammar::ConstructorRepositoryFor>>(), nb::arg("variant"))
                    .def_rw("index", &Data::index)
                    .def_rw("variant", &Data::variant);
     ygg::add_comparison(cls);
@@ -29,8 +29,8 @@ void bind_choice_data(nb::module_& m, const char* name)
 template<CategoryTag Category>
 void bind_choice_view(nb::module_& m, const char* name)
 {
-    using Type = runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::BaseFamilyTag, Category>;
-    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::grammar::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>>;
+    using Type = runir::kr::dl::grammar::ConstructorOrNonTerminal<Category>;
+    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::grammar::ConstructorRepositoryFor>;
     auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index).def("get_variant", &View::get_variant);
     ygg::add_print(cls);
     ygg::add_comparison(cls);
@@ -41,10 +41,10 @@ void bind_choice_view(nb::module_& m, const char* name)
 
 void bind_grammar_constructor_or_non_terminal(nb::module_& m)
 {
-    using Concept = runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::BaseFamilyTag, ConceptTag>;
-    using Role = runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::BaseFamilyTag, RoleTag>;
-    using Boolean = runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::BaseFamilyTag, BooleanTag>;
-    using Numerical = runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::BaseFamilyTag, NumericalTag>;
+    using Concept = runir::kr::dl::grammar::ConstructorOrNonTerminal<ConceptTag>;
+    using Role = runir::kr::dl::grammar::ConstructorOrNonTerminal<RoleTag>;
+    using Boolean = runir::kr::dl::grammar::ConstructorOrNonTerminal<BooleanTag>;
+    using Numerical = runir::kr::dl::grammar::ConstructorOrNonTerminal<NumericalTag>;
 
     ygg::bind_index<ygg::Index<Concept>>(m, "ConceptConstructorOrNonTerminalIndex");
     ygg::bind_index<ygg::Index<Role>>(m, "RoleConstructorOrNonTerminalIndex");

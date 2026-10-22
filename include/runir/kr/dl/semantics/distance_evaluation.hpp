@@ -24,15 +24,15 @@ namespace runir::kr::dl::semantics::detail
 {
 
 /// The rows of an input slot in the current state.
-template<FamilyTag Family, tyr::TaskKind Kind, StateEvaluationContextConcept<Family, Kind> Context>
-QueryDenotationView evaluate_slot(const QuerySlot& slot, const ConstructorRepositoryFor<Family>& constructors, Context& context)
+template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
+QueryDenotationView evaluate_slot(const QuerySlot& slot, const ConstructorRepositoryFor& constructors, Context& context)
 {
-    return visit_slot<Family>(slot, constructors, [&](auto expression) { return evaluate_relation<Kind>(expression, slot.columns, context); });
+    return visit_slot<>(slot, constructors, [&](auto expression) { return evaluate_relation<Kind>(expression, slot.columns, context); });
 }
 
 /// Builds the min-distance evaluator of a feature with role edges, a relation of one slot.
-template<typename Distance, FamilyTag Family>
-DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePlan& plan, FamilyConstructorView<Family, RoleTag> edges)
+template<typename Distance>
+DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePlan& plan, FamilyConstructorView<RoleTag> edges)
 {
     const auto columns = plan.edge_columns().span();
     return { { QuerySlot { QuerySlot::Kind::ROLE, ygg::uint_t(edges.get_index()), { columns.begin(), columns.end() }, edges.is_static() } },
@@ -41,10 +41,10 @@ DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePla
 }
 
 /// Translates a feature's query edges and builds its min-distance evaluator.
-template<typename Distance, FamilyTag Family>
-DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePlan& plan, FamilyQueryView<Family> edges)
+template<typename Distance>
+DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePlan& plan, FamilyQueryView<> edges)
 {
-    auto translator = dl::detail::QueryTranslator<Family>(true);
+    auto translator = dl::detail::QueryTranslator(true);
     const auto query = translator.translate(edges);
     auto static_slots = std::vector<bool>();
     for (const auto& slot : translator.get_slots())
@@ -66,8 +66,8 @@ make_heuristic(const DistanceFeature<Distance>& feature, const ygg::database::Di
 
 /// Minimum distance from any source to any target, or uint_t's maximum if none is reachable, from the state alone
 /// (full evaluation): the arguments and the edge query's slots are evaluated in the state.
-template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context>
-ygg::uint_t on_demand_distance(FamilyNumericalView<Family, DistanceTag> constructor, Context& context)
+template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
+ygg::uint_t on_demand_distance(FamilyNumericalView<DistanceTag> constructor, Context& context)
 {
     const auto& plan = constructor.get_data().plan;
     auto children = context.child_context();
@@ -84,15 +84,15 @@ ygg::uint_t on_demand_distance(FamilyNumericalView<Family, DistanceTag> construc
                 ygg::uint_t(constructor.get_index()),
                 [&]
                 {
-                    auto feature = make_distance_feature<ygg::database::MinDistance<heuristics::ProjectionHeuristic>, Family>(plan, edges);
+                    auto feature = make_distance_feature<ygg::database::MinDistance<heuristics::ProjectionHeuristic>>(plan, edges);
                     auto heuristic = make_heuristic(feature,
                                                     plan,
-                                                    detail::num_objects<Family, Kind>(context),
-                                                    [&](size_t slot) { return evaluate_slot<Family, Kind>(feature.slots[slot], edges.get_context(), children); });
+                                                    detail::num_objects<Kind>(context),
+                                                    [&](size_t slot) { return evaluate_slot<Kind>(feature.slots[slot], edges.get_context(), children); });
                     return FullDistanceFeature { std::move(feature), std::move(heuristic) };
                 });
             feature.heuristic.update(targets);
-            const auto input = [&](size_t slot) { return evaluate_slot<Family, Kind>(feature.edges.slots[slot], edges.get_context(), children); };
+            const auto input = [&](size_t slot) { return evaluate_slot<Kind>(feature.edges.slots[slot], edges.get_context(), children); };
             return feature.edges.distance.min_distance(input, sources, targets, feature.heuristic);
         },
         constructor.get_mid());
@@ -108,10 +108,9 @@ inline ygg::Builder<ygg::database::Columns> vertex_columns(std::span<const ygg::
 }
 
 /// Translates a must-pass query's edges and builds its must-pass evaluator and the abstraction of its heuristic.
-template<FamilyTag Family>
-MustPassFeature make_must_pass_feature(const ygg::database::MustPassPlan& plan, FamilyQueryView<Family> edges)
+inline MustPassFeature make_must_pass_feature(const ygg::database::MustPassPlan& plan, FamilyQueryView<> edges)
 {
-    auto translator = dl::detail::QueryTranslator<Family>(true);
+    auto translator = dl::detail::QueryTranslator(true);
     const auto query = translator.translate(edges);
     auto static_slots = std::vector<bool>();
     for (const auto& slot : translator.get_slots())
@@ -149,10 +148,8 @@ must_pass_heuristic(MustPassFeature& feature, ygg::uint_t num_objects, const Slo
 
 /// The must-pass probe objects of every key, from the state alone (full evaluation): sources, targets, probes and the
 /// edge query's slots are evaluated in the state, and the edges are explored on demand.
-template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context, typename C>
-void on_demand_must_pass(ygg::View<ygg::Index<Query<Family, QueryMustPassTag>>, C> constructor,
-                         Context& context,
-                         ygg::Builder<ygg::database::Relation>& result)
+template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
+void on_demand_must_pass(ygg::View<ygg::Index<Query<QueryMustPassTag>>, C> constructor, Context& context, ygg::Builder<ygg::database::Relation>& result)
 {
     auto children = context.child_context();
     const auto sources = evaluate<Kind>(constructor.get_sources(), children);
@@ -162,9 +159,9 @@ void on_demand_must_pass(ygg::View<ygg::Index<Query<Family, QueryMustPassTag>>, 
     auto& feature = context.get_workspace().get_must_pass_feature(context.get_state().get_formalism_repository(),
                                                                   constructor.get_context(),
                                                                   ygg::uint_t(constructor.get_index()),
-                                                                  [&] { return make_must_pass_feature<Family>(constructor.get_data().plan, edges); });
-    const auto input = [&](size_t slot) { return evaluate_slot<Family, Kind>(feature.slots[slot], edges.get_context(), children); };
-    auto& heuristic = must_pass_heuristic(feature, detail::num_objects<Family, Kind>(context), input, targets);
+                                                                  [&] { return make_must_pass_feature(constructor.get_data().plan, edges); });
+    const auto input = [&](size_t slot) { return evaluate_slot<Kind>(feature.slots[slot], edges.get_context(), children); };
+    auto& heuristic = must_pass_heuristic(feature, detail::num_objects<Kind>(context), input, targets);
     feature.must_pass.must_pass(input, sources, targets, probes, result, heuristic);
 }
 

@@ -14,7 +14,7 @@ namespace
 template<CategoryTag Category>
 void bind_non_terminal_data(nb::module_& m, const char* name)
 {
-    using Data = ygg::Data<runir::kr::dl::grammar::NonTerminal<runir::kr::BaseFamilyTag, Category>>;
+    using Data = ygg::Data<runir::kr::dl::grammar::NonTerminal<Category>>;
     auto cls = nb::class_<Data>(m, name)
                    .def(nb::init<>())
                    .def(nb::init<::cista::offset::string>(), nb::arg("name"))
@@ -26,8 +26,8 @@ void bind_non_terminal_data(nb::module_& m, const char* name)
 template<CategoryTag Category>
 void bind_non_terminal_view(nb::module_& m, const char* name)
 {
-    using Type = runir::kr::dl::grammar::NonTerminal<runir::kr::BaseFamilyTag, Category>;
-    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::grammar::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>>;
+    using Type = runir::kr::dl::grammar::NonTerminal<Category>;
+    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::grammar::ConstructorRepositoryFor>;
     auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index).def("get_name", &View::get_name);
     ygg::add_print(cls);
     ygg::add_comparison(cls);
@@ -38,10 +38,10 @@ void bind_non_terminal_view(nb::module_& m, const char* name)
 
 void bind_grammar_non_terminal(nb::module_& m)
 {
-    using Concept = runir::kr::dl::grammar::NonTerminal<runir::kr::BaseFamilyTag, ConceptTag>;
-    using Role = runir::kr::dl::grammar::NonTerminal<runir::kr::BaseFamilyTag, RoleTag>;
-    using Boolean = runir::kr::dl::grammar::NonTerminal<runir::kr::BaseFamilyTag, BooleanTag>;
-    using Numerical = runir::kr::dl::grammar::NonTerminal<runir::kr::BaseFamilyTag, NumericalTag>;
+    using Concept = runir::kr::dl::grammar::NonTerminal<ConceptTag>;
+    using Role = runir::kr::dl::grammar::NonTerminal<RoleTag>;
+    using Boolean = runir::kr::dl::grammar::NonTerminal<BooleanTag>;
+    using Numerical = runir::kr::dl::grammar::NonTerminal<NumericalTag>;
 
     ygg::bind_index<ygg::Index<Concept>>(m, "ConceptNonTerminalIndex");
     ygg::bind_index<ygg::Index<Role>>(m, "RoleNonTerminalIndex");

@@ -12,11 +12,11 @@
 namespace ygg::serialization
 {
 
-template<typename Archive, runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
-void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Role<Family, Tag>>, C>>)
+template<typename Archive, typename Tag, typename C>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Tag>
+void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Role<Tag>>, C>>)
 {
-    using Value = View<Index<runir::kr::dl::Role<Family, Tag>>, C>;
+    using Value = View<Index<runir::kr::dl::Role<Tag>>, C>;
 
     if constexpr (requires(const Value& value) { value.get_predicate(); })
         ar.field("predicate", [](const auto& value) -> decltype(auto) { return (value.get_predicate()); });

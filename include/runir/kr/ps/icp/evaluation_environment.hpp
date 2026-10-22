@@ -13,19 +13,19 @@
 namespace runir::kr::ps::icp
 {
 
-template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<ExtFamilyTag, Kind>>
+template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<Kind>>
 class EvaluationEnvironment
 {
-    using StateContext = runir::kr::dl::semantics::StateEvaluationContext<ExtFamilyTag, Kind>;
+    using StateContext = runir::kr::dl::semantics::StateEvaluationContext<Kind>;
     TaskContext<Kind>& m_task;
     ProgramView m_program;
-    runir::kr::dl::semantics::EvaluationStorage<ExtFamilyTag> m_source_storage, m_target_storage;
+    runir::kr::dl::semantics::EvaluationStorage m_source_storage, m_target_storage;
     runir::kr::dl::semantics::CallArgumentsView m_arguments;
     EvaluationPolicy m_policy;
 
     static auto roots(ProgramView program)
     {
-        auto result = std::vector<runir::kr::dl::semantics::incremental::EvaluationRoot<ExtFamilyTag>> {};
+        auto result = std::vector<runir::kr::dl::semantics::incremental::EvaluationRoot> {};
         const auto append = [&]<typename FeatureTag>()
         {
             for (const auto feature : program.get_module().template get_features<FeatureTag>())

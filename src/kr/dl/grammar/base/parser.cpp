@@ -26,10 +26,10 @@ using AstFamily = runir::kr::ExtFamilyTag;
 
 struct ConstructorContext
 {
-    using Target = runir::kr::parser::constructors::GrammarTarget<GrammarFamily>;
+    using Target = runir::kr::parser::constructors::GrammarTarget;
 
-    ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository;
-    Builder<runir::kr::BaseFamilyTag>& builder;
+    ConstructorRepositoryFor& repository;
+    Builder& builder;
     const runir::kr::parser::DiagnosticContext& diagnostics;
 };
 
@@ -46,138 +46,133 @@ auto intern(const ConstructorContext& context, Initialize&& initialize)
     return runir::kr::dl::grammar::insert(context.repository, *data).first;
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-auto parse(const ast::NonTerminal<Family, Category>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+template<runir::kr::dl::CategoryTag Category>
+auto parse(const ast::NonTerminal<Category>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
-    return intern<NonTerminal<GrammarFamily, Category>>(context, [&](auto& data) { data.name = node.name.text; });
+    return intern<NonTerminal<Category>>(context, [&](auto& data) { data.name = node.name.text; });
 }
 
 template<runir::kr::dl::CategoryTag Category, typename Node>
-[[noreturn]] auto reject(const Node& node, const ConstructorContext& context, const char* what) -> FamilyConstructorView<GrammarFamily, Category>
+[[noreturn]] auto reject(const Node& node, const ConstructorContext& context, const char* what) -> FamilyConstructorView<Category>
 {
     context.diagnostics.throw_at(node, runir::kr::InvalidExpressionError(std::string(what) + " are not supported in generation grammars."));
 }
 
-auto parse(const ast::ConceptRegister<AstFamily>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+auto parse(const ast::ConceptRegister& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     return reject<ConceptTag>(node, context, "Registers");
 }
 
-auto parse(const ast::RoleRegister<AstFamily>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+auto parse(const ast::RoleRegister& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     return reject<RoleTag>(node, context, "Registers");
 }
 
-auto parse(const ast::ConceptArgument<AstFamily>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+auto parse(const ast::ConceptArgument& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     return reject<ConceptTag>(node, context, "Arguments");
 }
 
-auto parse(const ast::RoleArgument<AstFamily>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+auto parse(const ast::RoleArgument& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     return reject<RoleTag>(node, context, "Arguments");
 }
 
-auto parse(const ast::BooleanArgument<AstFamily>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+auto parse(const ast::BooleanArgument& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     return reject<BooleanTag>(node, context, "Arguments");
 }
 
-auto parse(const ast::NumericalArgument<AstFamily>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+auto parse(const ast::NumericalArgument& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     return reject<NumericalTag>(node, context, "Arguments");
 }
 
 template<typename Tag>
     requires(ComparisonTag<Tag> || LogicalBinaryTag<Tag>)
-auto parse(const ast::Constructor<AstFamily, BooleanTag, Tag>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+auto parse(const ast::Constructor<BooleanTag, Tag>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     return reject<BooleanTag>(node, context, "Boolean comparisons and connectives");
 }
 
-auto parse(const ast::BooleanNot<AstFamily>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+auto parse(const ast::BooleanNot& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     return reject<BooleanTag>(node, context, "Boolean comparisons and connectives");
 }
 
-auto parse(const ast::BooleanConstant<AstFamily>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+auto parse(const ast::BooleanConstant& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     return reject<BooleanTag>(node, context, "Boolean constants");
 }
 
-auto parse(const ast::NumericalConstant<AstFamily>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+auto parse(const ast::NumericalConstant& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     return reject<NumericalTag>(node, context, "Arithmetic expressions");
 }
 
 template<NumericalBinaryTag Tag>
-auto parse(const ast::Constructor<AstFamily, NumericalTag, Tag>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+auto parse(const ast::Constructor<NumericalTag, Tag>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     return reject<NumericalTag>(node, context, "Arithmetic expressions");
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-FamilyConstructorOrNonTerminalView<GrammarFamily, Category>
-parse(const ast::ConstructorOrNonTerminal<Family, Category>& node, tyr::formalism::planning::DomainView domain, const ConstructorContext& context)
+template<runir::kr::dl::CategoryTag Category>
+FamilyConstructorOrNonTerminalView<Category>
+parse(const ast::ConstructorOrNonTerminal<Category>& node, tyr::formalism::planning::DomainView domain, const ConstructorContext& context)
 {
     const auto index = boost::apply_visitor(
-        [&]<typename Arg>(const Arg& arg) -> ygg::Data<ConstructorOrNonTerminal<GrammarFamily, Category>>::Variant
+        [&]<typename Arg>(const Arg& arg) -> ygg::Data<ConstructorOrNonTerminal<Category>>::Variant
         {
             const auto& unwrapped = unwrap(arg);
-            if constexpr (std::same_as<Unwrapped<Arg>, ast::NonTerminal<Family, Category>>)
+            if constexpr (std::same_as<Unwrapped<Arg>, ast::NonTerminal<Category>>)
                 return parse(unwrapped, domain, context).get_index();
             else
                 return parse_constructor(unwrapped, domain, context).get_index();
         },
         node.get());
 
-    return intern<ConstructorOrNonTerminal<GrammarFamily, Category>>(context, [&](auto& data) { data.variant = index; });
+    return intern<ConstructorOrNonTerminal<Category>>(context, [&](auto& data) { data.variant = index; });
 }
 
-template<runir::kr::dl::FamilyTag Family>
-FamilyConstructorView<GrammarFamily, ConceptTag>
-parse(const ast::ConceptProject<Family>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+FamilyConstructorView<ConceptTag> parse(const ast::ConceptProject& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     context.diagnostics.throw_at(node, runir::kr::InvalidExpressionError("Relational expressions are not supported in generation grammars."));
 }
 
-template<runir::kr::dl::FamilyTag Family>
-FamilyConstructorView<GrammarFamily, RoleTag>
-parse(const ast::RoleProject<Family>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+FamilyConstructorView<RoleTag> parse(const ast::RoleProject& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     context.diagnostics.throw_at(node, runir::kr::InvalidExpressionError("Relational expressions are not supported in generation grammars."));
 }
 
-template<typename Result, runir::kr::dl::FamilyTag Family>
-Result parse_collection_operand(const ast::Query<Family>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+template<typename Result>
+Result parse_collection_operand(const ast::Query& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     context.diagnostics.throw_at(node, runir::kr::InvalidExpressionError("Relational expressions are not supported in generation grammars."));
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-auto parse(const ast::DerivationRule<Family, Category>& node, tyr::formalism::planning::DomainView domain, const ConstructorContext& context)
+template<runir::kr::dl::CategoryTag Category>
+auto parse(const ast::DerivationRule<Category>& node, tyr::formalism::planning::DomainView domain, const ConstructorContext& context)
 {
-    return intern<DerivationRule<GrammarFamily, Category>>(context,
-                                                           [&](auto& data)
-                                                           {
-                                                               for (const auto& symbol : node.rhs)
-                                                                   data.rhs.push_back(parse(symbol, domain, context).get_index());
-                                                               data.lhs = parse(node.lhs, domain, context).get_index();
-                                                           });
+    return intern<DerivationRule<Category>>(context,
+                                            [&](auto& data)
+                                            {
+                                                for (const auto& symbol : node.rhs)
+                                                    data.rhs.push_back(parse(symbol, domain, context).get_index());
+                                                data.lhs = parse(node.lhs, domain, context).get_index();
+                                            });
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-void append_derivation_rule(ygg::IndexList<DerivationRule<GrammarFamily, Category>>& rules,
-                            const ast::DerivationRule<Family, Category>& node,
+template<runir::kr::dl::CategoryTag Category>
+void append_derivation_rule(ygg::IndexList<DerivationRule<Category>>& rules,
+                            const ast::DerivationRule<Category>& node,
                             tyr::formalism::planning::DomainView domain,
                             const ConstructorContext& context)
 {
     rules.push_back(parse(node, domain, context).get_index());
 }
 
-template<runir::kr::dl::FamilyTag Family>
-void append_derivation_rule(ygg::Data<GrammarTag<GrammarFamily>>& data,
-                            const ast::DerivationRuleVariant<Family>& node,
+void append_derivation_rule(ygg::Data<GrammarTag>& data,
+                            const ast::DerivationRuleVariant& node,
                             tyr::formalism::planning::DomainView domain,
                             const ConstructorContext& context)
 {
@@ -214,25 +209,23 @@ auto fixed_start_name()
 template<runir::kr::dl::CategoryTag Category>
 auto parse_fixed_start(tyr::formalism::planning::DomainView domain, const ConstructorContext& context)
 {
-    ast::NonTerminal<AstFamily, Category> start;
+    ast::NonTerminal<Category> start;
     start.name.text = fixed_start_name<Category>();
     return parse(start, domain, context).get_index();
 }
 
-auto parse_grammar_impl(const std::string& description,
-                        tyr::formalism::planning::DomainView domain,
-                        ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository)
+auto parse_grammar_impl(const std::string& description, tyr::formalism::planning::DomainView domain, ConstructorRepositoryFor& repository)
 {
     auto errors = std::ostringstream {};
     auto error_handler = runir::kr::parser::ErrorHandlerType(description.cbegin(), description.cend(), errors);
-    auto ast = runir::kr::dl::grammar::ast::Grammar<AstFamily> {};
+    auto ast = runir::kr::dl::grammar::ast::Grammar {};
     parser::parse_grammar_ast(description, ast, error_handler);
     auto diagnostics = runir::kr::parser::DiagnosticContext {};
     const auto scope = runir::kr::parser::DiagnosticContext::Scope(diagnostics, error_handler);
-    auto builder = Builder<runir::kr::BaseFamilyTag> {};
+    auto builder = Builder {};
     const auto context = ConstructorContext { repository, builder, diagnostics };
 
-    auto data = runir::kr::dl::grammar::checkout<GrammarTag<runir::kr::BaseFamilyTag>>(builder);
+    auto data = runir::kr::dl::grammar::checkout<GrammarTag>(builder);
 
     data->concept_start = parse_fixed_start<ConceptTag>(domain, context);
     data->role_start = parse_fixed_start<RoleTag>(domain, context);
@@ -248,8 +241,7 @@ auto parse_grammar_impl(const std::string& description,
 
 }  // namespace
 
-FamilyGrammarView<runir::kr::BaseFamilyTag>
-parse_grammar(const std::string& description, tyr::formalism::planning::DomainView domain, ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository)
+FamilyGrammarView parse_grammar(const std::string& description, tyr::formalism::planning::DomainView domain, ConstructorRepositoryFor& repository)
 {
     return parse_grammar_impl(description, domain, repository);
 }

@@ -15,126 +15,124 @@ namespace runir::kr::dl::semantics::incremental::detail
 
 /// One prepared query constructor. Operands identify preceding graph nodes;
 /// each operation owns its result and reports only the last update's changes.
-template<FamilyTag Family, tyr::TaskKind Kind>
+template<tyr::TaskKind Kind>
 class QueryNode
 {
 public:
-    QueryNode(FamilyQueryView<Family> expression, GraphBuilder<Family, Kind>& graph);
+    QueryNode(FamilyQueryView<> expression, GraphBuilder<Kind>& graph);
     /// A concept or role lifted into a relation with the given columns; it has no query expression.
     template<ConceptOrRoleTag Category>
     QueryNode(EvaluationIndex<Category> argument, std::span<const ygg::database::ColumnLayout> columns) :
         m_dependencies { ygg::uint_t(argument) },
-        m_operation(QueryFromDenotationEvaluator<Family, Kind, Category>(argument, columns))
+        m_operation(QueryFromDenotationEvaluator<Kind, Category>(argument, columns))
     {
     }
-    std::optional<FamilyQueryView<Family>> get_expression() const noexcept { return m_expression; }
+    std::optional<FamilyQueryView<>> get_expression() const noexcept { return m_expression; }
     /// Whether this node lifts argument into a relation with exactly these columns.
     template<ConceptOrRoleTag Category>
     bool lifts(EvaluationIndex<Category> argument, std::span<const ygg::database::ColumnLayout> columns) const
     {
-        const auto* lifted = std::get_if<QueryFromDenotationEvaluator<Family, Kind, Category>>(&m_operation);
+        const auto* lifted = std::get_if<QueryFromDenotationEvaluator<Kind, Category>>(&m_operation);
         return !m_expression && lifted && lifted->argument == argument && std::ranges::equal(lifted->result.columns().span(), columns);
     }
-    template<StateEvaluationContextConcept<Family, Kind> Context>
-    void initialize(EvaluationGraph<Family, Kind>& graph, Context& context);
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>& delta, ygg::database::Workspace& workspace);
+    template<StateEvaluationContextConcept<Kind> Context>
+    void initialize(EvaluationGraph<Kind>& graph, Context& context);
+    void update(EvaluationGraph<Kind>& graph, const Delta& delta, ygg::database::Workspace& workspace);
     std::span<const ygg::uint_t> get_dependencies() const noexcept { return m_dependencies; }
     const ygg::Builder<ygg::database::Relation>& get_result() const;
     const ygg::database::incremental::Delta& get_delta() const;
 
 private:
-    using Operation = std::variant<QueryStaticEvaluator<Family, Kind>,
-                                   QueryAtomicEvaluator<Family, Kind, tyr::formalism::FluentTag>,
-                                   QueryAtomicEvaluator<Family, Kind, tyr::formalism::DerivedTag>,
-                                   QueryProjectionEvaluator<Family, Kind>,
-                                   QueryJoinEvaluator<Family, Kind>,
-                                   QueryGenericJoinEvaluator<Family, Kind>,
-                                   QueryFromDenotationEvaluator<Family, Kind, ConceptTag>,
-                                   QueryFromDenotationEvaluator<Family, Kind, RoleTag>,
-                                   QuerySetCombinationEvaluator<Family, Kind, QueryUnionTag>,
-                                   QuerySetCombinationEvaluator<Family, Kind, QueryDifferenceTag>,
-                                   QuerySelectionEvaluator<Family, Kind, QueryRenameTag>,
-                                   QuerySelectionEvaluator<Family, Kind, QuerySelectEqualTag>,
-                                   QuerySelectionEvaluator<Family, Kind, QuerySelectValueTag>,
-                                   QueryMustPassEvaluator<Family, Kind>>;
+    using Operation = std::variant<QueryStaticEvaluator<Kind>,
+                                   QueryAtomicEvaluator<Kind, tyr::formalism::FluentTag>,
+                                   QueryAtomicEvaluator<Kind, tyr::formalism::DerivedTag>,
+                                   QueryProjectionEvaluator<Kind>,
+                                   QueryJoinEvaluator<Kind>,
+                                   QueryGenericJoinEvaluator<Kind>,
+                                   QueryFromDenotationEvaluator<Kind, ConceptTag>,
+                                   QueryFromDenotationEvaluator<Kind, RoleTag>,
+                                   QuerySetCombinationEvaluator<Kind, QueryUnionTag>,
+                                   QuerySetCombinationEvaluator<Kind, QueryDifferenceTag>,
+                                   QuerySelectionEvaluator<Kind, QueryRenameTag>,
+                                   QuerySelectionEvaluator<Kind, QuerySelectEqualTag>,
+                                   QuerySelectionEvaluator<Kind, QuerySelectValueTag>,
+                                   QueryMustPassEvaluator<Kind>>;
 
-    std::optional<FamilyQueryView<Family>> m_expression;
+    std::optional<FamilyQueryView<>> m_expression;
     std::vector<ygg::uint_t> m_dependencies;
     Operation m_operation;
-    Operation prepare_operation(FamilyQueryView<Family> expression, GraphBuilder<Family, Kind>& graph);
+    Operation prepare_operation(FamilyQueryView<> expression, GraphBuilder<Kind>& graph);
 };
 
-template<FamilyTag Family, tyr::TaskKind Kind>
-QueryNode<Family, Kind>::QueryNode(FamilyQueryView<Family> expression, GraphBuilder<Family, Kind>& graph) :
+template<tyr::TaskKind Kind>
+QueryNode<Kind>::QueryNode(FamilyQueryView<> expression, GraphBuilder<Kind>& graph) :
     m_expression(expression),
     m_operation(prepare_operation(expression, graph))
 {
 }
 
-template<FamilyTag Family, tyr::TaskKind Kind>
-template<StateEvaluationContextConcept<Family, Kind> Context>
-void QueryNode<Family, Kind>::initialize(EvaluationGraph<Family, Kind>& graph, Context& context)
+template<tyr::TaskKind Kind>
+template<StateEvaluationContextConcept<Kind> Context>
+void QueryNode<Kind>::initialize(EvaluationGraph<Kind>& graph, Context& context)
 {
     std::visit([&](auto& operation) { operation.initialize(graph, context); }, m_operation);
 }
 
-template<FamilyTag Family, tyr::TaskKind Kind>
-void QueryNode<Family, Kind>::update(EvaluationGraph<Family, Kind>& graph,
-                                     const Delta<Family>& delta,
-                                     ygg::database::Workspace& workspace)
+template<tyr::TaskKind Kind>
+void QueryNode<Kind>::update(EvaluationGraph<Kind>& graph, const Delta& delta, ygg::database::Workspace& workspace)
 {
     std::visit([&](auto& operation) { operation.update(graph, delta, workspace); }, m_operation);
 }
 
-template<FamilyTag Family, tyr::TaskKind Kind>
-const ygg::Builder<ygg::database::Relation>& QueryNode<Family, Kind>::get_result() const
+template<tyr::TaskKind Kind>
+const ygg::Builder<ygg::database::Relation>& QueryNode<Kind>::get_result() const
 {
     return std::visit([](const auto& operation) -> const auto& { return operation.get_result(); }, m_operation);
 }
 
-template<FamilyTag Family, tyr::TaskKind Kind>
-const ygg::database::incremental::Delta& QueryNode<Family, Kind>::get_delta() const
+template<tyr::TaskKind Kind>
+const ygg::database::incremental::Delta& QueryNode<Kind>::get_delta() const
 {
     return std::visit([](const auto& operation) -> const auto& { return operation.get_delta(); }, m_operation);
 }
 
-template<FamilyTag Family, tyr::TaskKind Kind>
-auto QueryNode<Family, Kind>::prepare_operation(FamilyQueryView<Family> expression, GraphBuilder<Family, Kind>& graph) -> Operation
+template<tyr::TaskKind Kind>
+auto QueryNode<Kind>::prepare_operation(FamilyQueryView<> expression, GraphBuilder<Kind>& graph) -> Operation
 {
     if (expression.is_static())
-        return QueryStaticEvaluator<Family, Kind>(expression);
+        return QueryStaticEvaluator<Kind>(expression);
     return ygg::visit(
-        [&]<typename Tag>(FamilyQueryView<Family, Tag> concrete) -> Operation
+        [&]<typename Tag>(FamilyQueryView<Tag> concrete) -> Operation
         {
             if constexpr (std::same_as<Tag, AtomicStateTag<tyr::formalism::FluentTag>>)
-                return QueryAtomicEvaluator<Family, Kind, tyr::formalism::FluentTag>(concrete);
+                return QueryAtomicEvaluator<Kind, tyr::formalism::FluentTag>(concrete);
             else if constexpr (std::same_as<Tag, AtomicStateTag<tyr::formalism::DerivedTag>>)
-                return QueryAtomicEvaluator<Family, Kind, tyr::formalism::DerivedTag>(concrete);
+                return QueryAtomicEvaluator<Kind, tyr::formalism::DerivedTag>(concrete);
             else if constexpr (std::same_as<Tag, QueryProjectTag>)
-                return QueryProjectionEvaluator<Family, Kind>(graph.prepare(concrete.get_arg(), m_dependencies), concrete.get_data().plan);
+                return QueryProjectionEvaluator<Kind>(graph.prepare(concrete.get_arg(), m_dependencies), concrete.get_data().plan);
             else if constexpr (std::same_as<Tag, QueryJoinTag>)
-                return QueryJoinEvaluator<Family, Kind>(graph.prepare(concrete.get_lhs(), m_dependencies),
-                                                        graph.prepare(concrete.get_rhs(), m_dependencies),
-                                                        concrete.get_data().plan);
+                return QueryJoinEvaluator<Kind>(graph.prepare(concrete.get_lhs(), m_dependencies),
+                                                graph.prepare(concrete.get_rhs(), m_dependencies),
+                                                concrete.get_data().plan);
             else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
             {
                 auto args = std::vector<QueryEvaluationIndex> {};
                 for (const auto arg : concrete.get_args())
                     args.push_back(graph.prepare(arg, m_dependencies));
-                return QueryGenericJoinEvaluator<Family, Kind>(std::move(args), concrete.get_data().plan);
+                return QueryGenericJoinEvaluator<Kind>(std::move(args), concrete.get_data().plan);
             }
             else if constexpr (std::same_as<Tag, QueryConceptTag>)
-                return QueryFromDenotationEvaluator<Family, Kind, ConceptTag>(graph.prepare(concrete.get_arg(), m_dependencies), concrete.get_schema().span());
+                return QueryFromDenotationEvaluator<Kind, ConceptTag>(graph.prepare(concrete.get_arg(), m_dependencies), concrete.get_schema().span());
             else if constexpr (std::same_as<Tag, QueryRoleTag>)
-                return QueryFromDenotationEvaluator<Family, Kind, RoleTag>(graph.prepare(concrete.get_arg(), m_dependencies), concrete.get_schema().span());
+                return QueryFromDenotationEvaluator<Kind, RoleTag>(graph.prepare(concrete.get_arg(), m_dependencies), concrete.get_schema().span());
             else if constexpr (std::same_as<Tag, QueryUnionTag> || std::same_as<Tag, QueryDifferenceTag>)
-                return QuerySetCombinationEvaluator<Family, Kind, Tag>(graph.prepare(concrete.get_lhs(), m_dependencies),
-                                                                       graph.prepare(concrete.get_rhs(), m_dependencies),
-                                                                       concrete.get_schema().span());
+                return QuerySetCombinationEvaluator<Kind, Tag>(graph.prepare(concrete.get_lhs(), m_dependencies),
+                                                               graph.prepare(concrete.get_rhs(), m_dependencies),
+                                                               concrete.get_schema().span());
             else if constexpr (std::same_as<Tag, QueryRenameTag> || std::same_as<Tag, QuerySelectEqualTag> || std::same_as<Tag, QuerySelectValueTag>)
-                return QuerySelectionEvaluator<Family, Kind, Tag>(graph.prepare(concrete.get_arg(), m_dependencies), concrete);
+                return QuerySelectionEvaluator<Kind, Tag>(graph.prepare(concrete.get_arg(), m_dependencies), concrete);
             else if constexpr (std::same_as<Tag, QueryMustPassTag>)
-                return QueryMustPassEvaluator<Family, Kind>(concrete, graph, m_dependencies);
+                return QueryMustPassEvaluator<Kind>(concrete, graph, m_dependencies);
             else
                 throw std::logic_error("Incremental query: a static constructor was marked dynamic.");
         },

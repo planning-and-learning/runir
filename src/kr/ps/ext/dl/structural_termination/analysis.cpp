@@ -11,8 +11,8 @@ namespace runir::kr::ps::ext::dl::detail
 
 template<runir::kr::dl::CategoryTag Category>
 using RegisterConstructor = std::conditional_t<std::same_as<Category, runir::kr::dl::ConceptTag>,
-                                               runir::kr::dl::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::RegisterTag>,
-                                               runir::kr::dl::Role<runir::kr::ExtFamilyTag, runir::kr::dl::RegisterTag>>;
+                                               runir::kr::dl::Concept<runir::kr::dl::RegisterTag>,
+                                               runir::kr::dl::Role<runir::kr::dl::RegisterTag>>;
 
 template<runir::kr::dl::CategoryTag Category>
 using RegisterConstructorView = ygg::View<ygg::Index<RegisterConstructor<Category>>, runir::kr::dl::ExtConstructorRepository>;

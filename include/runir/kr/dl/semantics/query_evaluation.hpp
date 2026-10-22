@@ -19,11 +19,9 @@ namespace detail
 {
 
 /// Materialize rows into an empty, matching builder without publishing the root.
-template<tyr::TaskKind Kind, FamilyTag Family, typename Tag, typename C, StateEvaluationContextConcept<Family, Kind> Context>
+template<tyr::TaskKind Kind, typename Tag, typename C, StateEvaluationContextConcept<Kind> Context>
     requires(!std::same_as<Tag, void>)
-void evaluate_query(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor,
-                    Context& context,
-                    ygg::Builder<ygg::database::Relation>& result)
+void evaluate_query(ygg::View<ygg::Index<Query<Tag>>, C> constructor, Context& context, ygg::Builder<ygg::database::Relation>& result)
 {
     const auto& data = constructor.get_data();
     auto children = context.child_context();

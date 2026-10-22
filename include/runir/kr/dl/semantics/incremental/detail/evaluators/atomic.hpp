@@ -15,7 +15,7 @@
 namespace runir::kr::dl::semantics::incremental::detail
 {
 
-template<FamilyTag Family, tyr::TaskKind Kind, CategoryTag Category, tyr::formalism::FactKind Fact>
+template<tyr::TaskKind Kind, CategoryTag Category, tyr::formalism::FactKind Fact>
 struct AtomicEvaluator
 {
     tyr::formalism::planning::PredicateView<Fact> predicate;
@@ -23,8 +23,8 @@ struct AtomicEvaluator
     DenotationState<Category> value;
 
     AtomicEvaluator(tyr::formalism::planning::PredicateView<Fact> predicate, bool polarity) : predicate(predicate), polarity(polarity) {}
-    template<StateEvaluationContextConcept<Family, Kind> Context>
-    void initialize(EvaluationGraph<Family, Kind>& graph, Context& context)
+    template<StateEvaluationContextConcept<Kind> Context>
+    void initialize(EvaluationGraph<Kind>& graph, Context& context)
     {
         if (!graph.repository().contains(predicate))
             throw std::invalid_argument("Incremental DL: predicate does not belong to the task repository.");
@@ -37,7 +37,7 @@ struct AtomicEvaluator
         }
         else
         {
-            auto& builder = value.initialize(semantics::detail::num_objects<Family, Kind>(context));
+            auto& builder = value.initialize(semantics::detail::num_objects<Kind>(context));
             for (const auto atom : context.get_state().get_atoms_view(predicate))
             {
                 const auto objects = atom.get_row().get_objects();
@@ -50,7 +50,7 @@ struct AtomicEvaluator
                 builder.flip();
         }
     }
-    void update(EvaluationGraph<Family, Kind>&, const Delta<Family>& delta, ygg::database::Workspace&)
+    void update(EvaluationGraph<Kind>&, const Delta& delta, ygg::database::Workspace&)
     {
         if constexpr (std::same_as<Fact, tyr::formalism::FluentTag>)
             update_atoms(delta.added.fluent_atoms, delta.removed.fluent_atoms);

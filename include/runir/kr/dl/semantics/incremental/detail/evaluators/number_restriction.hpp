@@ -10,7 +10,7 @@
 namespace runir::kr::dl::semantics::incremental::detail
 {
 
-template<FamilyTag Family, tyr::TaskKind Kind, typename Tag>
+template<tyr::TaskKind Kind, typename Tag>
 struct NumberRestrictionEvaluator
 {
     EvaluationIndex<RoleTag> role;
@@ -18,18 +18,18 @@ struct NumberRestrictionEvaluator
     DenotationState<ConceptTag> value;
 
     NumberRestrictionEvaluator(EvaluationIndex<RoleTag> role, ygg::uint_t threshold) : role(role), threshold(threshold) {}
-    template<StateEvaluationContextConcept<Family, Kind> Context>
-    void initialize(EvaluationGraph<Family, Kind>& graph, Context&)
+    template<StateEvaluationContextConcept<Kind> Context>
+    void initialize(EvaluationGraph<Kind>& graph, Context&)
     {
         initialize_set(Tag {}, value, graph.result(role), graph.change(role), threshold, graph.set_workspace());
     }
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
     {
         update_set(Tag {}, value, graph.result(role), graph.change(role), threshold, graph.set_workspace());
     }
 };
 
-template<FamilyTag Family, tyr::TaskKind Kind, typename Tag>
+template<tyr::TaskKind Kind, typename Tag>
 struct QualifiedNumberRestrictionEvaluator
 {
     EvaluationIndex<RoleTag> role;
@@ -43,8 +43,8 @@ struct QualifiedNumberRestrictionEvaluator
         threshold(threshold)
     {
     }
-    template<StateEvaluationContextConcept<Family, Kind> Context>
-    void initialize(EvaluationGraph<Family, Kind>& graph, Context&)
+    template<StateEvaluationContextConcept<Kind> Context>
+    void initialize(EvaluationGraph<Kind>& graph, Context&)
     {
         initialize_set(Tag {},
                        value,
@@ -55,7 +55,7 @@ struct QualifiedNumberRestrictionEvaluator
                        threshold,
                        graph.set_workspace());
     }
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
     {
         update_set(Tag {},
                    value,

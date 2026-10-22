@@ -33,7 +33,7 @@ template<tyr::TaskKind Kind,
          typename C,
          ProgramStateViewConcept<Kind> S,
          tyr::planning::StateViewConcept<Kind> PS,
-         runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy>
+         runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
 bool rule_is_applicable(ygg::View<ygg::Index<Rule<RuleKindT>>, C> rule,
                         S state,
                         const PS& planning_state,

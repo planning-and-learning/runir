@@ -12,8 +12,8 @@ namespace runir::kr::dl
 
 void bind_grammar_grammar(nb::module_& m)
 {
-    using Type = runir::kr::dl::grammar::GrammarTag<runir::kr::BaseFamilyTag>;
-    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::grammar::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>>;
+    using Type = runir::kr::dl::grammar::GrammarTag;
+    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::grammar::ConstructorRepositoryFor>;
 
     ygg::bind_index<ygg::Index<Type>>(m, "GrammarIndex");
     auto cls = nb::class_<View>(m, "Grammar").def("get_index", &View::get_index);

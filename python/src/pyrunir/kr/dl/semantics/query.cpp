@@ -17,7 +17,7 @@ void bind_semantics_query(nb::module_& m)
                     .def_rw("index", &ygg::Data<QueryColumn>::index)
                     .def_rw("name", &ygg::Data<QueryColumn>::name);
     ygg::add_comparison(data);
-    python::bind_queries<runir::kr::ExtFamilyTag>(m);
+    python::bind_queries(m);
 }
 
 }  // namespace runir::kr::dl

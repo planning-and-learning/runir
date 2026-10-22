@@ -10,20 +10,20 @@
 namespace runir::kr::dl::semantics::incremental::detail
 {
 
-template<FamilyTag Family, tyr::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct FillersEvaluator
 {
     EvaluationIndex<RoleTag> role;
-    FamilyConceptView<Family, RoleFillersTag> expression;
+    FamilyConceptView<RoleFillersTag> expression;
     DenotationState<ConceptTag> value;
 
-    FillersEvaluator(EvaluationIndex<RoleTag> role, FamilyConceptView<Family, RoleFillersTag> expression) : role(role), expression(expression) {}
-    template<StateEvaluationContextConcept<Family, Kind> Context>
-    void initialize(EvaluationGraph<Family, Kind>& graph, Context&)
+    FillersEvaluator(EvaluationIndex<RoleTag> role, FamilyConceptView<RoleFillersTag> expression) : role(role), expression(expression) {}
+    template<StateEvaluationContextConcept<Kind> Context>
+    void initialize(EvaluationGraph<Kind>& graph, Context&)
     {
         initialize_set(RoleFillersTag {}, value, graph.result(role), graph.change(role), expression.get_objects(), graph.set_workspace());
     }
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
     {
         update_set(RoleFillersTag {}, value, graph.result(role), graph.change(role), expression.get_objects(), graph.set_workspace());
     }

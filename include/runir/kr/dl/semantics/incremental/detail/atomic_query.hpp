@@ -37,8 +37,8 @@ class AtomicQueryEvaluator
     std::vector<std::byte> m_row;
 
 public:
-    template<FamilyTag Family, typename C>
-    explicit AtomicQueryEvaluator(ygg::View<ygg::Index<Query<Family, AtomicStateTag<Fact>>>, C> query);
+    template<typename C>
+    explicit AtomicQueryEvaluator(ygg::View<ygg::Index<Query<AtomicStateTag<Fact>>>, C> query);
 
     /// Replace the baseline from a completed state, retaining buffers and clearing the last delta.
     template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> State>
@@ -57,8 +57,8 @@ public:
 
 template<tyr::formalism::FactKind Fact>
     requires(std::same_as<Fact, tyr::formalism::FluentTag> || std::same_as<Fact, tyr::formalism::DerivedTag>)
-template<FamilyTag Family, typename C>
-AtomicQueryEvaluator<Fact>::AtomicQueryEvaluator(ygg::View<ygg::Index<Query<Family, AtomicStateTag<Fact>>>, C> query) :
+template<typename C>
+AtomicQueryEvaluator<Fact>::AtomicQueryEvaluator(ygg::View<ygg::Index<Query<AtomicStateTag<Fact>>>, C> query) :
     m_predicate(query.get_predicate()),
     m_result(query.get_schema().span()),
     m_delta(query.get_schema().span())

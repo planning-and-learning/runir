@@ -21,10 +21,9 @@ template<runir::kr::FamilyTag Family, typename Repository, typename View>
 void bind_ps_optimize(nanobind::class_<View>& cls)
 {
     namespace nb = nanobind;
-    using DlFamily = runir::kr::ps::DlFamilyFor<Family>;
-    using Statistics = runir::kr::dl::QueryStatistics<DlFamily>;
-    using GroundContext = runir::kr::dl::semantics::StateEvaluationContext<DlFamily, tyr::GroundTag>;
-    using LiftedContext = runir::kr::dl::semantics::StateEvaluationContext<DlFamily, tyr::LiftedTag>;
+    using Statistics = runir::kr::dl::QueryStatistics;
+    using GroundContext = runir::kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
+    using LiftedContext = runir::kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>;
     cls.def(
            "optimize",
            [](const View& view, Repository& repository) { return runir::kr::ps::dl::optimize(view, repository); },

@@ -18,9 +18,7 @@
 namespace runir::kr::ps::base
 {
 
-template<tyr::TaskKind Kind,
-         runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy =
-             runir::kr::dl::semantics::DefaultEvaluationPolicy<ExtFamilyTag, Kind>>
+template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<Kind>>
 class SuccessorExpander
 {
 private:

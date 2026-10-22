@@ -17,12 +17,12 @@ namespace
 template<typename Tag>
 void bind_role_data(nb::module_& m, const char* name)
 {
-    using Data = ygg::Data<Role<runir::kr::ExtFamilyTag, Tag>>;
+    using Data = ygg::Data<Role<Tag>>;
     auto cls = nb::class_<Data>(m, name).def(nb::init<>()).def_rw("index", &Data::index);
     ygg::add_comparison(cls);
     python::def_role_data_constructors<Tag,
-                                       ygg::Index<runir::kr::dl::Constructor<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>,
-                                       ygg::Index<runir::kr::dl::Constructor<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>,
+                                       ygg::Index<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>,
+                                       ygg::Index<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>,
                                        runir::kr::dl::ExtConstructorRepository>(cls);
 
     if constexpr (is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag>)
@@ -39,7 +39,7 @@ void bind_role_data(nb::module_& m, const char* name)
 template<typename Tag>
 void bind_role_view(nb::module_& m, const char* name)
 {
-    using Type = Role<runir::kr::ExtFamilyTag, Tag>;
+    using Type = Role<Tag>;
     using View = ygg::View<ygg::Index<Type>, ExtConstructorRepository>;
     auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index);
     ygg::add_print(cls);
@@ -64,25 +64,24 @@ void bind_role_view(nb::module_& m, const char* name)
 
 void bind_semantics_role(nb::module_& m)
 {
-    using Family = runir::kr::ExtFamilyTag;
-    using Universal = Role<Family, UniversalTag>;
-    using StaticState = Role<Family, AtomicStateTag<tyr::formalism::StaticTag>>;
-    using FluentState = Role<Family, AtomicStateTag<tyr::formalism::FluentTag>>;
-    using DerivedState = Role<Family, AtomicStateTag<tyr::formalism::DerivedTag>>;
-    using StaticGoal = Role<Family, AtomicGoalTag<tyr::formalism::StaticTag>>;
-    using FluentGoal = Role<Family, AtomicGoalTag<tyr::formalism::FluentTag>>;
-    using DerivedGoal = Role<Family, AtomicGoalTag<tyr::formalism::DerivedTag>>;
-    using Intersection = Role<Family, IntersectionTag>;
-    using Union = Role<Family, UnionTag>;
-    using Complement = Role<Family, ComplementTag>;
-    using Inverse = Role<Family, InverseTag>;
-    using Composition = Role<Family, CompositionTag>;
-    using TransitiveClosure = Role<Family, TransitiveClosureTag>;
-    using ReflexiveTransitiveClosure = Role<Family, ReflexiveTransitiveClosureTag>;
-    using Restriction = Role<Family, RestrictionTag>;
-    using Identity = Role<Family, IdentityTag>;
-    using RegisterReference = Role<Family, RegisterTag>;
-    using ArgumentReference = Role<Family, ArgumentTag<RoleTag>>;
+    using Universal = Role<UniversalTag>;
+    using StaticState = Role<AtomicStateTag<tyr::formalism::StaticTag>>;
+    using FluentState = Role<AtomicStateTag<tyr::formalism::FluentTag>>;
+    using DerivedState = Role<AtomicStateTag<tyr::formalism::DerivedTag>>;
+    using StaticGoal = Role<AtomicGoalTag<tyr::formalism::StaticTag>>;
+    using FluentGoal = Role<AtomicGoalTag<tyr::formalism::FluentTag>>;
+    using DerivedGoal = Role<AtomicGoalTag<tyr::formalism::DerivedTag>>;
+    using Intersection = Role<IntersectionTag>;
+    using Union = Role<UnionTag>;
+    using Complement = Role<ComplementTag>;
+    using Inverse = Role<InverseTag>;
+    using Composition = Role<CompositionTag>;
+    using TransitiveClosure = Role<TransitiveClosureTag>;
+    using ReflexiveTransitiveClosure = Role<ReflexiveTransitiveClosureTag>;
+    using Restriction = Role<RestrictionTag>;
+    using Identity = Role<IdentityTag>;
+    using RegisterReference = Role<RegisterTag>;
+    using ArgumentReference = Role<ArgumentTag<RoleTag>>;
 
     ygg::bind_index<ygg::Index<Universal>>(m, "RoleUniversalIndex");
     ygg::bind_index<ygg::Index<StaticState>>(m, "RoleAtomicStateStaticIndex");

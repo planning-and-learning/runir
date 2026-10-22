@@ -17,7 +17,7 @@ namespace runir::kr::ps::icp::detail
 {
 
 /// Prepared rule occurrences in module order, with one shared evaluation workspace.
-template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<ExtFamilyTag, Kind>>
+template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<Kind>>
 class RuleEvaluators
 {
     using CruleEvaluator = RuleEvaluator<Kind, CruleTag>;

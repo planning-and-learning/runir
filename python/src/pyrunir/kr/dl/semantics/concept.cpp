@@ -17,12 +17,12 @@ namespace
 template<typename Tag>
 void bind_concept_data(nb::module_& m, const char* name)
 {
-    using Data = ygg::Data<Concept<runir::kr::ExtFamilyTag, Tag>>;
+    using Data = ygg::Data<Concept<Tag>>;
     auto cls = nb::class_<Data>(m, name).def(nb::init<>()).def_rw("index", &Data::index);
     ygg::add_comparison(cls);
     python::def_concept_data_constructors<Tag,
-                                          ygg::Index<runir::kr::dl::Constructor<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>,
-                                          ygg::Index<runir::kr::dl::Constructor<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>,
+                                          ygg::Index<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>,
+                                          ygg::Index<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>,
                                           runir::kr::dl::ExtConstructorRepository>(cls);
 
     if constexpr (is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag>)
@@ -51,7 +51,7 @@ void bind_concept_data(nb::module_& m, const char* name)
 template<typename Tag>
 void bind_concept_view(nb::module_& m, const char* name)
 {
-    using Type = Concept<runir::kr::ExtFamilyTag, Tag>;
+    using Type = Concept<Tag>;
     using View = ygg::View<ygg::Index<Type>, ExtConstructorRepository>;
     auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index);
     ygg::add_print(cls);
@@ -88,34 +88,32 @@ void bind_concept_view(nb::module_& m, const char* name)
 
 void bind_semantics_concept(nb::module_& m)
 {
-    using Family = runir::kr::ExtFamilyTag;
-
-    ygg::bind_index<ygg::Index<Concept<Family, BotTag>>>(m, "ConceptBotIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, TopTag>>>(m, "ConceptTopIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, AtomicStateTag<tyr::formalism::StaticTag>>>>(m, "ConceptAtomicStateStaticIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, AtomicStateTag<tyr::formalism::FluentTag>>>>(m, "ConceptAtomicStateFluentIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, AtomicStateTag<tyr::formalism::DerivedTag>>>>(m, "ConceptAtomicStateDerivedIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, AtomicGoalTag<tyr::formalism::StaticTag>>>>(m, "ConceptAtomicGoalStaticIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, AtomicGoalTag<tyr::formalism::FluentTag>>>>(m, "ConceptAtomicGoalFluentIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, AtomicGoalTag<tyr::formalism::DerivedTag>>>>(m, "ConceptAtomicGoalDerivedIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, IntersectionTag>>>(m, "ConceptIntersectionIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, UnionTag>>>(m, "ConceptUnionIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, NegationTag>>>(m, "ConceptNegationIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, ValueRestrictionTag>>>(m, "ConceptValueRestrictionIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, ExistentialQuantificationTag>>>(m, "ConceptExistentialQuantificationIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, AtLeastNumberRestrictionTag>>>(m, "ConceptAtLeastNumberRestrictionIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, AtMostNumberRestrictionTag>>>(m, "ConceptAtMostNumberRestrictionIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, ExactNumberRestrictionTag>>>(m, "ConceptExactNumberRestrictionIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, QualifiedAtLeastNumberRestrictionTag>>>(m, "ConceptQualifiedAtLeastNumberRestrictionIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, QualifiedAtMostNumberRestrictionTag>>>(m, "ConceptQualifiedAtMostNumberRestrictionIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, QualifiedExactNumberRestrictionTag>>>(m, "ConceptQualifiedExactNumberRestrictionIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, RoleValueMapTag>>>(m, "ConceptRoleValueMapIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, AgreementTag>>>(m, "ConceptAgreementIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, RoleFillersTag>>>(m, "ConceptRoleFillersIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, OneOfTag>>>(m, "ConceptOneOfIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, NominalTag>>>(m, "ConceptNominalIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, RegisterTag>>>(m, "ConceptRegisterIndex");
-    ygg::bind_index<ygg::Index<Concept<Family, ArgumentTag<ConceptTag>>>>(m, "ConceptArgumentIndex");
+    ygg::bind_index<ygg::Index<Concept<BotTag>>>(m, "ConceptBotIndex");
+    ygg::bind_index<ygg::Index<Concept<TopTag>>>(m, "ConceptTopIndex");
+    ygg::bind_index<ygg::Index<Concept<AtomicStateTag<tyr::formalism::StaticTag>>>>(m, "ConceptAtomicStateStaticIndex");
+    ygg::bind_index<ygg::Index<Concept<AtomicStateTag<tyr::formalism::FluentTag>>>>(m, "ConceptAtomicStateFluentIndex");
+    ygg::bind_index<ygg::Index<Concept<AtomicStateTag<tyr::formalism::DerivedTag>>>>(m, "ConceptAtomicStateDerivedIndex");
+    ygg::bind_index<ygg::Index<Concept<AtomicGoalTag<tyr::formalism::StaticTag>>>>(m, "ConceptAtomicGoalStaticIndex");
+    ygg::bind_index<ygg::Index<Concept<AtomicGoalTag<tyr::formalism::FluentTag>>>>(m, "ConceptAtomicGoalFluentIndex");
+    ygg::bind_index<ygg::Index<Concept<AtomicGoalTag<tyr::formalism::DerivedTag>>>>(m, "ConceptAtomicGoalDerivedIndex");
+    ygg::bind_index<ygg::Index<Concept<IntersectionTag>>>(m, "ConceptIntersectionIndex");
+    ygg::bind_index<ygg::Index<Concept<UnionTag>>>(m, "ConceptUnionIndex");
+    ygg::bind_index<ygg::Index<Concept<NegationTag>>>(m, "ConceptNegationIndex");
+    ygg::bind_index<ygg::Index<Concept<ValueRestrictionTag>>>(m, "ConceptValueRestrictionIndex");
+    ygg::bind_index<ygg::Index<Concept<ExistentialQuantificationTag>>>(m, "ConceptExistentialQuantificationIndex");
+    ygg::bind_index<ygg::Index<Concept<AtLeastNumberRestrictionTag>>>(m, "ConceptAtLeastNumberRestrictionIndex");
+    ygg::bind_index<ygg::Index<Concept<AtMostNumberRestrictionTag>>>(m, "ConceptAtMostNumberRestrictionIndex");
+    ygg::bind_index<ygg::Index<Concept<ExactNumberRestrictionTag>>>(m, "ConceptExactNumberRestrictionIndex");
+    ygg::bind_index<ygg::Index<Concept<QualifiedAtLeastNumberRestrictionTag>>>(m, "ConceptQualifiedAtLeastNumberRestrictionIndex");
+    ygg::bind_index<ygg::Index<Concept<QualifiedAtMostNumberRestrictionTag>>>(m, "ConceptQualifiedAtMostNumberRestrictionIndex");
+    ygg::bind_index<ygg::Index<Concept<QualifiedExactNumberRestrictionTag>>>(m, "ConceptQualifiedExactNumberRestrictionIndex");
+    ygg::bind_index<ygg::Index<Concept<RoleValueMapTag>>>(m, "ConceptRoleValueMapIndex");
+    ygg::bind_index<ygg::Index<Concept<AgreementTag>>>(m, "ConceptAgreementIndex");
+    ygg::bind_index<ygg::Index<Concept<RoleFillersTag>>>(m, "ConceptRoleFillersIndex");
+    ygg::bind_index<ygg::Index<Concept<OneOfTag>>>(m, "ConceptOneOfIndex");
+    ygg::bind_index<ygg::Index<Concept<NominalTag>>>(m, "ConceptNominalIndex");
+    ygg::bind_index<ygg::Index<Concept<RegisterTag>>>(m, "ConceptRegisterIndex");
+    ygg::bind_index<ygg::Index<Concept<ArgumentTag<ConceptTag>>>>(m, "ConceptArgumentIndex");
 
     bind_concept_data<BotTag>(m, "ConceptBotData");
     bind_concept_data<TopTag>(m, "ConceptTopData");

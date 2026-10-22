@@ -13,12 +13,12 @@
 namespace ygg
 {
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, formalism::SymbolContextFor<runir::kr::dl::grammar::Boolean<Family, Tag>> C>
-    requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
-class View<Index<runir::kr::dl::grammar::Boolean<Family, Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::grammar::Boolean<Family, Tag>, C>
+template<typename Tag, formalism::SymbolContextFor<runir::kr::dl::grammar::Boolean<Tag>> C>
+    requires runir::kr::dl::FamilyBooleanConstructorTag<Tag>
+class View<Index<runir::kr::dl::grammar::Boolean<Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::grammar::Boolean<Tag>, C>
 {
 public:
-    using ygg::IndexViewBase<runir::kr::dl::grammar::Boolean<Family, Tag>, C>::IndexViewBase;
+    using ygg::IndexViewBase<runir::kr::dl::grammar::Boolean<Tag>, C>::IndexViewBase;
 
     auto get_identifier() const noexcept
         requires std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>

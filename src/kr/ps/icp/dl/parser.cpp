@@ -85,7 +85,7 @@ ModuleView lower_module(const ast::Module& module,
                         const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     auto builder = Builder {};
-    auto dl_builder = runir::kr::dl::Builder<ExtFamilyTag> {};
+    auto dl_builder = runir::kr::dl::Builder {};
     auto references = ModuleReferences {};
     auto data = checkout<Module>(builder);
     auto symbol = checkout<ModuleSymbol>(builder);

@@ -16,7 +16,7 @@ namespace runir::kr::ps::icp::detail
 {
 
 /// Shared evaluation and history scratch; individual rule records own no buffers.
-template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<ExtFamilyTag, Kind>>
+template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<Kind>>
 class RuleEvaluationWorkspace
 {
     using Concept = runir::kr::dl::ConceptTag;

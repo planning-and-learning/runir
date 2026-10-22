@@ -57,9 +57,9 @@ auto create_program(kr::ps::ext::Repository& repository,
 
 auto create_top_concept(kr::dl::ExtConstructorRepository& repository) -> kr::dl::ExtConstructorView<kr::dl::ConceptTag>
 {
-    auto top_data = ygg::Data<kr::dl::Concept<kr::ExtFamilyTag, kr::dl::TopTag>>();
+    auto top_data = ygg::Data<kr::dl::Concept<kr::dl::TopTag>>();
     const auto top = repository.insert(top_data).first;
-    auto constructor_data = ygg::Data<kr::dl::Constructor<kr::ExtFamilyTag, kr::dl::ConceptTag>>(top.get_index());
+    auto constructor_data = ygg::Data<kr::dl::Constructor<kr::dl::ConceptTag>>(top.get_index());
     return kr::dl::insert(repository, constructor_data).first;
 }
 

@@ -19,7 +19,7 @@
 namespace runir::kr::ps::ext
 {
 
-template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<ExtFamilyTag, Kind>>
+template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<Kind>>
 class EvaluationEnvironment
 {
 private:
@@ -30,7 +30,7 @@ private:
 
         ModuleEvaluation(const tyr::planning::Task<Kind>& task,
                          ModuleView module,
-                         std::span<const runir::kr::dl::semantics::incremental::EvaluationRoot<ExtFamilyTag>> roots) :
+                         std::span<const runir::kr::dl::semantics::incremental::EvaluationRoot> roots) :
             module_(module),
             policy(task, roots)
         {
@@ -48,9 +48,9 @@ private:
     runir::kr::dl::semantics::Builder& m_dl_builder;
     runir::kr::dl::semantics::DenotationRepository& m_dl_denotation_repository;
     ExecutionRepository<Kind>& m_execution_repository;
-    runir::kr::dl::semantics::EvaluationStorage<runir::kr::ExtFamilyTag> m_dl_storage;
-    runir::kr::dl::semantics::EvaluationStorage<runir::kr::ExtFamilyTag> m_dl_target_storage;
-    runir::kr::dl::semantics::DenotationCaches<runir::kr::ExtFamilyTag> m_call_caches;
+    runir::kr::dl::semantics::EvaluationStorage m_dl_storage;
+    runir::kr::dl::semantics::EvaluationStorage m_dl_target_storage;
+    runir::kr::dl::semantics::DenotationCaches m_call_caches;
     ProgramView m_program;
     std::vector<ModuleEvaluation> m_modules;
     ModuleEvaluation* m_current = nullptr;
@@ -73,7 +73,7 @@ public:
         m_program(program)
     {
         m_modules.reserve(program.get_modules().size());
-        auto roots = std::vector<runir::kr::dl::semantics::incremental::EvaluationRoot<ExtFamilyTag>> {};
+        auto roots = std::vector<runir::kr::dl::semantics::incremental::EvaluationRoot> {};
         for (const auto module_ : program.get_modules())
         {
             roots.clear();
@@ -144,7 +144,7 @@ public:
     template<tyr::planning::StateViewConcept<Kind> S, runir::kr::dl::semantics::RegisterValuesViewConcept R>
     auto make_dl_context(S state, runir::kr::dl::semantics::CallArgumentsView arguments, R registers)
     {
-        using StateDlContext = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, Kind, S>;
+        using StateDlContext = runir::kr::dl::semantics::StateEvaluationContext<Kind, S>;
         auto context = StateDlContext(std::move(state), m_dl_builder, m_dl_storage, arguments, registers);
         return current_policy().make_source_context(std::move(context));
     }
@@ -156,7 +156,7 @@ public:
     {
         if (&arguments.get_context() != &m_dl_denotation_repository)
             throw std::invalid_argument("Call argument evaluation requires arguments from the selected task repository.");
-        using StateDlContext = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, Kind, S>;
+        using StateDlContext = runir::kr::dl::semantics::StateEvaluationContext<Kind, S>;
         return StateDlContext(std::move(state), m_dl_builder, m_call_caches, m_dl_denotation_repository, m_dl_storage, arguments, registers);
     }
 
@@ -164,7 +164,7 @@ public:
     auto
     make_dl_transition_context(S source_state, S target_state, runir::kr::dl::semantics::CallArgumentsView arguments, R source_registers, R target_registers)
     {
-        using StateDlContext = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, Kind, S>;
+        using StateDlContext = runir::kr::dl::semantics::StateEvaluationContext<Kind, S>;
         auto source = StateDlContext(std::move(source_state), m_dl_builder, m_dl_storage, arguments, source_registers);
         auto target = StateDlContext(std::move(target_state), m_dl_builder, m_dl_target_storage, arguments, target_registers);
         return make_evaluation_transition_context<ExtFamilyTag, Kind>(current_policy().make_source_context(std::move(source)),

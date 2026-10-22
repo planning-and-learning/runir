@@ -24,37 +24,37 @@ concept IndexedDataView =
            view.get_variant();
        };
 
-template<typename Family, typename... Ts>
+template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
 {
-    return (IndexedDataView<Ts, kr::dl::ConstructorRepositoryFor<Family>> && ...);
+    return (IndexedDataView<Ts, kr::dl::ConstructorRepositoryFor> && ...);
 }
 
-template<typename Family, typename Category>
+template<typename Category>
 consteval bool view_alias()
 {
-    using Entity = kr::dl::Constructor<Family, Category>;
-    using View = ygg::View<ygg::Index<Entity>, kr::dl::ConstructorRepositoryFor<Family>>;
-    static_assert(std::same_as<View, kr::dl::FamilyConstructorView<Family, Category>>);
-    if constexpr (std::same_as<Family, kr::BaseFamilyTag>)
+    using Entity = kr::dl::Constructor<Category>;
+    using View = ygg::View<ygg::Index<Entity>, kr::dl::ConstructorRepositoryFor>;
+    static_assert(std::same_as<View, kr::dl::FamilyConstructorView<Category>>);
+    if constexpr (false)
         return std::same_as<View, kr::dl::BaseConstructorView<Category>>;
-    else if constexpr (std::same_as<Family, kr::ExtFamilyTag>)
+    else if constexpr (true)
         return std::same_as<View, kr::dl::ExtConstructorView<Category>>;
     else
         return std::same_as<View, kr::dl::UnsConstructorView<Category>>;
 }
 
-template<typename Family, typename... Categories>
+template<typename... Categories>
 consteval bool view_aliases(ygg::TypeList<Categories...>)
 {
-    return (view_alias<Family, Categories>() && ...);
+    return (view_alias<Categories>() && ...);
 }
 
-template<typename Family, typename Category>
+template<typename Category>
 consteval bool query_projection_contract()
 {
-    using Entity = kr::dl::QueryProjection<Family, Category>;
-    using Repository = kr::dl::ConstructorRepositoryFor<Family>;
+    using Entity = kr::dl::QueryProjection<Category>;
+    using Repository = kr::dl::ConstructorRepositoryFor;
     using View = ygg::View<ygg::Index<Entity>, Repository>;
     return ygg::ViewConcept<ygg::Index<Entity>, Repository> && requires(ygg::Data<Entity>& data, const View& view) {
         data.arg;
@@ -64,33 +64,26 @@ consteval bool query_projection_contract()
     } && !requires(const View& view) { view.get_plan(); };
 }
 
-template<typename Family, typename... Tags>
+template<typename... Tags>
 consteval bool query_view_contracts(ygg::TypeList<Tags...>)
 {
-    using Repository = kr::dl::ConstructorRepositoryFor<Family>;
-    return ygg::ViewConcept<ygg::Index<kr::dl::QueryColumn>, Repository> && ygg::ViewConcept<ygg::Index<kr::dl::Query<Family>>, Repository>
-           && query_projection_contract<Family, kr::dl::ConceptTag>() && query_projection_contract<Family, kr::dl::RoleTag>()
-           && (ygg::ViewConcept<ygg::Index<kr::dl::Query<Family, Tags>>, Repository> && ...);
+    using Repository = kr::dl::ConstructorRepositoryFor;
+    return ygg::ViewConcept<ygg::Index<kr::dl::QueryColumn>, Repository> && ygg::ViewConcept<ygg::Index<kr::dl::Query<>>, Repository>
+           && query_projection_contract<kr::dl::ConceptTag>() && query_projection_contract<kr::dl::RoleTag>()
+           && (ygg::ViewConcept<ygg::Index<kr::dl::Query<Tags>>, Repository> && ...);
 }
 
-static_assert(query_view_contracts<kr::BaseFamilyTag>(kr::dl::QueryConstructorTags {}));
-static_assert(query_view_contracts<kr::ExtFamilyTag>(kr::dl::QueryConstructorTags {}));
-static_assert(query_view_contracts<kr::UnsFamilyTag>(kr::dl::QueryConstructorTags {}));
+static_assert(query_view_contracts<>(kr::dl::QueryConstructorTags {}));
 
-static_assert(indexed_data_views<kr::BaseFamilyTag>(kr::dl::FamilyConstructorTypes<kr::BaseFamilyTag> {}));
-static_assert(indexed_data_views<kr::ExtFamilyTag>(kr::dl::FamilyConstructorTypes<kr::ExtFamilyTag> {}));
-static_assert(indexed_data_views<kr::UnsFamilyTag>(kr::dl::FamilyConstructorTypes<kr::UnsFamilyTag> {}));
-static_assert(view_aliases<kr::BaseFamilyTag>(kr::dl::CategoryTags {}));
-static_assert(view_aliases<kr::ExtFamilyTag>(kr::dl::CategoryTags {}));
-static_assert(view_aliases<kr::UnsFamilyTag>(kr::dl::CategoryTags {}));
+static_assert(indexed_data_views<>(kr::dl::FamilyConstructorTypes {}));
+static_assert(view_aliases<>(kr::dl::CategoryTags {}));
 
 }  // namespace
 
 TEST(RunirKrDlConstructor, PreservesConcreteVariant)
 {
-    using Family = kr::ExtFamilyTag;
-    using Concrete = kr::dl::Concept<Family, kr::dl::TopTag>;
-    using Constructor = kr::dl::Constructor<Family, kr::dl::ConceptTag>;
+    using Concrete = kr::dl::Concept<kr::dl::TopTag>;
+    using Constructor = kr::dl::Constructor<kr::dl::ConceptTag>;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     auto repository = kr::dl::ExtConstructorRepositoryFactory().create(planning_repository);
     auto data = ygg::Data<Constructor>(ygg::Index<Concrete>(6));
@@ -102,20 +95,20 @@ TEST(RunirKrDlConstructor, PreservesConcreteVariant)
 
 TEST(RunirKrDlConstructor, SharedInterningCanonicalizesAndPrepares)
 {
-    const auto check = []<kr::dl::FamilyTag Family>()
+    const auto check = []()
     {
         auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
-        auto repository = kr::dl::ConstructorRepositoryFactoryFor<Family>().create(planning_repository);
-        auto top = ygg::Data<kr::dl::Concept<Family, kr::dl::TopTag>>();
-        auto bot = ygg::Data<kr::dl::Concept<Family, kr::dl::BotTag>>();
-        auto first_data = ygg::Data<kr::dl::Constructor<Family, kr::dl::ConceptTag>>(ygg::formalism::insert(*repository, top).first.get_index());
-        auto second_data = ygg::Data<kr::dl::Constructor<Family, kr::dl::ConceptTag>>(ygg::formalism::insert(*repository, bot).first.get_index());
+        auto repository = kr::dl::ConstructorRepositoryFactoryFor().create(planning_repository);
+        auto top = ygg::Data<kr::dl::Concept<kr::dl::TopTag>>();
+        auto bot = ygg::Data<kr::dl::Concept<kr::dl::BotTag>>();
+        auto first_data = ygg::Data<kr::dl::Constructor<kr::dl::ConceptTag>>(ygg::formalism::insert(*repository, top).first.get_index());
+        auto second_data = ygg::Data<kr::dl::Constructor<kr::dl::ConceptTag>>(ygg::formalism::insert(*repository, bot).first.get_index());
         const auto first = ygg::formalism::insert(*repository, first_data).first;
         const auto second = ygg::formalism::insert(*repository, second_data).first;
         EXPECT_TRUE(first.is_static());
         EXPECT_TRUE(second.is_static());
 
-        auto data = ygg::Data<kr::dl::Concept<Family, kr::dl::IntersectionTag>>(second.get_index(), first.get_index());
+        auto data = ygg::Data<kr::dl::Concept<kr::dl::IntersectionTag>>(second.get_index(), first.get_index());
         ASSERT_FALSE(kr::dl::is_canonical(data));
         const auto [intersection, created] = ygg::formalism::insert(*repository, data);
         EXPECT_TRUE(created);
@@ -126,7 +119,7 @@ TEST(RunirKrDlConstructor, SharedInterningCanonicalizesAndPrepares)
         EXPECT_FALSE(duplicate_created);
         EXPECT_EQ(same.get_index(), intersection.get_index());
     };
-    check.template operator()<kr::ExtFamilyTag>();
+    check();
 }
 
 }

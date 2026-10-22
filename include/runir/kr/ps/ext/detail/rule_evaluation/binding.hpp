@@ -27,7 +27,7 @@ template<tyr::TaskKind Kind,
          ProgramStateViewConcept<Kind> S,
          tyr::planning::StateViewConcept<Kind> PS,
          runir::kr::dl::semantics::RegisterValuesViewConcept R,
-         runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy>
+         runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
 bool binding_effects_match(RuleView<Tag> rule, S state, const PS& planning_state, R registers, EvaluationEnvironment<Kind, EvaluationPolicy>& environment)
 {
     if (rule.get_effects().empty())

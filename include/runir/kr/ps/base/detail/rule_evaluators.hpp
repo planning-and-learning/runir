@@ -11,9 +11,7 @@
 namespace runir::kr::ps::base::detail
 {
 
-template<tyr::TaskKind Kind,
-         runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy =
-             runir::kr::dl::semantics::DefaultEvaluationPolicy<ExtFamilyTag, Kind>>
+template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<Kind>>
 class RuleEvaluators
 {
     EvaluationEnvironment<Kind, EvaluationPolicy> m_environment;

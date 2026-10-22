@@ -36,7 +36,7 @@ namespace runir::kr::ps::ext::detail
 
 /// Prepared rule instances and reusable scratch for one task/program pair.
 /// Records stay in place after construction; pending Choices borrow this owner's pools.
-template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<ExtFamilyTag, Kind>>
+template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<Kind>>
 class RuleEvaluators
 {
     using Concept = runir::kr::dl::ConceptTag;

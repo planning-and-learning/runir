@@ -20,17 +20,15 @@ template<kr::FamilyTag Family, tyr::TaskKind Kind>
 constexpr bool mapped_context()
 {
     using Context = kr::ps::dl::TransitionEvaluationContext<Family, Kind>;
-    using DlFamily = kr::ps::DlFamilyFor<Family>;
-    using StateContext = kr::dl::semantics::StateEvaluationContext<DlFamily, Kind>;
+    using StateContext = kr::dl::semantics::StateEvaluationContext<Kind>;
     using ResultContext = decltype(std::declval<const StateContext&>().for_result(false));
     using ChildContext = decltype(std::declval<const StateContext&>().child_context());
     return kr::ps::dl::TransitionEvaluationContextConcept<Context, Family, Kind>
            && std::same_as<decltype(std::declval<Context&>().get_source_context()), StateContext&>
            && std::same_as<decltype(std::declval<Context&>().get_target_context()), StateContext&>
-           && kr::dl::semantics::StateEvaluationContextConcept<StateContext&, DlFamily, Kind>
-           && kr::dl::semantics::StateEvaluationContextConcept<ResultContext, DlFamily, Kind>
-           && kr::dl::semantics::StateEvaluationContextConcept<ChildContext, DlFamily, Kind>
-           && (!std::same_as<DlFamily, kr::ExtFamilyTag> || (std::same_as<ResultContext, StateContext> && std::same_as<ChildContext, StateContext>) );
+           && kr::dl::semantics::StateEvaluationContextConcept<StateContext&, Kind> && kr::dl::semantics::StateEvaluationContextConcept<ResultContext, Kind>
+           && kr::dl::semantics::StateEvaluationContextConcept<ChildContext, Kind>
+           && (std::same_as<ResultContext, StateContext> && std::same_as<ChildContext, StateContext>);
 }
 
 static_assert(mapped_context<kr::BaseFamilyTag, tyr::GroundTag>());
@@ -42,39 +40,38 @@ static_assert(mapped_context<kr::IcpFamilyTag, tyr::LiftedTag>());
 static_assert(mapped_context<kr::UnsFamilyTag, tyr::GroundTag>());
 static_assert(mapped_context<kr::UnsFamilyTag, tyr::LiftedTag>());
 
-static_assert(kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, tyr::GroundTag>, kr::ExtFamilyTag, tyr::GroundTag>);
-static_assert(kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, tyr::LiftedTag>, kr::ExtFamilyTag, tyr::LiftedTag>);
-static_assert(kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::DeltaEvaluationPolicy<kr::ExtFamilyTag, tyr::GroundTag>, kr::ExtFamilyTag, tyr::GroundTag>);
-static_assert(kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::DeltaEvaluationPolicy<kr::ExtFamilyTag, tyr::LiftedTag>, kr::ExtFamilyTag, tyr::LiftedTag>);
-static_assert(!kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, tyr::GroundTag>, kr::ExtFamilyTag, tyr::LiftedTag>);
+static_assert(kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::FullEvaluationPolicy<tyr::GroundTag>, tyr::GroundTag>);
+static_assert(kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::FullEvaluationPolicy<tyr::LiftedTag>, tyr::LiftedTag>);
+static_assert(kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::DeltaEvaluationPolicy<tyr::GroundTag>, tyr::GroundTag>);
+static_assert(kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::DeltaEvaluationPolicy<tyr::LiftedTag>, tyr::LiftedTag>);
+static_assert(!kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::FullEvaluationPolicy<tyr::GroundTag>, tyr::LiftedTag>);
 
-struct InvalidTargetPolicy : kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, tyr::GroundTag>
+struct InvalidTargetPolicy : kr::dl::semantics::FullEvaluationPolicy<tyr::GroundTag>
 {
     using FullEvaluationPolicy::FullEvaluationPolicy;
-    int make_target_context(kr::dl::semantics::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>);
+    int make_target_context(kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>);
 };
-static_assert(!kr::dl::semantics::EvaluationPolicyConcept<InvalidTargetPolicy, kr::ExtFamilyTag, tyr::GroundTag>);
+static_assert(!kr::dl::semantics::EvaluationPolicyConcept<InvalidTargetPolicy, tyr::GroundTag>);
 
 template<typename ConceptResult, typename RoleResult>
 struct ResultContext
 {
 };
 
-template<tyr::TaskKind Kind, kr::FamilyTag Family, typename ConceptResult, typename RoleResult>
-ConceptResult evaluate(kr::dl::FamilyConstructorView<Family, kr::dl::ConceptTag>, ResultContext<ConceptResult, RoleResult>&);
-template<tyr::TaskKind Kind, kr::FamilyTag Family, typename ConceptResult, typename RoleResult>
-RoleResult evaluate(kr::dl::FamilyConstructorView<Family, kr::dl::RoleTag>, ResultContext<ConceptResult, RoleResult>&);
-template<tyr::TaskKind Kind, kr::FamilyTag Family, kr::dl::BooleanOrNumericalTag Category, typename ConceptResult, typename RoleResult>
-kr::dl::semantics::DenotationView<Category>
-evaluate(kr::dl::FamilyConstructorView<Family, Category>, ResultContext<ConceptResult, RoleResult>&);
-template<tyr::TaskKind Kind, kr::FamilyTag Family, typename ConceptResult, typename RoleResult>
-kr::dl::semantics::QueryDenotationView evaluate(kr::dl::FamilyQueryView<Family>, ResultContext<ConceptResult, RoleResult>&);
+template<tyr::TaskKind Kind, typename ConceptResult, typename RoleResult>
+ConceptResult evaluate(kr::dl::FamilyConstructorView<kr::dl::ConceptTag>, ResultContext<ConceptResult, RoleResult>&);
+template<tyr::TaskKind Kind, typename ConceptResult, typename RoleResult>
+RoleResult evaluate(kr::dl::FamilyConstructorView<kr::dl::RoleTag>, ResultContext<ConceptResult, RoleResult>&);
+template<tyr::TaskKind Kind, kr::dl::BooleanOrNumericalTag Category, typename ConceptResult, typename RoleResult>
+kr::dl::semantics::DenotationView<Category> evaluate(kr::dl::FamilyConstructorView<Category>, ResultContext<ConceptResult, RoleResult>&);
+template<tyr::TaskKind Kind, typename ConceptResult, typename RoleResult>
+kr::dl::semantics::QueryDenotationView evaluate(kr::dl::FamilyQueryView<>, ResultContext<ConceptResult, RoleResult>&);
 
 using ConceptResult = kr::dl::semantics::DenotationView<kr::dl::ConceptTag>;
 using RoleResult = kr::dl::semantics::DenotationView<kr::dl::RoleTag>;
-static_assert(kr::dl::semantics::EvaluationContextConcept<ResultContext<ConceptResult, RoleResult>, kr::ExtFamilyTag, tyr::GroundTag>);
-static_assert(!kr::dl::semantics::EvaluationContextConcept<ResultContext<int, RoleResult>, kr::ExtFamilyTag, tyr::GroundTag>);
-static_assert(!kr::dl::semantics::EvaluationContextConcept<ResultContext<RoleResult, ConceptResult>, kr::ExtFamilyTag, tyr::GroundTag>);
+static_assert(kr::dl::semantics::EvaluationContextConcept<ResultContext<ConceptResult, RoleResult>, tyr::GroundTag>);
+static_assert(!kr::dl::semantics::EvaluationContextConcept<ResultContext<int, RoleResult>, tyr::GroundTag>);
+static_assert(!kr::dl::semantics::EvaluationContextConcept<ResultContext<RoleResult, ConceptResult>, tyr::GroundTag>);
 
 template<kr::dl::CategoryTag Category>
 constexpr bool denotation_views()
@@ -91,13 +88,11 @@ static_assert(denotation_views<kr::dl::RoleTag>());
 template<kr::FamilyTag Family, tyr::TaskKind Kind>
 constexpr bool evaluation_policies_accept_borrowed_states()
 {
-    using Inputs = kr::dl::semantics::StateEvaluationContext<Family,
-                                                         Kind,
-                                                         tyr::planning::BuilderStateView<Kind>>;
-    return kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::FullEvaluationPolicy<Family, Kind>, Family, Kind>
-           && kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::DeltaEvaluationPolicy<Family, Kind>, Family, Kind>
-           && kr::dl::semantics::EvaluationContextConcept<Inputs, Family, Kind>
-           && kr::dl::semantics::EvaluationContextConcept<kr::dl::semantics::incremental::StateEvaluation<Family, Kind, Inputs>, Family, Kind>;
+    using Inputs = kr::dl::semantics::StateEvaluationContext<Kind, tyr::planning::BuilderStateView<Kind>>;
+    return kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::FullEvaluationPolicy<Kind>, Kind>
+           && kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::DeltaEvaluationPolicy<Kind>, Kind>
+           && kr::dl::semantics::EvaluationContextConcept<Inputs, Kind>
+           && kr::dl::semantics::EvaluationContextConcept<kr::dl::semantics::incremental::StateEvaluation<Kind, Inputs>, Kind>;
 }
 static_assert(evaluation_policies_accept_borrowed_states<kr::BaseFamilyTag, tyr::GroundTag>());
 static_assert(evaluation_policies_accept_borrowed_states<kr::BaseFamilyTag, tyr::LiftedTag>());
@@ -115,7 +110,7 @@ struct NameOnlyContext
 using BaseContext = kr::ps::dl::TransitionEvaluationContext<kr::BaseFamilyTag, tyr::GroundTag>;
 using ExtContext = kr::ps::dl::TransitionEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>;
 using IcpContext = kr::ps::dl::TransitionEvaluationContext<kr::IcpFamilyTag, tyr::GroundTag>;
-using ExtStateContext = kr::dl::semantics::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>;
+using ExtStateContext = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
 
 // The returned resources identify the task kind; the PS family still distinguishes ICP from Ext.
 template<kr::FamilyTag Family>
@@ -134,12 +129,11 @@ static_assert(kr::ps::dl::TransitionEvaluationContextConcept<IcpResourceContext,
 static_assert(!kr::ps::dl::TransitionEvaluationContextConcept<IcpResourceContext, kr::IcpFamilyTag, tyr::LiftedTag>);
 static_assert(!kr::ps::dl::TransitionEvaluationContextConcept<IcpResourceContext, kr::ExtFamilyTag, tyr::GroundTag>);
 
-static_assert(kr::dl::semantics::StateEvaluationContextConcept<ExtStateContext, kr::ps::DlFamilyFor<kr::IcpFamilyTag>, tyr::GroundTag>);
-static_assert(!kr::dl::semantics::StateEvaluationContextConcept<ExtStateContext, kr::ExtFamilyTag, tyr::LiftedTag>);
-static_assert(!kr::dl::semantics::StateEvaluationContextConcept<const ExtStateContext&, kr::ExtFamilyTag, tyr::GroundTag>);
-static_assert(!kr::dl::semantics::StateEvaluationContextConcept<ExtStateContext, int, tyr::GroundTag>);
-static_assert(!kr::dl::semantics::StateEvaluationContextConcept<ExtStateContext, kr::ExtFamilyTag, int>);
-static_assert(!kr::dl::semantics::StateEvaluationContextConcept<NameOnlyContext, kr::ExtFamilyTag, tyr::GroundTag>);
+static_assert(kr::dl::semantics::StateEvaluationContextConcept<ExtStateContext, tyr::GroundTag>);
+static_assert(!kr::dl::semantics::StateEvaluationContextConcept<ExtStateContext, tyr::LiftedTag>);
+static_assert(!kr::dl::semantics::StateEvaluationContextConcept<const ExtStateContext&, tyr::GroundTag>);
+static_assert(!kr::dl::semantics::StateEvaluationContextConcept<ExtStateContext, int>);
+static_assert(!kr::dl::semantics::StateEvaluationContextConcept<NameOnlyContext, tyr::GroundTag>);
 
 static_assert(kr::ps::dl::TransitionEvaluationContextConcept<IcpContext, kr::IcpFamilyTag, tyr::GroundTag>);
 static_assert(!kr::ps::dl::TransitionEvaluationContextConcept<IcpContext, kr::IcpFamilyTag, tyr::LiftedTag>);

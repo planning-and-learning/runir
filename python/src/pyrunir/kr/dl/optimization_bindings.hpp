@@ -12,20 +12,19 @@
 namespace runir::kr::python
 {
 
-template<runir::kr::dl::FamilyTag Family>
-void bind_query_statistics(nanobind::module_& m)
+inline void bind_query_statistics(nanobind::module_& m)
 {
     namespace nb = nanobind;
-    using Statistics = runir::kr::dl::QueryStatistics<Family>;
+    using Statistics = runir::kr::dl::QueryStatistics;
     nb::class_<Statistics>(m, "QueryStatistics")
         .def(nb::init<>())
         .def_rw("objects", &Statistics::objects)
         .def("num_leaves", [](const Statistics& statistics) { return statistics.leaves.size(); });
 
     // add(context) measures one sample state; its context and storage may be dropped right after, bounding memory.
-    using Sampler = runir::kr::dl::QueryStatisticsSampler<Family>;
-    using GroundContext = runir::kr::dl::semantics::StateEvaluationContext<Family, tyr::GroundTag>;
-    using LiftedContext = runir::kr::dl::semantics::StateEvaluationContext<Family, tyr::LiftedTag>;
+    using Sampler = runir::kr::dl::QueryStatisticsSampler;
+    using GroundContext = runir::kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
+    using LiftedContext = runir::kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>;
     nb::class_<Sampler>(m, "QueryStatisticsSampler")
         .def("add", [](Sampler& sampler, GroundContext& context) { sampler.template add<tyr::GroundTag>(context); }, nb::arg("context"))
         .def("add", [](Sampler& sampler, LiftedContext& context) { sampler.template add<tyr::LiftedTag>(context); }, nb::arg("context"))
@@ -40,14 +39,14 @@ void bind_query_statistics(nanobind::module_& m)
 }
 
 /// optimize(repository[, statistics]) and collect_query_statistics(contexts) on a DL expression view.
-template<runir::kr::dl::FamilyTag Family, typename View>
+template<typename View>
 void bind_optimize(nanobind::class_<View>& cls)
 {
     namespace nb = nanobind;
-    using Repository = runir::kr::dl::ConstructorRepositoryFor<Family>;
-    using Statistics = runir::kr::dl::QueryStatistics<Family>;
-    using GroundContext = runir::kr::dl::semantics::StateEvaluationContext<Family, tyr::GroundTag>;
-    using LiftedContext = runir::kr::dl::semantics::StateEvaluationContext<Family, tyr::LiftedTag>;
+    using Repository = runir::kr::dl::ConstructorRepositoryFor;
+    using Statistics = runir::kr::dl::QueryStatistics;
+    using GroundContext = runir::kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
+    using LiftedContext = runir::kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>;
     cls.def(
            "optimize",
            [](const View& view, Repository& repository) { return runir::kr::dl::optimize(view, repository); },
@@ -82,7 +81,7 @@ void bind_optimize(nanobind::class_<View>& cls)
         .def("query_statistics_sampler",
              [](const View& view)
              {
-                 auto collector = runir::kr::dl::QueryStatisticsCollector<Family>();
+                 auto collector = runir::kr::dl::QueryStatisticsCollector();
                  collector.add(view);
                  return collector.sampler();
              });
