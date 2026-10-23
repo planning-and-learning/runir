@@ -188,6 +188,8 @@ def test_termination_reports_a_cycle_of_a_nonterminating_draft(session: Session)
     with pytest.raises(ValueError, match="not changed"):
         session.set_program("(:program")
     assert not session.termination().terminating  # still the looping draft
+    with pytest.raises(ValueError, match="`termination`"):
+        session.validate()
 
 
 def test_validation_lists_the_largest_increases_without_comparing_results() -> None:

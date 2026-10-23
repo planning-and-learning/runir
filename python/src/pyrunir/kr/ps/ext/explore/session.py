@@ -649,6 +649,9 @@ class Session:
     ) -> tuple[LiftedProgramProofResults, float]:
         if self._spent >= self._total_seconds:
             raise BudgetExhausted(f"the session's search budget of {self._total_seconds:.0f} s is used up")
+        program = program or self._program
+        if not structural_termination(program).is_terminating():
+            raise ValueError("the program is not structurally terminating; `termination` shows the rules that keep a cycle")
         options = LiftedProgramSearchOptions()
         options.universal = universal
         options.state_memorization = StateMemorization.ALL
@@ -656,7 +659,7 @@ class Session:
         options.max_time = timedelta(seconds=budget.max_seconds)
         options.start_state = start
         started = time.monotonic()
-        result = find_lifted_solution(self._task_context(task), program or self._program, options)
+        result = find_lifted_solution(self._task_context(task), program, options)
         seconds = time.monotonic() - started
         if self._batches == 0:
             self._spent += seconds
