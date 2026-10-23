@@ -189,6 +189,24 @@ def try_load(rule: str, tasks: list[str] | None = None) -> str:
 
 @server.tool()
 @_logged
+def successors(vertex: str) -> str:
+    """Every applicable action at `<task>:v<n>`, the rule that admits it there (or none), and its feature deltas;
+    at a failure vertex this shows which moves the conditions and effects forbid."""
+    session = _session()
+    return "\n".join(str(step) for step in session.successors(session.vertex_ref(vertex))) or "(no applicable action)"
+
+
+@server.tool()
+@_logged
+def plan(vertex: str, max_states: int | None = None, max_seconds: float | None = None) -> str:
+    """A plan from the state of `<task>:v<n>` (e.g. a failure vertex) to the goal by greedy best-first search
+    with FF; it need not follow the program. Each step shows its feature deltas under the vertex's registers."""
+    session = _session()
+    return str(session.plan(session.vertex_ref(vertex), _budget(max_states, max_seconds)))
+
+
+@server.tool()
+@_logged
 def vertex(vertex: str) -> str:
     """Memory state, registers, declared Boolean and numerical feature values, and fluent atoms of `<task>:v<n>`."""
     session = _session()

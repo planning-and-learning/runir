@@ -123,3 +123,17 @@ def test_validate_executes_and_proves_every_task(session):
     [task] = validation.tasks
     assert task.execute == "passed" and task.prove == "passed" and task.choice_depth == 1  # a Choose needs one binding
     assert str(validation).startswith("passed 1/1; choice_depth sum over passed tasks 1")
+
+
+def test_successors_and_plan_from_a_failure_vertex(gripper_data_dir):
+    # As a Load the first ball is taken; carrying ball1 to roomb ends in an open state that a plan can still leave.
+    program = PROGRAM.replace("(:choose (:conditions) (:concept located) (:register (:concept selected)) (:effects) (:order (min selected_has_goal)))",
+                              "(:load (:conditions) (:concept located) (:register (:concept selected)) (:effects))")
+    session = Session(gripper_data_dir / "domain.pddl", program, [gripper_data_dir / "test-1.pddl"], workers=1)
+    run = session.run(session.task("test-1"))
+    assert run.status == "failure" and run.failure is not None
+    steps = session.successors(run.failure)
+    assert steps and all(step.rule is None for step in steps)  # memory `done` has no rules
+    plan = session.plan(run.failure)
+    assert plan.status == "solved" and plan.steps
+    assert any("ball2" in step.action for step in plan.steps)

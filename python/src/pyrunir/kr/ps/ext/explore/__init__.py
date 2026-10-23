@@ -27,7 +27,7 @@ from typing import Literal
 
 from pypddl.formalism import ParserOptions
 from pytyr.formalism.planning import Parser
-from pytyr.planning import lifted
+from pytyr.planning import SearchBudget, lifted
 from pyyggdrasil.execution import ExecutionContext
 
 from pyrunir.datasets import LiftedTaskSearchContext
@@ -58,6 +58,8 @@ __all__ = [
     "Contrast",
     "Feature",
     "LoadTrial",
+    "Plan",
+    "Step",
     "Separation",
     "Session",
     "Task",
@@ -321,6 +323,31 @@ class LoadTrial:
 
 
 @dataclass(frozen=True, slots=True)
+class Step:
+    action: str
+    rule: str | None
+    """For successors: the rule admitting the action at the vertex, or None if no rule does."""
+    deltas: Mapping[str, tuple[object, object]]
+    """Boolean and numerical features before and after the action, under the vertex's registers and arguments."""
+
+    def __str__(self) -> str:
+        deltas = " ".join(f"{name}:{a}>{b}" for name, (a, b) in self.deltas.items()) or "-"
+        rule = f" rule={self.rule}" if self.rule else (" rule=(none)" if self.rule is None else "")
+        return f"{self.action}{rule} deltas: {deltas}"
+
+
+@dataclass(frozen=True, slots=True)
+class Plan:
+    start: VertexRef
+    status: str
+    steps: tuple[Step, ...]
+
+    def __str__(self) -> str:
+        head = f"plan from {self.start}: {self.status}, {len(self.steps)} steps (need not follow the program)"
+        return "\n".join([head, *(f"  {i}. {step}" for i, step in enumerate(self.steps, 1))])
+
+
+@dataclass(frozen=True, slots=True)
 class Vertex:
     ref: VertexRef
     memory: str
@@ -438,6 +465,10 @@ def _reachable(graph, start: int) -> int:
                 seen.add(child)
                 stack.append(child)
     return len(seen)
+
+
+def _deltas(before: Mapping[str, object], after: Mapping[str, object]) -> dict[str, tuple[object, object]]:
+    return {name: (value, after[name]) for name, value in before.items() if after[name] != value}
 
 
 def _object_name(value) -> str | None:
@@ -797,7 +828,61 @@ class Session:
             goal=label.is_goal,
         )
 
+    def successors(self, ref: VertexRef, /) -> list[Step]:
+        """Every applicable action in the vertex's state, the rule that admits it there (None: no rule does), and its
+        feature deltas. At a failure vertex this shows which moves the conditions and effects forbid."""
+        task_context = self._task_context(ref.task)
+        search = task_context.search_context
+        program_state = self._search(ref.task).graph.get_vertex_property(ref.vertex).program_state
+        module_state = program_state.module_state
+        expander = LiftedSuccessorExpander(task_context, self._program)
+        before = self._state_values(task_context, program_state.state, module_state)
+        node = search.successor_generator.get_node(search.state_repository, program_state.state.get_index())
+        steps = []
+        for successor in search.successor_generator.get_labeled_successor_nodes(node, search.state_repository, search.axiom_evaluator):
+            rule = expander.matching_rule(program_state, successor)
+            after = self._state_values(task_context, successor.node.get_state(), module_state)
+            steps.append(Step(str(successor.label), None if rule is None else str(rule.get_symbol()), _deltas(before, after)))
+        return steps
+
+    def plan(self, ref: VertexRef, /, budget: Budget | None = None) -> Plan:
+        """A plan from the vertex's state to the goal by lazy GBFS with FF; it need not follow the program.
+        Each step shows its feature deltas under the vertex's registers and arguments."""
+        budget = budget or self._budget
+        task_context = self._task_context(ref.task)
+        search = task_context.search_context
+        module_state = self._search(ref.task).graph.get_vertex_property(ref.vertex).program_state.module_state
+        state = self._search(ref.task).graph.get_vertex_property(ref.vertex).state
+        options = lifted.gbfs_lazy.Options()
+        options.start_node = search.successor_generator.get_node(search.state_repository, state.get_index())
+        options.search_budget = SearchBudget(max_num_states=budget.max_states, max_time=timedelta(seconds=budget.max_seconds))
+        if self._spent >= self._total_seconds:
+            raise BudgetExhausted(f"the session's search budget of {self._total_seconds:.0f} s is used up")
+        started = time.monotonic()
+        found = lifted.gbfs_lazy.find_solution(
+            search.task, search.state_repository, search.axiom_evaluator, search.successor_generator,
+            lifted.FFRPGHeuristic(search.task, search.execution_context), options,
+        )
+        self._spent += time.monotonic() - started
+        steps = []
+        if found.plan is not None:
+            source = found.plan.get_start_node().get_state()
+            before = self._state_values(task_context, source, module_state)
+            for successor in found.plan.get_labeled_succ_nodes():
+                after = self._state_values(task_context, successor.node.get_state(), module_state)
+                steps.append(Step(str(successor.label), "", _deltas(before, after)))
+                before = after
+        return Plan(ref, found.status.name.lower(), tuple(steps))
+
     # -- internals -----------------------------------------------------------------------------------------------------
+
+    def _state_values(self, task_context: LiftedTaskContext, state, module_state) -> dict[str, object]:
+        storage = EvaluationStorage(task_context.dl_denotation_repository)
+        context = LiftedStateEvaluationContext(state, task_context.dl_builder, storage, module_state.arguments, module_state.registers)
+        return {
+            str(feature.get_symbol()): evaluate(feature, context).get()
+            for feature in (*self._module.get_boolean_features(), *self._module.get_numerical_features())
+        }
 
     def _task_context(self, task: Task) -> LiftedTaskContext:
         if task.name not in self._task_contexts:

@@ -30,6 +30,9 @@ print(session.try_load(rule))
 | `separation(feature, contrast)` | the same comparison for one declared feature or a new expression |
 | `try_load(rule, tasks)` | execute and prove with the rule's Choose replaced by a Load |
 | `vertex(ref)` | memory state, registers, Boolean and numerical features, fluent atoms |
+| `successors(ref)` | applicable actions, the rule admitting each there (or none), feature deltas |
+| `plan(ref, budget)` | a lazy GBFS/FF plan from the vertex's state to the goal, feature deltas per step |
+| `validate(tasks)` | execute and prove every task, as a learning loop validates a proposal |
 
 Each task is searched once, lazily, with `StateMemorization.ALL`, so the graph keeps
 failed branches. Vertex status is computed in postorder: a vertex with Choose edges
