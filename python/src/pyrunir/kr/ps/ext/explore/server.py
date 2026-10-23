@@ -85,7 +85,7 @@ def _logged(function: Callable[_Params, str]) -> Callable[_Params, str]:
     return wrapper
 
 
-@server.tool(name="open")
+@server.tool(name="open", structured_output=False)
 @_logged
 def open_workspace(workspace: str = ".") -> str:
     """Open the workspace: its domain, current module program and tasks. Earlier results are discarded."""
@@ -103,12 +103,12 @@ def open_workspace(workspace: str = ".") -> str:
     _server.contrasts.clear()
     rules = ", ".join(rule.name for rule in _server.session.choose_rules()) or "(none)"
     return (
-        f"{len(tasks)} tasks: {', '.join(task.stem for task in tasks)}\nChoose rules: {rules}\n"
+        f"{len(tasks)} tasks, e.g. {', '.join(task.stem for task in tasks[:3])}\nChoose rules: {rules}\n"
         f"per-search budget: {options.max_states} states, {options.max_seconds} s; session search budget {options.total_seconds} s"
     )
 
 
-@server.tool()
+@server.tool(structured_output=False)
 @_logged
 def set_program(program: str) -> str:
     """Explore another module program (full `(:program ...)` text), e.g. a draft. Earlier results are discarded."""
@@ -118,7 +118,7 @@ def set_program(program: str) -> str:
     return f"Choose rules: {', '.join(rule.name for rule in session.choose_rules()) or '(none)'}"
 
 
-@server.tool()
+@server.tool(structured_output=False)
 @_logged
 def validate(tasks: list[str] | None = None) -> str:
     """Execute and prove the program on the tasks (default: all), as the learning loop validates a proposal:
@@ -126,7 +126,7 @@ def validate(tasks: list[str] | None = None) -> str:
     return _server.require_session().validate(_server.tasks(tasks)).describe()
 
 
-@server.tool()
+@server.tool(structured_output=False)
 @_logged
 def run(task: str) -> str:
     """Status, failure category, search statistics, failure vertex and path length of the program on one task."""
@@ -134,7 +134,7 @@ def run(task: str) -> str:
     return session.run(session.task(task)).describe()
 
 
-@server.tool()
+@server.tool(structured_output=False)
 @_logged
 def chooses(tasks: list[str] | None = None) -> str:
     """One row per Choose rule over the choice points on each task's path to the goal or the failure."""
@@ -144,7 +144,7 @@ def chooses(tasks: list[str] | None = None) -> str:
     return "\n".join([*(row.describe() for row in session.chooses(_server.tasks(tasks))), f"tasks not succeeding: {status}"])
 
 
-@server.tool()
+@server.tool(structured_output=False)
 @_logged
 def points(rule: str, tasks: list[str] | None = None, limit: int = 20) -> str:
     """Choice points of one Choose rule on paths, most informative first (with failed bindings, then wider)."""
@@ -153,7 +153,7 @@ def points(rule: str, tasks: list[str] | None = None, limit: int = 20) -> str:
     return "\n".join(point.describe() for point in found) or "(none)"
 
 
-@server.tool()
+@server.tool(structured_output=False)
 @_logged
 def alternatives(point: str, max_states: int | None = None, max_seconds: float | None = None) -> str:
     """Every binding at a choice point (`<task>:v<n>`) in `:order` rank with its outcome and feature deltas.
@@ -164,7 +164,7 @@ def alternatives(point: str, max_states: int | None = None, max_seconds: float |
     return "\n".join(row.describe() for row in rows)
 
 
-@server.tool()
+@server.tool(structured_output=False)
 @_logged
 def contrast(
     rule: str,
@@ -181,7 +181,7 @@ def contrast(
     return result.describe()
 
 
-@server.tool()
+@server.tool(structured_output=False)
 @_logged
 def separation(feature: str, rule: str, tasks: list[str] | None = None) -> str:
     """How a declared feature or a new expression (c_..., b_..., n_..., registers by name) orders the pairs of the
@@ -193,7 +193,7 @@ def separation(feature: str, rule: str, tasks: list[str] | None = None) -> str:
     return session.separation(session.feature(feature), _server.contrasts[key]).describe()
 
 
-@server.tool()
+@server.tool(structured_output=False)
 @_logged
 def try_load(rule: str, tasks: list[str] | None = None) -> str:
     """Execute and prove the program with this rule's Choose replaced by a Load (first binding, no backtracking)."""
@@ -201,7 +201,7 @@ def try_load(rule: str, tasks: list[str] | None = None) -> str:
     return session.try_load(session.rule(rule), _server.tasks(tasks)).describe()
 
 
-@server.tool()
+@server.tool(structured_output=False)
 @_logged
 def vertex(vertex: str) -> str:
     """Memory state, registers, declared Boolean and numerical feature values, and fluent atoms of `<task>:v<n>`."""
@@ -209,7 +209,7 @@ def vertex(vertex: str) -> str:
     return session.vertex(session.vertex_ref(vertex)).describe()
 
 
-@server.tool()
+@server.tool(structured_output=False)
 @_logged
 def successors(vertex: str) -> str:
     """Every applicable action at `<task>:v<n>`, the rule that admits it there (or none), and its feature deltas;
@@ -218,7 +218,7 @@ def successors(vertex: str) -> str:
     return "\n".join(step.describe() for step in session.successors(session.vertex_ref(vertex))) or "(no applicable action)"
 
 
-@server.tool()
+@server.tool(structured_output=False)
 @_logged
 def plan(vertex: str, max_states: int | None = None, max_seconds: float | None = None) -> str:
     """A plan from the state of `<task>:v<n>` (e.g. a failure vertex) to the goal by lifted greedy best-first search
