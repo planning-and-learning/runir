@@ -32,6 +32,7 @@ print(session.try_load(rule))
 | `try_load(rule, tasks)` | execute and prove with the rule's Choose replaced by a Load |
 | `vertex(ref)` | memory state, registers, Boolean and numerical features, fluent atoms |
 | `successors(ref)` | applicable actions, the rule admitting each there (or none), feature deltas |
+| `dead_end(task, budget)` | the step on the failure path after which the task is unsolvable (binary search with plan searches; dead ends are absorbing) |
 | `plan(ref, budget)` | a lazy GBFS/FF plan from the vertex's state to the goal, feature deltas per step |
 | `termination()` | structural termination; per non-terminating module the surviving rules and one abstract cycle |
 | `validate(tasks)` | execute and prove every task, as a learning loop validates a proposal |

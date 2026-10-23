@@ -152,6 +152,8 @@ def test_successors_and_plan_from_a_failure_vertex(gripper_data_dir: Path) -> No
     [failure] = session.failures()
     assert failure.run.failure == run.failure and failure.memory == "done"
     assert failure.forbidden == failure.applicable and failure.applicable == len(steps)
+    # Carrying ball1 to roomb leaves ball2 reachable: the program stops in a solvable state.
+    assert session.dead_end(session.task("test-1")).dead is None
     plan = session.plan(run.failure)
     assert plan.status == "solved" and plan.steps
     assert any("ball2" in step.action for step in plan.steps)

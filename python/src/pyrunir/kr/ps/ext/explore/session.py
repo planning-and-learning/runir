@@ -84,6 +84,7 @@ from .results import (
     ChooseRule,
     ChooseSummary,
     Contrast,
+    DeadEnd,
     Failure,
     Feature,
     LoadTrial,
@@ -562,6 +563,46 @@ class Session:
                 steps.append(Step(str(successor.label), "", deltas(before, after)))
                 before = after
         return Plan(ref, found.status.name.lower(), tuple(steps))
+
+    def dead_end(self, task: Task, /, budget: Budget | None = None) -> DeadEnd:
+        """Where the failure path of `task` makes the task unsolvable: dead ends are absorbing, so a binary search
+        with plan searches finds the step from the last solvable to the first unsolvable state."""
+        path = self.run(task).path
+        if not path:
+            raise ValueError(f"{task.name} has no failure path")
+        unknown = False
+
+        def solvable(ref: VertexRef) -> bool:
+            nonlocal unknown
+            status = self.plan(ref, budget).status
+            if status not in ("solved", "exhausted", "unsolvable"):
+                unknown = True
+            return status not in ("exhausted", "unsolvable")
+
+        if solvable(path[-1]):
+            return DeadEnd(task, path[-1], None, None, None, unknown)
+        if not solvable(path[0]):
+            return DeadEnd(task, None, path[0], None, None, unknown)
+        low, high = 0, len(path) - 1  # path[low] solvable, path[high] dead
+        while high - low > 1:
+            middle = (low + high) // 2
+            if solvable(path[middle]):
+                low = middle
+            else:
+                high = middle
+        graph = self._search(task).graph
+        edge = next(
+            edge for edge in graph.get_out_edge_indices(path[low].vertex) if graph.get_target(edge) == path[high].vertex
+        )
+        label = graph.get_edge_property(edge)
+        return DeadEnd(
+            task,
+            path[low],
+            path[high],
+            None if label.rule is None else label.rule.get_symbol(),
+            None if label.action is None else str(label.action),
+            unknown,
+        )
 
     # -- internals -----------------------------------------------------------------------------------------------------
 

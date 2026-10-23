@@ -379,3 +379,29 @@ class Termination:
         if self.recursive_call_rules:
             lines.append(f"recursive call rules: {', '.join(self.recursive_call_rules)}")
         return "\n".join(lines)
+
+
+@dataclass(frozen=True, slots=True)
+class DeadEnd:
+    task: Task
+    solvable: VertexRef | None
+    """The last vertex on the failure path whose state still has a plan; None if the task itself is unsolvable."""
+    dead: VertexRef | None
+    """The first vertex on the path whose state has no plan; None if every state on the path has one."""
+    rule: str | None
+    action: str | None
+    """The rule and action of the step between them; the action is None for a control step."""
+    unknown: bool = False
+    """A plan search hit its budget, so the boundary is not certain."""
+
+    def describe(self) -> str:
+        if self.dead is None:
+            return f"{self.task.name}: every state on the failure path has a plan; the program stops in a solvable state"
+        if self.solvable is None:
+            return f"{self.task.name}: the initial state has no plan"
+        step = f"{self.rule}" + (f" {self.action}" if self.action else "")
+        note = " (a plan search hit its budget; the boundary may be later)" if self.unknown else ""
+        return (
+            f"{self.task.name}: the task becomes unsolvable in the step {self.solvable.describe()} -> "
+            f"{self.dead.describe()} by {step}{note}"
+        )

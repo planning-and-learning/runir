@@ -239,6 +239,15 @@ def successors(vertex: str) -> str:
 
 @server.tool(structured_output=False)
 @_logged
+def dead_end(task: str, max_states: int | None = None, max_seconds: float | None = None) -> str:
+    """For a task whose execution fails: the step on the failure path after which the task is unsolvable (found by
+    binary search with plan searches), or that every state on the path still has a plan."""
+    session = _server.require_session()
+    return session.dead_end(session.task(task), _server.budget(max_states, max_seconds)).describe()
+
+
+@server.tool(structured_output=False)
+@_logged
 def plan(vertex: str, max_states: int | None = None, max_seconds: float | None = None) -> str:
     """A plan from the state of `<task>:v<n>` (e.g. a failure vertex) to the goal by lifted greedy best-first search
     with FF; it need not follow the program. Each step shows its feature deltas under the vertex's registers."""
