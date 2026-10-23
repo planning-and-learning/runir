@@ -114,6 +114,8 @@ class TaskValidation:
     prove: str
     choice_depth: int | None
     """Choice depth of a passed execution."""
+    ms_per_state: float = 0.0
+    """Execution time per expanded state."""
 
     @property
     def passed(self) -> bool:
@@ -134,6 +136,12 @@ class Validation:
         passed = [task for task in self.tasks if task.passed]
         depth = sum(task.choice_depth or 0 for task in passed)
         lines = [f"passed {len(passed)}/{len(self.tasks)}; choice_depth sum over passed tasks {depth}"]
+        if self.tasks:
+            slowest = max(self.tasks, key=lambda task: task.ms_per_state)
+            lines.append(
+                f"slowest execution {slowest.ms_per_state:.1f} ms per expanded state ({slowest.task.name}); "
+                "feature evaluation cost grows polynomially with the number of objects"
+            )
         both = [task for task in passed if self.baseline is not None and task.task in self.baseline]
         if self.baseline is not None and both:
             baseline = self.baseline

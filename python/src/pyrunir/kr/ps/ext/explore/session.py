@@ -272,10 +272,12 @@ class Session:
         proofs = [self._search(task, True).result for task in tasks]
         rows: list[TaskValidation] = []
         for task, proof in zip(tasks, proofs):
-            execute = self._search(task).result
+            search = self._search(task)
+            execute = search.result
             rows.append(TaskValidation(
                 task, outcome(execute), outcome(proof),
                 execute.statistics.choice_depth if execute.status == ProgramProofStatus.SUCCESS else None,
+                1000 * search.seconds / max(execute.statistics.num_expanded, 1),
             ))
         if self._text == self._initial_text:
             return Validation(tuple(rows))
