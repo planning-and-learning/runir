@@ -17,12 +17,12 @@ from __future__ import annotations
 
 import difflib
 import time
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import timedelta
 from pathlib import Path
-from typing import cast
+from typing import TypeVar, cast
 
 from pypddl.formalism import ParserOptions
 from pytyr.formalism.planning import Parser
@@ -106,6 +106,8 @@ from .results import (
 )
 
 
+_Item = TypeVar("_Item")
+_Result = TypeVar("_Result")
 _Expression = Concept | Boolean | Numerical
 _DeclaredFeature = ConceptFeature | BooleanFeature | NumericalFeature
 
@@ -146,6 +148,7 @@ class Session:
         self._budget = budget
         self._total_seconds = total_seconds
         self._spent = 0.0
+        self._batches = 0  # while parallel searches run, the batch's wall time is charged instead
         self._workers = workers
         self._binding_cache: dict[tuple[int, VertexRef], tuple[RuleVariant, list[tuple[str | None, LiftedProgramState]]]] = {}
         self._parse_cache: dict[tuple[int, Feature], _DeclaredFeature | _Expression] = {}
@@ -277,8 +280,7 @@ class Session:
                 )
             return self._initial_depths[task.name]
 
-        with ThreadPoolExecutor(self._workers) as pool:
-            depths = list(pool.map(depth, tasks))
+        depths = self._parallel(depth, tasks)
         return {task: value for task, value in zip(tasks, depths) if value is not None}
 
     def termination(self) -> Termination:
@@ -481,19 +483,18 @@ class Session:
         failed: list[tuple[Task, str, str]] = []
         unavailable: list[tuple[Task, str]] = []
         depth_before = depth_after = 0
-        with ThreadPoolExecutor(self._workers) as pool:
-            for task, execute, prove in pool.map(trial, tasks):
-                stages = (("execute", execute), ("prove", prove))
-                bad = [(stage, r) for stage, r in stages if r.status == ProgramProofStatus.FAILURE]
-                open_ = [(stage, r) for stage, r in stages if r.status not in (ProgramProofStatus.SUCCESS, ProgramProofStatus.FAILURE)]
-                if bad:
-                    failed.append((task, bad[0][0], failure_category(bad[0][1]) or "failure"))
-                elif open_:
-                    unavailable.append((task, open_[0][0]))
-                else:
-                    passed.append(task)
-                    depth_before += before[task].statistics.choice_depth
-                    depth_after += execute.statistics.choice_depth
+        for task, execute, prove in self._parallel(trial, tasks):
+            stages = (("execute", execute), ("prove", prove))
+            bad = [(stage, r) for stage, r in stages if r.status == ProgramProofStatus.FAILURE]
+            open_ = [(stage, r) for stage, r in stages if r.status not in (ProgramProofStatus.SUCCESS, ProgramProofStatus.FAILURE)]
+            if bad:
+                failed.append((task, bad[0][0], failure_category(bad[0][1]) or "failure"))
+            elif open_:
+                unavailable.append((task, open_[0][0]))
+            else:
+                passed.append(task)
+                depth_before += before[task].statistics.choice_depth
+                depth_after += execute.statistics.choice_depth
         return LoadTrial(rule, True, tuple(passed), tuple(failed), tuple(unavailable), (depth_before, depth_after))
 
     # -- vertices ------------------------------------------------------------------------------------------------------
@@ -638,8 +639,20 @@ class Session:
         started = time.monotonic()
         result = find_lifted_solution(self._task_context(task), program or self._program, options)
         seconds = time.monotonic() - started
-        self._spent += seconds
+        if self._batches == 0:
+            self._spent += seconds
         return result, seconds
+
+    def _parallel(self, function: Callable[[_Item], _Result], items: Sequence[_Item]) -> list[_Result]:
+        """`function` over `items` on the session's workers; the budget is charged the batch's wall time."""
+        started = time.monotonic()
+        self._batches += 1
+        try:
+            with ThreadPoolExecutor(self._workers) as pool:
+                return list(pool.map(function, items))
+        finally:
+            self._batches -= 1
+            self._spent += time.monotonic() - started
 
     def _search(self, task: Task, prove: bool = False) -> _Search:
         searches = self._proofs if prove else self._searches
@@ -657,9 +670,8 @@ class Session:
         def find(task: Task) -> tuple[LiftedProgramProofResults, float]:
             return self._find(task, self._budget, universal=prove)
 
-        with ThreadPoolExecutor(self._workers) as pool:
-            for task, (result, seconds) in zip(missing, pool.map(find, missing)):
-                searches[task.name] = _Search(result, seconds, vertex_status(result))
+        for task, (result, seconds) in zip(missing, self._parallel(find, missing)):
+            searches[task.name] = _Search(result, seconds, vertex_status(result))
 
     def _points_on_path(self, task: Task) -> list[ChoicePoint]:
         search = self._search(task)
