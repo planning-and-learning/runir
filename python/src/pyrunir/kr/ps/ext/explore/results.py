@@ -333,3 +333,36 @@ class Failure:
             f"{self.run.failure.describe()} {self.run.category} memory={self.memory} registers: {registers}; "
             f"{self.forbidden} of {self.applicable} applicable actions admitted by no rule"
         )
+
+
+@dataclass(frozen=True, slots=True)
+class ModuleTermination:
+    module: str
+    status: str
+    surviving_rules: tuple[str, ...]
+    """Rules that remain on cycles after removing every rule some measure orders."""
+    cycle: tuple[str, ...]
+    """One cycle of the abstract policy graph: states as `memory[true Booleans; positive numericals]` and rules."""
+
+    def describe(self) -> str:
+        lines = [f"module {self.module}: {self.status}; surviving rules: {', '.join(self.surviving_rules) or '-'}"]
+        if self.cycle:
+            lines.append("  cycle: " + " ".join(self.cycle))
+        return "\n".join(lines)
+
+
+@dataclass(frozen=True, slots=True)
+class Termination:
+    terminating: bool
+    status: str
+    modules: tuple[ModuleTermination, ...]
+    recursive_call_rules: tuple[str, ...]
+
+    def describe(self) -> str:
+        if self.terminating:
+            return "structurally terminating"
+        lines = [f"not structurally terminating ({self.status})"]
+        lines += [module.describe() for module in self.modules]
+        if self.recursive_call_rules:
+            lines.append(f"recursive call rules: {', '.join(self.recursive_call_rules)}")
+        return "\n".join(lines)

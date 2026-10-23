@@ -115,7 +115,16 @@ def set_program(program: str) -> str:
     session = _server.require_session()
     session.set_program(program)
     _server.contrasts.clear()
-    return f"Choose rules: {', '.join(rule.name for rule in session.choose_rules()) or '(none)'}"
+    terminating = "structurally terminating" if session.termination().terminating else "NOT structurally terminating (see `termination`)"
+    return f"Choose rules: {', '.join(rule.name for rule in session.choose_rules()) or '(none)'}; {terminating}"
+
+
+@server.tool(structured_output=False)
+@_logged
+def termination() -> str:
+    """Structural termination of the program; for each module that does not terminate, the rules left on cycles
+    and one cycle of its abstract policy graph (memory states with true Booleans and positive numericals)."""
+    return _server.require_session().termination().describe()
 
 
 @server.tool(structured_output=False)

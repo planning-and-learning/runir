@@ -164,3 +164,20 @@ def test_validate_compares_a_draft_with_the_initial_program(gripper_data_dir: Pa
     validation = session.validate()
     assert validation.baseline == {session.task("test-1"): 1}
     assert "choice_depth 1 (initial program) -> 1 (this program)" in validation.describe()
+
+
+def test_termination_reports_a_cycle_of_a_nonterminating_draft(session: Session) -> None:
+    assert session.termination().terminating
+    # A rule from `done` back to `choose` without effects lets the program loop.
+    loop = PROGRAM.replace("(:memory choose pick move drop done)", "(:memory choose pick move drop done)").replace(
+        "(:rule (:symbol drop_it)",
+        "(:rule (:symbol again) (:expression (:source-memory done) (:target-memory choose) (:sketch (:conditions) (:effects))))\n    (:rule (:symbol drop_it)",
+    )
+    session.set_program(loop)
+    termination = session.termination()
+    assert not termination.terminating
+    [module] = termination.modules
+    assert "again" in module.surviving_rules and any("--again-->" in step for step in module.cycle)
+    with pytest.raises(ValueError, match="not changed"):
+        session.set_program("(:program")
+    assert not session.termination().terminating  # still the looping draft

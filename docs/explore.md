@@ -33,6 +33,7 @@ print(session.try_load(rule))
 | `vertex(ref)` | memory state, registers, Boolean and numerical features, fluent atoms |
 | `successors(ref)` | applicable actions, the rule admitting each there (or none), feature deltas |
 | `plan(ref, budget)` | a lazy GBFS/FF plan from the vertex's state to the goal, feature deltas per step |
+| `termination()` | structural termination; per non-terminating module the surviving rules and one abstract cycle |
 | `validate(tasks)` | execute and prove every task, as a learning loop validates a proposal |
 
 Each task is searched once, lazily, with `StateMemorization.ALL`, so the graph keeps

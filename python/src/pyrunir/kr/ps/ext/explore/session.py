@@ -15,6 +15,7 @@ Choose source, where candidates are computed, and its value for a binding is mem
 
 from __future__ import annotations
 
+import difflib
 import time
 from collections.abc import Iterable, Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
@@ -85,6 +86,7 @@ from .results import (
     Failure,
     Feature,
     LoadTrial,
+    ModuleTermination,
     Outcome,
     Plan,
     Separation,
@@ -92,6 +94,7 @@ from .results import (
     Task,
     TaskRun,
     TaskValidation,
+    Termination,
     Validation,
     Value,
     Vertex,
@@ -158,8 +161,12 @@ class Session:
         return self._spent
 
     def set_program(self, text: str, /) -> None:
-        """Explore `text` from now on; earlier searches are discarded."""
-        program = parse_program(text, self._parser.get_domain(), self._domain.ext_repository)
+        """Explore `text` from now on; earlier searches are discarded. A text that does not parse leaves the
+        current program unchanged."""
+        try:
+            program = parse_program(text, self._parser.get_domain(), self._domain.ext_repository)
+        except Exception as error:
+            raise ValueError(f"the program was not changed: {error}") from error
         self._text = text
         self._program = program
         self._module = program.get_entry_module()
@@ -178,7 +185,8 @@ class Session:
 
     def task(self, name: str, /) -> Task:
         if name not in self._task_paths:
-            raise KeyError(f"unknown task {name!r}; tasks: {', '.join(sorted(self._task_paths))}")
+            close = difflib.get_close_matches(name, self._task_paths, n=3)
+            raise KeyError(f"unknown task {name!r}; {len(self._task_paths)} tasks" + (f", closest: {', '.join(close)}" if close else ""))
         return Task(name)
 
     def rule(self, name: str, /) -> ChooseRule:
@@ -271,6 +279,41 @@ class Session:
         with ThreadPoolExecutor(self._workers) as pool:
             depths = list(pool.map(depth, tasks))
         return {task: value for task, value in zip(tasks, depths) if value is not None}
+
+    def termination(self) -> Termination:
+        """Structural termination of the program; for each module that does not terminate, the rules left on
+        cycles and one cycle of its abstract policy graph."""
+        result = structural_termination(self._program)
+        modules: list[ModuleTermination] = []
+        for module, module_result in zip(self._program.get_modules(), result.module_results):
+            if module_result.is_terminating():
+                continue
+            sieve = module_result.sieve_result
+            surviving = tuple(rule.get_symbol() for rule in sieve.surviving_rules) if sieve is not None else ()
+            cycle: list[str] = []
+            if sieve is not None:
+                graph = sieve.counterexample
+                booleans = [feature.get_symbol() for feature in module.get_boolean_features()]
+                numericals = [feature.get_symbol() for feature in module.get_numerical_features()]
+
+                def state(vertex: int) -> str:
+                    label = graph.get_vertex_property(vertex)
+                    true = [name for i, name in enumerate(booleans) if label.boolean_values & (1 << i)]
+                    positive = [name for i, name in enumerate(numericals) if label.numerical_values & (1 << i)]
+                    return f"{label.memory_state.get_name()}[{' '.join(true)}; {' '.join(positive)}]"
+
+                edges = graph.find_edge_cycle()
+                for edge in edges:
+                    cycle += [state(graph.get_source(edge)), f"--{graph.get_edge_property(edge).get_symbol()}-->"]
+                if edges:
+                    cycle.append(state(graph.get_target(edges[-1])))
+            modules.append(ModuleTermination(str(module.get_name()), module_result.status.name.lower(), surviving, tuple(cycle)))
+        return Termination(
+            result.is_terminating(),
+            result.status.name.lower(),
+            tuple(modules),
+            tuple(rule.get_symbol() for rule in result.recursive_call_rules),
+        )
 
     def failures(self, tasks: Iterable[Task] | None = None, /) -> list[Failure]:
         """Every task whose execution does not succeed: its failure vertex, memory state, registers, and how many
