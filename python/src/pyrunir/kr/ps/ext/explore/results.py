@@ -294,7 +294,12 @@ class Plan:
     steps: tuple[Step, ...]
 
     def describe(self) -> str:
-        head = f"plan from {self.start.describe()}: {self.status}, {len(self.steps)} steps (need not follow the program)"
+        start = self.start.describe()
+        if self.status in ("exhausted", "unsolvable"):
+            return f"no plan from {start}: its state is a dead end, so an earlier step on the path made the task unsolvable"
+        if self.status != "solved":
+            return f"no plan from {start} found within the budget ({self.status})"
+        head = f"plan from {start}: {len(self.steps)} steps (need not follow the program)"
         return "\n".join([head, *(f"  {i}. {step.describe()}" for i, step in enumerate(self.steps, 1))])
 
 
