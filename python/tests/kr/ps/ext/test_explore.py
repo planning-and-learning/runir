@@ -14,7 +14,7 @@ from pyrunir.datasets import LiftedTaskSearchContext
 from pyrunir.kr import DomainContext, LiftedTaskContext
 
 from pyrunir.kr.ps import ext
-from pyrunir.kr.ps.ext.explore import Budget, Session
+from pyrunir.kr.ps.ext.explore import Budget, Session, Task, TaskValidation, Validation
 
 # Carry one ball to roomb. Only ball2 has that goal; the order tries ball1 first, which ends in an open state.
 PROGRAM = """(:program (:entry carry) (:module (:symbol carry) (:arguments) (:registers (:concept selected))
@@ -181,3 +181,12 @@ def test_termination_reports_a_cycle_of_a_nonterminating_draft(session: Session)
     with pytest.raises(ValueError, match="not changed"):
         session.set_program("(:program")
     assert not session.termination().terminating  # still the looping draft
+
+
+def test_validation_lists_the_largest_increases_without_comparing_results() -> None:
+    tasks = (Task("a"), Task("b"), Task("c"))
+    validation = Validation(
+        tuple(TaskValidation(task, "passed", "passed", 3) for task in tasks),
+        {tasks[0]: 1, tasks[1]: 1, tasks[2]: 3},
+    )
+    assert "largest increases: a 1->3, b 1->3" in validation.describe()

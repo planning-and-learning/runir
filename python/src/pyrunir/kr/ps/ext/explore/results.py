@@ -136,8 +136,12 @@ class Validation:
             both = [task for task in passed if task.task in self.baseline]
             before = sum(self.baseline[task.task] for task in both)
             after = sum(task.choice_depth or 0 for task in both)
-            changes = sorted(((task.choice_depth or 0) - self.baseline[task.task], task) for task in both)
-            worse = [f"{task.task.name} {self.baseline[task.task]}->{task.choice_depth}" for change, task in reversed(changes) if change > 0][:5]
+            increases = sorted(both, key=lambda task: (task.choice_depth or 0) - self.baseline[task.task], reverse=True)
+            worse = [
+                f"{task.task.name} {self.baseline[task.task]}->{task.choice_depth}"
+                for task in increases
+                if (task.choice_depth or 0) > self.baseline[task.task]
+            ][:5]
             lines.append(
                 f"on the {len(both)} tasks both pass, choice_depth {before} (initial program) -> {after} (this program)"
                 + (f"; largest increases: {', '.join(worse)}" if worse else "")
