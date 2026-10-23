@@ -125,11 +125,23 @@ class TaskValidation:
 @dataclass(frozen=True, slots=True)
 class Validation:
     tasks: tuple[TaskValidation, ...]
+    baseline: Mapping[Task, int] | None = None
+    """Choice depth of the session's initial program per task it executes successfully; None while exploring it."""
 
     def describe(self) -> str:
         passed = [task for task in self.tasks if task.passed]
         depth = sum(task.choice_depth or 0 for task in passed)
         lines = [f"passed {len(passed)}/{len(self.tasks)}; choice_depth sum over passed tasks {depth}"]
+        if self.baseline is not None:
+            both = [task for task in passed if task.task in self.baseline]
+            before = sum(self.baseline[task.task] for task in both)
+            after = sum(task.choice_depth or 0 for task in both)
+            changes = sorted(((task.choice_depth or 0) - self.baseline[task.task], task) for task in both)
+            worse = [f"{task.task.name} {self.baseline[task.task]}->{task.choice_depth}" for change, task in reversed(changes) if change > 0][:5]
+            lines.append(
+                f"on the {len(both)} tasks both pass, choice_depth {before} (initial program) -> {after} (this program)"
+                + (f"; largest increases: {', '.join(worse)}" if worse else "")
+            )
         lines += [f"  {task.describe()}" for task in self.tasks if not task.passed]
         return "\n".join(lines)
 

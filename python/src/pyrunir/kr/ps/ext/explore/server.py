@@ -103,7 +103,7 @@ def open_workspace(workspace: str = ".") -> str:
     _server.contrasts.clear()
     rules = ", ".join(rule.name for rule in _server.session.choose_rules()) or "(none)"
     return (
-        f"{len(tasks)} tasks, e.g. {', '.join(task.stem for task in tasks[:3])}\nChoose rules: {rules}\n"
+        f"{len(tasks)} tasks" + (f", e.g. {', '.join(task.stem for task in tasks[:3])}" if tasks else "") + f"\nChoose rules: {rules}\n"
         f"per-search budget: {options.max_states} states, {options.max_seconds} s; session search budget {options.total_seconds} s"
     )
 
@@ -122,7 +122,8 @@ def set_program(program: str) -> str:
 @_logged
 def validate(tasks: list[str] | None = None) -> str:
     """Execute and prove the program on the tasks (default: all), as the learning loop validates a proposal:
-    how many pass, the choice depth summed over passed tasks, and every task that does not pass."""
+    how many pass, the choice depth summed over passed tasks, every task that does not pass, and for a draft the
+    choice depth of the workspace program on the tasks both pass, with the largest increases."""
     return _server.require_session().validate(_server.tasks(tasks)).describe()
 
 

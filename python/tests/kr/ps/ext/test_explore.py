@@ -154,3 +154,13 @@ def test_successors_and_plan_from_a_failure_vertex(gripper_data_dir: Path) -> No
     plan = session.plan(run.failure)
     assert plan.status == "solved" and plan.steps
     assert any("ball2" in step.action for step in plan.steps)
+
+
+def test_validate_compares_a_draft_with_the_initial_program(gripper_data_dir: Path) -> None:
+    # The draft orders the goal ball first: the same task passes without backtracking.
+    session = Session(gripper_data_dir / "domain.pddl", PROGRAM, [gripper_data_dir / "test-1.pddl"], workers=1)
+    assert session.validate().baseline is None
+    session.set_program(PROGRAM.replace("(:order (min selected_has_goal))", "(:order (max selected_has_goal))"))
+    validation = session.validate()
+    assert validation.baseline == {session.task("test-1"): 1}
+    assert "choice_depth 1 (initial program) -> 1 (this program)" in validation.describe()

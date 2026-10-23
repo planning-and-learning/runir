@@ -142,6 +142,9 @@ class Session:
         self._workers = workers
         self._binding_cache: dict[tuple[int, VertexRef], tuple[RuleVariant, list[tuple[str | None, LiftedProgramState]]]] = {}
         self._parse_cache: dict[tuple[int, Feature], _DeclaredFeature | _Expression] = {}
+        self._initial = parse_program(program, self._parser.get_domain(), self._domain.ext_repository)
+        self._initial_text = program
+        self._initial_depths: dict[str, int | None] = {}
         self.set_program(program)
 
     # -- boundary -----------------------------------------------------------------------------------------------------
@@ -251,7 +254,23 @@ class Session:
                 task, outcome(execute), outcome(proof),
                 execute.statistics.choice_depth if execute.status == ProgramProofStatus.SUCCESS else None,
             ))
-        return Validation(tuple(rows))
+        if self._text == self._initial_text:
+            return Validation(tuple(rows))
+        return Validation(tuple(rows), self._initial_choice_depths(tasks))
+
+    def _initial_choice_depths(self, tasks: Sequence[Task]) -> dict[Task, int]:
+        """Choice depth of the session's initial program on the tasks it executes successfully."""
+        def depth(task: Task) -> int | None:
+            if task.name not in self._initial_depths:
+                result, _ = self._find(task, self._budget, program=self._initial)
+                self._initial_depths[task.name] = (
+                    result.statistics.choice_depth if result.status == ProgramProofStatus.SUCCESS else None
+                )
+            return self._initial_depths[task.name]
+
+        with ThreadPoolExecutor(self._workers) as pool:
+            depths = list(pool.map(depth, tasks))
+        return {task: value for task, value in zip(tasks, depths) if value is not None}
 
     def failures(self, tasks: Iterable[Task] | None = None, /) -> list[Failure]:
         """Every task whose execution does not succeed: its failure vertex, memory state, registers, and how many
