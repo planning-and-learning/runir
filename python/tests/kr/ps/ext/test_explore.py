@@ -116,3 +116,10 @@ def test_standalone_expressions_reference_registers_by_name(gripper_planning_dom
     assert "selected" in str(concept)
     with pytest.raises(Exception):
         ext.dl.parse_concept("(c_register missing)", gripper_planning_domain, module, session._domain.ext_repository)
+
+
+def test_validate_executes_and_proves_every_task(session):
+    validation = session.validate()
+    [task] = validation.tasks
+    assert task.execute == "passed" and task.prove == "passed" and task.choice_depth == 1  # a Choose needs one binding
+    assert str(validation).startswith("passed 1/1; choice_depth sum over passed tasks 1")

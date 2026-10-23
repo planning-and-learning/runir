@@ -28,8 +28,8 @@ _CONTRASTS: dict[tuple[str, tuple[str, ...] | None], object] = {}
 server = MCPServer(
     "runir-explore",
     instructions=(
-        "Explore how the module program behaves on the workspace tasks, centred on its Choose rules. "
-        "Start with `chooses`, then `points` and `alternatives` for one rule, `contrast` to see which declared "
+        "Explore how the module program behaves on the workspace tasks, centred on its Choose rules, and test drafts "
+        "with `set_program` and `validate`. Start with `chooses`, then `points` and `alternatives` for one rule, `contrast` to see which declared "
         "features order successful above failed bindings, `separation` to test a new feature, and `try_load` "
         "to check whether a Choose can become a Load. Call `open` first."
     ),
@@ -110,6 +110,15 @@ def run(task: str) -> str:
     """Status, failure category, search statistics, failure vertex and path length of the program on one task."""
     session = _session()
     return str(session.run(session.task(task)))
+
+
+@server.tool()
+@_logged
+def validate(tasks: list[str] | None = None) -> str:
+    """Execute and prove the program on the tasks (default: all), as the learning loop validates a proposal:
+    how many pass, the choice depth summed over passed tasks, and every task that does not pass."""
+    session = _session()
+    return str(session.validate(_tasks(session, tasks)))
 
 
 @server.tool()

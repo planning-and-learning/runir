@@ -62,6 +62,8 @@ __all__ = [
     "Session",
     "Task",
     "TaskRun",
+    "TaskValidation",
+    "Validation",
     "Vertex",
     "VertexRef",
 ]
@@ -159,6 +161,36 @@ class TaskRun:
         )
         tail = f"failure={self.failure} " if self.failure else ""
         return f"{head}; {stats}; {tail}path={len(self.path)} vertices"
+
+
+@dataclass(frozen=True, slots=True)
+class TaskValidation:
+    task: Task
+    execute: str
+    """`passed`, `failed (<category>)` or `unavailable (<status>)`."""
+    prove: str
+    choice_depth: int | None
+    """Choice depth of a passed execution."""
+
+    @property
+    def passed(self) -> bool:
+        return self.execute == "passed" and self.prove == "passed"
+
+    def __str__(self) -> str:
+        depth = f" choice_depth={self.choice_depth}" if self.choice_depth is not None else ""
+        return f"{self.task}: execute {self.execute}, prove {self.prove}{depth}"
+
+
+@dataclass(frozen=True, slots=True)
+class Validation:
+    tasks: tuple[TaskValidation, ...]
+
+    def __str__(self) -> str:
+        passed = [task for task in self.tasks if task.passed]
+        depth = sum(task.choice_depth or 0 for task in passed)
+        lines = [f"passed {len(passed)}/{len(self.tasks)}; choice_depth sum over passed tasks {depth}"]
+        lines += [f"  {task}" for task in self.tasks if not task.passed]
+        return "\n".join(lines)
 
 
 @dataclass(frozen=True, slots=True)
@@ -491,6 +523,7 @@ class Session:
         self._program = program
         self._module = program.get_entry_module()
         self._searches: dict[str, _Search] = {}
+        self._proofs: dict[str, LiftedProgramProofResults] = {}
         self._rules = {}
         for bodies in self._module.get_memory_transitions():
             for body in bodies:
@@ -554,6 +587,34 @@ class Session:
             failure=VertexRef(task, failure) if failure is not None else None,
             path=tuple(VertexRef(task, v) for v in path),
         )
+
+    def validate(self, tasks: Iterable[Task] | None = None, /) -> Validation:
+        """Execute and prove the program on `tasks` (default: all), like the learning loop's validation."""
+        tasks = list(tasks) if tasks is not None else list(self.tasks)
+        self._prefetch(tasks)
+
+        def outcome(result) -> str:
+            if result.status == ProgramProofStatus.SUCCESS:
+                return "passed"
+            if result.status == ProgramProofStatus.FAILURE:
+                return f"failed ({_category(result)})"
+            return f"unavailable ({result.status.name.lower()})"
+
+        def prove(task: Task):
+            if task.name not in self._proofs:
+                self._proofs[task.name] = self._find(task, self._budget, universal=True)[0]
+            return self._proofs[task.name]
+
+        with ThreadPoolExecutor(self._workers) as pool:
+            proofs = list(pool.map(prove, tasks))
+        rows = []
+        for task, proof in zip(tasks, proofs):
+            execute = self._search(task).result
+            rows.append(TaskValidation(
+                task, outcome(execute), outcome(proof),
+                execute.statistics.choice_depth if execute.status == ProgramProofStatus.SUCCESS else None,
+            ))
+        return Validation(tuple(rows))
 
     def runs(self, tasks: Iterable[Task] | None = None, /) -> list[TaskRun]:
         tasks = list(tasks) if tasks is not None else list(self.tasks)
