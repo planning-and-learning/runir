@@ -318,9 +318,12 @@ class Session:
             tuple(rule.get_symbol() for rule in result.recursive_call_rules),
         )
 
-    def failures(self, tasks: Iterable[Task] | None = None, /, prove: bool = False) -> list[Failure]:
+    def failures(
+        self, tasks: Iterable[Task] | None = None, /, prove: bool = False, locate: Budget | None = None
+    ) -> list[Failure]:
         """Every task whose execution (or with `prove`, universal proof) does not succeed: its failure vertex, memory
-        state, registers, and how many applicable actions no rule admits there."""
+        state, registers, and how many applicable actions no rule admits there; with a `locate` budget also the step
+        that makes the task unsolvable (`dead_end`)."""
         failures: list[Failure] = []
         for run in self.runs(tasks, prove):
             if run.status == "success":
@@ -330,7 +333,10 @@ class Session:
                 continue
             vertex = self.vertex(run.failure)
             steps = self.successors(run.failure)
-            failures.append(Failure(run, vertex.memory, vertex.registers, sum(step.rule is None for step in steps), len(steps)))
+            located = self.dead_end(run.task, locate, prove) if locate is not None else None
+            failures.append(
+                Failure(run, vertex.memory, vertex.registers, sum(step.rule is None for step in steps), len(steps), located)
+            )
         return failures
 
     def runs(self, tasks: Iterable[Task] | None = None, /, prove: bool = False) -> list[TaskRun]:

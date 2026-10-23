@@ -138,10 +138,18 @@ def validate(tasks: list[str] | None = None) -> str:
 
 @server.tool(structured_output=False)
 @_logged
-def failures(tasks: list[str] | None = None, prove: bool = False) -> str:
+def failures(
+    tasks: list[str] | None = None,
+    prove: bool = False,
+    locate: bool = False,
+    max_states: int | None = None,
+    max_seconds: float | None = None,
+) -> str:
     """Every task (default: all) whose execution, or with `prove` universal proof, does not succeed, in one call:
-    category, failure vertex, memory, registers, and how many applicable actions there no rule admits."""
-    found = _server.require_session().failures(_server.tasks(tasks), prove)
+    category, failure vertex, memory, registers, and how many applicable actions there no rule admits. With `locate`,
+    also where the failure path makes the task unsolvable, or that the program stops in a solvable state."""
+    budget = _server.budget(max_states, max_seconds) or Budget(_server.options.max_states, _server.options.max_seconds)
+    found = _server.require_session().failures(_server.tasks(tasks), prove, budget if locate else None)
     return "\n".join(failure.describe() for failure in found) or ("all proofs succeed" if prove else "all executions succeed")
 
 

@@ -152,6 +152,9 @@ def test_successors_and_plan_from_a_failure_vertex(gripper_data_dir: Path) -> No
     assert steps and all(step.rule is None for step in steps)  # memory `done` has no rules
     [failure] = session.failures()
     assert failure.run.failure == run.failure and failure.memory == "done"
+    [located] = session.failures(locate=Budget(1_000, 5.0))
+    assert located.dead_end is not None and located.dead_end.dead is None
+    assert "stops in a solvable state" in located.describe()
     assert failure.forbidden == failure.applicable and failure.applicable == len(steps)
     # Carrying ball1 to roomb leaves ball2 reachable: the program stops in a solvable state.
     assert session.dead_end(session.task("test-1")).dead is None

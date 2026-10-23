@@ -337,25 +337,6 @@ class Vertex:
 
 
 @dataclass(frozen=True, slots=True)
-class Failure:
-    run: TaskRun
-    memory: str | None
-    registers: Mapping[str, str | None]
-    forbidden: int | None
-    """Applicable actions at the failure vertex that no rule admits; None if there is no failure vertex."""
-    applicable: int | None
-
-    def describe(self) -> str:
-        if self.run.failure is None:
-            return f"{self.run.task.name}: {self.run.status}" + (f" ({self.run.category})" if self.run.category else "")
-        registers = " ".join(f"{name}={value}" for name, value in self.registers.items())
-        return (
-            f"{self.run.failure.describe()} {self.run.category} memory={self.memory} registers: {registers}; "
-            f"{self.forbidden} of {self.applicable} applicable actions admitted by no rule"
-        )
-
-
-@dataclass(frozen=True, slots=True)
 class ModuleTermination:
     module: str
     status: str
@@ -411,4 +392,28 @@ class DeadEnd:
         return (
             f"{self.task.name}: the task becomes unsolvable in the step {self.solvable.describe()} -> "
             f"{self.dead.describe()} by {step}{note}"
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class Failure:
+    run: TaskRun
+    memory: str | None
+    registers: Mapping[str, str | None]
+    forbidden: int | None
+    """Applicable actions at the failure vertex that no rule admits; None if there is no failure vertex."""
+    applicable: int | None
+    dead_end: DeadEnd | None = None
+    """Where the failure path makes the task unsolvable, when requested."""
+
+    def describe(self) -> str:
+        if self.run.failure is None:
+            return f"{self.run.task.name}: {self.run.status}" + (f" ({self.run.category})" if self.run.category else "")
+        registers = " ".join(f"{name}={value}" for name, value in self.registers.items())
+        located = ""
+        if self.dead_end is not None:
+            located = "; " + self.dead_end.describe().split(": ", 1)[1]
+        return (
+            f"{self.run.failure.describe()} {self.run.category} memory={self.memory} registers: {registers}; "
+            f"{self.forbidden} of {self.applicable} applicable actions admitted by no rule{located}"
         )
