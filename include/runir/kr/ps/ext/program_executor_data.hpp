@@ -56,6 +56,9 @@ enum class StateMemorization
 template<tyr::TaskKind Kind>
 struct ProgramSearchOptions
 {
+    /// Optional start: an interned program state of this task and program, e.g. a proof graph vertex, instead of the initial
+    /// program state. Dynamic goals are still judged relative to the task's initial state; such searches return no plan.
+    std::optional<ProgramStateView<Kind>> start_state = std::nullopt;
     bool universal = false;
     std::optional<runir::kr::uns::ClassifierView> classifier = std::nullopt;
     /// Counts distinct admitted states in ALL, admitted state occurrences in NONE and CHOICE.

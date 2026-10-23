@@ -41,6 +41,9 @@ public:
     /// Create the entry module with empty registers and arguments, and no caller.
     StoredState initial_state(const tyr::planning::StateView<Kind>& state);
 
+    /// Continue from an interned program state reached under this task and program, e.g. a proof graph vertex.
+    StoredState start_state(ProgramStateView<Kind> state);
+
     /// Intern selected output states and, in CHOICE mode, sources with Choose obligations.
     template<ProgramStateViewConcept<Kind> S>
     ProgramStateView<Kind> materialize(const S& state);

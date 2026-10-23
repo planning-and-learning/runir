@@ -11,7 +11,7 @@ backend-path = ["python"]
 
 [project]
 name = "pyrunir"
-version = "0.5.0"
+version = "0.5.1"
 description = "Runir description logic feature library"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -26,6 +26,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+mcp = [
+    "mcp>=2.3,<3",
+]
 test = [
     "pytest",
     "pypddl-datasets>=0.0.17,<0.1",

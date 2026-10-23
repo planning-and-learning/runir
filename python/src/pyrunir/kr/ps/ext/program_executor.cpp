@@ -197,6 +197,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
 
     nb::class_<Options>(m, (std::string(prefix) + "ProgramSearchOptions").c_str())
         .def(nb::init<>())
+        .def_rw("start_state", &Options::start_state, nb::for_setter(nb::keep_alive<1, 2>()))
         .def_rw("universal", &Options::universal)
         .def_rw("and_backtracking", &Options::and_backtracking)
         .def_rw("classifier", &Options::classifier, nb::for_setter(nb::keep_alive<1, 2>()))

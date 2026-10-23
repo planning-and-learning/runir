@@ -47,6 +47,7 @@ concept ExecutionStorageConcept = requires(Storage& storage,
     requires std::copyable<StorageStoredState<Storage>>;
     requires ProgramStateViewConcept<StorageStateView<Storage>, Kind>;
     { storage.initial_state(initial) } -> std::same_as<StorageStoredState<Storage>>;
+    { storage.start_state(std::declval<ProgramStateView<Kind>>()) } -> std::same_as<StorageStoredState<Storage>>;
     { const_storage.view(stored) } -> std::same_as<StorageStateView<Storage>>;
     { storage.retain(state) } -> std::same_as<StorageStoredState<Storage>>;
     { storage.registers(registers) } -> runir::kr::dl::semantics::RegisterValuesViewConcept;
@@ -106,6 +107,9 @@ public:
         auto arguments = checkout<runir::kr::dl::semantics::CallArguments>(m_context->dl_builder);
         return store(state, entry, entry.get_entry_memory_state(), registers(*empty), insert(*m_context->dl_denotation_repository, *arguments).first, {});
     }
+
+    /// Continue from an interned program state of this task and program.
+    StoredState start_state(ProgramStateView<Kind> state) const noexcept { return state; }
 
     ProgramStateView<Kind> materialize(ProgramStateView<Kind> state) { return state; }
 
@@ -186,6 +190,13 @@ public:
         empty->role_values.resize(entry.get_data().role_registers.size());
         auto arguments = checkout<runir::kr::dl::semantics::CallArguments>(m_context->dl_builder);
         return store(state, entry, entry.get_entry_memory_state(), registers(*empty), insert(*m_context->dl_denotation_repository, *arguments).first, {});
+    }
+
+    /// Continue from an interned program state of this task and program.
+    StoredState start_state(ProgramStateView<Kind> state)
+    {
+        const auto module_ = state.get_module_state();
+        return store(module_.get_state(), module_.get_module(), module_.get_memory_state(), module_.get_registers(), module_.get_arguments(), state.get_call_stack());
     }
 
     ProgramStateView<Kind> materialize(BuilderProgramStateView<Kind> state)

@@ -85,5 +85,9 @@ from ....._pyrunir.kr.ps.ext.dl import (
     parse_module,
     parse_program,
     parse_modules,
+    parse_concept,
+    parse_role,
+    parse_boolean,
+    parse_numerical,
     structural_termination,
 )

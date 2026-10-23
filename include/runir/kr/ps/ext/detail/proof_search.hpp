@@ -294,6 +294,7 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
 }
 
 /// Own the search lifetime, then construct its graph and optional execution plan.
+/// `options.start_state` replaces the initial program state; such searches return no plan.
 template<tyr::TaskKind Kind,
          ExecutionStorageConcept<Kind> ExecutionStorage,
          runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
@@ -306,8 +307,10 @@ ProgramProofResults<Kind> find_solution(SuccessorExpander<Kind, ExecutionStorage
 {
     const auto& task_context = expander.get_task_context();
     auto& search = *task_context->search_context;
+    // Goals with dynamic parts are judged relative to the task's initial state, also when continuing from a start state.
     const auto initial_node = search.successor_generator->get_packed_initial_node(*search.state_repository, *search.axiom_evaluator);
-    const auto initial = expander.initial_state(initial_node.get_state().unpack());
+    const auto start = options.start_state;
+    const auto initial = start ? expander.start_state(*start) : expander.initial_state(initial_node.get_state().unpack());
     using PathPtr = ygg::SharedObjectPoolPtr<SearchPath<Kind, ExecutionStorage>>;
     auto statistics = ProgramSearchStatistics {};
     auto path_pool = ygg::SharedObjectPool<SearchPath<Kind, ExecutionStorage>> {};
@@ -329,7 +332,7 @@ ProgramProofResults<Kind> find_solution(SuccessorExpander<Kind, ExecutionStorage
         {
             result.statistics.choice_depth = first_goal->choice_depth;
             result.statistics.choice_width = first_goal->choice_width;
-            if (!options.universal)
+            if (!options.universal && !start)
             {
                 auto actions = std::vector<tyr::formalism::planning::ActionBindingView> {};
                 for (auto path = first_goal; path; path = path->parent)
@@ -348,7 +351,7 @@ ProgramProofResults<Kind> find_solution(SuccessorExpander<Kind, ExecutionStorage
             const auto goal = *first_goal->state;
             result.statistics.choice_depth = storage.node(goal).choice_depth;
             result.statistics.choice_width = storage.node(goal).choice_width;
-            if (!options.universal)
+            if (!options.universal && !start)
                 result.plan = extract_total_ordered_plan(goal, storage.nodes, initial_node, *task_context);
         }
     }

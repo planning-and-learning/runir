@@ -95,6 +95,8 @@ yggdrasil_install_python_files(
         pyrunir/kr/ps/icp/dl/__init__.py
         pyrunir/kr/ps/ext/__init__.py
         pyrunir/kr/ps/ext/dl/__init__.py
+        pyrunir/kr/ps/ext/explore/__init__.py
+        pyrunir/kr/ps/ext/explore/server.py
         pyrunir/kr/ps/base/dl/__init__.py
         pyrunir/kr/uns/__init__.py
         pyrunir/kr/uns/dl/__init__.py

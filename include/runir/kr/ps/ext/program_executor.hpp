@@ -13,7 +13,7 @@ namespace runir::kr::ps::ext
 /// ALL memoizes every state and returns the full explored graph, including rejected branches.
 /// NONE and CHOICE return only a selected solution or diagnostic path; they never retain the full graph.
 /// Materializing that returned path is separate from search memorization. Unmemorized states may be expanded again.
-/// Limits count work across attempted bindings; only successful non-universal searches return a plan.
+/// Limits count work across attempted bindings; only successful non-universal searches from the initial state return a plan.
 template<tyr::TaskKind Kind>
 auto find_solution(runir::kr::TaskContextPtr<Kind> task_context, ProgramView program, const ProgramSearchOptions<Kind>& options) -> ProgramProofResults<Kind>;
 

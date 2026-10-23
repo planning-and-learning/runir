@@ -49,6 +49,13 @@ auto SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::initial_state(
 }
 
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
+auto SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::start_state(ProgramStateView<Kind> state) -> StoredState
+{
+    validate_source(state);
+    return m_storage.start_state(state);
+}
+
+template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
 template<ProgramStateViewConcept<Kind> S>
 ProgramStateView<Kind> SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::materialize(const S& state)
 {
