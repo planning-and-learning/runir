@@ -302,3 +302,22 @@ class Vertex:
             f"{self.ref.describe()} memory={self.memory}{' goal' if self.goal else ''}\n  registers: {registers}\n"
             f"  features: {features}\n  atoms: {' '.join(self.atoms)}"
         )
+
+
+@dataclass(frozen=True, slots=True)
+class Failure:
+    run: TaskRun
+    memory: str | None
+    registers: Mapping[str, str | None]
+    forbidden: int | None
+    """Applicable actions at the failure vertex that no rule admits; None if there is no failure vertex."""
+    applicable: int | None
+
+    def describe(self) -> str:
+        if self.run.failure is None:
+            return f"{self.run.task.name}: {self.run.status}" + (f" ({self.run.category})" if self.run.category else "")
+        registers = " ".join(f"{name}={value}" for name, value in self.registers.items())
+        return (
+            f"{self.run.failure.describe()} {self.run.category} memory={self.memory} registers: {registers}; "
+            f"{self.forbidden} of {self.applicable} applicable actions admitted by no rule"
+        )

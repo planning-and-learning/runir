@@ -82,6 +82,7 @@ from .results import (
     ChooseRule,
     ChooseSummary,
     Contrast,
+    Failure,
     Feature,
     LoadTrial,
     Outcome,
@@ -251,6 +252,21 @@ class Session:
                 execute.statistics.choice_depth if execute.status == ProgramProofStatus.SUCCESS else None,
             ))
         return Validation(tuple(rows))
+
+    def failures(self, tasks: Iterable[Task] | None = None, /) -> list[Failure]:
+        """Every task whose execution does not succeed: its failure vertex, memory state, registers, and how many
+        applicable actions no rule admits there."""
+        failures: list[Failure] = []
+        for run in self.runs(tasks):
+            if run.status == "success":
+                continue
+            if run.failure is None:
+                failures.append(Failure(run, None, {}, None, None))
+                continue
+            vertex = self.vertex(run.failure)
+            steps = self.successors(run.failure)
+            failures.append(Failure(run, vertex.memory, vertex.registers, sum(step.rule is None for step in steps), len(steps)))
+        return failures
 
     def runs(self, tasks: Iterable[Task] | None = None, /) -> list[TaskRun]:
         tasks = list(tasks) if tasks is not None else list(self.tasks)

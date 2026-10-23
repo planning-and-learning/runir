@@ -128,6 +128,15 @@ def validate(tasks: list[str] | None = None) -> str:
 
 @server.tool(structured_output=False)
 @_logged
+def failures(tasks: list[str] | None = None) -> str:
+    """Every task (default: all) whose execution does not succeed, in one call: category, failure vertex, memory,
+    registers, and how many applicable actions there no rule admits. Follow up with `successors` and `plan`."""
+    found = _server.require_session().failures(_server.tasks(tasks))
+    return "\n".join(failure.describe() for failure in found) or "all executions succeed"
+
+
+@server.tool(structured_output=False)
+@_logged
 def run(task: str) -> str:
     """Status, failure category, search statistics, failure vertex and path length of the program on one task."""
     session = _server.require_session()

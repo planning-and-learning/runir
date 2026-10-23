@@ -22,6 +22,7 @@ print(session.try_load(rule))
 
 | Call | Result |
 |---|---|
+| `failures(tasks)` | every task whose execution fails: failure vertex, memory, registers, actions no rule admits there |
 | `run(task)` | status, failure category, statistics, failure vertex, path to the goal or the failure |
 | `chooses(tasks)` | per Choose rule: occurrences on paths, width, failed and untried bindings |
 | `points(rule, tasks, limit)` | choice points on paths, those with failed bindings and more bindings first |

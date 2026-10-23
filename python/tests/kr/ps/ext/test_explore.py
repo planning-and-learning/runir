@@ -148,6 +148,9 @@ def test_successors_and_plan_from_a_failure_vertex(gripper_data_dir: Path) -> No
     assert run.status == "failure" and run.failure is not None
     steps = session.successors(run.failure)
     assert steps and all(step.rule is None for step in steps)  # memory `done` has no rules
+    [failure] = session.failures()
+    assert failure.run.failure == run.failure and failure.memory == "done"
+    assert failure.forbidden == failure.applicable and failure.applicable == len(steps)
     plan = session.plan(run.failure)
     assert plan.status == "solved" and plan.steps
     assert any("ball2" in step.action for step in plan.steps)
