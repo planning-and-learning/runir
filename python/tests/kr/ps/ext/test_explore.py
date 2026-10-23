@@ -15,6 +15,7 @@ from pyrunir.kr import DomainContext, LiftedTaskContext
 
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext.explore import Budget, Session, Task, TaskValidation, Validation
+from pyrunir.kr.ps.ext.explore.graph import distinguishing_atoms
 
 # Carry one ball to roomb. Only ball2 has that goal; the order tries ball1 first, which ends in an open state.
 PROGRAM = """(:program (:entry carry) (:module (:symbol carry) (:arguments) (:registers (:concept selected))
@@ -193,3 +194,14 @@ def test_validation_lists_the_largest_increases_without_comparing_results() -> N
         {tasks[0]: 1, tasks[1]: 1, tasks[2]: 3},
     )
     assert "largest increases: a 1->3, b 1->3" in validation.describe()
+
+
+def test_distinguishing_atoms_count_peers_and_keep_values() -> None:
+    types = {name: frozenset({"position"}) for name in "pqrst"} | {"n0": frozenset({"numb"}), "n1": frozenset({"numb"})}
+    profiles = [
+        [("height", ("*", "n1")), ("neighbor", ("*", "r")), ("neighbor", ("*", "s"))],
+        [("height", ("*", "n0")), ("neighbor", ("*", "t"))],
+    ]
+    first, second = distinguishing_atoms(profiles, types, ["p", "q"])
+    assert first == ("(height * n1)", "(neighbor * _)x2")
+    assert second == ("(height * n0)", "(neighbor * _)")

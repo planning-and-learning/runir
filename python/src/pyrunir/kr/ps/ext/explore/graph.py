@@ -149,12 +149,45 @@ def rewrite_choose_as_load(text: str, rule: str) -> str:
     raise KeyError(rule)
 
 
-def object_atoms(state: lifted.State, name: str) -> set[str]:
-    """The static, fluent and derived atoms of `state` that mention the object `name`, written with `*` for it."""
-    atoms: set[str] = set()
+def object_types(state: lifted.State) -> dict[str, frozenset[str]]:
+    """Each object's static unary predicates, which include its domain types."""
+    types: dict[str, set[str]] = {}
+    for atom in state.static_atoms():
+        objects = atom.get_objects()
+        if len(objects) == 1:
+            types.setdefault(str(objects[0].get_name()), set()).add(str(atom.get_predicate().get_name()))
+    return {name: frozenset(values) for name, values in types.items()}
+
+
+def object_atoms(state: lifted.State, name: str) -> list[tuple[str, tuple[str, ...]]]:
+    """The static, fluent and derived atoms of `state` that mention the object `name`, with `*` for it."""
+    atoms: list[tuple[str, tuple[str, ...]]] = []
     for atom in (*state.static_atoms(), *state.fluent_atoms(), *state.derived_atoms()):
-        objects = [str(item.get_name()) for item in atom.get_objects()]
+        objects = tuple(str(item.get_name()) for item in atom.get_objects())
         if name in objects:
-            arguments = " ".join("*" if item == name else item for item in objects)
-            atoms.add(f"({atom.get_predicate().get_name()} {arguments})")
+            atoms.append((str(atom.get_predicate().get_name()), tuple("*" if item == name else item for item in objects)))
     return atoms
+
+
+def distinguishing_atoms(
+    profiles: list[list[tuple[str, tuple[str, ...]]]], types: dict[str, frozenset[str]], bindings: list[str]
+) -> list[tuple[str, ...]]:
+    """Per binding, the atoms around it that not every binding has as often. Other objects of the binding's own
+    unary predicates (its peers) become `_` and equal atoms are counted; other objects, such as values, stay."""
+    counts: list[dict[str, int]] = []
+    for profile, binding in zip(profiles, bindings):
+        own = types.get(binding, frozenset())
+        count: dict[str, int] = {}
+        for predicate, arguments in profile:
+            shown = " ".join(
+                argument if argument == "*" or types.get(argument, frozenset()) != own else "_" for argument in arguments
+            )
+            atom = f"({predicate} {shown})"
+            count[atom] = count.get(atom, 0) + 1
+        counts.append(count)
+    atoms = {atom for count in counts for atom in count}
+    differing = {atom for atom in atoms if len({count.get(atom, 0) for count in counts}) > 1}
+    return [
+        tuple(atom if count[atom] == 1 else f"{atom}x{count[atom]}" for atom in sorted(differing & count.keys()))
+        for count in counts
+    ]
