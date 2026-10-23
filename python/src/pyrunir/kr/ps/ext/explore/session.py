@@ -63,6 +63,7 @@ from pyrunir.kr.ps.ext.dl import (
 )
 
 from .graph import (
+    object_atoms,
     deltas,
     failure_category,
     is_choose,
@@ -399,6 +400,8 @@ class Session:
         source = graph.get_vertex_property(ref.vertex).program_state
         values = [self._feature_values(task_context, source, row[5], rule, row[0]) for row in rows]
         reference = next((i for i, row in enumerate(rows) if row[2] in ("succeeded", "succeeds")), 0)
+        profiles = [object_atoms(source.state, row[0]) for row in rows]
+        common: set[str] = set(profiles[0]).intersection(*profiles[1:]) if profiles else set()
         return [
             Alternative(
                 binding=BindingRef(ref, name),
@@ -407,6 +410,7 @@ class Session:
                 ending=ending,
                 states=states,
                 deltas={key: (values[reference][key], value) for key, value in values[i].items() if values[reference][key] != value},
+                atoms=tuple(sorted(profiles[i] - common))[:12],
             )
             for i, (name, rank, outcome, ending, states, _) in enumerate(rows)
         ]

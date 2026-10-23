@@ -62,6 +62,7 @@ def test_alternatives_show_the_failed_and_the_successful_binding_in_order_rank(s
     assert (first.binding.binding, first.rank, first.outcome, first.ending) == ("ball1", 1, "failed", "subtree")
     assert (second.binding.binding, second.rank, second.outcome) == ("ball2", 2, "succeeded")
     assert first.deltas == {"selected_has_goal": (True, False)}
+    assert first.atoms == second.atoms == ()  # both balls lie in rooma; only their goals differ, which are not atoms
 
 
 def test_untried_bindings_are_searched_only_with_a_budget(gripper_data_dir: Path) -> None:

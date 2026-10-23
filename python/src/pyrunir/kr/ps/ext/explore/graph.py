@@ -7,6 +7,7 @@ from collections import deque
 from collections.abc import Mapping
 
 from pytyr.formalism.planning import Object
+from pytyr.planning import lifted
 
 from pyrunir.kr.ps.ext import (
     ConceptChooseRule,
@@ -146,3 +147,14 @@ def rewrite_choose_as_load(text: str, rule: str) -> str:
         block = block.replace("(:choose", "(:load")
         return text[: match.start()] + block + text[end + 1 :]
     raise KeyError(rule)
+
+
+def object_atoms(state: lifted.State, name: str) -> set[str]:
+    """The static, fluent and derived atoms of `state` that mention the object `name`, written with `*` for it."""
+    atoms: set[str] = set()
+    for atom in (*state.static_atoms(), *state.fluent_atoms(), *state.derived_atoms()):
+        objects = [str(item.get_name()) for item in atom.get_objects()]
+        if name in objects:
+            arguments = " ".join("*" if item == name else item for item in objects)
+            atoms.add(f"({atom.get_predicate().get_name()} {arguments})")
+    return atoms

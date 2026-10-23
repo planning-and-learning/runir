@@ -195,12 +195,15 @@ class Alternative:
     states: int | None
     deltas: Mapping[str, tuple[Value, Value]]
     """Feature: (value at the reference binding, value here); the reference is the successful binding, else the first."""
+    atoms: tuple[str, ...] = ()
+    """Atoms of the Choose source that mention the binding (written `*`) and not every binding at the point."""
 
     def describe(self) -> str:
         deltas = " ".join(f"{name}:{a}>{b}" for name, (a, b) in self.deltas.items()) or "-"
         ending = f" {self.ending}" if self.ending else ""
         states = f" states={self.states}" if self.states is not None else ""
-        return f"{self.binding.binding} rank={self.rank} {self.outcome}{ending}{states} deltas: {deltas}"
+        atoms = f" atoms: {' '.join(self.atoms)}" if self.atoms else ""
+        return f"{self.binding.binding} rank={self.rank} {self.outcome}{ending}{states} deltas: {deltas}{atoms}"
 
 
 @dataclass(frozen=True, slots=True)
