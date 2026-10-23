@@ -61,9 +61,11 @@ class Feature:
 class VertexRef:
     task: Task
     vertex: int
+    proof: bool = False
+    """A vertex of the universal proof search (`<task>:pv<n>`) instead of the execution search (`<task>:v<n>`)."""
 
     def describe(self) -> str:
-        return f"{self.task.name}:v{self.vertex}"
+        return f"{self.task.name}:{'pv' if self.proof else 'v'}{self.vertex}"
 
 
 @dataclass(frozen=True, slots=True)

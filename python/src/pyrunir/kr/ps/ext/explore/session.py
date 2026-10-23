@@ -175,7 +175,7 @@ class Session:
         self._program = program
         self._module = program.get_entry_module()
         self._searches: dict[str, _Search] = {}
-        self._proofs: dict[str, LiftedProgramProofResults] = {}
+        self._proofs: dict[str, _Search] = {}
         self._rules: dict[str, ChooseRule] = {}
         for bodies in self._module.get_memory_transitions():
             for body in bodies:
@@ -210,14 +210,16 @@ class Session:
         return Feature(expression, self._expression_category(expression))
 
     def vertex_ref(self, text: str, /) -> VertexRef:
-        """`<task>:v<n>`."""
+        """`<task>:v<n>` for the execution search, `<task>:pv<n>` for the universal proof search."""
         task, _, vertex = text.rpartition(":")
-        return VertexRef(self.task(task), int(vertex.removeprefix("v")))
+        proof = vertex.startswith("pv")
+        return VertexRef(self.task(task), int(vertex.removeprefix("pv" if proof else "v")), proof)
 
     # -- searches -----------------------------------------------------------------------------------------------------
 
-    def run(self, task: Task, /) -> TaskRun:
-        search = self._search(task)
+    def run(self, task: Task, /, prove: bool = False) -> TaskRun:
+        """The execution (or with `prove`, the universal proof) of the program on `task`."""
+        search = self._search(task, prove)
         result = search.result
         graph = result.graph
         initial = next((v for v in graph.get_vertex_indices() if graph.get_vertex_property(v).is_initial), None)
@@ -236,8 +238,8 @@ class Session:
             choice_depth=statistics.choice_depth,
             choice_width=statistics.choice_width,
             seconds=search.seconds,
-            failure=VertexRef(task, failure) if failure is not None else None,
-            path=tuple(VertexRef(task, v) for v in path),
+            failure=VertexRef(task, failure, prove) if failure is not None else None,
+            path=tuple(VertexRef(task, v, prove) for v in path),
         )
 
     def validate(self, tasks: Iterable[Task] | None = None, /) -> Validation:
@@ -252,13 +254,8 @@ class Session:
                 return f"failed ({failure_category(result)})"
             return f"unavailable ({result.status.name.lower()})"
 
-        def prove(task: Task) -> LiftedProgramProofResults:
-            if task.name not in self._proofs:
-                self._proofs[task.name] = self._find(task, self._budget, universal=True)[0]
-            return self._proofs[task.name]
-
-        with ThreadPoolExecutor(self._workers) as pool:
-            proofs = list(pool.map(prove, tasks))
+        self._prefetch(tasks, prove=True)
+        proofs = [self._search(task, True).result for task in tasks]
         rows: list[TaskValidation] = []
         for task, proof in zip(tasks, proofs):
             execute = self._search(task).result
@@ -319,11 +316,11 @@ class Session:
             tuple(rule.get_symbol() for rule in result.recursive_call_rules),
         )
 
-    def failures(self, tasks: Iterable[Task] | None = None, /) -> list[Failure]:
-        """Every task whose execution does not succeed: its failure vertex, memory state, registers, and how many
-        applicable actions no rule admits there."""
+    def failures(self, tasks: Iterable[Task] | None = None, /, prove: bool = False) -> list[Failure]:
+        """Every task whose execution (or with `prove`, universal proof) does not succeed: its failure vertex, memory
+        state, registers, and how many applicable actions no rule admits there."""
         failures: list[Failure] = []
-        for run in self.runs(tasks):
+        for run in self.runs(tasks, prove):
             if run.status == "success":
                 continue
             if run.failure is None:
@@ -334,10 +331,10 @@ class Session:
             failures.append(Failure(run, vertex.memory, vertex.registers, sum(step.rule is None for step in steps), len(steps)))
         return failures
 
-    def runs(self, tasks: Iterable[Task] | None = None, /) -> list[TaskRun]:
+    def runs(self, tasks: Iterable[Task] | None = None, /, prove: bool = False) -> list[TaskRun]:
         tasks = list(tasks) if tasks is not None else list(self.tasks)
-        self._prefetch(tasks)
-        return [self.run(task) for task in tasks]
+        self._prefetch(tasks, prove=prove)
+        return [self.run(task, prove) for task in tasks]
 
     # -- choice points -------------------------------------------------------------------------------------------------
 
@@ -376,7 +373,7 @@ class Session:
         Tried bindings come from the session's search. Untried ones are searched from their target
         configuration only when `budget` is given; otherwise their outcome is `untried`."""
         ref = point.vertex if isinstance(point, ChoicePoint) else point
-        search = self._search(ref.task)
+        search = self._search(ref.task, ref.proof)
         graph = search.graph
         rule, bindings = self._bindings(ref)
         tried = {
@@ -459,7 +456,7 @@ class Session:
         ref = binding.point
         _, bindings = self._bindings(ref)
         target = next(state for name, state in bindings if str(name) == binding.binding)
-        source = self._search(ref.task).graph.get_vertex_property(ref.vertex).program_state
+        source = self._search(ref.task, ref.proof).graph.get_vertex_property(ref.vertex).program_state
         task_context = self._task_context(ref.task)
         return self._evaluate(task_context, feature, source if feature.category == "concept" else target, binding.binding)
 
@@ -502,7 +499,7 @@ class Session:
     # -- vertices ------------------------------------------------------------------------------------------------------
 
     def vertex(self, ref: VertexRef, /) -> Vertex:
-        label = self._search(ref.task).graph.get_vertex_property(ref.vertex)
+        label = self._search(ref.task, ref.proof).graph.get_vertex_property(ref.vertex)
         program_state = label.program_state
         module_state = program_state.module_state
         module = module_state.module
@@ -526,7 +523,7 @@ class Session:
         feature deltas. At a failure vertex this shows which moves the conditions and effects forbid."""
         task_context = self._task_context(ref.task)
         search = task_context.search_context
-        program_state = self._search(ref.task).graph.get_vertex_property(ref.vertex).program_state
+        program_state = self._search(ref.task, ref.proof).graph.get_vertex_property(ref.vertex).program_state
         module_state = program_state.module_state
         expander = LiftedSuccessorExpander(task_context, self._program)
         before = self._state_values(task_context, program_state.state, module_state)
@@ -544,8 +541,8 @@ class Session:
         budget = budget or self._budget
         task_context = self._task_context(ref.task)
         search = task_context.search_context
-        module_state = self._search(ref.task).graph.get_vertex_property(ref.vertex).program_state.module_state
-        state = self._search(ref.task).graph.get_vertex_property(ref.vertex).state
+        module_state = self._search(ref.task, ref.proof).graph.get_vertex_property(ref.vertex).program_state.module_state
+        state = self._search(ref.task, ref.proof).graph.get_vertex_property(ref.vertex).state
         options = lifted.gbfs_lazy.Options()
         options.start_node = search.successor_generator.get_node(search.state_repository, state.get_index())
         options.search_budget = SearchBudget(max_num_states=budget.max_states, max_time=timedelta(seconds=budget.max_seconds))
@@ -567,10 +564,10 @@ class Session:
                 before = after
         return Plan(ref, found.status.name.lower(), tuple(steps))
 
-    def dead_end(self, task: Task, /, budget: Budget | None = None) -> DeadEnd:
+    def dead_end(self, task: Task, /, budget: Budget | None = None, prove: bool = False) -> DeadEnd:
         """Where the failure path of `task` makes the task unsolvable: dead ends are absorbing, so a binary search
         with plan searches finds the step from the last solvable to the first unsolvable state."""
-        path = self.run(task).path
+        path = self.run(task, prove).path
         if not path:
             raise ValueError(f"{task.name} has no failure path")
         unknown = False
@@ -593,7 +590,7 @@ class Session:
                 low = middle
             else:
                 high = middle
-        graph = self._search(task).graph
+        graph = self._search(task, prove).graph
         edge = next(
             edge for edge in graph.get_out_edge_indices(path[low].vertex) if graph.get_target(edge) == path[high].vertex
         )
@@ -644,22 +641,25 @@ class Session:
         self._spent += seconds
         return result, seconds
 
-    def _search(self, task: Task) -> _Search:
-        if task.name not in self._searches:
-            result, seconds = self._find(task, self._budget)
-            self._searches[task.name] = _Search(result, seconds, vertex_status(result))
-        return self._searches[task.name]
+    def _search(self, task: Task, prove: bool = False) -> _Search:
+        searches = self._proofs if prove else self._searches
+        if task.name not in searches:
+            result, seconds = self._find(task, self._budget, universal=prove)
+            searches[task.name] = _Search(result, seconds, vertex_status(result))
+        return searches[task.name]
 
-    def _prefetch(self, tasks: Sequence[Task]) -> None:
-        missing = [task for task in tasks if task.name not in self._searches]
+    def _prefetch(self, tasks: Sequence[Task], *, prove: bool = False) -> None:
+        searches = self._proofs if prove else self._searches
+        missing = [task for task in tasks if task.name not in searches]
         for task in missing:
             self._task_context(task)
+
         def find(task: Task) -> tuple[LiftedProgramProofResults, float]:
-            return self._find(task, self._budget)
+            return self._find(task, self._budget, universal=prove)
 
         with ThreadPoolExecutor(self._workers) as pool:
             for task, (result, seconds) in zip(missing, pool.map(find, missing)):
-                self._searches[task.name] = _Search(result, seconds, vertex_status(result))
+                searches[task.name] = _Search(result, seconds, vertex_status(result))
 
     def _points_on_path(self, task: Task) -> list[ChoicePoint]:
         search = self._search(task)
@@ -696,7 +696,7 @@ class Session:
         if key in self._binding_cache:
             return self._binding_cache[key]
         task_context = self._task_context(ref.task)
-        graph = self._search(ref.task).graph
+        graph = self._search(ref.task, ref.proof).graph
         source = graph.get_vertex_property(ref.vertex).program_state
         expander = LiftedSuccessorExpander(task_context, self._program)
         choices: list[ConceptChoice | RoleChoice] = []

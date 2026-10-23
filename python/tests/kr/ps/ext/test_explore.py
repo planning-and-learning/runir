@@ -205,3 +205,18 @@ def test_distinguishing_atoms_count_peers_and_keep_values() -> None:
     first, second = distinguishing_atoms(profiles, types, ["p", "q"])
     assert first == ("(height * n1)", "(neighbor * _)x2")
     assert second == ("(height * n0)", "(neighbor * _)")
+
+
+def test_proof_failures_are_explorable_with_proof_vertex_handles(gripper_data_dir: Path) -> None:
+    # As a Load every located ball must lead to the goal in the proof; ball1 does not.
+    program = PROGRAM.replace("(:choose (:conditions) (:concept located) (:register (:concept selected)) (:effects) (:order (min selected_has_goal)))",
+                              "(:load (:conditions) (:concept located) (:register (:concept selected)) (:effects))")
+    session = Session(gripper_data_dir / "domain.pddl", program, [gripper_data_dir / "test-1.pddl"], workers=1)
+    task = session.task("test-1")
+    run = session.run(task, prove=True)
+    assert run.status == "failure" and run.failure is not None and run.failure.proof
+    assert run.failure.describe().startswith("test-1:pv")
+    assert session.vertex_ref(run.failure.describe()) == run.failure
+    assert session.vertex(run.failure).memory == "done"
+    [failure] = session.failures(prove=True)
+    assert failure.run.failure == run.failure

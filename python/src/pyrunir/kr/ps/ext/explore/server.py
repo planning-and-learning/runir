@@ -138,19 +138,20 @@ def validate(tasks: list[str] | None = None) -> str:
 
 @server.tool(structured_output=False)
 @_logged
-def failures(tasks: list[str] | None = None) -> str:
-    """Every task (default: all) whose execution does not succeed, in one call: category, failure vertex, memory,
-    registers, and how many applicable actions there no rule admits. Follow up with `successors` and `plan`."""
-    found = _server.require_session().failures(_server.tasks(tasks))
-    return "\n".join(failure.describe() for failure in found) or "all executions succeed"
+def failures(tasks: list[str] | None = None, prove: bool = False) -> str:
+    """Every task (default: all) whose execution, or with `prove` universal proof, does not succeed, in one call:
+    category, failure vertex, memory, registers, and how many applicable actions there no rule admits."""
+    found = _server.require_session().failures(_server.tasks(tasks), prove)
+    return "\n".join(failure.describe() for failure in found) or ("all proofs succeed" if prove else "all executions succeed")
 
 
 @server.tool(structured_output=False)
 @_logged
-def run(task: str) -> str:
-    """Status, failure category, search statistics, failure vertex and path length of the program on one task."""
+def run(task: str, prove: bool = False) -> str:
+    """Status, failure category, search statistics, failure vertex and path length of the program on one task:
+    of its execution, or with `prove` of its universal proof (vertices `<task>:pv<n>`)."""
     session = _server.require_session()
-    return session.run(session.task(task)).describe()
+    return session.run(session.task(task), prove).describe()
 
 
 @server.tool(structured_output=False)
@@ -239,11 +240,11 @@ def successors(vertex: str) -> str:
 
 @server.tool(structured_output=False)
 @_logged
-def dead_end(task: str, max_states: int | None = None, max_seconds: float | None = None) -> str:
-    """For a task whose execution fails: the step on the failure path after which the task is unsolvable (found by
-    binary search with plan searches), or that every state on the path still has a plan."""
+def dead_end(task: str, max_states: int | None = None, max_seconds: float | None = None, prove: bool = False) -> str:
+    """For a task whose execution (or with `prove`, universal proof) fails: the step on the failure path after which
+    the task is unsolvable (found by binary search with plan searches), or that every state on it has a plan."""
     session = _server.require_session()
-    return session.dead_end(session.task(task), _server.budget(max_states, max_seconds)).describe()
+    return session.dead_end(session.task(task), _server.budget(max_states, max_seconds), prove).describe()
 
 
 @server.tool(structured_output=False)

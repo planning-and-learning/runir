@@ -78,6 +78,9 @@ python -m pyrunir.kr.ps.ext.explore.server [--domain domain.pddl] [--program mod
     [--tasks 'problems/*.pddl'] [--max-states N] [--max-seconds S] [--total-seconds S] [--workers N]
 ```
 
+Executions and universal proofs are both explorable: `run`, `failures` and `dead_end` take `prove`, and
+proof vertices are written `<task>:pv<n>`, which `vertex`, `successors`, `plan` and `alternatives` accept.
+
 One session per server process. `open(workspace)` loads the files relative to the
 workspace; `set_program(text)` switches to a draft. Handles are strings: tasks by
 name, vertices as `<task>:v<n>`, rules and features by name, features also as
