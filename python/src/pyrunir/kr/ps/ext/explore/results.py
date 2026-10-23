@@ -132,9 +132,9 @@ class Validation:
         passed = [task for task in self.tasks if task.passed]
         depth = sum(task.choice_depth or 0 for task in passed)
         lines = [f"passed {len(passed)}/{len(self.tasks)}; choice_depth sum over passed tasks {depth}"]
-        if self.baseline is not None:
+        both = [task for task in passed if self.baseline is not None and task.task in self.baseline]
+        if self.baseline is not None and both:
             baseline = self.baseline
-            both = [task for task in passed if task.task in baseline]
             before = sum(baseline[task.task] for task in both)
             after = sum(task.choice_depth or 0 for task in both)
             increases = sorted(both, key=lambda task: (task.choice_depth or 0) - baseline[task.task], reverse=True)
