@@ -274,10 +274,15 @@ class LoadTrial:
             return f"{self.rule.name} as Load: the rewritten program is not structurally terminating"
         failed = ", ".join(f"{task.name} {stage} {category}" for task, stage, category in self.failed) or "-"
         unavailable = ", ".join(f"{task.name} {stage}" for task, stage in self.unavailable) or "-"
+        note = (
+            "\n  a prove failure means some binding, possibly one the Choose never tried, fails: in a proof a Load"
+            " needs every binding to succeed, a Choose only one; alternatives with a budget searches untried bindings"
+            if any(stage == "prove" for _, stage, _ in self.failed) else ""
+        )
         return (
             f"{self.rule.name} as Load: passed={len(self.passed)} failed={len(self.failed)} "
             f"unavailable={len(self.unavailable)} choice_depth {self.choice_depth[0]}->{self.choice_depth[1]}\n"
-            f"  failed: {failed}\n  unavailable: {unavailable}"
+            f"  failed: {failed}\n  unavailable: {unavailable}{note}"
         )
 
 
