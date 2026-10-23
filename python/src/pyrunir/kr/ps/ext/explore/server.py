@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import argparse
 import functools
+import os
+import resource
 import sys
 import time
 from collections.abc import Callable
@@ -64,6 +66,15 @@ server = MCPServer(
 )
 
 
+def _resident_mib() -> float:
+    """Resident memory of this process (Linux); 0 where /proc is unavailable."""
+    try:
+        with open("/proc/self/statm", encoding="ascii") as statm:
+            return int(statm.read().split()[1]) * os.sysconf("SC_PAGE_SIZE") / 2**20
+    except OSError:
+        return 0.0
+
+
 def _logged(function: Callable[_Params, str]) -> Callable[_Params, str]:
     """Report errors to the agent instead of failing the tool call, and log every call to stderr."""
 
@@ -75,6 +86,8 @@ def _logged(function: Callable[_Params, str]) -> Callable[_Params, str]:
         except Exception as error:  # pylint: disable=broad-exception-caught
             return f"error: {error}"
         finally:
+            if _server.session is not None and _resident_mib() > _server.options.release_mib:
+                _server.session.release()
             spent = _server.session.spent_seconds if _server.session else 0.0
             print(
                 f"[runir-explore] {function.__name__} {kwargs} {time.monotonic() - started:.2f}s search_total={spent:.1f}s",
@@ -273,7 +286,11 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--max-seconds", type=float, default=30.0)
     parser.add_argument("--total-seconds", type=float, default=1800.0)
     parser.add_argument("--workers", type=int, default=8)
+    parser.add_argument("--max-memory-mib", type=int, default=8192, help="address-space limit; searches beyond it fail")
+    parser.add_argument("--release-mib", type=int, default=4096, help="drop cached searches above this resident size")
     _server.options = parser.parse_args(argv)
+    limit = _server.options.max_memory_mib * 2**20
+    resource.setrlimit(resource.RLIMIT_AS, (limit, limit))
     server.run("stdio")
 
 

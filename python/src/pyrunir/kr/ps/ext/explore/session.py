@@ -16,6 +16,7 @@ Choose source, where candidates are computed, and its value for a binding is mem
 from __future__ import annotations
 
 import difflib
+import gc
 import time
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
@@ -155,6 +156,8 @@ class Session:
         self._initial = parse_program(program, self._parser.get_domain(), self._domain.ext_repository)
         self._initial_text = program
         self._initial_depths: dict[str, int | None] = {}
+        self._searches: dict[str, _Search] = {}
+        self._proofs: dict[str, _Search] = {}
         self.set_program(program)
 
     # -- boundary -----------------------------------------------------------------------------------------------------
@@ -177,14 +180,22 @@ class Session:
         self._text = text
         self._program = program
         self._module = program.get_entry_module()
-        self._searches: dict[str, _Search] = {}
-        self._proofs: dict[str, _Search] = {}
+        self.release()
         self._rules: dict[str, ChooseRule] = {}
         for bodies in self._module.get_memory_transitions():
             for body in bodies:
                 if is_choose(body):
                     variant = cast(ConceptChooseRule | RoleChooseRule, body.get_variant())
                     self._rules[body.get_symbol()] = ChooseRule(body.get_symbol(), str(variant.get_register().get_name()))
+
+    def release(self) -> None:
+        """Drop every cached search, task context and binding; later calls recompute them, as searches are
+        deterministic. Task contexts keep every state a search interned, so this is what frees memory."""
+        self._searches.clear()
+        self._proofs.clear()
+        self._binding_cache.clear()
+        self._task_contexts.clear()
+        gc.collect()
 
     @property
     def program(self) -> str:
