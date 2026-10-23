@@ -44,7 +44,7 @@ Install Runir's native dependency providers into the active Python environment,
 then configure CMake with their native prefixes:
 
 ```console
-python -m pip install 'pyyggdrasil>=0.5.0,<0.6' 'pypddl>=1.5.0,<1.6' 'pytyr>=0.5.0,<0.6' 'pypddl-datasets>=0.0.17,<0.1'
+python -m pip install 'pyyggdrasil>=0.5.0,<0.6' 'pypddl>=1.6.0,<1.7' 'pytyr>=0.6.0,<0.7' 'pypddl-datasets>=0.0.17,<0.1'
 
 cmake -S . -B build
 
