@@ -126,6 +126,10 @@ class _Search:
         return self.result.graph
 
 
+_NUMERICAL_COMPARISONS = frozenset({"n_eq", "n_neq", "n_lt", "n_le", "n_gt", "n_ge"})
+"""Boolean constructors over numericals, despite their `n_` prefix."""
+
+
 class Session:
     """Lazy searches of one program on named tasks of one domain.
 
@@ -773,6 +777,8 @@ class Session:
     def _expression_category(self, expression: str) -> Category:
         head = expression.strip().lstrip("(").split(None, 1)[0]
         prefix = head.split("_", 1)[0]
+        if head in _NUMERICAL_COMPARISONS:
+            return "boolean"
         if prefix == "c":
             return "concept"
         if prefix == "b":

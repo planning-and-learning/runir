@@ -239,3 +239,7 @@ def test_server_releases_the_session_on_memory_errors(session: Session, monkeypa
         raise MemoryError
 
     assert exhausting().startswith("error: out of memory") and released
+
+
+def test_numerical_comparisons_are_boolean_features(session: Session) -> None:
+    assert session.feature('(n_gt (n_count (c_atomic_state "ball")) (n_const 2))').category == "boolean"
