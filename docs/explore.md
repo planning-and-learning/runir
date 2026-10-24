@@ -81,7 +81,7 @@ python -m pyrunir.kr.ps.ext.explore.server [--domain domain.pddl] [--program mod
 Executions and universal proofs are both explorable: `run`, `failures` and `dead_end` take `prove`, and
 proof vertices are written `<task>:pv<n>`, which `vertex`, `successors`, `plan` and `alternatives` accept.
 
-One session per server process. `open(workspace)` loads the files relative to the
-workspace; `set_program(text)` switches to a draft. Handles are strings: tasks by
+One session per server process. `open(workspace, program=None)` loads the files relative to the
+workspace (`program` replaces a workspace program that does not parse); `set_program(text)` switches to a draft. Handles are strings: tasks by
 name, vertices as `<task>:v<n>`, rules and features by name, features also as
 expressions. Every call is logged to stderr with its duration and the search time used.

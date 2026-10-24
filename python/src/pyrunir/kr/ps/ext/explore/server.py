@@ -134,19 +134,29 @@ def _logged(function: Callable[_Params, str]) -> Callable[_Params, str]:
 
 @server.tool(name="open", structured_output=False)
 @_logged
-def open_workspace(workspace: str = ".") -> str:
-    """Open the workspace: its domain, current module program and tasks. Earlier results are discarded."""
+def open_workspace(workspace: str = ".", program: str | None = None) -> str:
+    """Open the workspace: its domain, current module program and tasks. Earlier results are discarded. `program`
+    (full `(:program ...)` text) replaces the workspace's program, e.g. when that one does not parse."""
     options = _server.options
     root = Path(workspace).resolve()
     tasks = sorted(root.glob(options.tasks))
-    _server.session = Session(
-        root / options.domain,
-        (root / options.program).read_text(encoding="utf-8"),
-        tasks,
-        budget=Budget(options.max_states, options.max_seconds),
-        total_seconds=options.total_seconds,
-        workers=options.workers,
-    )
+    text = (root / options.program).read_text(encoding="utf-8") if program is None else program
+    try:
+        session = Session(
+            root / options.domain,
+            text,
+            tasks,
+            budget=Budget(options.max_states, options.max_seconds),
+            total_seconds=options.total_seconds,
+            workers=options.workers,
+        )
+    except OSError:
+        raise
+    except Exception as error:  # pylint: disable=broad-exception-caught
+        if program is not None:
+            raise
+        raise ValueError(f"{options.program} does not parse; pass a program that does as `program`.\n{error}") from error
+    _server.session = session
     _server.contrasts.clear()
     rules = ", ".join(rule.name for rule in _server.session.choose_rules()) or "(none)"
     return (

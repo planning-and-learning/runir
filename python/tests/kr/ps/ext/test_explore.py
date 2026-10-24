@@ -243,3 +243,18 @@ def test_server_releases_the_session_on_memory_errors(session: Session, monkeypa
 
 def test_numerical_comparisons_are_boolean_features(session: Session) -> None:
     assert session.feature('(n_gt (n_count (c_atomic_state "ball")) (n_const 2))').category == "boolean"
+
+
+def test_open_takes_a_program_when_the_workspace_program_does_not_parse(
+    gripper_data_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    server = pytest.importorskip("pyrunir.kr.ps.ext.explore.server")
+    (tmp_path / "problems").mkdir()
+    (tmp_path / "domain.pddl").write_text((gripper_data_dir / "domain.pddl").read_text())
+    (tmp_path / "problems" / "t1.pddl").write_text((gripper_data_dir / "test-1.pddl").read_text())
+    (tmp_path / "module-program.txt").write_text("(:program (:entry carry) (:module")
+    options = argparse.Namespace(domain="domain.pddl", program="module-program.txt", tasks="problems/*.pddl",
+                                 max_states=10_000, max_seconds=10.0, total_seconds=60.0, workers=1, release_mib=2**30)
+    monkeypatch.setattr(server, "_server", server._Server(options))
+    assert "does not parse; pass a program that does as `program`" in server.open_workspace(str(tmp_path))
+    assert server.open_workspace(str(tmp_path), PROGRAM).startswith("1 tasks")
