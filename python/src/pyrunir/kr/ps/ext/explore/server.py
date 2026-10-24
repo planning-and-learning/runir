@@ -111,7 +111,12 @@ def _logged(function: Callable[_Params, str]) -> Callable[_Params, str]:
         try:
             return function(*args, **kwargs)
         except MemoryError:
+            # Cached searches of earlier calls may fill the limit; retry once without them.
             _release()
+            try:
+                return function(*args, **kwargs)
+            except MemoryError:
+                _release()
             return (
                 f"error: out of memory (limit {_server.options.max_memory_mib} MiB); cached searches were dropped. "
                 "Pass fewer tasks in `tasks`, or a smaller `max_states` to tools that take one; searches over all tasks keep "

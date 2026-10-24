@@ -238,7 +238,17 @@ def test_server_releases_the_session_on_memory_errors(session: Session, monkeypa
     def exhausting() -> str:
         raise MemoryError
 
-    assert exhausting().startswith("error: out of memory") and released
+    assert exhausting().startswith("error: out of memory") and len(released) == 2
+    calls: list[int] = []
+
+    @server._logged
+    def once() -> str:
+        calls.append(1)
+        if len(calls) == 1:
+            raise MemoryError
+        return "ok"
+
+    assert once() == "ok"
 
 
 def test_numerical_comparisons_are_boolean_features(session: Session) -> None:
