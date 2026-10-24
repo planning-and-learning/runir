@@ -14,7 +14,6 @@ from __future__ import annotations
 import argparse
 import ctypes
 import functools
-import os
 import resource
 import sys
 import time
@@ -26,7 +25,7 @@ from typing import ParamSpec
 from mcp.server.mcpserver import MCPServer
 
 from .results import Budget, Contrast, Task
-from .session import Session
+from .session import Session, resident_mib
 
 _Params = ParamSpec("_Params")
 
@@ -65,15 +64,6 @@ server = MCPServer(
         "feature, and `try_load` to check whether a Choose can become a Load. Call `open` first."
     ),
 )
-
-
-def _resident_mib() -> float:
-    """Resident memory of this process (Linux); 0 where /proc is unavailable."""
-    try:
-        with open("/proc/self/statm", encoding="ascii") as statm:
-            return int(statm.read().split()[1]) * os.sysconf("SC_PAGE_SIZE") / 2**20
-    except OSError:
-        return 0.0
 
 
 def _libc() -> ctypes.CDLL | None:
@@ -125,7 +115,7 @@ def _logged(function: Callable[_Params, str]) -> Callable[_Params, str]:
         except Exception as error:  # pylint: disable=broad-exception-caught
             return f"error: {error}"
         finally:
-            if _resident_mib() > _server.options.release_mib:
+            if resident_mib() > _server.options.release_mib:
                 _release()
             spent = _server.session.spent_seconds if _server.session else 0.0
             print(
@@ -154,6 +144,7 @@ def open_workspace(workspace: str = ".", program: str | None = None) -> str:
             budget=Budget(options.max_states, options.max_seconds),
             total_seconds=options.total_seconds,
             workers=options.workers,
+            release_mib=options.release_mib,
         )
     except OSError:
         raise

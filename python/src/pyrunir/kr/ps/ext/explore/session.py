@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import difflib
 import gc
+import os
 import time
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
@@ -109,6 +110,15 @@ from .results import (
 
 _Item = TypeVar("_Item")
 _Result = TypeVar("_Result")
+
+
+def resident_mib() -> float:
+    """Resident memory of this process (Linux); 0 where /proc is unavailable."""
+    try:
+        with open("/proc/self/statm", encoding="ascii") as statm:
+            return int(statm.read().split()[1]) * os.sysconf("SC_PAGE_SIZE") / 2**20
+    except OSError:
+        return 0.0
 _Expression = Concept | Boolean | Numerical
 _DeclaredFeature = ConceptFeature | BooleanFeature | NumericalFeature
 
@@ -145,6 +155,7 @@ class Session:
         budget: Budget = Budget(),
         total_seconds: float = 1800.0,
         workers: int = 8,
+        release_mib: float | None = None,
     ) -> None:
         self._parser = Parser(Path(domain), ParserOptions())
         self._domain = DomainContext(self._parser.get_domain())
@@ -155,6 +166,7 @@ class Session:
         self._spent = 0.0
         self._batches = 0  # while parallel searches run, the batch's wall time is charged instead
         self._workers = workers
+        self._release_mib = release_mib  # scans over many tasks evict their searches above this resident size
         self._binding_cache: dict[tuple[int, VertexRef], tuple[RuleVariant, list[tuple[str | None, LiftedProgramState]]]] = {}
         self._parse_cache: dict[tuple[int, Feature], _DeclaredFeature | _Expression] = {}
         self._initial = parse_program(program, self._parser.get_domain(), self._domain.ext_repository)
@@ -263,7 +275,6 @@ class Session:
     def validate(self, tasks: Iterable[Task] | None = None, /) -> Validation:
         """Execute and prove the program on `tasks` (default: all), like the learning loop's validation."""
         tasks = list(tasks) if tasks is not None else list(self.tasks)
-        self._prefetch(tasks)
 
         def outcome(result: LiftedProgramProofResults) -> str:
             if result.status == ProgramProofStatus.SUCCESS:
@@ -272,17 +283,18 @@ class Session:
                 return f"failed ({failure_category(result)})"
             return f"unavailable ({result.status.name.lower()})"
 
-        self._prefetch(tasks, prove=True)
-        proofs = [self._search(task, True).result for task in tasks]
-        rows: list[TaskValidation] = []
-        for task, proof in zip(tasks, proofs):
+        proofs = dict(zip(tasks, self._scan(tasks, lambda task: outcome(self._search(task, True).result), prove=True)))
+
+        def row(task: Task) -> TaskValidation:
             search = self._search(task)
             execute = search.result
-            rows.append(TaskValidation(
-                task, outcome(execute), outcome(proof),
+            return TaskValidation(
+                task, outcome(execute), proofs[task],
                 execute.statistics.choice_depth if execute.status == ProgramProofStatus.SUCCESS else None,
                 1000 * search.seconds / max(execute.statistics.num_expanded, 1),
-            ))
+            )
+
+        rows = self._scan(tasks, row)
         if self._text == self._initial_text:
             return Validation(tuple(rows))
         return Validation(tuple(rows), self._initial_choice_depths(tasks))
@@ -358,18 +370,16 @@ class Session:
 
     def runs(self, tasks: Iterable[Task] | None = None, /, prove: bool = False) -> list[TaskRun]:
         tasks = list(tasks) if tasks is not None else list(self.tasks)
-        self._prefetch(tasks, prove=prove)
-        return [self.run(task, prove) for task in tasks]
+        return self._scan(tasks, lambda task: self.run(task, prove), prove=prove)
 
     # -- choice points -------------------------------------------------------------------------------------------------
 
     def chooses(self, tasks: Iterable[Task] | None = None, /) -> list[ChooseSummary]:
         """One row per Choose rule over the choice points on each task's path (goal or failure)."""
         tasks = list(tasks) if tasks is not None else list(self.tasks)
-        self._prefetch(tasks)
         rows: dict[str, list[ChoicePoint]] = {name: [] for name in self._rules}
-        for task in tasks:
-            for point in self._points_on_path(task):
+        for points in self._scan(tasks, self._points_on_path):
+            for point in points:
                 rows[point.rule.name].append(point)
         return [
             ChooseSummary(
@@ -387,8 +397,8 @@ class Session:
     def points(self, rule: ChooseRule, /, tasks: Iterable[Task] | None = None, limit: int = 20) -> list[ChoicePoint]:
         """Choice points of `rule` on paths, most informative first: with failures, then with more bindings."""
         tasks = list(tasks) if tasks is not None else list(self.tasks)
-        self._prefetch(tasks)
-        points = [point for task in tasks for point in self._points_on_path(task) if point.rule == rule and point.width > 1]
+        points = [point for points in self._scan(tasks, self._points_on_path) for point in points
+                  if point.rule == rule and point.width > 1]
         points.sort(key=lambda point: (-point.failed, -point.width, point.vertex.task.name, point.vertex.vertex))
         return points[:limit]
 
@@ -686,6 +696,29 @@ class Session:
             result, seconds = self._find(task, self._budget, universal=prove)
             searches[task.name] = _Search(result, seconds, vertex_status(result))
         return searches[task.name]
+
+    def _scan(self, tasks: Sequence[Task], per_task: Callable[[Task], _Result], /, *, prove: bool = False) -> list[_Result]:
+        """`per_task` over `tasks` in batches of the session's workers; above `release_mib` each batch's searches are
+        evicted once it is done, so a scan over many tasks never holds all their graphs. Evicted searches are
+        recomputed on demand (searches are deterministic)."""
+        results: list[_Result] = []
+        for start in range(0, len(tasks), self._workers):
+            batch = tasks[start:start + self._workers]
+            self._prefetch(batch, prove=prove)
+            results.extend(per_task(task) for task in batch)
+            if self._release_mib is not None and resident_mib() > self._release_mib:
+                self._evict(batch)
+        return results
+
+    def _evict(self, tasks: Sequence[Task], /) -> None:
+        names = {task.name for task in tasks}
+        for name in names:
+            self._searches.pop(name, None)
+            self._proofs.pop(name, None)
+            self._task_contexts.pop(name, None)
+        for key in [key for key in self._binding_cache if key[1].task.name in names]:
+            del self._binding_cache[key]
+        gc.collect()
 
     def _prefetch(self, tasks: Sequence[Task], *, prove: bool = False) -> None:
         searches = self._proofs if prove else self._searches

@@ -268,3 +268,15 @@ def test_open_takes_a_program_when_the_workspace_program_does_not_parse(
     monkeypatch.setattr(server, "_server", server._Server(options))
     assert "does not parse; pass a program that does as `program`" in server.open_workspace(str(tmp_path))
     assert server.open_workspace(str(tmp_path), PROGRAM).startswith("1 tasks")
+
+
+def test_scans_that_evict_their_searches_give_the_same_results(gripper_data_dir: Path) -> None:
+    def make(release_mib: float | None) -> Session:
+        return Session(gripper_data_dir / "domain.pddl", PROGRAM, [gripper_data_dir / "test-1.pddl"],
+                       budget=Budget(10_000, 10.0), workers=1, release_mib=release_mib)
+
+    kept, evicted = make(None), make(0.0)
+    assert [row.describe() for row in evicted.chooses()] == [row.describe() for row in kept.chooses()]
+    assert evicted.validate().describe().split("\n")[0] == kept.validate().describe().split("\n")[0]
+    rule = kept.choose_rules()[0]
+    assert [point.describe() for point in evicted.points(rule)] == [point.describe() for point in kept.points(rule)]
