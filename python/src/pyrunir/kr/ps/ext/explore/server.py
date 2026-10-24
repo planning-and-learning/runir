@@ -114,7 +114,8 @@ def _logged(function: Callable[_Params, str]) -> Callable[_Params, str]:
             _release()
             return (
                 f"error: out of memory (limit {_server.options.max_memory_mib} MiB); cached searches were dropped. "
-                "Use fewer tasks or a smaller max_states."
+                "Pass fewer tasks in `tasks`, or a smaller `max_states` to tools that take one; searches over all tasks keep "
+                "every state of each task in memory."
             )
         except Exception as error:  # pylint: disable=broad-exception-caught
             return f"error: {error}"
