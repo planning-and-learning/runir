@@ -51,8 +51,6 @@ jobs:
         run: |
           cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
                 -DRUNIR_BUILD_TESTS=ON \
-                -DRUNIR_BUILD_SHARED=ON \
-                -DRUNIR_LINK_STATIC_DEPENDENCIES=OFF \
                 -DCMAKE_INSTALL_LIBDIR=lib \
                 -DPython_EXECUTABLE="$(python -c 'import sys; print(sys.executable)')" \
                 -DPython3_EXECUTABLE="$(python -c 'import sys; print(sys.executable)')" \
