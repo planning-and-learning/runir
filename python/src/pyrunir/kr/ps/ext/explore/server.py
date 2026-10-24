@@ -12,6 +12,7 @@ Requires the `mcp` extra: `pip install pyrunir[mcp]`.
 from __future__ import annotations
 
 import argparse
+import ctypes
 import functools
 import os
 import resource
@@ -75,6 +76,32 @@ def _resident_mib() -> float:
         return 0.0
 
 
+def _libc() -> ctypes.CDLL | None:
+    try:
+        return ctypes.CDLL("libc.so.6")
+    except OSError:
+        return None
+
+
+_LIBC = _libc()
+
+
+def _tune_malloc() -> None:
+    """glibc: a fixed mmap threshold and two arenas, so that freed searches give back address space, which
+    `--max-memory-mib` limits; with the defaults it grows with every large search and never shrinks."""
+    if _LIBC is not None:
+        _LIBC.mallopt(-3, 128 * 1024)  # M_MMAP_THRESHOLD
+        _LIBC.mallopt(-8, 2)  # M_ARENA_MAX
+
+
+def _release() -> None:
+    """Drop every cached search and return the freed memory to the system."""
+    if _server.session is not None:
+        _server.session.release()
+    if _LIBC is not None:
+        _LIBC.malloc_trim(0)
+
+
 def _logged(function: Callable[_Params, str]) -> Callable[_Params, str]:
     """Report errors to the agent instead of failing the tool call, and log every call to stderr."""
 
@@ -83,11 +110,17 @@ def _logged(function: Callable[_Params, str]) -> Callable[_Params, str]:
         started = time.monotonic()
         try:
             return function(*args, **kwargs)
+        except MemoryError:
+            _release()
+            return (
+                f"error: out of memory (limit {_server.options.max_memory_mib} MiB); cached searches were dropped. "
+                "Use fewer tasks or a smaller max_states."
+            )
         except Exception as error:  # pylint: disable=broad-exception-caught
             return f"error: {error}"
         finally:
-            if _server.session is not None and _resident_mib() > _server.options.release_mib:
-                _server.session.release()
+            if _resident_mib() > _server.options.release_mib:
+                _release()
             spent = _server.session.spent_seconds if _server.session else 0.0
             print(
                 f"[runir-explore] {function.__name__} {kwargs} {time.monotonic() - started:.2f}s search_total={spent:.1f}s",
@@ -289,6 +322,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--max-memory-mib", type=int, default=8192, help="address-space limit; searches beyond it fail")
     parser.add_argument("--release-mib", type=int, default=4096, help="drop cached searches above this resident size")
     _server.options = parser.parse_args(argv)
+    _tune_malloc()
     limit = _server.options.max_memory_mib * 2**20
     resource.setrlimit(resource.RLIMIT_AS, (limit, limit))
     server.run("stdio")

@@ -225,3 +225,19 @@ def test_proof_failures_are_explorable_with_proof_vertex_handles(gripper_data_di
     assert session.vertex(run.failure).memory == "done"
     [failure] = session.failures(prove=True)
     assert failure.run.failure == run.failure
+
+
+def test_server_releases_the_session_on_memory_errors(session: Session) -> None:
+    server = pytest.importorskip("pyrunir.kr.ps.ext.explore.server")
+    server._server.session = session  # pylint: disable=protected-access
+    server._server.options.max_memory_mib = 1  # pylint: disable=protected-access
+    server._server.options.release_mib = 2**30  # pylint: disable=protected-access
+    session.run(session.task(session.tasks[0].name))
+    assert session._searches  # pylint: disable=protected-access
+
+    @server._logged  # pylint: disable=protected-access
+    def exhausting() -> str:
+        raise MemoryError
+
+    assert exhausting().startswith("error: out of memory")
+    assert not session._searches  # pylint: disable=protected-access
