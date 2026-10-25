@@ -6,6 +6,8 @@
 
 namespace runir::kr::ps::base::dl::detail
 {
+namespace
+{
 
 ps::dl::RuleProfile make_rule_profile(SketchView sketch, RuleView rule)
 {
@@ -20,6 +22,8 @@ ps::dl::RuleProfile make_rule_profile(SketchView sketch, RuleView rule)
                    effect.get_variant());
     return profile;
 }
+
+}  // namespace
 
 Analysis analyze_sketch(SketchView sketch)
 {

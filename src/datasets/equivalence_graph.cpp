@@ -35,6 +35,7 @@
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <utility>
 #include <vector>
+#include <yggdrasil/core/config.hpp>
 
 namespace runir::datasets
 {
@@ -77,9 +78,10 @@ public:
     {
         if (!m_start)
             throw std::logic_error("Equivalence search did not report its initial state before pruning.");
+        const auto& start = m_start->second;
         auto& assignments = get_worker(worker).assignments;
-        [[maybe_unused]] const auto [it, inserted] = assignments.emplace(locator, m_start->second);
-        assert(inserted || (it->second.concrete == m_start->second.concrete && it->second.representative == m_start->second.representative));
+        [[maybe_unused]] const auto [it, inserted] = assignments.emplace(locator, start);
+        assert(inserted || (it->second.concrete == start.concrete && it->second.representative == start.representative));
         return false;
     }
 
@@ -129,7 +131,11 @@ public:
     EquivalenceGraphEventHandler(std::shared_ptr<EquivalenceCoordinator<Kind, Policy>> coordinator, const tyr::planning::StateView<Kind>& start) :
         m_events(start),
         m_coordinator(std::move(coordinator))
-    { m_coordinator->initialize_start(start, *m_events.get_start()); }
+    {
+        const auto& start_locator = m_events.get_start();
+        YGG_ASSUME(start_locator.has_value());
+        m_coordinator->initialize_start(start, *start_locator);
+    }
 
     void on_start_search(const tyr::planning::Node<Kind>& node, ygg::float_t f_value) override { m_events.on_start_search(node, f_value); }
 
@@ -227,12 +233,13 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(TaskSearchContext<Kind>& con
     state_to_equivalence.reserve(concrete_states.size());
     for (graphs::VertexIndex vertex = 0; vertex < concrete_states.size(); ++vertex)
     {
-        if (!concrete_states[vertex])
+        const auto& concrete_state = concrete_states[vertex];
+        if (!concrete_state)
             throw std::logic_error("Equivalence graph construction left a hole in the state vertex indices.");
-        auto state = tyr::planning::materialize_state(concrete_states[vertex]->unpack(), *context.state_repository, *context.axiom_evaluator).pack();
+        auto state = tyr::planning::materialize_state(concrete_state->unpack(), *context.state_repository, *context.axiom_evaluator).pack();
         [[maybe_unused]] const auto added = state_builder.add_vertex(StateGraphVertexLabel<Kind> { std::move(state) });
         assert(added == vertex);
-        state_to_equivalence.push_back(get_or_create_equivalence_vertex(get_assignment(*concrete_states[vertex]).representative));
+        state_to_equivalence.push_back(get_or_create_equivalence_vertex(get_assignment(*concrete_state).representative));
     }
 
     for (const auto& worker : events.get_workers())

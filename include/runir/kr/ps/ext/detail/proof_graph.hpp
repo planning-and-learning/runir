@@ -16,6 +16,7 @@
 #include <utility>
 #include <vector>
 #include <yggdrasil/containers/segmented_vector.hpp>
+#include <yggdrasil/core/config.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
@@ -90,6 +91,8 @@ void build_witness_graph(ProgramProofResults<Kind>& result,
     {
         const auto& entry = *path[i];
         const auto index = static_cast<graphs::VertexIndex>(i);
+        // Retained paths are initialized; only released pool entries lack a state.
+        YGG_ASSUME(entry.state.has_value());
         vertices.emplace_back(expander.materialize(expander.view(*entry.state)), i == 0, entry.is_goal, !entry.is_unsolvable, entry.is_unsolvable);
         if (entry.is_deadend)
             result.deadend_states.push_back(index);

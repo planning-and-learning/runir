@@ -15,7 +15,7 @@ namespace runir::kr::dl::semantics::incremental::detail
 {
 
 template<ConceptOrRoleTag Category, std::invocable<DenotationElementView<Category>> Function>
-void for_changed(const DenotationDelta<Category>& delta, Function&& function)
+void for_changed(const DenotationDelta<Category>& delta, Function function)
 {
     for (const auto& value : delta.added)
         function(value);

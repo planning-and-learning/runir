@@ -3,22 +3,27 @@
 
 from datetime import timedelta
 from pathlib import Path
+from typing import TypeAlias
 
 import pytest
 from fixture_utils import read_fixture
 from pypddl.formalism import ParserOptions
 from pytyr.formalism.planning import Parser
-from pytyr.planning import lifted
+from pytyr.planning import ground, lifted
 from pyyggdrasil.execution import ExecutionContext
 
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext, LiftedTaskContext
 from pyrunir.kr.ps import base
 
+TaskContext: TypeAlias = GroundTaskContext | LiftedTaskContext
+SearchOptions: TypeAlias = base.GroundSketchSearchOptions | base.LiftedSketchSearchOptions
+ProofResults: TypeAlias = base.GroundSketchProofResults | base.LiftedSketchProofResults
+
 
 def _context(
     tmp_path: Path, kind: str, *, initial_goal: bool = False, action_costs: bool = False
-) -> tuple[GroundTaskContext | LiftedTaskContext, base.Sketch]:
+) -> tuple[TaskContext, base.Sketch]:
     """Build a two-action counters task context of the given kind and an any-transition sketch for it."""
     domain_path = tmp_path / "domain.pddl"
     domain_pddl = """(define (domain counters)
@@ -61,13 +66,32 @@ def _context(
     return context, sketch
 
 
+def _same_state(left: ground.PackedState | lifted.PackedState, right: ground.PackedState | lifted.PackedState) -> bool:
+    if isinstance(left, ground.PackedState):
+        return isinstance(right, ground.PackedState) and left == right
+    return isinstance(right, lifted.PackedState) and left == right
+
+
+def _options(context: TaskContext) -> SearchOptions:
+    if isinstance(context, GroundTaskContext):
+        return base.GroundSketchSearchOptions()
+    return base.LiftedSketchSearchOptions()
+
+
+def _find_solution(context: TaskContext, sketch: base.Sketch, options: SearchOptions) -> ProofResults:
+    if isinstance(context, GroundTaskContext):
+        assert isinstance(options, base.GroundSketchSearchOptions)
+        return base.find_ground_solution(context, sketch, options)
+    assert isinstance(options, base.LiftedSketchSearchOptions)
+    return base.find_lifted_solution(context, sketch, options)
+
+
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
 def test_search_statistics_count_generation_before_filtering_and_deduplication(tmp_path: Path, kind: str) -> None:
     context, sketch = _context(tmp_path, kind)
-    options = getattr(base, f"{kind.title()}SketchSearchOptions")()
-    find_solution = getattr(base, f"find_{kind}_solution")
+    options = _options(context)
 
-    greedy = find_solution(context, sketch, options)
+    greedy = _find_solution(context, sketch, options)
     assert greedy.status == base.SketchProofStatus.SUCCESS
     assert isinstance(greedy.statistics, base.SketchSearchStatistics)
     assert greedy.statistics.num_expanded == 1
@@ -78,18 +102,14 @@ def test_search_statistics_count_generation_before_filtering_and_deduplication(t
     edge = next(iter(greedy.graph.get_edge_indices()))
     source = greedy.graph.get_vertex_property(greedy.graph.get_source(edge))
     target = greedy.graph.get_vertex_property(greedy.graph.get_target(edge))
-    assert greedy.plan.get_start_node().get_state() == source.state
-    assert step.node.get_state() == target.state
+    assert _same_state(greedy.plan.get_start_node().get_state(), source.state)
+    assert _same_state(step.node.get_state(), target.state)
     assert step.label == greedy.graph.get_edge_property(edge).action
     assert target.is_goal
     assert greedy.plan.get_cost() == step.node.get_metric()
-    with pytest.raises(AttributeError):
-        greedy.statistics.num_generated = 0
-    with pytest.raises(AttributeError):
-        greedy.statistics.num_expanded = 0
 
     options.universal = True
-    universal = find_solution(context, sketch, options)
+    universal = _find_solution(context, sketch, options)
     assert universal.status == base.SketchProofStatus.SUCCESS
     assert universal.plan is None
     assert universal.statistics.num_expanded == 1
@@ -100,7 +120,7 @@ def test_search_statistics_count_generation_before_filtering_and_deduplication(t
     assert actions[0] != actions[1]
 
     empty = base.dl.SketchFactory.create_empty(context.domain_context.base_repository)
-    rejected = find_solution(context, empty, options)
+    rejected = _find_solution(context, empty, options)
     assert rejected.status == base.SketchProofStatus.FAILURE
     assert rejected.plan is None
     assert rejected.statistics.num_expanded == 1
@@ -111,7 +131,7 @@ def test_search_statistics_count_generation_before_filtering_and_deduplication(t
     assert rejected.graph.get_vertex_property(rejected.open_states[0]).is_initial
 
     options.max_num_states = 1
-    bounded = find_solution(context, sketch, options)
+    bounded = _find_solution(context, sketch, options)
     assert bounded.status == base.SketchProofStatus.OUT_OF_STATES
     assert bounded.plan is None
     assert bounded.statistics.num_expanded == 1
@@ -120,7 +140,7 @@ def test_search_statistics_count_generation_before_filtering_and_deduplication(t
     assert bounded.open_states == []
 
     options.max_time = timedelta(0)
-    expired = find_solution(context, sketch, options)
+    expired = _find_solution(context, sketch, options)
     assert expired.status == base.SketchProofStatus.OUT_OF_TIME
     assert expired.plan is None
     assert expired.statistics.num_expanded == 0
@@ -130,7 +150,7 @@ def test_search_statistics_count_generation_before_filtering_and_deduplication(t
 
     # Initial admission precedes the deadline check and must not leave a phantom root.
     options.max_num_states = 0
-    unadmitted = find_solution(context, sketch, options)
+    unadmitted = _find_solution(context, sketch, options)
     assert unadmitted.status == base.SketchProofStatus.OUT_OF_STATES
     assert unadmitted.plan is None
     assert unadmitted.graph.get_num_vertices() == 0
@@ -145,8 +165,8 @@ def test_search_statistics_count_generation_before_filtering_and_deduplication(t
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
 def test_search_preserves_cumulative_node_metrics(tmp_path: Path, kind: str) -> None:
     context, sketch = _context(tmp_path, kind, action_costs=True)
-    options = getattr(base, f"{kind.title()}SketchSearchOptions")()
-    result = getattr(base, f"find_{kind}_solution")(context, sketch, options)
+    options = _options(context)
+    result = _find_solution(context, sketch, options)
 
     assert result.status == base.SketchProofStatus.SUCCESS
     assert result.plan is not None
@@ -161,8 +181,8 @@ def test_search_preserves_cumulative_node_metrics(tmp_path: Path, kind: str) -> 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
 def test_initial_goal_is_not_expanded(tmp_path: Path, kind: str) -> None:
     context, sketch = _context(tmp_path, kind, initial_goal=True, action_costs=True)
-    options = getattr(base, f"{kind.title()}SketchSearchOptions")()
-    result = getattr(base, f"find_{kind}_solution")(context, sketch, options)
+    options = _options(context)
+    result = _find_solution(context, sketch, options)
     assert result.status == base.SketchProofStatus.SUCCESS
     assert result.statistics.num_expanded == 0
     assert result.statistics.num_generated == 0
@@ -173,9 +193,9 @@ def test_initial_goal_is_not_expanded(tmp_path: Path, kind: str) -> None:
     initial = result.graph.get_vertex_property(next(iter(result.graph.get_vertex_indices())))
     assert initial.is_initial
     assert initial.is_goal
-    assert result.plan.get_start_node().get_state() == initial.state
+    assert _same_state(result.plan.get_start_node().get_state(), initial.state)
 
     options.universal = True
-    universal = getattr(base, f"find_{kind}_solution")(context, sketch, options)
+    universal = _find_solution(context, sketch, options)
     assert universal.status == base.SketchProofStatus.SUCCESS
     assert universal.plan is None

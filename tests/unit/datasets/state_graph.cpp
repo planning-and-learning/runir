@@ -18,13 +18,13 @@ TEST(StateGraphTest, RejectsUnsupportedCostMode)
     auto builder = datasets::StateGraphBuilder<tyr::GroundTag> {};
     const auto initial_state = context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator).get_state();
     [[maybe_unused]] const auto initial_vertex = builder.add_vertex(datasets::StateGraphVertexLabel<tyr::GroundTag> { initial_state.pack() });
-    auto graph = datasets::StateGraph<tyr::GroundTag>(std::move(builder));
+    auto graph = datasets::StateGraph<tyr::GroundTag>(builder);
 
     EXPECT_THROW(
         try {
-            static_cast<void>(datasets::annotate_state_graph(*context, graph, static_cast<datasets::StateGraphCostMode>(999)));
+            static_cast<void>(datasets::annotate_state_graph(*context, graph, static_cast<datasets::StateGraphCostMode>(255)));
         } catch (const std::runtime_error& error) {
-            EXPECT_STREQ(error.what(), "Unsupported state graph cost mode: 999.");
+            EXPECT_STREQ(error.what(), "Unsupported state graph cost mode: 255.");
             throw;
         },
         std::runtime_error);
@@ -107,7 +107,7 @@ TEST(StateGraphTest, LabelsKeepTheRepositoryWithoutRetainingUnpackedBuilders)
             released_builder = &node.get_state().get_state_builder();
             builder.add_vertex(datasets::StateGraphVertexLabel<tyr::GroundTag> { node.get_state().pack() });
         }
-        auto graph = datasets::StateGraph<tyr::GroundTag>(std::move(builder));
+        auto graph = datasets::StateGraph<tyr::GroundTag>(builder);
         {
             const auto recycled_builder = context->state_repository->get_state_builder();
             EXPECT_EQ(recycled_builder.get(), released_builder);

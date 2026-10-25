@@ -1,4 +1,4 @@
-#include "pyrunir/kr/ps/icp/module.hpp"
+#include "pyrunir/kr/ps/icp/bindings.hpp"
 
 #include <functional>
 #include <nanobind/stl/chrono.h>
@@ -69,8 +69,9 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     // Standalone Python evaluation returns the registered contexts with interned results.
     using Environment = EvaluationEnvironment<Kind, runir::kr::dl::semantics::FullEvaluationPolicy<Kind>>;
 
-    nb::class_<ExecutionRepository<Kind>>(m, (std::string(prefix) + "ExecutionRepository").c_str());
-    nb::class_<ExecutionBuilder<Kind>>(m, (std::string(prefix) + "ExecutionBuilder").c_str());
+    // Registered without methods so Python can hold and pass these handles.
+    const auto execution_repository = nb::class_<ExecutionRepository<Kind>>(m, (std::string(prefix) + "ExecutionRepository").c_str());
+    const auto execution_builder = nb::class_<ExecutionBuilder<Kind>>(m, (std::string(prefix) + "ExecutionBuilder").c_str());
 
     nb::class_<Environment>(m, (std::string(prefix) + "EvaluationEnvironment").c_str())
         .def(nb::init<runir::kr::TaskContext<Kind>&, ProgramView>(), "task_context"_a, "program"_a, nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>())

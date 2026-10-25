@@ -74,10 +74,10 @@ class StateEvaluationContext
 {
 private:
     S m_state;
-    Builder& m_builder;
+    Builder* m_builder;
     DenotationCaches* m_caches;
     std::array<DenotationRepository*, 2> m_denotations;
-    EvaluationStorage& m_intermediates;
+    EvaluationStorage* m_intermediates;
     BorrowedRegisterValuesView m_registers;
     std::optional<CallArgumentsView> m_arguments;
     bool m_result_is_static = false;
@@ -85,8 +85,8 @@ private:
     void select_result(bool is_static) noexcept { m_result_is_static = is_static; }
     void select_children() noexcept
     {
-        m_caches = &m_intermediates.get_caches();
-        m_denotations = { &m_intermediates.get_denotation_repository(false), &m_intermediates.get_denotation_repository(true) };
+        m_caches = &m_intermediates->get_caches();
+        m_denotations = { &m_intermediates->get_denotation_repository(false), &m_intermediates->get_denotation_repository(true) };
     }
 
     void validate_inputs() const
@@ -98,24 +98,8 @@ private:
             throw std::invalid_argument("Evaluation requires registers for the same planning task.");
     }
 
-public:
-    using KindType = Kind;
-
-    StateEvaluationContext(S state, Builder& builder, EvaluationStorage& storage) :
-        m_state(std::move(state)),
-        m_builder(builder),
-        m_caches(&storage.get_caches()),
-        m_denotations { &storage.get_denotation_repository(false), &storage.get_denotation_repository(true) },
-        m_intermediates(storage),
-        m_registers(detail::empty_register_values(), *m_state.get_formalism_repository())
-    {
-        if (storage.get_denotation_repository(false).get_formalism_repository_ptr() != m_state.get_formalism_repository())
-            throw std::invalid_argument("Evaluation requires a result repository for the same planning task.");
-    }
-
-    /// Retain computed roots in an existing repository while children use reusable storage.
-    StateEvaluationContext(S state, Builder& builder, DenotationCaches& caches, DenotationRepository& repository, EvaluationStorage& intermediates) :
-        StateEvaluationContext(std::move(state), builder, intermediates)
+    /// Retains computed roots in an existing repository while children use reusable storage.
+    void select_roots(DenotationCaches& caches, DenotationRepository& repository)
     {
         if (detail::get_formalism_repository(repository) != m_state.get_formalism_repository().get())
             throw std::invalid_argument("Evaluation requires a result repository for the same planning task.");
@@ -123,14 +107,41 @@ public:
         m_denotations = { &repository, &repository };
     }
 
+    /// Without registers, the registers are empty.
+    StateEvaluationContext(S state,
+                           Builder& builder,
+                           EvaluationStorage& storage,
+                           std::optional<BorrowedRegisterValuesView> registers,
+                           std::optional<CallArgumentsView> arguments) :
+        m_state(std::move(state)),
+        m_builder(&builder),
+        m_caches(&storage.get_caches()),
+        m_denotations { &storage.get_denotation_repository(false), &storage.get_denotation_repository(true) },
+        m_intermediates(&storage),
+        m_registers(registers.value_or(BorrowedRegisterValuesView(detail::empty_register_values(), *m_state.get_formalism_repository()))),
+        m_arguments(arguments)
+    {
+        if (storage.get_denotation_repository(false).get_formalism_repository_ptr() != m_state.get_formalism_repository())
+            throw std::invalid_argument("Evaluation requires a result repository for the same planning task.");
+    }
+
+public:
+    using KindType = Kind;
+
+    StateEvaluationContext(S state, Builder& builder, EvaluationStorage& storage) :
+        StateEvaluationContext(std::move(state), builder, storage, std::nullopt, std::nullopt)
+    {
+    }
+
+    /// Retain computed roots in an existing repository while children use reusable storage.
+    StateEvaluationContext(S state, Builder& builder, DenotationCaches& caches, DenotationRepository& repository, EvaluationStorage& intermediates) :
+        StateEvaluationContext(std::move(state), builder, intermediates)
+    { select_roots(caches, repository); }
+
     template<RegisterValuesViewConcept R>
     StateEvaluationContext(S state, Builder& builder, EvaluationStorage& storage, CallArgumentsView arguments, R registers) :
-        StateEvaluationContext(std::move(state), builder, storage)
-    {
-        m_registers = borrow_registers(registers);
-        m_arguments = arguments;
-        validate_inputs();
-    }
+        StateEvaluationContext(std::move(state), builder, storage, borrow_registers(registers), arguments)
+    { validate_inputs(); }
 
     template<RegisterValuesViewConcept R>
     StateEvaluationContext(S state,
@@ -140,18 +151,14 @@ public:
                            EvaluationStorage& intermediates,
                            CallArgumentsView arguments,
                            R registers) :
-        StateEvaluationContext(std::move(state), builder, caches, repository, intermediates)
-    {
-        m_registers = borrow_registers(registers);
-        m_arguments = arguments;
-        validate_inputs();
-    }
+        StateEvaluationContext(std::move(state), builder, intermediates, arguments, registers)
+    { select_roots(caches, repository); }
 
     [[nodiscard]] const S& get_state() const noexcept { return m_state; }
-    Builder& get_builder() noexcept { return m_builder; }
+    Builder& get_builder() noexcept { return *m_builder; }
     [[nodiscard]] DenotationRepository& get_denotation_repository(bool is_static) const noexcept { return *m_denotations[is_static]; }
     [[nodiscard]] DenotationRepository& get_denotation_repository() const noexcept { return get_denotation_repository(m_result_is_static); }
-    EvaluationWorkspace& get_workspace() noexcept { return detail::get_workspace(m_builder); }
+    EvaluationWorkspace& get_workspace() noexcept { return detail::get_workspace(*m_builder); }
     DenotationCaches& get_caches() noexcept { return *m_caches; }
 
     [[nodiscard]] BorrowedRegisterValuesView registers() const noexcept { return m_registers; }

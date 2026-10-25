@@ -1,4 +1,4 @@
-#include "pyrunir/kr/ps/base/module.hpp"
+#include "pyrunir/kr/ps/base/bindings.hpp"
 
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/base/repository.hpp>

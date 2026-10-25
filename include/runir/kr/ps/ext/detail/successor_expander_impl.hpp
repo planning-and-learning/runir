@@ -67,7 +67,10 @@ template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, run
 template<ProgramStateViewConcept<Kind> S, typename Emit, StopConcept Stop>
     requires EmitConcept<Emit, detail::ProgramStep<Kind, ExecutionStorage>> && EmitConcept<Emit, detail::Choice<runir::kr::dl::ConceptTag>>
              && EmitConcept<Emit, detail::Choice<runir::kr::dl::RoleTag>>
-bool SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::for_each_successor(S state, ProgramSearchStatistics& statistics, Emit&& emit, Stop&& stop)
+bool SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::for_each_successor(S state,
+                                                                                     ProgramSearchStatistics& statistics,
+                                                                                     const Emit& emit,
+                                                                                     const Stop& stop)
 {
     if (stop())
         return false;
@@ -75,12 +78,13 @@ bool SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::for_each_succe
     get_environment().reset_source();
     get_environment().select_source(state);
     bool emitted = false;
-    const auto emit_expansion = [&]<typename Expansion>(Expansion expansion)
+    // Expansions pass through to emit: choices own their bindings and only move.
+    const auto emit_expansion = [&]<typename Expansion>(Expansion&& expansion)
     {
         emitted = true;
-        if constexpr (std::same_as<Expansion, Step>)
+        if constexpr (std::same_as<std::remove_cvref_t<Expansion>, Step>)
             statistics.num_generated += expansion.status == detail::ProgramOutcome::APPLIED || expansion.status == detail::ProgramOutcome::RESTORED_CALLER;
-        return emit(std::move(expansion));
+        return emit(std::forward<Expansion>(expansion));
     };
     auto context = m_rule_evaluators.make_context(m_storage, state.get_state());
     if (!m_rule_evaluators.for_each_successor(context, state, emit_expansion, stop))

@@ -143,18 +143,18 @@ template<tyr::TaskKind Kind>
 class Pruning
 {
 private:
-    const std::vector<tyr::planning::PackedStateView<Kind>>& m_states;
+    const std::vector<tyr::planning::PackedStateView<Kind>>* m_states;
     runir::kr::dl::semantics::Builder m_builder;
-    runir::kr::dl::semantics::DenotationRepository& m_denotation_repository;
+    runir::kr::dl::semantics::DenotationRepository* m_denotation_repository;
     std::deque<runir::kr::dl::semantics::EvaluationStorage> m_intermediate_storage;
     std::vector<runir::kr::dl::semantics::DenotationCaches> m_denotation_caches;
     SeenDenotations m_seen_denotations;
 
 public:
     Pruning(const std::vector<tyr::planning::PackedStateView<Kind>>& states, runir::kr::dl::semantics::DenotationRepository& denotation_repository) :
-        m_states(states),
+        m_states(&states),
         m_builder(),
-        m_denotation_repository(denotation_repository),
+        m_denotation_repository(&denotation_repository),
         m_intermediate_storage(),
         m_denotation_caches(states.size()),
         m_seen_denotations(states.size())
@@ -167,18 +167,18 @@ public:
     bool should_prune(NonTerminalView<Category> lhs, runir::kr::dl::ConstructorView<Category> constructor)
     {
         auto& seen = m_seen_denotations.template get<Category>();
-        if (m_states.empty())
+        if (m_states->empty())
             return !seen.constructors.insert(std::pair(lhs, constructor)).second;
 
         const auto was_cached = m_denotation_caches.front().template get<Category>(constructor.is_static()).contains(constructor);
         seen.scratch.clear();
 
-        for (size_t i = 0; i < m_states.size(); ++i)
+        for (size_t i = 0; i < m_states->size(); ++i)
         {
-            auto context = runir::kr::dl::semantics::StateEvaluationContext<Kind>(m_states[i].unpack(),
+            auto context = runir::kr::dl::semantics::StateEvaluationContext<Kind>((*m_states)[i].unpack(),
                                                                                   m_builder,
                                                                                   m_denotation_caches[i],
-                                                                                  m_denotation_repository,
+                                                                                  *m_denotation_repository,
                                                                                   m_intermediate_storage[i]);
             // Roots share one canonical repository across example states; their
             // intermediate results remain in the per-state reusable storage.
@@ -201,9 +201,8 @@ class Generator
 {
 private:
     GrammarView m_grammar;
-    const std::vector<tyr::planning::PackedStateView<Kind>>& m_states;
-    runir::kr::dl::ConstructorRepository& m_output_repository;
-    const GenerateOptions& m_options;
+    runir::kr::dl::ConstructorRepository* m_output_repository;
+    const GenerateOptions* m_options;
     runir::kr::dl::Builder m_builder;
     GenerateResultsFor m_result;
     GeneratedSentences m_sentences;
@@ -225,11 +224,11 @@ private:
     {
         auto data = runir::kr::dl::checkout<T>(m_builder);
         std::forward<Initialize>(initialize)(*data);
-        const auto concrete = runir::kr::dl::insert(m_output_repository, *data).first;
+        const auto concrete = runir::kr::dl::insert(*m_output_repository, *data).first;
 
         auto wrapper = runir::kr::dl::checkout<runir::kr::dl::Constructor<Category>>(m_builder);
         wrapper->variant = concrete.get_index();
-        return runir::kr::dl::insert(m_output_repository, *wrapper).first;
+        return runir::kr::dl::insert(*m_output_repository, *wrapper).first;
     }
 
     template<runir::kr::dl::CategoryTag Category, typename T>
@@ -297,14 +296,14 @@ private:
     }
 
     template<runir::kr::dl::CategoryTag Category, typename ChildCategory, typename F>
-    bool generate_unary(NonTerminalView<Category> lhs, NonTerminalView<ChildCategory> arg, F&& make)
+    bool generate_unary(NonTerminalView<Category> lhs, NonTerminalView<ChildCategory> arg, F make)
     {
         if (m_complexity < 2)
             return true;
 
         for (auto child : m_sentences.get(arg, m_complexity - 1))
         {
-            maybe_keep(lhs, std::forward<F>(make)(child));
+            maybe_keep(lhs, make(child));
             if (out_of_time())
                 return false;
         }
@@ -314,7 +313,7 @@ private:
 
     template<runir::kr::dl::CategoryTag Category, typename LhsCategory, typename RhsCategory, typename F>
     bool
-    generate_binary(NonTerminalView<Category> lhs, NonTerminalView<LhsCategory> child_lhs, NonTerminalView<RhsCategory> child_rhs, bool commutative, F&& make)
+    generate_binary(NonTerminalView<Category> lhs, NonTerminalView<LhsCategory> child_lhs, NonTerminalView<RhsCategory> child_rhs, bool commutative, F make)
     {
         if (m_complexity < 3)
             return true;
@@ -337,7 +336,7 @@ private:
                         if (commutative && operands_are_interchangeable && i == j && rhs_constructor < lhs_constructor)
                             continue;
 
-                    maybe_keep(lhs, std::forward<F>(make)(lhs_constructor, rhs_constructor));
+                    maybe_keep(lhs, make(lhs_constructor, rhs_constructor));
                     if (out_of_time())
                         return false;
                 }
@@ -352,7 +351,7 @@ private:
                           NonTerminalView<runir::kr::dl::ConceptTag> child_lhs,
                           NonTerminalView<runir::kr::dl::RoleTag> child_mid,
                           NonTerminalView<runir::kr::dl::ConceptTag> child_rhs,
-                          F&& make)
+                          F make)
     {
         if (m_complexity < 4)
             return true;
@@ -369,7 +368,7 @@ private:
                     {
                         for (auto rhs_constructor : m_sentences.get(child_rhs, k))
                         {
-                            maybe_keep(lhs, std::forward<F>(make)(lhs_constructor, mid_constructor, rhs_constructor));
+                            maybe_keep(lhs, make(lhs_constructor, mid_constructor, rhs_constructor));
                             if (out_of_time())
                                 return false;
                         }
@@ -396,7 +395,7 @@ private:
         const auto& source = m_sentences.get(rule.get_rhs(), m_complexity);
         for (auto constructor : source)
         {
-            auto view = runir::kr::dl::ConstructorView<Category>(constructor, m_output_repository);
+            auto view = runir::kr::dl::ConstructorView<Category>(constructor, *m_output_repository);
             if (!m_pruning.should_prune(rule.get_lhs(), view))
             {
                 keep(rule.get_lhs(), constructor);
@@ -791,14 +790,14 @@ private:
         }
 
         // ponytail: rescan unit rules; use a worklist only if substitution-heavy grammars profile poorly.
-        auto changed = false;
-        do
+        auto changed = true;
+        while (changed)
         {
             changed = false;
             for (auto rule : m_grammar.template get_substitution_rules<Category>())
                 if (!propagate(rule, changed))
                     return false;
-        } while (changed);
+        }
 
         return true;
     }
@@ -809,9 +808,9 @@ private:
         if (auto start = m_grammar.template get_start<Category>())
         {
             auto& target = m_result.template get_constructors<Category>();
-            for (size_t complexity = 0; complexity <= m_options.max_syntactic_complexity; ++complexity)
+            for (size_t complexity = 0; complexity <= m_options->max_syntactic_complexity; ++complexity)
                 for (auto constructor : m_sentences.get(*start, complexity))
-                    target.emplace_back(constructor, m_output_repository);
+                    target.emplace_back(constructor, *m_output_repository);
         }
     }
 
@@ -822,9 +821,8 @@ public:
               runir::kr::dl::semantics::DenotationRepository& denotation_repository,
               const GenerateOptions& options) :
         m_grammar(grammar),
-        m_states(states),
-        m_output_repository(output_repository),
-        m_options(options),
+        m_output_repository(&output_repository),
+        m_options(&options),
         m_builder(),
         m_result(),
         m_sentences(),
@@ -837,7 +835,7 @@ public:
     {
         const auto start_time = std::chrono::steady_clock::now();
 
-        for (; m_complexity <= m_options.max_syntactic_complexity; ++m_complexity)
+        for (; m_complexity <= m_options->max_syntactic_complexity; ++m_complexity)
         {
             if (out_of_time())
                 break;

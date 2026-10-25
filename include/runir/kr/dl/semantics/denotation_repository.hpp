@@ -73,7 +73,8 @@ public:
     }
     [[nodiscard]] const auto& get_formalism_repository_ptr() const noexcept { return m_formalism_repository; }
 
-    void clear() noexcept
+    /// Clears the denotations together with the vector and relation repositories they refer to.
+    void reset() noexcept
     {
         Base::clear();
         m_vector_repository.clear();
@@ -85,7 +86,7 @@ public:
     const ygg::Data<T>& operator[](ygg::Index<T> index) const noexcept
     {
         assert(this->template is_local<T>(index));
-        return this->template at_local<T>(index);
+        return this->template local<T>(index);
     }
 
     template<typename T>
@@ -100,7 +101,7 @@ public:
 };
 
 /// A repository owns the records viewed through it.
-inline const DenotationRepository& get_repository(const DenotationRepository& repository) noexcept { return repository; }
+inline const DenotationRepository& get_repository(const DenotationRepository& repository YGG_LIFETIMEBOUND) noexcept { return repository; }
 
 template<typename T>
     requires ygg::formalism::SupportsSymbol<DenotationRepository, T>

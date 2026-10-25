@@ -25,8 +25,8 @@ struct SearchNode
 
 struct Predecessor
 {
-    std::size_t source;
-    std::size_t target;
+    std::size_t source = 0;
+    std::size_t target = 0;
     std::optional<tyr::formalism::planning::ActionBindingView> action;
     std::optional<RuleVariantView> rule;
 };

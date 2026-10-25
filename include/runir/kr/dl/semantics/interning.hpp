@@ -10,10 +10,17 @@
 namespace runir::kr::dl::semantics
 {
 
-struct CopyContext
+/// The target repository and scratch builder of a copy; brace-initialized at call sites as `{ repository, builder }`.
+class CopyContext
 {
-    DenotationRepository& repository;
-    Builder& builder;
+    DenotationRepository* m_repository;
+    Builder* m_builder;
+
+public:
+    CopyContext(DenotationRepository& repository, Builder& builder) noexcept : m_repository(&repository), m_builder(&builder) {}
+
+    [[nodiscard]] DenotationRepository& repository() const noexcept { return *m_repository; }
+    [[nodiscard]] Builder& builder() const noexcept { return *m_builder; }
 };
 
 template<CategoryTag Category>
@@ -72,7 +79,8 @@ template<CategoryTag Category>
 /// Register object identities remain tied to the same planning formalism.
 [[nodiscard]] inline auto copy(BorrowedRegisterValuesView source, const CopyContext& context)
 {
-    auto& [repository, builder] = context;
+    auto& repository = context.repository();
+    auto& builder = context.builder();
     if (&source.get_formalism_repository() != &repository.get_formalism_repository())
         throw std::invalid_argument("Register copying requires the same formalism repository.");
     auto data = checkout<RegisterValues>(builder);
@@ -83,7 +91,7 @@ template<CategoryTag Category>
 /// Reuse a view owned by the target; otherwise intern its values in the target repository.
 [[nodiscard]] inline std::pair<RegisterValuesView, bool> copy(RegisterValuesView source, const CopyContext& context)
 {
-    if (&source.get_context() == &context.repository)
+    if (&source.get_context() == &context.repository())
         return { source, false };
     return copy(BorrowedRegisterValuesView(source.get_data(), source.get_formalism_repository()), context);
 }
@@ -91,7 +99,8 @@ template<CategoryTag Category>
 template<CategoryTag Category>
 [[nodiscard]] std::pair<DenotationView<Category>, bool> copy(DenotationView<Category> source, const CopyContext& context)
 {
-    auto& [repository, builder] = context;
+    auto& repository = context.repository();
+    auto& builder = context.builder();
     if (&source.get_context() == &repository)
         return { source, false };
     auto data = checkout<Denotation<Category>>(builder);

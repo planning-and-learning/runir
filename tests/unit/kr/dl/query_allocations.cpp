@@ -41,29 +41,41 @@
 // setup, warmup, and destruction of the retained evaluation objects.
 namespace allocation_tracking
 {
+namespace
+{
 struct Counts
 {
     size_t allocated = 0;
     size_t deallocated = 0;
 };
 
-thread_local bool enabled = false;
-thread_local Counts counts;
+struct State
+{
+    bool enabled = false;
+    Counts counts;
+};
+
+/// The evaluating thread's tracking state.
+State& state() noexcept
+{
+    thread_local State result;
+    return result;
+}
 
 void* allocate(size_t bytes)
 {
     auto* result = std::malloc(bytes == 0 ? 1 : bytes);
     if (!result)
         throw std::bad_alloc();
-    if (enabled)
-        ++counts.allocated;
+    if (state().enabled)
+        ++state().counts.allocated;
     return result;
 }
 
 void deallocate(void* pointer) noexcept
 {
-    if (pointer && enabled)
-        ++counts.deallocated;
+    if (pointer && state().enabled)
+        ++state().counts.deallocated;
     std::free(pointer);
 }
 
@@ -80,15 +92,15 @@ void* allocate_aligned(size_t bytes, size_t alignment)
 #endif
     if (!result)
         throw std::bad_alloc();
-    if (enabled)
-        ++counts.allocated;
+    if (state().enabled)
+        ++state().counts.allocated;
     return result;
 }
 
 void deallocate_aligned(void* pointer) noexcept
 {
-    if (pointer && enabled)
-        ++counts.deallocated;
+    if (pointer && state().enabled)
+        ++state().counts.deallocated;
 #if defined(_MSC_VER)
     _aligned_free(pointer);
 #else
@@ -99,21 +111,24 @@ void deallocate_aligned(void* pointer) noexcept
 class Scope
 {
 public:
-    Scope()
+    Scope() noexcept
     {
-        counts = {};
-        enabled = true;
+        state().counts = {};
+        state().enabled = true;
     }
     Scope(const Scope&) = delete;
     Scope& operator=(const Scope&) = delete;
-    ~Scope() { enabled = false; }
+    Scope(Scope&&) = delete;
+    Scope& operator=(Scope&&) = delete;
+    ~Scope() { state().enabled = false; }
 
     Counts finish() noexcept
     {
-        enabled = false;
-        return counts;
+        state().enabled = false;
+        return state().counts;
     }
 };
+}  // namespace
 }  // namespace allocation_tracking
 
 void* operator new(size_t bytes) { return allocation_tracking::allocate(bytes); }
@@ -311,7 +326,7 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
     {
         const auto successors = search->successor_generator->get_successor_nodes(current, *search->state_repository, *search->axiom_evaluator);
         ASSERT_FALSE(successors.empty());
-        const auto next = successors.front();
+        const auto& next = successors.front();
         changes[i].assign<tyr::GroundTag>(current.get_state(), register_view, next.get_state(), register_view);
         contexts.push_back(kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>(next.get_state(), builder, storage, arguments, register_values));
         auto objects = std::set<ObjectIndex> {};
@@ -458,7 +473,7 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
     {
         const auto successors = search->successor_generator->get_successor_nodes(current, *search->state_repository, *search->axiom_evaluator);
         ASSERT_FALSE(successors.empty());
-        const auto next = successors.front();
+        const auto& next = successors.front();
         changes[i].assign<tyr::GroundTag>(current.get_state(),
                                           ygg::make_view(registers[i], *search->task->get_repository()),
                                           next.get_state(),
@@ -607,7 +622,7 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
     allocation_tracking::Scope measured;
     for (size_t repeat = 0; repeat < 1000; ++repeat)
     {
-        denotations.clear();
+        denotations.reset();
         reused &= repository.empty();
         auto next = builder.get_builder<ygg::database::Relation>(repeat % 2 ? renamed : columns);
         // Cista schema storage uses malloc, which the global new/delete counter does not cover.
@@ -642,7 +657,7 @@ TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
     bool valid = true;
     const auto cycle = [&](size_t generation)
     {
-        denotations.clear();
+        denotations.reset();
         valid &= repository.empty();
         for (ygg::uint_t i = 0; i < 512; ++i)
         {

@@ -23,8 +23,8 @@ public:
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy, EmitConcept<ProgramStep<Kind>> Emit, StopConcept Stop>
     bool emit(runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy>& context,
               ProgramStateView<Kind> source,
-              Emit&& output,
-              Stop&& stop) const
+              const Emit& output,
+              const Stop& stop) const
     {
         if (stop())
             return false;
@@ -33,7 +33,7 @@ public:
         if (&memory.get_context() != &required_memory.get_context() || memory != required_memory)
             return true;
         using Registers = runir::kr::dl::semantics::RegisterValues;
-        auto& workspace = context.workspace;
+        auto& workspace = *context.workspace;
         const auto& task = workspace.get_task_context();
         auto& environment = workspace.get_environment();
         auto source_context = context.make_dl_context(source);

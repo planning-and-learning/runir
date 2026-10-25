@@ -15,6 +15,7 @@
 #include <optional>
 #include <tyr/planning/declarations.hpp>
 #include <utility>
+#include <yggdrasil/core/config.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/formalism/builder.hpp>
 #include <yggdrasil/formalism/interning.hpp>
@@ -55,6 +56,7 @@ public:
     ExecutionRepository& operator=(const ExecutionRepository&) = delete;
     ExecutionRepository(ExecutionRepository&&) = delete;
     ExecutionRepository& operator=(ExecutionRepository&&) = delete;
+    ~ExecutionRepository() = default;
 
     [[nodiscard]] const auto& get_index() const noexcept { return m_index; }
     [[nodiscard]] auto& get_state_repository() const noexcept { return *m_state_repository; }
@@ -93,7 +95,7 @@ public:
 };
 
 template<tyr::TaskKind Kind>
-inline const ExecutionRepository<Kind>& get_repository(const ExecutionRepository<Kind>& context) noexcept
+inline const ExecutionRepository<Kind>& get_repository(const ExecutionRepository<Kind>& context YGG_LIFETIMEBOUND) noexcept
 { return context; }
 
 template<tyr::TaskKind Kind>

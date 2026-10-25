@@ -45,22 +45,22 @@ void expect_diagnostic(Parse parse,
         error = caught;
     }
     ASSERT_TRUE(error.has_value()) << source;
-    const auto& diagnostic = error->diagnostic();
+    const auto& diagnostic = error.value().diagnostic();
     EXPECT_NE(diagnostic.message.find("while parsing " + context), std::string::npos) << diagnostic.message;
     if (!expected.empty())
     {
         EXPECT_EQ(diagnostic.message, "Expected " + expected + " while parsing " + context);
     }
     ASSERT_TRUE(diagnostic.location.has_value());
-    EXPECT_EQ(diagnostic.location->begin(), position);
-    EXPECT_EQ(diagnostic.location->end(), position);
-    EXPECT_EQ(diagnostic.location->source()->text(), source);
+    EXPECT_EQ(diagnostic.location.value().begin(), position);
+    EXPECT_EQ(diagnostic.location.value().end(), position);
+    EXPECT_EQ(diagnostic.location.value().source()->text(), source);
     ASSERT_EQ(diagnostic.notes.size(), 1);
     EXPECT_EQ(diagnostic.notes[0].message, context + " starts here");
     ASSERT_TRUE(diagnostic.notes[0].location.has_value());
-    EXPECT_EQ(diagnostic.notes[0].location->begin(), start);
-    EXPECT_EQ(diagnostic.notes[0].location->source(), diagnostic.location->source());
-    EXPECT_EQ(error->what(), ygg::diagnostics::format_diagnostic(diagnostic));
+    EXPECT_EQ(diagnostic.notes[0].location.value().begin(), start);
+    EXPECT_EQ(diagnostic.notes[0].location.value().source(), diagnostic.location.value().source());
+    EXPECT_EQ(error.value().what(), ygg::diagnostics::format_diagnostic(diagnostic));
 }
 
 void check_dl_expression_diagnostics()
@@ -262,7 +262,7 @@ TEST(RunirTests, ParserDiagnosticsKeepUnrecognizedSectionsAtTheirParent)
                       unopened.find("(:boolean"),
                       ":expression");
     const auto entered = std::string("(:sketch (:features (:boolean (:symbol))))");
-    expect_diagnostic(kr::ps::base::dl::parser::parse_sketch_ast, entered, ":symbol", entered.find(")"), entered.find("(:symbol"), "identifier");
+    expect_diagnostic(kr::ps::base::dl::parser::parse_sketch_ast, entered, ":symbol", entered.find(')'), entered.find("(:symbol"), "identifier");
     const auto keyword_prefix = std::string("(:sketch (:features (:boolean (:symbolic b))))");
     expect_diagnostic(kr::ps::base::dl::parser::parse_sketch_ast,
                       keyword_prefix,
@@ -324,7 +324,7 @@ TEST(RunirTests, ParserDiagnosticOutlivesInputAndErrorHandler)
         throw std::logic_error("expected parse error");
     }();
     ASSERT_TRUE(diagnostic.location.has_value());
-    EXPECT_EQ(diagnostic.location->source()->text(), "(:sketch (:features) (:rules)");
+    EXPECT_EQ(diagnostic.location.value().source()->text(), "(:sketch (:features) (:rules)");
     EXPECT_NE(ygg::diagnostics::format_diagnostic(diagnostic).find("sketch starts here"), std::string::npos);
 }
 

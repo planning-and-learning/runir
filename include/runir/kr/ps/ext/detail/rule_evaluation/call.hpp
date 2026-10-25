@@ -50,9 +50,9 @@ private:
                                  State state,
                                  const PlanningState& planning_state) const
     {
-        auto result = checkout<runir::kr::dl::semantics::CallArguments>(context.task_context->dl_builder);
+        auto result = checkout<runir::kr::dl::semantics::CallArguments>((*context.task_context)->dl_builder);
         auto state_context =
-            context.environment.make_call_context(planning_state, state.get_module_state().get_arguments(), state.get_module_state().get_registers());
+            context.environment->make_call_context(planning_state, state.get_module_state().get_arguments(), state.get_module_state().get_registers());
         rule.for_each_call_argument(
             [&]<typename FeatureTag, typename FC>(ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, FC> argument)
             {
@@ -66,7 +66,7 @@ private:
                 else
                     result->numerical_arguments.push_back(denotation.get_index());
             });
-        return insert(*context.task_context->dl_denotation_repository, *result).first;
+        return insert(*(*context.task_context)->dl_denotation_repository, *result).first;
     }
 
 public:
@@ -76,27 +76,28 @@ public:
              StopConcept Stop,
              ExecutionStateViewConcept<Storage> State,
              tyr::planning::StateViewConcept<Kind> PlanningState>
-    bool emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, Emit&& emit, Stop&& stop) const
+    bool
+    emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, const Emit& emit, const Stop& stop) const
     {
         const auto& planning_state = context.planning_state;
         const auto rule = m_rule;
         const auto rule_variant = m_variant;
-        if (!ext::rule_is_applicable(rule, state, planning_state, context.environment))
+        if (!ext::rule_is_applicable(rule, state, planning_state, *context.environment))
             return true;
         auto arguments = evaluate_call_arguments(context, rule, state, planning_state);
         const auto callee = m_callee;
         if (stop())
             return false;
         if (!callee || !arguments_match(*callee, arguments))
-            return emit(detail::make_step<Kind, Storage>(ProgramOutcome::MALFORMED_CALL, context.storage.retain(state), context.task_context));
+            return emit(detail::make_step<Kind, Storage>(ProgramOutcome::MALFORMED_CALL, context.storage->retain(state), *context.task_context));
 
-        auto caller = context.storage.save_caller(state, rule.get_target());
-        auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(context.task_context->dl_builder);
+        auto caller = context.storage->save_caller(state, rule.get_target());
+        auto registers = checkout<runir::kr::dl::semantics::RegisterValues>((*context.task_context)->dl_builder);
         registers->concept_values.resize(callee->template get_registers<runir::kr::dl::ConceptTag>().size());
         registers->role_values.resize(callee->template get_registers<runir::kr::dl::RoleTag>().size());
         auto target =
-            context.storage.store(planning_state, *callee, callee->get_entry_memory_state(), context.storage.registers(*registers), arguments, caller);
-        return emit(detail::applied<Kind, Storage>(std::move(target), rule_variant, context.task_context));
+            context.storage->store(planning_state, *callee, callee->get_entry_memory_state(), context.storage->registers(*registers), arguments, caller);
+        return emit(detail::applied<Kind, Storage>(std::move(target), rule_variant, *context.task_context));
     }
 };
 

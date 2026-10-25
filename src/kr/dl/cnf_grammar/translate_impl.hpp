@@ -12,9 +12,7 @@
 #include <unordered_set>
 #include <utility>
 
-namespace runir::kr::dl::cnf_grammar
-{
-namespace detail
+namespace runir::kr::dl::cnf_grammar::detail
 {
 
 struct TranslationContext
@@ -57,17 +55,17 @@ template<runir::kr::dl::CategoryTag Category>
 class Translator
 {
 private:
-    TranslationContext& m_context;
+    TranslationContext* m_context;
 
-    auto& repository() const noexcept { return m_context.repository; }
-    auto& data() const noexcept { return *m_context.data; }
-    auto& non_terminal_names() const noexcept { return m_context.non_terminal_names; }
-    auto& next_fresh_index() const noexcept { return m_context.next_fresh_index; }
+    [[nodiscard]] auto& repository() const noexcept { return m_context->repository; }
+    [[nodiscard]] auto& data() const noexcept { return *m_context->data; }
+    [[nodiscard]] auto& non_terminal_names() const noexcept { return m_context->non_terminal_names; }
+    [[nodiscard]] auto& next_fresh_index() const noexcept { return m_context->next_fresh_index; }
 
     template<typename T, typename Initialize>
     auto intern(Initialize&& initialize)
     {
-        auto data = runir::kr::dl::cnf_grammar::checkout<T>(m_context.builder);
+        auto data = runir::kr::dl::cnf_grammar::checkout<T>(m_context->builder);
         std::forward<Initialize>(initialize)(*data);
         return runir::kr::dl::cnf_grammar::insert(repository(), *data).first;
     }
@@ -141,14 +139,14 @@ private:
 
     auto make_fresh_non_terminal()
     {
-        auto data = runir::kr::dl::cnf_grammar::checkout<NonTerminal<Category>>(m_context.builder);
+        auto data = runir::kr::dl::cnf_grammar::checkout<NonTerminal<Category>>(m_context->builder);
         auto name = std::string {};
-        do
+        while (name.empty() || non_terminal_names().contains(name))
         {
             name = category_prefix<Category>();
             name += '_';
             name += std::to_string(next_fresh_index()++);
-        } while (non_terminal_names().contains(name));
+        }
 
         data->name = name;
         non_terminal_names().insert(std::move(name));
@@ -179,11 +177,11 @@ private:
     }
 
 public:
-    Translator(TranslationContext& context) : m_context(context) {}
+    Translator(TranslationContext& context) : m_context(&context) {}
 
     auto translate_non_terminal(runir::kr::dl::grammar::NonTerminalView<Category> source)
     {
-        auto data = runir::kr::dl::cnf_grammar::checkout<NonTerminal<Category>>(m_context.builder);
+        auto data = runir::kr::dl::cnf_grammar::checkout<NonTerminal<Category>>(m_context->builder);
         data->name = source.get_name().str();
         non_terminal_names().insert(std::string(data->name.str()));
 
@@ -526,7 +524,7 @@ public:
     template<runir::kr::dl::CategoryTag ChildCategory>
     auto translate_child(runir::kr::dl::grammar::ConstructorOrNonTerminalView<ChildCategory> source)
     {
-        auto child_translator = Translator<ChildCategory>(m_context);
+        auto child_translator = Translator<ChildCategory>(*m_context);
         return child_translator.translate_to_non_terminal(source);
     }
 };
@@ -555,8 +553,6 @@ inline auto translate_impl(const runir::kr::dl::grammar::GrammarView& grammar, C
     return runir::kr::dl::cnf_grammar::insert(repository, *context.data).first;
 }
 
-}  // namespace detail
-
-}  // namespace runir::kr::dl::cnf_grammar
+}  // namespace runir::kr::dl::cnf_grammar::detail
 
 #endif

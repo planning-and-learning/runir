@@ -32,14 +32,14 @@ template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<K
 class ClassifierUnsolvability
 {
 private:
-    runir::kr::TaskContext<Kind>& m_task_context;
+    runir::kr::TaskContext<Kind>* m_task_context;
     runir::kr::uns::ClassifierView m_classifier;
     runir::kr::dl::semantics::EvaluationStorage m_storage;
     Policy m_policy;
 
 public:
     ClassifierUnsolvability(runir::kr::TaskContext<Kind>& task_context, runir::kr::uns::ClassifierView classifier) :
-        m_task_context(task_context),
+        m_task_context(&task_context),
         m_classifier(classifier),
         m_storage(*task_context.dl_denotation_repository),
         m_policy(*task_context.search_context->task,
@@ -58,7 +58,8 @@ public:
     {
         m_storage.reset_dynamic();
         m_policy.reset_source();
-        auto context = m_policy.make_source_context(runir::kr::dl::semantics::StateEvaluationContext<Kind, State>(state, m_task_context.dl_builder, m_storage));
+        auto context =
+            m_policy.make_source_context(runir::kr::dl::semantics::StateEvaluationContext<Kind, State>(state, m_task_context->dl_builder, m_storage));
         return runir::kr::uns::classify<Kind>(m_classifier, context);
     }
 };

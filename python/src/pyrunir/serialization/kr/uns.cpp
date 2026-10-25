@@ -1,4 +1,5 @@
 #include "pyrunir/serialization/binding_utils.hpp"
+#include "pyrunir/serialization/bindings.hpp"
 
 #include <runir/kr/uns/formatter.hpp>
 #include <runir/serialization/kr/uns/classifier_view.hpp>

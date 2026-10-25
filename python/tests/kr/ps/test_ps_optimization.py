@@ -165,20 +165,27 @@ def test_icp_program(kind: str) -> None:
     task = lifted.Task(parser.parse_task(directory / "test-1.pddl", ParserOptions()))
     execution = ExecutionContext(1)
     domain = DomainContext(parser.get_domain())
-    if kind == "Ground":
-        context = GroundTaskContext(
-            domain, GroundTaskSearchContext(task.instantiate_ground_task(execution).task, execution)
-        )
-    else:
-        context = LiftedTaskContext(domain, LiftedTaskSearchContext(task, execution))
     program = icp.dl.parse_program(_ICP_PROGRAM, parser.get_domain(), domain.icp_repository)
     optimized = program.optimize(domain.icp_repository)
     assert optimized != program
     assert icp.dl.parse_program(str(optimized), parser.get_domain(), domain.icp_repository) == optimized
-    options = getattr(icp, f"{kind}ProgramSearchOptions")()
-    for candidate in (program, optimized):
-        result = getattr(icp, f"find_{kind.lower()}_solution")(context, candidate, options)
-        assert result.status == icp.ProgramProofStatus.SUCCESS
+    if kind == "Ground":
+        ground_context = GroundTaskContext(
+            domain, GroundTaskSearchContext(task.instantiate_ground_task(execution).task, execution)
+        )
+        ground_options = icp.GroundProgramSearchOptions()
+        statuses = [
+            icp.find_ground_solution(ground_context, candidate, ground_options).status
+            for candidate in (program, optimized)
+        ]
+    else:
+        lifted_context = LiftedTaskContext(domain, LiftedTaskSearchContext(task, execution))
+        lifted_options = icp.LiftedProgramSearchOptions()
+        statuses = [
+            icp.find_lifted_solution(lifted_context, candidate, lifted_options).status
+            for candidate in (program, optimized)
+        ]
+    assert statuses == [icp.ProgramProofStatus.SUCCESS] * 2
 
 
 def test_uns_classifier(

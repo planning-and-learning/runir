@@ -34,6 +34,7 @@
 #include <variant>
 #include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/containers/vector.hpp>
+#include <yggdrasil/core/config.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
@@ -93,6 +94,7 @@ struct Data<runir::datasets::PredicateColor<T>>
     Data& operator=(const Data&) = default;
     Data(Data&&) = default;
     Data& operator=(Data&&) = default;
+    ~Data() = default;
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::predicate, &Data::argument_position, &Data::context> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::predicate, &Data::argument_position, &Data::context> {}; }
@@ -115,6 +117,7 @@ struct Data<runir::datasets::Color>
     Data& operator=(const Data&) = delete;
     Data(Data&&) = default;
     Data& operator=(Data&&) = default;
+    ~Data() = default;
     template<typename C>
     using ViewVariant = ::ygg::ViewVariant<Variant, C>;
     template<typename C>
@@ -198,6 +201,7 @@ public:
     ColorRepository& operator=(const ColorRepository&) = delete;
     ColorRepository(ColorRepository&&) = delete;
     ColorRepository& operator=(ColorRepository&&) = delete;
+    ~ColorRepository() = default;
 
     [[nodiscard]] const auto& get_index() const noexcept { return m_index; }
     [[nodiscard]] const auto& get_planning_repository() const noexcept
@@ -231,7 +235,7 @@ public:
     const ygg::Data<T>& operator[](ygg::Index<T> index) const noexcept
     {
         assert(m_symbol_repository.is_local<T>(index));
-        return m_symbol_repository.at_local<T>(index);
+        return m_symbol_repository.local<T>(index);
     }
 
     template<typename T>
@@ -255,8 +259,8 @@ public:
 
 using ColorView = ygg::View<ygg::Index<Color>, ColorRepository>;
 
-inline const ColorRepository& get_repository(const ColorRepository& repository) noexcept { return repository; }
-inline ColorRepository& get_repository(ColorRepository& repository) noexcept { return repository; }
+inline const ColorRepository& get_repository(const ColorRepository& repository YGG_LIFETIMEBOUND) noexcept { return repository; }
+inline ColorRepository& get_repository(ColorRepository& repository YGG_LIFETIMEBOUND) noexcept { return repository; }
 
 }  // namespace runir::datasets
 

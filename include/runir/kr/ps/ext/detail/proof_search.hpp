@@ -18,9 +18,11 @@
 #include <tyr/planning/algorithms/strategies/goal.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
+#include <utility>
 #include <variant>
 #include <vector>
 #include <yggdrasil/core/chrono.hpp>
+#include <yggdrasil/core/config.hpp>
 
 namespace runir::kr::ps::ext
 {
@@ -50,8 +52,8 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
     struct Frame
     {
         PathPtr path;
-        std::size_t successors_begin;
-        std::size_t choices_begin;
+        std::size_t successors_begin = 0;
+        std::size_t choices_begin = 0;
         std::optional<ProgramStateView<Kind>> memo_state;
         bool choice_child = false;
         bool succeeded = true;
@@ -109,14 +111,15 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
         }
         if (next)
         {
-            auto path = std::move(next);
+            auto path = std::exchange(next, PathPtr {});
+            YGG_ASSUME(path->state.has_value());
             const auto state = expander.view(*path->state);
             const auto memo_state = storage.initial_memo_state(state);
             if (memo_state)
             {
                 if (const auto cached = storage.completed(*memo_state))
                 {
-                    completed = *cached;
+                    completed = cached;
                     continue;
                 }
                 storage.memorize(*memo_state);
@@ -178,7 +181,7 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
                             {
                                 if (const auto cached = storage.completed(*frame.memo_state))
                                 {
-                                    completed = *cached;
+                                    completed = cached;
                                     return false;
                                 }
                                 storage.memorize(*frame.memo_state);
@@ -216,6 +219,7 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
         }
 
         auto& frame = stack.back();
+        YGG_ASSUME(frame.path->state.has_value());
         const auto state = expander.view(*frame.path->state);
         if (completed)
         {
@@ -348,6 +352,7 @@ ProgramProofResults<Kind> find_solution(SuccessorExpander<Kind, ExecutionStorage
         build_proof_graph(result, storage.nodes, storage.predecessors, storage.num_reached ? std::optional(initial) : std::nullopt);
         if (status == ProgramProofStatus::SUCCESS && first_goal)
         {
+            YGG_ASSUME(first_goal->state.has_value());
             const auto goal = *first_goal->state;
             result.statistics.choice_depth = storage.node(goal).choice_depth;
             result.statistics.choice_width = storage.node(goal).choice_width;

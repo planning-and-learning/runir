@@ -21,7 +21,7 @@
 namespace runir::kr::ps::ext
 {
 
-enum class ProgramProofStatus
+enum class ProgramProofStatus : std::uint8_t
 {
     SUCCESS,
     FAILURE,
@@ -46,7 +46,7 @@ constexpr std::string_view to_string(ProgramProofStatus status)
 }
 
 /// Search-state memorization, independent of materializing the returned witness path.
-enum class StateMemorization
+enum class StateMemorization : std::uint8_t
 {
     NONE,    ///< Do not memoize completed program states.
     CHOICE,  ///< Intern and memoize sources of admitted Choose obligations, including singleton and empty choices.

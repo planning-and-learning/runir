@@ -597,12 +597,12 @@ void expect_control_only_steps_do_not_generate_planning_successors()
         EXPECT_EQ(step.get_target().get_state().get_index(), initial.get_state().get_index());
         EXPECT_FALSE(step.planning_successor.has_value());
         ASSERT_TRUE(step.rule);
-        const auto applied = expander.apply(initial, *step.rule);
+        const auto applied = expander.apply(initial, step.rule.value());
         ASSERT_TRUE(applied);
-        EXPECT_EQ(applied->get_target().get_index(), step.get_target().get_index());
+        EXPECT_EQ(applied.value().get_target().get_index(), step.get_target().get_index());
         if (step.get_target().get_module_state().get_memory_state().get_name() == "skipped")
         {
-            EXPECT_FALSE(expander.apply(step.get_target(), *step.rule));
+            EXPECT_FALSE(expander.apply(step.get_target(), step.rule.value()));
         }
     }
     EXPECT_EQ(states.num_states(), 1);
@@ -1276,7 +1276,7 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     const auto return_steps = collect_steps(expander, call_target);
     ASSERT_EQ(return_steps.size(), 1);
     EXPECT_EQ(return_steps.front().status, kr::ps::ext::detail::ProgramOutcome::RESTORED_CALLER);
-    EXPECT_EQ(return_steps.front().get_target().get_call_stack(), caller_frame->get_caller());
+    EXPECT_EQ(return_steps.front().get_target().get_call_stack(), caller_frame.value().get_caller());
     EXPECT_EQ(return_steps.front().get_target().get_module_state().get_module().get_index(), caller.get_index());
     EXPECT_EQ(return_steps.front().get_target().get_module_state().get_memory_state().get_index(), caller_return.get_index());
 
@@ -1389,7 +1389,7 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     {
         EXPECT_EQ(step.status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
         ASSERT_TRUE(step.planning_successor.has_value());
-        EXPECT_EQ(step.planning_successor->label.get_relation().get_name(), "pick");
+        EXPECT_EQ(step.planning_successor.value().label.get_relation().get_name(), "pick");
         EXPECT_EQ(step.get_target().get_module_state().get_memory_state().get_index(), target.get_index());
         EXPECT_NE(step.get_target().get_state().get_index(), initial_state.get_state().get_index());
     }
@@ -1536,11 +1536,11 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     // Explicit application also accepts a rule created after the program was prepared.
     auto external_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>(std::string("external"), pick_rule.get_index());
     const auto external_rule = repository->insert(external_data).first;
-    const auto external = expander.apply(expander.initial_state(planning_node.get_state()), external_rule, steps.front().planning_successor->unpack());
+    const auto external = expander.apply(expander.initial_state(planning_node.get_state()), external_rule, steps.front().planning_successor.value().unpack());
     ASSERT_TRUE(external);
-    ASSERT_TRUE(external->rule);
-    EXPECT_EQ(external->rule->get_index(), external_rule.get_index());
-    EXPECT_EQ(external->get_target().get_module_state().get_memory_state().get_index(), pick_target.get_index());
+    ASSERT_TRUE(external.value().rule);
+    EXPECT_EQ(external.value().rule.value().get_index(), external_rule.get_index());
+    EXPECT_EQ(external.value().get_target().get_module_state().get_memory_state().get_index(), pick_target.get_index());
 
     auto greedy_options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
     const auto greedy = kr::ps::ext::find_solution(task_context, program, greedy_options);
@@ -1589,10 +1589,10 @@ TEST(RunirTests, ExtExplicitApplicationDistinguishesCollidingRuleIdsAcrossReposi
     const auto foreign = expander.apply(initial, foreign_rule);
     ASSERT_TRUE(prepared);
     ASSERT_TRUE(foreign);
-    ASSERT_TRUE(foreign->rule);
-    EXPECT_EQ(prepared->get_target().get_module_state().get_memory_state().get_name(), "prepared");
-    EXPECT_EQ(foreign->get_target().get_module_state().get_memory_state().get_name(), "external");
-    EXPECT_EQ(&foreign->rule->get_context(), &foreign_rule.get_context());
+    ASSERT_TRUE(foreign.value().rule);
+    EXPECT_EQ(prepared.value().get_target().get_module_state().get_memory_state().get_name(), "prepared");
+    EXPECT_EQ(foreign.value().get_target().get_module_state().get_memory_state().get_name(), "external");
+    EXPECT_EQ(&foreign.value().rule.value().get_context(), &foreign_rule.get_context());
 
     // A colliding memory index from a different repository identity cannot
     // make a rule applicable to the current program state.
@@ -1769,15 +1769,15 @@ void expect_query_action_contracts()
         for (const auto& step : steps)
         {
             ASSERT_TRUE(step.planning_successor.has_value());
-            const auto candidate = step.planning_successor->unpack();
+            const auto candidate = step.planning_successor.value().unpack();
             EXPECT_EQ(candidate.label.get_objects()[0].get_name(), "start");
             EXPECT_EQ(step.get_target().get_module_state().get_memory_state().get_name(), "target");
             const auto matching = expander.matching_rule(initial, candidate);
             ASSERT_TRUE(matching);
-            EXPECT_EQ(matching->get_index(), rule.get_index());
+            EXPECT_EQ(matching.value().get_index(), rule.get_index());
             const auto applied = expander.apply(initial, rule, candidate);
             ASSERT_TRUE(applied);
-            EXPECT_EQ(applied->get_target().get_index(), step.get_target().get_index());
+            EXPECT_EQ(applied.value().get_target().get_index(), step.get_target().get_index());
         }
         EXPECT_FALSE(expander.apply(initial, rule));
     }
@@ -1864,7 +1864,7 @@ void expect_rule_occurrence_order()
     for (size_t i = 0; i < steps.size(); ++i)
     {
         ASSERT_TRUE(steps[i].rule);
-        EXPECT_EQ(*steps[i].rule, expected[i]);
+        EXPECT_EQ(steps[i].rule.value(), expected[i]);
     }
 }
 
@@ -1948,7 +1948,7 @@ void expect_callback_sketch_order_and_cancellation()
             [] { return false; }));
         ASSERT_GT(complete.size(), 1);
         EXPECT_EQ(selected.front().get_target().get_index(), complete.front().get_target().get_index());
-        EXPECT_EQ(selected.front().planning_successor->label, complete.front().planning_successor->label);
+        EXPECT_EQ(selected.front().planning_successor.value().label, complete.front().planning_successor.value().label);
         EXPECT_EQ(statistics.num_expanded, 0);
     }
 }
@@ -1979,7 +1979,7 @@ void expect_query_action_existential_binding()
     const auto steps = collect_steps(expander, expander.initial_state(planning_node.get_state()));
     ASSERT_EQ(steps.size(), 1);
     ASSERT_TRUE(steps.front().planning_successor.has_value());
-    const auto objects = steps.front().planning_successor->label.get_objects();
+    const auto objects = steps.front().planning_successor.value().label.get_objects();
     ASSERT_EQ(objects.size(), 2);
     EXPECT_EQ(objects[0].get_name(), "start");
     EXPECT_EQ(objects[1].get_name(), "proof");
@@ -2022,7 +2022,7 @@ void expect_query_action_nullary_binding()
         {
             EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
             ASSERT_TRUE(steps.front().planning_successor.has_value());
-            EXPECT_TRUE(steps.front().planning_successor->label.get_objects().empty());
+            EXPECT_TRUE(steps.front().planning_successor.value().label.get_objects().empty());
             EXPECT_TRUE(is_planning_goal(expander, steps.front().get_target().get_state()));
             EXPECT_THROW(collect_steps(expander, steps.front().get_target()), std::logic_error);
             EXPECT_THROW(kr::ps::ext::find_solution(task_context, program, kr::ps::ext::ProgramSearchOptions<Kind> {}), std::invalid_argument);

@@ -17,6 +17,8 @@
 
 #include <argparse/argparse.hpp>
 #include <cstddef>
+#include <cstdio>
+#include <exception>
 #include <fmt/format.h>
 #include <iostream>
 #include <loki/loki.hpp>
@@ -41,9 +43,7 @@ void print_state_graph(tyr::planning::TaskPtr<Kind> task, ygg::ExecutionContextP
     fmt::print("{}", *graph);
 }
 
-}  // namespace
-
-int main(int argc, char** argv)
+int run(int argc, char** argv)
 {
     auto program = argparse::ArgumentParser("Generate a planning task state graph in Graphviz DOT format.");
     program.add_argument("-D", "--domain-filepath").required().help("The path to the PDDL domain file.");
@@ -101,4 +101,24 @@ int main(int argc, char** argv)
 
     print_state_graph(result.task, execution_context);
     return 0;
+}
+
+}  // namespace
+
+int main(int argc, char** argv)
+{
+    try
+    {
+        return run(argc, argv);
+    }
+    catch (const std::exception& err)
+    {
+        std::fputs(err.what(), stderr);
+        std::fputs("\n", stderr);
+    }
+    catch (...)
+    {
+        std::fputs("Unknown error.\n", stderr);
+    }
+    return 1;
 }

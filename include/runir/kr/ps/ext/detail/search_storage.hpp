@@ -22,13 +22,13 @@ struct SearchStorage;
 template<tyr::TaskKind Kind>
 struct SearchStorage<Kind, StateMemorization::ALL>
 {
-    const ProgramSearchOptions<Kind>& options;
+    const ProgramSearchOptions<Kind>* options;
     ygg::SegmentedVector<SearchNode<Kind>> nodes;
     // Retains each admitted transition in discovery order, including parallel edges.
     std::vector<Predecessor<Kind>> predecessors;
     ygg::uint_t num_reached = 0;
 
-    explicit SearchStorage(const ProgramSearchOptions<Kind>& options_) : options(options_) {}
+    explicit SearchStorage(const ProgramSearchOptions<Kind>& options_) : options(&options_) {}
 
     auto& node(ProgramStateView<Kind> state) { return get_or_create_search_node(state, nodes); }
 
@@ -40,7 +40,7 @@ struct SearchStorage<Kind, StateMemorization::ALL>
         auto& entry = node(state);
         if (entry.status != SearchStatus::NEW)
             return true;
-        if (num_reached == options.max_num_states)
+        if (num_reached == options->max_num_states)
             return false;
         ++num_reached;
         entry.status = SearchStatus::DISCOVERED;
@@ -104,17 +104,17 @@ struct SearchStorage<Kind, StateMemorization::ALL>
 template<tyr::TaskKind Kind>
 struct SearchStorage<Kind, StateMemorization::NONE>
 {
-    const ProgramSearchOptions<Kind>& options;
+    const ProgramSearchOptions<Kind>* options;
     ygg::uint_t num_reached = 0;
 
-    explicit SearchStorage(const ProgramSearchOptions<Kind>& options_) : options(options_) {}
+    explicit SearchStorage(const ProgramSearchOptions<Kind>& options_) : options(&options_) {}
 
     std::optional<ProgramStateView<Kind>> initial_memo_state(BuilderProgramStateView<Kind>) { return std::nullopt; }
     std::optional<ProgramStateView<Kind>> choice_memo_state(auto&&) { return std::nullopt; }
 
     bool admit(BuilderProgramStateView<Kind>, auto&&)
     {
-        if (num_reached == options.max_num_states)
+        if (num_reached == options->max_num_states)
             return false;
         ++num_reached;
         return true;

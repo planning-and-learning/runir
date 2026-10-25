@@ -74,8 +74,10 @@ public:
     }
 
     template<runir::kr::ps::dl::TransitionEvaluationContextConcept<IcpFamilyTag, Kind> Transition, StopConcept Stop>
-    std::optional<HistoriesView<Kind>>
-    update_histories(ProgramStateView<Kind> state, Transition& transition, std::optional<tyr::planning::BorrowedActionBindingView<Kind>> binding, Stop&& stop)
+    std::optional<HistoriesView<Kind>> update_histories(ProgramStateView<Kind> state,
+                                                        Transition& transition,
+                                                        std::optional<tyr::planning::BorrowedActionBindingView<Kind>> binding,
+                                                        const Stop& stop)
     {
         auto histories = checkout<Histories>(m_task->icp_execution_builder);
         *histories = state.get_histories().get_data();

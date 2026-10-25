@@ -24,13 +24,25 @@ namespace
 using GrammarFamily = runir::kr::BaseFamilyTag;
 using AstFamily = runir::kr::ExtFamilyTag;
 
-struct ConstructorContext
+class ConstructorContext
 {
+    ConstructorRepository* m_repository;
+    Builder* m_builder;
+    const runir::kr::parser::DiagnosticContext* m_diagnostics;
+
+public:
     using Target = runir::kr::parser::constructors::GrammarTarget;
 
-    ConstructorRepository& repository;
-    Builder& builder;
-    const runir::kr::parser::DiagnosticContext& diagnostics;
+    ConstructorContext(ConstructorRepository& repository, Builder& builder, const runir::kr::parser::DiagnosticContext& diagnostics) noexcept :
+        m_repository(&repository),
+        m_builder(&builder),
+        m_diagnostics(&diagnostics)
+    {
+    }
+
+    [[nodiscard]] ConstructorRepository& repository() const noexcept { return *m_repository; }
+    [[nodiscard]] Builder& builder() const noexcept { return *m_builder; }
+    [[nodiscard]] const runir::kr::parser::DiagnosticContext& diagnostics() const noexcept { return *m_diagnostics; }
 };
 
 using runir::kr::parser::constructors::parse;
@@ -41,9 +53,9 @@ using runir::kr::parser::constructors::Unwrapped;
 template<typename T, typename Initialize>
 auto intern(const ConstructorContext& context, Initialize&& initialize)
 {
-    auto data = runir::kr::dl::grammar::checkout<T>(context.builder);
+    auto data = runir::kr::dl::grammar::checkout<T>(context.builder());
     std::forward<Initialize>(initialize)(*data);
-    return runir::kr::dl::grammar::insert(context.repository, *data).first;
+    return runir::kr::dl::grammar::insert(context.repository(), *data).first;
 }
 
 template<runir::kr::dl::CategoryTag Category>
@@ -54,7 +66,7 @@ auto parse(const ast::NonTerminal<Category>& node, tyr::formalism::planning::Dom
 
 template<runir::kr::dl::CategoryTag Category, typename Node>
 [[noreturn]] auto reject(const Node& node, const ConstructorContext& context, const char* what) -> ConstructorView<Category>
-{ context.diagnostics.throw_at(node, runir::kr::InvalidExpressionError(std::string(what) + " are not supported in generation grammars.")); }
+{ context.diagnostics().throw_at(node, runir::kr::InvalidExpressionError(std::string(what) + " are not supported in generation grammars.")); }
 
 auto parse(const ast::ConceptRegister& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 { return reject<ConceptTag>(node, context, "Registers"); }
@@ -111,14 +123,14 @@ parse(const ast::ConstructorOrNonTerminal<Category>& node, tyr::formalism::plann
 }
 
 ConstructorView<ConceptTag> parse(const ast::ConceptProject& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
-{ context.diagnostics.throw_at(node, runir::kr::InvalidExpressionError("Relational expressions are not supported in generation grammars.")); }
+{ context.diagnostics().throw_at(node, runir::kr::InvalidExpressionError("Relational expressions are not supported in generation grammars.")); }
 
 ConstructorView<RoleTag> parse(const ast::RoleProject& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
-{ context.diagnostics.throw_at(node, runir::kr::InvalidExpressionError("Relational expressions are not supported in generation grammars.")); }
+{ context.diagnostics().throw_at(node, runir::kr::InvalidExpressionError("Relational expressions are not supported in generation grammars.")); }
 
 template<typename Result>
 Result parse_collection_operand(const ast::Query& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
-{ context.diagnostics.throw_at(node, runir::kr::InvalidExpressionError("Relational expressions are not supported in generation grammars.")); }
+{ context.diagnostics().throw_at(node, runir::kr::InvalidExpressionError("Relational expressions are not supported in generation grammars.")); }
 
 template<runir::kr::dl::CategoryTag Category>
 auto parse(const ast::DerivationRule<Category>& node, tyr::formalism::planning::DomainView domain, const ConstructorContext& context)

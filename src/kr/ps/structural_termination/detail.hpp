@@ -66,9 +66,9 @@ void record_effect(Definition definition,
 
 struct PolicyEdge
 {
-    std::size_t source;
-    std::size_t target;
-    std::size_t rule_position;
+    std::size_t source = 0;
+    std::size_t target = 0;
+    std::size_t rule_position = 0;
     bool alive = true;
 };
 

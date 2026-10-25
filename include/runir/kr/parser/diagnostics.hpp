@@ -25,6 +25,8 @@ struct DiagnosticContext
 
         Scope(const Scope&) = delete;
         Scope& operator=(const Scope&) = delete;
+        Scope(Scope&&) = delete;
+        Scope& operator=(Scope&&) = delete;
 
         DiagnosticContext& diagnostics;
         std::optional<std::reference_wrapper<const ErrorHandlerType>> previous;

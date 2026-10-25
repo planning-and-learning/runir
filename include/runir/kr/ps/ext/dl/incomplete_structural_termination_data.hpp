@@ -6,6 +6,7 @@
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 
+#include <cstdint>
 #include <variant>
 #include <vector>
 #include <yggdrasil/core/types.hpp>
@@ -13,7 +14,7 @@
 namespace runir::kr::ps::ext::dl
 {
 
-enum class IncompleteStructuralTerminationStatus
+enum class IncompleteStructuralTerminationStatus : std::uint8_t
 {
     TERMINATING,
     UNKNOWN,

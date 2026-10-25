@@ -11,6 +11,7 @@
 
 #include <concepts>
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <ranges>
 #include <stdexcept>
@@ -25,7 +26,7 @@ namespace runir::kr::ps::ext::detail
 {
 
 /// Local rule and caller-return outcomes; whole-search completion and limits use ProgramProofStatus.
-enum class ProgramOutcome
+enum class ProgramOutcome : std::uint8_t
 {
     APPLIED,
     RESTORED_CALLER,
@@ -57,10 +58,8 @@ constexpr std::string_view to_string(ProgramOutcome outcome)
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage = InternedExecutionStorage<Kind>>
 struct ProgramStep
 {
-private:
-    runir::kr::TaskContextPtr<Kind> m_task_context;
-
-public:
+    /// Keeps the task's repositories alive while the step refers to them.
+    runir::kr::TaskContextPtr<Kind> task_context;
     using StoredState = StorageStoredState<Storage>;
     ProgramOutcome status;
     StoredState target;
@@ -68,8 +67,8 @@ public:
     std::optional<RuleVariantView> rule = std::nullopt;
     std::optional<tyr::planning::PackedLabeledNode<Kind>> planning_successor = std::nullopt;
 
-    ProgramStep(ProgramOutcome status_, StoredState target_, runir::kr::TaskContextPtr<Kind> task_context) :
-        m_task_context(std::move(task_context)),
+    ProgramStep(ProgramOutcome status_, StoredState target_, runir::kr::TaskContextPtr<Kind> task_context_) :
+        task_context(std::move(task_context_)),
         status(status_),
         target(std::move(target_))
     {
@@ -118,25 +117,25 @@ struct Choice
 {
 private:
     ygg::UniqueObjectPoolPtr<runir::kr::dl::semantics::DenotationElementViewList<Category>> m_bindings;
+    RuleVariantView m_rule;
+    size_t m_position = 0;
 
 public:
-    RuleVariantView rule;
-    size_t position = 0;
-
     template<ygg::InputRangeOf<runir::kr::dl::semantics::DenotationElementView<Category>> Denotation>
     Choice(RuleVariantView rule_, Denotation denotation, ygg::UniqueObjectPool<runir::kr::dl::semantics::DenotationElementViewList<Category>>& pool) :
         m_bindings(pool.get_or_allocate()),
-        rule(rule_)
+        m_rule(rule_)
     {
         m_bindings->clear();
         for (const auto binding : denotation)
             m_bindings->push_back(binding);
     }
+    [[nodiscard]] RuleVariantView get_rule() const noexcept { return m_rule; }
     auto& bindings() noexcept { return *m_bindings; }
     [[nodiscard]] const auto& bindings() const noexcept { return *m_bindings; }
-    [[nodiscard]] bool exhausted() const noexcept { return position == bindings().size(); }
-    [[nodiscard]] const auto& current() const { return bindings().at(position); }
-    void advance() noexcept { ++position; }
+    [[nodiscard]] bool exhausted() const noexcept { return m_position == bindings().size(); }
+    [[nodiscard]] const auto& current() const { return bindings().at(m_position); }
+    void advance() noexcept { ++m_position; }
     [[nodiscard]] bool has_alternatives() const noexcept { return bindings().size() > 1; }
     [[nodiscard]] size_t count() const noexcept { return bindings().size(); }
 };

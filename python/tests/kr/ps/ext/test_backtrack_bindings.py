@@ -11,9 +11,13 @@ from pyrunir.kr.ps.ext.dl import parse_module
 from pyrunir.serialization import register_table, serialize, table
 
 
-@pytest.mark.parametrize("kind", ["Ground", "Lifted"])
-def test_and_backtracking_option_defaults_to_false(kind: str) -> None:
-    options = getattr(ext, f"{kind}ProgramSearchOptions")()
+@pytest.mark.parametrize(
+    "options_type", [ext.GroundProgramSearchOptions, ext.LiftedProgramSearchOptions], ids=["Ground", "Lifted"]
+)
+def test_and_backtracking_option_defaults_to_false(
+    options_type: type[ext.GroundProgramSearchOptions] | type[ext.LiftedProgramSearchOptions],
+) -> None:
+    options = options_type()
     assert options.and_backtracking is False
     options.and_backtracking = True
     assert options.and_backtracking is True

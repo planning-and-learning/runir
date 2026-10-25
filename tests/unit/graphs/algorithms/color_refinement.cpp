@@ -76,7 +76,7 @@ auto make_graph(const boost::json::object& object) -> Graph
         else
             builder.add_directed_edge(vertices.at(source), vertices.at(target));
     }
-    return Graph(std::move(builder));
+    return Graph(builder);
 }
 
 }  // namespace
@@ -172,7 +172,7 @@ TEST(RunirTests, NautyCanonicalizationAcceptsSemanticColors)
     const auto first_green = first_builder.add_vertex(VertexColor { 2 });
     first_builder.add_undirected_edge(first_center, first_blue);
     first_builder.add_undirected_edge(first_center, first_green);
-    const auto first = Graph(std::move(first_builder));
+    const auto first = Graph(first_builder);
 
     auto second_builder = GraphBuilder {};
     const auto second_blue = second_builder.add_vertex(VertexColor { 1 });
@@ -180,7 +180,7 @@ TEST(RunirTests, NautyCanonicalizationAcceptsSemanticColors)
     const auto second_green = second_builder.add_vertex(VertexColor { 2 });
     second_builder.add_undirected_edge(second_center, second_blue);
     second_builder.add_undirected_edge(second_center, second_green);
-    const auto second = Graph(std::move(second_builder));
+    const auto second = Graph(second_builder);
 
     auto first_certificate = graphs::nauty::SparseGraph(first);
     auto second_certificate = graphs::nauty::SparseGraph(second);

@@ -133,7 +133,7 @@ struct QualitativePolicy
 
 struct IncompletePolicyResult
 {
-    enum class FeatureKind
+    enum class FeatureKind : std::uint8_t
     {
         BOOLEAN,
         NUMERICAL
@@ -176,7 +176,7 @@ struct IncompletePolicyResult
     [[nodiscard]] std::vector<std::size_t> get_cyclic_rule_positions() const;
 };
 
-enum class StructuralTerminationStatus
+enum class StructuralTerminationStatus : std::uint8_t
 {
     TERMINATING,
     NON_TERMINATING,

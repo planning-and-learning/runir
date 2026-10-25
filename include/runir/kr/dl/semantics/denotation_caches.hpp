@@ -45,6 +45,7 @@ public:
     DenotationCaches& operator=(const DenotationCaches&) = delete;
     DenotationCaches(DenotationCaches&&) = default;
     DenotationCaches& operator=(DenotationCaches&&) = default;
+    ~DenotationCaches() = default;
 
     template<CategoryTag Category>
     auto& get(bool is_static) noexcept

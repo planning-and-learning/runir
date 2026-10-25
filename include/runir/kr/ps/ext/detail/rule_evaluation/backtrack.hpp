@@ -29,13 +29,14 @@ public:
              StopConcept Stop,
              ExecutionStateViewConcept<Storage> State,
              tyr::planning::StateViewConcept<Kind> PlanningState>
-    bool emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, Emit&& emit, Stop&& stop) const
+    bool
+    emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, const Emit& emit, const Stop& stop) const
     {
-        if (!ext::rule_is_applicable(m_rule, state, context.planning_state, context.environment))
+        if (!ext::rule_is_applicable(m_rule, state, context.planning_state, *context.environment))
             return true;
         if (stop())
             return false;
-        auto failure = detail::make_step<Kind, Storage>(ProgramOutcome::FAILURE, context.storage.retain(state), context.task_context);
+        auto failure = detail::make_step<Kind, Storage>(ProgramOutcome::FAILURE, context.storage->retain(state), *context.task_context);
         failure.rule = m_variant;
         return emit(std::move(failure));
     }

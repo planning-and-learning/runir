@@ -433,9 +433,9 @@ TEST(RunirTests, CommonSieveAppliesFeatureLimitPerResidualComponent)
     EXPECT_EQ(result.components[0].projected.policy.num_numericals, 8);
     EXPECT_EQ(result.components[1].projected.policy.num_numericals, 8);
     ASSERT_TRUE(result.scc_feature_positions);
-    ASSERT_EQ(result.scc_feature_positions->size(), 2);
-    EXPECT_EQ(result.scc_feature_positions->front().numerical_positions, std::vector<std::size_t>({ 0, 1, 2, 3, 4, 5, 6, 7 }));
-    EXPECT_EQ(result.scc_feature_positions->back().numerical_positions, std::vector<std::size_t>({ 8, 9, 10, 11, 12, 13, 14, 15 }));
+    ASSERT_EQ(result.scc_feature_positions.value().size(), 2);
+    EXPECT_EQ(result.scc_feature_positions.value().front().numerical_positions, std::vector<std::size_t>({ 0, 1, 2, 3, 4, 5, 6, 7 }));
+    EXPECT_EQ(result.scc_feature_positions.value().back().numerical_positions, std::vector<std::size_t>({ 8, 9, 10, 11, 12, 13, 14, 15 }));
 }
 
 TEST(RunirTests, CommonSieveRejectsOversizedResidualComponent)
@@ -903,9 +903,9 @@ TEST(RunirTests, CommonSieveReportsProjectedSccBeforeCompleteFiltering)
 
     EXPECT_TRUE(result.components.empty());
     ASSERT_TRUE(result.scc_feature_positions);
-    ASSERT_EQ(result.scc_feature_positions->size(), 1);
-    EXPECT_TRUE(result.scc_feature_positions->front().boolean_positions.empty());
-    EXPECT_EQ(result.scc_feature_positions->front().numerical_positions, std::vector<std::size_t>({ 0 }));
+    ASSERT_EQ(result.scc_feature_positions.value().size(), 1);
+    EXPECT_TRUE(result.scc_feature_positions.value().front().boolean_positions.empty());
+    EXPECT_EQ(result.scc_feature_positions.value().front().numerical_positions, std::vector<std::size_t>({ 0 }));
 }
 
 TEST(RunirTests, CommonSieveReportsEngagedEmptySccsWhenCompleteStageRuns)
@@ -914,7 +914,7 @@ TEST(RunirTests, CommonSieveReportsEngagedEmptySccsWhenCompleteStageRuns)
 
     EXPECT_TRUE(result.components.empty());
     ASSERT_TRUE(result.scc_feature_positions);
-    EXPECT_TRUE(result.scc_feature_positions->empty());
+    EXPECT_TRUE(result.scc_feature_positions.value().empty());
 }
 
 }  // namespace runir::tests

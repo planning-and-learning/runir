@@ -20,7 +20,7 @@
 namespace runir::kr::ps::icp
 {
 
-enum class ProgramProofStatus
+enum class ProgramProofStatus : std::uint8_t
 {
     SUCCESS,
     FAILURE,

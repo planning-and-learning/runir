@@ -31,14 +31,14 @@ using Object = runir::kr::ps::ext::dl::ast::PositionedVariant<ArgumentObject, Re
 
 struct XCondition : boost::spirit::x3::position_tagged
 {
-    bool belongs;
+    bool belongs = false;
     Object object;
     Identifier feature;
 };
 
 struct XEffect : boost::spirit::x3::position_tagged
 {
-    bool enter;
+    bool enter = false;
     Object object;
     Identifier feature;
 };

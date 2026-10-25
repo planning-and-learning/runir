@@ -6,8 +6,10 @@
 #include "planning_fixtures.hpp"
 
 #include <chrono>
-#include <cstdio>
+#include <exception>
+#include <fmt/core.h>
 #include <fstream>
+#include <iostream>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/detail/evaluation_helpers.hpp>
@@ -17,6 +19,7 @@
 #include <runir/kr/dl/semantics/state_evaluation.hpp>
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
+#include <span>
 #include <string>
 #include <tyr/planning/lifted/successor_generator.hpp>
 
@@ -39,19 +42,18 @@ std::string must_pass_text(const std::string& text)
     }
     throw std::invalid_argument("no q_must_pass query");
 }
-}  // namespace
 
-int main(int argc, char** argv)
+int run(std::span<char*> args)
 {
-    if (argc < 4)
+    if (args.size() < 4)
     {
-        std::fprintf(stderr, "usage: %s <domain.pddl> <task.pddl> <program> [repeats]\n", argv[0]);
+        fmt::print(stderr, "usage: {} <domain.pddl> <task.pddl> <program> [repeats]\n", args[0]);
         return 2;
     }
-    const auto repeats = argc > 4 ? std::stoul(argv[4]) : 3ul;
-    auto file = std::ifstream(argv[3]);
+    const auto repeats = args.size() > 4 ? std::stoul(args[4]) : 3ul;
+    auto file = std::ifstream(args[3]);
     const auto text = must_pass_text(std::string(std::istreambuf_iterator<char>(file), {}));
-    const auto search = runir::tests::make_lifted_context(argv[1], argv[2]);
+    const auto search = runir::tests::make_lifted_context(args[1], args[2]);
     const auto domain = search->task->get_domain().get_domain();
     auto repository = runir::kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
     const auto count = runir::kr::ps::ext::dl::parse_numerical("(n_count " + text + ")", domain, *repository);
@@ -104,21 +106,35 @@ int main(int argc, char** argv)
         feature->must_pass.must_pass(input, sources, targets, probes, out, heuristic);
         const auto must_pass_time = seconds_since(start);
         const auto& after = feature->must_pass.statistics();
-        std::printf("repeat %zu: arguments %.3f s (targets %zu rows), translate %.3f s, heuristic %.3f s, must_pass %.3f s (slots %.3f s): rows %zu, "
-                    "keys %zu, expanded %zu, backward %zu, edges %zu, removals %zu\n",
-                    repeat,
-                    arguments_time,
-                    targets.size(),
-                    translate_time,
-                    heuristic_time,
-                    must_pass_time,
-                    slot_time,
-                    out.size(),
-                    after.keys - before.keys,
-                    after.vertices - before.vertices,
-                    after.backward - before.backward,
-                    after.edges - before.edges,
-                    after.removals - before.removals);
+        fmt::print("repeat {}: arguments {:.3f} s (targets {} rows), translate {:.3f} s, heuristic {:.3f} s, must_pass {:.3f} s (slots {:.3f} s): rows {}, "
+                   "keys {}, expanded {}, backward {}, edges {}, removals {}\n",
+                   repeat,
+                   arguments_time,
+                   targets.size(),
+                   translate_time,
+                   heuristic_time,
+                   must_pass_time,
+                   slot_time,
+                   out.size(),
+                   after.keys - before.keys,
+                   after.vertices - before.vertices,
+                   after.backward - before.backward,
+                   after.edges - before.edges,
+                   after.removals - before.removals);
     }
     return 0;
+}
+}  // namespace
+
+int main(int argc, char** argv)
+{
+    try
+    {
+        return run(std::span(argv, static_cast<size_t>(argc)));
+    }
+    catch (const std::exception& error)
+    {
+        std::cerr << error.what() << '\n';
+        return 1;
+    }
 }

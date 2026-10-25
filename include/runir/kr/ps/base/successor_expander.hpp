@@ -22,13 +22,13 @@ template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<K
 class SuccessorExpander
 {
 private:
-    runir::kr::TaskContext<Kind>& m_task_context;
+    runir::kr::TaskContext<Kind>* m_task_context;
     detail::RuleEvaluators<Kind, EvaluationPolicy> m_rules;
 
 public:
     using LabeledNode = tyr::planning::LabeledNode<Kind>;
 
-    SuccessorExpander(runir::kr::TaskContext<Kind>& task_context, SketchView sketch) : m_task_context(task_context), m_rules(task_context, sketch) {}
+    SuccessorExpander(runir::kr::TaskContext<Kind>& task_context, SketchView sketch) : m_task_context(&task_context), m_rules(task_context, sketch) {}
 
     auto& get_environment() noexcept { return m_rules.get_environment(); }
 
@@ -38,14 +38,14 @@ public:
     /// Return true if enumeration completed, false if stopped.
     /// Callbacks must not reenter this expander or its generator.
     template<std::predicate<LabeledNode, RuleView> Emit, StopConcept Stop>
-    bool for_each_successor(const tyr::planning::StateView<Kind>& state, SketchSearchStatistics& statistics, Emit&& emit, Stop&& stop)
+    bool for_each_successor(const tyr::planning::StateView<Kind>& state, SketchSearchStatistics& statistics, const Emit& emit, const Stop& stop)
     {
         if (stop())
             return false;
 
         // All candidates share the source state, so its dynamic features are cached for this expansion.
         m_rules.begin_source();
-        auto& search_context = *m_task_context.search_context;
+        auto& search_context = *m_task_context->search_context;
         auto& generator = *search_context.successor_generator;
         // Tyr requires a Node, but policy expansion does not carry a path metric.
         const auto node = tyr::planning::Node<Kind>(state, 0);

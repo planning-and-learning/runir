@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include <type_traits>
 #include <vector>
+#include <yggdrasil/core/config.hpp>
 #include <yggdrasil/formalism/builder.hpp>
 
 namespace runir::kr::parser::constructors
@@ -71,7 +72,7 @@ template<typename Context, typename Tag>
 using TargetNumerical = typename Context::Target::template Numerical<Tag>;
 
 template<typename T>
-const T& unwrap(const T& value) noexcept
+const T& unwrap(const T& value YGG_LIFETIMEBOUND) noexcept
 { return value; }
 
 template<typename T>
@@ -96,11 +97,11 @@ using Unwrapped = typename UnwrapTraits<T>::Type;
 
 template<typename T, typename Context>
 auto checkout(const Context& context)
-{ return ygg::formalism::checkout<T>(context.builder); }
+{ return ygg::formalism::checkout<T>(context.builder()); }
 
 template<typename Context, typename T>
 auto intern(const Context& context, ygg::Data<T>& data)
-{ return insert(context.repository, data).first; }
+{ return insert(context.repository(), data).first; }
 
 template<runir::kr::dl::CategoryTag Category, typename Context, typename T>
 auto intern_constructor(const Context& context, ygg::Index<T> index)
@@ -151,7 +152,7 @@ auto parse(const runir::kr::dl::grammar::ast::QueryAtomicState& node, tyr::forma
                                                 node.predicate_name,
                                                 node.columns.size(),
                                                 "q_atomic_state",
-                                                context.diagnostics,
+                                                context.diagnostics(),
                                                 [&]<typename T>(T, auto predicate)
                                                 {
                                                     auto data = checkout<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>>(context);
@@ -168,7 +169,7 @@ auto parse(const runir::kr::dl::grammar::ast::QueryAtomicGoal& node, tyr::formal
                                                 node.predicate_name,
                                                 node.columns.size(),
                                                 "q_atomic_goal",
-                                                context.diagnostics,
+                                                context.diagnostics(),
                                                 [&]<typename T>(T, auto predicate)
                                                 {
                                                     auto data = checkout<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>>(context);
@@ -272,7 +273,7 @@ template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::QuerySelectValue& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
     const auto arg = parse(node.arg.get(), domain, context).get_index();
-    const auto object = runir::kr::parser::require_object(domain, node.object_name, context.diagnostics);
+    const auto object = runir::kr::parser::require_object(domain, node.object_name, context.diagnostics());
     auto data = checkout<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>>(context);
     data->arg = arg;
     data->column = parse_column(node.column, context);
@@ -295,11 +296,11 @@ QueryView parse(const runir::kr::dl::grammar::ast::Query& node, tyr::formalism::
             {
                 if (error.diagnostic().location)
                     throw;
-                context.diagnostics.throw_at(concrete, runir::kr::InvalidExpressionError(error.message()));
+                context.diagnostics().throw_at(concrete, runir::kr::InvalidExpressionError(error.message()));
             }
             catch (const std::logic_error& error)
             {
-                context.diagnostics.throw_at(concrete, runir::kr::InvalidExpressionError(error.what()));
+                context.diagnostics().throw_at(concrete, runir::kr::InvalidExpressionError(error.what()));
             }
         },
         node.get());
@@ -331,7 +332,7 @@ auto parse(const runir::kr::dl::grammar::ast::Constructor<Category, runir::kr::d
     }
     catch (const std::logic_error& error)
     {
-        context.diagnostics.throw_at(node, runir::kr::InvalidExpressionError(error.what()));
+        context.diagnostics().throw_at(node, runir::kr::InvalidExpressionError(error.what()));
     }
 }
 
@@ -356,7 +357,7 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptAtomicState& node, tyr::for
                                                 node.predicate_name,
                                                 1,
                                                 "ConceptAtomicState",
-                                                context.diagnostics,
+                                                context.diagnostics(),
                                                 [&]<typename T>(T, auto predicate)
                                                 {
                                                     auto data = checkout<TargetConcept<Context, runir::kr::dl::AtomicStateTag<T>>>(context);
@@ -373,7 +374,7 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptAtomicGoal& node, tyr::form
                                                 node.predicate_name,
                                                 1,
                                                 "ConceptAtomicGoal",
-                                                context.diagnostics,
+                                                context.diagnostics(),
                                                 [&]<typename T>(T, auto predicate)
                                                 {
                                                     auto data = checkout<TargetConcept<Context, runir::kr::dl::AtomicGoalTag<T>>>(context);
@@ -474,7 +475,7 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptRoleFillers& node, tyr::for
     const auto role = parse(node.role, domain, context);
     auto data = checkout<TargetConcept<Context, runir::kr::dl::RoleFillersTag>>(context);
     data->role = role.get_index();
-    runir::kr::parser::append_objects(domain, node.object_names, context.diagnostics, data->objects);
+    runir::kr::parser::append_objects(domain, node.object_names, context.diagnostics(), data->objects);
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
 }
 
@@ -482,7 +483,7 @@ template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptOneOf& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
     auto data = checkout<TargetConcept<Context, runir::kr::dl::OneOfTag>>(context);
-    runir::kr::parser::append_objects(domain, node.object_names, context.diagnostics, data->objects);
+    runir::kr::parser::append_objects(domain, node.object_names, context.diagnostics(), data->objects);
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
 }
 
@@ -499,7 +500,7 @@ template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptNominal& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
     auto data = checkout<TargetConcept<Context, runir::kr::dl::NominalTag>>(context);
-    data->object = runir::kr::parser::require_object(domain, node.object_name, context.diagnostics);
+    data->object = runir::kr::parser::require_object(domain, node.object_name, context.diagnostics());
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
 }
 
@@ -517,7 +518,7 @@ auto parse(const runir::kr::dl::grammar::ast::RoleAtomicState& node, tyr::formal
                                                 node.predicate_name,
                                                 2,
                                                 "RoleAtomicState",
-                                                context.diagnostics,
+                                                context.diagnostics(),
                                                 [&]<typename T>(T, auto predicate)
                                                 {
                                                     auto data = checkout<TargetRole<Context, runir::kr::dl::AtomicStateTag<T>>>(context);
@@ -534,7 +535,7 @@ auto parse(const runir::kr::dl::grammar::ast::RoleAtomicGoal& node, tyr::formali
                                                 node.predicate_name,
                                                 2,
                                                 "RoleAtomicGoal",
-                                                context.diagnostics,
+                                                context.diagnostics(),
                                                 [&]<typename T>(T, auto predicate)
                                                 {
                                                     auto data = checkout<TargetRole<Context, runir::kr::dl::AtomicGoalTag<T>>>(context);
@@ -619,7 +620,7 @@ auto parse(const runir::kr::dl::grammar::ast::BooleanAtomicState& node, tyr::for
                                                 node.predicate_name,
                                                 0,
                                                 "BooleanAtomicState",
-                                                context.diagnostics,
+                                                context.diagnostics(),
                                                 [&]<typename T>(T, auto predicate)
                                                 {
                                                     auto data = checkout<TargetBoolean<Context, runir::kr::dl::AtomicStateTag<T>>>(context);
@@ -636,7 +637,7 @@ auto parse(const runir::kr::dl::grammar::ast::BooleanAtomicGoal& node, tyr::form
                                                 node.predicate_name,
                                                 0,
                                                 "BooleanAtomicGoal",
-                                                context.diagnostics,
+                                                context.diagnostics(),
                                                 [&]<typename T>(T, auto predicate)
                                                 {
                                                     auto data = checkout<TargetBoolean<Context, runir::kr::dl::AtomicGoalTag<T>>>(context);

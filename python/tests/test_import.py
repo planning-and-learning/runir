@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 import pyrunir
-from pyrunir import _source_version
+from pyrunir import source_version
 
 
 def test_source_version_reads_project_table(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -16,7 +16,7 @@ def test_source_version_reads_project_table(tmp_path: Path, monkeypatch: pytest.
     (package / "pyproject.toml").write_text("[tool.example]\nversion = '9.9.9'\n", encoding="utf-8")
     (tmp_path / "pyproject.toml").write_text("[project]\nversion = '1.2.3' # source version\n", encoding="utf-8")
 
-    assert _source_version() == "1.2.3"
+    assert source_version() == "1.2.3"
 
 
 def test_native_prefix_points_to_installed_cmake_package() -> None:

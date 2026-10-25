@@ -102,7 +102,7 @@ public:
         {
         }
 
-        bool is_leaf() const noexcept { return children.empty(); }
+        [[nodiscard]] bool is_leaf() const noexcept { return children.empty(); }
     };
 
     // `component_of[m]` identifies the initial SCC containing memory state m.
@@ -131,12 +131,12 @@ public:
         }
     }
 
-    const std::vector<NodeIndex>& roots() const noexcept { return roots_; }
-    const std::vector<Node>& nodes() const noexcept { return nodes_; }
+    [[nodiscard]] const std::vector<NodeIndex>& roots() const noexcept { return roots_; }
+    [[nodiscard]] const std::vector<Node>& nodes() const noexcept { return nodes_; }
 
-    NodeIndex leaf_of_memory(std::size_t memory_position) const { return leaf_of_memory_.at(memory_position); }
+    [[nodiscard]] NodeIndex leaf_of_memory(std::size_t memory_position) const { return leaf_of_memory_.at(memory_position); }
 
-    const Node& node(NodeIndex index) const { return nodes_.at(index); }
+    [[nodiscard]] const Node& node(NodeIndex index) const { return nodes_.at(index); }
 
     void mark_boolean(NodeIndex leaf, std::size_t feature_position, std::size_t witnessing_rule_position)
     {
@@ -150,7 +150,7 @@ public:
         current.local_marks.mark_numerical(feature_position, witnessing_rule_position);
     }
 
-    Marks effective_marks(NodeIndex node_index) const
+    [[nodiscard]] Marks effective_marks(NodeIndex node_index) const
     {
         auto result = Marks(num_booleans_, num_numericals_);
         auto current = std::optional<NodeIndex> { node_index };
@@ -266,20 +266,20 @@ public:
 
     bool refine(std::span<const std::size_t> remaining_rule_positions);
 
-    bool share_opponent_scope(std::size_t lhs_rule_position, std::size_t rhs_rule_position) const;
-    bool is_cross_scc_rule(std::size_t rule_position) const;
+    [[nodiscard]] bool share_opponent_scope(std::size_t lhs_rule_position, std::size_t rhs_rule_position) const;
+    [[nodiscard]] bool is_cross_scc_rule(std::size_t rule_position) const;
 
-    SccRefinementForest::Marks marks_for(std::size_t rule_position) const;
+    [[nodiscard]] SccRefinementForest::Marks marks_for(std::size_t rule_position) const;
 
     void establish_r1_mark(std::size_t witnessing_rule_position, std::size_t numerical_position);
     void establish_r2_mark(std::size_t witnessing_rule_position, std::size_t boolean_position);
 
-    const SccRefinementForest& refinement_forest() const { return forest_; }
+    [[nodiscard]] const SccRefinementForest& refinement_forest() const { return forest_; }
 
 private:
-    SccRefinementForest::NodeIndex scc_for_rule(std::size_t rule_position) const;
+    [[nodiscard]] SccRefinementForest::NodeIndex scc_for_rule(std::size_t rule_position) const;
 
-    const dl::QualitativePolicy& policy_;
+    const dl::QualitativePolicy* policy_;
     bool use_memory_scc_scope_;
     SccRefinementForest forest_;
 };

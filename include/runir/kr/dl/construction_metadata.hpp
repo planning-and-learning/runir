@@ -18,7 +18,9 @@ bool infer_is_static(ygg::View<ygg::Index<Expression<Tag>>, C> constructor)
 {
     if constexpr (is_atomic_state_tag_v<Tag>)
         return std::same_as<TagFactKind<Tag>, tyr::formalism::StaticTag>;
-    else if constexpr (is_atomic_goal_tag_v<Tag>)
+    else if constexpr (is_atomic_goal_tag_v<Tag> || std::same_as<Tag, BotTag> || std::same_as<Tag, TopTag> || std::same_as<Tag, UniversalTag>
+                       || std::same_as<Tag, OneOfTag> || std::same_as<Tag, NominalTag> || std::same_as<Tag, BooleanConstantTag>
+                       || std::same_as<Tag, NumericalConstantTag> || std::same_as<Tag, QueryEmptyTag>)
         return true;
     else if constexpr (requires { constructor.get_register(); } || requires { constructor.get_argument(); })
         return false;
@@ -48,10 +50,6 @@ bool infer_is_static(ygg::View<ygg::Index<Expression<Tag>>, C> constructor)
         return constructor.get_role().is_static() && constructor.get_concept().is_static();
     else if constexpr (requires { constructor.get_role(); })
         return constructor.get_role().is_static();
-    else if constexpr (std::same_as<Tag, BotTag> || std::same_as<Tag, TopTag> || std::same_as<Tag, UniversalTag> || std::same_as<Tag, OneOfTag>
-                       || std::same_as<Tag, NominalTag> || std::same_as<Tag, BooleanConstantTag> || std::same_as<Tag, NumericalConstantTag>
-                       || std::same_as<Tag, QueryEmptyTag>)
-        return true;
     else
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL constructor staticness");
 }

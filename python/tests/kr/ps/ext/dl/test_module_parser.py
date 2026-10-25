@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import TypedDict, cast
 
 import pytest
-from ext_execution_utils import ExecutionStep, collect_steps, initial_node
+from ext_execution_utils import ExecutionStep, Outcome, collect_steps
 from fixture_utils import FIXTURE_ROOT, load_fixture, read_fixture
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
@@ -16,7 +16,7 @@ from pytyr.planning.ground import PackedPlan as GroundPackedPlan, Task as Ground
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 from pyyggdrasil.execution import ExecutionContext
 
-from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
+from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext, StateGraphEdgeLabel
 from pyrunir.kr import (
     ArityMismatchError,
     DomainContext,
@@ -281,7 +281,8 @@ def test_module_parser_accepts_more_than_four_registers(category: str) -> None:
     )
 
     module = dl.parse_module(source, planning_domain, repository)
-    assert len(getattr(module, f"get_{category}_registers")()) == 5
+    registers = module.get_concept_registers() if category == "concept" else module.get_role_registers()
+    assert len(registers) == 5
 
 
 def test_parser_exception_hierarchy_matches_cpp_categories() -> None:
@@ -528,51 +529,50 @@ def test_lifted_executor_binding_reports_failure_status() -> None:
     assert result.statistics.choice_depth == 0
 
 
-@pytest.mark.parametrize("kind", ["ground", "lifted"])
-def test_successor_callbacks_stop_and_own_their_native_steps(kind: str) -> None:
+_SUCCESSOR_CALLBACK_PROGRAM = """(:program (:entry main)
+      (:module (:symbol main) (:arguments) (:registers)
+        (:entry source) (:memory source target)
+        (:features (:numerical (:symbol Free) (:expression (n_count (c_atomic_state "free")))))
+        (:rules (:rule (:symbol pick) (:expression (:source-memory source) (:target-memory target)
+          (:sketch (:conditions) (:effects (decreases Free))))))))"""
+
+
+def _transition(step: ExecutionStep) -> StateGraphEdgeLabel:
+    transition = step.state_transition
+    assert transition is not None
+    return transition
+
+
+def _check_ground_successor_callbacks() -> None:
     directory = data_root() / "classical" / "tests" / "gripper"
     parser = Parser(directory / "domain.pddl", ParserOptions())
     planning_task = parser.parse_task(directory / "test-1.pddl", ParserOptions())
     planning_domain = parser.get_domain()
     execution_context = ExecutionContext(1)
     lifted_task = Task(planning_task)
-    if kind == "ground":
-        task = lifted_task.instantiate_ground_task(execution_context, GroundTaskInstantiationOptions()).task
-        assert task is not None
-        search = GroundTaskSearchContext(task, execution_context)
-        context = GroundTaskContext(DomainContext(planning_domain), search)
-        expander_type = ext.GroundSuccessorExpander
-    else:
-        task = lifted_task
-        search = LiftedTaskSearchContext(task, execution_context)
-        context = LiftedTaskContext(DomainContext(planning_domain), search)
-        expander_type = ext.LiftedSuccessorExpander
-    program = dl.parse_program(
-        """(:program (:entry main)
-      (:module (:symbol main) (:arguments) (:registers)
-        (:entry source) (:memory source target)
-        (:features (:numerical (:symbol Free) (:expression (n_count (c_atomic_state "free")))))
-        (:rules (:rule (:symbol pick) (:expression (:source-memory source) (:target-memory target)
-          (:sketch (:conditions) (:effects (decreases Free))))))))""",
-        planning_domain,
-        context.domain_context.ext_repository,
-    )
-    expander = expander_type(context, program)
-    node = initial_node(context)
+    task = lifted_task.instantiate_ground_task(execution_context, GroundTaskInstantiationOptions()).task
+    assert task is not None
+    search = GroundTaskSearchContext(task, execution_context)
+    context = GroundTaskContext(DomainContext(planning_domain), search)
+    program = dl.parse_program(_SUCCESSOR_CALLBACK_PROGRAM, planning_domain, context.domain_context.ext_repository)
+    expander = ext.GroundSuccessorExpander(context, program)
+    node = search.successor_generator.get_initial_node(search.state_repository, search.axiom_evaluator)
     initial = expander.initial_state(node.get_state())
     statistics = ext.ProgramSearchStatistics()
-    actual: list[ExecutionStep] = []
+    actual: list[ext.GroundProgramExecutionStep] = []
 
-    def emit(step: ExecutionStep) -> bool:
-        actual.append(step)
+    def emit(outcome: Outcome) -> bool:
+        assert isinstance(outcome, ext.GroundProgramExecutionStep)
+        actual.append(outcome)
         return True
 
     assert not expander.for_each_successor(initial, statistics, emit, lambda: True)
     assert actual == []
     assert statistics.num_generated == statistics.num_expanded == 0
 
-    def first(step: ExecutionStep) -> bool:
-        actual.append(step)
+    def first(outcome: Outcome) -> bool:
+        assert isinstance(outcome, ext.GroundProgramExecutionStep)
+        actual.append(outcome)
         return False
 
     assert not expander.for_each_successor(initial, statistics, first, lambda: False)
@@ -587,20 +587,91 @@ def test_successor_callbacks_stop_and_own_their_native_steps(kind: str) -> None:
         search.state_repository,
         search.axiom_evaluator,
     )
-    assert Counter((step.state_transition.action, step.target.state.get_index()) for step in actual) == Counter(
+    assert Counter((_transition(step).action, step.target.state.get_index()) for step in actual) == Counter(
         (step.label, step.node.get_state().get_index())
         for step in expected
         if expander.matching_rule(initial, step) is not None
     )
     retained = actual[0]
-    signature = (str(retained.state_transition.action), str(retained.target.state))
+    signature = (str(_transition(retained).action), str(retained.target.state))
     actual.clear()
     del expected, node, initial, expander, program, context, search, task, lifted_task
     del planning_task, planning_domain, execution_context, parser
     gc.collect()
 
-    assert (str(retained.state_transition.action), str(retained.target.state)) == signature
-    assert retained.planning_successor.node.get_state().unpack() == retained.target.state
+    assert (str(_transition(retained).action), str(retained.target.state)) == signature
+    successor = retained.planning_successor
+    assert successor is not None
+    assert successor.node.get_state().unpack() == retained.target.state
+
+
+def _check_lifted_successor_callbacks() -> None:
+    directory = data_root() / "classical" / "tests" / "gripper"
+    parser = Parser(directory / "domain.pddl", ParserOptions())
+    planning_task = parser.parse_task(directory / "test-1.pddl", ParserOptions())
+    planning_domain = parser.get_domain()
+    execution_context = ExecutionContext(1)
+    lifted_task = Task(planning_task)
+    task = lifted_task
+    search = LiftedTaskSearchContext(task, execution_context)
+    context = LiftedTaskContext(DomainContext(planning_domain), search)
+    program = dl.parse_program(_SUCCESSOR_CALLBACK_PROGRAM, planning_domain, context.domain_context.ext_repository)
+    expander = ext.LiftedSuccessorExpander(context, program)
+    node = search.successor_generator.get_initial_node(search.state_repository, search.axiom_evaluator)
+    initial = expander.initial_state(node.get_state())
+    statistics = ext.ProgramSearchStatistics()
+    actual: list[ext.LiftedProgramExecutionStep] = []
+
+    def emit(outcome: Outcome) -> bool:
+        assert isinstance(outcome, ext.LiftedProgramExecutionStep)
+        actual.append(outcome)
+        return True
+
+    assert not expander.for_each_successor(initial, statistics, emit, lambda: True)
+    assert actual == []
+    assert statistics.num_generated == statistics.num_expanded == 0
+
+    def first(outcome: Outcome) -> bool:
+        assert isinstance(outcome, ext.LiftedProgramExecutionStep)
+        actual.append(outcome)
+        return False
+
+    assert not expander.for_each_successor(initial, statistics, first, lambda: False)
+    assert len(actual) == statistics.num_generated == 1
+    actual.clear()
+    assert expander.for_each_successor(initial, statistics, emit, lambda: False)
+    assert len(actual) > 1
+    assert statistics.num_generated == len(actual) + 1
+    assert statistics.num_expanded == 0
+    expected = search.successor_generator.get_labeled_successor_nodes(
+        node,
+        search.state_repository,
+        search.axiom_evaluator,
+    )
+    assert Counter((_transition(step).action, step.target.state.get_index()) for step in actual) == Counter(
+        (step.label, step.node.get_state().get_index())
+        for step in expected
+        if expander.matching_rule(initial, step) is not None
+    )
+    retained = actual[0]
+    signature = (str(_transition(retained).action), str(retained.target.state))
+    actual.clear()
+    del expected, node, initial, expander, program, context, search, task, lifted_task
+    del planning_task, planning_domain, execution_context, parser
+    gc.collect()
+
+    assert (str(_transition(retained).action), str(retained.target.state)) == signature
+    successor = retained.planning_successor
+    assert successor is not None
+    assert successor.node.get_state().unpack() == retained.target.state
+
+
+@pytest.mark.parametrize("kind", ["ground", "lifted"])
+def test_successor_callbacks_stop_and_own_their_native_steps(kind: str) -> None:
+    if kind == "ground":
+        _check_ground_successor_callbacks()
+    else:
+        _check_lifted_successor_callbacks()
 
 
 def test_ground_execution_views_own_their_task_and_program_contexts() -> None:
@@ -610,8 +681,13 @@ def test_ground_execution_views_own_their_task_and_program_contexts() -> None:
     program = dl.ModuleFactory.create_bonet_et_al_icaps2024_program(planning_domain, repository)
 
     expander = ext.GroundSuccessorExpander(task_context, program)
-    initial = expander.initial_state(initial_node(task_context).get_state())
-    duplicate_initial = expander.initial_state(initial_node(task_context).get_state())
+    search = task_context.search_context
+    initial = expander.initial_state(
+        search.successor_generator.get_initial_node(search.state_repository, search.axiom_evaluator).get_state()
+    )
+    duplicate_initial = expander.initial_state(
+        search.successor_generator.get_initial_node(search.state_repository, search.axiom_evaluator).get_state()
+    )
     assert isinstance(initial, ext.GroundProgramState)
     assert initial.call_stack is None
     assert isinstance(initial.module_state, ext.GroundModuleState)
@@ -651,7 +727,11 @@ def test_lifted_execution_views_and_proof_labels_survive_owner_destruction(mode:
     program = dl.parse_program(read_fixture("kr/ps/ext/execution/empty.program"), planning_domain, repository)
 
     expander = ext.LiftedSuccessorExpander(task_context, program)
-    initial = expander.initial_state(initial_node(task_context).get_state())
+    initial = expander.initial_state(
+        search_context.successor_generator.get_initial_node(
+            search_context.state_repository, search_context.axiom_evaluator
+        ).get_state()
+    )
     assert isinstance(initial, ext.LiftedProgramState)
     assert initial.call_stack is None
     assert isinstance(initial.module_state, ext.LiftedModuleState)

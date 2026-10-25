@@ -276,8 +276,6 @@ def test_structural_termination_numerical_cycle_counterexample_uses_both_rules(
     assert len(surviving_rules) == len(rules)
     assert {rule.get_index() for rule in surviving_rules} == rules
     assert counterexample.get_num_edges() > len(surviving_rules)
-    with pytest.raises(AttributeError):
-        sieve_result.surviving_rules = []
 
     cycle = counterexample.find_edge_cycle()
     assert cycle

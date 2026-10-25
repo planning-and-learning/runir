@@ -337,7 +337,7 @@ void check_incremental_evaluation()
                 EXPECT_EQ(state.changed(), before != snapshot(state.get_result()));
             }
             compare_full(state, context);
-            const auto after = snapshot(state.get_result());
+            auto after = snapshot(state.get_result());
             auto unchanged = evaluator.update(context, empty_delta, workspace);
             expect_empty_delta(unchanged);
             EXPECT_EQ(snapshot(unchanged.get_result()), after);

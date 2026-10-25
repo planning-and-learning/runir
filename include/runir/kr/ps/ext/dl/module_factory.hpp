@@ -3,6 +3,7 @@
 
 #include "runir/kr/ps/ext/declarations.hpp"
 
+#include <cstdint>
 #include <string>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <vector>
@@ -10,7 +11,7 @@
 namespace runir::kr::ps::ext::dl
 {
 
-enum class ModuleSpecification
+enum class ModuleSpecification : std::uint8_t
 {
     ON_BONET_ET_AL_ICAPS2024,
     ON_TABLE_BONET_ET_AL_ICAPS2024,

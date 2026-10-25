@@ -87,7 +87,7 @@ struct LoadRule : boost::spirit::x3::position_tagged
 
 struct OrderTerm : boost::spirit::x3::position_tagged
 {
-    OrderDirection direction;
+    OrderDirection direction = OrderDirection::MIN;
     Identifier feature;
 };
 

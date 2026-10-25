@@ -82,10 +82,10 @@ static_assert(requires(BaseFeatureInExt feature, BaseConditionInExt condition) {
 // Storage contexts remain structural; no exact repository type is required.
 struct BaseFeatureStorage
 {
-    const BaseCustomRepository& repository;
-    [[nodiscard]] const auto& get_dl_repository() const { return repository.get_dl_repository(); }
-    [[nodiscard]] const auto& get_index() const { return repository.get_index(); }
-    friend const BaseCustomRepository& get_repository(const BaseFeatureStorage& storage) { return storage.repository; }
+    const BaseCustomRepository* repository;
+    [[nodiscard]] const auto& get_dl_repository() const { return repository->get_dl_repository(); }
+    [[nodiscard]] const auto& get_index() const { return repository->get_index(); }
+    friend const BaseCustomRepository& get_repository(const BaseFeatureStorage& storage) { return *storage.repository; }
 };
 
 template<typename Type, typename Repository, typename Context>

@@ -24,6 +24,7 @@
 #include <yggdrasil/containers/associative_containers.hpp>
 #include <yggdrasil/core/children.hpp>
 #include <yggdrasil/core/concepts.hpp>
+#include <yggdrasil/core/config.hpp>
 #include <yggdrasil/core/dependent_false.hpp>
 #include <yggdrasil/core/type_list.hpp>
 #include <yggdrasil/database/optimization/optimization.hpp>
@@ -154,7 +155,11 @@ inline std::vector<QueryView<>> lower(const ygg::database::QueryPlan& plan, std:
     }
     std::vector<QueryView<>> roots;
     for (const auto root : plan.roots())
-        roots.push_back(lowered.at(root.get_value()).value());
+    {
+        const auto& lowered_root = lowered.at(root.get_value());
+        YGG_ASSUME(lowered_root.has_value());  // Every plan node was lowered above.
+        roots.push_back(*lowered_root);
+    }
     return roots;
 }
 
@@ -171,7 +176,7 @@ class QueryOptimizer
 {
 public:
     /// statistics must outlive the optimizer; empty statistics plan every join block structurally.
-    QueryOptimizer(ConstructorRepository& repository, const QueryStatistics& statistics) : m_repository(repository), m_statistics(statistics) {}
+    QueryOptimizer(ConstructorRepository& repository, const QueryStatistics& statistics) : m_repository(&repository), m_statistics(&statistics) {}
 
     template<typename T>
     RecordView<T> optimize(RecordView<T> view)
@@ -190,7 +195,7 @@ private:
     {
         const auto key = runir::kr::detail::record_key<ConstructorRepositoryTypes>(view);
         if (const auto it = m_rewritten.find(key); it != m_rewritten.end())
-            return ygg::make_view(ygg::Index<T>(it->second), m_repository);
+            return ygg::make_view(ygg::Index<T>(it->second), *m_repository);
         const auto result = rewrite(view);
         m_rewritten.emplace(key, result.get_index().get_value());
         return result;
@@ -200,7 +205,7 @@ private:
     RecordView<T> rewrite(RecordView<T> view)
     {
         auto data = ygg::map_children<ConstructorRepositoryTypes>(view, [&]<typename U>(RecordView<U> child) { return optimize<U>(child); });
-        return runir::kr::dl::insert(m_repository, data).first;
+        return runir::kr::dl::insert(*m_repository, data).first;
     }
 
     /// Only the projected columns of the query are used, so the optimizer may drop the others early. The projection
@@ -219,7 +224,7 @@ private:
             },
             root.get_variant());
         auto data = ygg::Data<QueryProjection<Category>>(root.get_index(), view.get_data().columns);
-        return runir::kr::dl::insert(m_repository, data).first;
+        return runir::kr::dl::insert(*m_repository, data).first;
     }
 
     /// Only emptiness matters, so the optimizer may project the query onto no columns.
@@ -232,7 +237,7 @@ private:
                 {
                     auto data = ygg::Data<Boolean<NonemptyTag>>();
                     data.arg = optimize_root(arg, Labels {}).get_index();
-                    return runir::kr::dl::insert(m_repository, data).first;
+                    return runir::kr::dl::insert(*m_repository, data).first;
                 }
                 else
                     return rewrite<Boolean<NonemptyTag>>(view);
@@ -247,7 +252,7 @@ private:
         auto data = Data(optimize_argument<typename Data::Vertex>(view.get_lhs(), ygg::database::Evaluation::full),
                          optimize_argument<typename Data::Edge>(view.get_mid(), ygg::database::Evaluation::bound),
                          optimize_argument<typename Data::Vertex>(view.get_rhs(), ygg::database::Evaluation::full));
-        return runir::kr::dl::insert(m_repository, data).first;
+        return runir::kr::dl::insert(*m_repository, data).first;
     }
 
     /// The edges of a must-pass query are explored per vertex, with the key and the source columns bound, never fully.
@@ -258,7 +263,7 @@ private:
                                                        optimize_root(view.get_edges(), std::nullopt, ygg::database::Evaluation::bound).get_index(),
                                                        optimize_root(view.get_targets(), std::nullopt).get_index(),
                                                        optimize_root(view.get_probes(), std::nullopt).get_index());
-        return runir::kr::dl::insert(m_repository, data).first;
+        return runir::kr::dl::insert(*m_repository, data).first;
     }
 
     /// The index of an optimized argument that is a query evaluated as given or another record.
@@ -288,13 +293,13 @@ private:
         if (required)
             translated = translator.project(translated, *required);
         auto statistics = ygg::database::Statistics();
-        statistics.objects = m_statistics.objects;
+        statistics.objects = m_statistics->objects;
         const auto slot_leaves = translator.get_leaves(root.get_context());
         auto leaves = std::vector<QueryView<>>();
         for (size_t slot = 0; slot < slot_leaves.size(); ++slot)
         {
             const auto leaf = slot_leaves[slot];
-            if (const auto it = m_statistics.leaves.find(leaf); it != m_statistics.leaves.end())
+            if (const auto it = m_statistics->leaves.find(leaf); it != m_statistics->leaves.end())
                 statistics.inputs.emplace(slot, it->second);
             // Leaves are not optimized themselves, but their concept/role arguments may hold queries.
             leaves.push_back(memoized(leaf));
@@ -302,13 +307,13 @@ private:
         const auto plan = ygg::database::optimize(std::span<const ygg::database::QueryView<>>(&translated, 1),
                                                   std::span<const ygg::database::Evaluation>(&evaluation, 1),
                                                   statistics);
-        const auto result = detail::lower(plan, leaves, m_repository).front();
+        const auto result = detail::lower(plan, leaves, *m_repository).front();
         optimized.emplace(key, result);
         return result;
     }
 
-    ConstructorRepository& m_repository;
-    const QueryStatistics& m_statistics;
+    ConstructorRepository* m_repository;
+    const QueryStatistics* m_statistics;
     ygg::UnorderedMap<runir::kr::detail::RecordKey, ygg::uint_t> m_rewritten;  ///< Rewritten record index by record.
     ygg::UnorderedMap<std::pair<QueryView<>, Labels>, QueryView<>> m_optimized;
     ygg::UnorderedMap<std::pair<QueryView<>, Labels>, QueryView<>> m_projected;

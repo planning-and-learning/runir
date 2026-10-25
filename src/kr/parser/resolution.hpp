@@ -37,7 +37,7 @@ auto resolve_predicate(tyr::formalism::planning::DomainView domain,
                        size_t arity,
                        const char* constructor_name,
                        const DiagnosticContext& diagnostics,
-                       Make&& make)
+                       Make make)
 {
     if (auto predicate = require_predicate<tyr::formalism::StaticTag>(domain, name, arity, constructor_name, diagnostics))
         return make(tyr::formalism::StaticTag {}, *predicate);

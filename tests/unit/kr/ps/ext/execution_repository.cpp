@@ -137,7 +137,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         canonicalize(*data);
         const auto found = denotations.find(*data);
         ASSERT_TRUE(found);
-        EXPECT_EQ(found->get_index(), registers.get_index());
+        EXPECT_EQ(found.value().get_index(), registers.get_index());
         const auto [duplicate, created] = ygg::formalism::insert(denotations, *data);
         EXPECT_FALSE(created);
         EXPECT_EQ(duplicate.get_index(), registers.get_index());
@@ -165,7 +165,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         data->boolean_arguments = arguments.get_data().boolean_arguments;
         const auto found = denotations.find(*data);
         ASSERT_TRUE(found);
-        EXPECT_EQ(found->get_index(), arguments.get_index());
+        EXPECT_EQ(found.value().get_index(), arguments.get_index());
         const auto [duplicate, created] = denotations.insert(*data);
         EXPECT_FALSE(created);
         EXPECT_EQ(duplicate.get_index(), arguments.get_index());
@@ -215,7 +215,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         EXPECT_EQ(&duplicate.get_registers().get_context(), &denotations);
         const auto found = execution_repository->find(data);
         ASSERT_TRUE(found);
-        EXPECT_EQ(*found, callee_configuration);
+        EXPECT_EQ(found.value(), callee_configuration);
 
         const auto successors =
             search_context->successor_generator->get_successor_nodes(initial, *search_context->state_repository, *search_context->axiom_evaluator);
@@ -274,9 +274,10 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     }
 
     ASSERT_TRUE(callee_frame.get_caller());
-    EXPECT_EQ(callee_frame.get_caller()->get_index(), caller_frame.get_index());
-    EXPECT_EQ(callee_frame.get_caller()->get_registers().template get<kr::dl::ConceptTag>()[0].value().get_index(), ygg::Index<tyr::formalism::Object>(0));
-    const auto role_value = callee_frame.get_caller()->get_registers().template get<kr::dl::RoleTag>()[0];
+    EXPECT_EQ(callee_frame.get_caller().value().get_index(), caller_frame.get_index());
+    EXPECT_EQ(callee_frame.get_caller().value().get_registers().template get<kr::dl::ConceptTag>()[0].value().get_index(),
+              ygg::Index<tyr::formalism::Object>(0));
+    const auto role_value = callee_frame.get_caller().value().get_registers().template get<kr::dl::RoleTag>()[0];
     ASSERT_TRUE(role_value);
     const auto pair = role_value.value();
     EXPECT_EQ(pair.get_first().get_index(), ygg::Index<tyr::formalism::Object>(0));

@@ -20,7 +20,7 @@ class EvaluationEnvironment
 private:
     using StateDlContext = runir::kr::dl::semantics::StateEvaluationContext<Kind>;
 
-    runir::kr::dl::semantics::Builder& m_dl_builder;
+    runir::kr::dl::semantics::Builder* m_dl_builder;
     runir::kr::dl::semantics::EvaluationStorage m_source_storage;
     runir::kr::dl::semantics::EvaluationStorage m_target_storage;
     EvaluationPolicy m_policy;
@@ -37,7 +37,7 @@ private:
 
 public:
     EvaluationEnvironment(runir::kr::TaskContext<Kind>& task_context, SketchView sketch) :
-        m_dl_builder(task_context.dl_builder),
+        m_dl_builder(&task_context.dl_builder),
         m_source_storage(*task_context.dl_denotation_repository),
         m_target_storage(*task_context.dl_denotation_repository),
         m_policy(*task_context.search_context->task, roots(sketch))
@@ -58,13 +58,13 @@ public:
     }
 
     auto make_dl_context(tyr::planning::StateView<Kind> state)
-    { return m_policy.make_source_context(StateDlContext(std::move(state), m_dl_builder, m_source_storage)); }
+    { return m_policy.make_source_context(StateDlContext(std::move(state), *m_dl_builder, m_source_storage)); }
 
     auto make_dl_transition_context(tyr::planning::StateView<Kind> source_state, tyr::planning::StateView<Kind> target_state)
     {
         return make_evaluation_transition_context<BaseFamilyTag, Kind>(
             make_dl_context(std::move(source_state)),
-            m_policy.make_target_context(StateDlContext(std::move(target_state), m_dl_builder, m_target_storage)));
+            m_policy.make_target_context(StateDlContext(std::move(target_state), *m_dl_builder, m_target_storage)));
     }
 };
 

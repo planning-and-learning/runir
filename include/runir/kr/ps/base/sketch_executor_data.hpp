@@ -20,7 +20,7 @@
 namespace runir::kr::ps::base
 {
 
-enum class SketchProofStatus
+enum class SketchProofStatus : std::uint8_t
 {
     SUCCESS,
     FAILURE,

@@ -26,7 +26,7 @@ DenotationRepository::DenotationRepository(size_t index,
     m_index(index)
 {
     assert(m_formalism_repository);
-    this->clear();
+    this->reset();
 }
 
 DenotationRepository::~DenotationRepository() = default;

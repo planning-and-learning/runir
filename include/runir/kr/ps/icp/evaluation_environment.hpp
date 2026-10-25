@@ -17,7 +17,7 @@ template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<K
 class EvaluationEnvironment
 {
     using StateContext = runir::kr::dl::semantics::StateEvaluationContext<Kind>;
-    TaskContext<Kind>& m_task;
+    TaskContext<Kind>* m_task;
     ProgramView m_program;
     runir::kr::dl::semantics::EvaluationStorage m_source_storage, m_target_storage;
     runir::kr::dl::semantics::CallArgumentsView m_arguments;
@@ -47,7 +47,7 @@ class EvaluationEnvironment
 
 public:
     EvaluationEnvironment(TaskContext<Kind>& task, ProgramView program) :
-        m_task(task),
+        m_task(&task),
         m_program(program),
         m_source_storage(*task.dl_denotation_repository),
         m_target_storage(*task.dl_denotation_repository),
@@ -74,12 +74,12 @@ public:
     /// Contexts borrow stored data; callers clear dynamic caches before evaluating a new configuration.
     auto make_dl_context(ProgramStateView<Kind> state)
     {
-        if (&state.get_context() != m_task.icp_execution_repository.get() || state.get_program() != m_program)
+        if (&state.get_context() != m_task->icp_execution_repository.get() || state.get_program() != m_program)
             throw std::invalid_argument("ICP evaluation requires a state from the selected task and program.");
         return make_dl_context(state.get_state(), state.get_registers());
     }
     auto make_dl_context(tyr::planning::StateView<Kind> state, runir::kr::dl::semantics::RegisterValuesView registers)
-    { return m_policy.make_source_context(StateContext(state, m_task.dl_builder, m_source_storage, m_arguments, registers)); }
+    { return m_policy.make_source_context(StateContext(state, m_task->dl_builder, m_source_storage, m_arguments, registers)); }
     auto make_dl_transition_context(tyr::planning::StateView<Kind> source,
                                     tyr::planning::StateView<Kind> target,
                                     runir::kr::dl::semantics::RegisterValuesView source_registers,
@@ -87,7 +87,7 @@ public:
     {
         return make_evaluation_transition_context<IcpFamilyTag, Kind>(
             make_dl_context(source, source_registers),
-            m_policy.make_target_context(StateContext(target, m_task.dl_builder, m_target_storage, m_arguments, target_registers)));
+            m_policy.make_target_context(StateContext(target, m_task->dl_builder, m_target_storage, m_arguments, target_registers)));
     }
 };
 

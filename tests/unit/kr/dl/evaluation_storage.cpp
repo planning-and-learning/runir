@@ -363,7 +363,7 @@ TEST(RunirEvaluationStorage, DenotationConversionsResolvePayloadsAndReuseDestina
         EXPECT_FALSE(kr::dl::semantics::copy(source, { target_repository, scratch }).second);
         EXPECT_EQ(kr::dl::semantics::copy(copied, { target_repository, scratch }).first, copied);
 
-        source_repository.clear();
+        source_repository.reset();
         kr::dl::semantics::assign(payload, copied);
         EXPECT_TRUE(ygg::EqualTo<ygg::Builder<D>> {}(destination, payload));
     };

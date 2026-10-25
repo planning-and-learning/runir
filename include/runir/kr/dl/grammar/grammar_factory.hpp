@@ -3,13 +3,14 @@
 
 #include "runir/kr/dl/grammar/declarations.hpp"
 
+#include <cstdint>
 #include <string>
 #include <tyr/formalism/planning/declarations.hpp>
 
 namespace runir::kr::dl::grammar
 {
 
-enum class GrammarSpecification
+enum class GrammarSpecification : std::uint8_t
 {
     FRANCE_ET_AL_AAAI2021,
 };

@@ -24,9 +24,9 @@ TEST(RunirTests, RejectsUnknownGrammarFactorySpecification)
 
     EXPECT_THROW(
         try {
-            static_cast<void>(kr::dl::grammar::GrammarFactory::create_description(static_cast<kr::dl::grammar::GrammarSpecification>(999), domain));
+            static_cast<void>(kr::dl::grammar::GrammarFactory::create_description(static_cast<kr::dl::grammar::GrammarSpecification>(255), domain));
         } catch (const std::runtime_error& error) {
-            EXPECT_STREQ(error.what(), "Unknown grammar specification: 999.");
+            EXPECT_STREQ(error.what(), "Unknown grammar specification: 255.");
             throw;
         },
         std::runtime_error);

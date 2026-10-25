@@ -2,6 +2,7 @@
 #include "scc_refinement_forest.hpp"
 
 #include <algorithm>
+#include <cstdint>
 
 namespace runir::kr::ps::detail
 {
@@ -122,7 +123,7 @@ SieveState make_state(const QualitativePolicy& policy, bool use_memory_scc_scope
     return state;
 }
 
-enum class EliminationPass
+enum class EliminationPass : std::uint8_t
 {
     MARKING,
     R3

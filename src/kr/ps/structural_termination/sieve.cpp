@@ -92,7 +92,7 @@ StrongComponents find_strong_components(const std::vector<PolicyEdge>& edges, st
         if (edge.alive)
             builder.add_directed_edge(static_cast<graphs::VertexIndex>(edge.source), static_cast<graphs::VertexIndex>(edge.target));
 
-    const auto graph = graphs::StaticGraph<> { std::move(builder) };
+    const auto graph = graphs::StaticGraph<> { builder };
     auto [num_components, component_of] = graphs::algorithms::strong_components(graph);
     return { num_components, std::move(component_of) };
 }

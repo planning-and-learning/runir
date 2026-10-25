@@ -18,16 +18,18 @@
 #ifndef RUNIR_DATASETS_CONFIG_HPP_
 #define RUNIR_DATASETS_CONFIG_HPP_
 
+#include <cstdint>
+
 namespace runir::datasets
 {
 
-enum class StateGraphCostMode
+enum class StateGraphCostMode : std::uint8_t
 {
     UNIT_COST,
     ACTION_COST
 };
 
-enum class EquivalencePolicyMode
+enum class EquivalencePolicyMode : std::uint8_t
 {
     IDENTITY,
     GI

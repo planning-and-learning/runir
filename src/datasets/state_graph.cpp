@@ -71,8 +71,6 @@ auto compute_goal_distances(const G& graph, const std::vector<graphs::VertexInde
     throw std::runtime_error(fmt::format("Unsupported state graph cost mode: {}.", static_cast<int>(cost_mode)));
 }
 
-}  // namespace
-
 template<tyr::TaskKind Kind>
 auto create_astar_options(const StateGraphGenerationOptions& generation_options)
 {
@@ -81,6 +79,8 @@ auto create_astar_options(const StateGraphGenerationOptions& generation_options)
     options.num_search_workers = 1;
     return options;
 }
+
+}  // namespace
 
 template<tyr::TaskKind Kind>
 auto generate_state_graph_result(TaskSearchContext<Kind>& context, const StateGraphGenerationOptions& generation_options) -> StateGraphGenerationResult<Kind>

@@ -1,7 +1,9 @@
 #include "nauty_impl.hpp"
 
 #include <algorithm>
+#include <cstddef>
 #include <numeric>
+#include <span>
 #include <stdexcept>
 #include <utility>
 
@@ -142,9 +144,13 @@ void SparseGraphImpl::canonize()
 
     canonical.m_nde = canonical_graph.nde;
     canonical.m_num_vertices = canonical_graph.nv;
-    canonical.m_offsets.assign(canonical_graph.v, canonical_graph.v + canonical_graph.nv);
-    canonical.m_degrees.assign(canonical_graph.d, canonical_graph.d + canonical_graph.nv);
-    canonical.m_edges.assign(canonical_graph.e, canonical_graph.e + canonical_graph.nde);
+    const auto canonical_num_vertices = static_cast<std::size_t>(canonical_graph.nv);
+    const auto canonical_offsets = std::span(canonical_graph.v, canonical_num_vertices);
+    const auto canonical_degrees = std::span(canonical_graph.d, canonical_num_vertices);
+    const auto canonical_edges = std::span(canonical_graph.e, static_cast<std::size_t>(canonical_graph.nde));
+    canonical.m_offsets.assign(canonical_offsets.begin(), canonical_offsets.end());
+    canonical.m_degrees.assign(canonical_degrees.begin(), canonical_degrees.end());
+    canonical.m_edges.assign(canonical_edges.begin(), canonical_edges.end());
     SG_FREE(canonical_graph);
     canonical.initialize_sparse_graph();
 

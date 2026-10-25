@@ -70,7 +70,7 @@ public:
     { return make_view(this->get_data().arguments, this->get_context()); }
 
     template<typename F>
-    void for_each_call_argument(F&& function) const
+    void for_each_call_argument(F function) const
         requires std::same_as<Kind, runir::kr::ps::ext::CallTag>
     {
         for (const auto& argument : this->get_data().arguments)

@@ -9,9 +9,10 @@ do. `pyrunir.kr.ps.ext.explore.server` serves the same API as an MCP server
 ## Session
 
 ```python
-from pyrunir.kr.ps.ext.explore import Budget, Session
+from pyrunir.kr.ps.ext.explore import Budget, Session, SessionOptions
 
-session = Session(domain_path, program_text, task_paths, budget=Budget(max_states=100_000, max_seconds=10.0))
+options = SessionOptions(budget=Budget(max_states=100_000, max_seconds=10.0))
+session = Session(domain_path, program_text, task_paths, options=options)
 rule = session.rule("pick_dest")                  # names are resolved once, at the boundary
 for point in session.points(rule):
     print(point, *session.alternatives(point), sep="\n  ")
@@ -59,7 +60,7 @@ parser): every Choose body of the rule becomes a Load with the same conditions,
 candidates, register and effects, and its `:order` is dropped.
 
 Every search draws from the session's `total_seconds`; once used up, calls raise
-`BudgetExhausted`.
+`BudgetExhaustedError`.
 
 ## Additions to the core API
 

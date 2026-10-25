@@ -1,4 +1,4 @@
-#include "pyrunir/kr/ps/ext/module.hpp"
+#include "pyrunir/kr/ps/ext/bindings.hpp"
 
 #include <functional>
 #include <nanobind/stl/chrono.h>
@@ -55,24 +55,40 @@ void bind_feature_evaluation(nb::module_& m)
         nb::keep_alive<0, 2>());
 }
 
+/// The Python type of one candidate binding: an object, or a pair of objects for a role.
+template<typename Value>
+struct BindingType
+{
+    using type = nb::typed<nb::object, Value>;
+};
+
+template<typename First, typename Second>
+struct BindingType<std::pair<First, Second>>
+{
+    using type = nb::typed<nb::tuple, First, Second>;
+};
+
 template<runir::kr::dl::CategoryTag Category>
 void bind_choice(nb::module_& m, const char* name)
 {
     using Choice = detail::Choice<Category>;
-    const auto binding = [](const runir::kr::dl::semantics::DenotationElementView<Category>& value, nb::handle owner)
+    using Value = runir::kr::dl::semantics::DenotationElementView<Category>;
+    // A binding of a concept choice is an object; one of a role choice is a pair of objects.
+    using Binding = typename BindingType<Value>::type;
+    const auto binding = [](const Value& value, nb::handle owner) -> Binding
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return nb::cast(value, nb::rv_policy::reference_internal, owner);
+            return nb::borrow<Binding>(nb::cast(value, nb::rv_policy::reference_internal, owner));
         else
-            return nb::make_tuple(nb::cast(value.first, nb::rv_policy::reference_internal, owner),
-                                  nb::cast(value.second, nb::rv_policy::reference_internal, owner));
+            return nb::borrow<Binding>(nb::make_tuple(nb::cast(value.first, nb::rv_policy::reference_internal, owner),
+                                                      nb::cast(value.second, nb::rv_policy::reference_internal, owner)));
     };
     nb::class_<Choice>(m, name)
-        .def_ro("rule", &Choice::rule, nb::keep_alive<0, 1>())
+        .def_prop_ro("rule", &Choice::get_rule, nb::keep_alive<0, 1>())
         .def_prop_ro("bindings",
                      [binding](nb::handle owner)
                      {
-                         nb::list result;
+                         nb::typed<nb::list, Binding> result;
                          for (const auto& value : nb::cast<const Choice&>(owner).bindings())
                              result.append(binding(value, owner));
                          return result;
@@ -114,8 +130,9 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     // Callback results may outlive the expander that owns their binding pool.
     const auto retain_expander = ygg::python::make_owner_retainer();
 
-    nb::class_<ExecutionRepository<Kind>>(m, (std::string(prefix) + "ExecutionRepository").c_str());
-    nb::class_<ExecutionBuilder<Kind>>(m, (std::string(prefix) + "ExecutionBuilder").c_str());
+    // Registered without methods so Python can hold and pass these handles.
+    const auto execution_repository = nb::class_<ExecutionRepository<Kind>>(m, (std::string(prefix) + "ExecutionRepository").c_str());
+    const auto execution_builder = nb::class_<ExecutionBuilder<Kind>>(m, (std::string(prefix) + "ExecutionBuilder").c_str());
 
     nb::class_<Environment>(m, (std::string(prefix) + "EvaluationEnvironment").c_str())
         .def(nb::init<runir::kr::TaskContext<Kind>&, ProgramView>(), "task_context"_a, "program"_a, nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>())
@@ -217,7 +234,13 @@ void bind_execution_types(nb::module_& m, const char* prefix)
         .def("initial_state", &Expander::initial_state, "state"_a, nb::keep_alive<0, 1>())
         .def(
             "for_each_successor",
-            [retain_expander](Expander& self, StateView state, ProgramSearchStatistics& statistics, const nb::callable& emit, const std::function<bool()>& stop)
+            [retain_expander](
+                Expander& self,
+                StateView state,
+                ProgramSearchStatistics& statistics,
+                const nb::typed<nb::callable, bool(std::variant<Step, detail::Choice<runir::kr::dl::ConceptTag>, detail::Choice<runir::kr::dl::RoleTag>>)>&
+                    emit,
+                const std::function<bool()>& stop)
             {
                 const auto owner = nb::cast(&self, nb::rv_policy::reference);
                 return self.for_each_successor(

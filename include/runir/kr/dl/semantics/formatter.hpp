@@ -269,12 +269,10 @@ std::string boolean_constructor(ygg::View<ygg::Index<runir::kr::dl::Boolean<Tag>
         return constructor(runir::kr::dl::NonemptyTag::keyword, view.get_arg());
     else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>)
         return constructor(runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>::keyword, view.get_argument());
-    else if constexpr (runir::kr::dl::ComparisonTag<Tag>)
+    else if constexpr (runir::kr::dl::ComparisonTag<Tag> || runir::kr::dl::LogicalBinaryTag<Tag>)
         return constructor(Tag::keyword, view.get_lhs(), view.get_rhs());
     else if constexpr (std::same_as<Tag, runir::kr::dl::BooleanConstantTag>)
         return constructor(runir::kr::dl::BooleanConstantTag::keyword, boolean(view.get_value()));
-    else if constexpr (runir::kr::dl::LogicalBinaryTag<Tag>)
-        return constructor(Tag::keyword, view.get_lhs(), view.get_rhs());
     else if constexpr (std::same_as<Tag, runir::kr::dl::NotTag>)
         return constructor(runir::kr::dl::NotTag::keyword, view.get_arg());
     else

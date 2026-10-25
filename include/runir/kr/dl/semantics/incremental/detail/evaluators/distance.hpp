@@ -15,6 +15,7 @@
 #include <span>
 #include <stdexcept>
 #include <vector>
+#include <yggdrasil/core/config.hpp>
 #include <yggdrasil/database/semantics/incremental/distance.hpp>
 #include <yggdrasil/database/semantics/incremental/min_distance.hpp>
 
@@ -136,10 +137,15 @@ private:
     { return !graph.change(index).added.empty() || !graph.change(index).removed.empty(); }
     void set_targets(const EvaluationGraph<Kind>& graph)
     {
+        YGG_ASSUME(heuristic.has_value());  // Built by initialize(), which precedes every update().
         feature.distance.set_targets(graph.result(targets));
         heuristic->update(graph.result(targets));
     }
-    void evaluate(const EvaluationGraph<Kind>& graph) { value.set(feature.distance.min_distance(graph.result(sources), *heuristic)); }
+    void evaluate(const EvaluationGraph<Kind>& graph)
+    {
+        YGG_ASSUME(heuristic.has_value());  // Built by initialize(), which precedes every update().
+        value.set(feature.distance.min_distance(graph.result(sources), *heuristic));
+    }
 };
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

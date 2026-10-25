@@ -31,31 +31,32 @@ public:
              StopConcept Stop,
              ExecutionStateViewConcept<Storage> State,
              tyr::planning::StateViewConcept<Kind> PlanningState>
-    bool emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, Emit&& emit, Stop&& stop) const
+    bool
+    emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, const Emit& emit, const Stop& stop) const
     {
         const auto& planning_state = context.planning_state;
         const auto rule = m_rule;
         const auto rule_variant = m_variant;
-        if (!ext::rule_is_applicable(rule, state, planning_state, context.environment))
+        if (!ext::rule_is_applicable(rule, state, planning_state, *context.environment))
             return true;
         auto state_context = context.make_dl_context(state);
         const auto denotation = evaluate<Kind>(rule.get_feature(), state_context);
-        auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(context.task_context->dl_builder);
+        auto registers = checkout<runir::kr::dl::semantics::RegisterValues>((*context.task_context)->dl_builder);
         for (const auto value : denotation)
         {
             if (stop())
                 return false;
-            const auto target_registers = bound_registers<Kind>(rule, state.get_module_state().get_registers(), value, *registers, context.storage);
-            if (!binding_effects_match(rule, state, planning_state, target_registers, context.environment))
+            const auto target_registers = bound_registers<Kind>(rule, state.get_module_state().get_registers(), value, *registers, *context.storage);
+            if (!binding_effects_match(rule, state, planning_state, target_registers, *context.environment))
                 continue;
             const auto module_ = state.get_module_state();
-            auto target = context.storage.store(planning_state,
-                                                module_.get_module(),
-                                                rule.get_target(),
-                                                target_registers,
-                                                module_.get_arguments(),
-                                                state.get_call_stack());
-            if (!emit(detail::applied<Kind, Storage>(std::move(target), rule_variant, context.task_context)))
+            auto target = context.storage->store(planning_state,
+                                                 module_.get_module(),
+                                                 rule.get_target(),
+                                                 target_registers,
+                                                 module_.get_arguments(),
+                                                 state.get_call_stack());
+            if (!emit(detail::applied<Kind, Storage>(std::move(target), rule_variant, *context.task_context)))
                 return false;
         }
         return true;

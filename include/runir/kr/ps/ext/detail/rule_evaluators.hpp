@@ -114,7 +114,7 @@ class RuleEvaluators
     }
 
     template<ygg::InvocableWithEach<EvaluatorTypes> Function>
-    decltype(auto) with_rule(RuleVariantView rule, Function&& function)
+    decltype(auto) with_rule(RuleVariantView rule, Function function)
     {
         if (const auto found = find_rule(rule); found != m_rules.end())
             return std::visit(function, std::as_const(*found));
@@ -172,7 +172,7 @@ public:
     auto make_context(Storage& storage, PlanningState planning_state)
     {
         return runir::kr::ps::RuleEvaluationContext<runir::kr::ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy> {
-            m_task_context, storage, m_environment, m_do, m_choose, std::move(planning_state)
+            &m_task_context, &storage, &m_environment, &m_do, &m_choose, std::move(planning_state)
         };
     }
 
@@ -181,7 +181,10 @@ public:
              typename Emit,
              StopConcept Stop,
              tyr::planning::StateViewConcept<Kind> PlanningState>
-    bool for_each_successor(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, Emit&& emit, Stop&& stop)
+    bool for_each_successor(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
+                            State state,
+                            const Emit& emit,
+                            const Stop& stop)
     {
         const auto& planning_state = context.planning_state;
         m_sketch_rules.clear();
@@ -221,7 +224,7 @@ public:
                                if constexpr (std::same_as<Concrete, SketchRuleEvaluator<Kind>>)
                                    if (!concrete.get_rule().get_effects().empty())
                                    {
-                                       if (ext::rule_is_applicable(concrete.get_rule(), state, planning_state, context.environment))
+                                       if (ext::rule_is_applicable(concrete.get_rule(), state, planning_state, *context.environment))
                                            m_sketch_rules.push_back(concrete);
                                        return true;
                                    }
@@ -237,10 +240,10 @@ public:
         {
             if (stop())
                 return false;
-            const auto candidate = context.storage.successor(planning_state, binding);
+            const auto candidate = context.storage->successor(planning_state, binding);
             const auto borrowed_candidate =
                 tyr::planning::LabeledNode<Kind, PlanningState, tyr::planning::BorrowedActionBindingView<Kind>> { binding, candidate };
-            context.environment.reset_target();
+            context.environment->reset_target();
             auto label = std::optional<tyr::formalism::planning::ActionBindingView> {};
             for (const auto& evaluator : m_sketch_rules)
             {
@@ -253,12 +256,12 @@ public:
                 if (!label)
                     label = generator.materialize_action_binding(binding);
                 const auto labeled = tyr::planning::LabeledNode<Kind, PlanningState> { *label, candidate };
-                if (!emit(detail::planning_step(context.storage,
+                if (!emit(detail::planning_step(*context.storage,
                                                 state,
                                                 labeled,
                                                 evaluator.get_variant(),
                                                 evaluator.get_rule().get_target(),
-                                                context.task_context)))
+                                                *context.task_context)))
                     return false;
             }
             return true;
@@ -275,7 +278,7 @@ public:
         {
             const auto variant = rule.get_variant();
             if (variant.template is<ygg::Index<Rule<BacktrackTag>>>()
-                && ext::rule_is_applicable(variant.template get<ygg::Index<Rule<BacktrackTag>>>(), state, context.planning_state, context.environment))
+                && ext::rule_is_applicable(variant.template get<ygg::Index<Rule<BacktrackTag>>>(), state, context.planning_state, *context.environment))
                 return std::nullopt;
         }
         for (const auto rule : source_rules(state.get_module_state().get_module(), state.get_module_state().get_memory_state()))
@@ -311,7 +314,7 @@ public:
                     {
                         if (!candidate || !matches(evaluator, context, state, *candidate))
                             return {};
-                        return detail::planning_step(context.storage, state, *candidate, rule, evaluator.get_rule().get_target(), context.task_context);
+                        return detail::planning_step(*context.storage, state, *candidate, rule, evaluator.get_rule().get_target(), *context.task_context);
                     }
                 }
                 auto result = Result {};
@@ -338,7 +341,7 @@ public:
     auto apply_choice(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, const Choice<Category>& choice)
     {
         using Step = ProgramStep<Kind, Storage>;
-        return with_rule(choice.rule,
+        return with_rule(choice.get_rule(),
                          [&]<typename Concrete>(const Concrete& evaluator) -> Step
                          {
                              if constexpr (std::same_as<Concrete, ChooseRuleEvaluator<Kind, Category>>)

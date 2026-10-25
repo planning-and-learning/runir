@@ -358,7 +358,7 @@ void check_queries()
     storage.reset_all();
     EXPECT_EQ(retained_argument.get().count(), 1);
     EXPECT_TRUE(retained_argument.get()[ygg::uint_t(a.get_index())]);
-    denotations.clear();
+    denotations.reset();
     EXPECT_EQ(retained_distance.get(), 2);
 }
 
@@ -667,6 +667,7 @@ void check_cached_queries()
                                  EXPECT_TRUE(std::ranges::equal(decoded.plan.positions(), positions, {}, slice_position));
                                  ygg::Builder<ygg::database::Relation> input(decoded.plan.input_columns().span()), result(decoded.plan.output_columns().span());
                                  std::vector<ObjectIndex> row;
+                                 row.reserve(input.arity());
                                  for (size_t i = 0; i < input.arity(); ++i)
                                      row.emplace_back(10 + i);
                                  std::vector<std::byte> bytes;
@@ -1125,21 +1126,21 @@ template<tyr::TaskKind Kind>
 void check_query_object_views()
 {
     const auto execution = ygg::ExecutionContext::create(1);
-    const auto lifted = tyr::planning::Task<tyr::LiftedTag>::create(tyr::formalism::planning::Parser(R"(
+    auto lifted = tyr::planning::Task<tyr::LiftedTag>::create(tyr::formalism::planning::Parser(R"(
 (define (domain query-objects)
   (:requirements :strips)
   (:constants parent)
   (:predicates (fixed ?x ?y)))
 )",
-                                                                                                     "query-objects-domain.pddl")
-                                                                        .parse_task(R"(
+                                                                                               "query-objects-domain.pddl")
+                                                                  .parse_task(R"(
 (define (problem query-objects-task)
   (:domain query-objects)
   (:objects local)
   (:init (fixed parent local))
   (:goal (fixed parent local)))
 )",
-                                                                                    "query-objects-task.pddl"));
+                                                                              "query-objects-task.pddl"));
     const auto task = [&]
     {
         if constexpr (std::same_as<Kind, tyr::GroundTag>)
@@ -1292,6 +1293,9 @@ TEST(RunirQueries, GroundAtomicEvaluationChecksPredicateRepository) { check_pred
 TEST(RunirQueries, LiftedAtomicEvaluationChecksPredicateRepository) { check_predicate_repository_identity<tyr::LiftedTag>(); }
 TEST(RunirQueries, GroundRelationsAndMutableBindings) { check_queries<tyr::GroundTag>(); }
 TEST(RunirQueries, LiftedRelationsAndMutableBindings) { check_queries<tyr::LiftedTag>(); }
+
+namespace
+{
 /// The previous evaluation: min_distance over fully evaluated sources, edges, and targets.
 template<tyr::TaskKind Kind, typename Context>
 ygg::uint_t reference_distance(kr::dl::ConstructorView<kr::dl::NumericalTag> numerical, Context& context)
@@ -1374,6 +1378,8 @@ void check_distance_reuse_across_states()
                 EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(numericals[i], context).get(), reference_distance<Kind>(numericals[i], context)) << expressions[i];
         }
 }
+
+}  // namespace
 
 TEST(RunirQueries, GroundDistanceOverQueries) { check_distance_queries<tyr::GroundTag>(); }
 TEST(RunirQueries, LiftedDistanceOverQueries) { check_distance_queries<tyr::LiftedTag>(); }

@@ -32,6 +32,7 @@ struct TaskContext
     TaskContext& operator=(const TaskContext&) = delete;
     TaskContext(TaskContext&&) = delete;
     TaskContext& operator=(TaskContext&&) = delete;
+    ~TaskContext() = default;
 
     static TaskContextPtr<Kind> create(DomainContextPtr domain_context, runir::datasets::TaskSearchContextPtr<Kind> search_context);
 

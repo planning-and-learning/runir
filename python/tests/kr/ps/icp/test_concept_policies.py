@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import gc
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from datetime import timedelta
 from typing import Protocol, TypeVar
 
@@ -16,7 +16,7 @@ from pyyggdrasil.serialization import Dictionaries
 
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext, LiftedTaskContext
-from pyrunir.kr.dl.semantics import ConceptDenotation
+from pyrunir.kr.dl.semantics import ConceptDenotation, GroundStateEvaluationContext, LiftedStateEvaluationContext
 from pyrunir.kr.ps import icp
 from pyrunir.serialization import register_table, serialize, table
 
@@ -58,6 +58,11 @@ PROGRAM = """(:program (:entry main)
 
 StateT_contra = TypeVar("StateT_contra", contravariant=True)
 StepT_co = TypeVar("StepT_co", covariant=True)
+ExpressionT_co = TypeVar("ExpressionT_co", covariant=True)
+
+TaskContext = GroundTaskContext | LiftedTaskContext
+SearchOptions = icp.GroundProgramSearchOptions | icp.LiftedProgramSearchOptions
+SearchResults = icp.GroundProgramProofResults | icp.LiftedProgramProofResults
 
 
 def test_argument_position_binding_and_indexical_data() -> None:
@@ -70,21 +75,50 @@ def test_argument_position_binding_and_indexical_data() -> None:
         assert data.object == position
 
 
-def context_and_program(kind: str, source: str = PROGRAM) -> tuple[GroundTaskContext | LiftedTaskContext, icp.Program]:
-    """Build a ground or lifted gripper task context and parse ``source`` as an ICP program for it."""
+def _gripper() -> tuple[Parser, lifted.Task, ExecutionContext, DomainContext]:
     directory = data_root() / "classical" / "tests" / "gripper"
     parser = Parser(directory / "domain.pddl", ParserOptions())
     task = lifted.Task(parser.parse_task(directory / "test-1.pddl", ParserOptions()))
-    execution = ExecutionContext(1)
-    domain = DomainContext(parser.get_domain())
+    return parser, task, ExecutionContext(1), DomainContext(parser.get_domain())
+
+
+def ground_context_and_program(source: str = PROGRAM) -> tuple[GroundTaskContext, icp.Program]:
+    """Build a ground gripper task context and parse ``source`` as an ICP program for it."""
+    parser, task, execution, domain = _gripper()
+    context = GroundTaskContext(
+        domain, GroundTaskSearchContext(task.instantiate_ground_task(execution).task, execution)
+    )
+    return context, icp.dl.parse_program(source, parser.get_domain(), domain.icp_repository)
+
+
+def lifted_context_and_program(source: str = PROGRAM) -> tuple[LiftedTaskContext, icp.Program]:
+    """Build a lifted gripper task context and parse ``source`` as an ICP program for it."""
+    parser, task, execution, domain = _gripper()
+    context = LiftedTaskContext(domain, LiftedTaskSearchContext(task, execution))
+    return context, icp.dl.parse_program(source, parser.get_domain(), domain.icp_repository)
+
+
+def context_and_program(kind: str, source: str = PROGRAM) -> tuple[TaskContext, icp.Program]:
+    """Build a ground or lifted gripper task context and parse ``source`` as an ICP program for it."""
     if kind == "Ground":
-        context = GroundTaskContext(
-            domain, GroundTaskSearchContext(task.instantiate_ground_task(execution).task, execution)
-        )
-    else:
-        context = LiftedTaskContext(domain, LiftedTaskSearchContext(task, execution))
-    program = icp.dl.parse_program(source, parser.get_domain(), domain.icp_repository)
-    return context, program
+        return ground_context_and_program(source)
+    return lifted_context_and_program(source)
+
+
+def search_options(context: TaskContext) -> SearchOptions:
+    """Return default search options of the kind matching ``context``."""
+    if isinstance(context, GroundTaskContext):
+        return icp.GroundProgramSearchOptions()
+    return icp.LiftedProgramSearchOptions()
+
+
+def find_solution(context: TaskContext, program: icp.Program, options: SearchOptions) -> SearchResults:
+    """Search with the solver of the kind matching ``context``."""
+    if isinstance(context, GroundTaskContext):
+        assert isinstance(options, icp.GroundProgramSearchOptions)
+        return icp.find_ground_solution(context, program, options)
+    assert isinstance(options, icp.LiftedProgramSearchOptions)
+    return icp.find_lifted_solution(context, program, options)
 
 
 class _SuccessorExpander(Protocol[StateT_contra, StepT_co]):
@@ -115,9 +149,9 @@ def test_search_and_round_trip(kind: str, *, universal: bool) -> None:
     context, program = context_and_program(kind)
     domain = context.search_context.task.get_formalism_task().get_domain()
     assert icp.dl.parse_program(str(program), domain, context.domain_context.icp_repository) == program
-    options = getattr(icp, f"{kind}ProgramSearchOptions")()
+    options = search_options(context)
     options.universal = universal
-    result = getattr(icp, f"find_{kind.lower()}_solution")(context, program, options)
+    result = find_solution(context, program, options)
     assert result.status == icp.ProgramProofStatus.SUCCESS
     assert result.is_successful()
     assert result.statistics.num_expanded >= 4
@@ -126,6 +160,33 @@ def test_search_and_round_trip(kind: str, *, universal: bool) -> None:
     assert not result.open_states
     assert not result.cycle
     assert (result.plan is None) == universal
+
+
+class _FeatureVariant(Protocol[ExpressionT_co]):
+    def syntactic_complexity(self) -> int: ...
+
+    def get_feature(self) -> ExpressionT_co: ...
+
+
+class _Feature(Protocol[ExpressionT_co]):
+    def get_symbol(self) -> str: ...
+
+    def syntactic_complexity(self) -> int: ...
+
+    def get_variant(self) -> _FeatureVariant[ExpressionT_co]: ...
+
+    def get_feature(self) -> ExpressionT_co: ...
+
+    def get_expression(self) -> ExpressionT_co: ...
+
+
+def check_feature_complexity(features: Sequence[_Feature[ExpressionT_co]], symbol: str, complexity: int) -> None:
+    """Check the complexity and feature views of the feature named ``symbol``."""
+    feature = next(value for value in features if value.get_symbol() == symbol)
+    assert feature.syntactic_complexity() == complexity
+    assert feature.get_variant().syntactic_complexity() == complexity
+    assert feature.get_feature() == feature.get_expression()
+    assert feature.get_variant().get_feature() == feature.get_expression()
 
 
 def test_feature_complexity_uses_the_shared_dl_language() -> None:
@@ -145,11 +206,7 @@ def test_feature_complexity_uses_the_shared_dl_language() -> None:
         (module.get_query_features(), "locations", 1),
     )
     for features, symbol, complexity in cases:
-        feature = next(value for value in features if value.get_symbol() == symbol)
-        assert feature.syntactic_complexity() == complexity
-        assert feature.get_variant().syntactic_complexity() == complexity
-        assert feature.get_feature() == feature.get_expression()
-        assert feature.get_variant().get_feature() == feature.get_expression()
+        check_feature_complexity(features, symbol, complexity)
     total = sum(feature.syntactic_complexity() for features, _, _ in cases for feature in features)
     assert module.syntactic_complexity() == total
     assert program.syntactic_complexity() == total
@@ -157,39 +214,31 @@ def test_feature_complexity_uses_the_shared_dl_language() -> None:
     assert icp.dl.parse_program(str(program), domain, context.domain_context.icp_repository) == program
 
 
-@pytest.mark.parametrize("kind", ["Ground", "Lifted"])
-def test_histories_evaluation_and_owned_views(kind: str) -> None:
-    context, program = context_and_program(kind)
-    expander = getattr(icp, f"{kind}SuccessorExpander")(context, program)
-    search = context.search_context
-    node = search.successor_generator.get_initial_node(search.state_repository, search.axiom_evaluator)
-    initial = expander.initial_state(node.get_state())
-    assert all(len(list(history)) == 0 for history in initial.histories.concepts)
-    (step,) = collect_steps(expander, initial)
-    loaded = step.target
-    assert loaded.state == initial.state
-    assert loaded != initial
-    assert loaded.memory_state.get_name() == "pick"
-    environment = getattr(icp, f"{kind}EvaluationEnvironment")(context, program)
-    dl_context = environment.make_dl_context(loaded)
-    numericals = {feature.get_symbol(): feature for feature in loaded.module.get_numerical_features()}
+def check_loaded_features(
+    module: icp.Module, dl_context: GroundStateEvaluationContext | LiftedStateEvaluationContext
+) -> None:
+    """Check the features of the gripper program after loading the selected balls."""
+    numericals = {feature.get_symbol(): feature for feature in module.get_numerical_features()}
     assert icp.evaluate(numericals["selected_count"], dl_context).get() == 1
     assert icp.evaluate(numericals["carried_count"], dl_context).get() == 0
-    (query,) = loaded.module.get_query_features()
+    (query,) = module.get_query_features()
     relation = icp.evaluate(query, dl_context)
     assert relation.arity() == 2
     rows = {tuple(row) for row in relation}
     assert len(rows) == 2
     assert len({ball for ball, _ in rows}) == 2
-    robot = next(feature for feature in loaded.module.get_concept_features() if feature.get_symbol() == "robot")
+    robot = next(feature for feature in module.get_concept_features() if feature.get_symbol() == "robot")
     assert {room for _, room in rows} == {int(room.get_index()) for room in icp.evaluate(robot, dl_context)}
-    assert len(collect_steps(expander, loaded)) == 2
-    histories = loaded.histories
-    counts = [len(list(history)) for history in histories.concepts]
-    assert sum(counts) == 1
+
+
+def check_history_tables(
+    state_type: type[icp.GroundProgramState] | type[icp.LiftedProgramState],
+    history_type: type[icp.GroundHistories] | type[icp.LiftedHistories],
+    initial: icp.GroundProgramState | icp.LiftedProgramState,
+    loaded: icp.GroundProgramState | icp.LiftedProgramState,
+) -> None:
+    """Check that the initial and loaded program states serialize with distinct histories."""
     dictionaries = Dictionaries()
-    state_type = getattr(icp, f"{kind}ProgramState")
-    history_type = getattr(icp, f"{kind}Histories")
     register_table(dictionaries, state_type, "states", "s", fields=("histories",))
     register_table(dictionaries, history_type, "histories", "h")
     register_table(
@@ -202,22 +251,81 @@ def test_histories_evaluation_and_owned_views(kind: str) -> None:
     assert serialize(dictionaries, initial) == "s0"
     assert serialize(dictionaries, loaded) == "s1"
     assert table(dictionaries, state_type) == [{"histories": "h0"}, {"histories": "h1"}]
-    assert len(table(dictionaries, history_type)) == 2
-    del context, program, environment, dl_context, expander, initial, loaded, step, relation, query, robot, numericals
+    history_rows = table(dictionaries, history_type)
+    assert isinstance(history_rows, list)
+    rows: list[object] = [*history_rows]
+    assert len(rows) == 2
+
+
+def check_histories_ground() -> None:
+    """Check ground program state histories, evaluation and the lifetime of owned history views."""
+    context, program = ground_context_and_program()
+    expander = icp.GroundSuccessorExpander(context, program)
+    search = context.search_context
+    node = search.successor_generator.get_initial_node(search.state_repository, search.axiom_evaluator)
+    initial = expander.initial_state(node.get_state())
+    assert all(len(list(history)) == 0 for history in initial.histories.concepts)
+    (step,) = collect_steps(expander, initial)
+    loaded = step.target
+    assert loaded.state == initial.state
+    assert loaded != initial
+    assert loaded.memory_state.get_name() == "pick"
+    environment = icp.GroundEvaluationEnvironment(context, program)
+    dl_context = environment.make_dl_context(loaded)
+    check_loaded_features(loaded.module, dl_context)
+    assert len(collect_steps(expander, loaded)) == 2
+    histories = loaded.histories
+    counts = [len(list(history)) for history in histories.concepts]
+    assert sum(counts) == 1
+    check_history_tables(icp.GroundProgramState, icp.GroundHistories, initial, loaded)
+    del context, program, environment, dl_context, expander, initial, loaded, step
+    gc.collect()
+    assert [len(list(history)) for history in histories.concepts] == counts
+
+
+def check_histories_lifted() -> None:
+    """Check lifted program state histories, evaluation and the lifetime of owned history views."""
+    context, program = lifted_context_and_program()
+    expander = icp.LiftedSuccessorExpander(context, program)
+    search = context.search_context
+    node = search.successor_generator.get_initial_node(search.state_repository, search.axiom_evaluator)
+    initial = expander.initial_state(node.get_state())
+    assert all(len(list(history)) == 0 for history in initial.histories.concepts)
+    (step,) = collect_steps(expander, initial)
+    loaded = step.target
+    assert loaded.state == initial.state
+    assert loaded != initial
+    assert loaded.memory_state.get_name() == "pick"
+    environment = icp.LiftedEvaluationEnvironment(context, program)
+    dl_context = environment.make_dl_context(loaded)
+    check_loaded_features(loaded.module, dl_context)
+    assert len(collect_steps(expander, loaded)) == 2
+    histories = loaded.histories
+    counts = [len(list(history)) for history in histories.concepts]
+    assert sum(counts) == 1
+    check_history_tables(icp.LiftedProgramState, icp.LiftedHistories, initial, loaded)
+    del context, program, environment, dl_context, expander, initial, loaded, step
     gc.collect()
     assert [len(list(history)) for history in histories.concepts] == counts
 
 
 @pytest.mark.parametrize("kind", ["Ground", "Lifted"])
+def test_histories_evaluation_and_owned_views(kind: str) -> None:
+    if kind == "Ground":
+        check_histories_ground()
+    else:
+        check_histories_lifted()
+
+
+@pytest.mark.parametrize("kind", ["Ground", "Lifted"])
 def test_resource_limits(kind: str) -> None:
     context, program = context_and_program(kind)
-    options = getattr(icp, f"{kind}ProgramSearchOptions")()
+    options = search_options(context)
     options.max_num_states = 0
-    search = getattr(icp, f"find_{kind.lower()}_solution")
-    assert search(context, program, options).status == icp.ProgramProofStatus.OUT_OF_STATES
+    assert find_solution(context, program, options).status == icp.ProgramProofStatus.OUT_OF_STATES
     options.max_num_states = 100
     options.max_time = timedelta(0)
-    assert search(context, program, options).status == icp.ProgramProofStatus.OUT_OF_TIME
+    assert find_solution(context, program, options).status == icp.ProgramProofStatus.OUT_OF_TIME
 
 
 def test_serialization_fields_and_program_projection() -> None:
@@ -237,6 +345,7 @@ def test_serialization_fields_and_program_projection() -> None:
         for variant in transition
         if variant.get_symbol() == "pick"
     )
+    assert isinstance(pick, icp.CruleRule)
     (condition,) = pick.get_xconditions()
     dictionaries = Dictionaries()
     register_table(dictionaries, icp.XCondition, "conditions", "x")

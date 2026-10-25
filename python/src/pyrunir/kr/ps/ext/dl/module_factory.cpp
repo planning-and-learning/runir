@@ -1,4 +1,4 @@
-#include "pyrunir/kr/ps/ext/dl/module.hpp"
+#include "pyrunir/kr/ps/ext/dl/bindings.hpp"
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>

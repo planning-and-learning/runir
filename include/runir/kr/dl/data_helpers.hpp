@@ -31,7 +31,7 @@ template<typename Self, typename Identifier>
 struct IdentifierData : ygg::comparison::Mixin<IdentifierData<Self, Identifier>>
 {
     ygg::Index<Self> index;
-    Identifier identifier;
+    Identifier identifier {};
 
     IdentifierData() = default;
     explicit IdentifierData(Identifier identifier_) : index(), identifier(std::move(identifier_)) {}
@@ -142,7 +142,7 @@ struct PredicateData : ygg::comparison::Mixin<PredicateData<Self, T>>
 {
     ygg::Index<Self> index;
     ygg::Index<tyr::formalism::Predicate<T>> predicate;
-    bool polarity;
+    bool polarity = false;
 
     PredicateData() = default;
     PredicateData(ygg::Index<tyr::formalism::Predicate<T>> predicate_, bool polarity_) : index(), predicate(predicate_), polarity(polarity_) {}
@@ -176,7 +176,7 @@ template<typename Self, typename Role>
 struct NumberRestrictionData : ygg::comparison::Mixin<NumberRestrictionData<Self, Role>>
 {
     ygg::Index<Self> index;
-    ygg::uint_t n;
+    ygg::uint_t n = 0;
     ygg::Index<Role> role;
 
     NumberRestrictionData() = default;
@@ -195,27 +195,27 @@ template<typename Self, typename Role, typename Concept>
 struct QualifiedNumberRestrictionData : ygg::comparison::Mixin<QualifiedNumberRestrictionData<Self, Role, Concept>>
 {
     ygg::Index<Self> index;
-    ygg::uint_t n;
+    ygg::uint_t n = 0;
     ygg::Index<Role> role;
     ygg::Index<Concept> concept_;
 
     QualifiedNumberRestrictionData() = default;
-    QualifiedNumberRestrictionData(ygg::uint_t n_, ygg::Index<Role> role_, ygg::Index<Concept> concept__) :
+    QualifiedNumberRestrictionData(ygg::uint_t n_, ygg::Index<Role> role_, ygg::Index<Concept> concept_arg) :
         index(),
         n(n_),
         role(std::move(role_)),
-        concept_(std::move(concept__))
+        concept_(std::move(concept_arg))
     {
     }
     template<typename C>
-    QualifiedNumberRestrictionData(ygg::uint_t n_, ::ygg::View<ygg::Index<Role>, C> role_, ::ygg::View<ygg::Index<Concept>, C> concept__) :
+    QualifiedNumberRestrictionData(ygg::uint_t n_, ::ygg::View<ygg::Index<Role>, C> role_, ::ygg::View<ygg::Index<Concept>, C> concept_arg) :
         index(),
         n(n_),
         role(),
         concept_()
     {
         ygg::set(role_, role);
-        ygg::set(concept__, concept_);
+        ygg::set(concept_arg, concept_);
     }
 
     static constexpr auto cista_members() noexcept

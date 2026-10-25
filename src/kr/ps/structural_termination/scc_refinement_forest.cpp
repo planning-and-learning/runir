@@ -6,7 +6,7 @@ namespace runir::kr::ps::detail
 {
 
 ResidualMemorySccs::ResidualMemorySccs(const dl::QualitativePolicy& policy, bool use_memory_scc_scope) :
-    policy_(policy),
+    policy_(&policy),
     use_memory_scc_scope_(use_memory_scc_scope),
     forest_(std::vector<std::size_t>(policy.num_memory_states, 0), 1, policy.num_booleans, policy.num_numericals)
 {
@@ -21,13 +21,13 @@ bool ResidualMemorySccs::refine(std::span<const std::size_t> remaining_rule_posi
     memory_edges.reserve(remaining_rule_positions.size());
     for (const auto rule_position : remaining_rule_positions)
     {
-        const auto& rule = policy_.rule_profiles[rule_position];
+        const auto& rule = policy_->rule_profiles[rule_position];
         memory_edges.push_back(PolicyEdge { rule.source_memory_position, rule.target_memory_position, rule_position });
     }
 
-    const auto components = find_strong_components(memory_edges, policy_.num_memory_states);
+    const auto components = find_strong_components(memory_edges, policy_->num_memory_states);
     auto memories_by_component = std::vector<std::vector<std::size_t>>(components.count);
-    for (std::size_t memory = 0; memory < policy_.num_memory_states; ++memory)
+    for (std::size_t memory = 0; memory < policy_->num_memory_states; ++memory)
         memories_by_component[components.component_of[memory]].push_back(memory);
 
     const auto previous_node_count = forest_.nodes().size();
@@ -61,7 +61,7 @@ bool ResidualMemorySccs::share_opponent_scope(std::size_t lhs_rule_position, std
 
 bool ResidualMemorySccs::is_cross_scc_rule(std::size_t rule_position) const
 {
-    const auto& rule = policy_.rule_profiles[rule_position];
+    const auto& rule = policy_->rule_profiles[rule_position];
     return forest_.leaf_of_memory(rule.source_memory_position) != forest_.leaf_of_memory(rule.target_memory_position);
 }
 
@@ -74,6 +74,6 @@ void ResidualMemorySccs::establish_r2_mark(std::size_t witnessing_rule_position,
 { forest_.mark_boolean(scc_for_rule(witnessing_rule_position), boolean_position, witnessing_rule_position); }
 
 SccRefinementForest::NodeIndex ResidualMemorySccs::scc_for_rule(std::size_t rule_position) const
-{ return forest_.leaf_of_memory(policy_.rule_profiles[rule_position].source_memory_position); }
+{ return forest_.leaf_of_memory(policy_->rule_profiles[rule_position].source_memory_position); }
 
 }  // namespace runir::kr::ps::detail

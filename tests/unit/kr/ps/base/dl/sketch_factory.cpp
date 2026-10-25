@@ -54,9 +54,9 @@ TEST(RunirTests, RejectsUnknownSketchFactorySpecification)
 {
     EXPECT_THROW(
         try {
-            static_cast<void>(kr::ps::base::dl::SketchFactory::create_description(static_cast<kr::ps::base::dl::SketchSpecification>(999)));
+            static_cast<void>(kr::ps::base::dl::SketchFactory::create_description(static_cast<kr::ps::base::dl::SketchSpecification>(255)));
         } catch (const std::runtime_error& error) {
-            EXPECT_STREQ(error.what(), "Unknown sketch specification: 999.");
+            EXPECT_STREQ(error.what(), "Unknown sketch specification: 255.");
             throw;
         },
         std::runtime_error);

@@ -34,7 +34,7 @@ void append_features(std::ostream& os, Features features)
 }
 
 template<typename Values, typename FormatValue>
-void append_list_section(std::ostream& os, std::string_view name, Values values, FormatValue&& format_value)
+void append_list_section(std::ostream& os, std::string_view name, Values values, FormatValue format_value)
 {
     if (values.empty())
     {

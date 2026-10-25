@@ -107,13 +107,15 @@ void evaluate_closure(Tag,
             if (scratch.lowlink[vertex] != scratch.discovery[vertex])
                 continue;
             scratch.component.clear();
-            do
+            while (true)
             {
                 const auto member = scratch.active_stack.back();
                 scratch.active_stack.pop_back();
                 scratch.active[member] = 0;
                 scratch.component.push_back(member);
-            } while (scratch.component.back() != vertex);
+                if (member == vertex)
+                    break;
+            }
 
             auto reached = row.get();
             reached.reset();

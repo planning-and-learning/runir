@@ -8,6 +8,7 @@
 #include "runir/kr/ps/family_traits.hpp"
 
 #include <concepts>
+#include <cstdint>
 #include <memory>
 #include <yggdrasil/core/type_list.hpp>
 #include <yggdrasil/core/types.hpp>
@@ -27,7 +28,7 @@ struct OrderTerm
 {
 };
 
-enum class OrderDirection
+enum class OrderDirection : std::uint8_t
 {
     MIN,
     MAX,

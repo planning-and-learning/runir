@@ -12,12 +12,12 @@ struct RuleEvaluationContext<BaseFamilyTag, Kind, void, tyr::planning::StateView
 {
     using FamilyType = BaseFamilyTag;
 
-    base::EvaluationEnvironment<Kind, EvaluationPolicy>& environment;
+    base::EvaluationEnvironment<Kind, EvaluationPolicy>* environment;
 
-    auto make_dl_context(tyr::planning::StateView<Kind> source) { return environment.make_dl_context(source); }
+    auto make_dl_context(tyr::planning::StateView<Kind> source) { return environment->make_dl_context(source); }
 
     auto make_dl_transition_context(tyr::planning::StateView<Kind> source, tyr::planning::StateView<Kind> candidate)
-    { return environment.make_dl_transition_context(source, candidate); }
+    { return environment->make_dl_transition_context(source, candidate); }
 };
 
 }  // namespace runir::kr::ps

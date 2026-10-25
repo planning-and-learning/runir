@@ -56,21 +56,26 @@ template<typename Dialect>
 runir::kr::dl::grammar::ast::Grammar parse_grammar_ast(const std::string& description)
 { return parse_ast<runir::kr::dl::grammar::ast::Grammar>(description, grammar_root_parser<Dialect>(), "Failed to parse grammar description."); }
 
-#define RUNIR_INSTANTIATE_AST_PARSERS(Dialect)                                                                                        \
-    template void parse_concept_ast<Dialect>(const std::string&, ast::ConceptConstructor&, runir::kr::parser::ErrorHandlerType&);     \
-    template ast::ConceptConstructor parse_concept_ast<Dialect>(const std::string&);                                                  \
-    template void parse_role_ast<Dialect>(const std::string&, ast::RoleConstructor&, runir::kr::parser::ErrorHandlerType&);           \
-    template ast::RoleConstructor parse_role_ast<Dialect>(const std::string&);                                                        \
-    template void parse_boolean_ast<Dialect>(const std::string&, ast::BooleanConstructor&, runir::kr::parser::ErrorHandlerType&);     \
-    template ast::BooleanConstructor parse_boolean_ast<Dialect>(const std::string&);                                                  \
-    template void parse_numerical_ast<Dialect>(const std::string&, ast::NumericalConstructor&, runir::kr::parser::ErrorHandlerType&); \
-    template ast::NumericalConstructor parse_numerical_ast<Dialect>(const std::string&);                                              \
-    template void parse_grammar_ast<Dialect>(const std::string&, ast::Grammar&, runir::kr::parser::ErrorHandlerType&);                \
-    template ast::Grammar parse_grammar_ast<Dialect>(const std::string&);
+template void parse_concept_ast<FullDialectTag>(const std::string&, ast::ConceptConstructor&, runir::kr::parser::ErrorHandlerType&);
+template ast::ConceptConstructor parse_concept_ast<FullDialectTag>(const std::string&);
+template void parse_role_ast<FullDialectTag>(const std::string&, ast::RoleConstructor&, runir::kr::parser::ErrorHandlerType&);
+template ast::RoleConstructor parse_role_ast<FullDialectTag>(const std::string&);
+template void parse_boolean_ast<FullDialectTag>(const std::string&, ast::BooleanConstructor&, runir::kr::parser::ErrorHandlerType&);
+template ast::BooleanConstructor parse_boolean_ast<FullDialectTag>(const std::string&);
+template void parse_numerical_ast<FullDialectTag>(const std::string&, ast::NumericalConstructor&, runir::kr::parser::ErrorHandlerType&);
+template ast::NumericalConstructor parse_numerical_ast<FullDialectTag>(const std::string&);
+template void parse_grammar_ast<FullDialectTag>(const std::string&, ast::Grammar&, runir::kr::parser::ErrorHandlerType&);
+template ast::Grammar parse_grammar_ast<FullDialectTag>(const std::string&);
 
-RUNIR_INSTANTIATE_AST_PARSERS(FullDialectTag)
-RUNIR_INSTANTIATE_AST_PARSERS(SearchFreeDialectTag)
-
-#undef RUNIR_INSTANTIATE_AST_PARSERS
+template void parse_concept_ast<SearchFreeDialectTag>(const std::string&, ast::ConceptConstructor&, runir::kr::parser::ErrorHandlerType&);
+template ast::ConceptConstructor parse_concept_ast<SearchFreeDialectTag>(const std::string&);
+template void parse_role_ast<SearchFreeDialectTag>(const std::string&, ast::RoleConstructor&, runir::kr::parser::ErrorHandlerType&);
+template ast::RoleConstructor parse_role_ast<SearchFreeDialectTag>(const std::string&);
+template void parse_boolean_ast<SearchFreeDialectTag>(const std::string&, ast::BooleanConstructor&, runir::kr::parser::ErrorHandlerType&);
+template ast::BooleanConstructor parse_boolean_ast<SearchFreeDialectTag>(const std::string&);
+template void parse_numerical_ast<SearchFreeDialectTag>(const std::string&, ast::NumericalConstructor&, runir::kr::parser::ErrorHandlerType&);
+template ast::NumericalConstructor parse_numerical_ast<SearchFreeDialectTag>(const std::string&);
+template void parse_grammar_ast<SearchFreeDialectTag>(const std::string&, ast::Grammar&, runir::kr::parser::ErrorHandlerType&);
+template ast::Grammar parse_grammar_ast<SearchFreeDialectTag>(const std::string&);
 
 }  // namespace runir::kr::dl::grammar::parser

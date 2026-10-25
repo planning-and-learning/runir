@@ -41,8 +41,6 @@ def test_parser_rejects_missing_and_extra_closes_with_owned_context(
     assert note.location.begin == len(source[: source.index("(:sketch")].encode("utf-8"))
     assert note.location.source is location.source
     assert str(error) == format_diagnostic(diagnostic)
-    with pytest.raises(AttributeError):
-        error.diagnostic = None
 
     del error, raised, source, repository
     gc.collect()

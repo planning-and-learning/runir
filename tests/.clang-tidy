@@ -1,12 +1,16 @@
-# Tests: literal values are the test data. Tests read optionals with value(), whose
-# bad_optional_access fails the test: the check cannot see gtest's ASSERTs. Concept tests
-# shadow a method to show that the concept rejects the type, a test checks a handle's
-# moved-from state, and validation tests cast invalid enum values to show they are rejected.
+# Tests: literal values are the test data, and fixed seeds keep runs reproducible. Tests read
+# optionals with value(), whose bad_optional_access fails the test: the check cannot see gtest's
+# ASSERTs. Concept tests shadow a method to show that the concept rejects the type, a test checks
+# a handle's moved-from state, and validation tests cast invalid enum values to show they are
+# rejected. The allocation tests replace operator new with malloc and free what it allocates.
 InheritParentConfig: true
 Checks: >
   -cppcoreguidelines-avoid-magic-numbers,
+  -bugprone-random-generator-seed,
   -bugprone-derived-method-shadowing-base-method,
   -bugprone-use-after-move,
-  -clang-analyzer-optin.core.EnumCastOutOfRange
+  -clang-analyzer-optin.core.EnumCastOutOfRange,
+  -cppcoreguidelines-owning-memory,
+  -cppcoreguidelines-no-malloc
 CheckOptions:
   bugprone-unchecked-optional-access.IgnoreValueCalls: true

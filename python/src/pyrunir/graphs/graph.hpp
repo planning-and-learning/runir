@@ -94,9 +94,11 @@ using PyObjectBidirectionalStaticGraph = graphs::BidirectionalStaticGraph<PyObje
 template<typename Graph, typename Range>
 auto make_graph_iterator(const char* name, Range&& range)
 {
+    // The iterator outlives this call, so the range must not own its elements.
     static_assert(std::ranges::borrowed_range<Range>);
 
-    return nb::make_iterator(nb::type<Graph>(), name, std::ranges::begin(range), std::ranges::end(range));
+    const auto elements = std::ranges::subrange(std::forward<Range>(range));
+    return nb::make_iterator(nb::type<Graph>(), name, elements.begin(), elements.end());
 }
 
 template<typename Graph>
@@ -151,7 +153,7 @@ template<typename Range>
 auto materialize_vertex_indices(Range&& range) -> graphs::VertexIndexList
 {
     auto result = graphs::VertexIndexList {};
-    for (auto vertex : range)
+    for (auto vertex : std::forward<Range>(range))
         result.push_back(vertex);
     return result;
 }
@@ -160,7 +162,7 @@ template<typename Range>
 auto materialize_edge_indices(Range&& range) -> graphs::EdgeIndexList
 {
     auto result = graphs::EdgeIndexList {};
-    for (auto edge : range)
+    for (auto edge : std::forward<Range>(range))
         result.push_back(edge);
     return result;
 }

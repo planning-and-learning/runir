@@ -33,21 +33,22 @@ public:
              StopConcept Stop,
              ExecutionStateViewConcept<Storage> State,
              tyr::planning::StateViewConcept<Kind> PlanningState>
-    bool emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, Emit&& emit, Stop&& stop) const
+    bool
+    emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, const Emit& emit, const Stop& stop) const
     {
         assert(m_rule.get_effects().empty() && "Effectful Sketch rules require the shared successor batch.");
-        if (!ext::rule_is_applicable(m_rule, state, context.planning_state, context.environment))
+        if (!ext::rule_is_applicable(m_rule, state, context.planning_state, *context.environment))
             return true;
         if (stop())
             return false;
         const auto module_ = state.get_module_state();
-        auto target = context.storage.store(context.planning_state,
-                                            module_.get_module(),
-                                            m_rule.get_target(),
-                                            module_.get_registers(),
-                                            module_.get_arguments(),
-                                            state.get_call_stack());
-        return emit(detail::applied<Kind, Storage>(std::move(target), m_variant, context.task_context));
+        auto target = context.storage->store(context.planning_state,
+                                             module_.get_module(),
+                                             m_rule.get_target(),
+                                             module_.get_registers(),
+                                             module_.get_arguments(),
+                                             state.get_call_stack());
+        return emit(detail::applied<Kind, Storage>(std::move(target), m_variant, *context.task_context));
     }
 
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,

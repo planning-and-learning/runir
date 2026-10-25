@@ -15,6 +15,7 @@ template<ygg::uint_t size>
 void check_composition_and_closures()
 {
     SCOPED_TRACE(size);
+    constexpr auto cells = std::size_t { size } * size;
     auto repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     for (ygg::uint_t i = 0; i < size; ++i)
     {
@@ -41,11 +42,11 @@ void check_composition_and_closures()
 
     const auto check_result = [&](const kr::dl::semantics::incremental::detail::DenotationState<kr::dl::RoleTag>& output,
                                   const ygg::Builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>& previous,
-                                  const std::array<bool, size * size>& expected,
+                                  const std::array<bool, cells>& expected,
                                   bool initialized)
     {
-        auto added = std::array<bool, size * size> {};
-        auto removed = std::array<bool, size * size> {};
+        auto added = std::array<bool, cells> {};
+        auto removed = std::array<bool, cells> {};
         for (const auto& [source, target] : output.get_delta().added)
         {
             const auto position = ygg::uint_t(source.get_index()) * size + ygg::uint_t(target.get_index());
@@ -105,8 +106,8 @@ void check_composition_and_closures()
             kr::dl::semantics::incremental::detail::update_set(kr::dl::ReflexiveTransitiveClosureTag {}, reflexive, lhs_view, lhs_delta, workspace);
         }
 
-        auto expected_composition = std::array<bool, size * size> {};
-        auto expected_closure = std::array<bool, size * size> {};
+        auto expected_composition = std::array<bool, cells> {};
+        auto expected_closure = std::array<bool, cells> {};
         for (ygg::uint_t source = 0; source < size; ++source)
             for (ygg::uint_t target = 0; target < size; ++target)
             {

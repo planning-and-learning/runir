@@ -3,13 +3,14 @@
 
 #include "runir/kr/ps/base/declarations.hpp"
 
+#include <cstdint>
 #include <string>
 #include <tyr/formalism/planning/declarations.hpp>
 
 namespace runir::kr::ps::base::dl
 {
 
-enum class SketchSpecification
+enum class SketchSpecification : std::uint8_t
 {
     GRIPPER_FRANCE_ET_AL_AAAI2021,
     BLOCKS3OPS_FRANCE_ET_AL_AAAI2021,

@@ -30,7 +30,7 @@ namespace
 auto parse_gripper_domain() { return tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain(); }
 
 template<typename Parse>
-void expect_error_containing(Parse&& parse, const std::string& expected)
+void expect_error_containing(Parse parse, const std::string& expected)
 {
     try
     {

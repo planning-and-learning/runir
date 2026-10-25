@@ -28,6 +28,11 @@ template<IsGraph G>
 class TraversalVisitor
 {
 public:
+    TraversalVisitor() = default;
+    TraversalVisitor(const TraversalVisitor&) = default;
+    TraversalVisitor& operator=(const TraversalVisitor&) = default;
+    TraversalVisitor(TraversalVisitor&&) noexcept = default;
+    TraversalVisitor& operator=(TraversalVisitor&&) noexcept = default;
     virtual ~TraversalVisitor() = default;
 
     virtual void initialize_vertex(VertexIndex vertex) { static_cast<void>(vertex); }

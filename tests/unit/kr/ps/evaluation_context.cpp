@@ -118,9 +118,9 @@ struct ResourceContext
 {
     using FamilyType = Family;
 
-    kr::ps::dl::TransitionEvaluationContext<Family, tyr::GroundTag>& transition;
-    auto& get_source_context() { return transition.get_source_context(); }
-    auto& get_target_context() { return transition.get_target_context(); }
+    kr::ps::dl::TransitionEvaluationContext<Family, tyr::GroundTag>* transition;
+    auto& get_source_context() { return transition->get_source_context(); }
+    auto& get_target_context() { return transition->get_target_context(); }
 };
 using IcpResourceContext = ResourceContext<kr::IcpFamilyTag>;
 using BaseResourceContext = ResourceContext<kr::BaseFamilyTag>;

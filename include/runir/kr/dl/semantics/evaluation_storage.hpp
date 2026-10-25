@@ -23,6 +23,9 @@ public:
 
     EvaluationStorage(const EvaluationStorage&) = delete;
     EvaluationStorage& operator=(const EvaluationStorage&) = delete;
+    EvaluationStorage(EvaluationStorage&&) = delete;
+    EvaluationStorage& operator=(EvaluationStorage&&) = delete;
+    ~EvaluationStorage() = default;
 
     auto& get_caches() noexcept { return m_caches; }
     [[nodiscard]] const auto& get_caches() const noexcept { return m_caches; }
@@ -32,14 +35,14 @@ public:
     void reset_dynamic() noexcept
     {
         m_caches.reset_dynamic();
-        m_dynamic_denotations->clear();
+        m_dynamic_denotations->reset();
     }
 
     void reset_all() noexcept
     {
         m_caches.reset_all();
-        m_dynamic_denotations->clear();
-        m_static_denotations->clear();
+        m_dynamic_denotations->reset();
+        m_static_denotations->reset();
     }
 };
 

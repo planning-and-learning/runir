@@ -60,7 +60,7 @@ private:
                                  const std::shared_ptr<tyr::formalism::planning::Repository>& formalism,
                                  const ConstructorRepository& constructors,
                                  ygg::uint_t constructor,
-                                 Make&& make)
+                                 Make make)
     {
         const auto same_formalism = [&](const KeyedFeature<Feature>& entry)
         { return !entry.formalism.owner_before(formalism) && !formalism.owner_before(entry.formalism); };

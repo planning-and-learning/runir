@@ -292,6 +292,19 @@ BOOST_SPIRIT_DECLARE(dl_search_free_concept_root_type,
                      dl_search_free_query_type,
                      dl_search_free_grammar_root_type)
 
+/// The rules other grammars embed; X3 parses a rule with the definition of its type, which the declarations above make visible.
+inline constexpr dl_concept_type dl_concept = "concept";
+inline constexpr dl_role_type dl_role = "role";
+inline constexpr dl_boolean_type dl_boolean = "boolean";
+inline constexpr dl_numerical_type dl_numerical = "numerical";
+inline constexpr dl_query_type dl_query = "query";
+
+inline constexpr dl_search_free_concept_type dl_search_free_concept = "concept";
+inline constexpr dl_search_free_role_type dl_search_free_role = "role";
+inline constexpr dl_search_free_boolean_type dl_search_free_boolean = "boolean";
+inline constexpr dl_search_free_numerical_type dl_search_free_numerical = "numerical";
+inline constexpr dl_search_free_query_type dl_search_free_query = "query";
+
 template<typename Dialect = FullDialectTag>
 concept_type<Dialect> const& concept_parser();
 
@@ -322,32 +335,47 @@ query_type<Dialect> const& query_parser();
 template<typename Dialect = FullDialectTag>
 grammar_root_type<Dialect> const& grammar_root_parser();
 
-#define RUNIR_DECLARE_PARSER_ACCESSORS(Dialect)                           \
-    template<>                                                            \
-    concept_type<Dialect> const& concept_parser<Dialect>();               \
-    template<>                                                            \
-    concept_root_type<Dialect> const& concept_root_parser<Dialect>();     \
-    template<>                                                            \
-    role_type<Dialect> const& role_parser<Dialect>();                     \
-    template<>                                                            \
-    role_root_type<Dialect> const& role_root_parser<Dialect>();           \
-    template<>                                                            \
-    boolean_type<Dialect> const& boolean_parser<Dialect>();               \
-    template<>                                                            \
-    boolean_root_type<Dialect> const& boolean_root_parser<Dialect>();     \
-    template<>                                                            \
-    numerical_type<Dialect> const& numerical_parser<Dialect>();           \
-    template<>                                                            \
-    numerical_root_type<Dialect> const& numerical_root_parser<Dialect>(); \
-    template<>                                                            \
-    query_type<Dialect> const& query_parser<Dialect>();                   \
-    template<>                                                            \
-    grammar_root_type<Dialect> const& grammar_root_parser<Dialect>();
+template<>
+concept_type<FullDialectTag> const& concept_parser<FullDialectTag>();
+template<>
+concept_root_type<FullDialectTag> const& concept_root_parser<FullDialectTag>();
+template<>
+role_type<FullDialectTag> const& role_parser<FullDialectTag>();
+template<>
+role_root_type<FullDialectTag> const& role_root_parser<FullDialectTag>();
+template<>
+boolean_type<FullDialectTag> const& boolean_parser<FullDialectTag>();
+template<>
+boolean_root_type<FullDialectTag> const& boolean_root_parser<FullDialectTag>();
+template<>
+numerical_type<FullDialectTag> const& numerical_parser<FullDialectTag>();
+template<>
+numerical_root_type<FullDialectTag> const& numerical_root_parser<FullDialectTag>();
+template<>
+query_type<FullDialectTag> const& query_parser<FullDialectTag>();
+template<>
+grammar_root_type<FullDialectTag> const& grammar_root_parser<FullDialectTag>();
 
-RUNIR_DECLARE_PARSER_ACCESSORS(FullDialectTag)
-RUNIR_DECLARE_PARSER_ACCESSORS(SearchFreeDialectTag)
-
-#undef RUNIR_DECLARE_PARSER_ACCESSORS
+template<>
+concept_type<SearchFreeDialectTag> const& concept_parser<SearchFreeDialectTag>();
+template<>
+concept_root_type<SearchFreeDialectTag> const& concept_root_parser<SearchFreeDialectTag>();
+template<>
+role_type<SearchFreeDialectTag> const& role_parser<SearchFreeDialectTag>();
+template<>
+role_root_type<SearchFreeDialectTag> const& role_root_parser<SearchFreeDialectTag>();
+template<>
+boolean_type<SearchFreeDialectTag> const& boolean_parser<SearchFreeDialectTag>();
+template<>
+boolean_root_type<SearchFreeDialectTag> const& boolean_root_parser<SearchFreeDialectTag>();
+template<>
+numerical_type<SearchFreeDialectTag> const& numerical_parser<SearchFreeDialectTag>();
+template<>
+numerical_root_type<SearchFreeDialectTag> const& numerical_root_parser<SearchFreeDialectTag>();
+template<>
+query_type<SearchFreeDialectTag> const& query_parser<SearchFreeDialectTag>();
+template<>
+grammar_root_type<SearchFreeDialectTag> const& grammar_root_parser<SearchFreeDialectTag>();
 
 }  // namespace runir::kr::dl::grammar::parser
 

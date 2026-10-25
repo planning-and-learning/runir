@@ -72,7 +72,7 @@ public:
 
     DynamicGraph(const DynamicGraph&) = delete;
 
-    DynamicGraph(DynamicGraph&& other) :
+    DynamicGraph(DynamicGraph&& other) noexcept :
         m_vertices(std::move(other.m_vertices)),
         m_free_vertices(std::move(other.m_free_vertices)),
         m_next_vertex_index(other.m_next_vertex_index),
@@ -87,7 +87,7 @@ public:
 
     auto operator=(const DynamicGraph&) -> DynamicGraph& = delete;
 
-    auto operator=(DynamicGraph&& other) -> DynamicGraph&
+    auto operator=(DynamicGraph&& other) noexcept -> DynamicGraph&
     {
         if (this == &other)
             return *this;
@@ -105,6 +105,8 @@ public:
         rebind_parents();
         return *this;
     }
+
+    ~DynamicGraph() = default;
 
     void clear() noexcept
     {

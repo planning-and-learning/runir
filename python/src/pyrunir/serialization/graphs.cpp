@@ -1,4 +1,5 @@
 #include "pyrunir/serialization/binding_utils.hpp"
+#include "pyrunir/serialization/bindings.hpp"
 
 #include <runir/kr/ps/base/formatter.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>

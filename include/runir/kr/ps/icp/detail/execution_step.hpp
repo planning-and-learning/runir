@@ -9,6 +9,7 @@
 #include "runir/kr/ps/icp/rule_variant_view.hpp"
 
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <stdexcept>
 #include <string_view>
@@ -22,7 +23,7 @@ namespace runir::kr::ps::icp::detail
 {
 
 /// Local rule outcomes; whole-search completion and limits use ProgramProofStatus.
-enum class ProgramOutcome
+enum class ProgramOutcome : std::uint8_t
 {
     APPLIED,
     FAILURE,
@@ -48,18 +49,16 @@ constexpr std::string_view to_string(ProgramOutcome outcome)
 template<tyr::TaskKind Kind>
 struct ProgramStep
 {
-private:
-    runir::kr::TaskContextPtr<Kind> m_task_context;
-
-public:
+    /// Keeps the task's repositories alive while the step refers to them.
+    runir::kr::TaskContextPtr<Kind> task_context;
     ProgramOutcome status;
     ProgramStateView<Kind> target;
     std::optional<datasets::StateGraphEdgeLabel> state_transition = std::nullopt;
     std::optional<RuleVariantView> rule = std::nullopt;
     std::optional<tyr::planning::PackedLabeledNode<Kind>> planning_successor = std::nullopt;
 
-    ProgramStep(ProgramOutcome status_, ProgramStateView<Kind> target_, runir::kr::TaskContextPtr<Kind> task_context) :
-        m_task_context(std::move(task_context)),
+    ProgramStep(ProgramOutcome status_, ProgramStateView<Kind> target_, runir::kr::TaskContextPtr<Kind> task_context_) :
+        task_context(std::move(task_context_)),
         status(status_),
         target(std::move(target_))
     {

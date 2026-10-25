@@ -27,14 +27,14 @@ class RecordOptimizer
     using View = RecordView<Family, RepositoryTypes, T>;
 
 public:
-    RecordOptimizer(BasicRepository<Family, RepositoryTypes>& repository, Leaves leaves) : m_repository(repository), m_leaves(std::move(leaves)) {}
+    RecordOptimizer(BasicRepository<Family, RepositoryTypes>& repository, Leaves leaves) : m_repository(&repository), m_leaves(std::move(leaves)) {}
 
     template<typename T>
     View<T> optimize(View<T> view)
     {
         const auto key = runir::kr::detail::record_key<RepositoryTypes>(view);
         if (const auto it = m_rewritten.find(key); it != m_rewritten.end())
-            return ygg::make_view(ygg::Index<T>(it->second), m_repository);
+            return ygg::make_view(ygg::Index<T>(it->second), *m_repository);
         const auto result = rewrite(view);
         m_rewritten.emplace(key, result.get_index().get_value());
         return result;
@@ -44,16 +44,16 @@ private:
     template<typename T>
     View<T> rewrite(View<T> view)
     {
-        if constexpr (requires { m_leaves.rewrite(view, m_repository); })
-            return m_leaves.rewrite(view, m_repository);
+        if constexpr (requires { m_leaves.rewrite(view, *m_repository); })
+            return m_leaves.rewrite(view, *m_repository);
         else
         {
             auto data = ygg::map_children<RepositoryTypes>(view, [&]<typename U>(View<U> child) { return optimize<U>(child); });
-            return ygg::formalism::insert(m_repository, data).first;
+            return ygg::formalism::insert(*m_repository, data).first;
         }
     }
 
-    BasicRepository<Family, RepositoryTypes>& m_repository;
+    BasicRepository<Family, RepositoryTypes>* m_repository;
     Leaves m_leaves;
     ygg::UnorderedMap<runir::kr::detail::RecordKey, ygg::uint_t> m_rewritten;  ///< Rewritten record index by record.
 };

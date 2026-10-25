@@ -41,8 +41,8 @@ class RuleEvaluators
                      Action action,
                      std::span<const CruleEvaluator> rules,
                      ProgramStateView<Kind> source,
-                     Emit&& emit,
-                     Stop&& stop)
+                     const Emit& emit,
+                     const Stop& stop)
     {
         auto& search = *get_task_context()->search_context;
         auto& environment = m_workspace.get_environment();
@@ -112,15 +112,15 @@ public:
 
     /// Callbacks borrow shared scratch and must not reenter the evaluators or planning generator.
     template<EmitConcept<ProgramStep<Kind>> Emit, StopConcept Stop>
-    bool for_each_successor(ProgramStateView<Kind> state, Emit&& emit, Stop&& stop, bool grouped)
+    bool for_each_successor(ProgramStateView<Kind> state, const Emit& emit, const Stop& stop, bool grouped)
     {
         if (stop())
             return false;
         auto& environment = m_workspace.get_environment();
         environment.reset_source();
         auto source_context = environment.make_dl_context(state);
-        auto context =
-            runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy> { m_workspace, state.get_state() };
+        auto context = runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy> { &m_workspace,
+                                                                                                                                          state.get_state() };
         bool emitted = false;
         const auto output = [&](ProgramStep<Kind> step)
         {

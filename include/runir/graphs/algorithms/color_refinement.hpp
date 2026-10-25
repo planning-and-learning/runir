@@ -94,12 +94,7 @@ auto make_coloring_storage(const G& graph)
 
 template<IsGraph G>
 auto get_color(const Coloring<G>& colors, VertexIndex vertex) -> Color
-{
-    if constexpr (IsDenseGraph<G>)
-        return colors.at(vertex);
-    else
-        return colors.at(vertex);
-}
+{ return colors.at(vertex); }
 
 template<IsGraph G>
 void set_color(Coloring<G>& colors, VertexIndex vertex, Color color)

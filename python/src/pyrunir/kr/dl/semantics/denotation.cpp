@@ -40,10 +40,10 @@ void bind_denotation_view(nb::module_& m, const char* name)
                 [retainer](nb::typed<nb::handle, View> owner)
                 {
                     const auto& view = nb::cast<const View&>(owner);
+                    // Transfer the iterator reference instead of slicing the typed iterator into an object.
+                    auto iterator = nb::make_iterator(nb::type<View>(), "ConceptDenotationIterator", view.begin(), view.end());
                     return nb::borrow<nb::typed<nb::iterator, semantics::DenotationElementView<Category>>>(
-                        ygg::python::make_iterator_with_owner(nb::make_iterator(nb::type<View>(), "ConceptDenotationIterator", view.begin(), view.end()),
-                                                              owner,
-                                                              retainer));
+                        ygg::python::make_iterator_with_owner(nb::steal(iterator.release()), owner, retainer));
                 });
 
     if constexpr (std::same_as<Category, RoleTag>)
@@ -51,10 +51,10 @@ void bind_denotation_view(nb::module_& m, const char* name)
                 [retainer](nb::typed<nb::handle, View> owner)
                 {
                     const auto& view = nb::cast<const View&>(owner);
+                    // Transfer the iterator reference instead of slicing the typed iterator into an object.
+                    auto iterator = nb::make_iterator(nb::type<View>(), "RoleDenotationIterator", view.begin(), view.end());
                     return nb::borrow<nb::typed<nb::iterator, semantics::DenotationElementView<Category>>>(
-                        ygg::python::make_iterator_with_owner(nb::make_iterator(nb::type<View>(), "RoleDenotationIterator", view.begin(), view.end()),
-                                                              owner,
-                                                              retainer));
+                        ygg::python::make_iterator_with_owner(nb::steal(iterator.release()), owner, retainer));
                 });
 }
 

@@ -92,7 +92,7 @@ template<typename Range>
 auto materialize(Range&& range)
 {
     auto result = std::vector<std::ranges::range_value_t<Range>>();
-    for (auto value : range)
+    for (auto value : std::forward<Range>(range))
         result.push_back(value);
     return result;
 }
@@ -149,7 +149,7 @@ TEST(GraphContainersTest, DotFormatterEscapesVertexAndEdgeLabels)
     const auto target = builder.add_vertex(std::string("target"));
     builder.add_directed_edge(source, target, std::string("edge\n\"quoted\"\\slash\rcarriage"));
 
-    const auto graph = StaticGraph(std::move(builder));
+    const auto graph = StaticGraph(builder);
     const auto dot = fmt::format("{}", graph);
 
     EXPECT_NE(dot.find("digraph G"), std::string::npos);

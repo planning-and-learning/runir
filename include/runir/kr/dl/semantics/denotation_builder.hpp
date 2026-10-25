@@ -5,6 +5,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <span>
 #include <tuple>
 #include <tyr/formalism/declarations.hpp>
 #include <utility>
@@ -167,13 +168,13 @@ public:
     auto get(ygg::Index<tyr::formalism::Object> object) noexcept -> Bitset
     {
         assert(ygg::uint_t(object) < num_objects);
-        return Bitset(blocks.data() + row_block_offset(object, num_objects), num_objects);
+        return Bitset(std::span(blocks).subspan(row_block_offset(object, num_objects)).data(), num_objects);
     }
 
     [[nodiscard]] auto get(ygg::Index<tyr::formalism::Object> object) const noexcept -> ConstBitset
     {
         assert(ygg::uint_t(object) < num_objects);
-        return ConstBitset(blocks.data() + row_block_offset(object, num_objects), num_objects);
+        return ConstBitset(std::span(blocks).subspan(row_block_offset(object, num_objects)).data(), num_objects);
     }
 
     auto get(ygg::uint_t object) noexcept -> Bitset { return get(ygg::Index<tyr::formalism::Object>(object)); }

@@ -315,7 +315,7 @@ void check_query_graph()
             expect_net_delta(updated, before);  // Throws unless updated from the delta.
             compare_full(updated, state);
 
-            const auto after = rows(updated.get_result());
+            auto after = rows(updated.get_result());
             auto unchanged = evaluator.update(context, empty_delta, workspace);
             expect_empty_delta(unchanged);
             EXPECT_EQ(rows(unchanged.get_result()), after);

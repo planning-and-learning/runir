@@ -28,7 +28,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import timedelta
 from pathlib import Path
-from typing import TypeVar, cast
+from typing import TypeVar
 
 from pypddl.formalism import ParserOptions
 from pytyr.formalism.planning import Parser
@@ -244,8 +244,8 @@ class Session:
         self._rules: dict[str, ChooseRule] = {}
         for bodies in self._module.get_memory_transitions():
             for body in bodies:
-                if is_choose(body):
-                    variant = cast("ConceptChooseRule | RoleChooseRule", body.get_variant())
+                variant = body.get_variant()
+                if isinstance(variant, ConceptChooseRule | RoleChooseRule):
                     self._rules[body.get_symbol()] = ChooseRule(
                         body.get_symbol(), str(variant.get_register().get_name())
                     )
@@ -949,7 +949,7 @@ class Session:
             return True
 
         # The generated stub types `emit` as a bare Callable, whose parameters pyright cannot know.
-        expander.for_each_successor(source, ProgramSearchStatistics(), emit, lambda: False)  # pyright: ignore[reportUnknownMemberType]
+        expander.for_each_successor(source, ProgramSearchStatistics(), emit, lambda: False)
         choice = choices[0]
         rule = choice.rule
         bindings: list[tuple[str | None, LiftedProgramState]] = []

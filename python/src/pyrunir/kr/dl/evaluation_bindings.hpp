@@ -1,6 +1,8 @@
 #ifndef PYRUNIR_KR_DL_EVALUATION_BINDINGS_HPP_
 #define PYRUNIR_KR_DL_EVALUATION_BINDINGS_HPP_
 
+#include "pyrunir/kr/binding_utils.hpp"
+
 #include <nanobind/nanobind.h>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
@@ -38,66 +40,52 @@ void bind_state_evaluation_context(nanobind::module_& m, const char* name)
     using Caches = runir::kr::dl::semantics::DenotationCaches;
     auto cls = nb::class_<Context>(m, name);
     // Programs bind arguments and registers; other languages evaluate without them.
-    cls.def(nb::new_([](tyr::planning::StateView<Kind> state, runir::kr::dl::semantics::Builder& builder, Storage& storage)
-                     { return Context(state, builder, storage); }),
-            nb::arg("state"),
-            nb::arg("builder"),
-            nb::arg("storage"),
-            nb::keep_alive<0, 2>(),
-            nb::keep_alive<0, 3>(),
-            nb::keep_alive<0, 4>())
-        .def(nb::new_([](tyr::planning::StateView<Kind> state,
-                         runir::kr::dl::semantics::Builder& builder,
-                         Caches& caches,
-                         runir::kr::dl::semantics::DenotationRepository& repository,
-                         Storage& intermediates) { return Context(state, builder, caches, repository, intermediates); }),
-             nb::arg("state"),
-             nb::arg("builder"),
-             nb::arg("caches"),
-             nb::arg("repository"),
-             nb::arg("intermediates"),
-             nb::keep_alive<0, 2>(),
-             nb::keep_alive<0, 3>(),
-             nb::keep_alive<0, 4>(),
-             nb::keep_alive<0, 5>(),
-             nb::keep_alive<0, 6>())
-        .def(nb::new_([](tyr::planning::StateView<Kind> state,
-                         runir::kr::dl::semantics::Builder& builder,
-                         Storage& storage,
-                         runir::kr::dl::semantics::CallArgumentsView arguments,
-                         runir::kr::dl::semantics::RegisterValuesView registers) { return Context(state, builder, storage, arguments, registers); }),
-             nb::arg("state"),
-             nb::arg("builder"),
-             nb::arg("storage"),
-             nb::arg("arguments"),
-             nb::arg("registers"),
-             nb::keep_alive<0, 2>(),
-             nb::keep_alive<0, 3>(),
-             nb::keep_alive<0, 4>(),
-             nb::keep_alive<0, 5>(),
-             nb::keep_alive<0, 6>())
-        .def(nb::new_([](tyr::planning::StateView<Kind> state,
-                         runir::kr::dl::semantics::Builder& builder,
-                         Caches& caches,
-                         runir::kr::dl::semantics::DenotationRepository& repository,
-                         Storage& intermediates,
-                         runir::kr::dl::semantics::CallArgumentsView arguments,
-                         runir::kr::dl::semantics::RegisterValuesView registers)
-                      { return Context(state, builder, caches, repository, intermediates, arguments, registers); }),
-             nb::arg("state"),
-             nb::arg("builder"),
-             nb::arg("caches"),
-             nb::arg("repository"),
-             nb::arg("intermediates"),
-             nb::arg("arguments"),
-             nb::arg("registers"),
-             nb::keep_alive<0, 2>(),
-             nb::keep_alive<0, 3>(),
-             nb::keep_alive<0, 4>(),
-             nb::keep_alive<0, 5>(),
-             nb::keep_alive<0, 6>(),
-             nb::keep_alive<0, 7>(),
-             nb::keep_alive<0, 8>());
+    def_new_keeping_arguments_alive(
+        cls,
+        [](tyr::planning::StateView<Kind> state, runir::kr::dl::semantics::Builder& builder, Storage& storage) { return Context(state, builder, storage); },
+        nb::arg("state"),
+        nb::arg("builder"),
+        nb::arg("storage"));
+    def_new_keeping_arguments_alive(
+        cls,
+        [](tyr::planning::StateView<Kind> state,
+           runir::kr::dl::semantics::Builder& builder,
+           Caches& caches,
+           runir::kr::dl::semantics::DenotationRepository& repository,
+           Storage& intermediates) { return Context(state, builder, caches, repository, intermediates); },
+        nb::arg("state"),
+        nb::arg("builder"),
+        nb::arg("caches"),
+        nb::arg("repository"),
+        nb::arg("intermediates"));
+    def_new_keeping_arguments_alive(
+        cls,
+        [](tyr::planning::StateView<Kind> state,
+           runir::kr::dl::semantics::Builder& builder,
+           Storage& storage,
+           runir::kr::dl::semantics::CallArgumentsView arguments,
+           runir::kr::dl::semantics::RegisterValuesView registers) { return Context(state, builder, storage, arguments, registers); },
+        nb::arg("state"),
+        nb::arg("builder"),
+        nb::arg("storage"),
+        nb::arg("arguments"),
+        nb::arg("registers"));
+    def_new_keeping_arguments_alive(
+        cls,
+        [](tyr::planning::StateView<Kind> state,
+           runir::kr::dl::semantics::Builder& builder,
+           Caches& caches,
+           runir::kr::dl::semantics::DenotationRepository& repository,
+           Storage& intermediates,
+           runir::kr::dl::semantics::CallArgumentsView arguments,
+           runir::kr::dl::semantics::RegisterValuesView registers) { return Context(state, builder, caches, repository, intermediates, arguments, registers); },
+        nb::arg("state"),
+        nb::arg("builder"),
+        nb::arg("caches"),
+        nb::arg("repository"),
+        nb::arg("intermediates"),
+        nb::arg("arguments"),
+        nb::arg("registers"));
     cls.def("get_state", &Context::get_state, nb::rv_policy::copy, nb::keep_alive<0, 1>());
 }
 

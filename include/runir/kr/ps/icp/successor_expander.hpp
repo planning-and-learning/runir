@@ -38,15 +38,15 @@ public:
     /// Natural rule order for greedy execution; grouped action enumeration for universal search.
     /// Callbacks must not reenter this expander or the planning successor generator.
     template<EmitConcept<detail::ProgramStep<Kind>> Emit, StopConcept Stop>
-    bool for_each_successor(ProgramStateView<Kind> state, ProgramSearchStatistics& statistics, Emit&& emit, Stop&& stop, bool grouped = false)
+    bool for_each_successor(ProgramStateView<Kind> state, ProgramSearchStatistics& statistics, const Emit& emit, const Stop& stop, bool grouped = false)
     {
         validate(state);
-        const auto output = [&](Step step)
+        const auto output = [&](const Step& step)
         {
             statistics.num_generated += step.status == detail::ProgramOutcome::APPLIED;
             return emit(std::move(step));
         };
-        return m_rules.for_each_successor(state, output, std::forward<Stop>(stop), grouped);
+        return m_rules.for_each_successor(state, output, stop, grouped);
     }
 };
 

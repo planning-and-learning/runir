@@ -8,6 +8,7 @@
 #include <cassert>
 #include <memory>
 #include <utility>
+#include <yggdrasil/core/config.hpp>
 #include <yggdrasil/core/type_list.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>
@@ -41,6 +42,7 @@ public:
     BasicRepository& operator=(const BasicRepository&) = delete;
     BasicRepository(BasicRepository&&) = delete;
     BasicRepository& operator=(BasicRepository&&) = delete;
+    ~BasicRepository() = default;
 
     [[nodiscard]] const auto& get_index() const noexcept { return m_index; }
     // Dereference the raw pointer: operator* on the shared_ptr would complete the DL repository type for its lookup.
@@ -51,7 +53,7 @@ public:
     template<typename T>
         requires ygg::formalism::SupportsSymbol<BasicRepository, T>
     const ygg::Data<T>& operator[](ygg::Index<T> index) const noexcept
-    { return this->template at_local<T>(index); }
+    { return this->template local<T>(index); }
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<BasicRepository, T>
@@ -74,7 +76,7 @@ public:
 };
 
 template<FamilyTag Family, typename RepositoryTypes>
-inline const BasicRepository<Family, RepositoryTypes>& get_repository(const BasicRepository<Family, RepositoryTypes>& repository) noexcept
+inline const BasicRepository<Family, RepositoryTypes>& get_repository(const BasicRepository<Family, RepositoryTypes>& repository YGG_LIFETIMEBOUND) noexcept
 { return repository; }
 
 template<FamilyTag Family, typename RepositoryTypes>

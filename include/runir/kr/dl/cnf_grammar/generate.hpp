@@ -9,6 +9,7 @@
 #include <chrono>
 #include <concepts>
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <tyr/planning/declarations.hpp>
 #include <vector>
@@ -40,7 +41,7 @@ struct GenerateOptions
     std::optional<std::chrono::steady_clock::duration> max_time = std::nullopt;
 };
 
-enum class GenerateStatus
+enum class GenerateStatus : std::uint8_t
 {
     COMPLETED,
     OUT_OF_TIME

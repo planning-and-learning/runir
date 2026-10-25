@@ -27,11 +27,13 @@ public:
 
     BidirectionalStaticGraph(const BidirectionalStaticGraph&) = delete;
 
-    BidirectionalStaticGraph(BidirectionalStaticGraph&& other) : m_forward_graph(std::move(other.m_forward_graph)), m_backward_graph(m_forward_graph) {}
+    BidirectionalStaticGraph(BidirectionalStaticGraph&& other) noexcept : m_forward_graph(std::move(other.m_forward_graph)), m_backward_graph(m_forward_graph)
+    {
+    }
 
     auto operator=(const BidirectionalStaticGraph&) -> BidirectionalStaticGraph& = delete;
 
-    auto operator=(BidirectionalStaticGraph&& other) -> BidirectionalStaticGraph&
+    auto operator=(BidirectionalStaticGraph&& other) noexcept -> BidirectionalStaticGraph&
     {
         if (this == &other)
             return *this;
@@ -41,9 +43,9 @@ public:
         return *this;
     }
 
-    explicit BidirectionalStaticGraph(const StaticGraphBuilder<VP, EP>& builder) : m_forward_graph(builder), m_backward_graph(m_forward_graph) {}
+    ~BidirectionalStaticGraph() = default;
 
-    explicit BidirectionalStaticGraph(StaticGraphBuilder<VP, EP>&& builder) : m_forward_graph(std::move(builder)), m_backward_graph(m_forward_graph) {}
+    explicit BidirectionalStaticGraph(const StaticGraphBuilder<VP, EP>& builder) : m_forward_graph(builder), m_backward_graph(m_forward_graph) {}
 
     [[nodiscard]] auto get_forward_graph() const noexcept -> const ForwardGraphType& { return m_forward_graph; }
 

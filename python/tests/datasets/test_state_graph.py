@@ -156,32 +156,61 @@ def test_ground_state_graph_builder_can_copy_generated_graph_labels(
     assert list(copied_graph.get_successor_indices(first_vertex)) == builder.get_successor_indices(first_vertex)
 
 
-@pytest.mark.parametrize("ground", [False, True])
-def test_state_graph_labels_own_packed_states_and_action_bindings(gripper_data_dir: Path, ground: bool) -> None:
+def _parse_gripper_task(gripper_data_dir: Path) -> Task:
     parser_options = ParserOptions()
     parser = Parser(gripper_data_dir / "domain.pddl", parser_options)
-    task = Task(parser.parse_task(gripper_data_dir / "test-1.pddl", parser_options))
-    execution_context = ExecutionContext(1)
-    if ground:
-        task = task.instantiate_ground_task(execution_context, GroundTaskInstantiationOptions()).task
-    context = (GroundTaskSearchContext if ground else LiftedTaskSearchContext)(task, execution_context)
+    return Task(parser.parse_task(gripper_data_dir / "test-1.pddl", parser_options))
+
+
+def _state_graph_options() -> StateGraphGenerationOptions:
     options = StateGraphGenerationOptions()
     options.max_num_states = 4
+    return options
 
-    graph = (generate_ground_state_graph if ground else generate_lifted_state_graph)(
-        context, options
-    ).get_forward_graph()
+
+def test_ground_state_graph_labels_own_packed_states_and_action_bindings(gripper_data_dir: Path) -> None:
+    lifted_task = _parse_gripper_task(gripper_data_dir)
+    execution_context = ExecutionContext(1)
+    task = lifted_task.instantiate_ground_task(execution_context, GroundTaskInstantiationOptions()).task
+    context = GroundTaskSearchContext(task, execution_context)
+
+    graph = generate_ground_state_graph(context, _state_graph_options()).get_forward_graph()
     edge_label = graph.get_edge_property(next(iter(graph.get_edge_indices())))
 
     assert isinstance(edge_label, StateGraphEdgeLabel)
     assert isinstance(edge_label.action, ActionBinding)
-    for vertex in graph.get_vertex_indices():
-        state = graph.get_vertex_property(vertex).state
-        assert isinstance(state, GroundPackedState if ground else LiftedPackedState)
+    states = [graph.get_vertex_property(vertex).state for vertex in graph.get_vertex_indices()]
+    for state in states:
+        assert isinstance(state, GroundPackedState)
         assert state.get_state_repository().get_index() == context.state_repository.get_index()
 
+    state = states[-1]
     expected = str(state.unpack())
-    del edge_label, graph, context, task, parser
+    del edge_label, graph, context, task, lifted_task, states
+    gc.collect()
+
+    assert str(state.unpack()) == expected
+    assert state.unpack().pack() == state
+
+
+def test_lifted_state_graph_labels_own_packed_states_and_action_bindings(gripper_data_dir: Path) -> None:
+    task = _parse_gripper_task(gripper_data_dir)
+    execution_context = ExecutionContext(1)
+    context = LiftedTaskSearchContext(task, execution_context)
+
+    graph = generate_lifted_state_graph(context, _state_graph_options()).get_forward_graph()
+    edge_label = graph.get_edge_property(next(iter(graph.get_edge_indices())))
+
+    assert isinstance(edge_label, StateGraphEdgeLabel)
+    assert isinstance(edge_label.action, ActionBinding)
+    states = [graph.get_vertex_property(vertex).state for vertex in graph.get_vertex_indices()]
+    for state in states:
+        assert isinstance(state, LiftedPackedState)
+        assert state.get_state_repository().get_index() == context.state_repository.get_index()
+
+    state = states[-1]
+    expected = str(state.unpack())
+    del edge_label, graph, context, task, states
     gc.collect()
 
     assert str(state.unpack()) == expected

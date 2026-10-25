@@ -1,4 +1,4 @@
-#include "pyrunir/kr/ps/base/module.hpp"
+#include "pyrunir/kr/ps/base/bindings.hpp"
 
 #include <functional>
 #include <nanobind/stl/chrono.h>

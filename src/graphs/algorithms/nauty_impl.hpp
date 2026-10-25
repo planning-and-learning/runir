@@ -48,17 +48,17 @@ public:
 
     void canonize();
 
-    auto get_num_directed_edges() const noexcept -> std::size_t;
-    auto get_num_vertices() const noexcept -> int;
-    auto get_offsets() const noexcept -> const std::vector<std::size_t>&;
-    auto get_degrees() const noexcept -> const std::vector<int>&;
-    auto get_edges() const noexcept -> const std::vector<int>&;
-    auto get_labels() const noexcept -> const std::vector<int>&;
-    auto get_partitions() const noexcept -> const std::vector<int>&;
-    auto get_orbits() const noexcept -> const std::vector<int>&;
-    auto get_coloring() const noexcept -> const std::vector<ygg::uint_t>&;
-    auto get_permutation() const -> const std::vector<int>&;
-    auto get_inverse_permutation() const -> const std::vector<int>&;
+    [[nodiscard]] auto get_num_directed_edges() const noexcept -> std::size_t;
+    [[nodiscard]] auto get_num_vertices() const noexcept -> int;
+    [[nodiscard]] auto get_offsets() const noexcept -> const std::vector<std::size_t>&;
+    [[nodiscard]] auto get_degrees() const noexcept -> const std::vector<int>&;
+    [[nodiscard]] auto get_edges() const noexcept -> const std::vector<int>&;
+    [[nodiscard]] auto get_labels() const noexcept -> const std::vector<int>&;
+    [[nodiscard]] auto get_partitions() const noexcept -> const std::vector<int>&;
+    [[nodiscard]] auto get_orbits() const noexcept -> const std::vector<int>&;
+    [[nodiscard]] auto get_coloring() const noexcept -> const std::vector<ygg::uint_t>&;
+    [[nodiscard]] auto get_permutation() const -> const std::vector<int>&;
+    [[nodiscard]] auto get_inverse_permutation() const -> const std::vector<int>&;
 };
 
 }  // namespace runir::graphs::nauty::details

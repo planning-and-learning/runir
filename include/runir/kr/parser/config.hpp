@@ -12,7 +12,7 @@ namespace runir::kr::parser
 
 using ErrorHandlerTag = ygg::diagnostics::ErrorHandlerTag;
 
-inline auto keyword(const char* value)
+constexpr auto keyword(const char* value)
 {
     return boost::spirit::x3::rule<class Keyword> { value } =
                boost::spirit::x3::lexeme[boost::spirit::x3::lit(value)

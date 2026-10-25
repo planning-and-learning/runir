@@ -56,7 +56,7 @@ public:
     template<ProgramStateViewConcept<Kind> S, typename Emit, StopConcept Stop>
         requires EmitConcept<Emit, detail::ProgramStep<Kind, ExecutionStorage>> && EmitConcept<Emit, detail::Choice<runir::kr::dl::ConceptTag>>
                  && EmitConcept<Emit, detail::Choice<runir::kr::dl::RoleTag>>
-    bool for_each_successor(S state, ProgramSearchStatistics& statistics, Emit&& emit, Stop&& stop);
+    bool for_each_successor(S state, ProgramSearchStatistics& statistics, const Emit& emit, const Stop& stop);
 
     /// Apply the current admitted binding without advancing its cursor; an exhausted choice reports FAILURE.
     template<runir::kr::dl::CategoryTag Category, ProgramStateViewConcept<Kind> S>

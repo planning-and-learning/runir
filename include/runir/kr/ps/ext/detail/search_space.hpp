@@ -30,9 +30,11 @@ tyr::planning::PackedPlan<Kind> extract_total_ordered_plan(ProgramStateView<Kind
 {
     auto actions = std::vector<tyr::formalism::planning::ActionBindingView> {};
     auto state = goal;
-    while (search_nodes[ygg::uint_t(state.get_index())].parent_state)
+    while (true)
     {
         const auto& node = search_nodes[ygg::uint_t(state.get_index())];
+        if (!node.parent_state)
+            break;
         if (node.action)
             actions.push_back(*node.action);
         state = *node.parent_state;

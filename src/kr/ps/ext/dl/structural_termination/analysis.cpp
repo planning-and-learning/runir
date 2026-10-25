@@ -8,6 +8,8 @@
 
 namespace runir::kr::ps::ext::dl::detail
 {
+namespace
+{
 
 template<runir::kr::dl::CategoryTag Category>
 using RegisterConstructor = std::conditional_t<std::same_as<Category, runir::kr::dl::ConceptTag>,
@@ -92,6 +94,8 @@ void record_binding_effects(ModuleView module_, runir::kr::ps::detail::RuleProfi
             profile.numerical_unchanged_effects |= std::uint64_t { 1 } << position;
         }
 }
+
+}  // namespace
 
 Analysis analyze_module(ModuleView module_)
 {

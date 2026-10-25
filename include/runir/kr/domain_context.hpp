@@ -15,10 +15,10 @@ namespace runir::kr
 struct DomainContext
 {
     /// Declared first: every language shares its DL constructor repository.
-    const runir::kr::ps::ext::RepositoryPtr ext_repository;
-    const runir::kr::ps::base::RepositoryPtr base_repository;
-    const runir::kr::ps::icp::RepositoryPtr icp_repository;
-    const runir::kr::uns::RepositoryPtr uns_repository;
+    runir::kr::ps::ext::RepositoryPtr ext_repository;
+    runir::kr::ps::base::RepositoryPtr base_repository;
+    runir::kr::ps::icp::RepositoryPtr icp_repository;
+    runir::kr::uns::RepositoryPtr uns_repository;
 
     static DomainContextPtr create(const tyr::formalism::planning::PlanningDomain& domain);
 

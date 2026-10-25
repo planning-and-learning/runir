@@ -69,22 +69,22 @@ def test_optimized_features_evaluate_like_originals(
     )
 
 
+def _count_arg_variant(feature: NumericalFeature) -> object:
+    count = feature.get_expression().get_variant()
+    assert isinstance(count, semantics.NumericalCount)
+    return count.get_arg().get_variant()
+
+
 def test_generic_join_and_empty_bindings(gripper_planning_domain: PlanningDomain) -> None:
     domain = DomainContext(gripper_planning_domain)
     feature = _feature(
         f"(n_count (q_generic_join (ball room) (room ball) {_AT} {_BALL}))", gripper_planning_domain, domain
     )
-    join = feature.get_expression().get_variant().get_arg().get_variant()
+    join = _count_arg_variant(feature)
     assert isinstance(join, semantics.QueryGenericJoin)
     assert [str(column) for column in join.get_variable_order()] == ["ball", "room"]
     assert [str(column) for column in join.get_output_order()] == ["room", "ball"]
     assert len(join.get_args()) == 2
-    empty = (
-        _feature("(n_count (q_empty (ball)))", gripper_planning_domain, domain)
-        .get_expression()
-        .get_variant()
-        .get_arg()
-        .get_variant()
-    )
+    empty = _count_arg_variant(_feature("(n_count (q_empty (ball)))", gripper_planning_domain, domain))
     assert isinstance(empty, semantics.QueryEmpty)
     assert [str(column) for column in empty.get_columns()] == ["ball"]

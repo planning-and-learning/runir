@@ -78,7 +78,7 @@ TEST(RunirTests, PublicStructuralTerminationReportsFailureFrontier)
     EXPECT_EQ(kr::ps::dl::incomplete_structural_termination(policy).get_cyclic_rule_positions(), std::vector<std::size_t>({ 1, 2 }));
     EXPECT_EQ(result.get_cyclic_rule_positions(), std::vector<std::size_t>({ 1, 2 }));
     ASSERT_TRUE(result.incomplete_frontier.has_value());
-    const auto& frontier = *result.incomplete_frontier;
+    const auto& frontier = result.incomplete_frontier.value();
     ASSERT_EQ(frontier.surviving_rules.size(), 2);
     EXPECT_EQ(frontier.surviving_rules[0].rule_position, 1);
     ASSERT_EQ(frontier.surviving_rules[0].blocking_reasons.size(), 1);

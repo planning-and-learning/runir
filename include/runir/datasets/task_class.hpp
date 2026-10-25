@@ -59,6 +59,7 @@ struct TaskSearchContext
     TaskSearchContext& operator=(const TaskSearchContext&) = delete;
     TaskSearchContext(TaskSearchContext&&) = delete;
     TaskSearchContext& operator=(TaskSearchContext&&) = delete;
+    ~TaskSearchContext() = default;
 
     static std::shared_ptr<TaskSearchContext> create() { return std::shared_ptr<TaskSearchContext>(new TaskSearchContext()); }
 

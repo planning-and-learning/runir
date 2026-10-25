@@ -18,7 +18,9 @@ namespace runir::tests
 namespace
 {
 
-const std::string policy = R"((:module
+std::string policy()
+{
+    return R"((:module
   (:symbol visit)
   (:arguments)
   (:registers (:concept saved) (:role pair))
@@ -45,6 +47,8 @@ const std::string policy = R"((:module
         (:effects (unchanged size))))))
   (:reset-spo (:prec all selected) (:prec selected empty))
 ))";
+}
+
 std::string replaced(std::string value, const std::string& from, const std::string& to)
 {
     const auto pos = value.find(from);
@@ -62,7 +66,7 @@ TEST(RunirTests, IcpParserRoundTripAndValidation)
     auto constructors = kr::dl::ConstructorRepositoryFactory().create(planning.get_repository());
     auto repository = kr::ps::icp::RepositoryFactory().create(constructors);
     const auto parse = [&](const std::string& text) { return kr::ps::icp::dl::parse_module(text, planning.get_domain(), *repository); };
-    const auto module = parse(policy);
+    const auto module = parse(policy());
     ASSERT_EQ(module.get_memory_transitions().size(), 2);
     EXPECT_EQ(module.get_memory_transitions().front().size(), 2);
     EXPECT_EQ(module.get_query_features().size(), 1);
@@ -75,18 +79,18 @@ TEST(RunirTests, IcpParserRoundTripAndValidation)
     EXPECT_EQ(program.get_module(), module);
 
     for (const auto& invalid :
-         { replaced(policy, "(:arguments)", "(:arguments (:concept input))"),
-           replaced(policy, "(:reset-spo (:prec all selected) (:prec selected empty))", ""),
-           replaced(policy, "(:prec selected empty)", "(:prec selected all)"),
-           replaced(policy, "(:prec selected empty)", "(:prec all all)"),
-           replaced(policy, "(:prec selected empty)", "(:prec selected size)"),
-           replaced(policy, "(:arguments from to)", "(:arguments from from)"),
-           replaced(policy, "(:arguments from to)", "(:arguments from)"),
-           replaced(policy, "(:argument from)", "(:argument absent)"),
-           replaced(policy, "(c_register saved)", "(c_register absent)"),
-           replaced(policy, "(c_register saved)", "(c_argument 0)"),
-           replaced(policy, "(:concept all))\n                      ", "(:concept size))\n                      "),
-           replaced(policy, "(:concept saved) (:role pair)", "(:concept saved) (:concept a) (:concept b) (:concept c) (:concept d) (:role pair)") })
+         { replaced(policy(), "(:arguments)", "(:arguments (:concept input))"),
+           replaced(policy(), "(:reset-spo (:prec all selected) (:prec selected empty))", ""),
+           replaced(policy(), "(:prec selected empty)", "(:prec selected all)"),
+           replaced(policy(), "(:prec selected empty)", "(:prec all all)"),
+           replaced(policy(), "(:prec selected empty)", "(:prec selected size)"),
+           replaced(policy(), "(:arguments from to)", "(:arguments from from)"),
+           replaced(policy(), "(:arguments from to)", "(:arguments from)"),
+           replaced(policy(), "(:argument from)", "(:argument absent)"),
+           replaced(policy(), "(c_register saved)", "(c_register absent)"),
+           replaced(policy(), "(c_register saved)", "(c_argument 0)"),
+           replaced(policy(), "(:concept all))\n                      ", "(:concept size))\n                      "),
+           replaced(policy(), "(:concept saved) (:role pair)", "(:concept saved) (:concept a) (:concept b) (:concept c) (:concept d) (:role pair)") })
     {
         try
         {

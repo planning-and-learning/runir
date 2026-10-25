@@ -769,9 +769,9 @@ TEST(RunirTests, RejectsUnknownModuleFactorySpecification)
 {
     EXPECT_THROW(
         try {
-            static_cast<void>(kr::ps::ext::dl::ModuleFactory::create_description(static_cast<kr::ps::ext::dl::ModuleSpecification>(999)));
+            static_cast<void>(kr::ps::ext::dl::ModuleFactory::create_description(static_cast<kr::ps::ext::dl::ModuleSpecification>(255)));
         } catch (const std::runtime_error& error) {
-            EXPECT_STREQ(error.what(), "Unknown module specification: 999.");
+            EXPECT_STREQ(error.what(), "Unknown module specification: 255.");
             throw;
         },
         std::runtime_error);

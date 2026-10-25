@@ -51,7 +51,7 @@ auto make_role_builder(Context& context)
 { return context.get_builder().template get_builder<Denotation<RoleTag>>(num_objects<Kind>(context)); }
 
 template<tyr::formalism::FactKind T>
-auto object_index(tyr::formalism::planning::AtomView<::tyr::GroundTag, T> atom, size_t position) noexcept -> ygg::Index<tyr::formalism::Object>
+auto object_index(tyr::formalism::planning::AtomView<::tyr::GroundTag, T> atom, size_t position) -> ygg::Index<tyr::formalism::Object>
 { return atom.get_row().get_objects()[position].get_index(); }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>

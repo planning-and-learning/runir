@@ -72,7 +72,7 @@ struct StateGraphVertexCandidate : ygg::comparison::Mixin<StateGraphVertexCandid
 struct RepresentativeResult
 {
     StateGraphVertexRef representative;
-    bool inserted;
+    bool inserted = false;
 };
 
 /// Called at most once, and only when the policy creates a new equivalence class.

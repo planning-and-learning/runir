@@ -18,7 +18,7 @@
 namespace runir::kr::ps::ext::dl
 {
 
-enum class StructuralTerminationStatus
+enum class StructuralTerminationStatus : std::uint8_t
 {
     TERMINATING,
     NON_TERMINATING,

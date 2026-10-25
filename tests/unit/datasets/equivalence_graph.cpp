@@ -76,11 +76,11 @@ std::vector<EquivalenceGraphFigureCase> load_cases()
     return result;
 }
 
-}  // namespace
-
 class EquivalenceGraphTest : public ::testing::TestWithParam<EquivalenceGraphFigureCase>
 {
 };
+
+}  // namespace
 
 TEST_P(EquivalenceGraphTest, MatchesExpectedProperties)
 {
@@ -114,9 +114,9 @@ TEST(EquivalenceGraphTest, RejectsUnsupportedPolicyMode)
 
     EXPECT_THROW(
         try {
-            static_cast<void>(datasets::generate_equivalence_graph(contexts, static_cast<datasets::EquivalencePolicyMode>(999)));
+            static_cast<void>(datasets::generate_equivalence_graph(contexts, static_cast<datasets::EquivalencePolicyMode>(255)));
         } catch (const std::runtime_error& error) {
-            EXPECT_STREQ(error.what(), "Unsupported equivalence policy mode: 999.");
+            EXPECT_STREQ(error.what(), "Unsupported equivalence policy mode: 255.");
             throw;
         },
         std::runtime_error);

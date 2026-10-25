@@ -32,6 +32,7 @@ from pyrunir.kr.ps.base import (
     syntactic_complexity,
 )
 from pyrunir.kr.ps.base.dl import (
+    ConcreteBooleanFeature,
     GroundTransitionEvaluationContext,
     LiftedTransitionEvaluationContext,
     SketchFactory,
@@ -217,6 +218,7 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
     concrete_condition = concrete_condition_variant.get_variant()
     feature = concrete_condition.get_feature()
     concrete_feature = feature.get_variant()
+    assert isinstance(concrete_feature, ConcreteBooleanFeature)
     dl_constructor = concrete_feature.get_feature()
     dl_denotation = dl_constructor.evaluate(state_context)
     assert isinstance(feature.evaluate(state_context).get(), bool)

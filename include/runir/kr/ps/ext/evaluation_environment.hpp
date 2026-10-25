@@ -45,9 +45,9 @@ private:
         bool operator==(const Invocation&) const = default;
     };
 
-    runir::kr::dl::semantics::Builder& m_dl_builder;
-    runir::kr::dl::semantics::DenotationRepository& m_dl_denotation_repository;
-    ExecutionRepository<Kind>& m_execution_repository;
+    runir::kr::dl::semantics::Builder* m_dl_builder;
+    runir::kr::dl::semantics::DenotationRepository* m_dl_denotation_repository;
+    ExecutionRepository<Kind>* m_execution_repository;
     runir::kr::dl::semantics::EvaluationStorage m_dl_storage;
     runir::kr::dl::semantics::EvaluationStorage m_dl_target_storage;
     runir::kr::dl::semantics::DenotationCaches m_call_caches;
@@ -65,11 +65,11 @@ private:
 
 public:
     EvaluationEnvironment(runir::kr::TaskContext<Kind>& task_context, ProgramView program) :
-        m_dl_builder(task_context.dl_builder),
-        m_dl_denotation_repository(*task_context.dl_denotation_repository),
-        m_execution_repository(*task_context.execution_repository),
-        m_dl_storage(m_dl_denotation_repository),
-        m_dl_target_storage(m_dl_denotation_repository),
+        m_dl_builder(&task_context.dl_builder),
+        m_dl_denotation_repository(task_context.dl_denotation_repository.get()),
+        m_execution_repository(task_context.execution_repository.get()),
+        m_dl_storage(*m_dl_denotation_repository),
+        m_dl_target_storage(*m_dl_denotation_repository),
         m_program(program)
     {
         m_modules.reserve(program.get_modules().size());
@@ -93,6 +93,8 @@ public:
     EvaluationEnvironment(const EvaluationEnvironment&) = delete;
     EvaluationEnvironment& operator=(const EvaluationEnvironment&) = delete;
     EvaluationEnvironment(EvaluationEnvironment&&) = default;
+    EvaluationEnvironment& operator=(EvaluationEnvironment&&) = delete;
+    ~EvaluationEnvironment() = default;
 
     auto& get_dl_storage() noexcept { return m_dl_storage; }
     auto& get_dl_target_storage() noexcept { return m_dl_target_storage; }
@@ -134,7 +136,7 @@ public:
     auto make_dl_context(S state)
     {
         const auto program = state.get_program();
-        if (&state.get_context() != &m_execution_repository || &program.get_context() != &m_program.get_context() || program != m_program)
+        if (&state.get_context() != m_execution_repository || &program.get_context() != &m_program.get_context() || program != m_program)
             throw std::invalid_argument("EvaluationEnvironment requires an execution state from the selected task and program.");
         select_source(state);
         const auto module_state = state.get_module_state();
@@ -145,7 +147,7 @@ public:
     auto make_dl_context(S state, runir::kr::dl::semantics::CallArgumentsView arguments, R registers)
     {
         using StateDlContext = runir::kr::dl::semantics::StateEvaluationContext<Kind, S>;
-        auto context = StateDlContext(std::move(state), m_dl_builder, m_dl_storage, arguments, registers);
+        auto context = StateDlContext(std::move(state), *m_dl_builder, m_dl_storage, arguments, registers);
         return current_policy().make_source_context(std::move(context));
     }
 
@@ -154,10 +156,10 @@ public:
     template<tyr::planning::StateViewConcept<Kind> S, runir::kr::dl::semantics::RegisterValuesViewConcept R>
     auto make_call_context(S state, runir::kr::dl::semantics::CallArgumentsView arguments, R registers)
     {
-        if (&arguments.get_context() != &m_dl_denotation_repository)
+        if (&arguments.get_context() != m_dl_denotation_repository)
             throw std::invalid_argument("Call argument evaluation requires arguments from the selected task repository.");
         using StateDlContext = runir::kr::dl::semantics::StateEvaluationContext<Kind, S>;
-        return StateDlContext(std::move(state), m_dl_builder, m_call_caches, m_dl_denotation_repository, m_dl_storage, arguments, registers);
+        return StateDlContext(std::move(state), *m_dl_builder, m_call_caches, *m_dl_denotation_repository, m_dl_storage, arguments, registers);
     }
 
     template<tyr::planning::StateViewConcept<Kind> S, runir::kr::dl::semantics::RegisterValuesViewConcept R>
@@ -165,8 +167,8 @@ public:
     make_dl_transition_context(S source_state, S target_state, runir::kr::dl::semantics::CallArgumentsView arguments, R source_registers, R target_registers)
     {
         using StateDlContext = runir::kr::dl::semantics::StateEvaluationContext<Kind, S>;
-        auto source = StateDlContext(std::move(source_state), m_dl_builder, m_dl_storage, arguments, source_registers);
-        auto target = StateDlContext(std::move(target_state), m_dl_builder, m_dl_target_storage, arguments, target_registers);
+        auto source = StateDlContext(std::move(source_state), *m_dl_builder, m_dl_storage, arguments, source_registers);
+        auto target = StateDlContext(std::move(target_state), *m_dl_builder, m_dl_target_storage, arguments, target_registers);
         return make_evaluation_transition_context<ExtFamilyTag, Kind>(current_policy().make_source_context(std::move(source)),
                                                                       current_policy().make_target_context(std::move(target)));
     }

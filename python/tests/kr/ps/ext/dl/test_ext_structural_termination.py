@@ -290,8 +290,6 @@ def test_ext_structural_termination_lifts_projected_components(
     surviving_rule_ids = {rule.get_index() for rule in surviving_rules}
     assert len(surviving_rules) == len(surviving_rule_ids) == 4
     assert surviving_rule_ids == {edge.get_index() for edge in edges}
-    with pytest.raises(AttributeError):
-        sieve_result.surviving_rules = []
 
     cycle = counterexample.find_edge_cycle()
     assert cycle

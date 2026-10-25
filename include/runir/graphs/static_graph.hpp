@@ -84,7 +84,7 @@ public:
 
     StaticGraph(const StaticGraph&) = delete;
 
-    StaticGraph(StaticGraph&& other) :
+    StaticGraph(StaticGraph&& other) noexcept :
         m_vertices(std::move(other.m_vertices)),
         m_edges(std::move(other.m_edges)),
         m_vertex_properties(std::move(other.m_vertex_properties)),
@@ -94,7 +94,7 @@ public:
 
     auto operator=(const StaticGraph&) -> StaticGraph& = delete;
 
-    auto operator=(StaticGraph&& other) -> StaticGraph&
+    auto operator=(StaticGraph&& other) noexcept -> StaticGraph&
     {
         if (this == &other)
             return *this;
@@ -108,9 +108,9 @@ public:
         return *this;
     }
 
-    explicit StaticGraph(const StaticGraphBuilder<VP, EP>& builder) { initialize(builder); }
+    ~StaticGraph() = default;
 
-    explicit StaticGraph(StaticGraphBuilder<VP, EP>&& builder) { initialize(builder); }
+    explicit StaticGraph(const StaticGraphBuilder<VP, EP>& builder) { initialize(builder); }
 
     StaticGraph(std::span<const VP> vertices, std::span<const std::tuple<VertexIndex, VertexIndex, EP>> edges) : m_out_edge_offsets(vertices.size() + 1, 0)
     {

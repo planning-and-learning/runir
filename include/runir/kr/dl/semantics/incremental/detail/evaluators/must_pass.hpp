@@ -23,14 +23,6 @@ namespace runir::kr::dl::semantics::incremental::detail
 template<tyr::TaskKind Kind>
 struct QueryMustPassEvaluator : QueryValue
 {
-    QueryEvaluationIndex sources;
-    QueryEvaluationIndex targets;
-    QueryEvaluationIndex probes;
-    MustPassFeature feature;
-    std::vector<QueryEvaluationIndex> slots;         ///< The graph node of each input slot.
-    ygg::Builder<ygg::database::Relation> computed;  ///< The recomputed result; kept to avoid allocations.
-    std::vector<std::byte> removed;                  ///< Rows of the previous result that are gone.
-
     QueryMustPassEvaluator(QueryView<QueryMustPassTag> expression, GraphBuilder<Kind>& graph, std::vector<ygg::uint_t>& dependencies) :
         QueryValue(expression.get_schema().span()),
         sources(graph.prepare(expression.get_sources(), dependencies)),
@@ -73,6 +65,14 @@ struct QueryMustPassEvaluator : QueryValue
     }
 
 private:
+    QueryEvaluationIndex sources;
+    QueryEvaluationIndex targets;
+    QueryEvaluationIndex probes;
+    MustPassFeature feature;
+    std::vector<QueryEvaluationIndex> slots;         ///< The graph node of each input slot.
+    ygg::Builder<ygg::database::Relation> computed;  ///< The recomputed result; kept to avoid allocations.
+    std::vector<std::byte> removed;                  ///< Rows of the previous result that are gone.
+
     ygg::uint_t num_objects = 0;
 
     void compute(EvaluationGraph<Kind>& graph, ygg::Builder<ygg::database::Relation>& out)

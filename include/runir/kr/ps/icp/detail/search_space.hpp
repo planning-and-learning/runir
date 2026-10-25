@@ -21,11 +21,14 @@ tyr::planning::PackedPlan<Kind> extract_total_ordered_plan(std::size_t goal,
 {
     auto actions = std::vector<tyr::formalism::planning::ActionBindingView> {};
     auto index = goal;
-    while (nodes[index].parent)
+    while (true)
     {
-        if (nodes[index].action)
-            actions.push_back(*nodes[index].action);
-        index = *nodes[index].parent;
+        const auto& node = nodes[index];
+        if (!node.parent)
+            break;
+        if (node.action)
+            actions.push_back(*node.action);
+        index = *node.parent;
     }
     std::ranges::reverse(actions);
     auto& search = *context.search_context;

@@ -21,7 +21,8 @@ from pyrunir import (
 )
 
 
-def _source_version() -> str:
+def source_version() -> str:
+    """Return the version from the nearest enclosing pyproject.toml with a [project] table, or 0.0.0."""
     for parent in Path(__file__).resolve().parents:
         pyproject = parent / "pyproject.toml"
         if not pyproject.exists():
@@ -37,7 +38,7 @@ def _source_version() -> str:
 try:
     __version__ = version("pyrunir")
 except PackageNotFoundError:
-    __version__ = _source_version()
+    __version__ = source_version()
 
 
 def native_prefix() -> Path:

@@ -12,22 +12,22 @@ template<typename Graph>
 class CycleVisitor : public bgl::TraversalVisitor<Graph>
 {
 private:
-    const Graph& m_graph;
+    const Graph* m_graph;
     bgl::VertexMapStorage<Graph, VertexIndex> m_parent;
     VertexIndexList m_cycle;
 
 public:
-    explicit CycleVisitor(const Graph& graph) : m_graph(graph), m_parent(bgl::make_vertex_map_storage(graph, VertexIndex {})) {}
+    explicit CycleVisitor(const Graph& graph) : m_graph(&graph), m_parent(bgl::make_vertex_map_storage(graph, VertexIndex {})) {}
 
-    void tree_edge(EdgeIndex edge) override { m_parent[m_graph.get_target(edge)] = m_graph.get_source(edge); }
+    void tree_edge(EdgeIndex edge) override { m_parent[m_graph->get_target(edge)] = m_graph->get_source(edge); }
 
     void back_edge(EdgeIndex edge) override
     {
         if (!m_cycle.empty())
             return;
 
-        const auto source = m_graph.get_source(edge);
-        const auto target = m_graph.get_target(edge);
+        const auto source = m_graph->get_source(edge);
+        const auto target = m_graph->get_target(edge);
 
         m_cycle.push_back(target);
         for (auto vertex = source; vertex != target; vertex = m_parent.at(vertex))

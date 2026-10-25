@@ -23,6 +23,7 @@
 #include <tyr/planning/successor_generator.hpp>
 #include <utility>
 #include <vector>
+#include <yggdrasil/core/config.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
@@ -66,12 +67,12 @@ private:
                       State state,
                       const tyr::planning::Node<Kind, PlanningState>& candidate) const
     {
-        context.environment.reset_target();
-        auto transition = context.environment.make_dl_transition_context(context.planning_state,
-                                                                         candidate.get_state(),
-                                                                         state.get_module_state().get_arguments(),
-                                                                         state.get_module_state().get_registers(),
-                                                                         state.get_module_state().get_registers());
+        context.environment->reset_target();
+        auto transition = context.environment->make_dl_transition_context(context.planning_state,
+                                                                          candidate.get_state(),
+                                                                          state.get_module_state().get_arguments(),
+                                                                          state.get_module_state().get_registers(),
+                                                                          state.get_module_state().get_registers());
         return all_compatible<Kind, ExtFamilyTag>(m_rule.get_effects(), transition);
     }
 
@@ -82,12 +83,13 @@ public:
              StopConcept Stop,
              ExecutionStateViewConcept<Storage> State,
              tyr::planning::StateViewConcept<Kind> PlanningState>
-    bool emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, Emit&& emit, Stop&& stop) const
+    bool
+    emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, const Emit& emit, const Stop& stop) const
     {
         const auto& planning_state = context.planning_state;
         const auto rule = m_rule;
         const auto rule_variant = m_variant;
-        if (!ext::rule_is_applicable(rule, state, planning_state, context.environment))
+        if (!ext::rule_is_applicable(rule, state, planning_state, *context.environment))
             return true;
         auto state_context = context.make_dl_context(state);
         const auto query = evaluate<Kind>(rule.get_query_feature(), state_context);
@@ -99,18 +101,21 @@ public:
             for (const auto value : row.get_data().get_all(m_values))
                 m_objects.emplace_back(value);
             // Policy applicability has no carried path metric.
-            const auto offered = context.task_context->search_context->successor_generator->try_get_applicable_action_binding(
-                tyr::planning::Node<Kind, PlanningState>(planning_state, 0),
-                m_action,
-                tyr::formalism::planning::ObjectSpanView(std::span<const ygg::Index<tyr::formalism::Object>>(m_objects),
-                                                         *planning_state.get_formalism_repository()));
+            const auto offered = (*context.task_context)
+                                     ->search_context->successor_generator->try_get_applicable_action_binding(
+                                         tyr::planning::Node<Kind, PlanningState>(planning_state, 0),
+                                         m_action,
+                                         tyr::formalism::planning::ObjectSpanView(std::span<const ygg::Index<tyr::formalism::Object>>(m_objects),
+                                                                                  *planning_state.get_formalism_repository()));
             require_applicable(offered.status);
-            const auto candidate = context.storage.successor(planning_state, *offered.binding);
+            // An applicable offer carries its binding.
+            YGG_ASSUME(offered.binding.has_value());
+            const auto candidate = context.storage->successor(planning_state, *offered.binding);
             // Effects filter the offered transitions, as for Do rules.
             if (!effects_hold(context, state, candidate))
                 continue;
             const auto labeled = tyr::planning::LabeledNode<Kind, PlanningState> { *offered.binding, candidate };
-            if (!emit(detail::planning_step(context.storage, state, labeled, rule_variant, rule.get_target(), context.task_context)))
+            if (!emit(detail::planning_step(*context.storage, state, labeled, rule_variant, rule.get_target(), *context.task_context)))
                 return false;
         }
         return true;
@@ -127,14 +132,14 @@ public:
         const auto& planning_state = context.planning_state;
         const auto rule = m_rule;
         const auto action = candidate.label.get_relation();
-        if (!ext::rule_is_applicable(rule, state, planning_state, context.environment) || action != m_action)
+        if (!ext::rule_is_applicable(rule, state, planning_state, *context.environment) || action != m_action)
             return false;
         auto state_context = context.make_dl_context(state);
         const auto query = evaluate<Kind>(rule.get_query_feature(), state_context);
         const auto objects = candidate.label.get_objects();
         if (objects.size() != query.arity() || !query.contains(runir::kr::dl::encode_object_row(objects.get_data(), m_row)))
             return false;
-        auto& generator = *context.task_context->search_context->successor_generator;
+        auto& generator = *(*context.task_context)->search_context->successor_generator;
         const auto node = tyr::planning::Node<Kind, PlanningState>(planning_state, 0);
         const auto status = generator.check_action_binding(node, candidate.label);
         require_applicable(status);

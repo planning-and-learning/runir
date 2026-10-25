@@ -2,22 +2,29 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import gc
-from collections.abc import Iterator
+from collections.abc import Callable, Iterable
 from pathlib import Path
+from typing import TypeAlias, TypeVar
 
 import pytest
 from ext_execution_utils import (
+    DlContext,
     EvaluationEnvironment,
+    ExecutionStep,
     Expander,
     ProgramState,
     TaskContext,
     collect_steps,
     initial_node,
+    initial_program_state,
+    make_dl_context,
+    make_environment,
+    make_expander,
 )
 from fixture_utils import FIXTURE_ROOT
 from pypddl.formalism import ParserOptions
 from pytyr.formalism.planning import ActionBinding, Object, ObjectIndex, Parser, PlanningDomain
-from pytyr.planning import lifted
+from pytyr.planning import ground, lifted
 from pyyggdrasil import database
 from pyyggdrasil.execution import ExecutionContext
 from pyyggdrasil.serialization import Dictionaries
@@ -28,6 +35,9 @@ from pyrunir.kr.dl import semantics
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext import dl
 from pyrunir.serialization import register_table, serialize, table
+
+Successor: TypeAlias = ground.LabeledNode | lifted.LabeledNode
+T = TypeVar("T")
 
 QUERY = '(q_join (q_atomic_state "at" (from)) (q_atomic_state "edge" (from to)))'
 
@@ -65,15 +75,102 @@ def _context(kind: str) -> tuple[TaskContext, PlanningDomain]:
     return context, parser.get_domain()
 
 
+def _matching_rule(expander: Expander, state: ProgramState, successor: Successor) -> ext.RuleVariant | None:
+    if isinstance(expander, ext.GroundSuccessorExpander):
+        assert isinstance(state, ext.GroundProgramState)
+        assert isinstance(successor, ground.LabeledNode)
+        return expander.matching_rule(state, successor)
+    assert isinstance(state, ext.LiftedProgramState)
+    assert isinstance(successor, lifted.LabeledNode)
+    return expander.matching_rule(state, successor)
+
+
+def _apply(
+    expander: Expander, state: ProgramState, rule: ext.RuleVariant, successor: Successor
+) -> ExecutionStep | None:
+    if isinstance(expander, ext.GroundSuccessorExpander):
+        assert isinstance(state, ext.GroundProgramState)
+        assert isinstance(successor, ground.LabeledNode)
+        return expander.apply(state, rule, successor)
+    assert isinstance(state, ext.LiftedProgramState)
+    assert isinstance(successor, lifted.LabeledNode)
+    return expander.apply(state, rule, successor)
+
+
+def _labeled_successors(task_context: TaskContext) -> list[ground.LabeledNode] | list[lifted.LabeledNode]:
+    """Return the planning successors of the task's initial node."""
+    search = task_context.search_context
+    if isinstance(search, GroundTaskSearchContext):
+        node = search.successor_generator.get_initial_node(search.state_repository, search.axiom_evaluator)
+        return search.successor_generator.get_labeled_successor_nodes(
+            node, search.state_repository, search.axiom_evaluator
+        )
+    node = search.successor_generator.get_initial_node(search.state_repository, search.axiom_evaluator)
+    return search.successor_generator.get_labeled_successor_nodes(node, search.state_repository, search.axiom_evaluator)
+
+
+def _solve(task_context: TaskContext, program: ext.Program) -> bool:
+    if isinstance(task_context, GroundTaskContext):
+        return ext.find_ground_solution(task_context, program, ext.GroundProgramSearchOptions()).is_successful()
+    return ext.find_lifted_solution(task_context, program, ext.LiftedProgramSearchOptions()).is_successful()
+
+
+def _same_state(left: ProgramState, right: ProgramState) -> bool:
+    if isinstance(left, ext.GroundProgramState):
+        assert isinstance(right, ext.GroundProgramState)
+        return left == right
+    assert isinstance(right, ext.LiftedProgramState)
+    return left == right
+
+
+def _same_planning_state(left: ProgramState, right: ProgramState) -> bool:
+    if isinstance(left, ext.GroundProgramState):
+        assert isinstance(right, ext.GroundProgramState)
+        return left.state == right.state
+    assert isinstance(right, ext.LiftedProgramState)
+    return left.state == right.state
+
+
+def _successor(step: ExecutionStep) -> Successor:
+    successor = step.planning_successor
+    assert successor is not None
+    return successor.unpack()
+
+
+def _rule(step: ExecutionStep) -> ext.RuleVariant:
+    rule = step.rule
+    assert rule is not None
+    return rule
+
+
+def _action(step: ExecutionStep) -> ActionBinding:
+    transition = step.state_transition
+    assert transition is not None
+    return transition.action
+
+
+def _ints(row: Iterable[object]) -> tuple[int, ...]:
+    values: list[int] = []
+    for value in row:
+        assert isinstance(value, int)
+        values.append(value)
+    return tuple(values)
+
+
+def _register_value(state: ProgramState) -> int:
+    value = state.module_state.registers.concept_values[0]
+    assert value is not None
+    return int(value.get_index())
+
+
 def _runtime(
     kind: str, source: str | None = None
 ) -> tuple[TaskContext, ext.Program, Expander, ProgramState, EvaluationEnvironment]:
     task_context, domain = _context(kind)
     program = dl.parse_program(source or _program(), domain, task_context.domain_context.ext_repository)
-    prefix = kind.title()
-    expander = getattr(ext, f"{prefix}SuccessorExpander")(task_context, program)
-    state = expander.initial_state(initial_node(task_context).get_state())
-    environment = getattr(ext, f"{prefix}EvaluationEnvironment")(task_context, program)
+    expander = make_expander(task_context, program)
+    state = initial_program_state(expander, initial_node(task_context).get_state())
+    environment = make_environment(task_context, program)
     return task_context, program, expander, state, environment
 
 
@@ -82,36 +179,36 @@ def test_expander_rejects_foreign_states_programs_and_candidates(kind: str) -> N
     task_context, domain = _context(kind)
     repository = task_context.domain_context.ext_repository
     program = dl.parse_program(_program(), domain, repository)
-    expander_type = getattr(ext, f"{kind.title()}SuccessorExpander")
-    expander = expander_type(task_context, program)
+    expander = make_expander(task_context, program)
     planning_state = initial_node(task_context).get_state()
-    state = expander.initial_state(planning_state)
+    state = initial_program_state(expander, planning_state)
     step = collect_steps(expander, state)[0]
-    successor = step.planning_successor.unpack()
+    successor = _successor(step)
+    rule = _rule(step)
     _foreign_context, foreign_program, foreign_expander, foreign_state, _foreign_environment = _runtime(kind)
     other_program = dl.parse_program(_program(effects=""), domain, repository)
-    other_expander = expander_type(task_context, other_program)
-    other_state = other_expander.initial_state(planning_state)
+    other_expander = make_expander(task_context, other_program)
+    other_state = initial_program_state(other_expander, planning_state)
 
     with pytest.raises(ValueError, match="domain context repository"):
-        expander_type(task_context, foreign_program)
+        make_expander(task_context, foreign_program)
     with pytest.raises(ValueError, match="selected task's state repository"):
-        expander.initial_state(foreign_state.state)
+        initial_program_state(expander, foreign_state.state)
     for wrong_state, message in ((foreign_state, "selected task"), (other_state, "selected program")):
         statistics = ext.ProgramSearchStatistics()
         with pytest.raises(ValueError, match=message):
-            expander.for_each_successor(wrong_state, statistics, lambda _: True, lambda: False)
+            collect_steps(expander, wrong_state, statistics)
         assert statistics.num_generated == statistics.num_expanded == statistics.num_backtracks == 0
         with pytest.raises(ValueError, match=message):
-            expander.matching_rule(wrong_state, successor)
+            _matching_rule(expander, wrong_state, successor)
         with pytest.raises(ValueError, match=message):
-            expander.apply(wrong_state, step.rule, successor)
+            _apply(expander, wrong_state, rule, successor)
 
-    foreign_successor = collect_steps(foreign_expander, foreign_state)[0].planning_successor.unpack()
+    foreign_successor = _successor(collect_steps(foreign_expander, foreign_state)[0])
     with pytest.raises(ValueError, match="selected task's state repository"):
-        expander.matching_rule(state, foreign_successor)
+        _matching_rule(expander, state, foreign_successor)
     with pytest.raises(ValueError, match="selected task's state repository"):
-        expander.apply(state, step.rule, foreign_successor)
+        _apply(expander, state, rule, foreign_successor)
 
 
 def test_action_and_query_feature_bindings_round_trip_and_serialize() -> None:
@@ -173,7 +270,7 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
     task_context, program, expander, state, environment = _runtime(kind)
     features = {feature.get_symbol(): feature for feature in program.get_entry_module().get_query_features()}
 
-    dl_context = environment.make_dl_context(state)
+    dl_context = make_dl_context(environment, state)
     relation = ext.evaluate(features["selected"], dl_context)
     assert isinstance(relation, database.RelationView)
     assert relation == features["selected"].get_expression().evaluate(dl_context)
@@ -183,8 +280,7 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
     assert relation == ext.evaluate(features["selected"], dl_context)
     assert len({relation, ext.evaluate(features["selected"], dl_context)}) == 1
     assert all(isinstance(row, database.RelationRow) and len(row) == 2 for row in relation)
-    rows = {tuple(row) for row in relation}
-    assert all(isinstance(value, int) for row in rows for value in row)
+    rows = {_ints(row) for row in relation}
     objects = task_context.dl_denotation_repository
     assert all(isinstance(objects.get_object(ObjectIndex(value)), Object) for row in rows for value in row)
     assert {tuple(objects.get_object(ObjectIndex(value)).get_name() for value in row) for row in rows} == {
@@ -209,19 +305,21 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
 
     steps = collect_steps(expander, state)
     assert len(steps) == 2
-    assert rows == {
-        tuple(int(object_.get_index()) for object_ in step.state_transition.action.get_objects()) for step in steps
-    }
+    assert rows == {tuple(int(object_.get_index()) for object_ in _action(step).get_objects()) for step in steps}
     for step in steps:
-        assert isinstance(step.rule.get_variant(), ext.ActionRule)
-        successor = step.planning_successor.unpack()
-        assert expander.matching_rule(state, successor) == step.rule
-        assert expander.apply(state, step.rule, successor).target == step.target
-    good_step = next(step for step in steps if step.state_transition.action.get_objects()[1].get_name() == "good")
+        rule = _rule(step)
+        assert isinstance(rule.get_variant(), ext.ActionRule)
+        successor = _successor(step)
+        assert _matching_rule(expander, state, successor) == rule
+        applied = _apply(expander, state, rule, successor)
+        assert applied is not None
+        assert _same_state(applied.target, step.target)
+        del step, rule, successor, applied
+    good_step = next(step for step in steps if _action(step).get_objects()[1].get_name() == "good")
     del relation, truth, empty
     state = good_step.target
     environment.reset_source()
-    dl_context = environment.make_dl_context(state)
+    dl_context = make_dl_context(environment, state)
     relation = ext.evaluate(features["selected"], dl_context)
     assert len(relation) == 1
     new_rows = {tuple(row) for row in relation}
@@ -231,8 +329,6 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
     del (
         steps,
         good_step,
-        successor,
-        step,
         features,
         environment,
         dl_context,
@@ -249,52 +345,64 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
     assert tuple(row) == tuple(iterated_row) == expected_row
 
 
+def _retained(
+    kind: str, project: Callable[[database.RelationView, database.RelationRepository], T]
+) -> tuple[T, tuple[object, ...]]:
+    """Project the first query relation of a fresh runtime and drop every other owner."""
+    task_context, program, _expander, state, _environment = _runtime(kind)
+    repository = task_context.dl_denotation_repository
+    caches = semantics.DenotationCaches()
+    storage = semantics.EvaluationStorage(repository)
+    arguments = state.module_state.arguments
+    registers = state.module_state.registers
+    context: DlContext
+    if isinstance(state, ext.GroundProgramState):
+        context = semantics.GroundStateEvaluationContext(
+            state.state, task_context.dl_builder, caches, repository, storage, arguments, registers
+        )
+    else:
+        context = semantics.LiftedStateEvaluationContext(
+            state.state, task_context.dl_builder, caches, repository, storage, arguments, registers
+        )
+    feature = program.get_entry_module().get_query_features()[0]
+    relation = feature.get_expression().evaluate(context)
+    expected = tuple(relation[0])
+    return project(relation, repository.get_relation_repository()), expected
+
+
+def _renamed(relation: database.RelationView, relations: database.RelationRepository) -> database.RelationView:
+    columns = list(relation.columns())[::-1]
+    renamed = relations.rename(relation, columns)
+    assert isinstance(renamed, database.RelationView)
+    assert list(renamed.columns()) == columns
+    return renamed
+
+
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
 @pytest.mark.parametrize("access", ["object", "row_iterator", "query_iterator", "renamed"])
 def test_query_objects_iterators_and_renames_retain_owners(kind: str, access: str) -> None:
-    def retained_value() -> tuple[
-        object | Iterator[object] | Iterator[database.RelationRow] | database.RelationView, tuple[object, ...]
-    ]:
-        task_context, program, _expander, state, _environment = _runtime(kind)
-        repository = task_context.dl_denotation_repository
-        caches = semantics.DenotationCaches()
-        storage = semantics.EvaluationStorage(repository)
-        context = getattr(semantics, f"{kind.title()}StateEvaluationContext")(
-            state.state,
-            task_context.dl_builder,
-            caches,
-            repository,
-            storage,
-            state.module_state.arguments,
-            state.module_state.registers,
-        )
-        feature = program.get_entry_module().get_query_features()[0]
-        relation = feature.get_expression().evaluate(context)
-        expected = tuple(relation[0])
-        if access == "object":
-            return relation[0][0], expected
-        if access == "row_iterator":
-            return iter(relation[0]), expected
-        if access == "query_iterator":
-            return iter(relation), expected
-        columns = list(relation.columns())[::-1]
-        renamed = repository.get_relation_repository().rename(relation, columns)
-        assert isinstance(renamed, database.RelationView)
-        assert list(renamed.columns()) == columns
-        return renamed, expected
-
-    value, expected = retained_value()
-    gc.collect()
     if access == "object":
-        object_ = value
+        object_, expected = _retained(kind, lambda relation, _: relation[0][0])
+        gc.collect()
     elif access == "row_iterator":
-        object_ = next(value)
-    else:
-        row = next(value) if access == "query_iterator" else value[0]
+        objects, expected = _retained(kind, lambda relation, _: iter(relation[0]))
+        gc.collect()
+        object_ = next(objects)
+        del objects
+    elif access == "query_iterator":
+        rows, expected = _retained(kind, lambda relation, _: iter(relation))
+        gc.collect()
+        row = next(rows)
         assert tuple(row) == expected
         object_ = next(iter(row))
-        del row
-    del value
+        del row, rows
+    else:
+        renamed, expected = _retained(kind, _renamed)
+        gc.collect()
+        row = renamed[0]
+        assert tuple(row) == expected
+        object_ = next(iter(row))
+        del row, renamed
     gc.collect()
     assert isinstance(object_, int)
     assert object_ == expected[0]
@@ -304,8 +412,7 @@ def test_query_objects_iterators_and_renames_retain_owners(kind: str, access: st
 def test_action_effects_filter_transitions(kind: str) -> None:
     task_context, program, expander, state, _environment = _runtime(kind, _program(effects="(decreases count)"))
     assert [step.status for step in collect_steps(expander, state)] == ["no_applicable_action"]
-    options = getattr(ext, f"{kind.title()}ProgramSearchOptions")()
-    assert not getattr(ext, f"find_{kind}_solution")(task_context, program, options).is_successful()
+    assert not _solve(task_context, program)
 
 
 @pytest.mark.parametrize("query", ['(q_atomic_state "at" (from))', '(q_project () (q_atomic_state "at" (from)))'])
@@ -331,12 +438,15 @@ def test_action_structural_counterexample_retains_query_rule(preprocessing: bool
     program = dl.parse_program(_program(), domain, task_context.domain_context.ext_repository)
     result = dl.structural_termination(program.get_entry_module(), use_incomplete_preprocessing=preprocessing)
     assert not result.is_terminating()
-    graph = result.sieve_result.counterexample
-    rule = result.sieve_result.surviving_rules[0]
-    del result, program  # Rule views keep the existing caller-owned repository contract.
+    sieve_result = result.sieve_result
+    assert sieve_result is not None
+    graph = sieve_result.counterexample
+    rule = sieve_result.surviving_rules[0]
+    del result, sieve_result, program  # Rule views keep the existing caller-owned repository contract.
     gc.collect()
-    assert isinstance(rule.get_variant(), ext.ActionRule)
-    assert rule.get_variant().get_query_feature().get_symbol() == "selected"
+    variant = rule.get_variant()
+    assert isinstance(variant, ext.ActionRule)
+    assert variant.get_query_feature().get_symbol() == "selected"
     assert all(
         isinstance(graph.get_edge_property(index).get_variant(), ext.ActionRule) for index in graph.get_edge_indices()
     )
@@ -358,24 +468,20 @@ def test_static_query_role_closure_query_composition(kind: str) -> None:
     task_context, program, expander, state, environment = _runtime(kind, _program(query=closure))
     features = {feature.get_symbol(): feature for feature in program.get_entry_module().get_query_features()}
 
-    dl_context = environment.make_dl_context(state)
+    dl_context = make_dl_context(environment, state)
     edges = {tuple(row) for row in ext.evaluate(features["edges"], dl_context)}
     rows = {tuple(row) for row in ext.evaluate(features["selected"], dl_context)}
     assert len(edges) == 3
     assert len(rows) == 4
     assert rows == edges | {(source, target) for source, middle in edges for other, target in edges if middle == other}
-    search = task_context.search_context
-    node = initial_node(task_context)
-    successor = search.successor_generator.get_labeled_successor_nodes(
-        node,
-        search.state_repository,
-        search.axiom_evaluator,
-    )[0]
-    rule = expander.matching_rule(state, successor)
+    successor = _labeled_successors(task_context)[0]
+    rule = _matching_rule(expander, state, successor)
     assert rule is not None
-    state = expander.apply(state, rule, successor).target
+    step = _apply(expander, state, rule, successor)
+    assert step is not None
+    state = step.target
     environment.reset_source()
-    dl_context = environment.make_dl_context(state)
+    dl_context = make_dl_context(environment, state)
     assert {tuple(row) for row in ext.evaluate(features["selected"], dl_context)} == rows
 
 
@@ -403,25 +509,26 @@ def test_query_features_follow_module_arguments_and_registers_in_the_same_state(
     child = collect_steps(expander, initial)[0].target
     choices = [step.target for step in collect_steps(expander, child)]
     assert len(choices) == 2
-    assert choices[0].state == choices[1].state == initial.state
+    assert _same_planning_state(choices[0], choices[1])
+    assert _same_planning_state(choices[1], initial)
     features = {feature.get_symbol(): feature for feature in child.module_state.module.get_query_features()}
-    expected = [((int(state.module_state.registers.concept_values[0].get_index()),),) for state in choices]
+    expected = [((_register_value(state),),) for state in choices]
     all_candidates = {row for selected in expected for row in selected}
     assert expected[0] != expected[1]
 
-    snapshots = []
+    snapshots: list[tuple[tuple[int, ...], ...]] = []
     for position in (0, 1, 0):
         state = choices[position]
         environment.reset_source()
-        dl_context = environment.make_dl_context(state)
+        dl_context = make_dl_context(environment, state)
         assert {tuple(row) for row in ext.evaluate(features["argument"], dl_context)} == all_candidates
         selected = ext.evaluate(features["register"], dl_context)
         assert tuple(tuple(row) for row in selected) == expected[position]
         intersection = ext.evaluate(features["intersection"], dl_context)
         assert tuple(tuple(row) for row in intersection) == expected[position]
-        snapshots.append(tuple(tuple(int(object_) for object_ in row) for row in selected))
+        snapshots.append(tuple(_ints(row) for row in selected))
         del selected, intersection
-    expected_indices = [tuple(tuple(int(object_) for object_ in row) for row in rows) for rows in expected]
+    expected_indices = [tuple(_ints(row) for row in rows) for rows in expected]
     assert snapshots == [expected_indices[0], expected_indices[1], expected_indices[0]]
 
 
@@ -461,19 +568,13 @@ def test_action_query_preserves_correlated_parameter_tuples(kind: str, tmp_path:
         parser.get_domain(),
         domain.ext_repository,
     )
-    expander = getattr(ext, f"{kind.title()}SuccessorExpander")(task_context, program)
-    state = expander.initial_state(initial_node(task_context).get_state())
+    expander = make_expander(task_context, program)
+    state = initial_program_state(expander, initial_node(task_context).get_state())
 
     def arguments(action: ActionBinding) -> tuple[str, ...]:
         return tuple(object_.get_name() for object_ in action.get_objects())
 
-    search = task_context.search_context
-    node = initial_node(task_context)
-    broad = search.successor_generator.get_labeled_successor_nodes(
-        node,
-        search.state_repository,
-        search.axiom_evaluator,
-    )
+    broad = _labeled_successors(task_context)
     assert {arguments(successor.label) for successor in broad} == {
         ("a", "c"),
         ("a", "d"),
@@ -483,14 +584,14 @@ def test_action_query_preserves_correlated_parameter_tuples(kind: str, tmp_path:
     allowed = {("a", "c"), ("b", "d")}
     steps = collect_steps(expander, state)
     assert len(steps) == 2
-    assert {arguments(step.state_transition.action) for step in steps} == allowed
+    assert {arguments(_action(step)) for step in steps} == allowed
     rule = program.get_entry_module().get_memory_transitions()[0][0]
-    matched = set()
-    applied = set()
+    matched: set[tuple[str, ...]] = set()
+    applied: set[tuple[str, ...]] = set()
     for successor in broad:
-        if expander.matching_rule(state, successor) is not None:
+        if _matching_rule(expander, state, successor) is not None:
             matched.add(arguments(successor.label))
-        result = expander.apply(state, rule, successor)
+        result = _apply(expander, state, rule, successor)
         if result is not None:
-            applied.add(arguments(result.state_transition.action))
+            applied.add(arguments(_action(result)))
     assert matched == applied == allowed

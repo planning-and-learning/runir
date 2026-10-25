@@ -222,6 +222,8 @@ public:
     ~IncrementalEvaluation();
     IncrementalEvaluation(IncrementalEvaluation&&) = default;
     IncrementalEvaluation& operator=(IncrementalEvaluation&&) = default;
+    IncrementalEvaluation(const IncrementalEvaluation&) = delete;
+    IncrementalEvaluation& operator=(const IncrementalEvaluation&) = delete;
 
     [[nodiscard]] const EvaluationGraph<Kind>& graph() const noexcept { return m_graph; }
 

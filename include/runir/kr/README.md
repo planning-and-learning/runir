@@ -57,7 +57,7 @@ generic.
 
 ## Category and constructor
 
-[family_traits.hpp](dl/family_traits.hpp) lists the constructor tags of each
+[declarations.hpp](dl/declarations.hpp) lists the constructor tags of each
 category: atomic state/goal expressions, concept and role operations, Boolean
 nonemptiness, numerical count and distance, concept/role registers, typed call
 arguments, numerical constants and arithmetic, and Boolean constants, logic and

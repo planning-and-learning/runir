@@ -42,7 +42,7 @@ namespace runir::datasets
 struct EquivalenceVertexLabel : ygg::comparison::Mixin<EquivalenceVertexLabel>
 {
     ygg::uint_t state_graph_index = 0;
-    graphs::VertexIndex state_vertex_index;
+    graphs::VertexIndex state_vertex_index = 0;
 
     EquivalenceVertexLabel() = default;
     constexpr EquivalenceVertexLabel(ygg::uint_t state_graph_index_, graphs::VertexIndex state_vertex_index_) noexcept :
@@ -60,7 +60,7 @@ struct EquivalenceVertexLabel : ygg::comparison::Mixin<EquivalenceVertexLabel>
 struct AnnotatedEquivalenceVertexLabel : ygg::comparison::Mixin<AnnotatedEquivalenceVertexLabel>
 {
     ygg::uint_t state_graph_index = 0;
-    graphs::VertexIndex state_vertex_index;
+    graphs::VertexIndex state_vertex_index = 0;
     ygg::float_t goal_distance = std::numeric_limits<ygg::float_t>::infinity();
     bool is_initial = false;
     bool is_goal = false;
@@ -111,7 +111,7 @@ struct AnnotatedEquivalenceVertexLabel : ygg::comparison::Mixin<AnnotatedEquival
 struct EquivalenceEdgeLabel : ygg::comparison::Mixin<EquivalenceEdgeLabel>
 {
     ygg::uint_t state_graph_index = 0;
-    graphs::EdgeIndex state_edge_index;
+    graphs::EdgeIndex state_edge_index = 0;
 
     EquivalenceEdgeLabel() = default;
     constexpr EquivalenceEdgeLabel(ygg::uint_t state_graph_index_, graphs::EdgeIndex state_edge_index_) noexcept :

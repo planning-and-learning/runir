@@ -5,6 +5,7 @@
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
 
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <tyr/formalism/binding_view.hpp>
 #include <yggdrasil/containers/segmented_vector.hpp>
@@ -14,7 +15,7 @@ namespace runir::kr::ps::ext::detail
 
 // Structural termination excludes back edges to ACTIVE states. Completed results
 // are retained so shared continuations are evaluated only once.
-enum class SearchStatus
+enum class SearchStatus : std::uint8_t
 {
     NEW,         // Not yet admitted to this search.
     DISCOVERED,  // Admitted, awaiting expansion.

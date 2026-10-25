@@ -42,7 +42,7 @@ struct StateGraphTransition
     tyr::planning::PackedStateView<Kind> source;
     tyr::planning::PackedStateView<Kind> target;
     tyr::formalism::planning::ActionBindingView action;
-    ygg::float_t cost;
+    ygg::float_t cost = 0;
 };
 
 template<tyr::TaskKind Kind>

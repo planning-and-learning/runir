@@ -60,6 +60,12 @@ auto capacities(const Delta& delta)
                         delta.added.role_registers.capacity(),  delta.removed.role_registers.capacity() };
 }
 
+/// A copy the test wants: borrowed views over copied builders, and a copied task, are other
+/// objects than the repository's own, which is what the assignments below must handle.
+template<typename T>
+T copied(const T& value)
+{ return value; }
+
 template<typename Side>
 void expect_same_side(const Side& lhs, const Side& rhs)
 {
@@ -73,8 +79,8 @@ template<tyr::TaskKind Kind>
 void check_state_delta(tyr::planning::StateView<Kind> source, tyr::planning::StateView<Kind> target)
 {
     auto delta = kr::dl::semantics::incremental::Delta {};
-    const auto source_builder = source.get_state_builder();
-    const auto target_builder = target.get_state_builder();
+    const auto source_builder = copied(source.get_state_builder());
+    const auto target_builder = copied(target.get_state_builder());
     const auto borrowed_source = ygg::make_view(source_builder, source.get_task());
     const auto borrowed_target = ygg::make_view(target_builder, target.get_task());
     delta.template assign<Kind>(borrowed_source, borrowed_target);
@@ -107,7 +113,7 @@ void check_state_delta(tyr::planning::StateView<Kind> source, tyr::planning::Sta
     delta.template assign<Kind>(target, source);
     expect_atoms(target, source);
     EXPECT_EQ(capacities(), reserved);
-    const auto other_task = source.get_task();
+    const auto other_task = copied(source.get_task());
     EXPECT_THROW(delta.template assign<Kind>(source, ygg::make_view(source_builder, other_task)), std::invalid_argument);
     expect_atoms(target, source);
     delta.template assign<Kind>(source, source);
@@ -128,7 +134,7 @@ void check_delta()
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     const auto successors = search->successor_generator->get_successor_nodes(initial, *search->state_repository, *search->axiom_evaluator);
     ASSERT_FALSE(successors.empty());
-    const auto source = initial.get_state();
+    const auto& source = initial.get_state();
     const auto target = successors.front().get_state();
     const auto source_fluent = atoms<Kind, tyr::formalism::FluentTag>(source);
     const auto target_fluent = atoms<Kind, tyr::formalism::FluentTag>(target);
@@ -166,8 +172,8 @@ void check_delta()
     EXPECT_TRUE(delta.empty());
 
     // Copied builders exercise the borrowed state path used by NONE and CHOICE search.
-    const auto source_builder = source.get_state_builder();
-    const auto target_builder = target.get_state_builder();
+    const auto source_builder = copied(source.get_state_builder());
+    const auto target_builder = copied(target.get_state_builder());
     const auto borrowed_source = ygg::make_view(source_builder, *search->task);
     const auto borrowed_target = ygg::make_view(target_builder, *search->task);
     const auto assign = [&] { delta.template assign<Kind>(borrowed_source, source_register_view, borrowed_target, target_register_view); };

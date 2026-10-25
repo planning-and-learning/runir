@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <concepts>
+#include <cstdint>
 #include <optional>
 #include <span>
 #include <stdexcept>
@@ -27,7 +28,7 @@ namespace runir::kr::dl
 /// `columns` (the argument of a complemented leaf, or role edges), and whether its rows are the same in every state.
 struct QuerySlot
 {
-    enum class Kind
+    enum class Kind : std::uint8_t
     {
         QUERY,
         CONCEPT,
@@ -41,7 +42,7 @@ struct QuerySlot
 
 /// Calls f(expression) with the slot's expression as a view into `constructors`.
 template<ygg::InvocableWithEach<ygg::TypeList<ConstructorView<ConceptTag>, ConstructorView<RoleTag>, QueryView<>>> F>
-auto visit_slot(const QuerySlot& slot, const ConstructorRepository& constructors, F&& f)
+auto visit_slot(const QuerySlot& slot, const ConstructorRepository& constructors, F f)
 {
     switch (slot.kind)
     {
@@ -71,7 +72,7 @@ inline constexpr bool is_complement_view_v<ygg::View<ygg::Index<Concept<Negation
 
 /// Calls f(argument) if the query is a role or concept leaf over a complement (r_complement, c_not); returns whether.
 template<ygg::InvocableWithEach<ygg::TypeList<ConstructorView<RoleTag>, ConstructorView<ConceptTag>>> F>
-bool visit_complement_argument(QueryView<> query, F&& f)
+bool visit_complement_argument(QueryView<> query, F f)
 {
     return ygg::visit(
         [&]<typename Tag>(QueryView<Tag> concrete)
@@ -119,6 +120,7 @@ public:
     QueryTranslator& operator=(const QueryTranslator&) = delete;
     QueryTranslator(QueryTranslator&&) = delete;  // Translated views borrow the owned repository.
     QueryTranslator& operator=(QueryTranslator&&) = delete;
+    ~QueryTranslator() = default;
 
     YggQuery translate(DlQuery query);
 

@@ -1,10 +1,11 @@
 # Copyright (C) 2026 Dominik Drexler
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import TypedDict, cast, override
+from typing import TypedDict, cast
 
 import pytest
 from fixture_utils import load_fixture
+from typing_extensions import override
 
 from pyrunir.graphs import (
     BidirectionalStaticGraph,

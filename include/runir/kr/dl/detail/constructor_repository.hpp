@@ -7,6 +7,7 @@
 #include <memory>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <utility>
+#include <yggdrasil/core/config.hpp>
 #include <yggdrasil/core/type_list.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>
@@ -38,6 +39,7 @@ public:
     BasicConstructorRepository& operator=(const BasicConstructorRepository&) = delete;
     BasicConstructorRepository(BasicConstructorRepository&&) = delete;
     BasicConstructorRepository& operator=(BasicConstructorRepository&&) = delete;
+    ~BasicConstructorRepository() = default;
 
     [[nodiscard]] const auto& get_index() const noexcept { return m_index; }
     [[nodiscard]] const tyr::formalism::planning::Repository& get_planning_repository() const noexcept
@@ -53,7 +55,7 @@ public:
     const ygg::Data<T>& operator[](ygg::Index<T> index) const noexcept
     {
         assert(this->template is_local<T>(index));
-        return this->template at_local<T>(index);
+        return this->template local<T>(index);
     }
 
     template<typename T>
@@ -77,7 +79,8 @@ public:
 };
 
 template<typename RepositoryTypes>
-inline const BasicConstructorRepository<RepositoryTypes>& get_repository(const BasicConstructorRepository<RepositoryTypes>& repository) noexcept
+inline const BasicConstructorRepository<RepositoryTypes>&
+get_repository(const BasicConstructorRepository<RepositoryTypes>& repository YGG_LIFETIMEBOUND) noexcept
 { return repository; }
 
 template<typename RepositoryTypes>

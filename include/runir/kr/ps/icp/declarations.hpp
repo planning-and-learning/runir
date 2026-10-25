@@ -7,6 +7,7 @@
 #include "runir/kr/ps/family_traits.hpp"
 
 #include <concepts>
+#include <cstdint>
 #include <memory>
 #include <tyr/planning/declarations.hpp>
 #include <yggdrasil/core/type_list.hpp>
@@ -39,13 +40,13 @@ struct XEffect
 {
 };
 
-enum class ConditionOperation
+enum class ConditionOperation : std::uint8_t
 {
     BELONGS,
     NOT_BELONGS
 };
 
-enum class EffectOperation
+enum class EffectOperation : std::uint8_t
 {
     ENTER,
     EXIT

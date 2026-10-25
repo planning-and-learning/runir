@@ -61,7 +61,7 @@ public:
 
     StaticGraphBuilder(const StaticGraphBuilder&) = delete;
 
-    StaticGraphBuilder(StaticGraphBuilder&& other) :
+    StaticGraphBuilder(StaticGraphBuilder&& other) noexcept :
         m_vertices(std::move(other.m_vertices)),
         m_edges(std::move(other.m_edges)),
         m_out_edges(std::move(other.m_out_edges)),
@@ -72,7 +72,7 @@ public:
 
     auto operator=(const StaticGraphBuilder&) -> StaticGraphBuilder& = delete;
 
-    auto operator=(StaticGraphBuilder&& other) -> StaticGraphBuilder&
+    auto operator=(StaticGraphBuilder&& other) noexcept -> StaticGraphBuilder&
     {
         if (this == &other)
             return *this;
@@ -86,6 +86,8 @@ public:
         rebind_parents();
         return *this;
     }
+
+    ~StaticGraphBuilder() = default;
 
     void clear() noexcept
     {

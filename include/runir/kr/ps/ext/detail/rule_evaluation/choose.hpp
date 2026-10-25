@@ -48,20 +48,20 @@ public:
     {
         if (choice.exhausted())
         {
-            auto failure = detail::make_step<Kind, Storage>(ProgramOutcome::FAILURE, context.storage.retain(state), context.task_context);
-            failure.rule = choice.rule;
+            auto failure = detail::make_step<Kind, Storage>(ProgramOutcome::FAILURE, context.storage->retain(state), *context.task_context);
+            failure.rule = choice.get_rule();
             return failure;
         }
         const auto rule = m_rule;
-        auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(context.task_context->dl_builder);
+        auto registers = checkout<runir::kr::dl::semantics::RegisterValues>((*context.task_context)->dl_builder);
         const auto module_ = state.get_module_state();
-        auto target = context.storage.store(context.planning_state,
-                                            module_.get_module(),
-                                            rule.get_target(),
-                                            bound_registers<Kind>(rule, module_.get_registers(), choice.current(), *registers, context.storage),
-                                            module_.get_arguments(),
-                                            state.get_call_stack());
-        return detail::applied<Kind, Storage>(std::move(target), choice.rule, context.task_context);
+        auto target = context.storage->store(context.planning_state,
+                                             module_.get_module(),
+                                             rule.get_target(),
+                                             bound_registers<Kind>(rule, module_.get_registers(), choice.current(), *registers, *context.storage),
+                                             module_.get_arguments(),
+                                             state.get_call_stack());
+        return detail::applied<Kind, Storage>(std::move(target), choice.get_rule(), *context.task_context);
     }
 
 private:
@@ -88,23 +88,23 @@ private:
                      State state,
                      const PlanningState& planning_state,
                      Denotation denotation,
-                     Emit&& emit,
-                     Stop&& stop) const
+                     const Emit& emit,
+                     const Stop& stop) const
     {
         auto choice = make_choice(workspace, rule_variant, denotation);
         if (stop())
             return false;
         if (!rule.get_effects().empty())
         {
-            auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(context.task_context->dl_builder);
+            auto registers = checkout<runir::kr::dl::semantics::RegisterValues>((*context.task_context)->dl_builder);
             auto& bindings = choice.bindings();
             auto admitted = bindings.begin();
             for (const auto& value : bindings)
             {
                 if (stop())
                     return false;
-                const auto target_registers = bound_registers<Kind>(rule, state.get_module_state().get_registers(), value, *registers, context.storage);
-                if (binding_effects_match(rule, state, planning_state, target_registers, context.environment))
+                const auto target_registers = bound_registers<Kind>(rule, state.get_module_state().get_registers(), value, *registers, *context.storage);
+                if (binding_effects_match(rule, state, planning_state, target_registers, *context.environment))
                     *admitted++ = value;
             }
             bindings.erase(admitted, bindings.end());
@@ -118,18 +118,18 @@ private:
         workspace.order_scores.clear();
         workspace.order_indices.clear();
         const auto width = rule.get_order().size();
-        auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(context.task_context->dl_builder);
+        auto registers = checkout<runir::kr::dl::semantics::RegisterValues>((*context.task_context)->dl_builder);
         for (const auto& value : choice.bindings())
         {
             if (stop())
                 return false;
-            const auto target_registers = bound_registers<Kind>(rule, state.get_module_state().get_registers(), value, *registers, context.storage);
-            context.environment.reset_target();
-            auto transition = context.environment.make_dl_transition_context(planning_state,
-                                                                             planning_state,
-                                                                             state.get_module_state().get_arguments(),
-                                                                             state.get_module_state().get_registers(),
-                                                                             target_registers);
+            const auto target_registers = bound_registers<Kind>(rule, state.get_module_state().get_registers(), value, *registers, *context.storage);
+            context.environment->reset_target();
+            auto transition = context.environment->make_dl_transition_context(planning_state,
+                                                                              planning_state,
+                                                                              state.get_module_state().get_arguments(),
+                                                                              state.get_module_state().get_registers(),
+                                                                              target_registers);
             for (auto term : rule.get_order())
             {
                 if (stop())
@@ -181,13 +181,14 @@ public:
              StopConcept Stop,
              ExecutionStateViewConcept<Storage> State,
              tyr::planning::StateViewConcept<Kind> PlanningState>
-    bool emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, Emit&& emit, Stop&& stop) const
+    bool
+    emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, const Emit& emit, const Stop& stop) const
     {
         const auto& planning_state = context.planning_state;
-        auto& workspace = context.choose_workspace;
+        auto& workspace = *context.choose_workspace;
         const auto rule = m_rule;
         const auto rule_variant = m_variant;
-        if (!ext::rule_is_applicable(rule, state, planning_state, context.environment))
+        if (!ext::rule_is_applicable(rule, state, planning_state, *context.environment))
             return true;
         auto state_context = context.make_dl_context(state);
         const auto denotation = evaluate<Kind>(rule.get_feature(), state_context);

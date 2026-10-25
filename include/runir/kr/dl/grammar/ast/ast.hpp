@@ -1,18 +1,10 @@
 #ifndef RUNIR_GRAMMAR_AST_AST_HPP_
 #define RUNIR_GRAMMAR_AST_AST_HPP_
 
-#ifndef BOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
-#define BOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
-#endif
-#ifndef BOOST_MPL_LIMIT_LIST_SIZE
-#define BOOST_MPL_LIMIT_LIST_SIZE 30
-#endif
-#ifndef BOOST_VARIANT_LIMIT_TYPES
-#define BOOST_VARIANT_LIMIT_TYPES 30
-#endif
+// The Boost.MPL/Variant limits for the AST variants (30 alternatives) are set for every translation unit by the kr
+// target's compile definitions, so all units agree on them regardless of include order.
 
 #include "runir/kr/dl/declarations.hpp"
-#include "runir/kr/dl/family_traits.hpp"
 #include "runir/kr/parser/ast.hpp"
 
 #include <boost/optional.hpp>
@@ -209,7 +201,7 @@ struct QueryAtomicState : boost::spirit::x3::position_tagged
 struct QueryAtomicGoal : boost::spirit::x3::position_tagged
 {
     Identifier predicate_name;
-    bool polarity;
+    bool polarity = false;
     std::vector<Identifier> columns;
 };
 
@@ -372,7 +364,7 @@ template<>
 struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ConceptAtomicGoalSyntaxTag> : boost::spirit::x3::position_tagged
 {
     Identifier predicate_name;
-    bool polarity;
+    bool polarity = false;
 };
 
 template<>
@@ -412,28 +404,28 @@ struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ExistentialQuantifi
 template<>
 struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::AtLeastNumberRestrictionTag> : boost::spirit::x3::position_tagged
 {
-    ygg::uint_t n;
+    ygg::uint_t n = 0;
     RoleChoice role;
 };
 
 template<>
 struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::AtMostNumberRestrictionTag> : boost::spirit::x3::position_tagged
 {
-    ygg::uint_t n;
+    ygg::uint_t n = 0;
     RoleChoice role;
 };
 
 template<>
 struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ExactNumberRestrictionTag> : boost::spirit::x3::position_tagged
 {
-    ygg::uint_t n;
+    ygg::uint_t n = 0;
     RoleChoice role;
 };
 
 template<>
 struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag> : boost::spirit::x3::position_tagged
 {
-    ygg::uint_t n;
+    ygg::uint_t n = 0;
     RoleChoice role;
     ConceptChoice concept_;
 };
@@ -441,7 +433,7 @@ struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAtLeastNum
 template<>
 struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAtMostNumberRestrictionTag> : boost::spirit::x3::position_tagged
 {
-    ygg::uint_t n;
+    ygg::uint_t n = 0;
     RoleChoice role;
     ConceptChoice concept_;
 };
@@ -449,7 +441,7 @@ struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAtMostNumb
 template<>
 struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedExactNumberRestrictionTag> : boost::spirit::x3::position_tagged
 {
-    ygg::uint_t n;
+    ygg::uint_t n = 0;
     RoleChoice role;
     ConceptChoice concept_;
 };
@@ -543,7 +535,7 @@ template<>
 struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::RoleAtomicGoalSyntaxTag> : boost::spirit::x3::position_tagged
 {
     Identifier predicate_name;
-    bool polarity;
+    bool polarity = false;
 };
 
 template<>
@@ -623,14 +615,14 @@ template<>
 struct Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicStateSyntaxTag> : boost::spirit::x3::position_tagged
 {
     Identifier predicate_name;
-    bool polarity;
+    bool polarity = false;
 };
 
 template<>
 struct Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicGoalSyntaxTag> : boost::spirit::x3::position_tagged
 {
     Identifier predicate_name;
-    bool polarity;
+    bool polarity = false;
 };
 
 template<>
@@ -649,7 +641,7 @@ struct Constructor<runir::kr::dl::BooleanTag, Tag> : boost::spirit::x3::position
 template<>
 struct Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::BooleanConstantTag> : boost::spirit::x3::position_tagged
 {
-    bool value;
+    bool value = false;
 };
 
 template<runir::kr::dl::LogicalBinaryTag Tag>
@@ -703,7 +695,7 @@ struct Constructor<runir::kr::dl::NumericalTag, runir::kr::dl::DistanceTag> : bo
 template<>
 struct Constructor<runir::kr::dl::NumericalTag, runir::kr::dl::NumericalConstantTag> : boost::spirit::x3::position_tagged
 {
-    ygg::uint_t value;
+    ygg::uint_t value = 0;
 };
 
 template<runir::kr::dl::NumericalBinaryTag Tag>

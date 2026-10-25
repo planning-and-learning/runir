@@ -134,7 +134,8 @@ public:
     {
     }
 
-    reference operator*() const noexcept
+    /// Not noexcept: viewing an object looks up its canonical repository layer, which throws for a foreign index.
+    reference operator*() const
     {
         if constexpr (std::same_as<Category, ConceptTag>)
             return ygg::make_view(*m_index, *m_repository);

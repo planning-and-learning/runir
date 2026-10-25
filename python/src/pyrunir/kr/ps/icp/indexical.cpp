@@ -1,7 +1,6 @@
 #include "bindings.hpp"
 #include "pyrunir/kr/binding_utils.hpp"
 
-#include <nanobind/operators.h>
 #include <runir/kr/ps/icp/formatter.hpp>
 #include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/ps/icp/xcondition_view.hpp>
@@ -52,7 +51,11 @@ void bind_indexical(nb::module_& m, RepositoryBinding& repository)
     nb::enum_<EffectOperation>(m, "EffectOperation").value("ENTER", EffectOperation::ENTER).value("EXIT", EffectOperation::EXIT);
     ygg::bind_fixed_uint<ArgumentPosition>(m, "ArgumentPosition");
     auto reset_pair = nb::class_<ResetPair>(m, "ResetPair").def(nb::init<>()).def_rw("before", &ResetPair::before).def_rw("after", &ResetPair::after);
-    reset_pair.def(nb::self == nb::self).def(nb::self != nb::self);
+    reset_pair.def(
+                  "__eq__",
+                  [](const ResetPair& lhs, const ResetPair& rhs) { return lhs == rhs; },
+                  nb::is_operator())
+        .def("__ne__", [](const ResetPair& lhs, const ResetPair& rhs) { return lhs != rhs; }, nb::is_operator());
     bind_indexical_type<XCondition, ConditionOperation>(m, repository, "XCondition");
     bind_indexical_type<XEffect, EffectOperation>(m, repository, "XEffect");
 }

@@ -7,6 +7,7 @@
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <yggdrasil/core/config.hpp>
 #include <yggdrasil/formatting/cista_formatters.hpp>
 #include <yggdrasil/formatting/dynamic_bitset_formatters.hpp>
 
@@ -34,6 +35,8 @@ struct fmt::formatter<runir::kr::ps::ext::dl::ModuleStructuralTerminationResult>
     {
         if (result.is_terminating())
             return fmt::format_to(context.out(), "ModuleStructuralTerminationResult(terminating)");
+        // A non-terminating module has a SIEVE counterexample.
+        YGG_ASSUME(result.sieve_result.has_value());
         return fmt::format_to(context.out(),
                               "ModuleStructuralTerminationResult(non-terminating, counterexample with {} vertices and {} edges)",
                               result.sieve_result->counterexample->get_num_vertices(),

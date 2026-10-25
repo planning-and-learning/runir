@@ -40,9 +40,9 @@ TEST(RunirTests, ExtStructuralTerminationEmptyModuleIsTerminating)
     EXPECT_TRUE(result.is_terminating());
     EXPECT_FALSE(result.sieve_result.has_value());
     ASSERT_TRUE(without_incomplete.sieve_result.has_value());
-    EXPECT_EQ(without_incomplete.sieve_result->counterexample, nullptr);
-    EXPECT_TRUE(without_incomplete.sieve_result->scc_results.empty());
-    EXPECT_TRUE(without_incomplete.sieve_result->surviving_rules.empty());
+    EXPECT_EQ(without_incomplete.sieve_result.value().counterexample, nullptr);
+    EXPECT_TRUE(without_incomplete.sieve_result.value().scc_results.empty());
+    EXPECT_TRUE(without_incomplete.sieve_result.value().surviving_rules.empty());
 }
 
 TEST(RunirTests, ExtStructuralTerminationBacktrackHasNoEdgesAndDoesNotPruneOtherRules)
@@ -117,17 +117,17 @@ TEST(RunirTests, ExtStructuralTerminationDecreaseWithUnchangedReturnIsTerminatin
 
     EXPECT_TRUE(result.is_terminating());
     ASSERT_TRUE(result.incomplete_result.has_value());
-    EXPECT_EQ(result.incomplete_result->status, incomplete_result.status);
+    EXPECT_EQ(result.incomplete_result.value().status, incomplete_result.status);
     EXPECT_TRUE(without_incomplete.is_terminating());
     EXPECT_FALSE(without_incomplete.incomplete_result.has_value());
     EXPECT_FALSE(result.sieve_result.has_value());
     ASSERT_TRUE(without_incomplete.sieve_result.has_value());
-    EXPECT_EQ(without_incomplete.sieve_result->counterexample, nullptr);
-    EXPECT_TRUE(without_incomplete.sieve_result->surviving_rules.empty());
-    ASSERT_EQ(without_incomplete.sieve_result->scc_results.size(), 1);
-    EXPECT_TRUE(without_incomplete.sieve_result->scc_results.front().booleans.empty());
-    ASSERT_EQ(without_incomplete.sieve_result->scc_results.front().numericals.size(), 1);
-    EXPECT_EQ(without_incomplete.sieve_result->scc_results.front().numericals.front(), numericals.front());
+    EXPECT_EQ(without_incomplete.sieve_result.value().counterexample, nullptr);
+    EXPECT_TRUE(without_incomplete.sieve_result.value().surviving_rules.empty());
+    ASSERT_EQ(without_incomplete.sieve_result.value().scc_results.size(), 1);
+    EXPECT_TRUE(without_incomplete.sieve_result.value().scc_results.front().booleans.empty());
+    ASSERT_EQ(without_incomplete.sieve_result.value().scc_results.front().numericals.size(), 1);
+    EXPECT_EQ(without_incomplete.sieve_result.value().scc_results.front().numericals.front(), numericals.front());
 }
 
 TEST(RunirTests, ExtStructuralTerminationUsesDoRuleEffects)
@@ -254,7 +254,7 @@ TEST(RunirTests, ExtStructuralTerminationLoadUnconstrainsRegisterDependentFeatur
 
     ASSERT_FALSE(result.is_terminating());
     ASSERT_TRUE(result.sieve_result.has_value());
-    ASSERT_NE(result.sieve_result->counterexample, nullptr);
+    ASSERT_NE(result.sieve_result.value().counterexample, nullptr);
 }
 
 TEST(RunirTests, ExtStructuralTerminationFindsRegistersInsideQueries)
@@ -294,7 +294,7 @@ TEST(RunirTests, ExtStructuralTerminationLoadUnconstrainsRoleRegisterDependentFe
 
     ASSERT_FALSE(result.is_terminating());
     ASSERT_TRUE(result.sieve_result.has_value());
-    ASSERT_NE(result.sieve_result->counterexample, nullptr);
+    ASSERT_NE(result.sieve_result.value().counterexample, nullptr);
 }
 
 TEST(RunirTests, ExtStructuralTerminationChoosePreservesBindingSemantics)
@@ -354,16 +354,16 @@ TEST(RunirTests, ExtStructuralTerminationUnconstrainedReturnIsNotTerminating)
 
     ASSERT_FALSE(result.is_terminating());
     ASSERT_TRUE(result.sieve_result.has_value());
-    ASSERT_NE(result.sieve_result->counterexample, nullptr);
+    ASSERT_NE(result.sieve_result.value().counterexample, nullptr);
 
     // The counterexample cycle uses both rules and spans both memory states.
     auto rule_indices = std::set<ygg::Index<kr::ps::Rule<kr::ExtFamilyTag>>> {};
-    for (const auto& edge : result.sieve_result->counterexample->get_edges())
+    for (const auto& edge : result.sieve_result.value().counterexample->get_edges())
         rule_indices.insert(edge.get_property().get_index());
     EXPECT_EQ(rule_indices.size(), 2);
 
     auto memory_state_indices = std::set<ygg::Index<kr::ps::ext::MemoryState>> {};
-    for (const auto& vertex : result.sieve_result->counterexample->get_vertices())
+    for (const auto& vertex : result.sieve_result.value().counterexample->get_vertices())
         memory_state_indices.insert(vertex.get_property().memory_state.get_index());
     EXPECT_EQ(memory_state_indices.size(), 2);
 }
@@ -395,8 +395,8 @@ TEST(RunirTests, ExtStructuralTerminationPreservesSparseMemoryStateIdentities)
         const auto result = kr::ps::ext::dl::structural_termination(module_, kr::ps::dl::default_max_features, preprocessing);
         ASSERT_FALSE(result.is_terminating());
         ASSERT_TRUE(result.sieve_result.has_value());
-        ASSERT_NE(result.sieve_result->counterexample, nullptr);
-        const auto& graph = *result.sieve_result->counterexample;
+        ASSERT_NE(result.sieve_result.value().counterexample, nullptr);
+        const auto& graph = *result.sieve_result.value().counterexample;
         ASSERT_GT(graph.get_num_edges(), 0);
         for (const auto& edge : graph.get_edges())
             ygg::visit(
@@ -428,15 +428,15 @@ TEST(RunirTests, ExtStructuralTerminationIgnoresOneWayBridgeBetweenMemoryCycles)
 
     ASSERT_FALSE(result.is_terminating());
     ASSERT_TRUE(result.sieve_result.has_value());
-    ASSERT_NE(result.sieve_result->counterexample, nullptr);
+    ASSERT_NE(result.sieve_result.value().counterexample, nullptr);
 
     auto rules = std::set<ygg::Index<kr::ps::Rule<kr::ExtFamilyTag>>> {};
-    for (const auto& edge : result.sieve_result->counterexample->get_edges())
+    for (const auto& edge : result.sieve_result.value().counterexample->get_edges())
         rules.insert(edge.get_property().get_index());
     EXPECT_EQ(rules.size(), 2);
 
     auto memory_states = std::set<std::string> {};
-    for (const auto& vertex : result.sieve_result->counterexample->get_vertices())
+    for (const auto& vertex : result.sieve_result.value().counterexample->get_vertices())
         memory_states.emplace(vertex.get_property().memory_state.get_name());
     EXPECT_EQ(memory_states, (std::set<std::string> { "m2", "m3" }));
 }
@@ -463,15 +463,15 @@ TEST(RunirTests, ExtSurvivingRulesRetainOnlyResidualLabelsAcrossRuleVariants)
             SCOPED_TRACE(preprocessing);
             const auto result = kr::ps::ext::dl::structural_termination(module_, kr::ps::dl::default_max_features, preprocessing);
             ASSERT_TRUE(result.sieve_result.has_value());
-            const auto& rules = result.sieve_result->surviving_rules;
+            const auto& rules = result.sieve_result.value().surviving_rules;
             auto symbols = std::set<std::string> {};
             for (const auto rule : rules)
                 symbols.emplace(rule.get_symbol());
             EXPECT_EQ(rules.size(), expected.size());
             EXPECT_EQ(symbols, expected);
-            ASSERT_NE(result.sieve_result->counterexample, nullptr);
+            ASSERT_NE(result.sieve_result.value().counterexample, nullptr);
             auto edge_symbols = std::set<std::string> {};
-            for (const auto& edge : result.sieve_result->counterexample->get_edges())
+            for (const auto& edge : result.sieve_result.value().counterexample->get_edges())
                 edge_symbols.emplace(edge.get_property().get_symbol());
             EXPECT_EQ(symbols, edge_symbols);
         }
@@ -572,8 +572,8 @@ TEST(RunirTests, ExtStructuralTerminationAppliesFeatureLimitPerResidualComponent
     EXPECT_FALSE(result.is_terminating());
     EXPECT_EQ(numericals.size(), 15);
     ASSERT_TRUE(result.sieve_result.has_value());
-    ASSERT_NE(result.sieve_result->counterexample, nullptr);
-    for (const auto& vertex : result.sieve_result->counterexample->get_vertices())
+    ASSERT_NE(result.sieve_result.value().counterexample, nullptr);
+    for (const auto& vertex : result.sieve_result.value().counterexample->get_vertices())
         EXPECT_LT(vertex.get_property().numerical_values, std::uint64_t { 1 } << 15);
 }
 

@@ -40,7 +40,7 @@ private:
     using ObjectView = tyr::formalism::planning::ObjectView;
     using Edge = std::pair<graphs::VertexIndex, graphs::VertexIndex>;
 
-    ColorRepository& m_repository;
+    ColorRepository* m_repository;
     ygg::UnorderedMap<ObjectView, graphs::VertexIndex> m_object_to_vertex;
     std::vector<ygg::Data<Color>::VariantList> m_vertex_colors;
     ygg::UnorderedSet<Edge> m_edges;
@@ -68,7 +68,7 @@ private:
     }
 
 public:
-    explicit ObjectGraphConstructionContext(ColorRepository& repository) : m_repository(repository) {}
+    explicit ObjectGraphConstructionContext(ColorRepository& repository) : m_repository(&repository) {}
 
     void add_object(ObjectView object) { static_cast<void>(get_or_create_vertex(object)); }
 
@@ -85,7 +85,7 @@ public:
             vertices.push_back(vertex);
 
             auto predicate_color_data = ygg::Data<PredicateColor<T>>(atom.get_predicate().get_index(), static_cast<ygg::uint_t>(i), Context);
-            const auto predicate_color = m_repository.insert(predicate_color_data).first;
+            const auto predicate_color = m_repository->insert(predicate_color_data).first;
             m_vertex_colors[vertex].emplace_back(predicate_color.get_index());
         }
 
@@ -101,7 +101,7 @@ public:
         for (auto& colors : m_vertex_colors)
         {
             auto color_data = ygg::Data<Color>(std::move(colors));
-            builder.add_vertex(m_repository.insert(color_data).first);
+            builder.add_vertex(m_repository->insert(color_data).first);
         }
 
         for (const auto& [source, target] : m_edges)

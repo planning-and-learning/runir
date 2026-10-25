@@ -33,184 +33,181 @@ struct QuotedStringText
 {
 };
 
-identifier_type const identifier = "identifier";
-quoted_string_type const quoted_string = "quoted string";
-symbol_section_type const symbol_section = ":symbol";
-source_memory_section_type const source_memory_section = ":source-memory";
-target_memory_section_type const target_memory_section = ":target-memory";
-entry_section_type const entry_section = ":entry";
-action_section_type const action_section = ":action";
-callee_section_type const callee_section = ":callee";
-concept_argument_type const concept_argument = "concept_argument";
-role_argument_type const role_argument = "role_argument";
-boolean_argument_type const boolean_argument = "boolean_argument";
-numerical_argument_type const numerical_argument = "numerical_argument";
-argument_type const argument = "argument";
-arguments_section_type const arguments_section = ":arguments";
-concept_register_type const concept_register = "concept_register";
-role_register_type const role_register = "role_register";
-register_type const register_ = "register";
-registers_section_type const registers_section = ":registers";
-concept_feature_type const concept_feature = "concept_feature";
-role_feature_type const role_feature = "role_feature";
-boolean_feature_type const boolean_feature = "boolean_feature";
-numerical_feature_type const numerical_feature = "numerical_feature";
-query_feature_type const query_feature = "query_feature";
-feature_type const feature = "feature";
-features_section_type const features_section = ":features";
-symbol_expression_type const symbol_expression = "symbol_expression";
-named_value_type const named_value = "named_value";
-positive_condition_type const positive_condition = "positive_condition";
-negative_condition_type const negative_condition = "negative_condition";
-equal_zero_condition_type const equal_zero_condition = "equal_zero_condition";
-greater_zero_condition_type const greater_zero_condition = "greater_zero_condition";
-condition_observation_type const condition_observation = "condition_observation";
-condition_type const condition = "condition";
-conditions_section_type const conditions_section = ":conditions";
-positive_effect_type const positive_effect = "positive_effect";
-negative_effect_type const negative_effect = "negative_effect";
-unchanged_effect_type const unchanged_effect = "unchanged_effect";
-increases_effect_type const increases_effect = "increases_effect";
-decreases_effect_type const decreases_effect = "decreases_effect";
-effect_observation_type const effect_observation = "effect_observation";
-effect_type const effect = "effect";
-order_term_type const order_term = "order term";
-order_section_type const order_section = ":order";
-effects_section_type const effects_section = ":effects";
-arguments_expression_section_type const arguments_expression_section = ":arguments";
-concept_load_rule_type const concept_load_rule = "concept_load_rule";
-role_load_rule_type const role_load_rule = "role_load_rule";
-concept_choose_rule_type const concept_choose_rule = "concept_choose_rule";
-role_choose_rule_type const role_choose_rule = "role_choose_rule";
-sketch_rule_type const sketch_rule = "sketch_rule";
-do_rule_type const do_rule = "do_rule";
-call_rule_type const call_rule = "call_rule";
-action_rule_type const action_rule = "action_rule";
-backtrack_rule_type const backtrack_rule = "backtrack_rule";
-rule_type const rule = "rule";
-rule_entry_type const rule_entry = "rule_entry";
-rules_section_type const rules_section = ":rules";
-memory_section_type const memory_section = ":memory";
-module_type const module = "module";
-program_type const program = "program";
-module_root_type const module_root = "module_root";
-program_root_type const program_root = "program_root";
+constexpr identifier_type identifier = "identifier";
+constexpr quoted_string_type quoted_string = "quoted string";
+constexpr symbol_section_type symbol_section = ":symbol";
+constexpr source_memory_section_type source_memory_section = ":source-memory";
+constexpr target_memory_section_type target_memory_section = ":target-memory";
+constexpr entry_section_type entry_section = ":entry";
+constexpr action_section_type action_section = ":action";
+constexpr callee_section_type callee_section = ":callee";
+constexpr concept_argument_type concept_argument = "concept_argument";
+constexpr role_argument_type role_argument = "role_argument";
+constexpr boolean_argument_type boolean_argument = "boolean_argument";
+constexpr numerical_argument_type numerical_argument = "numerical_argument";
+constexpr argument_type argument = "argument";
+constexpr arguments_section_type arguments_section = ":arguments";
+constexpr concept_register_type concept_register = "concept_register";
+constexpr role_register_type role_register = "role_register";
+constexpr register_type register_ = "register";
+constexpr registers_section_type registers_section = ":registers";
+constexpr concept_feature_type concept_feature = "concept_feature";
+constexpr role_feature_type role_feature = "role_feature";
+constexpr boolean_feature_type boolean_feature = "boolean_feature";
+constexpr numerical_feature_type numerical_feature = "numerical_feature";
+constexpr query_feature_type query_feature = "query_feature";
+constexpr feature_type feature = "feature";
+constexpr features_section_type features_section = ":features";
+constexpr symbol_expression_type symbol_expression = "symbol_expression";
+constexpr named_value_type named_value = "named_value";
+constexpr positive_condition_type positive_condition = "positive_condition";
+constexpr negative_condition_type negative_condition = "negative_condition";
+constexpr equal_zero_condition_type equal_zero_condition = "equal_zero_condition";
+constexpr greater_zero_condition_type greater_zero_condition = "greater_zero_condition";
+constexpr condition_observation_type condition_observation = "condition_observation";
+constexpr condition_type condition = "condition";
+constexpr conditions_section_type conditions_section = ":conditions";
+constexpr positive_effect_type positive_effect = "positive_effect";
+constexpr negative_effect_type negative_effect = "negative_effect";
+constexpr unchanged_effect_type unchanged_effect = "unchanged_effect";
+constexpr increases_effect_type increases_effect = "increases_effect";
+constexpr decreases_effect_type decreases_effect = "decreases_effect";
+constexpr effect_observation_type effect_observation = "effect_observation";
+constexpr effect_type effect = "effect";
+constexpr order_term_type order_term = "order term";
+constexpr order_section_type order_section = ":order";
+constexpr effects_section_type effects_section = ":effects";
+constexpr arguments_expression_section_type arguments_expression_section = ":arguments";
+constexpr concept_load_rule_type concept_load_rule = "concept_load_rule";
+constexpr role_load_rule_type role_load_rule = "role_load_rule";
+constexpr concept_choose_rule_type concept_choose_rule = "concept_choose_rule";
+constexpr role_choose_rule_type role_choose_rule = "role_choose_rule";
+constexpr sketch_rule_type sketch_rule = "sketch_rule";
+constexpr do_rule_type do_rule = "do_rule";
+constexpr call_rule_type call_rule = "call_rule";
+constexpr action_rule_type action_rule = "action_rule";
+constexpr backtrack_rule_type backtrack_rule = "backtrack_rule";
+constexpr rule_type rule = "rule";
+constexpr rule_entry_type rule_entry = "rule_entry";
+constexpr rules_section_type rules_section = ":rules";
+constexpr memory_section_type memory_section = ":memory";
+constexpr module_type module = "module";
+constexpr program_type program = "program";
+constexpr module_root_type module_root = "module_root";
+constexpr program_root_type program_root = "program_root";
 
-const auto identifier_def = boost::spirit::x3::rule<IdentifierText, std::string> { "identifier_text" } =
+constexpr auto identifier_def = boost::spirit::x3::rule<IdentifierText, std::string> { "identifier_text" } =
     raw[lexeme[(alpha | char_('_')) >> *(alnum | char_('_') | char_('-'))]];
-const auto quoted_string_def = boost::spirit::x3::rule<QuotedStringText, std::string> { "quoted_string_text" } =
+constexpr auto quoted_string_def = boost::spirit::x3::rule<QuotedStringText, std::string> { "quoted_string_text" } =
     lexeme[context("quoted string")[(lit('"') >> *((lit('\\') >> char_) | (char_ - '"'))) > lit('"')]];
 
-const auto symbol_section_def = context(":symbol")[(lit("(") >> keyword(":symbol")) > identifier > lit(")")];
-const auto source_memory_section_def = context(":source-memory")[(lit("(") >> keyword(":source-memory")) > identifier > lit(")")];
-const auto target_memory_section_def = context(":target-memory")[(lit("(") >> keyword(":target-memory")) > identifier > lit(")")];
-const auto entry_section_def = context(":entry")[(lit("(") >> keyword(":entry")) > identifier > lit(")")];
-const auto action_section_def = context(":action")[(lit("(") >> keyword(":action")) > quoted_string > lit(")")];
-const auto callee_section_def = context(":callee")[(lit("(") >> keyword(":callee")) > identifier > lit(")")];
+constexpr auto symbol_section_def = context(":symbol")[(lit("(") >> keyword(":symbol")) > identifier > lit(")")];
+constexpr auto source_memory_section_def = context(":source-memory")[(lit("(") >> keyword(":source-memory")) > identifier > lit(")")];
+constexpr auto target_memory_section_def = context(":target-memory")[(lit("(") >> keyword(":target-memory")) > identifier > lit(")")];
+constexpr auto entry_section_def = context(":entry")[(lit("(") >> keyword(":entry")) > identifier > lit(")")];
+constexpr auto action_section_def = context(":action")[(lit("(") >> keyword(":action")) > quoted_string > lit(")")];
+constexpr auto callee_section_def = context(":callee")[(lit("(") >> keyword(":callee")) > identifier > lit(")")];
 
-const auto concept_argument_def = context("concept argument")[keyword("(:concept") > identifier > lit(")")];
-const auto role_argument_def = context("role argument")[keyword("(:role") > identifier > lit(")")];
-const auto boolean_argument_def = context("boolean argument")[keyword("(:boolean") > identifier > lit(")")];
-const auto numerical_argument_def = context("numerical argument")[keyword("(:numerical") > identifier > lit(")")];
-const auto argument_def = concept_argument | role_argument | boolean_argument | numerical_argument;
-const auto arguments_section_def = context(":arguments")[(lit("(") >> keyword(":arguments")) > *argument > lit(")")];
+constexpr auto concept_argument_def = context("concept argument")[keyword("(:concept") > identifier > lit(")")];
+constexpr auto role_argument_def = context("role argument")[keyword("(:role") > identifier > lit(")")];
+constexpr auto boolean_argument_def = context("boolean argument")[keyword("(:boolean") > identifier > lit(")")];
+constexpr auto numerical_argument_def = context("numerical argument")[keyword("(:numerical") > identifier > lit(")")];
+constexpr auto argument_def = concept_argument | role_argument | boolean_argument | numerical_argument;
+constexpr auto arguments_section_def = context(":arguments")[(lit("(") >> keyword(":arguments")) > *argument > lit(")")];
 
-const auto concept_register_def = context("concept register")[keyword("(:concept") > identifier > lit(")")];
-const auto role_register_def = context("role register")[keyword("(:role") > identifier > lit(")")];
-const auto register__def = concept_register | role_register;
-const auto registers_section_def = context(":registers")[(lit("(") >> keyword(":registers")) > *register_ > lit(")")];
+constexpr auto concept_register_def = context("concept register")[keyword("(:concept") > identifier > lit(")")];
+constexpr auto role_register_def = context("role register")[keyword("(:role") > identifier > lit(")")];
+constexpr auto register__def = concept_register | role_register;
+constexpr auto registers_section_def = context(":registers")[(lit("(") >> keyword(":registers")) > *register_ > lit(")")];
 
-const auto concept_feature_def =
-    context("concept feature")[keyword("(:concept") > symbol_section
-                               > context(":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::concept_parser<>() > lit(")")]
-                               > lit(")")];
-const auto role_feature_def = context(
-    "role feature")[keyword("(:role") > symbol_section
-                    > context(":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::role_parser<>() > lit(")")] > lit(")")];
-const auto boolean_feature_def =
-    context("boolean feature")[keyword("(:boolean") > symbol_section
-                               > context(":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::boolean_parser<>() > lit(")")]
-                               > lit(")")];
-const auto numerical_feature_def = context(
+constexpr auto concept_feature_def = context(
+    "concept feature")[keyword("(:concept") > symbol_section
+                       > context(":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::dl_concept > lit(")")] > lit(")")];
+constexpr auto role_feature_def =
+    context("role feature")[keyword("(:role") > symbol_section
+                            > context(":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::dl_role > lit(")")] > lit(")")];
+constexpr auto boolean_feature_def = context(
+    "boolean feature")[keyword("(:boolean") > symbol_section
+                       > context(":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::dl_boolean > lit(")")] > lit(")")];
+constexpr auto numerical_feature_def = context(
     "numerical feature")[keyword("(:numerical") > symbol_section
-                         > context(":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::numerical_parser<>() > lit(")")]
-                         > lit(")")];
-const auto query_feature_def = context(
-    "query feature")[keyword("(:query") > symbol_section
-                     > context(":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::query_parser<>() > lit(")")] > lit(")")];
-const auto feature_def = concept_feature | role_feature | boolean_feature | numerical_feature | query_feature;
-const auto features_section_def = context(":features")[(lit("(") >> keyword(":features")) > *feature > lit(")")];
+                         > context(":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::dl_numerical > lit(")")] > lit(")")];
+constexpr auto query_feature_def =
+    context("query feature")[keyword("(:query") > symbol_section
+                             > context(":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::dl_query > lit(")")] > lit(")")];
+constexpr auto feature_def = concept_feature | role_feature | boolean_feature | numerical_feature | query_feature;
+constexpr auto features_section_def = context(":features")[(lit("(") >> keyword(":features")) > *feature > lit(")")];
 
-const auto symbol_expression_def = identifier;
-const auto concept_feature_section_def = context("concept feature reference")[keyword("(:concept") > identifier > lit(")")];
-const auto role_feature_section_def = context("role feature reference")[keyword("(:role") > identifier > lit(")")];
-const auto query_feature_section_def = context("query feature reference")[keyword("(:query") > identifier > lit(")")];
-const auto concept_register_section_def =
+constexpr auto symbol_expression_def = identifier;
+constexpr auto concept_feature_section_def = context("concept feature reference")[keyword("(:concept") > identifier > lit(")")];
+constexpr auto role_feature_section_def = context("role feature reference")[keyword("(:role") > identifier > lit(")")];
+constexpr auto query_feature_section_def = context("query feature reference")[keyword("(:query") > identifier > lit(")")];
+constexpr auto concept_register_section_def =
     context("concept register reference")[(lit("(") >> keyword(":register") >> keyword("(:concept")) > identifier > lit(")") > lit(")")];
-const auto role_register_section_def =
+constexpr auto role_register_section_def =
     context("role register reference")[(lit("(") >> keyword(":register") >> keyword("(:role")) > identifier > lit(")") > lit(")")];
-const auto arguments_expression_section_def = context(":arguments")[(lit("(") >> keyword(":arguments")) > *symbol_expression > lit(")")];
+constexpr auto arguments_expression_section_def = context(":arguments")[(lit("(") >> keyword(":arguments")) > *symbol_expression > lit(")")];
 
-const auto positive_condition_def = keyword(runir::kr::ps::dl::Positive::keyword) >> attr(runir::kr::ps::base::dl::ast::Positive {});
-const auto negative_condition_def = keyword(runir::kr::ps::dl::Negative::keyword) >> attr(runir::kr::ps::base::dl::ast::Negative {});
-const auto equal_zero_condition_def = keyword(runir::kr::ps::dl::EqualZero::keyword) >> attr(runir::kr::ps::base::dl::ast::EqualZero {});
-const auto greater_zero_condition_def = keyword(runir::kr::ps::dl::GreaterZero::keyword) >> attr(runir::kr::ps::base::dl::ast::GreaterZero {});
-const auto condition_observation_def = positive_condition | negative_condition | equal_zero_condition | greater_zero_condition;
-const auto condition_def = context("condition")[(lit("(") >> condition_observation) > identifier > lit(")")];
-const auto conditions_section_def = context(":conditions")[(lit("(") >> keyword(":conditions")) > *condition > lit(")")];
+constexpr auto positive_condition_def = keyword(runir::kr::ps::dl::Positive::keyword) >> attr(runir::kr::ps::base::dl::ast::Positive {});
+constexpr auto negative_condition_def = keyword(runir::kr::ps::dl::Negative::keyword) >> attr(runir::kr::ps::base::dl::ast::Negative {});
+constexpr auto equal_zero_condition_def = keyword(runir::kr::ps::dl::EqualZero::keyword) >> attr(runir::kr::ps::base::dl::ast::EqualZero {});
+constexpr auto greater_zero_condition_def = keyword(runir::kr::ps::dl::GreaterZero::keyword) >> attr(runir::kr::ps::base::dl::ast::GreaterZero {});
+constexpr auto condition_observation_def = positive_condition | negative_condition | equal_zero_condition | greater_zero_condition;
+constexpr auto condition_def = context("condition")[(lit("(") >> condition_observation) > identifier > lit(")")];
+constexpr auto conditions_section_def = context(":conditions")[(lit("(") >> keyword(":conditions")) > *condition > lit(")")];
 
-const auto positive_effect_def = keyword(runir::kr::ps::dl::Positive::keyword) >> attr(runir::kr::ps::base::dl::ast::Positive {});
-const auto negative_effect_def = keyword(runir::kr::ps::dl::Negative::keyword) >> attr(runir::kr::ps::base::dl::ast::Negative {});
-const auto unchanged_effect_def = keyword(runir::kr::ps::dl::Unchanged::keyword) >> attr(runir::kr::ps::base::dl::ast::Unchanged {});
-const auto increases_effect_def = keyword(runir::kr::ps::dl::Increases::keyword) >> attr(runir::kr::ps::base::dl::ast::Increases {});
-const auto decreases_effect_def = keyword(runir::kr::ps::dl::Decreases::keyword) >> attr(runir::kr::ps::base::dl::ast::Decreases {});
-const auto effect_observation_def = positive_effect | negative_effect | unchanged_effect | increases_effect | decreases_effect;
-const auto effect_def = context("effect")[(lit("(") >> effect_observation) > identifier > lit(")")];
-const auto effects_section_def = context(":effects")[(lit("(") >> keyword(":effects")) > *effect > lit(")")];
-const auto optional_effects_section = effects_section | attr(std::vector<ast::Effect> {});
+constexpr auto positive_effect_def = keyword(runir::kr::ps::dl::Positive::keyword) >> attr(runir::kr::ps::base::dl::ast::Positive {});
+constexpr auto negative_effect_def = keyword(runir::kr::ps::dl::Negative::keyword) >> attr(runir::kr::ps::base::dl::ast::Negative {});
+constexpr auto unchanged_effect_def = keyword(runir::kr::ps::dl::Unchanged::keyword) >> attr(runir::kr::ps::base::dl::ast::Unchanged {});
+constexpr auto increases_effect_def = keyword(runir::kr::ps::dl::Increases::keyword) >> attr(runir::kr::ps::base::dl::ast::Increases {});
+constexpr auto decreases_effect_def = keyword(runir::kr::ps::dl::Decreases::keyword) >> attr(runir::kr::ps::base::dl::ast::Decreases {});
+constexpr auto effect_observation_def = positive_effect | negative_effect | unchanged_effect | increases_effect | decreases_effect;
+constexpr auto effect_def = context("effect")[(lit("(") >> effect_observation) > identifier > lit(")")];
+constexpr auto effects_section_def = context(":effects")[(lit("(") >> keyword(":effects")) > *effect > lit(")")];
+constexpr auto optional_effects_section = effects_section | attr(std::vector<ast::Effect> {});
 
-const auto order_term_def =
+constexpr auto order_term_def =
     context("order term")[lit("(") > ((keyword("min") >> attr(OrderDirection::MIN)) | (keyword("max") >> attr(OrderDirection::MAX))) > identifier > lit(")")];
-const auto order_section_def = context(":order")[(lit("(") >> keyword(":order")) > *order_term > lit(")")];
-const auto optional_order_section = order_section | attr(std::vector<ast::OrderTerm> {});
+constexpr auto order_section_def = context(":order")[(lit("(") >> keyword(":order")) > *order_term > lit(")")];
+constexpr auto optional_order_section = order_section | attr(std::vector<ast::OrderTerm> {});
 
-const auto concept_load_rule_def = context("concept load rule")[(keyword("(:load") >> conditions_section >> concept_feature_section_def)
-                                                                > concept_register_section_def > optional_effects_section > lit(")")];
-const auto role_load_rule_def = context(
+constexpr auto concept_load_rule_def = context("concept load rule")[(keyword("(:load") >> conditions_section >> concept_feature_section_def)
+                                                                    > concept_register_section_def > optional_effects_section > lit(")")];
+constexpr auto role_load_rule_def = context(
     "role load rule")[(keyword("(:load") >> conditions_section >> role_feature_section_def) > role_register_section_def > optional_effects_section > lit(")")];
-const auto concept_choose_rule_def =
+constexpr auto concept_choose_rule_def =
     context("concept choose rule")[(keyword("(:choose") >> conditions_section >> concept_feature_section_def) > concept_register_section_def
                                    > optional_effects_section > optional_order_section > lit(")")];
-const auto role_choose_rule_def = context("role choose rule")[(keyword("(:choose") >> conditions_section >> role_feature_section_def)
-                                                              > role_register_section_def > optional_effects_section > optional_order_section > lit(")")];
-const auto sketch_rule_def = context("sketch rule")[keyword("(:sketch") > conditions_section > effects_section > lit(")")];
-const auto do_rule_def =
+constexpr auto role_choose_rule_def = context("role choose rule")[(keyword("(:choose") >> conditions_section >> role_feature_section_def)
+                                                                  > role_register_section_def > optional_effects_section > optional_order_section > lit(")")];
+constexpr auto sketch_rule_def = context("sketch rule")[keyword("(:sketch") > conditions_section > effects_section > lit(")")];
+constexpr auto do_rule_def =
     context("action rule")[keyword("(:do") > conditions_section > action_section > arguments_expression_section > effects_section > lit(")")];
-const auto action_rule_def =
+constexpr auto action_rule_def =
     context("query action rule")[keyword("(:action") > conditions_section > action_section > query_feature_section_def > effects_section > lit(")")];
-const auto call_rule_def = context("call rule")[keyword("(:call") > conditions_section > callee_section > arguments_expression_section > lit(")")];
-const auto backtrack_rule_def = context("backtrack rule")[keyword("(:backtrack") > conditions_section > lit(")")];
-const auto rule_def =
+constexpr auto call_rule_def = context("call rule")[keyword("(:call") > conditions_section > callee_section > arguments_expression_section > lit(")")];
+constexpr auto backtrack_rule_def = context("backtrack rule")[keyword("(:backtrack") > conditions_section > lit(")")];
+constexpr auto rule_def =
     concept_load_rule | role_load_rule | sketch_rule | do_rule | call_rule | concept_choose_rule | role_choose_rule | action_rule | backtrack_rule;
-const auto required_rules = boost::spirit::x3::rule<class RequiredRules, std::vector<ast::Rule>> { "one or more rules" } = +rule;
+constexpr auto required_rules = boost::spirit::x3::rule<class RequiredRules, std::vector<ast::Rule>> { "one or more rules" } = +rule;
 
-const auto rule_entry_def = context(
+constexpr auto rule_entry_def = context(
     "rule")[(lit("(") >> keyword(":rule")) > symbol_section
             > context("rule expression")[(lit("(") >> keyword(":expression")) > source_memory_section > -target_memory_section > required_rules > lit(")")]
             > lit(")")];
-const auto rules_section_def = context(":rules")[(lit("(") >> keyword(":rules")) > *rule_entry > lit(")")];
+constexpr auto rules_section_def = context(":rules")[(lit("(") >> keyword(":rules")) > *rule_entry > lit(")")];
 
-const auto named_value_def = identifier;
-const auto required_memory_states = boost::spirit::x3::rule<class RequiredMemoryStates, std::vector<ast::NamedValue>> { "one or more memory states" } =
+constexpr auto named_value_def = identifier;
+constexpr auto required_memory_states = boost::spirit::x3::rule<class RequiredMemoryStates, std::vector<ast::NamedValue>> { "one or more memory states" } =
     +named_value;
-const auto memory_section_def = context(":memory")[(lit("(") >> keyword(":memory")) > required_memory_states > lit(")")];
+constexpr auto memory_section_def = context(":memory")[(lit("(") >> keyword(":memory")) > required_memory_states > lit(")")];
 
-const auto module_def = context("module")[(lit("(") >> keyword(":module")) > symbol_section > arguments_section > registers_section > entry_section
-                                          > memory_section > features_section > rules_section > lit(")")];
-const auto required_modules = boost::spirit::x3::rule<class RequiredModules, std::vector<ast::Module>> { "one or more modules" } = +module;
-const auto program_def = context("program")[(lit("(") >> keyword(":program")) > entry_section > required_modules > lit(")")];
-const auto module_root_def = context("module")[module > eoi];
-const auto program_root_def = context("program")[program > eoi];
+constexpr auto module_def = context("module")[(lit("(") >> keyword(":module")) > symbol_section > arguments_section > registers_section > entry_section
+                                              > memory_section > features_section > rules_section > lit(")")];
+constexpr auto required_modules = boost::spirit::x3::rule<class RequiredModules, std::vector<ast::Module>> { "one or more modules" } = +module;
+constexpr auto program_def = context("program")[(lit("(") >> keyword(":program")) > entry_section > required_modules > lit(")")];
+constexpr auto module_root_def = context("module")[module > eoi];
+constexpr auto program_root_def = context("program")[program > eoi];
 
 BOOST_SPIRIT_DEFINE(identifier,
                     quoted_string,

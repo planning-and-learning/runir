@@ -3,6 +3,9 @@
 #include "runir/kr/dl/construction_metadata.hpp"
 #include "runir/kr/dl/repository.hpp"
 
+#include <cstddef>
+#include <ranges>
+
 namespace runir::kr::dl::detail
 {
 
@@ -16,7 +19,8 @@ void require_generic_join_order(std::string_view name,
     {
         if (std::ranges::find(input_columns, order[i]) == input_columns.end())
             throw std::invalid_argument("q_generic_join: " + std::string(name) + " lists column `" + column_name(order[i]) + "`, which no input has.");
-        if (std::ranges::find(order.begin(), order.begin() + i, order[i]) != order.begin() + i)
+        const auto preceding = std::views::take(order, static_cast<std::ptrdiff_t>(i));
+        if (std::ranges::find(preceding, order[i]) != preceding.end())
             throw std::invalid_argument("q_generic_join: " + std::string(name) + " lists column `" + column_name(order[i]) + "` twice.");
     }
     for (const auto column : input_columns)

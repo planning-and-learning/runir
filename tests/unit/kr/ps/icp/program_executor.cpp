@@ -123,7 +123,7 @@ void check_evaluation_policies()
         SCOPED_TRACE(grouped);
         const auto compare = [&](kr::ps::icp::ProgramStateView<Kind> state)
         {
-            const auto expected = successors(full, state, grouped);
+            auto expected = successors(full, state, grouped);
             const auto actual = successors(delta, state, grouped);
             EXPECT_EQ(actual.size(), expected.size());
             for (size_t i = 0; i < std::min(actual.size(), expected.size()); ++i)
@@ -371,7 +371,7 @@ void check_normalized_arguments()
         if (!universal)
         {
             ASSERT_TRUE(progress.plan);
-            EXPECT_EQ(progress.plan->get_length(), 1);
+            EXPECT_EQ(progress.plan.value().get_length(), 1);
         }
     }
 }
@@ -420,9 +420,9 @@ void check_rejected_bindings_stay_unpublished()
         // Direct matching also checks conditions, argument filters, and memory before effects.
         // Scenario 2 passes the rule itself and is rejected separately by history admission.
         ASSERT_TRUE(accepted_steps.front().planning_successor);
-        const auto candidate = accepted_steps.front().planning_successor->unpack();
+        const auto candidate = accepted_steps.front().planning_successor.value().unpack();
         auto workspace = kr::ps::icp::detail::RuleEvaluationWorkspace<Kind>(context, rejected);
-        auto evaluation_context = kr::ps::RuleEvaluationContext<kr::IcpFamilyTag, Kind> { workspace, state.get_state() };
+        auto evaluation_context = kr::ps::RuleEvaluationContext<kr::IcpFamilyTag, Kind> { &workspace, state.get_state() };
         const auto published_before_matching = count_bindings();
         for (const auto rules : rejected.get_module().get_memory_transitions())
             for (const auto variant : rules)
@@ -445,8 +445,8 @@ void check_rejected_bindings_stay_unpublished()
         for (size_t i = 0; i < accepted_steps.size(); ++i)
         {
             ASSERT_TRUE(accepted_steps[i].planning_successor);
-            EXPECT_EQ(accepted_steps[i].planning_successor->label, repeated[i].planning_successor->label);
-            EXPECT_EQ(accepted_steps[i].planning_successor->unpack().label.get_objects().size(), 2);
+            EXPECT_EQ(accepted_steps[i].planning_successor.value().label, repeated[i].planning_successor.value().label);
+            EXPECT_EQ(accepted_steps[i].planning_successor.value().unpack().label.get_objects().size(), 2);
         }
     }
 }
@@ -466,7 +466,7 @@ void check_load_evaluator_entry_checks()
         auto& search = *task->search_context;
         const auto planning_state = search.successor_generator->get_initial_node(*search.state_repository, *search.axiom_evaluator).get_state();
         const auto source = workspace.initial_state(planning_state);
-        auto context = kr::ps::RuleEvaluationContext<kr::IcpFamilyTag, Kind> { workspace, planning_state };
+        auto context = kr::ps::RuleEvaluationContext<kr::IcpFamilyTag, Kind> { &workspace, planning_state };
         const auto states_before = task->icp_execution_repository->template size<kr::ps::icp::ProgramState<Kind>>();
         const auto histories_before = task->icp_execution_repository->template size<kr::ps::icp::Histories>();
         const auto registers_before = task->dl_denotation_repository->template size<kr::dl::semantics::RegisterValues>();

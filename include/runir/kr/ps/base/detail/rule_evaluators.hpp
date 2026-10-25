@@ -29,7 +29,7 @@ public:
         if (source == target)
             return std::nullopt;
         m_environment.reset_target();
-        auto context = RuleEvaluationContext<BaseFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy> { m_environment };
+        auto context = RuleEvaluationContext<BaseFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy> { &m_environment };
         for (const auto rule : m_sketch.get_rules())
         {
             if (stop())

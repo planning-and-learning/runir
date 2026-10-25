@@ -13,12 +13,14 @@ namespace runir::kr::ps::ext::dl
 
 namespace detail
 {
+namespace
+{
 
-inline void analyze_modules(ProgramView program,
-                            ProgramStructuralTerminationResult& result,
-                            std::size_t max_features,
-                            bool use_incomplete_preprocessing,
-                            bool use_memory_scc_scope)
+void analyze_modules(ProgramView program,
+                     ProgramStructuralTerminationResult& result,
+                     std::size_t max_features,
+                     bool use_incomplete_preprocessing,
+                     bool use_memory_scc_scope)
 {
     for (auto module_ : program.get_modules())
     {
@@ -35,7 +37,7 @@ struct ModuleCallGraph
     std::vector<RuleVariantView> unresolved_rules;
 };
 
-inline std::optional<std::size_t> find_module(ProgramView program, ModuleSymbolView symbol)
+std::optional<std::size_t> find_module(ProgramView program, ModuleSymbolView symbol)
 {
     const auto modules = program.get_modules();
     for (std::size_t position = 0; position < modules.size(); ++position)
@@ -44,7 +46,7 @@ inline std::optional<std::size_t> find_module(ProgramView program, ModuleSymbolV
     return std::nullopt;
 }
 
-inline ModuleCallGraph build_module_call_graph(ProgramView program)
+ModuleCallGraph build_module_call_graph(ProgramView program)
 {
     const auto modules = program.get_modules();
     auto builder = graphs::StaticGraphBuilder<std::tuple<>, RuleVariantView> {};
@@ -79,8 +81,10 @@ inline ModuleCallGraph build_module_call_graph(ProgramView program)
         }
     }
 
-    return { graphs::StaticGraph<std::tuple<>, RuleVariantView> { std::move(builder) }, std::move(unresolved_rules) };
+    return { graphs::StaticGraph<std::tuple<>, RuleVariantView> { builder }, std::move(unresolved_rules) };
 }
+
+}  // namespace
 
 std::vector<RuleVariantView> find_recursive_call_rules(ProgramView program)
 {

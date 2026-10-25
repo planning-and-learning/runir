@@ -15,24 +15,24 @@ struct RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<
 {
     using FamilyType = IcpFamilyTag;
 
-    icp::detail::RuleEvaluationWorkspace<Kind, EvaluationPolicy>& workspace;
-    const tyr::planning::StateView<Kind> planning_state;
+    icp::detail::RuleEvaluationWorkspace<Kind, EvaluationPolicy>* workspace;
+    tyr::planning::StateView<Kind> planning_state;
 
-    auto make_dl_context(icp::ProgramStateView<Kind> source) { return workspace.get_environment().make_dl_context(planning_state, source.get_registers()); }
+    auto make_dl_context(icp::ProgramStateView<Kind> source) { return workspace->get_environment().make_dl_context(planning_state, source.get_registers()); }
 
     template<ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
     auto make_dl_transition_context(icp::ProgramStateView<Kind> source,
                                     const tyr::planning::LabeledNode<Kind, tyr::planning::StateView<Kind>, Binding>& candidate)
     {
-        return workspace.get_environment().make_dl_transition_context(planning_state,
-                                                                      candidate.node.get_state(),
-                                                                      source.get_registers(),
-                                                                      source.get_registers());
+        return workspace->get_environment().make_dl_transition_context(planning_state,
+                                                                       candidate.node.get_state(),
+                                                                       source.get_registers(),
+                                                                       source.get_registers());
     }
 
     /// Loading registers leaves the planning state unchanged.
     auto make_dl_transition_context(icp::ProgramStateView<Kind> source, runir::kr::dl::semantics::RegisterValuesView target_registers)
-    { return workspace.get_environment().make_dl_transition_context(planning_state, planning_state, source.get_registers(), target_registers); }
+    { return workspace->get_environment().make_dl_transition_context(planning_state, planning_state, source.get_registers(), target_registers); }
 };
 
 }  // namespace runir::kr::ps
