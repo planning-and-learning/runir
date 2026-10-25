@@ -116,8 +116,8 @@ void bind_sketch_executor(nb::module_& m)
 
     m.def(
         "find_ground_solution",
-        [](runir::kr::TaskContextPtr<tyr::GroundTag> task_context, SketchView sketch, const SketchSearchOptions<tyr::GroundTag>& options)
-        { return find_solution(std::move(task_context), sketch, options); },
+        [](const runir::kr::TaskContextPtr<tyr::GroundTag>& task_context, SketchView sketch, const SketchSearchOptions<tyr::GroundTag>& options)
+        { return find_solution(task_context, sketch, options); },
         nb::call_guard<nb::gil_scoped_release>(),
         nb::keep_alive<0, 2>(),
         "task_context"_a,
@@ -125,8 +125,8 @@ void bind_sketch_executor(nb::module_& m)
         "options"_a);
     m.def(
         "find_lifted_solution",
-        [](runir::kr::TaskContextPtr<tyr::LiftedTag> task_context, SketchView sketch, const SketchSearchOptions<tyr::LiftedTag>& options)
-        { return find_solution(std::move(task_context), sketch, options); },
+        [](const runir::kr::TaskContextPtr<tyr::LiftedTag>& task_context, SketchView sketch, const SketchSearchOptions<tyr::LiftedTag>& options)
+        { return find_solution(task_context, sketch, options); },
         nb::call_guard<nb::gil_scoped_release>(),
         nb::keep_alive<0, 2>(),
         "task_context"_a,

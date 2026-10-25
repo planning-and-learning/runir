@@ -61,7 +61,7 @@ void evaluate_closure(Tag,
     assert(scratch.discovery.size() == role.get_num_objects() && dirty.size() == role.get_num_objects());
     for (const auto source : rows)
     {
-        const auto vertex = ygg::uint_t(source);
+        const auto vertex = static_cast<ygg::uint_t>(source);
         assert(dirty[vertex]);
         scratch.discovery[vertex] = scratch.lowlink[vertex] = scratch.active[vertex] = 0;
     }
@@ -78,9 +78,9 @@ void evaluate_closure(Tag,
     };
     for (const auto source : rows)
     {
-        if (scratch.discovery[ygg::uint_t(source)])
+        if (scratch.discovery[static_cast<ygg::uint_t>(source)])
             continue;
-        discover(ygg::uint_t(source));
+        discover(static_cast<ygg::uint_t>(source));
         while (!scratch.frames.empty())
         {
             auto& frame = scratch.frames.back();

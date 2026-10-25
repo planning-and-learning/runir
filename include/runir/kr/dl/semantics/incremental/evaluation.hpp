@@ -47,8 +47,8 @@ class EvaluationGraph
 
     template<CategoryTag Category>
     [[nodiscard]] const auto& node(EvaluationIndex<Category> index) const
-    { return std::get<detail::FeatureNode<Kind, Category>>(m_nodes.at(ygg::uint_t(index))); }
-    [[nodiscard]] const auto& node(QueryEvaluationIndex index) const { return std::get<detail::QueryNode<Kind>>(m_nodes.at(ygg::uint_t(index))); }
+    { return std::get<detail::FeatureNode<Kind, Category>>(m_nodes.at(static_cast<ygg::uint_t>(index))); }
+    [[nodiscard]] const auto& node(QueryEvaluationIndex index) const { return std::get<detail::QueryNode<Kind>>(m_nodes.at(static_cast<ygg::uint_t>(index))); }
 
     template<CategoryTag Category>
     std::optional<EvaluationIndex<Category>> find_node(ConstructorView<Category> expression) const;
@@ -61,13 +61,13 @@ class EvaluationGraph
     EvaluationIndex<Category> prepare(ConstructorView<Category> expression, std::vector<ygg::uint_t>& dependencies)
     {
         const auto index = prepare(expression);
-        dependencies.push_back(ygg::uint_t(index));
+        dependencies.push_back(static_cast<ygg::uint_t>(index));
         return index;
     }
     QueryEvaluationIndex prepare(QueryView<> expression, std::vector<ygg::uint_t>& dependencies)
     {
         const auto index = prepare(expression);
-        dependencies.push_back(ygg::uint_t(index));
+        dependencies.push_back(static_cast<ygg::uint_t>(index));
         return index;
     }
     /// The relation of a query, or of a concept or role lifted into the given columns. Identical
@@ -88,7 +88,7 @@ class EvaluationGraph
             index = QueryEvaluationIndex(ygg::to_uint_t(m_nodes.size()));
             m_nodes.emplace_back(detail::QueryNode<Kind>(argument, columns));
         }
-        dependencies.push_back(ygg::uint_t(*index));
+        dependencies.push_back(static_cast<ygg::uint_t>(*index));
         return *index;
     }
 
@@ -266,12 +266,12 @@ private:
     template<ConceptOrRoleTag Category>
     [[nodiscard]] const DenotationDelta<Category>& get_delta(EvaluationIndex<Category> index) const
     {
-        require_exact(ygg::uint_t(index));
+        require_exact(static_cast<ygg::uint_t>(index));
         return m_graph.change(index);
     }
     [[nodiscard]] const ygg::database::incremental::Delta& get_delta(QueryEvaluationIndex index) const
     {
-        require_exact(ygg::uint_t(index));
+        require_exact(static_cast<ygg::uint_t>(index));
         return m_graph.change(index);
     }
     template<BooleanOrNumericalTag Category>
@@ -310,19 +310,19 @@ public:
 
     template<CategoryTag Category>
     BorrowedDenotationView<Category> evaluate(EvaluationIndex<Category> index)
-    { return current(ygg::uint_t(index)).get_result(index); }
-    const ygg::Builder<ygg::database::Relation>& evaluate(QueryEvaluationIndex index) { return current(ygg::uint_t(index)).get_result(index); }
+    { return current(static_cast<ygg::uint_t>(index)).get_result(index); }
+    const ygg::Builder<ygg::database::Relation>& evaluate(QueryEvaluationIndex index) { return current(static_cast<ygg::uint_t>(index)).get_result(index); }
     template<ConceptOrRoleTag Category>
     size_t size(EvaluationIndex<Category> index)
-    { return current(ygg::uint_t(index)).size(index); }
-    size_t size(QueryEvaluationIndex index) { return current(ygg::uint_t(index)).size(index); }
+    { return current(static_cast<ygg::uint_t>(index)).size(index); }
+    size_t size(QueryEvaluationIndex index) { return current(static_cast<ygg::uint_t>(index)).size(index); }
     template<ConceptOrRoleTag Category>
     const DenotationDelta<Category>& delta(EvaluationIndex<Category> index)
-    { return current(ygg::uint_t(index)).get_delta(index); }
-    const ygg::database::incremental::Delta& delta(QueryEvaluationIndex index) { return current(ygg::uint_t(index)).get_delta(index); }
+    { return current(static_cast<ygg::uint_t>(index)).get_delta(index); }
+    const ygg::database::incremental::Delta& delta(QueryEvaluationIndex index) { return current(static_cast<ygg::uint_t>(index)).get_delta(index); }
     template<BooleanOrNumericalTag Category>
     bool changed(EvaluationIndex<Category> index)
-    { return current(ygg::uint_t(index)).changed(index); }
+    { return current(static_cast<ygg::uint_t>(index)).changed(index); }
 };
 
 }  // namespace runir::kr::dl::semantics::incremental

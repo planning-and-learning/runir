@@ -49,14 +49,14 @@ void check_composition_and_closures()
         auto removed = std::array<bool, cells> {};
         for (const auto& [source, target] : output.get_delta().added)
         {
-            const auto position = ygg::uint_t(source.get_index()) * size + ygg::uint_t(target.get_index());
+            const auto position = static_cast<ygg::uint_t>(source.get_index()) * size + static_cast<ygg::uint_t>(target.get_index());
             ASSERT_LT(position, added.size());
             EXPECT_FALSE(added[position]);
             added[position] = true;
         }
         for (const auto& [source, target] : output.get_delta().removed)
         {
-            const auto position = ygg::uint_t(source.get_index()) * size + ygg::uint_t(target.get_index());
+            const auto position = static_cast<ygg::uint_t>(source.get_index()) * size + static_cast<ygg::uint_t>(target.get_index());
             ASSERT_LT(position, removed.size());
             EXPECT_FALSE(removed[position]);
             removed[position] = true;

@@ -112,7 +112,7 @@ private:
 
     EquivalenceWorkerState<Kind>& get_worker(ygg::Index<tyr::planning::Worker> worker)
     {
-        const auto index = static_cast<size_t>(ygg::uint_t(worker));
+        const auto index = static_cast<size_t>(static_cast<ygg::uint_t>(worker));
         assert(index < m_workers.size());
         return m_workers[index];
     }

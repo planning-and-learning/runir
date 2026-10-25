@@ -90,7 +90,7 @@ public:
 
     auto make_worker(ygg::Index<tyr::planning::Worker> index) -> tyr::planning::astar_eager::WorkerEventHandlerPtr<Kind> override
     {
-        const auto value = static_cast<size_t>(ygg::uint_t(index));
+        const auto value = static_cast<size_t>(static_cast<ygg::uint_t>(index));
         if (value >= m_workers.size())
             throw std::out_of_range("State graph worker index is out of range.");
         return std::make_unique<StateGraphWorkerEventHandler<Kind>>(m_workers[value]);

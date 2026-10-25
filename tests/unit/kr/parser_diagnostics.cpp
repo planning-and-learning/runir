@@ -215,13 +215,16 @@ TEST(RunirTests, LookupErrorsPreserveIdentifierSpansAcrossLanguages)
                 EXPECT_EQ(diagnostic.location->source()->text(), source);
             }
         };
-        check(prefix + "((c_0 " + expression + "))",
+        check(std::string(prefix).append("((c_0 ").append(expression).append("))"),
               [&](const auto& source) { static_cast<void>(kr::dl::grammar::parse_grammar(source, domain, *grammar_repository)); });
-        check(prefix + "(:sketch (:features " + feature + ") (:rules))",
+        check(std::string(prefix).append("(:sketch (:features ").append(feature).append(") (:rules))"),
               [&](const auto& source) { static_cast<void>(kr::ps::base::dl::parse_sketch(source, domain, *context->base_repository)); });
-        check(prefix + "(:module (:symbol m) (:arguments) (:registers) (:entry s) (:memory s) (:features " + feature + ") (:rules))",
+        check(std::string(prefix)
+                  .append("(:module (:symbol m) (:arguments) (:registers) (:entry s) (:memory s) (:features ")
+                  .append(feature)
+                  .append(") (:rules))"),
               [&](const auto& source) { static_cast<void>(kr::ps::ext::dl::parse_module(source, domain, *context->ext_repository)); });
-        check(prefix + "(:classifier (:symbol c) (:features " + feature + ") (:expression (or)))",
+        check(std::string(prefix).append("(:classifier (:symbol c) (:features ").append(feature).append(") (:expression (or)))"),
               [&](const auto& source) { static_cast<void>(kr::uns::dl::parse_classifier(source, domain, *context->uns_repository)); });
     }
 }

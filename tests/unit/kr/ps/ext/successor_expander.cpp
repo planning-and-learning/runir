@@ -808,9 +808,9 @@ TEST(RunirTests, ExtChooseUsesNaturalBindingOrder)
     ASSERT_TRUE(expander.for_each_successor(
         state,
         statistics,
-        [&](auto choice)
+        [&](auto&& choice)
         {
-            if constexpr (std::same_as<decltype(choice), kr::ps::ext::detail::ProgramStep<tyr::GroundTag>>)
+            if constexpr (std::same_as<std::remove_cvref_t<decltype(choice)>, kr::ps::ext::detail::ProgramStep<tyr::GroundTag>>)
                 ADD_FAILURE() << "Expected a compact Choice descriptor";
             else
             {
@@ -868,10 +868,10 @@ TEST(RunirTests, ExtChoicesRetainBindingsAcrossChildEvaluationAndPoolReuse)
             EXPECT_TRUE(expander.for_each_successor(
                 expander.view(state),
                 statistics,
-                [&](auto expansion)
+                [&](auto&& expansion)
                 {
-                    if constexpr (std::same_as<decltype(expansion), Choice>)
-                        result.push_back(std::move(expansion));
+                    if constexpr (std::same_as<std::remove_cvref_t<decltype(expansion)>, Choice>)
+                        result.push_back(std::forward<decltype(expansion)>(expansion));
                     else
                         ADD_FAILURE() << "Expected a concept choice";
                     return true;
@@ -1009,7 +1009,7 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
         EXPECT_EQ(target_state.get_module_state().get_memory_state().get_index(), target.get_index());
         const auto loaded = target_state.get_module_state().get_registers().template get<kr::dl::ConceptTag>()[0];
         ASSERT_TRUE(loaded);
-        loaded_objects.insert(ygg::uint_t(loaded.value().get_index()));
+        loaded_objects.insert(static_cast<ygg::uint_t>(loaded.value().get_index()));
     }
     EXPECT_EQ(loaded_objects.size(), steps.size());
 
@@ -1080,7 +1080,7 @@ TEST(RunirTests, ExtRoleLoadRuleEnumeratesAllPairsAndAdvancesMemory)
         const auto loaded = target_state.get_module_state().get_registers().template get<kr::dl::RoleTag>()[0];
         ASSERT_TRUE(loaded);
         const auto pair = loaded.value();
-        loaded_pairs.emplace(ygg::uint_t(pair.get_first().get_index()), ygg::uint_t(pair.get_second().get_index()));
+        loaded_pairs.emplace(static_cast<ygg::uint_t>(pair.get_first().get_index()), static_cast<ygg::uint_t>(pair.get_second().get_index()));
     }
     EXPECT_EQ(loaded_pairs.size(), steps.size());
 }
@@ -1662,9 +1662,9 @@ void expect_query_action_contracts()
         const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
         const auto task_context = create_task_context<Kind>(directory / "domain.pddl", directory / "task.pddl");
         auto& repository = *task_context->domain_context->ext_repository;
-        const auto query = scenario == 1 ? "(q_difference " + valid_query + " " + valid_query + ")" :
-                           scenario == 3 ? "(q_union " + valid_query + R"( (q_atomic_state "edge" (from to))))" :
-                           scenario == 4 ? "(q_project (to from) " + valid_query + ")" :
+        const auto query = scenario == 1 ? fmt::format("(q_difference {} {})", valid_query, valid_query) :
+                           scenario == 3 ? fmt::format(R"((q_union {} (q_atomic_state "edge" (from to))))", valid_query) :
+                           scenario == 4 ? fmt::format("(q_project (to from) {})", valid_query) :
                                            valid_query;
         const auto source = fmt::format(R"(
 (:module (:symbol actions) (:arguments) (:registers)
@@ -1996,7 +1996,7 @@ void expect_query_action_nullary_binding()
         const auto task_context = create_task_context<Kind>(directory / "domain.pddl", directory / "task.pddl");
         auto& repository = *task_context->domain_context->ext_repository;
         const auto truth = std::string(R"((q_atomic_state "truth" ()))");
-        const auto query = empty ? "(q_difference " + truth + " " + truth + ")" : truth;
+        const auto query = empty ? fmt::format("(q_difference {} {})", truth, truth) : truth;
         const auto source = fmt::format(R"(
 (:module (:symbol nullary) (:arguments) (:registers)
   (:entry source) (:memory source)

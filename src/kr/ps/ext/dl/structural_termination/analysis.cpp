@@ -148,7 +148,7 @@ Analysis analyze_module(ModuleView module_)
                         // Other rules leave unmentioned features unconstrained.
                         // Call rules have no effect entries.
                         analysis.rules.push_back(rule);
-                        analysis.policy.rule_profiles.push_back(std::move(profile));
+                        analysis.policy.rule_profiles.push_back(profile);
                     }
                 },
                 rule.get_variant());

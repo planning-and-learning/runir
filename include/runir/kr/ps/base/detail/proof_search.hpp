@@ -51,7 +51,7 @@ SketchProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
 
     const auto get_or_create_state = [&](const tyr::planning::StateView<Kind>& state) -> std::optional<bool>
     {
-        const auto position = std::size_t(ygg::uint_t(state.get_index()));
+        const auto position = static_cast<std::size_t>(ygg::uint_t(state.get_index()));
         if ((num_reached > 0 && state == initial_state) || (position < nodes.size() && nodes[position].parent_state))
             return false;
         if (num_reached >= options.max_num_states)
@@ -166,7 +166,8 @@ auto find_solution(const runir::kr::TaskContextPtr<Kind>& task_context_owner,
 }  // namespace detail
 
 template<tyr::TaskKind Kind>
-auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
+auto find_solution(const runir::kr::TaskContextPtr<Kind>& task_context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options)
+    -> SketchProofResults<Kind>
 {
     // Retain the task until the classifier's caches are destroyed, including on exceptions.
     if (options.classifier)

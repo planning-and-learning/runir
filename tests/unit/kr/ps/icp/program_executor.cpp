@@ -586,7 +586,7 @@ void check_rule_evaluator_scheduling()
         EXPECT_FALSE(expander.for_each_successor(
             source,
             statistics,
-            [&](auto)
+            [&](const auto&)
             {
                 ++accepted;
                 return false;

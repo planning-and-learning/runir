@@ -461,7 +461,7 @@ void check_incremental_evaluation()
             const auto prefix = "(" + std::string(operation) + " " + std::to_string(threshold) + " " + edge_text;
             SCOPED_TRACE(prefix);
             check_leaf(kr::ps::ext::dl::parse_concept(prefix + ")", domain, *constructors));
-            check_leaf(kr::ps::ext::dl::parse_concept(prefix + " " + present_text + ")", domain, *constructors));
+            check_leaf(kr::ps::ext::dl::parse_concept(std::string(prefix).append(" ").append(present_text).append(")"), domain, *constructors));
         }
     const auto role_expressions = std::vector {
         edge,

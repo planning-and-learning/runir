@@ -110,7 +110,7 @@ QueryTranslator::YggQuery QueryTranslator::complement_argument(DlQuery complemen
                               {
                                   constexpr auto role = std::same_as<V, ConstructorView<RoleTag>>;
                                   slot.kind = role ? QuerySlot::Kind::ROLE : QuerySlot::Kind::CONCEPT;
-                                  slot.index = ygg::uint_t(argument.get_index());
+                                  slot.index = static_cast<ygg::uint_t>(argument.get_index());
                               });
     const auto result = input(std::move(slot));
     m_arguments.emplace(complement, result);
@@ -124,7 +124,7 @@ QueryTranslator::YggQuery QueryTranslator::translate_concrete(DlQuery query, Que
     if constexpr (is_query_leaf_tag_v<Tag>)
     {
         const auto columns = concrete.get_schema().span();
-        return input(QuerySlot { QuerySlot::Kind::QUERY, ygg::uint_t(query.get_index()), { columns.begin(), columns.end() }, query.is_static() });
+        return input(QuerySlot { QuerySlot::Kind::QUERY, static_cast<ygg::uint_t>(query.get_index()), { columns.begin(), columns.end() }, query.is_static() });
     }
     else if constexpr (std::same_as<Tag, QueryJoinTag>)
     {

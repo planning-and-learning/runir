@@ -129,7 +129,7 @@ auto search(const TaskContextPtr<Kind>& task, ProgramView program, const Program
 }  // namespace detail
 
 template<tyr::TaskKind Kind>
-auto find_solution(TaskContextPtr<Kind> task, ProgramView program, const ProgramSearchOptions<Kind>& options) -> ProgramProofResults<Kind>
+auto find_solution(const TaskContextPtr<Kind>& task, ProgramView program, const ProgramSearchOptions<Kind>& options) -> ProgramProofResults<Kind>
 {
     if (!task)
         throw std::invalid_argument("ICP find_solution requires a task context.");

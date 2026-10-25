@@ -9,11 +9,11 @@ namespace runir::kr::ps::base
 template class SuccessorExpander<tyr::GroundTag>;
 template class SuccessorExpander<tyr::LiftedTag>;
 
-template auto find_solution<tyr::GroundTag>(runir::kr::TaskContextPtr<tyr::GroundTag> task_context,
+template auto find_solution<tyr::GroundTag>(const runir::kr::TaskContextPtr<tyr::GroundTag>& task_context,
                                             SketchView sketch,
                                             const SketchSearchOptions<tyr::GroundTag>& options) -> SketchProofResults<tyr::GroundTag>;
 
-template auto find_solution<tyr::LiftedTag>(runir::kr::TaskContextPtr<tyr::LiftedTag> task_context,
+template auto find_solution<tyr::LiftedTag>(const runir::kr::TaskContextPtr<tyr::LiftedTag>& task_context,
                                             SketchView sketch,
                                             const SketchSearchOptions<tyr::LiftedTag>& options) -> SketchProofResults<tyr::LiftedTag>;
 

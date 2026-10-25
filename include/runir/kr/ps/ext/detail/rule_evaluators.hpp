@@ -190,10 +190,10 @@ public:
         m_sketch_rules.clear();
         // Pruning takes precedence over every ordinary rule, including caller-return fallback.
         bool backtracked = false;
-        const auto emit_backtrack = [&](auto failure)
+        const auto emit_backtrack = [&]<typename Failure>(Failure&& failure)
         {
             backtracked = true;
-            return emit(std::move(failure));
+            return emit(std::forward<Failure>(failure));
         };
         for (const auto rule : source_rules(state.get_module_state().get_module(), state.get_module_state().get_memory_state()))
         {

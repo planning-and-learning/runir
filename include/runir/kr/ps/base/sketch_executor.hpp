@@ -9,16 +9,16 @@ namespace runir::kr::ps::base
 {
 
 template<tyr::TaskKind Kind>
-auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options)
+auto find_solution(const runir::kr::TaskContextPtr<Kind>& task_context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options)
     -> SketchProofResults<Kind>;
 
 #ifndef RUNIR_HEADER_INSTANTIATION
 
-extern template auto find_solution<tyr::GroundTag>(runir::kr::TaskContextPtr<tyr::GroundTag> task_context,
+extern template auto find_solution<tyr::GroundTag>(const runir::kr::TaskContextPtr<tyr::GroundTag>& task_context,
                                                    SketchView sketch,
                                                    const SketchSearchOptions<tyr::GroundTag>& options) -> SketchProofResults<tyr::GroundTag>;
 
-extern template auto find_solution<tyr::LiftedTag>(runir::kr::TaskContextPtr<tyr::LiftedTag> task_context,
+extern template auto find_solution<tyr::LiftedTag>(const runir::kr::TaskContextPtr<tyr::LiftedTag>& task_context,
                                                    SketchView sketch,
                                                    const SketchSearchOptions<tyr::LiftedTag>& options) -> SketchProofResults<tyr::LiftedTag>;
 

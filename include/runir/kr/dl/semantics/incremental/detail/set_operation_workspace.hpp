@@ -30,7 +30,7 @@ struct SetOperationWorkspace
 
     void mark(ygg::Index<tyr::formalism::Object> source)
     {
-        const auto index = ygg::uint_t(source);
+        const auto index = static_cast<ygg::uint_t>(source);
         if (!marked[index])
         {
             rows.push_back(source);
@@ -41,7 +41,7 @@ struct SetOperationWorkspace
     void clear_rows() noexcept
     {
         for (const auto source : rows)
-            marked[ygg::uint_t(source)] = 0;
+            marked[static_cast<ygg::uint_t>(source)] = 0;
         rows.clear();
     }
 

@@ -75,7 +75,7 @@ namespace runir::kr::dl::semantics
 template<typename C>
 void assign_register(ygg::Data<RegisterValues>& data, RegisterIdentifier<ConceptTag> identifier, ygg::View<ygg::Index<tyr::formalism::Object>, C> value)
 {
-    data.concept_values.at(static_cast<size_t>(ygg::uint_t(identifier))) = value.get_index();
+    data.concept_values.at(static_cast<size_t>(static_cast<ygg::uint_t>(identifier))) = value.get_index();
     ygg::clear(data.index);
 }
 
@@ -84,7 +84,7 @@ void assign_register(ygg::Data<RegisterValues>& data,
                      RegisterIdentifier<RoleTag> identifier,
                      const std::pair<ygg::View<ygg::Index<tyr::formalism::Object>, C>, ygg::View<ygg::Index<tyr::formalism::Object>, C>>& value)
 {
-    data.role_values.at(static_cast<size_t>(ygg::uint_t(identifier))) = ::cista::pair(value.first.get_index(), value.second.get_index());
+    data.role_values.at(static_cast<size_t>(static_cast<ygg::uint_t>(identifier))) = ::cista::pair(value.first.get_index(), value.second.get_index());
     ygg::clear(data.index);
 }
 

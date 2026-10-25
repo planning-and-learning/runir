@@ -10,14 +10,14 @@ namespace runir::kr::ps::icp
 /// Histories belong to state identity. Every reachable cycle and failing alternative is a failure.
 /// Only successful greedy executions return a plan.
 template<tyr::TaskKind Kind>
-auto find_solution(TaskContextPtr<Kind> task_context, ProgramView program, const ProgramSearchOptions<Kind>& options) -> ProgramProofResults<Kind>;
+auto find_solution(const TaskContextPtr<Kind>& task_context, ProgramView program, const ProgramSearchOptions<Kind>& options) -> ProgramProofResults<Kind>;
 
 #ifndef RUNIR_HEADER_INSTANTIATION
 
-extern template auto find_solution<tyr::GroundTag>(TaskContextPtr<tyr::GroundTag>, ProgramView, const ProgramSearchOptions<tyr::GroundTag>&)
+extern template auto find_solution<tyr::GroundTag>(const TaskContextPtr<tyr::GroundTag>&, ProgramView, const ProgramSearchOptions<tyr::GroundTag>&)
     -> ProgramProofResults<tyr::GroundTag>;
 
-extern template auto find_solution<tyr::LiftedTag>(TaskContextPtr<tyr::LiftedTag>, ProgramView, const ProgramSearchOptions<tyr::LiftedTag>&)
+extern template auto find_solution<tyr::LiftedTag>(const TaskContextPtr<tyr::LiftedTag>&, ProgramView, const ProgramSearchOptions<tyr::LiftedTag>&)
     -> ProgramProofResults<tyr::LiftedTag>;
 
 #endif

@@ -35,7 +35,7 @@ template<typename Distance>
 DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePlan& plan, ConstructorView<RoleTag> edges)
 {
     const auto columns = plan.edge_columns().span();
-    return { { QuerySlot { QuerySlot::Kind::ROLE, ygg::uint_t(edges.get_index()), { columns.begin(), columns.end() }, edges.is_static() } },
+    return { { QuerySlot { QuerySlot::Kind::ROLE, static_cast<ygg::uint_t>(edges.get_index()), { columns.begin(), columns.end() }, edges.is_static() } },
              Distance(plan, edges.is_static()),
              std::nullopt };
 }
@@ -81,7 +81,7 @@ ygg::uint_t on_demand_distance(NumericalView<DistanceTag> constructor, Context& 
             auto& feature = context.get_workspace().get_distance_feature(
                 context.get_state().get_formalism_repository(),
                 constructor.get_context(),
-                ygg::uint_t(constructor.get_index()),
+                static_cast<ygg::uint_t>(constructor.get_index()),
                 [&]
                 {
                     auto feature = make_distance_feature<ygg::database::MinDistance<heuristics::ProjectionHeuristic>>(plan, edges);
@@ -157,7 +157,7 @@ void on_demand_must_pass(ygg::View<ygg::Index<Query<QueryMustPassTag>>, C> const
     const auto edges = constructor.get_edges();
     auto& feature = context.get_workspace().get_must_pass_feature(context.get_state().get_formalism_repository(),
                                                                   constructor.get_context(),
-                                                                  ygg::uint_t(constructor.get_index()),
+                                                                  static_cast<ygg::uint_t>(constructor.get_index()),
                                                                   [&] { return make_must_pass_feature(constructor.get_data().plan, edges); });
     const auto input = [&](size_t slot) { return evaluate_slot<Kind>(feature.slots[slot], edges.get_context(), children); };
     auto& heuristic = must_pass_heuristic(feature, detail::num_objects<Kind>(context), input, targets);

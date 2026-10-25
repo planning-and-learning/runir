@@ -32,6 +32,8 @@ mcp = [
 test = [
     "pytest",
     "pypddl-datasets>=0.0.17,<0.1",
+    # override for Python 3.11 in the tests.
+    "typing-extensions>=4.4",
 ]
 
 [project.urls]

@@ -27,9 +27,9 @@ template<ConceptOrRoleTag Category>
 bool contains(BorrowedDenotationView<Category> input, DenotationElementView<Category> value)
 {
     if constexpr (std::same_as<Category, ConceptTag>)
-        return input.get().test(ygg::uint_t(value.get_index()));
+        return input.get().test(static_cast<ygg::uint_t>(value.get_index()));
     else
-        return input.get(value.first.get_index()).test(ygg::uint_t(value.second.get_index()));
+        return input.get(value.first.get_index()).test(static_cast<ygg::uint_t>(value.second.get_index()));
 }
 
 inline void mark_sources(SetOperationWorkspace& workspace, const DenotationDelta<RoleTag>& delta)
@@ -39,7 +39,7 @@ inline void mark_sources(SetOperationWorkspace& workspace, const DenotationDelta
 
 inline void mark_predecessors(SetOperationWorkspace& workspace, const ygg::Builder<Denotation<RoleTag>>& role, ygg::Index<tyr::formalism::Object> target)
 {
-    const auto index = ygg::uint_t(target);
+    const auto index = static_cast<ygg::uint_t>(target);
     for (ygg::uint_t source = 0; source < role.get_num_objects(); ++source)
         if (!workspace.marked[source] && role.get(source).test(index))
             workspace.mark(ygg::Index<tyr::formalism::Object>(source));
@@ -58,9 +58,9 @@ void mark_predecessors(SetOperationWorkspace& workspace, const ygg::Builder<Deno
                 [&](auto value)
                 {
                     if constexpr (std::same_as<Category, ConceptTag>)
-                        targets.set(ygg::uint_t(value.get_index()));
+                        targets.set(static_cast<ygg::uint_t>(value.get_index()));
                     else
-                        targets.set(ygg::uint_t(value.first.get_index()));
+                        targets.set(static_cast<ygg::uint_t>(value.first.get_index()));
                 });
     const auto indices = ygg::set_bit_indices(targets);
     auto it = indices.begin();
@@ -157,7 +157,7 @@ void evaluate_rows(RoleFillersTag, BorrowedDenotationView<RoleTag> role, const O
     {
         bool present = true;
         for (const auto filler : fillers)
-            if (!role.get(source).test(ygg::uint_t(filler.get_index())))
+            if (!role.get(source).test(static_cast<ygg::uint_t>(filler.get_index())))
             {
                 present = false;
                 break;

@@ -122,7 +122,7 @@ public:
         auto context = runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy> { &m_workspace,
                                                                                                                                           state.get_state() };
         bool emitted = false;
-        const auto output = [&](ProgramStep<Kind> step)
+        const auto output = [&](ProgramStep<Kind>&& step)
         {
             emitted = true;
             return emit(std::move(step));

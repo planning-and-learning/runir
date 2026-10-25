@@ -45,9 +45,9 @@ public:
         m_changed.reserve(features.size());
         auto slots = std::unordered_map<ygg::uint_t, std::size_t> {};
         for (std::size_t i = 0; i < features.size(); ++i)
-            slots.emplace(ygg::uint_t(features[i].get_index()), i);
+            slots.emplace(static_cast<ygg::uint_t>(features[i].get_index()), i);
         for (const auto& pair : module.get_reset_pairs())
-            m_reset_predecessors.at(slots.at(ygg::uint_t(pair.after))).push_back(slots.at(ygg::uint_t(pair.before)));
+            m_reset_predecessors.at(slots.at(static_cast<ygg::uint_t>(pair.after))).push_back(slots.at(static_cast<ygg::uint_t>(pair.before)));
     }
 
     [[nodiscard]] const auto& get_task_context() const noexcept { return m_task; }
@@ -101,7 +101,7 @@ public:
             {
                 if (binding && !progress)
                     for (std::size_t j = 0; j < binding->get_relation().get_original_arity(); ++j)
-                        if (entered->get().test(ygg::uint_t(binding->get_objects()[j].get_index())))
+                        if (entered->get().test(static_cast<ygg::uint_t>(binding->get_objects()[j].get_index())))
                         {
                             progress = true;
                             break;
