@@ -16,7 +16,7 @@ struct StaticEvaluator
     DenotationState<Category> value;
     bool initialized = false;
 
-    explicit StaticEvaluator(ConstructorView<Category> expression) : expression(expression) {}
+    explicit StaticEvaluator(ConstructorView<Category> expression_) : expression(expression_) {}
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>&, Context& context)
     {

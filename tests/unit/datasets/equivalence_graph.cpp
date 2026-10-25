@@ -166,6 +166,6 @@ TEST(EquivalenceGraphTest, ReusesColorsAcrossProblems)
 INSTANTIATE_TEST_SUITE_P(RunirDatasets,
                          EquivalenceGraphTest,
                          ::testing::ValuesIn(load_cases()),
-                         [](const testing::TestParamInfo<EquivalenceGraphFigureCase>& info) { return info.param.name; });
+                         [](const testing::TestParamInfo<EquivalenceGraphFigureCase>& param_info) { return param_info.param.name; });
 
 }  // namespace runir::tests

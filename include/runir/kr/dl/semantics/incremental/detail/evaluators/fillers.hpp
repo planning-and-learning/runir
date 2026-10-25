@@ -17,7 +17,7 @@ struct FillersEvaluator
     ConceptView<RoleFillersTag> expression;
     DenotationState<ConceptTag> value;
 
-    FillersEvaluator(EvaluationIndex<RoleTag> role, ConceptView<RoleFillersTag> expression) : role(role), expression(expression) {}
+    FillersEvaluator(EvaluationIndex<RoleTag> role_, ConceptView<RoleFillersTag> expression_) : role(role_), expression(expression_) {}
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     { initialize_set(RoleFillersTag {}, value, graph.result(role), graph.change(role), expression.get_objects(), graph.set_workspace()); }

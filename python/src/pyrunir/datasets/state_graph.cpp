@@ -12,7 +12,6 @@
 namespace runir::datasets
 {
 
-using runir::graphs::bind_bidirectional_graph;
 using runir::graphs::bind_bidirectional_static_graph;
 using runir::graphs::bind_forward_graph;
 using runir::graphs::bind_labeled_constructible_graph;
@@ -120,8 +119,8 @@ void bind_state_graph_for_kind(nb::module_& m, const char* class_prefix, const c
           "context"_a,
           "options"_a = StateGraphGenerationOptions());
     m.def((std::string("annotate_") + function_prefix + "_state_graph").c_str(),
-          [](const TaskSearchContextPtr<Kind>& context, const Graph& graph, StateGraphCostMode cost_mode)
-          { return std::shared_ptr<AnnotatedGraph>(annotate_state_graph<Kind>(*context, graph, cost_mode)); },
+          [](const TaskSearchContextPtr<Kind>& context, const Graph& state_graph, StateGraphCostMode cost_mode)
+          { return std::shared_ptr<AnnotatedGraph>(annotate_state_graph<Kind>(*context, state_graph, cost_mode)); },
           "context"_a,
           "graph"_a,
           "cost_mode"_a);

@@ -19,7 +19,7 @@ struct ScalarBinaryEvaluator
     EvaluationIndex<Input> rhs;
     DenotationState<Category> value;
 
-    ScalarBinaryEvaluator(EvaluationIndex<Input> lhs, EvaluationIndex<Input> rhs) : lhs(lhs), rhs(rhs) {}
+    ScalarBinaryEvaluator(EvaluationIndex<Input> lhs_, EvaluationIndex<Input> rhs_) : lhs(lhs_), rhs(rhs_) {}
     void refresh(EvaluationGraph<Kind>& graph)
     {
         if constexpr (NumericalBinaryTag<Tag>)
@@ -41,7 +41,7 @@ struct LogicalNotEvaluator
     EvaluationIndex<BooleanTag> child;
     DenotationState<BooleanTag> value;
 
-    explicit LogicalNotEvaluator(EvaluationIndex<BooleanTag> child) : child(child) {}
+    explicit LogicalNotEvaluator(EvaluationIndex<BooleanTag> child_) : child(child_) {}
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     { value.set(!graph.result(child).get()); }

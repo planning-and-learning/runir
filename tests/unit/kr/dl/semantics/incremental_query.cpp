@@ -49,7 +49,7 @@ auto rows(const auto& relation)
         const auto row = ygg::database::Row(relation.row(i), relation.columns().span());
         auto& values = result.emplace_back();
         for (size_t j = 0; j < row.size(); ++j)
-            values.push_back(Object(row.get<ygg::uint_t>(j)));
+            values.emplace_back(row.get<ygg::uint_t>(j));
     }
     std::ranges::sort(result);
     return result;

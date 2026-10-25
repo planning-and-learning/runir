@@ -580,7 +580,7 @@ void check_incremental_evaluation()
     EXPECT_EQ(graph.get_index(edge), edge_id);
     EXPECT_EQ(graph.get_index(query), query_id);
     const auto unprepared = kr::ps::ext::dl::parse_numerical("(n_const 42)", domain, *constructors);
-    EXPECT_THROW(graph.get_index(unprepared), std::invalid_argument);
+    EXPECT_THROW(static_cast<void>(graph.get_index(unprepared)), std::invalid_argument);
     EXPECT_EQ(graph.node_count(), 12);
     const auto scalar_expressions = std::array { source_count, edge_count, distance_expression, self_distance, query_count };
     const auto scalar_ids = std::array { source_count_id, edge_count_id, distance_id, self_distance_id, query_count_id };
@@ -599,7 +599,7 @@ void check_incremental_evaluation()
             const auto row = ygg::database::Row(relation.row(i), relation.columns().span());
             auto& values = result.emplace_back();
             for (size_t j = 0; j < row.size(); ++j)
-                values.push_back(Object(row.get<ygg::uint_t>(j)));
+                values.emplace_back(row.get<ygg::uint_t>(j));
         }
         std::ranges::sort(result);
         return result;
@@ -781,8 +781,8 @@ void check_incremental_evaluation()
         auto demand = kr::dl::semantics::incremental::IncrementalEvaluation<Kind>(*search->task, { expression });
         const auto root = demand.graph().get_index(expression);
         EXPECT_NO_THROW(demand.enter(invocation_context).evaluate(root));
-        auto failed = demand.enter(invocation_context, invalid, workspace);
-        EXPECT_THROW(failed.evaluate(root), std::invalid_argument);
+        auto failed_state = demand.enter(invocation_context, invalid, workspace);
+        EXPECT_THROW(failed_state.evaluate(root), std::invalid_argument);
         EXPECT_THROW(demand.enter(invocation_context, empty_delta, workspace).delta(root), std::logic_error);
         EXPECT_EQ(demand.enter(invocation_context).evaluate(root).count(), 0);
         auto unchanged = demand.enter(invocation_context, empty_delta, workspace);
@@ -790,10 +790,10 @@ void check_incremental_evaluation()
         EXPECT_NO_THROW(unchanged.delta(root));  // Updated from the delta.
 
         const auto roots = std::array<kr::dl::semantics::incremental::EvaluationRoot, 1> { expression };
-        auto policy = kr::dl::semantics::DeltaEvaluationPolicy<Kind>(*search->task, roots);
-        auto context = policy.make_source_context(invocation_context);
+        auto delta_policy = kr::dl::semantics::DeltaEvaluationPolicy<Kind>(*search->task, roots);
+        auto context = delta_policy.make_source_context(invocation_context);
         EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(expression, context).count(), 0);
-        auto recovered = policy.make_source_context(invocation_context);
+        auto recovered = delta_policy.make_source_context(invocation_context);
         EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(expression, recovered).count(), 0);
     };
     reject_multiple_values(source);

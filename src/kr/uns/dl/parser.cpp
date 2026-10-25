@@ -29,7 +29,6 @@ namespace
 using runir::kr::parser::constructors::parse_constructor;
 using runir::kr::parser::ext_constructors::ConstructorContext;
 using runir::kr::parser::ext_constructors::LanguageCapabilities;
-using runir::kr::parser::ext_constructors::parse;
 
 template<typename T>
 auto intern(runir::kr::uns::Repository& repository, ygg::Data<T>& data)

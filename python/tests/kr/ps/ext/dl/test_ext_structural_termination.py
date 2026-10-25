@@ -108,14 +108,22 @@ def test_ext_structural_termination_feature_mask_boundary(
     )
     active = f"n{num_numericals - 1}"
     rule = (
-        "(:rule (:symbol keep) (:expression (:source-memory m0) (:target-memory m0) "
-        f"(:sketch (:conditions (greater_zero {active})) (:effects (unchanged {active})))))"
+        "".join(
+            (
+                "(:rule (:symbol keep) (:expression (:source-memory m0) (:target-memory m0) ",
+                f"(:sketch (:conditions (greater_zero {active})) (:effects (unchanged {active})))))",
+            )
+        )
         if with_rule
         else ""
     )
     module = dl.parse_module(
-        "(:module (:symbol boundary) (:arguments) (:registers) (:entry m0) (:memory m0) "
-        f"(:features {features}) (:rules {rule}))",
+        "".join(
+            (
+                "(:module (:symbol boundary) (:arguments) (:registers) (:entry m0) (:memory m0) ",
+                f"(:features {features}) (:rules {rule}))",
+            )
+        ),
         gripper_planning_domain,
         repository,
     )
@@ -157,10 +165,14 @@ def test_ext_structural_termination_rejects_conflicting_numerical_effects(
 ) -> None:
     repository = _repository(gripper_planning_domain)
     module = dl.parse_module(
-        "(:module (:symbol conflict) (:arguments) (:registers) (:entry m0) (:memory m0) "
-        "(:features (:numerical (:symbol n) (:expression (n_count (c_top))))) "
-        "(:rules (:rule (:symbol conflict) (:expression (:source-memory m0) (:target-memory m0) "
-        f"(:sketch (:conditions) (:effects {effects}))))))",
+        "".join(
+            (
+                "(:module (:symbol conflict) (:arguments) (:registers) (:entry m0) (:memory m0) ",
+                "(:features (:numerical (:symbol n) (:expression (n_count (c_top))))) ",
+                "(:rules (:rule (:symbol conflict) (:expression (:source-memory m0) (:target-memory m0) ",
+                f"(:sketch (:conditions) (:effects {effects}))))))",
+            )
+        ),
         gripper_planning_domain,
         repository,
     )

@@ -76,8 +76,12 @@ def test_statistics_warn_about_leaves_empty_in_every_sample(
     )
     carried = '(q_atomic_state "carry" (ball gripper))'  # no ball is carried in the initial state
     sketch = parse_sketch(
-        "(:sketch (:features (:numerical (:symbol carried) (:expression "
-        f'(n_count (q_join {carried} (q_concept ball (c_atomic_state "ball"))))))) (:rules))',
+        "".join(
+            (
+                "(:sketch (:features (:numerical (:symbol carried) (:expression ",
+                f'(n_count (q_join {carried} (q_concept ball (c_atomic_state "ball"))))))) (:rules))',
+            )
+        ),
         gripper_planning_domain,
         domain.base_repository,
     )

@@ -64,7 +64,6 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     ygg::bind_index<ygg::Index<Crule>>(m, "CruleRuleIndex");
     using DlRepository = runir::kr::dl::ConstructorRepository;
     using MemoryStateIndex = ygg::Index<MemoryState>;
-    using MemoryStateView = ygg::View<ygg::Index<MemoryState>, Repository>;
     using ConditionIndexList = ygg::IndexList<runir::kr::ps::ConditionVariant<runir::kr::IcpFamilyTag>>;
     using ConditionViewList = std::vector<ygg::View<ygg::Index<runir::kr::ps::ConditionVariant<runir::kr::IcpFamilyTag>>, Repository>>;
     using EffectIndexList = ygg::IndexList<runir::kr::ps::EffectVariant<runir::kr::IcpFamilyTag>>;

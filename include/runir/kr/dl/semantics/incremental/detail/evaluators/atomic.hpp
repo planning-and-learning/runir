@@ -22,7 +22,7 @@ struct AtomicEvaluator
     bool polarity;
     DenotationState<Category> value;
 
-    AtomicEvaluator(tyr::formalism::planning::PredicateView<Fact> predicate, bool polarity) : predicate(predicate), polarity(polarity) {}
+    AtomicEvaluator(tyr::formalism::planning::PredicateView<Fact> predicate_, bool polarity_) : predicate(predicate_), polarity(polarity_) {}
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context)
     {
@@ -72,19 +72,20 @@ private:
     void update_atoms(std::span<const tyr::formalism::planning::AtomView<tyr::GroundTag, Fact>> added,
                       std::span<const tyr::formalism::planning::AtomView<tyr::GroundTag, Fact>> removed)
     {
-        const auto present = [&](auto atom)
+        // A Boolean atom has no element, so only the concept and role branches read the atom.
+        const auto present = [&]([[maybe_unused]] auto atom)
         {
             if constexpr (std::same_as<Category, BooleanTag>)
                 return value.get_value() == polarity;
             else
                 return value.contains(atom_element(atom)) == polarity;
         };
-        const auto change = [&](auto atom, bool present)
+        const auto change = [&]([[maybe_unused]] auto atom, bool is_present)
         {
             if constexpr (std::same_as<Category, BooleanTag>)
-                value.set(present == polarity);
+                value.set(is_present == polarity);
             else
-                value.set(atom_element(atom), present == polarity);
+                value.set(atom_element(atom), is_present == polarity);
         };
         for (const auto atom : added)
             if (atom.get_predicate() == predicate && present(atom))

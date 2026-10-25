@@ -62,17 +62,25 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
     feature = f"(:boolean (:symbol value) (:expression {source}))"
     if family == "base":
         owner = parse_sketch(
-            f"(:sketch (:features {feature}) (:rules "
-            "(:rule (:symbol keep) (:expression "
-            "(:conditions (positive value)) (:effects (unchanged value))))))",
+            "".join(
+                (
+                    f"(:sketch (:features {feature}) (:rules ",
+                    "(:rule (:symbol keep) (:expression ",
+                    "(:conditions (positive value)) (:effects (unchanged value))))))",
+                )
+            ),
             gripper_planning_domain,
             context.base_repository,
         )
         expression = owner.get_boolean_features()[0].get_expression()
     elif family == "ext":
         owner = parse_program(
-            "(:program (:entry root) (:module (:symbol root) (:arguments) (:registers) "
-            f"(:entry m0) (:memory m0) (:features {feature}) (:rules)))",
+            "".join(
+                (
+                    "(:program (:entry root) (:module (:symbol root) (:arguments) (:registers) ",
+                    f"(:entry m0) (:memory m0) (:features {feature}) (:rules)))",
+                )
+            ),
             gripper_planning_domain,
             context.ext_repository,
         )
@@ -328,10 +336,14 @@ def test_concept_and_role_projection_bindings(
     context = semantics.GroundStateEvaluationContext(state, task.dl_builder, storage)
     atom = '(q_atomic_state "at" (ball room))'
     owner = parse_sketch(
-        "(:sketch (:features "
-        f"(:numerical (:symbol balls) (:expression (n_count (c_project ball {atom})))) "
-        f"(:numerical (:symbol reverse) (:expression (n_count (r_project room ball {atom})))) "
-        f"(:boolean (:symbol any) (:expression (b_nonempty {atom})))) (:rules))",
+        "".join(
+            (
+                "(:sketch (:features ",
+                f"(:numerical (:symbol balls) (:expression (n_count (c_project ball {atom})))) ",
+                f"(:numerical (:symbol reverse) (:expression (n_count (r_project room ball {atom})))) ",
+                f"(:boolean (:symbol any) (:expression (b_nonempty {atom})))) (:rules))",
+            )
+        ),
         gripper_planning_domain,
         domain.base_repository,
     )
@@ -429,11 +441,14 @@ def test_native_ext_query_construction_derives_schema_and_evaluates(
 ) -> None:
     domain = DomainContext(gripper_planning_domain)
     repository = domain.ext_repository.get_dl_repository()
+    count = '(n_count (q_join (q_atomic_state "at" (ball room)) (q_concept room (c_atomic_state "at-robby"))))'
     program = parse_program(
-        "(:program (:entry root) (:module (:symbol root) (:arguments) (:registers) "
-        "(:entry m0) (:memory m0) (:features (:numerical (:symbol count) "
-        '(:expression (n_count (q_join (q_atomic_state "at" (ball room)) '
-        '(q_concept room (c_atomic_state "at-robby"))))))) (:rules)))',
+        "".join(
+            (
+                "(:program (:entry root) (:module (:symbol root) (:arguments) (:registers) ",
+                f"(:entry m0) (:memory m0) (:features (:numerical (:symbol count) (:expression {count}))) (:rules)))",
+            )
+        ),
         gripper_planning_domain,
         domain.ext_repository,
     )

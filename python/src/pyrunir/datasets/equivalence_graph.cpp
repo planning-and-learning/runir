@@ -18,7 +18,6 @@
 namespace runir::datasets
 {
 
-using runir::graphs::bind_bidirectional_graph;
 using runir::graphs::bind_bidirectional_static_graph;
 using runir::graphs::bind_forward_graph;
 using runir::graphs::bind_labeled_constructible_graph;

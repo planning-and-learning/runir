@@ -40,15 +40,15 @@ struct QueryStaticEvaluator : QueryValue
     QueryView<> expression;
     bool initialized = false;
 
-    explicit QueryStaticEvaluator(QueryView<> expression) : QueryValue(expression.get_schema().span()), expression(expression) {}
+    explicit QueryStaticEvaluator(QueryView<> expression_) : QueryValue(expression_.get_schema().span()), expression(expression_) {}
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>&, Context& context)
     {
         if (!initialized)
         {
-            auto& result = this->clear();
+            auto& result_rows = this->clear();
             auto output = context.for_result(true);
-            ygg::visit([&](auto concrete) { semantics::detail::evaluate_query<Kind>(concrete, output, result); }, expression.get_variant());
+            ygg::visit([&](auto concrete) { semantics::detail::evaluate_query<Kind>(concrete, output, result_rows); }, expression.get_variant());
             initialized = true;
         }
         this->delta.clear();
@@ -77,9 +77,9 @@ struct QueryProjectionEvaluator : ygg::database::incremental::ProjectionEvaluato
 {
     QueryEvaluationIndex argument;
 
-    QueryProjectionEvaluator(QueryEvaluationIndex argument, const ygg::database::ProjectionPlan& plan) :
+    QueryProjectionEvaluator(QueryEvaluationIndex argument_, const ygg::database::ProjectionPlan& plan) :
         ygg::database::incremental::ProjectionEvaluator(plan),
-        argument(argument)
+        argument(argument_)
     {
     }
     template<StateEvaluationContextConcept<Kind> Context>
@@ -95,10 +95,10 @@ struct QueryJoinEvaluator : ygg::database::incremental::JoinEvaluator
     QueryEvaluationIndex lhs;
     QueryEvaluationIndex rhs;
 
-    QueryJoinEvaluator(QueryEvaluationIndex lhs, QueryEvaluationIndex rhs, const ygg::database::JoinPlan& plan) :
+    QueryJoinEvaluator(QueryEvaluationIndex lhs_, QueryEvaluationIndex rhs_, const ygg::database::JoinPlan& plan) :
         ygg::database::incremental::JoinEvaluator(plan),
-        lhs(lhs),
-        rhs(rhs)
+        lhs(lhs_),
+        rhs(rhs_)
     {
     }
     template<StateEvaluationContextConcept<Kind> Context>
@@ -113,9 +113,9 @@ struct QueryGenericJoinEvaluator : ygg::database::incremental::GenericJoinEvalua
 {
     std::vector<QueryEvaluationIndex> args;
 
-    QueryGenericJoinEvaluator(std::vector<QueryEvaluationIndex> args, const ygg::database::GenericJoinPlan& plan) :
+    QueryGenericJoinEvaluator(std::vector<QueryEvaluationIndex> args_, const ygg::database::GenericJoinPlan& plan) :
         ygg::database::incremental::GenericJoinEvaluator(plan),
-        args(std::move(args))
+        args(std::move(args_))
     {
     }
     template<StateEvaluationContextConcept<Kind> Context>
@@ -136,9 +136,9 @@ struct QueryFromDenotationEvaluator : QueryValue
 {
     EvaluationIndex<Category> argument;
 
-    QueryFromDenotationEvaluator(EvaluationIndex<Category> argument, std::span<const ygg::database::ColumnLayout> columns) :
+    QueryFromDenotationEvaluator(EvaluationIndex<Category> argument_, std::span<const ygg::database::ColumnLayout> columns) :
         QueryValue(columns),
-        argument(argument)
+        argument(argument_)
     {
     }
     void set_element(DenotationElementView<Category> element, bool present)
@@ -156,10 +156,10 @@ struct QueryFromDenotationEvaluator : QueryValue
     void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
     {
         this->delta.clear();
-        const auto& delta = graph.change(argument);
-        for (const auto& element : delta.removed)
+        const auto& child_delta = graph.change(argument);
+        for (const auto& element : child_delta.removed)
             set_element(element, false);
-        for (const auto& element : delta.added)
+        for (const auto& element : child_delta.added)
             set_element(element, true);
     }
 };
@@ -170,10 +170,10 @@ struct QuerySetCombinationEvaluator : QueryValue
     QueryEvaluationIndex lhs;
     QueryEvaluationIndex rhs;
 
-    QuerySetCombinationEvaluator(QueryEvaluationIndex lhs, QueryEvaluationIndex rhs, std::span<const ygg::database::ColumnLayout> columns) :
+    QuerySetCombinationEvaluator(QueryEvaluationIndex lhs_, QueryEvaluationIndex rhs_, std::span<const ygg::database::ColumnLayout> columns) :
         QueryValue(columns),
-        lhs(lhs),
-        rhs(rhs)
+        lhs(lhs_),
+        rhs(rhs_)
     {
     }
     template<ygg::database::RelationViewConcept Rows, std::invocable<std::span<const std::byte>, bool> Emit>
@@ -222,10 +222,10 @@ struct QuerySelectionEvaluator : QueryValue
     QueryEvaluationIndex argument;
     QueryView<Tag> expression;
 
-    QuerySelectionEvaluator(QueryEvaluationIndex argument, QueryView<Tag> expression) :
-        QueryValue(expression.get_schema().span()),
-        argument(argument),
-        expression(expression)
+    QuerySelectionEvaluator(QueryEvaluationIndex argument_, QueryView<Tag> expression_) :
+        QueryValue(expression_.get_schema().span()),
+        argument(argument_),
+        expression(expression_)
     {
     }
     template<ygg::database::RelationViewConcept Rows, std::invocable<std::span<const std::byte>> Emit>
@@ -258,9 +258,9 @@ struct QuerySelectionEvaluator : QueryValue
     void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
     {
         this->delta.clear();
-        const auto& delta = graph.change(argument);
-        evaluate_rows(delta.removed, [this](auto row) { this->set(row, false); });
-        evaluate_rows(delta.added, [this](auto row) { this->set(row, true); });
+        const auto& child_delta = graph.change(argument);
+        evaluate_rows(child_delta.removed, [this](auto row) { this->set(row, false); });
+        evaluate_rows(child_delta.added, [this](auto row) { this->set(row, true); });
     }
 };
 

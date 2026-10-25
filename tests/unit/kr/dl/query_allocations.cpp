@@ -328,7 +328,7 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
         ASSERT_FALSE(successors.empty());
         const auto& next = successors.front();
         changes[i].assign<tyr::GroundTag>(current.get_state(), register_view, next.get_state(), register_view);
-        contexts.push_back(kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>(next.get_state(), builder, storage, arguments, register_values));
+        contexts.emplace_back(next.get_state(), builder, storage, arguments, register_values);
         auto objects = std::set<ObjectIndex> {};
         for (const auto atom : next.get_state().get_atoms_view(atomic.get_predicate()))
             objects.insert(atom.get_row().get_data()[0]);
@@ -515,11 +515,11 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
     };
     initialize();
     auto workspace = ygg::database::Workspace {};
-    // Enters state `target` by `delta`. Every read root is updated from the delta: get_delta(), delta() and changed()
+    // Enters state `target_index` by `delta`. Every read root is updated from the delta: get_delta(), delta() and changed()
     // throw otherwise.
-    const auto apply = [&](const auto& delta, size_t target, size_t members, size_t register_members)
+    const auto apply = [&](const auto& delta, size_t target_index, size_t members, size_t register_members)
     {
-        const auto& target_context = contexts[target];
+        const auto& target_context = contexts[target_index];
         const auto concept_sizes = std::array { members, members, register_members, static_cast<size_t>(2) };
         const auto role_sizes = std::array { members, members, register_members };
         bool valid = true;
@@ -545,25 +545,25 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
             valid &= numerical.get_result().get() == expected;
             valid &= boolean.get_result().get() == (expected != 0);
         }
-        auto graph = evaluation.enter(target_context, delta, workspace);
+        auto graph_state = evaluation.enter(target_context, delta, workspace);
         const auto infinity = std::numeric_limits<ygg::uint_t>::max();
         const auto expected_distance = members == 2 ? static_cast<ygg::uint_t>(2) : members == 1 ? static_cast<ygg::uint_t>(0) : infinity;
-        valid &= graph.size(source_id) == register_members && graph.size(edge_id) == members;
-        valid &= graph.evaluate(source_count_id).get() == register_members;
-        valid &= graph.evaluate(edge_count_id).get() == members;
-        valid &= graph.evaluate(distance_id).get() == expected_distance;
-        valid &= graph.evaluate(self_distance_id).get() == (register_members ? 0 : infinity);
-        valid &= graph.size(closure_id) == (members == 2 ? 3 : members);
-        valid &= graph.evaluate(nonempty_id).get() == (members == 2);
-        valid &= graph.size(projected_id) == members && graph.size(projected_role_id) == members;
-        valid &= graph.evaluate(query_count_id).get() == members;
+        valid &= graph_state.size(source_id) == register_members && graph_state.size(edge_id) == members;
+        valid &= graph_state.evaluate(source_count_id).get() == register_members;
+        valid &= graph_state.evaluate(edge_count_id).get() == members;
+        valid &= graph_state.evaluate(distance_id).get() == expected_distance;
+        valid &= graph_state.evaluate(self_distance_id).get() == (register_members ? 0 : infinity);
+        valid &= graph_state.size(closure_id) == (members == 2 ? 3 : members);
+        valid &= graph_state.evaluate(nonempty_id).get() == (members == 2);
+        valid &= graph_state.size(projected_id) == members && graph_state.size(projected_role_id) == members;
+        valid &= graph_state.evaluate(query_count_id).get() == members;
         for (const auto id : { source_count_id, edge_count_id, distance_id, self_distance_id, query_count_id })
-            (void) graph.changed(id);
-        (void) graph.changed(nonempty_id);
+            (void) graph_state.changed(id);
+        (void) graph_state.changed(nonempty_id);
         for (const auto id : { source_id, projected_id })
-            (void) graph.delta(id);
+            (void) graph_state.delta(id);
         for (const auto id : { edge_id, closure_id, projected_role_id })
-            (void) graph.delta(id);
+            (void) graph_state.delta(id);
         return valid;
     };
     const auto cycle = [&]
@@ -606,7 +606,7 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
     const auto renamed = std::array<ColumnIndex, 2> { ColumnIndex(2), ColumnIndex(3) };
     auto result = builder.get_builder<ygg::database::Relation>(columns);
     for (ygg::uint_t i = 0; i < 32; ++i)
-        result->insert(std::tuple { static_cast<ygg::uint_t>(i), static_cast<ygg::uint_t>(i + 1) });
+        result->insert(std::tuple { i, static_cast<ygg::uint_t>(i + 1) });
     const auto* slot = result.get();
     const auto* schema_buffer = result->columns().data();
     const auto schema_capacity = result->memory_usage() - result->storage().memory_usage();
@@ -631,7 +631,7 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
         reused &= next->memory_usage() - next->storage().memory_usage() == schema_capacity;
         reused &= next->storage().memory_usage() == row_capacity;
         for (ygg::uint_t i = 0; i < 32; ++i)
-            next->insert(std::tuple { static_cast<ygg::uint_t>(i), static_cast<ygg::uint_t>(i + 1) });
+            next->insert(std::tuple { i, static_cast<ygg::uint_t>(i + 1) });
         reused &= next->row(0).data() == row_buffer;
         const auto value = ygg::database::insert(repository, *next).first;
         reused &= value.columns().data() == stored_schema_buffer;

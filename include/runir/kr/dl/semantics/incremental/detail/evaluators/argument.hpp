@@ -15,7 +15,7 @@ struct ArgumentEvaluator
     ArgumentIdentifier<Category> identifier;
     DenotationState<Category> value;
 
-    explicit ArgumentEvaluator(ArgumentIdentifier<Category> identifier) : identifier(identifier) {}
+    explicit ArgumentEvaluator(ArgumentIdentifier<Category> identifier_) : identifier(identifier_) {}
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>&, Context& context)
     { value.assign(argument_value(context, identifier)); }

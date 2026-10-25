@@ -17,7 +17,7 @@ struct NumberRestrictionEvaluator
     ygg::uint_t threshold;
     DenotationState<ConceptTag> value;
 
-    NumberRestrictionEvaluator(EvaluationIndex<RoleTag> role, ygg::uint_t threshold) : role(role), threshold(threshold) {}
+    NumberRestrictionEvaluator(EvaluationIndex<RoleTag> role_, ygg::uint_t threshold_) : role(role_), threshold(threshold_) {}
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     { initialize_set(Tag {}, value, graph.result(role), graph.change(role), threshold, graph.set_workspace()); }
@@ -33,10 +33,10 @@ struct QualifiedNumberRestrictionEvaluator
     ygg::uint_t threshold;
     DenotationState<ConceptTag> value;
 
-    QualifiedNumberRestrictionEvaluator(EvaluationIndex<RoleTag> role, EvaluationIndex<ConceptTag> qualifying_concept, ygg::uint_t threshold) :
-        role(role),
-        qualifying_concept(qualifying_concept),
-        threshold(threshold)
+    QualifiedNumberRestrictionEvaluator(EvaluationIndex<RoleTag> role_, EvaluationIndex<ConceptTag> qualifying_concept_, ygg::uint_t threshold_) :
+        role(role_),
+        qualifying_concept(qualifying_concept_),
+        threshold(threshold_)
     {
     }
     template<StateEvaluationContextConcept<Kind> Context>

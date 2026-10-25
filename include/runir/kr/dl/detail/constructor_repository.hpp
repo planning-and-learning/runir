@@ -71,7 +71,7 @@ private:
     size_t m_next_index = 0;
 
 public:
-    BasicConstructorRepositoryFactory() {}
+    BasicConstructorRepositoryFactory() = default;
 
     /// Defined in detail/constructor_repository_impl.hpp: an in-class definition would construct and destroy every
     /// symbol pool in each caller (template rule 7).

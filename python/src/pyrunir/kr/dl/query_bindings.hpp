@@ -101,7 +101,7 @@ void bind_query(nb::module_& m, const char* name)
     using Data = ygg::Data<Type>;
     using View = ygg::View<ygg::Index<Type>, ConstructorRepository>;
 
-    ygg::bind_index<ygg::Index<Type>>(m, (std::string(name) + "Index").c_str());
+    ygg::bind_index<ygg::Index<Type>>(m, std::string(name) + "Index");
     auto data = nb::class_<Data>(m, (std::string(name) + "Data").c_str()).def(nb::init<>()).def_rw("index", &Data::index);
     ygg::add_comparison(data);
     def_query_data_constructors<Tag>(data);
@@ -178,7 +178,7 @@ void bind_query_projection(nb::module_& m, const char* name)
     using Type = QueryProjection<Category>;
     using Data = ygg::Data<Type>;
     using View = ygg::View<ygg::Index<Type>, ConstructorRepository>;
-    ygg::bind_index<ygg::Index<Type>>(m, (std::string(name) + "Index").c_str());
+    ygg::bind_index<ygg::Index<Type>>(m, std::string(name) + "Index");
     auto data = nb::class_<Data>(m, (std::string(name) + "Data").c_str())
                     .def(nb::init<>())
                     .def(nb::init<ygg::Index<Query<>>, ygg::IndexList<QueryColumn>>(), nb::arg("arg"), nb::arg("columns"))

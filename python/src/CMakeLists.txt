@@ -23,6 +23,7 @@ file(
 
 nanobind_add_module(
     _pyrunir
+    NB_SUPPRESS_WARNINGS
     module.cpp
     pyrunir/module.cpp
     pyrunir/datasets/config.cpp

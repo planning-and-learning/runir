@@ -217,10 +217,10 @@ def test_validate_compares_a_draft_with_the_initial_program(gripper_data_dir: Pa
 def test_termination_reports_a_cycle_of_a_nonterminating_draft(session: Session) -> None:
     assert session.termination().terminating
     # A rule from `done` back to `choose` without effects lets the program loop.
+    again = "(:rule (:symbol again) (:expression (:source-memory done) (:target-memory choose)"
     loop = PROGRAM.replace("(:memory choose pick move drop done)", "(:memory choose pick move drop done)").replace(
         "(:rule (:symbol drop_it)",
-        "(:rule (:symbol again) (:expression (:source-memory done) (:target-memory choose)"
-        " (:sketch (:conditions) (:effects))))\n    (:rule (:symbol drop_it)",
+        f"{again} (:sketch (:conditions) (:effects))))\n    (:rule (:symbol drop_it)",
     )
     session.set_program(loop)
     termination = session.termination()

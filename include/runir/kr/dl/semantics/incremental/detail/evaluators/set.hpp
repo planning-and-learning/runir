@@ -16,7 +16,7 @@ struct UnarySetEvaluator
     EvaluationIndex<Input> child;
     DenotationState<Category> value;
 
-    explicit UnarySetEvaluator(EvaluationIndex<Input> child) : child(child) {}
+    explicit UnarySetEvaluator(EvaluationIndex<Input> child_) : child(child_) {}
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     { initialize_set(Tag {}, value, graph.result(child), graph.change(child), graph.set_workspace()); }
@@ -31,7 +31,7 @@ struct BinarySetEvaluator
     EvaluationIndex<Right> rhs;
     DenotationState<Category> value;
 
-    BinarySetEvaluator(EvaluationIndex<Left> lhs, EvaluationIndex<Right> rhs) : lhs(lhs), rhs(rhs) {}
+    BinarySetEvaluator(EvaluationIndex<Left> lhs_, EvaluationIndex<Right> rhs_) : lhs(lhs_), rhs(rhs_) {}
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     { initialize_set(Tag {}, value, graph.result(lhs), graph.change(lhs), graph.result(rhs), graph.change(rhs), graph.set_workspace()); }

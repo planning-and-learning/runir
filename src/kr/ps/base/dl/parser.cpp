@@ -35,12 +35,9 @@ struct Builders
     runir::kr::ps::base::Builder* ps;
 };
 
-using runir::kr::parser::constructors::intern;
-using runir::kr::parser::constructors::intern_constructor;
 using runir::kr::parser::constructors::parse_constructor;
 using runir::kr::parser::ext_constructors::ConstructorContext;
 using runir::kr::parser::ext_constructors::LanguageCapabilities;
-using runir::kr::parser::ext_constructors::parse;
 
 inline constexpr auto sketch_capabilities = LanguageCapabilities { "sketches", false, false };
 

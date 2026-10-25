@@ -181,8 +181,12 @@ class Validation:
         if self.tasks:
             slowest = max(self.tasks, key=lambda task: task.ms_per_state)
             lines.append(
-                f"slowest execution {slowest.ms_per_state:.1f} ms per expanded state ({slowest.task.name}); "
-                "feature evaluation cost grows polynomially with the number of objects"
+                "".join(
+                    (
+                        f"slowest execution {slowest.ms_per_state:.1f} ms per expanded state ({slowest.task.name}); ",
+                        "feature evaluation cost grows polynomially with the number of objects",
+                    )
+                )
             )
         both = [task for task in passed if self.baseline is not None and task.task in self.baseline]
         if self.baseline is not None and both:
@@ -350,9 +354,10 @@ class LoadTrial:
             return f"{self.rule.name} as Load: the rewritten program is not structurally terminating"
         failed = ", ".join(f"{task.name} {stage} {category}" for task, stage, category in self.failed) or "-"
         unavailable = ", ".join(f"{task.name} {stage}" for task, stage in self.unavailable) or "-"
+        prove = "a prove failure means some binding, possibly one the Choose never tried, fails"
+        load = "in a proof a Load needs every binding to succeed, a Choose only one"
         note = (
-            "\n  a prove failure means some binding, possibly one the Choose never tried, fails: in a proof a Load"
-            " needs every binding to succeed, a Choose only one; alternatives with a budget searches untried bindings"
+            f"\n  {prove}: {load}; alternatives with a budget searches untried bindings"
             if any(stage == "prove" for _, stage, _ in self.failed)
             else ""
         )

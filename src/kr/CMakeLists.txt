@@ -64,8 +64,7 @@ target_compile_definitions(kr
     PUBLIC
         FMT_HEADER_ONLY
         # The DL grammar AST variants have up to 30 alternatives (include/runir/kr/dl/grammar/ast/ast.hpp).
-        BOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
-        BOOST_MPL_LIMIT_LIST_SIZE=30
+        # The MPL list limit comes from tyr and loki (50); every translation unit must agree on it.
         BOOST_VARIANT_LIMIT_TYPES=30
         $<$<BOOL:${RUNIR_DELTA_EVALUATION}>:RUNIR_DELTA_EVALUATION=1>
 )

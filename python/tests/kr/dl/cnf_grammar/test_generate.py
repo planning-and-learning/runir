@@ -145,9 +145,9 @@ def test_distance_evaluation_handles_shortest_zero_and_infinity(gripper_data_dir
     planning_domain, search_context, task_context = _make_gripper_context(gripper_data_dir)
     state = search_context.state_repository.get_initial_state(search_context.axiom_evaluator).pack()
 
+    nominals = '((c_1 (c_nominal "rooma"))(c_2 (c_nominal "roomb"))(c_3 (c_bot))(r_1 (r_universal))'
     result = _generate(
-        '((c_1 (c_nominal "rooma"))(c_2 (c_nominal "roomb"))(c_3 (c_bot))(r_1 (r_universal))'
-        "(n_0 (n_distance c_1 r_1 c_2))(n_0 (n_distance c_1 r_1 c_1))(n_0 (n_distance c_3 r_1 c_2)))",
+        f"{nominals}(n_0 (n_distance c_1 r_1 c_2))(n_0 (n_distance c_1 r_1 c_1))(n_0 (n_distance c_3 r_1 c_2)))",
         [state],
         planning_domain,
         task_context,

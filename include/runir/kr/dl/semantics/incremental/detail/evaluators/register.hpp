@@ -21,7 +21,7 @@ struct RegisterEvaluator
     RegisterIdentifier<Category> identifier;
     DenotationState<Category> value;
 
-    explicit RegisterEvaluator(RegisterIdentifier<Category> identifier) : identifier(identifier) {}
+    explicit RegisterEvaluator(RegisterIdentifier<Category> identifier_) : identifier(identifier_) {}
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>&, Context& context)
     {

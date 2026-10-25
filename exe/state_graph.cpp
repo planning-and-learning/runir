@@ -17,7 +17,6 @@
 
 #include <argparse/argparse.hpp>
 #include <cstddef>
-#include <cstdio>
 #include <exception>
 #include <fmt/format.h>
 #include <iostream>
@@ -113,12 +112,11 @@ int main(int argc, char** argv)
     }
     catch (const std::exception& err)
     {
-        std::fputs(err.what(), stderr);
-        std::fputs("\n", stderr);
+        std::cerr << err.what() << "\n";
     }
     catch (...)
     {
-        std::fputs("Unknown error.\n", stderr);
+        std::cerr << "Unknown error.\n";
     }
     return 1;
 }

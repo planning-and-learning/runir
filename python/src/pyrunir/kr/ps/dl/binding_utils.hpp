@@ -35,7 +35,7 @@ auto bind_variant(nb::module_& m, nb::class_<Repository>& repository, const std:
 {
     using Data = ygg::Data<T>;
     using View = ygg::View<ygg::Index<T>, Repository>;
-    ygg::bind_index<ygg::Index<T>>(m, (name + "Index").c_str());
+    ygg::bind_index<ygg::Index<T>>(m, name + "Index");
     auto data = nb::class_<Data>(m, (name + "Data").c_str())
                     .def(nb::init<>())
                     .def(nb::init<DataVariant<Data>>(), nb::arg("variant"))
@@ -68,7 +68,7 @@ auto bind_feature(nb::module_& m, nb::class_<Repository>& repository, const std:
     bind_ps_optimize<Family, Repository>(feature);
 
     const auto concrete_name = "Concrete" + name;
-    ygg::bind_index<ygg::Index<ConcreteFeature>>(m, (concrete_name + "Index").c_str());
+    ygg::bind_index<ygg::Index<ConcreteFeature>>(m, concrete_name + "Index");
     using ExpressionIndex = ygg::Index<typename Data::Expression>;
     using DlRepository = runir::kr::dl::ConstructorRepository;
     auto data = nb::class_<Data>(m, (concrete_name + "Data").c_str())
@@ -113,7 +113,7 @@ auto bind_observation(nb::module_& m, nb::class_<Repository>& repository, const 
 {
     using Data = ygg::Data<T>;
     using View = ygg::View<ygg::Index<T>, Repository>;
-    ygg::bind_index<ygg::Index<T>>(m, (name + "Index").c_str());
+    ygg::bind_index<ygg::Index<T>>(m, name + "Index");
     using FeatureIndex = ygg::Index<typename ObservedFeature<T>::type>;
     auto data = nb::class_<Data>(m, (name + "Data").c_str())
                     .def(nb::init<>())

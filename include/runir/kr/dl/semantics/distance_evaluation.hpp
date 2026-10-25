@@ -84,12 +84,12 @@ ygg::uint_t on_demand_distance(NumericalView<DistanceTag> constructor, Context& 
                 static_cast<ygg::uint_t>(constructor.get_index()),
                 [&]
                 {
-                    auto feature = make_distance_feature<ygg::database::MinDistance<heuristics::ProjectionHeuristic>>(plan, edges);
-                    auto heuristic = make_heuristic(feature,
+                    auto edge_feature = make_distance_feature<ygg::database::MinDistance<heuristics::ProjectionHeuristic>>(plan, edges);
+                    auto heuristic = make_heuristic(edge_feature,
                                                     plan,
                                                     detail::num_objects<Kind>(context),
-                                                    [&](size_t slot) { return evaluate_slot<Kind>(feature.slots[slot], edges.get_context(), children); });
-                    return FullDistanceFeature { std::move(feature), std::move(heuristic) };
+                                                    [&](size_t slot) { return evaluate_slot<Kind>(edge_feature.slots[slot], edges.get_context(), children); });
+                    return FullDistanceFeature { std::move(edge_feature), std::move(heuristic) };
                 });
             feature.heuristic.update(targets);
             const auto input = [&](size_t slot) { return evaluate_slot<Kind>(feature.edges.slots[slot], edges.get_context(), children); };

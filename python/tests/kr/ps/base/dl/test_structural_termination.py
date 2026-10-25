@@ -165,8 +165,12 @@ def test_structural_termination_rejects_conflicting_numerical_effects(
 ) -> None:
     repository = make_repository(gripper_planning_domain)
     sketch = parse_sketch(
-        "(:sketch (:features (:numerical (:symbol n) (:expression (n_count (c_top))))) "
-        f"(:rules (:rule (:symbol conflict) (:expression (:conditions) (:effects {effects})))))",
+        "".join(
+            (
+                "(:sketch (:features (:numerical (:symbol n) (:expression (n_count (c_top))))) ",
+                f"(:rules (:rule (:symbol conflict) (:expression (:conditions) (:effects {effects})))))",
+            )
+        ),
         gripper_planning_domain,
         repository,
     )

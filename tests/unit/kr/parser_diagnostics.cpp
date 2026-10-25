@@ -235,7 +235,7 @@ TEST(RunirTests, ParserDiagnosticsPreserveTheInnermostContext)
     expect_diagnostic(kr::ps::base::dl::parser::parse_sketch_ast, source, ":expression", source.size(), source.find("(:expression"));
 
     const auto program = std::string("(:program (:entry root)");
-    expect_diagnostic([](const std::string& source) { return kr::ps::ext::dl::parser::parse_program_ast(source); },
+    expect_diagnostic([](const std::string& program_text) { return kr::ps::ext::dl::parser::parse_program_ast(program_text); },
                       program,
                       "program",
                       program.size(),

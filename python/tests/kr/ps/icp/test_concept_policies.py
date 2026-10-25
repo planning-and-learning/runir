@@ -192,9 +192,9 @@ def check_feature_complexity(features: Sequence[_Feature[ExpressionT_co]], symbo
 def test_feature_complexity_uses_the_shared_dl_language() -> None:
     source = PROGRAM.replace(
         "(:query (:symbol locations)",
-        '(:role (:symbol carrying) (:expression (r_atomic_state "carry")))\n'
-        "      (:boolean (:symbol populated) (:expression (b_nonempty (c_top))))\n"
-        "      (:query (:symbol locations)",
+        """(:role (:symbol carrying) (:expression (r_atomic_state "carry")))
+      (:boolean (:symbol populated) (:expression (b_nonempty (c_top))))
+      (:query (:symbol locations)""",
     )
     context, program = context_and_program("Lifted", source)
     module = program.get_module()

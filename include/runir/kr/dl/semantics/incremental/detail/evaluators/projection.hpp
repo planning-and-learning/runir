@@ -21,7 +21,7 @@ struct ProjectionEvaluator
     ygg::database::incremental::ProjectionEvaluator operation;
     DenotationState<Category> value;
 
-    ProjectionEvaluator(QueryEvaluationIndex child, const ygg::database::ProjectionPlan& plan) : child(child), operation(plan) {}
+    ProjectionEvaluator(QueryEvaluationIndex child_, const ygg::database::ProjectionPlan& plan) : child(child_), operation(plan) {}
     static void set_row(ygg::Builder<Denotation<Category>>& builder, ygg::database::Row row, bool present)
     {
         using ObjectIndex = ygg::Index<tyr::formalism::Object>;

@@ -45,38 +45,12 @@ struct Builders
 };
 
 using runir::kr::parser::constructors::intern;
-using runir::kr::parser::constructors::intern_constructor;
 using runir::kr::parser::constructors::parse;
 using runir::kr::parser::constructors::parse_constructor;
-using runir::kr::parser::constructors::unwrap;
 
 template<typename T>
 auto intern(Repository& repository, ygg::Data<T>& data)
 { return runir::kr::ps::ext::insert(repository, data).first; }
-
-auto parse_concept(const std::string& description,
-                   tyr::formalism::planning::DomainView domain,
-                   runir::kr::dl::ConstructorRepository& repository,
-                   runir::kr::dl::Builder& builder,
-                   runir::kr::parser::DiagnosticContext& diagnostics) -> runir::kr::dl::ConstructorView<runir::kr::dl::ConceptTag>;
-
-auto parse_role(const std::string& description,
-                tyr::formalism::planning::DomainView domain,
-                runir::kr::dl::ConstructorRepository& repository,
-                runir::kr::dl::Builder& builder,
-                runir::kr::parser::DiagnosticContext& diagnostics) -> runir::kr::dl::ConstructorView<runir::kr::dl::RoleTag>;
-
-auto parse_boolean(const std::string& description,
-                   tyr::formalism::planning::DomainView domain,
-                   runir::kr::dl::ConstructorRepository& repository,
-                   runir::kr::dl::Builder& builder,
-                   runir::kr::parser::DiagnosticContext& diagnostics) -> runir::kr::dl::ConstructorView<runir::kr::dl::BooleanTag>;
-
-auto parse_numerical(const std::string& description,
-                     tyr::formalism::planning::DomainView domain,
-                     runir::kr::dl::ConstructorRepository& repository,
-                     runir::kr::dl::Builder& builder,
-                     runir::kr::parser::DiagnosticContext& diagnostics) -> runir::kr::dl::ConstructorView<runir::kr::dl::NumericalTag>;
 
 template<typename T>
 struct AstCategory
@@ -564,8 +538,8 @@ auto parse_binding_rule(
             value->direction = term.direction;
             if (const auto it = boolean_features.find(term.feature.text); it != boolean_features.end())
                 value->feature = it->second;
-            else if (const auto it = numerical_features.find(term.feature.text); it != numerical_features.end())
-                value->feature = it->second;
+            else if (const auto numerical_it = numerical_features.find(term.feature.text); numerical_it != numerical_features.end())
+                value->feature = numerical_it->second;
             else
                 diagnostics.throw_at(term.feature, runir::kr::UndefinedSymbolError("Boolean or numerical ordering feature", term.feature.text));
             data->order.push_back(insert(repository, *value).first.get_index());

@@ -22,7 +22,7 @@ void bind_indexical_type(nb::module_& m, RepositoryBinding& repository, const ch
     using View = ygg::View<ygg::Index<T>, Repository>;
     using ObjectReference = ::cista::offset::variant<ArgumentPosition, ygg::Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>;
     using FeatureIndex = ygg::Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>>;
-    ygg::bind_index<ygg::Index<T>>(m, (std::string(name) + "Index").c_str());
+    ygg::bind_index<ygg::Index<T>>(m, std::string(name) + "Index");
     auto data = nb::class_<Data>(m, (std::string(name) + "Data").c_str())
                     .def(nb::init<>())
                     .def(nb::init<Operation, ObjectReference, FeatureIndex>(), "operation"_a, "object"_a, "feature"_a)

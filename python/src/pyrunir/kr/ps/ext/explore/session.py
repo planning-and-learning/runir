@@ -173,6 +173,17 @@ def _abstract_cycle(module: Module, graph: ModulePolicyGraph) -> list[str]:
     return cycle
 
 
+def _choose_rules(module: Module) -> dict[str, ChooseRule]:
+    """The Choose rules of `module` by name."""
+    rules: dict[str, ChooseRule] = {}
+    for bodies in module.get_memory_transitions():
+        for body in bodies:
+            variant = body.get_variant()
+            if isinstance(variant, ConceptChooseRule | RoleChooseRule):
+                rules[body.get_symbol()] = ChooseRule(body.get_symbol(), str(variant.get_register().get_name()))
+    return rules
+
+
 class Session:
     """Lazy searches of one program on named tasks of one domain.
 
@@ -210,7 +221,10 @@ class Session:
         self._initial_depths: dict[str, int | None] = {}
         self._searches: dict[str, _Search] = {}
         self._proofs: dict[str, _Search] = {}
-        self.set_program(program)
+        self._text = program
+        self._program = parse_program(program, self._parser.get_domain(), self._domain.ext_repository)
+        self._module = self._program.get_entry_module()
+        self._rules = _choose_rules(self._module)
 
     # -- boundary -----------------------------------------------------------------------------------------------------
 
@@ -241,14 +255,7 @@ class Session:
         self._program = program
         self._module = program.get_entry_module()
         self.release()
-        self._rules: dict[str, ChooseRule] = {}
-        for bodies in self._module.get_memory_transitions():
-            for body in bodies:
-                variant = body.get_variant()
-                if isinstance(variant, ConceptChooseRule | RoleChooseRule):
-                    self._rules[body.get_symbol()] = ChooseRule(
-                        body.get_symbol(), str(variant.get_register().get_name())
-                    )
+        self._rules = _choose_rules(self._module)
 
     def release(self) -> None:
         """Drop every cached search, task context and binding.

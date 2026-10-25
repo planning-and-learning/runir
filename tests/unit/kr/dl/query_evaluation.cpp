@@ -593,8 +593,8 @@ void check_cached_queries()
         if constexpr (requires { stale.position; })
             stale.position = 99;
         EXPECT_EQ(stale, concrete.get_data());
-        const auto [same, created] = ygg::formalism::insert(repo, stale);
-        EXPECT_FALSE(created);
+        const auto [same, stale_created] = ygg::formalism::insert(repo, stale);
+        EXPECT_FALSE(stale_created);
         EXPECT_EQ(same.get_index(), concrete.get_index());
         EXPECT_EQ(stale.columns, expected_columns);
         if constexpr (requires { stale.schema; })
@@ -681,8 +681,8 @@ void check_cached_queries()
         auto stale = data;
         stale.plan = {};
         EXPECT_EQ(stale, concrete.get_data());
-        const auto [same, created] = kr::dl::insert(repo, stale);
-        EXPECT_FALSE(created);
+        const auto [same, stale_created] = kr::dl::insert(repo, stale);
+        EXPECT_FALSE(stale_created);
         EXPECT_EQ(same.get_index(), concrete.get_index());
         EXPECT_TRUE(std::ranges::equal(stale.plan.positions(), positions, {}, slice_position));
         stale.clear();

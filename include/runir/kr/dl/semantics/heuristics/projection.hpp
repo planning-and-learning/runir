@@ -238,8 +238,9 @@ public:
         for (size_t r = 0; r < targets.size(); ++r)
         {
             const auto row = targets.row(r);
-            grouped[std::vector<std::byte>(row.begin(), row.begin() + static_cast<long>(m_key_size))].emplace_back(row.begin() + static_cast<long>(m_key_size),
-                                                                                                                   row.end());
+            grouped[std::vector<std::byte>(row.begin(), row.begin() + static_cast<std::ptrdiff_t>(m_key_size))].emplace_back(
+                row.begin() + static_cast<std::ptrdiff_t>(m_key_size),
+                row.end());
         }
         for (auto& [key, rows] : grouped)
         {
@@ -260,7 +261,7 @@ public:
     {
         if (m_heuristic.blind())
             return 0;
-        m_key.assign(key_and_vertex.begin(), key_and_vertex.begin() + static_cast<long>(m_key_size));
+        m_key.assign(key_and_vertex.begin(), key_and_vertex.begin() + static_cast<std::ptrdiff_t>(m_key_size));
         const auto it = m_keys.find(m_key);
         return it == m_keys.end() ? ygg::database::infinity : m_heuristic.estimate(key_and_vertex.subspan(m_key_size), it->second.tables);
     }

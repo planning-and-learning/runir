@@ -124,8 +124,8 @@ void check_composition_and_closures()
                         expected_closure[source * size + target] = true;
         check_result(composition, old_composition, expected_composition, initialize);
         check_result(transitive, old_transitive, expected_closure, initialize);
-        for (ygg::uint_t object = 0; object < size; ++object)
-            expected_closure[object * size + object] = true;
+        for (ygg::uint_t object_index = 0; object_index < size; ++object_index)
+            expected_closure[object_index * size + object_index] = true;
         check_result(reflexive, old_reflexive, expected_closure, initialize);
         previous_lhs = lhs;
         previous_rhs = rhs;
@@ -196,8 +196,8 @@ void check_composition_and_closures()
         if (iteration % 23 == 0)
             lhs.storage_bits().reset();
         if (iteration % 29 == 0)
-            for (ygg::uint_t object = 0; object < size; ++object)
-                lhs.get(object).set((object + 1) % size);
+            for (ygg::uint_t object_index = 0; object_index < size; ++object_index)
+                lhs.get(object_index).set((object_index + 1) % size);
         check();
         check();  // No changes must clear previous output deltas.
         if (iteration % 3 == 0)

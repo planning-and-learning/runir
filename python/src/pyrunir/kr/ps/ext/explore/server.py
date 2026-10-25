@@ -181,12 +181,14 @@ def open_workspace(workspace: str = ".", program: str | None = None) -> str:
     _server.session = session
     _server.contrasts.clear()
     rules = ", ".join(rule.name for rule in _server.session.choose_rules()) or "(none)"
-    return (
-        f"{len(tasks)} tasks"
-        + (f", e.g. {', '.join(task.stem for task in tasks[:3])}" if tasks else "")
-        + f"\nChoose rules: {rules}\n"
-        f"per-search budget: {options.max_states} states, {options.max_seconds} s; "
-        f"session search budget {options.total_seconds} s"
+    examples = f", e.g. {', '.join(task.stem for task in tasks[:3])}" if tasks else ""
+    budget = f"{options.max_states} states, {options.max_seconds} s"
+    return "\n".join(
+        (
+            f"{len(tasks)} tasks{examples}",
+            f"Choose rules: {rules}",
+            f"per-search budget: {budget}; session search budget {options.total_seconds} s",
+        )
     )
 
 
