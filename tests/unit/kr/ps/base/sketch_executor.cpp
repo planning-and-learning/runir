@@ -160,9 +160,9 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     auto expander = kr::ps::base::SuccessorExpander<tyr::GroundTag>(*task_context, sketch);
     auto& generator = *search_context->successor_generator;
     const auto initial = generator.get_initial_node(*search_context->state_repository, *search_context->axiom_evaluator);
-    const auto state = initial.get_state();
+    const auto& state = initial.get_state();
     const auto immediate = generator.get_labeled_successor_nodes(initial, *search_context->state_repository, *search_context->axiom_evaluator);
-    auto num_accepted = uint64_t(0);
+    auto num_accepted = static_cast<uint64_t>(0);
     auto statistics = kr::ps::base::SketchSearchStatistics {};
     EXPECT_TRUE(expander.for_each_successor(
         initial.get_state(),
@@ -255,7 +255,7 @@ namespace
 {
 
 template<tyr::TaskKind Kind>
-void check_base_successor_early_stop(datasets::TaskSearchContextPtr<Kind> prototype)
+void check_base_successor_early_stop(const datasets::TaskSearchContextPtr<Kind>& prototype)
 {
     const auto task = prototype->task;
     const auto domain_context = kr::DomainContext::create(task->get_domain());
@@ -271,7 +271,7 @@ void check_base_successor_early_stop(datasets::TaskSearchContextPtr<Kind> protot
     auto context = kr::TaskContext<Kind>::create(domain_context, search);
     auto expander = kr::ps::base::SuccessorExpander<Kind>(*context, sketch);
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
-    const auto state = initial.get_state();
+    const auto& state = initial.get_state();
     const auto count_bindings = [&]
     {
         size_t count = 0;
@@ -280,7 +280,7 @@ void check_base_successor_early_stop(datasets::TaskSearchContextPtr<Kind> protot
         return count;
     };
     const auto initial_binding_count = count_bindings();
-    auto num_bindings = size_t(0);
+    auto num_bindings = static_cast<size_t>(0);
     EXPECT_TRUE(search->successor_generator->for_each_borrowed_applicable_action_binding(initial,
                                                                                          [&](auto)
                                                                                          {
@@ -289,7 +289,7 @@ void check_base_successor_early_stop(datasets::TaskSearchContextPtr<Kind> protot
                                                                                          }));
     ASSERT_GT(num_bindings, 2);
     EXPECT_EQ(count_bindings(), initial_binding_count);
-    auto num_emitted = uint64_t(0);
+    auto num_emitted = static_cast<uint64_t>(0);
     auto statistics = kr::ps::base::SketchSearchStatistics {};
     const auto emit_one = [&](const auto& successor, auto rule)
     {
@@ -417,7 +417,7 @@ TEST(RunirTests, BaseSketchTransitionsRefreshDynamicQueriesAndReuseStaticQueries
         };
         auto& generator = *search->successor_generator;
         const auto initial = generator.get_initial_node(*search->state_repository, *search->axiom_evaluator);
-        const auto source = initial.get_state();
+        const auto& source = initial.get_state();
         const auto successors = generator.get_labeled_successor_nodes(initial, *search->state_repository, *search->axiom_evaluator);
         ASSERT_GT(successors.size(), 1);
         ASSERT_TRUE(matches(source, successors.front().node.get_state()));

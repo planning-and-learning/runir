@@ -18,7 +18,7 @@ struct Data<runir::kr::ps::icp::Program>
     Index<runir::kr::ps::icp::Module> module;
 
     Data() = default;
-    Data(Index<runir::kr::ps::icp::Module> module_) : index(), module(std::move(module_)) {}
+    Data(Index<runir::kr::ps::icp::Module> module_) : index(), module(module_) {}
     template<typename C>
     Data(::ygg::View<Index<runir::kr::ps::icp::Module>, C> module_) : index(), module()
     { set(module_, module); }

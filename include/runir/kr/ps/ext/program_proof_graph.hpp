@@ -44,7 +44,7 @@ struct ProgramProofVertexLabel : ygg::comparison::Mixin<ProgramProofVertexLabel<
                             &ProgramProofVertexLabel::is_alive,
                             &ProgramProofVertexLabel::is_unsolvable> {};
     }
-    auto identifying_members() const noexcept { return std::make_tuple(program_state, is_initial, is_goal, is_alive, is_unsolvable); }
+    [[nodiscard]] auto identifying_members() const noexcept { return std::make_tuple(program_state, is_initial, is_goal, is_alive, is_unsolvable); }
 };
 
 struct ProgramProofEdgeLabel : ygg::comparison::Mixin<ProgramProofEdgeLabel>

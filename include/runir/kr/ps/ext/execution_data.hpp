@@ -40,10 +40,10 @@ struct Data<runir::kr::ps::ext::ModuleState<Kind>>
          Index<runir::kr::dl::semantics::CallArguments> arguments_) :
         index(),
         state(std::move(state_)),
-        module_(std::move(module_index)),
-        memory_state(std::move(memory_state_)),
-        registers(std::move(registers_)),
-        arguments(std::move(arguments_))
+        module_(module_index),
+        memory_state(memory_state_),
+        registers(registers_),
+        arguments(arguments_)
     {
     }
     template<typename S, typename P, typename D>
@@ -91,10 +91,10 @@ struct Data<runir::kr::ps::ext::CallStack>
          Index<runir::kr::dl::semantics::CallArguments> arguments_,
          ::cista::optional<Index<runir::kr::ps::ext::CallStack>> caller_) :
         index(),
-        module_(std::move(module_index)),
-        return_memory_state(std::move(return_memory_state_)),
-        registers(std::move(registers_)),
-        arguments(std::move(arguments_)),
+        module_(module_index),
+        return_memory_state(return_memory_state_),
+        registers(registers_),
+        arguments(arguments_),
         caller(std::move(caller_))
     {
     }
@@ -139,7 +139,7 @@ struct Data<runir::kr::ps::ext::ProgramState<Kind>>
          Index<runir::kr::ps::ext::ModuleState<Kind>> module_state_,
          ::cista::optional<Index<runir::kr::ps::ext::CallStack>> call_stack_) :
         index(),
-        program(std::move(program_)),
+        program(program_),
         module_state(std::move(module_state_)),
         call_stack(std::move(call_stack_))
     {

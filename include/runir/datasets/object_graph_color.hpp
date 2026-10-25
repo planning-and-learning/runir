@@ -199,13 +199,13 @@ public:
     ColorRepository(ColorRepository&&) = delete;
     ColorRepository& operator=(ColorRepository&&) = delete;
 
-    const auto& get_index() const noexcept { return m_index; }
-    const auto& get_planning_repository() const noexcept
+    [[nodiscard]] const auto& get_index() const noexcept { return m_index; }
+    [[nodiscard]] const auto& get_planning_repository() const noexcept
     {
         assert(m_planning_repository);
         return *m_planning_repository;
     }
-    const auto& get_planning_repository_ptr() const noexcept { return m_planning_repository; }
+    [[nodiscard]] const auto& get_planning_repository_ptr() const noexcept { return m_planning_repository; }
 
     void clear() noexcept { m_symbol_repository.clear(); }
 
@@ -235,11 +235,11 @@ public:
     }
 
     template<typename T>
-    std::size_t size() const noexcept
+    [[nodiscard]] std::size_t size() const noexcept
     { return m_symbol_repository.local_size<T>(); }
 
     template<typename T>
-    const ColorRepository& get_canonical_context(ygg::Index<T>) const noexcept
+    [[nodiscard]] const ColorRepository& get_canonical_context(ygg::Index<T>) const noexcept
     { return *this; }
 };
 

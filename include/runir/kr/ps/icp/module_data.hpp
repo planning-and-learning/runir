@@ -49,7 +49,7 @@ struct Data<runir::kr::ps::icp::Module>
          IndexMatrix<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>> memory_transitions_,
          ::cista::offset::vector<runir::kr::ps::icp::ResetPair> reset_pairs_) :
         index(),
-        symbol(std::move(symbol_)),
+        symbol(symbol_),
         concept_registers(std::move(concept_registers_)),
         role_registers(std::move(role_registers_)),
         concept_features(std::move(concept_features_)),
@@ -57,7 +57,7 @@ struct Data<runir::kr::ps::icp::Module>
         boolean_features(std::move(boolean_features_)),
         numerical_features(std::move(numerical_features_)),
         query_features(std::move(query_features_)),
-        entry_memory_state(std::move(entry_memory_state_)),
+        entry_memory_state(entry_memory_state_),
         memory_states(std::move(memory_states_)),
         memory_transitions(std::move(memory_transitions_)),
         reset_pairs(std::move(reset_pairs_))

@@ -37,8 +37,8 @@ struct Data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::LoadTag<Category>>>
          Index<runir::kr::dl::Register<Category>> reg_,
          IndexList<runir::kr::ps::EffectVariant<runir::kr::IcpFamilyTag>> effects_) :
         index(),
-        source(std::move(source_)),
-        target(std::move(target_)),
+        source(source_),
+        target(target_),
         conditions(std::move(conditions_)),
         feature(std::move(feature_)),
         reg(std::move(reg_)),
@@ -98,8 +98,8 @@ struct Data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>>
          IndexList<runir::kr::ps::icp::XCondition> xconditions_,
          IndexList<runir::kr::ps::icp::XEffect> xeffects_) :
         index(),
-        source(std::move(source_)),
-        target(std::move(target_)),
+        source(source_),
+        target(target_),
         conditions(std::move(conditions_)),
         effects(std::move(effects_)),
         action_name(std::move(action_name_)),

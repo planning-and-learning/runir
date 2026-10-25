@@ -45,9 +45,9 @@ public:
 
     explicit BidirectionalStaticGraph(StaticGraphBuilder<VP, EP>&& builder) : m_forward_graph(std::move(builder)), m_backward_graph(m_forward_graph) {}
 
-    auto get_forward_graph() const noexcept -> const ForwardGraphType& { return m_forward_graph; }
+    [[nodiscard]] auto get_forward_graph() const noexcept -> const ForwardGraphType& { return m_forward_graph; }
 
-    auto get_backward_graph() const noexcept -> const BackwardGraphType& { return m_backward_graph; }
+    [[nodiscard]] auto get_backward_graph() const noexcept -> const BackwardGraphType& { return m_backward_graph; }
 };
 
 }  // namespace runir::graphs

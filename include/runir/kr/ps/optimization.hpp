@@ -78,7 +78,7 @@ public:
             ygg::for_each_child<RepositoryTypes>(view, [&]<typename U>(View<U> child) { add<U>(child); });
     }
 
-    const Leaves& get_leaves() const noexcept { return m_leaves; }
+    [[nodiscard]] const Leaves& get_leaves() const noexcept { return m_leaves; }
 
 private:
     Leaves m_leaves;

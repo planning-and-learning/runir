@@ -23,7 +23,8 @@ namespace detail
 {
 
 template<tyr::TaskKind Kind, UnsolvabilityConcept<Kind> Unsolvability>
-auto search(TaskContextPtr<Kind> task, ProgramView program, const ProgramSearchOptions<Kind>& options, Unsolvability& classifier) -> ProgramProofResults<Kind>
+auto search(const TaskContextPtr<Kind>& task, ProgramView program, const ProgramSearchOptions<Kind>& options, Unsolvability& classifier)
+    -> ProgramProofResults<Kind>
 {
     auto result = ProgramProofResults<Kind> {};
     result.task_context_owner = task;

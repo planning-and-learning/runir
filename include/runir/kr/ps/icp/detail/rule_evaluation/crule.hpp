@@ -26,7 +26,7 @@ class RuleEvaluator<Kind, CruleTag>
     }
 
     template<ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
-    std::optional<ygg::uint_t>
+    [[nodiscard]] std::optional<ygg::uint_t>
     resolve(const ::cista::offset::variant<ArgumentPosition, ygg::Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>& reference,
             runir::kr::dl::semantics::RegisterValuesView registers,
             Binding binding) const
@@ -53,9 +53,9 @@ public:
     {
     }
 
-    auto get_rule() const noexcept { return m_rule; }
+    [[nodiscard]] auto get_rule() const noexcept { return m_rule; }
     /// The aggregate groups rules by their resolved action before generating candidates.
-    auto get_action() const noexcept { return m_action; }
+    [[nodiscard]] auto get_action() const noexcept { return m_action; }
     /// Skip disabled rules before action enumeration; matches() also checks this for direct callers.
     template<runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context>
     bool is_applicable(Context& context) const
@@ -122,7 +122,7 @@ public:
         auto step = ProgramStep<Kind>(ProgramOutcome::APPLIED, workspace.intern(target), workspace.get_task_context());
         step.rule = m_variant;
         step.planning_successor = candidate.pack();
-        step.state_transition = datasets::StateGraphEdgeLabel { candidate.label, ygg::float_t(1) };
+        step.state_transition = datasets::StateGraphEdgeLabel { candidate.label, static_cast<ygg::float_t>(1) };
         return step;
     }
 };

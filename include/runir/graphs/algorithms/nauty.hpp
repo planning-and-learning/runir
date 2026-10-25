@@ -127,19 +127,19 @@ public:
 
     auto canonize() -> SparseGraph&;
 
-    auto get_num_directed_edges() const -> std::size_t;
-    auto get_num_vertices() const -> int;
-    auto get_offsets() const -> const std::vector<std::size_t>&;
-    auto get_degrees() const -> const std::vector<int>&;
-    auto get_edges() const -> const std::vector<int>&;
-    auto get_labels() const -> const std::vector<int>&;
-    auto get_partitions() const -> const std::vector<int>&;
-    auto get_orbits() const -> const std::vector<int>&;
-    auto get_coloring() const -> const std::vector<ygg::uint_t>&;
-    auto get_permutation() const -> const std::vector<int>&;
-    auto get_inverse_permutation() const -> const std::vector<int>&;
+    [[nodiscard]] auto get_num_directed_edges() const -> std::size_t;
+    [[nodiscard]] auto get_num_vertices() const -> int;
+    [[nodiscard]] auto get_offsets() const -> const std::vector<std::size_t>&;
+    [[nodiscard]] auto get_degrees() const -> const std::vector<int>&;
+    [[nodiscard]] auto get_edges() const -> const std::vector<int>&;
+    [[nodiscard]] auto get_labels() const -> const std::vector<int>&;
+    [[nodiscard]] auto get_partitions() const -> const std::vector<int>&;
+    [[nodiscard]] auto get_orbits() const -> const std::vector<int>&;
+    [[nodiscard]] auto get_coloring() const -> const std::vector<ygg::uint_t>&;
+    [[nodiscard]] auto get_permutation() const -> const std::vector<int>&;
+    [[nodiscard]] auto get_inverse_permutation() const -> const std::vector<int>&;
 
-    auto identifying_members() const noexcept
+    [[nodiscard]] auto identifying_members() const noexcept
     {
         return std::tuple(get_num_directed_edges(),
                           get_num_vertices(),

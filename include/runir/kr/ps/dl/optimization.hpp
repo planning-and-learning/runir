@@ -48,7 +48,7 @@ public:
     void add(RecordView<Family, RepositoryTypes, ConcreteFeature<Family, DlTag, FeatureTag>> view)
     { m_collector.add(view.get_expression()); }
 
-    const runir::kr::dl::QueryStatisticsCollector& get_collector() const noexcept { return m_collector; }
+    [[nodiscard]] const runir::kr::dl::QueryStatisticsCollector& get_collector() const noexcept { return m_collector; }
 
 private:
     runir::kr::dl::QueryStatisticsCollector m_collector;

@@ -99,8 +99,8 @@ OpposingRuleSet opposing_rules(const QualitativePolicy& policy,
         const auto& profile = policy.rule_profiles[other];
         const auto opposes =
             feature_kind == IncompletePolicyResult::FeatureKind::BOOLEAN ?
-                bool(feature & (towards_positive ? state.changes[other].boolean_may_become_false : state.changes[other].boolean_may_become_true)) :
-                bool(
+                static_cast<bool>(feature & (towards_positive ? state.changes[other].boolean_may_become_false : state.changes[other].boolean_may_become_true)) :
+                static_cast<bool>(
                     feature
                     & ((towards_positive ? profile.numerical_decrease_effects : profile.numerical_increase_effects) | profile.numerical_unconstrained_effects));
         if (!opposes)

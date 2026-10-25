@@ -54,11 +54,11 @@ public:
     ExecutionRepository(ExecutionRepository&&) = delete;
     ExecutionRepository& operator=(ExecutionRepository&&) = delete;
 
-    const auto& get_index() const noexcept { return m_index; }
-    auto& get_state_repository() const noexcept { return *m_state_repository; }
-    const auto& get_denotation_repository() const noexcept { return *m_denotation_repository; }
-    const auto& get_program_repository() const noexcept { return *m_program_repository; }
-    const auto& get_formalism_repository() const noexcept { return m_denotation_repository->get_formalism_repository(); }
+    [[nodiscard]] const auto& get_index() const noexcept { return m_index; }
+    [[nodiscard]] auto& get_state_repository() const noexcept { return *m_state_repository; }
+    [[nodiscard]] const auto& get_denotation_repository() const noexcept { return *m_denotation_repository; }
+    [[nodiscard]] const auto& get_program_repository() const noexcept { return *m_program_repository; }
+    [[nodiscard]] const auto& get_formalism_repository() const noexcept { return m_denotation_repository->get_formalism_repository(); }
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<ExecutionRepository, T>
@@ -70,7 +70,7 @@ public:
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<ExecutionRepository, T>
-    const ExecutionRepository& get_canonical_context(ygg::Index<T>) const noexcept
+    [[nodiscard]] const ExecutionRepository& get_canonical_context(ygg::Index<T>) const noexcept
     { return *this; }
 };
 

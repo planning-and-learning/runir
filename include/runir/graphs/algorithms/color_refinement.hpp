@@ -35,8 +35,8 @@ public:
 
     Certificate(RoundSummaryList round_summaries, ColorAssignmentList colors) : m_round_summaries(std::move(round_summaries)), m_colors(std::move(colors)) {}
 
-    auto get_round_summaries() const noexcept -> const RoundSummaryList& { return m_round_summaries; }
-    auto get_colors() const noexcept -> const ColorAssignmentList& { return m_colors; }
+    [[nodiscard]] auto get_round_summaries() const noexcept -> const RoundSummaryList& { return m_round_summaries; }
+    [[nodiscard]] auto get_colors() const noexcept -> const ColorAssignmentList& { return m_colors; }
 
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Certificate::m_colors, &Certificate::m_round_summaries> {}; }
 };
@@ -55,7 +55,7 @@ public:
         m_index.clear();
     }
 
-    auto insert(Signature signature) -> Color
+    auto insert(const Signature& signature) -> Color
     {
         const auto color = static_cast<Color>(m_data.size());
         const auto [it, inserted] = m_index.emplace(std::move(signature), color);

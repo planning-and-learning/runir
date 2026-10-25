@@ -28,9 +28,9 @@ public:
     }
 
     void clear_delta() noexcept { m_delta.clear(); }
-    const auto& get_builder() const noexcept { return m_result; }
-    const auto& get_delta() const noexcept { return m_delta; }
-    size_t size() const noexcept { return m_result.count(); }
+    [[nodiscard]] const auto& get_builder() const noexcept { return m_result; }
+    [[nodiscard]] const auto& get_delta() const noexcept { return m_delta; }
+    [[nodiscard]] size_t size() const noexcept { return m_result.count(); }
 
     /// Copy a complete result while retaining storage and clearing previous changes.
     auto& assign(DenotationView<Category> source)
@@ -47,7 +47,7 @@ public:
         return m_result;
     }
 
-    bool contains(DenotationElementView<Category> value) const noexcept
+    [[nodiscard]] bool contains(DenotationElementView<Category> value) const noexcept
     {
         if constexpr (std::same_as<Category, ConceptTag>)
             return m_result.contains(value.get_index());
@@ -102,7 +102,7 @@ public:
             row);
     }
 
-    BorrowedDenotationView<Category> get_result(const tyr::formalism::planning::Repository& repository) const noexcept
+    [[nodiscard]] BorrowedDenotationView<Category> get_result(const tyr::formalism::planning::Repository& repository) const noexcept
     { return ygg::make_view(m_result, repository); }
 };
 
@@ -119,9 +119,9 @@ public:
         clear_delta();
     }
     void clear_delta() noexcept { m_changed = false; }
-    const auto& get_builder() const noexcept { return m_result; }
-    auto get_value() const noexcept { return m_result.get(); }
-    bool changed() const noexcept { return m_changed; }
+    [[nodiscard]] const auto& get_builder() const noexcept { return m_result; }
+    [[nodiscard]] auto get_value() const noexcept { return m_result.get(); }
+    [[nodiscard]] bool changed() const noexcept { return m_changed; }
     void assign(DenotationView<Category> source) { initialize(source.get()); }
     void assign(BorrowedDenotationView<Category> source) { initialize(source.get()); }
     void set(DenotationElementView<Category> value) noexcept
@@ -129,7 +129,7 @@ public:
         m_changed = m_result.get() != value;
         m_result.get() = value;
     }
-    BorrowedDenotationView<Category> get_result(const tyr::formalism::planning::Repository& repository) const noexcept
+    [[nodiscard]] BorrowedDenotationView<Category> get_result(const tyr::formalism::planning::Repository& repository) const noexcept
     { return ygg::make_view(m_result, repository); }
 };
 

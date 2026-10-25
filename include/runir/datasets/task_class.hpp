@@ -96,7 +96,7 @@ struct TaskClassSearchContexts
 
     explicit TaskClassSearchContexts(TaskSearchContextList<Kind> contexts_) : contexts(std::move(contexts_)) {}
 
-    TaskClassSearchContexts(const TaskClass<Kind>& task_class, ygg::ExecutionContextPtr execution_context)
+    TaskClassSearchContexts(const TaskClass<Kind>& task_class, const ygg::ExecutionContextPtr& execution_context)
     {
         contexts.reserve(task_class.tasks.size());
         for (const auto& task : task_class.tasks)

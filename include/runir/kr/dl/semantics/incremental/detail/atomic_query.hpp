@@ -49,10 +49,10 @@ public:
     void update(std::span<const tyr::formalism::planning::AtomView<tyr::GroundTag, Fact>> added,
                 std::span<const tyr::formalism::planning::AtomView<tyr::GroundTag, Fact>> removed);
 
-    const ygg::Builder<ygg::database::Relation>& get_result() const& noexcept { return m_result; }
-    const ygg::Builder<ygg::database::Relation>& get_result() const&& = delete;
-    const ygg::database::incremental::Delta& get_delta() const& noexcept { return m_delta; }
-    const ygg::database::incremental::Delta& get_delta() const&& = delete;
+    [[nodiscard]] const ygg::Builder<ygg::database::Relation>& get_result() const& noexcept { return m_result; }
+    [[nodiscard]] const ygg::Builder<ygg::database::Relation>& get_result() const&& = delete;
+    [[nodiscard]] const ygg::database::incremental::Delta& get_delta() const& noexcept { return m_delta; }
+    [[nodiscard]] const ygg::database::incremental::Delta& get_delta() const&& = delete;
 };
 
 template<tyr::formalism::FactKind Fact>

@@ -24,7 +24,7 @@ template<tyr::TaskKind Kind>
 struct NoUnsolvability
 {
     template<tyr::planning::StateViewConcept<Kind> State>
-    bool is_unsolvable(const State&) const noexcept
+    [[nodiscard]] bool is_unsolvable(const State&) const noexcept
     { return false; }
 };
 

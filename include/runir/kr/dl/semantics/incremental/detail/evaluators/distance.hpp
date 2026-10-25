@@ -128,7 +128,7 @@ struct QueryEdgeDistanceEvaluator
     }
 
 private:
-    auto input(const EvaluationGraph<Kind>& graph) const
+    [[nodiscard]] auto input(const EvaluationGraph<Kind>& graph) const
     {
         return [this, &graph](size_t slot) -> const ygg::Builder<ygg::database::Relation>& { return graph.result(slots[slot]); };
     }

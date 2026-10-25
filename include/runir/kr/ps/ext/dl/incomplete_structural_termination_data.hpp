@@ -38,7 +38,7 @@ struct ModuleIncompleteStructuralTerminationResult
     /// Rules internal to final cyclic residual memory components.
     std::vector<IncompleteSurvivingRule> surviving_rules;
 
-    bool is_terminating() const noexcept { return status == IncompleteStructuralTerminationStatus::TERMINATING; }
+    [[nodiscard]] bool is_terminating() const noexcept { return status == IncompleteStructuralTerminationStatus::TERMINATING; }
 };
 
 struct ProgramIncompleteStructuralTerminationResult
@@ -47,7 +47,7 @@ struct ProgramIncompleteStructuralTerminationResult
     std::vector<ModuleIncompleteStructuralTerminationResult> module_results;
     std::vector<RuleVariantView> recursive_call_rules;
 
-    bool is_terminating() const noexcept { return status == IncompleteStructuralTerminationStatus::TERMINATING; }
+    [[nodiscard]] bool is_terminating() const noexcept { return status == IncompleteStructuralTerminationStatus::TERMINATING; }
 };
 
 }  // namespace runir::kr::ps::ext::dl

@@ -104,11 +104,11 @@ public:
 
     auto insert(const Data& data) { return m_set.insert(data); }
 
-    auto get(Index index) const noexcept -> const Data& { return m_set[index]; }
+    [[nodiscard]] auto get(Index index) const noexcept -> const Data& { return m_set[index]; }
     auto operator[](Index index) const noexcept -> const Data& { return get(index); }
-    auto get_value(Index index) const noexcept -> const auto& { return get(index).value; }
+    [[nodiscard]] auto get_value(Index index) const noexcept -> const auto& { return get(index).value; }
 
-    auto size() const noexcept -> std::size_t { return m_set.size(); }
+    [[nodiscard]] auto size() const noexcept -> std::size_t { return m_set.size(); }
 };
 
 template<Property P>

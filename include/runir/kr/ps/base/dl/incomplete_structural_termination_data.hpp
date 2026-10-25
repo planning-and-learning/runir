@@ -43,7 +43,7 @@ struct IncompleteStructuralTerminationResult
     IncompleteStructuralTerminationStatus status = IncompleteStructuralTerminationStatus::TERMINATING;
     std::vector<IncompleteSurvivingRule> surviving_rules;  ///< empty iff terminating.
 
-    bool is_terminating() const noexcept { return status == IncompleteStructuralTerminationStatus::TERMINATING; }
+    [[nodiscard]] bool is_terminating() const noexcept { return status == IncompleteStructuralTerminationStatus::TERMINATING; }
 };
 
 }  // namespace runir::kr::ps::base::dl

@@ -22,7 +22,7 @@ struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>>
     explicit Data(bool value_) noexcept : value(value_) {}
 
     auto get_data() noexcept -> bool& { return value; }
-    auto get_data() const noexcept -> const bool& { return value; }
+    [[nodiscard]] auto get_data() const noexcept -> const bool& { return value; }
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::value> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::value> {}; }
@@ -39,7 +39,7 @@ struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>>
     explicit Data(ygg::uint_t value_) noexcept : value(value_) {}
 
     auto get_data() noexcept -> ygg::uint_t& { return value; }
-    auto get_data() const noexcept -> const ygg::uint_t& { return value; }
+    [[nodiscard]] auto get_data() const noexcept -> const ygg::uint_t& { return value; }
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::value> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::value> {}; }

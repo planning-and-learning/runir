@@ -92,7 +92,7 @@ struct Delta
         removed.clear();
     }
 
-    bool empty() const noexcept
+    [[nodiscard]] bool empty() const noexcept
     {
         return added.fluent_atoms.empty() && removed.fluent_atoms.empty() && added.derived_atoms.empty() && removed.derived_atoms.empty()
                && added.concept_registers.empty() && removed.concept_registers.empty() && added.role_registers.empty() && removed.role_registers.empty();

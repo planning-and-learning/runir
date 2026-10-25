@@ -208,88 +208,88 @@ public:
         m_free_vertices.push_back(vertex);
     }
 
-    auto contains_vertex(VertexIndex vertex) const noexcept -> bool { return m_vertices.contains(vertex); }
-    auto contains_edge(EdgeIndex edge) const noexcept -> bool { return m_edges.contains(edge); }
+    [[nodiscard]] auto contains_vertex(VertexIndex vertex) const noexcept -> bool { return m_vertices.contains(vertex); }
+    [[nodiscard]] auto contains_edge(EdgeIndex edge) const noexcept -> bool { return m_edges.contains(edge); }
 
-    auto get_vertices() const noexcept -> const VertexMap& { return m_vertices; }
-    auto get_edges() const noexcept -> const EdgeMap& { return m_edges; }
-    auto get_vertex_property_map() const noexcept -> const VertexPropertyMapType& { return m_vertex_properties; }
-    auto get_edge_property_map() const noexcept -> const EdgePropertyMapType& { return m_edge_properties; }
-    auto get_vertex_property(VertexPropertyIndex<VP> property) const noexcept -> const VP& { return m_vertex_properties.get_value(property); }
-    auto get_edge_property(EdgePropertyIndex<EP> property) const noexcept -> const EP& { return m_edge_properties.get_value(property); }
+    [[nodiscard]] auto get_vertices() const noexcept -> const VertexMap& { return m_vertices; }
+    [[nodiscard]] auto get_edges() const noexcept -> const EdgeMap& { return m_edges; }
+    [[nodiscard]] auto get_vertex_property_map() const noexcept -> const VertexPropertyMapType& { return m_vertex_properties; }
+    [[nodiscard]] auto get_edge_property_map() const noexcept -> const EdgePropertyMapType& { return m_edge_properties; }
+    [[nodiscard]] auto get_vertex_property(VertexPropertyIndex<VP> property) const noexcept -> const VP& { return m_vertex_properties.get_value(property); }
+    [[nodiscard]] auto get_edge_property(EdgePropertyIndex<EP> property) const noexcept -> const EP& { return m_edge_properties.get_value(property); }
 
-    auto get_vertex(VertexIndex vertex) const -> const VertexType&
+    [[nodiscard]] auto get_vertex(VertexIndex vertex) const -> const VertexType&
     {
         assert_valid_vertex(vertex);
         return m_vertices.at(vertex);
     }
 
-    auto get_edge(EdgeIndex edge) const -> const EdgeType&
+    [[nodiscard]] auto get_edge(EdgeIndex edge) const -> const EdgeType&
     {
         assert_valid_edge(edge);
         return m_edges.at(edge);
     }
 
-    auto get_num_vertices() const noexcept -> std::size_t { return m_vertices.size(); }
-    auto get_num_edges() const noexcept -> std::size_t { return m_edges.size(); }
+    [[nodiscard]] auto get_num_vertices() const noexcept -> std::size_t { return m_vertices.size(); }
+    [[nodiscard]] auto get_num_edges() const noexcept -> std::size_t { return m_edges.size(); }
 
-    auto get_vertex_indices() const noexcept { return m_vertices | std::views::keys; }
+    [[nodiscard]] auto get_vertex_indices() const noexcept { return m_vertices | std::views::keys; }
 
-    auto get_edge_indices() const noexcept { return m_edges | std::views::keys; }
+    [[nodiscard]] auto get_edge_indices() const noexcept { return m_edges | std::views::keys; }
 
-    auto get_source(EdgeIndex edge) const -> VertexIndex { return get_edge(edge).get_source(); }
-    auto get_target(EdgeIndex edge) const -> VertexIndex { return get_edge(edge).get_target(); }
+    [[nodiscard]] auto get_source(EdgeIndex edge) const -> VertexIndex { return get_edge(edge).get_source(); }
+    [[nodiscard]] auto get_target(EdgeIndex edge) const -> VertexIndex { return get_edge(edge).get_target(); }
 
-    auto get_out_edge_indices(VertexIndex vertex) const -> const EdgeIndexSet&
+    [[nodiscard]] auto get_out_edge_indices(VertexIndex vertex) const -> const EdgeIndexSet&
     {
         assert_valid_vertex(vertex);
         return m_out_edges.at(vertex);
     }
 
-    auto get_in_edge_indices(VertexIndex vertex) const -> const EdgeIndexSet&
+    [[nodiscard]] auto get_in_edge_indices(VertexIndex vertex) const -> const EdgeIndexSet&
     {
         assert_valid_vertex(vertex);
         return m_in_edges.at(vertex);
     }
 
-    auto get_out_degree(VertexIndex vertex) const -> Degree
+    [[nodiscard]] auto get_out_degree(VertexIndex vertex) const -> Degree
     {
         assert_valid_vertex(vertex);
         return static_cast<Degree>(m_out_edges.at(vertex).size());
     }
 
-    auto get_in_degree(VertexIndex vertex) const -> Degree
+    [[nodiscard]] auto get_in_degree(VertexIndex vertex) const -> Degree
     {
         assert_valid_vertex(vertex);
         return static_cast<Degree>(m_in_edges.at(vertex).size());
     }
 
-    auto get_out_edges(VertexIndex vertex) const
+    [[nodiscard]] auto get_out_edges(VertexIndex vertex) const
     {
         return get_out_edge_indices(vertex) | std::views::transform([this](EdgeIndex edge) -> const EdgeType& { return get_edge(edge); });
     }
 
-    auto get_in_edges(VertexIndex vertex) const
+    [[nodiscard]] auto get_in_edges(VertexIndex vertex) const
     {
         return get_in_edge_indices(vertex) | std::views::transform([this](EdgeIndex edge) -> const EdgeType& { return get_edge(edge); });
     }
 
-    auto get_successor_indices(VertexIndex vertex) const
+    [[nodiscard]] auto get_successor_indices(VertexIndex vertex) const
     {
         return get_out_edge_indices(vertex) | std::views::transform([this](EdgeIndex edge) { return get_target(edge); });
     }
 
-    auto get_predecessor_indices(VertexIndex vertex) const
+    [[nodiscard]] auto get_predecessor_indices(VertexIndex vertex) const
     {
         return get_in_edge_indices(vertex) | std::views::transform([this](EdgeIndex edge) { return get_source(edge); });
     }
 
-    auto get_successors(VertexIndex vertex) const
+    [[nodiscard]] auto get_successors(VertexIndex vertex) const
     {
         return get_successor_indices(vertex) | std::views::transform([this](VertexIndex successor) -> const VertexType& { return get_vertex(successor); });
     }
 
-    auto get_predecessors(VertexIndex vertex) const
+    [[nodiscard]] auto get_predecessors(VertexIndex vertex) const
     {
         return get_predecessor_indices(vertex)
                | std::views::transform([this](VertexIndex predecessor) -> const VertexType& { return get_vertex(predecessor); });

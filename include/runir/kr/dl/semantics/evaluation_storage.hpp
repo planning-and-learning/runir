@@ -25,9 +25,9 @@ public:
     EvaluationStorage& operator=(const EvaluationStorage&) = delete;
 
     auto& get_caches() noexcept { return m_caches; }
-    const auto& get_caches() const noexcept { return m_caches; }
+    [[nodiscard]] const auto& get_caches() const noexcept { return m_caches; }
     auto& get_denotation_repository(bool is_static) noexcept { return *(is_static ? m_static_denotations : m_dynamic_denotations); }
-    const auto& get_denotation_repository(bool is_static) const noexcept { return *(is_static ? m_static_denotations : m_dynamic_denotations); }
+    [[nodiscard]] const auto& get_denotation_repository(bool is_static) const noexcept { return *(is_static ? m_static_denotations : m_dynamic_denotations); }
 
     void reset_dynamic() noexcept
     {

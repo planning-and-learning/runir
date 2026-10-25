@@ -217,7 +217,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
         .def("initial_state", &Expander::initial_state, "state"_a, nb::keep_alive<0, 1>())
         .def(
             "for_each_successor",
-            [retain_expander](Expander& self, StateView state, ProgramSearchStatistics& statistics, nb::callable emit, const std::function<bool()>& stop)
+            [retain_expander](Expander& self, StateView state, ProgramSearchStatistics& statistics, const nb::callable& emit, const std::function<bool()>& stop)
             {
                 const auto owner = nb::cast(&self, nb::rv_policy::reference);
                 return self.for_each_successor(

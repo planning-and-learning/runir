@@ -26,9 +26,9 @@ struct Data<runir::kr::ps::icp::XCondition>
          ::cista::offset::variant<runir::kr::ps::icp::ArgumentPosition, Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> object_,
          Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>> feature_) :
         index(),
-        operation(std::move(operation_)),
+        operation(operation_),
         object(std::move(object_)),
-        feature(std::move(feature_))
+        feature(feature_)
     {
     }
     template<typename C>
@@ -36,7 +36,7 @@ struct Data<runir::kr::ps::icp::XCondition>
          ::cista::offset::variant<runir::kr::ps::icp::ArgumentPosition, Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> object_,
          ::ygg::View<Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>>, C> feature_) :
         index(),
-        operation(std::move(operation_)),
+        operation(operation_),
         object(std::move(object_)),
         feature()
     { set(feature_, feature); }

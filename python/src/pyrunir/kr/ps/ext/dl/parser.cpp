@@ -16,7 +16,7 @@ void bind_parser(nb::module_& m)
     using namespace nb::literals;
     m.def(
         "parse_module",
-        [](const std::string& description, tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::ext::Repository& repository)
+        [](const std::string& description, const tyr::formalism::planning::PlanningDomain& domain, runir::kr::ps::ext::Repository& repository)
         { return runir::kr::ps::ext::dl::parse_module(description, domain.get_domain(), repository); },
         "description"_a,
         "domain"_a,
@@ -24,7 +24,7 @@ void bind_parser(nb::module_& m)
 
     m.def(
         "parse_program",
-        [](const std::string& description, tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::ext::Repository& repository)
+        [](const std::string& description, const tyr::formalism::planning::PlanningDomain& domain, runir::kr::ps::ext::Repository& repository)
         { return runir::kr::ps::ext::dl::parse_program(description, domain.get_domain(), repository); },
         "description"_a,
         "domain"_a,
@@ -32,7 +32,7 @@ void bind_parser(nb::module_& m)
 
     m.def(
         "parse_modules",
-        [](const std::vector<std::string>& descriptions, tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::ext::Repository& repository)
+        [](const std::vector<std::string>& descriptions, const tyr::formalism::planning::PlanningDomain& domain, runir::kr::ps::ext::Repository& repository)
         { return runir::kr::ps::ext::dl::parse_modules(descriptions, domain.get_domain(), repository); },
         "descriptions"_a,
         "domain"_a,
@@ -41,7 +41,7 @@ void bind_parser(nb::module_& m)
     m.def(
         "parse_concept",
         [](const std::string& description,
-           tyr::formalism::planning::PlanningDomain domain,
+           const tyr::formalism::planning::PlanningDomain& domain,
            runir::kr::ps::ext::ModuleView module_,
            runir::kr::ps::ext::Repository& repository) { return runir::kr::ps::ext::dl::parse_concept(description, domain.get_domain(), module_, repository); },
         "description"_a,
@@ -53,7 +53,7 @@ void bind_parser(nb::module_& m)
     m.def(
         "parse_role",
         [](const std::string& description,
-           tyr::formalism::planning::PlanningDomain domain,
+           const tyr::formalism::planning::PlanningDomain& domain,
            runir::kr::ps::ext::ModuleView module_,
            runir::kr::ps::ext::Repository& repository) { return runir::kr::ps::ext::dl::parse_role(description, domain.get_domain(), module_, repository); },
         "description"_a,
@@ -65,7 +65,7 @@ void bind_parser(nb::module_& m)
     m.def(
         "parse_boolean",
         [](const std::string& description,
-           tyr::formalism::planning::PlanningDomain domain,
+           const tyr::formalism::planning::PlanningDomain& domain,
            runir::kr::ps::ext::ModuleView module_,
            runir::kr::ps::ext::Repository& repository) { return runir::kr::ps::ext::dl::parse_boolean(description, domain.get_domain(), module_, repository); },
         "description"_a,
@@ -77,7 +77,7 @@ void bind_parser(nb::module_& m)
     m.def(
         "parse_numerical",
         [](const std::string& description,
-           tyr::formalism::planning::PlanningDomain domain,
+           const tyr::formalism::planning::PlanningDomain& domain,
            runir::kr::ps::ext::ModuleView module_,
            runir::kr::ps::ext::Repository& repository)
         { return runir::kr::ps::ext::dl::parse_numerical(description, domain.get_domain(), module_, repository); },

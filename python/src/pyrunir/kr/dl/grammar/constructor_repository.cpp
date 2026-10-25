@@ -17,7 +17,7 @@ void bind_grammar_constructor_repository(nb::module_& m)
     factory.def(nb::init<>())
         .def(
             "create",
-            [](runir::kr::dl::grammar::ConstructorRepositoryFactory& self, tyr::formalism::planning::PlanningDomain planning_domain)
+            [](runir::kr::dl::grammar::ConstructorRepositoryFactory& self, const tyr::formalism::planning::PlanningDomain& planning_domain)
             { return self.create(planning_domain.get_repository()); },
             nb::arg("planning_domain"));
 }

@@ -62,7 +62,7 @@ private:
     { return std::get<ConstructorsByNonTerminal<Category>>(m_maps); }
 
     template<runir::kr::dl::CategoryTag Category>
-    const auto& get_map() const noexcept
+    [[nodiscard]] const auto& get_map() const noexcept
     { return std::get<ConstructorsByNonTerminal<Category>>(m_maps); }
 
     template<runir::kr::dl::CategoryTag Category>
@@ -83,7 +83,7 @@ public:
     }
 
     template<runir::kr::dl::CategoryTag Category>
-    const ConstructorIndices<Category>& get(NonTerminalView<Category> nonterminal, size_t complexity) const
+    [[nodiscard]] const ConstructorIndices<Category>& get(NonTerminalView<Category> nonterminal, size_t complexity) const
     {
         const auto& map = get_map<Category>();
         const auto it = map.find(static_cast<std::uint64_t>(ygg::uint_t(nonterminal.get_index())));
@@ -101,7 +101,7 @@ private:
 public:
     explicit Timeout(const GenerateOptions& options) : m_stopwatch(options.max_time ? std::optional<ygg::CountdownWatch>(*options.max_time) : std::nullopt) {}
 
-    bool has_finished() const { return m_stopwatch && m_stopwatch->has_finished(); }
+    [[nodiscard]] bool has_finished() const { return m_stopwatch && m_stopwatch->has_finished(); }
 };
 
 template<runir::kr::dl::CategoryTag Category>

@@ -38,7 +38,7 @@ SketchProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
                                      std::optional<tyr::planning::PackedStateView<Kind>>& goal)
 {
     const auto& search_context = *task_context.search_context;
-    auto num_reached = std::size_t(0);
+    auto num_reached = static_cast<std::size_t>(0);
     auto goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*search_context.task);
     const auto initial_state = initial.unpack();
     const auto static_goal_satisfied = goal_strategy.is_static_goal_satisfied(*search_context.task);
@@ -134,8 +134,10 @@ SketchProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
 
 /// Own the search lifetime, then construct its graph and optional execution plan.
 template<tyr::TaskKind Kind, UnsolvabilityConcept<Kind> Unsolvability>
-auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options, Unsolvability& classifier)
-    -> SketchProofResults<Kind>
+auto find_solution(const runir::kr::TaskContextPtr<Kind>& task_context_owner,
+                   SketchView sketch,
+                   const SketchSearchOptions<Kind>& options,
+                   Unsolvability& classifier) -> SketchProofResults<Kind>
 {
     auto& task_context = *task_context_owner;
     const auto& search_context = *task_context.search_context;

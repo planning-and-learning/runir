@@ -27,7 +27,7 @@ public:
 
     SuccessorExpander(TaskContextPtr<Kind> task, ProgramView program) : m_rules(std::move(task), program) {}
 
-    const auto& get_task_context() const noexcept { return m_rules.get_task_context(); }
+    [[nodiscard]] const auto& get_task_context() const noexcept { return m_rules.get_task_context(); }
 
     ProgramStateView<Kind> initial_state(tyr::planning::StateView<Kind> state)
     {

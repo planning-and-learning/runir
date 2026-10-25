@@ -56,8 +56,8 @@ public:
     {
     }
 
-    auto get_round_summaries() const noexcept -> const RoundSummaryList& { return m_round_summaries; }
-    auto get_colors() const noexcept -> const TupleColorAssignmentList& { return m_colors; }
+    [[nodiscard]] auto get_round_summaries() const noexcept -> const RoundSummaryList& { return m_round_summaries; }
+    [[nodiscard]] auto get_colors() const noexcept -> const TupleColorAssignmentList& { return m_colors; }
 
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Certificate::m_colors, &Certificate::m_round_summaries> {}; }
 };

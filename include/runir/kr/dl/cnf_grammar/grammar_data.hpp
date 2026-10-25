@@ -60,7 +60,7 @@ struct Data<runir::kr::dl::cnf_grammar::Grammar>
         role_substitution_rules(std::move(role_substitution_rules_)),
         boolean_substitution_rules(std::move(boolean_substitution_rules_)),
         numerical_substitution_rules(std::move(numerical_substitution_rules_)),
-        domain(std::move(domain_))
+        domain(domain_)
     {
     }
     template<typename C, typename P>
@@ -121,7 +121,7 @@ struct Data<runir::kr::dl::cnf_grammar::Grammar>
     }
 
     template<runir::kr::dl::CategoryTag Category>
-    constexpr const auto& get_start() const noexcept
+    [[nodiscard]] constexpr const auto& get_start() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
             return concept_start;
@@ -147,7 +147,7 @@ struct Data<runir::kr::dl::cnf_grammar::Grammar>
     }
 
     template<runir::kr::dl::CategoryTag Category>
-    constexpr const auto& get_derivation_rules() const noexcept
+    [[nodiscard]] constexpr const auto& get_derivation_rules() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
             return concept_derivation_rules;
@@ -173,7 +173,7 @@ struct Data<runir::kr::dl::cnf_grammar::Grammar>
     }
 
     template<runir::kr::dl::CategoryTag Category>
-    constexpr const auto& get_substitution_rules() const noexcept
+    [[nodiscard]] constexpr const auto& get_substitution_rules() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
             return concept_substitution_rules;

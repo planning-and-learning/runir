@@ -49,8 +49,8 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<Category>>>
          Index<runir::kr::dl::Register<Category>> reg_,
          IndexList<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>> effects_) :
         index(),
-        source(std::move(source_)),
-        target(std::move(target_)),
+        source(source_),
+        target(target_),
         conditions(std::move(conditions_)),
         feature(std::move(feature_)),
         reg(std::move(reg_)),
@@ -110,8 +110,8 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ChooseTag<Category>>>
          IndexList<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>> effects_,
          IndexList<runir::kr::ps::ext::OrderTerm> order_) :
         index(),
-        source(std::move(source_)),
-        target(std::move(target_)),
+        source(source_),
+        target(target_),
         conditions(std::move(conditions_)),
         feature(std::move(feature_)),
         reg(std::move(reg_)),
@@ -167,8 +167,8 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>>
          IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions_,
          IndexList<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>> effects_) :
         index(),
-        source(std::move(source_)),
-        target(std::move(target_)),
+        source(source_),
+        target(target_),
         conditions(std::move(conditions_)),
         effects(std::move(effects_))
     {
@@ -214,8 +214,8 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>
          ::cista::offset::string action_name_,
          IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>> arguments_) :
         index(),
-        source(std::move(source_)),
-        target(std::move(target_)),
+        source(source_),
+        target(target_),
         conditions(std::move(conditions_)),
         effects(std::move(effects_)),
         action_name(std::move(action_name_)),
@@ -270,12 +270,12 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>>
          ::cista::offset::string action_name_,
          Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>> query_feature_) :
         index(),
-        source(std::move(source_)),
-        target(std::move(target_)),
+        source(source_),
+        target(target_),
         conditions(std::move(conditions_)),
         effects(std::move(effects_)),
         action_name(std::move(action_name_)),
-        query_feature(std::move(query_feature_))
+        query_feature(query_feature_)
     {
     }
     template<typename C>
@@ -324,10 +324,10 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>>
          Index<runir::kr::ps::ext::ModuleSymbol> callee_,
          ::cista::offset::vector<runir::kr::ps::ext::CallArgument> arguments_) :
         index(),
-        source(std::move(source_)),
-        target(std::move(target_)),
+        source(source_),
+        target(target_),
         conditions(std::move(conditions_)),
-        callee(std::move(callee_)),
+        callee(callee_),
         arguments(std::move(arguments_))
     {
     }
@@ -367,7 +367,7 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::BacktrackTag>>
     Data() = default;
     Data(Index<runir::kr::ps::ext::MemoryState> source_, IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions_) :
         index(),
-        source(std::move(source_)),
+        source(source_),
         conditions(std::move(conditions_))
     {
     }

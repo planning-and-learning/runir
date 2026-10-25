@@ -12,7 +12,7 @@ void bind_parser(nb::module_& m)
 {
     m.def(
         "parse_classifier",
-        [](const std::string& description, tyr::formalism::planning::PlanningDomain domain, runir::kr::uns::Repository& repository)
+        [](const std::string& description, const tyr::formalism::planning::PlanningDomain& domain, runir::kr::uns::Repository& repository)
         { return runir::kr::uns::dl::parse_classifier(description, domain.get_domain(), repository); },
         nb::arg("description"),
         nb::arg("domain"),

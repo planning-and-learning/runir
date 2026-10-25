@@ -51,7 +51,7 @@ struct MissingStoreStorage : kr::ps::ext::InternedExecutionStorage<tyr::GroundTa
 struct WrongRetainStorage : kr::ps::ext::InternedExecutionStorage<tyr::GroundTag>
 {
     using InternedExecutionStorage::InternedExecutionStorage;
-    int retain(kr::ps::ext::ProgramStateView<tyr::GroundTag>) const noexcept;
+    [[nodiscard]] int retain(kr::ps::ext::ProgramStateView<tyr::GroundTag>) const noexcept;
 };
 
 template<typename Storage, tyr::TaskKind Kind, bool Expected>
@@ -510,7 +510,7 @@ void expect_lazy_do_successors()
         if (scenario == 0 || scenario == 4)
         {
             ASSERT_EQ(steps.size(), scenario == 4 ? 4 : 2);
-            auto moves = std::size_t(0);
+            auto moves = static_cast<std::size_t>(0);
             for (const auto& step : steps)
             {
                 EXPECT_EQ(step.status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
@@ -1102,9 +1102,9 @@ TEST(RunirTests, ExtSuccessorEnumerationCombinesAllApplicableRuleKinds)
     const auto initial_state = expander.initial_state(planning_node.get_state());
     const auto steps = collect_steps(expander, initial_state);
 
-    auto load_steps = std::size_t(0);
-    auto do_steps = std::size_t(0);
-    auto sketch_steps = std::size_t(0);
+    auto load_steps = static_cast<std::size_t>(0);
+    auto do_steps = static_cast<std::size_t>(0);
+    auto sketch_steps = static_cast<std::size_t>(0);
     for (const auto& step : steps)
     {
         EXPECT_EQ(step.status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
@@ -1735,7 +1735,7 @@ void expect_query_action_contracts()
                             {
                                 const auto evaluator = kr::ps::ext::detail::ActionRuleEvaluator<Kind>(concrete, rule, action);
                                 const auto count = task_context->search_context->task->get_repository()->size(action.get_index());
-                                auto matched = size_t(0);
+                                auto matched = static_cast<size_t>(0);
                                 EXPECT_TRUE(generator.for_each_borrowed_applicable_action_binding(
                                     planning_node,
                                     action,

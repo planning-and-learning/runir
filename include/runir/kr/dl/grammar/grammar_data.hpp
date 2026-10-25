@@ -49,7 +49,7 @@ struct Data<runir::kr::dl::grammar::GrammarTag>
         role_derivation_rules(std::move(role_derivation_rules_)),
         boolean_derivation_rules(std::move(boolean_derivation_rules_)),
         numerical_derivation_rules(std::move(numerical_derivation_rules_)),
-        domain(std::move(domain_))
+        domain(domain_)
     {
     }
     template<typename C, typename P>

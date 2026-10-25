@@ -178,7 +178,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     }
 
     const auto initial = search_context->successor_generator->get_initial_node(*search_context->state_repository, *search_context->axiom_evaluator);
-    const auto state = initial.get_state();
+    const auto& state = initial.get_state();
     const auto caller_configuration = [&]()
     {
         auto data = execution_builder.checkout<kr::ps::ext::ModuleState<tyr::GroundTag>>();

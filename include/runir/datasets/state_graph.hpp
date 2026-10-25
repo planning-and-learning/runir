@@ -106,7 +106,7 @@ struct StateGraphEdgeLabel : ygg::comparison::Mixin<StateGraphEdgeLabel>
     StateGraphEdgeLabel(tyr::formalism::planning::ActionBindingView action_, ygg::float_t cost_) noexcept : action(action_), cost(cost_) {}
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&StateGraphEdgeLabel::action, &StateGraphEdgeLabel::cost> {}; }
-    auto identifying_members() const noexcept { return std::make_tuple(action.get_index(), cost); }
+    [[nodiscard]] auto identifying_members() const noexcept { return std::make_tuple(action.get_index(), cost); }
 };
 
 template<tyr::TaskKind Kind>

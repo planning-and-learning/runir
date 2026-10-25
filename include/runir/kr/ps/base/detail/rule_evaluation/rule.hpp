@@ -15,7 +15,7 @@ class RuleEvaluator
 public:
     explicit RuleEvaluator(RuleView rule) : m_rule(rule) {}
 
-    auto get_rule() const noexcept { return m_rule; }
+    [[nodiscard]] auto get_rule() const noexcept { return m_rule; }
 
     template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
     bool matches(RuleEvaluationContext<BaseFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy>& context,

@@ -18,7 +18,7 @@ private:
     EdgeIndexList m_out_edges;
     std::vector<ygg::uint_t> m_out_edge_offsets;
 
-    auto get_graph() const noexcept -> const G&
+    [[nodiscard]] auto get_graph() const noexcept -> const G&
     {
         assert(m_graph);
         return *m_graph;
@@ -51,26 +51,26 @@ public:
 
     explicit BackwardStaticGraphView(const G& graph) : m_graph(&graph), m_out_edges(), m_out_edge_offsets() { initialize(); }
 
-    auto get_vertices() const noexcept -> const auto& { return get_graph().get_vertices(); }
-    auto get_edges() const noexcept -> const auto& { return get_graph().get_edges(); }
-    auto get_vertex_property(VertexPropertyIndex<VertexPropertyType> property) const noexcept -> const VertexPropertyType&
+    [[nodiscard]] auto get_vertices() const noexcept -> const auto& { return get_graph().get_vertices(); }
+    [[nodiscard]] auto get_edges() const noexcept -> const auto& { return get_graph().get_edges(); }
+    [[nodiscard]] auto get_vertex_property(VertexPropertyIndex<VertexPropertyType> property) const noexcept -> const VertexPropertyType&
     { return get_graph().get_vertex_property(property); }
-    auto get_edge_property(EdgePropertyIndex<EdgePropertyType> property) const noexcept -> const EdgePropertyType&
+    [[nodiscard]] auto get_edge_property(EdgePropertyIndex<EdgePropertyType> property) const noexcept -> const EdgePropertyType&
     { return get_graph().get_edge_property(property); }
 
-    auto get_vertex(VertexIndex vertex) const noexcept -> const VertexType& { return get_graph().get_vertex(vertex); }
-    auto get_edge(EdgeIndex edge) const noexcept -> const EdgeType& { return get_graph().get_edge(edge); }
+    [[nodiscard]] auto get_vertex(VertexIndex vertex) const noexcept -> const VertexType& { return get_graph().get_vertex(vertex); }
+    [[nodiscard]] auto get_edge(EdgeIndex edge) const noexcept -> const EdgeType& { return get_graph().get_edge(edge); }
 
-    auto get_num_vertices() const noexcept -> std::size_t { return get_graph().get_num_vertices(); }
-    auto get_num_edges() const noexcept -> std::size_t { return get_graph().get_num_edges(); }
+    [[nodiscard]] auto get_num_vertices() const noexcept -> std::size_t { return get_graph().get_num_vertices(); }
+    [[nodiscard]] auto get_num_edges() const noexcept -> std::size_t { return get_graph().get_num_edges(); }
 
-    auto get_vertex_indices() const noexcept { return get_graph().get_vertex_indices(); }
-    auto get_edge_indices() const noexcept { return get_graph().get_edge_indices(); }
+    [[nodiscard]] auto get_vertex_indices() const noexcept { return get_graph().get_vertex_indices(); }
+    [[nodiscard]] auto get_edge_indices() const noexcept { return get_graph().get_edge_indices(); }
 
-    auto get_source(EdgeIndex edge) const noexcept -> VertexIndex { return get_graph().get_target(edge); }
-    auto get_target(EdgeIndex edge) const noexcept -> VertexIndex { return get_graph().get_source(edge); }
+    [[nodiscard]] auto get_source(EdgeIndex edge) const noexcept -> VertexIndex { return get_graph().get_target(edge); }
+    [[nodiscard]] auto get_target(EdgeIndex edge) const noexcept -> VertexIndex { return get_graph().get_source(edge); }
 
-    auto get_out_edge_indices(VertexIndex vertex) const noexcept
+    [[nodiscard]] auto get_out_edge_indices(VertexIndex vertex) const noexcept
     {
         assert_valid_vertex(vertex);
         const auto begin = m_out_edge_offsets[vertex];
@@ -78,23 +78,23 @@ public:
         return std::ranges::subrange(m_out_edges.begin() + begin, m_out_edges.begin() + end);
     }
 
-    auto get_out_degree(VertexIndex vertex) const noexcept -> Degree
+    [[nodiscard]] auto get_out_degree(VertexIndex vertex) const noexcept -> Degree
     {
         assert_valid_vertex(vertex);
         return m_out_edge_offsets[vertex + 1] - m_out_edge_offsets[vertex];
     }
 
-    auto get_out_edges(VertexIndex vertex) const noexcept
+    [[nodiscard]] auto get_out_edges(VertexIndex vertex) const noexcept
     {
         return get_out_edge_indices(vertex) | std::views::transform([this](EdgeIndex edge) -> const EdgeType& { return get_edge(edge); });
     }
 
-    auto get_successor_indices(VertexIndex vertex) const noexcept
+    [[nodiscard]] auto get_successor_indices(VertexIndex vertex) const noexcept
     {
         return get_out_edge_indices(vertex) | std::views::transform([this](EdgeIndex edge) { return get_target(edge); });
     }
 
-    auto get_successors(VertexIndex vertex) const noexcept
+    [[nodiscard]] auto get_successors(VertexIndex vertex) const noexcept
     {
         return get_successor_indices(vertex) | std::views::transform([this](VertexIndex successor) -> const VertexType& { return get_vertex(successor); });
     }

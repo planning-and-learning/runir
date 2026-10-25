@@ -27,7 +27,7 @@ size_t EvaluationGraph<Kind>::node_count() const noexcept
 
 template<tyr::TaskKind Kind>
 template<CategoryTag Category>
-BorrowedDenotationView<Category> EvaluationGraph<Kind>::result(EvaluationIndex<Category> index) const
+[[nodiscard]] BorrowedDenotationView<Category> EvaluationGraph<Kind>::result(EvaluationIndex<Category> index) const
 { return node(index).get_result(repository()); }
 
 template<tyr::TaskKind Kind>
@@ -36,7 +36,7 @@ const ygg::Builder<ygg::database::Relation>& EvaluationGraph<Kind>::result(Query
 
 template<tyr::TaskKind Kind>
 template<ConceptOrRoleTag Category>
-const DenotationDelta<Category>& EvaluationGraph<Kind>::change(EvaluationIndex<Category> index) const
+[[nodiscard]] const DenotationDelta<Category>& EvaluationGraph<Kind>::change(EvaluationIndex<Category> index) const
 { return node(index).get_delta(); }
 
 template<tyr::TaskKind Kind>
@@ -45,12 +45,12 @@ const ygg::database::incremental::Delta& EvaluationGraph<Kind>::change(QueryEval
 
 template<tyr::TaskKind Kind>
 template<ConceptOrRoleTag Category>
-size_t EvaluationGraph<Kind>::cardinality(EvaluationIndex<Category> index) const
+[[nodiscard]] size_t EvaluationGraph<Kind>::cardinality(EvaluationIndex<Category> index) const
 { return node(index).size(); }
 
 template<tyr::TaskKind Kind>
 template<CategoryTag Category>
-EvaluationIndex<Category> EvaluationGraph<Kind>::get_index(ConstructorView<Category> expression) const
+[[nodiscard]] EvaluationIndex<Category> EvaluationGraph<Kind>::get_index(ConstructorView<Category> expression) const
 {
     if (const auto index = find_node(expression))
         return *index;
@@ -67,7 +67,7 @@ QueryEvaluationIndex EvaluationGraph<Kind>::get_index(QueryView<> expression) co
 
 template<tyr::TaskKind Kind>
 template<CategoryTag Category>
-std::optional<EvaluationIndex<Category>> EvaluationGraph<Kind>::find_node(ConstructorView<Category> expression) const
+[[nodiscard]] std::optional<EvaluationIndex<Category>> EvaluationGraph<Kind>::find_node(ConstructorView<Category> expression) const
 {
     // ponytail: linear preparation/root lookup; add a lookup table only if large graphs make it costly.
     for (size_t i = 0; i < m_nodes.size(); ++i)
@@ -93,7 +93,7 @@ std::optional<QueryEvaluationIndex> EvaluationGraph<Kind>::find_node(QueryView<>
 
 template<tyr::TaskKind Kind>
 template<BooleanOrNumericalTag Category>
-bool IncrementalEvaluation<Kind>::changed(EvaluationIndex<Category> index) const
+[[nodiscard]] bool IncrementalEvaluation<Kind>::changed(EvaluationIndex<Category> index) const
 {
     require_exact(ygg::uint_t(index));
     return m_graph.node(index).changed();

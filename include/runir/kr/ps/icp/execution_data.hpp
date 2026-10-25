@@ -54,10 +54,10 @@ struct Data<runir::kr::ps::icp::ProgramState<Kind>>
          Index<runir::kr::ps::icp::Histories> histories_,
          Index<tyr::planning::State<Kind>> state_) :
         index(),
-        program(std::move(program_)),
-        memory_state(std::move(memory_state_)),
-        registers(std::move(registers_)),
-        histories(std::move(histories_)),
+        program(program_),
+        memory_state(memory_state_),
+        registers(registers_),
+        histories(histories_),
         state(std::move(state_))
     {
     }

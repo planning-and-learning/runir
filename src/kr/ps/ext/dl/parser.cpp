@@ -881,15 +881,15 @@ ModuleView lower_module(const ast::Module& ast,
     data->symbol = module_symbols.at(ast.name.text);
     data->entry_memory_state = entry->second;
 
-    auto concept_argument = ygg::uint_t(0);
-    auto role_argument = ygg::uint_t(0);
-    auto boolean_argument = ygg::uint_t(0);
-    auto numerical_argument = ygg::uint_t(0);
+    auto concept_argument = static_cast<ygg::uint_t>(0);
+    auto role_argument = static_cast<ygg::uint_t>(0);
+    auto boolean_argument = static_cast<ygg::uint_t>(0);
+    auto numerical_argument = static_cast<ygg::uint_t>(0);
     for (const auto& argument : ast.arguments)
         append_argument(repository, builders.dl, *data, references, argument, concept_argument, role_argument, boolean_argument, numerical_argument);
 
-    auto concept_register = ygg::uint_t(0);
-    auto role_register = ygg::uint_t(0);
+    auto concept_register = static_cast<ygg::uint_t>(0);
+    auto role_register = static_cast<ygg::uint_t>(0);
     for (const auto& reg : ast.registers)
     {
         boost::apply_visitor(

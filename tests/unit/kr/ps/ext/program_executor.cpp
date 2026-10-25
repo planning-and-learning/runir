@@ -558,7 +558,7 @@ void check_choice_execution()
     const auto expect_single_expansion = [](const kr::ps::ext::ProgramProofResults<Kind>& result)
     {
         ASSERT_TRUE(result.graph);
-        auto expandable = std::size_t(0);
+        auto expandable = static_cast<std::size_t>(0);
         for (const auto vertex : result.graph->get_vertex_indices())
         {
             const auto& label = result.graph->get_vertex(vertex).get_property();
@@ -1443,15 +1443,15 @@ struct MutableDataAccess : View
 template<tyr::TaskKind Kind>
 struct ReferenceModuleStateAccess : kr::ps::ext::ModuleStateView<Kind>
 {
-    const tyr::planning::StateView<Kind>& get_state() const;
-    const kr::dl::semantics::RegisterValuesView& get_registers() const;
+    [[nodiscard]] const tyr::planning::StateView<Kind>& get_state() const;
+    [[nodiscard]] const kr::dl::semantics::RegisterValuesView& get_registers() const;
 };
 
 template<tyr::TaskKind Kind>
 struct ReferenceProgramStateAccess : kr::ps::ext::ProgramStateView<Kind>
 {
-    const tyr::planning::StateView<Kind>& get_state() const;
-    const ReferenceModuleStateAccess<Kind>& get_module_state() const;
+    [[nodiscard]] const tyr::planning::StateView<Kind>& get_state() const;
+    [[nodiscard]] const ReferenceModuleStateAccess<Kind>& get_module_state() const;
 };
 
 template<tyr::TaskKind Kind>

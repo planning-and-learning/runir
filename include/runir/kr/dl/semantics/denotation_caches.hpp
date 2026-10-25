@@ -51,13 +51,13 @@ public:
     { return std::get<Cache<Category>>(m_partitions[is_static].values); }
 
     template<CategoryTag Category>
-    const auto& get(bool is_static) const noexcept
+    [[nodiscard]] const auto& get(bool is_static) const noexcept
     { return std::get<Cache<Category>>(m_partitions[is_static].values); }
 
     auto& get_queries(bool is_static) noexcept { return m_partitions[is_static].queries; }
-    const auto& get_queries(bool is_static) const noexcept { return m_partitions[is_static].queries; }
+    [[nodiscard]] const auto& get_queries(bool is_static) const noexcept { return m_partitions[is_static].queries; }
     auto& get_static_join_indexes() noexcept { return m_static_join_indexes; }
-    const auto& get_static_join_indexes() const noexcept { return m_static_join_indexes; }
+    [[nodiscard]] const auto& get_static_join_indexes() const noexcept { return m_static_join_indexes; }
 
     void reset_dynamic() noexcept { m_partitions[false].clear(); }
 

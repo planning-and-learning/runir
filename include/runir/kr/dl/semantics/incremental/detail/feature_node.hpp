@@ -31,19 +31,20 @@ class FeatureNode
 {
 public:
     FeatureNode(ConstructorView<Category> expression, GraphBuilder<Kind>& graph);
-    ConstructorView<Category> get_expression() const noexcept { return m_expression; }
+    [[nodiscard]] ConstructorView<Category> get_expression() const noexcept { return m_expression; }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context);
     void update(EvaluationGraph<Kind>& graph, const Delta& delta, ygg::database::Workspace& workspace);
-    std::span<const ygg::uint_t> get_dependencies() const noexcept { return m_dependencies; }
-    BorrowedDenotationView<Category> get_result(const tyr::formalism::planning::Repository& repository) const { return state().get_result(repository); }
-    const auto& get_delta() const
+    [[nodiscard]] std::span<const ygg::uint_t> get_dependencies() const noexcept { return m_dependencies; }
+    [[nodiscard]] BorrowedDenotationView<Category> get_result(const tyr::formalism::planning::Repository& repository) const
+    { return state().get_result(repository); }
+    [[nodiscard]] const auto& get_delta() const
         requires ConceptOrRoleTag<Category>
     { return state().get_delta(); }
-    size_t size() const
+    [[nodiscard]] size_t size() const
         requires ConceptOrRoleTag<Category>
     { return state().size(); }
-    bool changed() const
+    [[nodiscard]] bool changed() const
         requires BooleanOrNumericalTag<Category>
     { return state().changed(); }
 
@@ -187,7 +188,7 @@ private:
             throw std::logic_error("Incremental evaluation: static constructor reached dynamic preparation.");
     }
 
-    const DenotationState<Category>& state() const
+    [[nodiscard]] const DenotationState<Category>& state() const
     {
         return std::visit([](const auto& evaluator) -> const DenotationState<Category>& { return evaluator.value; }, m_evaluator);
     }

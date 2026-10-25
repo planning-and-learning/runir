@@ -39,14 +39,14 @@ public:
     BasicConstructorRepository(BasicConstructorRepository&&) = delete;
     BasicConstructorRepository& operator=(BasicConstructorRepository&&) = delete;
 
-    const auto& get_index() const noexcept { return m_index; }
-    const tyr::formalism::planning::Repository& get_planning_repository() const noexcept
+    [[nodiscard]] const auto& get_index() const noexcept { return m_index; }
+    [[nodiscard]] const tyr::formalism::planning::Repository& get_planning_repository() const noexcept
     {
         assert(m_planning_repository);
         // Dereference the raw pointer: operator* on the shared_ptr would complete the repository type for its lookup.
         return *m_planning_repository.get();
     }
-    const auto& get_planning_repository_ptr() const noexcept { return m_planning_repository; }
+    [[nodiscard]] const auto& get_planning_repository_ptr() const noexcept { return m_planning_repository; }
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<BasicConstructorRepository, T>
@@ -58,7 +58,7 @@ public:
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<BasicConstructorRepository, T>
-    const BasicConstructorRepository& get_canonical_context(ygg::Index<T>) const noexcept
+    [[nodiscard]] const BasicConstructorRepository& get_canonical_context(ygg::Index<T>) const noexcept
     { return *this; }
 };
 
@@ -66,10 +66,10 @@ template<typename RepositoryTypes>
 class BasicConstructorRepositoryFactory
 {
 private:
-    size_t m_next_index;
+    size_t m_next_index = 0;
 
 public:
-    BasicConstructorRepositoryFactory() : m_next_index(0) {}
+    BasicConstructorRepositoryFactory() {}
 
     /// Defined in detail/constructor_repository_impl.hpp: an in-class definition would construct and destroy every
     /// symbol pool in each caller (template rule 7).

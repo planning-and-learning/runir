@@ -75,10 +75,10 @@ public:
     {
     }
 
-    std::string_view get_status_name() const { return to_string(status); }
-    StoredState get_target() const noexcept { return target; }
-    const auto& get_state_transition() const noexcept { return state_transition; }
-    const auto& get_rule() const noexcept { return rule; }
+    [[nodiscard]] std::string_view get_status_name() const { return to_string(status); }
+    [[nodiscard]] StoredState get_target() const noexcept { return target; }
+    [[nodiscard]] const auto& get_state_transition() const noexcept { return state_transition; }
+    [[nodiscard]] const auto& get_rule() const noexcept { return rule; }
 };
 
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage>
@@ -107,7 +107,7 @@ auto planning_step(Storage& storage,
     auto step = applied<Kind, Storage>(std::move(target), rule, task_context);
     if constexpr (requires { successor.pack(); })
         step.planning_successor = successor.pack();
-    step.state_transition = datasets::StateGraphEdgeLabel { successor.label, ygg::float_t(1) };
+    step.state_transition = datasets::StateGraphEdgeLabel { successor.label, static_cast<ygg::float_t>(1) };
     return step;
 }
 
@@ -133,12 +133,12 @@ public:
             m_bindings->push_back(binding);
     }
     auto& bindings() noexcept { return *m_bindings; }
-    const auto& bindings() const noexcept { return *m_bindings; }
-    bool exhausted() const noexcept { return position == bindings().size(); }
-    const auto& current() const { return bindings().at(position); }
+    [[nodiscard]] const auto& bindings() const noexcept { return *m_bindings; }
+    [[nodiscard]] bool exhausted() const noexcept { return position == bindings().size(); }
+    [[nodiscard]] const auto& current() const { return bindings().at(position); }
     void advance() noexcept { ++position; }
-    bool has_alternatives() const noexcept { return bindings().size() > 1; }
-    size_t count() const noexcept { return bindings().size(); }
+    [[nodiscard]] bool has_alternatives() const noexcept { return bindings().size() > 1; }
+    [[nodiscard]] size_t count() const noexcept { return bindings().size(); }
 };
 
 }  // namespace runir::kr::ps::ext::detail

@@ -23,7 +23,7 @@ public:
     using ygg::IndexViewBase<runir::kr::dl::Constructor<Category>, C>::IndexViewBase;
 
     auto get_variant() const noexcept { return make_view(this->get_data().variant, this->get_context()); }
-    bool is_static() const noexcept { return this->get_data().is_static; }
+    [[nodiscard]] bool is_static() const noexcept { return this->get_data().is_static; }
 };
 
 }

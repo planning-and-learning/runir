@@ -148,7 +148,7 @@ void bind_semantics_repositories(nb::module_& m)
         .def(nb::init<>())
         .def(
             "create",
-            [](runir::kr::dl::semantics::DenotationRepositoryFactory& self, tyr::formalism::planning::PlanningDomain planning_domain)
+            [](runir::kr::dl::semantics::DenotationRepositoryFactory& self, const tyr::formalism::planning::PlanningDomain& planning_domain)
             { return self.create_shared(planning_domain.get_repository()); },
             nb::arg("planning_domain"));
 
@@ -164,7 +164,7 @@ void bind_semantics_repositories(nb::module_& m)
     factory.def(nb::init<>())
         .def(
             "create",
-            [](runir::kr::dl::ConstructorRepositoryFactory& self, tyr::formalism::planning::PlanningDomain planning_domain)
+            [](runir::kr::dl::ConstructorRepositoryFactory& self, const tyr::formalism::planning::PlanningDomain& planning_domain)
             { return self.create(planning_domain.get_repository()); },
             nb::arg("planning_domain"))
         .def(

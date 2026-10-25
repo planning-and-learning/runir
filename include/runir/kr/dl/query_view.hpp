@@ -30,7 +30,7 @@ public:
         requires std::same_as<Tag, void>
     { return make_view(this->get_data().variant, this->get_context()); }
 
-    bool is_static() const noexcept
+    [[nodiscard]] bool is_static() const noexcept
         requires std::same_as<Tag, void>
     { return this->get_data().is_static; }
 

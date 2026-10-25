@@ -27,7 +27,7 @@ void bind_module_factory(nb::module_& m)
         .def_static(
             "create",
             [](runir::kr::ps::ext::dl::ModuleSpecification specification,
-               tyr::formalism::planning::PlanningDomain domain,
+               const tyr::formalism::planning::PlanningDomain& domain,
                runir::kr::ps::ext::Repository& repository)
             { return runir::kr::ps::ext::dl::ModuleFactory::create(specification, domain.get_domain(), repository); },
             "specification"_a,
@@ -37,7 +37,7 @@ void bind_module_factory(nb::module_& m)
         .def_static("create_description", &runir::kr::ps::ext::dl::ModuleFactory::create_description, "specification"_a)
         .def_static(
             "create_bonet_et_al_icaps2024_modules",
-            [](tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::ext::Repository& repository)
+            [](const tyr::formalism::planning::PlanningDomain& domain, runir::kr::ps::ext::Repository& repository)
             { return runir::kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_modules(domain.get_domain(), repository); },
             "domain"_a,
             "repository"_a)
@@ -46,31 +46,31 @@ void bind_module_factory(nb::module_& m)
                     &runir::kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program_description)
         .def_static(
             "create_bonet_et_al_icaps2024_program",
-            [](tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::ext::Repository& repository)
+            [](const tyr::formalism::planning::PlanningDomain& domain, runir::kr::ps::ext::Repository& repository)
             { return runir::kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program(domain.get_domain(), repository); },
             "domain"_a,
             "repository"_a)
         .def_static(
             "create_on_bonet_et_al_icaps2024",
-            [](tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::ext::Repository& repository)
+            [](const tyr::formalism::planning::PlanningDomain& domain, runir::kr::ps::ext::Repository& repository)
             { return runir::kr::ps::ext::dl::ModuleFactory::create_on_bonet_et_al_icaps2024(domain.get_domain(), repository); },
             "domain"_a,
             "repository"_a)
         .def_static(
             "create_on_table_bonet_et_al_icaps2024",
-            [](tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::ext::Repository& repository)
+            [](const tyr::formalism::planning::PlanningDomain& domain, runir::kr::ps::ext::Repository& repository)
             { return runir::kr::ps::ext::dl::ModuleFactory::create_on_table_bonet_et_al_icaps2024(domain.get_domain(), repository); },
             "domain"_a,
             "repository"_a)
         .def_static(
             "create_tower_bonet_et_al_icaps2024",
-            [](tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::ext::Repository& repository)
+            [](const tyr::formalism::planning::PlanningDomain& domain, runir::kr::ps::ext::Repository& repository)
             { return runir::kr::ps::ext::dl::ModuleFactory::create_tower_bonet_et_al_icaps2024(domain.get_domain(), repository); },
             "domain"_a,
             "repository"_a)
         .def_static(
             "create_blocks_bonet_et_al_icaps2024",
-            [](tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::ext::Repository& repository)
+            [](const tyr::formalism::planning::PlanningDomain& domain, runir::kr::ps::ext::Repository& repository)
             { return runir::kr::ps::ext::dl::ModuleFactory::create_blocks_bonet_et_al_icaps2024(domain.get_domain(), repository); },
             "domain"_a,
             "repository"_a)

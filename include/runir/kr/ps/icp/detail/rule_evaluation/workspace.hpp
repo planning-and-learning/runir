@@ -50,8 +50,8 @@ public:
             m_reset_predecessors.at(slots.at(ygg::uint_t(pair.after))).push_back(slots.at(ygg::uint_t(pair.before)));
     }
 
-    const auto& get_task_context() const noexcept { return m_task; }
-    auto get_program() const noexcept { return m_program; }
+    [[nodiscard]] const auto& get_task_context() const noexcept { return m_task; }
+    [[nodiscard]] auto get_program() const noexcept { return m_program; }
     auto& get_environment() noexcept { return m_environment; }
     auto intern(ygg::Data<ProgramState<Kind>>& data) { return insert(*m_task->icp_execution_repository, data).first; }
 

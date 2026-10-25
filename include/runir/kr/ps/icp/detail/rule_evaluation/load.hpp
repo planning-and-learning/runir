@@ -18,7 +18,7 @@ class RuleEvaluator<Kind, LoadTag<Category>>
 public:
     RuleEvaluator(TaskContext<Kind>&, RuleView<LoadTag<Category>> rule, RuleVariantView variant) : m_rule(rule), m_variant(variant) {}
 
-    auto get_rule() const noexcept { return m_rule; }
+    [[nodiscard]] auto get_rule() const noexcept { return m_rule; }
 
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy, EmitConcept<ProgramStep<Kind>> Emit, StopConcept Stop>
     bool emit(runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy>& context,

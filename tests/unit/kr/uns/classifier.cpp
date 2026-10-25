@@ -76,7 +76,7 @@ struct Fixture
     {
     }
 
-    tyr::formalism::planning::DomainView domain() const { return planning_domain.get_domain(); }
+    [[nodiscard]] tyr::formalism::planning::DomainView domain() const { return planning_domain.get_domain(); }
 };
 
 }  // namespace

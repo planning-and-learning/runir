@@ -66,7 +66,7 @@ struct ModuleSieveStructuralTerminationResult
     /// Distinct rules labeling all retained policy-graph edges; empty if terminating.
     std::vector<RuleVariantView> surviving_rules;
 
-    bool is_terminating() const noexcept { return !counterexample; }
+    [[nodiscard]] bool is_terminating() const noexcept { return !counterexample; }
 };
 
 struct ModuleStructuralTerminationResult
@@ -75,7 +75,7 @@ struct ModuleStructuralTerminationResult
     std::optional<ModuleIncompleteStructuralTerminationResult> incomplete_result;  ///< Populated iff incomplete preprocessing was enabled.
     std::optional<ModuleSieveStructuralTerminationResult> sieve_result;            ///< Populated iff complete SIEVE was run.
 
-    bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }
+    [[nodiscard]] bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }
 };
 
 struct ProgramStructuralTerminationResult
@@ -84,7 +84,7 @@ struct ProgramStructuralTerminationResult
     std::vector<ModuleStructuralTerminationResult> module_results;
     std::vector<RuleVariantView> recursive_call_rules;
 
-    bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }
+    [[nodiscard]] bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }
 };
 
 }  // namespace runir::kr::ps::ext::dl

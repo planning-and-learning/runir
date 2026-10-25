@@ -114,7 +114,7 @@ struct QualitativePolicy
 
     void validate_feature_capacity() const { dl::validate_feature_capacity(num_booleans, num_numericals); }
 
-    std::size_t num_valuations() const
+    [[nodiscard]] std::size_t num_valuations() const
     {
         constexpr auto digits = std::numeric_limits<std::size_t>::digits;
         if (num_booleans >= digits || num_numericals >= digits - num_booleans)
@@ -122,7 +122,7 @@ struct QualitativePolicy
         return std::size_t { 1 } << (num_booleans + num_numericals);
     }
 
-    std::size_t num_vertices() const
+    [[nodiscard]] std::size_t num_vertices() const
     {
         const auto valuations = num_valuations();
         if (num_memory_states > std::numeric_limits<std::size_t>::max() / valuations)
@@ -171,9 +171,9 @@ struct IncompletePolicyResult
     std::vector<ResidualMemoryScope> residual_scopes;
     std::vector<SurvivingRule> surviving_rules;
 
-    bool is_terminating() const noexcept { return surviving_rules.empty(); }
+    [[nodiscard]] bool is_terminating() const noexcept { return surviving_rules.empty(); }
     /// Original rule positions not ruled out by incomplete elimination.
-    std::vector<std::size_t> get_cyclic_rule_positions() const;
+    [[nodiscard]] std::vector<std::size_t> get_cyclic_rule_positions() const;
 };
 
 enum class StructuralTerminationStatus
@@ -208,7 +208,7 @@ struct CounterexampleComponent
     std::vector<CounterexampleEdge> edges;
 
     /// One closed path of positions into edges, preserving the rule labels.
-    std::vector<std::size_t> get_cycle() const;
+    [[nodiscard]] std::vector<std::size_t> get_cycle() const;
 };
 
 struct StructuralTerminationResult
@@ -219,10 +219,10 @@ struct StructuralTerminationResult
     /// One normalized component per final cyclic SCC; empty iff terminating.
     std::vector<CounterexampleComponent> counterexample_components;
 
-    bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }
+    [[nodiscard]] bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }
     /// Sorted unique original rule positions on any final residual cycle.
     /// Hybrid results use the final SIEVE frontier, not the incomplete prefix.
-    std::vector<std::size_t> get_cyclic_rule_positions() const;
+    [[nodiscard]] std::vector<std::size_t> get_cyclic_rule_positions() const;
 };
 
 /// Sound incomplete elimination; surviving rules are potentially cyclic.

@@ -34,8 +34,8 @@ class ChooseRuleEvaluator
 public:
     using RuleTag = ChooseTag<Category>;
     ChooseRuleEvaluator(RuleView<ChooseTag<Category>> rule, RuleVariantView variant) : m_rule(rule), m_variant(variant) {}
-    auto get_rule() const noexcept { return m_rule; }
-    auto get_variant() const noexcept { return m_variant; }
+    [[nodiscard]] auto get_rule() const noexcept { return m_rule; }
+    [[nodiscard]] auto get_variant() const noexcept { return m_variant; }
 
     /// Resume a retained choice after child search; emit() only enumerates and prepares its alternatives.
     /// Bind a register and move memory while preserving the planning state and caller stack.

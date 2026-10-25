@@ -361,7 +361,7 @@ public:
     { collect<T>(expression); }
 
     /// A sampler for the collected leaves, to measure sample states one at a time.
-    QueryStatisticsSampler sampler() const { return QueryStatisticsSampler(m_leaves); }
+    [[nodiscard]] QueryStatisticsSampler sampler() const { return QueryStatisticsSampler(m_leaves); }
 
     /// The statistics of the collected leaves over contexts, one state evaluation context per sample state, measured
     /// state by state (see QueryStatisticsSampler).

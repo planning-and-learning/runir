@@ -114,7 +114,7 @@ struct Data<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>>
     Data(Index<tyr::formalism::Predicate<T>> predicate_, bool polarity_, IndexList<runir::kr::dl::QueryColumn> columns_) :
         index(),
         predicate(std::move(predicate_)),
-        polarity(std::move(polarity_)),
+        polarity(polarity_),
         columns(std::move(columns_))
     {
     }
@@ -124,7 +124,7 @@ struct Data<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>>
          const std::vector<::ygg::View<Index<runir::kr::dl::QueryColumn>, C>>& columns_) :
         index(),
         predicate(),
-        polarity(std::move(polarity_)),
+        polarity(polarity_),
         columns()
     {
         set(predicate_, predicate);
@@ -148,7 +148,7 @@ struct Data<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>>
     // schema is derived during insertion and therefore not a constructor parameter.
     Data(Index<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>> arg_, IndexList<runir::kr::dl::QueryColumn> columns_) :
         index(),
-        arg(std::move(arg_)),
+        arg(arg_),
         columns(std::move(columns_))
     {
     }
@@ -180,7 +180,7 @@ struct Data<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>>
     // schema is derived during insertion and therefore not a constructor parameter.
     Data(Index<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>> arg_, IndexList<runir::kr::dl::QueryColumn> columns_) :
         index(),
-        arg(std::move(arg_)),
+        arg(arg_),
         columns(std::move(columns_))
     {
     }
@@ -211,7 +211,7 @@ struct Data<runir::kr::dl::Query<runir::kr::dl::QueryJoinTag>>
 
     Data() = default;
     // columns and plan are derived during insertion and therefore not constructor parameters.
-    Data(Index<runir::kr::dl::Query<>> lhs_, Index<runir::kr::dl::Query<>> rhs_) : index(), lhs(std::move(lhs_)), rhs(std::move(rhs_)) {}
+    Data(Index<runir::kr::dl::Query<>> lhs_, Index<runir::kr::dl::Query<>> rhs_) : index(), lhs(lhs_), rhs(rhs_) {}
     template<typename C>
     Data(::ygg::View<Index<runir::kr::dl::Query<>>, C> lhs_, ::ygg::View<Index<runir::kr::dl::Query<>>, C> rhs_) : index(), lhs(), rhs()
     {
@@ -236,7 +236,7 @@ struct Data<runir::kr::dl::Query<Tag>>
 
     Data() = default;
     // columns and schema are derived during insertion and therefore not constructor parameters.
-    Data(Index<runir::kr::dl::Query<>> lhs_, Index<runir::kr::dl::Query<>> rhs_) : index(), lhs(std::move(lhs_)), rhs(std::move(rhs_)) {}
+    Data(Index<runir::kr::dl::Query<>> lhs_, Index<runir::kr::dl::Query<>> rhs_) : index(), lhs(lhs_), rhs(rhs_) {}
     template<typename C>
     Data(::ygg::View<Index<runir::kr::dl::Query<>>, C> lhs_, ::ygg::View<Index<runir::kr::dl::Query<>>, C> rhs_) : index(), lhs(), rhs()
     {
@@ -259,7 +259,7 @@ struct Data<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>>
 
     Data() = default;
     // plan is derived during insertion and therefore not a constructor parameter.
-    Data(Index<runir::kr::dl::Query<>> arg_, IndexList<runir::kr::dl::QueryColumn> columns_) : index(), arg(std::move(arg_)), columns(std::move(columns_)) {}
+    Data(Index<runir::kr::dl::Query<>> arg_, IndexList<runir::kr::dl::QueryColumn> columns_) : index(), arg(arg_), columns(std::move(columns_)) {}
     template<typename C>
     Data(::ygg::View<Index<runir::kr::dl::Query<>>, C> arg_, const std::vector<::ygg::View<Index<runir::kr::dl::QueryColumn>, C>>& columns_) :
         index(),
@@ -285,7 +285,7 @@ struct Data<runir::kr::dl::Query<runir::kr::dl::QueryRenameTag>>
 
     Data() = default;
     // schema is derived during insertion and therefore not a constructor parameter.
-    Data(Index<runir::kr::dl::Query<>> arg_, IndexList<runir::kr::dl::QueryColumn> columns_) : index(), arg(std::move(arg_)), columns(std::move(columns_)) {}
+    Data(Index<runir::kr::dl::Query<>> arg_, IndexList<runir::kr::dl::QueryColumn> columns_) : index(), arg(arg_), columns(std::move(columns_)) {}
     template<typename C>
     Data(::ygg::View<Index<runir::kr::dl::Query<>>, C> arg_, const std::vector<::ygg::View<Index<runir::kr::dl::QueryColumn>, C>>& columns_) :
         index(),
@@ -317,9 +317,9 @@ struct Data<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>>
     // columns, schema and positions are derived during insertion and therefore not constructor parameters.
     Data(Index<runir::kr::dl::Query<>> arg_, Index<runir::kr::dl::QueryColumn> lhs_column_, Index<runir::kr::dl::QueryColumn> rhs_column_) :
         index(),
-        arg(std::move(arg_)),
-        lhs_column(std::move(lhs_column_)),
-        rhs_column(std::move(rhs_column_))
+        arg(arg_),
+        lhs_column(lhs_column_),
+        rhs_column(rhs_column_)
     {
     }
     template<typename C>
@@ -360,9 +360,9 @@ struct Data<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>>
     // columns, schema and position are derived during insertion and therefore not constructor parameters.
     Data(Index<runir::kr::dl::Query<>> arg_, Index<runir::kr::dl::QueryColumn> column_, Index<tyr::formalism::Object> object_) :
         index(),
-        arg(std::move(arg_)),
-        column(std::move(column_)),
-        object(std::move(object_))
+        arg(arg_),
+        column(column_),
+        object(object_)
     {
     }
     template<typename C, typename P>
@@ -512,7 +512,7 @@ struct Data<runir::kr::dl::QueryProjection<Category>>
 
     Data() = default;
     // plan is derived during insertion and therefore not a constructor parameter.
-    Data(Index<runir::kr::dl::Query<>> arg_, IndexList<runir::kr::dl::QueryColumn> columns_) : index(), arg(std::move(arg_)), columns(std::move(columns_)) {}
+    Data(Index<runir::kr::dl::Query<>> arg_, IndexList<runir::kr::dl::QueryColumn> columns_) : index(), arg(arg_), columns(std::move(columns_)) {}
     template<typename C>
     Data(::ygg::View<Index<runir::kr::dl::Query<>>, C> arg_, const std::vector<::ygg::View<Index<runir::kr::dl::QueryColumn>, C>>& columns_) :
         index(),

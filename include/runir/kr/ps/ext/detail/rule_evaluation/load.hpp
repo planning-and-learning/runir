@@ -22,8 +22,8 @@ class LoadRuleEvaluator
 public:
     using RuleTag = LoadTag<Category>;
     LoadRuleEvaluator(RuleView<LoadTag<Category>> rule, RuleVariantView variant) : m_rule(rule), m_variant(variant) {}
-    auto get_rule() const noexcept { return m_rule; }
-    auto get_variant() const noexcept { return m_variant; }
+    [[nodiscard]] auto get_rule() const noexcept { return m_rule; }
+    [[nodiscard]] auto get_variant() const noexcept { return m_variant; }
 
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,

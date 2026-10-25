@@ -100,9 +100,9 @@ public:
         return !assignment.concrete;
     }
 
-    size_t get_num_state_vertices() const noexcept { return static_cast<size_t>(m_next_state_vertex.load(std::memory_order_relaxed)); }
-    const auto& get_start() const noexcept { return m_start; }
-    const auto& get_workers() const noexcept { return m_workers; }
+    [[nodiscard]] size_t get_num_state_vertices() const noexcept { return static_cast<size_t>(m_next_state_vertex.load(std::memory_order_relaxed)); }
+    [[nodiscard]] const auto& get_start() const noexcept { return m_start; }
+    [[nodiscard]] const auto& get_workers() const noexcept { return m_workers; }
 
 private:
     StateGraphVertexRef allocate_vertex()
@@ -139,7 +139,7 @@ public:
     auto make_worker(ygg::Index<tyr::planning::Worker> index) -> tyr::planning::astar_eager::WorkerEventHandlerPtr<Kind> override
     { return m_events.make_worker(index); }
 
-    const detail::StateGraphEventHandler<Kind>& get_events() const noexcept { return m_events; }
+    [[nodiscard]] const detail::StateGraphEventHandler<Kind>& get_events() const noexcept { return m_events; }
 
 private:
     detail::StateGraphEventHandler<Kind> m_events;

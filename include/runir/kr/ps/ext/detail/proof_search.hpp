@@ -90,7 +90,7 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
                                std::optional<RuleVariantView> rule,
                                std::size_t choice_width)
     {
-        const auto depth = parent ? parent->choice_depth + ygg::uint_t(choice_width > 1) : 0;
+        const auto depth = parent ? parent->choice_depth + static_cast<ygg::uint_t>(choice_width > 1) : 0;
         const auto width = parent ? std::max(parent->choice_width, choice_width) : 0;
         return path_pool.get_or_allocate(std::move(state), std::move(parent), transition, rule, depth, width);
     };

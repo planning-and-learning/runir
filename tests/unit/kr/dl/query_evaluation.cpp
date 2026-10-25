@@ -322,7 +322,7 @@ void check_queries()
         auto argument_data = ygg::Data<kr::dl::semantics::CallArguments> {};
         argument_data.concept_arguments.push_back(a_set.get_index());
         const auto arguments = kr::dl::semantics::insert(denotations, argument_data).first;
-        const auto planning_state = initial.get_state();
+        const auto& planning_state = initial.get_state();
         auto borrowed_context = kr::dl::semantics::StateEvaluationContext<Kind, tyr::planning::BuilderStateView<Kind>>(
             tyr::planning::BuilderStateView<Kind>(planning_state.get_state_builder(), *search->task),
             builder,
@@ -649,9 +649,9 @@ void check_cached_queries()
                          {
                              ygg::Builder<ygg::database::Relation> lhs(decoded.plan.lhs_columns().span()), rhs(decoded.plan.rhs_columns().span()),
                                  result(decoded.plan.output_columns().span());
-                             lhs.insert(std::tuple { ygg::uint_t(10), ygg::uint_t(20) });
-                             lhs.insert(std::tuple { ygg::uint_t(30), ygg::uint_t(40) });
-                             rhs.insert(std::tuple { ygg::uint_t(20) });
+                             lhs.insert(std::tuple { static_cast<ygg::uint_t>(10), static_cast<ygg::uint_t>(20) });
+                             lhs.insert(std::tuple { static_cast<ygg::uint_t>(30), static_cast<ygg::uint_t>(40) });
+                             rhs.insert(std::tuple { static_cast<ygg::uint_t>(20) });
                              ygg::database::Workspace scratch;
                              ygg::database::join(lhs, rhs, decoded.plan, result, scratch);
                              EXPECT_EQ(result.size(), 1);
@@ -1187,7 +1187,7 @@ void check_query_object_views()
 template<tyr::TaskKind Kind>
 void check_multiword_bit_evaluation()
 {
-    constexpr auto word_bits = ygg::uint_t(std::numeric_limits<ygg::uint_t>::digits);
+    constexpr auto word_bits = static_cast<ygg::uint_t>(std::numeric_limits<ygg::uint_t>::digits);
     constexpr auto num_objects = 2 * word_bits + 3;
     constexpr auto last = num_objects - 1;
     const auto name = [](ygg::uint_t i) { return "v" + std::to_string(1000 + i); };
@@ -1196,10 +1196,10 @@ void check_multiword_bit_evaluation()
         domain_source += " " + name(i);
     domain_source += ") (:predicates (marked ?x) (edge ?x ?y)))";
     auto task_source = std::string("(define (problem bit-boundaries-task) (:domain bit-boundaries) (:init");
-    for (const auto i : { ygg::uint_t(0), word_bits - 1, word_bits, last })
+    for (const auto i : { static_cast<ygg::uint_t>(0), word_bits - 1, word_bits, last })
         task_source += " (marked " + name(i) + ")";
-    for (const auto& [from, to] : std::array { std::pair { ygg::uint_t(0), word_bits - 1 },
-                                               std::pair { ygg::uint_t(0), word_bits },
+    for (const auto& [from, to] : std::array { std::pair { static_cast<ygg::uint_t>(0), word_bits - 1 },
+                                               std::pair { static_cast<ygg::uint_t>(0), word_bits },
                                                std::pair { word_bits - 1, last },
                                                std::pair { word_bits, last } })
         task_source += " (edge " + name(from) + " " + name(to) + ")";
@@ -1218,7 +1218,7 @@ void check_multiword_bit_evaluation()
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     const auto domain = task->get_domain().get_domain();
     ASSERT_EQ(domain.get_constants().size(), num_objects);
-    for (const auto i : { ygg::uint_t(0), word_bits - 1, word_bits, last })
+    for (const auto i : { static_cast<ygg::uint_t>(0), word_bits - 1, word_bits, last })
     {
         ASSERT_EQ(domain.get_constants()[i].get_name(), name(i));
         ASSERT_EQ(ygg::uint_t(domain.get_constants()[i].get_index()), i);
@@ -1244,7 +1244,7 @@ void check_multiword_bit_evaluation()
 
     const auto selected = query("(q_concept x " + marked + ")");
     ASSERT_EQ(selected.size(), 4);
-    for (const auto i : { ygg::uint_t(0), word_bits - 1, word_bits, last })
+    for (const auto i : { static_cast<ygg::uint_t>(0), word_bits - 1, word_bits, last })
         EXPECT_TRUE(selected.contains(std::tuple { ygg::uint_t(i) }));
     EXPECT_EQ(query("(q_concept x (c_top))").size(), num_objects);
     EXPECT_TRUE(query("(q_concept x (c_bot))").empty());

@@ -36,7 +36,7 @@ public:
         std::ranges::reverse(m_cycle);
     }
 
-    const auto& get_cycle() const noexcept { return m_cycle; }
+    [[nodiscard]] const auto& get_cycle() const noexcept { return m_cycle; }
 };
 
 template<IsGraph Graph>
@@ -61,7 +61,7 @@ auto find_edge_cycle(const Graph& graph) -> EdgeIndexList
     auto result = EdgeIndexList {};
     for (std::size_t position = 1; position < vertices.size(); ++position)
     {
-        const auto outgoing = graph.get_out_edge_indices(vertices[position - 1]);
+        const auto& outgoing = graph.get_out_edge_indices(vertices[position - 1]);
         result.push_back(*std::ranges::find_if(outgoing, [&](auto edge) { return graph.get_target(edge) == vertices[position]; }));
     }
     return result;

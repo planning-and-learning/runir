@@ -42,11 +42,11 @@ public:
     BasicRepository(BasicRepository&&) = delete;
     BasicRepository& operator=(BasicRepository&&) = delete;
 
-    const auto& get_index() const noexcept { return m_index; }
+    [[nodiscard]] const auto& get_index() const noexcept { return m_index; }
     // Dereference the raw pointer: operator* on the shared_ptr would complete the DL repository type for its lookup.
     auto& get_dl_repository() noexcept { return *m_dl_repository.get(); }
-    const auto& get_dl_repository() const noexcept { return *m_dl_repository.get(); }
-    const auto& get_dl_repository_ptr() const noexcept { return m_dl_repository; }
+    [[nodiscard]] const auto& get_dl_repository() const noexcept { return *m_dl_repository.get(); }
+    [[nodiscard]] const auto& get_dl_repository_ptr() const noexcept { return m_dl_repository; }
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<BasicRepository, T>
@@ -55,7 +55,7 @@ public:
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<BasicRepository, T>
-    const BasicRepository& get_canonical_context(ygg::Index<T>) const noexcept
+    [[nodiscard]] const BasicRepository& get_canonical_context(ygg::Index<T>) const noexcept
     { return *this; }
 };
 

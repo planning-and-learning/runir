@@ -40,8 +40,8 @@ public:
         m_action(action)
     {
     }
-    auto get_rule() const noexcept { return m_rule; }
-    auto get_variant() const noexcept { return m_variant; }
+    [[nodiscard]] auto get_rule() const noexcept { return m_rule; }
+    [[nodiscard]] auto get_variant() const noexcept { return m_variant; }
 
 private:
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,

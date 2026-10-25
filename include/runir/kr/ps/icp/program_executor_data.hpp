@@ -76,7 +76,7 @@ struct ProgramProofResults
     runir::graphs::VertexIndexList cycle;
     ProgramSearchStatistics statistics;
 
-    bool is_successful() const noexcept { return status == ProgramProofStatus::SUCCESS; }
+    [[nodiscard]] bool is_successful() const noexcept { return status == ProgramProofStatus::SUCCESS; }
 };
 
 }  // namespace runir::kr::ps::icp

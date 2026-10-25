@@ -76,7 +76,7 @@ void bind_equivalence_graph(nb::module_& m)
         .def(nb::init<>())
         .def(
             "create",
-            [](ColorRepositoryFactory& self, tyr::formalism::planning::PlanningDomain planning_domain)
+            [](ColorRepositoryFactory& self, const tyr::formalism::planning::PlanningDomain& planning_domain)
             { return self.create(planning_domain.get_repository()); },
             "planning_domain"_a)
         .def(

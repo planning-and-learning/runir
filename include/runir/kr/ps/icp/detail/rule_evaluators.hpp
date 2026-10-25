@@ -106,8 +106,8 @@ public:
         m_enabled.reserve(m_evaluators.size());
     }
 
-    const auto& get_task_context() const noexcept { return m_workspace.get_task_context(); }
-    auto get_program() const noexcept { return m_workspace.get_program(); }
+    [[nodiscard]] const auto& get_task_context() const noexcept { return m_workspace.get_task_context(); }
+    [[nodiscard]] auto get_program() const noexcept { return m_workspace.get_program(); }
     auto initial_state(tyr::planning::StateView<Kind> state) { return m_workspace.initial_state(state); }
 
     /// Callbacks borrow shared scratch and must not reenter the evaluators or planning generator.

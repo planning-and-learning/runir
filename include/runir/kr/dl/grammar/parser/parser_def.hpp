@@ -27,7 +27,7 @@ inline constexpr bool has_ast_constructor_tag_v = ygg::InTypeList<Tag, runir::kr
 
 template<bool Enabled, typename Parser>
     requires boost::spirit::x3::traits::is_parser<Parser>::value
-auto maybe(Parser parser)
+auto maybe(const Parser& parser)
 {
     if constexpr (Enabled)
         return parser;
@@ -115,7 +115,7 @@ inline auto bool_string_parser()
 
 template<typename Choice>
     requires boost::spirit::x3::traits::is_parser<Choice>::value && requires { typename Choice::attribute_type; }
-auto derivation_choices_parser(Choice choice)
+auto derivation_choices_parser(const Choice& choice)
 {
     const auto choices = boost::spirit::x3::rule<class DerivationChoiceList, std::vector<typename Choice::attribute_type>> { "constructor alternatives" } =
         choice % keyword("or");
@@ -125,7 +125,7 @@ auto derivation_choices_parser(Choice choice)
 
 template<typename Parser>
     requires boost::spirit::x3::traits::is_parser<Parser>::value
-auto with_constructor_parentheses(Parser parser)
+auto with_constructor_parentheses(const Parser& parser)
 { return lit("(") >> parser > lit(")"); }
 
 template<typename Tag>

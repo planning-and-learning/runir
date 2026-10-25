@@ -65,7 +65,7 @@ struct SketchProofResults
     runir::graphs::VertexIndexList cycle;
     SketchSearchStatistics statistics;
 
-    bool is_successful() const noexcept { return status == SketchProofStatus::SUCCESS; }
+    [[nodiscard]] bool is_successful() const noexcept { return status == SketchProofStatus::SUCCESS; }
 };
 
 template<tyr::TaskKind Kind>

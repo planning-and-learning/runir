@@ -95,7 +95,7 @@ auto successors(kr::ps::icp::SuccessorExpander<Kind, EvaluationPolicy>& expander
     expander.for_each_successor(
         source,
         stats,
-        [&](auto step)
+        [&](const auto& step)
         {
             result.push_back(step);
             return true;

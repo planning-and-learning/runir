@@ -63,7 +63,7 @@ template<runir::kr::FamilyTag Family,
          runir::kr::ps::dl::FeatureTag FeatureTag,
          runir::kr::ps::dl::ConditionObservationTag<FeatureTag> ObservationTag,
          typename C>
-Out condition(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view, Out out)
+Out condition(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view, const Out& out)
 { return fmt::format_to(out, "({} {})", ObservationTag::keyword, view.get_feature().get_symbol()); }
 
 template<runir::kr::FamilyTag Family, typename Out, typename LanguageTag, typename C>
@@ -83,7 +83,7 @@ template<runir::kr::FamilyTag Family,
          runir::kr::ps::dl::FeatureTag FeatureTag,
          runir::kr::ps::dl::EffectObservationTag<FeatureTag> ObservationTag,
          typename C>
-Out effect(ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view, Out out)
+Out effect(ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view, const Out& out)
 { return fmt::format_to(out, "({} {})", ObservationTag::keyword, view.get_feature().get_symbol()); }
 
 template<runir::kr::FamilyTag Family, typename Out, typename LanguageTag, typename C>

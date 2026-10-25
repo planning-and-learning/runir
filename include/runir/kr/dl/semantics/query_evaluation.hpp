@@ -12,10 +12,7 @@
 #include <yggdrasil/database/semantics/generic_join.hpp>
 #include <yggdrasil/database/semantics/operations.hpp>
 
-namespace runir::kr::dl::semantics
-{
-
-namespace detail
+namespace runir::kr::dl::semantics::detail
 {
 
 /// Materialize rows into an empty, matching builder without publishing the root.
@@ -109,8 +106,6 @@ void evaluate_query(ygg::View<ygg::Index<Query<Tag>>, C> constructor, Context& c
     }
 }
 
-}  // namespace detail
-
-}  // namespace runir::kr::dl::semantics
+}  // namespace runir::kr::dl::semantics::detail
 
 #endif

@@ -83,8 +83,8 @@ static_assert(requires(BaseFeatureInExt feature, BaseConditionInExt condition) {
 struct BaseFeatureStorage
 {
     const BaseCustomRepository& repository;
-    const auto& get_dl_repository() const { return repository.get_dl_repository(); }
-    const auto& get_index() const { return repository.get_index(); }
+    [[nodiscard]] const auto& get_dl_repository() const { return repository.get_dl_repository(); }
+    [[nodiscard]] const auto& get_index() const { return repository.get_index(); }
     friend const BaseCustomRepository& get_repository(const BaseFeatureStorage& storage) { return storage.repository; }
 };
 

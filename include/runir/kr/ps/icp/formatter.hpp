@@ -25,10 +25,10 @@ namespace runir::kr::ps::icp
 {
 
 template<typename Values, typename Append>
-void append_inline_section(std::ostream& os, std::string_view name, Values values, Append append)
+void append_inline_section(std::ostream& os, std::string_view name, const Values& values, Append append)
 {
     os << ygg::print_indent << "(:" << name;
-    for (auto value : values)
+    for (const auto& value : values)
     {
         os << ' ';
         append(os, value);

@@ -52,7 +52,7 @@ struct Data<runir::kr::ps::ext::Module>
          IndexList<runir::kr::ps::ext::MemoryState> memory_states_,
          IndexMatrix<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>> memory_transitions_) :
         index(),
-        symbol(std::move(symbol_)),
+        symbol(symbol_),
         concept_arguments(std::move(concept_arguments_)),
         role_arguments(std::move(role_arguments_)),
         boolean_arguments(std::move(boolean_arguments_)),
@@ -64,7 +64,7 @@ struct Data<runir::kr::ps::ext::Module>
         boolean_features(std::move(boolean_features_)),
         numerical_features(std::move(numerical_features_)),
         query_features(std::move(query_features_)),
-        entry_memory_state(std::move(entry_memory_state_)),
+        entry_memory_state(entry_memory_state_),
         memory_states(std::move(memory_states_)),
         memory_transitions(std::move(memory_transitions_))
     {

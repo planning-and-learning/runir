@@ -46,13 +46,13 @@ class EvaluationGraph
     const tyr::planning::Task<Kind>* m_task;
 
     template<CategoryTag Category>
-    const auto& node(EvaluationIndex<Category> index) const
+    [[nodiscard]] const auto& node(EvaluationIndex<Category> index) const
     { return std::get<detail::FeatureNode<Kind, Category>>(m_nodes.at(ygg::uint_t(index))); }
-    const auto& node(QueryEvaluationIndex index) const { return std::get<detail::QueryNode<Kind>>(m_nodes.at(ygg::uint_t(index))); }
+    [[nodiscard]] const auto& node(QueryEvaluationIndex index) const { return std::get<detail::QueryNode<Kind>>(m_nodes.at(ygg::uint_t(index))); }
 
     template<CategoryTag Category>
     std::optional<EvaluationIndex<Category>> find_node(ConstructorView<Category> expression) const;
-    std::optional<QueryEvaluationIndex> find_node(QueryView<> expression) const;
+    [[nodiscard]] std::optional<QueryEvaluationIndex> find_node(QueryView<> expression) const;
 
     template<CategoryTag Category>
     EvaluationIndex<Category> prepare(ConstructorView<Category> expression);
@@ -107,27 +107,27 @@ public:
 
     /// Resolve a prepared root or shared child once; retain its index for evaluation.
     template<CategoryTag Category>
-    EvaluationIndex<Category> get_index(ConstructorView<Category> expression) const;
-    QueryEvaluationIndex get_index(QueryView<> expression) const;
+    [[nodiscard]] EvaluationIndex<Category> get_index(ConstructorView<Category> expression) const;
+    [[nodiscard]] QueryEvaluationIndex get_index(QueryView<> expression) const;
 
-    size_t node_count() const noexcept;
+    [[nodiscard]] size_t node_count() const noexcept;
 
     /// The results and changes of nodes, read by evaluators from their children (brought to the current state first,
     /// see IncrementalEvaluation).
     template<CategoryTag Category>
-    BorrowedDenotationView<Category> result(EvaluationIndex<Category> index) const;
-    const ygg::Builder<ygg::database::Relation>& result(QueryEvaluationIndex index) const;
+    [[nodiscard]] BorrowedDenotationView<Category> result(EvaluationIndex<Category> index) const;
+    [[nodiscard]] const ygg::Builder<ygg::database::Relation>& result(QueryEvaluationIndex index) const;
     template<ConceptOrRoleTag Category>
-    const DenotationDelta<Category>& change(EvaluationIndex<Category> index) const;
-    const ygg::database::incremental::Delta& change(QueryEvaluationIndex index) const;
+    [[nodiscard]] const DenotationDelta<Category>& change(EvaluationIndex<Category> index) const;
+    [[nodiscard]] const ygg::database::incremental::Delta& change(QueryEvaluationIndex index) const;
     template<ConceptOrRoleTag Category>
-    size_t cardinality(EvaluationIndex<Category> index) const;
-    size_t cardinality(QueryEvaluationIndex index) const { return result(index).size(); }
+    [[nodiscard]] size_t cardinality(EvaluationIndex<Category> index) const;
+    [[nodiscard]] size_t cardinality(QueryEvaluationIndex index) const { return result(index).size(); }
     template<ConceptOrRoleTag Category>
-    bool nonempty(EvaluationIndex<Category> index) const
+    [[nodiscard]] bool nonempty(EvaluationIndex<Category> index) const
     { return result(index).any(); }
-    bool nonempty(QueryEvaluationIndex index) const { return !result(index).empty(); }
-    const tyr::formalism::planning::Repository& repository() const { return *m_task->get_repository(); }
+    [[nodiscard]] bool nonempty(QueryEvaluationIndex index) const { return !result(index).empty(); }
+    [[nodiscard]] const tyr::formalism::planning::Repository& repository() const { return *m_task->get_repository(); }
     detail::SetOperationWorkspace& set_workspace() noexcept { return m_set_workspace; }
 };
 
@@ -223,7 +223,7 @@ public:
     IncrementalEvaluation(IncrementalEvaluation&&) = default;
     IncrementalEvaluation& operator=(IncrementalEvaluation&&) = default;
 
-    const EvaluationGraph<Kind>& graph() const noexcept { return m_graph; }
+    [[nodiscard]] const EvaluationGraph<Kind>& graph() const noexcept { return m_graph; }
 
     /// Enters a state unrelated to the previous one: every demanded node is initialized.
     template<StateEvaluationContextConcept<Kind> Context>
@@ -253,27 +253,27 @@ public:
 private:
     /// Results of nodes evaluated in the current state, read through StateEvaluation, which demands them first.
     template<CategoryTag Category>
-    BorrowedDenotationView<Category> get_result(EvaluationIndex<Category> index) const
+    [[nodiscard]] BorrowedDenotationView<Category> get_result(EvaluationIndex<Category> index) const
     { return m_graph.result(index); }
-    const ygg::Builder<ygg::database::Relation>& get_result(QueryEvaluationIndex index) const { return m_graph.result(index); }
+    [[nodiscard]] const ygg::Builder<ygg::database::Relation>& get_result(QueryEvaluationIndex index) const { return m_graph.result(index); }
     template<ConceptOrRoleTag Category>
-    size_t size(EvaluationIndex<Category> index) const
+    [[nodiscard]] size_t size(EvaluationIndex<Category> index) const
     { return m_graph.cardinality(index); }
-    size_t size(QueryEvaluationIndex index) const { return m_graph.cardinality(index); }
+    [[nodiscard]] size_t size(QueryEvaluationIndex index) const { return m_graph.cardinality(index); }
     /// Changes of nodes updated from the transition into the current state.
     template<ConceptOrRoleTag Category>
-    const DenotationDelta<Category>& get_delta(EvaluationIndex<Category> index) const
+    [[nodiscard]] const DenotationDelta<Category>& get_delta(EvaluationIndex<Category> index) const
     {
         require_exact(ygg::uint_t(index));
         return m_graph.change(index);
     }
-    const ygg::database::incremental::Delta& get_delta(QueryEvaluationIndex index) const
+    [[nodiscard]] const ygg::database::incremental::Delta& get_delta(QueryEvaluationIndex index) const
     {
         require_exact(ygg::uint_t(index));
         return m_graph.change(index);
     }
     template<BooleanOrNumericalTag Category>
-    bool changed(EvaluationIndex<Category> index) const;
+    [[nodiscard]] bool changed(EvaluationIndex<Category> index) const;
 };
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
@@ -303,8 +303,8 @@ class StateEvaluation
     }
 
 public:
-    const EvaluationGraph<Kind>& graph() const noexcept { return m_evaluation->graph(); }
-    const Context& context() const noexcept { return m_context; }
+    [[nodiscard]] const EvaluationGraph<Kind>& graph() const noexcept { return m_evaluation->graph(); }
+    [[nodiscard]] const Context& context() const noexcept { return m_context; }
 
     template<CategoryTag Category>
     BorrowedDenotationView<Category> evaluate(EvaluationIndex<Category> index)

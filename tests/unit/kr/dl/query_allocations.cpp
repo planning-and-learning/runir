@@ -339,7 +339,7 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
         projection.update(delta.change(), workspace);
         auto graph_state = graph.update(contexts[target], change, workspace);
         const auto& projected_delta = projection.get_delta();
-        return leaf.get_result().size() == rows && delta.added.size() == size_t(adding) && delta.removed.size() == size_t(!adding)
+        return leaf.get_result().size() == rows && delta.added.size() == static_cast<size_t>(adding) && delta.removed.size() == static_cast<size_t>(!adding)
                && projection.get_result().size() == projected_rows && projected_delta.added.size() == (adding ? projected_rows - previous_size : 0)
                && projected_delta.removed.size() == (adding ? 0 : previous_size - projected_rows)
                && same_rows(graph_state.get_result(), projection.get_result()) && same_rows(graph_state.get_delta().added, projected_delta.added)
@@ -505,7 +505,7 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
     const auto apply = [&](const auto& delta, size_t target, size_t members, size_t register_members)
     {
         const auto& target_context = contexts[target];
-        const auto concept_sizes = std::array { members, members, register_members, size_t(2) };
+        const auto concept_sizes = std::array { members, members, register_members, static_cast<size_t>(2) };
         const auto role_sizes = std::array { members, members, register_members };
         bool valid = true;
         for (size_t i = 0; i < concepts.size(); ++i)
@@ -532,7 +532,7 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
         }
         auto graph = evaluation.enter(target_context, delta, workspace);
         const auto infinity = std::numeric_limits<ygg::uint_t>::max();
-        const auto expected_distance = members == 2 ? ygg::uint_t(2) : members == 1 ? ygg::uint_t(0) : infinity;
+        const auto expected_distance = members == 2 ? static_cast<ygg::uint_t>(2) : members == 1 ? static_cast<ygg::uint_t>(0) : infinity;
         valid &= graph.size(source_id) == register_members && graph.size(edge_id) == members;
         valid &= graph.evaluate(source_count_id).get() == register_members;
         valid &= graph.evaluate(edge_count_id).get() == members;
@@ -591,7 +591,7 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
     const auto renamed = std::array<ColumnIndex, 2> { ColumnIndex(2), ColumnIndex(3) };
     auto result = builder.get_builder<ygg::database::Relation>(columns);
     for (ygg::uint_t i = 0; i < 32; ++i)
-        result->insert(std::tuple { ygg::uint_t(i), ygg::uint_t(i + 1) });
+        result->insert(std::tuple { static_cast<ygg::uint_t>(i), static_cast<ygg::uint_t>(i + 1) });
     const auto* slot = result.get();
     const auto* schema_buffer = result->columns().data();
     const auto schema_capacity = result->memory_usage() - result->storage().memory_usage();
@@ -616,7 +616,7 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
         reused &= next->memory_usage() - next->storage().memory_usage() == schema_capacity;
         reused &= next->storage().memory_usage() == row_capacity;
         for (ygg::uint_t i = 0; i < 32; ++i)
-            next->insert(std::tuple { ygg::uint_t(i), ygg::uint_t(i + 1) });
+            next->insert(std::tuple { static_cast<ygg::uint_t>(i), static_cast<ygg::uint_t>(i + 1) });
         reused &= next->row(0).data() == row_buffer;
         const auto value = ygg::database::insert(repository, *next).first;
         reused &= value.columns().data() == stored_schema_buffer;
@@ -646,17 +646,17 @@ TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
         valid &= repository.empty();
         for (ygg::uint_t i = 0; i < 512; ++i)
         {
-            const auto object = ObjectIndex(ygg::uint_t(i + generation * 512));
+            const auto object = ObjectIndex(static_cast<ygg::uint_t>(i + generation * 512));
             auto owner = builder.get_builder<ygg::database::Relation>(columns);
-            owner->insert(std::tuple { object.get_value(), ygg::uint_t(1) });
-            owner->insert(std::tuple { object.get_value(), ygg::uint_t(2) });
+            owner->insert(std::tuple { object.get_value(), static_cast<ygg::uint_t>(1) });
+            owner->insert(std::tuple { object.get_value(), static_cast<ygg::uint_t>(2) });
             const auto value = ygg::database::insert(repository, *owner, generation).first;
             const auto alias = repository.rename(value, aliases);
             valid &= value.size() == 2 && alias.size() == 2 && ObjectIndex(value[0].template get<ygg::uint_t>(size_t { 0 })) == object;
             valid &= value.get_storage_address() == alias.get_storage_address();
             auto duplicate = builder.get_builder<ygg::database::Relation>(columns);
-            duplicate->insert(std::tuple { object.get_value(), ygg::uint_t(2) });
-            duplicate->insert(std::tuple { object.get_value(), ygg::uint_t(1) });
+            duplicate->insert(std::tuple { object.get_value(), static_cast<ygg::uint_t>(2) });
+            duplicate->insert(std::tuple { object.get_value(), static_cast<ygg::uint_t>(1) });
             valid &= ygg::database::insert(repository, *duplicate, generation).first == value;
             valid &= repository.rename(value, aliases) == alias;
         }
@@ -689,7 +689,7 @@ TEST(RunirSearch, WarmedProgramSearchAllocationsGrowWithContainerCapacity)
             auto allocations = std::array<size_t, 2> {};
             for (size_t scale = 0; scale < allocations.size(); ++scale)
             {
-                const auto length = scale == 0 ? size_t(64) : size_t(512);
+                const auto length = scale == 0 ? static_cast<size_t>(64) : static_cast<size_t>(512);
                 auto text = std::string(R"((:program (:entry chain)
                     (:module (:symbol chain) (:arguments) (:registers (:concept selected))
                         (:entry m0) (:memory)");
@@ -798,9 +798,9 @@ void expect_warmed_action_expansions(const kr::TaskContextPtr<Kind>& context, kr
         valid &= expander.for_each_successor(
             expander.view(initial),
             statistics,
-            [&](auto step)
+            [&](const auto& step)
             {
-                if constexpr (std::same_as<decltype(step), kr::ps::ext::detail::ProgramStep<Kind, Storage>>)
+                if constexpr (std::same_as<std::remove_cvref_t<decltype(step)>, kr::ps::ext::detail::ProgramStep<Kind, Storage>>)
                 {
                     valid &= step.status == kr::ps::ext::detail::ProgramOutcome::APPLIED && step.state_transition.has_value();
                     ++emitted;

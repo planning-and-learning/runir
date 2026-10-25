@@ -147,16 +147,16 @@ public:
         validate_inputs();
     }
 
-    const S& get_state() const noexcept { return m_state; }
+    [[nodiscard]] const S& get_state() const noexcept { return m_state; }
     Builder& get_builder() noexcept { return m_builder; }
-    DenotationRepository& get_denotation_repository(bool is_static) const noexcept { return *m_denotations[is_static]; }
-    DenotationRepository& get_denotation_repository() const noexcept { return get_denotation_repository(m_result_is_static); }
+    [[nodiscard]] DenotationRepository& get_denotation_repository(bool is_static) const noexcept { return *m_denotations[is_static]; }
+    [[nodiscard]] DenotationRepository& get_denotation_repository() const noexcept { return get_denotation_repository(m_result_is_static); }
     EvaluationWorkspace& get_workspace() noexcept { return detail::get_workspace(m_builder); }
     DenotationCaches& get_caches() noexcept { return *m_caches; }
 
-    BorrowedRegisterValuesView registers() const noexcept { return m_registers; }
-    bool has_arguments() const noexcept { return m_arguments.has_value(); }
-    CallArgumentsView arguments() const
+    [[nodiscard]] BorrowedRegisterValuesView registers() const noexcept { return m_registers; }
+    [[nodiscard]] bool has_arguments() const noexcept { return m_arguments.has_value(); }
+    [[nodiscard]] CallArgumentsView arguments() const
     {
         if (!m_arguments)
             detail::throw_unbound_arguments();
@@ -164,7 +164,7 @@ public:
     }
 
     /// Copies only borrowed views and references; result payloads stay put.
-    StateEvaluationContext for_result(bool is_static) const noexcept
+    [[nodiscard]] StateEvaluationContext for_result(bool is_static) const noexcept
     {
         auto result = *this;
         result.select_result(is_static);
@@ -172,7 +172,7 @@ public:
     }
 
     /// Recursive results use the reusable intermediate caches and repositories.
-    StateEvaluationContext child_context() const noexcept
+    [[nodiscard]] StateEvaluationContext child_context() const noexcept
     {
         auto result = *this;
         result.select_children();

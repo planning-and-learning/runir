@@ -30,8 +30,8 @@ public:
         m_callee(program.find_module(rule.get_callee()))
     {
     }
-    auto get_rule() const noexcept { return m_rule; }
-    auto get_variant() const noexcept { return m_variant; }
+    [[nodiscard]] auto get_rule() const noexcept { return m_rule; }
+    [[nodiscard]] auto get_variant() const noexcept { return m_variant; }
 
 private:
     static bool arguments_match(ModuleView callee, runir::kr::dl::semantics::CallArgumentsView arguments)

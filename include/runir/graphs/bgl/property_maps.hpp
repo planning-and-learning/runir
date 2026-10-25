@@ -38,8 +38,8 @@ public:
 
     explicit DenseReadPropertyMap(const std::vector<Value>& data) noexcept : m_data(data) {}
 
-    auto get(Key key) const -> const Value& { return m_data.get().at(key); }
-    auto get_data() const noexcept -> const std::vector<Value>& { return m_data.get(); }
+    [[nodiscard]] auto get(Key key) const -> const Value& { return m_data.get().at(key); }
+    [[nodiscard]] auto get_data() const noexcept -> const std::vector<Value>& { return m_data.get(); }
 };
 
 template<std::unsigned_integral Key, std::copyable Value>
@@ -60,10 +60,10 @@ public:
 
     explicit DenseReadWritePropertyMap(std::vector<Value>& data) noexcept : m_data(data) {}
 
-    auto get(Key key) const -> const Value& { return m_data.get().at(key); }
+    [[nodiscard]] auto get(Key key) const -> const Value& { return m_data.get().at(key); }
     void put(Key key, const Value& value) { m_data.get().at(key) = value; }
     auto get_data() noexcept -> std::vector<Value>& { return m_data.get(); }
-    auto get_data() const noexcept -> const std::vector<Value>& { return m_data.get(); }
+    [[nodiscard]] auto get_data() const noexcept -> const std::vector<Value>& { return m_data.get(); }
 };
 
 template<std::unsigned_integral Key, std::copyable Value>
@@ -88,8 +88,8 @@ public:
 
     explicit SparseReadPropertyMap(const ygg::UnorderedMap<Key, Value>& data) noexcept : m_data(data) {}
 
-    auto get(Key key) const -> const Value& { return m_data.get().at(key); }
-    auto get_data() const noexcept -> const ygg::UnorderedMap<Key, Value>& { return m_data.get(); }
+    [[nodiscard]] auto get(Key key) const -> const Value& { return m_data.get().at(key); }
+    [[nodiscard]] auto get_data() const noexcept -> const ygg::UnorderedMap<Key, Value>& { return m_data.get(); }
 };
 
 template<std::unsigned_integral Key, std::copyable Value>
@@ -110,10 +110,10 @@ public:
 
     explicit SparseReadWritePropertyMap(ygg::UnorderedMap<Key, Value>& data) noexcept : m_data(data) {}
 
-    auto get(Key key) const -> const Value& { return m_data.get().at(key); }
+    [[nodiscard]] auto get(Key key) const -> const Value& { return m_data.get().at(key); }
     void put(Key key, const Value& value) { m_data.get()[key] = value; }
     auto get_data() noexcept -> ygg::UnorderedMap<Key, Value>& { return m_data.get(); }
-    auto get_data() const noexcept -> const ygg::UnorderedMap<Key, Value>& { return m_data.get(); }
+    [[nodiscard]] auto get_data() const noexcept -> const ygg::UnorderedMap<Key, Value>& { return m_data.get(); }
 };
 
 template<std::unsigned_integral Key, std::copyable Value>
@@ -135,7 +135,7 @@ public:
 
     auto operator[](Key key) -> std::vector<Value>& { return m_data.get().at(key); }
     auto operator[](Key key) const -> const std::vector<Value>& { return m_data.get().at(key); }
-    auto get_data() const noexcept -> const std::vector<std::vector<Value>>& { return m_data.get(); }
+    [[nodiscard]] auto get_data() const noexcept -> const std::vector<std::vector<Value>>& { return m_data.get(); }
 };
 
 template<std::unsigned_integral Key, typename Value>
@@ -149,7 +149,7 @@ public:
 
     auto operator[](Key key) -> ygg::UnorderedMap<Key, Value>& { return m_data.get()[key]; }
     auto operator[](Key key) const -> const ygg::UnorderedMap<Key, Value>& { return m_data.get().at(key); }
-    auto get_data() const noexcept -> const ygg::UnorderedMap<Key, ygg::UnorderedMap<Key, Value>>& { return m_data.get(); }
+    [[nodiscard]] auto get_data() const noexcept -> const ygg::UnorderedMap<Key, ygg::UnorderedMap<Key, Value>>& { return m_data.get(); }
 };
 
 }  // namespace runir::graphs::bgl

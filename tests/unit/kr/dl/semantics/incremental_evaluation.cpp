@@ -732,7 +732,7 @@ void check_incremental_evaluation()
     EXPECT_THROW(demanded.delta(query_id), std::logic_error);  // Initialized results have no delta.
     size_t previous_state = 0;
     auto demand_delta = kr::dl::semantics::incremental::Delta {};
-    for (const auto i : { size_t(1), size_t(2), size_t(0) })
+    for (const auto i : { static_cast<size_t>(1), static_cast<size_t>(2), static_cast<size_t>(0) })
     {
         storage.reset_dynamic();
         demand_delta.template assign<Kind>(nodes[previous_state].get_state(), registers(previous_state), nodes[i].get_state(), registers(i));

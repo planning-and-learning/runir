@@ -79,8 +79,8 @@ public:
     runir::kr::dl::semantics::RegisterValuesView registers(ygg::Data<runir::kr::dl::semantics::RegisterValues>& data)
     { return insert(*m_context->dl_denotation_repository, data).first; }
 
-    StateView view(StoredState state) const noexcept { return state; }
-    StoredState retain(StateView state) const noexcept { return state; }
+    [[nodiscard]] StateView view(StoredState state) const noexcept { return state; }
+    [[nodiscard]] StoredState retain(StateView state) const noexcept { return state; }
 
     StoredState store(tyr::planning::StateView<Kind> planning_state,
                       ModuleView module_,
@@ -110,7 +110,7 @@ public:
     }
 
     /// Continue from an interned program state of this task and program.
-    StoredState start_state(ProgramStateView<Kind> state) const noexcept { return state; }
+    [[nodiscard]] StoredState start_state(ProgramStateView<Kind> state) const noexcept { return state; }
 
     ProgramStateView<Kind> materialize(ProgramStateView<Kind> state) { return state; }
 

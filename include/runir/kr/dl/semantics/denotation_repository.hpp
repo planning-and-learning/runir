@@ -63,15 +63,15 @@ public:
     DenotationRepository(DenotationRepository&&) = delete;
     DenotationRepository& operator=(DenotationRepository&&) = delete;
 
-    const auto& get_index() const noexcept { return m_index; }
-    auto get_factory() const noexcept { return m_factory; }
-    const tyr::formalism::planning::Repository& get_formalism_repository() const noexcept
+    [[nodiscard]] const auto& get_index() const noexcept { return m_index; }
+    [[nodiscard]] auto get_factory() const noexcept { return m_factory; }
+    [[nodiscard]] const tyr::formalism::planning::Repository& get_formalism_repository() const noexcept
     {
         assert(m_formalism_repository);
         // Dereference the raw pointer: operator* on the shared_ptr would complete the repository type for its lookup.
         return *m_formalism_repository.get();
     }
-    const auto& get_formalism_repository_ptr() const noexcept { return m_formalism_repository; }
+    [[nodiscard]] const auto& get_formalism_repository_ptr() const noexcept { return m_formalism_repository; }
 
     void clear() noexcept
     {
@@ -90,12 +90,12 @@ public:
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
-    const DenotationRepository& get_canonical_context(ygg::Index<T>) const noexcept
+    [[nodiscard]] const DenotationRepository& get_canonical_context(ygg::Index<T>) const noexcept
     { return *this; }
 
-    const auto& get_vector_repository() const noexcept { return m_vector_repository; }
+    [[nodiscard]] const auto& get_vector_repository() const noexcept { return m_vector_repository; }
     auto& get_vector_repository() noexcept { return m_vector_repository; }
-    const auto& get_relation_repository() const noexcept { return m_relation_repository; }
+    [[nodiscard]] const auto& get_relation_repository() const noexcept { return m_relation_repository; }
     auto& get_relation_repository() noexcept { return m_relation_repository; }
 };
 

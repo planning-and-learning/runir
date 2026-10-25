@@ -22,7 +22,7 @@ struct Data<runir::kr::ps::ext::Program>
     Data() = default;
     Data(Index<runir::kr::ps::ext::Module> entry_module_, IndexList<runir::kr::ps::ext::Module> modules_) :
         index(),
-        entry_module(std::move(entry_module_)),
+        entry_module(entry_module_),
         modules(std::move(modules_))
     {
     }

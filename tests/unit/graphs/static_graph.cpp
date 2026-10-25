@@ -39,23 +39,24 @@ struct PropertyOnlyGraph
 {
     using VertexPropertyType = std::string;
     using EdgePropertyType = std::string;
-    const std::string& get_vertex_property(graphs::VertexPropertyIndex<std::string>) const;
-    const std::string& get_edge_property(graphs::EdgePropertyIndex<std::string>) const;
+    [[nodiscard]] const std::string& get_vertex_property(graphs::VertexPropertyIndex<std::string>) const;
+    [[nodiscard]] const std::string& get_edge_property(graphs::EdgePropertyIndex<std::string>) const;
 };
 static_assert(graphs::IsGraphWithProperties<PropertyOnlyGraph, std::string, std::string>);
 static_assert(!graphs::IsGraph<PropertyOnlyGraph>);
 
 struct OwningVertexRange : StaticGraph
 {
-    std::vector<graphs::VertexIndex> get_vertex_indices() const;
+    [[nodiscard]] std::vector<graphs::VertexIndex> get_vertex_indices() const;
 };
 struct WrongEdgeRange : StaticGraph
 {
-    std::span<const std::string> get_edge_indices() const;
+    [[nodiscard]] std::span<const std::string> get_edge_indices() const;
 };
 struct NonCommonOutgoingRange : StaticGraph
 {
-    std::ranges::subrange<std::counted_iterator<const graphs::EdgeIndex*>, std::default_sentinel_t> get_out_edge_indices(graphs::VertexIndex) const;
+    [[nodiscard]] std::ranges::subrange<std::counted_iterator<const graphs::EdgeIndex*>, std::default_sentinel_t>
+        get_out_edge_indices(graphs::VertexIndex) const;
 };
 static_assert(!graphs::IsGraph<OwningVertexRange>);
 static_assert(!graphs::IsDenseGraph<OwningVertexRange>);

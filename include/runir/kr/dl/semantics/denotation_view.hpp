@@ -179,7 +179,7 @@ public:
         requires runir::kr::dl::ConceptOrRoleTag<Category>
     { return this->get_data().num_objects; }
 
-    bool any() const noexcept
+    [[nodiscard]] bool any() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
@@ -188,7 +188,7 @@ public:
             return storage_bits().any();
     }
 
-    size_t count() const noexcept
+    [[nodiscard]] size_t count() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
@@ -277,7 +277,7 @@ public:
         requires runir::kr::dl::ConceptOrRoleTag<Category>
     { return this->get_data().num_objects; }
 
-    bool any() const noexcept
+    [[nodiscard]] bool any() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
@@ -286,7 +286,7 @@ public:
             return storage_bits().any();
     }
 
-    size_t count() const noexcept
+    [[nodiscard]] size_t count() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)

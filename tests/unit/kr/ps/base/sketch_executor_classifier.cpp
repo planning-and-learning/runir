@@ -22,7 +22,7 @@ namespace
 {
 
 template<tyr::TaskKind Kind>
-void check_classifier_failures(datasets::TaskSearchContextPtr<Kind> search_context)
+void check_classifier_failures(const datasets::TaskSearchContextPtr<Kind>& search_context)
 {
     auto task = search_context->task;
     auto task_context = kr::TaskContext<Kind>::create(kr::DomainContext::create(task->get_domain()), search_context);

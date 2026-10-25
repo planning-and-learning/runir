@@ -66,7 +66,7 @@ struct SearchStorage<Kind, StateMemorization::ALL>
         {
             entry.parent_state = source;
             entry.action = action;
-            entry.choice_depth = node(source).choice_depth + ygg::uint_t(choice_width > 1);
+            entry.choice_depth = node(source).choice_depth + static_cast<ygg::uint_t>(choice_width > 1);
             entry.choice_width = std::max(node(source).choice_width, choice_width);
         }
         return true;

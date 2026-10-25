@@ -74,7 +74,7 @@ void build_proof_graph(ProgramProofResults<Kind>& result,
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
 void build_witness_graph(ProgramProofResults<Kind>& result,
                          SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>& expander,
-                         ygg::SharedObjectPoolPtr<SearchPath<Kind, ExecutionStorage>> witness)
+                         const ygg::SharedObjectPoolPtr<SearchPath<Kind, ExecutionStorage>>& witness)
 {
     using PathPtr = ygg::SharedObjectPoolPtr<SearchPath<Kind, ExecutionStorage>>;
     auto path = std::vector<PathPtr> {};

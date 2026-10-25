@@ -31,11 +31,11 @@ using ObjectIndex = ygg::Index<tyr::formalism::Object>;
 using GroundContext = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
 struct InvalidResultContext : GroundContext
 {
-    int for_result(bool) const;
+    [[nodiscard]] int for_result(bool) const;
 };
 struct WrongKindContext : GroundContext
 {
-    kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag> child_context() const;
+    [[nodiscard]] kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag> child_context() const;
 };
 static_assert(kr::dl::semantics::StateEvaluationContextConcept<GroundContext, tyr::GroundTag>);
 static_assert(!kr::dl::semantics::StateEvaluationContextConcept<InvalidResultContext, tyr::GroundTag>);

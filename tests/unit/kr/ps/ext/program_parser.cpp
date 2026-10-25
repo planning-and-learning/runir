@@ -345,8 +345,8 @@ TEST(RunirTests, ExtModuleParserReadsPaperFactoryDescriptions)
     const auto on = kr::ps::ext::dl::parser::parse_module_ast(kr::ps::ext::dl::ModuleFactory::create_on_bonet_et_al_icaps2024_description());
     EXPECT_EQ(on.name.text, "on");
     EXPECT_EQ(on.arguments.size(), 2);
-    auto concept_register_count = size_t(0);
-    auto role_register_count = size_t(0);
+    auto concept_register_count = static_cast<size_t>(0);
+    auto role_register_count = static_cast<size_t>(0);
     for (const auto& reg : on.registers)
     {
         boost::apply_visitor(

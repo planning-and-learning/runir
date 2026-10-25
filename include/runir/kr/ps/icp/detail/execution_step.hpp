@@ -65,10 +65,10 @@ public:
     {
     }
 
-    std::string_view get_status_name() const { return to_string(status); }
-    ProgramStateView<Kind> get_target() const noexcept { return target; }
-    const auto& get_state_transition() const noexcept { return state_transition; }
-    const auto& get_rule() const noexcept { return rule; }
+    [[nodiscard]] std::string_view get_status_name() const { return to_string(status); }
+    [[nodiscard]] ProgramStateView<Kind> get_target() const noexcept { return target; }
+    [[nodiscard]] const auto& get_state_transition() const noexcept { return state_transition; }
+    [[nodiscard]] const auto& get_rule() const noexcept { return rule; }
 };
 
 }  // namespace runir::kr::ps::icp::detail

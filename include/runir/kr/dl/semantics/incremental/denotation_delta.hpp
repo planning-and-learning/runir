@@ -18,7 +18,7 @@ struct DenotationDelta
         added.clear();
         removed.clear();
     }
-    bool empty() const noexcept { return added.empty() && removed.empty(); }
+    [[nodiscard]] bool empty() const noexcept { return added.empty() && removed.empty(); }
 };
 
 }  // namespace runir::kr::dl::semantics::incremental

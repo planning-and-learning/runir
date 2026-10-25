@@ -48,7 +48,10 @@ int main(int argc, char** argv)
     auto program = argparse::ArgumentParser("Generate a planning task state graph in Graphviz DOT format.");
     program.add_argument("-D", "--domain-filepath").required().help("The path to the PDDL domain file.");
     program.add_argument("-P", "--problem-filepath").required().help("The path to the PDDL problem file.");
-    program.add_argument("-N", "--num-datalog-threads").default_value(std::size_t(1)).scan<'u', std::size_t>().help("The number of Datalog threads.");
+    program.add_argument("-N", "--num-datalog-threads")
+        .default_value(static_cast<std::size_t>(1))
+        .scan<'u', std::size_t>()
+        .help("The number of Datalog threads.");
     program.add_argument("-G", "--instantiate-ground-task")
         .default_value(false)
         .implicit_value(true)

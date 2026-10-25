@@ -33,7 +33,7 @@ struct Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>>
     }
 
     auto get() noexcept -> bool& { return value; }
-    auto get() const noexcept -> const bool& { return value; }
+    [[nodiscard]] auto get() const noexcept -> const bool& { return value; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Builder::value> {}; }
 };
 
@@ -53,7 +53,7 @@ struct Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>
     }
 
     auto get() noexcept -> ygg::uint_t& { return value; }
-    auto get() const noexcept -> const ygg::uint_t& { return value; }
+    [[nodiscard]] auto get() const noexcept -> const ygg::uint_t& { return value; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Builder::value> {}; }
 };
 
@@ -94,10 +94,10 @@ public:
     { assert(valid_num_blocks(num_blocks_, num_objects_)); }
 
     auto get() noexcept -> Bitset { return Bitset(blocks.data(), num_bits(num_objects)); }
-    auto get() const noexcept -> ConstBitset { return ConstBitset(blocks.data(), num_bits(num_objects)); }
+    [[nodiscard]] auto get() const noexcept -> ConstBitset { return ConstBitset(blocks.data(), num_bits(num_objects)); }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Builder::num_objects, &Builder::blocks> {}; }
 
-    bool contains(Index<tyr::formalism::Object> object) const noexcept { return get().test(ygg::uint_t(object)); }
+    [[nodiscard]] bool contains(Index<tyr::formalism::Object> object) const noexcept { return get().test(ygg::uint_t(object)); }
 
     /// Set membership and invalidate published identity; return whether it changed.
     bool set(Index<tyr::formalism::Object> object, bool present) noexcept
@@ -117,10 +117,10 @@ public:
 
     /// Includes trailing padding; bulk operations must preserve its zero bits.
     auto storage_bits() noexcept -> Bitset { return Bitset(blocks.data(), blocks.size() * Bitset::Digits); }
-    auto storage_bits() const noexcept -> ConstBitset { return ConstBitset(blocks.data(), blocks.size() * ConstBitset::Digits); }
+    [[nodiscard]] auto storage_bits() const noexcept -> ConstBitset { return ConstBitset(blocks.data(), blocks.size() * ConstBitset::Digits); }
 
-    bool any() const noexcept { return get().any(); }
-    auto count() const noexcept -> size_t { return get().count(); }
+    [[nodiscard]] bool any() const noexcept { return get().any(); }
+    [[nodiscard]] auto count() const noexcept -> size_t { return get().count(); }
 };
 
 template<>
@@ -170,18 +170,19 @@ public:
         return Bitset(blocks.data() + row_block_offset(object, num_objects), num_objects);
     }
 
-    auto get(ygg::Index<tyr::formalism::Object> object) const noexcept -> ConstBitset
+    [[nodiscard]] auto get(ygg::Index<tyr::formalism::Object> object) const noexcept -> ConstBitset
     {
         assert(ygg::uint_t(object) < num_objects);
         return ConstBitset(blocks.data() + row_block_offset(object, num_objects), num_objects);
     }
 
     auto get(ygg::uint_t object) noexcept -> Bitset { return get(ygg::Index<tyr::formalism::Object>(object)); }
-    auto get(ygg::uint_t object) const noexcept -> ConstBitset { return get(ygg::Index<tyr::formalism::Object>(object)); }
-    auto get_num_objects() const noexcept { return num_objects; }
+    [[nodiscard]] auto get(ygg::uint_t object) const noexcept -> ConstBitset { return get(ygg::Index<tyr::formalism::Object>(object)); }
+    [[nodiscard]] auto get_num_objects() const noexcept { return num_objects; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Builder::num_objects, &Builder::blocks> {}; }
 
-    bool contains(Index<tyr::formalism::Object> source, Index<tyr::formalism::Object> target) const noexcept { return get(source).test(ygg::uint_t(target)); }
+    [[nodiscard]] bool contains(Index<tyr::formalism::Object> source, Index<tyr::formalism::Object> target) const noexcept
+    { return get(source).test(ygg::uint_t(target)); }
 
     /// Set membership and invalidate published identity; return whether it changed.
     bool set(Index<tyr::formalism::Object> source, Index<tyr::formalism::Object> target, bool present) noexcept
@@ -208,10 +209,10 @@ public:
 
     /// Includes per-row padding; bulk operations must preserve its zero bits.
     auto storage_bits() noexcept -> Bitset { return Bitset(blocks.data(), blocks.size() * Bitset::Digits); }
-    auto storage_bits() const noexcept -> ConstBitset { return ConstBitset(blocks.data(), blocks.size() * ConstBitset::Digits); }
+    [[nodiscard]] auto storage_bits() const noexcept -> ConstBitset { return ConstBitset(blocks.data(), blocks.size() * ConstBitset::Digits); }
 
-    bool any() const noexcept { return storage_bits().any(); }
-    auto count() const noexcept -> size_t { return storage_bits().count(); }
+    [[nodiscard]] bool any() const noexcept { return storage_bits().any(); }
+    [[nodiscard]] auto count() const noexcept -> size_t { return storage_bits().count(); }
 };
 
 }

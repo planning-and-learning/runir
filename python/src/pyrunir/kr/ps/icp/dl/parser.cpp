@@ -14,7 +14,7 @@ void bind_parser(nb::module_& m)
     using namespace nb::literals;
     m.def(
         "parse_module",
-        [](const std::string& description, tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::icp::Repository& repository)
+        [](const std::string& description, const tyr::formalism::planning::PlanningDomain& domain, runir::kr::ps::icp::Repository& repository)
         { return runir::kr::ps::icp::dl::parse_module(description, domain.get_domain(), repository); },
         "description"_a,
         "domain"_a,
@@ -23,7 +23,7 @@ void bind_parser(nb::module_& m)
 
     m.def(
         "parse_program",
-        [](const std::string& description, tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::icp::Repository& repository)
+        [](const std::string& description, const tyr::formalism::planning::PlanningDomain& domain, runir::kr::ps::icp::Repository& repository)
         { return runir::kr::ps::icp::dl::parse_program(description, domain.get_domain(), repository); },
         "description"_a,
         "domain"_a,

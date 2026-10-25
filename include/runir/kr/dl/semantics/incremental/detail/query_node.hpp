@@ -27,7 +27,7 @@ public:
         m_operation(QueryFromDenotationEvaluator<Kind, Category>(argument, columns))
     {
     }
-    std::optional<QueryView<>> get_expression() const noexcept { return m_expression; }
+    [[nodiscard]] std::optional<QueryView<>> get_expression() const noexcept { return m_expression; }
     /// Whether this node lifts argument into a relation with exactly these columns.
     template<ConceptOrRoleTag Category>
     bool lifts(EvaluationIndex<Category> argument, std::span<const ygg::database::ColumnLayout> columns) const
@@ -38,9 +38,9 @@ public:
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context);
     void update(EvaluationGraph<Kind>& graph, const Delta& delta, ygg::database::Workspace& workspace);
-    std::span<const ygg::uint_t> get_dependencies() const noexcept { return m_dependencies; }
-    const ygg::Builder<ygg::database::Relation>& get_result() const;
-    const ygg::database::incremental::Delta& get_delta() const;
+    [[nodiscard]] std::span<const ygg::uint_t> get_dependencies() const noexcept { return m_dependencies; }
+    [[nodiscard]] const ygg::Builder<ygg::database::Relation>& get_result() const;
+    [[nodiscard]] const ygg::database::incremental::Delta& get_delta() const;
 
 private:
     using Operation = std::variant<QueryStaticEvaluator<Kind>,

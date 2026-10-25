@@ -56,7 +56,7 @@ public:
     {
     }
 
-    auto get_program() const noexcept { return m_program; }
+    [[nodiscard]] auto get_program() const noexcept { return m_program; }
     auto& get_dl_repository() noexcept { return m_program.get_context().get_dl_repository(); }
     auto& get_dl_caches() noexcept { return m_source_storage.get_caches(); }
     auto& get_dl_target_caches() noexcept { return m_target_storage.get_caches(); }

@@ -32,10 +32,7 @@
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/database/semantics/distance.hpp>
 
-namespace runir::kr::dl::semantics
-{
-
-namespace detail
+namespace runir::kr::dl::semantics::detail
 {
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
@@ -257,8 +254,6 @@ auto evaluate_relation(ygg::View<ygg::Index<Constructor<Category>>, C> argument,
     return insert(context.get_denotation_repository(), *result).first;
 }
 
-}  // namespace detail
-
-}
+}  // namespace runir::kr::dl::semantics::detail
 
 #endif

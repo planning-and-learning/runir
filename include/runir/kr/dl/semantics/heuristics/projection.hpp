@@ -44,9 +44,9 @@ struct PatternDatabase
     std::vector<ygg::uint_t> h {};               ///< Abstract distance to α_i(T); ygg::database::infinity if unreachable.
 
     /// Whether h has been computed, for some abstract targets.
-    bool computed() const noexcept { return !h.empty(); }
+    [[nodiscard]] bool computed() const noexcept { return !h.empty(); }
     /// Whether h must be computed for `abstract_targets`: it never was, or it was for other abstract targets.
-    bool needs_update(const std::vector<bool>& abstract_targets) const { return !computed() || targets != abstract_targets; }
+    [[nodiscard]] bool needs_update(const std::vector<bool>& abstract_targets) const { return !computed() || targets != abstract_targets; }
 };
 
 /// h(v) = max_i h_i(α_i(v)) over single-column pattern databases (Culberson & Schaeffer, "Pattern Databases",
@@ -81,7 +81,7 @@ public:
     }
 
     /// h(vertex); requires update() to have computed every table.
-    ygg::uint_t estimate(std::span<const std::byte> vertex) const
+    [[nodiscard]] ygg::uint_t estimate(std::span<const std::byte> vertex) const
     {
         ygg::uint_t value = 0;
         for (const auto& database : m_databases)
@@ -109,7 +109,7 @@ public:
         return result;
     }
     /// h(vertex) with tables().
-    ygg::uint_t estimate(std::span<const std::byte> vertex, const Tables& tables) const
+    [[nodiscard]] ygg::uint_t estimate(std::span<const std::byte> vertex, const Tables& tables) const
     {
         ygg::uint_t value = 0;
         for (size_t d = 0; d < m_databases.size(); ++d)
@@ -121,7 +121,7 @@ public:
         }
         return value;
     }
-    bool blind() const noexcept { return m_databases.empty(); }
+    [[nodiscard]] bool blind() const noexcept { return m_databases.empty(); }
 
 private:
     std::vector<PatternDatabase> m_databases;
@@ -238,7 +238,8 @@ public:
         for (size_t r = 0; r < targets.size(); ++r)
         {
             const auto row = targets.row(r);
-            grouped[std::vector<std::byte>(row.begin(), row.begin() + long(m_key_size))].emplace_back(row.begin() + long(m_key_size), row.end());
+            grouped[std::vector<std::byte>(row.begin(), row.begin() + static_cast<long>(m_key_size))].emplace_back(row.begin() + static_cast<long>(m_key_size),
+                                                                                                                   row.end());
         }
         for (auto& [key, rows] : grouped)
         {
@@ -259,7 +260,7 @@ public:
     {
         if (m_heuristic.blind())
             return 0;
-        m_key.assign(key_and_vertex.begin(), key_and_vertex.begin() + long(m_key_size));
+        m_key.assign(key_and_vertex.begin(), key_and_vertex.begin() + static_cast<long>(m_key_size));
         const auto it = m_keys.find(m_key);
         return it == m_keys.end() ? ygg::database::infinity : m_heuristic.estimate(key_and_vertex.subspan(m_key_size), it->second.tables);
     }

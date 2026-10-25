@@ -33,17 +33,17 @@ public:
     {
     }
 
-    auto get_parent() const noexcept -> const G&
+    [[nodiscard]] auto get_parent() const noexcept -> const G&
     {
         assert(m_graph);
         return *m_graph;
     }
 
-    auto get_index() const noexcept -> EdgeIndex { return m_index; }
-    auto get_source() const noexcept -> VertexIndex { return m_source; }
-    auto get_target() const noexcept -> VertexIndex { return m_target; }
-    auto get_property_index() const noexcept -> PropertyIndexType { return m_property; }
-    auto get_property() const noexcept -> const P& { return get_parent().get_edge_property(m_property); }
+    [[nodiscard]] auto get_index() const noexcept -> EdgeIndex { return m_index; }
+    [[nodiscard]] auto get_source() const noexcept -> VertexIndex { return m_source; }
+    [[nodiscard]] auto get_target() const noexcept -> VertexIndex { return m_target; }
+    [[nodiscard]] auto get_property_index() const noexcept -> PropertyIndexType { return m_property; }
+    [[nodiscard]] auto get_property() const noexcept -> const P& { return get_parent().get_edge_property(m_property); }
 
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Edge::m_index, &Edge::m_source, &Edge::m_target, &Edge::m_property> {}; }
 };

@@ -46,7 +46,7 @@ TEST(RunirTests, PublicStructuralTerminationReportsFailureFrontier)
     auto decrease = kr::ps::dl::RuleProfile(0, 1);
     decrease.numerical_greater_conditions |= 1;
     decrease.numerical_decrease_effects |= 1;
-    terminating.rule_profiles.push_back(explicit_effects(std::move(decrease)));
+    terminating.rule_profiles.push_back(explicit_effects(decrease));
     EXPECT_TRUE(kr::ps::dl::incomplete_structural_termination(terminating).get_cyclic_rule_positions().empty());
     for (const bool preprocess : { false, true })
     {
@@ -60,17 +60,17 @@ TEST(RunirTests, PublicStructuralTerminationReportsFailureFrontier)
     auto isolated_witness = kr::ps::dl::RuleProfile(1, 0, 0, 0);
     isolated_witness.boolean_negative_conditions |= 1;
     isolated_witness.boolean_positive_effects |= 1;
-    policy.rule_profiles.push_back(explicit_effects(std::move(isolated_witness)));
+    policy.rule_profiles.push_back(explicit_effects(isolated_witness));
 
     auto to_true = kr::ps::dl::RuleProfile(1, 0, 1, 1);
     to_true.boolean_negative_conditions |= 1;
     to_true.boolean_positive_effects |= 1;
-    policy.rule_profiles.push_back(explicit_effects(std::move(to_true)));
+    policy.rule_profiles.push_back(explicit_effects(to_true));
 
     auto to_false = kr::ps::dl::RuleProfile(1, 0, 1, 1);
     to_false.boolean_positive_conditions |= 1;
     to_false.boolean_negative_effects |= 1;
-    policy.rule_profiles.push_back(explicit_effects(std::move(to_false)));
+    policy.rule_profiles.push_back(explicit_effects(to_false));
 
     const auto result = kr::ps::dl::structural_termination(policy);
 
@@ -141,11 +141,11 @@ TEST(RunirTests, PublicStructuralTerminationReportsFailureFrontier)
     auto false_loop = kr::ps::dl::RuleProfile(1, 0);
     false_loop.boolean_negative_conditions |= 1;
     false_loop.boolean_unchanged_effects |= 1;
-    disjoint_cycles.rule_profiles.push_back(explicit_effects(std::move(false_loop)));
+    disjoint_cycles.rule_profiles.push_back(explicit_effects(false_loop));
     auto true_loop = kr::ps::dl::RuleProfile(1, 0);
     true_loop.boolean_positive_conditions |= 1;
     true_loop.boolean_unchanged_effects |= 1;
-    disjoint_cycles.rule_profiles.push_back(explicit_effects(std::move(true_loop)));
+    disjoint_cycles.rule_profiles.push_back(explicit_effects(true_loop));
 
     const auto split = kr::ps::dl::structural_termination(disjoint_cycles);
     EXPECT_EQ(split.get_cyclic_rule_positions(), std::vector<std::size_t>({ 0, 1 }));
@@ -170,13 +170,13 @@ TEST(RunirTests, PublicHybridFrontierDoesNotRetainEliminationFalsePositives)
     to_true.boolean_positive_conditions |= 2;
     to_true.boolean_positive_effects |= 1;
     to_true.boolean_unchanged_effects |= 2;
-    policy.rule_profiles.push_back(explicit_effects(std::move(to_true)));
+    policy.rule_profiles.push_back(explicit_effects(to_true));
     auto to_false = kr::ps::dl::RuleProfile(2, 0);
     to_false.boolean_positive_conditions |= 1;
     to_false.boolean_negative_conditions |= 2;
     to_false.boolean_negative_effects |= 1;
     to_false.boolean_unchanged_effects |= 2;
-    policy.rule_profiles.push_back(explicit_effects(std::move(to_false)));
+    policy.rule_profiles.push_back(explicit_effects(to_false));
 
     // The unchanged selector separates the two apparent Boolean opponents.
     EXPECT_EQ(kr::ps::dl::incomplete_structural_termination(policy).get_cyclic_rule_positions(), std::vector<std::size_t>({ 0, 1 }));
@@ -194,15 +194,15 @@ TEST(RunirTests, PublicCyclicRulesIncludeAllInstancesButExcludeAcyclicEdges)
     auto policy = kr::ps::dl::QualitativePolicy(1, 1, 0);
     auto shared = kr::ps::dl::RuleProfile(1, 0);
     shared.boolean_unchanged_effects |= 1;
-    policy.rule_profiles.push_back(explicit_effects(std::move(shared)));
+    policy.rule_profiles.push_back(explicit_effects(shared));
     auto false_loop = kr::ps::dl::RuleProfile(1, 0);
     false_loop.boolean_negative_conditions |= 1;
     false_loop.boolean_unchanged_effects |= 1;
-    policy.rule_profiles.push_back(explicit_effects(std::move(false_loop)));
+    policy.rule_profiles.push_back(explicit_effects(false_loop));
     policy.rule_profiles.push_back(unchanged_boolean_loop(1));
     auto set_true = kr::ps::dl::RuleProfile(1, 0);
     set_true.boolean_positive_effects |= 1;
-    policy.rule_profiles.push_back(explicit_effects(std::move(set_true)));
+    policy.rule_profiles.push_back(explicit_effects(set_true));
 
     for (const bool preprocess : { false, true })
     {
@@ -284,7 +284,7 @@ TEST(RunirTests, PublicStructuralTerminationPreserves64FeatureGlobalPositions)
             rule.numerical_greater_conditions |= std::uint64_t { 1 } << (num_numericals - 1);
             rule.numerical_unchanged_effects |= std::uint64_t { 1 } << (num_numericals - 1);
         }
-        policy.rule_profiles.push_back(explicit_effects(std::move(rule)));
+        policy.rule_profiles.push_back(explicit_effects(rule));
         EXPECT_FALSE(kr::ps::dl::incomplete_structural_termination(policy).is_terminating());
 
         for (const auto preprocessing : { false, true })
@@ -326,7 +326,7 @@ TEST(RunirTests, PublicStructuralTerminationRejects65FeaturesBeforePreprocessing
                     rule.boolean_negative_conditions = 1;
                     rule.boolean_positive_effects = 1;
                 }
-                policy.rule_profiles.push_back(explicit_effects(std::move(rule)));
+                policy.rule_profiles.push_back(explicit_effects(rule));
             }
             EXPECT_THROW((void) kr::ps::dl::incomplete_structural_termination(policy), std::invalid_argument);
             for (const auto preprocessing : { false, true })
@@ -496,10 +496,10 @@ TEST(RunirTests, PublicStructuralTerminationValidatesProfilesAndEnumeration)
     auto multiplication_overflow = kr::ps::dl::QualitativePolicy(2, digits - 1, 0);
     auto forward = unchanged_boolean_loop(digits - 1);
     forward.target_memory_position = 1;
-    multiplication_overflow.rule_profiles.push_back(explicit_effects(std::move(forward)));
+    multiplication_overflow.rule_profiles.push_back(explicit_effects(forward));
     auto backward = unchanged_boolean_loop(digits - 1);
     backward.source_memory_position = 1;
-    multiplication_overflow.rule_profiles.push_back(explicit_effects(std::move(backward)));
+    multiplication_overflow.rule_profiles.push_back(explicit_effects(backward));
     EXPECT_THROW((void) kr::ps::dl::structural_termination(multiplication_overflow, digits - 1, false), std::invalid_argument);
 }
 
