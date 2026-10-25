@@ -21,7 +21,8 @@ jobs:
           PYTHON: ${{ steps.python.outputs.python-path }}
         with:
           # clang-tidy needs compile_commands.json, pyright the package in
-          # .venv (its stubs are generated at install). The native
+          # .venv with its mcp extra, which the explore server imports (the
+          # stubs are generated at install). The native
           # dependencies come with the pyyggdrasil, pypddl and pytyr wheels.
           prepare: |
             "$PYTHON" -m venv .venv
@@ -34,4 +35,4 @@ jobs:
                   -DRUNIR_BUILD_TESTS=ON -DRUNIR_BUILD_EXECUTABLES=ON -DRUNIR_BUILD_PYRUNIR=ON \
                   -DCMAKE_PREFIX_PATH="$PREFIX" -DCMAKE_INSTALL_LIBDIR=lib \
                   -DPython_EXECUTABLE="$PWD/.venv/bin/python" -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
-            .venv/bin/python -m pip install --no-build-isolation ".[test]"
+            .venv/bin/python -m pip install --no-build-isolation ".[test,mcp]"
