@@ -26,8 +26,19 @@ option(RUNIR_BUILD_PYRUNIR "Build pyrunir Python bindings." OFF)
 option(RUNIR_BUILD_TESTS "Build Runir tests." OFF)
 option(RUNIR_BUILD_EXECUTABLES "Build Runir executables." OFF)
 option(RUNIR_DELTA_EVALUATION "Use incremental feature evaluation in find_solution." ON)
+option(RUNIR_STDLIB_ASSERTIONS "Check bounds and preconditions of the standard library in Debug builds." ON)
 
 # Build configuration
+
+# Debug builds check the standard library's preconditions, such as the bounds of operator[]
+# on std::vector, std::array and std::span (libstdc++; libc++ in its hardened mode). The
+# definitions apply to this project's own targets only and do not change the ABI.
+if(RUNIR_STDLIB_ASSERTIONS)
+    add_compile_definitions(
+        $<$<CONFIG:Debug>:_GLIBCXX_ASSERTIONS>
+        "$<$<CONFIG:Debug>:_LIBCPP_HARDENING_MODE=(_LIBCPP_HARDENING_MODE_EXTENSIVE)>"
+    )
+endif()
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(
