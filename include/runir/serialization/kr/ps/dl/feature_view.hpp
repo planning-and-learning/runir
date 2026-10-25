@@ -2,8 +2,8 @@
 #define RUNIR_SERIALIZATION_KR_PS_DL_FEATURE_VIEW_HPP_
 
 #include "runir/kr/ps/dl/feature_view.hpp"
-#include "runir/serialization/kr/dl/semantics/constructor_view.hpp"
 #include "runir/serialization/kr/dl/query_view.hpp"
+#include "runir/serialization/kr/dl/semantics/constructor_view.hpp"
 
 #include <yggdrasil/serialization/dictionaries.hpp>
 

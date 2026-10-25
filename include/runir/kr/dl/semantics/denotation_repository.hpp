@@ -91,9 +91,7 @@ public:
     template<typename T>
         requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
     const DenotationRepository& get_canonical_context(ygg::Index<T>) const noexcept
-    {
-        return *this;
-    }
+    { return *this; }
 
     const auto& get_vector_repository() const noexcept { return m_vector_repository; }
     auto& get_vector_repository() noexcept { return m_vector_repository; }
@@ -107,9 +105,7 @@ inline const DenotationRepository& get_repository(const DenotationRepository& re
 template<typename T>
     requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
 void prepare_for_insert(DenotationRepository&, ygg::Data<T>& data)
-{
-    canonicalize(data);
-}
+{ canonicalize(data); }
 
 using ygg::formalism::insert;
 }

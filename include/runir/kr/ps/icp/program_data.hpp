@@ -21,16 +21,11 @@ struct Data<runir::kr::ps::icp::Program>
     Data(Index<runir::kr::ps::icp::Module> module_) : index(), module(std::move(module_)) {}
     template<typename C>
     Data(::ygg::View<Index<runir::kr::ps::icp::Module>, C> module_) : index(), module()
-    {
-        set(module_, module);
-    }
+    { set(module_, module); }
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::module> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::module> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 }  // namespace ygg

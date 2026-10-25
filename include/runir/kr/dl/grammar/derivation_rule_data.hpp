@@ -39,10 +39,7 @@ struct Data<runir::kr::dl::grammar::DerivationRule<Category>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::lhs, &Data::rhs> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::lhs, &Data::rhs> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 }  // namespace ygg

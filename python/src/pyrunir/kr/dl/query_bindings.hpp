@@ -124,7 +124,11 @@ void bind_query(nb::module_& m, const char* name)
     if constexpr (requires(Data value) { value.column; })
         data.def_rw("column", &Data::column).def_rw("object", &Data::object);
     if constexpr (requires(Data value) { value.keys; })
-        data.def_rw("keys", &Data::keys).def_rw("sources", &Data::sources).def_rw("edges", &Data::edges).def_rw("targets", &Data::targets).def_rw("probes", &Data::probes);
+        data.def_rw("keys", &Data::keys)
+            .def_rw("sources", &Data::sources)
+            .def_rw("edges", &Data::edges)
+            .def_rw("targets", &Data::targets)
+            .def_rw("probes", &Data::probes);
 
     auto view = nb::class_<View>(m, name).def("get_index", &View::get_index);
     ygg::add_print(view);

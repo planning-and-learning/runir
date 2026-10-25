@@ -80,9 +80,7 @@ private:
 
     template<typename T, typename Initialize>
     auto intern_concrete(Initialize&& initialize)
-    {
-        return intern_constructor(intern<T>(std::forward<Initialize>(initialize)).get_index());
-    }
+    { return intern_constructor(intern<T>(std::forward<Initialize>(initialize)).get_index()); }
 
     template<typename T>
     auto intern_nullary()
@@ -241,29 +239,21 @@ public:
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::BotTag>)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
-    {
-        return intern_nullary<Concept<runir::kr::dl::BotTag>>();
-    }
+    { return intern_nullary<Concept<runir::kr::dl::BotTag>>(); }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::TopTag>)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
-    {
-        return intern_nullary<Concept<runir::kr::dl::TopTag>>();
-    }
+    { return intern_nullary<Concept<runir::kr::dl::TopTag>>(); }
 
     template<tyr::formalism::FactKind T>
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::AtomicStateTag<T>> source)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
-    {
-        return intern_predicate<Concept<runir::kr::dl::AtomicStateTag<T>>>(source.get_data().predicate, source.get_data().polarity);
-    }
+    { return intern_predicate<Concept<runir::kr::dl::AtomicStateTag<T>>>(source.get_data().predicate, source.get_data().polarity); }
 
     template<tyr::formalism::FactKind T>
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::AtomicGoalTag<T>> source)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
-    {
-        return intern_predicate<Concept<runir::kr::dl::AtomicGoalTag<T>>>(source.get_data().predicate, source.get_data().polarity);
-    }
+    { return intern_predicate<Concept<runir::kr::dl::AtomicGoalTag<T>>>(source.get_data().predicate, source.get_data().polarity); }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::IntersectionTag> source)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
@@ -397,23 +387,17 @@ public:
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::UniversalTag>)
         requires std::same_as<Category, runir::kr::dl::RoleTag>
-    {
-        return intern_nullary<Role<runir::kr::dl::UniversalTag>>();
-    }
+    { return intern_nullary<Role<runir::kr::dl::UniversalTag>>(); }
 
     template<tyr::formalism::FactKind T>
     auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::AtomicStateTag<T>> source)
         requires std::same_as<Category, runir::kr::dl::RoleTag>
-    {
-        return intern_predicate<Role<runir::kr::dl::AtomicStateTag<T>>>(source.get_data().predicate, source.get_data().polarity);
-    }
+    { return intern_predicate<Role<runir::kr::dl::AtomicStateTag<T>>>(source.get_data().predicate, source.get_data().polarity); }
 
     template<tyr::formalism::FactKind T>
     auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::AtomicGoalTag<T>> source)
         requires std::same_as<Category, runir::kr::dl::RoleTag>
-    {
-        return intern_predicate<Role<runir::kr::dl::AtomicGoalTag<T>>>(source.get_data().predicate, source.get_data().polarity);
-    }
+    { return intern_predicate<Role<runir::kr::dl::AtomicGoalTag<T>>>(source.get_data().predicate, source.get_data().polarity); }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::IntersectionTag> source)
         requires std::same_as<Category, runir::kr::dl::RoleTag>
@@ -485,16 +469,12 @@ public:
     template<tyr::formalism::FactKind T>
     auto translate_concrete_constructor(runir::kr::dl::grammar::BooleanView<runir::kr::dl::AtomicStateTag<T>> source)
         requires std::same_as<Category, runir::kr::dl::BooleanTag>
-    {
-        return intern_predicate<Boolean<runir::kr::dl::AtomicStateTag<T>>>(source.get_data().predicate, source.get_data().polarity);
-    }
+    { return intern_predicate<Boolean<runir::kr::dl::AtomicStateTag<T>>>(source.get_data().predicate, source.get_data().polarity); }
 
     template<tyr::formalism::FactKind T>
     auto translate_concrete_constructor(runir::kr::dl::grammar::BooleanView<runir::kr::dl::AtomicGoalTag<T>> source)
         requires std::same_as<Category, runir::kr::dl::BooleanTag>
-    {
-        return intern_predicate<Boolean<runir::kr::dl::AtomicGoalTag<T>>>(source.get_data().predicate, source.get_data().polarity);
-    }
+    { return intern_predicate<Boolean<runir::kr::dl::AtomicGoalTag<T>>>(source.get_data().predicate, source.get_data().polarity); }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::BooleanView<runir::kr::dl::NonemptyTag> source)
         requires std::same_as<Category, runir::kr::dl::BooleanTag>

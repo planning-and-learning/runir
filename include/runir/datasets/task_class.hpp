@@ -63,9 +63,7 @@ struct TaskSearchContext
     static std::shared_ptr<TaskSearchContext> create() { return std::shared_ptr<TaskSearchContext>(new TaskSearchContext()); }
 
     static std::shared_ptr<TaskSearchContext> create(tyr::planning::TaskPtr<Kind> task, ygg::ExecutionContextPtr execution_context)
-    {
-        return std::shared_ptr<TaskSearchContext>(new TaskSearchContext(std::move(task), std::move(execution_context)));
-    }
+    { return std::shared_ptr<TaskSearchContext>(new TaskSearchContext(std::move(task), std::move(execution_context))); }
 
 private:
     TaskSearchContext() = default;

@@ -2,10 +2,10 @@
 #define RUNIR_KR_PS_EXT_EVALUATION_ENVIRONMENT_HPP_
 
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
+#include "runir/kr/dl/semantics/evaluation_policy.hpp"
 #include "runir/kr/dl/semantics/evaluation_storage.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include "runir/kr/ps/dl/transition_evaluation_context.hpp"
-#include "runir/kr/dl/semantics/evaluation_policy.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
 #include "runir/kr/ps/ext/program_view.hpp"
 #include "runir/kr/task_context.hpp"

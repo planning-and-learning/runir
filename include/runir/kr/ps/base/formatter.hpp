@@ -151,18 +151,14 @@ template<>
 struct fmt::formatter<runir::kr::ps::base::SketchProofStatus> : fmt::formatter<std::string_view>
 {
     auto format(runir::kr::ps::base::SketchProofStatus status, format_context& ctx) const
-    {
-        return fmt::formatter<std::string_view>::format(runir::kr::ps::base::to_string(status), ctx);
-    }
+    { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::to_string(status), ctx); }
 };
 
 template<tyr::TaskKind Kind>
 struct fmt::formatter<runir::kr::ps::base::SketchProofResults<Kind>> : fmt::formatter<std::string_view>
 {
     auto format(const runir::kr::ps::base::SketchProofResults<Kind>& result, format_context& ctx) const
-    {
-        return fmt::formatter<std::string_view>::format(runir::kr::ps::base::sketch_proof_results(result), ctx);
-    }
+    { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::sketch_proof_results(result), ctx); }
 };
 
 template<tyr::TaskKind Kind>

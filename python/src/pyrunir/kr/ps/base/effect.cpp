@@ -45,7 +45,10 @@ void bind_effect(nb::module_& m, RepositoryBinding& repository)
             "is_compatible_with",
             [](View value, GroundContext& context) { return runir::kr::ps::is_compatible_with<tyr::GroundTag>(value, context); },
             "context"_a)
-        .def("is_compatible_with", [](View value, LiftedContext& context) { return runir::kr::ps::is_compatible_with<tyr::LiftedTag>(value, context); }, "context"_a);
+        .def(
+            "is_compatible_with",
+            [](View value, LiftedContext& context) { return runir::kr::ps::is_compatible_with<tyr::LiftedTag>(value, context); },
+            "context"_a);
 
     runir::kr::python::bind_insert<T>(repository);
 }

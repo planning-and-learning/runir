@@ -3,7 +3,6 @@
 
 #include "runir/kr/ps/declarations.hpp"
 #include "runir/kr/uns/declarations.hpp"
-#include <yggdrasil/containers/variant.hpp>
 
 #include <cista/containers/string.h>
 #include <cista/containers/variant.h>
@@ -12,6 +11,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 
@@ -43,10 +43,7 @@ struct Data<runir::kr::uns::ClassifierLiteral>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::variant, &Data::polarity> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::variant, &Data::polarity> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 // A clause: a conjunction of literals.
@@ -60,16 +57,11 @@ struct Data<runir::kr::uns::ClassifierClause>
     Data(IndexList<runir::kr::uns::ClassifierLiteral> literals_) : index(), literals(std::move(literals_)) {}
     template<typename C>
     Data(const std::vector<::ygg::View<Index<runir::kr::uns::ClassifierLiteral>, C>>& literals_) : index(), literals()
-    {
-        set(literals_, literals);
-    }
+    { set(literals_, literals); }
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::literals> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::literals> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 // A classifier: named boolean features + a DNF (disjunction of clauses).
@@ -106,10 +98,7 @@ struct Data<runir::kr::uns::Classifier>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::symbol, &Data::features, &Data::clauses> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::symbol, &Data::features, &Data::clauses> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 }  // namespace ygg

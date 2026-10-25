@@ -29,9 +29,7 @@ concept IndexedDataView =
 
 template<typename Repository, typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
-{
-    return (IndexedDataView<Ts, Repository> && ...);
-}
+{ return (IndexedDataView<Ts, Repository> && ...); }
 
 template<typename Category>
 using Denotation = kr::dl::semantics::Denotation<Category>;
@@ -53,9 +51,7 @@ consteval bool scalar_denotation()
 
 template<typename... Ts>
 consteval bool scalar_denotations(ygg::TypeList<Ts...>)
-{
-    return (scalar_denotation<Ts>() && ...);
-}
+{ return (scalar_denotation<Ts>() && ...); }
 
 template<typename... Categories>
 consteval bool view_aliases(ygg::TypeList<Categories...>)
@@ -380,7 +376,7 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsSurviveRepositoryGrowthAndSkipRolePa
     // Only copied iterators survive: both temporary denotation views and indices ranges are gone.
     const auto concept_indices = std::ranges::subrange(ConceptView(concept_view).indices().begin(), ConceptView(concept_view).indices().end());
     const auto borrowed_concept_indices = std::ranges::subrange(ygg::make_view(concept_builder, *planning_repository).indices().begin(),
-                                                              ygg::make_view(concept_builder, *planning_repository).indices().end());
+                                                                ygg::make_view(concept_builder, *planning_repository).indices().end());
     const auto expected_concept_indices = std::array { ObjectIndex(0), ObjectIndex(64), ObjectIndex(129) };
     static_assert(std::ranges::borrowed_range<decltype(concept_view.indices())>);
     static_assert(std::ranges::forward_range<decltype(concept_indices)>);
@@ -395,8 +391,7 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsSurviveRepositoryGrowthAndSkipRolePa
     auto role_iterator = RoleView(role_view).begin();
     const auto role_end = RoleView(role_view).end();
     const auto role_indices = std::ranges::subrange(RoleView(role_view).indices().begin(), RoleView(role_view).indices().end());
-    const auto row_indices =
-        std::ranges::subrange(RoleView(role_view).indices(ObjectIndex(129)).begin(), RoleView(role_view).indices(ObjectIndex(129)).end());
+    const auto row_indices = std::ranges::subrange(RoleView(role_view).indices(ObjectIndex(129)).begin(), RoleView(role_view).indices(ObjectIndex(129)).end());
     const auto expected_role_indices = std::array { std::pair(ObjectIndex(0), ObjectIndex(64)), std::pair(ObjectIndex(129), ObjectIndex(1)) };
     const auto expected_row_indices = std::array { ObjectIndex(1) };
     static_assert(std::ranges::borrowed_range<decltype(role_view.indices())>);
@@ -406,9 +401,9 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsSurviveRepositoryGrowthAndSkipRolePa
     static_assert(std::same_as<std::ranges::range_value_t<decltype(row_indices)>, ObjectIndex>);
     const auto borrowed_role = ygg::make_view(role_builder, *planning_repository);
     const auto borrowed_role_indices = std::ranges::subrange(ygg::make_view(role_builder, *planning_repository).indices().begin(),
-                                                           ygg::make_view(role_builder, *planning_repository).indices().end());
+                                                             ygg::make_view(role_builder, *planning_repository).indices().end());
     const auto borrowed_row_indices = std::ranges::subrange(ygg::make_view(role_builder, *planning_repository).indices(ObjectIndex(129)).begin(),
-                                                          ygg::make_view(role_builder, *planning_repository).indices(ObjectIndex(129)).end());
+                                                            ygg::make_view(role_builder, *planning_repository).indices(ObjectIndex(129)).end());
     static_assert(std::ranges::borrowed_range<decltype(borrowed_role.indices())>);
     check_indices(borrowed_role_indices, expected_role_indices);
     check_indices(borrowed_row_indices, expected_row_indices);

@@ -18,9 +18,7 @@ namespace runir::kr::dl::semantics
 
 template<CategoryTag Category>
 bool is_canonical(const ygg::Data<Denotation<Category>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<CategoryTag Category>
 void canonicalize(ygg::Data<Denotation<Category>>&) noexcept

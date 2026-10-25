@@ -15,9 +15,7 @@ using DlComponentViews = ygg::MapTypeListSecondT<IndexView, kr::dl::ConstructorR
 
 template<typename... Ts>
 void bind_serialized_types(nb::module_& m, ygg::TypeList<Ts...> types)
-{
-    ygg::python::bind_serialization(m, ygg::TypeList<> {}, types, types);
-}
+{ ygg::python::bind_serialization(m, ygg::TypeList<> {}, types, types); }
 
 template<typename... Ts>
 void bind_entity_types(nb::module_& m, ygg::TypeList<Ts...> types)

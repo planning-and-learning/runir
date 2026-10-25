@@ -300,8 +300,8 @@ private:
             leaves.push_back(memoized(leaf));
         }
         const auto plan = ygg::database::optimize(std::span<const ygg::database::QueryView<>>(&translated, 1),
-                                                               std::span<const ygg::database::Evaluation>(&evaluation, 1),
-                                                               statistics);
+                                                  std::span<const ygg::database::Evaluation>(&evaluation, 1),
+                                                  statistics);
         const auto result = detail::lower(plan, leaves, m_repository).front();
         optimized.emplace(key, result);
         return result;
@@ -358,9 +358,7 @@ class QueryStatisticsCollector
 public:
     template<typename T>
     void add(RecordView<T> expression)
-    {
-        collect<T>(expression);
-    }
+    { collect<T>(expression); }
 
     /// A sampler for the collected leaves, to measure sample states one at a time.
     QueryStatisticsSampler sampler() const { return QueryStatisticsSampler(m_leaves); }
@@ -400,9 +398,7 @@ private:
 
     template<typename T, typename F>
     static void for_each_child(RecordView<T> view, F&& f)
-    {
-        ygg::for_each_child<ConstructorRepositoryTypes>(view, std::forward<F>(f));
-    }
+    { ygg::for_each_child<ConstructorRepositoryTypes>(view, std::forward<F>(f)); }
 
     template<typename T>
     void collect_children(RecordView<T> view)

@@ -33,9 +33,7 @@ namespace
 
 template<typename... Types>
 void bind_constructors(nb::class_<ConstructorRepository>& repository, ygg::TypeList<Types...>)
-{
-    (runir::kr::python::bind_insert<Types>(repository), ...);
-}
+{ (runir::kr::python::bind_insert<Types>(repository), ...); }
 
 }  // namespace
 

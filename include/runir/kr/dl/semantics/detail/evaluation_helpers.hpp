@@ -47,21 +47,15 @@ auto num_objects(const Context& context) noexcept -> ygg::uint_t
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
 auto make_concept_builder(Context& context)
-{
-    return context.get_builder().template get_builder<Denotation<ConceptTag>>(num_objects<Kind>(context));
-}
+{ return context.get_builder().template get_builder<Denotation<ConceptTag>>(num_objects<Kind>(context)); }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
 auto make_role_builder(Context& context)
-{
-    return context.get_builder().template get_builder<Denotation<RoleTag>>(num_objects<Kind>(context));
-}
+{ return context.get_builder().template get_builder<Denotation<RoleTag>>(num_objects<Kind>(context)); }
 
 template<tyr::formalism::FactKind T>
 auto object_index(tyr::formalism::planning::AtomView<::tyr::GroundTag, T> atom, size_t position) noexcept -> ygg::Index<tyr::formalism::Object>
-{
-    return atom.get_row().get_objects()[position].get_index();
-}
+{ return atom.get_row().get_objects()[position].get_index(); }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
 void evaluate_atomic_state_concept(ygg::View<ygg::Index<Concept<AtomicStateTag<T>>>, C> constructor,
@@ -250,9 +244,7 @@ void insert_denotation_rows(const Denotation& denotation, ygg::Builder<ygg::data
 /// A distance argument as a relation over the plan's columns for it.
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
 auto evaluate_relation(ygg::View<ygg::Index<Query<>>, C> argument, std::span<const ygg::database::ColumnLayout>, Context& context) -> QueryDenotationView
-{
-    return evaluate<Kind>(argument, context);
-}
+{ return evaluate<Kind>(argument, context); }
 
 /// Concepts and roles are lifted, so all argument forms share one distance evaluation.
 template<tyr::TaskKind Kind, ConceptOrRoleTag Category, StateEvaluationContextConcept<Kind> Context, typename C>

@@ -124,7 +124,25 @@ struct Data<runir::kr::ps::ext::Module>
         }
     }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::symbol, &Data::concept_arguments, &Data::role_arguments, &Data::boolean_arguments, &Data::numerical_arguments, &Data::concept_registers, &Data::role_registers, &Data::concept_features, &Data::role_features, &Data::boolean_features, &Data::numerical_features, &Data::query_features, &Data::entry_memory_state, &Data::memory_states, &Data::memory_transitions> {}; }
+    static constexpr auto cista_members() noexcept
+    {
+        return ygg::Members<&Data::index,
+                            &Data::symbol,
+                            &Data::concept_arguments,
+                            &Data::role_arguments,
+                            &Data::boolean_arguments,
+                            &Data::numerical_arguments,
+                            &Data::concept_registers,
+                            &Data::role_registers,
+                            &Data::concept_features,
+                            &Data::role_features,
+                            &Data::boolean_features,
+                            &Data::numerical_features,
+                            &Data::query_features,
+                            &Data::entry_memory_state,
+                            &Data::memory_states,
+                            &Data::memory_transitions> {};
+    }
     static constexpr auto identifying_members() noexcept
     {
         return ygg::Members<&Data::symbol,
@@ -143,10 +161,7 @@ struct Data<runir::kr::ps::ext::Module>
                             &Data::memory_states,
                             &Data::memory_transitions> {};
     }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 }  // namespace ygg

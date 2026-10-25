@@ -40,9 +40,7 @@ SparseGraphImpl::SparseGraphImpl(std::size_t nde,
     m_coloring(std::move(coloring)),
     m_is_canonical(false),
     m_graph()
-{
-    initialize_sparse_graph();
-}
+{ initialize_sparse_graph(); }
 
 SparseGraphImpl::SparseGraphImpl(const SparseGraphImpl& other) :
     m_nde(other.m_nde),
@@ -58,9 +56,7 @@ SparseGraphImpl::SparseGraphImpl(const SparseGraphImpl& other) :
     m_permutation(other.m_permutation),
     m_inverse_permutation(other.m_inverse_permutation),
     m_graph()
-{
-    initialize_sparse_graph();
-}
+{ initialize_sparse_graph(); }
 
 auto SparseGraphImpl::operator=(const SparseGraphImpl& other) -> SparseGraphImpl&
 {
@@ -99,9 +95,7 @@ SparseGraphImpl::SparseGraphImpl(SparseGraphImpl&& other) noexcept :
     m_permutation(std::move(other.m_permutation)),
     m_inverse_permutation(std::move(other.m_inverse_permutation)),
     m_graph()
-{
-    initialize_sparse_graph();
-}
+{ initialize_sparse_graph(); }
 
 auto SparseGraphImpl::operator=(SparseGraphImpl&& other) noexcept -> SparseGraphImpl&
 {

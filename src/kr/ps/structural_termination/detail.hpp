@@ -127,9 +127,8 @@ auto surviving_rules(const Graph& graph) -> std::vector<graphs::GraphEdgePropert
 }
 
 template<runir::kr::FamilyTag Family, typename C, typename BooleanRange, typename NumericalRange>
-auto materialize_scc_results(const std::vector<SccFeaturePositions>& positions,
-                             const BooleanRange& booleans,
-                             const NumericalRange& numericals) -> std::vector<dl::SccStructuralTerminationResult<Family, C>>
+auto materialize_scc_results(const std::vector<SccFeaturePositions>& positions, const BooleanRange& booleans, const NumericalRange& numericals)
+    -> std::vector<dl::SccStructuralTerminationResult<Family, C>>
 {
     auto result = std::vector<dl::SccStructuralTerminationResult<Family, C>> {};
     result.reserve(positions.size());

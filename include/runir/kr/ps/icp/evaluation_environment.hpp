@@ -1,10 +1,10 @@
 #ifndef RUNIR_KR_PS_ICP_EVALUATION_ENVIRONMENT_HPP_
 #define RUNIR_KR_PS_ICP_EVALUATION_ENVIRONMENT_HPP_
 
+#include "runir/kr/dl/semantics/evaluation_policy.hpp"
 #include "runir/kr/dl/semantics/evaluation_storage.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include "runir/kr/ps/dl/transition_evaluation_context.hpp"
-#include "runir/kr/dl/semantics/evaluation_policy.hpp"
 #include "runir/kr/ps/icp/execution_view.hpp"
 #include "runir/kr/task_context.hpp"
 
@@ -79,9 +79,7 @@ public:
         return make_dl_context(state.get_state(), state.get_registers());
     }
     auto make_dl_context(tyr::planning::StateView<Kind> state, runir::kr::dl::semantics::RegisterValuesView registers)
-    {
-        return m_policy.make_source_context(StateContext(state, m_task.dl_builder, m_source_storage, m_arguments, registers));
-    }
+    { return m_policy.make_source_context(StateContext(state, m_task.dl_builder, m_source_storage, m_arguments, registers)); }
     auto make_dl_transition_context(tyr::planning::StateView<Kind> source,
                                     tyr::planning::StateView<Kind> target,
                                     runir::kr::dl::semantics::RegisterValuesView source_registers,

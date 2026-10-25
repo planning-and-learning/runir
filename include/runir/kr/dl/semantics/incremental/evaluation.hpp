@@ -47,9 +47,7 @@ class EvaluationGraph
 
     template<CategoryTag Category>
     const auto& node(EvaluationIndex<Category> index) const
-    {
-        return std::get<detail::FeatureNode<Kind, Category>>(m_nodes.at(ygg::uint_t(index)));
-    }
+    { return std::get<detail::FeatureNode<Kind, Category>>(m_nodes.at(ygg::uint_t(index))); }
     const auto& node(QueryEvaluationIndex index) const { return std::get<detail::QueryNode<Kind>>(m_nodes.at(ygg::uint_t(index))); }
 
     template<CategoryTag Category>
@@ -75,9 +73,7 @@ class EvaluationGraph
     /// The relation of a query, or of a concept or role lifted into the given columns. Identical
     /// lifts share one node.
     QueryEvaluationIndex prepare_relation(QueryView<> expression, std::span<const ygg::database::ColumnLayout>, std::vector<ygg::uint_t>& dependencies)
-    {
-        return prepare(expression, dependencies);
-    }
+    { return prepare(expression, dependencies); }
     template<ConceptOrRoleTag Category>
     QueryEvaluationIndex
     prepare_relation(ConstructorView<Category> expression, std::span<const ygg::database::ColumnLayout> columns, std::vector<ygg::uint_t>& dependencies)
@@ -129,9 +125,7 @@ public:
     size_t cardinality(QueryEvaluationIndex index) const { return result(index).size(); }
     template<ConceptOrRoleTag Category>
     bool nonempty(EvaluationIndex<Category> index) const
-    {
-        return result(index).any();
-    }
+    { return result(index).any(); }
     bool nonempty(QueryEvaluationIndex index) const { return !result(index).empty(); }
     const tyr::formalism::planning::Repository& repository() const { return *m_task->get_repository(); }
     detail::SetOperationWorkspace& set_workspace() noexcept { return m_set_workspace; }
@@ -151,26 +145,18 @@ public:
 
     template<CategoryTag Category>
     EvaluationIndex<Category> prepare(ConstructorView<Category> expression)
-    {
-        return m_graph->prepare(expression);
-    }
+    { return m_graph->prepare(expression); }
     QueryEvaluationIndex prepare(QueryView<> expression) { return m_graph->prepare(expression); }
     template<CategoryTag Category>
     EvaluationIndex<Category> prepare(ConstructorView<Category> expression, std::vector<ygg::uint_t>& dependencies)
-    {
-        return m_graph->prepare(expression, dependencies);
-    }
+    { return m_graph->prepare(expression, dependencies); }
     QueryEvaluationIndex prepare(QueryView<> expression, std::vector<ygg::uint_t>& dependencies) { return m_graph->prepare(expression, dependencies); }
     QueryEvaluationIndex prepare_relation(QueryView<> expression, std::span<const ygg::database::ColumnLayout> columns, std::vector<ygg::uint_t>& dependencies)
-    {
-        return m_graph->prepare_relation(expression, columns, dependencies);
-    }
+    { return m_graph->prepare_relation(expression, columns, dependencies); }
     template<ConceptOrRoleTag Category>
     QueryEvaluationIndex
     prepare_relation(ConstructorView<Category> expression, std::span<const ygg::database::ColumnLayout> columns, std::vector<ygg::uint_t>& dependencies)
-    {
-        return m_graph->prepare_relation(expression, columns, dependencies);
-    }
+    { return m_graph->prepare_relation(expression, columns, dependencies); }
 };
 }  // namespace detail
 
@@ -268,15 +254,11 @@ private:
     /// Results of nodes evaluated in the current state, read through StateEvaluation, which demands them first.
     template<CategoryTag Category>
     BorrowedDenotationView<Category> get_result(EvaluationIndex<Category> index) const
-    {
-        return m_graph.result(index);
-    }
+    { return m_graph.result(index); }
     const ygg::Builder<ygg::database::Relation>& get_result(QueryEvaluationIndex index) const { return m_graph.result(index); }
     template<ConceptOrRoleTag Category>
     size_t size(EvaluationIndex<Category> index) const
-    {
-        return m_graph.cardinality(index);
-    }
+    { return m_graph.cardinality(index); }
     size_t size(QueryEvaluationIndex index) const { return m_graph.cardinality(index); }
     /// Changes of nodes updated from the transition into the current state.
     template<ConceptOrRoleTag Category>
@@ -326,33 +308,19 @@ public:
 
     template<CategoryTag Category>
     BorrowedDenotationView<Category> evaluate(EvaluationIndex<Category> index)
-    {
-        return current(ygg::uint_t(index)).get_result(index);
-    }
-    const ygg::Builder<ygg::database::Relation>& evaluate(QueryEvaluationIndex index)
-    {
-        return current(ygg::uint_t(index)).get_result(index);
-    }
+    { return current(ygg::uint_t(index)).get_result(index); }
+    const ygg::Builder<ygg::database::Relation>& evaluate(QueryEvaluationIndex index) { return current(ygg::uint_t(index)).get_result(index); }
     template<ConceptOrRoleTag Category>
     size_t size(EvaluationIndex<Category> index)
-    {
-        return current(ygg::uint_t(index)).size(index);
-    }
+    { return current(ygg::uint_t(index)).size(index); }
     size_t size(QueryEvaluationIndex index) { return current(ygg::uint_t(index)).size(index); }
     template<ConceptOrRoleTag Category>
     const DenotationDelta<Category>& delta(EvaluationIndex<Category> index)
-    {
-        return current(ygg::uint_t(index)).get_delta(index);
-    }
-    const ygg::database::incremental::Delta& delta(QueryEvaluationIndex index)
-    {
-        return current(ygg::uint_t(index)).get_delta(index);
-    }
+    { return current(ygg::uint_t(index)).get_delta(index); }
+    const ygg::database::incremental::Delta& delta(QueryEvaluationIndex index) { return current(ygg::uint_t(index)).get_delta(index); }
     template<BooleanOrNumericalTag Category>
     bool changed(EvaluationIndex<Category> index)
-    {
-        return current(ygg::uint_t(index)).changed(index);
-    }
+    { return current(ygg::uint_t(index)).changed(index); }
 };
 
 }  // namespace runir::kr::dl::semantics::incremental

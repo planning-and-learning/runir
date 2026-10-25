@@ -11,16 +11,15 @@ void bind_condition(nb::module_& m, RepositoryBinding& repository)
     using Family = runir::kr::IcpFamilyTag;
     using Variant = runir::kr::ps::ConcreteConditionVariant<Family, runir::kr::DlTag>;
     runir::kr::python::bind_variant<Variant>(m, repository, "ConcreteConditionVariant");
-    runir::kr::python::bind_observation<
-        runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>>(m,
-                                                                                                                                    repository,
-                                                                                                                                    "PositiveBooleanCondition");
-    runir::kr::python::bind_observation<
-        runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Negative>>(m,
-                                                                                                                                    repository,
-                                                                                                                                    "NegativeBooleanCondition");
-    runir::kr::python::bind_observation<
-        runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::EqualZero>>(
+    runir::kr::python::bind_observation<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>>(
+        m,
+        repository,
+        "PositiveBooleanCondition");
+    runir::kr::python::bind_observation<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Negative>>(
+        m,
+        repository,
+        "NegativeBooleanCondition");
+    runir::kr::python::bind_observation<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::EqualZero>>(
         m,
         repository,
         "EqualZeroNumericalCondition");

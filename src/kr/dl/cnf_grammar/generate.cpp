@@ -59,15 +59,11 @@ private:
 
     template<runir::kr::dl::CategoryTag Category>
     auto& get_map() noexcept
-    {
-        return std::get<ConstructorsByNonTerminal<Category>>(m_maps);
-    }
+    { return std::get<ConstructorsByNonTerminal<Category>>(m_maps); }
 
     template<runir::kr::dl::CategoryTag Category>
     const auto& get_map() const noexcept
-    {
-        return std::get<ConstructorsByNonTerminal<Category>>(m_maps);
-    }
+    { return std::get<ConstructorsByNonTerminal<Category>>(m_maps); }
 
     template<runir::kr::dl::CategoryTag Category>
     static const ConstructorIndices<Category>& empty_constructors()
@@ -140,9 +136,7 @@ struct SeenDenotations
 
     template<runir::kr::dl::CategoryTag Category>
     auto& get() noexcept
-    {
-        return std::get<Seen<Category>>(values);
-    }
+    { return std::get<Seen<Category>>(values); }
 };
 
 template<tyr::TaskKind Kind>
@@ -274,9 +268,7 @@ private:
 
     template<runir::kr::dl::CategoryTag Category>
     void keep(NonTerminalView<Category> lhs, ygg::Index<runir::kr::dl::Constructor<Category>> constructor)
-    {
-        m_sentences.get(lhs, m_complexity).push_back(constructor);
-    }
+    { m_sentences.get(lhs, m_complexity).push_back(constructor); }
 
     template<runir::kr::dl::CategoryTag Category>
     bool maybe_keep(NonTerminalView<Category> lhs, runir::kr::dl::ConstructorView<Category> constructor)
@@ -529,19 +521,13 @@ private:
     }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::AtLeastNumberRestrictionTag> constructor)
-    {
-        return generate_number_restriction(lhs, constructor);
-    }
+    { return generate_number_restriction(lhs, constructor); }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::AtMostNumberRestrictionTag> constructor)
-    {
-        return generate_number_restriction(lhs, constructor);
-    }
+    { return generate_number_restriction(lhs, constructor); }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::ExactNumberRestrictionTag> constructor)
-    {
-        return generate_number_restriction(lhs, constructor);
-    }
+    { return generate_number_restriction(lhs, constructor); }
 
     template<typename Tag>
     bool generate_qualified_number_restriction(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<Tag> constructor)
@@ -563,19 +549,13 @@ private:
     }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag> constructor)
-    {
-        return generate_qualified_number_restriction(lhs, constructor);
-    }
+    { return generate_qualified_number_restriction(lhs, constructor); }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::QualifiedAtMostNumberRestrictionTag> constructor)
-    {
-        return generate_qualified_number_restriction(lhs, constructor);
-    }
+    { return generate_qualified_number_restriction(lhs, constructor); }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::QualifiedExactNumberRestrictionTag> constructor)
-    {
-        return generate_qualified_number_restriction(lhs, constructor);
-    }
+    { return generate_qualified_number_restriction(lhs, constructor); }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::RoleValueMapTag> constructor)
     {

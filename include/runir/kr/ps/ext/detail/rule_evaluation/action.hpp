@@ -102,7 +102,8 @@ public:
             const auto offered = context.task_context->search_context->successor_generator->try_get_applicable_action_binding(
                 tyr::planning::Node<Kind, PlanningState>(planning_state, 0),
                 m_action,
-                tyr::formalism::planning::ObjectSpanView(std::span<const ygg::Index<tyr::formalism::Object>>(m_objects), *planning_state.get_formalism_repository()));
+                tyr::formalism::planning::ObjectSpanView(std::span<const ygg::Index<tyr::formalism::Object>>(m_objects),
+                                                         *planning_state.get_formalism_repository()));
             require_applicable(offered.status);
             const auto candidate = context.storage.successor(planning_state, *offered.binding);
             // Effects filter the offered transitions, as for Do rules.

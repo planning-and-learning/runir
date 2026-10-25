@@ -26,39 +26,27 @@ public:
 
     auto get_feature() const noexcept
         requires runir::kr::ps::icp::BindingRuleKind<Kind>
-    {
-        return make_view(this->get_data().feature, this->get_context());
-    }
+    { return make_view(this->get_data().feature, this->get_context()); }
 
     auto get_register() const noexcept
         requires runir::kr::ps::icp::BindingRuleKind<Kind>
-    {
-        return make_view(this->get_data().reg, this->get_repository().get_dl_repository());
-    }
+    { return make_view(this->get_data().reg, this->get_repository().get_dl_repository()); }
 
     const auto& get_action_name() const noexcept
         requires std::same_as<Kind, runir::kr::ps::icp::CruleTag>
-    {
-        return this->get_data().action_name;
-    }
+    { return this->get_data().action_name; }
 
     const auto& get_argument_names() const noexcept
         requires std::same_as<Kind, runir::kr::ps::icp::CruleTag>
-    {
-        return this->get_data().argument_names;
-    }
+    { return this->get_data().argument_names; }
 
     auto get_xconditions() const noexcept
         requires std::same_as<Kind, runir::kr::ps::icp::CruleTag>
-    {
-        return make_view(this->get_data().xconditions, this->get_context());
-    }
+    { return make_view(this->get_data().xconditions, this->get_context()); }
 
     auto get_xeffects() const noexcept
         requires std::same_as<Kind, runir::kr::ps::icp::CruleTag>
-    {
-        return make_view(this->get_data().xeffects, this->get_context());
-    }
+    { return make_view(this->get_data().xeffects, this->get_context()); }
 };
 
 }

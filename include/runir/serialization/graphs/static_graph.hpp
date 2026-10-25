@@ -2,8 +2,8 @@
 #define RUNIR_SERIALIZATION_GRAPHS_STATIC_GRAPH_HPP_
 
 #include "runir/graphs/static_graph.hpp"
-#include "runir/serialization/graphs/vertex.hpp"
 #include "runir/serialization/graphs/edge.hpp"
+#include "runir/serialization/graphs/vertex.hpp"
 #include "yggdrasil/serialization/dictionaries.hpp"
 
 namespace ygg::serialization

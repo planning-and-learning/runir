@@ -14,10 +14,10 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 #include <yggdrasil/semantics/comparison.hpp>
-#include <yggdrasil/containers/variant.hpp>
 
 namespace runir::kr::ps::ext
 {
@@ -80,13 +80,11 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<Category>>>
         set(effects_, effects);
     }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::feature, &Data::reg, &Data::effects> {}; }
+    static constexpr auto cista_members() noexcept
+    { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::feature, &Data::reg, &Data::effects> {}; }
     static constexpr auto identifying_members() noexcept
     { return ygg::Members<&Data::source, &Data::target, &Data::conditions, &Data::feature, &Data::reg, &Data::effects> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<runir::kr::dl::CategoryTag Category>
@@ -147,13 +145,11 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ChooseTag<Category>>>
         set(order_, order);
     }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::feature, &Data::reg, &Data::effects, &Data::order> {}; }
+    static constexpr auto cista_members() noexcept
+    { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::feature, &Data::reg, &Data::effects, &Data::order> {}; }
     static constexpr auto identifying_members() noexcept
     { return ygg::Members<&Data::source, &Data::target, &Data::conditions, &Data::feature, &Data::reg, &Data::effects, &Data::order> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<>
@@ -196,10 +192,7 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::effects> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::source, &Data::target, &Data::conditions, &Data::effects> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<>
@@ -251,13 +244,11 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>
         set(arguments_, arguments);
     }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::effects, &Data::action_name, &Data::arguments> {}; }
+    static constexpr auto cista_members() noexcept
+    { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::effects, &Data::action_name, &Data::arguments> {}; }
     static constexpr auto identifying_members() noexcept
     { return ygg::Members<&Data::source, &Data::target, &Data::conditions, &Data::effects, &Data::action_name, &Data::arguments> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<>
@@ -309,13 +300,11 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>>
         set(query_feature_, query_feature);
     }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::effects, &Data::action_name, &Data::query_feature> {}; }
+    static constexpr auto cista_members() noexcept
+    { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::effects, &Data::action_name, &Data::query_feature> {}; }
     static constexpr auto identifying_members() noexcept
     { return ygg::Members<&Data::source, &Data::target, &Data::conditions, &Data::effects, &Data::action_name, &Data::query_feature> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<>
@@ -361,13 +350,11 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>>
         set(callee_, callee);
     }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::callee, &Data::arguments> {}; }
+    static constexpr auto cista_members() noexcept
+    { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::callee, &Data::arguments> {}; }
     static constexpr auto identifying_members() noexcept
     { return ygg::Members<&Data::source, &Data::target, &Data::conditions, &Data::callee, &Data::arguments> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<>
@@ -397,10 +384,7 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::BacktrackTag>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::source, &Data::conditions> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::source, &Data::conditions> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 }  // namespace ygg

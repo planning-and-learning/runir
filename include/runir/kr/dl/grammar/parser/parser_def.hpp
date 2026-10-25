@@ -56,8 +56,8 @@ auto forbidden()
         return boost::spirit::x3::eps(false);
     else
         return lit("(") >> keyword(Tag::keyword)
-               > (boost::spirit::x3::rule<ForbiddenClass<Tag>> { "no transitive closure, n_distance or q_must_pass in the edges of n_distance or q_must_pass" } =
-                      boost::spirit::x3::eps(false));
+               > (boost::spirit::x3::rule<ForbiddenClass<Tag>> {
+                      "no transitive closure, n_distance or q_must_pass in the edges of n_distance or q_must_pass" } = boost::spirit::x3::eps(false));
 }
 
 predicate_name_type const predicate_name = "predicate name";
@@ -78,15 +78,11 @@ BOOST_SPIRIT_DEFINE(predicate_name, object_name, identifier, numeric_reference)
 
 template<runir::kr::dl::CategoryTag Category>
 auto argument_reference_parser()
-{
-    return argument_reference_type<Category> { "argument_reference" } = numeric_reference | identifier;
-}
+{ return argument_reference_type<Category> { "argument_reference" } = numeric_reference | identifier; }
 
 template<runir::kr::dl::CategoryTag Category>
 auto register_reference_parser()
-{
-    return register_reference_type<Category> { "register_reference" } = numeric_reference | identifier;
-}
+{ return register_reference_type<Category> { "register_reference" } = numeric_reference | identifier; }
 
 inline auto predicate_name_string_parser()
 {
@@ -115,9 +111,7 @@ inline auto query_columns_parser()
 inline auto true_string_parser() { return keyword(runir::kr::dl::TrueTag::keyword) >> boost::spirit::x3::attr(true); }
 inline auto false_string_parser() { return keyword(runir::kr::dl::FalseTag::keyword) >> boost::spirit::x3::attr(false); }
 inline auto bool_string_parser()
-{
-    return boost::spirit::x3::rule<class BooleanValue, bool> { "true or false" } = boost::spirit::x3::lexeme[true_string_parser() | false_string_parser()];
-}
+{ return boost::spirit::x3::rule<class BooleanValue, bool> { "true or false" } = boost::spirit::x3::lexeme[true_string_parser() | false_string_parser()]; }
 
 template<typename Choice>
     requires boost::spirit::x3::traits::is_parser<Choice>::value && requires { typename Choice::attribute_type; }
@@ -132,9 +126,7 @@ auto derivation_choices_parser(Choice choice)
 template<typename Parser>
     requires boost::spirit::x3::traits::is_parser<Parser>::value
 auto with_constructor_parentheses(Parser parser)
-{
-    return lit("(") >> parser > lit(")");
-}
+{ return lit("(") >> parser > lit(")"); }
 
 template<typename Tag>
 auto constructor_context(const char* rule_name)

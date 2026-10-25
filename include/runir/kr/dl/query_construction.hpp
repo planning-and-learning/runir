@@ -31,9 +31,7 @@ inline std::vector<ygg::Index<ygg::database::Column>> query_labels(const ygg::In
 }
 
 inline ygg::Builder<ygg::database::Columns> query_columns(const ygg::IndexList<QueryColumn>& columns)
-{
-    return ygg::Builder<ygg::database::Columns>(std::span<const ygg::Index<ygg::database::Column>>(query_labels(columns)));
-}
+{ return ygg::Builder<ygg::database::Columns>(std::span<const ygg::Index<ygg::database::Column>>(query_labels(columns))); }
 
 inline void require_query_arity(size_t actual, size_t expected)
 {
@@ -101,8 +99,8 @@ void prepare(ygg::Data<Query<Tag>>& data, const Repository& repository)
             const auto& columns = get_query_columns(query, repository);
             for (size_t i = 0; i < data.keys.size(); ++i)
                 if (i >= columns.size() || columns[i] != data.keys[i])
-                    throw std::invalid_argument("q_must_pass: the " + std::string(argument) + " must start with the key columns; column " + std::to_string(i + 1)
-                                                + " should be `" + column_name(data.keys[i]) + "`.");
+                    throw std::invalid_argument("q_must_pass: the " + std::string(argument) + " must start with the key columns; column "
+                                                + std::to_string(i + 1) + " should be `" + column_name(data.keys[i]) + "`.");
         };
         require_keys("sources", data.sources);
         require_keys("edges", data.edges);

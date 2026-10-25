@@ -59,9 +59,8 @@ namespace detail
 {
 
 template<typename Tag>
-inline constexpr bool is_query_leaf_tag_v =
-    is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag> || std::same_as<Tag, QueryConceptTag> || std::same_as<Tag, QueryRoleTag>
-    || std::same_as<Tag, QueryMustPassTag>;
+inline constexpr bool is_query_leaf_tag_v = is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag> || std::same_as<Tag, QueryConceptTag>
+                                            || std::same_as<Tag, QueryRoleTag> || std::same_as<Tag, QueryMustPassTag>;
 
 template<typename V>
 inline constexpr bool is_complement_view_v = false;
@@ -130,9 +129,7 @@ public:
     /// (ygg::database::relax); built in this translator's repository.
     template<std::predicate<size_t> Known>
     ygg::database::Relaxation relax(std::span<const YggQuery> roots, Known&& known)
-    {
-        return ygg::database::relax(roots, std::forward<Known>(known), m_repository, m_builder);
-    }
+    { return ygg::database::relax(roots, std::forward<Known>(known), m_repository, m_builder); }
 
     /// The expression of each input slot, by slot.
     const std::vector<QuerySlot>& get_slots() const noexcept { return m_slots; }
@@ -142,9 +139,7 @@ public:
 private:
     template<typename Tag>
     YggQuery insert(ygg::Data<ygg::database::Query<Tag>>& data)
-    {
-        return ygg::database::insert_query(m_repository, m_builder, data);
-    }
+    { return ygg::database::insert_query(m_repository, m_builder, data); }
     template<typename Tag>
     YggQuery binary(YggQuery lhs, YggQuery rhs)
     {

@@ -78,9 +78,7 @@ bool monolithic_sieve_has_cycle(const kr::ps::detail::QualitativePolicy& policy)
 }
 
 void expect_hybrid_matches_monolithic(const kr::ps::detail::QualitativePolicy& policy)
-{
-    EXPECT_EQ(!kr::ps::detail::sieve_policy(policy, 4, true).components.empty(), monolithic_sieve_has_cycle(policy));
-}
+{ EXPECT_EQ(!kr::ps::detail::sieve_policy(policy, 4, true).components.empty(), monolithic_sieve_has_cycle(policy)); }
 
 std::vector<kr::ps::detail::RuleProfile> numerical_rule_universe()
 {

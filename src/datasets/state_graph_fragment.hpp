@@ -71,9 +71,7 @@ public:
 
     void
     on_generate_transition(const tyr::planning::Node<Kind>& source, const tyr::planning::LabeledNode<Kind>& target, tyr::planning::TransitionOutcome) override
-    {
-        m_fragment->record(source, target);
-    }
+    { m_fragment->record(source, target); }
 
 private:
     StateGraphFragment<Kind>* m_fragment;

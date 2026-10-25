@@ -95,7 +95,8 @@ class RuleEvaluators
         const auto belongs_to_program = &module_.get_context() == &m_program.get_context() && std::ranges::find(modules, module_) != modules.end();
         return module_.get_memory_transitions() | std::views::join
                | std::views::filter(
-                   [belongs_to_program, memory_state](RuleVariantView rule) {
+                   [belongs_to_program, memory_state](RuleVariantView rule)
+                   {
                        return belongs_to_program
                               && ygg::visit([memory_state](auto concrete) { return concrete.get_source() == memory_state; }, rule.get_variant());
                    });

@@ -11,9 +11,7 @@ void bind_config(nb::module_& m)
         .value("UNIT_COST", StateGraphCostMode::UNIT_COST)
         .value("ACTION_COST", StateGraphCostMode::ACTION_COST);
 
-    nb::enum_<EquivalencePolicyMode>(m, "EquivalencePolicyMode")
-        .value("IDENTITY", EquivalencePolicyMode::IDENTITY)
-        .value("GI", EquivalencePolicyMode::GI);
+    nb::enum_<EquivalencePolicyMode>(m, "EquivalencePolicyMode").value("IDENTITY", EquivalencePolicyMode::IDENTITY).value("GI", EquivalencePolicyMode::GI);
 }
 
 }  // namespace runir::datasets

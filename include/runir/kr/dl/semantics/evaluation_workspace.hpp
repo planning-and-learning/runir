@@ -1,6 +1,10 @@
 #ifndef RUNIR_SEMANTICS_EVALUATION_WORKSPACE_HPP_
 #define RUNIR_SEMANTICS_EVALUATION_WORKSPACE_HPP_
 
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/distance/feature.hpp"
+#include "runir/kr/dl/semantics/heuristics/projection.hpp"
+
 #include <algorithm>
 #include <concepts>
 #include <deque>
@@ -9,13 +13,9 @@
 #include <optional>
 #include <span>
 #include <type_traits>
-#include <utility>
-#include "runir/kr/dl/declarations.hpp"
-#include "runir/kr/dl/semantics/distance/feature.hpp"
-#include "runir/kr/dl/semantics/heuristics/projection.hpp"
-
 #include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
+#include <utility>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/database/semantics/distance.hpp>
@@ -91,9 +91,7 @@ public:
                                               const ConstructorRepository& constructors,
                                               ygg::uint_t constructor,
                                               Make&& make)
-    {
-        return find_or_make<FullDistanceFeature>(m_distance_features, formalism, constructors, constructor, std::forward<Make>(make));
-    }
+    { return find_or_make<FullDistanceFeature>(m_distance_features, formalism, constructors, constructor, std::forward<Make>(make)); }
     /// The feature of a must-pass query, like get_distance_feature().
     template<std::invocable Make>
         requires std::same_as<std::invoke_result_t<Make&>, MustPassFeature>
@@ -101,9 +99,7 @@ public:
                                            const ConstructorRepository& constructors,
                                            ygg::uint_t query,
                                            Make&& make)
-    {
-        return find_or_make<MustPassFeature>(m_must_pass_features, formalism, constructors, query, std::forward<Make>(make));
-    }
+    { return find_or_make<MustPassFeature>(m_must_pass_features, formalism, constructors, query, std::forward<Make>(make)); }
 };
 
 }

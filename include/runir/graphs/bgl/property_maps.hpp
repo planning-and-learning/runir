@@ -22,9 +22,7 @@ struct IdentityReadPropertyMap
 
 template<std::unsigned_integral Key, std::copyable Value>
 auto get(const IdentityReadPropertyMap<Key, Value>&, Key key) noexcept -> Value
-{
-    return static_cast<Value>(key);
-}
+{ return static_cast<Value>(key); }
 
 template<std::unsigned_integral Key, typename Value>
 class DenseReadPropertyMap
@@ -46,9 +44,7 @@ public:
 
 template<std::unsigned_integral Key, std::copyable Value>
 auto get(const DenseReadPropertyMap<Key, Value>& map, Key key) -> const Value&
-{
-    return map.get(key);
-}
+{ return map.get(key); }
 
 template<std::unsigned_integral Key, typename Value>
 class DenseReadWritePropertyMap
@@ -72,15 +68,11 @@ public:
 
 template<std::unsigned_integral Key, std::copyable Value>
 auto get(const DenseReadWritePropertyMap<Key, Value>& map, Key key) -> const Value&
-{
-    return map.get(key);
-}
+{ return map.get(key); }
 
 template<std::unsigned_integral Key, std::copyable Value>
 void put(DenseReadWritePropertyMap<Key, Value>& map, Key key, const Value& value)
-{
-    map.put(key, value);
-}
+{ map.put(key, value); }
 
 template<std::unsigned_integral Key, typename Value>
 class SparseReadPropertyMap
@@ -102,9 +94,7 @@ public:
 
 template<std::unsigned_integral Key, std::copyable Value>
 auto get(const SparseReadPropertyMap<Key, Value>& map, Key key) -> const Value&
-{
-    return map.get(key);
-}
+{ return map.get(key); }
 
 template<std::unsigned_integral Key, typename Value>
 class SparseReadWritePropertyMap
@@ -128,15 +118,11 @@ public:
 
 template<std::unsigned_integral Key, std::copyable Value>
 auto get(const SparseReadWritePropertyMap<Key, Value>& map, Key key) -> const Value&
-{
-    return map.get(key);
-}
+{ return map.get(key); }
 
 template<std::unsigned_integral Key, std::copyable Value>
 void put(SparseReadWritePropertyMap<Key, Value>& map, Key key, const Value& value)
-{
-    map.put(key, value);
-}
+{ map.put(key, value); }
 
 template<std::unsigned_integral Key, typename Value>
 class DenseBasicMatrix

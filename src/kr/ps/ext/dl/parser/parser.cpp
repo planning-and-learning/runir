@@ -37,23 +37,15 @@ namespace runir::kr::ps::ext::dl::parser
 {
 
 void parse_module_ast(const std::string& description, ast::Module& result, runir::kr::parser::ErrorHandlerType& error_handler)
-{
-    parse_ast(description, module_root_parser(), result, error_handler, "Failed to parse DL module description.");
-}
+{ parse_ast(description, module_root_parser(), result, error_handler, "Failed to parse DL module description."); }
 
 void parse_program_ast(const std::string& description, ast::Program& result, runir::kr::parser::ErrorHandlerType& error_handler)
-{
-    parse_ast(description, program_root_parser(), result, error_handler, "Failed to parse DL module program description.");
-}
+{ parse_ast(description, program_root_parser(), result, error_handler, "Failed to parse DL module program description."); }
 
 ast::Module parse_module_ast(const std::string& description)
-{
-    return parse_ast<module_root_type, ast::Module>(description, module_root_parser(), "Failed to parse DL module description.");
-}
+{ return parse_ast<module_root_type, ast::Module>(description, module_root_parser(), "Failed to parse DL module description."); }
 
 ast::Program parse_program_ast(const std::string& description)
-{
-    return parse_ast<program_root_type, ast::Program>(description, program_root_parser(), "Failed to parse DL module program description.");
-}
+{ return parse_ast<program_root_type, ast::Program>(description, program_root_parser(), "Failed to parse DL module program description."); }
 
 }  // namespace runir::kr::ps::ext::dl::parser

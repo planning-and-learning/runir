@@ -17,7 +17,6 @@ public:
 
     auto get_direction() const noexcept { return this->get_data().direction; }
     auto get_feature() const noexcept { return make_view(this->get_data().feature, this->get_context()); }
-
 };
 
 }  // namespace ygg

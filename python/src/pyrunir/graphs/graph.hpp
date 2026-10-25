@@ -101,15 +101,11 @@ auto make_graph_iterator(const char* name, Range&& range)
 
 template<typename Graph>
 auto get_vertex_property(const Graph& graph, graphs::VertexIndex vertex)
-{
-    return graph.get_vertex(vertex).get_property();
-}
+{ return graph.get_vertex(vertex).get_property(); }
 
 template<typename Graph>
 auto get_edge_property(const Graph& graph, graphs::EdgeIndex edge)
-{
-    return graph.get_edge(edge).get_property();
-}
+{ return graph.get_edge(edge).get_property(); }
 
 template<bool KeepPropertyOwnerAlive = false, typename Graph, typename VertexPropertyGetter, typename EdgePropertyGetter>
 void bind_readable_graph_methods(nb::class_<Graph>& cls, VertexPropertyGetter vertex_property_getter, EdgePropertyGetter edge_property_getter)
@@ -138,9 +134,7 @@ void bind_readable_graph_methods(nb::class_<Graph>& cls, VertexPropertyGetter ve
 
 template<bool KeepPropertyOwnerAlive = false, typename Graph>
 void bind_readable_graph_methods(nb::class_<Graph>& cls)
-{
-    bind_readable_graph_methods<KeepPropertyOwnerAlive>(cls, &get_vertex_property<Graph>, &get_edge_property<Graph>);
-}
+{ bind_readable_graph_methods<KeepPropertyOwnerAlive>(cls, &get_vertex_property<Graph>, &get_edge_property<Graph>); }
 
 template<bool KeepPropertyOwnerAlive = false, typename Graph, typename VertexPropertyGetter, typename EdgePropertyGetter>
 void bind_readable_graph(nb::class_<Graph>& cls, VertexPropertyGetter vertex_property_getter, EdgePropertyGetter edge_property_getter)
@@ -151,9 +145,7 @@ void bind_readable_graph(nb::class_<Graph>& cls, VertexPropertyGetter vertex_pro
 
 template<bool KeepPropertyOwnerAlive = false, typename Graph>
 void bind_readable_graph(nb::class_<Graph>& cls)
-{
-    bind_readable_graph<KeepPropertyOwnerAlive>(cls, &get_vertex_property<Graph>, &get_edge_property<Graph>);
-}
+{ bind_readable_graph<KeepPropertyOwnerAlive>(cls, &get_vertex_property<Graph>, &get_edge_property<Graph>); }
 
 template<typename Range>
 auto materialize_vertex_indices(Range&& range) -> graphs::VertexIndexList
@@ -335,21 +327,15 @@ inline void bind_graph_certificates(nb::module_& m)
 
 template<typename Graph>
 auto get_python_vertex_property(const Graph& graph, graphs::VertexIndex vertex)
-{
-    return graph.get_vertex(vertex).get_property().value;
-}
+{ return graph.get_vertex(vertex).get_property().value; }
 
 template<typename Graph>
 auto get_python_edge_property(const Graph& graph, graphs::EdgeIndex edge)
-{
-    return graph.get_edge(edge).get_property().value;
-}
+{ return graph.get_edge(edge).get_property().value; }
 
 template<typename Graph>
 void bind_python_object_graph(nb::class_<Graph>& cls)
-{
-    bind_readable_graph(cls, &get_python_vertex_property<Graph>, &get_python_edge_property<Graph>);
-}
+{ bind_readable_graph(cls, &get_python_vertex_property<Graph>, &get_python_edge_property<Graph>); }
 
 template<typename Graph>
 void bind_labeled_constructible_graph(nb::class_<Graph>& cls)

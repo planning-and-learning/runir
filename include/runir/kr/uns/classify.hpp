@@ -1,8 +1,8 @@
 #ifndef RUNIR_KR_UNS_CLASSIFY_HPP_
 #define RUNIR_KR_UNS_CLASSIFY_HPP_
 
-#include "runir/kr/ps/dl/evaluation.hpp"
 #include "runir/kr/dl/semantics/evaluation_context.hpp"
+#include "runir/kr/ps/dl/evaluation.hpp"
 #include "runir/kr/uns/classifier_view.hpp"
 
 #include <tyr/planning/declarations.hpp>

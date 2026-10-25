@@ -24,45 +24,31 @@ public:
 
     auto get_predicate() const noexcept
         requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)
-    {
-        return make_view(this->get_data().predicate, this->get_context().get_planning_repository());
-    }
+    { return make_view(this->get_data().predicate, this->get_context().get_planning_repository()); }
 
     auto get_polarity() const noexcept
         requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)
-    {
-        return this->get_data().polarity;
-    }
+    { return this->get_data().polarity; }
 
     auto get_argument() const noexcept
         requires std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>
-    {
-        return make_view(this->get_data().reference, this->get_context());
-    }
+    { return make_view(this->get_data().reference, this->get_context()); }
 
     auto get_arg() const noexcept
         requires(std::same_as<Tag, runir::kr::dl::NonemptyTag> || std::same_as<Tag, runir::kr::dl::NotTag>)
-    {
-        return make_view(this->get_data().arg, this->get_context());
-    }
+    { return make_view(this->get_data().arg, this->get_context()); }
 
     auto get_lhs() const noexcept
         requires(runir::kr::dl::ComparisonTag<Tag> || runir::kr::dl::LogicalBinaryTag<Tag>)
-    {
-        return make_view(this->get_data().lhs, this->get_context());
-    }
+    { return make_view(this->get_data().lhs, this->get_context()); }
 
     auto get_rhs() const noexcept
         requires(runir::kr::dl::ComparisonTag<Tag> || runir::kr::dl::LogicalBinaryTag<Tag>)
-    {
-        return make_view(this->get_data().rhs, this->get_context());
-    }
+    { return make_view(this->get_data().rhs, this->get_context()); }
 
     auto get_value() const noexcept
         requires std::same_as<Tag, runir::kr::dl::BooleanConstantTag>
-    {
-        return this->get_data().identifier;
-    }
+    { return this->get_data().identifier; }
 };
 
 }

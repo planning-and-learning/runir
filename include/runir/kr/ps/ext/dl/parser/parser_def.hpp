@@ -190,8 +190,8 @@ const auto action_rule_def =
     context("query action rule")[keyword("(:action") > conditions_section > action_section > query_feature_section_def > effects_section > lit(")")];
 const auto call_rule_def = context("call rule")[keyword("(:call") > conditions_section > callee_section > arguments_expression_section > lit(")")];
 const auto backtrack_rule_def = context("backtrack rule")[keyword("(:backtrack") > conditions_section > lit(")")];
-const auto rule_def = concept_load_rule | role_load_rule | sketch_rule | do_rule | call_rule | concept_choose_rule | role_choose_rule | action_rule
-                      | backtrack_rule;
+const auto rule_def =
+    concept_load_rule | role_load_rule | sketch_rule | do_rule | call_rule | concept_choose_rule | role_choose_rule | action_rule | backtrack_rule;
 const auto required_rules = boost::spirit::x3::rule<class RequiredRules, std::vector<ast::Rule>> { "one or more rules" } = +rule;
 
 const auto rule_entry_def = context(

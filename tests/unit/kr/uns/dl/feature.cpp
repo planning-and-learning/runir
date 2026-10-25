@@ -1,5 +1,6 @@
 #include "runir/kr/ps/declarations.hpp"
 
+#include <cista/reflection/to_tuple.h>
 #include <concepts>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/register_values_view.hpp>
@@ -12,7 +13,6 @@
 #include <tyr/planning/state_repository.hpp>
 #include <utility>
 #include <yggdrasil/core/types.hpp>
-#include <cista/reflection/to_tuple.h>
 
 namespace runir::tests
 {

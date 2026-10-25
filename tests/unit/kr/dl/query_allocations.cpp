@@ -341,8 +341,9 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
         const auto& projected_delta = projection.get_delta();
         return leaf.get_result().size() == rows && delta.added.size() == size_t(adding) && delta.removed.size() == size_t(!adding)
                && projection.get_result().size() == projected_rows && projected_delta.added.size() == (adding ? projected_rows - previous_size : 0)
-               && projected_delta.removed.size() == (adding ? 0 : previous_size - projected_rows) && same_rows(graph_state.get_result(), projection.get_result())
-               && same_rows(graph_state.get_delta().added, projected_delta.added) && same_rows(graph_state.get_delta().removed, projected_delta.removed);
+               && projected_delta.removed.size() == (adding ? 0 : previous_size - projected_rows)
+               && same_rows(graph_state.get_result(), projection.get_result()) && same_rows(graph_state.get_delta().added, projected_delta.added)
+               && same_rows(graph_state.get_delta().removed, projected_delta.removed);
     };
     const auto cycle = [&]
     {

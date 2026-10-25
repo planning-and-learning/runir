@@ -25,14 +25,10 @@ using Status = kr::ps::icp::ProgramProofStatus;
 using Outcome = kr::ps::icp::detail::ProgramOutcome;
 
 std::string rule(const std::string& name, const std::string& source, const std::string& target, const std::string& body)
-{
-    return "(:rule (:symbol " + name + ") (:expression (:source-memory " + source + ") (:target-memory " + target + ") " + body + "))";
-}
+{ return "(:rule (:symbol " + name + ") (:expression (:source-memory " + source + ") (:target-memory " + target + ") " + body + "))"; }
 
 std::string load(const std::string& feature, const std::string& reg = "r0", const std::string& effects = "")
-{
-    return "(:load (:conditions) (:concept " + feature + ") (:register (:concept " + reg + ")) (:effects " + effects + "))";
-}
+{ return "(:load (:conditions) (:concept " + feature + ") (:register (:concept " + reg + ")) (:effects " + effects + "))"; }
 
 std::string move(const std::string& target)
 {
@@ -115,8 +111,8 @@ void check_evaluation_policies()
     auto context = make_context<Kind>("choose");
     const auto policy = program(context,
                                 module(rule("load-bad", "m0", "m1", load("Candidates", "r0", "(positive Bad)"))
-                                       + rule("load-good", "m0", "m1", load("Candidates", "r0", "(negative Bad)"))
-                                       + rule("move", "m1", "m2", move("R")) + rule("finish", "m2", "m3", move("Goal"))));
+                                       + rule("load-good", "m0", "m1", load("Candidates", "r0", "(negative Bad)")) + rule("move", "m1", "m2", move("R"))
+                                       + rule("finish", "m2", "m3", move("Goal"))));
     auto full = kr::ps::icp::SuccessorExpander<Kind, kr::dl::semantics::FullEvaluationPolicy<Kind>>(context, policy);
     auto delta = kr::ps::icp::SuccessorExpander<Kind, kr::dl::semantics::DeltaEvaluationPolicy<Kind>>(context, policy);
     const auto source = initial(full);

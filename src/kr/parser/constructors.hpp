@@ -72,15 +72,11 @@ using TargetNumerical = typename Context::Target::template Numerical<Tag>;
 
 template<typename T>
 const T& unwrap(const T& value) noexcept
-{
-    return value;
-}
+{ return value; }
 
 template<typename T>
 const T& unwrap(const boost::spirit::x3::forward_ast<T>& value) noexcept
-{
-    return value.get();
-}
+{ return value.get(); }
 
 template<typename T>
 struct UnwrapTraits
@@ -100,15 +96,11 @@ using Unwrapped = typename UnwrapTraits<T>::Type;
 
 template<typename T, typename Context>
 auto checkout(const Context& context)
-{
-    return ygg::formalism::checkout<T>(context.builder);
-}
+{ return ygg::formalism::checkout<T>(context.builder); }
 
 template<typename Context, typename T>
 auto intern(const Context& context, ygg::Data<T>& data)
-{
-    return insert(context.repository, data).first;
-}
+{ return insert(context.repository, data).first; }
 
 template<runir::kr::dl::CategoryTag Category, typename Context, typename T>
 auto intern_constructor(const Context& context, ygg::Index<T> index)
@@ -316,9 +308,7 @@ QueryView parse(const runir::kr::dl::grammar::ast::Query& node, tyr::formalism::
 /// Parses one alternative of a concept/role/query operand into the member variant Result.
 template<typename Result, typename Node, typename Context>
 Result parse_collection_operand(const Node& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{
-    return Result(parse(node, domain, context).get_index());
-}
+{ return Result(parse(node, domain, context).get_index()); }
 
 template<typename Result, typename Operand, typename Context>
 Result parse_operand(const Operand& node, tyr::formalism::planning::DomainView domain, const Context& context)
@@ -406,27 +396,19 @@ auto parse_binary_concept(const Ast& node, tyr::formalism::planning::DomainView 
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptIntersection& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{
-    return parse_binary_concept<runir::kr::dl::IntersectionTag>(node, domain, context);
-}
+{ return parse_binary_concept<runir::kr::dl::IntersectionTag>(node, domain, context); }
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptUnion& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{
-    return parse_binary_concept<runir::kr::dl::UnionTag>(node, domain, context);
-}
+{ return parse_binary_concept<runir::kr::dl::UnionTag>(node, domain, context); }
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptValueRestriction& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{
-    return parse_binary_concept<runir::kr::dl::ValueRestrictionTag>(node, domain, context);
-}
+{ return parse_binary_concept<runir::kr::dl::ValueRestrictionTag>(node, domain, context); }
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptExistentialQuantification& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{
-    return parse_binary_concept<runir::kr::dl::ExistentialQuantificationTag>(node, domain, context);
-}
+{ return parse_binary_concept<runir::kr::dl::ExistentialQuantificationTag>(node, domain, context); }
 
 template<typename Tag, typename Ast, typename Context>
 auto parse_number_restriction_concept(const Ast& node, tyr::formalism::planning::DomainView domain, const Context& context)
@@ -440,21 +422,15 @@ auto parse_number_restriction_concept(const Ast& node, tyr::formalism::planning:
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptAtLeastNumberRestriction& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{
-    return parse_number_restriction_concept<runir::kr::dl::AtLeastNumberRestrictionTag>(node, domain, context);
-}
+{ return parse_number_restriction_concept<runir::kr::dl::AtLeastNumberRestrictionTag>(node, domain, context); }
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptAtMostNumberRestriction& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{
-    return parse_number_restriction_concept<runir::kr::dl::AtMostNumberRestrictionTag>(node, domain, context);
-}
+{ return parse_number_restriction_concept<runir::kr::dl::AtMostNumberRestrictionTag>(node, domain, context); }
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptExactNumberRestriction& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{
-    return parse_number_restriction_concept<runir::kr::dl::ExactNumberRestrictionTag>(node, domain, context);
-}
+{ return parse_number_restriction_concept<runir::kr::dl::ExactNumberRestrictionTag>(node, domain, context); }
 
 template<typename Tag, typename Ast, typename Context>
 auto parse_qualified_number_restriction_concept(const Ast& node, tyr::formalism::planning::DomainView domain, const Context& context)
@@ -472,35 +448,25 @@ template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptQualifiedAtLeastNumberRestriction& node,
            tyr::formalism::planning::DomainView domain,
            const Context& context)
-{
-    return parse_qualified_number_restriction_concept<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>(node, domain, context);
-}
+{ return parse_qualified_number_restriction_concept<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>(node, domain, context); }
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptQualifiedAtMostNumberRestriction& node,
            tyr::formalism::planning::DomainView domain,
            const Context& context)
-{
-    return parse_qualified_number_restriction_concept<runir::kr::dl::QualifiedAtMostNumberRestrictionTag>(node, domain, context);
-}
+{ return parse_qualified_number_restriction_concept<runir::kr::dl::QualifiedAtMostNumberRestrictionTag>(node, domain, context); }
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptQualifiedExactNumberRestriction& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{
-    return parse_qualified_number_restriction_concept<runir::kr::dl::QualifiedExactNumberRestrictionTag>(node, domain, context);
-}
+{ return parse_qualified_number_restriction_concept<runir::kr::dl::QualifiedExactNumberRestrictionTag>(node, domain, context); }
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptRoleValueMap& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{
-    return parse_binary_concept<runir::kr::dl::RoleValueMapTag>(node, domain, context);
-}
+{ return parse_binary_concept<runir::kr::dl::RoleValueMapTag>(node, domain, context); }
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptAgreement& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{
-    return parse_binary_concept<runir::kr::dl::AgreementTag>(node, domain, context);
-}
+{ return parse_binary_concept<runir::kr::dl::AgreementTag>(node, domain, context); }
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptRoleFillers& node, tyr::formalism::planning::DomainView domain, const Context& context)
@@ -591,21 +557,15 @@ auto parse_binary_role(const Ast& node, tyr::formalism::planning::DomainView dom
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::RoleIntersection& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{
-    return parse_binary_role<runir::kr::dl::IntersectionTag>(node, domain, context);
-}
+{ return parse_binary_role<runir::kr::dl::IntersectionTag>(node, domain, context); }
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::RoleUnion& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{
-    return parse_binary_role<runir::kr::dl::UnionTag>(node, domain, context);
-}
+{ return parse_binary_role<runir::kr::dl::UnionTag>(node, domain, context); }
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::RoleComposition& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{
-    return parse_binary_role<runir::kr::dl::CompositionTag>(node, domain, context);
-}
+{ return parse_binary_role<runir::kr::dl::CompositionTag>(node, domain, context); }
 
 template<typename Tag, typename Ast, typename Context>
 auto parse_unary_role(const Ast& node, tyr::formalism::planning::DomainView domain, const Context& context)
@@ -618,27 +578,19 @@ auto parse_unary_role(const Ast& node, tyr::formalism::planning::DomainView doma
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::RoleComplement& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{
-    return parse_unary_role<runir::kr::dl::ComplementTag>(node, domain, context);
-}
+{ return parse_unary_role<runir::kr::dl::ComplementTag>(node, domain, context); }
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::RoleInverse& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{
-    return parse_unary_role<runir::kr::dl::InverseTag>(node, domain, context);
-}
+{ return parse_unary_role<runir::kr::dl::InverseTag>(node, domain, context); }
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::RoleTransitiveClosure& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{
-    return parse_unary_role<runir::kr::dl::TransitiveClosureTag>(node, domain, context);
-}
+{ return parse_unary_role<runir::kr::dl::TransitiveClosureTag>(node, domain, context); }
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::RoleReflexiveTransitiveClosure& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{
-    return parse_unary_role<runir::kr::dl::ReflexiveTransitiveClosureTag>(node, domain, context);
-}
+{ return parse_unary_role<runir::kr::dl::ReflexiveTransitiveClosureTag>(node, domain, context); }
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::RoleRestriction& node, tyr::formalism::planning::DomainView domain, const Context& context)

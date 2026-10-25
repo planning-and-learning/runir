@@ -35,10 +35,7 @@ public:
 
     template<runir::kr::dl::CategoryTag Category>
     auto at(runir::kr::dl::ArgumentIdentifier<Category> arg) const
-    {
-        return get<Category>().at(static_cast<size_t>(ygg::uint_t(arg)));
-    }
-
+    { return get<Category>().at(static_cast<size_t>(ygg::uint_t(arg))); }
 };
 
 }  // namespace ygg

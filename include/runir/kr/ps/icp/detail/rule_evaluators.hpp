@@ -119,8 +119,8 @@ public:
         auto& environment = m_workspace.get_environment();
         environment.reset_source();
         auto source_context = environment.make_dl_context(state);
-        auto context = runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy> { m_workspace,
-                                                                                                                                   state.get_state() };
+        auto context =
+            runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy> { m_workspace, state.get_state() };
         bool emitted = false;
         const auto output = [&](ProgramStep<Kind> step)
         {

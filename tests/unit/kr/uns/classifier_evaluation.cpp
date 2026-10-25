@@ -74,10 +74,7 @@ void check_classifier_evaluation_policies(datasets::TaskSearchContextPtr<Kind> s
 
 }  // namespace
 
-TEST(RunirTests, UnsGroundClassifierEvaluationPoliciesAgreeAfterBacktracking)
-{
-    check_classifier_evaluation_policies(make_gripper_ground_context());
-}
+TEST(RunirTests, UnsGroundClassifierEvaluationPoliciesAgreeAfterBacktracking) { check_classifier_evaluation_policies(make_gripper_ground_context()); }
 
 TEST(RunirTests, UnsLiftedClassifierEvaluationPoliciesAgreeAfterBacktracking)
 {

@@ -126,9 +126,7 @@ struct SearchStorage<Kind, StateMemorization::NONE>
                            std::optional<RuleVariantView>,
                            std::size_t,
                            auto&& classify)
-    {
-        return admit(target, classify);
-    }
+    { return admit(target, classify); }
 
     std::optional<bool> completed(ProgramStateView<Kind>) { return std::nullopt; }
 

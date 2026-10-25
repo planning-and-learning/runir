@@ -39,9 +39,7 @@ std::string concept_constructor(ygg::View<ygg::Index<Concept<Tag>>, C> view)
     else if constexpr (std::same_as<Tag, runir::kr::dl::TopTag>)
         return fmt::format("{}", runir::kr::dl::TopTag::keyword);
     else if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
-        return fmt::format("{} {}",
-                           runir::kr::dl::ConceptAtomicStateSyntaxTag::keyword,
-                           fmt::format("{:?}", view.get_predicate().get_name().view()));
+        return fmt::format("{} {}", runir::kr::dl::ConceptAtomicStateSyntaxTag::keyword, fmt::format("{:?}", view.get_predicate().get_name().view()));
     else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
         return fmt::format("{} {} {}",
                            runir::kr::dl::ConceptAtomicGoalSyntaxTag::keyword,
@@ -173,30 +171,22 @@ std::string numerical(ygg::View<ygg::Index<Numerical<Tag>>, C> view)
 template<typename Tag, typename C>
     requires runir::kr::dl::ConceptConstructorTag<Tag>
 std::string constructor_body(ygg::View<ygg::Index<Concept<Tag>>, C> view)
-{
-    return concept_constructor(view);
-}
+{ return concept_constructor(view); }
 
 template<typename Tag, typename C>
     requires runir::kr::dl::RoleConstructorTag<Tag>
 std::string constructor_body(ygg::View<ygg::Index<Role<Tag>>, C> view)
-{
-    return role(view);
-}
+{ return role(view); }
 
 template<typename Tag, typename C>
     requires runir::kr::dl::BooleanConstructorTag<Tag>
 std::string constructor_body(ygg::View<ygg::Index<Boolean<Tag>>, C> view)
-{
-    return boolean_constructor(view);
-}
+{ return boolean_constructor(view); }
 
 template<typename Tag, typename C>
     requires runir::kr::dl::NumericalConstructorTag<Tag>
 std::string constructor_body(ygg::View<ygg::Index<Numerical<Tag>>, C> view)
-{
-    return numerical(view);
-}
+{ return numerical(view); }
 
 template<runir::kr::dl::CategoryTag Category, typename C>
 std::string constructor_body(ygg::View<ygg::Index<Constructor<Category>>, C> view)
@@ -206,15 +196,11 @@ std::string constructor_body(ygg::View<ygg::Index<Constructor<Category>>, C> vie
 
 template<runir::kr::dl::CategoryTag Category, typename C>
 std::string rule(ygg::View<ygg::Index<DerivationRule<Category>>, C> view)
-{
-    return fmt::format("({} ({}))", view.get_lhs(), constructor_body(view.get_rhs()));
-}
+{ return fmt::format("({} ({}))", view.get_lhs(), constructor_body(view.get_rhs())); }
 
 template<runir::kr::dl::CategoryTag Category, typename C>
 std::string rule(ygg::View<ygg::Index<SubstitutionRule<Category>>, C> view)
-{
-    return fmt::format("({} ({}))", view.get_lhs(), view.get_rhs());
-}
+{ return fmt::format("({} ({}))", view.get_lhs(), view.get_rhs()); }
 
 template<typename Rules>
 void append_rules(std::string& text, Rules rules)

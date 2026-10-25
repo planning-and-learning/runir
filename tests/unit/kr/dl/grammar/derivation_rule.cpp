@@ -29,9 +29,7 @@ concept IndexedDataView =
 
 template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
-{
-    return (IndexedDataView<Ts, kr::dl::grammar::ConstructorRepository> && ...);
-}
+{ return (IndexedDataView<Ts, kr::dl::grammar::ConstructorRepository> && ...); }
 
 template<typename Category>
 consteval bool view_alias()
@@ -47,9 +45,7 @@ consteval bool view_alias()
 
 template<typename... Categories>
 consteval bool view_aliases(ygg::TypeList<Categories...>)
-{
-    return (view_alias<Categories>() && ...);
-}
+{ return (view_alias<Categories>() && ...); }
 
 static_assert(indexed_data_views<>(kr::dl::grammar::DerivationRuleTypes {}));
 static_assert(view_aliases<>(kr::dl::CategoryTags {}));

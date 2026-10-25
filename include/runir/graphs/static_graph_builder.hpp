@@ -68,9 +68,7 @@ public:
         m_in_edges(std::move(other.m_in_edges)),
         m_vertex_properties(std::move(other.m_vertex_properties)),
         m_edge_properties(std::move(other.m_edge_properties))
-    {
-        rebind_parents();
-    }
+    { rebind_parents(); }
 
     auto operator=(const StaticGraphBuilder&) -> StaticGraphBuilder& = delete;
 
@@ -114,9 +112,7 @@ public:
     template<typename P = VP>
         requires std::same_as<P, std::tuple<>>
     auto add_vertex() -> VertexIndex
-    {
-        return add_vertex(std::tuple<> {});
-    }
+    { return add_vertex(std::tuple<> {}); }
 
     auto add_vertex(const VertexType& vertex) -> VertexIndex { return add_vertex(vertex.get_property()); }
 
@@ -138,20 +134,14 @@ public:
     template<typename P = EP>
         requires std::same_as<P, std::tuple<>>
     auto add_directed_edge(VertexIndex source, VertexIndex target) -> EdgeIndex
-    {
-        return add_directed_edge(source, target, std::tuple<> {});
-    }
+    { return add_directed_edge(source, target, std::tuple<> {}); }
 
     auto add_directed_edge(VertexIndex source, VertexIndex target, const EdgeType& edge) -> EdgeIndex
-    {
-        return add_directed_edge(source, target, edge.get_property());
-    }
+    { return add_directed_edge(source, target, edge.get_property()); }
 
     auto add_undirected_edge(VertexIndex lhs, VertexIndex rhs) -> std::pair<EdgeIndex, EdgeIndex>
         requires std::same_as<EP, std::tuple<>>
-    {
-        return { add_directed_edge(lhs, rhs), add_directed_edge(rhs, lhs) };
-    }
+    { return { add_directed_edge(lhs, rhs), add_directed_edge(rhs, lhs) }; }
 
     template<typename P>
         requires std::same_as<std::remove_cvref_t<P>, EP>

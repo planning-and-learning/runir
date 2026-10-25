@@ -51,10 +51,7 @@ std::vector<ObjectIndex> object_values(const auto& row)
 }
 
 /// The column labels of a schema.
-std::vector<ColumnIndex> column_labels(const auto& columns)
-{
-    return ygg::database::column_labels(columns.span());
-}
+std::vector<ColumnIndex> column_labels(const auto& columns) { return ygg::database::column_labels(columns.span()); }
 static_assert(!std::same_as<ColumnIndex, ygg::Index<tyr::formalism::Object>>);
 static_assert(!std::is_convertible_v<ygg::Index<tyr::formalism::Object>, ColumnIndex>);
 
@@ -285,8 +282,8 @@ void check_queries()
     // Ext programs also use the comparisons, constants and connectives.
     const auto parse_boolean = [&](const std::string& description) { return kr::ps::ext::dl::parse_boolean(description, domain, *repository); };
     EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(parse_boolean("(b_and (b_const true) (b_not (n_lt (n_const 2) (n_const 1))))"), unbound_context).get());
-    EXPECT_FALSE(kr::dl::semantics::evaluate<Kind>(parse_boolean("(b_or (b_const false) (n_eq (n_add (n_const 1) (n_const 1)) (n_const 3)))"), unbound_context)
-                     .get());
+    EXPECT_FALSE(
+        kr::dl::semantics::evaluate<Kind>(parse_boolean("(b_or (b_const false) (n_eq (n_add (n_const 1) (n_const 1)) (n_const 3)))"), unbound_context).get());
     EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(parse_boolean("(b_neq (b_nonempty (c_top)) (b_const false))"), unbound_context).get());
     storage.reset_dynamic();
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(argument_count, argument_context).get(), 2);
@@ -395,7 +392,10 @@ void check_distance_queries()
                     const auto& plan = concrete.get_data().plan;
                     auto children = context.child_context();
                     const auto relation = [&](auto argument, auto columns)
-                    { return ygg::visit([&](auto child) { return kr::dl::semantics::detail::evaluate_relation<Kind>(child, columns.span(), children); }, argument); };
+                    {
+                        return ygg::visit([&](auto child) { return kr::dl::semantics::detail::evaluate_relation<Kind>(child, columns.span(), children); },
+                                          argument);
+                    };
                     const auto sources = relation(concrete.get_lhs(), plan.source_columns());
                     const auto edges = relation(concrete.get_mid(), plan.edge_columns());
                     const auto targets = relation(concrete.get_rhs(), plan.target_columns());
@@ -448,7 +448,9 @@ void check_distance_queries()
     const auto both_ways = "(q_union " + edges + " " + reversed + ")";
     EXPECT_EQ(number("(n_distance " + vertex("c") + " " + both_ways + " " + vertex("a") + ")"), 2);
     const auto without_ab = "(q_difference " + edges + " (q_role (x y) (r_restriction (r_identity (c_nominal \"a\")) (c_top))))";
-    EXPECT_EQ(number("(n_distance " + vertex("a") + " (q_difference " + edges + " (q_join (q_concept x (c_nominal \"a\")) (q_concept y (c_nominal \"b\")))) " + vertex("c") + ")"), infinity);
+    EXPECT_EQ(number("(n_distance " + vertex("a") + " (q_difference " + edges + " (q_join (q_concept x (c_nominal \"a\")) (q_concept y (c_nominal \"b\")))) "
+                     + vertex("c") + ")"),
+              infinity);
     EXPECT_EQ(number("(n_distance " + vertex("b") + " " + without_ab + " " + vertex("c") + ")"), 1);
     const auto any_other = "(q_role (x y) (r_complement (r_identity (c_top))))";
     EXPECT_EQ(number("(n_distance " + vertex("c") + " " + any_other + " " + vertex("a") + ")"), 1);
@@ -462,7 +464,8 @@ void check_distance_queries()
 
     // k = 2 Sokoban-style walk/push edges: one coordinate moves, the other stays put through an identity, and
     // the mover may not enter the other's cell.
-    const auto walk = "(q_project (x u y v) (q_join (q_join " + edges + " (q_role (u v) (r_identity (c_top)))) (q_role (y u) (r_complement (r_identity (c_top))))))";
+    const auto walk =
+        "(q_project (x u y v) (q_join (q_join " + edges + " (q_role (u v) (r_identity (c_top)))) (q_role (y u) (r_complement (r_identity (c_top))))))";
     const auto push = "(q_project (x u y v) (q_join (q_join (q_role (x u) " + edge + ") (q_role (u v) " + edge + ")) (q_role (u y) (r_identity (c_top)))))";
     const auto moves = "(q_union " + walk + " " + push + ")";
     const auto at = [](const char* x, const char* u)
@@ -481,7 +484,10 @@ void check_distance_queries()
     // A* relaxes dynamic leaves away: `triple` is dynamic, so the heuristic ignores which x may move,
     // while the search still respects it. x = a has triples (a b b) and (a b c); only x = b has (b c a).
     const auto with_triple = [&](const char* middle)
-    { return "(q_project (x u y v) (q_join " + pair_edges + " (q_project (x) (q_select_value m \"" + std::string(middle) + "\" (q_atomic_state \"triple\" (x m n))))))"; };
+    {
+        return "(q_project (x u y v) (q_join " + pair_edges + " (q_project (x) (q_select_value m \"" + std::string(middle)
+               + "\" (q_atomic_state \"triple\" (x m n))))))";
+    };
     EXPECT_EQ(number("(n_distance " + pair("a") + " " + with_triple("b") + " " + pair("c") + ")"), 2);
     EXPECT_EQ(number("(n_distance " + pair("a") + " " + with_triple("c") + " " + pair("c") + ")"), infinity);
     EXPECT_EQ(number("(n_distance " + pair("b") + " " + with_triple("c") + " " + pair("c") + ")"), 1);
@@ -641,8 +647,8 @@ void check_cached_queries()
     check_relocated_data(join_data,
                          [&](const auto& decoded)
                          {
-                             ygg::Builder<ygg::database::Relation> lhs(decoded.plan.lhs_columns().span()),
-                                 rhs(decoded.plan.rhs_columns().span()), result(decoded.plan.output_columns().span());
+                             ygg::Builder<ygg::database::Relation> lhs(decoded.plan.lhs_columns().span()), rhs(decoded.plan.rhs_columns().span()),
+                                 result(decoded.plan.output_columns().span());
                              lhs.insert(std::tuple { ygg::uint_t(10), ygg::uint_t(20) });
                              lhs.insert(std::tuple { ygg::uint_t(30), ygg::uint_t(40) });
                              rhs.insert(std::tuple { ygg::uint_t(20) });
@@ -659,8 +665,7 @@ void check_cached_queries()
                              [&](const auto& decoded)
                              {
                                  EXPECT_TRUE(std::ranges::equal(decoded.plan.positions(), positions, {}, slice_position));
-                                 ygg::Builder<ygg::database::Relation> input(decoded.plan.input_columns().span()),
-                                     result(decoded.plan.output_columns().span());
+                                 ygg::Builder<ygg::database::Relation> input(decoded.plan.input_columns().span()), result(decoded.plan.output_columns().span());
                                  std::vector<ObjectIndex> row;
                                  for (size_t i = 0; i < input.arity(); ++i)
                                      row.emplace_back(10 + i);
@@ -827,10 +832,9 @@ void check_query_cache_across_states()
     const auto static_join = parse_query(R"((q_join (q_atomic_state "fixed" (x y z)) (q_atomic_state "fixed" (x y z))))", domain, *repository);
     const auto count = kr::ps::ext::dl::parse_numerical(R"((n_count (q_atomic_state "triple" (x y z))))", domain, *repository);
     const auto fixed_count = kr::ps::ext::dl::parse_numerical(R"((n_count (q_atomic_state "fixed" (x y z))))", domain, *repository);
-    const auto matching_row =
-        std::tuple { domain.get_constants()[0].get_index().get_value(),
-                     domain.get_constants()[1].get_index().get_value(),
-                     domain.get_constants()[2].get_index().get_value() };
+    const auto matching_row = std::tuple { domain.get_constants()[0].get_index().get_value(),
+                                           domain.get_constants()[1].get_index().get_value(),
+                                           domain.get_constants()[2].get_index().get_value() };
     const auto check_mixed_joins = [&](auto& target)
     {
         const auto matches = kr::dl::semantics::evaluate<Kind>(triple, target).contains(matching_row);
@@ -1300,7 +1304,10 @@ ygg::uint_t reference_distance(kr::dl::ConstructorView<kr::dl::NumericalTag> num
                 const auto& plan = concrete.get_data().plan;
                 auto children = context.child_context();
                 const auto relation = [&](auto argument, auto columns)
-                { return ygg::visit([&](auto child) { return kr::dl::semantics::detail::evaluate_relation<Kind>(child, columns.span(), children); }, argument); };
+                {
+                    return ygg::visit([&](auto child) { return kr::dl::semantics::detail::evaluate_relation<Kind>(child, columns.span(), children); },
+                                      argument);
+                };
                 const auto sources = relation(concrete.get_lhs(), plan.source_columns());
                 const auto edges = relation(concrete.get_mid(), plan.edge_columns());
                 const auto targets = relation(concrete.get_rhs(), plan.target_columns());
@@ -1339,7 +1346,10 @@ void check_distance_reuse_across_states()
     const auto pair = [](const char* name) { return "(q_role (x u) (r_identity (c_nominal \"" + std::string(name) + "\")))"; };
     // `triple` is dynamic: removing a triple removes edges, and returning to the initial state adds them again.
     const auto with_triple = [&](const char* middle)
-    { return "(q_project (x u y v) (q_join " + pair_edges + " (q_project (x) (q_select_value m \"" + std::string(middle) + "\" (q_atomic_state \"triple\" (x m n))))))"; };
+    {
+        return "(q_project (x u y v) (q_join " + pair_edges + " (q_project (x) (q_select_value m \"" + std::string(middle)
+               + "\" (q_atomic_state \"triple\" (x m n))))))";
+    };
     const auto expressions = std::vector<std::string> {
         "(n_distance " + pair("a") + " " + with_triple("b") + " " + pair("c") + ")",
         "(n_distance " + pair("b") + " " + with_triple("c") + " " + pair("c") + ")",
@@ -1433,7 +1443,8 @@ TEST(RunirQueries, StaticnessIsInferredAndSerializedWithoutChangingIdentity)
     EXPECT_TRUE(kr::ps::ext::dl::parse_boolean("(b_nonempty (q_generic_join (x y z) (x y z) " + fixed + " " + fixed + "))", domain, *repository).is_static());
     EXPECT_FALSE(kr::ps::ext::dl::parse_boolean("(b_nonempty (q_generic_join (x y z) (x y z) " + fixed + " " + triple + "))", domain, *repository).is_static());
     EXPECT_TRUE(kr::ps::ext::dl::parse_boolean("(b_nonempty (q_empty (x)))", domain, *repository).is_static());
-    EXPECT_FALSE(kr::ps::ext::dl::parse_boolean("(b_nonempty (q_must_pass (x) (q_project (x y) " + triple + ") " + triple + " (q_project (x z) " + triple + R"() (q_concept p (c_top)))))",
+    EXPECT_FALSE(kr::ps::ext::dl::parse_boolean("(b_nonempty (q_must_pass (x) (q_project (x y) " + triple + ") " + triple + " (q_project (x z) " + triple
+                                                    + R"() (q_concept p (c_top)))))",
                                                 domain,
                                                 *repository)
                      .is_static());

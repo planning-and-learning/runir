@@ -1,8 +1,6 @@
 #ifndef RUNIR_GRAPHS_DECLARATIONS_HPP_
 #define RUNIR_GRAPHS_DECLARATIONS_HPP_
 
-#include <yggdrasil/core/config.hpp>
-
 #include <concepts>
 #include <cstddef>
 #include <ranges>
@@ -11,6 +9,7 @@
 #include <vector>
 #include <yggdrasil/containers/associative_containers.hpp>
 #include <yggdrasil/core/concepts.hpp>
+#include <yggdrasil/core/config.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/semantics/equal_to.hpp>
 #include <yggdrasil/semantics/hash.hpp>

@@ -26,9 +26,7 @@ concept IndexedDataView =
 
 template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
-{
-    return (IndexedDataView<Ts, kr::dl::ConstructorRepository> && ...);
-}
+{ return (IndexedDataView<Ts, kr::dl::ConstructorRepository> && ...); }
 
 template<typename Category>
 consteval bool view_alias()
@@ -46,9 +44,7 @@ consteval bool view_alias()
 
 template<typename... Categories>
 consteval bool view_aliases(ygg::TypeList<Categories...>)
-{
-    return (view_alias<Categories>() && ...);
-}
+{ return (view_alias<Categories>() && ...); }
 
 template<typename Category>
 consteval bool query_projection_contract()
@@ -56,12 +52,15 @@ consteval bool query_projection_contract()
     using Entity = kr::dl::QueryProjection<Category>;
     using Repository = kr::dl::ConstructorRepository;
     using View = ygg::View<ygg::Index<Entity>, Repository>;
-    return ygg::ViewConcept<ygg::Index<Entity>, Repository> && requires(ygg::Data<Entity>& data, const View& view) {
+    return ygg::ViewConcept<ygg::Index<Entity>, Repository>&&
+        requires(ygg::Data<Entity> & data, const View& view)
+    {
         data.arg;
         data.columns;
         view.get_arg();
         view.get_columns();
-    } && !requires(const View& view) { view.get_plan(); };
+    }
+    &&!requires(const View& view) { view.get_plan(); };
 }
 
 template<typename... Tags>

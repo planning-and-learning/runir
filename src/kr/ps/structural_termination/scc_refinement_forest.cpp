@@ -57,9 +57,7 @@ bool ResidualMemorySccs::refine(std::span<const std::size_t> remaining_rule_posi
 }
 
 bool ResidualMemorySccs::share_opponent_scope(std::size_t lhs_rule_position, std::size_t rhs_rule_position) const
-{
-    return scc_for_rule(lhs_rule_position) == scc_for_rule(rhs_rule_position);
-}
+{ return scc_for_rule(lhs_rule_position) == scc_for_rule(rhs_rule_position); }
 
 bool ResidualMemorySccs::is_cross_scc_rule(std::size_t rule_position) const
 {
@@ -70,18 +68,12 @@ bool ResidualMemorySccs::is_cross_scc_rule(std::size_t rule_position) const
 SccRefinementForest::Marks ResidualMemorySccs::marks_for(std::size_t rule_position) const { return forest_.effective_marks(scc_for_rule(rule_position)); }
 
 void ResidualMemorySccs::establish_r1_mark(std::size_t witnessing_rule_position, std::size_t numerical_position)
-{
-    forest_.mark_numerical(scc_for_rule(witnessing_rule_position), numerical_position, witnessing_rule_position);
-}
+{ forest_.mark_numerical(scc_for_rule(witnessing_rule_position), numerical_position, witnessing_rule_position); }
 
 void ResidualMemorySccs::establish_r2_mark(std::size_t witnessing_rule_position, std::size_t boolean_position)
-{
-    forest_.mark_boolean(scc_for_rule(witnessing_rule_position), boolean_position, witnessing_rule_position);
-}
+{ forest_.mark_boolean(scc_for_rule(witnessing_rule_position), boolean_position, witnessing_rule_position); }
 
 SccRefinementForest::NodeIndex ResidualMemorySccs::scc_for_rule(std::size_t rule_position) const
-{
-    return forest_.leaf_of_memory(policy_.rule_profiles[rule_position].source_memory_position);
-}
+{ return forest_.leaf_of_memory(policy_.rule_profiles[rule_position].source_memory_position); }
 
 }  // namespace runir::kr::ps::detail

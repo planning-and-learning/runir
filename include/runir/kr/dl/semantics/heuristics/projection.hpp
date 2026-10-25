@@ -12,14 +12,14 @@
 #include <map>
 #include <optional>
 #include <span>
-#include <utility>
 #include <tyr/formalism/declarations.hpp>
+#include <utility>
 #include <vector>
 #include <yggdrasil/database/semantics/bound/query_evaluation.hpp>
-#include <yggdrasil/database/semantics/search/concepts.hpp>
 #include <yggdrasil/database/semantics/distance.hpp>
 #include <yggdrasil/database/semantics/operations.hpp>
 #include <yggdrasil/database/semantics/relation_view.hpp>
+#include <yggdrasil/database/semantics/search/concepts.hpp>
 #include <yggdrasil/database/syntax/columns.hpp>
 #include <yggdrasil/database/syntax/query.hpp>
 #include <yggdrasil/database/syntax/row.hpp>
@@ -35,13 +35,13 @@ using Row = ygg::database::Row;
 /// its edges.
 struct PatternDatabase
 {
-    size_t pattern = 0;                                    ///< The vertex column i.
+    size_t pattern = 0;                          ///< The vertex column i.
     ygg::database::bound::QueryEvaluator edges;  ///< The abstract edges (u[i], v[i]), over static inputs only.
-    size_t u_position = 0;                                 ///< The position of u[i] in the columns of edges.
-    size_t v_position = 0;                                 ///< The position of v[i] in the columns of edges.
-    size_t predecessors = 0;                               ///< The binding of edges with v[i] bound.
-    std::vector<bool> targets {};                          ///< α_i(T), for which h was computed.
-    std::vector<ygg::uint_t> h {};                         ///< Abstract distance to α_i(T); ygg::database::infinity if unreachable.
+    size_t u_position = 0;                       ///< The position of u[i] in the columns of edges.
+    size_t v_position = 0;                       ///< The position of v[i] in the columns of edges.
+    size_t predecessors = 0;                     ///< The binding of edges with v[i] bound.
+    std::vector<bool> targets {};                ///< α_i(T), for which h was computed.
+    std::vector<ygg::uint_t> h {};               ///< Abstract distance to α_i(T); ygg::database::infinity if unreachable.
 
     /// Whether h has been computed, for some abstract targets.
     bool computed() const noexcept { return !h.empty(); }
@@ -288,7 +288,7 @@ struct EdgeAbstraction
 {
     ygg::database::QueryPlan plan;  ///< Plan root r is the abstract edge query of column patterns[r].
     std::vector<size_t> patterns;
-    std::vector<size_t> slots;                   ///< The edge query's slot of each input of the plan.
+    std::vector<size_t> slots;  ///< The edge query's slot of each input of the plan.
 };
 
 namespace detail
@@ -338,12 +338,12 @@ abstract_edges(dl::detail::QueryTranslator& translator, ygg::database::QueryView
 /// estimated and of the targets.
 template<ygg::database::SlotRelations SlotRows>
 ProjectionHeuristic make_projection_heuristic(const EdgeAbstraction& abstraction,
-                                             std::span<const ygg::database::ColumnLayout> from,
-                                             std::span<const ygg::database::ColumnLayout> to,
-                                             std::span<const ygg::database::ColumnLayout> vertices,
-                                             std::span<const ygg::database::ColumnLayout> targets,
-                                             ygg::uint_t num_objects,
-                                             const SlotRows& slot_rows)
+                                              std::span<const ygg::database::ColumnLayout> from,
+                                              std::span<const ygg::database::ColumnLayout> to,
+                                              std::span<const ygg::database::ColumnLayout> vertices,
+                                              std::span<const ygg::database::ColumnLayout> targets,
+                                              ygg::uint_t num_objects,
+                                              const SlotRows& slot_rows)
 {
     auto databases = std::vector<PatternDatabase>();
     for (size_t r = 0; r < abstraction.patterns.size(); ++r)
@@ -361,10 +361,8 @@ ProjectionHeuristic make_projection_heuristic(const EdgeAbstraction& abstraction
 }
 
 template<ygg::database::SlotRelations SlotRows>
-ProjectionHeuristic make_projection_heuristic(const EdgeAbstraction& abstraction,
-                                             const ygg::database::DistancePlan& plan,
-                                             ygg::uint_t num_objects,
-                                             const SlotRows& slot_rows)
+ProjectionHeuristic
+make_projection_heuristic(const EdgeAbstraction& abstraction, const ygg::database::DistancePlan& plan, ygg::uint_t num_objects, const SlotRows& slot_rows)
 {
     const auto columns = plan.edge_columns().span();
     return make_projection_heuristic(abstraction,

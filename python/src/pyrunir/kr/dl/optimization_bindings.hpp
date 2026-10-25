@@ -26,8 +26,14 @@ inline void bind_query_statistics(nanobind::module_& m)
     using GroundContext = runir::kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
     using LiftedContext = runir::kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>;
     nb::class_<Sampler>(m, "QueryStatisticsSampler")
-        .def("add", [](Sampler& sampler, GroundContext& context) { sampler.template add<tyr::GroundTag>(context); }, nb::arg("context"))
-        .def("add", [](Sampler& sampler, LiftedContext& context) { sampler.template add<tyr::LiftedTag>(context); }, nb::arg("context"))
+        .def(
+            "add",
+            [](Sampler& sampler, GroundContext& context) { sampler.template add<tyr::GroundTag>(context); },
+            nb::arg("context"))
+        .def(
+            "add",
+            [](Sampler& sampler, LiftedContext& context) { sampler.template add<tyr::LiftedTag>(context); },
+            nb::arg("context"))
         .def("finish",
              [](const Sampler& sampler)
              {

@@ -66,11 +66,8 @@ template<CategoryTag Category>
 }
 
 /// Publish typed query rows in the denotation repository's relation repository, which owns them.
-[[nodiscard]] inline std::pair<QueryDenotationView, bool> insert(DenotationRepository& repository,
-                                                                 ygg::Builder<ygg::database::Relation>& source)
-{
-    return ygg::database::insert(repository.get_relation_repository(), source);
-}
+[[nodiscard]] inline std::pair<QueryDenotationView, bool> insert(DenotationRepository& repository, ygg::Builder<ygg::database::Relation>& source)
+{ return ygg::database::insert(repository.get_relation_repository(), source); }
 
 /// Register object identities remain tied to the same planning formalism.
 [[nodiscard]] inline auto copy(BorrowedRegisterValuesView source, const CopyContext& context)

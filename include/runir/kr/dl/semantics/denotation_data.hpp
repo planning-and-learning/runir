@@ -26,10 +26,7 @@ struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::value> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::value> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<>
@@ -46,10 +43,7 @@ struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::value> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::value> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<>
@@ -64,10 +58,7 @@ struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::num_objects, &Data::vec_index> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::num_objects, &Data::vec_index> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<>
@@ -82,10 +73,7 @@ struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::num_objects, &Data::vec_index> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::num_objects, &Data::vec_index> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 static_assert(uses_trivial_storage_v<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>>);

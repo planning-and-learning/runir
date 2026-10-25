@@ -2,12 +2,12 @@
 #define RUNIR_GRAMMAR_NUMERICAL_DATA_HPP_
 
 #include "runir/kr/dl/grammar/boolean_data.hpp"
-#include <yggdrasil/containers/variant.hpp>
 
 #include <cista/containers/variant.h>
 #include <tuple>
 #include <utility>
 #include <variant>
+#include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 
@@ -34,10 +34,7 @@ struct Data<runir::kr::dl::grammar::Numerical<runir::kr::dl::CountTag>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::arg> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<>

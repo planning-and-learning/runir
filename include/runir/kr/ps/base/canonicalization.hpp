@@ -12,9 +12,7 @@ namespace runir::kr::ps
 {
 
 inline bool is_canonical(const ygg::Data<Rule<runir::kr::BaseFamilyTag>>& data) noexcept
-{
-    return ygg::is_canonical(data.conditions) && ygg::is_canonical(data.effects);
-}
+{ return ygg::is_canonical(data.conditions) && ygg::is_canonical(data.effects); }
 
 inline void canonicalize(ygg::Data<Rule<runir::kr::BaseFamilyTag>>& data)
 {

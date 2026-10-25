@@ -78,7 +78,7 @@ struct QueryEdgeDistanceEvaluator
     QueryEvaluationIndex sources;
     QueryEvaluationIndex targets;
     DistanceFeature<Distance> feature;
-    std::vector<QueryEvaluationIndex> slots;  ///< The graph node of each input slot.
+    std::vector<QueryEvaluationIndex> slots;                   ///< The graph node of each input slot.
     std::optional<heuristics::ProjectionHeuristic> heuristic;  ///< Built at the first initialize(), from the bound leaves.
     DenotationState<NumericalTag> value;
     std::vector<bool> slot_changed;  ///< Per slot, whether update()'s delta changed it; kept to avoid allocations.
@@ -133,9 +133,7 @@ private:
         return [this, &graph](size_t slot) -> const ygg::Builder<ygg::database::Relation>& { return graph.result(slots[slot]); };
     }
     static bool modified(const EvaluationGraph<Kind>& graph, QueryEvaluationIndex index)
-    {
-        return !graph.change(index).added.empty() || !graph.change(index).removed.empty();
-    }
+    { return !graph.change(index).added.empty() || !graph.change(index).removed.empty(); }
     void set_targets(const EvaluationGraph<Kind>& graph)
     {
         feature.distance.set_targets(graph.result(targets));

@@ -6,16 +6,16 @@
 
 #include <boost/fusion/include/adapt_struct.hpp>
 
-BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::ps::ext::dl::ast::Argument)(Category), symbol)
-BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::ps::ext::dl::ast::Register)(Category), symbol)
-BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::ps::ext::dl::ast::Feature)(Category), symbol, expression)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::ps::ext::dl::ast::Argument) (Category), symbol)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::ps::ext::dl::ast::Register) (Category), symbol)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::ps::ext::dl::ast::Feature) (Category), symbol, expression)
 
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::QueryFeature, symbol, expression)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::SymbolExpression, symbol)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::NamedValue, value)
 
-BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::ps::ext::dl::ast::LoadRule)(Category), conditions, feature, reg, effects)
-BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::ps::ext::dl::ast::ChooseRule)(Category), conditions, feature, reg, effects, order)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::ps::ext::dl::ast::LoadRule) (Category), conditions, feature, reg, effects)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::ps::ext::dl::ast::ChooseRule) (Category), conditions, feature, reg, effects, order)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::OrderTerm, direction, feature)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::SketchRule, conditions, effects)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DoRule, conditions, action, arguments, effects)

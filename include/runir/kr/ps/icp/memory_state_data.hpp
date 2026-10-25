@@ -24,10 +24,7 @@ struct Data<runir::kr::ps::icp::MemoryState>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::name> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::name> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 }  // namespace ygg

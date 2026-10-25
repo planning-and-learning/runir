@@ -25,9 +25,7 @@ using ygg::formalism::checkout;
 template<typename T>
     requires ygg::formalism::SupportsSymbol<ConstructorRepository, T>
 void prepare_for_insert(ConstructorRepository&, ygg::Data<T>& data)
-{
-    canonicalize(data);
-}
+{ canonicalize(data); }
 
 using ygg::formalism::insert;
 

@@ -31,9 +31,7 @@ template<FamilyTag Family,
          runir::kr::dl::semantics::EvaluationContextConcept<Kind> SourceContext,
          runir::kr::dl::semantics::EvaluationContextConcept<Kind> TargetContext>
 auto make_evaluation_transition_context(SourceContext source, TargetContext target)
-{
-    return EvaluationTransitionContext<Family, SourceContext, TargetContext>(std::move(source), std::move(target));
-}
+{ return EvaluationTransitionContext<Family, SourceContext, TargetContext>(std::move(source), std::move(target)); }
 
 }  // namespace runir::kr::ps
 

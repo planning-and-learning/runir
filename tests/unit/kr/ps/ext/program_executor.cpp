@@ -265,9 +265,7 @@ std::string choice_module(const std::string& name, const std::string& rules)
 }
 
 std::string choice_rule(const std::string& name, const std::string& source, const std::string& target, const std::string& body)
-{
-    return "(:rule (:symbol " + name + ") (:expression (:source-memory " + source + ") (:target-memory " + target + ") " + body + "))";
-}
+{ return "(:rule (:symbol " + name + ") (:expression (:source-memory " + source + ") (:target-memory " + target + ") " + body + "))"; }
 
 const auto choose_candidates = std::string("(:choose (:conditions) (:concept Candidates) (:register (:concept r0)))");
 const auto choose_empty = std::string("(:choose (:conditions) (:concept Empty) (:register (:concept r0)))");
@@ -276,9 +274,7 @@ const auto move_to_goal = std::string(R"((:do (:conditions) (:action "move") (:a
 const auto move_rules = choice_rule("move-selected", "m1", "m2", move_to_register) + choice_rule("finish", "m2", "m3", move_to_goal);
 
 std::string backtrack_rule(const std::string& name, const std::string& source, const std::string& conditions = "")
-{
-    return "(:rule (:symbol " + name + ") (:expression (:source-memory " + source + ") (:backtrack (:conditions " + conditions + "))))";
-}
+{ return "(:rule (:symbol " + name + ") (:expression (:source-memory " + source + ") (:backtrack (:conditions " + conditions + "))))"; }
 
 template<tyr::TaskKind Kind>
 void check_backtrack_execution()

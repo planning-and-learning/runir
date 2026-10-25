@@ -32,13 +32,9 @@ DenotationRepository::DenotationRepository(size_t index,
 DenotationRepository::~DenotationRepository() = default;
 
 DenotationRepository DenotationRepositoryFactory::create(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository)
-{
-    return DenotationRepository((*m_next_index)++, *this, std::move(formalism_repository));
-}
+{ return DenotationRepository((*m_next_index)++, *this, std::move(formalism_repository)); }
 
 DenotationRepositoryPtr DenotationRepositoryFactory::create_shared(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository)
-{
-    return DenotationRepositoryPtr(new DenotationRepository((*m_next_index)++, *this, std::move(formalism_repository)));
-}
+{ return DenotationRepositoryPtr(new DenotationRepository((*m_next_index)++, *this, std::move(formalism_repository))); }
 
 }  // namespace runir::kr::dl::semantics

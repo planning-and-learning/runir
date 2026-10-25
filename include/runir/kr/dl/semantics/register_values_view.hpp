@@ -36,9 +36,7 @@ public:
 
     template<runir::kr::dl::ConceptOrRoleTag Category>
     auto at(runir::kr::dl::RegisterIdentifier<Category> identifier) const
-    {
-        return get<Category>().at(static_cast<size_t>(ygg::uint_t(identifier)));
-    }
+    { return get<Category>().at(static_cast<size_t>(ygg::uint_t(identifier))); }
 };
 
 template<typename C>
@@ -60,10 +58,7 @@ public:
 
     template<runir::kr::dl::ConceptOrRoleTag Category>
     auto at(runir::kr::dl::RegisterIdentifier<Category> reg) const
-    {
-        return get<Category>().at(static_cast<size_t>(ygg::uint_t(reg)));
-    }
-
+    { return get<Category>().at(static_cast<size_t>(ygg::uint_t(reg))); }
 };
 
 }  // namespace ygg

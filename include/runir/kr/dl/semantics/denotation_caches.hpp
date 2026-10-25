@@ -48,15 +48,11 @@ public:
 
     template<CategoryTag Category>
     auto& get(bool is_static) noexcept
-    {
-        return std::get<Cache<Category>>(m_partitions[is_static].values);
-    }
+    { return std::get<Cache<Category>>(m_partitions[is_static].values); }
 
     template<CategoryTag Category>
     const auto& get(bool is_static) const noexcept
-    {
-        return std::get<Cache<Category>>(m_partitions[is_static].values);
-    }
+    { return std::get<Cache<Category>>(m_partitions[is_static].values); }
 
     auto& get_queries(bool is_static) noexcept { return m_partitions[is_static].queries; }
     const auto& get_queries(bool is_static) const noexcept { return m_partitions[is_static].queries; }

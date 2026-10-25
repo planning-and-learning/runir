@@ -27,9 +27,7 @@ concept IndexedDataView =
 
 template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
-{
-    return (IndexedDataView<Ts, kr::dl::cnf_grammar::ConstructorRepository> && ...);
-}
+{ return (IndexedDataView<Ts, kr::dl::cnf_grammar::ConstructorRepository> && ...); }
 
 static_assert(indexed_data_views<>(kr::dl::cnf_grammar::NumericalTypes {}));
 
@@ -81,9 +79,7 @@ consteval bool numerical_data_view()
 
 template<typename... Tags>
 consteval bool numerical_data_views(ygg::TypeList<Tags...>)
-{
-    return (numerical_data_view<Tags>() && ...);
-}
+{ return (numerical_data_view<Tags>() && ...); }
 
 static_assert(numerical_data_views(kr::dl::GenerationNumericalConstructorTags {}));
 

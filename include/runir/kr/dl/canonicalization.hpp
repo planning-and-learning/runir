@@ -18,9 +18,7 @@ void canonicalize(ygg::Data<QueryProjection<Category>>&) noexcept
 }
 template<ConceptOrRoleTag Category>
 bool is_canonical(const ygg::Data<QueryProjection<Category>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 inline void canonicalize(ygg::Data<QueryColumn>&) noexcept {}
 inline bool is_canonical(const ygg::Data<QueryColumn>&) noexcept { return true; }
@@ -30,9 +28,7 @@ void canonicalize(ygg::Data<Query<Tag>>&) noexcept
 }
 template<typename Tag>
 bool is_canonical(const ygg::Data<Query<Tag>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 /// Orders the two operands of a commutative binary constructor so that equal expressions get equal data.
 template<typename T>
@@ -49,48 +45,34 @@ void canonicalize_commutative_binary(ygg::Data<T>& data) noexcept
 template<typename Tag>
     requires ConceptConstructorTag<Tag>
 bool is_canonical(const ygg::Data<Concept<Tag>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<typename Tag>
     requires RoleConstructorTag<Tag>
 bool is_canonical(const ygg::Data<Role<Tag>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<typename Tag>
     requires BooleanConstructorTag<Tag>
 bool is_canonical(const ygg::Data<Boolean<Tag>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<typename Tag>
     requires NumericalConstructorTag<Tag>
 bool is_canonical(const ygg::Data<Numerical<Tag>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<CategoryTag Category>
 bool is_canonical(const ygg::Data<Constructor<Category>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<CategoryTag Category>
 bool is_canonical(const ygg::Data<Argument<Category>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<ConceptOrRoleTag Category>
 bool is_canonical(const ygg::Data<Register<Category>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<typename Tag>
     requires ConceptConstructorTag<Tag>

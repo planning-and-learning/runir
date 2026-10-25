@@ -18,8 +18,6 @@
 #ifndef RUNIR_DATASETS_OBJECT_GRAPH_COLOR_HPP_
 #define RUNIR_DATASETS_OBJECT_GRAPH_COLOR_HPP_
 
-#include <yggdrasil/containers/variant.hpp>
-
 #include <algorithm>
 #include <cassert>
 #include <cista/containers/variant.h>
@@ -90,9 +88,7 @@ struct Data<runir::datasets::PredicateColor<T>>
         predicate(),
         argument_position(argument_position_),
         context(context_)
-    {
-        set(predicate_, predicate);
-    }
+    { set(predicate_, predicate); }
     Data(const Data&) = default;
     Data& operator=(const Data&) = default;
     Data(Data&&) = default;
@@ -100,16 +96,14 @@ struct Data<runir::datasets::PredicateColor<T>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::predicate, &Data::argument_position, &Data::context> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::predicate, &Data::argument_position, &Data::context> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<>
 struct Data<runir::datasets::Color>
 {
-    using Variant = ::ygg::IndexVariant<ygg::MapTypeListT<runir::datasets::PredicateColor, ygg::TypeList<::tyr::formalism::StaticTag, ::tyr::formalism::FluentTag>>>;
+    using Variant =
+        ::ygg::IndexVariant<ygg::MapTypeListT<runir::datasets::PredicateColor, ygg::TypeList<::tyr::formalism::StaticTag, ::tyr::formalism::FluentTag>>>;
     using VariantList = cista::offset::vector<Variant>;
 
     Index<runir::datasets::Color> index;
@@ -133,10 +127,7 @@ struct Data<runir::datasets::Color>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::values> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::values> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<::tyr::formalism::FactKind T, typename C>
@@ -148,7 +139,6 @@ public:
     auto get_predicate() const noexcept { return ygg::make_view(this->get_data().predicate, this->get_context().get_planning_repository()); }
     auto get_argument_position() const noexcept { return this->get_data().argument_position; }
     auto get_predicate_context() const noexcept { return this->get_data().context; }
-
 };
 
 template<typename C>
@@ -158,7 +148,6 @@ public:
     using ygg::IndexViewBase<runir::datasets::Color, C>::IndexViewBase;
 
     auto get_colors() const noexcept { return ygg::make_view(this->get_data().values, this->get_context()); }
-
 };
 
 static_assert(ygg::uses_trivial_storage_v<runir::datasets::PredicateColor<::tyr::formalism::StaticTag>>);
@@ -172,9 +161,7 @@ namespace runir::datasets
 
 template<::tyr::formalism::FactKind T>
 bool is_canonical(const ygg::Data<PredicateColor<T>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<::tyr::formalism::FactKind T>
 void canonicalize(ygg::Data<PredicateColor<T>>&) noexcept
@@ -182,9 +169,7 @@ void canonicalize(ygg::Data<PredicateColor<T>>&) noexcept
 }
 
 inline bool is_canonical(const ygg::Data<Color>& data) noexcept
-{
-    return std::is_sorted(data.values.begin(), data.values.end()) && std::adjacent_find(data.values.begin(), data.values.end()) == data.values.end();
-}
+{ return std::is_sorted(data.values.begin(), data.values.end()) && std::adjacent_find(data.values.begin(), data.values.end()) == data.values.end(); }
 
 inline void canonicalize(ygg::Data<Color>& data)
 {
@@ -206,9 +191,7 @@ private:
         m_symbol_repository(nullptr),
         m_planning_repository(std::move(planning_repository)),
         m_index(index)
-    {
-        assert(m_planning_repository);
-    }
+    { assert(m_planning_repository); }
 
 public:
     ColorRepository(const ColorRepository&) = delete;
@@ -253,15 +236,11 @@ public:
 
     template<typename T>
     std::size_t size() const noexcept
-    {
-        return m_symbol_repository.local_size<T>();
-    }
+    { return m_symbol_repository.local_size<T>(); }
 
     template<typename T>
     const ColorRepository& get_canonical_context(ygg::Index<T>) const noexcept
-    {
-        return *this;
-    }
+    { return *this; }
 };
 
 class ColorRepositoryFactory
@@ -271,9 +250,7 @@ private:
 
 public:
     std::shared_ptr<ColorRepository> create(std::shared_ptr<const ::tyr::formalism::planning::Repository> planning_repository)
-    {
-        return std::shared_ptr<ColorRepository>(new ColorRepository(m_next_index++, std::move(planning_repository)));
-    }
+    { return std::shared_ptr<ColorRepository>(new ColorRepository(m_next_index++, std::move(planning_repository))); }
 };
 
 using ColorView = ygg::View<ygg::Index<Color>, ColorRepository>;

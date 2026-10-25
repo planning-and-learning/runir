@@ -39,19 +39,13 @@ public:
     BorrowedDenotationView<Category> get_result(const tyr::formalism::planning::Repository& repository) const { return state().get_result(repository); }
     const auto& get_delta() const
         requires ConceptOrRoleTag<Category>
-    {
-        return state().get_delta();
-    }
+    { return state().get_delta(); }
     size_t size() const
         requires ConceptOrRoleTag<Category>
-    {
-        return state().size();
-    }
+    { return state().size(); }
     bool changed() const
         requires BooleanOrNumericalTag<Category>
-    {
-        return state().changed();
-    }
+    { return state().changed(); }
 
 private:
     using ConceptOperations = ygg::TypeList<AtomicEvaluator<Kind, Category, tyr::formalism::FluentTag>,
@@ -129,19 +123,13 @@ private:
 
     template<ConceptOrRoleTag Projected, typename C>
     Evaluators prepare(ygg::View<ygg::Index<QueryProjection<Projected>>, C> expression, GraphBuilder<Kind>& graph)
-    {
-        return ProjectionEvaluator<Kind, Category>(graph.prepare(expression.get_arg(), m_dependencies), expression.get_data().plan);
-    }
+    { return ProjectionEvaluator<Kind, Category>(graph.prepare(expression.get_arg(), m_dependencies), expression.get_data().plan); }
 
     Evaluators prepare_distance(NumericalView<DistanceTag> expression, ConstructorView<RoleTag>, GraphBuilder<Kind>& graph)
-    {
-        return RoleEdgeDistanceEvaluator<Kind>(expression, graph, m_dependencies);
-    }
+    { return RoleEdgeDistanceEvaluator<Kind>(expression, graph, m_dependencies); }
     /// Query edges can range over pair vertices; maintaining them would materialize every edge.
     Evaluators prepare_distance(NumericalView<DistanceTag> expression, QueryView<> edges, GraphBuilder<Kind>& graph)
-    {
-        return QueryEdgeDistanceEvaluator<Kind>(expression, edges, graph, m_dependencies);
-    }
+    { return QueryEdgeDistanceEvaluator<Kind>(expression, edges, graph, m_dependencies); }
 
     template<template<typename> typename Expression, typename Tag, typename C>
     Evaluators prepare(ygg::View<ygg::Index<Expression<Tag>>, C> expression, GraphBuilder<Kind>& graph)

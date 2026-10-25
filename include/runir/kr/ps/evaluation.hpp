@@ -1,8 +1,8 @@
 #ifndef RUNIR_KR_PS_EVALUATION_HPP_
 #define RUNIR_KR_PS_EVALUATION_HPP_
 
-#include "runir/kr/ps/family_traits.hpp"
 #include "runir/kr/dl/semantics/evaluation_context.hpp"
+#include "runir/kr/ps/family_traits.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 
 #include <yggdrasil/containers/variant.hpp>

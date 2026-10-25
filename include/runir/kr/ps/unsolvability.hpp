@@ -1,8 +1,8 @@
 #ifndef RUNIR_KR_PS_UNSOLVABILITY_HPP_
 #define RUNIR_KR_PS_UNSOLVABILITY_HPP_
 
-#include "runir/kr/dl/semantics/evaluation_storage.hpp"
 #include "runir/kr/dl/semantics/evaluation_policy.hpp"
+#include "runir/kr/dl/semantics/evaluation_storage.hpp"
 #include "runir/kr/task_context.hpp"
 #include "runir/kr/uns/classify.hpp"
 #include "runir/kr/uns/repository.hpp"
@@ -25,9 +25,7 @@ struct NoUnsolvability
 {
     template<tyr::planning::StateViewConcept<Kind> State>
     bool is_unsolvable(const State&) const noexcept
-    {
-        return false;
-    }
+    { return false; }
 };
 
 template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> Policy = runir::kr::dl::semantics::DefaultEvaluationPolicy<Kind>>

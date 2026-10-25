@@ -29,9 +29,9 @@ ModuleStructuralTerminationResult structural_termination(ModuleView module_,
 /// ICAPS 2024 paper leaves modular acyclicity/termination as future work.
 /// use_memory_scc_scope only affects each module's incomplete preprocessing.
 ProgramStructuralTerminationResult structural_termination(ProgramView program,
-                                                                std::size_t max_features = runir::kr::ps::dl::default_max_features,
-                                                                bool use_incomplete_preprocessing = runir::kr::ps::dl::default_use_incomplete_preprocessing,
-                                                                bool use_memory_scc_scope = runir::kr::ps::dl::default_use_memory_scc_scope);
+                                                          std::size_t max_features = runir::kr::ps::dl::default_max_features,
+                                                          bool use_incomplete_preprocessing = runir::kr::ps::dl::default_use_incomplete_preprocessing,
+                                                          bool use_memory_scc_scope = runir::kr::ps::dl::default_use_memory_scc_scope);
 
 }  // namespace runir::kr::ps::ext::dl
 

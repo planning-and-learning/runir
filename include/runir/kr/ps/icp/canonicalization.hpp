@@ -20,9 +20,7 @@ namespace runir::kr::ps::icp
 
 template<typename T>
 bool is_canonical(const ygg::Data<T>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<typename T>
 void canonicalize(ygg::Data<T>&) noexcept

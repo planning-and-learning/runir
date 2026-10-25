@@ -42,7 +42,6 @@ void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::Progr
     ar.field("call_stack", [](const auto& value) -> decltype(auto) { return (value.get_call_stack()); });
 }
 
-
 }
 
 #endif

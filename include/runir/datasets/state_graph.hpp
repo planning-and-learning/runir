@@ -77,7 +77,15 @@ struct AnnotatedStateGraphVertexLabel : ygg::comparison::Mixin<AnnotatedStateGra
     {
     }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&AnnotatedStateGraphVertexLabel::state, &AnnotatedStateGraphVertexLabel::goal_distance, &AnnotatedStateGraphVertexLabel::is_initial, &AnnotatedStateGraphVertexLabel::is_goal, &AnnotatedStateGraphVertexLabel::is_alive, &AnnotatedStateGraphVertexLabel::is_unsolvable> {}; }
+    static constexpr auto cista_members() noexcept
+    {
+        return ygg::Members<&AnnotatedStateGraphVertexLabel::state,
+                            &AnnotatedStateGraphVertexLabel::goal_distance,
+                            &AnnotatedStateGraphVertexLabel::is_initial,
+                            &AnnotatedStateGraphVertexLabel::is_goal,
+                            &AnnotatedStateGraphVertexLabel::is_alive,
+                            &AnnotatedStateGraphVertexLabel::is_unsolvable> {};
+    }
     static constexpr auto identifying_members() noexcept
     {
         return ygg::Members<&AnnotatedStateGraphVertexLabel::state,
@@ -139,17 +147,16 @@ struct StateGraphGenerationResult
 };
 
 template<tyr::TaskKind Kind>
-auto generate_state_graph_result(TaskSearchContext<Kind>& context,
-                                 const StateGraphGenerationOptions& options = StateGraphGenerationOptions()) -> StateGraphGenerationResult<Kind>;
+auto generate_state_graph_result(TaskSearchContext<Kind>& context, const StateGraphGenerationOptions& options = StateGraphGenerationOptions())
+    -> StateGraphGenerationResult<Kind>;
 
 template<tyr::TaskKind Kind>
-auto generate_state_graph(TaskSearchContext<Kind>& context,
-                          const StateGraphGenerationOptions& options = StateGraphGenerationOptions()) -> std::unique_ptr<StateGraph<Kind>>;
+auto generate_state_graph(TaskSearchContext<Kind>& context, const StateGraphGenerationOptions& options = StateGraphGenerationOptions())
+    -> std::unique_ptr<StateGraph<Kind>>;
 
 template<tyr::TaskKind Kind>
-auto annotate_state_graph(TaskSearchContext<Kind>& context,
-                          const StateGraph<Kind>& graph,
-                          StateGraphCostMode cost_mode) -> std::unique_ptr<AnnotatedStateGraph<Kind>>;
+auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kind>& graph, StateGraphCostMode cost_mode)
+    -> std::unique_ptr<AnnotatedStateGraph<Kind>>;
 
 }  // namespace runir::datasets
 

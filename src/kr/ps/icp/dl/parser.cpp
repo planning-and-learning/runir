@@ -27,9 +27,7 @@ using runir::kr::parser::ext_constructors::parse;
 
 template<typename T>
 auto intern(Repository& repository, ygg::Data<T>& data)
-{
-    return insert(repository, data).first;
-}
+{ return insert(repository, data).first; }
 
 using runir::kr::parser::observations::append_conditions;
 using runir::kr::parser::observations::append_effects;

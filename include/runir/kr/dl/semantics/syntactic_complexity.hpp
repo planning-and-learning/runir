@@ -141,9 +141,7 @@ std::size_t syntactic_complexity(ygg::View<ygg::Index<runir::kr::dl::Query<Tag>>
 
 template<runir::kr::dl::ConceptOrRoleTag Category, typename C>
 std::size_t syntactic_complexity(ygg::View<ygg::Index<runir::kr::dl::QueryProjection<Category>>, C> view)
-{
-    return 1 + syntactic_complexity(view.get_arg());
-}
+{ return 1 + syntactic_complexity(view.get_arg()); }
 
 }  // namespace runir::kr::dl::semantics
 

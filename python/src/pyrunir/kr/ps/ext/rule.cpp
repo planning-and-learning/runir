@@ -25,11 +25,8 @@ template<typename T>
 auto bind_rule_data(nb::module_& m, const char* name)
 {
     using Data = ygg::Data<T>;
-    auto cls = nb::class_<Data>(m, name)
-                   .def(nb::init<>())
-                   .def_rw("index", &Data::index)
-                   .def_rw("source", &Data::source)
-                   .def_rw("conditions", &Data::conditions);
+    auto cls =
+        nb::class_<Data>(m, name).def(nb::init<>()).def_rw("index", &Data::index).def_rw("source", &Data::source).def_rw("conditions", &Data::conditions);
     if constexpr (requires { &Data::target; })
         cls.def_rw("target", &Data::target);
     if constexpr (requires { &Data::effects; })

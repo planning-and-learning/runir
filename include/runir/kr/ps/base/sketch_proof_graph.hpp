@@ -35,7 +35,14 @@ struct SketchProofVertexLabel : ygg::comparison::Mixin<SketchProofVertexLabel<Ki
     {
     }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&SketchProofVertexLabel::state, &SketchProofVertexLabel::is_initial, &SketchProofVertexLabel::is_goal, &SketchProofVertexLabel::is_alive, &SketchProofVertexLabel::is_unsolvable> {}; }
+    static constexpr auto cista_members() noexcept
+    {
+        return ygg::Members<&SketchProofVertexLabel::state,
+                            &SketchProofVertexLabel::is_initial,
+                            &SketchProofVertexLabel::is_goal,
+                            &SketchProofVertexLabel::is_alive,
+                            &SketchProofVertexLabel::is_unsolvable> {};
+    }
     static constexpr auto identifying_members() noexcept
     {
         return ygg::Members<&SketchProofVertexLabel::state,

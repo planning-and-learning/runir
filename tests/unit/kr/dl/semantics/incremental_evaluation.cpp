@@ -534,11 +534,11 @@ void check_incremental_evaluation()
         "(n_distance (q_concept x (c_register 0)) (q_role (x y) " + edge_text + ") (q_concept x (c_register 1)))",
         "(n_distance (c_register 0) (q_role (x y) " + edge_text + ") (c_register 1))",
         "(n_distance (q_concept x " + present_text + ") " + edge_text + " (c_register 1))",
-        "(n_distance (q_role (x u) (r_identity (c_register 0))) (q_project (x u y v) (q_join (q_role (x y) " + edge_text + ") (q_role (u v) "
-            + edge_text + "))) (q_role (x u) (r_identity (c_register 1))))",
+        "(n_distance (q_role (x u) (r_identity (c_register 0))) (q_project (x u y v) (q_join (q_role (x y) " + edge_text + ") (q_role (u v) " + edge_text
+            + "))) (q_role (x u) (r_identity (c_register 1))))",
         // k = 2 edges filtered by a second dynamic leaf: the evaluator must notice either change.
-        "(n_distance (q_role (x u) (r_identity (c_register 0))) (q_project (x u y v) (q_join (q_join (q_role (x y) " + edge_text
-            + ") (q_role (u v) " + edge_text + ")) (q_concept y " + present_text + "))) (q_role (x u) (r_identity (c_register 1))))",
+        "(n_distance (q_role (x u) (r_identity (c_register 0))) (q_project (x u y v) (q_join (q_join (q_role (x y) " + edge_text + ") (q_role (u v) "
+            + edge_text + ")) (q_concept y " + present_text + "))) (q_role (x u) (r_identity (c_register 1))))",
         "(n_distance (q_concept x (c_register 0)) (q_role (x y) (r_identity (c_bot))) (q_concept x (c_register 1)))",
         "(n_distance (q_concept x (c_register 0)) (q_role (x y) " + edge_text + ") (q_concept x (c_register 0)))",
     };

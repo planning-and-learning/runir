@@ -2,12 +2,12 @@
 #define RUNIR_KR_PS_CONDITION_DATA_HPP_
 
 #include "runir/kr/ps/declarations.hpp"
-#include <yggdrasil/containers/variant.hpp>
 
 #include <cista/containers/variant.h>
 #include <tuple>
 #include <utility>
 #include <variant>
+#include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 
@@ -27,16 +27,15 @@ struct Data<runir::kr::ps::ConditionVariant<Family>>
     template<typename C>
     using ViewVariant = ::ygg::ViewVariant<Variant, C>;
     template<typename C>
-    explicit Data(const ViewVariant<C>& variant_) : index(), variant(std::visit([](const auto& view) -> Variant { return Variant(view.get_index()); }, variant_))
+    explicit Data(const ViewVariant<C>& variant_) :
+        index(),
+        variant(std::visit([](const auto& view) -> Variant { return Variant(view.get_index()); }, variant_))
     {
     }
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::variant> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::variant> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 }  // namespace ygg

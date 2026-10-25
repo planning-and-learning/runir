@@ -5,13 +5,13 @@
 #include "runir/kr/ps/dl/condition_data.hpp"
 #include "runir/kr/ps/dl/effect_data.hpp"
 #include "runir/kr/ps/effect_data.hpp"
-#include "runir/kr/ps/feature_data.hpp"
 #include "runir/kr/ps/ext/memory_state_data.hpp"
 #include "runir/kr/ps/ext/module_data.hpp"
-#include "runir/kr/ps/ext/program_data.hpp"
 #include "runir/kr/ps/ext/module_symbol_data.hpp"
+#include "runir/kr/ps/ext/program_data.hpp"
 #include "runir/kr/ps/ext/rule_data.hpp"
 #include "runir/kr/ps/ext/rule_variant_data.hpp"
+#include "runir/kr/ps/feature_data.hpp"
 
 #include <algorithm>
 #include <yggdrasil/semantics/canonicalization.hpp>
@@ -36,27 +36,19 @@ inline bool is_canonical(const ygg::Data<ModuleSymbol>&) noexcept { return true;
 
 template<typename FeatureTag>
 bool is_canonical(const ygg::Data<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<typename FeatureTag>
 bool is_canonical(const ygg::Data<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<typename FeatureTag, typename ObservationTag>
 bool is_canonical(const ygg::Data<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<typename FeatureTag, typename ObservationTag>
 bool is_canonical(const ygg::Data<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 inline bool is_canonical(const ygg::Data<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>&) noexcept { return true; }
 

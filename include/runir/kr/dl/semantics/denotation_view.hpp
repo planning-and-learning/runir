@@ -177,9 +177,7 @@ public:
 
     auto get_num_objects() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    {
-        return this->get_data().num_objects;
-    }
+    { return this->get_data().num_objects; }
 
     bool any() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
@@ -203,28 +201,20 @@ public:
 
     auto get() const noexcept
         requires(!std::same_as<Category, runir::kr::dl::RoleTag>)
-    {
-        return this->get_data().get();
-    }
+    { return this->get_data().get(); }
 
     auto get(Index<tyr::formalism::Object> object) const noexcept
         requires std::same_as<Category, runir::kr::dl::RoleTag>
-    {
-        return this->get_data().get(object);
-    }
+    { return this->get_data().get(object); }
 
     auto get(ygg::uint_t object) const noexcept
         requires std::same_as<Category, runir::kr::dl::RoleTag>
-    {
-        return get(Index<tyr::formalism::Object>(object));
-    }
+    { return get(Index<tyr::formalism::Object>(object)); }
 
     /// Includes zero padding: trailing concept bits or padding after each role row.
     auto storage_bits() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    {
-        return this->get_data().storage_bits();
-    }
+    { return this->get_data().storage_bits(); }
 
     /// Typed indices borrowing only the bits, independently of the view and range wrappers.
     auto indices() const noexcept
@@ -247,40 +237,28 @@ public:
 
     auto begin() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    {
-        return runir::kr::dl::semantics::detail::DenotationIterator<Category>(storage_bits(), get_formalism_repository(), true, get_num_objects());
-    }
+    { return runir::kr::dl::semantics::detail::DenotationIterator<Category>(storage_bits(), get_formalism_repository(), true, get_num_objects()); }
 
     auto begin(tyr::formalism::planning::ObjectView source) const noexcept
         requires std::same_as<Category, runir::kr::dl::RoleTag>
-    {
-        return runir::kr::dl::semantics::detail::DenotationIterator<runir::kr::dl::ConceptTag>(get(source.get_index()), get_formalism_repository(), true);
-    }
+    { return runir::kr::dl::semantics::detail::DenotationIterator<runir::kr::dl::ConceptTag>(get(source.get_index()), get_formalism_repository(), true); }
 
     auto end() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    {
-        return runir::kr::dl::semantics::detail::DenotationIterator<Category>(storage_bits(), get_formalism_repository(), false, get_num_objects());
-    }
+    { return runir::kr::dl::semantics::detail::DenotationIterator<Category>(storage_bits(), get_formalism_repository(), false, get_num_objects()); }
 
     auto end(tyr::formalism::planning::ObjectView source) const noexcept
         requires std::same_as<Category, runir::kr::dl::RoleTag>
-    {
-        return runir::kr::dl::semantics::detail::DenotationIterator<runir::kr::dl::ConceptTag>(get(source.get_index()), get_formalism_repository(), false);
-    }
+    { return runir::kr::dl::semantics::detail::DenotationIterator<runir::kr::dl::ConceptTag>(get(source.get_index()), get_formalism_repository(), false); }
 
     auto views() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    {
-        return std::ranges::subrange(begin(), end());
-    }
+    { return std::ranges::subrange(begin(), end()); }
 
     /// Objects reached from this source, borrowing the row and repository.
     auto views(tyr::formalism::planning::ObjectView source) const noexcept
         requires std::same_as<Category, runir::kr::dl::RoleTag>
-    {
-        return std::ranges::subrange(begin(source), end(source));
-    }
+    { return std::ranges::subrange(begin(source), end(source)); }
 };
 
 template<runir::kr::dl::CategoryTag Category, typename C>
@@ -288,9 +266,7 @@ class View<Index<runir::kr::dl::semantics::Denotation<Category>>, C> : public yg
 {
     auto get_vector() const noexcept
         requires(std::same_as<Category, runir::kr::dl::ConceptTag> || std::same_as<Category, runir::kr::dl::RoleTag>)
-    {
-        return this->get_context().get_vector_repository()[this->get_data().vec_index];
-    }
+    { return this->get_context().get_vector_repository()[this->get_data().vec_index]; }
 
 public:
     using ygg::IndexViewBase<runir::kr::dl::semantics::Denotation<Category>, C>::IndexViewBase;
@@ -299,9 +275,7 @@ public:
 
     auto get_num_objects() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    {
-        return this->get_data().num_objects;
-    }
+    { return this->get_data().num_objects; }
 
     bool any() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
@@ -325,9 +299,7 @@ public:
 
     auto get() const noexcept
         requires runir::kr::dl::BooleanOrNumericalTag<Category>
-    {
-        return this->get_data().get_data();
-    }
+    { return this->get_data().get_data(); }
 
     auto get() const noexcept
         requires(std::same_as<Category, runir::kr::dl::ConceptTag>)
@@ -360,9 +332,7 @@ public:
 
     auto get(ygg::uint_t object) const noexcept
         requires(std::same_as<Category, runir::kr::dl::RoleTag>)
-    {
-        return get(Index<::tyr::formalism::Object>(object));
-    }
+    { return get(Index<::tyr::formalism::Object>(object)); }
 
     /// Includes zero padding: trailing concept bits or padding after each role row.
     auto storage_bits() const noexcept
@@ -394,40 +364,28 @@ public:
 
     auto begin() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    {
-        return runir::kr::dl::semantics::detail::DenotationIterator<Category>(storage_bits(), get_formalism_repository(), true, get_num_objects());
-    }
+    { return runir::kr::dl::semantics::detail::DenotationIterator<Category>(storage_bits(), get_formalism_repository(), true, get_num_objects()); }
 
     auto begin(tyr::formalism::planning::ObjectView source) const noexcept
         requires std::same_as<Category, runir::kr::dl::RoleTag>
-    {
-        return runir::kr::dl::semantics::detail::DenotationIterator<runir::kr::dl::ConceptTag>(get(source.get_index()), get_formalism_repository(), true);
-    }
+    { return runir::kr::dl::semantics::detail::DenotationIterator<runir::kr::dl::ConceptTag>(get(source.get_index()), get_formalism_repository(), true); }
 
     auto end() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    {
-        return runir::kr::dl::semantics::detail::DenotationIterator<Category>(storage_bits(), get_formalism_repository(), false, get_num_objects());
-    }
+    { return runir::kr::dl::semantics::detail::DenotationIterator<Category>(storage_bits(), get_formalism_repository(), false, get_num_objects()); }
 
     auto end(tyr::formalism::planning::ObjectView source) const noexcept
         requires std::same_as<Category, runir::kr::dl::RoleTag>
-    {
-        return runir::kr::dl::semantics::detail::DenotationIterator<runir::kr::dl::ConceptTag>(get(source.get_index()), get_formalism_repository(), false);
-    }
+    { return runir::kr::dl::semantics::detail::DenotationIterator<runir::kr::dl::ConceptTag>(get(source.get_index()), get_formalism_repository(), false); }
 
     auto views() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    {
-        return std::ranges::subrange(begin(), end());
-    }
+    { return std::ranges::subrange(begin(), end()); }
 
     /// Objects reached from this source, borrowing the row and repository.
     auto views(tyr::formalism::planning::ObjectView source) const noexcept
         requires std::same_as<Category, runir::kr::dl::RoleTag>
-    {
-        return std::ranges::subrange(begin(source), end(source));
-    }
+    { return std::ranges::subrange(begin(source), end(source)); }
 };
 
 }
@@ -437,9 +395,9 @@ namespace runir::kr::dl::semantics
 
 /// The interned and borrowed representations share the denotation interface for this category.
 template<typename V, typename Category>
-concept DenotationViewConcept = CategoryTag<Category>
-                                && (std::same_as<std::remove_cvref_t<V>, DenotationView<Category>>
-                                    || std::same_as<std::remove_cvref_t<V>, BorrowedDenotationView<Category>>);
+concept DenotationViewConcept =
+    CategoryTag<Category>
+    && (std::same_as<std::remove_cvref_t<V>, DenotationView<Category>> || std::same_as<std::remove_cvref_t<V>, BorrowedDenotationView<Category>>);
 
 }  // namespace runir::kr::dl::semantics
 

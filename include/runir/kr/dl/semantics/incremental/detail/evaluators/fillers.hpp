@@ -20,13 +20,9 @@ struct FillersEvaluator
     FillersEvaluator(EvaluationIndex<RoleTag> role, ConceptView<RoleFillersTag> expression) : role(role), expression(expression) {}
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
-    {
-        initialize_set(RoleFillersTag {}, value, graph.result(role), graph.change(role), expression.get_objects(), graph.set_workspace());
-    }
+    { initialize_set(RoleFillersTag {}, value, graph.result(role), graph.change(role), expression.get_objects(), graph.set_workspace()); }
     void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
-    {
-        update_set(RoleFillersTag {}, value, graph.result(role), graph.change(role), expression.get_objects(), graph.set_workspace());
-    }
+    { update_set(RoleFillersTag {}, value, graph.result(role), graph.change(role), expression.get_objects(), graph.set_workspace()); }
 };
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

@@ -44,10 +44,7 @@ class ViewMixin<runir::kr::ps::ext::CallStack, V>
 
 public:
     auto get_module() const noexcept { return make_view(self().get_data().module_, self().get_repository().get_program_repository()); }
-    auto get_return_memory_state() const noexcept
-    {
-        return make_view(self().get_data().return_memory_state, self().get_repository().get_program_repository());
-    }
+    auto get_return_memory_state() const noexcept { return make_view(self().get_data().return_memory_state, self().get_repository().get_program_repository()); }
     auto get_registers() const noexcept { return make_view(self().get_data().registers, self().get_repository().get_denotation_repository()); }
     auto get_arguments() const noexcept { return make_view(self().get_data().arguments, self().get_repository().get_denotation_repository()); }
 

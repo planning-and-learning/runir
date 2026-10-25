@@ -20,13 +20,9 @@ struct NumberRestrictionEvaluator
     NumberRestrictionEvaluator(EvaluationIndex<RoleTag> role, ygg::uint_t threshold) : role(role), threshold(threshold) {}
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
-    {
-        initialize_set(Tag {}, value, graph.result(role), graph.change(role), threshold, graph.set_workspace());
-    }
+    { initialize_set(Tag {}, value, graph.result(role), graph.change(role), threshold, graph.set_workspace()); }
     void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
-    {
-        update_set(Tag {}, value, graph.result(role), graph.change(role), threshold, graph.set_workspace());
-    }
+    { update_set(Tag {}, value, graph.result(role), graph.change(role), threshold, graph.set_workspace()); }
 };
 
 template<tyr::TaskKind Kind, typename Tag>

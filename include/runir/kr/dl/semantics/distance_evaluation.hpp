@@ -123,8 +123,7 @@ inline MustPassFeature make_must_pass_feature(const ygg::database::MustPassPlan&
 /// Builds a must-pass feature's heuristic at first use, from the static slots' rows (`slot_rows(slot)`), and sets its
 /// targets. Without an abstraction, the search is blind.
 template<ygg::database::SlotRelations SlotRows, ygg::database::RelationViewConcept Targets>
-heuristics::KeyedProjectionHeuristic&
-must_pass_heuristic(MustPassFeature& feature, ygg::uint_t num_objects, const SlotRows& slot_rows, const Targets& targets)
+heuristics::KeyedProjectionHeuristic& must_pass_heuristic(MustPassFeature& feature, ygg::uint_t num_objects, const SlotRows& slot_rows, const Targets& targets)
 {
     if (!feature.heuristic)
     {

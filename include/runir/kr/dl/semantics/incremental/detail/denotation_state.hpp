@@ -103,9 +103,7 @@ public:
     }
 
     BorrowedDenotationView<Category> get_result(const tyr::formalism::planning::Repository& repository) const noexcept
-    {
-        return ygg::make_view(m_result, repository);
-    }
+    { return ygg::make_view(m_result, repository); }
 };
 
 template<BooleanOrNumericalTag Category>
@@ -132,9 +130,7 @@ public:
         m_result.get() = value;
     }
     BorrowedDenotationView<Category> get_result(const tyr::formalism::planning::Repository& repository) const noexcept
-    {
-        return ygg::make_view(m_result, repository);
-    }
+    { return ygg::make_view(m_result, repository); }
 };
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

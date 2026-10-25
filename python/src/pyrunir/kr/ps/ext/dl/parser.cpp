@@ -79,7 +79,8 @@ void bind_parser(nb::module_& m)
         [](const std::string& description,
            tyr::formalism::planning::PlanningDomain domain,
            runir::kr::ps::ext::ModuleView module_,
-           runir::kr::ps::ext::Repository& repository) { return runir::kr::ps::ext::dl::parse_numerical(description, domain.get_domain(), module_, repository); },
+           runir::kr::ps::ext::Repository& repository)
+        { return runir::kr::ps::ext::dl::parse_numerical(description, domain.get_domain(), module_, repository); },
         "description"_a,
         "domain"_a,
         "module"_a,

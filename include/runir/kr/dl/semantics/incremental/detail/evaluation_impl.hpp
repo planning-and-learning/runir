@@ -23,42 +23,30 @@ EvaluationGraph<Kind>& EvaluationGraph<Kind>::operator=(EvaluationGraph&&) noexc
 
 template<tyr::TaskKind Kind>
 size_t EvaluationGraph<Kind>::node_count() const noexcept
-{
-    return m_nodes.size();
-}
+{ return m_nodes.size(); }
 
 template<tyr::TaskKind Kind>
 template<CategoryTag Category>
 BorrowedDenotationView<Category> EvaluationGraph<Kind>::result(EvaluationIndex<Category> index) const
-{
-    return node(index).get_result(repository());
-}
+{ return node(index).get_result(repository()); }
 
 template<tyr::TaskKind Kind>
 const ygg::Builder<ygg::database::Relation>& EvaluationGraph<Kind>::result(QueryEvaluationIndex index) const
-{
-    return node(index).get_result();
-}
+{ return node(index).get_result(); }
 
 template<tyr::TaskKind Kind>
 template<ConceptOrRoleTag Category>
 const DenotationDelta<Category>& EvaluationGraph<Kind>::change(EvaluationIndex<Category> index) const
-{
-    return node(index).get_delta();
-}
+{ return node(index).get_delta(); }
 
 template<tyr::TaskKind Kind>
 const ygg::database::incremental::Delta& EvaluationGraph<Kind>::change(QueryEvaluationIndex index) const
-{
-    return node(index).get_delta();
-}
+{ return node(index).get_delta(); }
 
 template<tyr::TaskKind Kind>
 template<ConceptOrRoleTag Category>
 size_t EvaluationGraph<Kind>::cardinality(EvaluationIndex<Category> index) const
-{
-    return node(index).size();
-}
+{ return node(index).size(); }
 
 template<tyr::TaskKind Kind>
 template<CategoryTag Category>

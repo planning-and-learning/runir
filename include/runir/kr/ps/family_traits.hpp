@@ -21,11 +21,10 @@ template<runir::kr::FamilyTag Family, typename Categories>
 using PsFeatureTypes = ygg::ConcatTypeListsT<ygg::MapTypeListSecondT<Feature, Family, Categories>, ygg::MapTypeListSecondT<DlFeature, Family, Categories>>;
 
 template<runir::kr::FamilyTag Family>
-using PsConcreteConditionTypes =
-    ygg::TypeList<ConcreteCondition<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>,
-                  ConcreteCondition<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Negative>,
-                  ConcreteCondition<Family, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::EqualZero>,
-                  ConcreteCondition<Family, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::GreaterZero>>;
+using PsConcreteConditionTypes = ygg::TypeList<ConcreteCondition<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>,
+                                               ConcreteCondition<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Negative>,
+                                               ConcreteCondition<Family, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::EqualZero>,
+                                               ConcreteCondition<Family, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::GreaterZero>>;
 
 template<runir::kr::FamilyTag Family>
 using PsConcreteEffectTypes = ygg::TypeList<ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>,
@@ -63,11 +62,8 @@ struct PsFamilyTraits<runir::kr::BaseFamilyTag>
 template<>
 struct PsFamilyTraits<runir::kr::ExtFamilyTag>
 {
-    using FeatureCategories = ygg::TypeList<runir::kr::dl::ConceptTag,
-                                            runir::kr::dl::RoleTag,
-                                            runir::kr::dl::BooleanTag,
-                                            runir::kr::dl::NumericalTag,
-                                            runir::kr::ps::dl::QueryFeature>;
+    using FeatureCategories = ygg::
+        TypeList<runir::kr::dl::ConceptTag, runir::kr::dl::RoleTag, runir::kr::dl::BooleanTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::QueryFeature>;
 
     using FeatureTypes = detail::PsFeatureTypes<runir::kr::ExtFamilyTag, FeatureCategories>;
 

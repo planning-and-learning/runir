@@ -48,10 +48,7 @@ struct Data<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::symbol, &Data::conditions, &Data::effects> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::symbol, &Data::conditions, &Data::effects> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 }  // namespace ygg

@@ -53,9 +53,7 @@ concept IndexedDataView =
 
 template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
-{
-    return (IndexedDataView<Ts, kr::dl::cnf_grammar::ConstructorRepository> && ...);
-}
+{ return (IndexedDataView<Ts, kr::dl::cnf_grammar::ConstructorRepository> && ...); }
 
 static_assert(indexed_data_views<>(kr::dl::cnf_grammar::GrammarTypes {}));
 static_assert(std::same_as<kr::dl::cnf_grammar::GrammarView, ygg::View<ygg::Index<kr::dl::cnf_grammar::Grammar>, kr::dl::cnf_grammar::ConstructorRepository>>);
@@ -122,9 +120,7 @@ consteval bool data_accessors()
 
 template<typename... Categories>
 consteval bool data_accessors(ygg::TypeList<Categories...>)
-{
-    return (data_accessors<Categories>() && ...);
-}
+{ return (data_accessors<Categories>() && ...); }
 
 static_assert(data_accessors<>(kr::dl::CategoryTags {}));
 

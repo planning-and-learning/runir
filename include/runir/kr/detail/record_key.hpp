@@ -24,9 +24,7 @@ using RecordKey = std::pair<size_t, ygg::uint_t>;
 
 template<typename Types, typename T, typename C>
 RecordKey record_key(const ygg::View<ygg::Index<T>, C>& view) noexcept
-{
-    return { type_position<T>(Types {}), view.get_index().get_value() };
-}
+{ return { type_position<T>(Types {}), view.get_index().get_value() }; }
 
 }  // namespace runir::kr::detail
 

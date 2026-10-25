@@ -25,10 +25,7 @@ struct Data<runir::kr::dl::Argument<Category>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::name, &Data::identifier> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::name, &Data::identifier> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 }  // namespace ygg

@@ -83,9 +83,7 @@ public:
 
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage>
 ProgramStep<Kind, Storage> make_step(ProgramOutcome status, StorageStoredState<Storage> state, const runir::kr::TaskContextPtr<Kind>& task_context)
-{
-    return ProgramStep<Kind, Storage>(status, std::move(state), task_context);
-}
+{ return ProgramStep<Kind, Storage>(status, std::move(state), task_context); }
 
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage>
 ProgramStep<Kind, Storage> applied(StorageStoredState<Storage> state, RuleVariantView rule, const runir::kr::TaskContextPtr<Kind>& task_context)

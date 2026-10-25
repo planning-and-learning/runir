@@ -26,24 +26,18 @@ concept IndexedDataView =
 
 template<typename Repository, typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
-{
-    return (IndexedDataView<Ts, Repository> && ...);
-}
+{ return (IndexedDataView<Ts, Repository> && ...); }
 
 using RegisterTypes = ygg::TypeList<kr::dl::Register<kr::dl::ConceptTag>, kr::dl::Register<kr::dl::RoleTag>>;
 using RegisterIdentifierTypes = ygg::TypeList<kr::dl::RegisterIdentifier<kr::dl::ConceptTag>, kr::dl::RegisterIdentifier<kr::dl::RoleTag>>;
 
 template<typename... Ts>
 consteval bool identifiers(ygg::TypeList<Ts...>)
-{
-    return ((std::constructible_from<Ts, ygg::uint_t> && ygg::Identifiable<Ts> && std::totally_ordered<Ts>) && ...);
-}
+{ return ((std::constructible_from<Ts, ygg::uint_t> && ygg::Identifiable<Ts> && std::totally_ordered<Ts>) && ...); }
 
 template<typename... Categories>
 consteval bool view_aliases(ygg::TypeList<Categories...>)
-{
-    return (std::same_as<kr::dl::RegisterView<Categories>, ygg::View<ygg::Index<kr::dl::Register<Categories>>, kr::dl::ConstructorRepository>> && ...);
-}
+{ return (std::same_as<kr::dl::RegisterView<Categories>, ygg::View<ygg::Index<kr::dl::Register<Categories>>, kr::dl::ConstructorRepository>> && ...); }
 
 static_assert(indexed_data_views<kr::dl::ConstructorRepository>(RegisterTypes {}));
 static_assert(identifiers(RegisterIdentifierTypes {}));

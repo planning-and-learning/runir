@@ -22,9 +22,7 @@ concept IndexedDataView =
 
 template<typename... Ts>
 consteval bool indexed_data_views(ygg::TypeList<Ts...>)
-{
-    return (IndexedDataView<Ts, kr::dl::ConstructorRepository> && ...);
-}
+{ return (IndexedDataView<Ts, kr::dl::ConstructorRepository> && ...); }
 
 static_assert(indexed_data_views<>(kr::dl::RoleTypes {}));
 
@@ -95,9 +93,7 @@ consteval bool role_data_view()
 
 template<typename... Tags>
 consteval bool role_data_views(ygg::TypeList<Tags...>)
-{
-    return (role_data_view<Tags>() && ...);
-}
+{ return (role_data_view<Tags>() && ...); }
 
 static_assert(role_data_views<>(kr::dl::RoleConstructorTags {}));
 

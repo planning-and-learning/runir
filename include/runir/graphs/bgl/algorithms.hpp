@@ -169,15 +169,11 @@ auto breadth_first_visit(const G& graph, SourceInputIterator first, SourceInputI
 template<IsGraph G, std::input_iterator SourceInputIterator>
     requires std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
 auto breadth_first_visit(const G& graph, SourceInputIterator first, SourceInputIterator last, TraversalVisitor<G>& visitor)
-{
-    return breadth_first_visit(graph, first, last, BoostTraversalVisitor<G>(visitor));
-}
+{ return breadth_first_visit(graph, first, last, BoostTraversalVisitor<G>(visitor)); }
 
 template<IsGraph G>
 auto breadth_first_visit(const G& graph, const std::vector<VertexIndex>& sources, TraversalVisitor<G>& visitor)
-{
-    return breadth_first_visit(graph, sources.begin(), sources.end(), visitor);
-}
+{ return breadth_first_visit(graph, sources.begin(), sources.end(), visitor); }
 
 template<IsGraph G, std::input_iterator SourceInputIterator>
     requires std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
@@ -224,9 +220,7 @@ auto breadth_first_search(const G& graph, SourceInputIterator first, SourceInput
 
 template<IsGraph G>
 auto breadth_first_search(const G& graph, const std::vector<VertexIndex>& sources)
-{
-    return breadth_first_search(graph, sources.begin(), sources.end());
-}
+{ return breadth_first_search(graph, sources.begin(), sources.end()); }
 
 template<IsGraph G, std::input_iterator SourceInputIterator>
     requires std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
@@ -245,15 +239,11 @@ auto depth_first_visit(const G& graph, SourceInputIterator first, SourceInputIte
 template<IsGraph G, std::input_iterator SourceInputIterator>
     requires std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
 auto depth_first_visit(const G& graph, SourceInputIterator first, SourceInputIterator last, TraversalVisitor<G>& visitor)
-{
-    return depth_first_visit(graph, first, last, BoostTraversalVisitor<G>(visitor));
-}
+{ return depth_first_visit(graph, first, last, BoostTraversalVisitor<G>(visitor)); }
 
 template<IsGraph G>
 auto depth_first_visit(const G& graph, const std::vector<VertexIndex>& sources, TraversalVisitor<G>& visitor)
-{
-    return depth_first_visit(graph, sources.begin(), sources.end(), visitor);
-}
+{ return depth_first_visit(graph, sources.begin(), sources.end(), visitor); }
 
 template<IsGraph G, std::input_iterator SourceInputIterator>
     requires std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
@@ -283,9 +273,7 @@ auto depth_first_search(const G& graph, SourceInputIterator first, SourceInputIt
 
 template<IsGraph G>
 auto depth_first_search(const G& graph, const std::vector<VertexIndex>& sources)
-{
-    return depth_first_search(graph, sources.begin(), sources.end());
-}
+{ return depth_first_search(graph, sources.begin(), sources.end()); }
 
 template<IsGraph G>
 auto topological_sort(const G& graph)
@@ -356,30 +344,22 @@ auto dijkstra_shortest_paths_impl(const G& graph, const EdgeMapStorage<G, Cost>&
 template<IsGraph G, typename Cost, std::input_iterator SourceInputIterator>
     requires IsDenseGraphV<G> && std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
 auto dijkstra_shortest_paths(const G& graph, const std::vector<Cost>& weights, SourceInputIterator first, SourceInputIterator last)
-{
-    return dijkstra_shortest_paths_impl<G, Cost>(graph, weights, first, last);
-}
+{ return dijkstra_shortest_paths_impl<G, Cost>(graph, weights, first, last); }
 
 template<IsGraph G, typename Cost>
     requires IsDenseGraphV<G>
 auto dijkstra_shortest_paths(const G& graph, const std::vector<Cost>& weights, const std::vector<VertexIndex>& sources)
-{
-    return dijkstra_shortest_paths(graph, weights, sources.begin(), sources.end());
-}
+{ return dijkstra_shortest_paths(graph, weights, sources.begin(), sources.end()); }
 
 template<IsGraph G, typename Cost, std::input_iterator SourceInputIterator>
     requires(!IsDenseGraphV<G>) && std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
 auto dijkstra_shortest_paths(const G& graph, const ygg::UnorderedMap<EdgeIndex, Cost>& weights, SourceInputIterator first, SourceInputIterator last)
-{
-    return dijkstra_shortest_paths_impl<G, Cost>(graph, weights, first, last);
-}
+{ return dijkstra_shortest_paths_impl<G, Cost>(graph, weights, first, last); }
 
 template<IsGraph G, typename Cost>
     requires(!IsDenseGraphV<G>)
 auto dijkstra_shortest_paths(const G& graph, const ygg::UnorderedMap<EdgeIndex, Cost>& weights, const std::vector<VertexIndex>& sources)
-{
-    return dijkstra_shortest_paths(graph, weights, sources.begin(), sources.end());
-}
+{ return dijkstra_shortest_paths(graph, weights, sources.begin(), sources.end()); }
 
 template<IsGraph G, typename Cost>
 auto floyd_warshall_all_pairs_shortest_paths_impl(const G& graph, const EdgeMapStorage<G, Cost>& weights)
@@ -400,16 +380,12 @@ auto floyd_warshall_all_pairs_shortest_paths_impl(const G& graph, const EdgeMapS
 template<IsGraph G, typename Cost>
     requires IsDenseGraphV<G>
 auto floyd_warshall_all_pairs_shortest_paths(const G& graph, const std::vector<Cost>& weights)
-{
-    return floyd_warshall_all_pairs_shortest_paths_impl<G, Cost>(graph, weights);
-}
+{ return floyd_warshall_all_pairs_shortest_paths_impl<G, Cost>(graph, weights); }
 
 template<IsGraph G, typename Cost>
     requires(!IsDenseGraphV<G>)
 auto floyd_warshall_all_pairs_shortest_paths(const G& graph, const ygg::UnorderedMap<EdgeIndex, Cost>& weights)
-{
-    return floyd_warshall_all_pairs_shortest_paths_impl<G, Cost>(graph, weights);
-}
+{ return floyd_warshall_all_pairs_shortest_paths_impl<G, Cost>(graph, weights); }
 
 }  // namespace runir::graphs::bgl
 

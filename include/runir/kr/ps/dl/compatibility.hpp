@@ -44,9 +44,7 @@ template<tyr::TaskKind Kind,
          runir::kr::ps::dl::TransitionEvaluationContextConcept<Family, Kind> Context>
 bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition,
                         Context& context)
-{
-    return is_compatible_with<Kind>(condition, context.get_source_context());
-}
+{ return is_compatible_with<Kind>(condition, context.get_source_context()); }
 
 template<tyr::TaskKind Kind,
          runir::kr::FamilyTag Family,

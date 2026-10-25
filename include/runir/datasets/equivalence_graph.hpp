@@ -51,7 +51,8 @@ struct EquivalenceVertexLabel : ygg::comparison::Mixin<EquivalenceVertexLabel>
     {
     }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&EquivalenceVertexLabel::state_graph_index, &EquivalenceVertexLabel::state_vertex_index> {}; }
+    static constexpr auto cista_members() noexcept
+    { return ygg::Members<&EquivalenceVertexLabel::state_graph_index, &EquivalenceVertexLabel::state_vertex_index> {}; }
     static constexpr auto identifying_members() noexcept
     { return ygg::Members<&EquivalenceVertexLabel::state_graph_index, &EquivalenceVertexLabel::state_vertex_index> {}; }
 };
@@ -84,7 +85,16 @@ struct AnnotatedEquivalenceVertexLabel : ygg::comparison::Mixin<AnnotatedEquival
     {
     }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&AnnotatedEquivalenceVertexLabel::state_graph_index, &AnnotatedEquivalenceVertexLabel::state_vertex_index, &AnnotatedEquivalenceVertexLabel::goal_distance, &AnnotatedEquivalenceVertexLabel::is_initial, &AnnotatedEquivalenceVertexLabel::is_goal, &AnnotatedEquivalenceVertexLabel::is_alive, &AnnotatedEquivalenceVertexLabel::is_unsolvable> {}; }
+    static constexpr auto cista_members() noexcept
+    {
+        return ygg::Members<&AnnotatedEquivalenceVertexLabel::state_graph_index,
+                            &AnnotatedEquivalenceVertexLabel::state_vertex_index,
+                            &AnnotatedEquivalenceVertexLabel::goal_distance,
+                            &AnnotatedEquivalenceVertexLabel::is_initial,
+                            &AnnotatedEquivalenceVertexLabel::is_goal,
+                            &AnnotatedEquivalenceVertexLabel::is_alive,
+                            &AnnotatedEquivalenceVertexLabel::is_unsolvable> {};
+    }
 
     static constexpr auto identifying_members() noexcept
     {
@@ -110,7 +120,8 @@ struct EquivalenceEdgeLabel : ygg::comparison::Mixin<EquivalenceEdgeLabel>
     {
     }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&EquivalenceEdgeLabel::state_graph_index, &EquivalenceEdgeLabel::state_edge_index> {}; }
+    static constexpr auto cista_members() noexcept
+    { return ygg::Members<&EquivalenceEdgeLabel::state_graph_index, &EquivalenceEdgeLabel::state_edge_index> {}; }
     static constexpr auto identifying_members() noexcept
     { return ygg::Members<&EquivalenceEdgeLabel::state_graph_index, &EquivalenceEdgeLabel::state_edge_index> {}; }
 };
@@ -158,9 +169,8 @@ auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts, const Equ
     -> EquivalenceGraphConstructionResult<Kind>;
 
 template<tyr::TaskKind Kind>
-auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts,
-                                const EquivalenceGraphGenerationOptions& options,
-                                ColorRepository& color_repository) -> EquivalenceGraphConstructionResult<Kind>;
+auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts, const EquivalenceGraphGenerationOptions& options, ColorRepository& color_repository)
+    -> EquivalenceGraphConstructionResult<Kind>;
 
 }  // namespace runir::datasets
 

@@ -122,7 +122,8 @@ Analysis analyze_module(ModuleView module_)
                         profile.target_memory_position = memory_position(concrete_rule.get_target());
                         for (auto condition : concrete_rule.get_conditions())
                             ygg::visit(
-                                [&](auto concrete_variant) {
+                                [&](auto concrete_variant)
+                                {
                                     ygg::visit([&](auto concrete) { ps::detail::record_condition(module_, profile, concrete); },
                                                concrete_variant.get_variant());
                                 },
@@ -131,7 +132,8 @@ Analysis analyze_module(ModuleView module_)
                         {
                             for (auto effect : concrete_rule.get_effects())
                                 ygg::visit(
-                                    [&](auto concrete_variant) {
+                                    [&](auto concrete_variant)
+                                    {
                                         ygg::visit([&](auto concrete) { ps::detail::record_effect(module_, profile, concrete); },
                                                    concrete_variant.get_variant());
                                     },

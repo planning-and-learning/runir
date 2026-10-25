@@ -40,9 +40,7 @@ std::string category_prefix(runir::kr::dl::NumericalTag) { return "n"; }
 
 template<runir::kr::dl::CategoryTag Category>
 std::string next_non_terminal(size_t& next_index)
-{
-    return category_prefix(Category {}) + "_" + std::to_string(next_index++);
-}
+{ return category_prefix(Category {}) + "_" + std::to_string(next_index++); }
 
 void add_concept_intersection(std::stringstream& out, std::vector<std::string>& heads, size_t& next_concept, const std::string& concept_)
 {
@@ -248,9 +246,7 @@ void add_category_rules(std::stringstream& rule_out,
 }  // namespace
 
 GrammarView GrammarFactory::create(GrammarSpecification specification, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
-{
-    return runir::kr::dl::grammar::parse_grammar(create_description(specification, domain), domain, repository);
-}
+{ return runir::kr::dl::grammar::parse_grammar(create_description(specification, domain), domain, repository); }
 
 std::string GrammarFactory::create_description(GrammarSpecification specification, tyr::formalism::planning::DomainView domain)
 {
@@ -264,9 +260,7 @@ std::string GrammarFactory::create_description(GrammarSpecification specificatio
 }
 
 GrammarView GrammarFactory::create_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
-{
-    return runir::kr::dl::grammar::parse_grammar(create_france_et_al_aaai2021_description(domain), domain, repository);
-}
+{ return runir::kr::dl::grammar::parse_grammar(create_france_et_al_aaai2021_description(domain), domain, repository); }
 
 std::string GrammarFactory::create_france_et_al_aaai2021_description(tyr::formalism::planning::DomainView domain)
 {

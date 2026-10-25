@@ -27,9 +27,9 @@ struct QueryMustPassEvaluator : QueryValue
     QueryEvaluationIndex targets;
     QueryEvaluationIndex probes;
     MustPassFeature feature;
-    std::vector<QueryEvaluationIndex> slots;  ///< The graph node of each input slot.
+    std::vector<QueryEvaluationIndex> slots;         ///< The graph node of each input slot.
     ygg::Builder<ygg::database::Relation> computed;  ///< The recomputed result; kept to avoid allocations.
-    std::vector<std::byte> removed;                                ///< Rows of the previous result that are gone.
+    std::vector<std::byte> removed;                  ///< Rows of the previous result that are gone.
 
     QueryMustPassEvaluator(QueryView<QueryMustPassTag> expression, GraphBuilder<Kind>& graph, std::vector<ygg::uint_t>& dependencies) :
         QueryValue(expression.get_schema().span()),
@@ -56,7 +56,8 @@ struct QueryMustPassEvaluator : QueryValue
     void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
     {
         this->delta.clear();
-        if (!modified(graph, sources) && !modified(graph, targets) && !modified(graph, probes) && std::ranges::none_of(slots, [&](auto slot) { return modified(graph, slot); }))
+        if (!modified(graph, sources) && !modified(graph, targets) && !modified(graph, probes)
+            && std::ranges::none_of(slots, [&](auto slot) { return modified(graph, slot); }))
             return;
         computed.clear();
         compute(graph, computed);
@@ -84,9 +85,7 @@ private:
         return [this, &graph](size_t slot) -> const ygg::Builder<ygg::database::Relation>& { return graph.result(slots[slot]); };
     }
     static bool modified(const EvaluationGraph<Kind>& graph, QueryEvaluationIndex index)
-    {
-        return !graph.change(index).added.empty() || !graph.change(index).removed.empty();
-    }
+    { return !graph.change(index).added.empty() || !graph.change(index).removed.empty(); }
 };
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

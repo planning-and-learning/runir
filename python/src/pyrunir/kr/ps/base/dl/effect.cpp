@@ -25,7 +25,10 @@ void bind_observation(nb::module_& m, RepositoryBinding& repository, const char*
             "is_compatible_with",
             [](View value, GroundContext& context) { return runir::kr::ps::is_compatible_with<tyr::GroundTag>(value, context); },
             nb::arg("context"))
-        .def("is_compatible_with", [](View value, LiftedContext& context) { return runir::kr::ps::is_compatible_with<tyr::LiftedTag>(value, context); }, nb::arg("context"));
+        .def(
+            "is_compatible_with",
+            [](View value, LiftedContext& context) { return runir::kr::ps::is_compatible_with<tyr::LiftedTag>(value, context); },
+            nb::arg("context"));
 }
 
 }  // namespace
@@ -35,14 +38,12 @@ void bind_effect(nb::module_& m, RepositoryBinding& repository)
     using Family = runir::kr::BaseFamilyTag;
     using Variant = runir::kr::ps::ConcreteEffectVariant<Family, runir::kr::DlTag>;
     runir::kr::python::bind_variant<Variant>(m, repository, "ConcreteEffectVariant");
-    bind_observation<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>>(
-        m,
-        repository,
-        "PositiveBooleanEffect");
-    bind_observation<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Negative>>(
-        m,
-        repository,
-        "NegativeBooleanEffect");
+    bind_observation<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>>(m,
+                                                                                                                                      repository,
+                                                                                                                                      "PositiveBooleanEffect");
+    bind_observation<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Negative>>(m,
+                                                                                                                                      repository,
+                                                                                                                                      "NegativeBooleanEffect");
     bind_observation<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Unchanged>>(
         m,
         repository,

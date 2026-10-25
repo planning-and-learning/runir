@@ -14,9 +14,7 @@ namespace runir::kr::ps::base
 
 template<tyr::TaskKind Kind, typename C, runir::kr::ps::dl::TransitionEvaluationContextConcept<BaseFamilyTag, Kind> Context>
 bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C> rule, Context& context)
-{
-    return all_compatible<Kind, BaseFamilyTag>(rule.get_conditions(), context) && all_compatible<Kind, BaseFamilyTag>(rule.get_effects(), context);
-}
+{ return all_compatible<Kind, BaseFamilyTag>(rule.get_conditions(), context) && all_compatible<Kind, BaseFamilyTag>(rule.get_effects(), context); }
 
 template<tyr::TaskKind Kind, typename C, runir::kr::ps::dl::TransitionEvaluationContextConcept<BaseFamilyTag, Kind> Context>
 bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::base::Sketch>, C> sketch, Context& context)

@@ -17,15 +17,11 @@ using runir::kr::ps::is_compatible_with;
 
 template<tyr::TaskKind Kind, RuleKind Tag, typename C, CompatibilityContext<ExtFamilyTag, Kind> Context>
 bool conditions_are_compatible(ygg::View<ygg::Index<Rule<Tag>>, C> rule, Context& context)
-{
-    return all_compatible<Kind, ExtFamilyTag>(rule.get_conditions(), context);
-}
+{ return all_compatible<Kind, ExtFamilyTag>(rule.get_conditions(), context); }
 
 template<tyr::TaskKind Kind, RuleKind RuleKindT, typename C, ProgramStateViewConcept<Kind> S>
 bool has_current_source(ygg::View<ygg::Index<Rule<RuleKindT>>, C> rule, S state)
-{
-    return rule.get_source() == state.get_module_state().get_memory_state();
-}
+{ return rule.get_source() == state.get_module_state().get_memory_state(); }
 
 // Reject the source memory before evaluating conditions in the reusable environment.
 template<tyr::TaskKind Kind,

@@ -185,7 +185,23 @@ struct Data<runir::kr::dl::cnf_grammar::Grammar>
             return numerical_substitution_rules;
     }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::concept_start, &Data::role_start, &Data::boolean_start, &Data::numerical_start, &Data::concept_derivation_rules, &Data::role_derivation_rules, &Data::boolean_derivation_rules, &Data::numerical_derivation_rules, &Data::concept_substitution_rules, &Data::role_substitution_rules, &Data::boolean_substitution_rules, &Data::numerical_substitution_rules, &Data::domain> {}; }
+    static constexpr auto cista_members() noexcept
+    {
+        return ygg::Members<&Data::index,
+                            &Data::concept_start,
+                            &Data::role_start,
+                            &Data::boolean_start,
+                            &Data::numerical_start,
+                            &Data::concept_derivation_rules,
+                            &Data::role_derivation_rules,
+                            &Data::boolean_derivation_rules,
+                            &Data::numerical_derivation_rules,
+                            &Data::concept_substitution_rules,
+                            &Data::role_substitution_rules,
+                            &Data::boolean_substitution_rules,
+                            &Data::numerical_substitution_rules,
+                            &Data::domain> {};
+    }
     static constexpr auto identifying_members() noexcept
     {
         return ygg::Members<&Data::concept_start,
@@ -202,10 +218,7 @@ struct Data<runir::kr::dl::cnf_grammar::Grammar>
                             &Data::numerical_substitution_rules,
                             &Data::domain> {};
     }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 }  // namespace ygg

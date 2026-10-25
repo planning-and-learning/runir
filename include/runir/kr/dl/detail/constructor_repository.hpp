@@ -59,9 +59,7 @@ public:
     template<typename T>
         requires ygg::formalism::SupportsSymbol<BasicConstructorRepository, T>
     const BasicConstructorRepository& get_canonical_context(ygg::Index<T>) const noexcept
-    {
-        return *this;
-    }
+    { return *this; }
 };
 
 template<typename RepositoryTypes>
@@ -80,15 +78,11 @@ public:
 
 template<typename RepositoryTypes>
 inline const BasicConstructorRepository<RepositoryTypes>& get_repository(const BasicConstructorRepository<RepositoryTypes>& repository) noexcept
-{
-    return repository;
-}
+{ return repository; }
 
 template<typename RepositoryTypes>
 inline BasicConstructorRepository<RepositoryTypes>& get_repository(BasicConstructorRepository<RepositoryTypes>& repository) noexcept
-{
-    return repository;
-}
+{ return repository; }
 
 }  // namespace runir::kr::dl::detail
 

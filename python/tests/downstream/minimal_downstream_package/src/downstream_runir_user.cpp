@@ -20,7 +20,4 @@ std::string make_graph_dot()
 
 }  // namespace
 
-NB_MODULE(downstream_runir_user, m)
-{
-    m.def("make_graph_dot", &make_graph_dot);
-}
+NB_MODULE(downstream_runir_user, m) { m.def("make_graph_dot", &make_graph_dot); }

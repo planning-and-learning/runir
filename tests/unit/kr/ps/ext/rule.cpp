@@ -47,8 +47,8 @@ template<kr::dl::CategoryTag Category>
 using Load = kr::ps::ext::LoadTag<Category>;
 
 template<typename Kind>
-concept BindingRuleContract = kr::ps::ext::BindingRuleKind<Kind> && TransitionRuleContract<Kind>
-                             && requires(ygg::Data<Entity<Kind>>& data, const View<Kind>& view) {
+concept BindingRuleContract =
+    kr::ps::ext::BindingRuleKind<Kind> && TransitionRuleContract<Kind> && requires(ygg::Data<Entity<Kind>>& data, const View<Kind>& view) {
         data.feature;
         data.reg;
         data.effects;

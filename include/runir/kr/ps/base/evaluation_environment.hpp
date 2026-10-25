@@ -1,11 +1,11 @@
 #ifndef RUNIR_KR_PS_BASE_EVALUATION_ENVIRONMENT_HPP_
 #define RUNIR_KR_PS_BASE_EVALUATION_ENVIRONMENT_HPP_
 
+#include "runir/kr/dl/semantics/evaluation_policy.hpp"
 #include "runir/kr/dl/semantics/evaluation_storage.hpp"
 #include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/base/sketch_view.hpp"
 #include "runir/kr/ps/dl/transition_evaluation_context.hpp"
-#include "runir/kr/dl/semantics/evaluation_policy.hpp"
 #include "runir/kr/task_context.hpp"
 
 #include <utility>
@@ -58,9 +58,7 @@ public:
     }
 
     auto make_dl_context(tyr::planning::StateView<Kind> state)
-    {
-        return m_policy.make_source_context(StateDlContext(std::move(state), m_dl_builder, m_source_storage));
-    }
+    { return m_policy.make_source_context(StateDlContext(std::move(state), m_dl_builder, m_source_storage)); }
 
     auto make_dl_transition_context(tyr::planning::StateView<Kind> source_state, tyr::planning::StateView<Kind> target_state)
     {

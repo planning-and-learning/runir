@@ -65,9 +65,7 @@ concept StateEvaluationContextConcept =
 /// Registers in the borrowed form, which interned registers provide without copying.
 template<RegisterValuesViewConcept R>
 BorrowedRegisterValuesView borrow_registers(R registers) noexcept
-{
-    return BorrowedRegisterValuesView(registers.get_data(), registers.get_formalism_repository());
-}
+{ return BorrowedRegisterValuesView(registers.get_data(), registers.get_formalism_repository()); }
 
 /// Every context carries registers and call arguments. Registers are empty and arguments absent unless a program binds
 /// them; evaluating a register or an argument that the context does not bind throws.

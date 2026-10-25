@@ -2,12 +2,12 @@
 #define RUNIR_KR_DL_NUMERICAL_DATA_HPP_
 
 #include "runir/kr/dl/boolean_data.hpp"
-#include <yggdrasil/containers/variant.hpp>
 
 #include <cista/containers/variant.h>
 #include <tuple>
 #include <utility>
 #include <variant>
+#include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 #include <yggdrasil/database/semantics/distance_plan.hpp>
@@ -37,10 +37,7 @@ struct Data<runir::kr::dl::Numerical<runir::kr::dl::CountTag>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::arg> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 /// n_distance(sources, edges, targets): sources/targets are k-column vertices
@@ -72,10 +69,7 @@ struct Data<runir::kr::dl::Numerical<runir::kr::dl::DistanceTag>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::lhs, &Data::mid, &Data::rhs, &Data::plan> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::lhs, &Data::mid, &Data::rhs> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<>

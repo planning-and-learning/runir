@@ -64,9 +64,7 @@ std::string constructor_with_objects(std::string_view keyword, Head&& head, Obje
 
 template<typename Columns>
 std::string query_columns(Columns columns)
-{
-    return fmt::format("({})", fmt::join(columns, " "));
-}
+{ return fmt::format("({})", fmt::join(columns, " ")); }
 
 template<typename Tag, typename C>
 std::string query(ygg::View<ygg::Index<runir::kr::dl::Query<Tag>>, C> view)
@@ -109,7 +107,12 @@ std::string query(ygg::View<ygg::Index<runir::kr::dl::Query<Tag>>, C> view)
     else if constexpr (std::same_as<Tag, runir::kr::dl::QueryEmptyTag>)
         return constructor(runir::kr::dl::QueryEmptyTag::keyword, query_columns(view.get_columns()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::QueryMustPassTag>)
-        return constructor(runir::kr::dl::QueryMustPassTag::keyword, query_columns(view.get_keys()), view.get_sources(), view.get_edges(), view.get_targets(), view.get_probes());
+        return constructor(runir::kr::dl::QueryMustPassTag::keyword,
+                           query_columns(view.get_keys()),
+                           view.get_sources(),
+                           view.get_edges(),
+                           view.get_targets(),
+                           view.get_probes());
     else
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL query constructor tag");
 }
@@ -311,9 +314,7 @@ template<typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::QueryColumn>, C>> : fmt::formatter<std::string_view>
 {
     auto format(const ygg::View<ygg::Index<runir::kr::dl::QueryColumn>, C>& value, format_context& ctx) const
-    {
-        return fmt::format_to(ctx.out(), "{}", value.get_name());
-    }
+    { return fmt::format_to(ctx.out(), "{}", value.get_name()); }
 };
 
 template<typename Tag, typename C>
@@ -328,27 +329,21 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::QueryProjection<Catego
 {
     using View = ygg::View<ygg::Index<runir::kr::dl::QueryProjection<Category>>, C>;
     auto format(View view, format_context& ctx) const
-    {
-        return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::query_projection(view), ctx);
-    }
+    { return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::query_projection(view), ctx); }
 };
 
 template<runir::kr::dl::CategoryTag Category, typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::Argument<Category>>, C>> : fmt::formatter<std::string_view>
 {
     auto format(const ygg::View<ygg::Index<runir::kr::dl::Argument<Category>>, C>& value, format_context& ctx) const
-    {
-        return fmt::format_to(ctx.out(), "{}", value.get_name());
-    }
+    { return fmt::format_to(ctx.out(), "{}", value.get_name()); }
 };
 
 template<runir::kr::dl::ConceptOrRoleTag Category, typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::Register<Category>>, C>> : fmt::formatter<std::string_view>
 {
     auto format(const ygg::View<ygg::Index<runir::kr::dl::Register<Category>>, C>& value, format_context& ctx) const
-    {
-        return fmt::format_to(ctx.out(), "{}", value.get_name());
-    }
+    { return fmt::format_to(ctx.out(), "{}", value.get_name()); }
 };
 
 template<typename Tag, typename C>
@@ -357,9 +352,7 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::Concept<Tag>>, C>> : f
 {
     using View = ygg::View<ygg::Index<runir::kr::dl::Concept<Tag>>, C>;
     auto format(View view, format_context& ctx) const
-    {
-        return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::concept_constructor(view), ctx);
-    }
+    { return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::concept_constructor(view), ctx); }
 };
 
 template<typename Tag, typename C>
@@ -376,9 +369,7 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::Boolean<Tag>>, C>> : f
 {
     using View = ygg::View<ygg::Index<runir::kr::dl::Boolean<Tag>>, C>;
     auto format(View view, format_context& ctx) const
-    {
-        return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::boolean_constructor(view), ctx);
-    }
+    { return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::boolean_constructor(view), ctx); }
 };
 
 template<typename Tag, typename C>

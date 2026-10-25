@@ -76,7 +76,8 @@ public:
 
     InternedExecutionStorage(runir::kr::TaskContextPtr<Kind> context, ProgramView program) : m_context(std::move(context)), m_program(program) {}
 
-    runir::kr::dl::semantics::RegisterValuesView registers(ygg::Data<runir::kr::dl::semantics::RegisterValues>& data) { return insert(*m_context->dl_denotation_repository, data).first; }
+    runir::kr::dl::semantics::RegisterValuesView registers(ygg::Data<runir::kr::dl::semantics::RegisterValues>& data)
+    { return insert(*m_context->dl_denotation_repository, data).first; }
 
     StateView view(StoredState state) const noexcept { return state; }
     StoredState retain(StateView state) const noexcept { return state; }
@@ -124,10 +125,7 @@ public:
     tyr::planning::Node<Kind> successor(const tyr::planning::StateView<Kind>& state, Binding binding)
     {
         auto& search = *m_context->search_context;
-        return search.successor_generator->get_successor_node(tyr::planning::Node<Kind>(state, 0),
-                                                              binding,
-                                                              *search.state_repository,
-                                                              *search.axiom_evaluator);
+        return search.successor_generator->get_successor_node(tyr::planning::Node<Kind>(state, 0), binding, *search.state_repository, *search.axiom_evaluator);
     }
 };
 
@@ -158,9 +156,7 @@ public:
         return result;
     }
     runir::kr::dl::semantics::BorrowedRegisterValuesView registers(const ygg::Data<runir::kr::dl::semantics::RegisterValues>& data)
-    {
-        return ygg::make_view(data, *m_context->search_context->task->get_repository());
-    }
+    { return ygg::make_view(data, *m_context->search_context->task->get_repository()); }
     template<tyr::planning::StateViewConcept<Kind> S, runir::kr::dl::semantics::RegisterValuesViewConcept R>
     StoredState store(const S& planning_state,
                       ModuleView module_,
@@ -196,7 +192,12 @@ public:
     StoredState start_state(ProgramStateView<Kind> state)
     {
         const auto module_ = state.get_module_state();
-        return store(module_.get_state(), module_.get_module(), module_.get_memory_state(), module_.get_registers(), module_.get_arguments(), state.get_call_stack());
+        return store(module_.get_state(),
+                     module_.get_module(),
+                     module_.get_memory_state(),
+                     module_.get_registers(),
+                     module_.get_arguments(),
+                     state.get_call_stack());
     }
 
     ProgramStateView<Kind> materialize(BuilderProgramStateView<Kind> state)

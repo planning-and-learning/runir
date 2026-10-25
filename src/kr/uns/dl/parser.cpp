@@ -33,9 +33,7 @@ using runir::kr::parser::ext_constructors::parse;
 
 template<typename T>
 auto intern(runir::kr::uns::Repository& repository, ygg::Data<T>& data)
-{
-    return runir::kr::uns::insert(repository, data).first;
-}
+{ return runir::kr::uns::insert(repository, data).first; }
 
 auto parse_feature(const runir::kr::uns::dl::ast::BooleanFeature& node,
                    tyr::formalism::planning::DomainView domain,

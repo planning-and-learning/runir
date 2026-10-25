@@ -19,9 +19,7 @@ SketchView SketchFactory::create_empty(Repository& repository)
 }
 
 SketchView SketchFactory::create(SketchSpecification specification, tyr::formalism::planning::DomainView domain, Repository& repository)
-{
-    return parse_sketch(create_description(specification), domain, repository);
-}
+{ return parse_sketch(create_description(specification), domain, repository); }
 
 std::string SketchFactory::create_empty_description()
 {
@@ -49,24 +47,16 @@ std::string SketchFactory::create_description(SketchSpecification specification)
 }
 
 SketchView SketchFactory::create_gripper_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain, Repository& repository)
-{
-    return parse_sketch(create_gripper_france_et_al_aaai2021_description(), domain, repository);
-}
+{ return parse_sketch(create_gripper_france_et_al_aaai2021_description(), domain, repository); }
 
 SketchView SketchFactory::create_blocks3ops_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain, Repository& repository)
-{
-    return parse_sketch(create_blocks3ops_france_et_al_aaai2021_description(), domain, repository);
-}
+{ return parse_sketch(create_blocks3ops_france_et_al_aaai2021_description(), domain, repository); }
 
 SketchView SketchFactory::create_spanner_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain, Repository& repository)
-{
-    return parse_sketch(create_spanner_france_et_al_aaai2021_description(), domain, repository);
-}
+{ return parse_sketch(create_spanner_france_et_al_aaai2021_description(), domain, repository); }
 
 SketchView SketchFactory::create_delivery_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain, Repository& repository)
-{
-    return parse_sketch(create_delivery_france_et_al_aaai2021_description(), domain, repository);
-}
+{ return parse_sketch(create_delivery_france_et_al_aaai2021_description(), domain, repository); }
 
 std::string SketchFactory::create_gripper_france_et_al_aaai2021_description()
 {

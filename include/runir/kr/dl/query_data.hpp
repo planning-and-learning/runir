@@ -35,10 +35,7 @@ struct Data<runir::kr::dl::QueryColumn>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::name> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::name> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<>
@@ -61,16 +58,15 @@ public:
     template<typename C>
     using ViewVariant = ::ygg::ViewVariant<Variant, C>;
     template<typename C>
-    explicit Data(const ViewVariant<C>& variant_) : index(), variant(std::visit([](const auto& view) -> Variant { return Variant(view.get_index()); }, variant_))
+    explicit Data(const ViewVariant<C>& variant_) :
+        index(),
+        variant(std::visit([](const auto& view) -> Variant { return Variant(view.get_index()); }, variant_))
     {
     }
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::variant, &Data::is_static> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::variant> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<tyr::formalism::FactKind T>
@@ -101,10 +97,7 @@ struct Data<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::predicate, &Data::columns, &Data::schema> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::predicate, &Data::columns> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<tyr::formalism::FactKind T>
@@ -140,10 +133,7 @@ struct Data<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::predicate, &Data::polarity, &Data::columns, &Data::schema> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::predicate, &Data::polarity, &Data::columns> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<>
@@ -175,10 +165,7 @@ struct Data<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::arg, &Data::columns, &Data::schema> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg, &Data::columns> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<>
@@ -210,10 +197,7 @@ struct Data<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::arg, &Data::columns, &Data::schema> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg, &Data::columns> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<>
@@ -237,10 +221,7 @@ struct Data<runir::kr::dl::Query<runir::kr::dl::QueryJoinTag>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::lhs, &Data::rhs, &Data::columns, &Data::plan> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::lhs, &Data::rhs> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<typename Tag>
@@ -265,10 +246,7 @@ struct Data<runir::kr::dl::Query<Tag>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::lhs, &Data::rhs, &Data::columns, &Data::schema> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::lhs, &Data::rhs> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<>
@@ -294,10 +272,7 @@ struct Data<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::arg, &Data::columns, &Data::plan> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg, &Data::columns> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<>
@@ -323,10 +298,7 @@ struct Data<runir::kr::dl::Query<runir::kr::dl::QueryRenameTag>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::arg, &Data::columns, &Data::schema> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg, &Data::columns> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<>
@@ -364,12 +336,13 @@ struct Data<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>>
         set(rhs_column_, rhs_column);
     }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::arg, &Data::lhs_column, &Data::rhs_column, &Data::columns, &Data::schema, &Data::lhs_position, &Data::rhs_position> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg, &Data::lhs_column, &Data::rhs_column> {}; }
-    void clear() noexcept
+    static constexpr auto cista_members() noexcept
     {
-        ygg::clear_members(*this);
+        return ygg::
+            Members<&Data::index, &Data::arg, &Data::lhs_column, &Data::rhs_column, &Data::columns, &Data::schema, &Data::lhs_position, &Data::rhs_position> {};
     }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg, &Data::lhs_column, &Data::rhs_column> {}; }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<>
@@ -406,12 +379,10 @@ struct Data<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>>
         set(object_, object);
     }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::arg, &Data::column, &Data::object, &Data::columns, &Data::schema, &Data::position> {}; }
+    static constexpr auto cista_members() noexcept
+    { return ygg::Members<&Data::index, &Data::arg, &Data::column, &Data::object, &Data::columns, &Data::schema, &Data::position> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg, &Data::column, &Data::object> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<>
@@ -447,12 +418,10 @@ struct Data<runir::kr::dl::Query<runir::kr::dl::QueryGenericJoinTag>>
         set(output_order_, output_order);
     }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::args, &Data::variable_order, &Data::output_order, &Data::columns, &Data::plan> {}; }
+    static constexpr auto cista_members() noexcept
+    { return ygg::Members<&Data::index, &Data::args, &Data::variable_order, &Data::output_order, &Data::columns, &Data::plan> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::args, &Data::variable_order, &Data::output_order> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 /// q_must_pass (keys...) sources edges targets probes: per key, the probe objects that every path from the key's sources
@@ -505,12 +474,13 @@ struct Data<runir::kr::dl::Query<runir::kr::dl::QueryMustPassTag>>
         set(probes_, probes);
     }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::keys, &Data::sources, &Data::edges, &Data::targets, &Data::probes, &Data::columns, &Data::schema, &Data::plan> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::keys, &Data::sources, &Data::edges, &Data::targets, &Data::probes> {}; }
-    void clear() noexcept
+    static constexpr auto cista_members() noexcept
     {
-        ygg::clear_members(*this);
+        return ygg::
+            Members<&Data::index, &Data::keys, &Data::sources, &Data::edges, &Data::targets, &Data::probes, &Data::columns, &Data::schema, &Data::plan> {};
     }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::keys, &Data::sources, &Data::edges, &Data::targets, &Data::probes> {}; }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<>
@@ -525,16 +495,11 @@ struct Data<runir::kr::dl::Query<runir::kr::dl::QueryEmptyTag>>
     explicit Data(IndexList<runir::kr::dl::QueryColumn> columns_) : index(), columns(std::move(columns_)) {}
     template<typename C>
     explicit Data(const std::vector<::ygg::View<Index<runir::kr::dl::QueryColumn>, C>>& columns_) : index(), columns()
-    {
-        set(columns_, columns);
-    }
+    { set(columns_, columns); }
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::columns, &Data::schema> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::columns> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<runir::kr::dl::ConceptOrRoleTag Category>
@@ -560,10 +525,7 @@ struct Data<runir::kr::dl::QueryProjection<Category>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::arg, &Data::columns, &Data::plan> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg, &Data::columns> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 }  // namespace ygg

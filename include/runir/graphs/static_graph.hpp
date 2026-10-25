@@ -90,9 +90,7 @@ public:
         m_vertex_properties(std::move(other.m_vertex_properties)),
         m_edge_properties(std::move(other.m_edge_properties)),
         m_out_edge_offsets(std::move(other.m_out_edge_offsets))
-    {
-        rebind_parents();
-    }
+    { rebind_parents(); }
 
     auto operator=(const StaticGraph&) -> StaticGraph& = delete;
 

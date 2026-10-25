@@ -16,19 +16,13 @@ struct RootState
     auto get_result() { return state.evaluate(root); }
     const auto& get_delta()
         requires kr::dl::ConceptOrRoleTag<Category>
-    {
-        return state.delta(root);
-    }
+    { return state.delta(root); }
     size_t size()
         requires kr::dl::ConceptOrRoleTag<Category>
-    {
-        return state.size(root);
-    }
+    { return state.size(root); }
     bool changed()
         requires kr::dl::BooleanOrNumericalTag<Category>
-    {
-        return state.changed(root);
-    }
+    { return state.changed(root); }
 };
 
 /// The root of a one-root IncrementalEvaluation, evaluated eagerly in each entered state.
@@ -55,16 +49,12 @@ public:
     /// Enters the state of `context` unrelated to the previous one.
     template<kr::dl::semantics::StateEvaluationContextConcept<Kind> Context>
     RootState<Kind, Category, Context> initialize(const Context& context)
-    {
-        return evaluated(m_evaluation.enter(context));
-    }
+    { return evaluated(m_evaluation.enter(context)); }
     /// Enters the state of `context`, reached from the previous one by `delta`. The root is updated from the delta if
     /// it can be, otherwise initialized; its get_delta() / changed() throw std::logic_error in the latter case.
     template<kr::dl::semantics::StateEvaluationContextConcept<Kind> Context>
     RootState<Kind, Category, Context> update(const Context& context, const kr::dl::semantics::incremental::Delta& delta, ygg::database::Workspace& workspace)
-    {
-        return evaluated(m_evaluation.enter(context, delta, workspace));
-    }
+    { return evaluated(m_evaluation.enter(context, delta, workspace)); }
 };
 
 /// The root query of a one-root IncrementalEvaluation in one entered state; stale once its evaluator enters another
@@ -103,14 +93,10 @@ public:
     }
     template<kr::dl::semantics::StateEvaluationContextConcept<Kind> Context>
     QueryRootState<Kind, Context> initialize(const Context& context)
-    {
-        return evaluated(m_evaluation.enter(context));
-    }
+    { return evaluated(m_evaluation.enter(context)); }
     template<kr::dl::semantics::StateEvaluationContextConcept<Kind> Context>
     QueryRootState<Kind, Context> update(const Context& context, const kr::dl::semantics::incremental::Delta& delta, ygg::database::Workspace& workspace)
-    {
-        return evaluated(m_evaluation.enter(context, delta, workspace));
-    }
+    { return evaluated(m_evaluation.enter(context, delta, workspace)); }
 };
 
 }  // namespace runir::tests

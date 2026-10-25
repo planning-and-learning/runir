@@ -36,7 +36,14 @@ struct ProgramProofVertexLabel : ygg::comparison::Mixin<ProgramProofVertexLabel<
     {
     }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&ProgramProofVertexLabel::program_state, &ProgramProofVertexLabel::is_initial, &ProgramProofVertexLabel::is_goal, &ProgramProofVertexLabel::is_alive, &ProgramProofVertexLabel::is_unsolvable> {}; }
+    static constexpr auto cista_members() noexcept
+    {
+        return ygg::Members<&ProgramProofVertexLabel::program_state,
+                            &ProgramProofVertexLabel::is_initial,
+                            &ProgramProofVertexLabel::is_goal,
+                            &ProgramProofVertexLabel::is_alive,
+                            &ProgramProofVertexLabel::is_unsolvable> {};
+    }
     auto identifying_members() const noexcept { return std::make_tuple(program_state, is_initial, is_goal, is_alive, is_unsolvable); }
 };
 

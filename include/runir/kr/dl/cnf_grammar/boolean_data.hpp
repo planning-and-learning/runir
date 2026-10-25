@@ -2,7 +2,6 @@
 #define RUNIR_CNF_GRAMMAR_BOOLEAN_DATA_HPP_
 
 #include "runir/kr/dl/cnf_grammar/data_helpers.hpp"
-#include <yggdrasil/containers/variant.hpp>
 
 #include <cista/containers/variant.h>
 #include <tuple>
@@ -50,10 +49,7 @@ struct Data<runir::kr::dl::cnf_grammar::Boolean<runir::kr::dl::NonemptyTag>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::arg> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<>

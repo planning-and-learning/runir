@@ -24,10 +24,7 @@ namespace
 {
 using Kind = tyr::LiftedTag;
 
-double seconds_since(std::chrono::steady_clock::time_point start)
-{
-    return std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
-}
+double seconds_since(std::chrono::steady_clock::time_point start) { return std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count(); }
 
 /// The first balanced "(q_must_pass ...)" of a text.
 std::string must_pass_text(const std::string& text)

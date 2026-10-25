@@ -19,13 +19,9 @@ struct UnarySetEvaluator
     explicit UnarySetEvaluator(EvaluationIndex<Input> child) : child(child) {}
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
-    {
-        initialize_set(Tag {}, value, graph.result(child), graph.change(child), graph.set_workspace());
-    }
+    { initialize_set(Tag {}, value, graph.result(child), graph.change(child), graph.set_workspace()); }
     void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
-    {
-        update_set(Tag {}, value, graph.result(child), graph.change(child), graph.set_workspace());
-    }
+    { update_set(Tag {}, value, graph.result(child), graph.change(child), graph.set_workspace()); }
 };
 
 template<tyr::TaskKind Kind, CategoryTag Category, typename Tag, ConceptOrRoleTag Left, ConceptOrRoleTag Right>
@@ -38,13 +34,9 @@ struct BinarySetEvaluator
     BinarySetEvaluator(EvaluationIndex<Left> lhs, EvaluationIndex<Right> rhs) : lhs(lhs), rhs(rhs) {}
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
-    {
-        initialize_set(Tag {}, value, graph.result(lhs), graph.change(lhs), graph.result(rhs), graph.change(rhs), graph.set_workspace());
-    }
+    { initialize_set(Tag {}, value, graph.result(lhs), graph.change(lhs), graph.result(rhs), graph.change(rhs), graph.set_workspace()); }
     void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
-    {
-        update_set(Tag {}, value, graph.result(lhs), graph.change(lhs), graph.result(rhs), graph.change(rhs), graph.set_workspace());
-    }
+    { update_set(Tag {}, value, graph.result(lhs), graph.change(lhs), graph.result(rhs), graph.change(rhs), graph.set_workspace()); }
 };
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

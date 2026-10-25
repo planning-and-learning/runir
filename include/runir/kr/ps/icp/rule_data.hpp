@@ -68,13 +68,11 @@ struct Data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::LoadTag<Category>>>
         set(effects_, effects);
     }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::feature, &Data::reg, &Data::effects> {}; }
+    static constexpr auto cista_members() noexcept
+    { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::feature, &Data::reg, &Data::effects> {}; }
     static constexpr auto identifying_members() noexcept
     { return ygg::Members<&Data::source, &Data::target, &Data::conditions, &Data::feature, &Data::reg, &Data::effects> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<>
@@ -137,7 +135,18 @@ struct Data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>>
         set(xeffects_, xeffects);
     }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::effects, &Data::action_name, &Data::argument_names, &Data::xconditions, &Data::xeffects> {}; }
+    static constexpr auto cista_members() noexcept
+    {
+        return ygg::Members<&Data::index,
+                            &Data::source,
+                            &Data::target,
+                            &Data::conditions,
+                            &Data::effects,
+                            &Data::action_name,
+                            &Data::argument_names,
+                            &Data::xconditions,
+                            &Data::xeffects> {};
+    }
     static constexpr auto identifying_members() noexcept
     {
         return ygg::Members<&Data::source,
@@ -149,10 +158,7 @@ struct Data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>>
                             &Data::xconditions,
                             &Data::xeffects> {};
     }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 }  // namespace ygg

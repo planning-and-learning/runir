@@ -17,9 +17,7 @@ void describe_fields(Archive& ar, std::type_identity<::runir::graphs::Bidirectio
 
 template<::runir::graphs::Property VP, ::runir::graphs::Property EP>
 const auto& serialize_as(Dictionaries&, const ::runir::graphs::BidirectionalStaticGraph<VP, EP>& value)
-{
-    return value.get_forward_graph();
-}
+{ return value.get_forward_graph(); }
 
 }
 

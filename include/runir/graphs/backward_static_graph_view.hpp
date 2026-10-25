@@ -54,13 +54,9 @@ public:
     auto get_vertices() const noexcept -> const auto& { return get_graph().get_vertices(); }
     auto get_edges() const noexcept -> const auto& { return get_graph().get_edges(); }
     auto get_vertex_property(VertexPropertyIndex<VertexPropertyType> property) const noexcept -> const VertexPropertyType&
-    {
-        return get_graph().get_vertex_property(property);
-    }
+    { return get_graph().get_vertex_property(property); }
     auto get_edge_property(EdgePropertyIndex<EdgePropertyType> property) const noexcept -> const EdgePropertyType&
-    {
-        return get_graph().get_edge_property(property);
-    }
+    { return get_graph().get_edge_property(property); }
 
     auto get_vertex(VertexIndex vertex) const noexcept -> const VertexType& { return get_graph().get_vertex(vertex); }
     auto get_edge(EdgeIndex edge) const noexcept -> const EdgeType& { return get_graph().get_edge(edge); }
@@ -106,9 +102,7 @@ public:
 
 template<IsDenseGraph G>
 auto backward(const G& graph)
-{
-    return BackwardStaticGraphView<G>(graph);
-}
+{ return BackwardStaticGraphView<G>(graph); }
 
 }  // namespace runir::graphs
 

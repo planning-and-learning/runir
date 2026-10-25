@@ -59,9 +59,7 @@ public:
     /// Skip disabled rules before action enumeration; matches() also checks this for direct callers.
     template<runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context>
     bool is_applicable(Context& context) const
-    {
-        return conditions_are_compatible<Kind>(m_rule, context);
-    }
+    { return conditions_are_compatible<Kind>(m_rule, context); }
 
     /// Reject a binding before generating its target; matches() also checks this for direct callers.
     template<runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context,

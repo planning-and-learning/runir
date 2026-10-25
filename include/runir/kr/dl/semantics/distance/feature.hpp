@@ -5,8 +5,8 @@
 #include "runir/kr/dl/translations/ygg_query.hpp"
 
 #include <optional>
-#include <yggdrasil/database/semantics/must_pass.hpp>
 #include <vector>
+#include <yggdrasil/database/semantics/must_pass.hpp>
 
 namespace runir::kr::dl::semantics
 {

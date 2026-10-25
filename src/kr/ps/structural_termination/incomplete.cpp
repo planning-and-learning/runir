@@ -129,9 +129,7 @@ enum class EliminationPass
 };
 
 bool eligible(const OpposingRuleSet& opposing, EliminationPass pass)
-{
-    return pass == EliminationPass::MARKING ? !opposing.has_raw_opponent : opposing.has_raw_opponent && opposing.undiscounted.empty();
-}
+{ return pass == EliminationPass::MARKING ? !opposing.has_raw_opponent : opposing.has_raw_opponent && opposing.undiscounted.empty(); }
 
 bool eliminate_one_rule(const QualitativePolicy& policy, SieveState& state, EliminationPass pass)
 {

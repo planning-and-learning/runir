@@ -361,9 +361,8 @@ ProgramProofResults<Kind> find_solution(SuccessorExpander<Kind, ExecutionStorage
 }  // namespace detail
 
 template<tyr::TaskKind Kind>
-auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner,
-                   ProgramView program,
-                   const ProgramSearchOptions<Kind>& options) -> ProgramProofResults<Kind>
+auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, ProgramView program, const ProgramSearchOptions<Kind>& options)
+    -> ProgramProofResults<Kind>
 {
     if (!dl::structural_termination(program).is_terminating())
         throw std::invalid_argument("Ext find_solution requires a structurally terminating program.");

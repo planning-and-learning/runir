@@ -111,14 +111,10 @@ void parse_ast(const std::string& description, const Parser& parser, Ast& result
 }  // namespace
 
 void parse_module_ast(const std::string& description, ast::Module& result, runir::kr::parser::ErrorHandlerType& error_handler)
-{
-    parse_ast(description, module_root, result, error_handler);
-}
+{ parse_ast(description, module_root, result, error_handler); }
 
 void parse_program_ast(const std::string& description, ast::Program& result, runir::kr::parser::ErrorHandlerType& error_handler)
-{
-    parse_ast(description, program_root, result, error_handler);
-}
+{ parse_ast(description, program_root, result, error_handler); }
 
 ast::Module parse_module_ast(const std::string& description)
 {

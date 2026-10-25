@@ -71,16 +71,12 @@ public:
     template<typename T>
         requires ygg::formalism::SupportsSymbol<ExecutionRepository, T>
     const ExecutionRepository& get_canonical_context(ygg::Index<T>) const noexcept
-    {
-        return *this;
-    }
+    { return *this; }
 };
 
 template<tyr::TaskKind Kind>
 inline const ExecutionRepository<Kind>& get_repository(const ExecutionRepository<Kind>& context) noexcept
-{
-    return context;
-}
+{ return context; }
 
 template<tyr::TaskKind Kind>
 class ExecutionRepositoryFactory

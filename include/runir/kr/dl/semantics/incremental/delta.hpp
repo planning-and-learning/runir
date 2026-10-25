@@ -74,9 +74,7 @@ struct Delta
     /// Refill retained buffers with the atom changes between completed states.
     template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> Source, tyr::planning::StateViewConcept<Kind> Target>
     void assign(const Source& source, const Target& target)
-    {
-        detail::assign_atom_delta<Kind>(source, target, *this);
-    }
+    { detail::assign_atom_delta<Kind>(source, target, *this); }
 
     /// Refill retained buffers from completed states, including their derived atoms, and their registers.
     /// Both endpoints must belong to the same module invocation.

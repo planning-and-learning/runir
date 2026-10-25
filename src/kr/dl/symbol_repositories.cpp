@@ -1,6 +1,6 @@
-#include "runir/kr/dl/repository.hpp"
 #include "runir/kr/detail/interning_contracts.hpp"
 #include "runir/kr/dl/grammar/declarations.hpp"
+#include "runir/kr/dl/repository.hpp"
 
 #include <yggdrasil/formalism/detail/basic_symbol_repository_impl.hpp>
 

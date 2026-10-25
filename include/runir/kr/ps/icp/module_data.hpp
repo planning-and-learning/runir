@@ -108,7 +108,22 @@ struct Data<runir::kr::ps::icp::Module>
         }
     }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::symbol, &Data::concept_registers, &Data::role_registers, &Data::concept_features, &Data::role_features, &Data::boolean_features, &Data::numerical_features, &Data::query_features, &Data::entry_memory_state, &Data::memory_states, &Data::memory_transitions, &Data::reset_pairs> {}; }
+    static constexpr auto cista_members() noexcept
+    {
+        return ygg::Members<&Data::index,
+                            &Data::symbol,
+                            &Data::concept_registers,
+                            &Data::role_registers,
+                            &Data::concept_features,
+                            &Data::role_features,
+                            &Data::boolean_features,
+                            &Data::numerical_features,
+                            &Data::query_features,
+                            &Data::entry_memory_state,
+                            &Data::memory_states,
+                            &Data::memory_transitions,
+                            &Data::reset_pairs> {};
+    }
     static constexpr auto identifying_members() noexcept
     {
         return ygg::Members<&Data::symbol,
@@ -124,10 +139,7 @@ struct Data<runir::kr::ps::icp::Module>
                             &Data::memory_transitions,
                             &Data::reset_pairs> {};
     }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 }  // namespace ygg

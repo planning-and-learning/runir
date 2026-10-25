@@ -28,9 +28,7 @@ std::size_t syntactic_complexity(ygg::View<ygg::Index<Module>, C> view)
 
 template<typename C>
 std::size_t syntactic_complexity(ygg::View<ygg::Index<Program>, C> view)
-{
-    return syntactic_complexity(view.get_module());
-}
+{ return syntactic_complexity(view.get_module()); }
 
 }  // namespace runir::kr::ps::icp
 

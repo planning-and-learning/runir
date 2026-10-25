@@ -89,7 +89,7 @@ namespace fmt
 {
 
 template<runir::graphs::IsVertex Vertex>
-    requires (!runir::graphs::IsEdge<Vertex>)
+    requires(!runir::graphs::IsEdge<Vertex>)
 struct formatter<Vertex, char> : formatter<std::string_view>
 {
     template<typename FormatContext>
@@ -156,9 +156,7 @@ struct formatter<runir::graphs::weisfeiler_leman::Signature<K>, char>
 
     template<typename FormatContext>
     auto format(const runir::graphs::weisfeiler_leman::Signature<K>& signature, FormatContext& ctx) const
-    {
-        return fmt::format_to(ctx.out(), "({}, {})", signature.color, signature.neighbor_colors);
-    }
+    { return fmt::format_to(ctx.out(), "({}, {})", signature.color, signature.neighbor_colors); }
 };
 
 template<std::size_t K>

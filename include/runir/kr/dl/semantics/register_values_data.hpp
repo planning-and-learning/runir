@@ -64,10 +64,7 @@ struct Data<runir::kr::dl::semantics::RegisterValues>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::concept_values, &Data::role_values> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::concept_values, &Data::role_values> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 }  // namespace ygg

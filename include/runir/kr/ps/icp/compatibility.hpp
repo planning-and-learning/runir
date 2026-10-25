@@ -14,9 +14,7 @@ namespace runir::kr::ps::icp
 
 template<tyr::TaskKind Kind, RuleKind Tag, typename C, CompatibilityContext<IcpFamilyTag, Kind> Context>
 bool conditions_are_compatible(ygg::View<ygg::Index<Rule<Tag>>, C> rule, Context& context)
-{
-    return all_compatible<Kind, IcpFamilyTag>(rule.get_conditions(), context);
-}
+{ return all_compatible<Kind, IcpFamilyTag>(rule.get_conditions(), context); }
 
 }  // namespace runir::kr::ps::icp
 

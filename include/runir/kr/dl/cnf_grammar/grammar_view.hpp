@@ -24,21 +24,15 @@ public:
 
     template<runir::kr::dl::CategoryTag Category>
     auto get_start() const noexcept
-    {
-        return make_view(this->get_data().template get_start<Category>(), this->get_context());
-    }
+    { return make_view(this->get_data().template get_start<Category>(), this->get_context()); }
 
     template<runir::kr::dl::CategoryTag Category>
     auto get_derivation_rules() const noexcept
-    {
-        return make_view(this->get_data().template get_derivation_rules<Category>(), this->get_context());
-    }
+    { return make_view(this->get_data().template get_derivation_rules<Category>(), this->get_context()); }
 
     template<runir::kr::dl::CategoryTag Category>
     auto get_substitution_rules() const noexcept
-    {
-        return make_view(this->get_data().template get_substitution_rules<Category>(), this->get_context());
-    }
+    { return make_view(this->get_data().template get_substitution_rules<Category>(), this->get_context()); }
 };
 
 }  // namespace ygg

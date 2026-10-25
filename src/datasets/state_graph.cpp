@@ -104,14 +104,11 @@ auto generate_state_graph_result(TaskSearchContext<Kind>& context, const StateGr
 
 template<tyr::TaskKind Kind>
 auto generate_state_graph(TaskSearchContext<Kind>& context, const StateGraphGenerationOptions& generation_options) -> std::unique_ptr<StateGraph<Kind>>
-{
-    return generate_state_graph_result(context, generation_options).graph;
-}
+{ return generate_state_graph_result(context, generation_options).graph; }
 
 template<tyr::TaskKind Kind>
-auto annotate_state_graph(TaskSearchContext<Kind>& context,
-                          const StateGraph<Kind>& graph,
-                          StateGraphCostMode cost_mode) -> std::unique_ptr<AnnotatedStateGraph<Kind>>
+auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kind>& graph, StateGraphCostMode cost_mode)
+    -> std::unique_ptr<AnnotatedStateGraph<Kind>>
 {
     const auto& forward_graph = graph.get_forward_graph();
     auto goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*context.task);
@@ -155,24 +152,22 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context,
     return std::make_unique<AnnotatedStateGraph<Kind>>(std::move(builder));
 }
 
-template auto generate_state_graph_result<tyr::GroundTag>(TaskSearchContext<tyr::GroundTag>&,
-                                                          const StateGraphGenerationOptions&) -> StateGraphGenerationResult<tyr::GroundTag>;
+template auto generate_state_graph_result<tyr::GroundTag>(TaskSearchContext<tyr::GroundTag>&, const StateGraphGenerationOptions&)
+    -> StateGraphGenerationResult<tyr::GroundTag>;
 
-template auto generate_state_graph_result<tyr::LiftedTag>(TaskSearchContext<tyr::LiftedTag>&,
-                                                          const StateGraphGenerationOptions&) -> StateGraphGenerationResult<tyr::LiftedTag>;
+template auto generate_state_graph_result<tyr::LiftedTag>(TaskSearchContext<tyr::LiftedTag>&, const StateGraphGenerationOptions&)
+    -> StateGraphGenerationResult<tyr::LiftedTag>;
 
-template auto generate_state_graph<tyr::GroundTag>(TaskSearchContext<tyr::GroundTag>&,
-                                                   const StateGraphGenerationOptions&) -> std::unique_ptr<StateGraph<tyr::GroundTag>>;
+template auto generate_state_graph<tyr::GroundTag>(TaskSearchContext<tyr::GroundTag>&, const StateGraphGenerationOptions&)
+    -> std::unique_ptr<StateGraph<tyr::GroundTag>>;
 
-template auto generate_state_graph<tyr::LiftedTag>(TaskSearchContext<tyr::LiftedTag>&,
-                                                   const StateGraphGenerationOptions&) -> std::unique_ptr<StateGraph<tyr::LiftedTag>>;
+template auto generate_state_graph<tyr::LiftedTag>(TaskSearchContext<tyr::LiftedTag>&, const StateGraphGenerationOptions&)
+    -> std::unique_ptr<StateGraph<tyr::LiftedTag>>;
 
-template auto annotate_state_graph<tyr::GroundTag>(TaskSearchContext<tyr::GroundTag>&,
-                                                   const StateGraph<tyr::GroundTag>&,
-                                                   StateGraphCostMode) -> std::unique_ptr<AnnotatedStateGraph<tyr::GroundTag>>;
+template auto annotate_state_graph<tyr::GroundTag>(TaskSearchContext<tyr::GroundTag>&, const StateGraph<tyr::GroundTag>&, StateGraphCostMode)
+    -> std::unique_ptr<AnnotatedStateGraph<tyr::GroundTag>>;
 
-template auto annotate_state_graph<tyr::LiftedTag>(TaskSearchContext<tyr::LiftedTag>&,
-                                                   const StateGraph<tyr::LiftedTag>&,
-                                                   StateGraphCostMode) -> std::unique_ptr<AnnotatedStateGraph<tyr::LiftedTag>>;
+template auto annotate_state_graph<tyr::LiftedTag>(TaskSearchContext<tyr::LiftedTag>&, const StateGraph<tyr::LiftedTag>&, StateGraphCostMode)
+    -> std::unique_ptr<AnnotatedStateGraph<tyr::LiftedTag>>;
 
 }  // namespace runir::datasets

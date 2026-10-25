@@ -133,8 +133,7 @@ public:
         if (std::ranges::any_of(denotations, [](const auto& denotation) { return denotation.count() == 0; }))
             return true;
         auto& search = *context.task_context->search_context;
-        const auto accept = [&](tyr::planning::BorrowedActionBindingView<Kind> binding)
-        { return action_matches_do_arguments(rule, binding, denotations); };
+        const auto accept = [&](tyr::planning::BorrowedActionBindingView<Kind> binding) { return action_matches_do_arguments(rule, binding, denotations); };
         const auto visit = [&](tyr::planning::BorrowedActionBindingView<Kind> binding)
         {
             if (stop())

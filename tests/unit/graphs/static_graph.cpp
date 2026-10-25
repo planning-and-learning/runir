@@ -55,8 +55,7 @@ struct WrongEdgeRange : StaticGraph
 };
 struct NonCommonOutgoingRange : StaticGraph
 {
-    std::ranges::subrange<std::counted_iterator<const graphs::EdgeIndex*>, std::default_sentinel_t>
-    get_out_edge_indices(graphs::VertexIndex) const;
+    std::ranges::subrange<std::counted_iterator<const graphs::EdgeIndex*>, std::default_sentinel_t> get_out_edge_indices(graphs::VertexIndex) const;
 };
 static_assert(!graphs::IsGraph<OwningVertexRange>);
 static_assert(!graphs::IsDenseGraph<OwningVertexRange>);
@@ -261,9 +260,9 @@ TEST(GraphContainersTest, StaticGraphMoveRebindsVertexAndEdgeParents)
 TEST(GraphContainersTest, BulkStaticGraphMatchesBuilderOrderAndProperties)
 {
     const auto vertices = std::vector<std::string> { "source", "target", "target", "isolated" };
-    const auto edges = std::vector<std::tuple<graphs::VertexIndex, graphs::VertexIndex, std::string>> {
-        { 2, 1, "late" }, { 0, 1, "shared" }, { 2, 0, "shared" }, { 0, 1, "parallel" }, { 0, 1, "shared" }, { 1, 1, "loop" }
-    };
+    const auto edges =
+        std::vector<std::tuple<graphs::VertexIndex, graphs::VertexIndex, std::string>> { { 2, 1, "late" },     { 0, 1, "shared" }, { 2, 0, "shared" },
+                                                                                         { 0, 1, "parallel" }, { 0, 1, "shared" }, { 1, 1, "loop" } };
     auto builder = Builder();
     for (const auto& property : vertices)
         builder.add_vertex(property);
@@ -312,9 +311,8 @@ TEST(GraphContainersTest, BulkStaticGraphAcceptsEmptyEdgesAndVertices)
 TEST(GraphContainersTest, CycleParentsSupportDenseAndSparseVertexIndices)
 {
     const auto vertices = std::vector<std::string> { "prefix", "a", "b" };
-    const auto edges = std::vector<std::tuple<graphs::VertexIndex, graphs::VertexIndex, std::string>> {
-        { 0, 1, "prefix" }, { 1, 2, "forward" }, { 2, 1, "back" }
-    };
+    const auto edges =
+        std::vector<std::tuple<graphs::VertexIndex, graphs::VertexIndex, std::string>> { { 0, 1, "prefix" }, { 1, 2, "forward" }, { 2, 1, "back" } };
     const auto graph = StaticGraph(vertices, edges);
     EXPECT_EQ(graphs::find_cycle(graph), (graphs::VertexIndexList { 1, 2, 1 }));
     EXPECT_EQ(graphs::find_edge_cycle(graph), (graphs::EdgeIndexList { 1, 2 }));

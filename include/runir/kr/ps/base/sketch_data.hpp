@@ -48,10 +48,7 @@ struct Data<runir::kr::ps::base::Sketch>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::boolean_features, &Data::numerical_features, &Data::rules> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::boolean_features, &Data::numerical_features, &Data::rules> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 }  // namespace ygg

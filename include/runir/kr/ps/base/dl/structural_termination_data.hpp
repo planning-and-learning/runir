@@ -37,7 +37,8 @@ struct PolicyGraphVertexLabel : ygg::comparison::Mixin<PolicyGraphVertexLabel>
     {
     }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&PolicyGraphVertexLabel::boolean_values, &PolicyGraphVertexLabel::numerical_values> {}; }
+    static constexpr auto cista_members() noexcept
+    { return ygg::Members<&PolicyGraphVertexLabel::boolean_values, &PolicyGraphVertexLabel::numerical_values> {}; }
     static constexpr auto identifying_members() noexcept
     { return ygg::Members<&PolicyGraphVertexLabel::boolean_values, &PolicyGraphVertexLabel::numerical_values> {}; }
 };

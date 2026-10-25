@@ -46,25 +46,21 @@ inline constexpr auto sketch_capabilities = LanguageCapabilities { "sketches", f
 
 template<typename T>
 auto intern(runir::kr::ps::base::Repository& repository, ygg::Data<T>& data)
-{
-    return runir::kr::ps::base::insert(repository, data).first;
-}
+{ return runir::kr::ps::base::insert(repository, data).first; }
 
-auto parse_feature(
-    const runir::kr::ps::base::dl::ast::BooleanFeature<runir::kr::BaseFamilyTag>& node,
-    tyr::formalism::planning::DomainView domain,
-    Repository& repository,
-    Builders& builders,
-    std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>>& boolean_features,
-    std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>>&,
-    ygg::Data<runir::kr::ps::base::Sketch>& sketch_data,
-    const runir::kr::parser::DiagnosticContext& diagnostics)
+auto parse_feature(const runir::kr::ps::base::dl::ast::BooleanFeature<runir::kr::BaseFamilyTag>& node,
+                   tyr::formalism::planning::DomainView domain,
+                   Repository& repository,
+                   Builders& builders,
+                   std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>>& boolean_features,
+                   std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>>&,
+                   ygg::Data<runir::kr::ps::base::Sketch>& sketch_data,
+                   const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     const auto constructor =
         parse_constructor(node.feature, domain, ConstructorContext { repository.get_dl_repository(), builders.dl, diagnostics, nullptr, sketch_capabilities });
     auto concrete_data =
-        runir::kr::ps::base::checkout<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>>(
-            builders.ps);
+        runir::kr::ps::base::checkout<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>>(builders.ps);
     concrete_data->feature = constructor.get_index();
     concrete_data->symbol = node.symbol.text;
     const auto concrete = intern(repository, *concrete_data);
@@ -88,8 +84,7 @@ auto parse_feature(
     const auto constructor =
         parse_constructor(node.feature, domain, ConstructorContext { repository.get_dl_repository(), builders.dl, diagnostics, nullptr, sketch_capabilities });
     auto concrete_data =
-        runir::kr::ps::base::checkout<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::dl::NumericalTag>>(
-            builders.ps);
+        runir::kr::ps::base::checkout<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::dl::NumericalTag>>(builders.ps);
     concrete_data->feature = constructor.get_index();
     concrete_data->symbol = node.symbol.text;
     const auto concrete = intern(repository, *concrete_data);
@@ -108,8 +103,7 @@ auto parse_rule(
     Repository& repository,
     runir::kr::ps::base::Builder& builder,
     const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>>& boolean_features,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>>&
-        numerical_features,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>>& numerical_features,
     const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     auto data = runir::kr::ps::base::checkout<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>(builder);
@@ -142,8 +136,7 @@ SketchView parse_sketch(const std::string& description, tyr::formalism::planning
     auto builders = Builders { dl_builder, ps_builder };
 
     auto boolean_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>> {};
-    auto numerical_features =
-        std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>> {};
+    auto numerical_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>> {};
     auto feature_symbols = std::unordered_set<std::string> {};
     auto data = runir::kr::ps::base::checkout<runir::kr::ps::base::Sketch>(ps_builder);
     data->boolean_features.reserve(ast.features.size());

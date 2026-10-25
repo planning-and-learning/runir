@@ -6,12 +6,12 @@
 #include "runir/kr/ps/dl/effect_data.hpp"
 #include "runir/kr/ps/effect_data.hpp"
 #include "runir/kr/ps/ext/execution_data.hpp"
-#include "runir/kr/ps/feature_data.hpp"
 #include "runir/kr/ps/ext/memory_state_data.hpp"
 #include "runir/kr/ps/ext/module_data.hpp"
-#include "runir/kr/ps/ext/program_data.hpp"
 #include "runir/kr/ps/ext/module_symbol_data.hpp"
+#include "runir/kr/ps/ext/program_data.hpp"
 #include "runir/kr/ps/ext/rule_data.hpp"
 #include "runir/kr/ps/ext/rule_variant_data.hpp"
+#include "runir/kr/ps/feature_data.hpp"
 
 #endif

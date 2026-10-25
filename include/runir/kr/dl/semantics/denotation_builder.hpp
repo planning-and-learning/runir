@@ -91,9 +91,7 @@ public:
     static constexpr auto num_blocks(ygg::uint_t num_objects_) noexcept -> size_t { return Bitset::num_blocks(num_bits(num_objects_)); }
     static constexpr auto valid_num_blocks(size_t num_blocks_, ygg::uint_t num_objects_) noexcept -> bool { return num_blocks_ == num_blocks(num_objects_); }
     static constexpr void assert_valid_num_blocks([[maybe_unused]] size_t num_blocks_, [[maybe_unused]] ygg::uint_t num_objects_) noexcept
-    {
-        assert(valid_num_blocks(num_blocks_, num_objects_));
-    }
+    { assert(valid_num_blocks(num_blocks_, num_objects_)); }
 
     auto get() noexcept -> Bitset { return Bitset(blocks.data(), num_bits(num_objects)); }
     auto get() const noexcept -> ConstBitset { return ConstBitset(blocks.data(), num_bits(num_objects)); }
@@ -157,20 +155,14 @@ public:
     }
 
     static constexpr auto num_bits(ygg::uint_t num_objects_) noexcept -> size_t
-    {
-        return static_cast<size_t>(num_objects_) * static_cast<size_t>(num_objects_);
-    }
+    { return static_cast<size_t>(num_objects_) * static_cast<size_t>(num_objects_); }
     static constexpr auto num_row_blocks(ygg::uint_t num_objects_) noexcept -> size_t { return Bitset::num_blocks(num_objects_); }
     static constexpr auto num_blocks(ygg::uint_t num_objects_) noexcept -> size_t { return static_cast<size_t>(num_objects_) * num_row_blocks(num_objects_); }
     static constexpr auto valid_num_blocks(size_t num_blocks_, ygg::uint_t num_objects_) noexcept -> bool { return num_blocks_ == num_blocks(num_objects_); }
     static constexpr void assert_valid_num_blocks([[maybe_unused]] size_t num_blocks_, [[maybe_unused]] ygg::uint_t num_objects_) noexcept
-    {
-        assert(valid_num_blocks(num_blocks_, num_objects_));
-    }
+    { assert(valid_num_blocks(num_blocks_, num_objects_)); }
     static constexpr auto row_block_offset(ygg::Index<tyr::formalism::Object> object, ygg::uint_t num_objects_) noexcept -> size_t
-    {
-        return static_cast<size_t>(ygg::uint_t(object)) * num_row_blocks(num_objects_);
-    }
+    { return static_cast<size_t>(ygg::uint_t(object)) * num_row_blocks(num_objects_); }
 
     auto get(ygg::Index<tyr::formalism::Object> object) noexcept -> Bitset
     {

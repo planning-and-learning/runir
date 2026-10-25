@@ -16,7 +16,6 @@ namespace runir::tests
 namespace
 {
 
-
 consteval bool distinct_repository_contexts()
 {
     return !std::same_as<kr::dl::ConstructorRepository, kr::dl::grammar::ConstructorRepository>

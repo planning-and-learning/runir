@@ -30,10 +30,7 @@ struct ProjectionEvaluator
         else
             builder.set(ObjectIndex(row.template get<ygg::uint_t>(size_t { 0 })), ObjectIndex(row.template get<ygg::uint_t>(size_t { 1 })), present);
     }
-    static void set_row(DenotationState<Category>& state,
-                        ygg::database::Row row,
-                        bool present,
-                        const tyr::formalism::planning::Repository& repository)
+    static void set_row(DenotationState<Category>& state, ygg::database::Row row, bool present, const tyr::formalism::planning::Repository& repository)
     {
         using ObjectIndex = ygg::Index<tyr::formalism::Object>;
         if constexpr (std::same_as<Category, ConceptTag>)

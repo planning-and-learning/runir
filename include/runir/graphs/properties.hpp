@@ -10,9 +10,7 @@ namespace runir::graphs
 
 template<IsVertex Vertex>
 auto get_vertex_color(Vertex vertex)
-{
-    return vertex.get_property_index();
-}
+{ return vertex.get_property_index(); }
 
 template<IsGraph G>
 auto is_loopless(const G& graph) -> bool
@@ -52,9 +50,7 @@ auto is_symmetric(const G& graph) -> bool
 
 template<IsGraph G>
 auto is_simple_undirected(const G& graph) -> bool
-{
-    return is_loopless(graph) && !is_multi_graph(graph) && is_symmetric(graph);
-}
+{ return is_loopless(graph) && !is_multi_graph(graph) && is_symmetric(graph); }
 
 }  // namespace runir::graphs
 

@@ -48,8 +48,7 @@ public:
         requires(sizeof...(Args) > 0
                  && ((DenotationTypes::contains<T> && requires(DenotationPool<T>& pool, Args&&... args) { pool.get_or_allocate(std::forward<Args>(args)...); })
                      || (std::same_as<T, ygg::database::Relation>
-                         && requires(ygg::database::RelationPool& pool,
-                                     Args&&... args) { pool.get_or_allocate(std::forward<Args>(args)...); })))
+                         && requires(ygg::database::RelationPool& pool, Args&&... args) { pool.get_or_allocate(std::forward<Args>(args)...); })))
     [[nodiscard]] auto get_builder(Args&&... args)
     {
         if constexpr (std::same_as<T, ygg::database::Relation>)
@@ -61,24 +60,18 @@ public:
     template<typename T>
         requires DenotationRecordTypes::contains<T>
     [[nodiscard]] auto get_data()
-    {
-        return m_data.template get_builder<T>();
-    }
+    { return m_data.template get_builder<T>(); }
 
     template<typename T>
         requires DenotationRecordTypes::contains<T>
     [[nodiscard]] auto checkout()
-    {
-        return m_data.template checkout<T>();
-    }
+    { return m_data.template checkout<T>(); }
 };
 
 template<typename T>
     requires DenotationRecordTypes::contains<T>
 [[nodiscard]] auto checkout(Builder& builder)
-{
-    return builder.template checkout<T>();
-}
+{ return builder.template checkout<T>(); }
 
 }  // namespace runir::kr::dl::semantics
 

@@ -10,9 +10,7 @@ namespace runir
 
 template<typename T>
 std::string to_string(const T& element)
-{
-    return fmt::format("{}", element);
-}
+{ return fmt::format("{}", element); }
 
 }  // namespace runir
 

@@ -51,16 +51,12 @@ public:
     template<typename T>
         requires ygg::formalism::SupportsSymbol<BasicRepository, T>
     const ygg::Data<T>& operator[](ygg::Index<T> index) const noexcept
-    {
-        return this->template at_local<T>(index);
-    }
+    { return this->template at_local<T>(index); }
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<BasicRepository, T>
     const BasicRepository& get_canonical_context(ygg::Index<T>) const noexcept
-    {
-        return *this;
-    }
+    { return *this; }
 };
 
 template<FamilyTag Family, typename RepositoryTypes>
@@ -79,15 +75,11 @@ public:
 
 template<FamilyTag Family, typename RepositoryTypes>
 inline const BasicRepository<Family, RepositoryTypes>& get_repository(const BasicRepository<Family, RepositoryTypes>& repository) noexcept
-{
-    return repository;
-}
+{ return repository; }
 
 template<FamilyTag Family, typename RepositoryTypes>
 inline BasicRepository<Family, RepositoryTypes>& get_repository(BasicRepository<Family, RepositoryTypes>& repository) noexcept
-{
-    return repository;
-}
+{ return repository; }
 
 }  // namespace runir::kr::ps
 

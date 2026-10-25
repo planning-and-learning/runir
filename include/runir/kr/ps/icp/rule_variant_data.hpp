@@ -2,7 +2,6 @@
 #define RUNIR_KR_PS_ICP_RULE_VARIANT_DATA_HPP_
 
 #include "runir/kr/ps/icp/declarations.hpp"
-#include <yggdrasil/containers/variant.hpp>
 
 #include <cista/containers/string.h>
 #include <cista/containers/variant.h>
@@ -10,6 +9,7 @@
 #include <tuple>
 #include <utility>
 #include <variant>
+#include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 
@@ -39,10 +39,7 @@ struct Data<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::symbol, &Data::variant> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::symbol, &Data::variant> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 }  // namespace ygg

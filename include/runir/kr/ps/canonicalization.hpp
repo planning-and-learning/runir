@@ -10,51 +10,35 @@ namespace runir::kr::ps
 
 template<FamilyTag Family, typename T>
 bool is_canonical(const ygg::Data<Feature<Family, T>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<FamilyTag Family, typename LanguageTag, typename FeatureTag>
 bool is_canonical(const ygg::Data<ConcreteFeature<Family, LanguageTag, FeatureTag>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<FamilyTag Family>
 inline bool is_canonical(const ygg::Data<ConditionVariant<Family>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<FamilyTag Family, typename LanguageTag>
 bool is_canonical(const ygg::Data<ConcreteConditionVariant<Family, LanguageTag>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<FamilyTag Family, typename LanguageTag, typename FeatureTag, typename ObservationTag>
 bool is_canonical(const ygg::Data<ConcreteCondition<Family, LanguageTag, FeatureTag, ObservationTag>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<FamilyTag Family>
 inline bool is_canonical(const ygg::Data<EffectVariant<Family>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<FamilyTag Family, typename LanguageTag>
 bool is_canonical(const ygg::Data<ConcreteEffectVariant<Family, LanguageTag>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<FamilyTag Family, typename LanguageTag, typename FeatureTag, typename ObservationTag>
 bool is_canonical(const ygg::Data<ConcreteEffect<Family, LanguageTag, FeatureTag, ObservationTag>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<FamilyTag Family, typename T>
 void canonicalize(ygg::Data<Feature<Family, T>>&) noexcept

@@ -43,9 +43,8 @@ auto create_module(kr::ps::ext::Repository& repository,
     return repository.insert(data).first;
 }
 
-auto create_program(kr::ps::ext::Repository& repository,
-                    kr::ps::ext::ModuleView entry,
-                    std::initializer_list<kr::ps::ext::ModuleView> modules) -> kr::ps::ext::ProgramView
+auto create_program(kr::ps::ext::Repository& repository, kr::ps::ext::ModuleView entry, std::initializer_list<kr::ps::ext::ModuleView> modules)
+    -> kr::ps::ext::ProgramView
 {
     auto data = ygg::Data<kr::ps::ext::Program>();
     data.entry_module = entry.get_index();

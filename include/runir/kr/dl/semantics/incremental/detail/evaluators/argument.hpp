@@ -18,9 +18,7 @@ struct ArgumentEvaluator
     explicit ArgumentEvaluator(ArgumentIdentifier<Category> identifier) : identifier(identifier) {}
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>&, Context& context)
-    {
-        value.assign(argument_value(context, identifier));
-    }
+    { value.assign(argument_value(context, identifier)); }
     void update(EvaluationGraph<Kind>&, const Delta&, ygg::database::Workspace&) {}
 };
 

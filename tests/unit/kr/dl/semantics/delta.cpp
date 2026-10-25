@@ -94,8 +94,12 @@ void check_state_delta(tyr::planning::StateView<Kind> source, tyr::planning::Sta
     delta.reverse();
     expect_atoms(target, source);
     const auto capacities = [&]
-    { return std::array { delta.added.fluent_atoms.capacity(), delta.removed.fluent_atoms.capacity(),
-                         delta.added.derived_atoms.capacity(), delta.removed.derived_atoms.capacity() }; };
+    {
+        return std::array { delta.added.fluent_atoms.capacity(),
+                            delta.removed.fluent_atoms.capacity(),
+                            delta.added.derived_atoms.capacity(),
+                            delta.removed.derived_atoms.capacity() };
+    };
     const auto reserved = capacities();
     delta.clear();
     EXPECT_TRUE(delta.empty());

@@ -476,8 +476,7 @@ auto evaluate_impl(ygg::View<ygg::Index<QueryProjection<Category>>, C> construct
         const auto source = position(0);
         const auto target = position(1);
         for (const auto row : relation)
-            result->get(row.template get<ygg::uint_t>(source))
-                .set(row.template get<ygg::uint_t>(target));
+            result->get(row.template get<ygg::uint_t>(source)).set(row.template get<ygg::uint_t>(target));
     }
     return insert(context.get_denotation_repository(), *result, context.get_builder()).first;
 }
@@ -512,27 +511,19 @@ auto evaluate_impl(ygg::View<ygg::Index<Role<RegisterTag>>, C> constructor, Cont
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<Concept<ArgumentTag<ConceptTag>>>, C> constructor, Context& context) -> DenotationView<ConceptTag>
-{
-    return argument_value(context, constructor.get_argument().get_identifier());
-}
+{ return argument_value(context, constructor.get_argument().get_identifier()); }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<Role<ArgumentTag<RoleTag>>>, C> constructor, Context& context) -> DenotationView<RoleTag>
-{
-    return argument_value(context, constructor.get_argument().get_identifier());
-}
+{ return argument_value(context, constructor.get_argument().get_identifier()); }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<Boolean<ArgumentTag<BooleanTag>>>, C> constructor, Context& context) -> DenotationView<BooleanTag>
-{
-    return argument_value(context, constructor.get_argument().get_identifier());
-}
+{ return argument_value(context, constructor.get_argument().get_identifier()); }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<Numerical<ArgumentTag<NumericalTag>>>, C> constructor, Context& context) -> DenotationView<NumericalTag>
-{
-    return argument_value(context, constructor.get_argument().get_identifier());
-}
+{ return argument_value(context, constructor.get_argument().get_identifier()); }
 
 }  // namespace runir::kr::dl::semantics
 

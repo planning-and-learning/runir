@@ -9,17 +9,13 @@ namespace runir::kr::ps::ext
 
 template<tyr::TaskKind Kind>
 bool is_canonical(const ygg::Data<ModuleState<Kind>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 inline bool is_canonical(const ygg::Data<CallStack>&) noexcept { return true; }
 
 template<tyr::TaskKind Kind>
 bool is_canonical(const ygg::Data<ProgramState<Kind>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<tyr::TaskKind Kind>
 void canonicalize(ygg::Data<ModuleState<Kind>>&) noexcept

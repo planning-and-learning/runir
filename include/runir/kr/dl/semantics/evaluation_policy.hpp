@@ -32,29 +32,21 @@ public:
     void invalidate() noexcept {}
     template<StateEvaluationContextConcept<Kind> Context>
     auto make_source_context(Context context)
-    {
-        return context;
-    }
+    { return context; }
     template<StateEvaluationContextConcept<Kind> Context>
     auto make_target_context(Context context)
-    {
-        return context;
-    }
+    { return context; }
 };
 
 /// Evaluates in the graph of a DeltaEvaluationPolicy: first demand in a state brings a node up to date; results
 /// already read in this state remain stable as other roots are evaluated.
 template<tyr::TaskKind Kind, runir::kr::dl::CategoryTag Category, StateEvaluationContextConcept<Kind> Context>
 auto evaluate(runir::kr::dl::ConstructorView<Category> expression, incremental::StateEvaluation<Kind, Context>& context)
-{
-    return context.evaluate(context.graph().get_index(expression));
-}
+{ return context.evaluate(context.graph().get_index(expression)); }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
 auto evaluate(runir::kr::dl::QueryView<> expression, incremental::StateEvaluation<Kind, Context>& context)
-{
-    return ygg::make_view(context.evaluate(context.graph().get_index(expression)), *context.context().get_state().get_task().get_repository());
-}
+{ return ygg::make_view(context.evaluate(context.graph().get_index(expression)), *context.context().get_state().get_task().get_repository()); }
 
 /// Independent source and target evaluations retain their input snapshots and result buffers.
 /// Differences are computed between evaluations, including backward search moves;
@@ -125,14 +117,10 @@ public:
     }
     template<StateEvaluationContextConcept<Kind> Context>
     auto make_source_context(Context context)
-    {
-        return m_source.prepare(context);
-    }
+    { return m_source.prepare(context); }
     template<StateEvaluationContextConcept<Kind> Context>
     auto make_target_context(Context context)
-    {
-        return m_target.prepare(context);
-    }
+    { return m_target.prepare(context); }
 };
 
 /// Provide source and target feature contexts while retaining reusable evaluation storage.

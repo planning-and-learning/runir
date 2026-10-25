@@ -38,10 +38,7 @@ struct Data<runir::kr::ps::ext::Program>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::entry_module, &Data::modules> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::entry_module, &Data::modules> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 }  // namespace ygg

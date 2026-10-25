@@ -136,9 +136,7 @@ concept ProgramStateContract =
 
 template<tyr::TaskKind Kind>
 consteval bool execution_contracts()
-{
-    return ModuleStateContract<Kind> && CallStackContract<Kind> && ProgramStateContract<Kind>;
-}
+{ return ModuleStateContract<Kind> && CallStackContract<Kind> && ProgramStateContract<Kind>; }
 
 static_assert(RegisterValuesContract<kr::dl::semantics::RegisterValuesView>);
 static_assert(CallArgumentsContract<kr::dl::semantics::CallArgumentsView>);

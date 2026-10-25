@@ -181,9 +181,7 @@ void evaluate_rows(CompositionTag, BorrowedDenotationView<RoleTag> lhs, Borrowed
 
 template<BaseRoleConstructorTag Tag, std::invocable<ygg::Index<tyr::formalism::Object>, ygg::BitsetSpan<const ygg::uint_t>> Emit>
 void evaluate_rows(Tag, const ygg::Builder<Denotation<RoleTag>>& result, BorrowedDenotationView<RoleTag> role, SetOperationWorkspace& workspace, Emit emit)
-{
-    evaluate_closure(Tag {}, result, role.get_handle(), workspace.rows, workspace.marked, workspace.row, workspace.closure, emit);
-}
+{ evaluate_closure(Tag {}, result, role.get_handle(), workspace.rows, workspace.marked, workspace.row, workspace.closure, emit); }
 
 template<ConceptOrRoleTag Category>
 void initialize_set(IntersectionTag,
@@ -250,9 +248,7 @@ inline void initialize_set(NegationTag,
                            BorrowedDenotationView<ConceptTag> input,
                            const DenotationDelta<ConceptTag>&,
                            SetOperationWorkspace&)
-{
-    output.assign(input).flip();
-}
+{ output.assign(input).flip(); }
 
 inline void update_set(NegationTag,
                        DenotationState<ConceptTag>& output,
@@ -266,9 +262,7 @@ inline void update_set(NegationTag,
 
 inline void
 initialize_set(ComplementTag, DenotationState<RoleTag>& output, BorrowedDenotationView<RoleTag> input, const DenotationDelta<RoleTag>&, SetOperationWorkspace&)
-{
-    output.assign(input).flip();
-}
+{ output.assign(input).flip(); }
 
 inline void update_set(ComplementTag,
                        DenotationState<RoleTag>& output,

@@ -25,7 +25,10 @@ void bind_observation(nb::module_& m, RepositoryBinding& repository, const char*
             "is_compatible_with",
             [](View value, GroundContext& context) { return runir::kr::ps::is_compatible_with<tyr::GroundTag>(value, context); },
             nb::arg("context"))
-        .def("is_compatible_with", [](View value, LiftedContext& context) { return runir::kr::ps::is_compatible_with<tyr::LiftedTag>(value, context); }, nb::arg("context"));
+        .def(
+            "is_compatible_with",
+            [](View value, LiftedContext& context) { return runir::kr::ps::is_compatible_with<tyr::LiftedTag>(value, context); },
+            nb::arg("context"));
 }
 
 }  // namespace

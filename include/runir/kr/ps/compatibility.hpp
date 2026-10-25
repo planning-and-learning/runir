@@ -1,11 +1,11 @@
 #ifndef RUNIR_KR_PS_COMPATIBILITY_HPP_
 #define RUNIR_KR_PS_COMPATIBILITY_HPP_
 
+#include "runir/kr/dl/semantics/evaluation_context.hpp"
 #include "runir/kr/ps/condition_view.hpp"
 #include "runir/kr/ps/dl/compatibility.hpp"
 #include "runir/kr/ps/effect_view.hpp"
 #include "runir/kr/ps/family_traits.hpp"
-#include "runir/kr/dl/semantics/evaluation_context.hpp"
 
 #include <concepts>
 #include <ranges>
@@ -41,15 +41,11 @@ template<tyr::TaskKind Kind,
          runir::kr::ps::dl::TransitionEvaluationContextConcept<Family, Kind> Context>
     requires std::same_as<LanguageTag, runir::kr::DlTag>
 bool is_compatible_with(ygg::View<ygg::Index<ConcreteConditionVariant<Family, LanguageTag>>, C> condition, Context& context)
-{
-    return is_compatible_with<Kind>(condition, context.get_source_context());
-}
+{ return is_compatible_with<Kind>(condition, context.get_source_context()); }
 
 template<tyr::TaskKind Kind, runir::kr::FamilyTag Family, typename C, runir::kr::ps::dl::TransitionEvaluationContextConcept<Family, Kind> Context>
 bool is_compatible_with(ygg::View<ygg::Index<ConditionVariant<Family>>, C> condition, Context& context)
-{
-    return is_compatible_with<Kind>(condition, context.get_source_context());
-}
+{ return is_compatible_with<Kind>(condition, context.get_source_context()); }
 
 template<tyr::TaskKind Kind,
          runir::kr::FamilyTag Family,

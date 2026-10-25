@@ -35,10 +35,7 @@ struct Data<runir::graphs::VertexProperty<P>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::value> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::value> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<runir::graphs::Property P>
@@ -51,10 +48,7 @@ struct Data<runir::graphs::EdgeProperty<P>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::value> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::value> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<runir::graphs::Property P>

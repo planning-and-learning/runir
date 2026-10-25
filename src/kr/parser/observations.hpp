@@ -117,59 +117,52 @@ auto parse_effect(Repository& repository,
         {
             if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Positive>)
             {
-                return make_effect<runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>(
-                    repository,
-                    builder,
-                    require_feature(boolean_features, effect.feature, diagnostics));
+                return make_effect<runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>(repository,
+                                                                                           builder,
+                                                                                           require_feature(boolean_features, effect.feature, diagnostics));
             }
             else if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Negative>)
             {
-                return make_effect<runir::kr::dl::BooleanTag, runir::kr::ps::dl::Negative>(
-                    repository,
-                    builder,
-                    require_feature(boolean_features, effect.feature, diagnostics));
+                return make_effect<runir::kr::dl::BooleanTag, runir::kr::ps::dl::Negative>(repository,
+                                                                                           builder,
+                                                                                           require_feature(boolean_features, effect.feature, diagnostics));
             }
             else if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Unchanged>)
             {
                 if (boolean_features.contains(effect.feature.text) && numerical_features.contains(effect.feature.text))
                     diagnostics.throw_at(effect.feature, runir::kr::InvalidExpressionError("Ambiguous feature \"" + effect.feature.text + "\"."));
                 if (boolean_features.contains(effect.feature.text))
-                    return make_effect<runir::kr::dl::BooleanTag, runir::kr::ps::dl::Unchanged>(
-                        repository,
-                        builder,
-                        require_feature(boolean_features, effect.feature, diagnostics));
-                return make_effect<runir::kr::dl::NumericalTag, runir::kr::ps::dl::Unchanged>(
-                    repository,
-                    builder,
-                    require_feature(numerical_features, effect.feature, diagnostics));
+                    return make_effect<runir::kr::dl::BooleanTag, runir::kr::ps::dl::Unchanged>(repository,
+                                                                                                builder,
+                                                                                                require_feature(boolean_features, effect.feature, diagnostics));
+                return make_effect<runir::kr::dl::NumericalTag, runir::kr::ps::dl::Unchanged>(repository,
+                                                                                              builder,
+                                                                                              require_feature(numerical_features, effect.feature, diagnostics));
             }
             else if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Increases>)
             {
-                return make_effect<runir::kr::dl::NumericalTag, runir::kr::ps::dl::Increases>(
-                    repository,
-                    builder,
-                    require_feature(numerical_features, effect.feature, diagnostics));
+                return make_effect<runir::kr::dl::NumericalTag, runir::kr::ps::dl::Increases>(repository,
+                                                                                              builder,
+                                                                                              require_feature(numerical_features, effect.feature, diagnostics));
             }
             else if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Decreases>)
             {
-                return make_effect<runir::kr::dl::NumericalTag, runir::kr::ps::dl::Decreases>(
-                    repository,
-                    builder,
-                    require_feature(numerical_features, effect.feature, diagnostics));
+                return make_effect<runir::kr::dl::NumericalTag, runir::kr::ps::dl::Decreases>(repository,
+                                                                                              builder,
+                                                                                              require_feature(numerical_features, effect.feature, diagnostics));
             }
         },
         effect.observation.get());
 }
 
 template<runir::kr::FamilyTag Family, typename Repository, typename Builder>
-void append_conditions(
-    Repository& repository,
-    Builder& builder,
-    const std::vector<runir::kr::ps::base::dl::ast::Condition>& observations,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<Family, runir::kr::dl::BooleanTag>>>& boolean_features,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<Family, runir::kr::dl::NumericalTag>>>& numerical_features,
-    const runir::kr::parser::DiagnosticContext& diagnostics,
-    ygg::IndexList<runir::kr::ps::ConditionVariant<Family>>& result)
+void append_conditions(Repository& repository,
+                       Builder& builder,
+                       const std::vector<runir::kr::ps::base::dl::ast::Condition>& observations,
+                       const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<Family, runir::kr::dl::BooleanTag>>>& boolean_features,
+                       const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<Family, runir::kr::dl::NumericalTag>>>& numerical_features,
+                       const runir::kr::parser::DiagnosticContext& diagnostics,
+                       ygg::IndexList<runir::kr::ps::ConditionVariant<Family>>& result)
 {
     result.reserve(result.size() + observations.size());
     for (const auto& observation : observations)

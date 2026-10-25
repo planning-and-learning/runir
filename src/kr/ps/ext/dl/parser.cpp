@@ -52,9 +52,7 @@ using runir::kr::parser::constructors::unwrap;
 
 template<typename T>
 auto intern(Repository& repository, ygg::Data<T>& data)
-{
-    return runir::kr::ps::ext::insert(repository, data).first;
-}
+{ return runir::kr::ps::ext::insert(repository, data).first; }
 
 auto parse_concept(const std::string& description,
                    tyr::formalism::planning::DomainView domain,
@@ -255,8 +253,7 @@ void validate_module_declarations(const ast::Module& module_, const runir::kr::p
                     if constexpr (std::same_as<Concrete, ast::BacktrackRule>)
                     {
                         if (entry.target)
-                            diagnostics.throw_at(*entry.target,
-                                                 runir::kr::InvalidExpressionError("Backtrack rules must not declare a target memory state."));
+                            diagnostics.throw_at(*entry.target, runir::kr::InvalidExpressionError("Backtrack rules must not declare a target memory state."));
                     }
                     else if (!entry.target)
                         diagnostics.throw_at(concrete, runir::kr::InvalidExpressionError("Transition rules require a target memory state."));
@@ -373,9 +370,7 @@ auto parse_do_argument(
     const ast::SymbolExpression& expression,
     const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>& concept_features,
     const runir::kr::parser::DiagnosticContext& diagnostics)
-{
-    return require_feature(concept_features, expression.symbol, diagnostics);
-}
+{ return require_feature(concept_features, expression.symbol, diagnostics); }
 
 auto parse_call_argument(
     const ast::SymbolExpression& expression,
@@ -931,8 +926,7 @@ ModuleView lower_module(const ast::Module& ast,
     auto concept_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>> {};
     auto role_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>> {};
     auto boolean_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>> {};
-    auto numerical_features =
-        std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>> {};
+    auto numerical_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>> {};
     auto query_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>> {};
     for (const auto& feature : ast.features)
     {
@@ -970,8 +964,7 @@ ModuleView lower_module(const ast::Module& ast,
         auto& parsed_transition = data->memory_transitions.back();
         parsed_transition.reserve(transition.rules.size());
         const auto source = require_memory_state(memory_states, transition.source, diagnostics);
-        const auto target = transition.target ? std::optional(require_memory_state(memory_states, *transition.target, diagnostics))
-                                              : std::nullopt;
+        const auto target = transition.target ? std::optional(require_memory_state(memory_states, *transition.target, diagnostics)) : std::nullopt;
         for (const auto& rule : transition.rules)
             parsed_transition.push_back(parse_rule(repository,
                                                    builders.ps,

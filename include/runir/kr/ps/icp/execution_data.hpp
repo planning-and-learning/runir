@@ -29,16 +29,11 @@ struct Data<runir::kr::ps::icp::Histories>
     Data(IndexList<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>> concepts_) : index(), concepts(std::move(concepts_)) {}
     template<typename C>
     Data(const std::vector<::ygg::View<Index<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>, C>>& concepts_) : index(), concepts()
-    {
-        set(concepts_, concepts);
-    }
+    { set(concepts_, concepts); }
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::concepts> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::concepts> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 template<tyr::TaskKind Kind>
@@ -86,13 +81,11 @@ struct Data<runir::kr::ps::icp::ProgramState<Kind>>
         set(state_, state);
     }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::program, &Data::memory_state, &Data::registers, &Data::histories, &Data::state> {}; }
+    static constexpr auto cista_members() noexcept
+    { return ygg::Members<&Data::index, &Data::program, &Data::memory_state, &Data::registers, &Data::histories, &Data::state> {}; }
     static constexpr auto identifying_members() noexcept
     { return ygg::Members<&Data::program, &Data::memory_state, &Data::registers, &Data::histories, &Data::state> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 }  // namespace ygg

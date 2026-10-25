@@ -9,7 +9,8 @@
 #ifndef RUNIR_HEADER_INSTANTIATION
 
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>>;
-extern template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>>;
+extern template class ygg::formalism::BasicSymbolRepository<
+    runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>>;
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::uns::ClassifierLiteral>;
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::uns::ClassifierClause>;
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::uns::Classifier>;

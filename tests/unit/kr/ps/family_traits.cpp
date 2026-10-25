@@ -46,9 +46,7 @@ concept ViewableType = StoredType<T> && requires { sizeof(ygg::View<ygg::Index<T
 
 template<typename Repository, typename... Types>
 consteval bool usable_inventory(ygg::TypeList<Types...>)
-{
-    return (ViewableType<Types, Repository> && ...);
-}
+{ return (ViewableType<Types, Repository> && ...); }
 
 static_assert(usable_inventory<kr::ps::base::Repository>(kr::ps::PsCoreTypes<kr::BaseFamilyTag> {}));
 static_assert(usable_inventory<kr::ps::ext::Repository>(kr::ps::PsCoreTypes<kr::ExtFamilyTag> {}));
@@ -91,7 +89,8 @@ struct BaseFeatureStorage
 };
 
 template<typename Type, typename Repository, typename Context>
-concept CanEvaluate = StoredType<Type> && requires(ygg::View<ygg::Index<Type>, Repository>& view, Context& context) { kr::ps::evaluate<tyr::GroundTag>(view, context); };
+concept CanEvaluate =
+    StoredType<Type> && requires(ygg::View<ygg::Index<Type>, Repository>& view, Context& context) { kr::ps::evaluate<tyr::GroundTag>(view, context); };
 
 using BaseStateContext = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
 using UnsStateContext = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
@@ -157,9 +156,7 @@ static_assert(observation_contracts<kr::UnsFamilyTag, UnsCustomRepository>());
 
 // Compile the implementation body as well as checking its callable signature.
 [[maybe_unused]] bool check_custom_uns_condition(ygg::View<ygg::Index<UnsPositive>, UnsCustomRepository> condition, UnsStateContext& context)
-{
-    return kr::ps::is_compatible_with<tyr::GroundTag>(condition, context);
-}
+{ return kr::ps::is_compatible_with<tyr::GroundTag>(condition, context); }
 
 }  // namespace
 }  // namespace runir::tests

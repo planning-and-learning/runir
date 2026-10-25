@@ -11,8 +11,7 @@
 namespace runir::tests
 {
 
-auto make_ground_context(const std::filesystem::path& domain_file,
-                         const std::filesystem::path& task_file) -> datasets::TaskSearchContextPtr<tyr::GroundTag>
+auto make_ground_context(const std::filesystem::path& domain_file, const std::filesystem::path& task_file) -> datasets::TaskSearchContextPtr<tyr::GroundTag>
 {
     auto execution_context = ygg::ExecutionContext::create(1);
     auto lifted_task = tyr::planning::Task<tyr::LiftedTag>::create(tyr::formalism::planning::Parser(domain_file).parse_task(task_file));
@@ -20,16 +19,15 @@ auto make_ground_context(const std::filesystem::path& domain_file,
     return datasets::TaskSearchContext<tyr::GroundTag>::create(std::move(task), std::move(execution_context));
 }
 
-auto make_lifted_context(const std::filesystem::path& domain_file,
-                         const std::filesystem::path& task_file) -> datasets::TaskSearchContextPtr<tyr::LiftedTag>
+auto make_lifted_context(const std::filesystem::path& domain_file, const std::filesystem::path& task_file) -> datasets::TaskSearchContextPtr<tyr::LiftedTag>
 {
     auto execution_context = ygg::ExecutionContext::create(1);
     auto task = tyr::planning::Task<tyr::LiftedTag>::create(tyr::formalism::planning::Parser(domain_file).parse_task(task_file));
     return datasets::TaskSearchContext<tyr::LiftedTag>::create(std::move(task), std::move(execution_context));
 }
 
-auto make_ground_contexts(const std::filesystem::path& domain_file,
-                          const std::vector<std::filesystem::path>& task_files) -> datasets::TaskSearchContextList<tyr::GroundTag>
+auto make_ground_contexts(const std::filesystem::path& domain_file, const std::vector<std::filesystem::path>& task_files)
+    -> datasets::TaskSearchContextList<tyr::GroundTag>
 {
     auto parser = tyr::formalism::planning::Parser(domain_file);
     auto execution_context = ygg::ExecutionContext::create(1);

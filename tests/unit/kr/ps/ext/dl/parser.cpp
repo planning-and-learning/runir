@@ -153,17 +153,17 @@ TEST(RunirTests, ExtendedBacktrackRulesRejectInvalidTargetsAndConditions)
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
     const auto parse = [&](const std::string& expression)
     {
-        return kr::ps::ext::dl::parse_module(
-            "(:module (:symbol pruning) (:arguments) (:registers) (:entry start) (:memory start done) (:features) "
-            "(:rules (:rule (:symbol reject) (:expression (:source-memory start) " + expression + "))))",
-            domain,
-            *repository);
+        return kr::ps::ext::dl::parse_module("(:module (:symbol pruning) (:arguments) (:registers) (:entry start) (:memory start done) (:features) "
+                                             "(:rules (:rule (:symbol reject) (:expression (:source-memory start) "
+                                                 + expression + "))))",
+                                             domain,
+                                             *repository);
     };
     expect_error_containing([&] { parse("(:target-memory done) (:backtrack (:conditions))"); }, "Backtrack rules must not declare a target");
     expect_error_containing([&] { parse("(:sketch (:conditions) (:effects))"); }, "Transition rules require a target");
     expect_error_containing([&] { parse("(:backtrack (:conditions)) (:sketch (:conditions) (:effects))"); }, "Transition rules require a target");
     expect_error_containing([&] { parse("(:target-memory done) (:sketch (:conditions) (:effects)) (:backtrack (:conditions))"); },
-                           "Backtrack rules must not declare a target");
+                            "Backtrack rules must not declare a target");
     EXPECT_THROW(parse("(:backtrack (:conditions (positive missing)))"), kr::UndefinedSymbolError);
     EXPECT_THROW(parse("(:backtrack (:conditions) (:effects))"), kr::ParseError);
 }
@@ -175,47 +175,45 @@ TEST(RunirTests, RelationalExpressionsRoundTripAndRejectGenerationGrammars)
     auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
     auto grammar_repository = kr::dl::grammar::ConstructorRepositoryFactory().create(planning_domain.get_repository());
 
-    const std::vector<std::string> expressions { R"((n_count (q_project () (q_atomic_state "at" (X Y)))))",
-                                                 R"((n_count (q_atomic_goal "at" false (X Y))))",
-                                                 R"((n_count (q_join (q_rename (X) (q_concept a (c_top))) (q_concept Y (c_top)))))",
-                                                 R"((n_count (q_union (q_concept X (c_top)) (q_concept X (c_bot)))))",
-                                                 R"((n_count (q_difference (q_concept X (c_top)) (q_concept X (c_bot)))))",
-                                                 R"((n_count (c_project Y (q_atomic_state "at" (X Y)))))",
-                                                 R"((n_count (r_project Y X (q_atomic_state "at" (X Y)))))",
-                                                 R"((n_count (q_generic_join (X Y) (Y X) (q_atomic_state "at" (X Y)) (q_concept X (c_top)))))",
-                                                 R"((n_count (q_empty (X Y))))",
-                                                 R"((n_count (q_must_pass (X) (q_atomic_state "at" (X Y)) (q_project (X Y Z) (q_join (q_atomic_state "at" (X Y)) (q_rename (X Z) (q_atomic_state "at" (X Y))))) (q_atomic_state "at" (X Y)) (q_concept P (c_top)))))" };
+    const std::vector<std::string> expressions {
+        R"((n_count (q_project () (q_atomic_state "at" (X Y)))))",
+        R"((n_count (q_atomic_goal "at" false (X Y))))",
+        R"((n_count (q_join (q_rename (X) (q_concept a (c_top))) (q_concept Y (c_top)))))",
+        R"((n_count (q_union (q_concept X (c_top)) (q_concept X (c_bot)))))",
+        R"((n_count (q_difference (q_concept X (c_top)) (q_concept X (c_bot)))))",
+        R"((n_count (c_project Y (q_atomic_state "at" (X Y)))))",
+        R"((n_count (r_project Y X (q_atomic_state "at" (X Y)))))",
+        R"((n_count (q_generic_join (X Y) (Y X) (q_atomic_state "at" (X Y)) (q_concept X (c_top)))))",
+        R"((n_count (q_empty (X Y))))",
+        R"((n_count (q_must_pass (X) (q_atomic_state "at" (X Y)) (q_project (X Y Z) (q_join (q_atomic_state "at" (X Y)) (q_rename (X Z) (q_atomic_state "at" (X Y))))) (q_atomic_state "at" (X Y)) (q_concept P (c_top)))))"
+    };
     for (const auto& expression : expressions)
     {
         const auto parsed = kr::ps::ext::dl::parse_numerical(expression, domain, *repository);
         const auto formatted = fmt::format("{}", parsed);
         EXPECT_EQ(kr::ps::ext::dl::parse_numerical(formatted, domain, *repository), parsed);
-        expect_error_containing(
-            [&] { kr::dl::grammar::parse_grammar("((n_0 " + expression + "))", domain, *grammar_repository); },
-            "Relational expressions are not supported in generation grammars");
+        expect_error_containing([&] { kr::dl::grammar::parse_grammar("((n_0 " + expression + "))", domain, *grammar_repository); },
+                                "Relational expressions are not supported in generation grammars");
     }
 
     expect_error_containing(
         [&]
         {
             kr::ps::ext::dl::parse_numerical(
-                R"((n_count (q_must_pass (Y) (q_atomic_state "at" (X Y)) (q_atomic_state "at" (X Y)) (q_atomic_state "at" (X Y)) (q_concept P (c_top)))))", domain, *repository);
+                R"((n_count (q_must_pass (Y) (q_atomic_state "at" (X Y)) (q_atomic_state "at" (X Y)) (q_atomic_state "at" (X Y)) (q_concept P (c_top)))))",
+                domain,
+                *repository);
         },
         "q_must_pass: the sources must start with the key columns");
 
-    const auto boolean = kr::ps::ext::dl::parse_boolean(
-        "(b_nonempty (q_select_equal X Y (q_role (X Y) (r_identity (c_top)))))", domain, *repository);
+    const auto boolean = kr::ps::ext::dl::parse_boolean("(b_nonempty (q_select_equal X Y (q_role (X Y) (r_identity (c_top)))))", domain, *repository);
     EXPECT_EQ(kr::ps::ext::dl::parse_boolean(fmt::format("{}", boolean), domain, *repository), boolean);
-    expect_error_containing(
-        [&] { kr::dl::grammar::parse_grammar("((b_0 (b_nonempty (q_concept X (c_top)))))", domain, *grammar_repository); },
-        "Relational expressions are not supported in generation grammars");
+    expect_error_containing([&] { kr::dl::grammar::parse_grammar("((b_0 (b_nonempty (q_concept X (c_top)))))", domain, *grammar_repository); },
+                            "Relational expressions are not supported in generation grammars");
 
-    for (const auto* grammar : {
-             R"(((c_0 (c_project X (q_atomic_state "at" (X Y))))))",
-             R"(((r_0 (r_project X Y (q_atomic_state "at" (X Y))))))" })
-        expect_error_containing(
-            [&] { kr::dl::grammar::parse_grammar(grammar, domain, *grammar_repository); },
-            "Relational expressions are not supported in generation grammars");
+    for (const auto* grammar : { R"(((c_0 (c_project X (q_atomic_state "at" (X Y))))))", R"(((r_0 (r_project X Y (q_atomic_state "at" (X Y))))))" })
+        expect_error_containing([&] { kr::dl::grammar::parse_grammar(grammar, domain, *grammar_repository); },
+                                "Relational expressions are not supported in generation grammars");
 
     // Generation grammars accept only what generation enumerates.
     for (const auto& [grammar, expected] : std::vector<std::pair<std::string, std::string>> {
@@ -229,10 +227,9 @@ TEST(RunirTests, RelationalExpressionsRoundTripAndRejectGenerationGrammars)
 
     EXPECT_THROW(kr::ps::ext::dl::parse_numerical("(n_count (q_atomic_state \"at\" (X X)))", domain, *repository), kr::InvalidExpressionError);
     EXPECT_THROW(kr::ps::ext::dl::parse_numerical("(n_count (q_project (missing) (q_concept X (c_top))))", domain, *repository), kr::InvalidExpressionError);
-    for (const auto& expression : {
-             "(n_count (c_project missing (q_concept X (c_top))))",
-             "(n_count (r_project X missing (q_role (X Y) (r_universal))))",
-             "(n_count (q_select_equal X missing (q_concept X (c_top))))" })
+    for (const auto& expression : { "(n_count (c_project missing (q_concept X (c_top))))",
+                                    "(n_count (r_project X missing (q_role (X Y) (r_universal))))",
+                                    "(n_count (q_select_equal X missing (q_concept X (c_top))))" })
     {
         try
         {
@@ -265,7 +262,8 @@ TEST(RunirTests, RelationalExpressionsRoundTripAndRejectGenerationGrammars)
     }
     EXPECT_THROW(kr::ps::ext::dl::parse_numerical(R"((n_count (q_generic_join (X Y) (X Y) (q_atomic_state "at" (X Y)))))", domain, *repository),
                  kr::ParseError);
-    EXPECT_THROW(kr::ps::ext::dl::parse_numerical("(n_count (q_select_value X \"missing\" (q_concept X (c_top))))", domain, *repository), kr::UndefinedSymbolError);
+    EXPECT_THROW(kr::ps::ext::dl::parse_numerical("(n_count (q_select_value X \"missing\" (q_concept X (c_top))))", domain, *repository),
+                 kr::UndefinedSymbolError);
 }
 
 TEST(RunirTests, SearchEdgesRejectClosuresAndSearches)
@@ -278,28 +276,30 @@ TEST(RunirTests, SearchEdgesRejectClosuresAndSearches)
 
     // Closures and searches are fine outside the edges of a search: sources, targets and probes are evaluated once per
     // state like any feature.
-    for (const auto* expression :
-         { R"((n_count (c_some (r_transitive_closure (r_atomic_state "at")) (c_top))))",
-           R"((n_add (n_distance (c_top) (r_atomic_state "at") (c_top)) (n_count (c_some (r_reflexive_transitive_closure (r_atomic_state "at")) (c_top)))))",
-           R"((n_distance (c_top) (r_restriction (r_inverse (r_atomic_state "at")) (c_top)) (c_top)))",
-           R"((n_distance (c_some (r_transitive_closure (r_atomic_state "at")) (c_top)) (r_atomic_state "at") (c_top)))",
-           R"((n_distance (c_top) (r_atomic_state "at") (c_project X (q_must_pass (X) (q_atomic_state "at" (X Y)) (q_project (X Y Z) (q_join (q_atomic_state "at" (X Y)) (q_rename (X Z) (q_atomic_state "at" (X Y))))) (q_atomic_state "at" (X Y)) (q_concept P (c_top))))))",
-           R"((n_count (q_must_pass (X) (q_join (q_atomic_state "at" (X Y)) (q_concept X (c_some (r_transitive_closure (r_atomic_state "at")) (c_top)))) (q_project (X Y Z) (q_join (q_atomic_state "at" (X Y)) (q_rename (X Z) (q_atomic_state "at" (X Y))))) (q_atomic_state "at" (X Y)) (q_concept P (c_top)))))",
-           R"((n_count (q_must_pass (X) (q_atomic_state "at" (X Y)) (q_project (X Y Z) (q_join (q_atomic_state "at" (X Y)) (q_rename (X Z) (q_atomic_state "at" (X Y))))) (q_join (q_atomic_state "at" (X Y)) (q_concept Y (c_some (r_reflexive_transitive_closure (r_atomic_state "at")) (c_top)))) (q_concept P (c_top)))))",
-           R"((n_count (q_must_pass (X) (q_atomic_state "at" (X Y)) (q_project (X Y Z) (q_join (q_atomic_state "at" (X Y)) (q_rename (X Z) (q_atomic_state "at" (X Y))))) (q_atomic_state "at" (X Y)) (q_concept P (c_some (r_transitive_closure (r_atomic_state "at")) (c_top))))))",
-           R"((n_count (q_must_pass (X) (q_atomic_state "at" (X Y)) (q_project (X Y Z) (q_join (q_atomic_state "at" (X Y)) (q_rename (X Z) (q_atomic_state "at" (X Y))))) (q_atomic_state "at" (X Y)) (q_project (Q) (q_must_pass (P) (q_atomic_state "at" (P Y)) (q_project (P Y Z) (q_join (q_atomic_state "at" (P Y)) (q_rename (P Z) (q_atomic_state "at" (P Y))))) (q_atomic_state "at" (P Y)) (q_concept Q (c_top)))))))" })
+    for (
+        const auto* expression :
+        { R"((n_count (c_some (r_transitive_closure (r_atomic_state "at")) (c_top))))",
+          R"((n_add (n_distance (c_top) (r_atomic_state "at") (c_top)) (n_count (c_some (r_reflexive_transitive_closure (r_atomic_state "at")) (c_top)))))",
+          R"((n_distance (c_top) (r_restriction (r_inverse (r_atomic_state "at")) (c_top)) (c_top)))",
+          R"((n_distance (c_some (r_transitive_closure (r_atomic_state "at")) (c_top)) (r_atomic_state "at") (c_top)))",
+          R"((n_distance (c_top) (r_atomic_state "at") (c_project X (q_must_pass (X) (q_atomic_state "at" (X Y)) (q_project (X Y Z) (q_join (q_atomic_state "at" (X Y)) (q_rename (X Z) (q_atomic_state "at" (X Y))))) (q_atomic_state "at" (X Y)) (q_concept P (c_top))))))",
+          R"((n_count (q_must_pass (X) (q_join (q_atomic_state "at" (X Y)) (q_concept X (c_some (r_transitive_closure (r_atomic_state "at")) (c_top)))) (q_project (X Y Z) (q_join (q_atomic_state "at" (X Y)) (q_rename (X Z) (q_atomic_state "at" (X Y))))) (q_atomic_state "at" (X Y)) (q_concept P (c_top)))))",
+          R"((n_count (q_must_pass (X) (q_atomic_state "at" (X Y)) (q_project (X Y Z) (q_join (q_atomic_state "at" (X Y)) (q_rename (X Z) (q_atomic_state "at" (X Y))))) (q_join (q_atomic_state "at" (X Y)) (q_concept Y (c_some (r_reflexive_transitive_closure (r_atomic_state "at")) (c_top)))) (q_concept P (c_top)))))",
+          R"((n_count (q_must_pass (X) (q_atomic_state "at" (X Y)) (q_project (X Y Z) (q_join (q_atomic_state "at" (X Y)) (q_rename (X Z) (q_atomic_state "at" (X Y))))) (q_atomic_state "at" (X Y)) (q_concept P (c_some (r_transitive_closure (r_atomic_state "at")) (c_top))))))",
+          R"((n_count (q_must_pass (X) (q_atomic_state "at" (X Y)) (q_project (X Y Z) (q_join (q_atomic_state "at" (X Y)) (q_rename (X Z) (q_atomic_state "at" (X Y))))) (q_atomic_state "at" (X Y)) (q_project (Q) (q_must_pass (P) (q_atomic_state "at" (P Y)) (q_project (P Y Z) (q_join (q_atomic_state "at" (P Y)) (q_rename (P Z) (q_atomic_state "at" (P Y))))) (q_atomic_state "at" (P Y)) (q_concept Q (c_top)))))))" })
     {
         SCOPED_TRACE(expression);
         EXPECT_NO_THROW(parse(expression));
     }
 
-    for (const auto* expression :
-         { R"((n_distance (c_top) (r_transitive_closure (r_atomic_state "at")) (c_top)))",
-           R"((n_distance (c_top) (r_restriction (r_inverse (r_reflexive_transitive_closure (r_atomic_state "at"))) (c_top)) (c_top)))",
-           R"((n_distance (q_concept X (c_top)) (q_role (X Y) (r_transitive_closure (r_atomic_state "at"))) (q_concept Y (c_top))))",
-           R"((n_distance (c_top) (r_restriction (r_atomic_state "at") (c_some (r_transitive_closure (r_atomic_state "at")) (c_top))) (c_top)))",
-           R"((n_count (q_must_pass (X) (q_atomic_state "at" (X Y)) (q_join (q_atomic_state "at" (X Y)) (q_role (Y Z) (r_transitive_closure (r_atomic_state "at")))) (q_atomic_state "at" (X Y)) (q_concept P (c_top)))))",
-           R"((n_count (q_must_pass (X) (q_atomic_state "at" (X Y)) (q_join (q_atomic_state "at" (X Y)) (q_must_pass (Y) (q_atomic_state "at" (Y Z)) (q_atomic_state "at" (Y Z)) (q_atomic_state "at" (Y Z)) (q_concept Z (c_top)))) (q_atomic_state "at" (X Y)) (q_concept P (c_top)))))" })
+    for (
+        const auto* expression :
+        { R"((n_distance (c_top) (r_transitive_closure (r_atomic_state "at")) (c_top)))",
+          R"((n_distance (c_top) (r_restriction (r_inverse (r_reflexive_transitive_closure (r_atomic_state "at"))) (c_top)) (c_top)))",
+          R"((n_distance (q_concept X (c_top)) (q_role (X Y) (r_transitive_closure (r_atomic_state "at"))) (q_concept Y (c_top))))",
+          R"((n_distance (c_top) (r_restriction (r_atomic_state "at") (c_some (r_transitive_closure (r_atomic_state "at")) (c_top))) (c_top)))",
+          R"((n_count (q_must_pass (X) (q_atomic_state "at" (X Y)) (q_join (q_atomic_state "at" (X Y)) (q_role (Y Z) (r_transitive_closure (r_atomic_state "at")))) (q_atomic_state "at" (X Y)) (q_concept P (c_top)))))",
+          R"((n_count (q_must_pass (X) (q_atomic_state "at" (X Y)) (q_join (q_atomic_state "at" (X Y)) (q_must_pass (Y) (q_atomic_state "at" (Y Z)) (q_atomic_state "at" (Y Z)) (q_atomic_state "at" (Y Z)) (q_concept Z (c_top)))) (q_atomic_state "at" (X Y)) (q_concept P (c_top)))))" })
     {
         SCOPED_TRACE(expression);
         expect_error_containing([&] { parse(expression); }, message);
@@ -376,12 +376,12 @@ TEST(RunirTests, ExtendedQueryActionRuleRejectsInvalidReferencesAndArity)
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
     const auto parse = [&](const std::string& action, const std::string& query, const std::string& features)
     {
-        return kr::ps::ext::dl::parse_module(
-            "(:module (:symbol test) (:arguments) (:registers) (:entry start) (:memory start done) (:features " + features
-                + ") (:rules (:rule (:symbol step) (:expression (:source-memory start) (:target-memory done) "
-                  "(:action (:conditions) (:action \"" + action + "\") (:query " + query + ") (:effects))))))",
-            domain,
-            *repository);
+        return kr::ps::ext::dl::parse_module("(:module (:symbol test) (:arguments) (:registers) (:entry start) (:memory start done) (:features " + features
+                                                 + ") (:rules (:rule (:symbol step) (:expression (:source-memory start) (:target-memory done) "
+                                                   "(:action (:conditions) (:action \""
+                                                 + action + "\") (:query " + query + ") (:effects))))))",
+                                             domain,
+                                             *repository);
     };
     const auto binary = std::string(R"((:query (:symbol Q) (:expression (q_role (X Y) (r_universal)))))");
     try
@@ -401,21 +401,20 @@ TEST(RunirTests, ExtendedQueryActionRuleRejectsInvalidReferencesAndArity)
     EXPECT_THROW(parse("move", "Q", "(:query (:symbol Q) (:expression (q_project () (q_concept X (c_top)))))"), kr::ArityMismatchError);
     EXPECT_THROW(parse("move", "Q", binary + " (:concept (:symbol Q) (:expression (c_top)))"), kr::DuplicateDefinitionError);
     EXPECT_THROW(parse("move", "Q", "(:query (:symbol Q) (:expression (q_role (X X) (r_universal))))"), kr::InvalidExpressionError);
-    EXPECT_THROW(parse("move", "Q", "(:query (:symbol Q) (:expression (q_project (X absent) (q_role (X Y) (r_universal)))))"),
-                 kr::InvalidExpressionError);
+    EXPECT_THROW(parse("move", "Q", "(:query (:symbol Q) (:expression (q_project (X absent) (q_role (X Y) (r_universal)))))"), kr::InvalidExpressionError);
 }
 
 TEST(RunirTests, ExtendedQueryActionRuleUsesNormalizedActionArity)
 {
-    const auto planning_domain = tyr::formalism::planning::Parser(
-        std::string(R"((define (domain witness)
+    const auto planning_domain = tyr::formalism::planning::Parser(std::string(R"((define (domain witness)
           (:requirements :strips :existential-preconditions)
           (:predicates (edge ?x ?y) (done ?x))
           (:action mark
             :parameters (?x)
             :precondition (exists (?w) (edge ?x ?w))
             :effect (done ?x))))"),
-        std::nullopt).get_domain();
+                                                                  std::nullopt)
+                                     .get_domain();
     const auto domain = planning_domain.get_domain();
     ASSERT_EQ(domain.get_actions().size(), 1);
     EXPECT_EQ(domain.get_actions().front().get_arity(), 2);
@@ -423,13 +422,14 @@ TEST(RunirTests, ExtendedQueryActionRuleUsesNormalizedActionArity)
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
     const auto parse = [&](const std::string& query)
     {
-        return kr::ps::ext::dl::parse_module(
-            "(:module (:symbol witness) (:arguments) (:registers) (:entry start) (:memory start done) "
-            "(:features (:query (:symbol Q) (:expression " + query + "))) "
-            "(:rules (:rule (:symbol mark) (:expression (:source-memory start) (:target-memory done) "
-            "(:action (:conditions) (:action \"mark\") (:query Q) (:effects))))))",
-            domain,
-            *repository);
+        return kr::ps::ext::dl::parse_module("(:module (:symbol witness) (:arguments) (:registers) (:entry start) (:memory start done) "
+                                             "(:features (:query (:symbol Q) (:expression "
+                                                 + query
+                                                 + "))) "
+                                                   "(:rules (:rule (:symbol mark) (:expression (:source-memory start) (:target-memory done) "
+                                                   "(:action (:conditions) (:action \"mark\") (:query Q) (:effects))))))",
+                                             domain,
+                                             *repository);
     };
     EXPECT_NO_THROW(parse("(q_atomic_state \"edge\" (X W))"));
     EXPECT_THROW(parse("(q_concept X (c_top))"), kr::ArityMismatchError);

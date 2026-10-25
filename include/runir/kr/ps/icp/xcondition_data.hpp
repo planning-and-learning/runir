@@ -39,16 +39,11 @@ struct Data<runir::kr::ps::icp::XCondition>
         operation(std::move(operation_)),
         object(std::move(object_)),
         feature()
-    {
-        set(feature_, feature);
-    }
+    { set(feature_, feature); }
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::operation, &Data::object, &Data::feature> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::operation, &Data::object, &Data::feature> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 }  // namespace ygg

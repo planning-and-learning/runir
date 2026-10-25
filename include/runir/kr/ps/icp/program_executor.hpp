@@ -14,11 +14,11 @@ auto find_solution(TaskContextPtr<Kind> task_context, ProgramView program, const
 
 #ifndef RUNIR_HEADER_INSTANTIATION
 
-extern template auto
-find_solution<tyr::GroundTag>(TaskContextPtr<tyr::GroundTag>, ProgramView, const ProgramSearchOptions<tyr::GroundTag>&) -> ProgramProofResults<tyr::GroundTag>;
+extern template auto find_solution<tyr::GroundTag>(TaskContextPtr<tyr::GroundTag>, ProgramView, const ProgramSearchOptions<tyr::GroundTag>&)
+    -> ProgramProofResults<tyr::GroundTag>;
 
-extern template auto
-find_solution<tyr::LiftedTag>(TaskContextPtr<tyr::LiftedTag>, ProgramView, const ProgramSearchOptions<tyr::LiftedTag>&) -> ProgramProofResults<tyr::LiftedTag>;
+extern template auto find_solution<tyr::LiftedTag>(TaskContextPtr<tyr::LiftedTag>, ProgramView, const ProgramSearchOptions<tyr::LiftedTag>&)
+    -> ProgramProofResults<tyr::LiftedTag>;
 
 #endif
 

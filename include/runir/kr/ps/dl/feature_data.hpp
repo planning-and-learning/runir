@@ -48,16 +48,11 @@ struct Data<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>
     Data(Index<Expression> feature_, ::cista::offset::string symbol_) : index(), feature(std::move(feature_)), symbol(std::move(symbol_)) {}
     template<typename C>
     Data(::ygg::View<Index<Expression>, C> feature_, ::cista::offset::string symbol_) : index(), feature(), symbol(std::move(symbol_))
-    {
-        set(feature_, feature);
-    }
+    { set(feature_, feature); }
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::feature, &Data::symbol> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::feature, &Data::symbol> {}; }
-    void clear() noexcept
-    {
-        ygg::clear_members(*this);
-    }
+    void clear() noexcept { ygg::clear_members(*this); }
 };
 
 }  // namespace ygg

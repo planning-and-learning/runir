@@ -130,9 +130,7 @@ auto create_feature(kr::ps::ext::Repository& repository, ygg::Index<kr::dl::Cons
 }
 
 auto create_concept_feature(kr::ps::ext::Repository& repository, ygg::Index<kr::dl::Constructor<kr::dl::ConceptTag>> expression, const std::string& name)
-{
-    return create_feature<kr::dl::ConceptTag>(repository, expression, name);
-}
+{ return create_feature<kr::dl::ConceptTag>(repository, expression, name); }
 
 template<tyr::TaskKind Kind>
 auto create_task_context(const std::filesystem::path& domain, const std::filesystem::path& task_file)
@@ -296,7 +294,8 @@ void expect_borrowed_query_evaluation()
         {
             const auto target_rows = kr::ps::evaluate<Kind>(feature, transition.get_target_context());
             ASSERT_EQ(target_rows.size(), 1);
-            EXPECT_NE(ygg::Index<tyr::formalism::Object>(target_rows[0].template get<ygg::uint_t>(size_t { 0 })), ygg::Index<tyr::formalism::Object>(rows[0].template get<ygg::uint_t>(size_t { 0 })));
+            EXPECT_NE(ygg::Index<tyr::formalism::Object>(target_rows[0].template get<ygg::uint_t>(size_t { 0 })),
+                      ygg::Index<tyr::formalism::Object>(rows[0].template get<ygg::uint_t>(size_t { 0 })));
             EXPECT_NE(target_rows.get_storage_address(), rows.get_storage_address());
 
             // The indexed program state supplies bindings; its prepared planning view may use builder storage.
@@ -309,7 +308,8 @@ void expect_borrowed_query_evaluation()
             static_assert(std::same_as<std::remove_cvref_t<decltype(prepared_context.get_state())>, tyr::planning::BuilderStateView<Kind>>);
             const auto prepared_rows = kr::ps::evaluate<Kind>(feature, prepared_context);
             ASSERT_EQ(prepared_rows.size(), rows.size());
-            EXPECT_EQ(ygg::Index<tyr::formalism::Object>(prepared_rows[0].template get<ygg::uint_t>(size_t { 0 })), ygg::Index<tyr::formalism::Object>(rows[0].template get<ygg::uint_t>(size_t { 0 })));
+            EXPECT_EQ(ygg::Index<tyr::formalism::Object>(prepared_rows[0].template get<ygg::uint_t>(size_t { 0 })),
+                      ygg::Index<tyr::formalism::Object>(rows[0].template get<ygg::uint_t>(size_t { 0 })));
             const auto candidate = tyr::planning::LabeledNode<Kind, tyr::planning::BuilderStateView<Kind>> {
                 successors.front().label,
                 tyr::planning::Node<Kind, tyr::planning::BuilderStateView<Kind>>(prepared_target, successors.front().node.get_metric())
@@ -317,8 +317,11 @@ void expect_borrowed_query_evaluation()
             auto prepared_transition = context.make_dl_transition_context(state, candidate);
             const auto prepared_target_rows = kr::ps::evaluate<Kind>(feature, prepared_transition.get_target_context());
             ASSERT_EQ(prepared_target_rows.size(), target_rows.size());
-            EXPECT_EQ(ygg::Index<tyr::formalism::Object>(prepared_target_rows[0].template get<ygg::uint_t>(size_t { 0 })), ygg::Index<tyr::formalism::Object>(target_rows[0].template get<ygg::uint_t>(size_t { 0 })));
-            EXPECT_EQ(ygg::Index<tyr::formalism::Object>(kr::ps::evaluate<Kind>(feature, prepared_transition.get_source_context())[0].template get<ygg::uint_t>(size_t { 0 })), ygg::Index<tyr::formalism::Object>(rows[0].template get<ygg::uint_t>(size_t { 0 })));
+            EXPECT_EQ(ygg::Index<tyr::formalism::Object>(prepared_target_rows[0].template get<ygg::uint_t>(size_t { 0 })),
+                      ygg::Index<tyr::formalism::Object>(target_rows[0].template get<ygg::uint_t>(size_t { 0 })));
+            EXPECT_EQ(ygg::Index<tyr::formalism::Object>(
+                          kr::ps::evaluate<Kind>(feature, prepared_transition.get_source_context())[0].template get<ygg::uint_t>(size_t { 0 })),
+                      ygg::Index<tyr::formalism::Object>(rows[0].template get<ygg::uint_t>(size_t { 0 })));
         }
         EXPECT_TRUE(environment.get_dl_target_caches().get_queries(false).contains(query));
         environment.reset_target();
@@ -445,9 +448,7 @@ void expect_lazy_do_successors()
         auto& repository = *task_context->domain_context->ext_repository;
         auto& states = *task_context->search_context->state_repository;
         const auto domain = task_context->search_context->task->get_domain().get_domain();
-        const auto selected_ball = scenario == 2 ? "(c_bot)" :
-                                   scenario == 5 ? "(c_atomic_state \"room\")" :
-                                                   "(c_some (r_atomic_goal \"at\" true) (c_top))";
+        const auto selected_ball = scenario == 2 ? "(c_bot)" : scenario == 5 ? "(c_atomic_state \"room\")" : "(c_some (r_atomic_goal \"at\" true) (c_top))";
         const auto sketch = scenario == 4 ? R"(
     (:rule (:symbol move) (:expression
       (:source-memory source) (:target-memory sketch-target)
@@ -1694,8 +1695,7 @@ void expect_query_action_contracts()
                 EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::NO_APPLICABLE_ACTION);
             }
             auto& search = *task_context->search_context;
-            const auto successors =
-                search.successor_generator->get_labeled_successor_nodes(planning_node, *search.state_repository, *search.axiom_evaluator);
+            const auto successors = search.successor_generator->get_labeled_successor_nodes(planning_node, *search.state_repository, *search.axiom_evaluator);
             ASSERT_FALSE(successors.empty());
             EXPECT_FALSE(expander.matching_rule(initial, successors.front()).has_value());
             continue;

@@ -138,8 +138,8 @@ TEST(RunirTests, StructuralTerminationSurvivingRulesIncludeDisjointCycles)
             (:rule (:symbol false_loop) (:expression (:conditions (negative b)) (:effects (unchanged b))))
             (:rule (:symbol true_loop) (:expression (:conditions (positive b)) (:effects (unchanged b))))
         )))",
-                                                    planning_domain.get_domain(),
-                                                    *repository);
+                                                       planning_domain.get_domain(),
+                                                       *repository);
 
     for (const auto preprocessing : { false, true })
     {
