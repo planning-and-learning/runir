@@ -8,7 +8,7 @@
 #include <runir/kr/dl/semantics/register_values_view.hpp>
 #include <runir/kr/dl/semantics/state_evaluation.hpp>
 #include <runir/kr/ps/dl/optimization.hpp>
-#include <tyr/planning/state_view.hpp>
+#include <tyr/planning/state_repository.hpp>
 #include <vector>
 #include <yggdrasil/python/diagnostics.hpp>
 

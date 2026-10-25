@@ -5,6 +5,7 @@
 #include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/ps/icp/xcondition_view.hpp>
 #include <runir/kr/ps/icp/xeffect_view.hpp>
+#include <nanobind/operators.h>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 

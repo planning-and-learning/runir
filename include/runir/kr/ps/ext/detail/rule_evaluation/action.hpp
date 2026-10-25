@@ -19,7 +19,7 @@
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <tyr/planning/lifted/task.hpp>
 #include <tyr/planning/node.hpp>
-#include <tyr/planning/state_view.hpp>
+#include <tyr/planning/state_repository.hpp>
 #include <tyr/planning/successor_generator.hpp>
 #include <utility>
 #include <vector>

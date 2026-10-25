@@ -7,7 +7,7 @@
 #include <optional>
 #include <tyr/formalism/binding_view.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
-#include <tyr/planning/state_view.hpp>
+#include <tyr/planning/state_repository.hpp>
 #include <yggdrasil/containers/segmented_vector.hpp>
 
 namespace runir::kr::ps::base::detail

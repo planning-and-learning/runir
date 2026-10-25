@@ -27,7 +27,7 @@
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/state_repository.hpp>
 #include <tyr/planning/lifted/task.hpp>
-#include <tyr/planning/state_view.hpp>
+#include <tyr/planning/state_repository.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/containers/associative_containers.hpp>

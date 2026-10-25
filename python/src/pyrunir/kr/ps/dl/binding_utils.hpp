@@ -19,7 +19,7 @@
 #include <runir/kr/ps/formatter.hpp>
 #include <runir/kr/ps/syntactic_complexity.hpp>
 #include <string>
-#include <tyr/planning/state_view.hpp>
+#include <tyr/planning/state_repository.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/python/bindings.hpp>

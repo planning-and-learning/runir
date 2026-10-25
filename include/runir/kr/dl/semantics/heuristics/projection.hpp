@@ -20,8 +20,7 @@
 #include <yggdrasil/database/semantics/distance.hpp>
 #include <yggdrasil/database/semantics/operations.hpp>
 #include <yggdrasil/database/semantics/relation_view.hpp>
-#include <yggdrasil/database/syntax/columns_builder.hpp>
-#include <yggdrasil/database/syntax/copy.hpp>
+#include <yggdrasil/database/syntax/columns.hpp>
 #include <yggdrasil/database/syntax/query.hpp>
 #include <yggdrasil/database/syntax/row.hpp>
 

@@ -5,7 +5,7 @@
 #include "runir/serialization/graphs/static_graph.hpp"
 #include "runir/serialization/kr/ps/ext/execution_view.hpp"
 #include "runir/serialization/kr/ps/ext/rule_variant_view.hpp"
-#include "tyr/serialization/formalism/binding_view.hpp"
+#include "tyr/serialization/formalism/planning/planning.hpp"
 #include "yggdrasil/serialization/dictionaries.hpp"
 
 namespace ygg::serialization

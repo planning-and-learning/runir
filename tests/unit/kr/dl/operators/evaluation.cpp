@@ -13,7 +13,7 @@
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <string>
-#include <tyr/planning/state_view.hpp>
+#include <tyr/planning/state_repository.hpp>
 
 namespace runir::tests
 {

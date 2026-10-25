@@ -11,7 +11,7 @@
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/condition_data.hpp>
 #include <runir/kr/ps/dl/transition_evaluation_context.hpp>
-#include <tyr/planning/state_view.hpp>
+#include <tyr/planning/state_repository.hpp>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 

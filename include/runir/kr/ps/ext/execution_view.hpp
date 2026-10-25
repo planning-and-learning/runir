@@ -11,7 +11,7 @@
 #include <tuple>
 #include <type_traits>
 #include <tyr/formalism/object_view.hpp>
-#include <tyr/planning/state_view.hpp>
+#include <tyr/planning/state_repository.hpp>
 #include <yggdrasil/containers/optional.hpp>
 #include <yggdrasil/containers/pair.hpp>
 #include <yggdrasil/containers/vector.hpp>

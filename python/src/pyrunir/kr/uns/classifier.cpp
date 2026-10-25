@@ -12,7 +12,7 @@
 #include <runir/kr/uns/formatter.hpp>
 #include <runir/kr/uns/repository.hpp>
 #include <runir/kr/uns/syntactic_complexity.hpp>
-#include <tyr/planning/state_view.hpp>
+#include <tyr/planning/state_repository.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>

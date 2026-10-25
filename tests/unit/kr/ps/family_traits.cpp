@@ -9,7 +9,7 @@
 #include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/uns/repository.hpp>
 #include <type_traits>
-#include <tyr/planning/state_view.hpp>
+#include <tyr/planning/state_repository.hpp>
 
 namespace runir::tests
 {

@@ -21,7 +21,7 @@
 #include <tyr/formalism/planning/action_view.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/node.hpp>
-#include <tyr/planning/state_view.hpp>
+#include <tyr/planning/state_repository.hpp>
 #include <utility>
 #include <variant>
 #include <vector>

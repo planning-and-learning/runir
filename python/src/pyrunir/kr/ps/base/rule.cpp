@@ -12,7 +12,7 @@
 #include <runir/kr/ps/base/rule_data.hpp>
 #include <runir/kr/ps/base/rule_view.hpp>
 #include <runir/kr/ps/dl/transition_evaluation_context.hpp>
-#include <tyr/planning/state_view.hpp>
+#include <tyr/planning/state_repository.hpp>
 #include <vector>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>

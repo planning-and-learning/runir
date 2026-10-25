@@ -9,7 +9,7 @@
 #include <runir/kr/ps/dl/feature_view.hpp>
 #include <runir/kr/ps/feature_view.hpp>
 #include <runir/kr/uns/repository.hpp>
-#include <tyr/planning/state_view.hpp>
+#include <tyr/planning/state_repository.hpp>
 #include <utility>
 #include <yggdrasil/core/types.hpp>
 #include <cista/reflection/to_tuple.h>
