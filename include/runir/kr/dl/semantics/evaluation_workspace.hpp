@@ -2,6 +2,7 @@
 #define RUNIR_SEMANTICS_EVALUATION_WORKSPACE_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/datalog_feature.hpp"
 #include "runir/kr/dl/semantics/distance/feature.hpp"
 #include "runir/kr/dl/semantics/heuristics/projection.hpp"
 
@@ -48,6 +49,7 @@ private:
     };
     std::deque<KeyedFeature<FullDistanceFeature>> m_distance_features;  ///< A deque keeps references stable.
     std::deque<KeyedFeature<MustPassFeature>> m_must_pass_features;
+    std::deque<KeyedFeature<DatalogFeature>> m_datalog_features;
     std::vector<ygg::database::GenericJoinWorkspace> m_generic_join_workspaces;  ///< One per generic join plan.
     ygg::database::Workspace m_database_workspace;
 
@@ -100,6 +102,14 @@ public:
                                            ygg::uint_t query,
                                            Make&& make)
     { return find_or_make<MustPassFeature>(m_must_pass_features, formalism, constructors, query, std::forward<Make>(make)); }
+    /// The evaluator of a Datalog program in full evaluation, like get_distance_feature().
+    template<std::invocable Make>
+        requires std::same_as<std::invoke_result_t<Make&>, DatalogFeature>
+    DatalogFeature& get_datalog_feature(const std::shared_ptr<tyr::formalism::planning::Repository>& formalism,
+                                        const ConstructorRepository& constructors,
+                                        ygg::uint_t program,
+                                        Make&& make)
+    { return find_or_make<DatalogFeature>(m_datalog_features, formalism, constructors, program, std::forward<Make>(make)); }
 };
 
 }

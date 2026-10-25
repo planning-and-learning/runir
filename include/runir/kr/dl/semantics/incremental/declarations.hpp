@@ -42,6 +42,9 @@ class FeatureNode;
 
 template<tyr::TaskKind Kind>
 class QueryNode;
+
+template<tyr::TaskKind Kind>
+struct QueryProgramEvaluator;
 }
 
 }  // namespace runir::kr::dl::semantics::incremental

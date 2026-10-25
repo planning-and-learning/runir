@@ -61,7 +61,7 @@ namespace detail
 
 template<typename Tag>
 inline constexpr bool is_query_leaf_tag_v = is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag> || std::same_as<Tag, QueryConceptTag>
-                                            || std::same_as<Tag, QueryRoleTag> || std::same_as<Tag, QueryMustPassTag>;
+                                            || std::same_as<Tag, QueryRoleTag> || std::same_as<Tag, QueryMustPassTag> || std::same_as<Tag, QueryHeadTag>;
 
 template<typename V>
 inline constexpr bool is_complement_view_v = false;
@@ -134,9 +134,9 @@ public:
     { return ygg::database::relax(roots, std::forward<Known>(known), m_repository, m_builder); }
 
     /// The expression of each input slot, by slot.
-    const std::vector<QuerySlot>& get_slots() const noexcept { return m_slots; }
+    [[nodiscard]] const std::vector<QuerySlot>& get_slots() const noexcept { return m_slots; }
     /// The DL leaf of each input slot; without complement rewriting, every slot is a leaf query.
-    std::vector<DlQuery> get_leaves(const ConstructorRepository& constructors) const;
+    [[nodiscard]] std::vector<DlQuery> get_leaves(const ConstructorRepository& constructors) const;
 
 private:
     template<typename Tag>

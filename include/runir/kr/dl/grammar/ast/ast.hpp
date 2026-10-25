@@ -267,6 +267,13 @@ struct QueryEmpty : boost::spirit::x3::position_tagged
     std::vector<Identifier> columns;
 };
 
+/// The rows of a head relation of the enclosing policy's Datalog program.
+struct QueryHead : boost::spirit::x3::position_tagged
+{
+    Identifier name;
+    std::vector<Identifier> columns;
+};
+
 struct QueryMustPass : boost::spirit::x3::position_tagged
 {
     std::vector<Identifier> keys;
@@ -290,7 +297,8 @@ struct Query :
                       QueryDifference,
                       QueryGenericJoin,
                       QueryEmpty,
-                      QueryMustPass>
+                      QueryMustPass,
+                      QueryHead>
 {
     using Base = PositionedVariant<QueryAtomicState,
                                    QueryAtomicGoal,
@@ -305,7 +313,8 @@ struct Query :
                                    QueryDifference,
                                    QueryGenericJoin,
                                    QueryEmpty,
-                                   QueryMustPass>;
+                                   QueryMustPass,
+                                   QueryHead>;
     using Base::Base;
     using Base::operator=;
 };

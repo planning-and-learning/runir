@@ -3,6 +3,7 @@
 
 #include "runir/kr/dl/grammar/parser/parsers.hpp"
 #include "runir/kr/parser/error_handler.hpp"
+#include "runir/kr/parser/sexpression.hpp"
 #include "runir/kr/ps/base/dl/ast/ast_adapted.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/ext/dl/ast/ast_adapted.hpp"
@@ -203,7 +204,7 @@ constexpr auto required_memory_states = boost::spirit::x3::rule<class RequiredMe
 constexpr auto memory_section_def = context(":memory")[(lit("(") >> keyword(":memory")) > required_memory_states > lit(")")];
 
 constexpr auto module_def = context("module")[(lit("(") >> keyword(":module")) > symbol_section > arguments_section > registers_section > entry_section
-                                              > memory_section > features_section > rules_section > lit(")")];
+                                              > memory_section > -runir::kr::parser::grammar::datalog_section > features_section > rules_section > lit(")")];
 constexpr auto required_modules = boost::spirit::x3::rule<class RequiredModules, std::vector<ast::Module>> { "one or more modules" } = +module;
 constexpr auto program_def = context("program")[(lit("(") >> keyword(":program")) > entry_section > required_modules > lit(")")];
 constexpr auto module_root_def = context("module")[module > eoi];

@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_DETAIL_EVALUATION_IMPL_HPP_
 #define RUNIR_KR_DL_SEMANTICS_DETAIL_EVALUATION_IMPL_HPP_
 
+#include "runir/kr/dl/semantics/datalog_evaluation.hpp"
 #include "runir/kr/dl/semantics/detail/evaluation_helpers.hpp"
 #include "runir/kr/dl/semantics/distance_evaluation.hpp"
 #include "runir/kr/dl/semantics/evaluation_decl.hpp"

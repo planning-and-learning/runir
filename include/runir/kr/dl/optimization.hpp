@@ -266,6 +266,20 @@ private:
         return runir::kr::dl::insert(*m_repository, data).first;
     }
 
+    /// A program reads its inputs positionally, so an optimized input replaces the input only with the same columns in
+    /// the same order.
+    RecordView<DatalogProgram> rewrite(RecordView<DatalogProgram> view)
+    {
+        auto data = view.get_data();
+        data.inputs.clear();
+        for (const auto input : view.get_inputs())
+        {
+            const auto optimized = optimize_root(input, std::nullopt);
+            data.inputs.push_back(std::ranges::equal(optimized.get_schema(), input.get_schema()) ? optimized.get_index() : input.get_index());
+        }
+        return runir::kr::dl::insert(*m_repository, data).first;
+    }
+
     /// The index of an optimized argument that is a query evaluated as given or another record.
     template<typename Result, typename Argument>
     Result optimize_argument(const Argument& arg, ygg::database::Evaluation evaluation)

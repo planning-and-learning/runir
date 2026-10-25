@@ -243,6 +243,34 @@ auto parse(const runir::kr::dl::grammar::ast::QueryEmpty& node, tyr::formalism::
 }
 
 template<typename Context>
+auto parse(const runir::kr::dl::grammar::ast::QueryHead& node, tyr::formalism::planning::DomainView, const Context& context)
+{
+    if constexpr (requires { context.features(); })
+    {
+        const auto head = context.features() ? context.features()->head(node.name) : std::nullopt;
+        if (!head)
+            context.diagnostics().throw_at(node.name, runir::kr::UndefinedSymbolError("Datalog head", node.name.text));
+        auto data = checkout<runir::kr::dl::Query<runir::kr::dl::QueryHeadTag>>(context);
+        data->program = head->program;
+        data->relation = head->relation;
+        data->columns = parse_columns(node.columns, context);
+        try
+        {
+            return intern_query(context, intern(context, *data).get_index());
+        }
+        catch (const std::invalid_argument& error)
+        {
+            context.diagnostics().throw_at(node, runir::kr::InvalidExpressionError(std::string("q_head: ") + error.what()));
+        }
+    }
+    else
+    {
+        context.diagnostics().throw_at(node, runir::kr::InvalidExpressionError("q_head is not supported here."));
+        return intern_query(context, ygg::Index<runir::kr::dl::Query<runir::kr::dl::QueryEmptyTag>>());
+    }
+}
+
+template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::QueryMustPass& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
     const auto sources = parse(node.sources.get(), domain, context).get_index();

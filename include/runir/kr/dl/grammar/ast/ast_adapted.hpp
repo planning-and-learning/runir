@@ -20,6 +20,7 @@ BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::QuerySelectValue, column,
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::QueryGenericJoin, variable_order, output_order, args)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::QueryEmpty, columns)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::QueryMustPass, keys, sources, edges, targets, probes)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::QueryHead, name, columns)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptProject, columns, arg)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::RoleProject, columns, arg)
 

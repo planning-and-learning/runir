@@ -1,5 +1,6 @@
 #include "runir/kr/ps/ext/dl/parser.hpp"
 
+#include "kr/parser/datalog.hpp"
 #include "kr/parser/ext_constructors.hpp"
 #include "kr/parser/observations.hpp"
 #include "kr/parser/resolution.hpp"
@@ -300,37 +301,33 @@ void append_feature(
     Builders& builders,
     ygg::Data<Module>& module_data,
     const ast::Feature<Category>& feature,
-    tyr::formalism::planning::DomainView domain,
+    ygg::Index<runir::kr::dl::Constructor<Category>> constructor,
     std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>& concept_features,
     std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>& role_features,
     std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>>& boolean_features,
-    std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>>& numerical_features,
-    const ModuleReferences& references,
-    runir::kr::parser::DiagnosticContext& diagnostics)
+    std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>>& numerical_features)
 {
-    const auto context = ConstructorContext { repository.get_dl_repository(), *builders.dl, diagnostics, &references };
-    const auto constructor = parse_constructor(feature.expression, domain, context);
     if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
     {
-        const auto view = intern_dl_feature<runir::kr::dl::ConceptTag>(repository, *builders.ps, constructor.get_index(), feature.symbol.text);
+        const auto view = intern_dl_feature<runir::kr::dl::ConceptTag>(repository, *builders.ps, constructor, feature.symbol.text);
         concept_features.emplace(feature.symbol.text, view.get_index());
         module_data.concept_features.push_back(view.get_index());
     }
     else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
     {
-        const auto view = intern_dl_feature<runir::kr::dl::RoleTag>(repository, *builders.ps, constructor.get_index(), feature.symbol.text);
+        const auto view = intern_dl_feature<runir::kr::dl::RoleTag>(repository, *builders.ps, constructor, feature.symbol.text);
         role_features.emplace(feature.symbol.text, view.get_index());
         module_data.role_features.push_back(view.get_index());
     }
     else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
     {
-        const auto view = intern_dl_feature<runir::kr::dl::BooleanTag>(repository, *builders.ps, constructor.get_index(), feature.symbol.text);
+        const auto view = intern_dl_feature<runir::kr::dl::BooleanTag>(repository, *builders.ps, constructor, feature.symbol.text);
         boolean_features.emplace(feature.symbol.text, view.get_index());
         module_data.boolean_features.push_back(view.get_index());
     }
     else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
     {
-        const auto view = intern_dl_feature<runir::kr::dl::NumericalTag>(repository, *builders.ps, constructor.get_index(), feature.symbol.text);
+        const auto view = intern_dl_feature<runir::kr::dl::NumericalTag>(repository, *builders.ps, constructor, feature.symbol.text);
         numerical_features.emplace(feature.symbol.text, view.get_index());
         module_data.numerical_features.push_back(view.get_index());
     }
@@ -905,16 +902,44 @@ ModuleView lower_module(const ast::Module& ast,
     auto boolean_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>> {};
     auto numerical_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>> {};
     auto query_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>> {};
+    // Features may name each other and read Datalog heads, in any order; each is parsed at its first reference.
+    auto resolver = runir::kr::parser::datalog::FeatureResolver(diagnostics);
+    auto section = runir::kr::parser::datalog::DatalogSection(ast.datalog ? &*ast.datalog : nullptr,
+                                                              domain,
+                                                              repository.get_dl_repository(),
+                                                              *builders.dl,
+                                                              resolver,
+                                                              diagnostics);
+    const auto feature_scope = runir::kr::parser::datalog::make_scope(resolver, section);
+    const auto context = ConstructorContext {
+        repository.get_dl_repository(), *builders.dl, diagnostics, &references, runir::kr::parser::ext_constructors::all_capabilities, &feature_scope
+    };
+    for (const auto& feature : ast.features)
+        boost::apply_visitor(
+            [&]<typename Concrete>(const Concrete& concrete)
+            {
+                if (section.defines(concrete.symbol.text))
+                    diagnostics.throw_at(concrete.symbol, runir::kr::DuplicateDefinitionError("feature", concrete.symbol.text));
+                resolver.declare(concrete.symbol,
+                                 [&]() -> runir::kr::parser::datalog::FeatureReference
+                                 {
+                                     if constexpr (std::same_as<Concrete, ast::QueryFeature>)
+                                         return parse(concrete.expression, domain, context).get_index();
+                                     else
+                                         return parse_constructor(concrete.expression, domain, context).get_index();
+                                 });
+            },
+            feature.get());
     for (const auto& feature : ast.features)
     {
         boost::apply_visitor(
             [&]<typename Concrete>(const Concrete& concrete)
             {
+                const auto resolved = *resolver.resolve(concrete.symbol);
                 if constexpr (std::same_as<Concrete, ast::QueryFeature>)
                 {
-                    const auto context = ConstructorContext { repository.get_dl_repository(), *builders.dl, diagnostics, &references };
-                    const auto query = parse(concrete.expression, domain, context);
-                    const auto view = intern_dl_feature<runir::kr::ps::dl::QueryFeature>(repository, *builders.ps, query.get_index(), concrete.symbol.text);
+                    const auto query = std::get<ygg::Index<runir::kr::dl::Query<>>>(resolved);
+                    const auto view = intern_dl_feature<runir::kr::ps::dl::QueryFeature>(repository, *builders.ps, query, concrete.symbol.text);
                     query_features.emplace(concrete.symbol.text, view.get_index());
                     data->query_features.push_back(view.get_index());
                 }
@@ -923,13 +948,11 @@ ModuleView lower_module(const ast::Module& ast,
                                    builders,
                                    *data,
                                    concrete,
-                                   domain,
+                                   std::get<ygg::Index<runir::kr::dl::Constructor<typename AstCategory<Concrete>::Type>>>(resolved),
                                    concept_features,
                                    role_features,
                                    boolean_features,
-                                   numerical_features,
-                                   references,
-                                   diagnostics);
+                                   numerical_features);
             },
             feature.get());
     }

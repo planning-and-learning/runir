@@ -92,7 +92,33 @@ class EvaluationGraph
         return *index;
     }
 
+    /// The node of a Datalog program; one per program.
+    QueryEvaluationIndex prepare_program(DatalogProgramView program, std::vector<ygg::uint_t>& dependencies)
+    {
+        auto index = std::optional<QueryEvaluationIndex> {};
+        for (size_t i = 0; i < m_nodes.size() && !index; ++i)
+            if (const auto* candidate = std::get_if<detail::QueryNode<Kind>>(&m_nodes[i]);
+                candidate && candidate->get_program() && candidate->get_program()->program == program)
+                index = QueryEvaluationIndex(ygg::to_uint_t(i));
+        if (!index)
+        {
+            // Construct locally: preparing the inputs may relocate m_nodes.
+            auto builder = detail::GraphBuilder<Kind>(*this);
+            auto prepared = detail::QueryNode<Kind>(program, builder);
+            index = QueryEvaluationIndex(ygg::to_uint_t(m_nodes.size()));
+            m_nodes.emplace_back(std::move(prepared));
+        }
+        dependencies.push_back(static_cast<ygg::uint_t>(*index));
+        return *index;
+    }
+    /// Requests a head of a program node; returns its output.
+    size_t request_head(QueryEvaluationIndex program, ygg::Index<ygg::database::datalog::Relation> relation)
+    { return std::get<detail::QueryNode<Kind>>(m_nodes.at(static_cast<ygg::uint_t>(program))).get_program()->request(relation); }
+
 public:
+    /// The operation of a program node, read by its heads.
+    [[nodiscard]] const detail::QueryProgramEvaluator<Kind>& program(QueryEvaluationIndex index) const { return *node(index).get_program(); }
+
     EvaluationGraph(const tyr::planning::Task<Kind>& task, std::span<const EvaluationRoot> roots);
     EvaluationGraph(const tyr::planning::Task<Kind>& task, std::initializer_list<EvaluationRoot> roots) :
         EvaluationGraph(task, std::span<const EvaluationRoot>(roots.begin(), roots.size()))
@@ -151,6 +177,10 @@ public:
     EvaluationIndex<Category> prepare(ConstructorView<Category> expression, std::vector<ygg::uint_t>& dependencies)
     { return m_graph->prepare(expression, dependencies); }
     QueryEvaluationIndex prepare(QueryView<> expression, std::vector<ygg::uint_t>& dependencies) { return m_graph->prepare(expression, dependencies); }
+    QueryEvaluationIndex prepare_program(DatalogProgramView program, std::vector<ygg::uint_t>& dependencies)
+    { return m_graph->prepare_program(program, dependencies); }
+    size_t request_head(QueryEvaluationIndex program, ygg::Index<ygg::database::datalog::Relation> relation)
+    { return m_graph->request_head(program, relation); }
     QueryEvaluationIndex prepare_relation(QueryView<> expression, std::span<const ygg::database::ColumnLayout> columns, std::vector<ygg::uint_t>& dependencies)
     { return m_graph->prepare_relation(expression, columns, dependencies); }
     template<ConceptOrRoleTag Category>

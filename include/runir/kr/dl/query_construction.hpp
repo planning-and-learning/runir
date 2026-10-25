@@ -142,6 +142,8 @@ void prepare(ygg::Data<Query<Tag>>& data, const Repository& repository)
             require_query_arity(columns.size(), std::same_as<Tag, QueryConceptTag> ? 1 : 2);
         else if constexpr (std::same_as<Tag, QueryRenameTag>)
             require_query_arity(columns.size(), ygg::make_view(data.arg, repository).get_schema().size());
+        else if constexpr (std::same_as<Tag, QueryHeadTag>)
+            require_query_arity(columns.size(), ygg::database::datalog::RelationView(data.relation, repository.get_datalog_repository()).get_arity());
         else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
         {
             data.lhs_position = columns.column_index(ygg::Index<ygg::database::Column>(data.lhs_column.get_value()));
@@ -151,6 +153,9 @@ void prepare(ygg::Data<Query<Tag>>& data, const Repository& repository)
             data.position = columns.column_index(ygg::Index<ygg::database::Column>(data.column.get_value()));
     }
 }
+
+/// Each input must have the arity of its slot's relation; the program is static if all its inputs are.
+void prepare(ygg::Data<DatalogProgram>& data, const ConstructorRepository& repository);
 
 template<ConceptOrRoleTag Category, typename Repository>
 void prepare(ygg::Data<QueryProjection<Category>>& data, const Repository& repository)

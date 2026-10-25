@@ -100,6 +100,8 @@ order. `incremental::IncrementalEvaluation` schedules them over a sequence of st
 - A demanded node is updated from the delta if it was evaluated in the previous state and its
   children hold exact deltas. Otherwise it is initialized from the state.
 - `DeltaEvaluationPolicy` computes the deltas between successive source and target states.
+- A Datalog program is one node without an expression; its `q_head` nodes depend on it and read its evaluator
+  (`docs/datalog.md`).
 
 ## Storage and lifetime
 

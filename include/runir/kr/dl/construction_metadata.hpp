@@ -24,6 +24,8 @@ bool infer_is_static(ygg::View<ygg::Index<Expression<Tag>>, C> constructor)
         return true;
     else if constexpr (requires { constructor.get_register(); } || requires { constructor.get_argument(); })
         return false;
+    else if constexpr (std::same_as<Tag, QueryHeadTag>)
+        return constructor.get_program().is_static();
     else if constexpr (std::same_as<Tag, QueryMustPassTag>)
         return constructor.get_sources().is_static() && constructor.get_edges().is_static() && constructor.get_targets().is_static()
                && constructor.get_probes().is_static();

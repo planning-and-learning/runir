@@ -2,6 +2,7 @@
 #define RUNIR_SRC_KR_PARSER_EXT_CONSTRUCTORS_HPP_
 
 #include "kr/parser/constructors.hpp"
+#include "kr/parser/datalog.hpp"
 #include "runir/kr/parser/diagnostics.hpp"
 
 #include <string>
@@ -51,6 +52,7 @@ class ConstructorContext
     const runir::kr::parser::DiagnosticContext* m_diagnostics;
     const ModuleReferences* m_references;
     LanguageCapabilities m_capabilities;
+    const datalog::FeatureScope* m_features;
 
 public:
     using Target = runir::kr::parser::constructors::SemanticTarget;
@@ -59,12 +61,14 @@ public:
                        runir::kr::dl::Builder& builder,
                        const runir::kr::parser::DiagnosticContext& diagnostics,
                        const ModuleReferences* references,
-                       LanguageCapabilities capabilities = all_capabilities) noexcept :
+                       LanguageCapabilities capabilities = all_capabilities,
+                       const datalog::FeatureScope* features = nullptr) noexcept :
         m_repository(&repository),
         m_builder(&builder),
         m_diagnostics(&diagnostics),
         m_references(references),
-        m_capabilities(capabilities)
+        m_capabilities(capabilities),
+        m_features(features)
     {
     }
 
@@ -73,7 +77,29 @@ public:
     [[nodiscard]] const runir::kr::parser::DiagnosticContext& diagnostics() const noexcept { return *m_diagnostics; }
     [[nodiscard]] const ModuleReferences* references() const noexcept { return m_references; }
     [[nodiscard]] const LanguageCapabilities& capabilities() const noexcept { return m_capabilities; }
+    /// The names of features and Datalog heads; without them, names are errors.
+    [[nodiscard]] const datalog::FeatureScope* features() const noexcept { return m_features; }
 };
+
+/// Whether a bare name has the form of a grammar nonterminal (c_1, r_1, b_1, n_1).
+inline bool is_nonterminal_name(const std::string& name)
+{
+    return name.size() > 2 && std::string_view("crbn").find(name[0]) != std::string_view::npos && name[1] == '_'
+           && std::all_of(name.begin() + 2, name.end(), [](char c) { return c >= '0' && c <= '9'; });
+}
+
+/// The feature a bare name refers to.
+inline datalog::FeatureReference resolve_feature(const runir::kr::parser::ast::Identifier& name, const ConstructorContext& context)
+{
+    if (is_nonterminal_name(name.text))
+        context.diagnostics().throw_at(
+            name,
+            runir::kr::InvalidExpressionError(std::string(context.capabilities().language) + " cannot reference grammar nonterminals."));
+    const auto feature = context.features() ? context.features()->feature(name) : std::nullopt;
+    if (!feature)
+        context.diagnostics().throw_at(name, runir::kr::UndefinedSymbolError("feature", name.text));
+    return *feature;
+}
 
 template<typename Node>
 void require_registers(const Node& node, const ConstructorContext& context)
@@ -103,13 +129,41 @@ inline auto parse(const runir::kr::dl::grammar::ast::ConstructorOrNonTerminal<Ca
         {
             const auto& unwrapped = unwrap(value);
             if constexpr (std::same_as<Unwrapped<Value>, runir::kr::dl::grammar::ast::NonTerminal<Category>>)
+            {
+                const auto feature = resolve_feature(unwrapped.name, context);
+                if (const auto* index = std::get_if<ygg::Index<runir::kr::dl::Constructor<Category>>>(&feature))
+                    return ygg::make_view(*index, context.repository());
                 context.diagnostics().throw_at(
                     unwrapped.name,
-                    runir::kr::InvalidExpressionError(std::string(context.capabilities().language) + " cannot reference grammar nonterminals."));
+                    runir::kr::InvalidExpressionError("Feature `" + unwrapped.name.text + "` is not a " + Category::name + " feature."));
+            }
             else
                 return parse_constructor(unwrapped, domain, context);
         },
         node.get());
+}
+
+/// An operand that may be of several categories (n_count, b_nonempty, n_distance): a bare name is parsed as a concept
+/// choice, so it may name a feature of any of the operand's categories.
+template<typename Result, runir::kr::dl::CategoryTag Category>
+Result parse_collection_operand(const runir::kr::dl::grammar::ast::ConstructorOrNonTerminal<Category>& node,
+                                tyr::formalism::planning::DomainView domain,
+                                const ConstructorContext& context)
+{
+    if (const auto* name = boost::get<runir::kr::dl::grammar::ast::NonTerminal<Category>>(&node.get()))
+    {
+        const auto feature = resolve_feature(name->name, context);
+        return std::visit(
+            [&]<typename T>(ygg::Index<T> index) -> Result
+            {
+                if constexpr (std::is_constructible_v<Result, ygg::Index<T>>)
+                    return Result(index);
+                else
+                    context.diagnostics().throw_at(name->name, runir::kr::InvalidExpressionError("Feature `" + name->name.text + "` cannot be used here."));
+            },
+            feature);
+    }
+    return Result(parse(node, domain, context).get_index());
 }
 
 template<typename Entity, typename Identifier, typename Reference>

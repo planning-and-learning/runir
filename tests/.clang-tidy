@@ -2,7 +2,8 @@
 # optionals with value(), whose bad_optional_access fails the test: the check cannot see gtest's
 # ASSERTs. Concept tests shadow a method to show that the concept rejects the type, and validation
 # tests cast invalid enum values to show they are rejected. The allocation tests replace operator
-# new with malloc and free what it allocates.
+# new with malloc and free what it allocates. Tests run on Linux, so thread safety follows glibc,
+# whose getenv is thread-safe (no test calls setenv).
 InheritParentConfig: true
 Checks: >
   -cppcoreguidelines-avoid-magic-numbers,
@@ -13,3 +14,5 @@ Checks: >
   -clang-analyzer-optin.core.EnumCastOutOfRange
 CheckOptions:
   bugprone-unchecked-optional-access.IgnoreValueCalls: true
+  concurrency-mt-unsafe.FunctionSet: glibc
+

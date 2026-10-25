@@ -10,6 +10,7 @@
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/core/type_list.hpp>
 #include <yggdrasil/core/types.hpp>
+#include <yggdrasil/database/datalog/repository.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>
 
 namespace runir::kr::dl::detail
@@ -24,10 +25,13 @@ class BasicConstructorRepository : public ygg::formalism::SymbolRepositoryBase<B
 
 private:
     std::shared_ptr<const tyr::formalism::planning::Repository> m_planning_repository;
+    /// The rules of the repository's DatalogPrograms.
+    std::shared_ptr<ygg::database::datalog::DatalogRepository> m_datalog_repository;
     size_t m_index;
 
     BasicConstructorRepository(size_t index, std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository) :
         m_planning_repository(std::move(planning_repository)),
+        m_datalog_repository(ygg::database::datalog::DatalogRepositoryFactory {}.create_shared()),
         m_index(index)
     {
         assert(m_planning_repository);
@@ -49,6 +53,8 @@ public:
         return *m_planning_repository.get();
     }
     [[nodiscard]] const auto& get_planning_repository_ptr() const noexcept { return m_planning_repository; }
+    [[nodiscard]] const ygg::database::datalog::DatalogRepository& get_datalog_repository() const noexcept { return *m_datalog_repository; }
+    [[nodiscard]] ygg::database::datalog::DatalogRepository& get_datalog_repository() noexcept { return *m_datalog_repository; }
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<BasicConstructorRepository, T>

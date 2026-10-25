@@ -90,6 +90,10 @@ void def_query_data_constructors(Class& cls)
     else if constexpr (std::same_as<Tag, QueryMustPassTag>)
         cls.def(nb::init<ColumnIndexList, QueryIndex, QueryIndex, QueryIndex, QueryIndex>(), "keys"_a, "sources"_a, "edges"_a, "targets"_a, "probes"_a)
             .def(nb::init<const ColumnViewList&, QueryView, QueryView, QueryView, QueryView>(), "keys"_a, "sources"_a, "edges"_a, "targets"_a, "probes"_a);
+    else if constexpr (std::same_as<Tag, QueryHeadTag>)
+    {
+        // Heads are interned by the policy parsers, which resolve their programs.
+    }
     else
         static_assert(ygg::dependent_false<Tag>::value);
 }
@@ -135,6 +139,8 @@ void bind_query(nb::module_& m, const char* name)
     ygg::add_comparison(view);
     ygg::add_hash(view);
     view.def("syntactic_complexity", [](View value) { return semantics::syntactic_complexity(value); });
+    if constexpr (std::same_as<Tag, QueryHeadTag>)
+        view.def("get_name", [](View value) { return std::string(value.get_name()); });
     if constexpr (std::same_as<Tag, void>)
     {
         view.def("get_variant", &View::get_variant, nb::keep_alive<0, 1>());
@@ -230,6 +236,7 @@ inline void bind_queries(nb::module_& m)
     bind_query<QueryGenericJoinTag>(m, "QueryGenericJoin");
     bind_query<QueryEmptyTag>(m, "QueryEmpty");
     bind_query<QueryMustPassTag>(m, "QueryMustPass");
+    bind_query<QueryHeadTag>(m, "QueryHead");
 }
 
 }  // namespace runir::kr::dl::python

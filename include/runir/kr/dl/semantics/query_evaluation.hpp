@@ -100,6 +100,8 @@ void evaluate_query(ygg::View<ygg::Index<Query<Tag>>, C> constructor, Context& c
     }
     else if constexpr (std::same_as<Tag, QueryMustPassTag>)
         on_demand_must_pass<Kind>(constructor, context, result);
+    else if constexpr (std::same_as<Tag, QueryHeadTag>)
+        on_demand_head<Kind>(constructor, context, result);
     else
     {
         static_assert(ygg::dependent_false<Tag>::value, "unhandled relational query constructor");

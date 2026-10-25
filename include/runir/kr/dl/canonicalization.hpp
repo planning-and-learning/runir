@@ -21,6 +21,9 @@ bool is_canonical(const ygg::Data<QueryProjection<Category>>&) noexcept
 { return true; }
 
 inline void canonicalize(ygg::Data<QueryColumn>&) noexcept {}
+
+/// Input slots are positional, so a program has no canonical reordering.
+inline void canonicalize(ygg::Data<DatalogProgram>&) noexcept {}
 inline bool is_canonical(const ygg::Data<QueryColumn>&) noexcept { return true; }
 template<typename Tag>
 void canonicalize(ygg::Data<Query<Tag>>&) noexcept

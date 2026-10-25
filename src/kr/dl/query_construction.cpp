@@ -4,7 +4,10 @@
 #include "runir/kr/dl/repository.hpp"
 
 #include <cstddef>
+#include <optional>
 #include <ranges>
+#include <stdexcept>
+#include <vector>
 
 namespace runir::kr::dl::detail
 {
@@ -31,6 +34,45 @@ void require_generic_join_order(std::string_view name,
 const ygg::IndexList<QueryColumn>& get_query_columns(ygg::Index<Query<>> index, const ConstructorRepository& repository)
 {
     return std::visit([&](auto concrete) -> const ygg::IndexList<QueryColumn>& { return repository[concrete].columns; }, repository[index].variant);
+}
+
+void prepare(ygg::Data<DatalogProgram>& data, const ConstructorRepository& repository)
+{
+    const auto program = ygg::database::datalog::ProgramView(data.program, repository.get_datalog_repository());
+    auto arities = std::vector<std::optional<size_t>>(data.inputs.size());
+    const auto read = [&](ygg::database::datalog::RelationView relation)
+    {
+        if (!relation.is_input())
+            return;
+        const auto slot = relation.get_input_slot();
+        if (slot >= data.inputs.size())
+            throw std::invalid_argument("Datalog program: an input relation has no input query.");
+        arities[slot] = relation.get_arity();
+    };
+    const auto atoms = [&](auto range)
+    {
+        for (const auto atom : range)
+            read(atom.get_relation());
+    };
+    for (const auto rule : program.get_rules())
+    {
+        atoms(rule.get_atoms());
+        atoms(rule.get_negated());
+        for (const auto aggregate : rule.get_aggregates())
+        {
+            atoms(aggregate.get_atoms());
+            atoms(aggregate.get_negated());
+        }
+    }
+    data.is_static = true;
+    for (size_t slot = 0; slot < data.inputs.size(); ++slot)
+    {
+        const auto input = ygg::make_view(data.inputs[slot], repository);
+        if (const auto& arity = arities[slot]; arity && *arity != input.get_schema().size())
+
+            throw std::invalid_argument("Datalog program: an input query does not have its relation's arity.");
+        data.is_static = data.is_static && input.is_static();
+    }
 }
 
 void prepare(ygg::Data<Query<>>& data, const ConstructorRepository& repository)

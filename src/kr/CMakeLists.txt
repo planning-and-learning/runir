@@ -5,6 +5,7 @@ add_library(kr SHARED
     dl/repository.cpp
     dl/translations/ygg_query.cpp
     dl/semantics/evaluation.cpp
+    parser/datalog.cpp
     dl/semantics/heuristics/projection.cpp
     dl/semantics/repository.cpp
     dl/semantics/state_evaluation_context.cpp

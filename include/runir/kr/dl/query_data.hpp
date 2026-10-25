@@ -5,6 +5,7 @@
 
 #include <cista/containers/string.h>
 #include <cista/containers/variant.h>
+#include <cista/containers/vector.h>
 #include <cstddef>
 #include <optional>
 #include <tuple>
@@ -15,6 +16,7 @@
 #include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
+#include <yggdrasil/database/datalog/declarations.hpp>
 #include <yggdrasil/database/semantics/generic_join_plan.hpp>
 #include <yggdrasil/database/semantics/must_pass_plan.hpp>
 #include <yggdrasil/database/semantics/plans.hpp>
@@ -525,6 +527,42 @@ struct Data<runir::kr::dl::QueryProjection<Category>>
 
     static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::arg, &Data::columns, &Data::plan> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg, &Data::columns> {}; }
+    void clear() noexcept { ygg::clear_members(*this); }
+};
+
+/// A Datalog program over the repository's DatalogRepository whose input slot s reads the rows of inputs[s].
+template<>
+struct Data<runir::kr::dl::DatalogProgram>
+{
+    Index<runir::kr::dl::DatalogProgram> index;
+    Index<ygg::database::datalog::Program> program {};
+    IndexList<runir::kr::dl::Query<>> inputs {};
+    /// Per derived relation id of the program, its name; per input slot, its name (for printing).
+    cista::offset::vector<cista::offset::string> relation_names {};
+    cista::offset::vector<cista::offset::string> input_names {};
+    bool is_static = false;
+
+    Data() = default;
+    // is_static is derived during insertion and therefore not a constructor parameter.
+    static constexpr auto cista_members() noexcept
+    { return ygg::Members<&Data::index, &Data::program, &Data::inputs, &Data::relation_names, &Data::input_names, &Data::is_static> {}; }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::program, &Data::inputs> {}; }
+    void clear() noexcept { ygg::clear_members(*this); }
+};
+
+template<>
+struct Data<runir::kr::dl::Query<runir::kr::dl::QueryHeadTag>>
+{
+    Index<runir::kr::dl::Query<runir::kr::dl::QueryHeadTag>> index;
+    Index<runir::kr::dl::DatalogProgram> program {};
+    Index<ygg::database::datalog::Relation> relation {};
+    IndexList<runir::kr::dl::QueryColumn> columns {};
+    ygg::Builder<ygg::database::Columns> schema {};
+
+    Data() = default;
+    // schema is derived during insertion and therefore not a constructor parameter.
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::program, &Data::relation, &Data::columns, &Data::schema> {}; }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::program, &Data::relation, &Data::columns> {}; }
     void clear() noexcept { ygg::clear_members(*this); }
 };
 

@@ -4,6 +4,7 @@
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/parser/ast.hpp"
+#include "runir/kr/parser/sexpression_ast.hpp"
 #include "runir/kr/ps/base/dl/ast/ast.hpp"
 #include "runir/kr/ps/ext/declarations.hpp"
 
@@ -160,6 +161,7 @@ struct Module : boost::spirit::x3::position_tagged
     std::vector<RegisterVariant> registers;
     Identifier entry;
     std::vector<NamedValue> memory_states;
+    boost::optional<runir::kr::parser::ast::DatalogSection> datalog;
     std::vector<FeatureVariant> features;
     std::vector<RuleEntry> rule_entries;
 };

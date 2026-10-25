@@ -714,6 +714,15 @@ struct QueryMustPassTag
     static constexpr auto keyword = "q_must_pass";
 };
 
+/// The rows of a head relation of a Datalog program (DatalogProgram), with named columns.
+struct QueryHeadTag
+{
+    static constexpr auto keyword = "q_head";
+};
+
+/// A stratified Datalog program (yggdrasil's datalog records) whose input relations are queries.
+struct DatalogProgram;
+
 using QueryConstructorTags = ygg::TypeList<AtomicStateTag<tyr::formalism::StaticTag>,
                                            AtomicStateTag<tyr::formalism::FluentTag>,
                                            AtomicStateTag<tyr::formalism::DerivedTag>,
@@ -731,7 +740,8 @@ using QueryConstructorTags = ygg::TypeList<AtomicStateTag<tyr::formalism::Static
                                            QueryDifferenceTag,
                                            QueryGenericJoinTag,
                                            QueryEmptyTag,
-                                           QueryMustPassTag>;
+                                           QueryMustPassTag,
+                                           QueryHeadTag>;
 
 using BaseConceptConstructorTags = ygg::TypeList<BotTag,
                                                  TopTag,
@@ -890,14 +900,15 @@ using ReferenceTypes = std::conditional_t<
     ygg::TypeList<Argument<ConceptTag>, Argument<RoleTag>, Argument<BooleanTag>, Argument<NumericalTag>, Register<ConceptTag>, Register<RoleTag>>,
     ygg::TypeList<>>;
 
-using ConstructorRepositoryTypes = ygg::ConcatTypeListsT<ConceptTypes,
-                                                         RoleTypes,
-                                                         BooleanTypes,
-                                                         NumericalTypes,
-                                                         ConstructorTypes,
-                                                         ReferenceTypes,
-                                                         QueryTypes,
-                                                         ygg::TypeList<Query<>, QueryColumn, QueryProjection<ConceptTag>, QueryProjection<RoleTag>>>;
+using ConstructorRepositoryTypes =
+    ygg::ConcatTypeListsT<ConceptTypes,
+                          RoleTypes,
+                          BooleanTypes,
+                          NumericalTypes,
+                          ConstructorTypes,
+                          ReferenceTypes,
+                          QueryTypes,
+                          ygg::TypeList<Query<>, QueryColumn, QueryProjection<ConceptTag>, QueryProjection<RoleTag>, DatalogProgram>>;
 
 using ConstructorRepository = runir::kr::dl::detail::BasicConstructorRepository<ConstructorRepositoryTypes>;
 
@@ -926,6 +937,8 @@ using ConstructorView = ygg::View<ygg::Index<Constructor<Category>>, Constructor
 
 template<typename Tag = void>
 using QueryView = ygg::View<ygg::Index<Query<Tag>>, ConstructorRepository>;
+
+using DatalogProgramView = ygg::View<ygg::Index<DatalogProgram>, ConstructorRepository>;
 
 template<CategoryTag Category>
 using ArgumentView = ygg::View<ygg::Index<Argument<Category>>, ConstructorRepository>;

@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_QUERY_NODE_HPP_
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_QUERY_NODE_HPP_
 
+#include "runir/kr/dl/semantics/incremental/detail/evaluators/datalog.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/must_pass.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/query.hpp"
 
@@ -27,10 +28,15 @@ public:
         m_operation(QueryFromDenotationEvaluator<Kind, Category>(argument, columns))
     {
     }
+    /// A Datalog program, which its q_head nodes read; it has no query expression.
+    QueryNode(DatalogProgramView program, GraphBuilder<Kind>& graph) : m_operation(QueryProgramEvaluator<Kind>(program, graph, m_dependencies)) {}
     [[nodiscard]] std::optional<QueryView<>> get_expression() const noexcept { return m_expression; }
+    /// The operation of a program node, if this is one.
+    [[nodiscard]] QueryProgramEvaluator<Kind>* get_program() noexcept { return std::get_if<QueryProgramEvaluator<Kind>>(&m_operation); }
+    [[nodiscard]] const QueryProgramEvaluator<Kind>* get_program() const noexcept { return std::get_if<QueryProgramEvaluator<Kind>>(&m_operation); }
     /// Whether this node lifts argument into a relation with exactly these columns.
     template<ConceptOrRoleTag Category>
-    bool lifts(EvaluationIndex<Category> argument, std::span<const ygg::database::ColumnLayout> columns) const
+    [[nodiscard]] bool lifts(EvaluationIndex<Category> argument, std::span<const ygg::database::ColumnLayout> columns) const
     {
         const auto* lifted = std::get_if<QueryFromDenotationEvaluator<Kind, Category>>(&m_operation);
         return !m_expression && lifted && lifted->argument == argument && std::ranges::equal(lifted->result.columns().span(), columns);
@@ -56,7 +62,9 @@ private:
                                    QuerySelectionEvaluator<Kind, QueryRenameTag>,
                                    QuerySelectionEvaluator<Kind, QuerySelectEqualTag>,
                                    QuerySelectionEvaluator<Kind, QuerySelectValueTag>,
-                                   QueryMustPassEvaluator<Kind>>;
+                                   QueryMustPassEvaluator<Kind>,
+                                   QueryProgramEvaluator<Kind>,
+                                   QueryHeadEvaluator<Kind>>;
 
     std::optional<QueryView<>> m_expression;
     std::vector<ygg::uint_t> m_dependencies;
@@ -131,6 +139,8 @@ auto QueryNode<Kind>::prepare_operation(QueryView<> expression, GraphBuilder<Kin
                 return QuerySelectionEvaluator<Kind, Tag>(graph.prepare(concrete.get_arg(), m_dependencies), concrete);
             else if constexpr (std::same_as<Tag, QueryMustPassTag>)
                 return QueryMustPassEvaluator<Kind>(concrete, graph, m_dependencies);
+            else if constexpr (std::same_as<Tag, QueryHeadTag>)
+                return QueryHeadEvaluator<Kind>(concrete, graph, m_dependencies);
             else
                 throw std::logic_error("Incremental query: a static constructor was marked dynamic.");
         },

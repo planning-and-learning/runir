@@ -200,6 +200,9 @@ template<typename Dialect = FullDialectTag>
 using query_must_pass_type = boost::spirit::x3::rule<QueryClass<ast::QueryMustPass, Dialect>, ast::QueryMustPass>;
 
 template<typename Dialect = FullDialectTag>
+using query_head_type = boost::spirit::x3::rule<QueryClass<ast::QueryHead, Dialect>, ast::QueryHead>;
+
+template<typename Dialect = FullDialectTag>
 using query_type = boost::spirit::x3::rule<QueryClass<ast::Query, Dialect>, ast::Query>;
 
 template<typename Dialect = FullDialectTag>

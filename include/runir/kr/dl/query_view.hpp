@@ -3,10 +3,12 @@
 
 #include "runir/kr/dl/query_data.hpp"
 
+#include <string_view>
 #include <tyr/formalism/object_view.hpp>
 #include <tyr/formalism/predicate_view.hpp>
 #include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/containers/vector.hpp>
+#include <yggdrasil/database/datalog/repository.hpp>
 
 namespace ygg
 {
@@ -82,6 +84,24 @@ public:
         requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
     { return make_view(this->get_data().probes, this->get_context()); }
 
+    auto get_program() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::QueryHeadTag>
+    { return make_view(this->get_data().program, this->get_context()); }
+
+    /// The head relation in the repository's DatalogRepository.
+    auto get_relation() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::QueryHeadTag>
+    { return ygg::database::datalog::RelationView(this->get_data().relation, this->get_context().get_datalog_repository()); }
+
+    /// The head relation's name in its program.
+    [[nodiscard]] std::string_view get_name() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::QueryHeadTag>
+    {
+        const auto& names = get_program().get_data().relation_names;
+        const auto id = get_relation().get_id();
+        return id < names.size() ? std::string_view(names[id]) : std::string_view();
+    }
+
     auto get_columns() const noexcept
     {
         if constexpr (std::same_as<Tag, void>)
@@ -135,6 +155,20 @@ public:
 
     auto get_arg() const noexcept { return make_view(this->get_data().arg, this->get_context()); }
     auto get_columns() const noexcept { return make_view(this->get_data().columns, this->get_context()); }
+};
+
+template<typename C>
+class View<Index<runir::kr::dl::DatalogProgram>, C> : public ygg::IndexViewBase<runir::kr::dl::DatalogProgram, C>
+{
+public:
+    using ygg::IndexViewBase<runir::kr::dl::DatalogProgram, C>::IndexViewBase;
+
+    /// The program's rules, in the repository's DatalogRepository.
+    auto get_program() const noexcept { return ygg::database::datalog::ProgramView(this->get_data().program, this->get_context().get_datalog_repository()); }
+    auto get_inputs() const noexcept { return make_view(this->get_data().inputs, this->get_context()); }
+    const auto& get_relation_names() const noexcept { return this->get_data().relation_names; }
+    const auto& get_input_names() const noexcept { return this->get_data().input_names; }
+    [[nodiscard]] bool is_static() const noexcept { return this->get_data().is_static; }
 };
 
 }  // namespace ygg

@@ -23,6 +23,9 @@ ygg::uint_t on_demand_distance(NumericalView<DistanceTag> constructor, Context& 
 /// Defined in distance_evaluation.hpp.
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
 void on_demand_must_pass(ygg::View<ygg::Index<Query<QueryMustPassTag>>, C> constructor, Context& context, ygg::Builder<ygg::database::Relation>& result);
+/// Defined in datalog_evaluation.hpp.
+template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
+void on_demand_head(ygg::View<ygg::Index<Query<QueryHeadTag>>, C> constructor, Context& context, ygg::Builder<ygg::database::Relation>& result);
 }
 
 template<tyr::TaskKind Kind, ConceptOrRoleTag Category, StateEvaluationContextConcept<Kind> Context, typename C>

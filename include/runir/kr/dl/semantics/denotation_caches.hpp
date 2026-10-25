@@ -5,6 +5,7 @@
 #include "runir/kr/dl/semantics/denotation_view.hpp"
 
 #include <array>
+#include <cstdint>
 #include <tuple>
 #include <yggdrasil/containers/associative_containers.hpp>
 #include <yggdrasil/database/semantics/join_index.hpp>
@@ -23,16 +24,20 @@ class DenotationCaches
     using Cache = ygg::UnorderedMap<ConstructorView<Category>, DenotationView<Category>>;
 
     using QueryCache = ygg::UnorderedMap<QueryView<>, QueryDenotationView>;
+    /// Per program, the generation of its feature's evaluation in this state (DatalogFeature).
+    using ProgramCache = ygg::UnorderedMap<DatalogProgramView, uint64_t>;
 
     struct Partition
     {
         std::tuple<Cache<ConceptTag>, Cache<RoleTag>, Cache<BooleanTag>, Cache<NumericalTag>> values;
         QueryCache queries;
+        ProgramCache programs;
 
         void clear() noexcept
         {
             std::apply([](auto&... caches) { (caches.clear(), ...); }, values);
             queries.clear();
+            programs.clear();
         }
     };
 
@@ -57,6 +62,7 @@ public:
 
     auto& get_queries(bool is_static) noexcept { return m_partitions[is_static].queries; }
     [[nodiscard]] const auto& get_queries(bool is_static) const noexcept { return m_partitions[is_static].queries; }
+    [[nodiscard]] auto& get_programs(bool is_static) noexcept { return m_partitions[is_static].programs; }
     auto& get_static_join_indexes() noexcept { return m_static_join_indexes; }
     [[nodiscard]] const auto& get_static_join_indexes() const noexcept { return m_static_join_indexes; }
 

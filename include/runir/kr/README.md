@@ -83,7 +83,8 @@ list.
 alternatives. A query evaluates to a relation, not a fifth DL denotation
 category. Queries can embed DL expressions; query projections produce concepts
 or roles. `ConceptOrRoleTag` restricts projection and register types to these
-two categories.
+two categories. `q_head` reads a head of a policy's Datalog program
+(`DatalogProgram`, see `docs/datalog.md`).
 
 The `dl::grammar` and `dl::cnf_grammar` namespaces represent generation grammars,
 separately from evaluable expressions. They contain the `Generation*ConstructorTags`
