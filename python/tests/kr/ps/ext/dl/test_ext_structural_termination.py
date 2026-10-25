@@ -1,13 +1,17 @@
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import gc
 import sys
+from collections.abc import Callable
 
 import pytest
-
 from fixture_utils import read_fixture
+from pytyr.formalism.planning import PlanningDomain
+
 from pyrunir.kr.dl import ConstructorRepositoryFactory as DlRepositoryFactory
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext import dl
-from pytyr.formalism.planning import PlanningDomain
 
 TERMINATING_MODULE = read_fixture("kr/ps/ext/dl/terminating.module")
 NON_TERMINATING_MODULE = read_fixture("kr/ps/ext/dl/non_terminating.module")
@@ -32,12 +36,17 @@ def test_counterexample_properties_keep_the_graph_alive(
     graph = sieve_result.counterexample
     assert graph is not None
     references = sys.getrefcount(graph)
+    read_property: Callable[[], str]
     if vertex_property:
         label = graph.get_vertex_property(next(iter(graph.get_vertex_indices())))
         read_property = label.memory_state.get_name
     else:
         label = graph.get_edge_property(next(iter(graph.get_edge_indices())))
-        read_property = lambda: str(label)
+
+        def read_edge_label() -> str:
+            return str(label)
+
+        read_property = read_edge_label
     assert sys.getrefcount(graph) > references
     expected = read_property()
 
@@ -86,16 +95,16 @@ def test_empty_module_distinguishes_skipped_sieve_from_empty_sccs(
         assert sieve_result.surviving_rules == []
 
 
-@pytest.mark.parametrize("num_booleans,num_numericals", [(0, 64), (0, 65), (32, 32), (32, 33)])
+@pytest.mark.parametrize(("num_booleans", "num_numericals"), [(0, 64), (0, 65), (32, 32), (32, 33)])
 @pytest.mark.parametrize("with_rule", [False, True])
 def test_ext_structural_termination_feature_mask_boundary(
     gripper_planning_domain: PlanningDomain, num_booleans: int, num_numericals: int, with_rule: bool
 ) -> None:
     repository = _repository(gripper_planning_domain)
-    features = " ".join(
-        f"(:boolean (:symbol b{i}) (:expression (b_nonempty (c_top))))" for i in range(num_booleans)
-    ) + " " + " ".join(
-        f"(:numerical (:symbol n{i}) (:expression (n_count (c_top))))" for i in range(num_numericals)
+    features = (
+        " ".join(f"(:boolean (:symbol b{i}) (:expression (b_nonempty (c_top))))" for i in range(num_booleans))
+        + " "
+        + " ".join(f"(:numerical (:symbol n{i}) (:expression (n_count (c_top))))" for i in range(num_numericals))
     )
     active = f"n{num_numericals - 1}"
     rule = (
@@ -106,7 +115,9 @@ def test_ext_structural_termination_feature_mask_boundary(
     )
     module = dl.parse_module(
         "(:module (:symbol boundary) (:arguments) (:registers) (:entry m0) (:memory m0) "
-        f"(:features {features}) (:rules {rule}))", gripper_planning_domain, repository
+        f"(:features {features}) (:rules {rule}))",
+        gripper_planning_domain,
+        repository,
     )
     assert len(module.get_boolean_features()) == num_booleans
     assert len(module.get_numerical_features()) == num_numericals
@@ -218,7 +229,7 @@ def test_ext_structural_termination_counterexample_spans_memory_states(gripper_p
     cycle = counterexample.find_edge_cycle()
     assert len(cycle) == 2
     assert len(set(cycle)) == 2
-    for edge, next_edge in zip(cycle, cycle[1:] + cycle[:1]):
+    for edge, next_edge in zip(cycle, cycle[1:] + cycle[:1], strict=True):
         assert counterexample.get_target(edge) == counterexample.get_source(next_edge)
 
 
@@ -280,13 +291,13 @@ def test_ext_structural_termination_lifts_projected_components(
     assert len(surviving_rules) == len(surviving_rule_ids) == 4
     assert surviving_rule_ids == {edge.get_index() for edge in edges}
     with pytest.raises(AttributeError):
-        setattr(sieve_result, "surviving_rules", [])
+        sieve_result.surviving_rules = []
 
     cycle = counterexample.find_edge_cycle()
     assert cycle
     assert len(cycle) == len(set(cycle))
     assert set(cycle) <= set(counterexample.get_edge_indices())
-    for edge, next_edge in zip(cycle, cycle[1:] + cycle[:1]):
+    for edge, next_edge in zip(cycle, cycle[1:] + cycle[:1], strict=True):
         assert counterexample.get_target(edge) == counterexample.get_source(next_edge)
     assert {counterexample.get_edge_property(edge).get_index() for edge in cycle} < surviving_rule_ids
 

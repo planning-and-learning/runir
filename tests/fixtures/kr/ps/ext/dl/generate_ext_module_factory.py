@@ -1,3 +1,6 @@
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Regenerate expected module-factory metadata."""
 
 import json
@@ -6,11 +9,11 @@ from typing import TypedDict, cast
 
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
+from pytyr.formalism.planning import Parser
+
 from pyrunir.kr.dl import ConstructorRepositoryFactory as DlRepositoryFactory
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext import dl
-from pytyr.formalism.planning import Parser
-
 
 SUITE = Path(__file__).with_name("module_factory.json")
 
@@ -38,7 +41,7 @@ class Suite(TypedDict):
 
 
 def main() -> None:
-    suite = cast(Suite, json.loads(SUITE.read_text(encoding="utf-8")))
+    suite = cast("Suite", json.loads(SUITE.read_text(encoding="utf-8")))
     planning_domain = Parser(Path(data_root()) / suite["domain_file"], ParserOptions()).get_domain()
     dl_repository = DlRepositoryFactory().create(planning_domain)
     repository = ext.RepositoryFactory().create(dl_repository)

@@ -1,9 +1,15 @@
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+"""Command line entry point printing discovery paths for the bundled native runir library."""
+
 import argparse
 
 import pyrunir
 
 
 def main() -> None:
+    """Parse the command line and print the requested native library path or the package version."""
     parser = argparse.ArgumentParser(
         prog="python -m pyrunir",
         description="Print discovery paths for the bundled native runir library.",

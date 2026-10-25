@@ -1,17 +1,25 @@
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 from datetime import timedelta
+from pathlib import Path
 
 import pytest
 from fixture_utils import read_fixture
 from pypddl.formalism import ParserOptions
-from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
-from pyrunir.kr import DomainContext, GroundTaskContext, LiftedTaskContext
-from pyrunir.kr.ps import base
 from pytyr.formalism.planning import Parser
 from pytyr.planning import lifted
 from pyyggdrasil.execution import ExecutionContext
 
+from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
+from pyrunir.kr import DomainContext, GroundTaskContext, LiftedTaskContext
+from pyrunir.kr.ps import base
 
-def _context(tmp_path, kind, initial_goal=False, *, action_costs=False):
+
+def _context(
+    tmp_path: Path, kind: str, *, initial_goal: bool = False, action_costs: bool = False
+) -> tuple[GroundTaskContext | LiftedTaskContext, base.Sketch]:
+    """Build a two-action counters task context of the given kind and an any-transition sketch for it."""
     domain_path = tmp_path / "domain.pddl"
     domain_pddl = """(define (domain counters)
       (:requirements :strips)
@@ -54,7 +62,7 @@ def _context(tmp_path, kind, initial_goal=False, *, action_costs=False):
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
-def test_search_statistics_count_generation_before_filtering_and_deduplication(tmp_path, kind):
+def test_search_statistics_count_generation_before_filtering_and_deduplication(tmp_path: Path, kind: str) -> None:
     context, sketch = _context(tmp_path, kind)
     options = getattr(base, f"{kind.title()}SketchSearchOptions")()
     find_solution = getattr(base, f"find_{kind}_solution")
@@ -135,7 +143,7 @@ def test_search_statistics_count_generation_before_filtering_and_deduplication(t
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
-def test_search_preserves_cumulative_node_metrics(tmp_path, kind):
+def test_search_preserves_cumulative_node_metrics(tmp_path: Path, kind: str) -> None:
     context, sketch = _context(tmp_path, kind, action_costs=True)
     options = getattr(base, f"{kind.title()}SketchSearchOptions")()
     result = getattr(base, f"find_{kind}_solution")(context, sketch, options)
@@ -151,7 +159,7 @@ def test_search_preserves_cumulative_node_metrics(tmp_path, kind):
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
-def test_initial_goal_is_not_expanded(tmp_path, kind):
+def test_initial_goal_is_not_expanded(tmp_path: Path, kind: str) -> None:
     context, sketch = _context(tmp_path, kind, initial_goal=True, action_costs=True)
     options = getattr(base, f"{kind.title()}SketchSearchOptions")()
     result = getattr(base, f"find_{kind}_solution")(context, sketch, options)
@@ -163,7 +171,8 @@ def test_initial_goal_is_not_expanded(tmp_path, kind):
     assert result.plan.get_cost() == 0
     assert result.plan.get_start_node().get_metric() == 7
     initial = result.graph.get_vertex_property(next(iter(result.graph.get_vertex_indices())))
-    assert initial.is_initial and initial.is_goal
+    assert initial.is_initial
+    assert initial.is_goal
     assert result.plan.get_start_node().get_state() == initial.state
 
     options.universal = True

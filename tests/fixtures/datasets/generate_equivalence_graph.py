@@ -1,3 +1,6 @@
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Regenerate equivalence-graph counts while preserving authored inputs."""
 
 import json
@@ -6,16 +9,16 @@ from typing import TypedDict, cast
 
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
+from pytyr.formalism.planning import Parser
+from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
+from pyyggdrasil.execution import ExecutionContext
+
 from pyrunir.datasets import (
     EquivalenceGraphGenerationOptions,
     EquivalencePolicyMode,
     GroundTaskSearchContext,
     generate_ground_equivalence_graph,
 )
-from pyyggdrasil.execution import ExecutionContext
-from pytyr.formalism.planning import Parser
-from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
-
 
 SUITE = Path(__file__).with_name("equivalence_graph.json")
 POLICIES = {
@@ -50,7 +53,7 @@ def make_contexts(case: Case) -> list[GroundTaskSearchContext]:
 
 
 def main() -> None:
-    suite = cast(Suite, json.loads(SUITE.read_text(encoding="utf-8")))
+    suite = cast("Suite", json.loads(SUITE.read_text(encoding="utf-8")))
     for case in suite["tests"]:
         options = EquivalenceGraphGenerationOptions()
         options.policy_mode = POLICIES[case["equivalence_policy"]]

@@ -1,5 +1,6 @@
-# Import all classes and functions for better IDE support
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
 
-from . import base as base
-from . import ext as ext
-from . import icp as icp
+"""Policy sketches: the base, extended and indexical concept policy languages."""
+
+from pyrunir.kr.ps import base as base, ext as ext, icp as icp

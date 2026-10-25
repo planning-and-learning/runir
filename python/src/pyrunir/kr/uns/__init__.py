@@ -1,15 +1,17 @@
-# Import all classes and functions for better IDE support
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
 
-from ..._pyrunir.kr.uns import (
-    Classifier,
-    ClassifierClause,
-    ClassifierClauseIndex,
-    ClassifierIndex,
-    ClassifierLiteral,
-    ClassifierLiteralIndex,
-    Repository,
-    RepositoryFactory,
-    classify,
+"""Unsolvability classifiers over states."""
+
+from pyrunir._pyrunir.kr.uns import (
+    Classifier as Classifier,
+    ClassifierClause as ClassifierClause,
+    ClassifierClauseIndex as ClassifierClauseIndex,
+    ClassifierIndex as ClassifierIndex,
+    ClassifierLiteral as ClassifierLiteral,
+    ClassifierLiteralIndex as ClassifierLiteralIndex,
+    Repository as Repository,
+    RepositoryFactory as RepositoryFactory,
+    classify as classify,
 )
-
-from . import dl as dl
+from pyrunir.kr.uns import dl as dl

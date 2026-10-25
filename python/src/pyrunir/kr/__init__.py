@@ -1,6 +1,9 @@
-# Import submodules for better IDE support
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
 
-from .._pyrunir.kr import (
+"""Knowledge representation: description logics, policy sketches and unsolvability classifiers."""
+
+from pyrunir._pyrunir.kr import (
     ArityMismatchError as ArityMismatchError,
     DomainContext as DomainContext,
     DuplicateDefinitionError as DuplicateDefinitionError,
@@ -11,8 +14,7 @@ from .._pyrunir.kr import (
     SemanticError as SemanticError,
     UndefinedSymbolError as UndefinedSymbolError,
 )
-
-from . import (
+from pyrunir.kr import (
     dl as dl,
     ps as ps,
     uns as uns,

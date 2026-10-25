@@ -1,9 +1,12 @@
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Handles and results of an exploration session; each result has a compact `describe()` for agents."""
 
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 
 Value = bool | int | float
@@ -14,7 +17,7 @@ Outcome = Literal["succeeded", "failed", "untried", "succeeds", "fails", "unknow
 `succeeds`/`fails`/`unknown`: the result of a budgeted search from an untried binding."""
 
 
-class BudgetExhausted(RuntimeError):
+class BudgetExhaustedError(RuntimeError):
     """The session's search budget is used up."""
 
 
@@ -26,54 +29,83 @@ class Budget:
     max_seconds: float = 10.0
 
 
+@dataclass(frozen=True, slots=True)
+class SessionOptions:
+    """Search limits and parallelism of a session."""
+
+    budget: Budget = field(default_factory=Budget)
+    """Limits every search the session starts."""
+    total_seconds: float = 1800.0
+    """Limits the sum of the session's search times."""
+    workers: int = 8
+    """Number of tasks searched in parallel."""
+    release_mib: float | None = None
+    """Scans over many tasks evict their searches above this resident size; None never evicts."""
+
+
 # ---------------------------------------------------------------------------------------------------------------------
 # Handles
 
 
 @dataclass(frozen=True, slots=True)
 class Task:
+    """A lifted task of the session, identified by its name."""
+
     name: str
 
     def describe(self) -> str:
+        """Return a compact one-line or multi-line text description for agents."""
         return self.name
 
 
 @dataclass(frozen=True, slots=True)
 class ChooseRule:
+    """A Choose rule of the program and the register it binds."""
+
     name: str
     register: str
 
     def describe(self) -> str:
+        """Return a compact one-line or multi-line text description for agents."""
         return self.name
 
 
 @dataclass(frozen=True, slots=True)
 class Feature:
+    """A description logic feature expression, optionally named, of a given category."""
+
     expression: str
     category: Category
     name: str | None = None
 
     def describe(self) -> str:
+        """Return a compact one-line or multi-line text description for agents."""
         return self.name or self.expression
 
 
 @dataclass(frozen=True, slots=True)
 class VertexRef:
+    """A vertex of a task's execution or proof search graph."""
+
     task: Task
     vertex: int
     proof: bool = False
     """A vertex of the universal proof search (`<task>:pv<n>`) instead of the execution search (`<task>:v<n>`)."""
 
     def describe(self) -> str:
+        """Return a compact one-line or multi-line text description for agents."""
         return f"{self.task.name}:{'pv' if self.proof else 'v'}{self.vertex}"
 
 
 @dataclass(frozen=True, slots=True)
 class BindingRef:
+    """One binding of the Choose rule applied at a vertex."""
+
     point: VertexRef
     binding: str
 
     def describe(self) -> str:
+        """Return a compact one-line or multi-line text description for agents."""
         return f"{self.point.describe()}:{self.binding}"
 
 
@@ -83,6 +115,8 @@ class BindingRef:
 
 @dataclass(frozen=True, slots=True)
 class TaskRun:
+    """The outcome and search statistics of executing the program on one task."""
+
     task: Task
     status: str
     category: str | None
@@ -97,6 +131,7 @@ class TaskRun:
     """From the initial vertex to the first goal, or to the failure."""
 
     def describe(self) -> str:
+        """Return a compact one-line or multi-line text description for agents."""
         head = f"{self.task.name}: {self.status}" + (f" ({self.category})" if self.category else "")
         stats = (
             f"expanded={self.num_expanded} backtracks={self.num_backtracks} "
@@ -108,6 +143,8 @@ class TaskRun:
 
 @dataclass(frozen=True, slots=True)
 class TaskValidation:
+    """The execution and proof outcomes of the program on one task."""
+
     task: Task
     execute: str
     """`passed`, `failed (<category>)` or `unavailable (<status>)`."""
@@ -119,20 +156,25 @@ class TaskValidation:
 
     @property
     def passed(self) -> bool:
+        """Whether both the execution and the proof passed."""
         return self.execute == "passed" and self.prove == "passed"
 
     def describe(self) -> str:
+        """Return a compact one-line or multi-line text description for agents."""
         depth = f" choice_depth={self.choice_depth}" if self.choice_depth is not None else ""
         return f"{self.task.name}: execute {self.execute}, prove {self.prove}{depth}"
 
 
 @dataclass(frozen=True, slots=True)
 class Validation:
+    """The validation of a program on all tasks, optionally compared to the initial program's choice depth."""
+
     tasks: tuple[TaskValidation, ...]
     baseline: Mapping[Task, int] | None = None
     """Choice depth of the session's initial program per task it executes successfully; None while exploring it."""
 
     def describe(self) -> str:
+        """Return a compact one-line or multi-line text description for agents."""
         passed = [task for task in self.tasks if task.passed]
         depth = sum(task.choice_depth or 0 for task in passed)
         lines = [f"passed {len(passed)}/{len(self.tasks)}; choice_depth sum over passed tasks {depth}"]
@@ -163,6 +205,8 @@ class Validation:
 
 @dataclass(frozen=True, slots=True)
 class ChooseSummary:
+    """How often a Choose rule branches across the tasks and how its bindings fared."""
+
     rule: ChooseRule
     occurrences: int
     """Choose steps with at least two bindings on first-goal or failure paths."""
@@ -173,6 +217,7 @@ class ChooseSummary:
     untried_bindings: int
 
     def describe(self) -> str:
+        """Return a compact one-line or multi-line text description for agents."""
         return (
             f"{self.rule.name}: occurrences={self.occurrences} tasks={self.tasks} max_width={self.max_width} "
             f"failed_bindings={self.failed_bindings} points_with_failure={self.points_with_failure} "
@@ -182,6 +227,8 @@ class ChooseSummary:
 
 @dataclass(frozen=True, slots=True)
 class ChoicePoint:
+    """A vertex where a Choose rule has several bindings, with the fate of each."""
+
     vertex: VertexRef
     rule: ChooseRule
     width: int
@@ -191,12 +238,15 @@ class ChoicePoint:
     untried: int
 
     def describe(self) -> str:
+        """Return a compact one-line or multi-line text description for agents."""
         chosen = f"{self.chosen}/{self.width}" if self.chosen else f"-/{self.width}"
         return f"{self.vertex.describe()} {self.rule.name} chosen={chosen} failed={self.failed} untried={self.untried}"
 
 
 @dataclass(frozen=True, slots=True)
 class Alternative:
+    """One binding at a choice point: its outcome and how its features differ from the reference binding."""
+
     binding: BindingRef
     rank: int
     outcome: Outcome
@@ -204,11 +254,15 @@ class Alternative:
     """For failures: `open_state`, `empty_choose`, or `subtree` when every continuation failed."""
     states: int | None
     deltas: Mapping[str, tuple[Value, Value]]
-    """Feature: (value at the reference binding, value here); the reference is the successful binding, else the first."""
+    """Feature: (value at the reference binding, value here).
+
+    The reference is the successful binding, else the first.
+    """
     atoms: tuple[str, ...] = ()
     """Atoms of the Choose source that mention the binding (written `*`) and not every binding at the point."""
 
     def describe(self) -> str:
+        """Return a compact one-line or multi-line text description for agents."""
         deltas = " ".join(f"{name}:{a}>{b}" for name, (a, b) in self.deltas.items()) or "-"
         ending = f" {self.ending}" if self.ending else ""
         states = f" states={self.states}" if self.states is not None else ""
@@ -221,7 +275,8 @@ class Separation:
     """How `feature` compares a successful binding with a failed one at the same choice point.
 
     Booleans count `True` as higher. A feature that is higher (or lower) on every pair would decide
-    the Choose as an `:order` or a condition; one that is equal on every pair cannot."""
+    the Choose as an `:order` or a condition; one that is equal on every pair cannot.
+    """
 
     feature: Feature
     pairs: int
@@ -237,18 +292,23 @@ class Separation:
 
     @property
     def consistent(self) -> bool:
+        """Whether every pair separates in the same direction and none is equal."""
         return self.pairs > 0 and self.equal == 0 and min(self.higher, self.lower) == 0
 
     def describe(self) -> str:
+        """Return a compact one-line or multi-line text description for agents."""
         direction = "max" if self.higher >= self.lower else "min"
         return (
-            f"{self.feature.describe()}: score={self.score:.2f} ({direction}){' consistent' if self.consistent else ''} "
+            f"{self.feature.describe()}: score={self.score:.2f} ({direction})"
+            f"{' consistent' if self.consistent else ''} "
             f"higher={self.higher} lower={self.lower} equal={self.equal} of {self.pairs} pairs"
         )
 
 
 @dataclass(frozen=True, slots=True)
 class Contrast:
+    """Successful and failed bindings of a Choose rule, with the features ranked by how well they separate them."""
+
     rule: ChooseRule
     pairs: tuple[tuple[BindingRef, BindingRef], ...]
     """(successful, failed) bindings at the same choice point."""
@@ -258,10 +318,13 @@ class Contrast:
     ranking: tuple[Separation, ...]
 
     def describe(self) -> str:
+        """Return a compact one-line or multi-line text description for agents."""
         informative = [separation for separation in self.ranking if separation.score > 0]
         lines = [
-            f"{self.rule.name}: {len(self.pairs)} (succeeded, failed) pairs from {self.decided} points with a failed binding; "
-            f"{self.undecided} points without one",
+            (
+                f"{self.rule.name}: {len(self.pairs)} (succeeded, failed) pairs from {self.decided} points with a "
+                f"failed binding; {self.undecided} points without one"
+            ),
             *(f"  {separation.describe()}" for separation in informative[:10]),
             f"  ({len(self.ranking) - len(informative[:10])} other declared features separate less or not at all)",
         ]
@@ -270,6 +333,8 @@ class Contrast:
 
 @dataclass(frozen=True, slots=True)
 class LoadTrial:
+    """The outcome of validating the program with a Choose rule rewritten as a Load."""
+
     rule: ChooseRule
     terminating: bool
     passed: tuple[Task, ...]
@@ -280,6 +345,7 @@ class LoadTrial:
     """Sum over the passed tasks: with the Choose, with the Load."""
 
     def describe(self) -> str:
+        """Return a compact one-line or multi-line text description for agents."""
         if not self.terminating:
             return f"{self.rule.name} as Load: the rewritten program is not structurally terminating"
         failed = ", ".join(f"{task.name} {stage} {category}" for task, stage, category in self.failed) or "-"
@@ -287,7 +353,8 @@ class LoadTrial:
         note = (
             "\n  a prove failure means some binding, possibly one the Choose never tried, fails: in a proof a Load"
             " needs every binding to succeed, a Choose only one; alternatives with a budget searches untried bindings"
-            if any(stage == "prove" for _, stage, _ in self.failed) else ""
+            if any(stage == "prove" for _, stage, _ in self.failed)
+            else ""
         )
         return (
             f"{self.rule.name} as Load: passed={len(self.passed)} failed={len(self.failed)} "
@@ -298,6 +365,8 @@ class LoadTrial:
 
 @dataclass(frozen=True, slots=True)
 class Step:
+    """One action from a vertex, with the rule admitting it and the feature changes it causes."""
+
     action: str
     rule: str | None
     """For successors: the rule admitting the action at the vertex, or None if no rule does."""
@@ -305,6 +374,7 @@ class Step:
     """Boolean and numerical features before and after the action, under the vertex's registers and arguments."""
 
     def describe(self) -> str:
+        """Return a compact one-line or multi-line text description for agents."""
         deltas = " ".join(f"{name}:{a}>{b}" for name, (a, b) in self.deltas.items()) or "-"
         rule = f" rule={self.rule}" if self.rule else (" rule=(none)" if self.rule is None else "")
         return f"{self.action}{rule} deltas: {deltas}"
@@ -312,14 +382,20 @@ class Step:
 
 @dataclass(frozen=True, slots=True)
 class Plan:
+    """A plan found from a vertex, or why none was found."""
+
     start: VertexRef
     status: str
     steps: tuple[Step, ...]
 
     def describe(self) -> str:
+        """Return a compact one-line or multi-line text description for agents."""
         start = self.start.describe()
         if self.status in ("exhausted", "unsolvable"):
-            return f"no plan from {start}: its state is a dead end, so an earlier step on the path made the task unsolvable"
+            return (
+                f"no plan from {start}: its state is a dead end, so an earlier step on the path made the task "
+                "unsolvable"
+            )
         if self.status != "solved":
             return f"no plan from {start} found within the budget ({self.status})"
         head = f"plan from {start}: {len(self.steps)} steps (need not follow the program)"
@@ -328,6 +404,8 @@ class Plan:
 
 @dataclass(frozen=True, slots=True)
 class Vertex:
+    """The program state at a vertex: memory, registers, atoms and feature values."""
+
     ref: VertexRef
     memory: str
     registers: Mapping[str, str | None]
@@ -336,6 +414,7 @@ class Vertex:
     goal: bool
 
     def describe(self) -> str:
+        """Return a compact one-line or multi-line text description for agents."""
         registers = " ".join(f"{name}={value}" for name, value in self.registers.items())
         features = " ".join(f"{name}={value}" for name, value in self.features.items())
         return (
@@ -346,6 +425,8 @@ class Vertex:
 
 @dataclass(frozen=True, slots=True)
 class ModuleTermination:
+    """Why a module is not structurally terminating."""
+
     module: str
     status: str
     surviving_rules: tuple[str, ...]
@@ -354,6 +435,7 @@ class ModuleTermination:
     """One cycle of the abstract policy graph: states as `memory[true Booleans; positive numericals]` and rules."""
 
     def describe(self) -> str:
+        """Return a compact one-line or multi-line text description for agents."""
         lines = [f"module {self.module}: {self.status}; surviving rules: {', '.join(self.surviving_rules) or '-'}"]
         if self.cycle:
             lines.append("  cycle: " + " ".join(self.cycle))
@@ -362,12 +444,15 @@ class ModuleTermination:
 
 @dataclass(frozen=True, slots=True)
 class Termination:
+    """The structural termination result of the program."""
+
     terminating: bool
     status: str
     modules: tuple[ModuleTermination, ...]
     recursive_call_rules: tuple[str, ...]
 
     def describe(self) -> str:
+        """Return a compact one-line or multi-line text description for agents."""
         if self.terminating:
             return "structurally terminating"
         lines = [f"not structurally terminating ({self.status})"]
@@ -379,6 +464,8 @@ class Termination:
 
 @dataclass(frozen=True, slots=True)
 class DeadEnd:
+    """The step on a failure path where the task becomes unsolvable."""
+
     task: Task
     solvable: VertexRef | None
     """The last vertex on the failure path whose state still has a plan; None if the task itself is unsolvable."""
@@ -391,8 +478,11 @@ class DeadEnd:
     """A plan search hit its budget, so the boundary is not certain."""
 
     def describe(self) -> str:
+        """Return a compact one-line or multi-line text description for agents."""
         if self.dead is None:
-            return f"{self.task.name}: every state on the failure path has a plan; the program stops in a solvable state"
+            return (
+                f"{self.task.name}: every state on the failure path has a plan; the program stops in a solvable state"
+            )
         if self.solvable is None:
             return f"{self.task.name}: the initial state has no plan"
         step = f"{self.rule}" + (f" {self.action}" if self.action else "")
@@ -405,6 +495,8 @@ class DeadEnd:
 
 @dataclass(frozen=True, slots=True)
 class Failure:
+    """Where and how the program fails on a task."""
+
     run: TaskRun
     memory: str | None
     registers: Mapping[str, str | None]
@@ -415,6 +507,7 @@ class Failure:
     """Where the failure path makes the task unsolvable, when requested."""
 
     def describe(self) -> str:
+        """Return a compact one-line or multi-line text description for agents."""
         if self.run.failure is None:
             return f"{self.run.task.name}: {self.run.status}" + (f" ({self.run.category})" if self.run.category else "")
         registers = " ".join(f"{name}={value}" for name, value in self.registers.items())

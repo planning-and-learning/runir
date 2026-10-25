@@ -1,3 +1,6 @@
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Regenerate execution outcome fields while preserving program inputs."""
 
 import json
@@ -6,14 +9,14 @@ from typing import TypedDict, cast
 
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
+from pytyr.formalism.planning import Parser
+from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
+from pyyggdrasil.execution import ExecutionContext
+
 from pyrunir.datasets import GroundTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext import dl
-from pyyggdrasil.execution import ExecutionContext
-from pytyr.formalism.planning import Parser
-from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
-
 
 ROOT = Path(__file__).resolve().parents[5]
 SUITE = Path(__file__).with_name("execution.json")
@@ -36,7 +39,7 @@ class Suite(TypedDict):
 
 
 def main() -> None:
-    suite = cast(Suite, json.loads(SUITE.read_text(encoding="utf-8")))
+    suite = cast("Suite", json.loads(SUITE.read_text(encoding="utf-8")))
     benchmark = Path(data_root()) / "classical/profiling/blocksworld-large-simple"
     parser = Parser(benchmark / "domain.pddl", ParserOptions())
     planning_task = parser.parse_task(benchmark / "p-100-2.pddl", ParserOptions())

@@ -1,15 +1,17 @@
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 from pathlib import Path
 from typing import TypedDict, cast
 
 import pytest
-
 from fixture_utils import load_fixture, read_fixture
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
-from pyrunir.kr.dl.grammar import parse_grammar
-from pyrunir.kr.dl import cnf_grammar
-from pyrunir.kr.dl.grammar import ConstructorRepositoryFactory, GrammarFactory, GrammarSpecification
 from pytyr.formalism.planning import Parser
+
+from pyrunir.kr.dl import cnf_grammar
+from pyrunir.kr.dl.grammar import ConstructorRepositoryFactory, GrammarFactory, GrammarSpecification, parse_grammar
 
 
 class GrammarFactoryFixture(TypedDict):
@@ -20,7 +22,7 @@ class GrammarFactoryFixture(TypedDict):
 
 
 _SUITE = load_fixture("kr/dl/grammar/factory.json")
-CASES = cast(list[GrammarFactoryFixture], _SUITE["cases"])
+CASES = cast("list[GrammarFactoryFixture]", _SUITE["cases"])
 
 
 @pytest.mark.parametrize("case", CASES, ids=[case["name"] for case in CASES])

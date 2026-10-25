@@ -1,10 +1,14 @@
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import gc
 import sys
 from typing import TypedDict, cast
 
 import pytest
-
 from fixture_utils import load_fixture, read_fixture
+from pytyr.formalism.planning import PlanningDomain
+
 from pyrunir.kr.dl.semantics import ConstructorRepositoryFactory
 from pyrunir.kr.ps.base import Repository, RepositoryFactory
 from pyrunir.kr.ps.base.dl import (
@@ -17,7 +21,6 @@ from pyrunir.kr.ps.base.dl import (
     parse_sketch,
     structural_termination,
 )
-from pytyr.formalism.planning import PlanningDomain
 
 
 class StructuralTerminationFixture(TypedDict):
@@ -27,7 +30,7 @@ class StructuralTerminationFixture(TypedDict):
 
 
 _SUITE = load_fixture("kr/ps/structural_termination.json")
-BASE_CASES = cast(list[StructuralTerminationFixture], _SUITE["base"])
+BASE_CASES = cast("list[StructuralTerminationFixture]", _SUITE["base"])
 OSCILLATOR = read_fixture("kr/ps/base/dl/oscillator.sketch")
 NUMERICAL_CYCLE = read_fixture("kr/ps/base/dl/numerical_cycle.sketch")
 TPP = read_fixture("kr/ps/base/dl/tpp.sketch")
@@ -73,7 +76,9 @@ def test_sieve_surviving_rule_uses_caller_owned_repository(gripper_planning_doma
 
 
 @pytest.mark.parametrize("case", BASE_CASES, ids=[case["name"] for case in BASE_CASES])
-def test_base_structural_termination_fixture(case: StructuralTerminationFixture, gripper_planning_domain: PlanningDomain) -> None:
+def test_base_structural_termination_fixture(
+    case: StructuralTerminationFixture, gripper_planning_domain: PlanningDomain
+) -> None:
     repository = make_repository(gripper_planning_domain)
     sketch = parse_sketch(read_fixture(case["file"]), gripper_planning_domain, repository)
 
@@ -104,16 +109,16 @@ def test_empty_sketch_distinguishes_skipped_sieve_from_empty_sccs(
         assert sieve_result.surviving_rules == []
 
 
-@pytest.mark.parametrize("num_booleans,num_numericals", [(64, 0), (65, 0), (32, 32), (32, 33)])
+@pytest.mark.parametrize(("num_booleans", "num_numericals"), [(64, 0), (65, 0), (32, 32), (32, 33)])
 @pytest.mark.parametrize("with_rule", [False, True])
 def test_structural_termination_feature_mask_boundary(
     gripper_planning_domain: PlanningDomain, num_booleans: int, num_numericals: int, with_rule: bool
 ) -> None:
     repository = make_repository(gripper_planning_domain)
-    features = " ".join(
-        f"(:boolean (:symbol b{i}) (:expression (b_nonempty (c_top))))" for i in range(num_booleans)
-    ) + " " + " ".join(
-        f"(:numerical (:symbol n{i}) (:expression (n_count (c_top))))" for i in range(num_numericals)
+    features = (
+        " ".join(f"(:boolean (:symbol b{i}) (:expression (b_nonempty (c_top))))" for i in range(num_booleans))
+        + " "
+        + " ".join(f"(:numerical (:symbol n{i}) (:expression (n_count (c_top))))" for i in range(num_numericals))
     )
     active = f"b{num_booleans - 1}"
     rule = (
@@ -200,7 +205,9 @@ def test_structural_termination_tpp_sketch_is_terminating(gripper_planning_domai
     assert [feature.get_index() for feature in scc_result.numericals] == [feature.get_index() for feature in numericals]
 
 
-def test_structural_termination_oscillator_counterexample_has_positional_valuations(gripper_planning_domain: PlanningDomain) -> None:
+def test_structural_termination_oscillator_counterexample_has_positional_valuations(
+    gripper_planning_domain: PlanningDomain,
+) -> None:
     repository = make_repository(gripper_planning_domain)
     sketch = parse_sketch(OSCILLATOR, gripper_planning_domain, repository)
 
@@ -224,13 +231,17 @@ def test_structural_termination_oscillator_counterexample_has_positional_valuati
     assert scc_result.numericals == []
 
     # Positional valuations: one vertex per truth value of b1.
-    valuations = {counterexample.get_vertex_property(vertex).boolean_values for vertex in counterexample.get_vertex_indices()}
+    valuations = {
+        counterexample.get_vertex_property(vertex).boolean_values for vertex in counterexample.get_vertex_indices()
+    }
     assert valuations == {0, 1}
-    first_vertex = counterexample.get_vertex_property(next(iter(counterexample.get_vertex_indices())))
+    first_vertex_index = next(iter(counterexample.get_vertex_indices()))
+    first_vertex = counterexample.get_vertex_property(first_vertex_index)
+    same_vertex = counterexample.get_vertex_property(first_vertex_index)
     assert type(first_vertex.boolean_values) is int
     assert type(first_vertex.numerical_values) is int
-    assert first_vertex == first_vertex
-    assert first_vertex <= first_vertex
+    assert first_vertex == same_vertex
+    assert first_vertex <= same_vertex
     with pytest.raises(TypeError):
         hash(first_vertex)
 
@@ -266,13 +277,13 @@ def test_structural_termination_numerical_cycle_counterexample_uses_both_rules(
     assert {rule.get_index() for rule in surviving_rules} == rules
     assert counterexample.get_num_edges() > len(surviving_rules)
     with pytest.raises(AttributeError):
-        setattr(sieve_result, "surviving_rules", [])
+        sieve_result.surviving_rules = []
 
     cycle = counterexample.find_edge_cycle()
     assert cycle
     assert len(cycle) == len(set(cycle))
     assert set(cycle) <= set(counterexample.get_edge_indices())
-    for edge, next_edge in zip(cycle, cycle[1:] + cycle[:1]):
+    for edge, next_edge in zip(cycle, cycle[1:] + cycle[:1], strict=True):
         assert counterexample.get_target(edge) == counterexample.get_source(next_edge)
 
 
@@ -284,7 +295,9 @@ def test_incomplete_structural_termination_reports_blocking_reasons(gripper_plan
 
     assert not result.is_terminating()
     assert len(result.surviving_rules) == 2
-    assert {surviving.rule.get_index() for surviving in result.surviving_rules} == {rule.get_index() for rule in sketch.get_rules()}
+    assert {surviving.rule.get_index() for surviving in result.surviving_rules} == {
+        rule.get_index() for rule in sketch.get_rules()
+    }
     for surviving in result.surviving_rules:
         (reason,) = surviving.blocking_reasons
         assert isinstance(reason.feature, BooleanFeature)

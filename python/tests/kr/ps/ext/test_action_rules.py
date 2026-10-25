@@ -1,26 +1,38 @@
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import gc
+from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
-from ext_execution_utils import collect_steps, initial_node
+from ext_execution_utils import (
+    EvaluationEnvironment,
+    Expander,
+    ProgramState,
+    TaskContext,
+    collect_steps,
+    initial_node,
+)
 from fixture_utils import FIXTURE_ROOT
 from pypddl.formalism import ParserOptions
+from pytyr.formalism.planning import ActionBinding, Object, ObjectIndex, Parser, PlanningDomain
+from pytyr.planning import lifted
+from pyyggdrasil import database
+from pyyggdrasil.execution import ExecutionContext
+from pyyggdrasil.serialization import Dictionaries
+
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
 from pyrunir.kr import ArityMismatchError, DomainContext, GroundTaskContext, LiftedTaskContext, UndefinedSymbolError
 from pyrunir.kr.dl import semantics
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext import dl
 from pyrunir.serialization import register_table, serialize, table
-from pytyr.formalism.planning import Object, ObjectIndex, Parser
-from pyyggdrasil import database
-from pytyr.planning import lifted
-from pyyggdrasil.execution import ExecutionContext
-from pyyggdrasil.serialization import Dictionaries
-
 
 QUERY = '(q_join (q_atomic_state "at" (from)) (q_atomic_state "edge" (from to)))'
 
 
-def _program(query=QUERY, effects="(unchanged count)"):
+def _program(query: str = QUERY, effects: str = "(unchanged count)") -> str:
     return f"""(:program (:entry root)
       (:module (:symbol root) (:arguments) (:registers)
         (:entry m0) (:memory m0)
@@ -37,20 +49,25 @@ def _program(query=QUERY, effects="(unchanged count)"):
           (:action (:conditions) (:action "move") (:query selected) (:effects {effects})))))))"""
 
 
-def _context(kind):
+def _context(kind: str) -> tuple[TaskContext, PlanningDomain]:
     directory = FIXTURE_ROOT / "kr/ps/ext/choose"
     parser = Parser(directory / "domain.pddl", ParserOptions())
     task = lifted.Task(parser.parse_task(directory / "task.pddl", ParserOptions()))
     execution = ExecutionContext(1)
     domain = DomainContext(parser.get_domain())
+    context: TaskContext
     if kind == "ground":
-        context = GroundTaskContext(domain, GroundTaskSearchContext(task.instantiate_ground_task(execution).task, execution))
+        context = GroundTaskContext(
+            domain, GroundTaskSearchContext(task.instantiate_ground_task(execution).task, execution)
+        )
     else:
         context = LiftedTaskContext(domain, LiftedTaskSearchContext(task, execution))
     return context, parser.get_domain()
 
 
-def _runtime(kind, source=None):
+def _runtime(
+    kind: str, source: str | None = None
+) -> tuple[TaskContext, ext.Program, Expander, ProgramState, EvaluationEnvironment]:
     task_context, domain = _context(kind)
     program = dl.parse_program(source or _program(), domain, task_context.domain_context.ext_repository)
     prefix = kind.title()
@@ -61,7 +78,7 @@ def _runtime(kind, source=None):
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
-def test_expander_rejects_foreign_states_programs_and_candidates(kind):
+def test_expander_rejects_foreign_states_programs_and_candidates(kind: str) -> None:
     task_context, domain = _context(kind)
     repository = task_context.domain_context.ext_repository
     program = dl.parse_program(_program(), domain, repository)
@@ -71,7 +88,7 @@ def test_expander_rejects_foreign_states_programs_and_candidates(kind):
     state = expander.initial_state(planning_state)
     step = collect_steps(expander, state)[0]
     successor = step.planning_successor.unpack()
-    foreign_context, foreign_program, foreign_expander, foreign_state, foreign_environment = _runtime(kind)
+    _foreign_context, foreign_program, foreign_expander, foreign_state, _foreign_environment = _runtime(kind)
     other_program = dl.parse_program(_program(effects=""), domain, repository)
     other_expander = expander_type(task_context, other_program)
     other_state = other_expander.initial_state(planning_state)
@@ -97,7 +114,7 @@ def test_expander_rejects_foreign_states_programs_and_candidates(kind):
         expander.apply(state, step.rule, foreign_successor)
 
 
-def test_action_and_query_feature_bindings_round_trip_and_serialize():
+def test_action_and_query_feature_bindings_round_trip_and_serialize() -> None:
     task_context, domain = _context("lifted")
     repository = task_context.domain_context.ext_repository
     program = dl.parse_program(_program(), domain, repository)
@@ -136,16 +153,23 @@ def test_action_and_query_feature_bindings_round_trip_and_serialize():
     dictionaries = Dictionaries()
     register_table(dictionaries, ext.RuleVariant, "rules", "r")
     register_table(dictionaries, ext.ActionRule, "actions", "a", fields=("action_name", "query_feature"))
-    register_table(dictionaries, dl.QueryFeature, "queries", "q", project=lambda value: {
-        "symbol": value.get_symbol(), "expression": str(value.get_expression()),
-    })
+    register_table(
+        dictionaries,
+        dl.QueryFeature,
+        "queries",
+        "q",
+        project=lambda value: {
+            "symbol": value.get_symbol(),
+            "expression": str(value.get_expression()),
+        },
+    )
     assert serialize(dictionaries, variant) == "r0"
     assert table(dictionaries, ext.ActionRule) == [{"action_name": "move", "query_feature": "q0"}]
     assert table(dictionaries, dl.QueryFeature) == [{"symbol": "selected", "expression": QUERY}]
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
-def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(kind):
+def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(kind: str) -> None:
     task_context, program, expander, state, environment = _runtime(kind)
     features = {feature.get_symbol(): feature for feature in program.get_entry_module().get_query_features()}
 
@@ -163,7 +187,10 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
     assert all(isinstance(value, int) for row in rows for value in row)
     objects = task_context.dl_denotation_repository
     assert all(isinstance(objects.get_object(ObjectIndex(value)), Object) for row in rows for value in row)
-    assert {tuple(objects.get_object(ObjectIndex(value)).get_name() for value in row) for row in rows} == {("start", "bad"), ("start", "good")}
+    assert {tuple(objects.get_object(ObjectIndex(value)).get_name() for value in row) for row in rows} == {
+        ("start", "bad"),
+        ("start", "good"),
+    }
     assert relation[-1][-1] == relation.at(len(relation) - 1)[relation.arity() - 1]
     with pytest.raises(IndexError):
         relation[len(relation)]
@@ -183,8 +210,7 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
     steps = collect_steps(expander, state)
     assert len(steps) == 2
     assert rows == {
-        tuple(int(object_.get_index()) for object_ in step.state_transition.action.get_objects())
-        for step in steps
+        tuple(int(object_.get_index()) for object_ in step.state_transition.action.get_objects()) for step in steps
     }
     for step in steps:
         assert isinstance(step.rule.get_variant(), ext.ActionRule)
@@ -202,7 +228,20 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
     row = relation.at(0)
     iterated_row = next(iter(relation))
     expected_row = tuple(row)
-    del steps, good_step, successor, step, features, environment, dl_context, state, expander, program, task_context, objects
+    del (
+        steps,
+        good_step,
+        successor,
+        step,
+        features,
+        environment,
+        dl_context,
+        state,
+        expander,
+        program,
+        task_context,
+        objects,
+    )
     gc.collect()
     assert {tuple(value) for value in relation} == new_rows
     del relation
@@ -212,15 +251,22 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
 @pytest.mark.parametrize("access", ["object", "row_iterator", "query_iterator", "renamed"])
-def test_query_objects_iterators_and_renames_retain_owners(kind, access):
-    def retained_value():
-        task_context, program, expander, state, environment = _runtime(kind)
+def test_query_objects_iterators_and_renames_retain_owners(kind: str, access: str) -> None:
+    def retained_value() -> tuple[
+        object | Iterator[object] | Iterator[database.RelationRow] | database.RelationView, tuple[object, ...]
+    ]:
+        task_context, program, _expander, state, _environment = _runtime(kind)
         repository = task_context.dl_denotation_repository
         caches = semantics.DenotationCaches()
         storage = semantics.EvaluationStorage(repository)
         context = getattr(semantics, f"{kind.title()}StateEvaluationContext")(
-            state.state, task_context.dl_builder, caches, repository, storage,
-            state.module_state.arguments, state.module_state.registers,
+            state.state,
+            task_context.dl_builder,
+            caches,
+            repository,
+            storage,
+            state.module_state.arguments,
+            state.module_state.registers,
         )
         feature = program.get_entry_module().get_query_features()[0]
         relation = feature.get_expression().evaluate(context)
@@ -255,28 +301,32 @@ def test_query_objects_iterators_and_renames_retain_owners(kind, access):
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
-def test_action_effects_filter_transitions(kind):
-    task_context, program, expander, state, environment = _runtime(kind, _program(effects="(decreases count)"))
+def test_action_effects_filter_transitions(kind: str) -> None:
+    task_context, program, expander, state, _environment = _runtime(kind, _program(effects="(decreases count)"))
     assert [step.status for step in collect_steps(expander, state)] == ["no_applicable_action"]
     options = getattr(ext, f"{kind.title()}ProgramSearchOptions")()
     assert not getattr(ext, f"find_{kind}_solution")(task_context, program, options).is_successful()
 
 
 @pytest.mark.parametrize("query", ['(q_atomic_state "at" (from))', '(q_project () (q_atomic_state "at" (from)))'])
-def test_action_parser_rejects_incomplete_binding_schema(query):
+def test_action_parser_rejects_incomplete_binding_schema(query: str) -> None:
     task_context, domain = _context("lifted")
     with pytest.raises(ArityMismatchError):
         dl.parse_program(_program(query=query), domain, task_context.domain_context.ext_repository)
 
 
-def test_action_parser_rejects_undefined_query_feature():
+def test_action_parser_rejects_undefined_query_feature() -> None:
     task_context, domain = _context("lifted")
     with pytest.raises(UndefinedSymbolError):
-        dl.parse_program(_program().replace("(:query selected)", "(:query missing)"), domain, task_context.domain_context.ext_repository)
+        dl.parse_program(
+            _program().replace("(:query selected)", "(:query missing)"),
+            domain,
+            task_context.domain_context.ext_repository,
+        )
 
 
 @pytest.mark.parametrize("preprocessing", [False, True])
-def test_action_structural_counterexample_retains_query_rule(preprocessing):
+def test_action_structural_counterexample_retains_query_rule(preprocessing: bool) -> None:
     task_context, domain = _context("lifted")
     program = dl.parse_program(_program(), domain, task_context.domain_context.ext_repository)
     result = dl.structural_termination(program.get_entry_module(), use_incomplete_preprocessing=preprocessing)
@@ -287,20 +337,23 @@ def test_action_structural_counterexample_retains_query_rule(preprocessing):
     gc.collect()
     assert isinstance(rule.get_variant(), ext.ActionRule)
     assert rule.get_variant().get_query_feature().get_symbol() == "selected"
-    assert all(isinstance(graph.get_edge_property(index).get_variant(), ext.ActionRule) for index in graph.get_edge_indices())
+    assert all(
+        isinstance(graph.get_edge_property(index).get_variant(), ext.ActionRule) for index in graph.get_edge_indices()
+    )
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
-def test_action_rejects_visited_inapplicable_query_tuple(kind):
-    task_context, program, expander, state, environment = _runtime(
-        kind, _program(query='(q_atomic_state "edge" (from to))'),
+def test_action_rejects_visited_inapplicable_query_tuple(kind: str) -> None:
+    _task_context, _program_value, expander, state, _environment = _runtime(
+        kind,
+        _program(query='(q_atomic_state "edge" (from to))'),
     )
     with pytest.raises(RuntimeError, match="offered action is not applicable"):
         collect_steps(expander, state)
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
-def test_static_query_role_closure_query_composition(kind):
+def test_static_query_role_closure_query_composition(kind: str) -> None:
     closure = '(q_role (from to) (r_transitive_closure (r_project from to (q_atomic_state "edge" (from to)))))'
     task_context, program, expander, state, environment = _runtime(kind, _program(query=closure))
     features = {feature.get_symbol(): feature for feature in program.get_entry_module().get_query_features()}
@@ -314,7 +367,9 @@ def test_static_query_role_closure_query_composition(kind):
     search = task_context.search_context
     node = initial_node(task_context)
     successor = search.successor_generator.get_labeled_successor_nodes(
-        node, search.state_repository, search.axiom_evaluator,
+        node,
+        search.state_repository,
+        search.axiom_evaluator,
     )[0]
     rule = expander.matching_rule(state, successor)
     assert rule is not None
@@ -325,7 +380,7 @@ def test_static_query_role_closure_query_composition(kind):
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
-def test_query_features_follow_module_arguments_and_registers_in_the_same_state(kind):
+def test_query_features_follow_module_arguments_and_registers_in_the_same_state(kind: str) -> None:
     source = """(:program (:entry root)
       (:module (:symbol root) (:arguments) (:registers)
         (:entry m0) (:memory m0 m1)
@@ -344,7 +399,7 @@ def test_query_features_follow_module_arguments_and_registers_in_the_same_state(
         (:rules (:rule (:symbol bind) (:expression
           (:source-memory m0) (:target-memory m1)
           (:load (:conditions) (:concept candidates) (:register (:concept selected))))))))"""
-    task_context, program, expander, initial, environment = _runtime(kind, source)
+    _task_context, _program_value, expander, initial, environment = _runtime(kind, source)
     child = collect_steps(expander, initial)[0].target
     choices = [step.target for step in collect_steps(expander, child)]
     assert len(choices) == 2
@@ -371,7 +426,7 @@ def test_query_features_follow_module_arguments_and_registers_in_the_same_state(
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
-def test_action_query_preserves_correlated_parameter_tuples(kind, tmp_path):
+def test_action_query_preserves_correlated_parameter_tuples(kind: str, tmp_path: Path) -> None:
     domain_file = tmp_path / "domain.pddl"
     task_file = tmp_path / "task.pddl"
     domain_file.write_text("""(define (domain correlated)
@@ -388,32 +443,42 @@ def test_action_query_preserves_correlated_parameter_tuples(kind, tmp_path):
     task = lifted.Task(parser.parse_task(task_file, ParserOptions()))
     execution = ExecutionContext(1)
     domain = DomainContext(parser.get_domain())
+    task_context: TaskContext
     if kind == "ground":
-        task_context = GroundTaskContext(domain, GroundTaskSearchContext(task.instantiate_ground_task(execution).task, execution))
+        task_context = GroundTaskContext(
+            domain, GroundTaskSearchContext(task.instantiate_ground_task(execution).task, execution)
+        )
     else:
         task_context = LiftedTaskContext(domain, LiftedTaskSearchContext(task, execution))
-    program = dl.parse_program("""(:program (:entry root)
+    program = dl.parse_program(
+        """(:program (:entry root)
       (:module (:symbol root) (:arguments) (:registers)
         (:entry m0) (:memory m0 m1)
         (:features (:query (:symbol pairs) (:expression (q_atomic_state "allowed" (source target)))))
         (:rules (:rule (:symbol connect-pair) (:expression
           (:source-memory m0) (:target-memory m1)
           (:action (:conditions) (:action "connect") (:query pairs) (:effects)))))))""",
-        parser.get_domain(), domain.ext_repository,
+        parser.get_domain(),
+        domain.ext_repository,
     )
     expander = getattr(ext, f"{kind.title()}SuccessorExpander")(task_context, program)
     state = expander.initial_state(initial_node(task_context).get_state())
 
-    def arguments(action):
+    def arguments(action: ActionBinding) -> tuple[str, ...]:
         return tuple(object_.get_name() for object_ in action.get_objects())
 
     search = task_context.search_context
     node = initial_node(task_context)
     broad = search.successor_generator.get_labeled_successor_nodes(
-        node, search.state_repository, search.axiom_evaluator,
+        node,
+        search.state_repository,
+        search.axiom_evaluator,
     )
     assert {arguments(successor.label) for successor in broad} == {
-        ("a", "c"), ("a", "d"), ("b", "c"), ("b", "d"),
+        ("a", "c"),
+        ("a", "d"),
+        ("b", "c"),
+        ("b", "d"),
     }
     allowed = {("a", "c"), ("b", "d")}
     steps = collect_steps(expander, state)

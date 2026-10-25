@@ -1,14 +1,18 @@
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import pytest
+from pytyr.formalism.planning import PlanningDomain
+from pyyggdrasil.serialization import Dictionaries
 
 from pyrunir.kr import DomainContext
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext.dl import parse_module
 from pyrunir.serialization import register_table, serialize, table
-from pyyggdrasil.serialization import Dictionaries
 
 
 @pytest.mark.parametrize("kind", ["Ground", "Lifted"])
-def test_and_backtracking_option_defaults_to_false(kind):
+def test_and_backtracking_option_defaults_to_false(kind: str) -> None:
     options = getattr(ext, f"{kind}ProgramSearchOptions")()
     assert options.and_backtracking is False
     options.and_backtracking = True
@@ -17,7 +21,9 @@ def test_and_backtracking_option_defaults_to_false(kind):
 
 
 @pytest.mark.parametrize("conditions", ["", "(positive bad)", "(positive bad) (positive bad)"])
-def test_backtrack_rule_construct_format_and_serialize(gripper_planning_domain, conditions):
+def test_backtrack_rule_construct_format_and_serialize(
+    gripper_planning_domain: PlanningDomain, conditions: str
+) -> None:
     repository = DomainContext(gripper_planning_domain).ext_repository
     source = f"""(:module (:symbol prune) (:arguments) (:registers)
       (:entry m) (:memory m)
@@ -49,7 +55,9 @@ def test_backtrack_rule_construct_format_and_serialize(gripper_planning_domain, 
     register_table(dictionaries, ext.RuleVariant, "variants", "v")
     register_table(dictionaries, ext.BacktrackRule, "backtrack", "r")
     register_table(dictionaries, ext.MemoryState, "memory", "m")
-    register_table(dictionaries, ext.ConditionVariant, "conditions", "c", project=lambda condition: {"text": str(condition)})
+    register_table(
+        dictionaries, ext.ConditionVariant, "conditions", "c", project=lambda condition: {"text": str(condition)}
+    )
     assert serialize(dictionaries, variant) == "v0"
     assert table(dictionaries, ext.RuleVariant) == [{"symbol": "reject", "variant": "r0"}]
     assert table(dictionaries, ext.BacktrackRule) == [{"source": "m0", "conditions": ["c0"] if conditions else []}]

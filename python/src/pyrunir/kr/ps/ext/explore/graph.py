@@ -1,3 +1,6 @@
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Graph and program helpers of the exploration session."""
 
 from __future__ import annotations
@@ -18,16 +21,19 @@ from pyrunir.kr.ps.ext import (
     RoleChooseRule,
     RuleVariant,
 )
-
-from .results import Value
+from pyrunir.kr.ps.ext.explore.results import Value
 
 
 def is_choose(rule: RuleVariant | None) -> bool:
+    """Return whether `rule` is a concept or role Choose rule."""
     return rule is not None and isinstance(rule.get_variant(), (ConceptChooseRule, RoleChooseRule))
 
 
 def failure_category(result: LiftedProgramProofResults) -> str | None:
-    """Why a search did not succeed; None if it did. Open and dead-end states also occur in failed branches of a success."""
+    """Why a search did not succeed; None if it did.
+
+    Open and dead-end states also occur in failed branches of a success.
+    """
     if result.status == ProgramProofStatus.SUCCESS:
         return None
     if result.open_states:
@@ -37,13 +43,8 @@ def failure_category(result: LiftedProgramProofResults) -> str | None:
     return result.status.name.lower()
 
 
-def vertex_status(result: LiftedProgramProofResults) -> dict[int, bool | None]:
-    """True: a goal is reached from the vertex; False: every continuation fails; None: unknown (not fully explored).
-
-    A vertex with Choose out-edges succeeds if one tried binding does; other vertices need all their successors."""
-    graph = result.graph
-    failed = set(result.open_states) | set(result.deadend_states)
-    status: dict[int, bool | None] = {}
+def _postorder(graph: LiftedProgramProofGraph) -> list[int]:
+    """All vertices of `graph`, each after the successors first reached from it by depth-first search."""
     order: list[int] = []
     seen: set[int] = set()
     for root in graph.get_vertex_indices():
@@ -60,7 +61,18 @@ def vertex_status(result: LiftedProgramProofResults) -> dict[int, bool | None]:
             elif child not in seen:
                 seen.add(child)
                 stack.append((child, iter(graph.get_successor_indices(child))))
-    for vertex in order:
+    return order
+
+
+def vertex_status(result: LiftedProgramProofResults) -> dict[int, bool | None]:
+    """True: a goal is reached from the vertex; False: every continuation fails; None: unknown (not fully explored).
+
+    A vertex with Choose out-edges succeeds if one tried binding does; other vertices need all their successors.
+    """
+    graph = result.graph
+    failed = set(result.open_states) | set(result.deadend_states)
+    status: dict[int, bool | None] = {}
+    for vertex in _postorder(graph):
         label = graph.get_vertex_property(vertex)
         edges = list(graph.get_out_edge_indices(vertex))
         if label.is_goal:
@@ -72,9 +84,13 @@ def vertex_status(result: LiftedProgramProofResults) -> dict[int, bool | None]:
         else:
             values = [status.get(graph.get_target(edge)) for edge in edges]
             if any(is_choose(graph.get_edge_property(edge).rule) for edge in edges):
-                status[vertex] = True if any(v is True for v in values) else (False if all(v is False for v in values) else None)
+                status[vertex] = (
+                    True if any(v is True for v in values) else (False if all(v is False for v in values) else None)
+                )
             else:
-                status[vertex] = False if any(v is False for v in values) else (True if all(v is True for v in values) else None)
+                status[vertex] = (
+                    False if any(v is False for v in values) else (True if all(v is True for v in values) else None)
+                )
     return status
 
 
@@ -97,6 +113,7 @@ def shortest_path(graph: LiftedProgramProofGraph, start: int, targets: set[int])
 
 
 def reachable_count(graph: LiftedProgramProofGraph, start: int) -> int:
+    """Return the number of vertices reachable from `start`, including `start` itself."""
     seen = {start}
     stack = [start]
     while stack:
@@ -108,10 +125,12 @@ def reachable_count(graph: LiftedProgramProofGraph, start: int) -> int:
 
 
 def deltas(before: Mapping[str, Value], after: Mapping[str, Value]) -> dict[str, tuple[Value, Value]]:
+    """Map each name whose value changed from `before` to `after` to its (before, after) pair."""
     return {name: (value, after[name]) for name, value in before.items() if after[name] != value}
 
 
 def object_name(value: Object | tuple[Object, Object] | None) -> str | None:
+    """Return the name of an object, `(a b)` for an object pair, or None for no value."""
     if value is None:
         return None
     if isinstance(value, tuple):
@@ -120,13 +139,19 @@ def object_name(value: Object | tuple[Object, Object] | None) -> str | None:
 
 
 def register_value(module_state: LiftedModuleState, rule: RuleVariant) -> str | None:
+    """Return the name of the value held by the register that the Choose rule `rule` binds.
+
+    Raises:
+        TypeError: If `rule` is not a Choose rule.
+    """
     variant = rule.get_variant()
     registers = module_state.registers
     if isinstance(variant, ConceptChooseRule):
         return object_name(registers.concept_values[variant.get_register().get_identifier().value()])
     if isinstance(variant, RoleChooseRule):
         return object_name(registers.role_values[variant.get_register().get_identifier().value()])
-    raise TypeError(f"{rule.get_symbol()} is not a Choose rule")
+    msg = f"{rule.get_symbol()} is not a Choose rule"
+    raise TypeError(msg)
 
 
 _RULE_BLOCK = re.compile(r"\(:rule\s+\(:symbol\s+([^\s()]+)\)")
@@ -165,22 +190,28 @@ def object_atoms(state: lifted.State, name: str) -> list[tuple[str, tuple[str, .
     for atom in (*state.static_atoms(), *state.fluent_atoms(), *state.derived_atoms()):
         objects = tuple(str(item.get_name()) for item in atom.get_objects())
         if name in objects:
-            atoms.append((str(atom.get_predicate().get_name()), tuple("*" if item == name else item for item in objects)))
+            atoms.append(
+                (str(atom.get_predicate().get_name()), tuple("*" if item == name else item for item in objects))
+            )
     return atoms
 
 
 def distinguishing_atoms(
     profiles: list[list[tuple[str, tuple[str, ...]]]], types: dict[str, frozenset[str]], bindings: list[str]
 ) -> list[tuple[str, ...]]:
-    """Per binding, the atoms around it that not every binding has as often. Other objects of the binding's own
-    unary predicates (its peers) become `_` and equal atoms are counted; other objects, such as values, stay."""
+    """Per binding, the atoms around it that not every binding has as often.
+
+    Other objects of the binding's own unary predicates (its peers) become `_` and equal atoms are counted; other
+    objects, such as values, stay.
+    """
     counts: list[dict[str, int]] = []
-    for profile, binding in zip(profiles, bindings):
+    for profile, binding in zip(profiles, bindings, strict=True):
         own = types.get(binding, frozenset())
         count: dict[str, int] = {}
         for predicate, arguments in profile:
             shown = " ".join(
-                argument if argument == "*" or types.get(argument, frozenset()) != own else "_" for argument in arguments
+                argument if argument == "*" or types.get(argument, frozenset()) != own else "_"
+                for argument in arguments
             )
             atom = f"({predicate} {shown})"
             count[atom] = count.get(atom, 0) + 1

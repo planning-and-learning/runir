@@ -1,3 +1,6 @@
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Regenerate grammar and CNF golden files from the factory manifest."""
 
 import json
@@ -6,11 +9,10 @@ from typing import TypedDict, cast
 
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
-from pyrunir.kr.dl.grammar import parse_grammar
-from pyrunir.kr.dl import cnf_grammar
-from pyrunir.kr.dl.grammar import ConstructorRepositoryFactory, GrammarFactory, GrammarSpecification
 from pytyr.formalism.planning import Parser
 
+from pyrunir.kr.dl import cnf_grammar
+from pyrunir.kr.dl.grammar import ConstructorRepositoryFactory, GrammarFactory, GrammarSpecification, parse_grammar
 
 ROOT = Path(__file__).resolve().parents[5]
 SUITE = Path(__file__).with_name("factory.json")
@@ -28,7 +30,7 @@ class Suite(TypedDict):
 
 
 def main() -> None:
-    suite = cast(Suite, json.loads(SUITE.read_text(encoding="utf-8")))
+    suite = cast("Suite", json.loads(SUITE.read_text(encoding="utf-8")))
     for case in suite["cases"]:
         planning_domain = Parser(Path(data_root()) / case["domain_file"], ParserOptions()).get_domain()
         domain = planning_domain.get_domain()

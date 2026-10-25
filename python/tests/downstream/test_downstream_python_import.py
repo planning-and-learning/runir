@@ -1,3 +1,6 @@
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import json
 import os
 import shutil
@@ -5,10 +8,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pyrunir
-import pyyggdrasil
 import pytest
+import pyyggdrasil
 
+import pyrunir
 
 DOWNSTREAM_PACKAGE_DIR = Path(__file__).resolve().parent / "minimal_downstream_package"
 
@@ -54,12 +57,7 @@ def test_downstream_python_binding_links_installed_runir(tmp_path: Path) -> None
         [
             sys.executable,
             "-c",
-            (
-                "import json, downstream_runir_user; "
-                "print(json.dumps({"
-                "'dot': downstream_runir_user.make_graph_dot()"
-                "}))"
-            ),
+            ("import json, downstream_runir_user; print(json.dumps({'dot': downstream_runir_user.make_graph_dot()}))"),
         ],
         check=True,
         capture_output=True,

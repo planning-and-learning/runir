@@ -1,16 +1,22 @@
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import pytest
+from pytyr.formalism.planning import PlanningDomain
+from pyyggdrasil.serialization import Dictionaries
 
 from pyrunir.kr import DomainContext
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext.dl import parse_module
 from pyrunir.serialization import register_table, serialize, table
-from pyyggdrasil.serialization import Dictionaries
 
 
 @pytest.mark.parametrize("kind", ["load", "choose"])
-@pytest.mark.parametrize("category,expression", [("concept", "c_top"), ("role", "r_universal")])
+@pytest.mark.parametrize(("category", "expression"), [("concept", "c_top"), ("role", "r_universal")])
 @pytest.mark.parametrize("effects", ["", "(:effects)", "(:effects (increases n))"])
-def test_binding_rules_parse_construct_and_serialize(gripper_planning_domain, kind, category, expression, effects):
+def test_binding_rules_parse_construct_and_serialize(
+    gripper_planning_domain: PlanningDomain, kind: str, category: str, expression: str, effects: str
+) -> None:
     repository = DomainContext(gripper_planning_domain).ext_repository
     source = f"""(:module (:symbol bindings) (:arguments)
       (:registers (:{category} selected)) (:entry m0) (:memory m0 m1)
@@ -40,7 +46,14 @@ def test_binding_rules_parse_construct_and_serialize(gripper_planning_domain, ki
     data.effects = []
     assert (repository.insert(data)[0] == rule) == (not rule.get_effects())
 
-    assert list(rule_type.Fields.__members__) == ["source", "target", "conditions", "effects", "feature", "register"] + (["order"] if kind == "choose" else [])
+    assert list(rule_type.Fields.__members__) == [
+        "source",
+        "target",
+        "conditions",
+        "effects",
+        "feature",
+        "register",
+    ] + (["order"] if kind == "choose" else [])
     dictionaries = Dictionaries()
     register_table(dictionaries, ext.RuleVariant, "variants", "v")
     register_table(dictionaries, rule_type, "bindings", "r", fields=("source", "target", "effects"))
@@ -48,14 +61,20 @@ def test_binding_rules_parse_construct_and_serialize(gripper_planning_domain, ki
     register_table(dictionaries, ext.EffectVariant, "effects", "e", project=lambda effect: {"text": str(effect)})
     assert serialize(dictionaries, variant) == "v0"
     assert table(dictionaries, ext.RuleVariant) == [{"symbol": "bind", "variant": "r0"}]
-    assert table(dictionaries, rule_type) == [{
-        "source": "m0", "target": "m1", "effects": [f"e{i}" for i in range(len(rule.get_effects()))],
-    }]
+    assert table(dictionaries, rule_type) == [
+        {
+            "source": "m0",
+            "target": "m1",
+            "effects": [f"e{i}" for i in range(len(rule.get_effects()))],
+        }
+    ]
     assert table(dictionaries, ext.EffectVariant) == [{"text": str(effect)} for effect in rule.get_effects()]
 
 
-@pytest.mark.parametrize("category,expression", [("concept", "c_top"), ("role", "r_universal")])
-def test_choose_order_data_and_serialization(gripper_planning_domain, category, expression):
+@pytest.mark.parametrize(("category", "expression"), [("concept", "c_top"), ("role", "r_universal")])
+def test_choose_order_data_and_serialization(
+    gripper_planning_domain: PlanningDomain, category: str, expression: str
+) -> None:
     repository = DomainContext(gripper_planning_domain).ext_repository
     source = f"""(:module (:symbol ranked) (:arguments) (:registers (:{category} selected))
       (:entry a) (:memory a b)
@@ -69,7 +88,11 @@ def test_choose_order_data_and_serialization(gripper_planning_domain, category, 
     rule = module.get_memory_transitions()[0][0].get_variant()
     terms = rule.get_order()
     assert terms[0].get_index() == terms[2].get_index()
-    assert [t.get_direction() for t in terms] == [ext.OrderDirection.MAX, ext.OrderDirection.MIN, ext.OrderDirection.MAX]
+    assert [t.get_direction() for t in terms] == [
+        ext.OrderDirection.MAX,
+        ext.OrderDirection.MIN,
+        ext.OrderDirection.MAX,
+    ]
     assert [t.get_feature().get_symbol() for t in terms] == ["flag", "n", "flag"]
     assert str(parse_module(str(module), gripper_planning_domain, repository)) == str(module)
     data = getattr(ext, f"{category.title()}ChooseRuleData")()
@@ -88,11 +111,14 @@ def test_choose_order_data_and_serialization(gripper_planning_domain, category, 
     assert repository.insert(data)[0] != rule
     dictionaries = Dictionaries()
     register_table(dictionaries, ext.dl.BooleanFeature, "booleans", "b", project=lambda f: {"symbol": f.get_symbol()})
-    register_table(dictionaries, ext.dl.NumericalFeature, "numericals", "n", project=lambda f: {"symbol": f.get_symbol()})
+    register_table(
+        dictionaries, ext.dl.NumericalFeature, "numericals", "n", project=lambda f: {"symbol": f.get_symbol()}
+    )
     register_table(dictionaries, ext.OrderTerm, "ordering", "o")
     register_table(dictionaries, type(rule), "rules", "r", fields=("order",))
     assert serialize(dictionaries, rule) == "r0"
     assert table(dictionaries, type(rule)) == [{"order": ["o0", "o1", "o0"]}]
     assert table(dictionaries, ext.OrderTerm) == [
-        {"direction": "max", "variant": "b0"}, {"direction": "min", "variant": "n0"},
+        {"direction": "max", "variant": "b0"},
+        {"direction": "min", "variant": "n0"},
     ]

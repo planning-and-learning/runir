@@ -1,15 +1,20 @@
-import pytest
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
 
+from types import ModuleType
+
+import pytest
 from fixture_utils import read_fixture
+from pytyr.formalism.planning import PlanningDomain
+
 from pyrunir.datasets import GroundTaskClass
 from pyrunir.kr import DomainContext
 from pyrunir.kr.dl import ConstructorRepositoryFactory as DlRepositoryFactory
 from pyrunir.kr.ps import base, ext, icp
 from pyrunir.kr.uns import dl as uns_dl
-from pytyr.formalism.planning import PlanningDomain
 
 
-def test_base_and_ext_repositories_construct_programmatically(gripper_planning_domain: PlanningDomain):
+def test_base_and_ext_repositories_construct_programmatically(gripper_planning_domain: PlanningDomain) -> None:
     base_repository = base.RepositoryFactory().create(DlRepositoryFactory().create(gripper_planning_domain))
     rule_data = base.RuleData()
     rule_data.symbol = "r"
@@ -25,9 +30,11 @@ def test_base_and_ext_repositories_construct_programmatically(gripper_planning_d
     assert ext_repository.insert(memory_state_data)[0] == memory_state
 
 
-def test_uns_features_construct_programmatically(gripper_planning_domain: PlanningDomain):
+def test_uns_features_construct_programmatically(gripper_planning_domain: PlanningDomain) -> None:
     repository = DomainContext(gripper_planning_domain).uns_repository
-    classifier = uns_dl.parse_classifier(read_fixture("kr/uns/positive.classifier"), gripper_planning_domain, repository)
+    classifier = uns_dl.parse_classifier(
+        read_fixture("kr/uns/positive.classifier"), gripper_planning_domain, repository
+    )
     feature = classifier.get_features()[0]
     concrete_data = uns_dl.ConcreteBooleanFeatureData()
     concrete_data.feature = feature.get_expression().get_index()
@@ -40,7 +47,9 @@ def test_uns_features_construct_programmatically(gripper_planning_domain: Planni
 
 
 @pytest.mark.parametrize("family", [base, ext, icp], ids=["base", "ext", "icp"])
-def test_features_and_observations_have_consistent_accessors(family, gripper_planning_domain: PlanningDomain):
+def test_features_and_observations_have_consistent_accessors(
+    family: ModuleType, gripper_planning_domain: PlanningDomain
+) -> None:
     domain_context = DomainContext(gripper_planning_domain)
     family_name = family.__name__.rsplit(".", 1)[-1]
     repository = getattr(domain_context, f"{family_name}_repository")
@@ -56,8 +65,8 @@ def test_features_and_observations_have_consistent_accessors(family, gripper_pla
             gripper_planning_domain,
             repository,
         )
-    boolean, = policy.get_boolean_features()
-    numerical, = policy.get_numerical_features()
+    (boolean,) = policy.get_boolean_features()
+    (numerical,) = policy.get_numerical_features()
     for feature, name in ((boolean, "BooleanFeature"), (numerical, "NumericalFeature")):
         assert feature.get_feature() == feature.get_expression()
         assert feature.get_variant().get_feature() == feature.get_expression()
@@ -89,7 +98,9 @@ def test_features_and_observations_have_consistent_accessors(family, gripper_pla
         assert repository.insert(data)[0] == observation
 
 
-def test_ext_module_role_features_and_program_modules_construct_programmatically(gripper_planning_domain: PlanningDomain):
+def test_ext_module_role_features_and_program_modules_construct_programmatically(
+    gripper_planning_domain: PlanningDomain,
+) -> None:
     repository = DomainContext(gripper_planning_domain).ext_repository
     parsed_module = ext.dl.parse_module(
         """(:module (:symbol main) (:arguments) (:registers) (:entry m0) (:memory m0)
@@ -97,7 +108,7 @@ def test_ext_module_role_features_and_program_modules_construct_programmatically
         gripper_planning_domain,
         repository,
     )
-    role, = parsed_module.get_role_features()
+    (role,) = parsed_module.get_role_features()
     module_data = ext.ModuleData()
     module_data.symbol = parsed_module.get_symbol().get_index()
     module_data.role_features = [role.get_index()]
@@ -116,23 +127,27 @@ def test_ext_module_role_features_and_program_modules_construct_programmatically
     assert ext.dl.parse_program(str(program), gripper_planning_domain, repository) == program
 
 
-def test_data_rich_comparison_is_bound():
+def test_data_rich_comparison_is_bound() -> None:
     first = base.RuleData()
     first.symbol = "a"
+    first_copy = base.RuleData()
+    first_copy.symbol = "a"
     second = base.RuleData()
     second.symbol = "b"
+    second_copy = base.RuleData()
+    second_copy.symbol = "b"
 
-    assert first == first
+    assert first == first_copy
     assert first != second
     assert first < second
-    assert first <= first
+    assert first <= first_copy
     assert second > first
-    assert second >= second
+    assert second >= second_copy
     with pytest.raises(TypeError):
         hash(first)
 
 
-def test_task_class_rich_comparison_is_bound():
+def test_task_class_rich_comparison_is_bound() -> None:
     first = GroundTaskClass()
     second = GroundTaskClass()
 

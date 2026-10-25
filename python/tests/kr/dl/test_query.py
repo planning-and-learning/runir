@@ -1,21 +1,27 @@
-import gc
-import pytest
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
 
+import gc
+from types import ModuleType
+
+import pytest
+from pytyr.formalism.planning import Object, ObjectIndex, PlanningDomain
+from pyyggdrasil import database
+from pyyggdrasil.serialization import Dictionaries
+
+from pyrunir.datasets import GroundTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext, UndefinedSymbolError
 from pyrunir.kr.dl import semantics
+from pyrunir.kr.ps.base import Sketch
 from pyrunir.kr.ps.base.dl import parse_sketch
 from pyrunir.kr.ps.ext.dl import parse_program
 from pyrunir.kr.uns.dl import parse_classifier
 from pyrunir.serialization import register_table, serialize, table
-from pytyr.formalism.planning import Object, ObjectIndex
-from pyyggdrasil import database
-from pyyggdrasil.serialization import Dictionaries
 
 
-def _sketch(expression, category, domain, context):
+def _sketch(expression: str, category: str, domain: PlanningDomain, context: DomainContext) -> Sketch:
     return parse_sketch(
-        f"(:sketch (:features (:{category} (:symbol value) "
-        f"(:expression {expression}))) (:rules))",
+        f"(:sketch (:features (:{category} (:symbol value) (:expression {expression}))) (:rules))",
         domain,
         context.base_repository,
     )
@@ -23,8 +29,8 @@ def _sketch(expression, category, domain, context):
 
 @pytest.mark.parametrize("family", ["base", "ext", "uns"])
 def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
-    gripper_planning_domain, ground_gripper_search_context, family
-):
+    gripper_planning_domain: PlanningDomain, ground_gripper_search_context: GroundTaskSearchContext, family: str
+) -> None:
     context = DomainContext(gripper_planning_domain)
     source = '(b_nonempty (q_project (ball) (q_atomic_state "at" (ball room))))'
     feature = f"(:boolean (:symbol value) (:expression {source}))"
@@ -57,14 +63,20 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
         module = semantics
 
     task = GroundTaskContext(context, ground_gripper_search_context)
-    state = ground_gripper_search_context.state_repository.get_initial_state(ground_gripper_search_context.axiom_evaluator)
+    state = ground_gripper_search_context.state_repository.get_initial_state(
+        ground_gripper_search_context.axiom_evaluator
+    )
     storage = module.EvaluationStorage(task.dl_denotation_repository)
     with pytest.raises(TypeError):
         module.GroundStateEvaluationContext(state, task.dl_builder, task.dl_denotation_repository)
     bindings = (
-        task.dl_denotation_repository.insert(semantics.CallArgumentsData())[0],
-        task.dl_denotation_repository.insert(semantics.RegisterValuesData())[0],
-    ) if family == "ext" else ()
+        (
+            task.dl_denotation_repository.insert(semantics.CallArgumentsData())[0],
+            task.dl_denotation_repository.insert(semantics.RegisterValuesData())[0],
+        )
+        if family == "ext"
+        else ()
+    )
     evaluation_context = module.GroundStateEvaluationContext(state, task.dl_builder, storage, *bindings)
     assert expression.evaluate(evaluation_context).get() is True
     persistent_caches = module.DenotationCaches()
@@ -80,7 +92,9 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
     assert isinstance(retained_query.get_index(), database.RelationIndex)
     assert all(isinstance(row, database.RelationRow) for row in retained_query)
     assert all(isinstance(object_, int) for row in retained_query for object_ in row)
-    assert all(isinstance(repository.get_object(ObjectIndex(object_)), Object) for row in retained_query for object_ in row)
+    assert all(
+        isinstance(repository.get_object(ObjectIndex(object_)), Object) for row in retained_query for object_ in row
+    )
     assert relations.rename(retained_query, list(retained_query.columns())) == retained_query
     retained_rows = {tuple(row) for row in retained_query}
     with pytest.raises(TypeError):
@@ -138,7 +152,10 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
     register_table(dictionaries, module.QueryProject, "projects", "p")
     register_table(dictionaries, module.QueryColumn, "columns", "c")
     register_table(
-        dictionaries, module.QueryAtomicStateFluent, "atoms", "a",
+        dictionaries,
+        module.QueryAtomicStateFluent,
+        "atoms",
+        "a",
         project=lambda value: {"predicate": value.get_predicate().get_name()},
     )
     assert serialize(dictionaries, query) == "q0"
@@ -171,7 +188,7 @@ _NAMED_QUERY_PROGRAM = """(:program (:entry root)
     (:rules)))"""
 
 
-def test_query_program_round_trip_preserves_named_references(gripper_planning_domain):
+def test_query_program_round_trip_preserves_named_references(gripper_planning_domain: PlanningDomain) -> None:
     context = DomainContext(gripper_planning_domain)
     program = parse_program(_NAMED_QUERY_PROGRAM, gripper_planning_domain, context.ext_repository)
     formatted = str(program)
@@ -188,23 +205,25 @@ def test_query_program_round_trip_preserves_named_references(gripper_planning_do
     assert [argument.get_name() for argument in worker.get_concept_arguments()] == ["X"]
     assert [register.get_name() for register in worker.get_role_registers()] == ["R"]
     assert str(worker.get_concept_features()[0].get_expression()) == (
-        "(c_project ball (q_join (q_concept ball (c_argument X)) "
-        "(q_role (ball room) (r_register R))))"
+        "(c_project ball (q_join (q_concept ball (c_argument X)) (q_role (ball room) (r_register R))))"
     )
-    assert str(worker.get_numerical_features()[0].get_expression()) == (
-        "(n_count (q_role (ball room) (r_register R)))"
-    )
+    assert str(worker.get_numerical_features()[0].get_expression()) == ("(n_count (q_role (ball room) (r_register R)))")
     query = worker.get_concept_features()[0].get_expression().get_variant().get_arg()
     assert [column.get_name() for column in query.get_columns()] == ["ball", "room"]
     assert [column.get_name() for column in query.get_variant().get_columns()] == ["ball", "room"]
     assert list(semantics.QueryJoin.Fields.__members__) == ["columns", "lhs", "rhs"]
 
 
-@pytest.mark.parametrize("reference, missing, kind", [
-    ("c_argument X", "c_argument missing", "concept argument"),
-    ("r_register R", "r_register missing", "role register"),
-])
-def test_query_program_rejects_undefined_named_references(gripper_planning_domain, reference, missing, kind):
+@pytest.mark.parametrize(
+    ("reference", "missing", "kind"),
+    [
+        ("c_argument X", "c_argument missing", "concept argument"),
+        ("r_register R", "r_register missing", "role register"),
+    ],
+)
+def test_query_program_rejects_undefined_named_references(
+    gripper_planning_domain: PlanningDomain, reference: str, missing: str, kind: str
+) -> None:
     source = _NAMED_QUERY_PROGRAM.replace(reference, missing)
     context = DomainContext(gripper_planning_domain)
     with pytest.raises(UndefinedSymbolError, match=f"Undefined {kind}: missing") as raised:
@@ -213,17 +232,25 @@ def test_query_program_rejects_undefined_named_references(gripper_planning_domai
     assert raised.value.diagnostic.location.begin == source.index("missing")
 
 
-@pytest.mark.parametrize("query, expected", [
-    ('(q_atomic_state "at" (ball room))', 2),
-    ('(q_project (room) (q_atomic_state "at" (ball room)))', 1),
-    ('(q_project () (q_atomic_state "at" (ball room)))', 1),
-    ('(q_select_equal ball room (q_atomic_state "at" (ball room)))', 0),
-    ('(q_rename (room ball) (q_atomic_state "at" (ball room)))', 2),
-    ('(q_join (q_atomic_state "at" (ball room)) (q_concept room (c_atomic_state "at-robby")))', 2),
-    ('(q_union (q_atomic_state "at" (ball room)) (q_atomic_state "at" (ball room)))', 2),
-    ('(q_difference (q_atomic_state "at" (ball room)) (q_atomic_state "at" (ball room)))', 0),
-])
-def test_query_count_evaluation(gripper_planning_domain, ground_gripper_search_context, query, expected):
+@pytest.mark.parametrize(
+    ("query", "expected"),
+    [
+        ('(q_atomic_state "at" (ball room))', 2),
+        ('(q_project (room) (q_atomic_state "at" (ball room)))', 1),
+        ('(q_project () (q_atomic_state "at" (ball room)))', 1),
+        ('(q_select_equal ball room (q_atomic_state "at" (ball room)))', 0),
+        ('(q_rename (room ball) (q_atomic_state "at" (ball room)))', 2),
+        ('(q_join (q_atomic_state "at" (ball room)) (q_concept room (c_atomic_state "at-robby")))', 2),
+        ('(q_union (q_atomic_state "at" (ball room)) (q_atomic_state "at" (ball room)))', 2),
+        ('(q_difference (q_atomic_state "at" (ball room)) (q_atomic_state "at" (ball room)))', 0),
+    ],
+)
+def test_query_count_evaluation(
+    gripper_planning_domain: PlanningDomain,
+    ground_gripper_search_context: GroundTaskSearchContext,
+    query: str,
+    expected: int,
+) -> None:
     domain = DomainContext(gripper_planning_domain)
     search = ground_gripper_search_context
     task = GroundTaskContext(domain, search)
@@ -239,14 +266,25 @@ def test_query_count_evaluation(gripper_planning_domain, ground_gripper_search_c
 _AT = '(q_atomic_state "at" (ball room))'
 
 
-@pytest.mark.parametrize("expression, expected", [
-    (f'(n_distance (q_concept ball (c_atomic_state "ball")) {_AT} (q_concept room (c_atomic_state "at-robby")))', 1),
-    (f'(n_distance (c_atomic_state "ball") {_AT} (c_atomic_state "at-robby"))', 1),
-    ('(n_distance (q_concept ball (c_atomic_state "ball")) (r_atomic_state "at") (c_atomic_state "at-robby"))', 1),
-    (f'(n_distance (c_atomic_state "ball") {_AT} (c_atomic_state "ball"))', 0),
-    (f'(n_distance (c_atomic_state "room") {_AT} (c_atomic_state "ball"))', 2**32 - 1),
-])
-def test_query_distance_evaluation(gripper_planning_domain, ground_gripper_search_context, expression, expected):
+@pytest.mark.parametrize(
+    ("expression", "expected"),
+    [
+        (
+            f'(n_distance (q_concept ball (c_atomic_state "ball")) {_AT} (q_concept room (c_atomic_state "at-robby")))',
+            1,
+        ),
+        (f'(n_distance (c_atomic_state "ball") {_AT} (c_atomic_state "at-robby"))', 1),
+        ('(n_distance (q_concept ball (c_atomic_state "ball")) (r_atomic_state "at") (c_atomic_state "at-robby"))', 1),
+        (f'(n_distance (c_atomic_state "ball") {_AT} (c_atomic_state "ball"))', 0),
+        (f'(n_distance (c_atomic_state "room") {_AT} (c_atomic_state "ball"))', 2**32 - 1),
+    ],
+)
+def test_query_distance_evaluation(
+    gripper_planning_domain: PlanningDomain,
+    ground_gripper_search_context: GroundTaskSearchContext,
+    expression: str,
+    expected: int,
+) -> None:
     domain = DomainContext(gripper_planning_domain)
     search = ground_gripper_search_context
     task = GroundTaskContext(domain, search)
@@ -259,7 +297,9 @@ def test_query_distance_evaluation(gripper_planning_domain, ground_gripper_searc
     assert str(feature) == expression
 
 
-def test_concept_and_role_projection_bindings(gripper_planning_domain, ground_gripper_search_context):
+def test_concept_and_role_projection_bindings(
+    gripper_planning_domain: PlanningDomain, ground_gripper_search_context: GroundTaskSearchContext
+) -> None:
     domain = DomainContext(gripper_planning_domain)
     search = ground_gripper_search_context
     task = GroundTaskContext(domain, search)
@@ -287,7 +327,8 @@ def test_concept_and_role_projection_bindings(gripper_planning_domain, ground_gr
     assert concept.syntactic_complexity() == role.syntactic_complexity() == 2
     assert {value.get_name() for value in concept.evaluate(context)} == {"ball1", "ball2"}
     assert {(lhs.get_name(), rhs.get_name()) for lhs, rhs in role.evaluate(context)} == {
-        ("rooma", "ball1"), ("rooma", "ball2"),
+        ("rooma", "ball1"),
+        ("rooma", "ball2"),
     }
     assert str(concept) == f"(c_project ball {atom})"
     assert str(role) == f"(r_project room ball {atom})"
@@ -308,7 +349,8 @@ def test_concept_and_role_projection_bindings(gripper_planning_domain, ground_gr
     assert owner.get_boolean_features()[0].get_expression().evaluate(retained_context) == saved_boolean
     assert {value.get_name() for value in saved_concept} == {"ball1", "ball2"}
     assert {(lhs.get_name(), rhs.get_name()) for lhs, rhs in saved_role} == {
-        ("rooma", "ball1"), ("rooma", "ball2"),
+        ("rooma", "ball1"),
+        ("rooma", "ball2"),
     }
     assert saved_count.get() == 2
     assert saved_boolean.get() is True
@@ -316,11 +358,13 @@ def test_concept_and_role_projection_bindings(gripper_planning_domain, ground_gr
 
 @pytest.mark.parametrize("module", [semantics], ids=["dl"])
 @pytest.mark.parametrize("owner_kind", ["query", "concrete", "concept", "role"])
-def test_query_column_retains_owner_after_list_and_repository_scope(gripper_planning_domain, module, owner_kind):
-    def column_after_owner_scope():
+def test_query_column_retains_owner_after_list_and_repository_scope(
+    gripper_planning_domain: PlanningDomain, module: ModuleType, owner_kind: str
+) -> None:
+    def column_after_owner_scope() -> tuple[semantics.QueryColumn, str]:
         factory = module.ConstructorRepositoryFactory()
         repository = factory.create(gripper_planning_domain)
-        column_indices = []
+        column_indices: list[semantics.QueryColumnIndex] = []
         for name in ("left", "right"):
             data = semantics.QueryColumnData()
             data.name = name
@@ -360,13 +404,13 @@ def test_query_column_retains_owner_after_list_and_repository_scope(gripper_plan
 
 
 def test_native_ext_query_construction_derives_schema_and_evaluates(
-    gripper_planning_domain, ground_gripper_search_context
-):
+    gripper_planning_domain: PlanningDomain, ground_gripper_search_context: GroundTaskSearchContext
+) -> None:
     domain = DomainContext(gripper_planning_domain)
     repository = domain.ext_repository.get_dl_repository()
     program = parse_program(
-        '(:program (:entry root) (:module (:symbol root) (:arguments) (:registers) '
-        '(:entry m0) (:memory m0) (:features (:numerical (:symbol count) '
+        "(:program (:entry root) (:module (:symbol root) (:arguments) (:registers) "
+        "(:entry m0) (:memory m0) (:features (:numerical (:symbol count) "
         '(:expression (n_count (q_join (q_atomic_state "at" (ball room)) '
         '(q_concept room (c_atomic_state "at-robby"))))))) (:rules)))',
         gripper_planning_domain,
@@ -395,7 +439,5 @@ def test_native_ext_query_construction_derives_schema_and_evaluates(
     storage = semantics.EvaluationStorage(task.dl_denotation_repository)
     arguments = task.dl_denotation_repository.insert(semantics.CallArgumentsData())[0]
     registers = task.dl_denotation_repository.insert(semantics.RegisterValuesData())[0]
-    context = semantics.GroundStateEvaluationContext(
-        state, task.dl_builder, storage, arguments, registers
-    )
+    context = semantics.GroundStateEvaluationContext(state, task.dl_builder, storage, arguments, registers)
     assert rewritten.evaluate(context).get() == expression.evaluate(context).get() == 2

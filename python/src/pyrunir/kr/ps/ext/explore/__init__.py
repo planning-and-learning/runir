@@ -1,3 +1,6 @@
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Explore how an Ext module program behaves on lifted tasks, centred on its Choose rules.
 
 A `Session` holds a domain, a program and named tasks. Searches run lazily per task with
@@ -13,38 +16,39 @@ in the configuration after binding, like `:order`; a concept expression is evalu
 Choose source, where candidates are computed, and its value for a binding is membership.
 """
 
-from .results import (
-    Alternative,
-    BindingRef,
-    Budget,
-    BudgetExhausted,
-    ChoicePoint,
-    ChooseRule,
-    ChooseSummary,
-    Contrast,
-    DeadEnd,
-    Failure,
-    Feature,
-    LoadTrial,
-    ModuleTermination,
-    Plan,
-    Step,
-    Separation,
-    Task,
-    TaskRun,
-    TaskValidation,
-    Termination,
-    Validation,
-    Vertex,
-    VertexRef,
+from pyrunir.kr.ps.ext.explore.results import (
+    Alternative as Alternative,
+    BindingRef as BindingRef,
+    Budget as Budget,
+    BudgetExhaustedError as BudgetExhaustedError,
+    ChoicePoint as ChoicePoint,
+    ChooseRule as ChooseRule,
+    ChooseSummary as ChooseSummary,
+    Contrast as Contrast,
+    DeadEnd as DeadEnd,
+    Failure as Failure,
+    Feature as Feature,
+    LoadTrial as LoadTrial,
+    ModuleTermination as ModuleTermination,
+    Plan as Plan,
+    Separation as Separation,
+    SessionOptions as SessionOptions,
+    Step as Step,
+    Task as Task,
+    TaskRun as TaskRun,
+    TaskValidation as TaskValidation,
+    Termination as Termination,
+    Validation as Validation,
+    Vertex as Vertex,
+    VertexRef as VertexRef,
 )
-from .session import Session
+from pyrunir.kr.ps.ext.explore.session import Session as Session
 
 __all__ = [
     "Alternative",
     "BindingRef",
     "Budget",
-    "BudgetExhausted",
+    "BudgetExhaustedError",
     "ChoicePoint",
     "ChooseRule",
     "ChooseSummary",
@@ -55,9 +59,10 @@ __all__ = [
     "LoadTrial",
     "ModuleTermination",
     "Plan",
-    "Step",
     "Separation",
     "Session",
+    "SessionOptions",
+    "Step",
     "Task",
     "TaskRun",
     "TaskValidation",

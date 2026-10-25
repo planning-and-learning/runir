@@ -1,13 +1,16 @@
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import gc
 
 import pytest
+from pytyr.formalism.planning import PlanningDomain
+from pyyggdrasil.diagnostics import Diagnostic, format_diagnostic
 
 from pyrunir.kr import DuplicateDefinitionError, ParseError, SemanticError
 from pyrunir.kr.dl.semantics import ConstructorRepositoryFactory
 from pyrunir.kr.ps.base import RepositoryFactory
 from pyrunir.kr.ps.base.dl import parse_sketch
-from pytyr.formalism.planning import PlanningDomain
-from pyyggdrasil.diagnostics import Diagnostic, format_diagnostic
 
 
 @pytest.mark.parametrize("suffix", ["", ")"])
@@ -35,11 +38,11 @@ def test_parser_rejects_missing_and_extra_closes_with_owned_context(
     note = diagnostic.notes[0]
     assert note.message == "sketch starts here"
     assert note.location is not None
-    assert note.location.begin == len(source[:source.index("(:sketch")].encode("utf-8"))
+    assert note.location.begin == len(source[: source.index("(:sketch")].encode("utf-8"))
     assert note.location.source is location.source
     assert str(error) == format_diagnostic(diagnostic)
     with pytest.raises(AttributeError):
-        setattr(error, "diagnostic", None)
+        error.diagnostic = None
 
     del error, raised, source, repository
     gc.collect()
@@ -64,11 +67,7 @@ def test_parser_preserves_semicolon_comments(gripper_planning_domain: PlanningDo
 def test_constructor_error_belongs_to_deepest_recognized_parent(
     gripper_planning_domain: PlanningDomain, expression: str, owner: str, unexpected: str
 ) -> None:
-    source = (
-        "(:sketch (:features (:boolean (:symbol b) (:expression "
-        f"(b_nonempty {expression})"
-        "))) (:rules))"
-    )
+    source = f"(:sketch (:features (:boolean (:symbol b) (:expression (b_nonempty {expression})))) (:rules))"
     repository = RepositoryFactory().create(ConstructorRepositoryFactory().create(gripper_planning_domain))
     with pytest.raises(ParseError) as raised:
         parse_sketch(source, gripper_planning_domain, repository)
@@ -105,11 +104,7 @@ def test_constructor_expectations_use_complete_readable_messages(
     expected: str,
     unexpected: str,
 ) -> None:
-    source = (
-        "(:sketch (:features (:boolean (:symbol b) (:expression "
-        f"(b_nonempty {expression})"
-        "))) (:rules))"
-    )
+    source = f"(:sketch (:features (:boolean (:symbol b) (:expression (b_nonempty {expression})))) (:rules))"
     repository = RepositoryFactory().create(ConstructorRepositoryFactory().create(gripper_planning_domain))
     with pytest.raises(ParseError) as raised:
         parse_sketch(source, gripper_planning_domain, repository)
@@ -163,7 +158,7 @@ def test_semantic_error_retains_exact_identifier_span(gripper_planning_domain: P
     assert location is not None
     begin = source.rindex("same")
     assert (location.begin, location.end) == (begin, begin + len("same"))
-    assert location.source.text[location.begin:location.end] == "same"
+    assert location.source.text[location.begin : location.end] == "same"
     assert diagnostic.notes == []
 
 

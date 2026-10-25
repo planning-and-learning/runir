@@ -1,7 +1,12 @@
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+from pytyr.formalism.planning import PlanningDomain
+
 from pyrunir.kr import dl
 
 
-def test_value_and_view_constructors_build_equal_data(gripper_planning_domain):
+def test_value_and_view_constructors_build_equal_data(gripper_planning_domain: PlanningDomain) -> None:
     semantics = dl.semantics
     repository = semantics.ConstructorRepositoryFactory().create(gripper_planning_domain)
 
@@ -22,7 +27,7 @@ def test_value_and_view_constructors_build_equal_data(gripper_planning_domain):
     assert query_by_index == query_by_view
 
 
-def test_view_variant_constructor_builds_equal_data(gripper_planning_domain):
+def test_view_variant_constructor_builds_equal_data(gripper_planning_domain: PlanningDomain) -> None:
     semantics = dl.semantics
     repository = semantics.ConstructorRepositoryFactory().create(gripper_planning_domain)
 

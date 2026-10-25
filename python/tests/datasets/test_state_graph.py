@@ -1,16 +1,23 @@
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import gc
 import sys
 from pathlib import Path
 from typing import TypedDict, cast
 
 import pytest
-
 from fixture_utils import load_fixture
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
+from pytyr.formalism.planning import ActionBinding, Parser
+from pytyr.planning.ground import PackedState as GroundPackedState
+from pytyr.planning.lifted import GroundTaskInstantiationOptions, PackedState as LiftedPackedState, Task
+from pyyggdrasil.execution import ExecutionContext
 
 from pyrunir.datasets import (
     AnnotatedEquivalenceVertexLabel,
+    ColorRepositoryFactory,
     DynamicAnnotatedEquivalenceGraph,
     DynamicEquivalenceGraph,
     EquivalenceEdgeLabel,
@@ -24,21 +31,15 @@ from pyrunir.datasets import (
     GroundStaticStateGraph,
     GroundTaskSearchContext,
     LiftedTaskSearchContext,
-    ColorRepositoryFactory,
-    StateGraphEdgeLabel,
-    StaticEquivalenceGraph,
     StateGraphCostMode,
+    StateGraphEdgeLabel,
     StateGraphGenerationOptions,
+    StaticEquivalenceGraph,
     annotate_ground_state_graph,
     generate_ground_equivalence_graph,
     generate_ground_state_graph,
     generate_lifted_state_graph,
 )
-from pyyggdrasil.execution import ExecutionContext
-from pytyr.formalism.planning import ActionBinding, Parser
-from pytyr.planning.ground import PackedState as GroundPackedState
-from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
-from pytyr.planning.lifted import PackedState as LiftedPackedState
 
 
 class EquivalenceGraphFixture(TypedDict):
@@ -51,7 +52,7 @@ class EquivalenceGraphFixture(TypedDict):
 
 
 _EQUIVALENCE_SUITE = load_fixture("datasets/equivalence_graph.json")
-EQUIVALENCE_GRAPH_FIXTURES = cast(list[EquivalenceGraphFixture], _EQUIVALENCE_SUITE["tests"])
+EQUIVALENCE_GRAPH_FIXTURES = cast("list[EquivalenceGraphFixture]", _EQUIVALENCE_SUITE["tests"])
 EQUIVALENCE_POLICIES = {
     "identity": EquivalencePolicyMode.IDENTITY,
     "gi": EquivalencePolicyMode.GI,
@@ -115,7 +116,9 @@ def test_state_graph_properties_keep_the_graph_alive(
     assert (str(state.unpack()), str(action)) == expected
 
 
-def test_ground_state_graph_builder_can_copy_generated_graph_labels(ground_gripper_search_context: GroundTaskSearchContext) -> None:
+def test_ground_state_graph_builder_can_copy_generated_graph_labels(
+    ground_gripper_search_context: GroundTaskSearchContext,
+) -> None:
     options = StateGraphGenerationOptions()
     options.max_num_states = 4
 
@@ -165,7 +168,9 @@ def test_state_graph_labels_own_packed_states_and_action_bindings(gripper_data_d
     options = StateGraphGenerationOptions()
     options.max_num_states = 4
 
-    graph = (generate_ground_state_graph if ground else generate_lifted_state_graph)(context, options).get_forward_graph()
+    graph = (generate_ground_state_graph if ground else generate_lifted_state_graph)(
+        context, options
+    ).get_forward_graph()
     edge_label = graph.get_edge_property(next(iter(graph.get_edge_indices())))
 
     assert isinstance(edge_label, StateGraphEdgeLabel)
@@ -228,7 +233,9 @@ def test_labeled_dataset_graphs_expose_undirected_edge_insertion() -> None:
     assert graph.get_edge_property(dynamic_reverse).state_edge_index == edge_label.state_edge_index
 
 
-def test_generate_ground_equivalence_graph_exposes_owned_result_graphs(ground_gripper_search_context: GroundTaskSearchContext) -> None:
+def test_generate_ground_equivalence_graph_exposes_owned_result_graphs(
+    ground_gripper_search_context: GroundTaskSearchContext,
+) -> None:
     options = EquivalenceGraphGenerationOptions()
     options.policy_mode = EquivalencePolicyMode.IDENTITY
     options.state_graph_options.max_num_states = 4
@@ -310,7 +317,9 @@ def test_dataset_dynamic_graph_bindings_support_mutation_and_membership() -> Non
     assert not graph.contains_vertex(source)
 
 
-def test_ground_state_dynamic_graph_binding_can_copy_generated_labels(ground_gripper_search_context: GroundTaskSearchContext) -> None:
+def test_ground_state_dynamic_graph_binding_can_copy_generated_labels(
+    ground_gripper_search_context: GroundTaskSearchContext,
+) -> None:
     options = StateGraphGenerationOptions()
     options.max_num_states = 4
 
@@ -352,12 +361,16 @@ def test_annotated_equivalence_dynamic_graph_binding_uses_annotated_labels() -> 
     assert graph.get_edge_property(edge).state_graph_index == edge_label.state_graph_index
 
 
-def test_ground_annotated_state_dynamic_graph_binding_can_copy_annotated_labels(ground_gripper_search_context: GroundTaskSearchContext) -> None:
+def test_ground_annotated_state_dynamic_graph_binding_can_copy_annotated_labels(
+    ground_gripper_search_context: GroundTaskSearchContext,
+) -> None:
     options = StateGraphGenerationOptions()
     options.max_num_states = 4
 
     generated = generate_ground_state_graph(ground_gripper_search_context, options)
-    annotated = annotate_ground_state_graph(ground_gripper_search_context, generated, StateGraphCostMode.UNIT_COST).get_forward_graph()
+    annotated = annotate_ground_state_graph(
+        ground_gripper_search_context, generated, StateGraphCostMode.UNIT_COST
+    ).get_forward_graph()
     source = next(vertex for vertex in annotated.get_vertex_indices() if annotated.get_out_degree(vertex) > 0)
     edge = next(iter(annotated.get_out_edge_indices(source)))
     target = annotated.get_target(edge)

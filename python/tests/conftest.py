@@ -1,13 +1,16 @@
-from pypddl_datasets import data_root
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 from pathlib import Path
 
 import pytest
+from pypddl.formalism import ParserOptions
+from pypddl_datasets import data_root
+from pytyr.formalism.planning import Parser, PlanningDomain
+from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
+from pyyggdrasil.execution import ExecutionContext
 
 from pyrunir.datasets import GroundTaskSearchContext
-from pyyggdrasil.execution import ExecutionContext
-from pypddl.formalism import ParserOptions
-from pytyr.formalism.planning import Parser
-from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 
 
 @pytest.fixture
@@ -21,12 +24,12 @@ def gripper_parser(gripper_data_dir: Path) -> Parser:
 
 
 @pytest.fixture
-def gripper_planning_domain(gripper_parser: Parser):
+def gripper_planning_domain(gripper_parser: Parser) -> PlanningDomain:
     return gripper_parser.get_domain()
 
 
 @pytest.fixture
-def ground_gripper_search_context(gripper_data_dir: Path, gripper_parser: Parser):
+def ground_gripper_search_context(gripper_data_dir: Path, gripper_parser: Parser) -> GroundTaskSearchContext:
     planning_task = gripper_parser.parse_task(gripper_data_dir / "test-1.pddl", ParserOptions())
 
     execution_context = ExecutionContext(1)

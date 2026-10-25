@@ -1,8 +1,12 @@
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import pytest
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
-from pytyr.formalism.planning import Parser
+from pytyr.formalism.planning import Parser, PlanningDomain
 from pytyr.planning import lifted
+from pytyr.planning.ground import State
 from pyyggdrasil.execution import ExecutionContext
 
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
@@ -15,20 +19,36 @@ from pyrunir.kr.uns import classify
 from pyrunir.kr.uns.dl import parse_classifier
 
 # Optimization replans a generic join over two atoms as a binary join, so every object below changes.
-_LOCATED = '(q_generic_join (ball room) (ball room) (q_atomic_state "at" (ball room)) (q_concept ball (c_atomic_state "ball")))'
-_GOALS = '(q_generic_join (ball room) (ball room) (q_atomic_goal "at" true (ball room)) (q_concept ball (c_atomic_state "ball")))'
+_LOCATED = (
+    "(q_generic_join (ball room) (ball room) "
+    '(q_atomic_state "at" (ball room)) (q_concept ball (c_atomic_state "ball")))'
+)
+_GOALS = (
+    "(q_generic_join (ball room) (ball room) "
+    '(q_atomic_goal "at" true (ball room)) (q_concept ball (c_atomic_state "ball")))'
+)
 
 
-def _ground(gripper_planning_domain, ground_gripper_search_context):
+def _ground(
+    gripper_planning_domain: PlanningDomain,
+    ground_gripper_search_context: GroundTaskSearchContext,
+) -> tuple[DomainContext, GroundTaskContext, State]:
+    """Return the gripper domain context, ground task context, and initial state."""
     domain = DomainContext(gripper_planning_domain)
     task = GroundTaskContext(domain, ground_gripper_search_context)
-    state = ground_gripper_search_context.state_repository.get_initial_state(ground_gripper_search_context.axiom_evaluator)
+    state = ground_gripper_search_context.state_repository.get_initial_state(
+        ground_gripper_search_context.axiom_evaluator
+    )
     return domain, task, state
 
 
-def test_base_sketch(gripper_planning_domain, ground_gripper_search_context):
+def test_base_sketch(
+    gripper_planning_domain: PlanningDomain, ground_gripper_search_context: GroundTaskSearchContext
+) -> None:
     domain, task, state = _ground(gripper_planning_domain, ground_gripper_search_context)
-    context = semantics.GroundStateEvaluationContext(state, task.dl_builder, semantics.EvaluationStorage(task.dl_denotation_repository))
+    context = semantics.GroundStateEvaluationContext(
+        state, task.dl_builder, semantics.EvaluationStorage(task.dl_denotation_repository)
+    )
     source = (
         f"(:sketch (:features (:numerical (:symbol located) (:expression (n_count {_LOCATED})))) "
         "(:rules (:rule (:symbol step) (:expression (:conditions) (:effects (decreases located))))))"
@@ -47,12 +67,17 @@ def test_base_sketch(gripper_planning_domain, ground_gripper_search_context):
     assert plain.optimize(domain.base_repository) == plain
 
 
-def test_statistics_warn_about_leaves_empty_in_every_sample(gripper_planning_domain, ground_gripper_search_context):
+def test_statistics_warn_about_leaves_empty_in_every_sample(
+    gripper_planning_domain: PlanningDomain, ground_gripper_search_context: GroundTaskSearchContext
+) -> None:
     domain, task, state = _ground(gripper_planning_domain, ground_gripper_search_context)
-    context = semantics.GroundStateEvaluationContext(state, task.dl_builder, semantics.EvaluationStorage(task.dl_denotation_repository))
+    context = semantics.GroundStateEvaluationContext(
+        state, task.dl_builder, semantics.EvaluationStorage(task.dl_denotation_repository)
+    )
     carried = '(q_atomic_state "carry" (ball gripper))'  # no ball is carried in the initial state
     sketch = parse_sketch(
-        f"(:sketch (:features (:numerical (:symbol carried) (:expression (n_count (q_join {carried} (q_concept ball (c_atomic_state \"ball\"))))))) (:rules))",
+        "(:sketch (:features (:numerical (:symbol carried) (:expression "
+        f'(n_count (q_join {carried} (q_concept ball (c_atomic_state "ball"))))))) (:rules))',
         gripper_planning_domain,
         domain.base_repository,
     )
@@ -63,7 +88,9 @@ def test_statistics_warn_about_leaves_empty_in_every_sample(gripper_planning_dom
     assert optimized.get_numerical_features()[0].get_expression().evaluate(context).get() == 0
 
 
-def test_ext_program(gripper_planning_domain, ground_gripper_search_context):
+def test_ext_program(
+    gripper_planning_domain: PlanningDomain, ground_gripper_search_context: GroundTaskSearchContext
+) -> None:
     domain, task, state = _ground(gripper_planning_domain, ground_gripper_search_context)
     bindings = (
         task.dl_denotation_repository.insert(semantics.CallArgumentsData())[0],
@@ -132,14 +159,16 @@ _ICP_PROGRAM = f"""(:program (:entry main)
 
 
 @pytest.mark.parametrize("kind", ["Ground", "Lifted"])
-def test_icp_program(kind):
+def test_icp_program(kind: str) -> None:
     directory = data_root() / "classical" / "tests" / "gripper"
     parser = Parser(directory / "domain.pddl", ParserOptions())
     task = lifted.Task(parser.parse_task(directory / "test-1.pddl", ParserOptions()))
     execution = ExecutionContext(1)
     domain = DomainContext(parser.get_domain())
     if kind == "Ground":
-        context = GroundTaskContext(domain, GroundTaskSearchContext(task.instantiate_ground_task(execution).task, execution))
+        context = GroundTaskContext(
+            domain, GroundTaskSearchContext(task.instantiate_ground_task(execution).task, execution)
+        )
     else:
         context = LiftedTaskContext(domain, LiftedTaskSearchContext(task, execution))
     program = icp.dl.parse_program(_ICP_PROGRAM, parser.get_domain(), domain.icp_repository)
@@ -152,7 +181,9 @@ def test_icp_program(kind):
         assert result.status == icp.ProgramProofStatus.SUCCESS
 
 
-def test_uns_classifier(gripper_planning_domain, ground_gripper_search_context):
+def test_uns_classifier(
+    gripper_planning_domain: PlanningDomain, ground_gripper_search_context: GroundTaskSearchContext
+) -> None:
     domain, task, state = _ground(gripper_planning_domain, ground_gripper_search_context)
     context = semantics.GroundStateEvaluationContext(
         state, task.dl_builder, semantics.EvaluationStorage(task.dl_denotation_repository)
@@ -164,7 +195,10 @@ def test_uns_classifier(gripper_planning_domain, ground_gripper_search_context):
     classifier = parse_classifier(source, gripper_planning_domain, domain.uns_repository)
     statistics = classifier.collect_query_statistics([context])
     assert statistics.num_leaves() == 2
-    for optimized in (classifier.optimize(domain.uns_repository), classifier.optimize(domain.uns_repository, statistics)):
+    for optimized in (
+        classifier.optimize(domain.uns_repository),
+        classifier.optimize(domain.uns_repository, statistics),
+    ):
         assert optimized != classifier
         assert parse_classifier(str(optimized), gripper_planning_domain, domain.uns_repository) == optimized
         assert classify(optimized, context) == classify(classifier, context)

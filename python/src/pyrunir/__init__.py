@@ -1,14 +1,19 @@
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+"""Python bindings for the runir planning and learning library."""
+
+import tomllib as _tomllib
 from importlib import import_module as _import_module
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
-import tomllib as _tomllib
 
 # Load native dependency packages before this package loads native extensions.
 _import_module("pypddl")
 _import_module("pytyr")
 _import_module("pyyggdrasil")
 
-from . import (
+from pyrunir import (
     datasets as datasets,
     graphs as graphs,
     kr as kr,
@@ -36,6 +41,7 @@ except PackageNotFoundError:
 
 
 def native_prefix() -> Path:
+    """Return the install prefix of the native runir library: the bundled `native` dir or an enclosing prefix."""
     package_dir = Path(__file__).resolve().parent
     native_dir = package_dir / "native"
     if (native_dir / "include" / "runir").is_dir():
@@ -47,10 +53,12 @@ def native_prefix() -> Path:
 
 
 def native_include_dir() -> Path:
+    """Return the directory containing the runir C++ headers."""
     return native_prefix() / "include"
 
 
 def native_lib_dir() -> Path:
+    """Return the directory containing the native runir libraries (`lib` or `lib64`)."""
     native_dir = native_prefix()
     for lib_dir_name in ("lib", "lib64"):
         lib_dir = native_dir / lib_dir_name
@@ -72,7 +80,5 @@ def cmake_dir() -> Path:
         if (candidate / "runirConfig.cmake").is_file():
             return candidate
 
-    raise FileNotFoundError(
-        f"runirConfig.cmake not found under {prefix}; "
-        "the installed pyrunir is too old or incomplete."
-    )
+    msg = f"runirConfig.cmake not found under {prefix}; the installed pyrunir is too old or incomplete."
+    raise FileNotFoundError(msg)

@@ -1,30 +1,46 @@
-import pytest
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Sequence
+from pathlib import Path
+
+import pytest
 from pypddl.formalism import ParserOptions
-from pyyggdrasil.execution import ExecutionContext
-from pytyr.formalism.planning import Parser
+from pytyr.formalism.planning import Parser, PlanningDomain
+from pytyr.planning.ground import PackedState
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
+from pyyggdrasil.execution import ExecutionContext
+
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext, LiftedTaskContext
-from pyrunir.kr.dl.grammar import parse_grammar
 from pyrunir.kr.dl import cnf_grammar, semantics
-from pyrunir.kr.dl.grammar import ConstructorRepositoryFactory
+from pyrunir.kr.dl.grammar import ConstructorRepositoryFactory, parse_grammar
 
 
-def _make_gripper_context(gripper_data_dir):
+def _make_gripper_context(
+    gripper_data_dir: Path,
+) -> tuple[PlanningDomain, GroundTaskSearchContext, GroundTaskContext]:
     parser_options = ParserOptions()
     parser = Parser(gripper_data_dir / "domain.pddl", parser_options)
     gripper_planning_domain = parser.get_domain()
     execution_context = ExecutionContext(1)
-    task = Task(parser.parse_task(gripper_data_dir / "test-1.pddl", parser_options)).instantiate_ground_task(
-        execution_context, GroundTaskInstantiationOptions()
-    ).task
+    task = (
+        Task(parser.parse_task(gripper_data_dir / "test-1.pddl", parser_options))
+        .instantiate_ground_task(execution_context, GroundTaskInstantiationOptions())
+        .task
+    )
     search_context = GroundTaskSearchContext(task, execution_context)
     task_context = GroundTaskContext(DomainContext(gripper_planning_domain), search_context)
     return gripper_planning_domain, search_context, task_context
 
 
-def _generate(grammar_description, states, planning_domain, task_context, max_syntactic_complexity):
+def _generate(
+    grammar_description: str,
+    states: Sequence[PackedState],
+    planning_domain: PlanningDomain,
+    task_context: GroundTaskContext,
+    max_syntactic_complexity: int,
+) -> cnf_grammar.GenerateResults:
     grammar_repository = ConstructorRepositoryFactory().create(planning_domain)
     grammar = parse_grammar(grammar_description, planning_domain.get_domain(), grammar_repository)
     cnf_repository = cnf_grammar.ConstructorRepositoryFactory().create(planning_domain)
@@ -32,12 +48,18 @@ def _generate(grammar_description, states, planning_domain, task_context, max_sy
     options = cnf_grammar.GenerateOptions()
     options.max_syntactic_complexity = max_syntactic_complexity
     return cnf_grammar.generate_ground(
-        cnf, states, task_context.domain_context.base_repository.get_dl_repository(), task_context.dl_denotation_repository, options
+        cnf,
+        states,
+        task_context.domain_context.base_repository.get_dl_repository(),
+        task_context.dl_denotation_repository,
+        options,
     )
 
 
-def _concept_vector(concept, states, task_context):
-    result = []
+def _concept_vector(
+    concept: semantics.Concept, states: Sequence[PackedState], task_context: GroundTaskContext
+) -> tuple[tuple[str, ...], ...]:
+    result: list[tuple[str, ...]] = []
     storage = semantics.EvaluationStorage(task_context.dl_denotation_repository)
     for state in states:
         storage.reset_dynamic()
@@ -46,7 +68,7 @@ def _concept_vector(concept, states, task_context):
     return tuple(result)
 
 
-def test_generate_ground_and_cached_evaluation(gripper_data_dir) -> None:
+def test_generate_ground_and_cached_evaluation(gripper_data_dir: Path) -> None:
     gripper_planning_domain, search_context, task_context = _make_gripper_context(gripper_data_dir)
     state = search_context.state_repository.get_initial_state(search_context.axiom_evaluator).pack()
 
@@ -70,7 +92,7 @@ def test_generate_ground_and_cached_evaluation(gripper_data_dir) -> None:
     assert result.numericals[0].evaluate(context).get() == 6
 
 
-def test_generate_lifted_uses_domain_constructors_and_task_denotations(gripper_data_dir) -> None:
+def test_generate_lifted_uses_domain_constructors_and_task_denotations(gripper_data_dir: Path) -> None:
     parser = Parser(gripper_data_dir / "domain.pddl", ParserOptions())
     planning_domain = parser.get_domain()
     execution = ExecutionContext(1)
@@ -80,9 +102,7 @@ def test_generate_lifted_uses_domain_constructors_and_task_denotations(gripper_d
     state = search.state_repository.get_initial_state(search.axiom_evaluator).pack()
     output_repository = task_context.domain_context.base_repository.get_dl_repository()
     grammar_repository = ConstructorRepositoryFactory().create(planning_domain)
-    grammar = parse_grammar(
-        "((c_0 (c_top))(n_0 (n_count c_0)))", planning_domain.get_domain(), grammar_repository
-    )
+    grammar = parse_grammar("((c_0 (c_top))(n_0 (n_count c_0)))", planning_domain.get_domain(), grammar_repository)
     cnf_repository = cnf_grammar.ConstructorRepositoryFactory().create(planning_domain)
     cnf = cnf_grammar.translate(grammar, cnf_repository)
     options = cnf_grammar.GenerateOptions()
@@ -110,8 +130,8 @@ def test_generate_lifted_uses_domain_constructors_and_task_denotations(gripper_d
     foreign_search = LiftedTaskSearchContext(foreign_task, execution)
     foreign_state = foreign_search.state_repository.get_initial_state(foreign_search.axiom_evaluator).pack()
     foreign_context = LiftedTaskContext(DomainContext(foreign_parser.get_domain()), foreign_search)
+    foreign_storage = semantics.EvaluationStorage(foreign_context.dl_denotation_repository)
     with pytest.raises(ValueError, match="repository for the same planning task"):
-        foreign_storage = semantics.EvaluationStorage(foreign_context.dl_denotation_repository)
         semantics.LiftedStateEvaluationContext(state.unpack(), task_context.dl_builder, foreign_storage)
     with pytest.raises(ValueError, match="states and output repository for the same planning domain"):
         cnf_grammar.generate_lifted(cnf, [foreign_state], output_repository, denotation_repository, options)
@@ -121,7 +141,7 @@ def test_generate_lifted_uses_domain_constructors_and_task_denotations(gripper_d
         cnf_grammar.generate_lifted(cnf, [], foreign_repository, denotation_repository, options)
 
 
-def test_distance_evaluation_handles_shortest_zero_and_infinity(gripper_data_dir) -> None:
+def test_distance_evaluation_handles_shortest_zero_and_infinity(gripper_data_dir: Path) -> None:
     planning_domain, search_context, task_context = _make_gripper_context(gripper_data_dir)
     state = search_context.state_repository.get_initial_state(search_context.axiom_evaluator).pack()
 
@@ -144,7 +164,7 @@ def test_distance_evaluation_handles_shortest_zero_and_infinity(gripper_data_dir
     assert refreshed_values == values
 
 
-def test_generate_distinguishes_ordered_state_denotation_vectors(gripper_data_dir) -> None:
+def test_generate_distinguishes_ordered_state_denotation_vectors(gripper_data_dir: Path) -> None:
     planning_domain, search_context, task_context = _make_gripper_context(gripper_data_dir)
     initial_node = search_context.successor_generator.get_initial_node(
         search_context.state_repository, search_context.axiom_evaluator
@@ -172,7 +192,7 @@ def test_generate_distinguishes_ordered_state_denotation_vectors(gripper_data_di
     assert vectors.count((("roomb",), ("rooma",))) == 1
 
 
-def test_generate_keeps_equal_denotations_in_distinct_nonterminals(gripper_data_dir) -> None:
+def test_generate_keeps_equal_denotations_in_distinct_nonterminals(gripper_data_dir: Path) -> None:
     planning_domain, search_context, task_context = _make_gripper_context(gripper_data_dir)
     state = search_context.state_repository.get_initial_state(search_context.axiom_evaluator).pack()
 
@@ -185,7 +205,7 @@ def test_generate_keeps_equal_denotations_in_distinct_nonterminals(gripper_data_
     assert result.concepts[0].syntactic_complexity() == 3
 
 
-def test_generate_computes_substitution_closure_independent_of_rule_order(gripper_data_dir) -> None:
+def test_generate_computes_substitution_closure_independent_of_rule_order(gripper_data_dir: Path) -> None:
     planning_domain, search_context, task_context = _make_gripper_context(gripper_data_dir)
     state = search_context.state_repository.get_initial_state(search_context.axiom_evaluator).pack()
 
@@ -197,7 +217,7 @@ def test_generate_computes_substitution_closure_independent_of_rule_order(grippe
     assert [str(concept) for concept in result.concepts] == ["(c_top)"]
 
 
-def test_generate_deduplicates_commutative_candidates(gripper_data_dir) -> None:
+def test_generate_deduplicates_commutative_candidates(gripper_data_dir: Path) -> None:
     planning_domain, search_context, task_context = _make_gripper_context(gripper_data_dir)
     state = search_context.state_repository.get_initial_state(search_context.axiom_evaluator).pack()
 
@@ -216,7 +236,7 @@ def test_generate_deduplicates_commutative_candidates(gripper_data_dir) -> None:
     assert sum(concept.syntactic_complexity() == 3 for concept in result.concepts) == 1
 
 
-def test_generate_terminates_substitution_closure_cycle_without_states(gripper_data_dir) -> None:
+def test_generate_terminates_substitution_closure_cycle_without_states(gripper_data_dir: Path) -> None:
     planning_domain, _, task_context = _make_gripper_context(gripper_data_dir)
 
     result = _generate("((c_0 (c_1))(c_1 (c_2))(c_2 (c_0))(c_2 (c_top)))", [], planning_domain, task_context, 1)

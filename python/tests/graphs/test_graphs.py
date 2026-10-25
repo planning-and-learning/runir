@@ -1,7 +1,9 @@
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 from typing import TypedDict, cast, override
 
 import pytest
-
 from fixture_utils import load_fixture
 
 from pyrunir.graphs import (
@@ -52,8 +54,8 @@ class CertificatePairFixture(TypedDict):
 
 
 _GRAPH_SUITE = load_fixture("graphs/shapes.json")
-GRAPH_FIXTURES = cast(list[GraphFixture], _GRAPH_SUITE["graphs"])
-CERTIFICATE_PAIRS = cast(list[CertificatePairFixture], _GRAPH_SUITE["certificate_pairs"])
+GRAPH_FIXTURES = cast("list[GraphFixture]", _GRAPH_SUITE["graphs"])
+CERTIFICATE_PAIRS = cast("list[CertificatePairFixture]", _GRAPH_SUITE["certificate_pairs"])
 
 
 def _populate_fixture_graph(graph: StaticGraphBuilder | DynamicGraph, case: GraphFixture) -> None:
@@ -61,7 +63,9 @@ def _populate_fixture_graph(graph: StaticGraphBuilder | DynamicGraph, case: Grap
     for raw_edge in case["edges"]:
         assert len(raw_edge) == 3
         source, target, undirected = raw_edge
-        assert isinstance(source, int) and isinstance(target, int) and isinstance(undirected, bool)
+        assert isinstance(source, int)
+        assert isinstance(target, int)
+        assert isinstance(undirected, bool)
         if undirected:
             graph.add_undirected_edge(vertices[source], vertices[target], "edge")
         else:
@@ -180,12 +184,10 @@ def test_bidirectional_static_graph_exposes_forward_and_backward_graphs() -> Non
     graph = BidirectionalStaticGraph(builder)
 
     forward_targets = [
-        graph.get_forward_graph().get_target(edge)
-        for edge in graph.get_forward_graph().get_out_edge_indices(b)
+        graph.get_forward_graph().get_target(edge) for edge in graph.get_forward_graph().get_out_edge_indices(b)
     ]
     backward_targets = [
-        graph.get_backward_graph().get_target(edge)
-        for edge in graph.get_backward_graph().get_out_edge_indices(b)
+        graph.get_backward_graph().get_target(edge) for edge in graph.get_backward_graph().get_out_edge_indices(b)
     ]
 
     assert forward_targets == [a]
@@ -195,7 +197,7 @@ def test_bidirectional_static_graph_exposes_forward_and_backward_graphs() -> Non
 
 
 @pytest.mark.parametrize(
-    "num_vertices, edge_pairs, cycle_length",
+    ("num_vertices", "edge_pairs", "cycle_length"),
     [
         pytest.param(0, [], 0, id="empty"),
         pytest.param(3, [(0, 1), (1, 2)], 0, id="acyclic"),
@@ -216,12 +218,18 @@ def test_find_edge_cycle_on_readable_graphs(
             graph.add_directed_edge(vertices[source], vertices[target], position)
 
     bidirectional = BidirectionalStaticGraph(builder)
-    for graph in (builder, dynamic, StaticGraph(builder), bidirectional.get_forward_graph(), bidirectional.get_backward_graph()):
+    for graph in (
+        builder,
+        dynamic,
+        StaticGraph(builder),
+        bidirectional.get_forward_graph(),
+        bidirectional.get_backward_graph(),
+    ):
         cycle = graph.find_edge_cycle()
         assert len(cycle) == cycle_length
         assert len(set(cycle)) == len(cycle)
         assert set(cycle) <= set(graph.get_edge_indices())
-        for edge, next_edge in zip(cycle, cycle[1:] + cycle[:1]):
+        for edge, next_edge in zip(cycle, cycle[1:] + cycle[:1], strict=True):
             assert graph.get_target(edge) == graph.get_source(next_edge)
             assert edge == next(
                 candidate
@@ -246,7 +254,7 @@ def test_find_edge_cycle_preserves_sparse_dynamic_indices() -> None:
     cycle = graph.find_edge_cycle()
     assert len(cycle) == 3
     assert set(cycle) == {first, second, third}
-    for edge, next_edge in zip(cycle, cycle[1:] + cycle[:1]):
+    for edge, next_edge in zip(cycle, cycle[1:] + cycle[:1], strict=True):
         assert graph.get_target(edge) == graph.get_source(next_edge)
 
 
@@ -392,7 +400,7 @@ def test_graph_fixture_properties(case: GraphFixture) -> None:
         assert is_simple_undirected(graph) == expected["simple_undirected"]
 
 
-@pytest.mark.parametrize("case", CERTIFICATE_PAIRS, ids=lambda case: f'{case["left"]}-{case["right"]}')
+@pytest.mark.parametrize("case", CERTIFICATE_PAIRS, ids=lambda case: f"{case['left']}-{case['right']}")
 def test_graph_fixture_certificates(case: CertificatePairFixture) -> None:
     fixtures = {fixture["name"]: fixture for fixture in GRAPH_FIXTURES}
     left = _make_fixture_graph(fixtures[case["left"]])

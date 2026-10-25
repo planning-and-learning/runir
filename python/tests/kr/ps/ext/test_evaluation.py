@@ -1,24 +1,43 @@
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import gc
 import sys
+from dataclasses import dataclass
 from datetime import timedelta
+from pathlib import Path
 from typing import Literal
 
 import pytest
-from ext_execution_utils import collect_steps, initial_node
+from ext_execution_utils import (
+    ExecutionStep,
+    Expander,
+    Outcome,
+    ProgramState,
+    TaskContext,
+    collect_steps,
+    initial_node,
+)
 from fixture_utils import FIXTURE_ROOT, read_fixture
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
-from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
-from pyrunir.kr import DomainContext, GroundTaskContext, LiftedTaskContext
-from pyrunir.kr.dl.semantics import CallArguments, CallArgumentsData, RegisterValues, RegisterValuesData
-from pyrunir.kr.dl import semantics
-from pyrunir.kr.ps import ext
-from pyrunir.kr.ps.ext.dl import parse_program
-from pyrunir.kr.uns.dl import parse_classifier
-from pytyr.formalism.planning import Parser, PlanningDomain
+from pytyr.formalism.planning import Object, Parser, PlanningDomain
 from pytyr.planning import lifted
 from pyyggdrasil.execution import ExecutionContext
 
+from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
+from pyrunir.kr import DomainContext, GroundTaskContext, LiftedTaskContext
+from pyrunir.kr.dl import semantics
+from pyrunir.kr.dl.semantics import (
+    BooleanDenotation,
+    CallArguments,
+    CallArgumentsData,
+    RegisterValues,
+    RegisterValuesData,
+)
+from pyrunir.kr.ps import ext
+from pyrunir.kr.ps.ext.dl import parse_program
+from pyrunir.kr.uns.dl import parse_classifier
 
 PROGRAM = """(:program
   (:entry root)
@@ -75,6 +94,16 @@ PROGRAM = """(:program
 """
 
 
+@dataclass(frozen=True)
+class OrderCase:
+    """A Choose order with the expected search statistics."""
+
+    order: str
+    expected: int
+    depth: int
+    width: int
+
+
 def _task_context(
     kind: Literal["ground", "lifted"],
 ) -> tuple[GroundTaskContext | LiftedTaskContext, PlanningDomain]:
@@ -91,13 +120,16 @@ def _task_context(
     return LiftedTaskContext(domain, LiftedTaskSearchContext(task, execution)), parser.get_domain()
 
 
-def _loaded_frame(kind: Literal["ground", "lifted"], source: str = PROGRAM):
+def _loaded_frame(
+    kind: Literal["ground", "lifted"], source: str = PROGRAM
+) -> tuple[TaskContext, ext.Program, Expander, ProgramState]:
     task_context, domain = _task_context(kind)
     program = parse_program(
         source,
         domain,
         task_context.domain_context.ext_repository,
     )
+    expander: Expander
     if kind == "ground":
         expander = ext.GroundSuccessorExpander(task_context, program)
     else:
@@ -111,10 +143,14 @@ def _loaded_frame(kind: Literal["ground", "lifted"], source: str = PROGRAM):
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
-@pytest.mark.parametrize("value_kind", ["concept_register", "role_register", "argument", "concept_iterator", "role_iterator"])
-def test_nested_borrowed_values_retain_owner_after_container_scope(kind, value_kind):
-    def extract():
-        task, program, expander, loaded = _loaded_frame(kind)
+@pytest.mark.parametrize(
+    "value_kind", ["concept_register", "role_register", "argument", "concept_iterator", "role_iterator"]
+)
+def test_nested_borrowed_values_retain_owner_after_container_scope(
+    kind: Literal["ground", "lifted"], value_kind: str
+) -> None:
+    def extract() -> tuple[Object | BooleanDenotation, str | bool]:
+        _task, _program, _expander, loaded = _loaded_frame(kind)
         if value_kind.endswith("register"):
             owner = loaded.module_state.registers
             before = sys.getrefcount(owner)
@@ -131,7 +167,9 @@ def test_nested_borrowed_values_retain_owner_after_container_scope(kind, value_k
                 value = owner.boolean_arguments[0]
                 expected = value.get()
             else:
-                owner = (arguments.concept_arguments if value_kind == "concept_iterator" else arguments.role_arguments)[0]
+                owner = (arguments.concept_arguments if value_kind == "concept_iterator" else arguments.role_arguments)[
+                    0
+                ]
                 before = sys.getrefcount(owner)
                 iterator = iter(owner)
                 value = next(iterator)
@@ -148,7 +186,7 @@ def test_nested_borrowed_values_retain_owner_after_container_scope(kind, value_k
 
 
 def test_call_rule_arguments_preserve_feature_views_and_order() -> None:
-    task_context, program, expander, loaded = _loaded_frame("lifted")
+    _task_context, program, _expander, _loaded = _loaded_frame("lifted")
     module = program.get_entry_module()
     rule = module.get_memory_transitions()[0][0].get_variant()
     arguments = rule.get_call_arguments()
@@ -192,10 +230,7 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
     kind: Literal["ground", "lifted"],
 ) -> None:
     task_context, program, expander, loaded = _loaded_frame(kind)
-    if kind == "ground":
-        environment_type = ext.GroundEvaluationEnvironment
-    else:
-        environment_type = ext.LiftedEvaluationEnvironment
+    environment_type = ext.GroundEvaluationEnvironment if kind == "ground" else ext.LiftedEvaluationEnvironment
     frame = loaded.module_state
     assert len(frame.arguments.concept_arguments) == 1
     assert len(frame.arguments.role_arguments) == 1
@@ -227,26 +262,12 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
         "role_match": True,
         "selected_goal_ball": False,
     }
-    assert {
-        name: ext.evaluate(feature, dl_context).get()
-        for name, feature in booleans.items()
-    } == expected_booleans
-    assert {
-        name: ext.evaluate(feature, dl_context).get()
-        for name, feature in numericals.items()
-    } == expected
-    concept = ext.evaluate(
-        frame.module.get_concept_features()[0], dl_context
-    )
-    role = ext.evaluate(
-        frame.module.get_role_features()[0], dl_context
-    )
-    boolean = ext.evaluate(
-        booleans["argument_flag"], dl_context
-    )
-    numerical = ext.evaluate(
-        numericals["argument_count"], dl_context
-    )
+    assert {name: ext.evaluate(feature, dl_context).get() for name, feature in booleans.items()} == expected_booleans
+    assert {name: ext.evaluate(feature, dl_context).get() for name, feature in numericals.items()} == expected
+    concept = ext.evaluate(frame.module.get_concept_features()[0], dl_context)
+    role = ext.evaluate(frame.module.get_role_features()[0], dl_context)
+    boolean = ext.evaluate(booleans["argument_flag"], dl_context)
+    numerical = ext.evaluate(numericals["argument_count"], dl_context)
     assert concept == frame.arguments.concept_arguments[0]
     assert role == frame.arguments.role_arguments[0]
     assert boolean == frame.arguments.boolean_arguments[0]
@@ -273,10 +294,7 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
     dl_context = environment.make_dl_context(moved)
     assert ext.evaluate(numericals["nearby_balls"], dl_context).get() == 0
     assert ext.evaluate(numericals["argument_count"], dl_context).get() == 2
-    assert {
-        name: ext.evaluate(feature, dl_context).get()
-        for name, feature in booleans.items()
-    } == expected_booleans
+    assert {name: ext.evaluate(feature, dl_context).get() for name, feature in booleans.items()} == expected_booleans
     environment.reset_source()
     dl_context = environment.make_dl_context(loaded)
     assert ext.evaluate(numericals["nearby_balls"], dl_context).get() == 2
@@ -284,20 +302,12 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
     del task_context, program, expander, loaded, frame
     del moved
     gc.collect()
-    assert {
-        name: ext.evaluate(feature, dl_context).get()
-        for name, feature in numericals.items()
-    } == expected
-    assert {
-        name: ext.evaluate(feature, dl_context).get()
-        for name, feature in booleans.items()
-    } == expected_booleans
+    assert {name: ext.evaluate(feature, dl_context).get() for name, feature in numericals.items()} == expected
+    assert {name: ext.evaluate(feature, dl_context).get() for name, feature in booleans.items()} == expected_booleans
     del dl_context, environment, booleans, numericals
     gc.collect()
     assert {obj.get_name() for obj in concept} == {"ball1", "ball2"}
-    assert {(first.get_name(), second.get_name()) for first, second in role} == {
-        ("ball1", "rooma"), ("ball2", "rooma")
-    }
+    assert {(first.get_name(), second.get_name()) for first, second in role} == {("ball1", "rooma"), ("ball2", "rooma")}
     assert boolean.get() is True
     assert numerical.get() == 2
 
@@ -307,9 +317,7 @@ def test_state_evaluation_context_retains_program_state_and_environment(
     kind: Literal["ground", "lifted"],
 ) -> None:
     task_context, program, expander, loaded = _loaded_frame(kind)
-    environment_type = (
-        ext.GroundEvaluationEnvironment if kind == "ground" else ext.LiftedEvaluationEnvironment
-    )
+    environment_type = ext.GroundEvaluationEnvironment if kind == "ground" else ext.LiftedEvaluationEnvironment
     environment = environment_type(task_context, program)
     state_references = sys.getrefcount(loaded)
     environment_references = sys.getrefcount(environment)
@@ -354,12 +362,13 @@ def test_more_than_four_registers_and_interned_binding_views(kind: Literal["grou
         "(:registers (:concept selected) (:role location))",
         f"(:registers {declarations} (:concept selected) (:role location))",
     )
-    task_context, program, expander, loaded = _loaded_frame(kind, source)
+    task_context, program, _expander, loaded = _loaded_frame(kind, source)
     concept_values = loaded.module_state.registers.concept_values
     role_values = loaded.module_state.registers.role_values
     assert len(concept_values) == len(role_values) == 6
     assert concept_values[:5] == role_values[:5] == [None] * 5
-    assert concept_values[5] is not None and role_values[5] is not None
+    assert concept_values[5] is not None
+    assert role_values[5] is not None
     features = {feature.get_symbol(): feature for feature in loaded.module_state.module.get_numerical_features()}
     environment = getattr(ext, f"{kind.title()}EvaluationEnvironment")(task_context, program)
     context = environment.make_dl_context(loaded)
@@ -386,7 +395,11 @@ def test_more_than_four_registers_and_interned_binding_views(kind: Literal["grou
     assert len({register_view, loaded.module_state.registers}) == 1
     storage = semantics.EvaluationStorage(repository)
     context = getattr(semantics, f"{kind.title()}StateEvaluationContext")(
-        loaded.state, task_context.dl_builder, storage, argument_view, register_view,
+        loaded.state,
+        task_context.dl_builder,
+        storage,
+        argument_view,
+        register_view,
     )
     assert ext.evaluate(features["argument_count"], context).get() == 2
     assert ext.evaluate(features["concept_register_size"], context).get() == 1
@@ -399,7 +412,11 @@ def test_more_than_four_registers_and_interned_binding_views(kind: Literal["grou
     assert ext.evaluate(features["concept_register_size"], context).get() == 1
     assert ext.evaluate(features["role_register_size"], context).get() == 1
     context = getattr(semantics, f"{kind.title()}StateEvaluationContext")(
-        loaded.state, task_context.dl_builder, storage, argument_view, empty_register_view,
+        loaded.state,
+        task_context.dl_builder,
+        storage,
+        argument_view,
+        empty_register_view,
     )
     storage.reset_dynamic()
     assert ext.evaluate(features["concept_register_size"], context).get() == 0
@@ -413,12 +430,16 @@ def test_more_than_four_registers_and_interned_binding_views(kind: Literal["grou
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
 def test_choice_callbacks_filter_effects_and_keep_independent_cursors(kind: Literal["ground", "lifted"]) -> None:
     task_context, domain = _task_context(kind)
-    source = PROGRAM.replace("(:load", "(:choose").replace(
-        "(:register (:concept selected))",
-        "(:register (:concept selected)) (:effects (increases concept_register_size))",
-    ).replace(
-        "(:register (:role location))",
-        "(:register (:role location)) (:effects (increases role_register_size))",
+    source = (
+        PROGRAM.replace("(:load", "(:choose")
+        .replace(
+            "(:register (:concept selected))",
+            "(:register (:concept selected)) (:effects (increases concept_register_size))",
+        )
+        .replace(
+            "(:register (:role location))",
+            "(:register (:role location)) (:effects (increases role_register_size))",
+        )
     )
     program = parse_program(source, domain, task_context.domain_context.ext_repository)
     expander_type = ext.GroundSuccessorExpander if kind == "ground" else ext.LiftedSuccessorExpander
@@ -427,22 +448,22 @@ def test_choice_callbacks_filter_effects_and_keep_independent_cursors(kind: Lite
     child = collect_steps(expander, expander.initial_state(node.get_state()))[0].target
     statistics = ext.ProgramSearchStatistics()
 
-    def bindings(state, choice_type):
-        choices = []
+    def bindings(state: ProgramState, choice_type: type[ext.ConceptChoice | ext.RoleChoice]) -> list[ExecutionStep]:
+        choices: list[Outcome] = []
 
-        def emit(choice):
+        def emit(choice: Outcome) -> bool:
             choices.append(choice)
             return True
 
         generated = statistics.num_generated
         assert expander.for_each_successor(state, statistics, emit, lambda: False)
         assert statistics.num_generated == generated
-        choice, = choices
+        (choice,) = choices
         assert isinstance(choice, choice_type)
         assert choice.rule is not None
         assert choice.count() == 2
         expected = choice.bindings
-        result = []
+        result: list[ExecutionStep] = []
         for value in expected:
             assert not choice.exhausted()
             assert choice.current() == value
@@ -460,9 +481,10 @@ def test_choice_callbacks_filter_effects_and_keep_independent_cursors(kind: Lite
     concept_steps = bindings(child, ext.ConceptChoice)
     assert len(concept_steps) == 2
     assert child.module_state.registers.concept_values[0] is None
-    assert {
-        step.target.module_state.registers.concept_values[0].get_name() for step in concept_steps
-    } == {"ball1", "ball2"}
+    assert {step.target.module_state.registers.concept_values[0].get_name() for step in concept_steps} == {
+        "ball1",
+        "ball2",
+    }
     for step in concept_steps:
         role_steps = bindings(step.target, ext.RoleChoice)
         assert len(role_steps) == 2
@@ -473,28 +495,34 @@ def test_choice_callbacks_filter_effects_and_keep_independent_cursors(kind: Lite
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
-def test_choice_bindings_keep_pool_and_repositories_alive(kind):
+def test_choice_bindings_keep_pool_and_repositories_alive(kind: Literal["ground", "lifted"]) -> None:
     task_context, domain = _task_context(kind)
     program = parse_program(PROGRAM.replace("(:load", "(:choose"), domain, task_context.domain_context.ext_repository)
     expander = getattr(ext, f"{kind.title()}SuccessorExpander")(task_context, program)
     child = collect_steps(expander, expander.initial_state(initial_node(task_context).get_state()))[0].target
     statistics = ext.ProgramSearchStatistics()
-    choices = []
+    choices: list[Outcome] = []
+
+    def emit(choice: Outcome) -> bool:
+        choices.append(choice)
+        return True
+
     references = sys.getrefcount(expander)
-    expander.for_each_successor(child, statistics, lambda choice: choices.append(choice) or True, lambda: False)
-    concept_choice, = choices
+    expander.for_each_successor(child, statistics, emit, lambda: False)
+    (concept_choice,) = choices
     assert sys.getrefcount(expander) > references
     with_concept = expander.apply_choice(child, concept_choice, statistics).target
     choices.clear()
-    expander.for_each_successor(with_concept, statistics, lambda choice: choices.append(choice) or True, lambda: False)
-    role_choice, = choices
+    expander.for_each_successor(with_concept, statistics, emit, lambda: False)
+    (role_choice,) = choices
     concept = concept_choice.current()
     role = role_choice.current()
     concepts = concept_choice.bindings
     roles = role_choice.bindings
     names = concept.get_name(), tuple(value.get_name() for value in role)
 
-    del choices, expander, with_concept, child, program, task_context, domain
+    choices.clear()
+    del expander, with_concept, child, program, task_context, domain
     gc.collect()
     assert concept_choice.current() == concept
     assert role_choice.current() == role
@@ -506,7 +534,7 @@ def test_choice_bindings_keep_pool_and_repositories_alive(kind):
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
-def test_state_memorization_options(kind):
+def test_state_memorization_options(kind: Literal["ground", "lifted"]) -> None:
     options = getattr(ext, f"{kind.title()}ProgramSearchOptions")()
     assert options.state_memorization == ext.StateMemorization.ALL
     for mode in (ext.StateMemorization.NONE, ext.StateMemorization.CHOICE, ext.StateMemorization.ALL):
@@ -516,7 +544,9 @@ def test_state_memorization_options(kind):
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
 @pytest.mark.parametrize("mode", [ext.StateMemorization.NONE, ext.StateMemorization.CHOICE, ext.StateMemorization.ALL])
-def test_state_memorization_preserves_axiom_closure(tmp_path, kind, mode):
+def test_state_memorization_preserves_axiom_closure(
+    tmp_path: Path, kind: Literal["ground", "lifted"], mode: ext.StateMemorization
+) -> None:
     domain_source = read_fixture("kr/ps/ext/choose/domain.pddl")
     domain_source = domain_source.replace(":requirements :strips", ":requirements :strips :derived-predicates")
     domain_source = domain_source.replace("(bad ?x)", "(bad ?x) (reached ?x)")
@@ -524,16 +554,21 @@ def test_state_memorization_preserves_axiom_closure(tmp_path, kind, mode):
     domain_path = tmp_path / "domain.pddl"
     domain_path.write_text(domain_source)
     task_path = tmp_path / "task.pddl"
-    task_path.write_text(read_fixture("kr/ps/ext/choose/task.pddl").replace("(:goal (at goal))", "(:goal (reached goal))"))
+    task_path.write_text(
+        read_fixture("kr/ps/ext/choose/task.pddl").replace("(:goal (at goal))", "(:goal (reached goal))")
+    )
     parser = Parser(domain_path, ParserOptions())
     task = lifted.Task(parser.parse_task(task_path, ParserOptions()))
     execution = ExecutionContext(1)
     domain = DomainContext(parser.get_domain())
     if kind == "ground":
-        context = GroundTaskContext(domain, GroundTaskSearchContext(task.instantiate_ground_task(execution).task, execution))
+        context = GroundTaskContext(
+            domain, GroundTaskSearchContext(task.instantiate_ground_task(execution).task, execution)
+        )
     else:
         context = LiftedTaskContext(domain, LiftedTaskSearchContext(task, execution))
-    program = parse_program("""(:program (:entry main)
+    program = parse_program(
+        """(:program (:entry main)
       (:module (:symbol main) (:arguments) (:registers (:concept selected))
         (:entry m0) (:memory m0 m1 m2 m3)
         (:features
@@ -548,14 +583,19 @@ def test_state_memorization_preserves_axiom_closure(tmp_path, kind, mode):
             (:do (:conditions) (:action "move") (:arguments here target) (:effects))))
           (:rule (:symbol finish) (:expression (:source-memory m2) (:target-memory m3)
             (:do (:conditions) (:action "move") (:arguments here goal) (:effects)))))))""",
-        parser.get_domain(), domain.ext_repository,
+        parser.get_domain(),
+        domain.ext_repository,
     )
     options = getattr(ext, f"{kind.title()}ProgramSearchOptions")()
     options.state_memorization = mode
-    options.classifier = parse_classifier("""(:classifier (:symbol bad-location)
+    options.classifier = parse_classifier(
+        """(:classifier (:symbol bad-location)
       (:features (:boolean (:symbol bad) (:expression
         (b_nonempty (c_and (c_atomic_state "reached") (c_atomic_state "bad"))))))
-      (:expression (or (and bad))))""", parser.get_domain(), domain.uns_repository)
+      (:expression (or (and bad))))""",
+        parser.get_domain(),
+        domain.uns_repository,
+    )
     result = getattr(ext, f"find_{kind}_solution")(context, program, options)
     assert result.is_successful()
     assert result.plan.get_length() == 2
@@ -567,10 +607,14 @@ def test_state_memorization_preserves_axiom_closure(tmp_path, kind, mode):
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
 @pytest.mark.parametrize("universal", [False, True])
 @pytest.mark.parametrize("program_file", ["non_terminating.program", "recursive_calls.program"])
-def test_execution_requires_whole_program_structural_termination(kind, universal, program_file):
+def test_execution_requires_whole_program_structural_termination(
+    kind: Literal["ground", "lifted"], universal: bool, program_file: str
+) -> None:
     context, domain = _task_context(kind)
     program = parse_program(
-        read_fixture(f"kr/ps/ext/dl/{program_file}"), domain, context.domain_context.ext_repository,
+        read_fixture(f"kr/ps/ext/dl/{program_file}"),
+        domain,
+        context.domain_context.ext_repository,
     )
     options = getattr(ext, f"{kind.title()}ProgramSearchOptions")()
     options.universal = universal
@@ -583,7 +627,10 @@ def test_execution_requires_whole_program_structural_termination(kind, universal
 @pytest.mark.parametrize("universal", [False, True])
 @pytest.mark.parametrize("initial_goal_satisfied", [False, True])
 def test_initial_goal_classifier_and_zero_time_results(
-    tmp_path, kind: Literal["ground", "lifted"], universal: bool, initial_goal_satisfied: bool,
+    tmp_path: Path,
+    kind: Literal["ground", "lifted"],
+    universal: bool,
+    initial_goal_satisfied: bool,
 ) -> None:
     directory = FIXTURE_ROOT / "kr/ps/ext/choose"
     # Grounding rejects false static goals; exercise that case directly only in lifted mode.
@@ -604,16 +651,22 @@ def test_initial_goal_classifier_and_zero_time_results(
     else:
         context = LiftedTaskContext(domain, LiftedTaskSearchContext(task, execution))
     program = parse_program(
-        read_fixture("kr/ps/ext/execution/empty.program"), parser.get_domain(), domain.ext_repository,
+        read_fixture("kr/ps/ext/execution/empty.program"),
+        parser.get_domain(),
+        domain.ext_repository,
     )
     options = getattr(ext, f"{kind.title()}ProgramSearchOptions")()
     options.universal = universal
     options.classifier = parse_classifier(
-        read_fixture("kr/uns/always.classifier"), parser.get_domain(), domain.uns_repository,
+        read_fixture("kr/uns/always.classifier"),
+        parser.get_domain(),
+        domain.uns_repository,
     )
     find_solution = getattr(ext, f"find_{kind}_solution")
     result = find_solution(context, program, options)
-    assert result.status == (ext.ProgramProofStatus.SUCCESS if initial_goal_satisfied else ext.ProgramProofStatus.FAILURE)
+    assert result.status == (
+        ext.ProgramProofStatus.SUCCESS if initial_goal_satisfied else ext.ProgramProofStatus.FAILURE
+    )
     assert result.deadend_states == ([] if initial_goal_satisfied else [0])
     if initial_goal_satisfied and not universal:
         assert result.plan is not None
@@ -645,7 +698,9 @@ def test_initial_goal_classifier_and_zero_time_results(
 @pytest.mark.parametrize("universal", [False, True])
 @pytest.mark.parametrize("mode", [ext.StateMemorization.NONE, ext.StateMemorization.CHOICE, ext.StateMemorization.ALL])
 def test_choose_search_statistics_are_read_only(
-    kind: Literal["ground", "lifted"], universal: bool, mode,
+    kind: Literal["ground", "lifted"],
+    universal: bool,
+    mode: ext.StateMemorization,
 ) -> None:
     assert ext.ProgramSearchStatistics().choice_width == 0
     directory = FIXTURE_ROOT / "kr/ps/ext/choose"
@@ -699,18 +754,24 @@ def test_choose_search_statistics_are_read_only(
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
 @pytest.mark.parametrize("universal", [False, True])
-@pytest.mark.parametrize("order,expected,depth,width", [
-    ("(:order (min score))", 3, 1, 2),
-    ("(:order (max score))", 5, 1, 2),
-    ("(:order (min infinite_score))", 3, 1, 2),
-    ("(:order (max infinite_score))", 5, 1, 2),
-    ("(:order (min bad_flag) (max score))", 3, 1, 2),
-    ("(:order)", 5, 1, 2),
-    ("(:order (min zero))", 5, 1, 2),
-    ("(:effects (negative bad_flag)) (:order (max score))", 3, 0, 1),
-])
+@pytest.mark.parametrize(
+    "case",
+    [
+        OrderCase("(:order (min score))", 3, 1, 2),
+        OrderCase("(:order (max score))", 5, 1, 2),
+        OrderCase("(:order (min infinite_score))", 3, 1, 2),
+        OrderCase("(:order (max infinite_score))", 5, 1, 2),
+        OrderCase("(:order (min bad_flag) (max score))", 3, 1, 2),
+        OrderCase("(:order)", 5, 1, 2),
+        OrderCase("(:order (min zero))", 5, 1, 2),
+        OrderCase("(:effects (negative bad_flag)) (:order (max score))", 3, 0, 1),
+    ],
+    ids=lambda case: f"{case.order}-{case.expected}-{case.depth}-{case.width}",
+)
 @pytest.mark.parametrize("category", ["concept", "role"])
-def test_choose_order_scores_bound_candidates(kind, universal, order, expected, depth, width, category):
+def test_choose_order_scores_bound_candidates(
+    kind: Literal["ground", "lifted"], universal: bool, case: OrderCase, category: str
+) -> None:
     directory = FIXTURE_ROOT / "kr/ps/ext/choose"
     parser = Parser(directory / "domain.pddl", ParserOptions())
     task = lifted.Task(parser.parse_task(directory / "task.pddl", ParserOptions()))
@@ -745,10 +806,11 @@ def test_choose_order_scores_bound_candidates(kind, universal, order, expected, 
               (:numerical (:symbol zero) (:expression (n_const 0)))
               (:boolean (:symbol bad_flag) (:expression (b_nonempty (c_and {target} (c_atomic_state "bad")))))
               (:numerical (:symbol infinite_score) (:expression (n_div (n_const 1) (n_sub (n_const 1) {bad_count}))))
-              (:numerical (:symbol score) (:expression (n_add (n_count (c_and {target} (c_atomic_state "bad"))) (n_const 0)))))
+              (:numerical (:symbol score)
+                (:expression (n_add (n_count (c_and {target} (c_atomic_state "bad"))) (n_const 0)))))
             (:rules
               (:rule (:symbol select) (:expression (:source-memory m0) (:target-memory m1)
-                (:choose (:conditions) (:{category} candidates) (:register (:{category} selected)) {order})))
+                (:choose (:conditions) (:{category} candidates) (:register (:{category} selected)) {case.order})))
               (:rule (:symbol move-selected) (:expression (:source-memory m1) (:target-memory m2)
                 (:do (:conditions) (:action "move") (:arguments here target) (:effects))))
               (:rule (:symbol finish) (:expression (:source-memory m2) (:target-memory m3)
@@ -760,14 +822,14 @@ def test_choose_order_scores_bound_candidates(kind, universal, order, expected, 
     result = find_solution(context, program, options)
     assert result.is_successful()
     assert isinstance(result.statistics, ext.ProgramSearchStatistics)
-    assert result.statistics.num_expanded == expected
-    assert result.statistics.num_generated == expected
-    assert result.statistics.choice_depth == depth
-    assert result.statistics.choice_width == width
+    assert result.statistics.num_expanded == case.expected
+    assert result.statistics.num_generated == case.expected
+    assert result.statistics.choice_depth == case.depth
+    assert result.statistics.choice_width == case.width
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
-def test_ext_arithmetic_values_and_round_trip(kind):
+def test_ext_arithmetic_values_and_round_trip(kind: Literal["ground", "lifted"]) -> None:
     cases = [
         ("(n_const 7)", 7),
         ("(n_add (n_const 4) (n_const 5))", 9),
@@ -780,8 +842,13 @@ def test_ext_arithmetic_values_and_round_trip(kind):
         ("(n_div (n_const 9) (n_div (n_const 1) (n_const 0)))", 0),
     ]
     task_context, domain = _task_context(kind)
-    features = "\n".join(f"(:numerical (:symbol f{i}) (:expression {expression}))" for i, (expression, _) in enumerate(cases))
-    source = f"(:program (:entry root) (:module (:symbol root) (:arguments) (:registers) (:entry m) (:memory m) (:features {features}) (:rules)))"
+    features = "\n".join(
+        f"(:numerical (:symbol f{i}) (:expression {expression}))" for i, (expression, _) in enumerate(cases)
+    )
+    source = (
+        "(:program (:entry root) (:module (:symbol root) (:arguments) (:registers) (:entry m) (:memory m)"
+        f" (:features {features}) (:rules)))"
+    )
     repository = task_context.domain_context.ext_repository
     program = parse_program(source, domain, repository)
     assert str(parse_program(str(program), domain, repository)) == str(program)
@@ -789,5 +856,7 @@ def test_ext_arithmetic_values_and_round_trip(kind):
     state = expander.initial_state(initial_node(task_context).get_state())
     environment = getattr(ext, f"{kind.title()}EvaluationEnvironment")(task_context, program)
     context = environment.make_dl_context(state)
-    values = {f.get_symbol(): ext.evaluate(f, context).get() for f in program.get_entry_module().get_numerical_features()}
+    values = {
+        f.get_symbol(): ext.evaluate(f, context).get() for f in program.get_entry_module().get_numerical_features()
+    }
     assert values == {f"f{i}": expected for i, (_, expected) in enumerate(cases)}

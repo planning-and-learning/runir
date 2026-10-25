@@ -1,12 +1,20 @@
+# Copyright (C) 2026 Dominik Drexler
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import gc
 from collections import Counter
 from pathlib import Path
 from typing import TypedDict, cast
 
-from ext_execution_utils import collect_steps, initial_node
-from fixture_utils import FIXTURE_ROOT, load_fixture, read_fixture
-from pypddl_datasets import data_root
 import pytest
+from ext_execution_utils import ExecutionStep, collect_steps, initial_node
+from fixture_utils import FIXTURE_ROOT, load_fixture, read_fixture
+from pypddl.formalism import ParserOptions
+from pypddl_datasets import data_root
+from pytyr.formalism.planning import ActionBinding, LiftedPlanningTask, Parser, PlanningDomain
+from pytyr.planning.ground import PackedPlan as GroundPackedPlan, Task as GroundTask
+from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
+from pyyggdrasil.execution import ExecutionContext
 
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
 from pyrunir.kr import (
@@ -25,12 +33,6 @@ from pyrunir.kr.dl.semantics import CallArguments, RegisterValues
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext import dl
 from pyrunir.kr.uns.dl import parse_classifier
-from pyyggdrasil.execution import ExecutionContext
-from pypddl.formalism import ParserOptions
-from pytyr.formalism.planning import ActionBinding, LiftedPlanningTask, Parser, PlanningDomain
-from pytyr.planning.ground import PackedPlan as GroundPackedPlan
-from pytyr.planning.ground import Task as GroundTask
-from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 
 
 class ExecutionFixture(TypedDict):
@@ -62,12 +64,12 @@ class ProgramFactoryFixture(TypedDict):
 
 
 _EXECUTION_SUITE = load_fixture("kr/ps/ext/execution.json")
-EXECUTION_CASES = cast(list[ExecutionFixture], _EXECUTION_SUITE["cases"])
+EXECUTION_CASES = cast("list[ExecutionFixture]", _EXECUTION_SUITE["cases"])
 _MODULE_FACTORY_SUITE = load_fixture("kr/ps/ext/dl/module_factory.json")
-MODULE_FACTORY_CASES = cast(list[ModuleFactoryFixture], _MODULE_FACTORY_SUITE["modules"])
-PROGRAM_FACTORY_CASE = cast(ProgramFactoryFixture, _MODULE_FACTORY_SUITE["program"])
+MODULE_FACTORY_CASES = cast("list[ModuleFactoryFixture]", _MODULE_FACTORY_SUITE["modules"])
+PROGRAM_FACTORY_CASE = cast("ProgramFactoryFixture", _MODULE_FACTORY_SUITE["program"])
 _FORMATTER_FRAGMENTS = load_fixture("kr/ps/ext/formatter_fragments.json")
-MODULE_FACTORY_SKETCH_FRAGMENT = cast(str, _FORMATTER_FRAGMENTS["module_factory_sketch"])
+MODULE_FACTORY_SKETCH_FRAGMENT = cast("str", _FORMATTER_FRAGMENTS["module_factory_sketch"])
 
 
 def _blocksworld_data_dir() -> Path:
@@ -90,16 +92,18 @@ def _ground_context_and_domain() -> tuple[GroundTaskContext, PlanningDomain, Gro
     return GroundTaskContext(DomainContext(planning_domain), search_context), planning_domain, ground_task
 
 
-def _terminating_context_and_program():
+def _terminating_context_and_program() -> tuple[GroundTaskContext, PlanningDomain, ext.Program]:
     directory = FIXTURE_ROOT / "kr/ps/ext/choose"
     parser = Parser(directory / "domain.pddl", ParserOptions())
     task = Task(parser.parse_task(directory / "task.pddl", ParserOptions()))
     execution = ExecutionContext(1)
     ground_task = task.instantiate_ground_task(execution, GroundTaskInstantiationOptions()).task
     context = GroundTaskContext(
-        DomainContext(parser.get_domain()), GroundTaskSearchContext(ground_task, execution),
+        DomainContext(parser.get_domain()),
+        GroundTaskSearchContext(ground_task, execution),
     )
-    program = dl.parse_program("""(:program (:entry main)
+    program = dl.parse_program(
+        """(:program (:entry main)
       (:module (:symbol main) (:arguments) (:registers)
         (:entry m0) (:memory m0 m1 m2)
         (:features
@@ -111,7 +115,8 @@ def _terminating_context_and_program():
             (:do (:conditions) (:action "move") (:arguments here good) (:effects))))
           (:rule (:symbol second) (:expression (:source-memory m1) (:target-memory m2)
             (:do (:conditions) (:action "move") (:arguments here goal) (:effects)))))))""",
-        parser.get_domain(), context.domain_context.ext_repository,
+        parser.get_domain(),
+        context.domain_context.ext_repository,
     )
     return context, parser.get_domain(), program
 
@@ -147,7 +152,7 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip() -> None
 
     assert [module.get_name() for module in modules] == [case["name"] for case in MODULE_FACTORY_CASES]
     assert len(modules) == len(MODULE_FACTORY_CASES)
-    for module, case in zip(modules, MODULE_FACTORY_CASES):
+    for module, case in zip(modules, MODULE_FACTORY_CASES, strict=True):
         assert len(module.get_concept_features()) == case["concept_features"]
         assert len(module.get_role_features()) == case["role_features"]
         assert len(module.get_boolean_features()) == case["boolean_features"]
@@ -170,9 +175,7 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip() -> None
             module.get_numerical_features(),
         )
         assert module.syntactic_complexity() == sum(
-            feature.syntactic_complexity()
-            for feature_group in feature_groups
-            for feature in feature_group
+            feature.syntactic_complexity() for feature_group in feature_groups for feature in feature_group
         )
     memory_transitions = modules[3].get_memory_transitions()
     assert len(memory_transitions) > 0
@@ -186,7 +189,10 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip() -> None
 
     created_modules = dl.ModuleFactory.create_bonet_et_al_icaps2024_modules(planning_domain, repository)
     assert [module.get_name() for module in created_modules] == [case["name"] for case in MODULE_FACTORY_CASES]
-    assert dl.ModuleFactory.create(dl.ModuleSpecification.ON_BONET_ET_AL_ICAPS2024, planning_domain, repository).get_name() == "on"
+    assert (
+        dl.ModuleFactory.create(dl.ModuleSpecification.ON_BONET_ET_AL_ICAPS2024, planning_domain, repository).get_name()
+        == "on"
+    )
     assert dl.ModuleFactory.create_on_bonet_et_al_icaps2024(planning_domain, repository).get_name() == "on"
     assert dl.ModuleFactory.create_on_table_bonet_et_al_icaps2024(planning_domain, repository).get_name() == "on-table"
     assert dl.ModuleFactory.create_tower_bonet_et_al_icaps2024(planning_domain, repository).get_name() == "tower"
@@ -215,9 +221,9 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip() -> None
 
 def test_program_parser_reports_x3_syntax_position() -> None:
     planning_domain, repository = _repositories()
-    source = '(:program (:entry root)'
+    source = "(:program (:entry root)"
 
-    with pytest.raises(ParseError, match="Expected .* while parsing program") as raised:
+    with pytest.raises(ParseError, match=r"Expected .* while parsing program") as raised:
         dl.parse_program(source, planning_domain, repository)
 
     assert "In line 1:" in str(raised.value)
@@ -228,7 +234,9 @@ def test_program_parser_reports_x3_syntax_position() -> None:
 
 def test_module_parser_composes_dl_grammar_and_reports_symbolic_reference_position() -> None:
     planning_domain, repository = _repositories()
-    source = read_fixture("kr/ps/ext/python/module_parser_composes_dl_grammar_and_reports_symbolic_reference_position/source.module")
+    source = read_fixture(
+        "kr/ps/ext/python/module_parser_composes_dl_grammar_and_reports_symbolic_reference_position/source.module"
+    )
 
     with pytest.raises(UndefinedSymbolError, match=r"Undefined concept argument: missing") as raised:
         dl.parse_module(source, planning_domain, repository)
@@ -250,7 +258,9 @@ def test_load_rules_require_named_features_of_the_matching_category() -> None:
     planning_domain, repository = _repositories()
 
     def module(features: str, feature: str) -> str:
-        return read_fixture("kr/ps/ext/python/load_rules_require_named_features_of_the_matching_category/load.module").format(features=features, feature=feature)
+        return read_fixture(
+            "kr/ps/ext/python/load_rules_require_named_features_of_the_matching_category/load.module"
+        ).format(features=features, feature=feature)
 
     inline = module("", "(c_top)")
     with pytest.raises(ParseError) as inline_error:
@@ -266,7 +276,9 @@ def test_load_rules_require_named_features_of_the_matching_category() -> None:
 @pytest.mark.parametrize("category", ["concept", "role"])
 def test_module_parser_accepts_more_than_four_registers(category: str) -> None:
     planning_domain, repository = _repositories()
-    source = read_fixture("kr/ps/ext/python/module_parser_reports_fifth_register_position/source.module").replace(":concept", f":{category}")
+    source = read_fixture("kr/ps/ext/python/module_parser_reports_fifth_register_position/source.module").replace(
+        ":concept", f":{category}"
+    )
 
     module = dl.parse_module(source, planning_domain, repository)
     assert len(getattr(module, f"get_{category}_registers")()) == 5
@@ -291,10 +303,18 @@ def test_program_parser_rejects_invalid_wiring() -> None:
             repository,
         )
     with pytest.raises(UndefinedSymbolError):
-        dl.parse_program(read_fixture("kr/ps/ext/python/program_parser_rejects_invalid_wiring/root.program"), planning_domain, repository)
+        dl.parse_program(
+            read_fixture("kr/ps/ext/python/program_parser_rejects_invalid_wiring/root.program"),
+            planning_domain,
+            repository,
+        )
 
     with pytest.raises(InvalidExpressionError, match="argument signature"):
-        dl.parse_program(read_fixture("kr/ps/ext/python/program_parser_rejects_invalid_wiring/caller.program"), planning_domain, repository)
+        dl.parse_program(
+            read_fixture("kr/ps/ext/python/program_parser_rejects_invalid_wiring/caller.program"),
+            planning_domain,
+            repository,
+        )
 
     with pytest.raises(UndefinedSymbolError, match=r"Undefined module: missing"):
         dl.parse_program(
@@ -304,13 +324,25 @@ def test_program_parser_rejects_invalid_wiring() -> None:
         )
 
     with pytest.raises(UndefinedSymbolError, match=r"Undefined memory state: missing"):
-        dl.parse_program(read_fixture("kr/ps/ext/python/program_parser_rejects_invalid_wiring/bad_memory.program"), planning_domain, repository)
+        dl.parse_program(
+            read_fixture("kr/ps/ext/python/program_parser_rejects_invalid_wiring/bad_memory.program"),
+            planning_domain,
+            repository,
+        )
 
     with pytest.raises(UndefinedSymbolError, match=r"Undefined register: r1"):
-        dl.parse_program(read_fixture("kr/ps/ext/python/program_parser_rejects_invalid_wiring/bad_register.program"), planning_domain, repository)
+        dl.parse_program(
+            read_fixture("kr/ps/ext/python/program_parser_rejects_invalid_wiring/bad_register.program"),
+            planning_domain,
+            repository,
+        )
 
     with pytest.raises(UndefinedSymbolError, match=r"Undefined feature: missing"):
-        dl.parse_program(read_fixture("kr/ps/ext/python/program_parser_rejects_invalid_wiring/bad_feature.program"), planning_domain, repository)
+        dl.parse_program(
+            read_fixture("kr/ps/ext/python/program_parser_rejects_invalid_wiring/bad_feature.program"),
+            planning_domain,
+            repository,
+        )
 
 
 def test_empty_module_factory_uses_ext_repositories() -> None:
@@ -329,7 +361,8 @@ def test_empty_module_factory_uses_ext_repositories() -> None:
 def test_paper_program_requires_structural_termination(universal: bool) -> None:
     task_context, planning_domain, _ground_task = _ground_context_and_domain()
     program = dl.ModuleFactory.create_bonet_et_al_icaps2024_program(
-        planning_domain, task_context.domain_context.ext_repository,
+        planning_domain,
+        task_context.domain_context.ext_repository,
     )
     assert not dl.structural_termination(program).is_terminating()
     options = ext.GroundProgramSearchOptions()
@@ -411,8 +444,8 @@ def test_terminating_program_executes_and_proves_from_python() -> None:
 
 
 @pytest.mark.parametrize("mode", [ext.StateMemorization.NONE, ext.StateMemorization.CHOICE, ext.StateMemorization.ALL])
-def test_packed_solution_plan_owns_states_after_result_release(mode) -> None:
-    def solve():
+def test_packed_solution_plan_owns_states_after_result_release(mode: ext.StateMemorization) -> None:
+    def solve() -> tuple[GroundPackedPlan, str, str]:
         task_context, _planning_domain, program = _terminating_context_and_program()
         options = ext.GroundProgramSearchOptions()
         options.state_memorization = mode
@@ -464,7 +497,10 @@ def test_executor_fixture(case: ExecutionFixture) -> None:
 
 def test_program_parser_rejects_missing_action() -> None:
     task_context, planning_domain, _ground_task = _ground_context_and_domain()
-    with pytest.raises(UndefinedSymbolError, match=rf"Undefined action in domain '{planning_domain.get_domain().get_name()}': missing-action"):
+    with pytest.raises(
+        UndefinedSymbolError,
+        match=rf"Undefined action in domain '{planning_domain.get_domain().get_name()}': missing-action",
+    ):
         dl.parse_program(
             read_fixture("kr/ps/ext/execution/missing_action.program"),
             planning_domain,
@@ -511,21 +547,23 @@ def test_successor_callbacks_stop_and_own_their_native_steps(kind: str) -> None:
         search = LiftedTaskSearchContext(task, execution_context)
         context = LiftedTaskContext(DomainContext(planning_domain), search)
         expander_type = ext.LiftedSuccessorExpander
-    program = dl.parse_program("""(:program (:entry main)
+    program = dl.parse_program(
+        """(:program (:entry main)
       (:module (:symbol main) (:arguments) (:registers)
         (:entry source) (:memory source target)
         (:features (:numerical (:symbol Free) (:expression (n_count (c_atomic_state "free")))))
         (:rules (:rule (:symbol pick) (:expression (:source-memory source) (:target-memory target)
           (:sketch (:conditions) (:effects (decreases Free))))))))""",
-        planning_domain, context.domain_context.ext_repository,
+        planning_domain,
+        context.domain_context.ext_repository,
     )
     expander = expander_type(context, program)
     node = initial_node(context)
     initial = expander.initial_state(node.get_state())
     statistics = ext.ProgramSearchStatistics()
-    actual = []
+    actual: list[ExecutionStep] = []
 
-    def emit(step):
+    def emit(step: ExecutionStep) -> bool:
         actual.append(step)
         return True
 
@@ -533,7 +571,7 @@ def test_successor_callbacks_stop_and_own_their_native_steps(kind: str) -> None:
     assert actual == []
     assert statistics.num_generated == statistics.num_expanded == 0
 
-    def first(step):
+    def first(step: ExecutionStep) -> bool:
         actual.append(step)
         return False
 
@@ -545,15 +583,19 @@ def test_successor_callbacks_stop_and_own_their_native_steps(kind: str) -> None:
     assert statistics.num_generated == len(actual) + 1
     assert statistics.num_expanded == 0
     expected = search.successor_generator.get_labeled_successor_nodes(
-        node, search.state_repository, search.axiom_evaluator,
+        node,
+        search.state_repository,
+        search.axiom_evaluator,
     )
     assert Counter((step.state_transition.action, step.target.state.get_index()) for step in actual) == Counter(
-        (step.label, step.node.get_state().get_index()) for step in expected
+        (step.label, step.node.get_state().get_index())
+        for step in expected
         if expander.matching_rule(initial, step) is not None
     )
     retained = actual[0]
     signature = (str(retained.state_transition.action), str(retained.target.state))
-    del actual, expected, node, initial, expander, program, context, search, task, lifted_task
+    actual.clear()
+    del expected, node, initial, expander, program, context, search, task, lifted_task
     del planning_task, planning_domain, execution_context, parser
     gc.collect()
 
@@ -598,7 +640,7 @@ def test_ground_execution_views_own_their_task_and_program_contexts() -> None:
 
 
 @pytest.mark.parametrize("mode", [ext.StateMemorization.NONE, ext.StateMemorization.CHOICE, ext.StateMemorization.ALL])
-def test_lifted_execution_views_and_proof_labels_survive_owner_destruction(mode) -> None:
+def test_lifted_execution_views_and_proof_labels_survive_owner_destruction(mode: ext.StateMemorization) -> None:
     planning_task, planning_domain = _planning_task_and_domain()
     execution_context = ExecutionContext(1)
     lifted_task = Task(planning_task)
