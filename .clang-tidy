@@ -5,6 +5,10 @@
 #   (CMakeLists.txt) defines _GLIBCXX_ASSERTIONS, so operator[] of std::vector, std::array and
 #   std::span asserts its index there, at no cost in Release;
 # - easily-swappable-parameters: a heuristic without a clear fix;
+# - chained-comparison: GCC's -Wall (-Wparentheses) already rejects a < b < c on built-in
+#   types in the Linux CI build, where warnings are errors, so the check adds only overloaded
+#   operators, and here those are Boost.Spirit X3's expectation chains (a > b > c), which are
+#   not comparisons;
 # - avoid-c-arrays: std::unique_ptr<T[]> with make_unique_for_overwrite is the uninitialized buffer,
 #   which std::vector would zero;
 # From the other families, the checks that find defects rather than enforce a style: the static
@@ -71,7 +75,8 @@ Checks: >
   -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,
   -cppcoreguidelines-pro-bounds-constant-array-index,
   -bugprone-easily-swappable-parameters,
-  -cppcoreguidelines-avoid-c-arrays
+  -cppcoreguidelines-avoid-c-arrays,
+  -bugprone-chained-comparison
 HeaderFilterRegex: '.*/(include/runir|tests|profiling|python/src|exe)/.*'
 ExcludeHeaderFilterRegex: '.*/(dependencies-install|dependencies-build|build|site-packages|_deps)/.*'
 CheckOptions:
