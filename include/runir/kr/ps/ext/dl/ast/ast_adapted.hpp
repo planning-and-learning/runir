@@ -30,6 +30,7 @@ BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogComparison, op, lh
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogArithmetic, result, op, lhs, rhs)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogAggregate, function, result, value, body)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogRule, head, body)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogProgram, weighted, rules)
 
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::RuleEntry, symbol, source, target, rules)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::Module, name, arguments, registers, entry, memory_states, datalog, features, rule_entries)

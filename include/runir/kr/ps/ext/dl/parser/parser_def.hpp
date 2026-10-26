@@ -250,7 +250,8 @@ constexpr auto datalog_aggregate_def = ((((lit("(") >> datalog_aggregate_functio
                                        > lit(")");
 constexpr auto datalog_literal_def = datalog_aggregate | datalog_condition;
 constexpr auto datalog_rule_def = context("Datalog rule")[(((lit("(") >> keyword(":rule")) > datalog_atom) > *datalog_literal) > lit(")")];
-constexpr auto datalog_section_def = context(":datalog")[((lit("(") >> keyword(":datalog")) > *datalog_rule) > lit(")")];
+constexpr auto datalog_weighted = context(":weighted")[(lit("(") >> keyword(":weighted")) > *identifier > lit(")")];
+constexpr auto datalog_section_def = context(":datalog")[((lit("(") >> keyword(":datalog")) > -datalog_weighted > *datalog_rule) > lit(")")];
 
 constexpr auto module_def = context("module")[(lit("(") >> keyword(":module")) > symbol_section > arguments_section > registers_section > entry_section
                                               > memory_section > -datalog_section > features_section > rules_section > lit(")")];

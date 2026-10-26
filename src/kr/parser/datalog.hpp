@@ -10,6 +10,7 @@
 #include <functional>
 #include <map>
 #include <optional>
+#include <set>
 #include <string>
 #include <tyr/formalism/planning/repository.hpp>
 #include <unordered_map>
@@ -59,7 +60,7 @@ private:
     std::vector<std::string> m_stack;
 };
 
-using DatalogRules = std::vector<runir::kr::ps::ext::dl::ast::DatalogRule>;
+using DatalogAst = runir::kr::ps::ext::dl::ast::DatalogProgram;
 
 /// The :datalog section of a module: one program whose rules read domain predicates, goal atoms ((goal p t...)), the
 /// module's concept and role registers and arguments, and concept, role and query features, built at the first q_head.
@@ -67,7 +68,7 @@ using DatalogRules = std::vector<runir::kr::ps::ext::dl::ast::DatalogRule>;
 class DatalogSection
 {
 public:
-    DatalogSection(const DatalogRules* rules,
+    DatalogSection(const DatalogAst* section,
                    tyr::formalism::planning::DomainView domain,
                    runir::kr::dl::ConstructorRepository& repository,
                    runir::kr::dl::Builder& builder,
@@ -81,7 +82,8 @@ public:
     void validate(const ast::Identifier& reference);
 
 private:
-    const DatalogRules* m_rules;
+    const DatalogAst* m_section;
+    std::set<std::string> m_weighted;
     tyr::formalism::planning::DomainView m_domain;
     runir::kr::dl::ConstructorRepository* m_repository;
     runir::kr::dl::Builder* m_builder;

@@ -67,6 +67,7 @@ public:
                    FeatureResolver& features,
                    const ext_constructors::ModuleReferences& references,
                    const std::map<std::string, size_t>& arities,
+                   const std::set<std::string>& weighted,
                    const DiagnosticContext& diagnostics) :
         m_domain(domain),
         m_context(repository, builder, diagnostics, &references),
@@ -78,6 +79,7 @@ public:
             data->id = m_derived.size();
             data->arity = arity;
             data->name = name;
+            data->weighted = weighted.contains(name);
             m_derived.emplace(name, ydl::insert(datalog(), *data).first.get_index());
         }
     }
@@ -395,14 +397,14 @@ private:
 
 }  // namespace
 
-DatalogSection::DatalogSection(const DatalogRules* rules,
+DatalogSection::DatalogSection(const DatalogAst* section,
                                tyr::formalism::planning::DomainView domain,
                                runir::kr::dl::ConstructorRepository& repository,
                                runir::kr::dl::Builder& builder,
                                FeatureResolver& features,
                                const ext_constructors::ModuleReferences& references,
                                const DiagnosticContext& diagnostics) :
-    m_rules(rules),
+    m_section(section),
     m_domain(domain),
     m_repository(&repository),
     m_builder(&builder),
@@ -410,10 +412,10 @@ DatalogSection::DatalogSection(const DatalogRules* rules,
     m_references(&references),
     m_diagnostics(&diagnostics)
 {
-    if (!rules)
+    if (!section)
         return;
     // The heads and their arities, so that rules may use heads defined later.
-    for (const auto& rule : *rules)
+    for (const auto& rule : section->rules)
     {
         const auto& name = rule.head.relation;
         const auto clashes = [&]<typename T>(T)
@@ -424,13 +426,22 @@ DatalogSection::DatalogSection(const DatalogRules* rules,
         if (const auto [it, inserted] = m_arities.emplace(name.text, arity); !inserted && it->second != arity)
             diagnostics.throw_at(name, ArityMismatchError(name.text, it->second, arity));
     }
+    if (section->weighted)
+        for (const auto& name : *section->weighted)
+        {
+            if (!m_arities.contains(name.text))
+                diagnostics.throw_at(name, InvalidExpressionError("Only a head of the section can be weighted: " + name.text + "."));
+            if (m_arities.at(name.text) == 0)
+                diagnostics.throw_at(name, InvalidExpressionError("A weighted head has its weight as last column: " + name.text + "."));
+            m_weighted.insert(name.text);
+        }
 }
 
 void DatalogSection::build(const ast::Identifier& reference)
 {
     m_building = true;
-    auto builder = ProgramBuilder(m_domain, *m_repository, *m_builder, *m_features, *m_references, m_arities, *m_diagnostics);
-    for (const auto& rule : *m_rules)
+    auto builder = ProgramBuilder(m_domain, *m_repository, *m_builder, *m_features, *m_references, m_arities, m_weighted, *m_diagnostics);
+    for (const auto& rule : m_section->rules)
         builder.add_rule(rule);
     m_program = builder.finish(reference);
     for (const auto& [name, arity] : m_arities)
@@ -454,7 +465,7 @@ std::optional<HeadReference> DatalogSection::head(const ast::Identifier& name)
 
 void DatalogSection::validate(const ast::Identifier& reference)
 {
-    if (m_rules && !m_program)
+    if (m_section && !m_program)
         build(reference);
 }
 

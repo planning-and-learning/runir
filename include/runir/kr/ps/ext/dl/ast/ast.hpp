@@ -240,6 +240,13 @@ struct DatalogRule : boost::spirit::x3::position_tagged
     std::vector<DatalogLiteral> body;
 };
 
+/// (:datalog (:weighted head...)? rule...): a weighted head's last column is a weight, least per row of the others.
+struct DatalogProgram : boost::spirit::x3::position_tagged
+{
+    boost::optional<std::vector<Identifier>> weighted;
+    std::vector<DatalogRule> rules;
+};
+
 struct Module : boost::spirit::x3::position_tagged
 {
     Identifier name;
@@ -247,7 +254,7 @@ struct Module : boost::spirit::x3::position_tagged
     std::vector<RegisterVariant> registers;
     Identifier entry;
     std::vector<NamedValue> memory_states;
-    boost::optional<std::vector<DatalogRule>> datalog;
+    boost::optional<DatalogProgram> datalog;
     std::vector<FeatureVariant> features;
     std::vector<RuleEntry> rule_entries;
 };

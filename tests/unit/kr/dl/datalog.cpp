@@ -202,6 +202,38 @@ TEST(RunirTests, DatalogRulesComputeWithNumbers)
     EXPECT_EQ(values(module_, context), (std::vector<int64_t> { 1, 1, 2, 1, 2 }));
 }
 
+TEST(RunirTests, DatalogWeightedHeadsKeepLeastWeights)
+{
+    // dist: unit distances from the markers, the weight its last column; far reads the weights in a higher stratum.
+    const auto module_text = std::string(R"(
+(:module (:symbol entry) (:arguments) (:registers) (:entry m0) (:memory m0)
+  (:datalog
+    (:weighted dist)
+    (:rule (dist ?x 0) (marker ?x))
+    (:rule (dist ?y ?v) (dist ?x ?w) (edge ?x ?y) (= ?v (+ ?w 1)))
+    (:rule (far ?x) (dist ?x ?w) (>= ?w 1)))
+  (:features
+    (:numerical (:symbol reached) (:expression (n_count (q_head dist (x w)))))
+    (:numerical (:symbol far-count) (:expression (n_count (q_head far (x))))))
+  (:rules))
+)");
+    const auto search = query_search_context();
+    const auto domain_context = kr::DomainContext::create(search->task->get_domain());
+    const auto module_ = kr::ps::ext::dl::parse_module(module_text, search->task->get_domain().get_domain(), *domain_context->ext_repository);
+    const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    auto builder = kr::dl::semantics::Builder();
+    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto storage = kr::dl::semantics::EvaluationStorage(denotations);
+    auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.get_state(), builder, storage);
+    // markers a, c (distance 0); a -> b: b at 1, and c stays 0 although b -> c; one row per object.
+    EXPECT_EQ(values(module_, context), (std::vector<int64_t> { 3, 1 }));
+
+    // A filter on a weight inside the weighted rule is rejected.
+    auto filtered = module_text;
+    filtered.replace(filtered.find("(edge ?x ?y) (= ?v"), 13, "(edge ?x ?y) (< ?w 3)");
+    EXPECT_THROW(kr::ps::ext::dl::parse_module(filtered, search->task->get_domain().get_domain(), *domain_context->ext_repository), kr::InvalidExpressionError);
+}
+
 TEST(RunirTests, DatalogRulesReadRegistersByName)
 {
     // Rules read the concept register `here` (one object), the role register `link` (one pair) and the concept
