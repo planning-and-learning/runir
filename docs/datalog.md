@@ -24,8 +24,9 @@ Rules are evaluated by yggdrasil's `ygg::database::datalog::Evaluator`.
 
 `(:rule HEAD LITERAL...)`, the head an atom over distinct variables. Literals:
 
-- `(r t...)`: `r` is a head of the section, a feature (below), or a domain predicate (static, fluent or derived; names
-  as the PDDL parser stores them, lower case);
+- `(r t...)`: `r` is a head of the section, a feature (below), a concept or role register or argument of the module
+  (one or two columns; a concept register holds one object, a role register one pair), or a domain predicate
+  (static, fluent or derived; names as the PDDL parser stores them, lower case; `object` holds every object);
 - `(goal p t...)`: the goal atoms of predicate `p`;
 - `(not (r t...))`, `(= a b)`, `(!= a b)`;
 - aggregates `(count ?n (LITERAL...))`, `(sum ?n ?v (LITERAL...))`, `(min ?n ?v (...))`, `(max ?n ?v (...))`, grouped by

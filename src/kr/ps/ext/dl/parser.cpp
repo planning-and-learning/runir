@@ -909,6 +909,7 @@ ModuleView lower_module(const ast::Module& ast,
                                                               repository.get_dl_repository(),
                                                               *builders.dl,
                                                               resolver,
+                                                              references,
                                                               diagnostics);
     references.features = &resolver;
     references.datalog = &section;

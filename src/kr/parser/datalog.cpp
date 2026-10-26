@@ -64,10 +64,11 @@ public:
                    dl::ConstructorRepository& repository,
                    dl::Builder& builder,
                    FeatureResolver& features,
+                   const ext_constructors::ModuleReferences& references,
                    const std::map<std::string, size_t>& arities,
                    const DiagnosticContext& diagnostics) :
         m_domain(domain),
-        m_context(repository, builder, diagnostics, nullptr),
+        m_context(repository, builder, diagnostics, &references),
         m_features(&features)
     {
         for (const auto& [name, arity] : arities)
@@ -226,12 +227,42 @@ private:
         return input(index, (goal ? "goal " : "") + name.text);
     }
 
-    /// The relation of a body atom: a head, a feature, or a domain predicate.
+    /// A concept or role register or argument of the module, as the constructor that reads it.
+    std::optional<FeatureReference> module_reference(const ast::Identifier& name) const
+    {
+        const auto& references = *m_context.references();
+        const auto find = [&](const auto& table) -> std::optional<std::decay_t<decltype(table.by_name.begin()->second)>>
+        {
+            const auto it = table.by_name.find(name.text);
+            return it == table.by_name.end() ? std::nullopt : std::optional(it->second);
+        };
+        // The record of a register or argument constructor, of the concept or role category.
+        const auto reading = [&]<typename Category, typename Record>(auto reference) -> FeatureReference
+        {
+            auto data = dl::checkout<Record>(m_context.builder());
+            data->reference = reference;
+            return constructors::intern_constructor<Category>(m_context, ext_constructors::intern(m_context, *data).get_index()).get_index();
+        };
+        if (const auto r = find(references.concept_registers))
+            return reading.template operator()<dl::ConceptTag, dl::Concept<dl::RegisterTag>>(*r);
+        if (const auto r = find(references.role_registers))
+            return reading.template operator()<dl::RoleTag, dl::Role<dl::RegisterTag>>(*r);
+        if (const auto r = find(references.concept_arguments))
+            return reading.template operator()<dl::ConceptTag, dl::Concept<dl::ArgumentTag<dl::ConceptTag>>>(*r);
+        if (const auto r = find(references.role_arguments))
+            return reading.template operator()<dl::RoleTag, dl::Role<dl::ArgumentTag<dl::RoleTag>>>(*r);
+        return std::nullopt;
+    }
+
+    /// The relation of a body atom: a head, a feature, a register or argument of the module, or a domain predicate.
     ygg::Index<ydl::Relation> body_relation(const ast::Identifier& name, size_t arity)
     {
         if (const auto it = m_derived.find(name.text); it != m_derived.end())
             return it->second;
-        if (const auto feature = m_features->resolve(name))
+        auto feature = m_features->resolve(name);
+        if (!feature)
+            feature = module_reference(name);
+        if (feature)
         {
             const auto index = std::visit(
                 [&]<typename T>(ygg::Index<T> resolved) -> ygg::Index<dl::Query<>>
@@ -320,12 +351,14 @@ DatalogSection::DatalogSection(const DatalogRules* rules,
                                runir::kr::dl::ConstructorRepository& repository,
                                runir::kr::dl::Builder& builder,
                                FeatureResolver& features,
+                               const ext_constructors::ModuleReferences& references,
                                const DiagnosticContext& diagnostics) :
     m_rules(rules),
     m_domain(domain),
     m_repository(&repository),
     m_builder(&builder),
     m_features(&features),
+    m_references(&references),
     m_diagnostics(&diagnostics)
 {
     if (!rules)
@@ -347,7 +380,7 @@ DatalogSection::DatalogSection(const DatalogRules* rules,
 void DatalogSection::build(const ast::Identifier& reference)
 {
     m_building = true;
-    auto builder = ProgramBuilder(m_domain, *m_repository, *m_builder, *m_features, m_arities, *m_diagnostics);
+    auto builder = ProgramBuilder(m_domain, *m_repository, *m_builder, *m_features, *m_references, m_arities, *m_diagnostics);
     for (const auto& rule : *m_rules)
         builder.add_rule(rule);
     m_program = builder.finish(reference);

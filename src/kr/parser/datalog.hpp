@@ -18,6 +18,11 @@
 #include <yggdrasil/database/datalog/declarations.hpp>
 
 /// Names in policies: features that DL expressions and Datalog rules read, and the heads of the :datalog section.
+namespace runir::kr::parser::ext_constructors
+{
+struct ModuleReferences;
+}
+
 namespace runir::kr::parser::datalog
 {
 
@@ -56,9 +61,9 @@ private:
 
 using DatalogRules = std::vector<runir::kr::ps::ext::dl::ast::DatalogRule>;
 
-/// The :datalog section of a module: one program whose rules read domain predicates, goal atoms ((goal p t...)) and
-/// concept, role and query features, built at the first q_head. A rule may not read a feature that reads the program's
-/// heads.
+/// The :datalog section of a module: one program whose rules read domain predicates, goal atoms ((goal p t...)), the
+/// module's concept and role registers and arguments, and concept, role and query features, built at the first q_head.
+/// A rule may not read a feature that reads the program's heads.
 class DatalogSection
 {
 public:
@@ -67,6 +72,7 @@ public:
                    runir::kr::dl::ConstructorRepository& repository,
                    runir::kr::dl::Builder& builder,
                    FeatureResolver& features,
+                   const ext_constructors::ModuleReferences& references,
                    const DiagnosticContext& diagnostics);
 
     [[nodiscard]] bool defines(const std::string& name) const { return m_arities.contains(name); }
@@ -80,6 +86,7 @@ private:
     runir::kr::dl::ConstructorRepository* m_repository;
     runir::kr::dl::Builder* m_builder;
     FeatureResolver* m_features;
+    const ext_constructors::ModuleReferences* m_references;
     const DiagnosticContext* m_diagnostics;
     std::map<std::string, size_t> m_arities;
     bool m_building = false;

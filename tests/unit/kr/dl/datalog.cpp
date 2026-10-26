@@ -17,6 +17,7 @@
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include <runir/kr/dl/semantics/incremental/delta.hpp>
 #include <runir/kr/dl/semantics/incremental/evaluation.hpp>
+#include <runir/kr/dl/semantics/interning.hpp>
 #include <runir/kr/dl/semantics/state_evaluation.hpp>
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/domain_context.hpp>
@@ -166,6 +167,88 @@ TEST(RunirTests, DatalogRulesReadFeaturesInModules)
     auto layered = module_text;
     layered.replace(layered.find("(start ?x) (edge"), 10, "(reachable ?x)");
     EXPECT_THROW(kr::ps::ext::dl::parse_module(layered, search->task->get_domain().get_domain(), *domain_context->ext_repository), kr::InvalidExpressionError);
+}
+
+TEST(RunirTests, DatalogRulesReadRegistersByName)
+{
+    // Rules read the concept register `here` (one object), the role register `link` (one pair) and the concept
+    // argument `from` as relations.
+    const auto module_text = std::string(R"(
+(:module (:symbol entry) (:arguments (:concept from)) (:registers (:concept here) (:role link)) (:entry m0) (:memory m0)
+  (:datalog
+    (:rule (near ?y) (here ?x) (edge ?x ?y))
+    (:rule (linked ?x) (link ?x ?y) (marker ?y))
+    (:rule (given ?x) (from ?x) (marker ?x)))
+  (:features
+    (:numerical (:symbol nears) (:expression (n_count (q_head near (y)))))
+    (:numerical (:symbol links) (:expression (n_count (q_head linked (x)))))
+    (:numerical (:symbol givens) (:expression (n_count (q_head given (x))))))
+  (:rules))
+)");
+    const auto search = query_search_context();
+    const auto domain_context = kr::DomainContext::create(search->task->get_domain());
+    const auto module_ = kr::ps::ext::dl::parse_module(module_text, search->task->get_domain().get_domain(), *domain_context->ext_repository);
+    const auto domain = search->task->get_domain().get_domain();
+    const auto a = domain.get_constants()[0].get_index(), b = domain.get_constants()[1].get_index(), c = domain.get_constants()[2].get_index();
+    auto register_data = std::array<ygg::Data<kr::dl::semantics::RegisterValues>, 2> {};
+    for (auto& data : register_data)
+    {
+        data.concept_values.resize(1);
+        data.role_values.resize(1);
+    }
+    // here = a, link = (b, c); then here = c, link = (b, b).
+    register_data[0].concept_values[0] = a;
+    register_data[0].role_values[0] = cista::pair(b, c);
+    register_data[1].concept_values[0] = c;
+    register_data[1].role_values[0] = cista::pair(b, b);
+    const auto registers = [&](size_t i) { return ygg::make_view(register_data[i], *search->task->get_repository()); };
+
+    const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    auto builder = kr::dl::semantics::Builder();
+    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto storage = kr::dl::semantics::EvaluationStorage(denotations);
+    // from = {a, b}: one marker.
+    auto from = ygg::Builder<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(3);
+    from.get().set(a.get_value());
+    from.get().set(b.get_value());
+    auto argument_data = ygg::Data<kr::dl::semantics::CallArguments>();
+    argument_data.concept_arguments.push_back(kr::dl::semantics::insert(denotations, from, builder).first.get_index());
+    const auto arguments = kr::dl::semantics::insert(denotations, argument_data).first;
+    const auto context_for = [&](size_t i)
+    { return kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.get_state(), builder, storage, arguments, registers(i)); };
+    // near = successors of `here`: {b} for a, {} for c; linked = first of `link` if its second is a marker: {b}, {};
+    // given = the markers of `from`: {a}.
+    const auto expected = std::array { std::vector<int64_t> { 1, 1, 1 }, std::vector<int64_t> { 0, 0, 1 } };
+    for (size_t i = 0; i < 2; ++i)
+    {
+        storage.reset_dynamic();  // Before changing registers; a program that reads registers is dynamic.
+        auto context = context_for(i);
+        EXPECT_EQ(values(module_, context), expected[i]);
+    }
+
+    // Incremental evaluation sees a change of the registers alone.
+    auto roots = std::vector<kr::dl::semantics::incremental::EvaluationRoot>();
+    for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
+        roots.emplace_back(feature.get_feature());
+    auto evaluation = kr::dl::semantics::incremental::IncrementalEvaluation<tyr::LiftedTag>(*search->task, roots);
+    const auto incremental = [&](auto& state_evaluation)
+    {
+        auto result = std::vector<int64_t>();
+        for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
+            result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(feature.get_feature())).get()));
+        return result;
+    };
+    auto& workspace = builder.get_workspace().get_database_workspace();
+    storage.reset_dynamic();
+    auto first_context = context_for(0);
+    auto first = evaluation.enter(first_context);
+    EXPECT_EQ(incremental(first), expected[0]);
+    auto delta = kr::dl::semantics::incremental::Delta {};
+    delta.assign<tyr::LiftedTag>(initial.get_state(), registers(0), initial.get_state(), registers(1));
+    storage.reset_dynamic();
+    auto second_context = context_for(1);
+    auto second = evaluation.enter(second_context, delta, workspace);
+    EXPECT_EQ(incremental(second), expected[1]);
 }
 
 TEST(RunirTests, DatalogRejectsInvalidPrograms)
