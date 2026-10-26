@@ -40,7 +40,7 @@ template<ConceptOrRoleTag Category>
 { return node(index).get_delta(); }
 
 template<tyr::TaskKind Kind>
-const ygg::database::incremental::Delta& EvaluationGraph<Kind>::change(QueryEvaluationIndex index) const
+const ygg::database::Delta& EvaluationGraph<Kind>::change(QueryEvaluationIndex index) const
 { return node(index).get_delta(); }
 
 template<tyr::TaskKind Kind>

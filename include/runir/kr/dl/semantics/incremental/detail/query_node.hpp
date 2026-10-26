@@ -45,7 +45,7 @@ public:
     void update(EvaluationGraph<Kind>& graph, const Delta& delta, ygg::database::Workspace& workspace);
     [[nodiscard]] std::span<const ygg::uint_t> get_dependencies() const noexcept { return m_dependencies; }
     [[nodiscard]] const ygg::Builder<ygg::database::Relation>& get_result() const;
-    [[nodiscard]] const ygg::database::incremental::Delta& get_delta() const;
+    [[nodiscard]] const ygg::database::Delta& get_delta() const;
 
 private:
     using Operation = std::variant<QueryStaticEvaluator<Kind>,
@@ -96,7 +96,7 @@ const ygg::Builder<ygg::database::Relation>& QueryNode<Kind>::get_result() const
 }
 
 template<tyr::TaskKind Kind>
-const ygg::database::incremental::Delta& QueryNode<Kind>::get_delta() const
+const ygg::database::Delta& QueryNode<Kind>::get_delta() const
 {
     return std::visit([](const auto& operation) -> const auto& { return operation.get_delta(); }, m_operation);
 }

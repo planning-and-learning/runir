@@ -142,7 +142,7 @@ public:
     [[nodiscard]] const ygg::Builder<ygg::database::Relation>& result(QueryEvaluationIndex index) const;
     template<ConceptOrRoleTag Category>
     [[nodiscard]] const DenotationDelta<Category>& change(EvaluationIndex<Category> index) const;
-    [[nodiscard]] const ygg::database::incremental::Delta& change(QueryEvaluationIndex index) const;
+    [[nodiscard]] const ygg::database::Delta& change(QueryEvaluationIndex index) const;
     template<ConceptOrRoleTag Category>
     [[nodiscard]] size_t cardinality(EvaluationIndex<Category> index) const;
     [[nodiscard]] size_t cardinality(QueryEvaluationIndex index) const { return result(index).size(); }
@@ -294,7 +294,7 @@ private:
         require_exact(static_cast<ygg::uint_t>(index));
         return m_graph.change(index);
     }
-    [[nodiscard]] const ygg::database::incremental::Delta& get_delta(QueryEvaluationIndex index) const
+    [[nodiscard]] const ygg::database::Delta& get_delta(QueryEvaluationIndex index) const
     {
         require_exact(static_cast<ygg::uint_t>(index));
         return m_graph.change(index);
@@ -344,7 +344,7 @@ public:
     template<ConceptOrRoleTag Category>
     const DenotationDelta<Category>& delta(EvaluationIndex<Category> index)
     { return current(static_cast<ygg::uint_t>(index)).get_delta(index); }
-    const ygg::database::incremental::Delta& delta(QueryEvaluationIndex index) { return current(static_cast<ygg::uint_t>(index)).get_delta(index); }
+    const ygg::database::Delta& delta(QueryEvaluationIndex index) { return current(static_cast<ygg::uint_t>(index)).get_delta(index); }
     template<BooleanOrNumericalTag Category>
     bool changed(EvaluationIndex<Category> index)
     { return current(static_cast<ygg::uint_t>(index)).changed(index); }

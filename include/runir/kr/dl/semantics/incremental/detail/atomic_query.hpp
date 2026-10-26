@@ -33,7 +33,7 @@ class AtomicQueryEvaluator
     tyr::formalism::planning::PredicateView<Fact> m_predicate;
     bool m_initialized = false;
     ygg::Builder<ygg::database::Relation> m_result;
-    ygg::database::incremental::Delta m_delta;
+    ygg::database::Delta m_delta;
     std::vector<std::byte> m_row;
 
 public:
@@ -51,8 +51,8 @@ public:
 
     [[nodiscard]] const ygg::Builder<ygg::database::Relation>& get_result() const& noexcept { return m_result; }
     [[nodiscard]] const ygg::Builder<ygg::database::Relation>& get_result() const&& = delete;
-    [[nodiscard]] const ygg::database::incremental::Delta& get_delta() const& noexcept { return m_delta; }
-    [[nodiscard]] const ygg::database::incremental::Delta& get_delta() const&& = delete;
+    [[nodiscard]] const ygg::database::Delta& get_delta() const& noexcept { return m_delta; }
+    [[nodiscard]] const ygg::database::Delta& get_delta() const&& = delete;
 };
 
 template<tyr::formalism::FactKind Fact>
