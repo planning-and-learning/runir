@@ -37,8 +37,9 @@ Other rules read such a head like any relation, its least value as its last colu
 
 `(:rule HEAD LITERAL...)`, the head an atom over distinct variables. Literals:
 
-- `(r t...)`: `r` is a head of the section, a feature (below), a concept or role register or argument of the module
-  (one or two columns; a concept register holds one object, a role register one pair), or a domain predicate
+- `(r t...)`: `r` is a head of the section, a feature (below), a register or argument of the module (a concept one has
+  one column, a role one two; a concept register holds one object, a role register one pair; a Boolean argument is
+  nullary, with its row iff true; a numerical argument has one row, holding its value), or a domain predicate
   (static, fluent or derived; names as the PDDL parser stores them, lower case; `object` holds every object);
 - `(goal p t...)`: the goal atoms of predicate `p`;
 - `(not (r t...))`, `(= a b)`, `(!= a b)`, `(< a b)`, `(<= a b)`, `(> a b)`, `(>= a b)`;
@@ -65,8 +66,8 @@ positive atom; negation and aggregation must be stratified. Violations are repor
   (:numerical (:symbol distance) (:head to-target))
   (:boolean (:symbol can-reach) (:head reachable))
   ```
-- A rule body may read a concept feature (one column), a role feature (two columns) or a query feature (its columns) by
-  name.
+- A rule body may read a feature by name: a concept feature (one column), a role feature (two columns), a query feature
+  (its columns), a Boolean feature (nullary, its row iff true) or a numerical feature (one row holding the value).
 - A DL expression may name another feature: `(n_add reached plain)`, `(c_or start reachable)`, `(n_count pairs)`. The
   name stands for that feature's expression, so evaluation is shared. Bare feature names must not start with the
   reserved prefixes `c_`, `r_`, `b_`, `n_` or `q_`.

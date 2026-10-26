@@ -9,6 +9,7 @@
 
 #include <concepts>
 #include <cstddef>
+#include <optional>
 #include <ranges>
 #include <span>
 #include <tuple>
@@ -161,6 +162,57 @@ struct QueryFromDenotationEvaluator : QueryValue
             set_element(element, false);
         for (const auto& element : child_delta.added)
             set_element(element, true);
+    }
+};
+
+/// q_boolean and q_numerical: the row of the scalar's value, replaced when the value changes.
+template<tyr::TaskKind Kind, typename Category>
+struct QueryFromScalarEvaluator : QueryValue
+{
+    EvaluationIndex<Category> argument;
+    std::optional<ygg::uint_t> current;
+
+    QueryFromScalarEvaluator(EvaluationIndex<Category> argument_, std::span<const ygg::database::ColumnLayout> columns) :
+        QueryValue(columns),
+        argument(argument_)
+    {
+    }
+    /// The value as a row: Booleans are rows only when true.
+    std::optional<ygg::uint_t> read(EvaluationGraph<Kind>& graph) const
+    {
+        const auto value = graph.result(argument).get();
+        if constexpr (std::same_as<Category, BooleanTag>)
+            return value ? std::optional<ygg::uint_t>(0) : std::nullopt;
+        else
+            return value;
+    }
+    auto row(ygg::uint_t value) const
+    {
+        const auto columns = this->result.columns().span();
+        if constexpr (std::same_as<Category, BooleanTag>)
+            return ygg::database::encode_row(std::tuple<> {}, columns);
+        else
+            return ygg::database::encode_row(std::tuple { value }, columns);
+    }
+    template<StateEvaluationContextConcept<Kind> Context>
+    void initialize(EvaluationGraph<Kind>& graph, Context&)
+    {
+        auto& rows = this->clear();
+        current = read(graph);
+        if (current)
+            rows.insert(row(*current));
+    }
+    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
+    {
+        this->delta.clear();
+        const auto next = read(graph);
+        if (next == current)
+            return;
+        if (current)
+            this->set(row(*current), false);
+        if (next)
+            this->set(row(*next), true);
+        current = next;
     }
 };
 

@@ -50,6 +50,13 @@ void evaluate_query(ygg::View<ygg::Index<Query<Tag>>, C> constructor, Context& c
         insert_denotation_rows<ConceptTag>(evaluate<Kind>(constructor.get_arg(), children), result);
     else if constexpr (std::same_as<Tag, QueryRoleTag>)
         insert_denotation_rows<RoleTag>(evaluate<Kind>(constructor.get_arg(), children), result);
+    else if constexpr (std::same_as<Tag, QueryBooleanTag>)
+    {
+        if (evaluate<Kind>(constructor.get_arg(), children).get())
+            result.insert(std::tuple<> {});
+    }
+    else if constexpr (std::same_as<Tag, QueryNumericalTag>)
+        result.insert(std::tuple { evaluate<Kind>(constructor.get_arg(), children).get() });
     else if constexpr (std::same_as<Tag, QueryJoinTag> || std::same_as<Tag, QueryUnionTag> || std::same_as<Tag, QueryDifferenceTag>)
     {
         const auto lhs = evaluate<Kind>(constructor.get_lhs(), children);

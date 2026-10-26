@@ -101,6 +101,8 @@ template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Query<runir:
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<tyr::formalism::DerivedTag>>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>>;
+template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Query<runir::kr::dl::QueryBooleanTag>>;
+template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Query<runir::kr::dl::QueryNumericalTag>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Query<runir::kr::dl::QueryJoinTag>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Query<runir::kr::dl::QueryRenameTag>>;

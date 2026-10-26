@@ -319,6 +319,106 @@ TEST(RunirTests, DatalogRulesReadRegistersByName)
     EXPECT_EQ(incremental(second), expected[1]);
 }
 
+TEST(RunirTests, DatalogRulesReadBooleanAndNumericalArgumentsAndFeatures)
+{
+    // Rules read the Boolean argument `on` (a nullary relation), the numerical argument `bound`, the numerical
+    // feature `triples` (one row with the value) and the Boolean feature `ready` (nullary).
+    const auto module_text = std::string(R"(
+(:module (:symbol entry) (:arguments (:boolean on) (:numerical bound)) (:registers) (:entry m0) (:memory m0)
+  (:datalog
+    (:rule (limit ?v) (bound ?b) (= ?v (+ ?b 1)))
+    (:rule (within) (triples ?m) (bound ?b) (<= ?m ?b))
+    (:rule (gated) (ready) (on)))
+  (:features
+    (:numerical (:symbol triples) (:expression (n_count (q_atomic_state "triple" (x y z)))))
+    (:boolean (:symbol ready) (:expression (b_atomic_state "ready" true)))
+    (:numerical (:symbol limits) (:head limit))
+    (:boolean (:symbol withins) (:head within))
+    (:boolean (:symbol gates) (:head gated)))
+  (:rules))
+)");
+    const auto search = query_search_context();
+    const auto domain_context = kr::DomainContext::create(search->task->get_domain());
+    const auto module_ = kr::ps::ext::dl::parse_module(module_text, search->task->get_domain().get_domain(), *domain_context->ext_repository);
+    const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    auto builder = kr::dl::semantics::Builder();
+    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto storage = kr::dl::semantics::EvaluationStorage(denotations);
+    const auto arguments = [&](bool on, ygg::uint_t bound)
+    {
+        auto boolean = ygg::Data<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>();
+        boolean.value = on;
+        auto numerical = ygg::Data<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>();
+        numerical.value = bound;
+        auto data = ygg::Data<kr::dl::semantics::CallArguments>();
+        data.boolean_arguments.push_back(denotations.insert(boolean).first.get_index());
+        data.numerical_arguments.push_back(denotations.insert(numerical).first.get_index());
+        return kr::dl::semantics::insert(denotations, data).first;
+    };
+    const auto register_data = ygg::Data<kr::dl::semantics::RegisterValues>();
+    const auto registers = ygg::make_view(register_data, *search->task->get_repository());
+    auto roots = std::vector<kr::dl::semantics::incremental::EvaluationRoot>();
+    for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
+        roots.emplace_back(feature.get_feature());
+    for (const auto feature : module_.get_features<kr::dl::BooleanTag>())
+        roots.emplace_back(feature.get_feature());
+    auto evaluation = kr::dl::semantics::incremental::IncrementalEvaluation<tyr::LiftedTag>(*search->task, roots);
+    for (const auto& [on, bound] : { std::pair { true, ygg::uint_t { 0 } }, std::pair { false, ygg::uint_t { 5 } } })
+    {
+        storage.reset_dynamic();
+        const auto call = arguments(on, bound);
+        auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.get_state(), builder, storage, call, registers);
+        const auto result = values(module_, context);
+        // triples, limits; ready, withins, gates: four triples and ready in the initial state.
+        EXPECT_EQ(result, (std::vector<int64_t> { 4, static_cast<int64_t>(bound) + 1, 1, 4 <= static_cast<int64_t>(bound), on }));
+        storage.reset_dynamic();
+        auto state_evaluation = evaluation.enter(context);
+        auto incremental = std::vector<int64_t>();
+        for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
+            incremental.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(feature.get_feature())).get()));
+        for (const auto feature : module_.get_features<kr::dl::BooleanTag>())
+            incremental.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(feature.get_feature())).get()));
+        EXPECT_EQ(incremental, result);
+    }
+    {
+        // Removing triples one by one, incremental evaluation agrees with full evaluation as `triples` and `ready` change.
+        const auto call = arguments(true, 1);
+        const auto incremental = [&](auto& state_evaluation)
+        {
+            auto result = std::vector<int64_t>();
+            for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
+                result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(feature.get_feature())).get()));
+            for (const auto feature : module_.get_features<kr::dl::BooleanTag>())
+                result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(feature.get_feature())).get()));
+            return result;
+        };
+        auto& workspace = builder.get_workspace().get_database_workspace();
+        storage.reset_dynamic();
+        auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.get_state(), builder, storage, call, registers);
+        auto first = evaluation.enter(context);
+        static_cast<void>(incremental(first));
+        auto changed = false;
+        auto node = initial;
+        for (int step = 0; step < 4; ++step)
+        {
+            const auto successors = search->successor_generator->get_successor_nodes(node, *search->state_repository, *search->axiom_evaluator);
+            ASSERT_FALSE(successors.empty());
+            const auto& next = successors.front();
+            auto delta = kr::dl::semantics::incremental::Delta {};
+            delta.assign<tyr::LiftedTag>(node.get_state(), next.get_state());
+            storage.reset_dynamic();
+            auto next_context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(next.get_state(), builder, storage, call, registers);
+            const auto expected = values(module_, next_context);
+            storage.reset_dynamic();
+            auto forward = evaluation.enter(next_context, delta, workspace);
+            EXPECT_EQ(incremental(forward), expected) << "step " << step;
+            changed = changed || expected[3] != 0;
+            node = next;
+        }
+        EXPECT_TRUE(changed);  // `within` became true: at most one triple is left.
+    }
+}
+
 TEST(RunirTests, DatalogRejectsInvalidPrograms)
 {
     const auto search = query_search_context();

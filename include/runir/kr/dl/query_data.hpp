@@ -171,6 +171,70 @@ struct Data<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>>
 };
 
 template<>
+struct Data<runir::kr::dl::Query<runir::kr::dl::QueryBooleanTag>>
+{
+    Index<runir::kr::dl::Query<runir::kr::dl::QueryBooleanTag>> index;
+    Index<runir::kr::dl::Constructor<runir::kr::dl::BooleanTag>> arg {};
+    IndexList<runir::kr::dl::QueryColumn> columns {};
+    ygg::Builder<ygg::database::Columns> schema {};
+
+    Data() = default;
+    // schema is derived during insertion and therefore not a constructor parameter.
+    Data(Index<runir::kr::dl::Constructor<runir::kr::dl::BooleanTag>> arg_, IndexList<runir::kr::dl::QueryColumn> columns_) :
+        index(),
+        arg(arg_),
+        columns(std::move(columns_))
+    {
+    }
+    template<typename C>
+    Data(::ygg::View<Index<runir::kr::dl::Constructor<runir::kr::dl::BooleanTag>>, C> arg_,
+         const std::vector<::ygg::View<Index<runir::kr::dl::QueryColumn>, C>>& columns_) :
+        index(),
+        arg(),
+        columns()
+    {
+        set(arg_, arg);
+        set(columns_, columns);
+    }
+
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::arg, &Data::columns, &Data::schema> {}; }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg, &Data::columns> {}; }
+    void clear() noexcept { ygg::clear_members(*this); }
+};
+
+template<>
+struct Data<runir::kr::dl::Query<runir::kr::dl::QueryNumericalTag>>
+{
+    Index<runir::kr::dl::Query<runir::kr::dl::QueryNumericalTag>> index;
+    Index<runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>> arg {};
+    IndexList<runir::kr::dl::QueryColumn> columns {};
+    ygg::Builder<ygg::database::Columns> schema {};
+
+    Data() = default;
+    // schema is derived during insertion and therefore not a constructor parameter.
+    Data(Index<runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>> arg_, IndexList<runir::kr::dl::QueryColumn> columns_) :
+        index(),
+        arg(arg_),
+        columns(std::move(columns_))
+    {
+    }
+    template<typename C>
+    Data(::ygg::View<Index<runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>>, C> arg_,
+         const std::vector<::ygg::View<Index<runir::kr::dl::QueryColumn>, C>>& columns_) :
+        index(),
+        arg(),
+        columns()
+    {
+        set(arg_, arg);
+        set(columns_, columns);
+    }
+
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::arg, &Data::columns, &Data::schema> {}; }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg, &Data::columns> {}; }
+    void clear() noexcept { ygg::clear_members(*this); }
+};
+
+template<>
 struct Data<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>>
 {
     Index<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>> index;

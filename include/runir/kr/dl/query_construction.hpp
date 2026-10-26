@@ -140,6 +140,8 @@ void prepare(ygg::Data<Query<Tag>>& data, const Repository& repository)
             require_query_arity(columns.size(), ygg::make_view(data.predicate, repository.get_planning_repository()).get_arity());
         else if constexpr (std::same_as<Tag, QueryConceptTag> || std::same_as<Tag, QueryRoleTag>)
             require_query_arity(columns.size(), std::same_as<Tag, QueryConceptTag> ? 1 : 2);
+        else if constexpr (std::same_as<Tag, QueryBooleanTag> || std::same_as<Tag, QueryNumericalTag>)
+            require_query_arity(columns.size(), std::same_as<Tag, QueryBooleanTag> ? 0 : 1);
         else if constexpr (std::same_as<Tag, QueryRenameTag>)
             require_query_arity(columns.size(), ygg::make_view(data.arg, repository).get_schema().size());
         else if constexpr (std::same_as<Tag, QueryHeadTag>)

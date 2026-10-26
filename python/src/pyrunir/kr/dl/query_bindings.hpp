@@ -69,6 +69,12 @@ void def_query_data_constructors(Class& cls)
         cls.def(nb::init<ArgIndex, ColumnIndexList>(), "arg"_a, "columns"_a)
             .def(nb::init<ygg::View<ArgIndex, Repository>, const ColumnViewList&>(), "arg"_a, "columns"_a);
     }
+    else if constexpr (std::same_as<Tag, QueryBooleanTag> || std::same_as<Tag, QueryNumericalTag>)
+    {
+        using ArgIndex = ygg::Index<Constructor<std::conditional_t<std::same_as<Tag, QueryBooleanTag>, BooleanTag, NumericalTag>>>;
+        cls.def(nb::init<ArgIndex, ColumnIndexList>(), "arg"_a, "columns"_a)
+            .def(nb::init<ygg::View<ArgIndex, Repository>, const ColumnViewList&>(), "arg"_a, "columns"_a);
+    }
     else if constexpr (std::same_as<Tag, QueryJoinTag> || std::same_as<Tag, QueryUnionTag> || std::same_as<Tag, QueryDifferenceTag>)
         cls.def(nb::init<QueryIndex, QueryIndex>(), "lhs"_a, "rhs"_a).def(nb::init<QueryView, QueryView>(), "lhs"_a, "rhs"_a);
     else if constexpr (std::same_as<Tag, QueryProjectTag> || std::same_as<Tag, QueryRenameTag>)
@@ -226,6 +232,8 @@ inline void bind_queries(nb::module_& m)
     bind_query<AtomicGoalTag<tyr::formalism::DerivedTag>>(m, "QueryAtomicGoalDerived");
     bind_query<QueryConceptTag>(m, "QueryConcept");
     bind_query<QueryRoleTag>(m, "QueryRole");
+    bind_query<QueryBooleanTag>(m, "QueryBoolean");
+    bind_query<QueryNumericalTag>(m, "QueryNumerical");
     bind_query<QueryJoinTag>(m, "QueryJoin");
     bind_query<QueryProjectTag>(m, "QueryProject");
     bind_query<QueryRenameTag>(m, "QueryRename");

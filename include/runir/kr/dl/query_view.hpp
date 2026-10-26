@@ -38,6 +38,7 @@ public:
 
     auto get_arg() const noexcept
         requires(std::same_as<Tag, runir::kr::dl::QueryConceptTag> || std::same_as<Tag, runir::kr::dl::QueryRoleTag>
+                 || std::same_as<Tag, runir::kr::dl::QueryBooleanTag> || std::same_as<Tag, runir::kr::dl::QueryNumericalTag>
                  || std::same_as<Tag, runir::kr::dl::QueryProjectTag> || std::same_as<Tag, runir::kr::dl::QueryRenameTag>
                  || std::same_as<Tag, runir::kr::dl::QuerySelectEqualTag> || std::same_as<Tag, runir::kr::dl::QuerySelectValueTag>)
     { return make_view(this->get_data().arg, this->get_context()); }

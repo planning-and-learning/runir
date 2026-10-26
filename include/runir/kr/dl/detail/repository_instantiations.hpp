@@ -105,6 +105,8 @@ extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Query
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<tyr::formalism::DerivedTag>>>;
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>>;
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>>;
+extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Query<runir::kr::dl::QueryBooleanTag>>;
+extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Query<runir::kr::dl::QueryNumericalTag>>;
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Query<runir::kr::dl::QueryJoinTag>>;
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>>;
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Query<runir::kr::dl::QueryRenameTag>>;

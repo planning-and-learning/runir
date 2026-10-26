@@ -82,6 +82,10 @@ std::string query(ygg::View<ygg::Index<runir::kr::dl::Query<Tag>>, C> view)
         return constructor(runir::kr::dl::QueryConceptTag::keyword, *view.get_columns().begin(), view.get_arg());
     else if constexpr (std::same_as<Tag, runir::kr::dl::QueryRoleTag>)
         return constructor(runir::kr::dl::QueryRoleTag::keyword, query_columns(view.get_columns()), view.get_arg());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::QueryBooleanTag>)
+        return constructor(runir::kr::dl::QueryBooleanTag::keyword, view.get_arg());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::QueryNumericalTag>)
+        return constructor(runir::kr::dl::QueryNumericalTag::keyword, *view.get_columns().begin(), view.get_arg());
     else if constexpr (std::same_as<Tag, runir::kr::dl::QueryProjectTag>)
         return constructor(runir::kr::dl::QueryProjectTag::keyword, query_columns(view.get_columns()), view.get_arg());
     else if constexpr (std::same_as<Tag, runir::kr::dl::QueryRenameTag>)

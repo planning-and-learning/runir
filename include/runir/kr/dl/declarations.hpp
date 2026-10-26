@@ -671,6 +671,18 @@ struct QueryRoleTag
     static constexpr auto keyword = "q_role";
 };
 
+/// A Boolean as a nullary relation: its one row iff the Boolean holds.
+struct QueryBooleanTag
+{
+    static constexpr auto keyword = "q_boolean";
+};
+
+/// A numerical as a relation with one row, holding the value.
+struct QueryNumericalTag
+{
+    static constexpr auto keyword = "q_numerical";
+};
+
 struct QueryJoinTag
 {
     static constexpr auto keyword = "q_join";
@@ -738,6 +750,8 @@ using QueryConstructorTags = ygg::TypeList<AtomicStateTag<tyr::formalism::Static
                                            AtomicGoalTag<tyr::formalism::DerivedTag>,
                                            QueryConceptTag,
                                            QueryRoleTag,
+                                           QueryBooleanTag,
+                                           QueryNumericalTag,
                                            QueryJoinTag,
                                            QueryProjectTag,
                                            QueryRenameTag,

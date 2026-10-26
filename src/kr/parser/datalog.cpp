@@ -255,7 +255,7 @@ private:
             const auto it = table.by_name.find(name.text);
             return it == table.by_name.end() ? std::nullopt : std::optional(it->second);
         };
-        // The record of a register or argument constructor, of the concept or role category.
+        // The record of a register or argument constructor.
         const auto reading = [&]<typename Category, typename Record>(auto reference) -> FeatureReference
         {
             auto data = dl::checkout<Record>(m_context.builder());
@@ -270,6 +270,10 @@ private:
             return reading.template operator()<dl::ConceptTag, dl::Concept<dl::ArgumentTag<dl::ConceptTag>>>(*r);
         if (const auto r = find(references.role_arguments))
             return reading.template operator()<dl::RoleTag, dl::Role<dl::ArgumentTag<dl::RoleTag>>>(*r);
+        if (const auto r = find(references.boolean_arguments))
+            return reading.template operator()<dl::BooleanTag, dl::Boolean<dl::ArgumentTag<dl::BooleanTag>>>(*r);
+        if (const auto r = find(references.numerical_arguments))
+            return reading.template operator()<dl::NumericalTag, dl::Numerical<dl::ArgumentTag<dl::NumericalTag>>>(*r);
         return std::nullopt;
     }
 
@@ -300,12 +304,21 @@ private:
                         data->columns = columns(2);
                         return query(constructors::intern(m_context, *data).get_index());
                     }
-                    else if constexpr (std::same_as<T, dl::Query<>>)
-                        return resolved;
+                    else if constexpr (std::same_as<T, dl::Constructor<dl::BooleanTag>>)
+                    {
+                        auto data = constructors::checkout<dl::Query<dl::QueryBooleanTag>>(m_context);
+                        data->arg = resolved;
+                        return query(constructors::intern(m_context, *data).get_index());
+                    }
+                    else if constexpr (std::same_as<T, dl::Constructor<dl::NumericalTag>>)
+                    {
+                        auto data = constructors::checkout<dl::Query<dl::QueryNumericalTag>>(m_context);
+                        data->arg = resolved;
+                        data->columns = columns(1);
+                        return query(constructors::intern(m_context, *data).get_index());
+                    }
                     else
-                        m_context.diagnostics().throw_at(
-                            name,
-                            InvalidExpressionError("A Datalog rule can read concept, role and query features, not " + name.text + "."));
+                        return resolved;
                 },
                 *feature);
             return input(index, name.text);

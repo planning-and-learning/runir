@@ -56,6 +56,8 @@ private:
                                    QueryGenericJoinEvaluator<Kind>,
                                    QueryFromDenotationEvaluator<Kind, ConceptTag>,
                                    QueryFromDenotationEvaluator<Kind, RoleTag>,
+                                   QueryFromScalarEvaluator<Kind, BooleanTag>,
+                                   QueryFromScalarEvaluator<Kind, NumericalTag>,
                                    QuerySetCombinationEvaluator<Kind, QueryUnionTag>,
                                    QuerySetCombinationEvaluator<Kind, QueryDifferenceTag>,
                                    QuerySelectionEvaluator<Kind, QueryRenameTag>,
@@ -130,6 +132,10 @@ auto QueryNode<Kind>::prepare_operation(QueryView<> expression, GraphBuilder<Kin
                 return QueryFromDenotationEvaluator<Kind, ConceptTag>(graph.prepare(concrete.get_arg(), m_dependencies), concrete.get_schema().span());
             else if constexpr (std::same_as<Tag, QueryRoleTag>)
                 return QueryFromDenotationEvaluator<Kind, RoleTag>(graph.prepare(concrete.get_arg(), m_dependencies), concrete.get_schema().span());
+            else if constexpr (std::same_as<Tag, QueryBooleanTag>)
+                return QueryFromScalarEvaluator<Kind, BooleanTag>(graph.prepare(concrete.get_arg(), m_dependencies), concrete.get_schema().span());
+            else if constexpr (std::same_as<Tag, QueryNumericalTag>)
+                return QueryFromScalarEvaluator<Kind, NumericalTag>(graph.prepare(concrete.get_arg(), m_dependencies), concrete.get_schema().span());
             else if constexpr (std::same_as<Tag, QueryUnionTag> || std::same_as<Tag, QueryDifferenceTag>)
                 return QuerySetCombinationEvaluator<Kind, Tag>(graph.prepare(concrete.get_lhs(), m_dependencies),
                                                                graph.prepare(concrete.get_rhs(), m_dependencies),
