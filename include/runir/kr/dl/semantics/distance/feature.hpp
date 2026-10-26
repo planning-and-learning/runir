@@ -6,7 +6,7 @@
 
 #include <optional>
 #include <vector>
-#include <yggdrasil/database/semantics/must_pass.hpp>
+#include <yggdrasil/database/search/must_pass.hpp>
 
 namespace runir::kr::dl::semantics
 {

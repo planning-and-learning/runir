@@ -9,8 +9,8 @@
 #include <span>
 #include <tuple>
 #include <vector>
-#include <yggdrasil/database/semantics/generic_join.hpp>
-#include <yggdrasil/database/semantics/operations.hpp>
+#include <yggdrasil/database/operators/generic_join/generic_join.hpp>
+#include <yggdrasil/database/operators/relational/operations.hpp>
 
 namespace runir::kr::dl::semantics::detail
 {

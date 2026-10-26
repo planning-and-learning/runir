@@ -15,14 +15,14 @@
 #include <tyr/formalism/declarations.hpp>
 #include <utility>
 #include <vector>
-#include <yggdrasil/database/semantics/bound/query_evaluation.hpp>
-#include <yggdrasil/database/semantics/distance.hpp>
-#include <yggdrasil/database/semantics/operations.hpp>
-#include <yggdrasil/database/semantics/relation_view.hpp>
-#include <yggdrasil/database/semantics/search/concepts.hpp>
-#include <yggdrasil/database/syntax/columns.hpp>
-#include <yggdrasil/database/syntax/query.hpp>
-#include <yggdrasil/database/syntax/row.hpp>
+#include <yggdrasil/database/evaluation/bound.hpp>
+#include <yggdrasil/database/operators/distance/distance.hpp>
+#include <yggdrasil/database/operators/relational/operations.hpp>
+#include <yggdrasil/database/query/query.hpp>
+#include <yggdrasil/database/relation/columns.hpp>
+#include <yggdrasil/database/relation/relation_view.hpp>
+#include <yggdrasil/database/relation/row.hpp>
+#include <yggdrasil/database/search/concepts.hpp>
 
 namespace runir::kr::dl::semantics::heuristics
 {

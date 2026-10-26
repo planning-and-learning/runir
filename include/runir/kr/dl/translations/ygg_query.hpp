@@ -18,8 +18,8 @@
 #include <yggdrasil/core/concepts.hpp>
 #include <yggdrasil/core/dependent_false.hpp>
 #include <yggdrasil/core/type_list.hpp>
-#include <yggdrasil/database/syntax/query.hpp>
-#include <yggdrasil/database/syntax/translations/relaxation.hpp>
+#include <yggdrasil/database/query/query.hpp>
+#include <yggdrasil/database/query/rewrite/relaxation.hpp>
 
 namespace runir::kr::dl
 {

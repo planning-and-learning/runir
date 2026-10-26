@@ -14,8 +14,8 @@
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <yggdrasil/database/semantics/incremental/generic_join.hpp>
-#include <yggdrasil/database/semantics/incremental/query.hpp>
+#include <yggdrasil/database/evaluation/incremental.hpp>
+#include <yggdrasil/database/operators/generic_join/incremental/generic_join.hpp>
 
 namespace runir::kr::dl::semantics::incremental::detail
 {

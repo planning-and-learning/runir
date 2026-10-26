@@ -4,7 +4,7 @@
 #include "runir/kr/dl/semantics/denotation_view.hpp"
 #include "runir/kr/dl/semantics/evaluation.hpp"
 
-#include <yggdrasil/database/semantics/relation_view.hpp>
+#include <yggdrasil/database/relation/relation_view.hpp>
 
 namespace runir::kr::dl::semantics
 {

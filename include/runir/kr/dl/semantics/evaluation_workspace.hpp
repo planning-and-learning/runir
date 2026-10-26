@@ -19,10 +19,10 @@
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/database/semantics/distance.hpp>
-#include <yggdrasil/database/semantics/generic_join.hpp>
-#include <yggdrasil/database/semantics/min_distance.hpp>
-#include <yggdrasil/database/semantics/operations.hpp>
+#include <yggdrasil/database/operators/distance/distance.hpp>
+#include <yggdrasil/database/operators/generic_join/generic_join.hpp>
+#include <yggdrasil/database/operators/relational/operations.hpp>
+#include <yggdrasil/database/search/min_distance.hpp>
 
 namespace runir::kr::dl::semantics
 {

@@ -15,7 +15,7 @@
 #include <yggdrasil/containers/raw_vector_set.hpp>
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/core/types.hpp>
-#include <yggdrasil/database/semantics/relation_repository.hpp>
+#include <yggdrasil/database/relation/relation_repository.hpp>
 #include <yggdrasil/formalism/interning.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>
 

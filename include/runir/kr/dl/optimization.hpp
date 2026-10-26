@@ -28,7 +28,7 @@
 #include <yggdrasil/core/dependent_false.hpp>
 #include <yggdrasil/core/type_list.hpp>
 #include <yggdrasil/database/optimization/optimization.hpp>
-#include <yggdrasil/database/syntax/query.hpp>
+#include <yggdrasil/database/query/query.hpp>
 #include <yggdrasil/diagnostics/warnings.hpp>
 
 namespace runir::kr::dl

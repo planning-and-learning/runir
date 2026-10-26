@@ -25,7 +25,7 @@
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <tyr/planning/lifted/task.hpp>
 #include <vector>
-#include <yggdrasil/database/semantics/incremental/projection.hpp>
+#include <yggdrasil/database/operators/relational/incremental/projection.hpp>
 
 namespace runir::tests
 {

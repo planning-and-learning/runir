@@ -10,8 +10,8 @@
 
 #include <span>
 #include <vector>
-#include <yggdrasil/database/semantics/min_distance.hpp>
-#include <yggdrasil/database/semantics/relation_view.hpp>
+#include <yggdrasil/database/relation/relation_view.hpp>
+#include <yggdrasil/database/search/min_distance.hpp>
 
 /// n_distance over a DL edge query, evaluated by yggdrasil (ygg::database::MinDistance in full evaluation,
 /// ygg::database::incremental::MinDistance in incremental evaluation; see their method overviews). runir translates the

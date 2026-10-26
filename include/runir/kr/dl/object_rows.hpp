@@ -6,7 +6,7 @@
 #include <span>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/database/syntax/row.hpp>
+#include <yggdrasil/database/relation/row.hpp>
 
 namespace runir::kr::dl
 {

@@ -11,7 +11,7 @@
 #include <tuple>
 #include <utility>
 #include <yggdrasil/containers/unique_object_pool.hpp>
-#include <yggdrasil/database/semantics/relation_pool.hpp>
+#include <yggdrasil/database/relation/relation_pool.hpp>
 #include <yggdrasil/formalism/builder.hpp>
 
 namespace runir::kr::dl::semantics

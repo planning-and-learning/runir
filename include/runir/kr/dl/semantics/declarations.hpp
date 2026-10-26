@@ -15,7 +15,7 @@
 #include <yggdrasil/core/type_list.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/database/declarations.hpp>
-#include <yggdrasil/database/syntax/row.hpp>
+#include <yggdrasil/database/relation/row.hpp>
 
 namespace runir::kr::dl::semantics
 {

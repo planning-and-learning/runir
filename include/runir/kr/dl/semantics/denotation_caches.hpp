@@ -8,8 +8,8 @@
 #include <cstdint>
 #include <tuple>
 #include <yggdrasil/containers/associative_containers.hpp>
-#include <yggdrasil/database/semantics/join_index.hpp>
-#include <yggdrasil/database/semantics/relation_repository.hpp>
+#include <yggdrasil/database/operators/relational/join_index.hpp>
+#include <yggdrasil/database/relation/relation_repository.hpp>
 
 namespace runir::kr::dl::semantics
 {

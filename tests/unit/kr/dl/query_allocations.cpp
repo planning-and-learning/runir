@@ -28,7 +28,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
-#include <yggdrasil/database/semantics/incremental/projection.hpp>
+#include <yggdrasil/database/operators/relational/incremental/projection.hpp>
 
 #if defined(_MSC_VER)
 #include <malloc.h>

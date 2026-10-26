@@ -9,7 +9,7 @@
 
 #include <concepts>
 #include <span>
-#include <yggdrasil/database/semantics/incremental/projection.hpp>
+#include <yggdrasil/database/operators/relational/incremental/projection.hpp>
 
 namespace runir::kr::dl::semantics::incremental::detail
 {

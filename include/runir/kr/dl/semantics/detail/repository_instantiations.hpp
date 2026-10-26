@@ -6,7 +6,7 @@
 
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 
-#include <yggdrasil/database/syntax/query_repository.hpp>
+#include <yggdrasil/database/query/query_repository.hpp>
 
 #ifndef RUNIR_HEADER_INSTANTIATION
 

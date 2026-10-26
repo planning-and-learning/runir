@@ -18,8 +18,8 @@
 #include <utility>
 #include <variant>
 #include <vector>
-#include <yggdrasil/database/semantics/incremental/delta.hpp>
-#include <yggdrasil/database/semantics/relation_builder.hpp>
+#include <yggdrasil/database/relation/delta.hpp>
+#include <yggdrasil/database/relation/relation_builder.hpp>
 
 namespace runir::kr::dl::semantics::incremental
 {

@@ -16,8 +16,8 @@
 #include <stdexcept>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/database/semantics/incremental/distance.hpp>
-#include <yggdrasil/database/semantics/incremental/min_distance.hpp>
+#include <yggdrasil/database/operators/distance/incremental/distance.hpp>
+#include <yggdrasil/database/search/incremental/min_distance.hpp>
 
 namespace runir::kr::dl::semantics::incremental::detail
 {

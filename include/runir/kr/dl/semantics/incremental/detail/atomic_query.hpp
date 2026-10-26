@@ -14,9 +14,9 @@
 #include <utility>
 #include <variant>
 #include <vector>
-#include <yggdrasil/database/semantics/incremental/delta.hpp>
-#include <yggdrasil/database/semantics/incremental/join.hpp>
-#include <yggdrasil/database/semantics/incremental/projection.hpp>
+#include <yggdrasil/database/operators/relational/incremental/join.hpp>
+#include <yggdrasil/database/operators/relational/incremental/projection.hpp>
+#include <yggdrasil/database/relation/delta.hpp>
 
 namespace runir::kr::dl::semantics::incremental::detail
 {

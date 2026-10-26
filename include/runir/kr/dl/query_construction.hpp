@@ -12,11 +12,11 @@
 #include <tyr/formalism/predicate_view.hpp>
 #include <variant>
 #include <vector>
-#include <yggdrasil/database/semantics/distance.hpp>
-#include <yggdrasil/database/semantics/generic_join.hpp>
-#include <yggdrasil/database/semantics/must_pass_plan.hpp>
-#include <yggdrasil/database/semantics/plans.hpp>
-#include <yggdrasil/database/syntax/columns.hpp>
+#include <yggdrasil/database/operators/distance/distance.hpp>
+#include <yggdrasil/database/operators/generic_join/generic_join.hpp>
+#include <yggdrasil/database/operators/relational/plan.hpp>
+#include <yggdrasil/database/relation/columns.hpp>
+#include <yggdrasil/database/search/must_pass_plan.hpp>
 
 namespace runir::kr::dl::detail
 {
