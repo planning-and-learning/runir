@@ -30,7 +30,8 @@
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <utility>
 #include <vector>
-#include <yggdrasil/database/operators/relational/operations.hpp>
+#include <yggdrasil/database/operators/relational/join.hpp>
+#include <yggdrasil/database/operators/relational/project.hpp>
 #include <yggdrasil/execution/onetbb.hpp>
 #include <yggdrasil/semantics/hash.hpp>
 

@@ -10,7 +10,10 @@
 #include <tuple>
 #include <vector>
 #include <yggdrasil/database/operators/generic_join/generic_join.hpp>
-#include <yggdrasil/database/operators/relational/operations.hpp>
+#include <yggdrasil/database/operators/relational/join.hpp>
+#include <yggdrasil/database/operators/relational/project.hpp>
+#include <yggdrasil/database/operators/relational/select.hpp>
+#include <yggdrasil/database/operators/relational/set.hpp>
 
 namespace runir::kr::dl::semantics::detail
 {

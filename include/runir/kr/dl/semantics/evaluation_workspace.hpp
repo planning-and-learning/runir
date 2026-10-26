@@ -21,7 +21,7 @@
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/database/operators/distance/distance.hpp>
 #include <yggdrasil/database/operators/generic_join/generic_join.hpp>
-#include <yggdrasil/database/operators/relational/operations.hpp>
+#include <yggdrasil/database/operators/relational/common.hpp>
 #include <yggdrasil/database/search/min_distance.hpp>
 
 namespace runir::kr::dl::semantics
