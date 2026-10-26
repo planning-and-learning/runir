@@ -174,16 +174,45 @@ struct DatalogNegation : boost::spirit::x3::position_tagged
     DatalogAtom atom;
 };
 
-/// (= lhs rhs) or (!= lhs rhs)
+enum class DatalogComparisonOperator : std::uint8_t
+{
+    EQUAL,
+    NOT_EQUAL,
+    LESS,
+    LESS_EQUAL,
+    GREATER,
+    GREATER_EQUAL,
+};
+
+/// (op lhs rhs) with op one of = != < <= > >=
 struct DatalogComparison : boost::spirit::x3::position_tagged
 {
-    bool equal = true;
+    DatalogComparisonOperator op = DatalogComparisonOperator::EQUAL;
+    Identifier lhs;
+    Identifier rhs;
+};
+
+enum class DatalogArithmeticOperator : std::uint8_t
+{
+    ADD,
+    SUBTRACT,
+    MULTIPLY,
+    DIVIDE,
+    MIN,
+    MAX,
+};
+
+/// (= ?result (op lhs rhs)) with op one of + - * / min max
+struct DatalogArithmetic : boost::spirit::x3::position_tagged
+{
+    Identifier result;
+    DatalogArithmeticOperator op = DatalogArithmeticOperator::ADD;
     Identifier lhs;
     Identifier rhs;
 };
 
 /// A literal that an aggregate body may hold: anything but an aggregate.
-using DatalogCondition = PositionedVariant<DatalogNegation, DatalogGoalAtom, DatalogComparison, DatalogAtom>;
+using DatalogCondition = PositionedVariant<DatalogNegation, DatalogGoalAtom, DatalogArithmetic, DatalogComparison, DatalogAtom>;
 
 enum class DatalogAggregateFunction : std::uint8_t
 {

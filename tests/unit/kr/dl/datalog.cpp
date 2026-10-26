@@ -169,6 +169,39 @@ TEST(RunirTests, DatalogRulesReadFeaturesInModules)
     EXPECT_THROW(kr::ps::ext::dl::parse_module(layered, search->task->get_domain().get_domain(), *domain_context->ext_repository), kr::InvalidExpressionError);
 }
 
+TEST(RunirTests, DatalogRulesComputeWithNumbers)
+{
+    // Out-degrees of the markers, compared with a number and doubled; arithmetic results are read by later literals.
+    const auto module_text = std::string(R"(
+(:module (:symbol entry) (:arguments) (:registers) (:entry m0) (:memory m0)
+  (:datalog
+    (:rule (degree ?x ?n) (marker ?x) (count ?n ((edge ?x ?y))))
+    (:rule (busy ?x) (degree ?x ?n) (>= ?n 1))
+    (:rule (idle ?x) (degree ?x ?n) (< ?n 1))
+    (:rule (twice ?x ?m) (degree ?x ?n) (= ?m (* ?n 2)))
+    (:rule (two ?x) (twice ?x ?m) (= ?m 2))
+    (:rule (left ?x) (degree ?x ?n) (= ?k (- ?n 5)) (= ?k 0)))
+  (:features
+    (:numerical (:symbol busy-count) (:expression (n_count (q_head busy (x)))))
+    (:numerical (:symbol idle-count) (:expression (n_count (q_head idle (x)))))
+    (:numerical (:symbol twice-count) (:expression (n_count (q_head twice (x m)))))
+    (:numerical (:symbol two-count) (:expression (n_count (q_head two (x)))))
+    (:numerical (:symbol left-count) (:expression (n_count (q_head left (x))))))
+  (:rules))
+)");
+    const auto search = query_search_context();
+    const auto domain_context = kr::DomainContext::create(search->task->get_domain());
+    const auto module_ = kr::ps::ext::dl::parse_module(module_text, search->task->get_domain().get_domain(), *domain_context->ext_repository);
+    const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    auto builder = kr::dl::semantics::Builder();
+    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto storage = kr::dl::semantics::EvaluationStorage(denotations);
+    auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.get_state(), builder, storage);
+    // markers a, c; edges a -> b, b -> c: degree a = 1, c = 0; busy = {a}, idle = {c}, twice = {(a, 2), (c, 0)},
+    // two = {a}; 1 - 5 and 0 - 5 saturate at 0: left = {a, c}.
+    EXPECT_EQ(values(module_, context), (std::vector<int64_t> { 1, 1, 2, 1, 2 }));
+}
+
 TEST(RunirTests, DatalogRulesReadRegistersByName)
 {
     // Rules read the concept register `here` (one object), the role register `link` (one pair) and the concept

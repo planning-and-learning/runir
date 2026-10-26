@@ -28,11 +28,14 @@ Rules are evaluated by yggdrasil's `ygg::database::datalog::Evaluator`.
   (one or two columns; a concept register holds one object, a role register one pair), or a domain predicate
   (static, fluent or derived; names as the PDDL parser stores them, lower case; `object` holds every object);
 - `(goal p t...)`: the goal atoms of predicate `p`;
-- `(not (r t...))`, `(= a b)`, `(!= a b)`;
+- `(not (r t...))`, `(= a b)`, `(!= a b)`, `(< a b)`, `(<= a b)`, `(> a b)`, `(>= a b)`;
+- `(= ?z (op a b))` with `op` one of `+ - * / min max`, binding `?z` from bound terms (in order, so later literals may
+  read it). Numbers are runir's: the largest value is infinity, `+` and `*` saturate to infinity, `-` at 0, division by
+  0 is infinity;
 - aggregates `(count ?n (LITERAL...))`, `(sum ?n ?v (LITERAL...))`, `(min ?n ?v (...))`, `(max ?n ?v (...))`, grouped by
   the variables that the rule's other atoms bind; COUNT and SUM are 0 for an empty group.
 
-Terms are `?variables` or domain constants. Every variable of the head, a negated atom or a comparison must occur in a
+Terms are `?variables`, domain constants, or numbers (digits). Every variable of the head, a negated atom or a comparison must occur in a
 positive atom; negation and aggregation must be stratified. Violations are reported at the offending rule.
 
 ## Names

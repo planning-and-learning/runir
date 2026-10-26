@@ -73,6 +73,7 @@ struct DatalogAtomClass;
 struct DatalogGoalAtomClass;
 struct DatalogNegationClass;
 struct DatalogComparisonClass;
+struct DatalogArithmeticClass;
 struct DatalogConditionClass;
 struct DatalogAggregateClass;
 struct DatalogLiteralClass;
@@ -147,6 +148,7 @@ using datalog_atom_type = boost::spirit::x3::rule<DatalogAtomClass, ast::Datalog
 using datalog_goal_atom_type = boost::spirit::x3::rule<DatalogGoalAtomClass, ast::DatalogGoalAtom>;
 using datalog_negation_type = boost::spirit::x3::rule<DatalogNegationClass, ast::DatalogNegation>;
 using datalog_comparison_type = boost::spirit::x3::rule<DatalogComparisonClass, ast::DatalogComparison>;
+using datalog_arithmetic_type = boost::spirit::x3::rule<DatalogArithmeticClass, ast::DatalogArithmetic>;
 using datalog_condition_type = boost::spirit::x3::rule<DatalogConditionClass, ast::DatalogCondition>;
 using datalog_aggregate_type = boost::spirit::x3::rule<DatalogAggregateClass, ast::DatalogAggregate>;
 using datalog_literal_type = boost::spirit::x3::rule<DatalogLiteralClass, ast::DatalogLiteral>;

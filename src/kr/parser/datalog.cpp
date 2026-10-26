@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <boost/variant/apply_visitor.hpp>
+#include <charconv>
 #include <concepts>
 #include <set>
 #include <stdexcept>
@@ -93,7 +94,7 @@ public:
                     if constexpr (std::same_as<T, xast::DatalogAggregate>)
                         aggregate(node, rule->aggregates);
                     else
-                        condition(node, rule->atoms, rule->negated, rule->comparisons);
+                        condition(node, rule->atoms, rule->negated, rule->comparisons, rule->arithmetic);
                 },
                 literal);
         try
@@ -146,10 +147,20 @@ private:
 
     ydl::DatalogRepository& datalog() { return m_context.repository().get_datalog_repository(); }
 
+    /// A variable, a number (digits), or an object constant.
     ydl::Term term(const ast::Identifier& name)
     {
         if (name.text.starts_with('?'))
             return ydl::Term::variable(m_variables.try_emplace(name.text, ygg::to_uint_t(m_variables.size())).first->second);
+        if (std::ranges::all_of(name.text, [](char c) { return c >= '0' && c <= '9'; }))
+        {
+            const auto text = std::string_view(name.text);
+            auto value = ygg::uint_t { 0 };
+            const auto [end, error] = std::from_chars(text.begin(), text.end(), value);
+            if (error != std::errc() || end != text.end() || value == ydl::Arithmetic::infinity)
+                m_context.diagnostics().throw_at(name, InvalidExpressionError("The number " + name.text + " is too large."));
+            return ydl::Term::constant(value);
+        }
         return ydl::Term::constant(static_cast<ygg::uint_t>(require_object(m_domain, name, m_context.diagnostics())));
     }
 
@@ -294,11 +305,12 @@ private:
         return predicate(name, arity, false);
     }
 
-    /// Adds a literal other than an aggregate: an atom, a goal atom, a negated atom or a comparison.
+    /// Adds a literal other than an aggregate: an atom, a goal atom, a negated atom, a comparison or arithmetic.
     void condition(const xast::DatalogCondition& syntax,
                    ygg::IndexList<ydl::Atom>& atoms,
                    ygg::IndexList<ydl::Atom>& negated,
-                   cista::offset::vector<ydl::Comparison>& comparisons)
+                   cista::offset::vector<ydl::Comparison>& comparisons,
+                   cista::offset::vector<ydl::Arithmetic>& arithmetic)
     {
         boost::apply_visitor(
             [&]<typename T>(const T& node)
@@ -308,8 +320,45 @@ private:
                 else if constexpr (std::same_as<T, xast::DatalogGoalAtom>)
                     atoms.push_back(atom(node.predicate, node.terms, predicate(node.predicate, node.terms.size(), true)).get_index());
                 else if constexpr (std::same_as<T, xast::DatalogComparison>)
-                    comparisons.push_back(
-                        ydl::Comparison { node.equal ? ydl::Comparison::Kind::EQUAL : ydl::Comparison::Kind::NOT_EQUAL, term(node.lhs), term(node.rhs) });
+                {
+                    using Operator = xast::DatalogComparisonOperator;
+                    using Kind = ydl::Comparison::Kind;
+                    const auto lhs = term(node.lhs), rhs = term(node.rhs);
+                    switch (node.op)
+                    {
+                        case Operator::EQUAL:
+                            comparisons.push_back(ydl::Comparison { Kind::EQUAL, lhs, rhs });
+                            break;
+                        case Operator::NOT_EQUAL:
+                            comparisons.push_back(ydl::Comparison { Kind::NOT_EQUAL, lhs, rhs });
+                            break;
+                        case Operator::LESS:
+                            comparisons.push_back(ydl::Comparison { Kind::LESS, lhs, rhs });
+                            break;
+                        case Operator::LESS_EQUAL:
+                            comparisons.push_back(ydl::Comparison { Kind::LESS_EQUAL, lhs, rhs });
+                            break;
+                        case Operator::GREATER:
+                            comparisons.push_back(ydl::Comparison { Kind::LESS, rhs, lhs });
+                            break;
+                        case Operator::GREATER_EQUAL:
+                            comparisons.push_back(ydl::Comparison { Kind::LESS_EQUAL, rhs, lhs });
+                            break;
+                    }
+                }
+                else if constexpr (std::same_as<T, xast::DatalogArithmetic>)
+                {
+                    using Operator = xast::DatalogArithmeticOperator;
+                    using Operation = ydl::Arithmetic::Operation;
+                    const auto operation = node.op == Operator::ADD      ? Operation::ADD :
+                                           node.op == Operator::SUBTRACT ? Operation::SUBTRACT :
+                                           node.op == Operator::MULTIPLY ? Operation::MULTIPLY :
+                                           node.op == Operator::DIVIDE   ? Operation::DIVIDE :
+                                           node.op == Operator::MIN      ? Operation::MIN :
+                                                                           Operation::MAX;
+                    const auto lhs = term(node.lhs), rhs = term(node.rhs);
+                    arithmetic.push_back(ydl::Arithmetic { operation, lhs, rhs, term(node.result).value });
+                }
                 else
                     atoms.push_back(atom(node.relation, node.terms, body_relation(node.relation, node.terms.size())).get_index());
             },
@@ -332,7 +381,7 @@ private:
         if (syntax.value)
             data->value = term(*syntax.value).value;
         for (const auto& literal : syntax.body)
-            condition(literal, data->atoms, data->negated, data->comparisons);
+            condition(literal, data->atoms, data->negated, data->comparisons, data->arithmetic);
         try
         {
             aggregates.push_back(ydl::insert(datalog(), *data).first.get_index());

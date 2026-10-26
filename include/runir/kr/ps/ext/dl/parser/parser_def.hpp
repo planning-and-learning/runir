@@ -25,6 +25,7 @@ using ygg::diagnostics::context;
 using boost::spirit::x3::ascii::alnum;
 using boost::spirit::x3::ascii::alpha;
 using boost::spirit::x3::ascii::char_;
+using boost::spirit::x3::ascii::digit;
 
 struct IdentifierText
 {
@@ -107,6 +108,7 @@ constexpr datalog_atom_type datalog_atom = "Datalog atom";
 constexpr datalog_goal_atom_type datalog_goal_atom = "Datalog goal atom";
 constexpr datalog_negation_type datalog_negation = "Datalog negation";
 constexpr datalog_comparison_type datalog_comparison = "Datalog comparison";
+constexpr datalog_arithmetic_type datalog_arithmetic = "Datalog arithmetic";
 constexpr datalog_condition_type datalog_condition = "Datalog condition";
 constexpr datalog_aggregate_type datalog_aggregate = "Datalog aggregate";
 constexpr datalog_literal_type datalog_literal = "Datalog literal";
@@ -223,13 +225,23 @@ constexpr auto memory_section_def = context(":memory")[(lit("(") >> keyword(":me
 constexpr auto datalog_variable_def = boost::spirit::x3::rule<DatalogVariableText, std::string> { "variable_text" } =
     raw[lexeme[char_('?') >> (alpha | char_('_')) >> *(alnum | char_('_') | char_('-'))]];
 constexpr auto datalog_term_def = boost::spirit::x3::rule<DatalogTermText, std::string> { "term_text" } =
-    raw[lexeme[-char_('?') >> (alpha | char_('_')) >> *(alnum | char_('_') | char_('-'))]];
+    raw[lexeme[(-char_('?') >> (alpha | char_('_')) >> *(alnum | char_('_') | char_('-'))) | +digit]];
 constexpr auto datalog_atom_def = ((lit("(") >> identifier) > *datalog_term) > lit(")");
 constexpr auto datalog_goal_atom_def = (((lit("(") >> keyword("goal")) > identifier) > *datalog_term) > lit(")");
 constexpr auto datalog_negation_def = ((lit("(") >> keyword("not")) > datalog_atom) > lit(")");
-constexpr auto datalog_comparison_operator = (lit("!=") >> attr(false)) | (lit("=") >> attr(true));
+constexpr auto datalog_comparison_operator =
+    (lit("!=") >> attr(ast::DatalogComparisonOperator::NOT_EQUAL)) | (lit("<=") >> attr(ast::DatalogComparisonOperator::LESS_EQUAL))
+    | (lit(">=") >> attr(ast::DatalogComparisonOperator::GREATER_EQUAL)) | (lit("<") >> attr(ast::DatalogComparisonOperator::LESS))
+    | (lit(">") >> attr(ast::DatalogComparisonOperator::GREATER)) | (lit("=") >> attr(ast::DatalogComparisonOperator::EQUAL));
 constexpr auto datalog_comparison_def = (((lit("(") >> datalog_comparison_operator) > datalog_term) > datalog_term) > lit(")");
-constexpr auto datalog_condition_def = datalog_negation | datalog_goal_atom | datalog_comparison | datalog_atom;
+constexpr auto datalog_arithmetic_operator =
+    (lit("+") >> attr(ast::DatalogArithmeticOperator::ADD)) | (lit("-") >> attr(ast::DatalogArithmeticOperator::SUBTRACT))
+    | (lit("*") >> attr(ast::DatalogArithmeticOperator::MULTIPLY)) | (lit("/") >> attr(ast::DatalogArithmeticOperator::DIVIDE))
+    | (keyword("min") >> attr(ast::DatalogArithmeticOperator::MIN)) | (keyword("max") >> attr(ast::DatalogArithmeticOperator::MAX));
+// (= ?result (op lhs rhs)); backtracks to a comparison (= lhs rhs) before the inner parenthesis.
+constexpr auto datalog_arithmetic_def =
+    (((((lit("(") >> lit("=") >> datalog_variable >> lit("(")) > datalog_arithmetic_operator) > datalog_term) > datalog_term) > lit(")")) > lit(")");
+constexpr auto datalog_condition_def = datalog_negation | datalog_goal_atom | datalog_arithmetic | datalog_comparison | datalog_atom;
 constexpr auto datalog_aggregate_function =
     (keyword("count") >> attr(ast::DatalogAggregateFunction::COUNT)) | (keyword("sum") >> attr(ast::DatalogAggregateFunction::SUM))
     | (keyword("min") >> attr(ast::DatalogAggregateFunction::MIN)) | (keyword("max") >> attr(ast::DatalogAggregateFunction::MAX));
@@ -253,6 +265,7 @@ BOOST_SPIRIT_DEFINE(datalog_variable,
                     datalog_goal_atom,
                     datalog_negation,
                     datalog_comparison,
+                    datalog_arithmetic,
                     datalog_condition,
                     datalog_aggregate,
                     datalog_literal,
