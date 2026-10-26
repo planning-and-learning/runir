@@ -91,16 +91,7 @@ public:
     /// The head relation in the repository's DatalogRepository.
     auto get_relation() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryHeadTag>
-    { return ygg::database::datalog::RelationView(this->get_data().relation, this->get_context().get_datalog_repository()); }
-
-    /// The head relation's name in its program.
-    [[nodiscard]] std::string_view get_name() const noexcept
-        requires std::same_as<Tag, runir::kr::dl::QueryHeadTag>
-    {
-        const auto& names = get_program().get_data().relation_names;
-        const auto id = get_relation().get_id();
-        return id < names.size() ? std::string_view(names[id]) : std::string_view();
-    }
+    { return make_view(this->get_data().relation, this->get_context().get_datalog_repository()); }
 
     auto get_columns() const noexcept
     {
@@ -164,10 +155,8 @@ public:
     using ygg::IndexViewBase<runir::kr::dl::DatalogProgram, C>::IndexViewBase;
 
     /// The program's rules, in the repository's DatalogRepository.
-    auto get_program() const noexcept { return ygg::database::datalog::ProgramView(this->get_data().program, this->get_context().get_datalog_repository()); }
+    auto get_program() const noexcept { return make_view(this->get_data().program, this->get_context().get_datalog_repository()); }
     auto get_inputs() const noexcept { return make_view(this->get_data().inputs, this->get_context()); }
-    const auto& get_relation_names() const noexcept { return this->get_data().relation_names; }
-    const auto& get_input_names() const noexcept { return this->get_data().input_names; }
     [[nodiscard]] bool is_static() const noexcept { return this->get_data().is_static; }
 };
 

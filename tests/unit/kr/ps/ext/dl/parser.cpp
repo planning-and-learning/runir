@@ -222,8 +222,12 @@ TEST(RunirTests, RelationalExpressionsRoundTripAndRejectGenerationGrammars)
              { "((b_0 (b_and (b_nonempty (c_top)) (b_nonempty (c_bot)))))", "Boolean comparisons and connectives are not supported in generation grammars" },
              { "((b_0 (n_lt (n_count (c_top)) (n_count (c_bot)))))", "Boolean comparisons and connectives are not supported in generation grammars" },
              { "((b_0 (b_const true)))", "Boolean constants are not supported in generation grammars" },
-             { "((n_0 (n_add (n_count (c_top)) (n_const 1))))", "Arithmetic expressions are not supported in generation grammars" } })
+             { "((n_0 (n_add (n_count (c_top)) (n_const 1))))", "Arithmetic expressions are not supported in generation grammars" },
+             { "((c_0 (c_not typo)))", "Feature names are not supported in generation grammars" } })
         expect_error_containing([&] { kr::dl::grammar::parse_grammar(grammar, domain, *grammar_repository); }, expected);
+    // Policy expressions name features, not nonterminals; q_head needs a module's :datalog section.
+    expect_error_containing([&] { kr::ps::ext::dl::parse_numerical("(n_count c_1)", domain, *repository); }, "cannot reference grammar nonterminals");
+    expect_error_containing([&] { kr::ps::ext::dl::parse_numerical("(n_count (q_head r (x)))", domain, *repository); }, "q_head is not supported");
 
     EXPECT_THROW(kr::ps::ext::dl::parse_numerical("(n_count (q_atomic_state \"at\" (X X)))", domain, *repository), kr::InvalidExpressionError);
     EXPECT_THROW(kr::ps::ext::dl::parse_numerical("(n_count (q_project (missing) (q_concept X (c_top))))", domain, *repository), kr::InvalidExpressionError);

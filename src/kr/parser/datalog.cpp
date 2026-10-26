@@ -1,10 +1,13 @@
 #include "kr/parser/datalog.hpp"
 
+#include "kr/parser/ext_constructors.hpp"
 #include "kr/parser/resolution.hpp"
 #include "runir/kr/dl/detail/repository_instantiations.hpp"
 #include "runir/kr/errors.hpp"
 
 #include <algorithm>
+#include <boost/variant/apply_visitor.hpp>
+#include <concepts>
 #include <set>
 #include <stdexcept>
 #include <string_view>
@@ -51,22 +54,8 @@ std::optional<FeatureReference> FeatureResolver::resolve(const ast::Identifier& 
 namespace
 {
 
-/// The items of a list, or nullptr for an atom.
-const ast::SList* as_list(const ast::SExpression& expression)
-{
-    if (const auto* list = boost::get<boost::spirit::x3::forward_ast<ast::SList>>(&expression))
-        return &list->get();
-    return nullptr;
-}
-
-const ast::Identifier* as_atom(const ast::SExpression& expression) { return boost::get<ast::Identifier>(&expression); }
-
-/// The head atom or a literal: (name term...), its name and terms.
-struct AtomSyntax
-{
-    const ast::Identifier* name;
-    std::vector<const ast::Identifier*> terms;
-};
+namespace xast = runir::kr::ps::ext::dl::ast;
+namespace constructors = runir::kr::parser::constructors;
 
 class ProgramBuilder
 {
@@ -78,41 +67,41 @@ public:
                    const std::map<std::string, size_t>& arities,
                    const DiagnosticContext& diagnostics) :
         m_domain(domain),
-        m_repository(repository),
-        m_builder(builder),
-        m_features(features),
-        m_arities(arities),
-        m_diagnostics(diagnostics)
+        m_context(repository, builder, diagnostics, nullptr),
+        m_features(&features)
     {
         for (const auto& [name, arity] : arities)
         {
             auto data = ydl::checkout<ydl::Relation>(m_datalog_builder);
-            data->id = m_relation_names.size();
+            data->id = m_derived.size();
             data->arity = arity;
+            data->name = name;
             m_derived.emplace(name, ydl::insert(datalog(), *data).first.get_index());
-            m_relation_names.push_back(name);
         }
     }
 
-    void add_rule(const ast::SExpression& expression)
+    void add_rule(const xast::DatalogRule& syntax)
     {
-        const auto* list = as_list(expression);
-        const auto* keyword = list && !list->items.empty() ? as_atom(list->items.front()) : nullptr;
-        if (!keyword || keyword->text != ":rule" || list->items.size() < 2)
-            m_diagnostics.throw_at(expression, InvalidExpressionError("Expected a Datalog rule: (:rule (head ?x...) literal...)."));
         m_variables.clear();
         auto rule = ydl::checkout<ydl::Rule>(m_datalog_builder);
-        const auto head = atom_syntax(list->items[1]);
-        rule->head = atom(head, head_relation(head)).get_index();
-        for (size_t i = 2; i < list->items.size(); ++i)
-            literal(list->items[i], rule->atoms, rule->negated, rule->comparisons, &rule->aggregates);
+        rule->head = atom(syntax.head.relation, syntax.head.terms, head_relation(syntax.head.relation)).get_index();
+        for (const auto& literal : syntax.body)
+            boost::apply_visitor(
+                [&]<typename T>(const T& node)
+                {
+                    if constexpr (std::same_as<T, xast::DatalogAggregate>)
+                        aggregate(node, rule->aggregates);
+                    else
+                        condition(node, rule->atoms, rule->negated, rule->comparisons);
+                },
+                literal);
         try
         {
             m_rules.push_back(ydl::insert(datalog(), *rule).first.get_index());
         }
         catch (const std::invalid_argument& error)
         {
-            m_diagnostics.throw_at(expression, InvalidExpressionError(std::string("Datalog rule: ") + error.what()));
+            m_context.diagnostics().throw_at(syntax, InvalidExpressionError(std::string("Datalog rule: ") + error.what()));
         }
     }
 
@@ -132,124 +121,85 @@ public:
         }
         catch (const std::invalid_argument& error)
         {
-            m_diagnostics.throw_at(reference, InvalidExpressionError(std::string("Datalog program: ") + error.what()));
+            m_context.diagnostics().throw_at(reference, InvalidExpressionError(std::string("Datalog program: ") + error.what()));
         }
-        auto data = dl::checkout<dl::DatalogProgram>(m_builder);
+        auto data = constructors::checkout<dl::DatalogProgram>(m_context);
         data->program = view.get_index();
         for (const auto input : m_inputs)
             data->inputs.push_back(input);
-        for (const auto& name : m_relation_names)
-            data->relation_names.emplace_back(name);
-        for (const auto& name : m_input_names)
-            data->input_names.emplace_back(name);
-        return dl::insert(m_repository, *data).first.get_index();
+        return constructors::intern(m_context, *data).get_index();
     }
 
     ygg::Index<ydl::Relation> derived(const std::string& name) const { return m_derived.at(name); }
 
 private:
     tyr::formalism::planning::DomainView m_domain;
-    dl::ConstructorRepository& m_repository;
-    dl::Builder& m_builder;
-    FeatureResolver& m_features;
-    const std::map<std::string, size_t>& m_arities;
-    const DiagnosticContext& m_diagnostics;
+    ext_constructors::ConstructorContext m_context;
+    FeatureResolver* m_features;
     ydl::DatalogBuilder m_datalog_builder;
     std::map<std::string, ygg::Index<ydl::Relation>> m_derived;
-    std::vector<std::string> m_relation_names;
     std::vector<ygg::Index<dl::Query<>>> m_inputs;
-    std::vector<std::string> m_input_names;
     std::map<ygg::uint_t, ygg::Index<ydl::Relation>> m_input_relations;  ///< By input query index.
     std::map<std::string, ygg::uint_t> m_variables;
     std::vector<ygg::Index<ydl::Rule>> m_rules;
 
-    ydl::DatalogRepository& datalog() { return m_repository.get_datalog_repository(); }
-
-    AtomSyntax atom_syntax(const ast::SExpression& expression) const
-    {
-        const auto* list = as_list(expression);
-        const auto* name = list && !list->items.empty() ? as_atom(list->items.front()) : nullptr;
-        if (!name)
-            m_diagnostics.throw_at(expression, InvalidExpressionError("Expected an atom: (relation term...)."));
-        auto result = AtomSyntax { name, {} };
-        for (size_t i = 1; i < list->items.size(); ++i)
-        {
-            const auto* term = as_atom(list->items[i]);
-            if (!term)
-                m_diagnostics.throw_at(list->items[i], InvalidExpressionError("Expected a term: ?variable or object name."));
-            result.terms.push_back(term);
-        }
-        return result;
-    }
+    ydl::DatalogRepository& datalog() { return m_context.repository().get_datalog_repository(); }
 
     ydl::Term term(const ast::Identifier& name)
     {
         if (name.text.starts_with('?'))
             return ydl::Term::variable(m_variables.try_emplace(name.text, ygg::to_uint_t(m_variables.size())).first->second);
-        for (const auto object : m_domain.get_constants())
-            if (object.get_name() == name.text)
-                return ydl::Term::constant(static_cast<ygg::uint_t>(object.get_index()));
-        m_diagnostics.throw_at(name, UndefinedSymbolError("constant", name.text));
+        return ydl::Term::constant(static_cast<ygg::uint_t>(require_object(m_domain, name, m_context.diagnostics())));
     }
 
-    ydl::AtomView atom(const AtomSyntax& syntax, ygg::Index<ydl::Relation> relation)
+    ydl::AtomView atom(const ast::Identifier& name, const std::vector<ast::Identifier>& terms, ygg::Index<ydl::Relation> relation)
     {
         auto data = ydl::checkout<ydl::Atom>(m_datalog_builder);
         data->relation = relation;
-        for (const auto* t : syntax.terms)
-            data->terms.push_back(term(*t));
+        for (const auto& t : terms)
+            data->terms.push_back(term(t));
         try
         {
             return ydl::insert(datalog(), *data).first;
         }
         catch (const std::invalid_argument&)
         {
-            m_diagnostics.throw_at(*syntax.name,
-                                   ArityMismatchError(syntax.name->text, ydl::RelationView(relation, datalog()).get_arity(), syntax.terms.size()));
+            m_context.diagnostics().throw_at(name, ArityMismatchError(name.text, ydl::RelationView(relation, datalog()).get_arity(), terms.size()));
         }
     }
 
-    ygg::Index<ydl::Relation> head_relation(const AtomSyntax& syntax)
+    ygg::Index<ydl::Relation> head_relation(const ast::Identifier& name)
     {
-        const auto it = m_derived.find(syntax.name->text);
+        const auto it = m_derived.find(name.text);
         if (it == m_derived.end())
-            m_diagnostics.throw_at(*syntax.name, InvalidExpressionError("Not a Datalog head: " + syntax.name->text));
+            m_context.diagnostics().throw_at(name, InvalidExpressionError("Not a Datalog head: " + name.text));
         return it->second;
     }
 
-    ygg::Index<dl::QueryColumn> column(size_t position)
+    /// The columns _0, ..., _{arity - 1} of an input query, read positionally.
+    ygg::IndexList<dl::QueryColumn> columns(size_t arity) const
     {
-        auto data = dl::checkout<dl::QueryColumn>(m_builder);
-        data->name = "_" + std::to_string(position);
-        return dl::insert(m_repository, *data).first.get_index();
-    }
-    ygg::IndexList<dl::QueryColumn> columns(size_t arity)
-    {
-        auto result = ygg::IndexList<dl::QueryColumn>();
+        auto names = std::vector<runir::kr::dl::grammar::ast::Identifier>(arity);
         for (size_t i = 0; i < arity; ++i)
-            result.push_back(column(i));
-        return result;
+            names[i].text = "_" + std::to_string(i);
+        return constructors::parse_columns(names, m_context);
     }
     template<typename Tag>
-    ygg::Index<dl::Query<>> query(ygg::Index<dl::Query<Tag>> index)
-    {
-        auto data = dl::checkout<dl::Query<>>(m_builder);
-        data->variant = index;
-        return dl::insert(m_repository, *data).first.get_index();
-    }
+    ygg::Index<dl::Query<>> query(ygg::Index<dl::Query<Tag>> index) const
+    { return constructors::intern_query(m_context, index).get_index(); }
 
     /// The input relation of an input query, a new input slot for a new query.
-    ygg::Index<ydl::Relation> input(ygg::Index<dl::Query<>> query, std::string name)
+    ygg::Index<ydl::Relation> input(ygg::Index<dl::Query<>> query, const std::string& name)
     {
         if (const auto it = m_input_relations.find(query.get_value()); it != m_input_relations.end())
             return it->second;
         auto data = ydl::checkout<ydl::Relation>(m_datalog_builder);
         data->id = m_inputs.size();
-        data->arity = ygg::make_view(query, m_repository).get_schema().size();
+        data->arity = ygg::make_view(query, m_context.repository()).get_schema().size();
         data->input_slot = m_inputs.size();
+        data->name = name;
         const auto relation = ydl::insert(datalog(), *data).first.get_index();
         m_inputs.push_back(query);
-        m_input_names.push_back(std::move(name));
         m_input_relations.emplace(query.get_value(), relation);
         return relation;
     }
@@ -261,169 +211,136 @@ private:
         {
             if (goal)
             {
-                auto data = dl::checkout<dl::Query<dl::AtomicGoalTag<T>>>(m_builder);
+                auto data = constructors::checkout<dl::Query<dl::AtomicGoalTag<T>>>(m_context);
                 data->predicate = predicate;
                 data->polarity = true;
                 data->columns = columns(arity);
-                return query(dl::insert(m_repository, *data).first.get_index());
+                return query(constructors::intern(m_context, *data).get_index());
             }
-            auto data = dl::checkout<dl::Query<dl::AtomicStateTag<T>>>(m_builder);
+            auto data = constructors::checkout<dl::Query<dl::AtomicStateTag<T>>>(m_context);
             data->predicate = predicate;
             data->columns = columns(arity);
-            return query(dl::insert(m_repository, *data).first.get_index());
+            return query(constructors::intern(m_context, *data).get_index());
         };
-        const auto index = runir::kr::parser::resolve_predicate(m_domain, name, arity, goal ? "goal atom" : "atom", m_diagnostics, make);
+        const auto index = runir::kr::parser::resolve_predicate(m_domain, name, arity, goal ? "goal atom" : "atom", m_context.diagnostics(), make);
         return input(index, (goal ? "goal " : "") + name.text);
     }
 
     /// The relation of a body atom: a head, a feature, or a domain predicate.
-    ygg::Index<ydl::Relation> body_relation(const AtomSyntax& syntax)
+    ygg::Index<ydl::Relation> body_relation(const ast::Identifier& name, size_t arity)
     {
-        const auto& name = *syntax.name;
         if (const auto it = m_derived.find(name.text); it != m_derived.end())
             return it->second;
-        if (const auto feature = m_features.resolve(name))
+        if (const auto feature = m_features->resolve(name))
         {
             const auto index = std::visit(
                 [&]<typename T>(ygg::Index<T> resolved) -> ygg::Index<dl::Query<>>
                 {
                     if constexpr (std::same_as<T, dl::Constructor<dl::ConceptTag>>)
                     {
-                        auto data = dl::checkout<dl::Query<dl::QueryConceptTag>>(m_builder);
+                        auto data = constructors::checkout<dl::Query<dl::QueryConceptTag>>(m_context);
                         data->arg = resolved;
                         data->columns = columns(1);
-                        return query(dl::insert(m_repository, *data).first.get_index());
+                        return query(constructors::intern(m_context, *data).get_index());
                     }
                     else if constexpr (std::same_as<T, dl::Constructor<dl::RoleTag>>)
                     {
-                        auto data = dl::checkout<dl::Query<dl::QueryRoleTag>>(m_builder);
+                        auto data = constructors::checkout<dl::Query<dl::QueryRoleTag>>(m_context);
                         data->arg = resolved;
                         data->columns = columns(2);
-                        return query(dl::insert(m_repository, *data).first.get_index());
+                        return query(constructors::intern(m_context, *data).get_index());
                     }
                     else if constexpr (std::same_as<T, dl::Query<>>)
                         return resolved;
                     else
-                        m_diagnostics.throw_at(name,
-                                               InvalidExpressionError("A Datalog rule can read concept, role and query features, not " + name.text + "."));
+                        m_context.diagnostics().throw_at(
+                            name,
+                            InvalidExpressionError("A Datalog rule can read concept, role and query features, not " + name.text + "."));
                 },
                 *feature);
             return input(index, name.text);
         }
-        return predicate(name, syntax.terms.size(), false);
+        return predicate(name, arity, false);
     }
 
-    /// Adds a body literal: an atom, a goal atom, a negated atom, a comparison, or (with aggregates) an aggregate.
-    void literal(const ast::SExpression& expression,
-                 ygg::IndexList<ydl::Atom>& atoms,
-                 ygg::IndexList<ydl::Atom>& negated,
-                 cista::offset::vector<ydl::Comparison>& comparisons,
-                 ygg::IndexList<ydl::Aggregate>* aggregates)
+    /// Adds a literal other than an aggregate: an atom, a goal atom, a negated atom or a comparison.
+    void condition(const xast::DatalogCondition& syntax,
+                   ygg::IndexList<ydl::Atom>& atoms,
+                   ygg::IndexList<ydl::Atom>& negated,
+                   cista::offset::vector<ydl::Comparison>& comparisons)
     {
-        const auto* list = as_list(expression);
-        const auto* first = list && !list->items.empty() ? as_atom(list->items.front()) : nullptr;
-        if (!first)
-            m_diagnostics.throw_at(expression, InvalidExpressionError("Expected a Datalog literal."));
-        const auto& keyword = first->text;
-        const auto items = list->items.size();
-        if (keyword == "not" && items == 2)
-        {
-            const auto syntax = atom_syntax(list->items[1]);
-            negated.push_back(atom(syntax, body_relation(syntax)).get_index());
-        }
-        else if ((keyword == "=" || keyword == "!=") && items == 3)
-        {
-            const auto* lhs = as_atom(list->items[1]);
-            const auto* rhs = as_atom(list->items[2]);
-            if (!lhs || !rhs)
-                m_diagnostics.throw_at(expression, InvalidExpressionError("A comparison compares two terms."));
-            comparisons.push_back(ydl::Comparison { keyword == "=" ? ydl::Comparison::Kind::EQUAL : ydl::Comparison::Kind::NOT_EQUAL, term(*lhs), term(*rhs) });
-        }
-        else if (keyword == "goal")
-        {
-            auto syntax = atom_syntax(expression);
-            if (syntax.terms.empty())
-                m_diagnostics.throw_at(expression, InvalidExpressionError("Expected a goal atom: (goal predicate term...)."));
-            const auto* predicate_name = syntax.terms.front();
-            syntax.name = predicate_name;
-            syntax.terms.erase(syntax.terms.begin());
-            atoms.push_back(atom(syntax, predicate(*predicate_name, syntax.terms.size(), true)).get_index());
-        }
-        else if (keyword == "count" || keyword == "sum" || keyword == "min" || keyword == "max")
-            atoms_or_aggregate(expression, *list, keyword, aggregates);
-        else
-        {
-            const auto syntax = atom_syntax(expression);
-            atoms.push_back(atom(syntax, body_relation(syntax)).get_index());
-        }
+        boost::apply_visitor(
+            [&]<typename T>(const T& node)
+            {
+                if constexpr (std::same_as<T, xast::DatalogNegation>)
+                    negated.push_back(atom(node.atom.relation, node.atom.terms, body_relation(node.atom.relation, node.atom.terms.size())).get_index());
+                else if constexpr (std::same_as<T, xast::DatalogGoalAtom>)
+                    atoms.push_back(atom(node.predicate, node.terms, predicate(node.predicate, node.terms.size(), true)).get_index());
+                else if constexpr (std::same_as<T, xast::DatalogComparison>)
+                    comparisons.push_back(
+                        ydl::Comparison { node.equal ? ydl::Comparison::Kind::EQUAL : ydl::Comparison::Kind::NOT_EQUAL, term(node.lhs), term(node.rhs) });
+                else
+                    atoms.push_back(atom(node.relation, node.terms, body_relation(node.relation, node.terms.size())).get_index());
+            },
+            syntax);
     }
 
-    /// (count ?n (literal...)), (sum ?n ?v (literal...)), (min ...), (max ...).
-    void atoms_or_aggregate(const ast::SExpression& expression, const ast::SList& list, const std::string& function, ygg::IndexList<ydl::Aggregate>* aggregates)
+    /// (count ?n (condition...)), (sum ?n ?v (condition...)), (min ...), (max ...).
+    void aggregate(const xast::DatalogAggregate& syntax, ygg::IndexList<ydl::Aggregate>& aggregates)
     {
-        const auto valued = function != "count";
-        const auto* result = list.items.size() > 1 ? as_atom(list.items[1]) : nullptr;
-        const auto* value = valued && list.items.size() > 2 ? as_atom(list.items[2]) : nullptr;
-        const auto* body = list.items.size() == (valued ? 4u : 3u) ? as_list(list.items.back()) : nullptr;
-        if (!aggregates)
-            m_diagnostics.throw_at(expression, InvalidExpressionError("Aggregates cannot be nested."));
-        if (!result || !result->text.starts_with('?') || (valued && (!value || !value->text.starts_with('?'))) || !body)
-            m_diagnostics.throw_at(expression,
-                                   InvalidExpressionError("Expected an aggregate: (count ?n (literal...)) or (" + function + " ?n ?value (literal...))."));
+        using Function = xast::DatalogAggregateFunction;
+        if ((syntax.function == Function::COUNT) == syntax.value.has_value())
+            m_context.diagnostics().throw_at(syntax,
+                                             InvalidExpressionError("Expected an aggregate: (count ?n (literal...)) or (sum|min|max ?n ?value (literal...))."));
         auto data = ydl::checkout<ydl::Aggregate>(m_datalog_builder);
-        data->function = function == "count" ? ydl::AggregateFunction::COUNT :
-                         function == "sum"   ? ydl::AggregateFunction::SUM :
-                         function == "min"   ? ydl::AggregateFunction::MIN :
-                                               ydl::AggregateFunction::MAX;
-        data->result = term(*result).value;
-        if (valued)
-            data->value = term(*value).value;
-        for (const auto& item : body->items)
-            literal(item, data->atoms, data->negated, data->comparisons, nullptr);
+        data->function = syntax.function == Function::COUNT ? ydl::AggregateFunction::COUNT :
+                         syntax.function == Function::SUM   ? ydl::AggregateFunction::SUM :
+                         syntax.function == Function::MIN   ? ydl::AggregateFunction::MIN :
+                                                              ydl::AggregateFunction::MAX;
+        data->result = term(syntax.result).value;
+        if (syntax.value)
+            data->value = term(*syntax.value).value;
+        for (const auto& literal : syntax.body)
+            condition(literal, data->atoms, data->negated, data->comparisons);
         try
         {
-            aggregates->push_back(ydl::insert(datalog(), *data).first.get_index());
+            aggregates.push_back(ydl::insert(datalog(), *data).first.get_index());
         }
         catch (const std::invalid_argument& error)
         {
-            m_diagnostics.throw_at(expression, InvalidExpressionError(std::string("Datalog aggregate: ") + error.what()));
+            m_context.diagnostics().throw_at(syntax, InvalidExpressionError(std::string("Datalog aggregate: ") + error.what()));
         }
     }
 };
 
 }  // namespace
 
-DatalogSection::DatalogSection(const ast::DatalogSection* section,
+DatalogSection::DatalogSection(const DatalogRules* rules,
                                tyr::formalism::planning::DomainView domain,
                                runir::kr::dl::ConstructorRepository& repository,
                                runir::kr::dl::Builder& builder,
                                FeatureResolver& features,
                                const DiagnosticContext& diagnostics) :
-    m_section(section),
+    m_rules(rules),
     m_domain(domain),
     m_repository(&repository),
     m_builder(&builder),
     m_features(&features),
     m_diagnostics(&diagnostics)
 {
-    if (!section)
+    if (!rules)
         return;
     // The heads and their arities, so that rules may use heads defined later.
-    for (const auto& rule : section->rules)
+    for (const auto& rule : *rules)
     {
-        const auto* list = as_list(rule);
-        const auto* keyword = list && list->items.size() >= 2 ? as_atom(list->items.front()) : nullptr;
-        const auto* head = keyword && keyword->text == ":rule" ? as_list(list->items[1]) : nullptr;
-        const auto* name = head && !head->items.empty() ? as_atom(head->items.front()) : nullptr;
-        if (!name)
-            diagnostics.throw_at(rule, InvalidExpressionError("Expected a Datalog rule: (:rule (head ?x...) literal...)."));
+        const auto& name = rule.head.relation;
         const auto clashes = [&]<typename T>(T)
-        { return std::ranges::any_of(domain.get_predicates<T>(), [&](auto predicate) { return predicate.get_name() == name->text; }); };
+        { return std::ranges::any_of(domain.get_predicates<T>(), [&](auto predicate) { return predicate.get_name() == name.text; }); };
         if (clashes(tyr::formalism::StaticTag {}) || clashes(tyr::formalism::FluentTag {}) || clashes(tyr::formalism::DerivedTag {}))
-            diagnostics.throw_at(*name, InvalidExpressionError("A Datalog head cannot be named like the predicate " + name->text + "."));
-        const auto arity = head->items.size() - 1;
-        if (const auto [it, inserted] = m_arities.emplace(name->text, arity); !inserted && it->second != arity)
-            diagnostics.throw_at(*name, ArityMismatchError(name->text, it->second, arity));
+            diagnostics.throw_at(name, InvalidExpressionError("A Datalog head cannot be named like the predicate " + name.text + "."));
+        const auto arity = rule.head.terms.size();
+        if (const auto [it, inserted] = m_arities.emplace(name.text, arity); !inserted && it->second != arity)
+            diagnostics.throw_at(name, ArityMismatchError(name.text, it->second, arity));
     }
 }
 
@@ -431,7 +348,7 @@ void DatalogSection::build(const ast::Identifier& reference)
 {
     m_building = true;
     auto builder = ProgramBuilder(m_domain, *m_repository, *m_builder, *m_features, m_arities, *m_diagnostics);
-    for (const auto& rule : m_section->rules)
+    for (const auto& rule : *m_rules)
         builder.add_rule(rule);
     m_program = builder.finish(reference);
     for (const auto& [name, arity] : m_arities)
@@ -453,10 +370,10 @@ std::optional<HeadReference> DatalogSection::head(const ast::Identifier& name)
     return HeadReference { *m_program, m_heads.at(name.text) };
 }
 
-FeatureScope make_scope(FeatureResolver& features, DatalogSection& section)
+void DatalogSection::validate(const ast::Identifier& reference)
 {
-    return FeatureScope { [&features](const ast::Identifier& name) { return features.resolve(name); },
-                          [&section](const ast::Identifier& name) { return section.head(name); } };
+    if (m_rules && !m_program)
+        build(reference);
 }
 
 }  // namespace runir::kr::parser::datalog

@@ -33,6 +33,9 @@ struct ModuleReferences
     ReferenceTable<runir::kr::dl::Argument<runir::kr::dl::NumericalTag>> numerical_arguments;
     ReferenceTable<runir::kr::dl::Register<runir::kr::dl::ConceptTag>> concept_registers;
     ReferenceTable<runir::kr::dl::Register<runir::kr::dl::RoleTag>> role_registers;
+    /// The module's features by name and its :datalog section, while the module is parsed.
+    datalog::FeatureResolver* features = nullptr;
+    datalog::DatalogSection* datalog = nullptr;
 };
 
 /// What a language binds: sketches and classifiers bind neither registers nor arguments, ICP programs only registers.
@@ -52,7 +55,6 @@ class ConstructorContext
     const runir::kr::parser::DiagnosticContext* m_diagnostics;
     const ModuleReferences* m_references;
     LanguageCapabilities m_capabilities;
-    const datalog::FeatureScope* m_features;
 
 public:
     using Target = runir::kr::parser::constructors::SemanticTarget;
@@ -61,14 +63,12 @@ public:
                        runir::kr::dl::Builder& builder,
                        const runir::kr::parser::DiagnosticContext& diagnostics,
                        const ModuleReferences* references,
-                       LanguageCapabilities capabilities = all_capabilities,
-                       const datalog::FeatureScope* features = nullptr) noexcept :
+                       LanguageCapabilities capabilities = all_capabilities) noexcept :
         m_repository(&repository),
         m_builder(&builder),
         m_diagnostics(&diagnostics),
         m_references(references),
-        m_capabilities(capabilities),
-        m_features(features)
+        m_capabilities(capabilities)
     {
     }
 
@@ -77,25 +77,17 @@ public:
     [[nodiscard]] const runir::kr::parser::DiagnosticContext& diagnostics() const noexcept { return *m_diagnostics; }
     [[nodiscard]] const ModuleReferences* references() const noexcept { return m_references; }
     [[nodiscard]] const LanguageCapabilities& capabilities() const noexcept { return m_capabilities; }
-    /// The names of features and Datalog heads; without them, names are errors.
-    [[nodiscard]] const datalog::FeatureScope* features() const noexcept { return m_features; }
 };
-
-/// Whether a bare name has the form of a grammar nonterminal (c_1, r_1, b_1, n_1).
-inline bool is_nonterminal_name(const std::string& name)
-{
-    return name.size() > 2 && std::string_view("crbn").find(name[0]) != std::string_view::npos && name[1] == '_'
-           && std::all_of(name.begin() + 2, name.end(), [](char c) { return c >= '0' && c <= '9'; });
-}
 
 /// The feature a bare name refers to.
 inline datalog::FeatureReference resolve_feature(const runir::kr::parser::ast::Identifier& name, const ConstructorContext& context)
 {
-    if (is_nonterminal_name(name.text))
+    const auto* references = context.references();
+    if (!references || !references->features)
         context.diagnostics().throw_at(
             name,
-            runir::kr::InvalidExpressionError(std::string(context.capabilities().language) + " cannot reference grammar nonterminals."));
-    const auto feature = context.features() ? context.features()->feature(name) : std::nullopt;
+            runir::kr::InvalidExpressionError(std::string("Feature names are not supported in ") + context.capabilities().language + "."));
+    const auto feature = references->features->resolve(name);
     if (!feature)
         context.diagnostics().throw_at(name, runir::kr::UndefinedSymbolError("feature", name.text));
     return *feature;
@@ -119,6 +111,30 @@ void require_arguments(const Node& node, const ConstructorContext& context)
             runir::kr::InvalidExpressionError(std::string("Arguments are not supported in ") + context.capabilities().language + "."));
 }
 
+/// q_head: the rows of a head of the module's :datalog section.
+inline auto parse(const runir::kr::dl::grammar::ast::QueryHead& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+{
+    const auto* references = context.references();
+    if (!references || !references->datalog)
+        context.diagnostics().throw_at(node,
+                                       runir::kr::InvalidExpressionError(std::string("q_head is not supported in ") + context.capabilities().language + "."));
+    const auto head = references->datalog->head(node.name);
+    if (!head)
+        context.diagnostics().throw_at(node.name, runir::kr::UndefinedSymbolError("Datalog head", node.name.text));
+    auto data = constructors::checkout<runir::kr::dl::Query<runir::kr::dl::QueryHeadTag>>(context);
+    data->program = head->program;
+    data->relation = head->relation;
+    data->columns = constructors::parse_columns(node.columns, context);
+    try
+    {
+        return constructors::intern_query(context, intern(context, *data).get_index());
+    }
+    catch (const std::invalid_argument& error)
+    {
+        context.diagnostics().throw_at(node, runir::kr::InvalidExpressionError(std::string("q_head: ") + error.what()));
+    }
+}
+
 template<runir::kr::dl::CategoryTag Category>
 inline auto parse(const runir::kr::dl::grammar::ast::ConstructorOrNonTerminal<Category>& node,
                   tyr::formalism::planning::DomainView domain,
@@ -129,6 +145,10 @@ inline auto parse(const runir::kr::dl::grammar::ast::ConstructorOrNonTerminal<Ca
         {
             const auto& unwrapped = unwrap(value);
             if constexpr (std::same_as<Unwrapped<Value>, runir::kr::dl::grammar::ast::NonTerminal<Category>>)
+                context.diagnostics().throw_at(
+                    unwrapped.name,
+                    runir::kr::InvalidExpressionError(std::string(context.capabilities().language) + " cannot reference grammar nonterminals."));
+            else if constexpr (std::same_as<Unwrapped<Value>, runir::kr::dl::grammar::ast::FeatureName>)
             {
                 const auto feature = resolve_feature(unwrapped.name, context);
                 if (const auto* index = std::get_if<ygg::Index<runir::kr::dl::Constructor<Category>>>(&feature))
@@ -150,7 +170,7 @@ Result parse_collection_operand(const runir::kr::dl::grammar::ast::ConstructorOr
                                 tyr::formalism::planning::DomainView domain,
                                 const ConstructorContext& context)
 {
-    if (const auto* name = boost::get<runir::kr::dl::grammar::ast::NonTerminal<Category>>(&node.get()))
+    if (const auto* name = boost::get<runir::kr::dl::grammar::ast::FeatureName>(&node.get()))
     {
         const auto feature = resolve_feature(name->name, context);
         return std::visit(

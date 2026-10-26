@@ -32,11 +32,10 @@ public:
     QueryNode(DatalogProgramView program, GraphBuilder<Kind>& graph) : m_operation(QueryProgramEvaluator<Kind>(program, graph, m_dependencies)) {}
     [[nodiscard]] std::optional<QueryView<>> get_expression() const noexcept { return m_expression; }
     /// The operation of a program node, if this is one.
-    [[nodiscard]] QueryProgramEvaluator<Kind>* get_program() noexcept { return std::get_if<QueryProgramEvaluator<Kind>>(&m_operation); }
     [[nodiscard]] const QueryProgramEvaluator<Kind>* get_program() const noexcept { return std::get_if<QueryProgramEvaluator<Kind>>(&m_operation); }
     /// Whether this node lifts argument into a relation with exactly these columns.
     template<ConceptOrRoleTag Category>
-    [[nodiscard]] bool lifts(EvaluationIndex<Category> argument, std::span<const ygg::database::ColumnLayout> columns) const
+    bool lifts(EvaluationIndex<Category> argument, std::span<const ygg::database::ColumnLayout> columns) const
     {
         const auto* lifted = std::get_if<QueryFromDenotationEvaluator<Kind, Category>>(&m_operation);
         return !m_expression && lifted && lifted->argument == argument && std::ranges::equal(lifted->result.columns().span(), columns);

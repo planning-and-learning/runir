@@ -1,11 +1,12 @@
 # Datalog programs in policies
 
-A sketch (`ps::base`) or module (`ps::ext`) may define relations by stratified Datalog rules in a `:datalog` section,
-placed before `:features` (in modules, after `:memory`). Features read a rule head with the query constructor `q_head`.
+A module (`ps::ext`) may define relations by stratified Datalog rules in a `:datalog` section, placed after `:memory`
+and before `:features`; sketches (`ps::base`) have no such section. Features read a rule head with the query constructor
+`q_head`.
 Rules are evaluated by yggdrasil's `ygg::database::datalog::Evaluator`.
 
 ```
-(:sketch
+(:module (:symbol entry) (:arguments) (:registers) (:entry m0) (:memory m0)
   (:datalog
     (:rule (reach ?x) (marker ?x))
     (:rule (reach ?y) (reach ?x) (edge ?x ?y))
@@ -50,7 +51,8 @@ positive atom; negation and aggregation must be stratified. Violations are repor
 
 The program is a `dl::DatalogProgram` record: its rules in the repository's `DatalogRepository` and one input query
 per input slot (an atomic state or goal query for a predicate, `q_concept` / `q_role` for a concept or role feature, the
-query of a query feature).
+query of a query feature). Each relation carries its name (a head's name, or a description of an input), which `q_head`
+prints and which is part of the relation's identity.
 
 - Full evaluation (`evaluate`): the first `q_head` of a program read in a state evaluates the program for all its heads;
   the others reuse it (`DatalogFeature` in the evaluation workspace, a generation per state in `DenotationCaches`).
@@ -60,5 +62,4 @@ query of a query feature).
   yggdrasil). A program is evaluated in a state only if a demanded feature reads one of its heads.
 
 On Autoscale Termes `p16` (the ramp heights still needed for the goal, a 1000-step random walk), full evaluation takes
-205 µs per state and incremental evaluation 0.4 µs median, 0.8 µs mean (`RUNIR_TERMES_DIR` enables the timing test in
-`tests/unit/kr/dl/datalog.cpp`).
+about 320 µs per state and incremental evaluation 0.4 µs median, 0.8 µs mean (the timing test in `tests/unit/kr/dl/datalog.cpp`).

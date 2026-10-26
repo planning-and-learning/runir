@@ -1,6 +1,5 @@
 #include "runir/kr/ps/base/dl/parser.hpp"
 
-#include "kr/parser/datalog.hpp"
 #include "kr/parser/ext_constructors.hpp"
 #include "kr/parser/observations.hpp"
 #include "kr/parser/resolution.hpp"
@@ -24,7 +23,6 @@
 #include <tyr/formalism/planning/repository.hpp>
 #include <unordered_map>
 #include <unordered_set>
-#include <yggdrasil/core/config.hpp>
 
 namespace runir::kr::ps::base::dl
 {
@@ -48,19 +46,19 @@ auto intern(runir::kr::ps::base::Repository& repository, ygg::Data<T>& data)
 { return runir::kr::ps::base::insert(repository, data).first; }
 
 auto parse_feature(const runir::kr::ps::base::dl::ast::BooleanFeature<runir::kr::BaseFamilyTag>& node,
-                   runir::kr::parser::datalog::FeatureResolver& resolver,
+                   tyr::formalism::planning::DomainView domain,
                    Repository& repository,
                    Builders& builders,
                    std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>>& boolean_features,
                    std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>>&,
-                   ygg::Data<runir::kr::ps::base::Sketch>& sketch_data)
+                   ygg::Data<runir::kr::ps::base::Sketch>& sketch_data,
+                   const runir::kr::parser::DiagnosticContext& diagnostics)
 {
-    const auto resolved = resolver.resolve(node.symbol);
-    YGG_ASSUME(resolved.has_value());  // Every feature is declared before any is parsed.
-    const auto constructor = std::get<ygg::Index<runir::kr::dl::Constructor<runir::kr::dl::BooleanTag>>>(*resolved);
+    const auto constructor =
+        parse_constructor(node.feature, domain, ConstructorContext { repository.get_dl_repository(), *builders.dl, diagnostics, nullptr, sketch_capabilities });
     auto concrete_data =
         runir::kr::ps::base::checkout<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>>(*builders.ps);
-    concrete_data->feature = constructor;
+    concrete_data->feature = constructor.get_index();
     concrete_data->symbol = node.symbol.text;
     const auto concrete = intern(repository, *concrete_data);
     auto data = runir::kr::ps::base::checkout<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>(*builders.ps);
@@ -72,20 +70,19 @@ auto parse_feature(const runir::kr::ps::base::dl::ast::BooleanFeature<runir::kr:
 
 auto parse_feature(
     const runir::kr::ps::base::dl::ast::NumericalFeature<runir::kr::BaseFamilyTag>& node,
-    runir::kr::parser::datalog::FeatureResolver& resolver,
+    tyr::formalism::planning::DomainView domain,
     Repository& repository,
     Builders& builders,
     std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>>&,
     std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>>& numerical_features,
-    ygg::Data<runir::kr::ps::base::Sketch>& sketch_data)
+    ygg::Data<runir::kr::ps::base::Sketch>& sketch_data,
+    const runir::kr::parser::DiagnosticContext& diagnostics)
 {
-    const auto resolved = resolver.resolve(node.symbol);
-    YGG_ASSUME(resolved.has_value());  // Every feature is declared before any is parsed.
-    const auto constructor = std::get<ygg::Index<runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>>>(*resolved);
-
+    const auto constructor =
+        parse_constructor(node.feature, domain, ConstructorContext { repository.get_dl_repository(), *builders.dl, diagnostics, nullptr, sketch_capabilities });
     auto concrete_data =
         runir::kr::ps::base::checkout<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::dl::NumericalTag>>(*builders.ps);
-    concrete_data->feature = constructor;
+    concrete_data->feature = constructor.get_index();
     concrete_data->symbol = node.symbol.text;
     const auto concrete = intern(repository, *concrete_data);
     auto data = runir::kr::ps::base::checkout<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>(*builders.ps);
@@ -143,36 +140,15 @@ SketchView parse_sketch(const std::string& description, tyr::formalism::planning
     data->numerical_features.reserve(ast.features.size());
     data->rules.reserve(ast.rules.size());
 
-    // Features may name each other and read Datalog heads, in any order; each is parsed at its first reference.
-    auto resolver = runir::kr::parser::datalog::FeatureResolver(diagnostics);
-    auto section = runir::kr::parser::datalog::DatalogSection(ast.datalog ? &*ast.datalog : nullptr,
-                                                              domain,
-                                                              repository.get_dl_repository(),
-                                                              dl_builder,
-                                                              resolver,
-                                                              diagnostics);
-    const auto feature_scope = runir::kr::parser::datalog::make_scope(resolver, section);
     for (const auto& feature : ast.features)
         boost::apply_visitor(
             [&](const auto& arg)
             {
-                if (!feature_symbols.emplace(arg.symbol.text).second || section.defines(arg.symbol.text))
+                if (!feature_symbols.emplace(arg.symbol.text).second)
                     diagnostics.throw_at(arg.symbol, runir::kr::DuplicateDefinitionError("feature", arg.symbol.text));
-                resolver.declare(
-                    arg.symbol,
-                    [&]() -> runir::kr::parser::datalog::FeatureReference
-                    {
-                        return parse_constructor(
-                                   arg.feature,
-                                   domain,
-                                   ConstructorContext { repository.get_dl_repository(), dl_builder, diagnostics, nullptr, sketch_capabilities, &feature_scope })
-                            .get_index();
-                    });
+                parse_feature(arg, domain, repository, builders, boolean_features, numerical_features, *data, diagnostics);
             },
             feature.get());
-    for (const auto& feature : ast.features)
-        boost::apply_visitor([&](const auto& arg) { parse_feature(arg, resolver, repository, builders, boolean_features, numerical_features, *data); },
-                             feature.get());
 
     auto rule_symbols = std::unordered_set<std::string> {};
     for (const auto& rule : ast.rules)

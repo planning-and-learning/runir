@@ -4,9 +4,7 @@
 #include "runir/kr/declarations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/parser/ast.hpp"
-#include "runir/kr/parser/sexpression_ast.hpp"
 
-#include <boost/optional.hpp>
 #include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
 #include <vector>
@@ -116,7 +114,6 @@ struct Rule : boost::spirit::x3::position_tagged
 template<runir::kr::FamilyTag Family>
 struct Sketch : boost::spirit::x3::position_tagged
 {
-    boost::optional<runir::kr::parser::ast::DatalogSection> datalog;
     std::vector<Feature<Family>> features;
     std::vector<Rule<Family>> rules;
 };

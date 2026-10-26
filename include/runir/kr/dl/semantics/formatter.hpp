@@ -114,7 +114,7 @@ std::string query(ygg::View<ygg::Index<runir::kr::dl::Query<Tag>>, C> view)
                            view.get_targets(),
                            view.get_probes());
     else if constexpr (std::same_as<Tag, runir::kr::dl::QueryHeadTag>)
-        return constructor(runir::kr::dl::QueryHeadTag::keyword, view.get_name(), query_columns(view.get_columns()));
+        return constructor(runir::kr::dl::QueryHeadTag::keyword, view.get_relation().get_name().view(), query_columns(view.get_columns()));
     else
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL query constructor tag");
 }

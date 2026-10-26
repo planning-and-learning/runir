@@ -5,7 +5,7 @@
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/parser/ast.hpp"
 #include "runir/kr/parser/diagnostics.hpp"
-#include "runir/kr/parser/sexpression_ast.hpp"
+#include "runir/kr/ps/ext/dl/ast/ast.hpp"
 
 #include <functional>
 #include <map>
@@ -33,13 +33,6 @@ struct HeadReference
     ygg::Index<ygg::database::datalog::Relation> relation;
 };
 
-/// What names a DL expression may refer to (ConstructorContext::features).
-struct FeatureScope
-{
-    std::function<std::optional<FeatureReference>(const ast::Identifier&)> feature;
-    std::function<std::optional<HeadReference>(const ast::Identifier&)> head;
-};
-
 /// Features by name, each parsed at its first reference: a feature that reaches itself through references is an error.
 class FeatureResolver
 {
@@ -48,7 +41,6 @@ public:
 
     void declare(const ast::Identifier& name, std::function<FeatureReference()> parse);
     std::optional<FeatureReference> resolve(const ast::Identifier& name);
-    [[nodiscard]] bool declares(const std::string& name) const { return m_entries.contains(name); }
 
 private:
     struct Entry
@@ -62,13 +54,15 @@ private:
     std::vector<std::string> m_stack;
 };
 
-/// The :datalog section of a policy: one program whose rules read domain predicates, goal atoms ((goal p t...)) and
+using DatalogRules = std::vector<runir::kr::ps::ext::dl::ast::DatalogRule>;
+
+/// The :datalog section of a module: one program whose rules read domain predicates, goal atoms ((goal p t...)) and
 /// concept, role and query features, built at the first q_head. A rule may not read a feature that reads the program's
 /// heads.
 class DatalogSection
 {
 public:
-    DatalogSection(const ast::DatalogSection* section,
+    DatalogSection(const DatalogRules* rules,
                    tyr::formalism::planning::DomainView domain,
                    runir::kr::dl::ConstructorRepository& repository,
                    runir::kr::dl::Builder& builder,
@@ -77,11 +71,11 @@ public:
 
     [[nodiscard]] bool defines(const std::string& name) const { return m_arities.contains(name); }
     std::optional<HeadReference> head(const ast::Identifier& name);
-    /// The program, if a feature read one of its heads.
-    [[nodiscard]] std::optional<ygg::Index<runir::kr::dl::DatalogProgram>> program() const { return m_program; }
+    /// Builds the program if no feature read a head, so that every rule is checked; `reference` locates errors.
+    void validate(const ast::Identifier& reference);
 
 private:
-    const ast::DatalogSection* m_section;
+    const DatalogRules* m_rules;
     tyr::formalism::planning::DomainView m_domain;
     runir::kr::dl::ConstructorRepository* m_repository;
     runir::kr::dl::Builder* m_builder;
@@ -94,9 +88,6 @@ private:
 
     void build(const ast::Identifier& reference);
 };
-
-/// The scope of a resolver and a section.
-FeatureScope make_scope(FeatureResolver& features, DatalogSection& section);
 
 }  // namespace runir::kr::parser::datalog
 

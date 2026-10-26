@@ -33,6 +33,10 @@ struct IdentifierClass : boost::spirit::x3::annotate_on_success
 {
 };
 
+struct FeatureNameClass : boost::spirit::x3::annotate_on_success
+{
+};
+
 struct NumericReferenceClass : boost::spirit::x3::annotate_on_success
 {
 };
@@ -46,6 +50,10 @@ struct ObjectNameTextClass
 };
 
 struct IdentifierTextClass
+{
+};
+
+struct FeatureNameTextClass
 {
 };
 
@@ -131,6 +139,7 @@ struct GrammarRootClass : ErrorHandlerBase
 using predicate_name_type = boost::spirit::x3::rule<PredicateNameClass, ast::Identifier>;
 using object_name_type = boost::spirit::x3::rule<ObjectNameClass, ast::Identifier>;
 using identifier_type = boost::spirit::x3::rule<IdentifierClass, ast::Identifier>;
+using feature_name_type = boost::spirit::x3::rule<FeatureNameClass, ast::FeatureName>;
 using numeric_reference_type = boost::spirit::x3::rule<NumericReferenceClass, ast::NumericReference>;
 
 template<runir::kr::dl::CategoryTag Category>

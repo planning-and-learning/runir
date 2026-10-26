@@ -134,9 +134,9 @@ public:
     { return ygg::database::relax(roots, std::forward<Known>(known), m_repository, m_builder); }
 
     /// The expression of each input slot, by slot.
-    [[nodiscard]] const std::vector<QuerySlot>& get_slots() const noexcept { return m_slots; }
+    const std::vector<QuerySlot>& get_slots() const noexcept { return m_slots; }
     /// The DL leaf of each input slot; without complement rewriting, every slot is a leaf query.
-    [[nodiscard]] std::vector<DlQuery> get_leaves(const ConstructorRepository& constructors) const;
+    std::vector<DlQuery> get_leaves(const ConstructorRepository& constructors) const;
 
 private:
     template<typename Tag>

@@ -3,7 +3,6 @@
 
 #include "runir/kr/dl/grammar/parser/parsers.hpp"
 #include "runir/kr/parser/error_handler.hpp"
-#include "runir/kr/parser/sexpression.hpp"
 #include "runir/kr/ps/base/dl/ast/ast.hpp"
 #include "runir/kr/ps/base/dl/ast/ast_adapted.hpp"
 #include "runir/kr/ps/base/dl/parser/parsers.hpp"
@@ -95,8 +94,7 @@ constexpr auto features_section_def = context(":features")[(lit("(") >> keyword(
 constexpr auto rules_section_def = context(":rules")[(lit("(") >> keyword(":rules")) > *rule > lit(")")];
 
 constexpr auto rule_def = context("rule")[(lit("(") >> keyword(":rule")) > symbol_section_def > rule_expression_section_def > lit(")")];
-constexpr auto sketch_def =
-    context("sketch")[(lit("(") >> keyword(":sketch")) > -runir::kr::parser::grammar::datalog_section > features_section_def > rules_section_def > lit(")")];
+constexpr auto sketch_def = context("sketch")[(lit("(") >> keyword(":sketch")) > features_section_def > rules_section_def > lit(")")];
 constexpr auto sketch_root_def = context("sketch")[sketch > eoi];
 
 BOOST_SPIRIT_DEFINE(identifier, boolean_feature, numerical_feature, feature)

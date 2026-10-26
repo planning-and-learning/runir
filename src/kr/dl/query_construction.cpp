@@ -69,7 +69,6 @@ void prepare(ygg::Data<DatalogProgram>& data, const ConstructorRepository& repos
     {
         const auto input = ygg::make_view(data.inputs[slot], repository);
         if (const auto& arity = arities[slot]; arity && *arity != input.get_schema().size())
-
             throw std::invalid_argument("Datalog program: an input query does not have its relation's arity.");
         data.is_static = data.is_static && input.is_static();
     }

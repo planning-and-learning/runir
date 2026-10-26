@@ -174,10 +174,16 @@ struct NonTerminal : boost::spirit::x3::position_tagged
     Identifier name;
 };
 
-template<runir::kr::dl::CategoryTag Category>
-struct ConstructorOrNonTerminal : PositionedVariant<NonTerminal<Category>, Constructor<Category>>
+/// A bare name in a policy expression: another feature of the module, of any category.
+struct FeatureName : boost::spirit::x3::position_tagged
 {
-    using Base = PositionedVariant<NonTerminal<Category>, Constructor<Category>>;
+    Identifier name;
+};
+
+template<runir::kr::dl::CategoryTag Category>
+struct ConstructorOrNonTerminal : PositionedVariant<NonTerminal<Category>, FeatureName, Constructor<Category>>
+{
+    using Base = PositionedVariant<NonTerminal<Category>, FeatureName, Constructor<Category>>;
     using Base::Base;
     using Base::operator=;
 };

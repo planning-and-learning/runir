@@ -23,6 +23,13 @@ BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::ActionRule, conditions, a
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::CallRule, conditions, callee, arguments)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::BacktrackRule, conditions)
 
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogAtom, relation, terms)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogGoalAtom, predicate, terms)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogNegation, atom)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogComparison, equal, lhs, rhs)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogAggregate, function, result, value, body)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogRule, head, body)
+
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::RuleEntry, symbol, source, target, rules)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::Module, name, arguments, registers, entry, memory_states, datalog, features, rule_entries)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::Program, entry, modules)

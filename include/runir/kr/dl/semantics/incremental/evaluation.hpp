@@ -111,9 +111,6 @@ class EvaluationGraph
         dependencies.push_back(static_cast<ygg::uint_t>(*index));
         return *index;
     }
-    /// Requests a head of a program node; returns its output.
-    size_t request_head(QueryEvaluationIndex program, ygg::Index<ygg::database::datalog::Relation> relation)
-    { return std::get<detail::QueryNode<Kind>>(m_nodes.at(static_cast<ygg::uint_t>(program))).get_program()->request(relation); }
 
 public:
     /// The operation of a program node, read by its heads.
@@ -179,8 +176,6 @@ public:
     QueryEvaluationIndex prepare(QueryView<> expression, std::vector<ygg::uint_t>& dependencies) { return m_graph->prepare(expression, dependencies); }
     QueryEvaluationIndex prepare_program(DatalogProgramView program, std::vector<ygg::uint_t>& dependencies)
     { return m_graph->prepare_program(program, dependencies); }
-    size_t request_head(QueryEvaluationIndex program, ygg::Index<ygg::database::datalog::Relation> relation)
-    { return m_graph->request_head(program, relation); }
     QueryEvaluationIndex prepare_relation(QueryView<> expression, std::span<const ygg::database::ColumnLayout> columns, std::vector<ygg::uint_t>& dependencies)
     { return m_graph->prepare_relation(expression, columns, dependencies); }
     template<ConceptOrRoleTag Category>

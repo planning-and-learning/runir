@@ -910,10 +910,9 @@ ModuleView lower_module(const ast::Module& ast,
                                                               *builders.dl,
                                                               resolver,
                                                               diagnostics);
-    const auto feature_scope = runir::kr::parser::datalog::make_scope(resolver, section);
-    const auto context = ConstructorContext {
-        repository.get_dl_repository(), *builders.dl, diagnostics, &references, runir::kr::parser::ext_constructors::all_capabilities, &feature_scope
-    };
+    references.features = &resolver;
+    references.datalog = &section;
+    const auto context = ConstructorContext { repository.get_dl_repository(), *builders.dl, diagnostics, &references };
     for (const auto& feature : ast.features)
         boost::apply_visitor(
             [&]<typename Concrete>(const Concrete& concrete)
@@ -956,6 +955,7 @@ ModuleView lower_module(const ast::Module& ast,
             },
             feature.get());
     }
+    section.validate(ast.name);
 
     data->memory_transitions.reserve(ast.rule_entries.size());
     for (const auto& transition : ast.rule_entries)

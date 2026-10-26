@@ -63,6 +63,7 @@ constexpr auto forbidden()
 constexpr predicate_name_type predicate_name = "predicate name";
 constexpr object_name_type object_name = "object name";
 constexpr identifier_type identifier = "identifier";
+constexpr feature_name_type feature_name = "feature name";
 constexpr numeric_reference_type numeric_reference = "numeric_reference";
 
 constexpr auto predicate_name_def = boost::spirit::x3::rule<PredicateNameTextClass, std::string> { "predicate_name_text" } =
@@ -74,7 +75,12 @@ constexpr auto identifier_def = boost::spirit::x3::rule<IdentifierTextClass, std
 constexpr auto unsigned_integer = boost::spirit::x3::rule<class UnsignedInteger, unsigned int> { "unsigned integer" } = boost::spirit::x3::uint_;
 constexpr auto numeric_reference_def = boost::spirit::x3::rule<NumericReferenceTextClass, ygg::uint_t> { "numeric_reference_value" } = unsigned_integer;
 
-BOOST_SPIRIT_DEFINE(predicate_name, object_name, identifier, numeric_reference)
+// A bare feature name. The prefixes of constructor keywords and nonterminals (c_, r_, b_, n_, q_) are reserved, so that
+// a constructor without parentheses still fails here and backtracks.
+constexpr auto feature_name_def = boost::spirit::x3::rule<FeatureNameTextClass, std::string> { "feature_name_text" } =
+    raw[lexeme[!((lit('c') | lit('r') | lit('b') | lit('n') | lit('q')) >> lit('_')) >> (alpha | char_('_')) >> *(alnum | char_('-') | char_('_'))]];
+
+BOOST_SPIRIT_DEFINE(predicate_name, object_name, identifier, feature_name, numeric_reference)
 
 template<runir::kr::dl::CategoryTag Category>
 constexpr auto argument_reference_parser()
@@ -140,7 +146,7 @@ constexpr auto constructor_context(const char* rule_name)
 template<runir::kr::dl::CategoryTag Category>
 constexpr auto non_terminal_string_parser()
 {
-    const auto nonterminal = []
+    const auto parser = []
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
             return lexeme[lit("c_") >> +digit];
@@ -151,12 +157,6 @@ constexpr auto non_terminal_string_parser()
         else
             return lexeme[lit("n_") >> +digit];
     }();
-    // Any other bare name is a feature reference (resolved by the semantic parser). The prefixes of constructor keywords
-    // and nonterminals (c_, r_, b_, n_, q_) are reserved, so that a constructor without parentheses or a nonterminal of
-    // another category still fails here and backtracks.
-    const auto name =
-        lexeme[!((lit('c') | lit('r') | lit('b') | lit('n') | lit('q')) >> lit('_')) >> (alpha | char_('_')) >> *(alnum | char_('_') | char_('-'))];
-    const auto parser = nonterminal | name;
     return boost::spirit::x3::rule<NonTerminalNameClass<Category>, runir::kr::dl::grammar::ast::Identifier> { "non_terminal_name" } =
                (boost::spirit::x3::rule<NonTerminalNameTextClass<Category>, std::string> { "non_terminal_name_text" } = raw[parser]);
 }
@@ -332,7 +332,7 @@ constexpr auto constructor_alternatives(const Parser& parser, const constructor_
                                                                    prefix##_concept_argument);                                                                 \
     constexpr auto prefix##_concept_root_def = context("concept expression")[prefix##_concept > eoi];                                                          \
     constexpr auto prefix##_concept_non_terminal_def = non_terminal_string_parser<runir::kr::dl::ConceptTag>();                                                \
-    constexpr auto prefix##_concept_choice_def = prefix##_concept_non_terminal | prefix##_concept;                                                             \
+    constexpr auto prefix##_concept_choice_def = prefix##_concept_non_terminal | feature_name | prefix##_concept;                                              \
     constexpr auto prefix##_role_def = constructor_alternatives(boost::spirit::x3::eps(false),                                                                 \
                                                                 prefix##_role_project,                                                                         \
                                                                 prefix##_role_universal,                                                                       \
@@ -351,7 +351,7 @@ constexpr auto constructor_alternatives(const Parser& parser, const constructor_
                                                                 prefix##_role_argument);                                                                       \
     constexpr auto prefix##_role_root_def = context("role expression")[prefix##_role > eoi];                                                                   \
     constexpr auto prefix##_role_non_terminal_def = non_terminal_string_parser<runir::kr::dl::RoleTag>();                                                      \
-    constexpr auto prefix##_role_choice_def = prefix##_role_non_terminal | prefix##_role;                                                                      \
+    constexpr auto prefix##_role_choice_def = prefix##_role_non_terminal | feature_name | prefix##_role;                                                       \
     constexpr auto prefix##_constructor_or_non_terminal_variant_def = prefix##_concept_choice | prefix##_role_choice | prefix##_query;                         \
     constexpr auto prefix##_boolean_def = constructor_alternatives(boost::spirit::x3::eps(false),                                                              \
                                                                    prefix##_boolean_atomic_state,                                                              \
@@ -376,7 +376,7 @@ constexpr auto constructor_alternatives(const Parser& parser, const constructor_
                                                                    prefix##_boolean_argument);                                                                 \
     constexpr auto prefix##_boolean_root_def = context("boolean expression")[prefix##_boolean > eoi];                                                          \
     constexpr auto prefix##_boolean_non_terminal_def = non_terminal_string_parser<runir::kr::dl::BooleanTag>();                                                \
-    constexpr auto prefix##_boolean_choice_def = prefix##_boolean_non_terminal | prefix##_boolean;                                                             \
+    constexpr auto prefix##_boolean_choice_def = prefix##_boolean_non_terminal | feature_name | prefix##_boolean;                                              \
     constexpr auto prefix##_numerical_def = constructor_alternatives(boost::spirit::x3::eps(false),                                                            \
                                                                      prefix##_numerical_count,                                                                 \
                                                                      prefix##_numerical_distance,                                                              \
@@ -390,7 +390,7 @@ constexpr auto constructor_alternatives(const Parser& parser, const constructor_
                                                                      prefix##_numerical_argument);                                                             \
     constexpr auto prefix##_numerical_root_def = context("numerical expression")[prefix##_numerical > eoi];                                                    \
     constexpr auto prefix##_numerical_non_terminal_def = non_terminal_string_parser<runir::kr::dl::NumericalTag>();                                            \
-    constexpr auto prefix##_numerical_choice_def = prefix##_numerical_non_terminal | prefix##_numerical;                                                       \
+    constexpr auto prefix##_numerical_choice_def = prefix##_numerical_non_terminal | feature_name | prefix##_numerical;                                        \
     constexpr auto prefix##_query_atomic_state_def =                                                                                                           \
         with_constructor_parentheses(keyword("q_atomic_state") > predicate_name_string_parser() > query_columns_parser());                                     \
     constexpr auto prefix##_query_atomic_goal_def =                                                                                                            \

@@ -537,15 +537,11 @@ struct Data<runir::kr::dl::DatalogProgram>
     Index<runir::kr::dl::DatalogProgram> index;
     Index<ygg::database::datalog::Program> program {};
     IndexList<runir::kr::dl::Query<>> inputs {};
-    /// Per derived relation id of the program, its name; per input slot, its name (for printing).
-    cista::offset::vector<cista::offset::string> relation_names {};
-    cista::offset::vector<cista::offset::string> input_names {};
     bool is_static = false;
 
     Data() = default;
     // is_static is derived during insertion and therefore not a constructor parameter.
-    static constexpr auto cista_members() noexcept
-    { return ygg::Members<&Data::index, &Data::program, &Data::inputs, &Data::relation_names, &Data::input_names, &Data::is_static> {}; }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::program, &Data::inputs, &Data::is_static> {}; }
     static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::program, &Data::inputs> {}; }
     void clear() noexcept { ygg::clear_members(*this); }
 };

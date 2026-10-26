@@ -140,7 +140,7 @@ void bind_query(nb::module_& m, const char* name)
     ygg::add_hash(view);
     view.def("syntactic_complexity", [](View value) { return semantics::syntactic_complexity(value); });
     if constexpr (std::same_as<Tag, QueryHeadTag>)
-        view.def("get_name", [](View value) { return std::string(value.get_name()); });
+        view.def("get_relation", &View::get_relation, nb::keep_alive<0, 1>());
     if constexpr (std::same_as<Tag, void>)
     {
         view.def("get_variant", &View::get_variant, nb::keep_alive<0, 1>());

@@ -114,6 +114,8 @@ parse(const ast::ConstructorOrNonTerminal<Category>& node, tyr::formalism::plann
             const auto& unwrapped = unwrap(arg);
             if constexpr (std::same_as<Unwrapped<Arg>, ast::NonTerminal<Category>>)
                 return parse(unwrapped, domain, context).get_index();
+            else if constexpr (std::same_as<Unwrapped<Arg>, ast::FeatureName>)
+                context.diagnostics().throw_at(unwrapped.name, runir::kr::InvalidExpressionError("Feature names are not supported in generation grammars."));
             else
                 return parse_constructor(unwrapped, domain, context).get_index();
         },

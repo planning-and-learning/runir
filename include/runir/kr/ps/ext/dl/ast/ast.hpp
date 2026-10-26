@@ -4,13 +4,13 @@
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/parser/ast.hpp"
-#include "runir/kr/parser/sexpression_ast.hpp"
 #include "runir/kr/ps/base/dl/ast/ast.hpp"
 #include "runir/kr/ps/ext/declarations.hpp"
 
 #include <boost/optional.hpp>
 #include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -154,6 +154,63 @@ struct RuleEntry : boost::spirit::x3::position_tagged
     std::vector<Rule> rules;
 };
 
+/// (relation term...): a rule head or a body atom. Terms are ?variables or object names.
+struct DatalogAtom : boost::spirit::x3::position_tagged
+{
+    Identifier relation;
+    std::vector<Identifier> terms;
+};
+
+/// (goal predicate term...): the goal atoms of a predicate.
+struct DatalogGoalAtom : boost::spirit::x3::position_tagged
+{
+    Identifier predicate;
+    std::vector<Identifier> terms;
+};
+
+/// (not atom)
+struct DatalogNegation : boost::spirit::x3::position_tagged
+{
+    DatalogAtom atom;
+};
+
+/// (= lhs rhs) or (!= lhs rhs)
+struct DatalogComparison : boost::spirit::x3::position_tagged
+{
+    bool equal = true;
+    Identifier lhs;
+    Identifier rhs;
+};
+
+/// A literal that an aggregate body may hold: anything but an aggregate.
+using DatalogCondition = PositionedVariant<DatalogNegation, DatalogGoalAtom, DatalogComparison, DatalogAtom>;
+
+enum class DatalogAggregateFunction : std::uint8_t
+{
+    COUNT,
+    SUM,
+    MIN,
+    MAX,
+};
+
+/// (count ?result (condition...)) or (sum|min|max ?result ?value (condition...))
+struct DatalogAggregate : boost::spirit::x3::position_tagged
+{
+    DatalogAggregateFunction function = DatalogAggregateFunction::COUNT;
+    Identifier result;
+    boost::optional<Identifier> value;
+    std::vector<DatalogCondition> body;
+};
+
+using DatalogLiteral = PositionedVariant<DatalogAggregate, DatalogCondition>;
+
+/// (:rule head literal...)
+struct DatalogRule : boost::spirit::x3::position_tagged
+{
+    DatalogAtom head;
+    std::vector<DatalogLiteral> body;
+};
+
 struct Module : boost::spirit::x3::position_tagged
 {
     Identifier name;
@@ -161,7 +218,7 @@ struct Module : boost::spirit::x3::position_tagged
     std::vector<RegisterVariant> registers;
     Identifier entry;
     std::vector<NamedValue> memory_states;
-    boost::optional<runir::kr::parser::ast::DatalogSection> datalog;
+    boost::optional<std::vector<DatalogRule>> datalog;
     std::vector<FeatureVariant> features;
     std::vector<RuleEntry> rule_entries;
 };

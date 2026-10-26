@@ -1,9 +1,9 @@
+#include "fixtures.hpp"
 #include "planning_fixtures.hpp"
 
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
-#include <cstdlib>
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -23,7 +23,6 @@
 #include <runir/kr/errors.hpp>
 #include <runir/kr/ps/base/dl/parser.hpp>
 #include <runir/kr/ps/base/repository.hpp>
-#include <runir/kr/ps/base/sketch_view.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <runir/kr/ps/ext/module_view.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
@@ -45,8 +44,8 @@ auto query_search_context()
 
 /// Rules over the fixture: reachability from the markers along edges, the out-degree of reached objects, the reached
 /// objects without a marker, and the first object of the triples that hold and are goals.
-constexpr auto sketch_text = R"(
-(:sketch
+constexpr auto heads_text = R"(
+(:module (:symbol entry) (:arguments) (:registers) (:entry m0) (:memory m0)
   (:datalog
     (:rule (reach ?x) (marker ?x))
     (:rule (reach ?y) (reach ?x) (edge ?x ?y))
@@ -62,13 +61,13 @@ constexpr auto sketch_text = R"(
   (:rules))
 )";
 
-template<typename Sketch, typename Context>
-std::vector<int64_t> values(Sketch sketch, Context& context)
+template<typename Module, typename Context>
+std::vector<int64_t> values(Module module_, Context& context)
 {
     auto result = std::vector<int64_t>();
-    for (const auto feature : sketch.template get_features<kr::dl::NumericalTag>())
+    for (const auto feature : module_.template get_features<kr::dl::NumericalTag>())
         result.push_back(static_cast<int64_t>(kr::dl::semantics::evaluate<tyr::LiftedTag>(feature.get_feature(), context).get()));
-    for (const auto feature : sketch.template get_features<kr::dl::BooleanTag>())
+    for (const auto feature : module_.template get_features<kr::dl::BooleanTag>())
         result.push_back(static_cast<int64_t>(kr::dl::semantics::evaluate<tyr::LiftedTag>(feature.get_feature(), context).get()));
     return result;
 }
@@ -79,8 +78,7 @@ TEST(RunirTests, DatalogHeadsAreFeatures)
 {
     const auto search = query_search_context();
     const auto domain_context = kr::DomainContext::create(search->task->get_domain());
-    auto& repository = *domain_context->base_repository;
-    const auto sketch = kr::ps::base::dl::parse_sketch(sketch_text, search->task->get_domain().get_domain(), repository);
+    const auto module_ = kr::ps::ext::dl::parse_module(heads_text, search->task->get_domain().get_domain(), *domain_context->ext_repository);
 
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     auto builder = kr::dl::semantics::Builder();
@@ -88,21 +86,21 @@ TEST(RunirTests, DatalogHeadsAreFeatures)
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.get_state(), builder, storage);
     // reach = {a, b, c}; degree has a row per reached object; unmarked = {b}; total = 3 + 1; (triple b c a) holds.
-    EXPECT_EQ(values(sketch, context), (std::vector<int64_t> { 3, 3, 1, 4, 1 }));
+    EXPECT_EQ(values(module_, context), (std::vector<int64_t> { 3, 3, 1, 4, 1 }));
 
     // The incremental graph agrees with full evaluation along every successor and back.
     auto roots = std::vector<kr::dl::semantics::incremental::EvaluationRoot>();
-    for (const auto feature : sketch.get_features<kr::dl::NumericalTag>())
+    for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
         roots.emplace_back(feature.get_feature());
-    for (const auto feature : sketch.get_features<kr::dl::BooleanTag>())
+    for (const auto feature : module_.get_features<kr::dl::BooleanTag>())
         roots.emplace_back(feature.get_feature());
     auto evaluation = kr::dl::semantics::incremental::IncrementalEvaluation<tyr::LiftedTag>(*search->task, roots);
     const auto incremental = [&](auto& state_evaluation)
     {
         auto result = std::vector<int64_t>();
-        for (const auto feature : sketch.get_features<kr::dl::NumericalTag>())
+        for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
             result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(feature.get_feature())).get()));
-        for (const auto feature : sketch.get_features<kr::dl::BooleanTag>())
+        for (const auto feature : module_.get_features<kr::dl::BooleanTag>())
             result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(feature.get_feature())).get()));
         return result;
     };
@@ -118,12 +116,12 @@ TEST(RunirTests, DatalogHeadsAreFeatures)
         delta.assign<tyr::LiftedTag>(initial.get_state(), successor.get_state());
         storage.reset_dynamic();
         auto successor_context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(successor.get_state(), builder, storage);
-        const auto expected = values(sketch, successor_context);
+        const auto expected = values(module_, successor_context);
         auto forward = evaluation.enter(successor_context, delta, workspace);
         EXPECT_EQ(incremental(forward), expected);
-        for (const auto feature : sketch.get_features<kr::dl::NumericalTag>())
+        for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
             EXPECT_NO_THROW(forward.changed(evaluation.graph().get_index(feature.get_feature())));  // Updated from the delta.
-        for (const auto feature : sketch.get_features<kr::dl::BooleanTag>())
+        for (const auto feature : module_.get_features<kr::dl::BooleanTag>())
             EXPECT_NO_THROW(forward.changed(evaluation.graph().get_index(feature.get_feature())));
         delta.reverse();
         storage.reset_dynamic();
@@ -177,9 +175,10 @@ TEST(RunirTests, DatalogRejectsInvalidPrograms)
     const auto parse = [&](const std::string& datalog, const std::string& features)
     {
         const auto domain_context = kr::DomainContext::create(search->task->get_domain());
-        return kr::ps::base::dl::parse_sketch("(:sketch (:datalog " + datalog + ") (:features " + features + ") (:rules))",
-                                              domain,
-                                              *domain_context->base_repository);
+        return kr::ps::ext::dl::parse_module("(:module (:symbol m) (:arguments) (:registers) (:entry m0) (:memory m0) (:datalog " + datalog + ") (:features "
+                                                 + features + ") (:rules))",
+                                             domain,
+                                             *domain_context->ext_repository);
     };
     const auto read = std::string("(:numerical (:symbol f) (:expression (n_count (q_head r (x)))))");
     EXPECT_THROW(parse("(:rule (r ?x) (unknown ?x))", read), kr::UndefinedSymbolError);
@@ -191,20 +190,28 @@ TEST(RunirTests, DatalogRejectsInvalidPrograms)
     EXPECT_THROW(parse("(:rule (r ?x) (marker ?x))",
                        "(:numerical (:symbol f) (:expression (n_add g (n_const 1)))) (:numerical (:symbol g) (:expression (n_add f (n_const 1))))"),
                  kr::InvalidExpressionError);  // cycle
+    // Syntax the grammar rejects: a nested aggregate, a negation without an atom, a count with a value variable.
+    EXPECT_THROW(parse("(:rule (r ?x) (marker ?x) (count ?n ((count ?m ((edge ?x ?y))))))", read), kr::ParseError);
+    EXPECT_THROW(parse("(:rule (r ?x) (marker ?x) (not))", read), kr::ParseError);
+    EXPECT_THROW(parse("(:rule (r ?x) (marker ?x) (count ?n ?v ((edge ?x ?v))))", read), kr::InvalidExpressionError);
+    // A section that no feature reads is still checked.
+    EXPECT_THROW(parse("(:rule (r ?x) (unknown ?x))", "(:numerical (:symbol f) (:expression (n_const 1)))"), kr::UndefinedSymbolError);
     EXPECT_NO_THROW(parse("(:rule (r ?x) (marker ?x))", read));
+    // Sketches have no :datalog section, so q_head and feature names are not supported there.
+    const auto domain_context = kr::DomainContext::create(search->task->get_domain());
+    EXPECT_THROW(kr::ps::base::dl::parse_sketch("(:sketch (:features " + read + ") (:rules))", domain, *domain_context->base_repository),
+                 kr::InvalidExpressionError);
 }
 
-/// Timing on a Termes task (RUNIR_TERMES_DIR holds domain.pddl and p16.pddl): the ramp heights still needed for the
-/// goal, per state of a random walk, with full and with incremental evaluation.
+/// The ramp heights still needed for the goal of Autoscale Termes p16, per state of a random walk, with full and with
+/// incremental evaluation: both agree, and their times are printed.
 TEST(RunirTests, DatalogTermesTiming)
 {
-    const auto* directory = std::getenv("RUNIR_TERMES_DIR");
-    if (!directory)
-        GTEST_SKIP() << "RUNIR_TERMES_DIR is not set.";
-    const auto search = make_lifted_context(std::filesystem::path(directory) / "domain.pddl", std::filesystem::path(directory) / "p16.pddl");
+    const auto directory = benchmark_path("classical/autoscale-benchmarks-main/21.11-agile-strips/termes");
+    const auto search = make_lifted_context(directory / "domain.pddl", directory / "p16.pddl");
     const auto domain_context = kr::DomainContext::create(search->task->get_domain());
-    const auto sketch = kr::ps::base::dl::parse_sketch(R"(
-(:sketch
+    const auto module_ = kr::ps::ext::dl::parse_module(R"(
+(:module (:symbol entry) (:arguments) (:registers) (:entry m0) (:memory m0)
   (:datalog
     (:rule (built ?p ?h) (height ?p ?h))
     (:rule (built ?p ?l) (built ?p ?h) (succ ?h ?l))
@@ -214,8 +221,8 @@ TEST(RunirTests, DatalogTermesTiming)
   (:rules))
 )",
                                                        search->task->get_domain().get_domain(),
-                                                       *domain_context->base_repository);
-    const auto feature = sketch.get_features<kr::dl::NumericalTag>()[0].get_feature();
+                                                       *domain_context->ext_repository);
+    const auto feature = module_.get_features<kr::dl::NumericalTag>()[0].get_feature();
     auto builder = kr::dl::semantics::Builder();
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);

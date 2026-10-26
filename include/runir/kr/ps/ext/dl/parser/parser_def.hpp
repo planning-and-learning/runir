@@ -3,7 +3,6 @@
 
 #include "runir/kr/dl/grammar/parser/parsers.hpp"
 #include "runir/kr/parser/error_handler.hpp"
-#include "runir/kr/parser/sexpression.hpp"
 #include "runir/kr/ps/base/dl/ast/ast_adapted.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/ext/dl/ast/ast_adapted.hpp"
@@ -31,6 +30,12 @@ struct IdentifierText
 {
 };
 struct QuotedStringText
+{
+};
+struct DatalogVariableText
+{
+};
+struct DatalogTermText
 {
 };
 
@@ -96,6 +101,17 @@ constexpr module_type module = "module";
 constexpr program_type program = "program";
 constexpr module_root_type module_root = "module_root";
 constexpr program_root_type program_root = "program_root";
+constexpr datalog_variable_type datalog_variable = "Datalog variable";
+constexpr datalog_term_type datalog_term = "Datalog term";
+constexpr datalog_atom_type datalog_atom = "Datalog atom";
+constexpr datalog_goal_atom_type datalog_goal_atom = "Datalog goal atom";
+constexpr datalog_negation_type datalog_negation = "Datalog negation";
+constexpr datalog_comparison_type datalog_comparison = "Datalog comparison";
+constexpr datalog_condition_type datalog_condition = "Datalog condition";
+constexpr datalog_aggregate_type datalog_aggregate = "Datalog aggregate";
+constexpr datalog_literal_type datalog_literal = "Datalog literal";
+constexpr datalog_rule_type datalog_rule = "Datalog rule";
+constexpr datalog_section_type datalog_section = ":datalog";
 
 constexpr auto identifier_def = boost::spirit::x3::rule<IdentifierText, std::string> { "identifier_text" } =
     raw[lexeme[(alpha | char_('_')) >> *(alnum | char_('_') | char_('-'))]];
@@ -203,13 +219,45 @@ constexpr auto required_memory_states = boost::spirit::x3::rule<class RequiredMe
     +named_value;
 constexpr auto memory_section_def = context(":memory")[(lit("(") >> keyword(":memory")) > required_memory_states > lit(")")];
 
+// The :datalog section: (:rule head literal...), literals as in docs/datalog.md. Aggregate bodies hold no aggregates.
+constexpr auto datalog_variable_def = boost::spirit::x3::rule<DatalogVariableText, std::string> { "variable_text" } =
+    raw[lexeme[char_('?') >> (alpha | char_('_')) >> *(alnum | char_('_') | char_('-'))]];
+constexpr auto datalog_term_def = boost::spirit::x3::rule<DatalogTermText, std::string> { "term_text" } =
+    raw[lexeme[-char_('?') >> (alpha | char_('_')) >> *(alnum | char_('_') | char_('-'))]];
+constexpr auto datalog_atom_def = ((lit("(") >> identifier) > *datalog_term) > lit(")");
+constexpr auto datalog_goal_atom_def = (((lit("(") >> keyword("goal")) > identifier) > *datalog_term) > lit(")");
+constexpr auto datalog_negation_def = ((lit("(") >> keyword("not")) > datalog_atom) > lit(")");
+constexpr auto datalog_comparison_operator = (lit("!=") >> attr(false)) | (lit("=") >> attr(true));
+constexpr auto datalog_comparison_def = (((lit("(") >> datalog_comparison_operator) > datalog_term) > datalog_term) > lit(")");
+constexpr auto datalog_condition_def = datalog_negation | datalog_goal_atom | datalog_comparison | datalog_atom;
+constexpr auto datalog_aggregate_function =
+    (keyword("count") >> attr(ast::DatalogAggregateFunction::COUNT)) | (keyword("sum") >> attr(ast::DatalogAggregateFunction::SUM))
+    | (keyword("min") >> attr(ast::DatalogAggregateFunction::MIN)) | (keyword("max") >> attr(ast::DatalogAggregateFunction::MAX));
+constexpr auto datalog_aggregate_body = (lit("(") > *datalog_condition) > lit(")");
+constexpr auto datalog_aggregate_def = ((((lit("(") >> datalog_aggregate_function) > datalog_variable) > -datalog_variable) > datalog_aggregate_body)
+                                       > lit(")");
+constexpr auto datalog_literal_def = datalog_aggregate | datalog_condition;
+constexpr auto datalog_rule_def = context("Datalog rule")[(((lit("(") >> keyword(":rule")) > datalog_atom) > *datalog_literal) > lit(")")];
+constexpr auto datalog_section_def = context(":datalog")[((lit("(") >> keyword(":datalog")) > *datalog_rule) > lit(")")];
+
 constexpr auto module_def = context("module")[(lit("(") >> keyword(":module")) > symbol_section > arguments_section > registers_section > entry_section
-                                              > memory_section > -runir::kr::parser::grammar::datalog_section > features_section > rules_section > lit(")")];
+                                              > memory_section > -datalog_section > features_section > rules_section > lit(")")];
 constexpr auto required_modules = boost::spirit::x3::rule<class RequiredModules, std::vector<ast::Module>> { "one or more modules" } = +module;
 constexpr auto program_def = context("program")[(lit("(") >> keyword(":program")) > entry_section > required_modules > lit(")")];
 constexpr auto module_root_def = context("module")[module > eoi];
 constexpr auto program_root_def = context("program")[program > eoi];
 
+BOOST_SPIRIT_DEFINE(datalog_variable,
+                    datalog_term,
+                    datalog_atom,
+                    datalog_goal_atom,
+                    datalog_negation,
+                    datalog_comparison,
+                    datalog_condition,
+                    datalog_aggregate,
+                    datalog_literal,
+                    datalog_rule,
+                    datalog_section)
 BOOST_SPIRIT_DEFINE(identifier,
                     quoted_string,
                     symbol_section,
@@ -445,6 +493,39 @@ struct RuleClass : boost::spirit::x3::annotate_on_success
 {
 };
 struct RuleEntryClass : boost::spirit::x3::annotate_on_success
+{
+};
+struct DatalogVariableClass : boost::spirit::x3::annotate_on_success
+{
+};
+struct DatalogTermClass : boost::spirit::x3::annotate_on_success
+{
+};
+struct DatalogAtomClass : boost::spirit::x3::annotate_on_success
+{
+};
+struct DatalogGoalAtomClass : boost::spirit::x3::annotate_on_success
+{
+};
+struct DatalogNegationClass : boost::spirit::x3::annotate_on_success
+{
+};
+struct DatalogComparisonClass : boost::spirit::x3::annotate_on_success
+{
+};
+struct DatalogConditionClass : boost::spirit::x3::annotate_on_success
+{
+};
+struct DatalogAggregateClass : boost::spirit::x3::annotate_on_success
+{
+};
+struct DatalogLiteralClass : boost::spirit::x3::annotate_on_success
+{
+};
+struct DatalogRuleClass : boost::spirit::x3::annotate_on_success
+{
+};
+struct DatalogSectionClass : boost::spirit::x3::annotate_on_success
 {
 };
 struct ModuleClass : boost::spirit::x3::annotate_on_success
