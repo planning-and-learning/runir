@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <iostream>
+#include <limits>
 #include <numeric>
 #include <random>
 #include <runir/kr/dl/detail/repository_instantiations.hpp>
@@ -353,6 +354,68 @@ TEST(RunirTests, DatalogRejectsInvalidPrograms)
 
 /// The ramp heights still needed for the goal of Autoscale Termes p16, per state of a random walk, with full and with
 /// incremental evaluation: both agree, and their times are printed.
+TEST(RunirTests, DatalogDistanceEqualsNDistanceOnTermes)
+{
+    // The robot's distance to the depot over NEIGHBOR, as n_distance and as weighted rules with a min over the depots,
+    // along a random walk of Autoscale Termes p16; n_distance is infinity (the largest uint_t) where the rules give no row.
+    const auto directory = benchmark_path("classical/autoscale-benchmarks-main/21.11-agile-strips/termes");
+    const auto search = make_lifted_context(directory / "domain.pddl", directory / "p16.pddl");
+    const auto domain_context = kr::DomainContext::create(search->task->get_domain());
+    const auto module_ = kr::ps::ext::dl::parse_module(R"(
+(:module (:symbol entry) (:arguments) (:registers) (:entry m0) (:memory m0)
+  (:datalog
+    (:weighted dist)
+    (:rule (dist ?p 0) (at ?p))
+    (:rule (dist ?q ?v) (dist ?p ?w) (neighbor ?p ?q) (= ?v (+ ?w 1)))
+    (:rule (best ?m) (min ?m ?w ((dist ?p ?w) (is-depot ?p)))))
+  (:features
+    (:numerical (:symbol to-depot) (:expression (n_distance (c_atomic_state "at") (r_atomic_state "neighbor") (c_atomic_state "is-depot"))))
+    (:query (:symbol closest) (:expression (q_head best (m)))))
+  (:rules))
+)",
+                                                       search->task->get_domain().get_domain(),
+                                                       *domain_context->ext_repository);
+    const auto distance = module_.get_features<kr::dl::NumericalTag>()[0].get_feature();
+    const auto best = module_.get_query_features()[0].get_feature();
+    auto builder = kr::dl::semantics::Builder();
+    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto storage = kr::dl::semantics::EvaluationStorage(denotations);
+    const auto value_of = [](ygg::database::RelationView rows)
+    {
+        if (rows.size() == 0)
+            return std::numeric_limits<ygg::uint_t>::max();
+        return ygg::ByteCodec<ygg::uint_t>::decode(rows.row(0).first(ygg::ByteCodec<ygg::uint_t>::size));
+    };
+
+    auto random = std::mt19937(1);
+    auto node = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    auto rules = std::vector<double>(), constructor = std::vector<double>();
+    const auto seconds = [](auto start) { return std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count(); };
+    for (int step = 0; step < 300; ++step)
+    {
+        storage.reset_dynamic();
+        auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(node.get_state(), builder, storage);
+        auto start = std::chrono::steady_clock::now();
+        const auto expected = kr::dl::semantics::evaluate<tyr::LiftedTag>(distance, context).get();
+        constructor.push_back(seconds(start));
+        storage.reset_dynamic();
+        start = std::chrono::steady_clock::now();
+        const auto value = value_of(kr::dl::semantics::evaluate<tyr::LiftedTag>(best, context));
+        rules.push_back(seconds(start));
+        ASSERT_EQ(value, expected) << "step " << step;
+        const auto successors = search->successor_generator->get_successor_nodes(node, *search->state_repository, *search->axiom_evaluator);
+        node = successors[random() % successors.size()];
+    }
+    const auto report = [](const char* name, std::vector<double> times)
+    {
+        std::ranges::sort(times);
+        const auto mean = std::accumulate(times.begin(), times.end(), 0.0) / static_cast<double>(times.size());
+        std::cout << name << ": median " << times[times.size() / 2] * 1e6 << " us, mean " << mean * 1e6 << " us\n";
+    };
+    report("n_distance (full)", constructor);
+    report("weighted rules (full)", rules);
+}
+
 TEST(RunirTests, DatalogTermesTiming)
 {
     const auto directory = benchmark_path("classical/autoscale-benchmarks-main/21.11-agile-strips/termes");
