@@ -97,6 +97,7 @@ private:
                                             ScalarBinaryEvaluator<Kind, Category, NumericalGtTag, NumericalTag>,
                                             ScalarBinaryEvaluator<Kind, Category, NumericalGeTag, NumericalTag>>;
     using NumericalOperations = ygg::TypeList<CountEvaluator<Kind>,
+                                              ValueEvaluator<Kind>,
                                               RoleEdgeDistanceEvaluator<Kind>,
                                               QueryEdgeDistanceEvaluator<Kind>,
                                               ScalarBinaryEvaluator<Kind, Category, AddTag, NumericalTag>,
@@ -145,6 +146,8 @@ private:
             return ArgumentEvaluator<Kind, Category>(expression.get_argument().get_identifier());
         else if constexpr (std::same_as<Tag, DistanceTag>)
             return ygg::visit([&](auto edges) { return prepare_distance(expression, edges, graph); }, expression.get_mid());
+        else if constexpr (std::same_as<Tag, ValueTag>)
+            return ValueEvaluator<Kind>(graph.prepare(expression.get_arg(), m_dependencies));
         else if constexpr (std::same_as<Tag, CountTag>)
             return ygg::visit([&](auto child) -> Evaluators { return CountEvaluator<Kind>(graph.prepare(child, m_dependencies)); }, expression.get_arg());
         else if constexpr (std::same_as<Tag, NonemptyTag>)

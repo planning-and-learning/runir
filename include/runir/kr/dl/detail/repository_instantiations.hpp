@@ -77,6 +77,7 @@ extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Boole
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Boolean<runir::kr::dl::OrTag>>;
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Boolean<runir::kr::dl::NotTag>>;
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Numerical<runir::kr::dl::CountTag>>;
+extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Numerical<runir::kr::dl::ValueTag>>;
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Numerical<runir::kr::dl::DistanceTag>>;
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Numerical<runir::kr::dl::NumericalConstantTag>>;
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Numerical<runir::kr::dl::AddTag>>;

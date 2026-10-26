@@ -139,6 +139,8 @@ void def_numerical_data_constructors(Class& cls)
     using namespace nb::literals;
     if constexpr (std::same_as<Tag, CountTag>)
         cls.def(nb::init<typename Class::Type::Arg>(), "arg"_a).def(nb::init<typename Class::Type::template ViewVariant<Repository>>(), "arg"_a);
+    else if constexpr (std::same_as<Tag, ValueTag>)
+        cls.def(nb::init<ygg::Index<Query<>>>(), "arg"_a);
     else if constexpr (std::same_as<Tag, DistanceTag>)
     {
         using Vertex = typename Class::Type::Vertex;

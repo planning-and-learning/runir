@@ -348,6 +348,12 @@ TEST(RunirTests, DatalogRejectsInvalidPrograms)
     // A section that no feature reads is still checked.
     EXPECT_THROW(parse("(:rule (r ?x) (unknown ?x))", "(:numerical (:symbol f) (:expression (n_const 1)))"), kr::UndefinedSymbolError);
     EXPECT_NO_THROW(parse("(:rule (r ?x) (marker ?x))", read));
+    // A Boolean head feature reads a nullary head, a numerical one a unary head.
+    EXPECT_THROW(parse("(:rule (r ?x) (marker ?x))", "(:boolean (:symbol f) (:head r))"), kr::InvalidExpressionError);
+    EXPECT_THROW(parse("(:rule (r ?x ?y) (edge ?x ?y))", "(:numerical (:symbol f) (:head r))"), kr::InvalidExpressionError);
+    EXPECT_THROW(parse("(:rule (r ?x) (marker ?x))", "(:numerical (:symbol f) (:head s))"), kr::UndefinedSymbolError);
+    EXPECT_THROW(parse("(:rule (r ?x) (marker ?x))", "(:numerical (:symbol r) (:head r))"), kr::DuplicateDefinitionError);
+    EXPECT_NO_THROW(parse("(:rule (r) (marker ?x)) (:rule (n (min 1)) (r))", "(:boolean (:symbol f) (:head r)) (:numerical (:symbol g) (:head n))"));
     // Sketches have no :datalog section, so q_head and feature names are not supported there.
     const auto domain_context = kr::DomainContext::create(search->task->get_domain());
     EXPECT_THROW(kr::ps::base::dl::parse_sketch("(:sketch (:features " + read + ") (:rules))", domain, *domain_context->base_repository),
@@ -358,8 +364,9 @@ TEST(RunirTests, DatalogRejectsInvalidPrograms)
 /// incremental evaluation: both agree, and their times are printed.
 TEST(RunirTests, DatalogDistanceEqualsNDistanceOnTermes)
 {
-    // The robot's distance to the depot over NEIGHBOR, as n_distance and as weighted rules with a minimizing goal head over the depots,
-    // along a random walk of Autoscale Termes p16; n_distance is infinity (the largest uint_t) where the rules give no row.
+    // The robot's distance to the depot over NEIGHBOR, as n_distance and as weighted rules with a minimizing goal head over the depots
+    // read by a numerical head feature, along a random walk of Autoscale Termes p16, with full and incremental evaluation; both are
+    // infinity (the largest uint_t) where no depot is reachable, which a Boolean head feature tells.
     const auto directory = benchmark_path("classical/autoscale-benchmarks-main/21.11-agile-strips/termes");
     const auto search = make_lifted_context(directory / "domain.pddl", directory / "p16.pddl");
     const auto domain_context = kr::DomainContext::create(search->task->get_domain());
@@ -368,44 +375,55 @@ TEST(RunirTests, DatalogDistanceEqualsNDistanceOnTermes)
   (:datalog
     (:rule (dist ?p (min 0)) (at ?p))
     (:rule (dist ?q (min ?v)) (dist ?p ?w) (neighbor ?p ?q) (= ?v (+ ?w 1)))
-    (:rule (best (min ?w)) (dist ?p ?w) (is-depot ?p)))
+    (:rule (best (min ?w)) (dist ?p ?w) (is-depot ?p))
+    (:rule (reached) (best ?w)))
   (:features
     (:numerical (:symbol to-depot) (:expression (n_distance (c_atomic_state "at") (r_atomic_state "neighbor") (c_atomic_state "is-depot"))))
-    (:query (:symbol closest) (:expression (q_head best (m)))))
+    (:numerical (:symbol closest) (:head best))
+    (:boolean (:symbol reachable) (:head reached)))
   (:rules))
 )",
                                                        search->task->get_domain().get_domain(),
                                                        *domain_context->ext_repository);
     const auto distance = module_.get_features<kr::dl::NumericalTag>()[0].get_feature();
-    const auto best = module_.get_query_features()[0].get_feature();
+    const auto best = module_.get_features<kr::dl::NumericalTag>()[1].get_feature();
+    const auto reachable = module_.get_features<kr::dl::BooleanTag>()[0].get_feature();
     auto builder = kr::dl::semantics::Builder();
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
-    const auto value_of = [](ygg::database::RelationView rows)
-    {
-        if (rows.size() == 0)
-            return std::numeric_limits<ygg::uint_t>::max();
-        return ygg::ByteCodec<ygg::uint_t>::decode(rows.row(0).first(ygg::ByteCodec<ygg::uint_t>::size));
-    };
+    auto evaluation = kr::dl::semantics::incremental::IncrementalEvaluation<tyr::LiftedTag>(*search->task, { best, reachable });
+    auto& workspace = builder.get_workspace().get_database_workspace();
 
     auto random = std::mt19937(1);
     auto node = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    {
+        auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(node.get_state(), builder, storage);
+        static_cast<void>(evaluation.enter(context).evaluate(evaluation.graph().get_index(best)));
+    }
     auto rules = std::vector<double>(), constructor = std::vector<double>();
     const auto seconds = [](auto start) { return std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count(); };
     for (int step = 0; step < 300; ++step)
     {
+        const auto successors = search->successor_generator->get_successor_nodes(node, *search->state_repository, *search->axiom_evaluator);
+        const auto& next = successors[random() % successors.size()];
+        auto delta = kr::dl::semantics::incremental::Delta {};
+        delta.assign<tyr::LiftedTag>(node.get_state(), next.get_state());
         storage.reset_dynamic();
-        auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(node.get_state(), builder, storage);
+        auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(next.get_state(), builder, storage);
         auto start = std::chrono::steady_clock::now();
         const auto expected = kr::dl::semantics::evaluate<tyr::LiftedTag>(distance, context).get();
         constructor.push_back(seconds(start));
         storage.reset_dynamic();
         start = std::chrono::steady_clock::now();
-        const auto value = value_of(kr::dl::semantics::evaluate<tyr::LiftedTag>(best, context));
+        const auto value = kr::dl::semantics::evaluate<tyr::LiftedTag>(best, context).get();
         rules.push_back(seconds(start));
         ASSERT_EQ(value, expected) << "step " << step;
-        const auto successors = search->successor_generator->get_successor_nodes(node, *search->state_repository, *search->axiom_evaluator);
-        node = successors[random() % successors.size()];
+        ASSERT_EQ(kr::dl::semantics::evaluate<tyr::LiftedTag>(reachable, context).get(), expected != std::numeric_limits<ygg::uint_t>::max());
+        storage.reset_dynamic();
+        auto incremental = evaluation.enter(context, delta, workspace);
+        ASSERT_EQ(incremental.evaluate(evaluation.graph().get_index(best)).get(), expected) << "step " << step;
+        ASSERT_EQ(incremental.evaluate(evaluation.graph().get_index(reachable)).get(), expected != std::numeric_limits<ygg::uint_t>::max());
+        node = next;
     }
     const auto report = [](const char* name, std::vector<double> times)
     {

@@ -289,6 +289,8 @@ std::string numerical(ygg::View<ygg::Index<runir::kr::dl::Numerical<Tag>>, C> vi
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::CountTag>)
         return constructor(runir::kr::dl::CountTag::keyword, view.get_arg());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::ValueTag>)
+        return constructor(runir::kr::dl::ValueTag::keyword, view.get_arg());
     else if constexpr (std::same_as<Tag, runir::kr::dl::DistanceTag>)
         return constructor(runir::kr::dl::DistanceTag::keyword, view.get_lhs(), view.get_mid(), view.get_rhs());
     else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>)

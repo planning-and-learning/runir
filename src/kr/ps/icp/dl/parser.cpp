@@ -147,7 +147,9 @@ ModuleView lower_module(const ast::Module& module,
             {
                 if (!feature_names.emplace(concrete.symbol.text).second)
                     diagnostics.throw_at(concrete.symbol, DuplicateDefinitionError("feature", concrete.symbol.text));
-                if constexpr (std::same_as<Concrete, ast::QueryFeature>)
+                if constexpr (requires { concrete.head; })
+                    diagnostics.throw_at(concrete.head, runir::kr::InvalidExpressionError("Head features need a :datalog section."));
+                else if constexpr (std::same_as<Concrete, ast::QueryFeature>)
                 {
                     const auto expression = parse(concrete.expression, domain, context);
                     data->query_features.push_back(make_feature<ps::dl::QueryFeature>(repository, builder, expression.get_index(), concrete.symbol.text));

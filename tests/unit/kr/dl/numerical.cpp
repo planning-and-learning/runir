@@ -41,7 +41,7 @@ consteval bool numerical_data_view()
     else
         static_assert(std::same_as<View, kr::dl::NumericalView<Tag>>);
 
-    if constexpr (std::same_as<Tag, kr::dl::CountTag>)
+    if constexpr (std::same_as<Tag, kr::dl::CountTag> || std::same_as<Tag, kr::dl::ValueTag>)
         return requires(Data& data, const View& view) {
             data.arg;
             view.get_arg();

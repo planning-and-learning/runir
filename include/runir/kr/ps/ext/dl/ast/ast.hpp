@@ -66,9 +66,20 @@ struct QueryFeature : boost::spirit::x3::position_tagged
     runir::kr::dl::grammar::ast::Query expression;
 };
 
+/// A feature read from a head of the module's Datalog program: a Boolean one is true iff the nullary head has its row,
+/// a numerical one is the least value of the unary head (infinity without a row).
+template<runir::kr::dl::CategoryTag Category>
+struct HeadFeature : boost::spirit::x3::position_tagged
+{
+    Identifier symbol;
+    Identifier head;
+};
+
 using FeatureVariant = PositionedVariant<Feature<runir::kr::dl::ConceptTag>,
                                          Feature<runir::kr::dl::RoleTag>,
+                                         HeadFeature<runir::kr::dl::BooleanTag>,
                                          Feature<runir::kr::dl::BooleanTag>,
+                                         HeadFeature<runir::kr::dl::NumericalTag>,
                                          Feature<runir::kr::dl::NumericalTag>,
                                          QueryFeature>;
 

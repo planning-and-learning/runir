@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_EVALUATORS_COUNT_HPP_
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_EVALUATORS_COUNT_HPP_
 
+#include "runir/kr/dl/semantics/detail/evaluation_helpers.hpp"
 #include "runir/kr/dl/semantics/incremental/declarations.hpp"
 #include "runir/kr/dl/semantics/incremental/delta.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/denotation_state.hpp"
@@ -35,6 +36,25 @@ struct CountEvaluator
                 return ygg::to_uint_t(remaining + delta.added.size());
             },
             child));
+    }
+};
+
+/// n_value: the least value in the one column of the child query, read anew from its result when its rows change.
+template<tyr::TaskKind Kind>
+struct ValueEvaluator
+{
+    QueryEvaluationIndex child;
+    DenotationState<NumericalTag> value;
+
+    explicit ValueEvaluator(QueryEvaluationIndex child_) : child(child_) {}
+    template<StateEvaluationContextConcept<Kind> Context>
+    void initialize(EvaluationGraph<Kind>& graph, Context&)
+    { value.set(semantics::detail::least_value(graph.result(child))); }
+    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
+    {
+        const auto& delta = graph.change(child);
+        if (!delta.added.empty() || !delta.removed.empty())
+            value.set(semantics::detail::least_value(graph.result(child)));
     }
 };
 

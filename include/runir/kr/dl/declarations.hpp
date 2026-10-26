@@ -231,6 +231,13 @@ struct DistanceTag
     static constexpr auto keyword = "n_distance";
 };
 
+/// The least value in the one column of a query (a Datalog head read with q_head), infinity if it has no row: the
+/// bridge from a head to a numerical feature.
+struct ValueTag
+{
+    static constexpr auto keyword = "n_value";
+};
+
 struct ConceptAtomicStateSyntaxTag
 {
     static constexpr auto keyword = "c_atomic_state";
@@ -821,7 +828,8 @@ using BooleanConstructorTags = ygg::ConcatTypeListsT<BaseBooleanConstructorTags,
                                                      ygg::TypeList<BooleanConstantTag>,
                                                      LogicalConstructorTags,
                                                      ygg::TypeList<ArgumentTag<BooleanTag>>>;
-using NumericalConstructorTags = ygg::ConcatTypeListsT<BaseNumericalConstructorTags, ArithmeticConstructorTags, ygg::TypeList<ArgumentTag<NumericalTag>>>;
+using NumericalConstructorTags =
+    ygg::ConcatTypeListsT<BaseNumericalConstructorTags, ArithmeticConstructorTags, ygg::TypeList<ValueTag, ArgumentTag<NumericalTag>>>;
 
 /// Feature generation grammars and their CNF build only these constructors.
 using GenerationConceptConstructorTags = BaseConceptConstructorTags;

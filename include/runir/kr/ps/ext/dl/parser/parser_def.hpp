@@ -62,6 +62,8 @@ constexpr concept_feature_type concept_feature = "concept_feature";
 constexpr role_feature_type role_feature = "role_feature";
 constexpr boolean_feature_type boolean_feature = "boolean_feature";
 constexpr numerical_feature_type numerical_feature = "numerical_feature";
+constexpr boolean_head_feature_type boolean_head_feature = "boolean_head_feature";
+constexpr numerical_head_feature_type numerical_head_feature = "numerical_head_feature";
 constexpr query_feature_type query_feature = "query_feature";
 constexpr feature_type feature = "feature";
 constexpr features_section_type features_section = ":features";
@@ -155,7 +157,12 @@ constexpr auto numerical_feature_def = context(
 constexpr auto query_feature_def =
     context("query feature")[keyword("(:query") > symbol_section
                              > context(":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::dl_query > lit(")")] > lit(")")];
-constexpr auto feature_def = concept_feature | role_feature | boolean_feature | numerical_feature | query_feature;
+constexpr auto boolean_head_feature_def =
+    context("boolean feature")[(keyword("(:boolean") >> symbol_section >> lit("(") >> keyword(":head")) > identifier > lit(")") > lit(")")];
+constexpr auto numerical_head_feature_def =
+    context("numerical feature")[(keyword("(:numerical") >> symbol_section >> lit("(") >> keyword(":head")) > identifier > lit(")") > lit(")")];
+constexpr auto feature_def =
+    concept_feature | role_feature | boolean_head_feature | boolean_feature | numerical_head_feature | numerical_feature | query_feature;
 constexpr auto features_section_def = context(":features")[(lit("(") >> keyword(":features")) > *feature > lit(")")];
 
 constexpr auto symbol_expression_def = identifier;
@@ -296,6 +303,8 @@ BOOST_SPIRIT_DEFINE(identifier,
                     role_feature,
                     boolean_feature,
                     numerical_feature,
+                    boolean_head_feature,
+                    numerical_head_feature,
                     query_feature,
                     feature,
                     features_section,
@@ -419,6 +428,12 @@ struct BooleanFeatureClass : boost::spirit::x3::annotate_on_success
 {
 };
 struct NumericalFeatureClass : boost::spirit::x3::annotate_on_success
+{
+};
+struct BooleanHeadFeatureClass : boost::spirit::x3::annotate_on_success
+{
+};
+struct NumericalHeadFeatureClass : boost::spirit::x3::annotate_on_success
 {
 };
 struct QueryFeatureClass : boost::spirit::x3::annotate_on_success

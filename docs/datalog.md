@@ -54,6 +54,17 @@ positive atom; negation and aggregation must be stratified. Violations are repor
 ## Names
 
 - `(q_head r (columns))` is a query: the rows of head `r`, with the given column names.
+- `(:boolean (:symbol s) (:head r))` is true iff the nullary head `r` has its row (`b_nonempty` of `q_head`);
+  `(:numerical (:symbol s) (:head r))` is the least value of the unary head `r`, infinity if it has no row (`n_value`
+  of `q_head`). The column should hold numbers, as a `(min ...)` head, an aggregate or arithmetic gives them:
+
+  ```
+  (:rule (to-target (min ?w)) (dist ?x ?w) (target ?x))
+  (:rule (reachable) (to-target ?w))
+  ...
+  (:numerical (:symbol distance) (:head to-target))
+  (:boolean (:symbol can-reach) (:head reachable))
+  ```
 - A rule body may read a concept feature (one column), a role feature (two columns) or a query feature (its columns) by
   name.
 - A DL expression may name another feature: `(n_add reached plain)`, `(c_or start reachable)`, `(n_count pairs)`. The

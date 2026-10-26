@@ -385,6 +385,10 @@ auto evaluate_impl(ygg::View<ygg::Index<Numerical<Tag>>, C> constructor, Context
     {
         result_value = detail::on_demand_distance<Kind>(constructor, context);
     }
+    else if constexpr (std::same_as<Tag, ValueTag>)
+    {
+        result_value = detail::least_value(evaluate<Kind>(constructor.get_arg(), children));
+    }
     else if constexpr (std::same_as<Tag, NumericalConstantTag>)
     {
         result_value = constructor.get_value();

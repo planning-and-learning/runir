@@ -27,6 +27,7 @@
 #include <utility>
 #include <yggdrasil/containers/dynamic_bitset.hpp>
 #include <yggdrasil/containers/unique_object_pool.hpp>
+#include <yggdrasil/core/byte_codec.hpp>
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/core/dependent_false.hpp>
 #include <yggdrasil/core/types.hpp>
@@ -149,6 +150,16 @@ inline bool nonempty(QueryDenotationView value) { return !value.empty(); }
 inline ygg::uint_t count(DenotationView<ConceptTag> value) { return ygg::to_uint_t(value.get().count()); }
 inline ygg::uint_t count(DenotationView<RoleTag> value) { return ygg::to_uint_t(value.count()); }
 inline ygg::uint_t count(QueryDenotationView value) { return ygg::to_uint_t(value.size()); }
+
+/// The least value in the one column of a relation, the largest uint_t (infinity) if it has no row.
+template<typename Rows>
+ygg::uint_t least_value(const Rows& rows)
+{
+    auto result = std::numeric_limits<ygg::uint_t>::max();
+    for (size_t i = 0; i < rows.size(); ++i)
+        result = std::min(result, ygg::ByteCodec<ygg::uint_t>::decode(rows.row(i).first(ygg::ByteCodec<ygg::uint_t>::size)));
+    return result;
+}
 
 template<ComparisonTag Tag>
 constexpr bool apply_comparison(ygg::uint_t lhs, ygg::uint_t rhs) noexcept

@@ -73,6 +73,7 @@ template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Boolean<runi
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Boolean<runir::kr::dl::OrTag>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Boolean<runir::kr::dl::NotTag>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Numerical<runir::kr::dl::CountTag>>;
+template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Numerical<runir::kr::dl::ValueTag>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Numerical<runir::kr::dl::DistanceTag>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Numerical<runir::kr::dl::NumericalConstantTag>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::Numerical<runir::kr::dl::AddTag>>;

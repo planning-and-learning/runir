@@ -99,6 +99,8 @@ std::size_t syntactic_complexity(ygg::View<ygg::Index<runir::kr::dl::Numerical<T
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::CountTag>)
         return 1 + ygg::visit([](auto child) { return syntactic_complexity(child); }, view.get_arg());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::ValueTag>)
+        return 1 + syntactic_complexity(view.get_arg());
     else if constexpr (std::same_as<Tag, runir::kr::dl::DistanceTag>)
     {
         const auto complexity = [](auto argument) { return ygg::visit([](auto child) { return syntactic_complexity(child); }, argument); };

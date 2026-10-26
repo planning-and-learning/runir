@@ -26,7 +26,7 @@ public:
     { return make_view(this->get_data().reference, this->get_context()); }
 
     auto get_arg() const noexcept
-        requires std::same_as<Tag, runir::kr::dl::CountTag>
+        requires(std::same_as<Tag, runir::kr::dl::CountTag> || std::same_as<Tag, runir::kr::dl::ValueTag>)
     { return make_view(this->get_data().arg, this->get_context()); }
 
     auto get_lhs() const noexcept

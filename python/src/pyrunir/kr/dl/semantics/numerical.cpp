@@ -26,7 +26,7 @@ void bind_numerical_data(nb::module_& m, const char* name)
                                             ygg::Index<runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>>,
                                             runir::kr::dl::ConstructorRepository>(cls);
 
-    if constexpr (std::same_as<Tag, CountTag>)
+    if constexpr (std::same_as<Tag, CountTag> || std::same_as<Tag, ValueTag>)
         cls.def_rw("arg", &Data::arg);
     else if constexpr (std::same_as<Tag, DistanceTag>)
         cls.def_rw("lhs", &Data::lhs).def_rw("mid", &Data::mid).def_rw("rhs", &Data::rhs);
@@ -49,7 +49,7 @@ void bind_numerical_view(nb::module_& m, const char* name)
     ygg::add_hash(cls);
     cls.def("syntactic_complexity", [](View view) { return semantics::syntactic_complexity(view); });
 
-    if constexpr (std::same_as<Tag, CountTag>)
+    if constexpr (std::same_as<Tag, CountTag> || std::same_as<Tag, ValueTag>)
         cls.def("get_arg", &View::get_arg, nb::keep_alive<0, 1>());
     else if constexpr (std::same_as<Tag, DistanceTag>)
         cls.def("get_lhs", &View::get_lhs, nb::keep_alive<0, 1>())
@@ -97,18 +97,22 @@ void bind_semantics_numerical(nb::module_& m)
 
     using Count = Numerical<CountTag>;
     using Distance = Numerical<DistanceTag>;
+    using Value = Numerical<ValueTag>;
     using ArgumentReference = Numerical<ArgumentTag<NumericalTag>>;
 
     ygg::bind_index<ygg::Index<Count>>(m, "NumericalCountIndex");
     ygg::bind_index<ygg::Index<Distance>>(m, "NumericalDistanceIndex");
+    ygg::bind_index<ygg::Index<Value>>(m, "NumericalValueIndex");
     ygg::bind_index<ygg::Index<ArgumentReference>>(m, "NumericalArgumentIndex");
 
     bind_numerical_data<CountTag>(m, "NumericalCountData");
     bind_numerical_data<DistanceTag>(m, "NumericalDistanceData");
+    bind_numerical_data<ValueTag>(m, "NumericalValueData");
     bind_numerical_data<ArgumentTag<NumericalTag>>(m, "NumericalArgumentData");
 
     bind_numerical_view<CountTag>(m, "NumericalCount");
     bind_numerical_view<DistanceTag>(m, "NumericalDistance");
+    bind_numerical_view<ValueTag>(m, "NumericalValue");
     bind_numerical_view<ArgumentTag<NumericalTag>>(m, "NumericalArgument");
 }
 

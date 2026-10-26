@@ -40,6 +40,20 @@ struct Data<runir::kr::dl::Numerical<runir::kr::dl::CountTag>>
     void clear() noexcept { ygg::clear_members(*this); }
 };
 
+template<>
+struct Data<runir::kr::dl::Numerical<runir::kr::dl::ValueTag>>
+{
+    Index<runir::kr::dl::Numerical<runir::kr::dl::ValueTag>> index;
+    Index<runir::kr::dl::Query<>> arg;
+
+    Data() = default;
+    explicit Data(Index<runir::kr::dl::Query<>> arg_) : index(), arg(arg_) {}
+
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::arg> {}; }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg> {}; }
+    void clear() noexcept { ygg::clear_members(*this); }
+};
+
 /// n_distance(sources, edges, targets): sources/targets are k-column vertices
 /// (a concept is k = 1), edges are 2k columns (a role is k = 1).
 template<>

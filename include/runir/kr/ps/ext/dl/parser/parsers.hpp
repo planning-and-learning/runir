@@ -37,6 +37,8 @@ struct ConceptFeatureClass;
 struct RoleFeatureClass;
 struct BooleanFeatureClass;
 struct NumericalFeatureClass;
+struct BooleanHeadFeatureClass;
+struct NumericalHeadFeatureClass;
 struct QueryFeatureClass;
 struct FeatureClass;
 struct SymbolExpressionClass;
@@ -107,6 +109,8 @@ using concept_feature_type = boost::spirit::x3::rule<ConceptFeatureClass, ast::F
 using role_feature_type = boost::spirit::x3::rule<RoleFeatureClass, ast::Feature<runir::kr::dl::RoleTag>>;
 using boolean_feature_type = boost::spirit::x3::rule<BooleanFeatureClass, ast::Feature<runir::kr::dl::BooleanTag>>;
 using numerical_feature_type = boost::spirit::x3::rule<NumericalFeatureClass, ast::Feature<runir::kr::dl::NumericalTag>>;
+using boolean_head_feature_type = boost::spirit::x3::rule<BooleanHeadFeatureClass, ast::HeadFeature<runir::kr::dl::BooleanTag>>;
+using numerical_head_feature_type = boost::spirit::x3::rule<NumericalHeadFeatureClass, ast::HeadFeature<runir::kr::dl::NumericalTag>>;
 using query_feature_type = boost::spirit::x3::rule<QueryFeatureClass, ast::QueryFeature>;
 using feature_type = boost::spirit::x3::rule<FeatureClass, ast::FeatureVariant>;
 using features_section_type = boost::spirit::x3::rule<FeaturesSectionClass, std::vector<ast::FeatureVariant>>;

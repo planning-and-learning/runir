@@ -11,6 +11,7 @@ BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::ps::ext::dl::ast::Register
 BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::ps::ext::dl::ast::Feature) (Category), symbol, expression)
 
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::QueryFeature, symbol, expression)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::ps::ext::dl::ast::HeadFeature) (Category), symbol, head)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::SymbolExpression, symbol)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::NamedValue, value)
 
