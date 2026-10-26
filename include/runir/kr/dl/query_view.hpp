@@ -157,6 +157,7 @@ public:
     /// The program's rules, in the repository's DatalogRepository.
     auto get_program() const noexcept { return make_view(this->get_data().program, this->get_context().get_datalog_repository()); }
     auto get_inputs() const noexcept { return make_view(this->get_data().inputs, this->get_context()); }
+    auto get_outputs() const noexcept { return make_view(this->get_data().outputs, this->get_context().get_datalog_repository()); }
     [[nodiscard]] bool is_static() const noexcept { return this->get_data().is_static; }
 };
 

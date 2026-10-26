@@ -537,12 +537,14 @@ struct Data<runir::kr::dl::DatalogProgram>
     Index<runir::kr::dl::DatalogProgram> index;
     Index<ygg::database::datalog::Program> program {};
     IndexList<runir::kr::dl::Query<>> inputs {};
+    /// The heads that features read (q_head); only these are evaluated, so the others may be evaluated partially.
+    IndexList<ygg::database::datalog::Relation> outputs {};
     bool is_static = false;
 
     Data() = default;
     // is_static is derived during insertion and therefore not a constructor parameter.
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::program, &Data::inputs, &Data::is_static> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::program, &Data::inputs> {}; }
+    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::program, &Data::inputs, &Data::outputs, &Data::is_static> {}; }
+    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::program, &Data::inputs, &Data::outputs> {}; }
     void clear() noexcept { ygg::clear_members(*this); }
 };
 

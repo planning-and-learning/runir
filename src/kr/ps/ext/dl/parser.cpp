@@ -7,19 +7,25 @@
 #include "runir/kr/dl/canonicalization.hpp"
 #include "runir/kr/dl/detail/repository_instantiations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
+#include "runir/kr/dl/grammar/ast/ast_adapted.hpp"
 #include "runir/kr/dl/grammar/parser/parser.hpp"
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/errors.hpp"
 #include "runir/kr/parser/diagnostics.hpp"
 #include "runir/kr/ps/ext/canonicalization.hpp"
 #include "runir/kr/ps/ext/detail/repository_instantiations.hpp"
+#include "runir/kr/ps/ext/dl/ast/ast_adapted.hpp"
 #include "runir/kr/ps/ext/dl/parser/parser.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
 
+#include <boost/fusion/include/for_each.hpp>
+#include <boost/fusion/support/is_sequence.hpp>
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
 #include <boost/variant/apply_visitor.hpp>
 #include <memory>
 #include <optional>
+#include <ranges>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -35,6 +41,40 @@ namespace runir::kr::ps::ext::dl
 {
 namespace
 {
+/// Collects the heads that q_head constructors name anywhere in a syntax tree.
+struct HeadNames
+{
+    std::set<std::string>* names;
+
+    template<typename T>
+    void operator()(const T& node) const
+    {
+        if constexpr (std::same_as<T, runir::kr::dl::grammar::ast::QueryHead>)
+            names->insert(node.name.text);
+        else if constexpr (std::same_as<T, std::string>)
+            return;
+        else if constexpr (requires { node.get().which(); })
+            boost::apply_visitor([this](const auto& alternative) { (*this)(alternative); }, node.get());
+        else if constexpr (requires { node.get(); })
+            (*this)(node.get());
+        else if constexpr (requires {
+                               node.has_value();
+                               *node;
+                           })
+        {
+            if (node)
+                (*this)(*node);
+        }
+        else if constexpr (std::ranges::range<T>)
+        {
+            for (const auto& element : node)
+                (*this)(element);
+        }
+        else if constexpr (boost::fusion::traits::is_sequence<T>::value)
+            boost::fusion::for_each(node, *this);
+    }
+};
+
 using runir::kr::parser::ext_constructors::ConstructorContext;
 using runir::kr::parser::ext_constructors::ModuleReferences;
 using runir::kr::parser::ext_constructors::parse;
@@ -904,7 +944,11 @@ ModuleView lower_module(const ast::Module& ast,
     auto query_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>> {};
     // Features may name each other and read Datalog heads, in any order; each is parsed at its first reference.
     auto resolver = runir::kr::parser::datalog::FeatureResolver(diagnostics);
+    // The heads that features read are the program's outputs; the others are evaluated only as far as those need.
+    auto read_heads = std::set<std::string>();
+    HeadNames { &read_heads }(ast.features);
     auto section = runir::kr::parser::datalog::DatalogSection(ast.datalog ? &*ast.datalog : nullptr,
+                                                              std::move(read_heads),
                                                               domain,
                                                               repository.get_dl_repository(),
                                                               *builders.dl,

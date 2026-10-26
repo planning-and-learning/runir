@@ -69,6 +69,7 @@ class DatalogSection
 {
 public:
     DatalogSection(const DatalogRules* rules,
+                   std::set<std::string> read_heads,
                    tyr::formalism::planning::DomainView domain,
                    runir::kr::dl::ConstructorRepository& repository,
                    runir::kr::dl::Builder& builder,
@@ -84,6 +85,8 @@ public:
 private:
     const DatalogRules* m_rules;
     std::set<std::string> m_weighted;
+    /// The heads that q_head constructors read anywhere in the module, the program's outputs.
+    std::set<std::string> m_read_heads;
     tyr::formalism::planning::DomainView m_domain;
     runir::kr::dl::ConstructorRepository* m_repository;
     runir::kr::dl::Builder* m_builder;

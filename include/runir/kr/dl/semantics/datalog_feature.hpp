@@ -29,15 +29,14 @@ struct DatalogFeature
     }
 };
 
-/// The relations of the program's rule heads, in rule order. The repository is a template parameter so that the body
-/// is checked once it is complete.
+/// The heads that features read, the evaluator's outputs. The repository is a template parameter so that the body is
+/// checked once it is complete.
 template<typename C>
 std::vector<ygg::database::datalog::RelationView> program_heads(ygg::View<ygg::Index<DatalogProgram>, C> program)
 {
     auto heads = std::vector<ygg::database::datalog::RelationView>();
-    for (const auto rule : program.get_program().get_rules())
-        if (const auto head = rule.get_head().get_relation(); std::ranges::find(heads, head) == heads.end())
-            heads.push_back(head);
+    for (const auto head : program.get_outputs())
+        heads.push_back(head);
     return heads;
 }
 

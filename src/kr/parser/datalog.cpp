@@ -112,7 +112,7 @@ public:
         }
     }
 
-    ygg::Index<dl::DatalogProgram> finish(const ast::Identifier& reference)
+    ygg::Index<dl::DatalogProgram> finish(const ast::Identifier& reference, const std::set<std::string>& read_heads)
     {
         auto program = ydl::checkout<ydl::Program>(m_datalog_builder);
         for (const auto rule : m_rules)
@@ -134,6 +134,9 @@ public:
         data->program = view.get_index();
         for (const auto input : m_inputs)
             data->inputs.push_back(input);
+        for (const auto& [name, relation] : m_derived)
+            if (read_heads.contains(name))
+                data->outputs.push_back(relation);
         return constructors::intern(m_context, *data).get_index();
     }
 
@@ -401,6 +404,7 @@ private:
 }  // namespace
 
 DatalogSection::DatalogSection(const DatalogRules* rules,
+                               std::set<std::string> read_heads,
                                tyr::formalism::planning::DomainView domain,
                                runir::kr::dl::ConstructorRepository& repository,
                                runir::kr::dl::Builder& builder,
@@ -408,6 +412,7 @@ DatalogSection::DatalogSection(const DatalogRules* rules,
                                const ext_constructors::ModuleReferences& references,
                                const DiagnosticContext& diagnostics) :
     m_rules(rules),
+    m_read_heads(std::move(read_heads)),
     m_domain(domain),
     m_repository(&repository),
     m_builder(&builder),
@@ -443,7 +448,7 @@ void DatalogSection::build(const ast::Identifier& reference)
     auto builder = ProgramBuilder(m_domain, *m_repository, *m_builder, *m_features, *m_references, m_arities, m_weighted, *m_diagnostics);
     for (const auto& rule : *m_rules)
         builder.add_rule(rule);
-    m_program = builder.finish(reference);
+    m_program = builder.finish(reference, m_read_heads);
     for (const auto& [name, arity] : m_arities)
         m_heads.emplace(name, builder.derived(name));
     m_building = false;
