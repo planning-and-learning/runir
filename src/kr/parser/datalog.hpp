@@ -60,7 +60,7 @@ private:
     std::vector<std::string> m_stack;
 };
 
-using DatalogAst = runir::kr::ps::ext::dl::ast::DatalogProgram;
+using DatalogRules = std::vector<runir::kr::ps::ext::dl::ast::DatalogRule>;
 
 /// The :datalog section of a module: one program whose rules read domain predicates, goal atoms ((goal p t...)), the
 /// module's concept and role registers and arguments, and concept, role and query features, built at the first q_head.
@@ -68,7 +68,7 @@ using DatalogAst = runir::kr::ps::ext::dl::ast::DatalogProgram;
 class DatalogSection
 {
 public:
-    DatalogSection(const DatalogAst* section,
+    DatalogSection(const DatalogRules* rules,
                    tyr::formalism::planning::DomainView domain,
                    runir::kr::dl::ConstructorRepository& repository,
                    runir::kr::dl::Builder& builder,
@@ -82,7 +82,7 @@ public:
     void validate(const ast::Identifier& reference);
 
 private:
-    const DatalogAst* m_section;
+    const DatalogRules* m_rules;
     std::set<std::string> m_weighted;
     tyr::formalism::planning::DomainView m_domain;
     runir::kr::dl::ConstructorRepository* m_repository;

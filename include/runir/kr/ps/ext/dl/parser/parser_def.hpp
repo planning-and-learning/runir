@@ -113,6 +113,7 @@ constexpr datalog_condition_type datalog_condition = "Datalog condition";
 constexpr datalog_aggregate_type datalog_aggregate = "Datalog aggregate";
 constexpr datalog_literal_type datalog_literal = "Datalog literal";
 constexpr datalog_rule_type datalog_rule = "Datalog rule";
+constexpr datalog_head_type datalog_head = "Datalog head";
 constexpr datalog_section_type datalog_section = ":datalog";
 
 constexpr auto identifier_def = boost::spirit::x3::rule<IdentifierText, std::string> { "identifier_text" } =
@@ -249,9 +250,9 @@ constexpr auto datalog_aggregate_body = (lit("(") > *datalog_condition) > lit(")
 constexpr auto datalog_aggregate_def = ((((lit("(") >> datalog_aggregate_function) > datalog_variable) > -datalog_variable) > datalog_aggregate_body)
                                        > lit(")");
 constexpr auto datalog_literal_def = datalog_aggregate | datalog_condition;
-constexpr auto datalog_rule_def = context("Datalog rule")[(((lit("(") >> keyword(":rule")) > datalog_atom) > *datalog_literal) > lit(")")];
-constexpr auto datalog_weighted = context(":weighted")[(lit("(") >> keyword(":weighted")) > *identifier > lit(")")];
-constexpr auto datalog_section_def = context(":datalog")[((lit("(") >> keyword(":datalog")) > -datalog_weighted > *datalog_rule) > lit(")")];
+constexpr auto datalog_head_def = (((lit("(") >> identifier) > *datalog_term) > -((lit("(") >> keyword("min")) > datalog_term > lit(")"))) > lit(")");
+constexpr auto datalog_rule_def = context("Datalog rule")[(((lit("(") >> keyword(":rule")) > datalog_head) > *datalog_literal) > lit(")")];
+constexpr auto datalog_section_def = context(":datalog")[((lit("(") >> keyword(":datalog")) > *datalog_rule) > lit(")")];
 
 constexpr auto module_def = context("module")[(lit("(") >> keyword(":module")) > symbol_section > arguments_section > registers_section > entry_section
                                               > memory_section > -datalog_section > features_section > rules_section > lit(")")];
@@ -271,6 +272,7 @@ BOOST_SPIRIT_DEFINE(datalog_variable,
                     datalog_aggregate,
                     datalog_literal,
                     datalog_rule,
+                    datalog_head,
                     datalog_section)
 BOOST_SPIRIT_DEFINE(identifier,
                     quoted_string,

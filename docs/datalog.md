@@ -22,18 +22,18 @@ Rules are evaluated by yggdrasil's `ygg::database::datalog::Evaluator`.
 
 ## Rules
 
-`(:weighted r...)`, first in the section, makes heads weighted: the last column of a weighted head is its weight, and it
-keeps per row of the other columns the least weight its rules derive (evaluated in order of weight, Knuth's
-generalization of Dijkstra's algorithm). A rule into a weighted head computes its weight from its weighted atoms'
-weights only with `+` and `max`, and uses those weights nowhere else; a base rule may give a number:
+A head whose last term is `(min t)` keeps, per row of its other terms, the least value of `t` its rules derive
+(aggregates in recursion, Zaniolo et al., TPLP 2017; evaluated in order of value, Knuth's generalization of
+Dijkstra's algorithm). Every rule of such a head has the `(min ...)`; it computes the value from its body's minimized
+atoms' values only with `+` and `max` and uses those values nowhere else; a base rule may give a number:
 
 ```
-(:weighted dist)
-(:rule (dist ?x 0) (marker ?x))
-(:rule (dist ?y ?v) (dist ?x ?w) (edge ?x ?y) (= ?v (+ ?w 1)))
+(:rule (dist ?x (min 0)) (marker ?x))
+(:rule (dist ?y (min ?v)) (dist ?x ?w) (edge ?x ?y) (= ?v (+ ?w 1)))
+(:rule (to-target (min ?w)) (dist ?x ?w) (target ?x))
 ```
 
-Other rules read a weighted head like any relation, its weight as a value.
+Other rules read such a head like any relation, its least value as its last column.
 
 `(:rule HEAD LITERAL...)`, the head an atom over distinct variables. Literals:
 

@@ -88,7 +88,10 @@ public:
     {
         m_variables.clear();
         auto rule = ydl::checkout<ydl::Rule>(m_datalog_builder);
-        rule->head = atom(syntax.head.relation, syntax.head.terms, head_relation(syntax.head.relation)).get_index();
+        auto head_terms = syntax.head.terms;
+        if (syntax.head.min)
+            head_terms.push_back(*syntax.head.min);
+        rule->head = atom(syntax.head.relation, head_terms, head_relation(syntax.head.relation)).get_index();
         for (const auto& literal : syntax.body)
             boost::apply_visitor(
                 [&]<typename T>(const T& node)
@@ -397,14 +400,14 @@ private:
 
 }  // namespace
 
-DatalogSection::DatalogSection(const DatalogAst* section,
+DatalogSection::DatalogSection(const DatalogRules* rules,
                                tyr::formalism::planning::DomainView domain,
                                runir::kr::dl::ConstructorRepository& repository,
                                runir::kr::dl::Builder& builder,
                                FeatureResolver& features,
                                const ext_constructors::ModuleReferences& references,
                                const DiagnosticContext& diagnostics) :
-    m_section(section),
+    m_rules(rules),
     m_domain(domain),
     m_repository(&repository),
     m_builder(&builder),
@@ -412,36 +415,33 @@ DatalogSection::DatalogSection(const DatalogAst* section,
     m_references(&references),
     m_diagnostics(&diagnostics)
 {
-    if (!section)
+    if (!rules)
         return;
-    // The heads and their arities, so that rules may use heads defined later.
-    for (const auto& rule : section->rules)
+    // The heads, their arities and whether they keep least values, so that rules may use heads defined later.
+    auto minimizing = std::map<std::string, bool>();
+    for (const auto& rule : *rules)
     {
         const auto& name = rule.head.relation;
         const auto clashes = [&]<typename T>(T)
         { return std::ranges::any_of(domain.get_predicates<T>(), [&](auto predicate) { return predicate.get_name() == name.text; }); };
         if (clashes(tyr::formalism::StaticTag {}) || clashes(tyr::formalism::FluentTag {}) || clashes(tyr::formalism::DerivedTag {}))
             diagnostics.throw_at(name, InvalidExpressionError("A Datalog head cannot be named like the predicate " + name.text + "."));
-        const auto arity = rule.head.terms.size();
+        const auto arity = rule.head.terms.size() + (rule.head.min ? 1 : 0);
         if (const auto [it, inserted] = m_arities.emplace(name.text, arity); !inserted && it->second != arity)
             diagnostics.throw_at(name, ArityMismatchError(name.text, it->second, arity));
+        if (const auto [it, inserted] = minimizing.emplace(name.text, rule.head.min.has_value()); !inserted && it->second != rule.head.min.has_value())
+            diagnostics.throw_at(name, InvalidExpressionError("Either every rule of " + name.text + " has (min ...) as last head term or none."));
     }
-    if (section->weighted)
-        for (const auto& name : *section->weighted)
-        {
-            if (!m_arities.contains(name.text))
-                diagnostics.throw_at(name, InvalidExpressionError("Only a head of the section can be weighted: " + name.text + "."));
-            if (m_arities.at(name.text) == 0)
-                diagnostics.throw_at(name, InvalidExpressionError("A weighted head has its weight as last column: " + name.text + "."));
-            m_weighted.insert(name.text);
-        }
+    for (const auto& [name, minimum] : minimizing)
+        if (minimum)
+            m_weighted.insert(name);
 }
 
 void DatalogSection::build(const ast::Identifier& reference)
 {
     m_building = true;
     auto builder = ProgramBuilder(m_domain, *m_repository, *m_builder, *m_features, *m_references, m_arities, m_weighted, *m_diagnostics);
-    for (const auto& rule : m_section->rules)
+    for (const auto& rule : *m_rules)
         builder.add_rule(rule);
     m_program = builder.finish(reference);
     for (const auto& [name, arity] : m_arities)
@@ -465,7 +465,7 @@ std::optional<HeadReference> DatalogSection::head(const ast::Identifier& name)
 
 void DatalogSection::validate(const ast::Identifier& reference)
 {
-    if (m_section && !m_program)
+    if (m_rules && !m_program)
         build(reference);
 }
 

@@ -205,13 +205,12 @@ TEST(RunirTests, DatalogRulesComputeWithNumbers)
 
 TEST(RunirTests, DatalogWeightedHeadsKeepLeastWeights)
 {
-    // dist: unit distances from the markers, the weight its last column; far reads the weights in a higher stratum.
+    // dist: unit distances from the markers, the least as its last column; far reads them in a higher stratum.
     const auto module_text = std::string(R"(
 (:module (:symbol entry) (:arguments) (:registers) (:entry m0) (:memory m0)
   (:datalog
-    (:weighted dist)
-    (:rule (dist ?x 0) (marker ?x))
-    (:rule (dist ?y ?v) (dist ?x ?w) (edge ?x ?y) (= ?v (+ ?w 1)))
+    (:rule (dist ?x (min 0)) (marker ?x))
+    (:rule (dist ?y (min ?v)) (dist ?x ?w) (edge ?x ?y) (= ?v (+ ?w 1)))
     (:rule (far ?x) (dist ?x ?w) (>= ?w 1)))
   (:features
     (:numerical (:symbol reached) (:expression (n_count (q_head dist (x w)))))
@@ -229,10 +228,13 @@ TEST(RunirTests, DatalogWeightedHeadsKeepLeastWeights)
     // markers a, c (distance 0); a -> b: b at 1, and c stays 0 although b -> c; one row per object.
     EXPECT_EQ(values(module_, context), (std::vector<int64_t> { 3, 1 }));
 
-    // A filter on a weight inside the weighted rule is rejected.
+    // A filter on a weight inside the minimizing rule is rejected, and so are rules of dist that disagree on min.
     auto filtered = module_text;
     filtered.replace(filtered.find("(edge ?x ?y) (= ?v"), 13, "(edge ?x ?y) (< ?w 3)");
     EXPECT_THROW(kr::ps::ext::dl::parse_module(filtered, search->task->get_domain().get_domain(), *domain_context->ext_repository), kr::InvalidExpressionError);
+    auto mixed = module_text;
+    mixed.replace(mixed.find("(dist ?x (min 0))"), 17, "(dist ?x 0)");
+    EXPECT_THROW(kr::ps::ext::dl::parse_module(mixed, search->task->get_domain().get_domain(), *domain_context->ext_repository), kr::InvalidExpressionError);
 }
 
 TEST(RunirTests, DatalogRulesReadRegistersByName)
@@ -356,7 +358,7 @@ TEST(RunirTests, DatalogRejectsInvalidPrograms)
 /// incremental evaluation: both agree, and their times are printed.
 TEST(RunirTests, DatalogDistanceEqualsNDistanceOnTermes)
 {
-    // The robot's distance to the depot over NEIGHBOR, as n_distance and as weighted rules with a min over the depots,
+    // The robot's distance to the depot over NEIGHBOR, as n_distance and as weighted rules with a minimizing goal head over the depots,
     // along a random walk of Autoscale Termes p16; n_distance is infinity (the largest uint_t) where the rules give no row.
     const auto directory = benchmark_path("classical/autoscale-benchmarks-main/21.11-agile-strips/termes");
     const auto search = make_lifted_context(directory / "domain.pddl", directory / "p16.pddl");
@@ -364,10 +366,9 @@ TEST(RunirTests, DatalogDistanceEqualsNDistanceOnTermes)
     const auto module_ = kr::ps::ext::dl::parse_module(R"(
 (:module (:symbol entry) (:arguments) (:registers) (:entry m0) (:memory m0)
   (:datalog
-    (:weighted dist)
-    (:rule (dist ?p 0) (at ?p))
-    (:rule (dist ?q ?v) (dist ?p ?w) (neighbor ?p ?q) (= ?v (+ ?w 1)))
-    (:rule (best ?m) (min ?m ?w ((dist ?p ?w) (is-depot ?p)))))
+    (:rule (dist ?p (min 0)) (at ?p))
+    (:rule (dist ?q (min ?v)) (dist ?p ?w) (neighbor ?p ?q) (= ?v (+ ?w 1)))
+    (:rule (best (min ?w)) (dist ?p ?w) (is-depot ?p)))
   (:features
     (:numerical (:symbol to-depot) (:expression (n_distance (c_atomic_state "at") (r_atomic_state "neighbor") (c_atomic_state "is-depot"))))
     (:query (:symbol closest) (:expression (q_head best (m)))))

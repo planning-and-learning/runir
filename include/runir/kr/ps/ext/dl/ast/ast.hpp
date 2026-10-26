@@ -234,17 +234,19 @@ struct DatalogAggregate : boost::spirit::x3::position_tagged
 using DatalogLiteral = PositionedVariant<DatalogAggregate, DatalogCondition>;
 
 /// (:rule head literal...)
-struct DatalogRule : boost::spirit::x3::position_tagged
+/// (relation term... (min term)?): with a min as last term, the relation keeps per row of the other terms the least
+/// value its rules derive (aggregates in recursion, Zaniolo et al. 2017).
+struct DatalogHead : boost::spirit::x3::position_tagged
 {
-    DatalogAtom head;
-    std::vector<DatalogLiteral> body;
+    Identifier relation;
+    std::vector<Identifier> terms;
+    boost::optional<Identifier> min;
 };
 
-/// (:datalog (:weighted head...)? rule...): a weighted head's last column is a weight, least per row of the others.
-struct DatalogProgram : boost::spirit::x3::position_tagged
+struct DatalogRule : boost::spirit::x3::position_tagged
 {
-    boost::optional<std::vector<Identifier>> weighted;
-    std::vector<DatalogRule> rules;
+    DatalogHead head;
+    std::vector<DatalogLiteral> body;
 };
 
 struct Module : boost::spirit::x3::position_tagged
@@ -254,7 +256,7 @@ struct Module : boost::spirit::x3::position_tagged
     std::vector<RegisterVariant> registers;
     Identifier entry;
     std::vector<NamedValue> memory_states;
-    boost::optional<DatalogProgram> datalog;
+    boost::optional<std::vector<DatalogRule>> datalog;
     std::vector<FeatureVariant> features;
     std::vector<RuleEntry> rule_entries;
 };

@@ -78,6 +78,7 @@ struct DatalogConditionClass;
 struct DatalogAggregateClass;
 struct DatalogLiteralClass;
 struct DatalogRuleClass;
+struct DatalogHeadClass;
 struct DatalogSectionClass;
 struct ModuleClass;
 struct ProgramClass;
@@ -153,7 +154,8 @@ using datalog_condition_type = boost::spirit::x3::rule<DatalogConditionClass, as
 using datalog_aggregate_type = boost::spirit::x3::rule<DatalogAggregateClass, ast::DatalogAggregate>;
 using datalog_literal_type = boost::spirit::x3::rule<DatalogLiteralClass, ast::DatalogLiteral>;
 using datalog_rule_type = boost::spirit::x3::rule<DatalogRuleClass, ast::DatalogRule>;
-using datalog_section_type = boost::spirit::x3::rule<DatalogSectionClass, ast::DatalogProgram>;
+using datalog_section_type = boost::spirit::x3::rule<DatalogSectionClass, std::vector<ast::DatalogRule>>;
+using datalog_head_type = boost::spirit::x3::rule<DatalogHeadClass, ast::DatalogHead>;
 using module_type = boost::spirit::x3::rule<ModuleClass, ast::Module>;
 using program_type = boost::spirit::x3::rule<ProgramClass, ast::Program>;
 using module_root_type = boost::spirit::x3::rule<ModuleRootClass, ast::Module>;
