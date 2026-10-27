@@ -1,0 +1,419 @@
+{
+  "cases": [
+    {
+      "name": "c_bot",
+      "category": "concept",
+      "dl": "(c_bot)",
+      "datalog": "(:rule (r ?x) (object ?x) (!= ?x ?x))"
+    },
+    {
+      "name": "c_top",
+      "category": "concept",
+      "dl": "(c_top)",
+      "datalog": "(:rule (r ?x) (object ?x))"
+    },
+    {
+      "name": "c_atomic_state",
+      "category": "concept",
+      "dl": "(c_atomic_state \"p\")",
+      "datalog": "(:rule (r ?x) (p ?x))"
+    },
+    {
+      "name": "c_atomic_goal",
+      "category": "concept",
+      "dl": "(c_atomic_goal \"p\" true)",
+      "datalog": "(:rule (r ?x) (goal p ?x))"
+    },
+    {
+      "name": "c_atomic_goal negative",
+      "category": "concept",
+      "dl": "(c_atomic_goal \"p\" false)",
+      "datalog": "(:rule (r ?x) (goal (not (p ?x))))"
+    },
+    {
+      "name": "c_and",
+      "category": "concept",
+      "dl": "(c_and (c_atomic_state \"p\") (c_atomic_state \"q\"))",
+      "datalog": "(:rule (r ?x) (p ?x) (q ?x))"
+    },
+    {
+      "name": "c_or",
+      "category": "concept",
+      "dl": "(c_or (c_atomic_state \"p\") (c_atomic_state \"q\"))",
+      "datalog": "(:rule (r ?x) (p ?x)) (:rule (r ?x) (q ?x))"
+    },
+    {
+      "name": "c_not",
+      "category": "concept",
+      "dl": "(c_not (c_atomic_state \"p\"))",
+      "datalog": "(:rule (r ?x) (object ?x) (not (p ?x)))"
+    },
+    {
+      "name": "c_all",
+      "category": "concept",
+      "dl": "(c_all (r_atomic_state \"e\") (c_atomic_state \"q\"))",
+      "datalog": "(:rule (viol ?x) (e ?x ?y) (not (q ?y))) (:rule (r ?x) (object ?x) (not (viol ?x)))"
+    },
+    {
+      "name": "c_some",
+      "category": "concept",
+      "dl": "(c_some (r_atomic_state \"e\") (c_atomic_state \"q\"))",
+      "datalog": "(:rule (r ?x) (e ?x ?y) (q ?y))"
+    },
+    {
+      "name": "c_at_least",
+      "category": "concept",
+      "dl": "(c_at_least 1 (r_atomic_state \"e\"))",
+      "datalog": "(:rule (r ?x) (object ?x) (count ?k ((e ?x ?y))) (>= ?k 1))"
+    },
+    {
+      "name": "c_at_most",
+      "category": "concept",
+      "dl": "(c_at_most 1 (r_atomic_state \"e\"))",
+      "datalog": "(:rule (r ?x) (object ?x) (count ?k ((e ?x ?y))) (<= ?k 1))"
+    },
+    {
+      "name": "c_exactly",
+      "category": "concept",
+      "dl": "(c_exactly 1 (r_atomic_state \"e\"))",
+      "datalog": "(:rule (r ?x) (object ?x) (count ?k ((e ?x ?y))) (= ?k 1))"
+    },
+    {
+      "name": "c_at_least qualified",
+      "category": "concept",
+      "dl": "(c_at_least 1 (r_atomic_state \"e\") (c_atomic_state \"q\"))",
+      "datalog": "(:rule (r ?x) (object ?x) (count ?k ((e ?x ?y) (q ?y))) (>= ?k 1))"
+    },
+    {
+      "name": "c_at_most qualified",
+      "category": "concept",
+      "dl": "(c_at_most 1 (r_atomic_state \"e\") (c_atomic_state \"q\"))",
+      "datalog": "(:rule (r ?x) (object ?x) (count ?k ((e ?x ?y) (q ?y))) (<= ?k 1))"
+    },
+    {
+      "name": "c_exactly qualified",
+      "category": "concept",
+      "dl": "(c_exactly 1 (r_atomic_state \"e\") (c_atomic_state \"q\"))",
+      "datalog": "(:rule (r ?x) (object ?x) (count ?k ((e ?x ?y) (q ?y))) (= ?k 1))"
+    },
+    {
+      "name": "c_subset",
+      "category": "concept",
+      "dl": "(c_subset (r_atomic_state \"e\") (r_atomic_state \"f\"))",
+      "datalog": "(:rule (viol ?x) (e ?x ?y) (not (f ?x ?y))) (:rule (r ?x) (object ?x) (not (viol ?x)))"
+    },
+    {
+      "name": "c_same_as",
+      "category": "concept",
+      "dl": "(c_same_as (r_atomic_state \"e\") (r_atomic_state \"f\"))",
+      "datalog": "(:rule (viol ?x) (e ?x ?y) (not (f ?x ?y))) (:rule (viol ?x) (f ?x ?y) (not (e ?x ?y))) (:rule (r ?x) (object ?x) (not (viol ?x)))"
+    },
+    {
+      "name": "c_fillers",
+      "category": "concept",
+      "dl": "(c_fillers (r_atomic_state \"e\") \"b\" \"c\")",
+      "datalog": "(:rule (r ?x) (e ?x b) (e ?x c))"
+    },
+    {
+      "name": "c_one_of",
+      "category": "concept",
+      "dl": "(c_one_of \"a\" \"c\")",
+      "datalog": "(:rule (r ?x) (object ?x) (= ?x a)) (:rule (r ?x) (object ?x) (= ?x c))"
+    },
+    {
+      "name": "c_nominal",
+      "category": "concept",
+      "dl": "(c_nominal \"b\")",
+      "datalog": "(:rule (r ?x) (object ?x) (= ?x b))"
+    },
+    {
+      "name": "c_all nested",
+      "category": "concept",
+      "dl": "(c_all (r_transitive_closure (r_atomic_state \"e\")) (c_or (c_atomic_state \"p\") (c_atomic_state \"q\")))",
+      "datalog": "(:rule (t ?x ?y) (e ?x ?y)) (:rule (t ?x ?z) (t ?x ?y) (e ?y ?z)) (:rule (pq ?x) (p ?x)) (:rule (pq ?x) (q ?x)) (:rule (viol ?x) (t ?x ?y) (not (pq ?y))) (:rule (r ?x) (object ?x) (not (viol ?x)))"
+    },
+    {
+      "name": "r_universal",
+      "category": "role",
+      "dl": "(r_universal)",
+      "datalog": "(:rule (r ?x ?y) (object ?x) (object ?y))"
+    },
+    {
+      "name": "r_atomic_state",
+      "category": "role",
+      "dl": "(r_atomic_state \"e\")",
+      "datalog": "(:rule (r ?x ?y) (e ?x ?y))"
+    },
+    {
+      "name": "r_atomic_goal",
+      "category": "role",
+      "dl": "(r_atomic_goal \"e\" true)",
+      "datalog": "(:rule (r ?x ?y) (goal e ?x ?y))"
+    },
+    {
+      "name": "r_atomic_goal negative",
+      "category": "role",
+      "dl": "(r_atomic_goal \"e\" false)",
+      "datalog": "(:rule (r ?x ?y) (goal (not (e ?x ?y))))"
+    },
+    {
+      "name": "r_and",
+      "category": "role",
+      "dl": "(r_and (r_atomic_state \"e\") (r_atomic_state \"f\"))",
+      "datalog": "(:rule (r ?x ?y) (e ?x ?y) (f ?x ?y))"
+    },
+    {
+      "name": "r_or",
+      "category": "role",
+      "dl": "(r_or (r_atomic_state \"e\") (r_atomic_state \"f\"))",
+      "datalog": "(:rule (r ?x ?y) (e ?x ?y)) (:rule (r ?x ?y) (f ?x ?y))"
+    },
+    {
+      "name": "r_complement",
+      "category": "role",
+      "dl": "(r_complement (r_atomic_state \"e\"))",
+      "datalog": "(:rule (r ?x ?y) (object ?x) (object ?y) (not (e ?x ?y)))"
+    },
+    {
+      "name": "r_inverse",
+      "category": "role",
+      "dl": "(r_inverse (r_atomic_state \"e\"))",
+      "datalog": "(:rule (r ?x ?y) (e ?y ?x))"
+    },
+    {
+      "name": "r_composition",
+      "category": "role",
+      "dl": "(r_composition (r_atomic_state \"e\") (r_atomic_state \"f\"))",
+      "datalog": "(:rule (r ?x ?z) (e ?x ?y) (f ?y ?z))"
+    },
+    {
+      "name": "r_transitive_closure",
+      "category": "role",
+      "dl": "(r_transitive_closure (r_atomic_state \"e\"))",
+      "datalog": "(:rule (r ?x ?y) (e ?x ?y)) (:rule (r ?x ?z) (r ?x ?y) (e ?y ?z))"
+    },
+    {
+      "name": "r_reflexive_transitive_closure",
+      "category": "role",
+      "dl": "(r_reflexive_transitive_closure (r_atomic_state \"e\"))",
+      "datalog": "(:rule (r ?x ?y) (object ?x) (object ?y) (= ?x ?y)) (:rule (r ?x ?z) (r ?x ?y) (e ?y ?z))"
+    },
+    {
+      "name": "r_restriction",
+      "category": "role",
+      "dl": "(r_restriction (r_atomic_state \"e\") (c_atomic_state \"q\"))",
+      "datalog": "(:rule (r ?x ?y) (e ?x ?y) (q ?y))"
+    },
+    {
+      "name": "r_identity",
+      "category": "role",
+      "dl": "(r_identity (c_atomic_state \"q\"))",
+      "datalog": "(:rule (r ?x ?y) (q ?x) (object ?y) (= ?x ?y))"
+    },
+    {
+      "name": "b_atomic_state",
+      "category": "boolean",
+      "dl": "(b_atomic_state \"flag\" true)",
+      "datalog": "(:rule (r) (flag))"
+    },
+    {
+      "name": "b_atomic_state negative",
+      "category": "boolean",
+      "dl": "(b_atomic_state \"flag\" false)",
+      "datalog": "(:rule (r) (not (flag)))"
+    },
+    {
+      "name": "b_atomic_goal",
+      "category": "boolean",
+      "dl": "(b_atomic_goal \"flag\" true)",
+      "datalog": "(:rule (r) (goal flag))"
+    },
+    {
+      "name": "b_atomic_goal negative",
+      "category": "boolean",
+      "dl": "(b_atomic_goal \"flag\" false)",
+      "datalog": "(:rule (r) (goal (not (flag))))"
+    },
+    {
+      "name": "b_nonempty",
+      "category": "boolean",
+      "dl": "(b_nonempty (c_atomic_state \"p\"))",
+      "datalog": "(:rule (r) (p ?x))"
+    },
+    {
+      "name": "b_const true",
+      "category": "boolean",
+      "dl": "(b_const true)",
+      "datalog": "(:rule (r) (object ?x))"
+    },
+    {
+      "name": "b_const false",
+      "category": "boolean",
+      "dl": "(b_const false)",
+      "datalog": "(:rule (r) (object ?x) (!= ?x ?x))"
+    },
+    {
+      "name": "b_and",
+      "category": "boolean",
+      "dl": "(b_and (b_nonempty (c_atomic_state \"p\")) (b_nonempty (c_atomic_state \"q\")))",
+      "datalog": "(:rule (ba) (p ?x)) (:rule (bb) (q ?x)) (:rule (r) (ba) (bb))"
+    },
+    {
+      "name": "b_or",
+      "category": "boolean",
+      "dl": "(b_or (b_nonempty (c_atomic_state \"p\")) (b_nonempty (c_atomic_state \"q\")))",
+      "datalog": "(:rule (ba) (p ?x)) (:rule (bb) (q ?x)) (:rule (r) (ba)) (:rule (r) (bb))"
+    },
+    {
+      "name": "b_not",
+      "category": "boolean",
+      "dl": "(b_not (b_nonempty (c_atomic_state \"p\")))",
+      "datalog": "(:rule (ba) (p ?x)) (:rule (bb) (q ?x)) (:rule (r) (not (ba)))"
+    },
+    {
+      "name": "b_eq",
+      "category": "boolean",
+      "dl": "(b_eq (b_nonempty (c_atomic_state \"p\")) (b_nonempty (c_atomic_state \"q\")))",
+      "datalog": "(:rule (ba) (p ?x)) (:rule (bb) (q ?x)) (:rule (r) (ba) (bb)) (:rule (r) (not (ba)) (not (bb)))"
+    },
+    {
+      "name": "b_neq",
+      "category": "boolean",
+      "dl": "(b_neq (b_nonempty (c_atomic_state \"p\")) (b_nonempty (c_atomic_state \"q\")))",
+      "datalog": "(:rule (ba) (p ?x)) (:rule (bb) (q ?x)) (:rule (r) (ba) (not (bb))) (:rule (r) (not (ba)) (bb))"
+    },
+    {
+      "name": "b_lt",
+      "category": "boolean",
+      "dl": "(b_lt (b_nonempty (c_atomic_state \"p\")) (b_nonempty (c_atomic_state \"q\")))",
+      "datalog": "(:rule (ba) (p ?x)) (:rule (bb) (q ?x)) (:rule (r) (not (ba)) (bb))"
+    },
+    {
+      "name": "b_le",
+      "category": "boolean",
+      "dl": "(b_le (b_nonempty (c_atomic_state \"p\")) (b_nonempty (c_atomic_state \"q\")))",
+      "datalog": "(:rule (ba) (p ?x)) (:rule (bb) (q ?x)) (:rule (r) (not (ba))) (:rule (r) (bb))"
+    },
+    {
+      "name": "b_gt",
+      "category": "boolean",
+      "dl": "(b_gt (b_nonempty (c_atomic_state \"p\")) (b_nonempty (c_atomic_state \"q\")))",
+      "datalog": "(:rule (ba) (p ?x)) (:rule (bb) (q ?x)) (:rule (r) (ba) (not (bb)))"
+    },
+    {
+      "name": "b_ge",
+      "category": "boolean",
+      "dl": "(b_ge (b_nonempty (c_atomic_state \"p\")) (b_nonempty (c_atomic_state \"q\")))",
+      "datalog": "(:rule (ba) (p ?x)) (:rule (bb) (q ?x)) (:rule (r) (ba)) (:rule (r) (not (bb)))"
+    },
+    {
+      "name": "n_eq",
+      "category": "boolean",
+      "dl": "(n_eq (n_count (c_atomic_state \"p\")) (n_count (c_atomic_state \"q\")))",
+      "datalog": "(:rule (na ?n) (count ?n ((p ?x)))) (:rule (nb ?n) (count ?n ((q ?x)))) (:rule (r) (na ?x) (nb ?y) (= ?x ?y))"
+    },
+    {
+      "name": "n_neq",
+      "category": "boolean",
+      "dl": "(n_neq (n_count (c_atomic_state \"p\")) (n_count (c_atomic_state \"q\")))",
+      "datalog": "(:rule (na ?n) (count ?n ((p ?x)))) (:rule (nb ?n) (count ?n ((q ?x)))) (:rule (r) (na ?x) (nb ?y) (!= ?x ?y))"
+    },
+    {
+      "name": "n_lt",
+      "category": "boolean",
+      "dl": "(n_lt (n_count (c_atomic_state \"p\")) (n_count (c_atomic_state \"q\")))",
+      "datalog": "(:rule (na ?n) (count ?n ((p ?x)))) (:rule (nb ?n) (count ?n ((q ?x)))) (:rule (r) (na ?x) (nb ?y) (< ?x ?y))"
+    },
+    {
+      "name": "n_le",
+      "category": "boolean",
+      "dl": "(n_le (n_count (c_atomic_state \"p\")) (n_count (c_atomic_state \"q\")))",
+      "datalog": "(:rule (na ?n) (count ?n ((p ?x)))) (:rule (nb ?n) (count ?n ((q ?x)))) (:rule (r) (na ?x) (nb ?y) (<= ?x ?y))"
+    },
+    {
+      "name": "n_gt",
+      "category": "boolean",
+      "dl": "(n_gt (n_count (c_atomic_state \"p\")) (n_count (c_atomic_state \"q\")))",
+      "datalog": "(:rule (na ?n) (count ?n ((p ?x)))) (:rule (nb ?n) (count ?n ((q ?x)))) (:rule (r) (na ?x) (nb ?y) (> ?x ?y))"
+    },
+    {
+      "name": "n_ge",
+      "category": "boolean",
+      "dl": "(n_ge (n_count (c_atomic_state \"p\")) (n_count (c_atomic_state \"q\")))",
+      "datalog": "(:rule (na ?n) (count ?n ((p ?x)))) (:rule (nb ?n) (count ?n ((q ?x)))) (:rule (r) (na ?x) (nb ?y) (>= ?x ?y))"
+    },
+    {
+      "name": "n_count concept",
+      "category": "numerical",
+      "dl": "(n_count (c_atomic_state \"p\"))",
+      "datalog": "(:rule (r ?n) (count ?n ((p ?x))))"
+    },
+    {
+      "name": "n_count role",
+      "category": "numerical",
+      "dl": "(n_count (r_atomic_state \"e\"))",
+      "datalog": "(:rule (r ?n) (count ?n ((e ?x ?y))))"
+    },
+    {
+      "name": "n_const",
+      "category": "numerical",
+      "dl": "(n_const 3)",
+      "datalog": "(:rule (r ?v) (object ?x) (= ?v (+ 3 0)))"
+    },
+    {
+      "name": "n_add",
+      "category": "numerical",
+      "dl": "(n_add (n_count (c_atomic_state \"p\")) (n_count (c_atomic_state \"q\")))",
+      "datalog": "(:rule (na ?n) (count ?n ((p ?x)))) (:rule (nb ?n) (count ?n ((q ?x)))) (:rule (r ?z) (na ?x) (nb ?y) (= ?z (+ ?x ?y)))"
+    },
+    {
+      "name": "n_sub",
+      "category": "numerical",
+      "dl": "(n_sub (n_count (c_atomic_state \"p\")) (n_count (c_atomic_state \"q\")))",
+      "datalog": "(:rule (na ?n) (count ?n ((p ?x)))) (:rule (nb ?n) (count ?n ((q ?x)))) (:rule (r ?z) (na ?x) (nb ?y) (= ?z (- ?x ?y)))"
+    },
+    {
+      "name": "n_mul",
+      "category": "numerical",
+      "dl": "(n_mul (n_count (c_atomic_state \"p\")) (n_count (c_atomic_state \"q\")))",
+      "datalog": "(:rule (na ?n) (count ?n ((p ?x)))) (:rule (nb ?n) (count ?n ((q ?x)))) (:rule (r ?z) (na ?x) (nb ?y) (= ?z (* ?x ?y)))"
+    },
+    {
+      "name": "n_div",
+      "category": "numerical",
+      "dl": "(n_div (n_count (c_atomic_state \"p\")) (n_count (c_atomic_state \"q\")))",
+      "datalog": "(:rule (na ?n) (count ?n ((p ?x)))) (:rule (nb ?n) (count ?n ((q ?x)))) (:rule (r ?z) (na ?x) (nb ?y) (= ?z (/ ?x ?y)))"
+    },
+    {
+      "name": "n_min",
+      "category": "numerical",
+      "dl": "(n_min (n_count (c_atomic_state \"p\")) (n_count (c_atomic_state \"q\")))",
+      "datalog": "(:rule (na ?n) (count ?n ((p ?x)))) (:rule (nb ?n) (count ?n ((q ?x)))) (:rule (r ?z) (na ?x) (nb ?y) (= ?z (min ?x ?y)))"
+    },
+    {
+      "name": "n_max",
+      "category": "numerical",
+      "dl": "(n_max (n_count (c_atomic_state \"p\")) (n_count (c_atomic_state \"q\")))",
+      "datalog": "(:rule (na ?n) (count ?n ((p ?x)))) (:rule (nb ?n) (count ?n ((q ?x)))) (:rule (r ?z) (na ?x) (nb ?y) (= ?z (max ?x ?y)))"
+    },
+    {
+      "name": "n_distance",
+      "category": "numerical",
+      "dl": "(n_distance (c_atomic_state \"p\") (r_atomic_state \"e\") (c_atomic_state \"q\"))",
+      "datalog": "(:rule (d ?x (min 0)) (p ?x)) (:rule (d ?y (min ?v)) (d ?x ?w) (e ?x ?y) (= ?v (+ ?w 1))) (:rule (r (min ?w)) (d ?x ?w) (q ?x))"
+    },
+    {
+      "name": "n_distance query",
+      "category": "numerical",
+      "dl": "(n_distance (q_atomic_state \"p\" (v)) (q_atomic_state \"f\" (v w)) (q_atomic_goal \"q\" true (v)))",
+      "datalog": "(:rule (d ?x (min 0)) (p ?x)) (:rule (d ?y (min ?v)) (d ?x ?w) (f ?x ?y) (= ?v (+ ?w 1))) (:rule (r (min ?w)) (d ?x ?w) (goal q ?x))"
+    },
+    {
+      "name": "q_must_pass",
+      "category": "query",
+      "dl": "(q_must_pass () (q_atomic_state \"p\" (v)) (q_atomic_state \"e\" (v w)) (q_atomic_state \"q\" (v)) (q_concept x (c_top)))",
+      "datalog": "(:rule (reach ?v) (p ?v)) (:rule (reach ?w) (reach ?v) (e ?v ?w)) (:rule (avoid ?x ?v) (object ?x) (p ?v) (!= ?v ?x)) (:rule (avoid ?x ?w) (avoid ?x ?v) (e ?v ?w) (!= ?w ?x)) (:rule (escapes ?x) (avoid ?x ?t) (q ?t)) (:rule (r ?x) (object ?x) (reach ?t) (q ?t) (not (escapes ?x)))",
+      "columns": "(x)"
+    }
+  ]
+}

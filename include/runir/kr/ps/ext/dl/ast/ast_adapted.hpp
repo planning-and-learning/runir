@@ -25,7 +25,7 @@ BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::CallRule, conditions, cal
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::BacktrackRule, conditions)
 
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogAtom, relation, terms)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogGoalAtom, predicate, terms)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogGoalAtom, predicate, terms, negative)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogNegation, atom)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogComparison, op, lhs, rhs)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DatalogArithmetic, result, op, lhs, rhs)

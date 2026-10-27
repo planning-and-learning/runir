@@ -29,9 +29,12 @@
 #include <runir/kr/ps/ext/module_view.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/feature_view.hpp>
+#include <set>
 #include <string>
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <vector>
+#include <yggdrasil/containers/dynamic_bitset.hpp>
+#include <yggdrasil/serialization/json.hpp>
 
 namespace runir::tests
 {
@@ -462,6 +465,179 @@ TEST(RunirTests, DatalogRejectsInvalidPrograms)
     const auto domain_context = kr::DomainContext::create(search->task->get_domain());
     EXPECT_THROW(kr::ps::base::dl::parse_sketch("(:sketch (:features " + read + ") (:rules))", domain, *domain_context->base_repository),
                  kr::InvalidExpressionError);
+}
+
+namespace
+{
+struct QueryCategory
+{
+};
+
+/// A denotation as sorted strings: concept members, role pairs, query rows (bytes) or a Boolean or numerical value.
+template<typename Category, typename V>
+std::vector<std::string> contents(const V& value, size_t num_objects)
+{
+    auto result = std::vector<std::string>();
+    if constexpr (std::same_as<Category, kr::dl::ConceptTag>)
+    {
+        for (const auto object : ygg::set_bit_indices(value.get()))
+            result.push_back(std::to_string(object));
+    }
+    else if constexpr (std::same_as<Category, kr::dl::RoleTag>)
+    {
+        for (size_t source = 0; source < num_objects; ++source)
+            for (const auto target : ygg::set_bit_indices(value.get(static_cast<ygg::uint_t>(source))))
+                result.push_back(std::to_string(source) + "," + std::to_string(target));
+    }
+    else if constexpr (std::same_as<Category, kr::dl::BooleanTag> || std::same_as<Category, kr::dl::NumericalTag>)
+        result.push_back(std::to_string(value.get()));
+    else
+    {
+        auto rows = std::set<std::string>();
+        for (size_t i = 0; i < value.size(); ++i)
+        {
+            auto text = std::string();
+            for (const auto byte : value.row(i))
+                text.append(std::to_string(std::to_integer<int>(byte))).push_back(' ');
+            rows.insert(std::move(text));
+        }
+        result.assign(rows.begin(), rows.end());
+    }
+    return result;
+}
+}  // namespace
+
+/// Every DL constructor, n_distance and q_must_pass next to a Datalog formulation read through a head feature
+/// (fixtures/kr/dl/expressivity/cases.json): along a random walk of a task whose actions toggle every atom, the rules
+/// agree with the constructor, in full and in incremental evaluation.
+TEST(RunirTests, DatalogExpressesTheDlConstructors)
+{
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/dl/expressivity";
+    const auto search = make_lifted_context(directory / "domain.pddl", directory / "task.pddl");
+    const auto domain_context = kr::DomainContext::create(search->task->get_domain());
+    const auto domain = search->task->get_domain().get_domain();
+    const auto fixture = load_fixture_json("kr/dl/expressivity/cases.json");
+    const auto parse = [&](const std::string& text) { return kr::ps::ext::dl::parse_module(text, domain, *domain_context->ext_repository); };
+    struct Case
+    {
+        std::string name;
+        std::string category;
+        decltype(parse(std::string())) module_;
+    };
+    auto cases = std::vector<Case>();
+    for (const auto& value : ygg::common::as_array(ygg::common::as_object(fixture, "cases"), "cases", "cases"))
+    {
+        const auto& object = ygg::common::as_object(value, "case");
+        const auto name = ygg::common::as_string(object, "name", "case");
+        const auto category = ygg::common::as_string(object, "category", name);
+        const auto dl = ygg::common::as_string(object, "dl", name);
+        auto text = std::string("(:module (:symbol m) (:arguments) (:registers) (:entry m0) (:memory m0) (:datalog ");
+        text += ygg::common::as_string(object, "datalog", name);
+        text += ") (:features (:";
+        text += category;
+        text += " (:symbol dl) (:expression ";
+        text += dl;
+        if (category == "query")
+        {
+            text += ")) (:query (:symbol rules) (:expression (q_head r ";
+            text += ygg::common::as_string(object, "columns", name);
+            text += ")))";
+        }
+        else
+        {
+            text += ")) (:";
+            text += category;
+            text += " (:symbol rules) (:head r))";
+        }
+        text += ") (:rules))";
+        try
+        {
+            cases.push_back(Case { name, category, parse(text) });
+        }
+        catch (const std::exception& error)
+        {
+            FAIL() << name << ": " << error.what();
+        }
+    }
+
+    // Per case, the constructor's and the rules' features, as roots of one incremental evaluation.
+    const auto visit = [&](const Case& c, auto f)
+    {
+        if (c.category == "concept")
+            f(kr::dl::ConceptTag {},
+              c.module_.get_features<kr::dl::ConceptTag>()[0].get_feature(),
+              c.module_.get_features<kr::dl::ConceptTag>()[1].get_feature());
+        else if (c.category == "role")
+            f(kr::dl::RoleTag {}, c.module_.get_features<kr::dl::RoleTag>()[0].get_feature(), c.module_.get_features<kr::dl::RoleTag>()[1].get_feature());
+        else if (c.category == "boolean")
+            f(kr::dl::BooleanTag {},
+              c.module_.get_features<kr::dl::BooleanTag>()[0].get_feature(),
+              c.module_.get_features<kr::dl::BooleanTag>()[1].get_feature());
+        else if (c.category == "numerical")
+            f(kr::dl::NumericalTag {},
+              c.module_.get_features<kr::dl::NumericalTag>()[0].get_feature(),
+              c.module_.get_features<kr::dl::NumericalTag>()[1].get_feature());
+        else
+            f(QueryCategory {}, c.module_.get_query_features()[0].get_feature(), c.module_.get_query_features()[1].get_feature());
+    };
+    auto roots = std::vector<kr::dl::semantics::incremental::EvaluationRoot>();
+    for (const auto& c : cases)
+        visit(c,
+              [&](auto, auto dl, auto rules)
+              {
+                  roots.emplace_back(dl);
+                  roots.emplace_back(rules);
+              });
+    auto evaluation = kr::dl::semantics::incremental::IncrementalEvaluation<tyr::LiftedTag>(*search->task, roots);
+    auto builder = kr::dl::semantics::Builder();
+    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto storage = kr::dl::semantics::EvaluationStorage(denotations);
+    auto& workspace = builder.get_workspace().get_database_workspace();
+
+    auto random = std::mt19937(3);
+    auto node = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    const auto num_objects = static_cast<size_t>(node.get_state().get_task().get_task().get_num_objects());
+    // Per case, the constructor's values seen, so that each case is checked on more than one value.
+    auto seen = std::vector<std::set<std::vector<std::string>>>(cases.size());
+    const auto check = [&](auto& context, auto& incremental, int step)
+    {
+        for (size_t i = 0; i < cases.size(); ++i)
+            visit(cases[i],
+                  [&]<typename Category>(Category, auto dl, auto rules)
+                  {
+                      storage.reset_dynamic();
+                      const auto expected = contents<Category>(kr::dl::semantics::evaluate<tyr::LiftedTag>(dl, context), num_objects);
+                      storage.reset_dynamic();
+                      EXPECT_EQ(contents<Category>(kr::dl::semantics::evaluate<tyr::LiftedTag>(rules, context), num_objects), expected)
+                          << cases[i].name << ", step " << step;
+                      EXPECT_EQ(contents<Category>(incremental.evaluate(evaluation.graph().get_index(rules)), num_objects), expected)
+                          << cases[i].name << " (incremental), step " << step;
+                      seen[i].insert(expected);
+                  });
+    };
+    {
+        storage.reset_dynamic();
+        auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(node.get_state(), builder, storage);
+        auto incremental = evaluation.enter(context);
+        check(context, incremental, 0);
+    }
+    for (int step = 1; step <= 400; ++step)
+    {
+        const auto successors = search->successor_generator->get_successor_nodes(node, *search->state_repository, *search->axiom_evaluator);
+        const auto& next = successors[random() % successors.size()];
+        auto delta = kr::dl::semantics::incremental::Delta {};
+        delta.assign<tyr::LiftedTag>(node.get_state(), next.get_state());
+        storage.reset_dynamic();
+        auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(next.get_state(), builder, storage);
+        auto incremental = evaluation.enter(context, delta, workspace);
+        check(context, incremental, step);
+        node = next;
+    }
+    // The goal is fixed, so its constructors and constants keep their value; every other case takes several.
+    for (size_t i = 0; i < cases.size(); ++i)
+        if (cases[i].name.find("goal") == std::string::npos && cases[i].name.find("const") == std::string::npos && cases[i].name != "c_bot"
+            && cases[i].name != "c_top" && cases[i].name != "c_one_of" && cases[i].name != "c_nominal" && cases[i].name != "r_universal")
+            EXPECT_GT(seen[i].size(), 1) << cases[i].name;
 }
 
 /// The ramp heights still needed for the goal of Autoscale Termes p16, per state of a random walk, with full and with

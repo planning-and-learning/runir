@@ -241,7 +241,9 @@ constexpr auto datalog_variable_def = boost::spirit::x3::rule<DatalogVariableTex
 constexpr auto datalog_term_def = boost::spirit::x3::rule<DatalogTermText, std::string> { "term_text" } =
     raw[lexeme[(-char_('?') >> (alpha | char_('_')) >> *(alnum | char_('_') | char_('-'))) | +digit]];
 constexpr auto datalog_atom_def = ((lit("(") >> identifier) > *datalog_term) > lit(")");
-constexpr auto datalog_goal_atom_def = (((lit("(") >> keyword("goal")) > identifier) > *datalog_term) > lit(")");
+constexpr auto datalog_goal_atom_def =
+    ((lit("(") >> keyword("goal") >> lit("(") >> keyword("not") >> lit("(")) > identifier > *datalog_term > lit(")") > lit(")") > attr(true) > lit(")"))
+    | ((lit("(") >> keyword("goal")) > identifier > *datalog_term > attr(false) > lit(")"));
 constexpr auto datalog_negation_def = ((lit("(") >> keyword("not")) > datalog_atom) > lit(")");
 constexpr auto datalog_comparison_operator =
     (lit("!=") >> attr(ast::DatalogComparisonOperator::NOT_EQUAL)) | (lit("<=") >> attr(ast::DatalogComparisonOperator::LESS_EQUAL))

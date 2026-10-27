@@ -175,11 +175,12 @@ struct DatalogAtom : boost::spirit::x3::position_tagged
     std::vector<Identifier> terms;
 };
 
-/// (goal predicate term...): the goal atoms of a predicate.
+/// (goal p t...) or, for the goal's negative literals, (goal (not (p t...))).
 struct DatalogGoalAtom : boost::spirit::x3::position_tagged
 {
     Identifier predicate;
     std::vector<Identifier> terms;
+    bool negative = false;
 };
 
 /// (not atom)

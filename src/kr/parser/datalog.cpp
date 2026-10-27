@@ -224,8 +224,8 @@ private:
         return relation;
     }
 
-    /// A predicate's atoms in the state, or in the goal.
-    ygg::Index<ydl::Relation> predicate(const ast::Identifier& name, size_t arity, bool goal)
+    /// A predicate's atoms in the state, or in the goal's positive or negative literals.
+    ygg::Index<ydl::Relation> predicate(const ast::Identifier& name, size_t arity, bool goal, bool polarity = true)
     {
         const auto make = [&]<typename T>(T, auto predicate) -> ygg::Index<dl::Query<>>
         {
@@ -233,7 +233,7 @@ private:
             {
                 auto data = constructors::checkout<dl::Query<dl::AtomicGoalTag<T>>>(m_context);
                 data->predicate = predicate;
-                data->polarity = true;
+                data->polarity = polarity;
                 data->columns = columns(arity);
                 return query(constructors::intern(m_context, *data).get_index());
             }
@@ -243,7 +243,7 @@ private:
             return query(constructors::intern(m_context, *data).get_index());
         };
         const auto index = runir::kr::parser::resolve_predicate(m_domain, name, arity, goal ? "goal atom" : "atom", m_context.diagnostics(), make);
-        return input(index, (goal ? "goal " : "") + name.text);
+        return input(index, (goal ? (polarity ? "goal " : "goal not ") : "") + name.text);
     }
 
     /// A concept or role register or argument of the module, as the constructor that reads it.
@@ -339,7 +339,7 @@ private:
                 if constexpr (std::same_as<T, xast::DatalogNegation>)
                     negated.push_back(atom(node.atom.relation, node.atom.terms, body_relation(node.atom.relation, node.atom.terms.size())).get_index());
                 else if constexpr (std::same_as<T, xast::DatalogGoalAtom>)
-                    atoms.push_back(atom(node.predicate, node.terms, predicate(node.predicate, node.terms.size(), true)).get_index());
+                    atoms.push_back(atom(node.predicate, node.terms, predicate(node.predicate, node.terms.size(), true, !node.negative)).get_index());
                 else if constexpr (std::same_as<T, xast::DatalogComparison>)
                 {
                     using Operator = xast::DatalogComparisonOperator;

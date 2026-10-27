@@ -41,7 +41,7 @@ Other rules read such a head like any relation, its least value as its last colu
   one column, a role one two; a concept register holds one object, a role register one pair; a Boolean argument is
   nullary, with its row iff true; a numerical argument has one row, holding its value), or a domain predicate
   (static, fluent or derived; names as the PDDL parser stores them, lower case; `object` holds every object);
-- `(goal p t...)`: the goal atoms of predicate `p`;
+- `(goal p t...)`: the goal's positive literals of predicate `p`; `(goal (not (p t...)))` its negative literals;
 - `(not (r t...))`, `(= a b)`, `(!= a b)`, `(< a b)`, `(<= a b)`, `(> a b)`, `(>= a b)`;
 - `(= ?z (op a b))` with `op` one of `+ - * / min max`, binding `?z` from bound terms (in order, so later literals may
   read it). Numbers are runir's: the largest value is infinity, `+` and `*` saturate to infinity, `-` at 0, division by
@@ -95,3 +95,28 @@ prints and which is part of the relation's identity.
 
 On Autoscale Termes `p16` (the ramp heights still needed for the goal, a 1000-step random walk), full evaluation takes
 about 320 µs per state and incremental evaluation 0.4 µs median, 0.8 µs mean (the timing test in `tests/unit/kr/dl/datalog.cpp`).
+
+## DL constructors as rules
+
+Every DL constructor, `n_distance` and `q_must_pass` has a formulation as rules; the test
+`DatalogExpressesTheDlConstructors` checks each one (`tests/fixtures/kr/dl/expressivity/cases.json`) against the
+constructor along a random walk, in full and incremental evaluation. The patterns, for the head `r`:
+
+| Constructor | Rules |
+|---|---|
+| `c_not C` | `(r ?x) (object ?x) (not (c ?x))` |
+| `c_all R C` | `(viol ?x) (r ?x ?y) (not (c ?y))`; `(r ?x) (object ?x) (not (viol ?x))` |
+| `c_some R C` | `(r ?x) (r ?x ?y) (c ?y)` |
+| `c_at_least n R C` | `(r ?x) (object ?x) (count ?k ((r ?x ?y) (c ?y))) (>= ?k n)` (`<=`, `=` for `c_at_most`, `c_exactly`) |
+| `c_subset R S` | `(viol ?x) (r ?x ?y) (not (s ?x ?y))`; `(r ?x) (object ?x) (not (viol ?x))` |
+| `c_fillers R a b` | `(r ?x) (r ?x a) (r ?x b)` |
+| `r_complement R` | `(r ?x ?y) (object ?x) (object ?y) (not (r ?x ?y))` |
+| `r_transitive_closure R` | `(t ?x ?y) (r ?x ?y)`; `(t ?x ?z) (t ?x ?y) (r ?y ?z)` (reflexive: base `(object ?x) (object ?y) (= ?x ?y)`) |
+| `b_lt A B` | `(r) (not (a)) (b)` (Booleans compare as numbers, false < true) |
+| `n_count C`, `n_add A B` | `(r ?n) (count ?n ((c ?x)))`; `(r ?z) (a ?x) (b ?y) (= ?z (+ ?x ?y))` |
+| `n_distance S E T` | `(d ?x (min 0)) (s ?x)`; `(d ?y (min ?v)) (d ?x ?w) (e ?x ?y) (= ?v (+ ?w 1))`; `(r (min ?w)) (d ?x ?w) (t ?x)` |
+| `q_must_pass () S E T P` | reach from `S`; per probe `?x`, `(avoid ?x ?v)` reaches over `E` without `?x`; `(r ?x) (p ?x) (reach ?t) (t ?t) (not (escapes ?x))` with `(escapes ?x) (avoid ?x ?t) (t ?t)` |
+
+Constants (`c_bot`, `b_const`, `n_const`) need a body: `(object ?x)`, with `(!= ?x ?x)` for false. The must-pass rules
+compute one reachability per probe, where `q_must_pass` verifies only the objects on one shortest witness path.
+
