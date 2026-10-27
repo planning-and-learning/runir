@@ -62,9 +62,9 @@ private:
 
 using DatalogRules = std::vector<runir::kr::ps::ext::dl::ast::DatalogRule>;
 
-/// The :datalog section of a module: one program whose rules read domain predicates, goal atoms ((goal p t...)), the
-/// module's concept and role registers and arguments, and concept, role and query features, built at the first q_head.
-/// A rule may not read a feature that reads the program's heads.
+/// The :datalog section of a module: rules that read domain predicates, goal atoms ((goal p t...)), the module's
+/// registers and arguments, and features, built at the first q_head into one program per head that features read. A
+/// rule may not read a feature that reads the section's heads.
 class DatalogSection
 {
 public:
@@ -95,7 +95,9 @@ private:
     const DiagnosticContext* m_diagnostics;
     std::map<std::string, size_t> m_arities;
     bool m_building = false;
-    std::optional<ygg::Index<runir::kr::dl::DatalogProgram>> m_program;
+    bool m_built = false;
+    /// Per head that a feature reads, its program (ProgramBuilder::finish).
+    std::map<std::string, ygg::Index<runir::kr::dl::DatalogProgram>> m_programs;
     std::unordered_map<std::string, ygg::Index<ygg::database::datalog::Relation>> m_heads;
 
     void build(const ast::Identifier& reference);

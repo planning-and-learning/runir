@@ -81,16 +81,16 @@ positive atom; negation and aggregation must be stratified. Violations are repor
 
 ## Evaluation
 
-The program is a `dl::DatalogProgram` record: its rules in the repository's `DatalogRepository` and one input query
-per input slot (an atomic state or goal query for a predicate, `q_concept` / `q_role` for a concept or role feature, the
+Each head that a feature reads has its own `dl::DatalogProgram` record, with that head as its one output, so that
+reading a head evaluates only the strata it depends on: the section's rules in the repository's `DatalogRepository`
+and one input query per input slot, an empty query (`q_empty`) for the slots the head does not depend on (an atomic state or goal query for a predicate, `q_concept` / `q_role` for a concept or role feature, the
 query of a query feature). Each relation carries its name (a head's name, or a description of an input), which `q_head`
 prints and which is part of the relation's identity.
 
-- Full evaluation (`evaluate`): the first `q_head` of a program read in a state evaluates the program for all its heads;
-  the others reuse it (`DatalogFeature` in the evaluation workspace, a generation per state in `DenotationCaches`).
+- Full evaluation (`evaluate`): the first `q_head` of a program read in a state evaluates it; the others reuse it
+  (`DatalogFeature` in the evaluation workspace, a generation per state in `DenotationCaches`).
 - Incremental evaluation (`incremental::EvaluationGraph`): a program is one node, which the nodes of its `q_head`s depend
-  on. Its evaluator is built at the first evaluation with the heads that the graph's roots read, so other heads are not
-  evaluated. It is initialized from its inputs, or updated from their exact changes (counting and Delete and Rederive in
+  on. It is initialized from its inputs, or updated from their exact changes (counting and Delete and Rederive in
   yggdrasil). A program is evaluated in a state only if a demanded feature reads one of its heads.
 
 On Autoscale Termes `p16` (the ramp heights still needed for the goal, a 1000-step random walk), full evaluation takes

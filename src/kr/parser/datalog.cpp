@@ -112,7 +112,9 @@ public:
         }
     }
 
-    ygg::Index<dl::DatalogProgram> finish(const ast::Identifier& reference, const std::set<std::string>& read_heads)
+    /// Per head that a feature reads, a program with that head as its one output, so that reading a head evaluates only
+    /// what it depends on; the inputs it does not read are empty queries.
+    std::map<std::string, ygg::Index<dl::DatalogProgram>> finish(const ast::Identifier& reference, const std::set<std::string>& read_heads)
     {
         auto program = ydl::checkout<ydl::Program>(m_datalog_builder);
         for (const auto rule : m_rules)
@@ -130,14 +132,30 @@ public:
         {
             m_context.diagnostics().throw_at(reference, InvalidExpressionError(std::string("Datalog program: ") + error.what()));
         }
-        auto data = constructors::checkout<dl::DatalogProgram>(m_context);
-        data->program = view.get_index();
-        for (const auto input : m_inputs)
-            data->inputs.push_back(input);
+        auto programs = std::map<std::string, ygg::Index<dl::DatalogProgram>>();
         for (const auto& [name, relation] : m_derived)
-            if (read_heads.contains(name))
-                data->outputs.push_back(relation);
-        return constructors::intern(m_context, *data).get_index();
+        {
+            if (!read_heads.contains(name))
+                continue;
+            const auto output = ydl::RelationView(relation, datalog());
+            const auto evaluator = ydl::Evaluator(view, std::span(&output, 1));
+            auto data = constructors::checkout<dl::DatalogProgram>(m_context);
+            data->program = view.get_index();
+            for (size_t slot = 0; slot < m_inputs.size(); ++slot)
+            {
+                if (evaluator.reads(slot))
+                    data->inputs.push_back(m_inputs[slot]);
+                else
+                {
+                    auto empty = constructors::checkout<dl::Query<dl::QueryEmptyTag>>(m_context);
+                    empty->columns = columns(ygg::make_view(m_inputs[slot], m_context.repository()).get_schema().size());
+                    data->inputs.push_back(query(constructors::intern(m_context, *empty).get_index()));
+                }
+            }
+            data->outputs.push_back(relation);
+            programs.emplace(name, constructors::intern(m_context, *data).get_index());
+        }
+        return programs;
     }
 
     ygg::Index<ydl::Relation> derived(const std::string& name) const { return m_derived.at(name); }
@@ -461,7 +479,8 @@ void DatalogSection::build(const ast::Identifier& reference)
     auto builder = ProgramBuilder(m_domain, *m_repository, *m_builder, *m_features, *m_references, m_arities, m_weighted, *m_diagnostics);
     for (const auto& rule : *m_rules)
         builder.add_rule(rule);
-    m_program = builder.finish(reference, m_read_heads);
+    m_programs = builder.finish(reference, m_read_heads);
+    m_built = true;
     for (const auto& [name, arity] : m_arities)
         m_heads.emplace(name, builder.derived(name));
     m_building = false;
@@ -475,15 +494,17 @@ std::optional<HeadReference> DatalogSection::head(const ast::Identifier& name)
         m_diagnostics->throw_at(
             name,
             InvalidExpressionError("q_head " + name.text + ": a Datalog rule reads a feature that reads the program's heads; define that feature as a rule."));
-    if (!m_program)
+    if (!m_built)
         build(name);
-    YGG_ASSUME(m_program.has_value());  // Set by build().
-    return HeadReference { *m_program, m_heads.at(name.text) };
+    const auto program = m_programs.find(name.text);
+    if (program == m_programs.end())
+        throw std::logic_error("q_head " + name.text + ": the head was not found among the heads that features read.");
+    return HeadReference { program->second, m_heads.at(name.text) };
 }
 
 void DatalogSection::validate(const ast::Identifier& reference)
 {
-    if (m_rules && !m_program)
+    if (m_rules && !m_built)
         build(reference);
 }
 
