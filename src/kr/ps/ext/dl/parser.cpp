@@ -51,7 +51,7 @@ struct HeadNames
     {
         if constexpr (std::same_as<T, runir::kr::dl::grammar::ast::QueryHead>)
             names->insert(node.name.text);
-        else if constexpr (std::same_as<T, ast::HeadFeature<runir::kr::dl::BooleanTag>> || std::same_as<T, ast::HeadFeature<runir::kr::dl::NumericalTag>>)
+        else if constexpr (requires { node.head.text; })
             names->insert(node.head.text);
         else if constexpr (std::same_as<T, std::string>)
             return;
@@ -91,14 +91,12 @@ using runir::kr::parser::constructors::intern;
 using runir::kr::parser::constructors::parse;
 using runir::kr::parser::constructors::parse_constructor;
 
-/// b_nonempty or n_value of q_head over the head that a head feature names; q_head checks the head's arity.
+/// The projection (concept, role), b_nonempty or n_value of q_head over the head that a head feature names; q_head
+/// checks the head's arity.
 template<runir::kr::dl::CategoryTag Category>
 auto parse_head_feature(const ast::HeadFeature<Category>& feature, tyr::formalism::planning::DomainView domain, const ConstructorContext& context)
 {
     namespace constructors = runir::kr::parser::constructors;
-    using Entity = std::conditional_t<std::same_as<Category, runir::kr::dl::BooleanTag>,
-                                      runir::kr::dl::Boolean<runir::kr::dl::NonemptyTag>,
-                                      runir::kr::dl::Numerical<runir::kr::dl::ValueTag>>;
     const auto identifier = [&](std::string text)
     {
         auto result = runir::kr::dl::grammar::ast::Identifier {};
@@ -109,12 +107,27 @@ auto parse_head_feature(const ast::HeadFeature<Category>& feature, tyr::formalis
     auto head = runir::kr::dl::grammar::ast::QueryHead {};
     static_cast<boost::spirit::x3::position_tagged&>(head) = feature.head;
     head.name = identifier(feature.head.text);
-    if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-        head.columns.push_back(identifier("value"));
-    const auto query = parse(head, domain, context).get_index();
-    auto data = constructors::checkout<Entity>(context);
-    data->arg = query;
-    return constructors::intern_constructor<Category>(context, constructors::intern(context, *data).get_index());
+    if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag> || std::same_as<Category, runir::kr::dl::RoleTag>)
+    {
+        head.columns.push_back(identifier("x"));
+        if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
+            head.columns.push_back(identifier("y"));
+        auto data = constructors::checkout<runir::kr::dl::QueryProjection<Category>>(context);
+        data->arg = parse(head, domain, context).get_index();
+        data->columns = constructors::parse_columns(head.columns, context);
+        return constructors::intern_constructor<Category>(context, constructors::intern(context, *data).get_index());
+    }
+    else
+    {
+        using Entity = std::conditional_t<std::same_as<Category, runir::kr::dl::BooleanTag>,
+                                          runir::kr::dl::Boolean<runir::kr::dl::NonemptyTag>,
+                                          runir::kr::dl::Numerical<runir::kr::dl::ValueTag>>;
+        if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
+            head.columns.push_back(identifier("value"));
+        auto data = constructors::checkout<Entity>(context);
+        data->arg = parse(head, domain, context).get_index();
+        return constructors::intern_constructor<Category>(context, constructors::intern(context, *data).get_index());
+    }
 }
 
 template<typename T>

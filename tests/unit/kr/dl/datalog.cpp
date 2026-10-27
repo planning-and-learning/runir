@@ -144,8 +144,10 @@ TEST(RunirTests, DatalogRulesReadFeaturesInModules)
     (:numerical (:symbol reached) (:expression (n_count reachable)))
     (:numerical (:symbol any) (:expression (n_count both)))
     (:numerical (:symbol pair-count) (:expression (n_count pairs)))
+    (:numerical (:symbol paired-count) (:expression (n_count paired)))
     (:concept (:symbol start) (:expression (c_atomic_state "marker")))
-    (:concept (:symbol reachable) (:expression (c_project x (q_head next (x)))))
+    (:concept (:symbol reachable) (:head next))
+    (:role (:symbol paired) (:head pair))
     (:concept (:symbol both) (:expression (c_or start reachable)))
     (:query (:symbol pairs) (:expression (q_head pair (x y)))))
   (:rules))
@@ -162,7 +164,7 @@ TEST(RunirTests, DatalogRulesReadFeaturesInModules)
     for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
         result.push_back(static_cast<int64_t>(kr::dl::semantics::evaluate<tyr::LiftedTag>(feature.get_feature(), context).get()));
     // start = {a, c} (markers); next = {b} (a -> b); both = {a, b, c}; pair = {(b, b)}.
-    EXPECT_EQ(result, (std::vector<int64_t> { 1, 3, 1 }));
+    EXPECT_EQ(result, (std::vector<int64_t> { 1, 3, 1, 1 }));
 
     // A rule cannot read a feature that reads the program's heads (one program per module).
     auto layered = module_text;
@@ -453,6 +455,8 @@ TEST(RunirTests, DatalogRejectsInvalidPrograms)
     EXPECT_THROW(parse("(:rule (r ?x ?y) (edge ?x ?y))", "(:numerical (:symbol f) (:head r))"), kr::InvalidExpressionError);
     EXPECT_THROW(parse("(:rule (r ?x) (marker ?x))", "(:numerical (:symbol f) (:head s))"), kr::UndefinedSymbolError);
     EXPECT_THROW(parse("(:rule (r ?x) (marker ?x))", "(:numerical (:symbol r) (:head r))"), kr::DuplicateDefinitionError);
+    EXPECT_THROW(parse("(:rule (r ?x) (marker ?x))", "(:role (:symbol f) (:head r))"), kr::InvalidExpressionError);
+    EXPECT_THROW(parse("(:rule (r ?x ?y) (edge ?x ?y))", "(:concept (:symbol f) (:head r))"), kr::InvalidExpressionError);
     EXPECT_NO_THROW(parse("(:rule (r) (marker ?x)) (:rule (n (min 1)) (r))", "(:boolean (:symbol f) (:head r)) (:numerical (:symbol g) (:head n))"));
     // Sketches have no :datalog section, so q_head and feature names are not supported there.
     const auto domain_context = kr::DomainContext::create(search->task->get_domain());

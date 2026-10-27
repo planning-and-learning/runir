@@ -55,6 +55,9 @@ positive atom; negation and aggregation must be stratified. Violations are repor
 ## Names
 
 - `(q_head r (columns))` is a query: the rows of head `r`, with the given column names.
+- `(:concept (:symbol s) (:head r))` is the rows of the unary head `r`, `(:role (:symbol s) (:head r))` those of the
+  binary head `r` (`c_project`/`r_project` of `q_head`); they can be loaded into registers like any concept or role
+  feature.
 - `(:boolean (:symbol s) (:head r))` is true iff the nullary head `r` has its row (`b_nonempty` of `q_head`);
   `(:numerical (:symbol s) (:head r))` is the least value of the unary head `r`, infinity if it has no row (`n_value`
   of `q_head`). The column should hold numbers, as a `(min ...)` head, an aggregate or arithmetic gives them:

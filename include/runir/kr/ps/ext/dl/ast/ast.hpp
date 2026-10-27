@@ -66,8 +66,9 @@ struct QueryFeature : boost::spirit::x3::position_tagged
     runir::kr::dl::grammar::ast::Query expression;
 };
 
-/// A feature read from a head of the module's Datalog program: a Boolean one is true iff the nullary head has its row,
-/// a numerical one is the least value of the unary head (infinity without a row).
+/// A feature read from a head of the module's Datalog program: a concept one is the unary head's rows, a role one the
+/// binary head's rows, a Boolean one is true iff the nullary head has its row, a numerical one is the least value of
+/// the unary head (infinity without a row).
 template<runir::kr::dl::CategoryTag Category>
 struct HeadFeature : boost::spirit::x3::position_tagged
 {
@@ -75,7 +76,9 @@ struct HeadFeature : boost::spirit::x3::position_tagged
     Identifier head;
 };
 
-using FeatureVariant = PositionedVariant<Feature<runir::kr::dl::ConceptTag>,
+using FeatureVariant = PositionedVariant<HeadFeature<runir::kr::dl::ConceptTag>,
+                                         Feature<runir::kr::dl::ConceptTag>,
+                                         HeadFeature<runir::kr::dl::RoleTag>,
                                          Feature<runir::kr::dl::RoleTag>,
                                          HeadFeature<runir::kr::dl::BooleanTag>,
                                          Feature<runir::kr::dl::BooleanTag>,
