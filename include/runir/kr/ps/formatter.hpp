@@ -9,9 +9,11 @@
 #include "runir/kr/ps/effect_view.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 
+#include <algorithm>
 #include <concepts>
 #include <fmt/format.h>
 #include <iterator>
+#include <optional>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -30,6 +32,58 @@ constexpr std::string_view feature_type()
         return FeatureTag::name;
 }
 
+namespace detail
+{
+/// The head of a q_head with `arity` columns; none for any other query.
+template<typename C>
+std::optional<std::string> query_head(ygg::View<ygg::Index<runir::kr::dl::Query<runir::kr::dl::QueryHeadTag>>, C> view, size_t arity)
+{
+    if (view.get_columns().size() != arity)
+        return std::nullopt;
+    return std::string(view.get_relation().get_name().view());
+}
+template<typename V>
+std::optional<std::string> query_head(V, size_t)
+{ return std::nullopt; }
+template<typename C>
+std::optional<std::string> query_head(ygg::View<ygg::Index<runir::kr::dl::Query<>>, C> view, size_t arity)
+{
+    return ygg::visit([&](auto concrete) { return query_head(concrete, arity); }, view.get_variant());
+}
+
+/// The head that a feature's expression reads whole, as `(:head h)` parses into (parse_head_feature in
+/// src/kr/ps/ext/dl/parser.cpp): a projection of a q_head onto its columns in their order, b_nonempty of a q_head
+/// without columns, or n_value of one with one column.
+template<runir::kr::dl::ConceptOrRoleTag Category, typename C>
+std::optional<std::string> read_head(ygg::View<ygg::Index<runir::kr::dl::QueryProjection<Category>>, C> view)
+{
+    const auto columns = view.get_columns();
+    const auto arity = std::same_as<Category, runir::kr::dl::ConceptTag> ? size_t { 1 } : size_t { 2 };
+    auto result = query_head(view.get_arg(), arity);
+    if (result)
+        ygg::visit(
+            [&](auto concrete)
+            {
+                if constexpr (requires { concrete.get_relation(); })
+                    if (!std::ranges::equal(concrete.get_columns(), columns))
+                        result.reset();
+            },
+            view.get_arg().get_variant());
+    return result;
+}
+template<typename C>
+std::optional<std::string> read_head(ygg::View<ygg::Index<runir::kr::dl::Boolean<runir::kr::dl::NonemptyTag>>, C> view)
+{
+    return ygg::visit([&](auto arg) { return query_head(arg, 0); }, view.get_arg());
+}
+template<typename C>
+std::optional<std::string> read_head(ygg::View<ygg::Index<runir::kr::dl::Numerical<runir::kr::dl::ValueTag>>, C> view)
+{ return query_head(view.get_arg(), 1); }
+template<typename V>
+std::optional<std::string> read_head(V)
+{ return std::nullopt; }
+}
+
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, typename C>
 void append_feature(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>>, C> view)
 {
@@ -37,9 +91,18 @@ void append_feature(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::Concre
     {
         ygg::IndentScope scope(os);
         os << ygg::print_indent << "(:symbol " << view.get_symbol() << ")\n";
-        os << ygg::print_indent << "(:expression ";
-        fmt::format_to(std::ostream_iterator<char>(os), "{}", view.get_expression());
-        os << ")\n";
+        // A feature that reads a :datalog head whole prints as it is written, so that the program parses again.
+        auto head = std::optional<std::string>();
+        if constexpr (requires { view.get_expression().get_variant(); })
+            head = ygg::visit([](auto concrete) { return detail::read_head(concrete); }, view.get_expression().get_variant());
+        if (head)
+            os << ygg::print_indent << "(:head " << *head << ")\n";
+        else
+        {
+            os << ygg::print_indent << "(:expression ";
+            fmt::format_to(std::ostream_iterator<char>(os), "{}", view.get_expression());
+            os << ")\n";
+        }
     }
     os << ygg::print_indent << ')';
 }

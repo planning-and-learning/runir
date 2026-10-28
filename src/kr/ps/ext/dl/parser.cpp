@@ -983,6 +983,8 @@ ModuleView lower_module(const ast::Module& ast,
 
     for (const auto& state : ast.memory_states)
         data->memory_states.push_back(memory_states.at(state.value.text));
+    if (ast.datalog && !ast.datalog->empty())
+        data->datalog = diagnostics.source(ast.datalog->front(), ast.datalog->back());
 
     auto concept_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>> {};
     auto role_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>> {};

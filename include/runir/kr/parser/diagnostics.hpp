@@ -39,6 +39,14 @@ struct DiagnosticContext
         return error;
     }
 
+    /// The input from the start of `first` to the end of `last`; empty without an active error handler.
+    std::string source(const boost::spirit::x3::position_tagged& first, const boost::spirit::x3::position_tagged& last) const
+    {
+        if (!active)
+            return {};
+        return std::string(active->get().position_of(first).begin(), active->get().position_of(last).end());
+    }
+
     template<std::derived_from<SemanticError> Error>
     [[noreturn]] void throw_at(const boost::spirit::x3::position_tagged& node, Error error) const
     {

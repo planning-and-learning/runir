@@ -344,7 +344,7 @@ private:
         return predicate(name, arity, false);
     }
 
-    /// Adds a literal other than an aggregate: an atom, a goal atom, a negated atom, a comparison or arithmetic.
+    /// Adds a literal other than an aggregate: an atom, a goal atom, a negated atom or goal atom, a comparison or arithmetic.
     void condition(const xast::DatalogCondition& syntax,
                    ygg::IndexList<ydl::Atom>& atoms,
                    ygg::IndexList<ydl::Atom>& negated,
@@ -356,6 +356,10 @@ private:
             {
                 if constexpr (std::same_as<T, xast::DatalogNegation>)
                     negated.push_back(atom(node.atom.relation, node.atom.terms, body_relation(node.atom.relation, node.atom.terms.size())).get_index());
+                else if constexpr (std::same_as<T, xast::DatalogNegatedGoal>)
+                    negated.push_back(
+                        atom(node.atom.predicate, node.atom.terms, predicate(node.atom.predicate, node.atom.terms.size(), true, !node.atom.negative))
+                            .get_index());
                 else if constexpr (std::same_as<T, xast::DatalogGoalAtom>)
                     atoms.push_back(atom(node.predicate, node.terms, predicate(node.predicate, node.terms.size(), true, !node.negative)).get_index());
                 else if constexpr (std::same_as<T, xast::DatalogComparison>)

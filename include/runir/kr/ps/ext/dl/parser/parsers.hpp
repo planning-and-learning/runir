@@ -76,6 +76,7 @@ struct DatalogTermClass;
 struct DatalogAtomClass;
 struct DatalogGoalAtomClass;
 struct DatalogNegationClass;
+struct DatalogNegatedGoalClass;
 struct DatalogComparisonClass;
 struct DatalogArithmeticClass;
 struct DatalogConditionClass;
@@ -156,6 +157,7 @@ using datalog_term_type = boost::spirit::x3::rule<DatalogTermClass, ast::Identif
 using datalog_atom_type = boost::spirit::x3::rule<DatalogAtomClass, ast::DatalogAtom>;
 using datalog_goal_atom_type = boost::spirit::x3::rule<DatalogGoalAtomClass, ast::DatalogGoalAtom>;
 using datalog_negation_type = boost::spirit::x3::rule<DatalogNegationClass, ast::DatalogNegation>;
+using datalog_negated_goal_type = boost::spirit::x3::rule<DatalogNegatedGoalClass, ast::DatalogNegatedGoal>;
 using datalog_comparison_type = boost::spirit::x3::rule<DatalogComparisonClass, ast::DatalogComparison>;
 using datalog_arithmetic_type = boost::spirit::x3::rule<DatalogArithmeticClass, ast::DatalogArithmetic>;
 using datalog_condition_type = boost::spirit::x3::rule<DatalogConditionClass, ast::DatalogCondition>;

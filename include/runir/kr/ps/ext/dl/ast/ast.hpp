@@ -189,6 +189,12 @@ struct DatalogNegation : boost::spirit::x3::position_tagged
     DatalogAtom atom;
 };
 
+/// (not (goal ...)): the goal does not contain that literal.
+struct DatalogNegatedGoal : boost::spirit::x3::position_tagged
+{
+    DatalogGoalAtom atom;
+};
+
 enum class DatalogComparisonOperator : std::uint8_t
 {
     EQUAL,
@@ -227,7 +233,7 @@ struct DatalogArithmetic : boost::spirit::x3::position_tagged
 };
 
 /// A literal that an aggregate body may hold: anything but an aggregate.
-using DatalogCondition = PositionedVariant<DatalogNegation, DatalogGoalAtom, DatalogArithmetic, DatalogComparison, DatalogAtom>;
+using DatalogCondition = PositionedVariant<DatalogNegatedGoal, DatalogNegation, DatalogGoalAtom, DatalogArithmetic, DatalogComparison, DatalogAtom>;
 
 enum class DatalogAggregateFunction : std::uint8_t
 {

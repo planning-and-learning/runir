@@ -111,6 +111,7 @@ constexpr datalog_term_type datalog_term = "Datalog term";
 constexpr datalog_atom_type datalog_atom = "Datalog atom";
 constexpr datalog_goal_atom_type datalog_goal_atom = "Datalog goal atom";
 constexpr datalog_negation_type datalog_negation = "Datalog negation";
+constexpr datalog_negated_goal_type datalog_negated_goal = "Datalog negated goal atom";
 constexpr datalog_comparison_type datalog_comparison = "Datalog comparison";
 constexpr datalog_arithmetic_type datalog_arithmetic = "Datalog arithmetic";
 constexpr datalog_condition_type datalog_condition = "Datalog condition";
@@ -245,6 +246,7 @@ constexpr auto datalog_goal_atom_def =
     ((lit("(") >> keyword("goal") >> lit("(") >> keyword("not") >> lit("(")) > identifier > *datalog_term > lit(")") > lit(")") > attr(true) > lit(")"))
     | ((lit("(") >> keyword("goal")) > identifier > *datalog_term > attr(false) > lit(")"));
 constexpr auto datalog_negation_def = ((lit("(") >> keyword("not")) > datalog_atom) > lit(")");
+constexpr auto datalog_negated_goal_def = ((lit("(") >> keyword("not") >> &(lit("(") >> keyword("goal"))) > datalog_goal_atom) > lit(")");
 constexpr auto datalog_comparison_operator =
     (lit("!=") >> attr(ast::DatalogComparisonOperator::NOT_EQUAL)) | (lit("<=") >> attr(ast::DatalogComparisonOperator::LESS_EQUAL))
     | (lit(">=") >> attr(ast::DatalogComparisonOperator::GREATER_EQUAL)) | (lit("<") >> attr(ast::DatalogComparisonOperator::LESS))
@@ -257,7 +259,7 @@ constexpr auto datalog_arithmetic_operator =
 // (= ?result (op lhs rhs)); backtracks to a comparison (= lhs rhs) before the inner parenthesis.
 constexpr auto datalog_arithmetic_def =
     (((((lit("(") >> lit("=") >> datalog_variable >> lit("(")) > datalog_arithmetic_operator) > datalog_term) > datalog_term) > lit(")")) > lit(")");
-constexpr auto datalog_condition_def = datalog_negation | datalog_goal_atom | datalog_arithmetic | datalog_comparison | datalog_atom;
+constexpr auto datalog_condition_def = datalog_negated_goal | datalog_negation | datalog_goal_atom | datalog_arithmetic | datalog_comparison | datalog_atom;
 constexpr auto datalog_aggregate_function =
     (keyword("count") >> attr(ast::DatalogAggregateFunction::COUNT)) | (keyword("sum") >> attr(ast::DatalogAggregateFunction::SUM))
     | (keyword("min") >> attr(ast::DatalogAggregateFunction::MIN)) | (keyword("max") >> attr(ast::DatalogAggregateFunction::MAX));
@@ -281,6 +283,7 @@ BOOST_SPIRIT_DEFINE(datalog_variable,
                     datalog_atom,
                     datalog_goal_atom,
                     datalog_negation,
+                    datalog_negated_goal,
                     datalog_comparison,
                     datalog_arithmetic,
                     datalog_condition,
@@ -550,6 +553,9 @@ struct DatalogAtomClass : boost::spirit::x3::annotate_on_success
 {
 };
 struct DatalogGoalAtomClass : boost::spirit::x3::annotate_on_success
+{
+};
+struct DatalogNegatedGoalClass : boost::spirit::x3::annotate_on_success
 {
 };
 struct DatalogNegationClass : boost::spirit::x3::annotate_on_success

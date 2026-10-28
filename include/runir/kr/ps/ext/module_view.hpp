@@ -9,6 +9,7 @@
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
 
 #include <concepts>
+#include <string_view>
 #include <tuple>
 #include <yggdrasil/containers/vector.hpp>
 #include <yggdrasil/core/dependent_false.hpp>
@@ -72,6 +73,8 @@ public:
     auto get_query_features() const noexcept { return get_features<runir::kr::ps::dl::QueryFeature>(); }
 
     auto get_entry_memory_state() const noexcept { return make_view(this->get_data().entry_memory_state, this->get_context()); }
+    /// The rules of its :datalog section as written; empty without one.
+    std::string_view get_datalog() const noexcept { return { this->get_data().datalog.data(), this->get_data().datalog.size() }; }
     auto get_memory_states() const noexcept { return make_view(this->get_data().memory_states, this->get_context()); }
     auto get_memory_transitions() const noexcept { return make_view(this->get_data().memory_transitions, this->get_context()); }
 };

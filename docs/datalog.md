@@ -42,7 +42,8 @@ Other rules read such a head like any relation, its least value as its last colu
   nullary, with its row iff true; a numerical argument has one row, holding its value), or a domain predicate
   (static, fluent or derived; names as the PDDL parser stores them, lower case; `object` holds every object);
 - `(goal p t...)`: the goal's positive literals of predicate `p`; `(goal (not (p t...)))` its negative literals;
-- `(not (r t...))`, `(= a b)`, `(!= a b)`, `(< a b)`, `(<= a b)`, `(> a b)`, `(>= a b)`;
+- `(not (r t...))`, and `(not (goal ...))` for a goal atom the goal does not contain; `(= a b)`, `(!= a b)`, `(< a b)`,
+  `(<= a b)`, `(> a b)`, `(>= a b)`;
 - `(= ?z (op a b))` with `op` one of `+ - * / min max`, binding `?z` from bound terms (in order, so later literals may
   read it). Numbers are runir's: the largest value is infinity, `+` and `*` saturate to infinity, `-` at 0, division by
   0 is infinity;
@@ -57,7 +58,8 @@ positive atom; negation and aggregation must be stratified. Violations are repor
 - `(q_head r (columns))` is a query: the rows of head `r`, with the given column names.
 - `(:concept (:symbol s) (:head r))` is the rows of the unary head `r`, `(:role (:symbol s) (:head r))` those of the
   binary head `r` (`c_project`/`r_project` of `q_head`); they can be loaded into registers like any concept or role
-  feature.
+  feature. A module prints such features back as `(:head r)` and its `:datalog` rules as written, so that a printed
+  module parses again.
 - `(:boolean (:symbol s) (:head r))` is true iff the nullary head `r` has its row (`b_nonempty` of `q_head`);
   `(:numerical (:symbol s) (:head r))` is the least value of the unary head `r`, infinity if it has no row (`n_value`
   of `q_head`). The column should hold numbers, as a `(min ...)` head, an aggregate or arithmetic gives them:

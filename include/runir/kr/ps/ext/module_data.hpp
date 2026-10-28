@@ -34,6 +34,8 @@ struct Data<runir::kr::ps::ext::Module>
     Index<runir::kr::ps::ext::MemoryState> entry_memory_state;
     IndexList<runir::kr::ps::ext::MemoryState> memory_states;
     IndexMatrix<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>> memory_transitions;
+    /// The rules of its :datalog section as written (empty without one): printed back, so that the module parses again.
+    ::cista::offset::string datalog;
     Data() = default;
     // Arguments and registers live in the description-logic repository, hence the separate context parameter.
     Data(Index<runir::kr::ps::ext::ModuleSymbol> symbol_,
@@ -141,7 +143,8 @@ struct Data<runir::kr::ps::ext::Module>
                             &Data::query_features,
                             &Data::entry_memory_state,
                             &Data::memory_states,
-                            &Data::memory_transitions> {};
+                            &Data::memory_transitions,
+                            &Data::datalog> {};
     }
     static constexpr auto identifying_members() noexcept
     {
@@ -159,7 +162,8 @@ struct Data<runir::kr::ps::ext::Module>
                             &Data::query_features,
                             &Data::entry_memory_state,
                             &Data::memory_states,
-                            &Data::memory_transitions> {};
+                            &Data::memory_transitions,
+                            &Data::datalog> {};
     }
     void clear() noexcept { ygg::clear_members(*this); }
 };

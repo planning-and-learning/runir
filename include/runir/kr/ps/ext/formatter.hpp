@@ -160,6 +160,9 @@ void append_module(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext::Mo
             os << ' ' << state.get_name();
         os << ")\n";
 
+        if (!view.get_datalog().empty())
+            os << ygg::print_indent << "(:datalog " << view.get_datalog() << ")\n";
+
         os << ygg::print_indent << "(:features\n";
         {
             ygg::IndentScope feature_scope(os);
