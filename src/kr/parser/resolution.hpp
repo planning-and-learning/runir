@@ -2,6 +2,8 @@
 #define RUNIR_SRC_KR_PARSER_RESOLUTION_HPP_
 
 #include "runir/kr/errors.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/parser/ast.hpp"
 #include "runir/kr/parser/diagnostics.hpp"
 
@@ -26,9 +28,9 @@ auto require_predicate(tyr::formalism::planning::DomainView domain,
             continue;
         if (predicate.get_arity() != arity)
             diagnostics.throw_at(name, ArityMismatchError(constructor_name, arity, predicate.get_arity()));
-        return std::optional(predicate.get_index());
+        return std::optional(predicate.index());
     }
-    return std::optional<ygg::Index<tyr::formalism::Predicate<T>>> {};
+    return std::optional<urd::index<tyr::formalism::Predicate<T>>> {};
 }
 
 template<typename Make>
@@ -53,16 +55,16 @@ inline auto require_object(tyr::formalism::planning::DomainView domain, const as
 {
     for (auto object : domain.get_constants())
         if (object.get_name() == name.text)
-            return object.get_index();
+            return object.index();
 
     diagnostics.throw_at(name, UndefinedSymbolError("constant", name.text));
 }
 
 template<typename Identifier>
 void append_objects(tyr::formalism::planning::DomainView domain,
-                    const std::vector<Identifier>& names,
+                    const urd::Store<urd::sequence<Identifier>>& names,
                     const DiagnosticContext& diagnostics,
-                    ygg::IndexList<tyr::formalism::Object>& result)
+                    urd::flat_vector<urd::index<tyr::formalism::Object>>& result)
 {
     result.reserve(result.size() + names.size());
     for (const auto& name : names)

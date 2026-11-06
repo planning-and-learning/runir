@@ -11,6 +11,9 @@
 #include <ranges>
 #include <span>
 #include <type_traits>
+#include <urd/repr/maps/dense_multimap.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 
@@ -28,13 +31,14 @@ public:
     using EdgePropertyMapType = EdgePropertyMap<EP>;
 
 private:
-    using VertexList = std::vector<VertexType>;
-    using EdgeList = std::vector<EdgeType>;
+    using VertexList = urd::Store<urd::sequence<VertexType>>;
+    using EdgeList = urd::Store<urd::sequence<EdgeType>>;
     using VertexPropertyMapType = VertexPropertyMap<VP>;
     VertexList m_vertices;
     EdgeList m_edges;
-    std::vector<EdgeIndexList> m_out_edges;
-    std::vector<EdgeIndexList> m_in_edges;
+    /// Each vertex's out and in edges, in the order added.
+    urd::Store<urd::map<VertexIndex, EdgeIndex>, urd::multi, urd::dense> m_out_edges;
+    urd::Store<urd::map<VertexIndex, EdgeIndex>, urd::multi, urd::dense> m_in_edges;
     VertexPropertyMapType m_vertex_properties;
     EdgePropertyMapType m_edge_properties;
 
@@ -104,10 +108,8 @@ public:
     auto add_vertex(P&& property) -> VertexIndex
     {
         const auto index = next_index(m_vertices.size());
-        auto [property_index, _] = m_vertex_properties.insert(ygg::Data<VertexProperty<VP>>(std::forward<P>(property)));
+        auto [property_index, _] = m_vertex_properties.insert(urd::data<VertexProperty<VP>>(std::forward<P>(property)));
         m_vertices.emplace_back(index, property_index, *this);
-        m_out_edges.emplace_back();
-        m_in_edges.emplace_back();
         return index;
     }
 
@@ -126,10 +128,10 @@ public:
         assert_valid_vertex(target);
 
         const auto index = next_index(m_edges.size());
-        auto [property_index, _] = m_edge_properties.insert(ygg::Data<EdgeProperty<EP>>(std::forward<P>(property)));
+        auto [property_index, _] = m_edge_properties.insert(urd::data<EdgeProperty<EP>>(std::forward<P>(property)));
         m_edges.emplace_back(index, source, target, property_index, *this);
-        m_out_edges[source].push_back(index);
-        m_in_edges[target].push_back(index);
+        m_out_edges.insert({ source, index });
+        m_in_edges.insert({ target, index });
         return index;
     }
 
@@ -184,25 +186,25 @@ public:
     [[nodiscard]] auto get_out_edge_indices(VertexIndex vertex) const noexcept
     {
         assert_valid_vertex(vertex);
-        return std::span<const EdgeIndex>(m_out_edges[vertex]);
+        return m_out_edges.values(vertex);
     }
 
     [[nodiscard]] auto get_in_edge_indices(VertexIndex vertex) const noexcept
     {
         assert_valid_vertex(vertex);
-        return std::span<const EdgeIndex>(m_in_edges[vertex]);
+        return m_in_edges.values(vertex);
     }
 
     [[nodiscard]] auto get_out_degree(VertexIndex vertex) const noexcept -> Degree
     {
         assert_valid_vertex(vertex);
-        return static_cast<Degree>(m_out_edges[vertex].size());
+        return static_cast<Degree>(m_out_edges.count(vertex));
     }
 
     [[nodiscard]] auto get_in_degree(VertexIndex vertex) const noexcept -> Degree
     {
         assert_valid_vertex(vertex);
-        return static_cast<Degree>(m_in_edges[vertex].size());
+        return static_cast<Degree>(m_in_edges.count(vertex));
     }
 
     [[nodiscard]] auto get_out_edges(VertexIndex vertex) const noexcept

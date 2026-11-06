@@ -4,12 +4,6 @@
 """Base policy sketches: rules over features, parsing and sketch search."""
 
 from pyrunir._pyrunir.kr.ps.base import (
-    ConditionVariant as ConditionVariant,
-    ConditionVariantData as ConditionVariantData,
-    ConditionVariantIndex as ConditionVariantIndex,
-    EffectVariant as EffectVariant,
-    EffectVariantData as EffectVariantData,
-    EffectVariantIndex as EffectVariantIndex,
     GroundSketchProofGraph as GroundSketchProofGraph,
     GroundSketchProofResults as GroundSketchProofResults,
     GroundSketchProofVertexLabel as GroundSketchProofVertexLabel,

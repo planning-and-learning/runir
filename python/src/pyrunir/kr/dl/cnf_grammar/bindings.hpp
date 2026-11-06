@@ -10,7 +10,6 @@ void bind_cnf_grammar_concept(nb::module_& m);
 void bind_cnf_grammar_role(nb::module_& m);
 void bind_cnf_grammar_boolean(nb::module_& m);
 void bind_cnf_grammar_numerical(nb::module_& m);
-void bind_cnf_grammar_constructor(nb::module_& m);
 void bind_cnf_grammar_non_terminal(nb::module_& m);
 void bind_cnf_grammar_grammar(nb::module_& m);
 void bind_cnf_grammar_constructor_repository(nb::module_& m);

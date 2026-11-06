@@ -1,4 +1,5 @@
 #include "runir/kr/dl/cnf_grammar/generate.hpp"
+#include <urd/repr/sequences/segmented.hpp>
 
 #include "runir/kr/dl/canonicalization.hpp"
 #include "runir/kr/dl/cnf_grammar/constructor_repository.hpp"
@@ -17,8 +18,6 @@
 #include <chrono>
 #include <concepts>
 #include <cstdint>
-#include <deque>
-#include <map>
 #include <optional>
 #include <stdexcept>
 #include <tuple>
@@ -28,10 +27,16 @@
 #include <tyr/planning/lifted/state_repository.hpp>
 #include <tyr/planning/lifted/task.hpp>
 #include <tyr/planning/state_repository.hpp>
+#include <urd/repr/maps/postings.hpp>
+#include <urd/repr/maps/std_map.hpp>
+#include <urd/repr/maps/unordered_flat_map.hpp>
+#include <urd/repr/values/std_set.hpp>
+#include <urd/repr/values/unordered_flat_set.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
-#include <yggdrasil/containers/associative_containers.hpp>
-#include <yggdrasil/containers/raw_array_set.hpp>
+#include <urd/repr/pools/pools.hpp>
 #include <yggdrasil/core/chrono.hpp>
 
 namespace runir::kr::dl::cnf_grammar
@@ -39,58 +44,34 @@ namespace runir::kr::dl::cnf_grammar
 namespace
 {
 
+/// The constructors generated so far, by the nonterminal that derives them and their complexity, in the order
+/// generated: a multimap per category.
 class GeneratedSentences
 {
 private:
-    template<runir::kr::dl::CategoryTag Category>
-    using ConstructorIndices = std::vector<ygg::Index<runir::kr::dl::Constructor<Category>>>;
+    using Key = std::pair<std::uint64_t, size_t>;
 
     template<runir::kr::dl::CategoryTag Category>
-    using ConstructorsByComplexity = std::vector<ConstructorIndices<Category>>;
+    using Sentences = urd::Store<urd::map<Key, urd::index<runir::kr::dl::Constructor<Category>>>, urd::multi>;
+
+    std::tuple<Sentences<runir::kr::dl::ConceptTag>,
+               Sentences<runir::kr::dl::RoleTag>,
+               Sentences<runir::kr::dl::BooleanTag>,
+               Sentences<runir::kr::dl::NumericalTag>>
+        m_sentences;
 
     template<runir::kr::dl::CategoryTag Category>
-    using ConstructorsByNonTerminal = std::map<std::uint64_t, ConstructorsByComplexity<Category>>;
-
-    std::tuple<ConstructorsByNonTerminal<runir::kr::dl::ConceptTag>,
-               ConstructorsByNonTerminal<runir::kr::dl::RoleTag>,
-               ConstructorsByNonTerminal<runir::kr::dl::BooleanTag>,
-               ConstructorsByNonTerminal<runir::kr::dl::NumericalTag>>
-        m_maps;
-
-    template<runir::kr::dl::CategoryTag Category>
-    auto& get_map() noexcept
-    { return std::get<ConstructorsByNonTerminal<Category>>(m_maps); }
-
-    template<runir::kr::dl::CategoryTag Category>
-    [[nodiscard]] const auto& get_map() const noexcept
-    { return std::get<ConstructorsByNonTerminal<Category>>(m_maps); }
-
-    template<runir::kr::dl::CategoryTag Category>
-    static const ConstructorIndices<Category>& empty_constructors()
-    {
-        static const auto empty = ConstructorIndices<Category> {};
-        return empty;
-    }
+    static Key key(NonTerminalView<Category> nonterminal, size_t complexity)
+    { return { static_cast<std::uint64_t>(ygg::uint_t(nonterminal.index().value)), complexity }; }
 
 public:
     template<runir::kr::dl::CategoryTag Category>
-    ConstructorIndices<Category>& get(NonTerminalView<Category> nonterminal, size_t complexity)
-    {
-        auto& by_complexity = get_map<Category>()[static_cast<std::uint64_t>(ygg::uint_t(nonterminal.get_index()))];
-        if (complexity >= by_complexity.size())
-            by_complexity.resize(complexity + 1);
-        return by_complexity[complexity];
-    }
+    void add(NonTerminalView<Category> nonterminal, size_t complexity, urd::index<runir::kr::dl::Constructor<Category>> constructor)
+    { std::get<Sentences<Category>>(m_sentences).insert({ key(nonterminal, complexity), constructor }); }
 
     template<runir::kr::dl::CategoryTag Category>
-    [[nodiscard]] const ConstructorIndices<Category>& get(NonTerminalView<Category> nonterminal, size_t complexity) const
-    {
-        const auto& map = get_map<Category>();
-        const auto it = map.find(static_cast<std::uint64_t>(ygg::uint_t(nonterminal.get_index())));
-        if (it == map.end() || complexity >= it->second.size())
-            return empty_constructors<Category>();
-        return it->second[complexity];
-    }
+    [[nodiscard]] auto get(NonTerminalView<Category> nonterminal, size_t complexity) const
+    { return std::get<Sentences<Category>>(m_sentences).values(key(nonterminal, complexity)); }
 };
 
 class Timeout
@@ -111,12 +92,19 @@ struct SeenDenotationsFor
     using Denotation = runir::kr::dl::semantics::DenotationView<Category>;
     using NonTerminal = NonTerminalView<Category>;
 
-    ygg::RawArraySet<Denotation> vectors;
-    ygg::UnorderedSet<std::pair<NonTerminal, ygg::uint_t>> signatures;
-    ygg::UnorderedSet<std::pair<NonTerminal, Constructor>> constructors;
-    std::vector<Denotation> scratch;
+    /// The denotation rows seen (one denotation per state), interned in a urd pool by the denotations' indices: they
+    /// all live in the one canonical repository, so an index identifies a denotation. A handle's value identifies a row.
+    urd::Store<urd::pool<urd::Store<urd::sequence<urd::index<runir::kr::dl::semantics::Denotation<Category>>>, urd::frozen>>> vectors;
+    urd::Store<urd::sequence<urd::index<runir::kr::dl::semantics::Denotation<Category>>>> scratch_indices;
+    urd::Store<urd::set<std::pair<NonTerminal, ygg::uint_t>>> signatures;
+    urd::Store<urd::set<std::pair<NonTerminal, Constructor>>> constructors;
+    urd::Store<urd::sequence<Denotation>> scratch;
 
-    explicit SeenDenotationsFor(size_t num_states) : vectors(num_states), signatures(), constructors(), scratch() { scratch.reserve(num_states); }
+    explicit SeenDenotationsFor(size_t num_states) : vectors(), scratch_indices(), signatures(), constructors(), scratch()
+    {
+        scratch.reserve(num_states);
+        scratch_indices.reserve(num_states);
+    }
 };
 
 struct SeenDenotations
@@ -143,15 +131,15 @@ template<tyr::TaskKind Kind>
 class Pruning
 {
 private:
-    const std::vector<tyr::planning::PackedStateView<Kind>>* m_states;
+    const urd::Store<urd::sequence<tyr::planning::PackedStateView<Kind>>>* m_states;
     runir::kr::dl::semantics::Builder m_builder;
     runir::kr::dl::semantics::DenotationRepository* m_denotation_repository;
-    std::deque<runir::kr::dl::semantics::EvaluationStorage> m_intermediate_storage;
-    std::vector<runir::kr::dl::semantics::DenotationCaches> m_denotation_caches;
+    urd::Store<urd::sequence<runir::kr::dl::semantics::EvaluationStorage>, urd::stable_refs> m_intermediate_storage;
+    urd::Store<urd::sequence<runir::kr::dl::semantics::DenotationCaches>> m_denotation_caches;
     SeenDenotations m_seen_denotations;
 
 public:
-    Pruning(const std::vector<tyr::planning::PackedStateView<Kind>>& states, runir::kr::dl::semantics::DenotationRepository& denotation_repository) :
+    Pruning(const urd::Store<urd::sequence<tyr::planning::PackedStateView<Kind>>>& states, runir::kr::dl::semantics::DenotationRepository& denotation_repository) :
         m_states(&states),
         m_builder(),
         m_denotation_repository(&denotation_repository),
@@ -185,7 +173,10 @@ public:
             seen.scratch.push_back(runir::kr::dl::semantics::evaluate<Kind>(constructor, context));
         }
 
-        const auto vector = seen.vectors.insert(seen.scratch);
+        seen.scratch_indices.clear();
+        for (const auto& denotation : seen.scratch)
+            seen.scratch_indices.push_back(denotation.index());
+        const auto vector = seen.vectors.insert(seen.scratch_indices).first.value;
         const auto is_novel = seen.signatures.insert(std::pair(lhs, vector)).second;
 
         if (!is_novel && !was_cached)
@@ -227,7 +218,7 @@ private:
         const auto concrete = runir::kr::dl::insert(*m_output_repository, *data).first;
 
         auto wrapper = runir::kr::dl::checkout<runir::kr::dl::Constructor<Category>>(m_builder);
-        wrapper->variant = concrete.get_index();
+        wrapper->variant = concrete.index();
         return runir::kr::dl::insert(*m_output_repository, *wrapper).first;
     }
 
@@ -266,8 +257,8 @@ private:
     }
 
     template<runir::kr::dl::CategoryTag Category>
-    void keep(NonTerminalView<Category> lhs, ygg::Index<runir::kr::dl::Constructor<Category>> constructor)
-    { m_sentences.get(lhs, m_complexity).push_back(constructor); }
+    void keep(NonTerminalView<Category> lhs, urd::index<runir::kr::dl::Constructor<Category>> constructor)
+    { m_sentences.add(lhs, m_complexity, constructor); }
 
     template<runir::kr::dl::CategoryTag Category>
     bool maybe_keep(NonTerminalView<Category> lhs, runir::kr::dl::ConstructorView<Category> constructor)
@@ -281,7 +272,7 @@ private:
         }
 
         ++m_result.statistics.num_kept;
-        keep(lhs, constructor.get_index());
+        keep(lhs, constructor.index());
         return true;
     }
 
@@ -383,7 +374,7 @@ private:
     template<runir::kr::dl::CategoryTag Category>
     bool generate_rule(DerivationRuleView<Category> rule)
     {
-        return ygg::visit([&](auto constructor) { return generate_constructor(rule.get_lhs(), constructor); }, rule.get_rhs().get_variant());
+        return std::visit([&](auto constructor) { return generate_constructor(rule.get_lhs(), constructor); }, rule.get_rhs());
     }
 
     template<runir::kr::dl::CategoryTag Category>
@@ -392,7 +383,7 @@ private:
         if (rule.get_lhs() == rule.get_rhs())
             return !out_of_time();
 
-        const auto& source = m_sentences.get(rule.get_rhs(), m_complexity);
+        const auto source = m_sentences.get(rule.get_rhs(), m_complexity);
         for (auto constructor : source)
         {
             auto view = runir::kr::dl::ConstructorView<Category>(constructor, *m_output_repository);
@@ -416,8 +407,8 @@ private:
                                 [&]
                                 {
                                     return intern_predicate<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::AtomicStateTag<T>>>(
-                                        constructor.get_data().predicate,
-                                        constructor.get_data().polarity);
+                                        constructor.data().predicate,
+                                        constructor.data().polarity);
                                 });
     }
 
@@ -428,8 +419,8 @@ private:
                                 [&]
                                 {
                                     return intern_predicate<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::AtomicGoalTag<T>>>(
-                                        constructor.get_data().predicate,
-                                        constructor.get_data().polarity);
+                                        constructor.data().predicate,
+                                        constructor.data().polarity);
                                 });
     }
 
@@ -449,7 +440,7 @@ private:
                                 [&]
                                 {
                                     return intern_wrapped<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::NominalTag>>(
-                                        [&](auto& data) { data.object = constructor.get_data().object; });
+                                        [&](auto& data) { data.object = constructor.data().object; });
                                 });
     }
 
@@ -587,7 +578,7 @@ private:
                                       [&](auto& data)
                                       {
                                           data.role = role;
-                                          for (auto object : constructor.get_data().objects)
+                                          for (auto object : constructor.data().objects)
                                               data.objects.push_back(object);
                                       });
                               });
@@ -601,7 +592,7 @@ private:
                                     return intern_wrapped<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::OneOfTag>>(
                                         [&](auto& data)
                                         {
-                                            for (auto object : constructor.get_data().objects)
+                                            for (auto object : constructor.data().objects)
                                                 data.objects.push_back(object);
                                         });
                                 });
@@ -614,8 +605,8 @@ private:
                                 [&]
                                 {
                                     return intern_predicate<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::AtomicStateTag<T>>>(
-                                        constructor.get_data().predicate,
-                                        constructor.get_data().polarity);
+                                        constructor.data().predicate,
+                                        constructor.data().polarity);
                                 });
     }
 
@@ -626,8 +617,8 @@ private:
                                 [&]
                                 {
                                     return intern_predicate<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::AtomicGoalTag<T>>>(
-                                        constructor.get_data().predicate,
-                                        constructor.get_data().polarity);
+                                        constructor.data().predicate,
+                                        constructor.data().polarity);
                                 });
     }
 
@@ -719,8 +710,8 @@ private:
                                 [&]
                                 {
                                     return intern_predicate<runir::kr::dl::BooleanTag, runir::kr::dl::Boolean<runir::kr::dl::AtomicStateTag<T>>>(
-                                        constructor.get_data().predicate,
-                                        constructor.get_data().polarity);
+                                        constructor.data().predicate,
+                                        constructor.data().polarity);
                                 });
     }
 
@@ -731,14 +722,14 @@ private:
                                 [&]
                                 {
                                     return intern_predicate<runir::kr::dl::BooleanTag, runir::kr::dl::Boolean<runir::kr::dl::AtomicGoalTag<T>>>(
-                                        constructor.get_data().predicate,
-                                        constructor.get_data().polarity);
+                                        constructor.data().predicate,
+                                        constructor.data().polarity);
                                 });
     }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::BooleanTag> lhs, BooleanView<runir::kr::dl::NonemptyTag> constructor)
     {
-        return ygg::visit(
+        return std::visit(
             [&](auto arg)
             {
                 return generate_unary(lhs,
@@ -751,7 +742,7 @@ private:
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::NumericalTag> lhs, NumericalView<runir::kr::dl::CountTag> constructor)
     {
-        return ygg::visit(
+        return std::visit(
             [&](auto arg)
             {
                 return generate_unary(lhs,
@@ -816,7 +807,7 @@ private:
 
 public:
     Generator(GrammarView grammar,
-              const std::vector<tyr::planning::PackedStateView<Kind>>& states,
+              const urd::Store<urd::sequence<tyr::planning::PackedStateView<Kind>>>& states,
               runir::kr::dl::ConstructorRepository& output_repository,
               runir::kr::dl::semantics::DenotationRepository& denotation_repository,
               const GenerateOptions& options) :
@@ -863,18 +854,18 @@ public:
 }  // namespace
 template<tyr::TaskKind Kind>
 GenerateResultsFor generate(GrammarView grammar,
-                            const std::vector<tyr::planning::PackedStateView<Kind>>& states,
+                            const urd::Store<urd::sequence<tyr::planning::PackedStateView<Kind>>>& states,
                             runir::kr::dl::ConstructorRepository& output_repository,
                             runir::kr::dl::semantics::DenotationRepository& denotation_repository,
                             const GenerateOptions& options)
 {
     const auto& planning_repository = output_repository.get_planning_repository_ptr();
-    if (&grammar.get_context().get_planning_repository().get_root() != &planning_repository->get_root())
+    if (&grammar.context().get_planning_repository().get_root() != &planning_repository->get_root())
         throw std::invalid_argument("generate requires grammar and output repository for the same planning domain");
 
     for (const auto& state : states)
     {
-        const auto& task = state.get_state_repository()->get_task();
+        const auto& task = state.get_state_repository().get_task();
         if (task->get_repository() != planning_repository && task->get_domain().get_repository() != planning_repository)
             throw std::invalid_argument("generate requires states and output repository for the same planning domain");
         if (task->get_repository().get() != &denotation_repository.get_formalism_repository())
@@ -885,13 +876,13 @@ GenerateResultsFor generate(GrammarView grammar,
 }
 
 template GenerateResultsFor generate<tyr::GroundTag>(GrammarView,
-                                                     const std::vector<tyr::planning::PackedStateView<tyr::GroundTag>>&,
+                                                     const urd::Store<urd::sequence<tyr::planning::PackedStateView<tyr::GroundTag>>>&,
                                                      runir::kr::dl::ConstructorRepository&,
                                                      runir::kr::dl::semantics::DenotationRepository&,
                                                      const GenerateOptions&);
 
 template GenerateResultsFor generate<tyr::LiftedTag>(GrammarView,
-                                                     const std::vector<tyr::planning::PackedStateView<tyr::LiftedTag>>&,
+                                                     const urd::Store<urd::sequence<tyr::planning::PackedStateView<tyr::LiftedTag>>>&,
                                                      runir::kr::dl::ConstructorRepository&,
                                                      runir::kr::dl::semantics::DenotationRepository&,
                                                      const GenerateOptions&);

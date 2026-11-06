@@ -2,6 +2,8 @@
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_ATOMIC_QUERY_HPP_
 
 #include "runir/kr/dl/object_rows.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/dl/query_view.hpp"
 #include "runir/kr/dl/semantics/state_evaluation.hpp"
 
@@ -32,13 +34,13 @@ class AtomicQueryEvaluator
 {
     tyr::formalism::planning::PredicateView<Fact> m_predicate;
     bool m_initialized = false;
-    ygg::Builder<ygg::database::Relation> m_result;
+    urd::builder<ygg::database::Relation> m_result;
     ygg::database::incremental::Delta m_delta;
-    std::vector<std::byte> m_row;
+    urd::Store<urd::sequence<std::byte>> m_row;
 
 public:
     template<typename C>
-    explicit AtomicQueryEvaluator(ygg::View<ygg::Index<Query<AtomicStateTag<Fact>>>, C> query);
+    explicit AtomicQueryEvaluator(urd::view<Query<AtomicStateTag<Fact>>, C> query);
 
     /// Replace the baseline from a completed state, retaining buffers and clearing the last delta.
     template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> State>
@@ -49,8 +51,8 @@ public:
     void update(std::span<const tyr::formalism::planning::AtomView<tyr::GroundTag, Fact>> added,
                 std::span<const tyr::formalism::planning::AtomView<tyr::GroundTag, Fact>> removed);
 
-    [[nodiscard]] const ygg::Builder<ygg::database::Relation>& get_result() const& noexcept { return m_result; }
-    [[nodiscard]] const ygg::Builder<ygg::database::Relation>& get_result() const&& = delete;
+    [[nodiscard]] const urd::builder<ygg::database::Relation>& get_result() const& noexcept { return m_result; }
+    [[nodiscard]] const urd::builder<ygg::database::Relation>& get_result() const&& = delete;
     [[nodiscard]] const ygg::database::incremental::Delta& get_delta() const& noexcept { return m_delta; }
     [[nodiscard]] const ygg::database::incremental::Delta& get_delta() const&& = delete;
 };
@@ -58,7 +60,7 @@ public:
 template<tyr::formalism::FactKind Fact>
     requires(std::same_as<Fact, tyr::formalism::FluentTag> || std::same_as<Fact, tyr::formalism::DerivedTag>)
 template<typename C>
-AtomicQueryEvaluator<Fact>::AtomicQueryEvaluator(ygg::View<ygg::Index<Query<AtomicStateTag<Fact>>>, C> query) :
+AtomicQueryEvaluator<Fact>::AtomicQueryEvaluator(urd::view<Query<AtomicStateTag<Fact>>, C> query) :
     m_predicate(query.get_predicate()),
     m_result(query.get_schema().span()),
     m_delta(query.get_schema().span())
@@ -76,7 +78,7 @@ void AtomicQueryEvaluator<Fact>::initialize(const State& state)
     m_result.clear();
     m_delta.clear();
     for (const auto atom : state.get_atoms_view(m_predicate))
-        m_result.insert(encode_object_row(atom.get_row().get_data(), m_row));
+        m_result.insert(encode_object_row(atom.get_row().data().objects, m_row));
     m_initialized = true;
 }
 
@@ -94,7 +96,7 @@ void AtomicQueryEvaluator<Fact>::update(std::span<const tyr::formalism::planning
     {
         if (atom.get_predicate() != m_predicate)
             continue;
-        const auto row = encode_object_row(atom.get_row().get_data(), m_row);
+        const auto row = encode_object_row(atom.get_row().data().objects, m_row);
         if (m_result.contains(row))
             throw std::invalid_argument("Incremental atomic query: added atom is already present.");
         m_delta.added.insert(row);
@@ -103,7 +105,7 @@ void AtomicQueryEvaluator<Fact>::update(std::span<const tyr::formalism::planning
     {
         if (atom.get_predicate() != m_predicate)
             continue;
-        const auto row = encode_object_row(atom.get_row().get_data(), m_row);
+        const auto row = encode_object_row(atom.get_row().data().objects, m_row);
         const auto position = m_result.find(row);
         if (!position)
             throw std::invalid_argument("Incremental atomic query: removed atom is absent.");

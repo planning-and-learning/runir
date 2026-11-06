@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_ICP_EVALUATION_ENVIRONMENT_HPP_
 
 #include "runir/kr/dl/semantics/evaluation_policy.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/dl/semantics/evaluation_storage.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include "runir/kr/ps/dl/transition_evaluation_context.hpp"
@@ -25,7 +27,7 @@ class EvaluationEnvironment
 
     static auto roots(ProgramView program)
     {
-        auto result = std::vector<runir::kr::dl::semantics::incremental::EvaluationRoot> {};
+        auto result = urd::Store<urd::sequence<runir::kr::dl::semantics::incremental::EvaluationRoot>> {};
         const auto append = [&]<typename FeatureTag>()
         {
             for (const auto feature : program.get_module().template get_features<FeatureTag>())
@@ -57,7 +59,7 @@ public:
     }
 
     [[nodiscard]] auto get_program() const noexcept { return m_program; }
-    auto& get_dl_repository() noexcept { return m_program.get_context().get_dl_repository(); }
+    auto& get_dl_repository() noexcept { return m_program.context().get_dl_repository(); }
     auto& get_dl_caches() noexcept { return m_source_storage.get_caches(); }
     auto& get_dl_target_caches() noexcept { return m_target_storage.get_caches(); }
     void reset_source() noexcept
@@ -74,7 +76,7 @@ public:
     /// Contexts borrow stored data; callers clear dynamic caches before evaluating a new configuration.
     auto make_dl_context(ProgramStateView<Kind> state)
     {
-        if (&state.get_context() != m_task->icp_execution_repository.get() || state.get_program() != m_program)
+        if (&state.context() != m_task->icp_execution_repository.get() || state.get_program() != m_program)
             throw std::invalid_argument("ICP evaluation requires a state from the selected task and program.");
         return make_dl_context(state.get_state(), state.get_registers());
     }

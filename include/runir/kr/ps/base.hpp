@@ -16,7 +16,6 @@
 #include "runir/kr/ps/base/sketch_executor.hpp"
 #include "runir/kr/ps/base/sketch_view.hpp"
 #include "runir/kr/ps/base/syntactic_complexity.hpp"
-#include "runir/kr/ps/condition_data.hpp"
 #include "runir/kr/ps/declarations.hpp"
 #include "runir/kr/ps/dl/compatibility.hpp"
 #include "runir/kr/ps/dl/condition_data.hpp"
@@ -28,8 +27,6 @@
 #include "runir/kr/ps/dl/feature_view.hpp"
 #include "runir/kr/ps/dl/syntactic_complexity.hpp"
 #include "runir/kr/ps/dl/transition_evaluation_context.hpp"
-#include "runir/kr/ps/effect_data.hpp"
 
-#include <yggdrasil/core/types.hpp>
 
 #endif

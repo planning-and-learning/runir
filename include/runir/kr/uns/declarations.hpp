@@ -8,8 +8,8 @@
 #include "runir/kr/ps/family_traits.hpp"
 
 #include <memory>
-#include <yggdrasil/core/type_list.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <boost/mp11.hpp>
+#include <urd/elements/flat.hpp>
 
 namespace runir::kr::uns
 {
@@ -31,23 +31,23 @@ struct Classifier
 };
 
 using RepositoryTypes =
-    ygg::ConcatTypeListsT<runir::kr::ps::PsFeatureTypes<runir::kr::UnsFamilyTag>, ygg::TypeList<ClassifierLiteral, ClassifierClause, Classifier>>;
+    boost::mp11::mp_append<runir::kr::ps::PsFeatureTypes<runir::kr::UnsFamilyTag>, boost::mp11::mp_list<ClassifierLiteral, ClassifierClause, Classifier>>;
 using Repository = runir::kr::ps::BasicRepository<runir::kr::UnsFamilyTag, RepositoryTypes>;
 using RepositoryPtr = std::shared_ptr<Repository>;
 using RepositoryFactory = runir::kr::ps::BasicRepositoryFactory<runir::kr::UnsFamilyTag, RepositoryTypes>;
 
-using ClassifierLiteralView = ygg::View<ygg::Index<runir::kr::uns::ClassifierLiteral>, Repository>;
-using ClassifierClauseView = ygg::View<ygg::Index<runir::kr::uns::ClassifierClause>, Repository>;
-using ClassifierView = ygg::View<ygg::Index<runir::kr::uns::Classifier>, Repository>;
+using ClassifierLiteralView = urd::view<runir::kr::uns::ClassifierLiteral, Repository>;
+using ClassifierClauseView = urd::view<runir::kr::uns::ClassifierClause, Repository>;
+using ClassifierView = urd::view<runir::kr::uns::Classifier, Repository>;
 
 }  // namespace runir::kr::uns
 
 namespace runir::kr::uns::dl
 {
 
-using BooleanFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>>, Repository>;
+using BooleanFeatureView = urd::view<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>, Repository>;
 using ConcreteBooleanFeatureView =
-    ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>>, Repository>;
+    urd::view<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>, Repository>;
 
 }  // namespace runir::kr::uns::dl
 

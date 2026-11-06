@@ -6,8 +6,9 @@
 #include <runir/kr/dl/cnf_grammar/numerical_data.hpp>
 #include <runir/kr/dl/cnf_grammar/numerical_view.hpp>
 #include <tyr/formalism/planning/repository.hpp>
-#include <yggdrasil/core/concepts.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
+#include <boost/mp11.hpp>
+#include <yggdrasil/core/config.hpp>
 
 namespace runir::tests
 {
@@ -17,16 +18,15 @@ namespace
 
 template<typename T, typename Repository>
 concept IndexedDataView =
-    std::constructible_from<ygg::Index<T>, ygg::uint_t> && ygg::Identifiable<ygg::Index<T>> && ygg::Identifiable<ygg::Data<T>>
-    && ygg::Identifiable<ygg::View<ygg::Index<T>, Repository>> && std::totally_ordered<ygg::Index<T>> && std::totally_ordered<ygg::Data<T>>
-    && std::totally_ordered<ygg::View<ygg::Index<T>, Repository>> && requires(ygg::Data<T>& data, const ygg::View<ygg::Index<T>, Repository>& view) {
+    std::constructible_from<urd::index<T>, ygg::uint_t> && urd::Identifiable<urd::index<T>> && urd::Identifiable<urd::data<T>>
+    && urd::Identifiable<urd::view<T, Repository>> && std::totally_ordered<urd::index<T>> && std::totally_ordered<urd::data<T>>
+    && std::totally_ordered<urd::view<T, Repository>> && requires(urd::data<T>& data, const urd::view<T, Repository>& view) {
            data.index;
-           data.clear();
-           view.get_index();
+           view.index();
        };
 
 template<typename... Ts>
-consteval bool indexed_data_views(ygg::TypeList<Ts...>)
+consteval bool indexed_data_views(boost::mp11::mp_list<Ts...>)
 { return (IndexedDataView<Ts, kr::dl::cnf_grammar::ConstructorRepository> && ...); }
 
 static_assert(indexed_data_views<>(kr::dl::cnf_grammar::NumericalTypes {}));
@@ -35,8 +35,8 @@ template<typename Tag>
 consteval bool numerical_data_view()
 {
     using Entity = kr::dl::cnf_grammar::Numerical<Tag>;
-    using Data = ygg::Data<Entity>;
-    using View = ygg::View<ygg::Index<Entity>, kr::dl::cnf_grammar::ConstructorRepository>;
+    using Data = urd::data<Entity>;
+    using View = urd::view<Entity, kr::dl::cnf_grammar::ConstructorRepository>;
 
     static_assert(std::same_as<View, kr::dl::cnf_grammar::NumericalView<Tag>>);
     if constexpr (false)
@@ -66,7 +66,7 @@ consteval bool numerical_data_view()
             data.identifier;
             view.get_value();
         };
-    else if constexpr (ygg::InTypeList<Tag, kr::dl::NumericalBinaryConstructorTags>)
+    else if constexpr (boost::mp11::mp_contains<kr::dl::NumericalBinaryConstructorTags, Tag>::value)
         return requires(Data& data, const View& view) {
             data.lhs;
             data.rhs;
@@ -78,7 +78,7 @@ consteval bool numerical_data_view()
 }
 
 template<typename... Tags>
-consteval bool numerical_data_views(ygg::TypeList<Tags...>)
+consteval bool numerical_data_views(boost::mp11::mp_list<Tags...>)
 { return (numerical_data_view<Tags>() && ...); }
 
 static_assert(numerical_data_views(kr::dl::GenerationNumericalConstructorTags {}));
@@ -90,13 +90,13 @@ TEST(RunirKrDlCnfGrammarNumerical, ExposesDistanceOperands)
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     auto repository = kr::dl::cnf_grammar::ConstructorRepositoryFactory().create(planning_repository);
 
-    auto source_data = ygg::Data<kr::dl::cnf_grammar::NonTerminal<kr::dl::ConceptTag>>(std::string("source"));
-    auto role_data = ygg::Data<kr::dl::cnf_grammar::NonTerminal<kr::dl::RoleTag>>(std::string("role"));
-    auto target_data = ygg::Data<kr::dl::cnf_grammar::NonTerminal<kr::dl::ConceptTag>>(std::string("target"));
+    auto source_data = urd::data<kr::dl::cnf_grammar::NonTerminal<kr::dl::ConceptTag>>(std::string("source"));
+    auto role_data = urd::data<kr::dl::cnf_grammar::NonTerminal<kr::dl::RoleTag>>(std::string("role"));
+    auto target_data = urd::data<kr::dl::cnf_grammar::NonTerminal<kr::dl::ConceptTag>>(std::string("target"));
     const auto source = repository->insert(source_data).first;
     const auto role = repository->insert(role_data).first;
     const auto target = repository->insert(target_data).first;
-    auto distance_data = ygg::Data<kr::dl::cnf_grammar::Numerical<kr::dl::DistanceTag>>(source.get_index(), role.get_index(), target.get_index());
+    auto distance_data = urd::data<kr::dl::cnf_grammar::Numerical<kr::dl::DistanceTag>>(source.index(), role.index(), target.index());
     const auto distance = repository->insert(distance_data).first;
 
     EXPECT_EQ(distance.get_lhs(), source);

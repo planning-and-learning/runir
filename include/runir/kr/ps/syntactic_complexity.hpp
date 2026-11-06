@@ -8,9 +8,9 @@ namespace runir::kr::ps
 {
 
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, typename C>
-std::size_t syntactic_complexity(ygg::View<ygg::Index<Feature<Family, FeatureTag>>, C> view)
+std::size_t syntactic_complexity(urd::view<Feature<Family, FeatureTag>, C> view)
 {
-    return ygg::visit([](auto feature) { return runir::kr::ps::dl::syntactic_complexity(feature); }, view.get_variant());
+    return std::visit([](auto feature) { return runir::kr::ps::dl::syntactic_complexity(feature); }, view.get_variant());
 }
 
 }  // namespace runir::kr::ps

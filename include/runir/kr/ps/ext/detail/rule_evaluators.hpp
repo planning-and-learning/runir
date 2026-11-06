@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_EXT_DETAIL_RULE_EVALUATORS_HPP_
 
 #include "runir/kr/ps/ext/compatibility.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
 #include "runir/kr/ps/ext/detail/rule_evaluation/action.hpp"
 #include "runir/kr/ps/ext/detail/rule_evaluation/backtrack.hpp"
@@ -28,8 +30,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
-#include <yggdrasil/core/concepts.hpp>
-#include <yggdrasil/core/type_list.hpp>
+#include <boost/mp11.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
@@ -41,7 +42,7 @@ class RuleEvaluators
 {
     using Concept = runir::kr::dl::ConceptTag;
     using Role = runir::kr::dl::RoleTag;
-    using EvaluatorTypes = ygg::TypeList<LoadRuleEvaluator<Kind, Concept>,
+    using EvaluatorTypes = boost::mp11::mp_list<LoadRuleEvaluator<Kind, Concept>,
                                          LoadRuleEvaluator<Kind, Role>,
                                          SketchRuleEvaluator<Kind>,
                                          DoRuleEvaluator<Kind>,
@@ -50,14 +51,14 @@ class RuleEvaluators
                                          ChooseRuleEvaluator<Kind, Role>,
                                          ActionRuleEvaluator<Kind>,
                                          BacktrackRuleEvaluator<Kind>>;
-    using Evaluator = ygg::ApplyTypeListT<std::variant, EvaluatorTypes>;
+    using Evaluator = boost::mp11::mp_apply<std::variant, EvaluatorTypes>;
     runir::kr::TaskContextPtr<Kind> m_task_context;
     ProgramView m_program;
     EvaluationEnvironment<Kind, EvaluationPolicy> m_environment;
-    std::vector<Evaluator> m_rules;
+    urd::Store<urd::sequence<Evaluator>> m_rules;
     ChooseRuleWorkspace m_choose;
     DoRuleWorkspace m_do;
-    std::vector<SketchRuleEvaluator<Kind>> m_sketch_rules;
+    urd::Store<urd::sequence<SketchRuleEvaluator<Kind>>> m_sketch_rules;
 
     template<RuleKind Tag>
     auto prepare(RuleView<Tag> rule, RuleVariantView variant)
@@ -92,20 +93,20 @@ class RuleEvaluators
     auto source_rules(ModuleView module_, MemoryStateView memory_state) const
     {
         const auto modules = m_program.get_modules();
-        const auto belongs_to_program = &module_.get_context() == &m_program.get_context() && std::ranges::find(modules, module_) != modules.end();
+        const auto belongs_to_program = &module_.context() == &m_program.context() && std::ranges::find(modules, module_) != modules.end();
         return module_.get_memory_transitions() | std::views::join
                | std::views::filter(
                    [belongs_to_program, memory_state](RuleVariantView rule)
                    {
                        return belongs_to_program
-                              && ygg::visit([memory_state](auto concrete) { return concrete.get_source() == memory_state; }, rule.get_variant());
+                              && std::visit([memory_state](auto concrete) { return concrete.get_source() == memory_state; }, rule.get_variant());
                    });
     }
 
     auto find_rule(RuleVariantView rule)
     {
         // Repository indices alone do not identify a rule supplied to apply().
-        if (&rule.get_context() != &m_program.get_context())
+        if (&rule.context() != &m_program.context())
             return m_rules.end();
         // ponytail: Linear lookup keeps dispatch simple; index it only if profiling shows a bottleneck.
         return std::ranges::find_if(m_rules,
@@ -113,13 +114,14 @@ class RuleEvaluators
                                     { return std::visit([rule](const auto& concrete) { return concrete.get_variant() == rule; }, evaluator); });
     }
 
-    template<ygg::InvocableWithEach<EvaluatorTypes> Function>
+    template<typename Function>
+        requires boost::mp11::mp_all_of_q<EvaluatorTypes, boost::mp11::mp_bind_front<std::is_invocable, Function>>::value
     decltype(auto) with_rule(RuleVariantView rule, Function function)
     {
         if (const auto found = find_rule(rule); found != m_rules.end())
             return std::visit(function, std::as_const(*found));
         // Direct application historically accepts rules outside the prepared program.
-        return ygg::visit(
+        return std::visit(
             [&](auto concrete) -> decltype(auto)
             {
                 const auto evaluator = prepare(concrete, rule);
@@ -151,7 +153,7 @@ public:
         m_program(program),
         m_environment(*m_task_context, m_program)
     {
-        if (&program.get_context() != m_task_context->domain_context->ext_repository.get())
+        if (&program.context() != m_task_context->domain_context->ext_repository.get())
             throw std::invalid_argument("RuleEvaluators requires a program from the domain context repository.");
         size_t count = 0;
         for (const auto module_ : program.get_modules())
@@ -163,7 +165,7 @@ public:
             for (const auto transition : module_.get_memory_transitions())
                 for (const auto rule : transition)
                     if (find_rule(rule) == m_rules.end())
-                        m_rules.push_back(ygg::visit([&](auto concrete) -> Evaluator { return prepare(concrete, rule); }, rule.get_variant()));
+                        m_rules.push_back(std::visit([&](auto concrete) -> Evaluator { return prepare(concrete, rule); }, rule.get_variant()));
     }
 
     auto& get_environment() noexcept { return m_environment; }
@@ -199,7 +201,7 @@ public:
         {
             if (stop())
                 return false;
-            if (!rule.get_variant().template is<ygg::Index<Rule<BacktrackTag>>>())
+            if (!std::holds_alternative<ext::RuleView<BacktrackTag>>(rule.get_variant()))
                 continue;
             if (!with_rule(rule,
                            [&]<typename Concrete>(const Concrete& concrete)
@@ -277,8 +279,8 @@ public:
         for (const auto rule : source_rules(state.get_module_state().get_module(), state.get_module_state().get_memory_state()))
         {
             const auto variant = rule.get_variant();
-            if (variant.template is<ygg::Index<Rule<BacktrackTag>>>()
-                && ext::rule_is_applicable(variant.template get<ygg::Index<Rule<BacktrackTag>>>(), state, context.planning_state, *context.environment))
+            if (std::holds_alternative<ext::RuleView<BacktrackTag>>(variant)
+                && ext::rule_is_applicable(std::get<ext::RuleView<BacktrackTag>>(variant), state, context.planning_state, *context.environment))
                 return std::nullopt;
         }
         for (const auto rule : source_rules(state.get_module_state().get_module(), state.get_module_state().get_memory_state()))

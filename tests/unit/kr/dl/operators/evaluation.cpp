@@ -22,59 +22,59 @@ namespace
 
 auto wrap_boolean(runir::kr::dl::ConstructorRepository& repository, auto boolean)
 {
-    auto data = ygg::Data<runir::kr::dl::Constructor<runir::kr::dl::BooleanTag>>(boolean.get_index());
+    auto data = urd::data<runir::kr::dl::Constructor<runir::kr::dl::BooleanTag>>(boolean.index());
     return repository.insert(data).first;
 }
 
 auto wrap_numerical(runir::kr::dl::ConstructorRepository& repository, auto numerical)
 {
-    auto data = ygg::Data<runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>>(numerical.get_index());
+    auto data = urd::data<runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>>(numerical.index());
     return repository.insert(data).first;
 }
 
 auto boolean_constant(runir::kr::dl::ConstructorRepository& repository, bool value)
 {
-    auto data = ygg::Data<runir::kr::dl::Boolean<runir::kr::dl::BooleanConstantTag>>(value);
+    auto data = urd::data<runir::kr::dl::Boolean<runir::kr::dl::BooleanConstantTag>>(value);
     return wrap_boolean(repository, repository.insert(data).first);
 }
 
 auto numerical_constant(runir::kr::dl::ConstructorRepository& repository, ygg::uint_t value)
 {
-    auto data = ygg::Data<runir::kr::dl::Numerical<runir::kr::dl::NumericalConstantTag>>(value);
+    auto data = urd::data<runir::kr::dl::Numerical<runir::kr::dl::NumericalConstantTag>>(value);
     return wrap_numerical(repository, repository.insert(data).first);
 }
 
 template<runir::kr::dl::ComparisonTag Tag>
 auto numerical_comparison(runir::kr::dl::ConstructorRepository& repository, auto lhs, auto rhs)
 {
-    auto data = ygg::Data<runir::kr::dl::Boolean<Tag>>(lhs.get_index(), rhs.get_index());
+    auto data = urd::data<runir::kr::dl::Boolean<Tag>>(lhs.index(), rhs.index());
     return wrap_boolean(repository, repository.insert(data).first);
 }
 
 template<runir::kr::dl::ComparisonTag Tag>
 auto boolean_comparison(runir::kr::dl::ConstructorRepository& repository, auto lhs, auto rhs)
 {
-    auto data = ygg::Data<runir::kr::dl::Boolean<Tag>>(lhs.get_index(), rhs.get_index());
+    auto data = urd::data<runir::kr::dl::Boolean<Tag>>(lhs.index(), rhs.index());
     return wrap_boolean(repository, repository.insert(data).first);
 }
 
 template<runir::kr::dl::NumericalBinaryTag Tag>
 auto numerical_binary(runir::kr::dl::ConstructorRepository& repository, auto lhs, auto rhs)
 {
-    auto data = ygg::Data<runir::kr::dl::Numerical<Tag>>(lhs.get_index(), rhs.get_index());
+    auto data = urd::data<runir::kr::dl::Numerical<Tag>>(lhs.index(), rhs.index());
     return wrap_numerical(repository, repository.insert(data).first);
 }
 
 template<runir::kr::dl::LogicalBinaryTag Tag>
 auto logical_binary(runir::kr::dl::ConstructorRepository& repository, auto lhs, auto rhs)
 {
-    auto data = ygg::Data<runir::kr::dl::Boolean<Tag>>(lhs.get_index(), rhs.get_index());
+    auto data = urd::data<runir::kr::dl::Boolean<Tag>>(lhs.index(), rhs.index());
     return wrap_boolean(repository, repository.insert(data).first);
 }
 
 auto logical_not(runir::kr::dl::ConstructorRepository& repository, auto boolean)
 {
-    auto data = ygg::Data<runir::kr::dl::Boolean<runir::kr::dl::NotTag>>(boolean.get_index());
+    auto data = urd::data<runir::kr::dl::Boolean<runir::kr::dl::NotTag>>(boolean.index());
     return wrap_boolean(repository, repository.insert(data).first);
 }
 
@@ -90,12 +90,12 @@ TEST(RunirTests, ComparisonsAndConstantsEvaluateAndFormat)
     auto& repo = *repository;
 
     // c_top -> n_count(c_top)
-    auto top_data = ygg::Data<runir::kr::dl::Concept<runir::kr::dl::TopTag>>();
+    auto top_data = urd::data<runir::kr::dl::Concept<runir::kr::dl::TopTag>>();
     auto top = repo.insert(top_data).first;
-    auto top_ctor_data = ygg::Data<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>(top.get_index());
+    auto top_ctor_data = urd::data<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>(top.index());
     auto top_ctor = repo.insert(top_ctor_data).first;
 
-    auto count_data = ygg::Data<runir::kr::dl::Numerical<runir::kr::dl::CountTag>>(top_ctor.get_index());
+    auto count_data = urd::data<runir::kr::dl::Numerical<runir::kr::dl::CountTag>>(top_ctor.index());
     auto count = repo.insert(count_data).first;
     auto count_ctor = wrap_numerical(repo, count);
 
@@ -106,7 +106,7 @@ TEST(RunirTests, ComparisonsAndConstantsEvaluateAndFormat)
     auto context = runir::kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>(state, builder, storage);
 
     // |c_top| is the number of objects; build n_const with exactly that value.
-    const auto num_objects = runir::kr::dl::semantics::evaluate<tyr::GroundTag>(count_ctor, context).get();
+    const auto num_objects = runir::kr::dl::semantics::evaluate<tyr::GroundTag>(count_ctor, context).value();
     EXPECT_GT(num_objects, 0u);
 
     auto n_const_eq = numerical_constant(repo, num_objects);
@@ -116,42 +116,42 @@ TEST(RunirTests, ComparisonsAndConstantsEvaluateAndFormat)
     EXPECT_TRUE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(
                     numerical_comparison<runir::kr::dl::EqTag<runir::kr::dl::NumericalTag>>(repo, count_ctor, n_const_eq),
                     context)
-                    .get());
+                    .value());
     EXPECT_FALSE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(
                      numerical_comparison<runir::kr::dl::NeqTag<runir::kr::dl::NumericalTag>>(repo, count_ctor, n_const_eq),
                      context)
-                     .get());
+                     .value());
     EXPECT_FALSE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(
                      numerical_comparison<runir::kr::dl::LtTag<runir::kr::dl::NumericalTag>>(repo, count_ctor, n_const_eq),
                      context)
-                     .get());
+                     .value());
     EXPECT_TRUE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(
                     numerical_comparison<runir::kr::dl::LeTag<runir::kr::dl::NumericalTag>>(repo, count_ctor, n_const_eq),
                     context)
-                    .get());
+                    .value());
     EXPECT_TRUE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(
                     numerical_comparison<runir::kr::dl::GtTag<runir::kr::dl::NumericalTag>>(repo, count_ctor, n_const_zero),
                     context)
-                    .get());
+                    .value());
     EXPECT_TRUE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(
                     numerical_comparison<runir::kr::dl::GeTag<runir::kr::dl::NumericalTag>>(repo, count_ctor, n_const_eq),
                     context)
-                    .get());
+                    .value());
 
     // Boolean constants and comparisons.
     auto b_true = boolean_constant(repo, true);
     auto b_false = boolean_constant(repo, false);
-    EXPECT_TRUE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(b_true, context).get());
-    EXPECT_FALSE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(b_false, context).get());
+    EXPECT_TRUE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(b_true, context).value());
+    EXPECT_FALSE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(b_false, context).value());
     EXPECT_TRUE(
         runir::kr::dl::semantics::evaluate<tyr::GroundTag>(boolean_comparison<runir::kr::dl::EqTag<runir::kr::dl::BooleanTag>>(repo, b_true, b_true), context)
-            .get());
+            .value());
     EXPECT_FALSE(
         runir::kr::dl::semantics::evaluate<tyr::GroundTag>(boolean_comparison<runir::kr::dl::EqTag<runir::kr::dl::BooleanTag>>(repo, b_true, b_false), context)
-            .get());
+            .value());
     EXPECT_TRUE(
         runir::kr::dl::semantics::evaluate<tyr::GroundTag>(boolean_comparison<runir::kr::dl::NeqTag<runir::kr::dl::BooleanTag>>(repo, b_true, b_false), context)
-            .get());
+            .value());
 
     // Formatting round-trips the keywords and nested children.
     const auto lt = numerical_comparison<runir::kr::dl::LtTag<runir::kr::dl::NumericalTag>>(repo, count_ctor, n_const_zero);
@@ -189,26 +189,26 @@ TEST(RunirTests, ArithmeticAndLogicalOperatorsEvaluateAndFormat)
     auto zero = numerical_constant(repo, 0);
 
     // Arithmetic.
-    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::AddTag>(repo, two, five), context).get(), 7u);
-    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::SubTag>(repo, two, five), context).get(),
+    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::AddTag>(repo, two, five), context).value(), 7u);
+    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::SubTag>(repo, two, five), context).value(),
               0u);  // saturates at 0
-    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::SubTag>(repo, five, two), context).get(), 3u);
-    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::MulTag>(repo, two, five), context).get(), 10u);
-    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::DivTag>(repo, five, two), context).get(), 2u);
-    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::DivTag>(repo, five, zero), context).get(),
+    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::SubTag>(repo, five, two), context).value(), 3u);
+    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::MulTag>(repo, two, five), context).value(), 10u);
+    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::DivTag>(repo, five, two), context).value(), 2u);
+    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::DivTag>(repo, five, zero), context).value(),
               inf);  // div by zero -> inf
-    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::MinTag>(repo, two, five), context).get(), 2u);
-    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::MaxTag>(repo, two, five), context).get(), 5u);
+    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::MinTag>(repo, two, five), context).value(), 2u);
+    EXPECT_EQ(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(numerical_binary<runir::kr::dl::MaxTag>(repo, two, five), context).value(), 5u);
 
     // Logical.
     auto b_true = boolean_constant(repo, true);
     auto b_false = boolean_constant(repo, false);
-    EXPECT_FALSE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(logical_binary<runir::kr::dl::AndTag>(repo, b_true, b_false), context).get());
-    EXPECT_TRUE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(logical_binary<runir::kr::dl::AndTag>(repo, b_true, b_true), context).get());
-    EXPECT_TRUE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(logical_binary<runir::kr::dl::OrTag>(repo, b_true, b_false), context).get());
-    EXPECT_FALSE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(logical_binary<runir::kr::dl::OrTag>(repo, b_false, b_false), context).get());
-    EXPECT_TRUE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(logical_not(repo, b_false), context).get());
-    EXPECT_FALSE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(logical_not(repo, b_true), context).get());
+    EXPECT_FALSE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(logical_binary<runir::kr::dl::AndTag>(repo, b_true, b_false), context).value());
+    EXPECT_TRUE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(logical_binary<runir::kr::dl::AndTag>(repo, b_true, b_true), context).value());
+    EXPECT_TRUE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(logical_binary<runir::kr::dl::OrTag>(repo, b_true, b_false), context).value());
+    EXPECT_FALSE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(logical_binary<runir::kr::dl::OrTag>(repo, b_false, b_false), context).value());
+    EXPECT_TRUE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(logical_not(repo, b_false), context).value());
+    EXPECT_FALSE(runir::kr::dl::semantics::evaluate<tyr::GroundTag>(logical_not(repo, b_true), context).value());
 
     // Formatting.
     const auto add = numerical_binary<runir::kr::dl::AddTag>(repo, two, five);

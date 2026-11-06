@@ -8,8 +8,8 @@
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
+#include <urd/repr/containers/bitset_span.hpp>
 #include <vector>
-#include <yggdrasil/core/concepts.hpp>
 
 namespace runir::kr::dl::semantics::incremental::detail
 {
@@ -27,26 +27,26 @@ template<ConceptOrRoleTag Category>
 bool contains(BorrowedDenotationView<Category> input, DenotationElementView<Category> value)
 {
     if constexpr (std::same_as<Category, ConceptTag>)
-        return input.get().test(static_cast<ygg::uint_t>(value.get_index()));
+        return input.value().test(static_cast<ygg::uint_t>(value.index().value));
     else
-        return input.get(value.first.get_index()).test(static_cast<ygg::uint_t>(value.second.get_index()));
+        return input.value(value.first.index()).test(static_cast<ygg::uint_t>(value.second.index().value));
 }
 
 inline void mark_sources(SetOperationWorkspace& workspace, const DenotationDelta<RoleTag>& delta)
 {
-    for_changed(delta, [&](auto edge) { workspace.mark(edge.first.get_index()); });
+    for_changed(delta, [&](auto edge) { workspace.mark(edge.first.index()); });
 }
 
-inline void mark_predecessors(SetOperationWorkspace& workspace, const ygg::Builder<Denotation<RoleTag>>& role, ygg::Index<tyr::formalism::Object> target)
+inline void mark_predecessors(SetOperationWorkspace& workspace, const urd::builder<Denotation<RoleTag>>& role, urd::index<tyr::formalism::Object> target)
 {
-    const auto index = static_cast<ygg::uint_t>(target);
+    const auto index = static_cast<ygg::uint_t>(target.value);
     for (ygg::uint_t source = 0; source < role.get_num_objects(); ++source)
         if (!workspace.marked[source] && role.get(source).test(index))
-            workspace.mark(ygg::Index<tyr::formalism::Object>(source));
+            workspace.mark(urd::index<tyr::formalism::Object>(source));
 }
 
 template<ConceptOrRoleTag Category>
-void mark_predecessors(SetOperationWorkspace& workspace, const ygg::Builder<Denotation<RoleTag>>& role, const DenotationDelta<Category>& delta)
+void mark_predecessors(SetOperationWorkspace& workspace, const urd::builder<Denotation<RoleTag>>& role, const DenotationDelta<Category>& delta)
 {
     if (delta.empty())
         return;
@@ -58,21 +58,21 @@ void mark_predecessors(SetOperationWorkspace& workspace, const ygg::Builder<Deno
                 [&](auto value)
                 {
                     if constexpr (std::same_as<Category, ConceptTag>)
-                        targets.set(static_cast<ygg::uint_t>(value.get_index()));
+                        targets.set(static_cast<ygg::uint_t>(value.index().value));
                     else
-                        targets.set(static_cast<ygg::uint_t>(value.first.get_index()));
+                        targets.set(static_cast<ygg::uint_t>(value.first.index().value));
                 });
-    const auto indices = ygg::set_bit_indices(targets);
+    const auto indices = urd::repr::set_bit_indices(targets);
     auto it = indices.begin();
     const auto first = *it;
     if (++it == indices.end())
     {
-        mark_predecessors(workspace, role, ygg::Index<tyr::formalism::Object>(static_cast<ygg::uint_t>(first)));
+        mark_predecessors(workspace, role, urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(first)));
         return;
     }
     for (ygg::uint_t source = 0; source < role.get_num_objects(); ++source)
         if (!workspace.marked[source] && role.get(source).intersects(targets))
-            workspace.mark(ygg::Index<tyr::formalism::Object>(source));
+            workspace.mark(urd::index<tyr::formalism::Object>(source));
 }
 
 template<BaseConceptConstructorTag Tag>
@@ -89,7 +89,7 @@ bool number_restriction(size_t count, ygg::uint_t threshold)
     }
 }
 
-template<std::invocable<ygg::Index<tyr::formalism::Object>, ygg::BitsetSpan<const ygg::uint_t>> Emit>
+template<std::invocable<urd::index<tyr::formalism::Object>, urd::repr::BitsetSpan<const ygg::uint_t>> Emit>
 void evaluate_rows(RestrictionTag,
                    BorrowedDenotationView<RoleTag> role,
                    BorrowedDenotationView<ConceptTag> concept_,
@@ -99,32 +99,32 @@ void evaluate_rows(RestrictionTag,
     for (const auto source : workspace.rows)
     {
         auto row = workspace.row.get();
-        row.copy_from(role.get(source));
-        row &= concept_.get();
-        emit(source, ygg::BitsetSpan<const ygg::uint_t>(row));
+        row.copy_from(role.value(source));
+        row &= concept_.value();
+        emit(source, urd::repr::BitsetSpan<const ygg::uint_t>(row));
     }
 }
 
-template<BaseConceptConstructorTag Tag, std::invocable<ygg::Index<tyr::formalism::Object>, bool> Emit>
+template<BaseConceptConstructorTag Tag, std::invocable<urd::index<tyr::formalism::Object>, bool> Emit>
 void evaluate_rows(Tag, BorrowedDenotationView<RoleTag> role, BorrowedDenotationView<ConceptTag> concept_, SetOperationWorkspace& workspace, Emit emit)
 {
     static_assert(std::same_as<Tag, ValueRestrictionTag> || std::same_as<Tag, ExistentialQuantificationTag>);
     for (const auto source : workspace.rows)
     {
         const auto present =
-            std::same_as<Tag, ValueRestrictionTag> ? role.get(source).is_subset_of(concept_.get()) : role.get(source).intersects(concept_.get());
+            std::same_as<Tag, ValueRestrictionTag> ? role.value(source).is_subset_of(concept_.value()) : role.value(source).intersects(concept_.value());
         emit(source, present);
     }
 }
 
-template<BaseConceptConstructorTag Tag, std::invocable<ygg::Index<tyr::formalism::Object>, bool> Emit>
+template<BaseConceptConstructorTag Tag, std::invocable<urd::index<tyr::formalism::Object>, bool> Emit>
 void evaluate_rows(Tag, BorrowedDenotationView<RoleTag> role, ygg::uint_t threshold, SetOperationWorkspace& workspace, Emit emit)
 {
     for (const auto source : workspace.rows)
-        emit(source, number_restriction<Tag>(role.get(source).count(), threshold));
+        emit(source, number_restriction<Tag>(role.value(source).count(), threshold));
 }
 
-template<BaseConceptConstructorTag Tag, std::invocable<ygg::Index<tyr::formalism::Object>, bool> Emit>
+template<BaseConceptConstructorTag Tag, std::invocable<urd::index<tyr::formalism::Object>, bool> Emit>
 void evaluate_rows(Tag,
                    BorrowedDenotationView<RoleTag> role,
                    BorrowedDenotationView<ConceptTag> concept_,
@@ -134,30 +134,33 @@ void evaluate_rows(Tag,
 {
     for (const auto source : workspace.rows)
     {
-        const auto count = role.get(source).count_intersection(concept_.get());
+        const auto count = role.value(source).count_intersection(concept_.value());
         emit(source, number_restriction<Tag>(count, threshold));
     }
 }
 
-template<BaseConceptConstructorTag Tag, std::invocable<ygg::Index<tyr::formalism::Object>, bool> Emit>
+template<BaseConceptConstructorTag Tag, std::invocable<urd::index<tyr::formalism::Object>, bool> Emit>
 void evaluate_rows(Tag, BorrowedDenotationView<RoleTag> lhs, BorrowedDenotationView<RoleTag> rhs, SetOperationWorkspace& workspace, Emit emit)
 {
     static_assert(std::same_as<Tag, RoleValueMapTag> || std::same_as<Tag, AgreementTag>);
     for (const auto source : workspace.rows)
     {
-        const auto present = std::same_as<Tag, RoleValueMapTag> ? lhs.get(source).is_subset_of(rhs.get(source)) : lhs.get(source) == rhs.get(source);
+        const auto present = std::same_as<Tag, RoleValueMapTag> ? lhs.value(source).is_subset_of(rhs.value(source)) : lhs.value(source) == rhs.value(source);
         emit(source, present);
     }
 }
 
-template<ygg::SizedForwardRangeOf<tyr::formalism::planning::ObjectView> Objects, std::invocable<ygg::Index<tyr::formalism::Object>, bool> Emit>
+template<typename Objects, typename Emit>
+    requires std::ranges::forward_range<const Objects> && std::ranges::sized_range<const Objects> && std::same_as<std::ranges::range_value_t<const Objects>, tyr::formalism::planning::ObjectView>
+             && std::convertible_to<std::ranges::range_reference_t<const Objects>, const tyr::formalism::planning::ObjectView&>
+             && std::invocable<Emit, urd::index<tyr::formalism::Object>, bool>
 void evaluate_rows(RoleFillersTag, BorrowedDenotationView<RoleTag> role, const Objects& fillers, SetOperationWorkspace& workspace, Emit emit)
 {
     for (const auto source : workspace.rows)
     {
         bool present = true;
         for (const auto filler : fillers)
-            if (!role.get(source).test(static_cast<ygg::uint_t>(filler.get_index())))
+            if (!role.value(source).test(static_cast<ygg::uint_t>(filler.index().value)))
             {
                 present = false;
                 break;
@@ -166,22 +169,22 @@ void evaluate_rows(RoleFillersTag, BorrowedDenotationView<RoleTag> role, const O
     }
 }
 
-template<std::invocable<ygg::Index<tyr::formalism::Object>, ygg::BitsetSpan<const ygg::uint_t>> Emit>
+template<std::invocable<urd::index<tyr::formalism::Object>, urd::repr::BitsetSpan<const ygg::uint_t>> Emit>
 void evaluate_rows(CompositionTag, BorrowedDenotationView<RoleTag> lhs, BorrowedDenotationView<RoleTag> rhs, SetOperationWorkspace& workspace, Emit emit)
 {
     for (const auto source : workspace.rows)
     {
         auto row = workspace.row.get();
         row.reset();
-        for (const auto middle : ygg::set_bit_indices(lhs.get(source)))
-            row |= rhs.get(static_cast<ygg::uint_t>(middle));
-        emit(source, ygg::BitsetSpan<const ygg::uint_t>(row));
+        for (const auto middle : urd::repr::set_bit_indices(lhs.value(source)))
+            row |= rhs.value(static_cast<ygg::uint_t>(middle));
+        emit(source, urd::repr::BitsetSpan<const ygg::uint_t>(row));
     }
 }
 
-template<BaseRoleConstructorTag Tag, std::invocable<ygg::Index<tyr::formalism::Object>, ygg::BitsetSpan<const ygg::uint_t>> Emit>
-void evaluate_rows(Tag, const ygg::Builder<Denotation<RoleTag>>& result, BorrowedDenotationView<RoleTag> role, SetOperationWorkspace& workspace, Emit emit)
-{ evaluate_closure(Tag {}, result, role.get_handle(), workspace.rows, workspace.marked, workspace.row, workspace.closure, emit); }
+template<BaseRoleConstructorTag Tag, std::invocable<urd::index<tyr::formalism::Object>, urd::repr::BitsetSpan<const ygg::uint_t>> Emit>
+void evaluate_rows(Tag, const urd::builder<Denotation<RoleTag>>& result, BorrowedDenotationView<RoleTag> role, SetOperationWorkspace& workspace, Emit emit)
+{ evaluate_closure(Tag {}, result, role.data(), workspace.rows, workspace.marked, workspace.row, workspace.closure, emit); }
 
 template<ConceptOrRoleTag Category>
 void initialize_set(IntersectionTag,
@@ -334,7 +337,7 @@ inline void update_set(RestrictionTag,
     output.clear_delta();
     workspace.clear_rows();
     mark_sources(workspace, role_delta);
-    mark_predecessors(workspace, role.get_handle(), concept_delta);
+    mark_predecessors(workspace, role.data(), concept_delta);
     evaluate_rows(RestrictionTag {},
                   role,
                   concept_,
@@ -368,7 +371,7 @@ void update_set(Tag,
     output.clear_delta();
     workspace.clear_rows();
     mark_sources(workspace, role_delta);
-    mark_predecessors(workspace, role.get_handle(), concept_delta);
+    mark_predecessors(workspace, role.data(), concept_delta);
     evaluate_rows(Tag {}, role, concept_, workspace, [&](auto source, bool present) { output.set(source, present, role.get_formalism_repository()); });
 }
 
@@ -427,7 +430,7 @@ void update_set(Tag,
     output.clear_delta();
     workspace.clear_rows();
     mark_sources(workspace, role_delta);
-    mark_predecessors(workspace, role.get_handle(), concept_delta);
+    mark_predecessors(workspace, role.data(), concept_delta);
     evaluate_rows(Tag {},
                   role,
                   concept_,
@@ -466,7 +469,9 @@ void update_set(Tag,
     evaluate_rows(Tag {}, lhs, rhs, workspace, [&](auto source, bool present) { output.set(source, present, lhs.get_formalism_repository()); });
 }
 
-template<ygg::SizedForwardRangeOf<tyr::formalism::planning::ObjectView> Objects>
+template<typename Objects>
+    requires std::ranges::forward_range<const Objects> && std::ranges::sized_range<const Objects> && std::same_as<std::ranges::range_value_t<const Objects>, tyr::formalism::planning::ObjectView>
+             && std::convertible_to<std::ranges::range_reference_t<const Objects>, const tyr::formalism::planning::ObjectView&>
 void initialize_set(RoleFillersTag,
                     DenotationState<ConceptTag>& output,
                     BorrowedDenotationView<RoleTag> role,
@@ -479,7 +484,9 @@ void initialize_set(RoleFillersTag,
     evaluate_rows(RoleFillersTag {}, role, fillers, workspace, [&](auto source, bool present) { result.set(source, present); });
 }
 
-template<ygg::SizedForwardRangeOf<tyr::formalism::planning::ObjectView> Objects>
+template<typename Objects>
+    requires std::ranges::forward_range<const Objects> && std::ranges::sized_range<const Objects> && std::same_as<std::ranges::range_value_t<const Objects>, tyr::formalism::planning::ObjectView>
+             && std::convertible_to<std::ranges::range_reference_t<const Objects>, const tyr::formalism::planning::ObjectView&>
 void update_set(RoleFillersTag,
                 DenotationState<ConceptTag>& output,
                 BorrowedDenotationView<RoleTag> role,
@@ -521,7 +528,7 @@ inline void update_set(CompositionTag,
     output.clear_delta();
     workspace.clear_rows();
     mark_sources(workspace, lhs_delta);
-    mark_predecessors(workspace, lhs.get_handle(), rhs_delta);
+    mark_predecessors(workspace, lhs.data(), rhs_delta);
     // ponytail: affected rows are rebuilt; retain witness counts if dense rows dominate profiling.
     evaluate_rows(CompositionTag {}, lhs, rhs, workspace, [&](auto source, auto row) { output.update_row(source, row, lhs.get_formalism_repository()); });
 }

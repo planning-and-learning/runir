@@ -138,10 +138,12 @@ static_assert(!kr::dl::semantics::StateEvaluationContextConcept<NameOnlyContext,
 static_assert(kr::ps::dl::TransitionEvaluationContextConcept<IcpContext, kr::IcpFamilyTag, tyr::GroundTag>);
 static_assert(!kr::ps::dl::TransitionEvaluationContextConcept<IcpContext, kr::IcpFamilyTag, tyr::LiftedTag>);
 
-using BaseCondition = ygg::View<ygg::Index<kr::ps::ConditionVariant<kr::BaseFamilyTag>>, kr::ps::base::Repository>;
-using ExtCondition = ygg::View<ygg::Index<kr::ps::ConditionVariant<kr::ExtFamilyTag>>, kr::ps::ext::Repository>;
-using IcpCondition = ygg::View<ygg::Index<kr::ps::ConditionVariant<kr::IcpFamilyTag>>, kr::ps::icp::Repository>;
-using IcpEffect = ygg::View<ygg::Index<kr::ps::EffectVariant<kr::IcpFamilyTag>>, kr::ps::icp::Repository>;
+template<typename Family>
+using Condition = urd::index<kr::ps::ConcreteCondition<Family, kr::DlTag, kr::dl::BooleanTag, kr::ps::dl::Positive>>;
+using BaseCondition = urd::view<typename Condition<kr::BaseFamilyTag>::element_type, kr::ps::base::Repository>;
+using ExtCondition = urd::view<typename Condition<kr::ExtFamilyTag>::element_type, kr::ps::ext::Repository>;
+using IcpCondition = urd::view<typename Condition<kr::IcpFamilyTag>::element_type, kr::ps::icp::Repository>;
+using IcpEffect = urd::view<kr::ps::ConcreteEffect<kr::IcpFamilyTag, kr::DlTag, kr::dl::BooleanTag, kr::ps::dl::Positive>, kr::ps::icp::Repository>;
 
 using kr::ps::is_compatible_with;
 using kr::ps::base::is_compatible_with;

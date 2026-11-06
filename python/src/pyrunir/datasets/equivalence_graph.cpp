@@ -61,7 +61,8 @@ void bind_equivalence_graph_generation_for_kind(nb::module_& m, const char* clas
           },
           "contexts"_a,
           "options"_a = EquivalenceGraphGenerationOptions(),
-          "color_repository"_a = nb::none());
+          "color_repository"_a = nb::none(),
+          nb::keep_alive<0, 1>());
 }
 
 }  // namespace
@@ -97,8 +98,8 @@ void bind_equivalence_graph(nb::module_& m)
                             .def_rw("state_graph_index", &EquivalenceVertexLabel::state_graph_index)
                             .def_rw("state_vertex_index", &EquivalenceVertexLabel::state_vertex_index);
     ygg::add_print(vertex_label);
-    ygg::add_comparison(vertex_label);
-    ygg::add_hash(vertex_label);
+    urd::python::add_comparison(vertex_label);
+    urd::python::add_hash(vertex_label);
 
     auto annotated_vertex_label = nb::class_<AnnotatedEquivalenceVertexLabel>(m, "AnnotatedEquivalenceVertexLabel")  //
                                       .def(nb::init<>())
@@ -110,16 +111,16 @@ void bind_equivalence_graph(nb::module_& m)
                                       .def_rw("is_alive", &AnnotatedEquivalenceVertexLabel::is_alive)
                                       .def_rw("is_unsolvable", &AnnotatedEquivalenceVertexLabel::is_unsolvable);
     ygg::add_print(annotated_vertex_label);
-    ygg::add_comparison(annotated_vertex_label);
-    ygg::add_hash(annotated_vertex_label);
+    urd::python::add_comparison(annotated_vertex_label);
+    urd::python::add_hash(annotated_vertex_label);
 
     auto edge_label = nb::class_<EquivalenceEdgeLabel>(m, "EquivalenceEdgeLabel")  //
                           .def(nb::init<>())
                           .def_rw("state_graph_index", &EquivalenceEdgeLabel::state_graph_index)
                           .def_rw("state_edge_index", &EquivalenceEdgeLabel::state_edge_index);
     ygg::add_print(edge_label);
-    ygg::add_comparison(edge_label);
-    ygg::add_hash(edge_label);
+    urd::python::add_comparison(edge_label);
+    urd::python::add_hash(edge_label);
 
     auto builder = nb::class_<EquivalenceGraphBuilder>(m, "EquivalenceGraphBuilder");
     builder.def(nb::init<>()).def("clear", &EquivalenceGraphBuilder::clear);

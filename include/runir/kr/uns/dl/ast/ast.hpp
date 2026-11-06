@@ -2,6 +2,8 @@
 #define RUNIR_KR_UNS_DL_AST_AST_HPP_
 
 #include "runir/kr/declarations.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/parser/ast.hpp"
 
@@ -40,18 +42,18 @@ using Literal = PositionedVariant<PositiveLiteral, NegativeLiteral>;
 
 struct Conjunction : boost::spirit::x3::position_tagged
 {
-    std::vector<Literal> literals;
+    urd::Store<urd::sequence<Literal>> literals;
 };
 
 struct Disjunction : boost::spirit::x3::position_tagged
 {
-    std::vector<Conjunction> clauses;
+    urd::Store<urd::sequence<Conjunction>> clauses;
 };
 
 struct Classifier : boost::spirit::x3::position_tagged
 {
     runir::kr::parser::ast::Identifier symbol;
-    std::vector<BooleanFeature> features;
+    urd::Store<urd::sequence<BooleanFeature>> features;
     Disjunction expression;
 };
 

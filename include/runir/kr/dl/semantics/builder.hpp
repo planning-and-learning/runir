@@ -10,7 +10,8 @@
 #include <concepts>
 #include <tuple>
 #include <utility>
-#include <yggdrasil/containers/unique_object_pool.hpp>
+#include <urd/repr/slots/slots.hpp>
+#include <urd/store.hpp>
 #include <yggdrasil/database/semantics/relation_pool.hpp>
 #include <yggdrasil/formalism/builder.hpp>
 
@@ -21,9 +22,9 @@ class Builder
 {
 private:
     template<typename T>
-    using DenotationPool = ygg::UniqueObjectPool<ygg::Builder<T>>;
-    using DenotationBuilderStorage = ygg::TypeListToTupleT<ygg::MapTypeListT<DenotationPool, DenotationTypes>>;
-    using DenotationDataStorage = ygg::ApplyTypeListT<ygg::formalism::BuilderStorage, DenotationRecordTypes>;
+    using DenotationPool = urd::Store<urd::slots<urd::builder<T>>>;
+    using DenotationBuilderStorage = boost::mp11::mp_rename<boost::mp11::mp_transform<DenotationPool, DenotationTypes>, std::tuple>;
+    using DenotationDataStorage = boost::mp11::mp_apply<ygg::formalism::BuilderStorage, DenotationRecordTypes>;
 
     DenotationBuilderStorage m_builders;
     DenotationDataStorage m_data;
@@ -35,18 +36,18 @@ public:
     auto& get_workspace() noexcept { return m_workspace; }
 
     template<typename T>
-        requires(DenotationTypes::contains<T> || std::same_as<T, ygg::database::Relation>)
+        requires(boost::mp11::mp_contains<DenotationTypes, T>::value || std::same_as<T, ygg::database::Relation>)
     [[nodiscard]] auto get_builder()
     {
         if constexpr (std::same_as<T, ygg::database::Relation>)
             return m_relation_builders.get_or_allocate({});
         else
-            return std::get<ygg::UniqueObjectPool<ygg::Builder<T>>>(m_builders).get_or_allocate();
+            return std::get<urd::Store<urd::slots<urd::builder<T>>>>(m_builders).acquire_unique();
     }
 
     template<typename T, typename... Args>
         requires(sizeof...(Args) > 0
-                 && ((DenotationTypes::contains<T> && requires(DenotationPool<T>& pool, Args&&... args) { pool.get_or_allocate(std::forward<Args>(args)...); })
+                 && ((boost::mp11::mp_contains<DenotationTypes, T>::value && requires(urd::builder<T>& builder, Args&&... args) { builder.initialize(std::forward<Args>(args)...); })
                      || (std::same_as<T, ygg::database::Relation>
                          && requires(ygg::database::RelationPool& pool, Args&&... args) { pool.get_or_allocate(std::forward<Args>(args)...); })))
     [[nodiscard]] auto get_builder(Args&&... args)
@@ -54,22 +55,26 @@ public:
         if constexpr (std::same_as<T, ygg::database::Relation>)
             return m_relation_builders.get_or_allocate(std::forward<Args>(args)...);
         else
-            return std::get<ygg::UniqueObjectPool<ygg::Builder<T>>>(m_builders).get_or_allocate(std::forward<Args>(args)...);
+        {
+            auto builder = std::get<urd::Store<urd::slots<urd::builder<T>>>>(m_builders).acquire_unique();
+            builder->initialize(std::forward<Args>(args)...);
+            return builder;
+        }
     }
 
     template<typename T>
-        requires DenotationRecordTypes::contains<T>
+        requires boost::mp11::mp_contains<DenotationRecordTypes, T>::value
     [[nodiscard]] auto get_data()
     { return m_data.template get_builder<T>(); }
 
     template<typename T>
-        requires DenotationRecordTypes::contains<T>
+        requires boost::mp11::mp_contains<DenotationRecordTypes, T>::value
     [[nodiscard]] auto checkout()
     { return m_data.template checkout<T>(); }
 };
 
 template<typename T>
-    requires DenotationRecordTypes::contains<T>
+    requires boost::mp11::mp_contains<DenotationRecordTypes, T>::value
 [[nodiscard]] auto checkout(Builder& builder)
 { return builder.template checkout<T>(); }
 

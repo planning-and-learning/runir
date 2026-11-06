@@ -53,7 +53,7 @@ void bind_structural_termination(nb::module_& m)
                             .def_ro("boolean_values", &ModulePolicyGraphVertexLabel::boolean_values)
                             .def_ro("numerical_values", &ModulePolicyGraphVertexLabel::numerical_values)
                             .def_ro("memory_state", &ModulePolicyGraphVertexLabel::memory_state);
-    ygg::add_comparison(vertex_label);
+    urd::python::add_comparison(vertex_label);
 
     auto graph = nb::class_<ModulePolicyGraph>(m, "ModulePolicyGraph");
     bind_readable_graph_methods<true>(graph);

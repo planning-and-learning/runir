@@ -53,10 +53,6 @@ template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::cnf_grammar:
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::cnf_grammar::Boolean<runir::kr::dl::NonemptyTag>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::CountTag>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::DistanceTag>>;
-template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::cnf_grammar::Constructor<runir::kr::dl::ConceptTag>>;
-template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::cnf_grammar::Constructor<runir::kr::dl::RoleTag>>;
-template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::cnf_grammar::Constructor<runir::kr::dl::BooleanTag>>;
-template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::cnf_grammar::Constructor<runir::kr::dl::NumericalTag>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::BooleanTag>>;

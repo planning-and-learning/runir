@@ -4,21 +4,20 @@
 #include "runir/kr/ps/ext/order_term_data.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 
-#include <yggdrasil/containers/variant.hpp>
+#include <urd/elements/flat.hpp>
 
-namespace ygg
+namespace urd
 {
+template<typename V>
+struct view_mixin<runir::kr::ps::ext::OrderTerm, V>
+{
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
-template<formalism::SymbolContextFor<runir::kr::ps::ext::OrderTerm> C>
-class View<Index<runir::kr::ps::ext::OrderTerm>, C> : public ygg::IndexViewBase<runir::kr::ps::ext::OrderTerm, C>
-{
 public:
-    using ygg::IndexViewBase<runir::kr::ps::ext::OrderTerm, C>::IndexViewBase;
-
-    auto get_direction() const noexcept { return this->get_data().direction; }
-    auto get_feature() const noexcept { return make_view(this->get_data().feature, this->get_context()); }
+    auto get_direction() const noexcept { return self().data().direction; }
+    auto get_feature() const noexcept { return self().template get<&urd::record_of<V>::feature>(); }
 };
-
-}  // namespace ygg
+}  // namespace urd
 
 #endif

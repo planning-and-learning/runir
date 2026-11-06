@@ -6,7 +6,10 @@
 
 #include <array>
 #include <tuple>
-#include <yggdrasil/containers/associative_containers.hpp>
+#include <urd/repr/maps/std_map.hpp>
+#include <urd/repr/maps/unordered_flat_map.hpp>
+#include <urd/repr/values/unordered_flat_set.hpp>
+#include <urd/store.hpp>
 #include <yggdrasil/database/semantics/join_index.hpp>
 #include <yggdrasil/database/semantics/relation_repository.hpp>
 
@@ -20,9 +23,9 @@ namespace runir::kr::dl::semantics
 class DenotationCaches
 {
     template<CategoryTag Category>
-    using Cache = ygg::UnorderedMap<ConstructorView<Category>, DenotationView<Category>>;
+    using Cache = urd::Store<urd::map<ConstructorView<Category>, DenotationView<Category>>>;
 
-    using QueryCache = ygg::UnorderedMap<QueryView<>, QueryDenotationView>;
+    using QueryCache = urd::Store<urd::map<QueryView<>, QueryDenotationView>>;
 
     struct Partition
     {

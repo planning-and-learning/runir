@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_BASE_DETAIL_SEARCH_SPACE_HPP_
 
 #include "runir/kr/ps/base/detail/search_node.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/task_context.hpp"
 
 #include <algorithm>
@@ -15,15 +17,15 @@ namespace runir::kr::ps::base::detail
 
 template<tyr::TaskKind Kind>
 tyr::planning::PackedPlan<Kind> extract_total_ordered_plan(tyr::planning::PackedStateView<Kind> goal,
-                                                           const ygg::SegmentedVector<SearchNode<Kind>>& search_nodes,
+                                                           const urd::Store<urd::sequence<SearchNode<Kind>>, urd::stable_refs>& search_nodes,
                                                            const tyr::planning::PackedNode<Kind>& initial_node,
                                                            runir::kr::TaskContext<Kind>& context)
 {
-    auto actions = std::vector<tyr::formalism::planning::ActionBindingView> {};
+    auto actions = urd::Store<urd::sequence<tyr::formalism::planning::ActionBindingView>> {};
     auto state = std::move(goal);
     while (true)
     {
-        const auto& node = search_nodes[ygg::uint_t(state.get_index())];
+        const auto& node = search_nodes[ygg::uint_t(state.index().value)];
         if (!node.parent_state)
             break;
         assert(node.action);

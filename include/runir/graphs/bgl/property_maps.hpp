@@ -2,6 +2,8 @@
 #define RUNIR_GRAPHS_BGL_PROPERTY_MAPS_HPP_
 
 #include "runir/graphs/declarations.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 #include <boost/property_map/property_map.hpp>
 #include <concepts>
@@ -28,7 +30,7 @@ template<std::unsigned_integral Key, typename Value>
 class DenseReadPropertyMap
 {
 private:
-    std::reference_wrapper<const std::vector<Value>> m_data;
+    std::reference_wrapper<const urd::Store<urd::sequence<Value>>> m_data;
 
 public:
     using value_type = Value;
@@ -36,10 +38,10 @@ public:
     using reference = const Value&;
     using category = boost::readable_property_map_tag;
 
-    explicit DenseReadPropertyMap(const std::vector<Value>& data) noexcept : m_data(data) {}
+    explicit DenseReadPropertyMap(const urd::Store<urd::sequence<Value>>& data) noexcept : m_data(data) {}
 
     [[nodiscard]] auto get(Key key) const -> const Value& { return m_data.get().at(key); }
-    [[nodiscard]] auto get_data() const noexcept -> const std::vector<Value>& { return m_data.get(); }
+    [[nodiscard]] auto get_data() const noexcept -> const urd::Store<urd::sequence<Value>>& { return m_data.get(); }
 };
 
 template<std::unsigned_integral Key, std::copyable Value>
@@ -50,7 +52,7 @@ template<std::unsigned_integral Key, typename Value>
 class DenseReadWritePropertyMap
 {
 private:
-    std::reference_wrapper<std::vector<Value>> m_data;
+    std::reference_wrapper<urd::Store<urd::sequence<Value>>> m_data;
 
 public:
     using value_type = Value;
@@ -58,12 +60,12 @@ public:
     using reference = Value&;
     using category = boost::read_write_property_map_tag;
 
-    explicit DenseReadWritePropertyMap(std::vector<Value>& data) noexcept : m_data(data) {}
+    explicit DenseReadWritePropertyMap(urd::Store<urd::sequence<Value>>& data) noexcept : m_data(data) {}
 
     [[nodiscard]] auto get(Key key) const -> const Value& { return m_data.get().at(key); }
     void put(Key key, const Value& value) { m_data.get().at(key) = value; }
-    auto get_data() noexcept -> std::vector<Value>& { return m_data.get(); }
-    [[nodiscard]] auto get_data() const noexcept -> const std::vector<Value>& { return m_data.get(); }
+    auto get_data() noexcept -> urd::Store<urd::sequence<Value>>& { return m_data.get(); }
+    [[nodiscard]] auto get_data() const noexcept -> const urd::Store<urd::sequence<Value>>& { return m_data.get(); }
 };
 
 template<std::unsigned_integral Key, std::copyable Value>
@@ -78,7 +80,7 @@ template<std::unsigned_integral Key, typename Value>
 class SparseReadPropertyMap
 {
 private:
-    std::reference_wrapper<const ygg::UnorderedMap<Key, Value>> m_data;
+    std::reference_wrapper<const urd::Store<urd::map<Key, Value>>> m_data;
 
 public:
     using value_type = Value;
@@ -86,10 +88,10 @@ public:
     using reference = const Value&;
     using category = boost::readable_property_map_tag;
 
-    explicit SparseReadPropertyMap(const ygg::UnorderedMap<Key, Value>& data) noexcept : m_data(data) {}
+    explicit SparseReadPropertyMap(const urd::Store<urd::map<Key, Value>>& data) noexcept : m_data(data) {}
 
     [[nodiscard]] auto get(Key key) const -> const Value& { return m_data.get().at(key); }
-    [[nodiscard]] auto get_data() const noexcept -> const ygg::UnorderedMap<Key, Value>& { return m_data.get(); }
+    [[nodiscard]] auto get_data() const noexcept -> const urd::Store<urd::map<Key, Value>>& { return m_data.get(); }
 };
 
 template<std::unsigned_integral Key, std::copyable Value>
@@ -100,7 +102,7 @@ template<std::unsigned_integral Key, typename Value>
 class SparseReadWritePropertyMap
 {
 private:
-    std::reference_wrapper<ygg::UnorderedMap<Key, Value>> m_data;
+    std::reference_wrapper<urd::Store<urd::map<Key, Value>>> m_data;
 
 public:
     using value_type = Value;
@@ -108,12 +110,12 @@ public:
     using reference = Value&;
     using category = boost::read_write_property_map_tag;
 
-    explicit SparseReadWritePropertyMap(ygg::UnorderedMap<Key, Value>& data) noexcept : m_data(data) {}
+    explicit SparseReadWritePropertyMap(urd::Store<urd::map<Key, Value>>& data) noexcept : m_data(data) {}
 
     [[nodiscard]] auto get(Key key) const -> const Value& { return m_data.get().at(key); }
     void put(Key key, const Value& value) { m_data.get()[key] = value; }
-    auto get_data() noexcept -> ygg::UnorderedMap<Key, Value>& { return m_data.get(); }
-    [[nodiscard]] auto get_data() const noexcept -> const ygg::UnorderedMap<Key, Value>& { return m_data.get(); }
+    auto get_data() noexcept -> urd::Store<urd::map<Key, Value>>& { return m_data.get(); }
+    [[nodiscard]] auto get_data() const noexcept -> const urd::Store<urd::map<Key, Value>>& { return m_data.get(); }
 };
 
 template<std::unsigned_integral Key, std::copyable Value>
@@ -128,28 +130,28 @@ template<std::unsigned_integral Key, typename Value>
 class DenseBasicMatrix
 {
 private:
-    std::reference_wrapper<std::vector<std::vector<Value>>> m_data;
+    std::reference_wrapper<urd::Store<urd::sequence<urd::Store<urd::sequence<Value>>>>> m_data;
 
 public:
-    explicit DenseBasicMatrix(std::vector<std::vector<Value>>& data) noexcept : m_data(data) {}
+    explicit DenseBasicMatrix(urd::Store<urd::sequence<urd::Store<urd::sequence<Value>>>>& data) noexcept : m_data(data) {}
 
-    auto operator[](Key key) -> std::vector<Value>& { return m_data.get().at(key); }
-    auto operator[](Key key) const -> const std::vector<Value>& { return m_data.get().at(key); }
-    [[nodiscard]] auto get_data() const noexcept -> const std::vector<std::vector<Value>>& { return m_data.get(); }
+    auto operator[](Key key) -> urd::Store<urd::sequence<Value>>& { return m_data.get().at(key); }
+    auto operator[](Key key) const -> const urd::Store<urd::sequence<Value>>& { return m_data.get().at(key); }
+    [[nodiscard]] auto get_data() const noexcept -> const urd::Store<urd::sequence<urd::Store<urd::sequence<Value>>>>& { return m_data.get(); }
 };
 
 template<std::unsigned_integral Key, typename Value>
 class SparseBasicMatrix
 {
 private:
-    std::reference_wrapper<ygg::UnorderedMap<Key, ygg::UnorderedMap<Key, Value>>> m_data;
+    std::reference_wrapper<urd::Store<urd::map<Key, urd::Store<urd::map<Key, Value>>>>> m_data;
 
 public:
-    explicit SparseBasicMatrix(ygg::UnorderedMap<Key, ygg::UnorderedMap<Key, Value>>& data) noexcept : m_data(data) {}
+    explicit SparseBasicMatrix(urd::Store<urd::map<Key, urd::Store<urd::map<Key, Value>>>>& data) noexcept : m_data(data) {}
 
-    auto operator[](Key key) -> ygg::UnorderedMap<Key, Value>& { return m_data.get()[key]; }
-    auto operator[](Key key) const -> const ygg::UnorderedMap<Key, Value>& { return m_data.get().at(key); }
-    [[nodiscard]] auto get_data() const noexcept -> const ygg::UnorderedMap<Key, ygg::UnorderedMap<Key, Value>>& { return m_data.get(); }
+    auto operator[](Key key) -> urd::Store<urd::map<Key, Value>>& { return m_data.get()[key]; }
+    auto operator[](Key key) const -> const urd::Store<urd::map<Key, Value>>& { return m_data.get().at(key); }
+    [[nodiscard]] auto get_data() const noexcept -> const urd::Store<urd::map<Key, urd::Store<urd::map<Key, Value>>>>& { return m_data.get(); }
 };
 
 }  // namespace runir::graphs::bgl

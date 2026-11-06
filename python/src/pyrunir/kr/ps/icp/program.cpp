@@ -19,24 +19,24 @@ namespace runir::kr::ps::icp
 void bind_program(nb::module_& m, RepositoryBinding& repository)
 {
     using T = Program;
-    using Data = ygg::Data<T>;
-    using View = ygg::View<ygg::Index<T>, Repository>;
-    ygg::bind_index<ygg::Index<T>>(m, "ProgramIndex");
+    using Data = urd::data<T>;
+    using View = urd::view<T, Repository>;
+    urd::python::bind_index<urd::index<T>>(m, "ProgramIndex");
     auto data = nb::class_<Data>(m, "ProgramData")
                     .def(nb::init<>())
-                    .def(nb::init<ygg::Index<Module>>(), nb::arg("module"))
-                    .def(nb::init<ygg::View<ygg::Index<Module>, Repository>>(), nb::arg("module"))
+                    .def(nb::init<urd::index<Module>>(), nb::arg("module"))
+                    .def(urd::python::init_from_views<urd::view<Module, Repository>>(), nb::arg("module"))
                     .def_rw("index", &Data::index)
                     .def_rw("module", &Data::module);
-    ygg::add_comparison(data);
+    urd::python::add_comparison(data);
     auto view = nb::class_<View>(m, "Program")
-                    .def("get_index", &View::get_index)
+                    .def("get_index", &View::index)
                     .def("get_entry_module", &View::get_entry_module, nb::keep_alive<0, 1>())
                     .def("get_module", &View::get_module, nb::keep_alive<0, 1>())
                     .def("syntactic_complexity", [](View value) { return runir::kr::ps::icp::syntactic_complexity(value); });
     ygg::add_print(view);
-    ygg::add_comparison(view);
-    ygg::add_hash(view);
+    urd::python::add_comparison(view);
+    urd::python::add_hash(view);
     runir::kr::python::bind_ps_optimize<runir::kr::IcpFamilyTag, Repository>(view);
     runir::kr::python::bind_insert<T>(repository);
 }

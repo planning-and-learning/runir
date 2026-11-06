@@ -120,9 +120,10 @@ family's rules and program types.
 
 The index/data/view pattern is a separate representation choice:
 
-- `ygg::Index<T>` is a typed handle to an interned object.
-- `ygg::Data<T>` is its stored record.
-- `ygg::View<ygg::Index<T>, C>` combines the handle with a repository context.
+- `urd::index<T>` is a typed handle to an interned object (`ygg::handle_t<T>` for records with a handle of
+  their own: a relation binding's is `ygg::formalism::RelationBindingIndex`).
+- `urd::data<T>` is its stored record.
+- `urd::view<T, C>` combines the handle with a repository context.
 
 The view parameter `C` identifies the storage context; it is not another policy
 or feature-language dimension.

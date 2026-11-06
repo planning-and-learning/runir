@@ -16,6 +16,5 @@
 #include "runir/kr/uns/repository.hpp"
 #include "runir/kr/uns/syntactic_complexity.hpp"
 
-#include <yggdrasil/core/types.hpp>
 
 #endif

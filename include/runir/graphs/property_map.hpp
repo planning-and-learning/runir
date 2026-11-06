@@ -6,12 +6,41 @@
 #include <concepts>
 #include <tuple>
 #include <utility>
-#include <yggdrasil/containers/detail/indexed_hash_set_impl.hpp>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
+#include <urd/repr/records/records.hpp>
+#include <urd/store.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/semantics/canonicalization.hpp>
 
-namespace ygg
+namespace urd
+{
+
+template<runir::graphs::Property P>
+struct data<runir::graphs::VertexProperty<P>>
+{
+    P value {};
+
+    data() = default;
+    explicit data(P value_) noexcept : value(std::move(value_)) {}
+
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::value> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::value> {}; }
+};
+
+template<runir::graphs::Property P>
+struct data<runir::graphs::EdgeProperty<P>>
+{
+    P value {};
+
+    data() = default;
+    explicit data(P value_) noexcept : value(std::move(value_)) {}
+
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::value> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::value> {}; }
+};
+
+}  // namespace urd
+
+namespace runir::graphs
 {
 
 namespace detail
@@ -26,33 +55,7 @@ concept HasCanonicalize = requires(T& value) { ygg::canonicalize(value); };
 }
 
 template<runir::graphs::Property P>
-struct Data<runir::graphs::VertexProperty<P>>
-{
-    P value {};
-
-    Data() = default;
-    explicit Data(P value_) noexcept : value(std::move(value_)) {}
-
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::value> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::value> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
-};
-
-template<runir::graphs::Property P>
-struct Data<runir::graphs::EdgeProperty<P>>
-{
-    P value {};
-
-    Data() = default;
-    explicit Data(P value_) noexcept : value(std::move(value_)) {}
-
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::value> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::value> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
-};
-
-template<runir::graphs::Property P>
-bool is_canonical(const Data<runir::graphs::VertexProperty<P>>& data) noexcept
+bool is_canonical(const urd::data<runir::graphs::VertexProperty<P>>& data) noexcept
 {
     if constexpr (detail::HasIsCanonical<P>)
         return ygg::is_canonical(data.value);
@@ -61,7 +64,7 @@ bool is_canonical(const Data<runir::graphs::VertexProperty<P>>& data) noexcept
 }
 
 template<runir::graphs::Property P>
-bool is_canonical(const Data<runir::graphs::EdgeProperty<P>>& data) noexcept
+bool is_canonical(const urd::data<runir::graphs::EdgeProperty<P>>& data) noexcept
 {
     if constexpr (detail::HasIsCanonical<P>)
         return ygg::is_canonical(data.value);
@@ -70,41 +73,45 @@ bool is_canonical(const Data<runir::graphs::EdgeProperty<P>>& data) noexcept
 }
 
 template<runir::graphs::Property P>
-void canonicalize(Data<runir::graphs::VertexProperty<P>>& data) noexcept
+void canonicalize(urd::data<runir::graphs::VertexProperty<P>>& data) noexcept
 {
     if constexpr (detail::HasCanonicalize<P>)
         ygg::canonicalize(data.value);
 }
 
 template<runir::graphs::Property P>
-void canonicalize(Data<runir::graphs::EdgeProperty<P>>& data) noexcept
+void canonicalize(urd::data<runir::graphs::EdgeProperty<P>>& data) noexcept
 {
     if constexpr (detail::HasCanonicalize<P>)
         ygg::canonicalize(data.value);
 }
-
-}  // namespace ygg
-
-namespace runir::graphs
-{
 
 template<typename Tag>
 class PropertyMap
 {
 private:
-    ygg::IndexedHashSet<Tag> m_set;
+public:
+    using Index = urd::index<Tag>;
+    using Data = urd::data<Tag>;
+
+private:
+    /// The distinct properties, interned in a urd pool: a handle's value is the property's index.
+    using Pool = urd::Store<urd::pool<Data>>;
+    Pool m_set { urd::layer { 0 } };
 
 public:
-    using Index = ygg::Index<Tag>;
-    using Data = ygg::Data<Tag>;
 
     PropertyMap() = default;
 
     void clear() noexcept { m_set.clear(); }
 
-    auto insert(const Data& data) { return m_set.insert(data); }
+    std::pair<Index, bool> insert(const Data& data)
+    {
+        const auto [handle, inserted] = m_set.insert(data);
+        return { Index(handle.value), inserted };
+    }
 
-    [[nodiscard]] auto get(Index index) const noexcept -> const Data& { return m_set[index]; }
+    [[nodiscard]] auto get(Index index) const noexcept -> const Data& { return m_set[typename Pool::handle_type(index.value)]; }
     auto operator[](Index index) const noexcept -> const Data& { return get(index); }
     [[nodiscard]] auto get_value(Index index) const noexcept -> const auto& { return get(index).value; }
 

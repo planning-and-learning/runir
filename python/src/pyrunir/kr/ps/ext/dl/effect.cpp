@@ -1,4 +1,5 @@
 #include "bindings.hpp"
+#include <yggdrasil/python/type_casters.hpp>
 #include "pyrunir/kr/ps/dl/binding_utils.hpp"
 
 #include <runir/kr/ps/ext/repository.hpp>
@@ -9,8 +10,6 @@ namespace runir::kr::ps::ext::dl
 void bind_effect(nb::module_& m, RepositoryBinding& repository)
 {
     using Family = runir::kr::ExtFamilyTag;
-    using Variant = runir::kr::ps::ConcreteEffectVariant<Family, runir::kr::DlTag>;
-    runir::kr::python::bind_variant<Variant>(m, repository, "ConcreteEffectVariant");
     runir::kr::python::bind_observation<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>>(
         m,
         repository,

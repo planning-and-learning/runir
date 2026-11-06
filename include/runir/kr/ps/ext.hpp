@@ -2,8 +2,6 @@
 #define RUNIR_KR_PS_EXT_HPP_
 
 #include "runir/kr/dl/semantics/declarations.hpp"
-#include "runir/kr/ps/condition_data.hpp"
-#include "runir/kr/ps/condition_view.hpp"
 #include "runir/kr/ps/declarations.hpp"
 #include "runir/kr/ps/dl/compatibility.hpp"
 #include "runir/kr/ps/dl/condition_data.hpp"
@@ -15,8 +13,6 @@
 #include "runir/kr/ps/dl/feature_view.hpp"
 #include "runir/kr/ps/dl/syntactic_complexity.hpp"
 #include "runir/kr/ps/dl/transition_evaluation_context.hpp"
-#include "runir/kr/ps/effect_data.hpp"
-#include "runir/kr/ps/effect_view.hpp"
 #include "runir/kr/ps/ext/canonicalization.hpp"
 #include "runir/kr/ps/ext/compatibility.hpp"
 #include "runir/kr/ps/ext/datas.hpp"
@@ -44,6 +40,5 @@
 #include "runir/kr/ps/feature_data.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 
-#include <yggdrasil/core/types.hpp>
 
 #endif

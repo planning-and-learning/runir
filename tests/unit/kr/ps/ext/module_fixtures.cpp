@@ -17,16 +17,16 @@ auto formatter_fragment(std::string_view name) -> std::string
 
 auto create_memory_state(kr::ps::ext::Repository& repository, const std::string& name) -> kr::ps::ext::MemoryStateView
 {
-    auto data = ygg::Data<kr::ps::ext::MemoryState>(name);
+    auto data = urd::data<kr::ps::ext::MemoryState>(name);
     return repository.insert(data).first;
 }
 
-auto make_module_data(kr::ps::ext::Repository& repository, const std::string& name) -> ygg::Data<kr::ps::ext::Module>
+auto make_module_data(kr::ps::ext::Repository& repository, const std::string& name) -> urd::data<kr::ps::ext::Module>
 {
-    auto symbol_data = ygg::Data<kr::ps::ext::ModuleSymbol>(name);
+    auto symbol_data = urd::data<kr::ps::ext::ModuleSymbol>(name);
     const auto symbol = repository.insert(symbol_data).first;
-    auto data = ygg::Data<kr::ps::ext::Module>();
-    data.symbol = symbol.get_index();
+    auto data = urd::data<kr::ps::ext::Module>();
+    data.symbol = symbol.index();
     return data;
 }
 
@@ -36,9 +36,9 @@ auto create_module(kr::ps::ext::Repository& repository,
                    std::initializer_list<kr::ps::ext::MemoryStateView> memory_states) -> kr::ps::ext::ModuleView
 {
     auto data = make_module_data(repository, name);
-    data.entry_memory_state = entry.get_index();
+    data.entry_memory_state = entry.index();
     for (auto state : memory_states)
-        data.memory_states.push_back(state.get_index());
+        data.memory_states.push_back(state.index());
     kr::ps::ext::canonicalize(data);
     return repository.insert(data).first;
 }
@@ -46,19 +46,19 @@ auto create_module(kr::ps::ext::Repository& repository,
 auto create_program(kr::ps::ext::Repository& repository, kr::ps::ext::ModuleView entry, std::initializer_list<kr::ps::ext::ModuleView> modules)
     -> kr::ps::ext::ProgramView
 {
-    auto data = ygg::Data<kr::ps::ext::Program>();
-    data.entry_module = entry.get_index();
+    auto data = urd::data<kr::ps::ext::Program>();
+    data.entry_module = entry.index();
     for (auto module_ : modules)
-        data.modules.push_back(module_.get_index());
+        data.modules.push_back(module_.index());
     kr::ps::ext::canonicalize(data);
     return repository.insert(data).first;
 }
 
 auto create_top_concept(kr::dl::ConstructorRepository& repository) -> kr::dl::ConstructorView<kr::dl::ConceptTag>
 {
-    auto top_data = ygg::Data<kr::dl::Concept<kr::dl::TopTag>>();
+    auto top_data = urd::data<kr::dl::Concept<kr::dl::TopTag>>();
     const auto top = repository.insert(top_data).first;
-    auto constructor_data = ygg::Data<kr::dl::Constructor<kr::dl::ConceptTag>>(top.get_index());
+    auto constructor_data = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(top.index());
     return kr::dl::insert(repository, constructor_data).first;
 }
 

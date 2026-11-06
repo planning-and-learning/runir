@@ -19,7 +19,7 @@
 #include <string_view>
 #include <tyr/formalism/planning/formatter.hpp>
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/io/iostream.hpp>
 
 namespace runir::kr::ps::ext
@@ -50,7 +50,7 @@ void append_effects(std::ostream& os, Effects effects)
 }
 
 template<runir::kr::ps::ext::RuleKind Kind, typename C>
-void append_rule_body(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext::Rule<Kind>>, C> view)
+void append_rule_body(std::ostream& os, urd::view<runir::kr::ps::ext::Rule<Kind>, C> view)
 {
     append_conditions(os, view.get_conditions());
     if constexpr (runir::kr::ps::ext::BindingRuleKind<Kind>)
@@ -73,7 +73,7 @@ void append_rule_body(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext:
                                       [](std::ostream& output, auto term)
                                       {
                                           output << '(' << (term.get_direction() == OrderDirection::MIN ? "min" : "max") << ' ';
-                                          ygg::visit([&](auto feature) { output << feature.get_symbol(); }, term.get_feature());
+                                          std::visit([&](auto feature) { output << feature.get_symbol(); }, term.get_feature());
                                           output << ')';
                                       });
     }
@@ -103,7 +103,7 @@ void append_rule_body(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext:
 }
 
 template<runir::kr::ps::ext::RuleKind Kind, typename C>
-void append_rule(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext::Rule<Kind>>, C> view)
+void append_rule(std::ostream& os, urd::view<runir::kr::ps::ext::Rule<Kind>, C> view)
 {
     os << ygg::print_indent << "(:" << Kind::keyword << "\n";
     {
@@ -114,9 +114,9 @@ void append_rule(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext::Rule
 }
 
 template<typename C>
-void append_rule(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>, C> view)
+void append_rule(std::ostream& os, urd::view<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>, C> view)
 {
-    ygg::visit([&](auto rule) { append_rule(os, rule); }, view.get_variant());
+    std::visit([&](auto rule) { append_rule(os, rule); }, view.get_variant());
 }
 
 template<typename View>
@@ -135,7 +135,7 @@ void append_declarations(std::ostream& os, Arguments arguments)
 }
 
 template<typename C>
-void append_module(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C> view)
+void append_module(std::ostream& os, urd::view<runir::kr::ps::ext::Module, C> view)
 {
     os << ygg::print_indent << "(:module\n";
     {
@@ -194,7 +194,7 @@ void append_module(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext::Mo
                     os << ygg::print_indent << "(:expression\n";
                     {
                         ygg::IndentScope expression_scope(os);
-                        ygg::visit(
+                        std::visit(
                             [&](auto first_rule)
                             {
                                 os << ygg::print_indent << "(:source-memory " << first_rule.get_source().get_name() << ")\n";
@@ -219,7 +219,7 @@ void append_module(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext::Mo
 }
 
 template<typename C>
-std::string module(ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C> view)
+std::string module(urd::view<runir::kr::ps::ext::Module, C> view)
 {
     auto os = std::ostringstream {};
     append_module(os, view);
@@ -227,7 +227,7 @@ std::string module(ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C> view)
 }
 
 template<typename C>
-void append_program(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext::Program>, C> view)
+void append_program(std::ostream& os, urd::view<runir::kr::ps::ext::Program, C> view)
 {
     os << ygg::print_indent << "(:program\n";
     {
@@ -243,7 +243,7 @@ void append_program(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext::P
 }
 
 template<typename C>
-std::string program(ygg::View<ygg::Index<runir::kr::ps::ext::Program>, C> view)
+std::string program(urd::view<runir::kr::ps::ext::Program, C> view)
 {
     auto os = std::ostringstream {};
     append_program(os, view);
@@ -253,52 +253,52 @@ std::string program(ygg::View<ygg::Index<runir::kr::ps::ext::Program>, C> view)
 }  // namespace runir::kr::ps::ext
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::MemoryState>, C>>
+struct fmt::formatter<urd::view<runir::kr::ps::ext::MemoryState, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(auto view, format_context& context) const { return fmt::format_to(context.out(), "{}", view.get_name()); }
 };
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ModuleSymbol>, C>>
+struct fmt::formatter<urd::view<runir::kr::ps::ext::ModuleSymbol, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(auto view, format_context& context) const { return fmt::format_to(context.out(), "{}", view.get_name()); }
 };
 
 template<runir::kr::ps::ext::RuleKind Kind, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::Rule<Kind>>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::view<runir::kr::ps::ext::Rule<Kind>, C>> : fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::rule(view), context); }
 };
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::view<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>, C>> : fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::rule(view), context); }
 };
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::view<runir::kr::ps::ext::Module, C>> : fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::module(view), context); }
 };
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::Program>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::view<runir::kr::ps::ext::Program, C>> : fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::program(view), context); }
 };
 
 template<tyr::TaskKind Kind, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ModuleState<Kind>>, C>>
+struct fmt::formatter<urd::view<runir::kr::ps::ext::ModuleState<Kind>, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(const auto& value, format_context& context) const
     {
         return fmt::format_to(context.out(),
                               "ModuleState(state={}, module={}, memory_state={}, registers={}, arguments={})",
-                              value.get_state().get_index(),
+                              value.get_state().index(),
                               value.get_module().get_name(),
                               value.get_memory_state(),
                               value.get_registers(),
@@ -307,7 +307,7 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ModuleState<Kind>
 };
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::CallStack>, C>>
+struct fmt::formatter<urd::view<runir::kr::ps::ext::CallStack, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(const auto& value, format_context& context) const -> format_context::iterator
@@ -323,14 +323,14 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::CallStack>, C>>
 };
 
 template<tyr::TaskKind Kind, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ProgramState<Kind>>, C>>
+struct fmt::formatter<urd::view<runir::kr::ps::ext::ProgramState<Kind>, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(const auto& value, format_context& context) const
     {
         return fmt::format_to(context.out(),
                               "ProgramState(program={}, module_state={}, call_stack={})",
-                              value.get_program().get_index(),
+                              value.get_program().index(),
                               value.get_module_state(),
                               value.get_call_stack());
     }
@@ -345,7 +345,7 @@ struct fmt::formatter<runir::kr::ps::ext::ProgramProofVertexLabel<Kind>>
         const auto state = label.program_state;
         return fmt::format_to(context.out(),
                               "state={} module={} initial={} goal={} alive={} unsolvable={}",
-                              state.get_state().get_index(),
+                              state.get_state().index(),
                               state.get_module_state().get_module().get_name(),
                               label.is_initial,
                               label.is_goal,

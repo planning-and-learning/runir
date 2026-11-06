@@ -1,4 +1,5 @@
 #include "../query_bindings.hpp"
+#include <yggdrasil/python/type_casters.hpp>
 #include "bindings.hpp"
 
 #include <runir/kr/dl/detail/repository_instantiations.hpp>
@@ -10,13 +11,13 @@ namespace runir::kr::dl
 
 void bind_semantics_query(nb::module_& m)
 {
-    ygg::bind_index<ygg::Index<QueryColumn>>(m, "QueryColumnIndex");
-    auto data = nb::class_<ygg::Data<QueryColumn>>(m, "QueryColumnData")
+    urd::python::bind_index<urd::index<QueryColumn>>(m, "QueryColumnIndex");
+    auto data = nb::class_<urd::data<QueryColumn>>(m, "QueryColumnData")
                     .def(nb::init<>())
                     .def(nb::init<::cista::offset::string>(), nb::arg("name"))
-                    .def_rw("index", &ygg::Data<QueryColumn>::index)
-                    .def_rw("name", &ygg::Data<QueryColumn>::name);
-    ygg::add_comparison(data);
+                    .def_rw("index", &urd::data<QueryColumn>::index)
+                    .def_rw("name", &urd::data<QueryColumn>::name);
+    urd::python::add_comparison(data);
     python::bind_queries(m);
 }
 

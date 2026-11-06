@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_BASE_DL_AST_AST_HPP_
 
 #include "runir/kr/declarations.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/parser/ast.hpp"
 
@@ -107,15 +109,15 @@ template<runir::kr::FamilyTag Family>
 struct Rule : boost::spirit::x3::position_tagged
 {
     runir::kr::parser::ast::Identifier symbol;
-    std::vector<Condition> conditions;
-    std::vector<Effect> effects;
+    urd::Store<urd::sequence<Condition>> conditions;
+    urd::Store<urd::sequence<Effect>> effects;
 };
 
 template<runir::kr::FamilyTag Family>
 struct Sketch : boost::spirit::x3::position_tagged
 {
-    std::vector<Feature<Family>> features;
-    std::vector<Rule<Family>> rules;
+    urd::Store<urd::sequence<Feature<Family>>> features;
+    urd::Store<urd::sequence<Rule<Family>>> rules;
 };
 
 }  // namespace runir::kr::ps::base::dl::ast

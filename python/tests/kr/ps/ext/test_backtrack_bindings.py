@@ -60,9 +60,13 @@ def test_backtrack_rule_construct_format_and_serialize(
     register_table(dictionaries, ext.BacktrackRule, "backtrack", "r")
     register_table(dictionaries, ext.MemoryState, "memory", "m")
     register_table(
-        dictionaries, ext.ConditionVariant, "conditions", "c", project=lambda condition: {"text": str(condition)}
+        dictionaries,
+        ext.dl.PositiveBooleanCondition,
+        "conditions",
+        "c",
+        project=lambda condition: {"text": str(condition)},
     )
     assert serialize(dictionaries, variant) == "v0"
     assert table(dictionaries, ext.RuleVariant) == [{"symbol": "reject", "variant": "r0"}]
     assert table(dictionaries, ext.BacktrackRule) == [{"source": "m0", "conditions": ["c0"] if conditions else []}]
-    assert table(dictionaries, ext.ConditionVariant) == ([{"text": "(positive bad)"}] if conditions else [])
+    assert table(dictionaries, ext.dl.PositiveBooleanCondition) == ([{"text": "(positive bad)"}] if conditions else [])

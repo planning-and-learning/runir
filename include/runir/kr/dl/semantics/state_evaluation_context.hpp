@@ -28,7 +28,7 @@ namespace detail
 /// Defined in the library, so that the contexts need only declarations of their resources.
 EvaluationWorkspace& get_workspace(Builder& builder) noexcept;
 const tyr::formalism::planning::Repository* get_formalism_repository(const DenotationRepository& repository) noexcept;
-const ygg::Data<RegisterValues>& empty_register_values() noexcept;
+const urd::data<RegisterValues>& empty_register_values() noexcept;
 [[noreturn]] void throw_unbound_register(size_t index, size_t count);
 [[noreturn]] void throw_unbound_argument(size_t index, size_t count);
 [[noreturn]] void throw_unbound_arguments();
@@ -65,7 +65,7 @@ concept StateEvaluationContextConcept =
 /// Registers in the borrowed form, which interned registers provide without copying.
 template<RegisterValuesViewConcept R>
 BorrowedRegisterValuesView borrow_registers(R registers) noexcept
-{ return BorrowedRegisterValuesView(registers.get_data(), registers.get_formalism_repository()); }
+{ return BorrowedRegisterValuesView(registers.data(), registers.get_formalism_repository()); }
 
 /// Every context carries registers and call arguments. Registers are empty and arguments absent unless a program binds
 /// them; evaluating a register or an argument that the context does not bind throws.
@@ -92,7 +92,7 @@ private:
     void validate_inputs() const
     {
         const auto* repository = m_state.get_formalism_repository().get();
-        if (m_arguments && detail::get_formalism_repository(m_arguments->get_context()) != repository)
+        if (m_arguments && detail::get_formalism_repository(m_arguments->context()) != repository)
             throw std::invalid_argument("Evaluation requires arguments for the same planning task.");
         if (&m_registers.get_formalism_repository() != repository)
             throw std::invalid_argument("Evaluation requires registers for the same planning task.");
@@ -191,20 +191,20 @@ public:
 template<ConceptOrRoleTag Category, typename Context>
 auto register_value(const Context& context, RegisterIdentifier<Category> identifier)
 {
-    const auto values = context.registers().template get<Category>();
-    if (ygg::uint_t(identifier) >= values.size())
-        detail::throw_unbound_register(ygg::uint_t(identifier), values.size());
-    return values[ygg::uint_t(identifier)];
+    const auto values = context.registers().template values<Category>();
+    if (ygg::uint_t(identifier.value) >= values.size())
+        detail::throw_unbound_register(ygg::uint_t(identifier.value), values.size());
+    return values[ygg::uint_t(identifier.value)];
 }
 
 /// The value of a call argument, which only ext programs bind.
 template<CategoryTag Category, typename Context>
 auto argument_value(const Context& context, ArgumentIdentifier<Category> identifier)
 {
-    const auto values = context.arguments().template get<Category>();
-    if (ygg::uint_t(identifier) >= values.size())
-        detail::throw_unbound_argument(ygg::uint_t(identifier), values.size());
-    return values[ygg::uint_t(identifier)];
+    const auto values = context.arguments().template arguments<Category>();
+    if (ygg::uint_t(identifier.value) >= values.size())
+        detail::throw_unbound_argument(ygg::uint_t(identifier.value), values.size());
+    return values[ygg::uint_t(identifier.value)];
 }
 
 }

@@ -12,7 +12,6 @@
 #include <runir/kr/ps/base/repository.hpp>
 #include <set>
 #include <tyr/formalism/planning/parser.hpp>
-#include <yggdrasil/semantics/comparison.hpp>
 #include <yggdrasil/serialization/json.hpp>
 
 namespace runir::tests
@@ -21,24 +20,24 @@ namespace runir::tests
 namespace
 {
 
-auto counterexample_rules(const kr::ps::base::dl::SieveStructuralTerminationResult& sieve) -> std::set<ygg::Index<kr::ps::Rule<kr::BaseFamilyTag>>>
+auto counterexample_rules(const kr::ps::base::dl::SieveStructuralTerminationResult& sieve) -> std::set<urd::index<kr::ps::Rule<kr::BaseFamilyTag>>>
 {
-    auto rules = std::set<ygg::Index<kr::ps::Rule<kr::BaseFamilyTag>>> {};
+    auto rules = std::set<urd::index<kr::ps::Rule<kr::BaseFamilyTag>>> {};
     for (const auto& edge : sieve.counterexample->get_edges())
-        rules.insert(edge.get_property().get_index());
-    auto surviving = std::set<ygg::Index<kr::ps::Rule<kr::BaseFamilyTag>>> {};
+        rules.insert(edge.get_property().index());
+    auto surviving = std::set<urd::index<kr::ps::Rule<kr::BaseFamilyTag>>> {};
     for (const auto rule : sieve.surviving_rules)
-        surviving.insert(rule.get_index());
+        surviving.insert(rule.index());
     EXPECT_EQ(surviving.size(), sieve.surviving_rules.size());
     EXPECT_EQ(surviving, rules);
     return rules;
 }
 
-auto sketch_rules(kr::ps::base::SketchView sketch) -> std::set<ygg::Index<kr::ps::Rule<kr::BaseFamilyTag>>>
+auto sketch_rules(kr::ps::base::SketchView sketch) -> std::set<urd::index<kr::ps::Rule<kr::BaseFamilyTag>>>
 {
-    auto rules = std::set<ygg::Index<kr::ps::Rule<kr::BaseFamilyTag>>> {};
+    auto rules = std::set<urd::index<kr::ps::Rule<kr::BaseFamilyTag>>> {};
     for (auto rule : sketch.get_rules())
-        rules.insert(rule.get_index());
+        rules.insert(rule.index());
     return rules;
 }
 

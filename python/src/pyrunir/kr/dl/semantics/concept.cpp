@@ -17,12 +17,12 @@ namespace
 template<typename Tag>
 void bind_concept_data(nb::module_& m, const char* name)
 {
-    using Data = ygg::Data<Concept<Tag>>;
+    using Data = urd::data<Concept<Tag>>;
     auto cls = nb::class_<Data>(m, name).def(nb::init<>()).def_rw("index", &Data::index);
-    ygg::add_comparison(cls);
+    urd::python::add_comparison(cls);
     python::def_concept_data_constructors<Tag,
-                                          ygg::Index<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>,
-                                          ygg::Index<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>,
+                                          urd::index<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>,
+                                          urd::index<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>,
                                           runir::kr::dl::ConstructorRepository>(cls);
 
     if constexpr (is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag>)
@@ -52,11 +52,11 @@ template<typename Tag>
 void bind_concept_view(nb::module_& m, const char* name)
 {
     using Type = Concept<Tag>;
-    using View = ygg::View<ygg::Index<Type>, ConstructorRepository>;
-    auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index);
+    using View = urd::view<Type, ConstructorRepository>;
+    auto cls = nb::class_<View>(m, name).def("get_index", &View::index);
     ygg::add_print(cls);
-    ygg::add_comparison(cls);
-    ygg::add_hash(cls);
+    urd::python::add_comparison(cls);
+    urd::python::add_hash(cls);
     cls.def("syntactic_complexity", [](View view) { return semantics::syntactic_complexity(view); });
 
     if constexpr (is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag>)
@@ -88,32 +88,32 @@ void bind_concept_view(nb::module_& m, const char* name)
 
 void bind_semantics_concept(nb::module_& m)
 {
-    ygg::bind_index<ygg::Index<Concept<BotTag>>>(m, "ConceptBotIndex");
-    ygg::bind_index<ygg::Index<Concept<TopTag>>>(m, "ConceptTopIndex");
-    ygg::bind_index<ygg::Index<Concept<AtomicStateTag<tyr::formalism::StaticTag>>>>(m, "ConceptAtomicStateStaticIndex");
-    ygg::bind_index<ygg::Index<Concept<AtomicStateTag<tyr::formalism::FluentTag>>>>(m, "ConceptAtomicStateFluentIndex");
-    ygg::bind_index<ygg::Index<Concept<AtomicStateTag<tyr::formalism::DerivedTag>>>>(m, "ConceptAtomicStateDerivedIndex");
-    ygg::bind_index<ygg::Index<Concept<AtomicGoalTag<tyr::formalism::StaticTag>>>>(m, "ConceptAtomicGoalStaticIndex");
-    ygg::bind_index<ygg::Index<Concept<AtomicGoalTag<tyr::formalism::FluentTag>>>>(m, "ConceptAtomicGoalFluentIndex");
-    ygg::bind_index<ygg::Index<Concept<AtomicGoalTag<tyr::formalism::DerivedTag>>>>(m, "ConceptAtomicGoalDerivedIndex");
-    ygg::bind_index<ygg::Index<Concept<IntersectionTag>>>(m, "ConceptIntersectionIndex");
-    ygg::bind_index<ygg::Index<Concept<UnionTag>>>(m, "ConceptUnionIndex");
-    ygg::bind_index<ygg::Index<Concept<NegationTag>>>(m, "ConceptNegationIndex");
-    ygg::bind_index<ygg::Index<Concept<ValueRestrictionTag>>>(m, "ConceptValueRestrictionIndex");
-    ygg::bind_index<ygg::Index<Concept<ExistentialQuantificationTag>>>(m, "ConceptExistentialQuantificationIndex");
-    ygg::bind_index<ygg::Index<Concept<AtLeastNumberRestrictionTag>>>(m, "ConceptAtLeastNumberRestrictionIndex");
-    ygg::bind_index<ygg::Index<Concept<AtMostNumberRestrictionTag>>>(m, "ConceptAtMostNumberRestrictionIndex");
-    ygg::bind_index<ygg::Index<Concept<ExactNumberRestrictionTag>>>(m, "ConceptExactNumberRestrictionIndex");
-    ygg::bind_index<ygg::Index<Concept<QualifiedAtLeastNumberRestrictionTag>>>(m, "ConceptQualifiedAtLeastNumberRestrictionIndex");
-    ygg::bind_index<ygg::Index<Concept<QualifiedAtMostNumberRestrictionTag>>>(m, "ConceptQualifiedAtMostNumberRestrictionIndex");
-    ygg::bind_index<ygg::Index<Concept<QualifiedExactNumberRestrictionTag>>>(m, "ConceptQualifiedExactNumberRestrictionIndex");
-    ygg::bind_index<ygg::Index<Concept<RoleValueMapTag>>>(m, "ConceptRoleValueMapIndex");
-    ygg::bind_index<ygg::Index<Concept<AgreementTag>>>(m, "ConceptAgreementIndex");
-    ygg::bind_index<ygg::Index<Concept<RoleFillersTag>>>(m, "ConceptRoleFillersIndex");
-    ygg::bind_index<ygg::Index<Concept<OneOfTag>>>(m, "ConceptOneOfIndex");
-    ygg::bind_index<ygg::Index<Concept<NominalTag>>>(m, "ConceptNominalIndex");
-    ygg::bind_index<ygg::Index<Concept<RegisterTag>>>(m, "ConceptRegisterIndex");
-    ygg::bind_index<ygg::Index<Concept<ArgumentTag<ConceptTag>>>>(m, "ConceptArgumentIndex");
+    urd::python::bind_index<urd::index<Concept<BotTag>>>(m, "ConceptBotIndex");
+    urd::python::bind_index<urd::index<Concept<TopTag>>>(m, "ConceptTopIndex");
+    urd::python::bind_index<urd::index<Concept<AtomicStateTag<tyr::formalism::StaticTag>>>>(m, "ConceptAtomicStateStaticIndex");
+    urd::python::bind_index<urd::index<Concept<AtomicStateTag<tyr::formalism::FluentTag>>>>(m, "ConceptAtomicStateFluentIndex");
+    urd::python::bind_index<urd::index<Concept<AtomicStateTag<tyr::formalism::DerivedTag>>>>(m, "ConceptAtomicStateDerivedIndex");
+    urd::python::bind_index<urd::index<Concept<AtomicGoalTag<tyr::formalism::StaticTag>>>>(m, "ConceptAtomicGoalStaticIndex");
+    urd::python::bind_index<urd::index<Concept<AtomicGoalTag<tyr::formalism::FluentTag>>>>(m, "ConceptAtomicGoalFluentIndex");
+    urd::python::bind_index<urd::index<Concept<AtomicGoalTag<tyr::formalism::DerivedTag>>>>(m, "ConceptAtomicGoalDerivedIndex");
+    urd::python::bind_index<urd::index<Concept<IntersectionTag>>>(m, "ConceptIntersectionIndex");
+    urd::python::bind_index<urd::index<Concept<UnionTag>>>(m, "ConceptUnionIndex");
+    urd::python::bind_index<urd::index<Concept<NegationTag>>>(m, "ConceptNegationIndex");
+    urd::python::bind_index<urd::index<Concept<ValueRestrictionTag>>>(m, "ConceptValueRestrictionIndex");
+    urd::python::bind_index<urd::index<Concept<ExistentialQuantificationTag>>>(m, "ConceptExistentialQuantificationIndex");
+    urd::python::bind_index<urd::index<Concept<AtLeastNumberRestrictionTag>>>(m, "ConceptAtLeastNumberRestrictionIndex");
+    urd::python::bind_index<urd::index<Concept<AtMostNumberRestrictionTag>>>(m, "ConceptAtMostNumberRestrictionIndex");
+    urd::python::bind_index<urd::index<Concept<ExactNumberRestrictionTag>>>(m, "ConceptExactNumberRestrictionIndex");
+    urd::python::bind_index<urd::index<Concept<QualifiedAtLeastNumberRestrictionTag>>>(m, "ConceptQualifiedAtLeastNumberRestrictionIndex");
+    urd::python::bind_index<urd::index<Concept<QualifiedAtMostNumberRestrictionTag>>>(m, "ConceptQualifiedAtMostNumberRestrictionIndex");
+    urd::python::bind_index<urd::index<Concept<QualifiedExactNumberRestrictionTag>>>(m, "ConceptQualifiedExactNumberRestrictionIndex");
+    urd::python::bind_index<urd::index<Concept<RoleValueMapTag>>>(m, "ConceptRoleValueMapIndex");
+    urd::python::bind_index<urd::index<Concept<AgreementTag>>>(m, "ConceptAgreementIndex");
+    urd::python::bind_index<urd::index<Concept<RoleFillersTag>>>(m, "ConceptRoleFillersIndex");
+    urd::python::bind_index<urd::index<Concept<OneOfTag>>>(m, "ConceptOneOfIndex");
+    urd::python::bind_index<urd::index<Concept<NominalTag>>>(m, "ConceptNominalIndex");
+    urd::python::bind_index<urd::index<Concept<RegisterTag>>>(m, "ConceptRegisterIndex");
+    urd::python::bind_index<urd::index<Concept<ArgumentTag<ConceptTag>>>>(m, "ConceptArgumentIndex");
 
     bind_concept_data<BotTag>(m, "ConceptBotData");
     bind_concept_data<TopTag>(m, "ConceptTopData");

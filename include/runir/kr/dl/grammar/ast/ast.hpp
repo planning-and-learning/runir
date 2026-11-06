@@ -5,6 +5,8 @@
 // target's compile definitions, so all units agree on them regardless of include order.
 
 #include "runir/kr/dl/declarations.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/parser/ast.hpp"
 
 #include <boost/optional.hpp>
@@ -13,7 +15,8 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <yggdrasil/core/types.hpp>
+#include <boost/mp11.hpp>
+#include <yggdrasil/core/config.hpp>
 
 namespace runir::kr::dl::grammar::ast
 {
@@ -64,7 +67,7 @@ struct RegisterReference : PositionedVariant<NumericReference, Identifier>
 template<runir::kr::dl::CategoryTag Category, typename Tag = void>
 struct Constructor;
 
-using BaseAstConceptConstructorTags = ygg::TypeList<runir::kr::dl::BotTag,
+using BaseAstConceptConstructorTags = boost::mp11::mp_list<runir::kr::dl::BotTag,
                                                     runir::kr::dl::TopTag,
                                                     runir::kr::dl::ConceptAtomicStateSyntaxTag,
                                                     runir::kr::dl::ConceptAtomicGoalSyntaxTag,
@@ -86,7 +89,7 @@ using BaseAstConceptConstructorTags = ygg::TypeList<runir::kr::dl::BotTag,
                                                     runir::kr::dl::NominalTag,
                                                     runir::kr::dl::ProjectTag>;
 
-using BaseAstRoleConstructorTags = ygg::TypeList<runir::kr::dl::UniversalTag,
+using BaseAstRoleConstructorTags = boost::mp11::mp_list<runir::kr::dl::UniversalTag,
                                                  runir::kr::dl::RoleAtomicStateSyntaxTag,
                                                  runir::kr::dl::RoleAtomicGoalSyntaxTag,
                                                  runir::kr::dl::RoleIntersectionSyntaxTag,
@@ -101,22 +104,22 @@ using BaseAstRoleConstructorTags = ygg::TypeList<runir::kr::dl::UniversalTag,
                                                  runir::kr::dl::ProjectTag>;
 
 using BaseAstBooleanConstructorTags =
-    ygg::TypeList<runir::kr::dl::BooleanAtomicStateSyntaxTag, runir::kr::dl::BooleanAtomicGoalSyntaxTag, runir::kr::dl::NonemptyTag>;
+    boost::mp11::mp_list<runir::kr::dl::BooleanAtomicStateSyntaxTag, runir::kr::dl::BooleanAtomicGoalSyntaxTag, runir::kr::dl::NonemptyTag>;
 
-using BaseAstNumericalConstructorTags = ygg::TypeList<runir::kr::dl::CountTag, runir::kr::dl::DistanceTag>;
+using BaseAstNumericalConstructorTags = boost::mp11::mp_list<runir::kr::dl::CountTag, runir::kr::dl::DistanceTag>;
 
 using AstConceptConstructorTags =
-    ygg::ConcatTypeListsT<BaseAstConceptConstructorTags, ygg::TypeList<runir::kr::dl::RegisterTag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>>;
+    boost::mp11::mp_append<BaseAstConceptConstructorTags, boost::mp11::mp_list<runir::kr::dl::RegisterTag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>>;
 using AstRoleConstructorTags =
-    ygg::ConcatTypeListsT<BaseAstRoleConstructorTags, ygg::TypeList<runir::kr::dl::RegisterTag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>>;
-using AstBooleanConstructorTags = ygg::ConcatTypeListsT<BaseAstBooleanConstructorTags,
+    boost::mp11::mp_append<BaseAstRoleConstructorTags, boost::mp11::mp_list<runir::kr::dl::RegisterTag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>>;
+using AstBooleanConstructorTags = boost::mp11::mp_append<BaseAstBooleanConstructorTags,
                                                         runir::kr::dl::ComparisonConstructorTags,
-                                                        ygg::TypeList<runir::kr::dl::BooleanConstantTag>,
+                                                        boost::mp11::mp_list<runir::kr::dl::BooleanConstantTag>,
                                                         runir::kr::dl::LogicalConstructorTags,
-                                                        ygg::TypeList<runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>>;
-using AstNumericalConstructorTags = ygg::ConcatTypeListsT<BaseAstNumericalConstructorTags,
+                                                        boost::mp11::mp_list<runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>>;
+using AstNumericalConstructorTags = boost::mp11::mp_append<BaseAstNumericalConstructorTags,
                                                           runir::kr::dl::ArithmeticConstructorTags,
-                                                          ygg::TypeList<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>>;
+                                                          boost::mp11::mp_list<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>>;
 
 template<runir::kr::dl::CategoryTag Category>
 struct AstConstructorTags;
@@ -157,7 +160,7 @@ struct AstConstructorAlternative
 
 template<runir::kr::dl::CategoryTag Category>
 using ConstructorVariantBase =
-    ygg::ApplyTypeListT<PositionedVariant, ygg::MapTypeListT<AstConstructorAlternative<Category>::template Type, AstConstructorTagsT<Category>>>;
+    boost::mp11::mp_apply<PositionedVariant, boost::mp11::mp_transform<AstConstructorAlternative<Category>::template Type, AstConstructorTagsT<Category>>>;
 
 /// Defined before the constructors so that they can hold choices by value.
 template<runir::kr::dl::CategoryTag Category>
@@ -195,25 +198,25 @@ struct Query;
 struct QueryAtomicState : boost::spirit::x3::position_tagged
 {
     Identifier predicate_name;
-    std::vector<Identifier> columns;
+    urd::Store<urd::sequence<Identifier>> columns;
 };
 
 struct QueryAtomicGoal : boost::spirit::x3::position_tagged
 {
     Identifier predicate_name;
     bool polarity = false;
-    std::vector<Identifier> columns;
+    urd::Store<urd::sequence<Identifier>> columns;
 };
 
 struct QueryConcept : boost::spirit::x3::position_tagged
 {
-    std::vector<Identifier> columns;
+    urd::Store<urd::sequence<Identifier>> columns;
     ConceptChoice arg;
 };
 
 struct QueryRole : boost::spirit::x3::position_tagged
 {
-    std::vector<Identifier> columns;
+    urd::Store<urd::sequence<Identifier>> columns;
     RoleChoice arg;
 };
 
@@ -233,7 +236,7 @@ using QueryDifference = QueryBinary<runir::kr::dl::QueryDifferenceTag>;
 template<typename Tag>
 struct QueryColumns : boost::spirit::x3::position_tagged
 {
-    std::vector<Identifier> columns;
+    urd::Store<urd::sequence<Identifier>> columns;
     boost::spirit::x3::forward_ast<Query> arg;
 };
 
@@ -257,19 +260,19 @@ struct QuerySelectValue : boost::spirit::x3::position_tagged
 
 struct QueryGenericJoin : boost::spirit::x3::position_tagged
 {
-    std::vector<Identifier> variable_order;
-    std::vector<Identifier> output_order;
-    std::vector<boost::spirit::x3::forward_ast<Query>> args;
+    urd::Store<urd::sequence<Identifier>> variable_order;
+    urd::Store<urd::sequence<Identifier>> output_order;
+    urd::Store<urd::sequence<boost::spirit::x3::forward_ast<Query>>> args;
 };
 
 struct QueryEmpty : boost::spirit::x3::position_tagged
 {
-    std::vector<Identifier> columns;
+    urd::Store<urd::sequence<Identifier>> columns;
 };
 
 struct QueryMustPass : boost::spirit::x3::position_tagged
 {
-    std::vector<Identifier> keys;
+    urd::Store<urd::sequence<Identifier>> keys;
     boost::spirit::x3::forward_ast<Query> sources;
     boost::spirit::x3::forward_ast<Query> edges;
     boost::spirit::x3::forward_ast<Query> targets;
@@ -313,7 +316,7 @@ struct Query :
 template<runir::kr::dl::CategoryTag Category>
 struct Constructor<Category, runir::kr::dl::ProjectTag> : boost::spirit::x3::position_tagged
 {
-    std::vector<Identifier> columns;
+    urd::Store<urd::sequence<Identifier>> columns;
     Query arg;
 };
 
@@ -464,13 +467,13 @@ template<>
 struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::RoleFillersTag> : boost::spirit::x3::position_tagged
 {
     RoleChoice role;
-    std::vector<Identifier> object_names;
+    urd::Store<urd::sequence<Identifier>> object_names;
 };
 
 template<>
 struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::OneOfTag> : boost::spirit::x3::position_tagged
 {
-    std::vector<Identifier> object_names;
+    urd::Store<urd::sequence<Identifier>> object_names;
 };
 
 template<>
@@ -722,7 +725,7 @@ struct DerivationRule : boost::spirit::x3::position_tagged
     using CategoryTag = Category;
 
     NonTerminal<Category> lhs;
-    std::vector<ConstructorOrNonTerminal<Category>> rhs;
+    urd::Store<urd::sequence<ConstructorOrNonTerminal<Category>>> rhs;
 };
 
 struct DerivationRuleVariant :
@@ -741,7 +744,7 @@ struct DerivationRuleVariant :
 
 struct Grammar : boost::spirit::x3::position_tagged
 {
-    std::vector<DerivationRuleVariant> rules;
+    urd::Store<urd::sequence<DerivationRuleVariant>> rules;
 };
 
 using ConceptConstructor = Constructor<runir::kr::dl::ConceptTag>;

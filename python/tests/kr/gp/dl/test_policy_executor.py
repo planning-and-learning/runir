@@ -60,7 +60,8 @@ def test_base_proof_properties_keep_the_graph_and_sketch_alive(
     assert sys.getrefcount(graph) > references
     references = sys.getrefcount(vertex)
     state = vertex.state
-    assert sys.getrefcount(vertex) == references
+    # The state borrows the search context's repository, so it keeps its vertex alive.
+    assert sys.getrefcount(vertex) > references
     assert state == vertex.state
     references = sys.getrefcount(graph)
     edge = graph.get_edge_property(next(iter(graph.get_edge_indices())))
@@ -214,9 +215,7 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
     assert isinstance(rule.is_compatible_with(transition_context), bool)
     condition = next(iter(rule.get_conditions()))
     assert isinstance(condition.is_compatible_with(transition_context), bool)
-    concrete_condition_variant = condition.get_variant()
-    concrete_condition = concrete_condition_variant.get_variant()
-    feature = concrete_condition.get_feature()
+    feature = condition.get_feature()
     concrete_feature = feature.get_variant()
     assert isinstance(concrete_feature, ConcreteBooleanFeature)
     dl_constructor = concrete_feature.get_feature()
@@ -237,8 +236,6 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
         sketch,
         rule,
         condition,
-        concrete_condition_variant,
-        concrete_condition,
         feature,
         concrete_feature,
         dl_constructor,

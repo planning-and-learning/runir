@@ -1,4 +1,6 @@
 #include "runir/kr/ps/ext/dl/module_factory.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 #include "runir/kr/ps/ext/canonicalization.hpp"
 #include "runir/kr/ps/ext/dl/parser.hpp"
@@ -24,9 +26,9 @@ ModuleView ModuleFactory::create_empty(Repository& repository)
     symbol_data->name = "empty";
     const auto symbol = runir::kr::ps::ext::insert(repository, *symbol_data).first;
     auto data = runir::kr::ps::ext::checkout<Module>(builder);
-    data->symbol = symbol.get_index();
-    data->entry_memory_state = entry.get_index();
-    data->memory_states.push_back(entry.get_index());
+    data->symbol = symbol.index();
+    data->entry_memory_state = entry.index();
+    data->memory_states.push_back(entry.index());
     return runir::kr::ps::ext::insert(repository, *data).first;
 }
 
@@ -63,10 +65,10 @@ std::string ModuleFactory::create_description(ModuleSpecification specification)
     throw std::runtime_error(fmt::format("Unknown module specification: {}.", static_cast<int>(specification)));
 }
 
-std::vector<ModuleView> ModuleFactory::create_bonet_et_al_icaps2024_modules(tyr::formalism::planning::DomainView domain, Repository& repository)
+urd::Store<urd::sequence<ModuleView>> ModuleFactory::create_bonet_et_al_icaps2024_modules(tyr::formalism::planning::DomainView domain, Repository& repository)
 { return parse_modules(create_bonet_et_al_icaps2024_descriptions(), domain, repository); }
 
-std::vector<std::string> ModuleFactory::create_bonet_et_al_icaps2024_descriptions()
+urd::Store<urd::sequence<std::string>> ModuleFactory::create_bonet_et_al_icaps2024_descriptions()
 {
     return {
         create_on_bonet_et_al_icaps2024_description(),

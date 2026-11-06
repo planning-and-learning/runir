@@ -17,12 +17,12 @@ namespace
 template<typename Tag>
 void bind_boolean_data(nb::module_& m, const char* name)
 {
-    using Data = ygg::Data<runir::kr::dl::cnf_grammar::Boolean<Tag>>;
+    using Data = urd::data<runir::kr::dl::cnf_grammar::Boolean<Tag>>;
     auto cls = nb::class_<Data>(m, name).def(nb::init<>()).def_rw("index", &Data::index);
-    ygg::add_comparison(cls);
+    urd::python::add_comparison(cls);
     python::def_boolean_data_constructors<Tag,
-                                          ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::BooleanTag>>,
-                                          ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::NumericalTag>>,
+                                          urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::BooleanTag>>,
+                                          urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::NumericalTag>>,
                                           runir::kr::dl::cnf_grammar::ConstructorRepository>(cls);
 
     if constexpr (is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag>)
@@ -35,11 +35,11 @@ template<typename Tag>
 void bind_boolean_view(nb::module_& m, const char* name)
 {
     using Type = runir::kr::dl::cnf_grammar::Boolean<Tag>;
-    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::cnf_grammar::ConstructorRepository>;
-    auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index);
+    using View = urd::view<Type, runir::kr::dl::cnf_grammar::ConstructorRepository>;
+    auto cls = nb::class_<View>(m, name).def("get_index", &View::index);
     ygg::add_print(cls);
-    ygg::add_comparison(cls);
-    ygg::add_hash(cls);
+    urd::python::add_comparison(cls);
+    urd::python::add_hash(cls);
 
     if constexpr (is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag>)
         cls.def("get_predicate", &View::get_predicate, nb::keep_alive<0, 1>()).def("get_polarity", &View::get_polarity);
@@ -59,13 +59,13 @@ void bind_cnf_grammar_boolean(nb::module_& m)
     using DerivedGoal = runir::kr::dl::cnf_grammar::Boolean<AtomicGoalTag<tyr::formalism::DerivedTag>>;
     using Nonempty = runir::kr::dl::cnf_grammar::Boolean<NonemptyTag>;
 
-    ygg::bind_index<ygg::Index<StaticState>>(m, "BooleanAtomicStateStaticIndex");
-    ygg::bind_index<ygg::Index<FluentState>>(m, "BooleanAtomicStateFluentIndex");
-    ygg::bind_index<ygg::Index<DerivedState>>(m, "BooleanAtomicStateDerivedIndex");
-    ygg::bind_index<ygg::Index<StaticGoal>>(m, "BooleanAtomicGoalStaticIndex");
-    ygg::bind_index<ygg::Index<FluentGoal>>(m, "BooleanAtomicGoalFluentIndex");
-    ygg::bind_index<ygg::Index<DerivedGoal>>(m, "BooleanAtomicGoalDerivedIndex");
-    ygg::bind_index<ygg::Index<Nonempty>>(m, "BooleanNonemptyIndex");
+    urd::python::bind_index<urd::index<StaticState>>(m, "BooleanAtomicStateStaticIndex");
+    urd::python::bind_index<urd::index<FluentState>>(m, "BooleanAtomicStateFluentIndex");
+    urd::python::bind_index<urd::index<DerivedState>>(m, "BooleanAtomicStateDerivedIndex");
+    urd::python::bind_index<urd::index<StaticGoal>>(m, "BooleanAtomicGoalStaticIndex");
+    urd::python::bind_index<urd::index<FluentGoal>>(m, "BooleanAtomicGoalFluentIndex");
+    urd::python::bind_index<urd::index<DerivedGoal>>(m, "BooleanAtomicGoalDerivedIndex");
+    urd::python::bind_index<urd::index<Nonempty>>(m, "BooleanNonemptyIndex");
 
     bind_boolean_data<AtomicStateTag<tyr::formalism::StaticTag>>(m, "BooleanAtomicStateStaticData");
     bind_boolean_data<AtomicStateTag<tyr::formalism::FluentTag>>(m, "BooleanAtomicStateFluentData");

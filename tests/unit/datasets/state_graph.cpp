@@ -90,21 +90,20 @@ TEST(StateGraphTest, KeepsInitialVertexWhenStateLimitIsZero)
     ASSERT_EQ(graph.get_num_vertices(), 1);
     EXPECT_EQ(graph.get_vertex(0).get_property().state,
               context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator).get_state().pack());
-    EXPECT_EQ(graph.get_vertex(0).get_property().state.get_state_repository(), context->state_repository);
+    EXPECT_EQ(&graph.get_vertex(0).get_property().state.get_state_repository(), context->state_repository.get());
 }
 
-TEST(StateGraphTest, LabelsKeepTheRepositoryWithoutRetainingUnpackedBuilders)
+TEST(StateGraphTest, LabelsDoNotRetainUnpackedBuilders)
 {
-    auto repository = std::weak_ptr<tyr::planning::StateRepository<tyr::GroundTag>> {};
+    // Labels borrow the context's repository: the caller keeps it alive.
+    const auto context = make_gripper_ground_context();
     const auto retained = [&]
     {
-        auto context = make_gripper_ground_context();
-        repository = context->state_repository;
-        const ygg::Builder<tyr::planning::State<tyr::GroundTag>>* released_builder = nullptr;
+        const urd::data<tyr::planning::State<tyr::GroundTag>>* released_builder = nullptr;
         auto builder = datasets::StateGraphBuilder<tyr::GroundTag> {};
         {
             const auto node = context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator);
-            released_builder = &node.get_state().get_state_builder();
+            released_builder = &node.get_state().data();
             builder.add_vertex(datasets::StateGraphVertexLabel<tyr::GroundTag> { node.get_state().pack() });
         }
         auto graph = datasets::StateGraph<tyr::GroundTag>(builder);
@@ -116,7 +115,6 @@ TEST(StateGraphTest, LabelsKeepTheRepositoryWithoutRetainingUnpackedBuilders)
         return annotated->get_forward_graph().get_vertex(0).get_property().state;
     }();
 
-    EXPECT_FALSE(repository.expired());
     EXPECT_EQ(retained.unpack().pack(), retained);
 }
 

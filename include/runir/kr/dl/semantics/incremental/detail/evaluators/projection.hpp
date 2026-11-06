@@ -22,9 +22,9 @@ struct ProjectionEvaluator
     DenotationState<Category> value;
 
     ProjectionEvaluator(QueryEvaluationIndex child_, const ygg::database::ProjectionPlan& plan) : child(child_), operation(plan) {}
-    static void set_row(ygg::Builder<Denotation<Category>>& builder, ygg::database::Row row, bool present)
+    static void set_row(urd::builder<Denotation<Category>>& builder, ygg::database::Row row, bool present)
     {
-        using ObjectIndex = ygg::Index<tyr::formalism::Object>;
+        using ObjectIndex = urd::index<tyr::formalism::Object>;
         if constexpr (std::same_as<Category, ConceptTag>)
             builder.set(ObjectIndex(row.template get<ygg::uint_t>(size_t { 0 })), present);
         else
@@ -32,7 +32,7 @@ struct ProjectionEvaluator
     }
     static void set_row(DenotationState<Category>& state, ygg::database::Row row, bool present, const tyr::formalism::planning::Repository& repository)
     {
-        using ObjectIndex = ygg::Index<tyr::formalism::Object>;
+        using ObjectIndex = urd::index<tyr::formalism::Object>;
         if constexpr (std::same_as<Category, ConceptTag>)
             state.set(ObjectIndex(row.template get<ygg::uint_t>(size_t { 0 })), present, repository);
         else

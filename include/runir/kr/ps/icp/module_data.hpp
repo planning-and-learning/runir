@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_ICP_MODULE_DATA_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/icp/declarations.hpp"
 #include "runir/kr/ps/icp/object_reference.hpp"
@@ -11,42 +13,41 @@
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
+#include <urd/elements/flat.hpp>
 
-namespace ygg
+namespace urd
 {
 
 template<>
-struct Data<runir::kr::ps::icp::Module>
+struct data<runir::kr::ps::icp::Module>
 {
-    Index<runir::kr::ps::icp::Module> index;
-    Index<runir::kr::ps::icp::ModuleSymbol> symbol;
-    IndexList<runir::kr::dl::Register<runir::kr::dl::ConceptTag>> concept_registers;
-    IndexList<runir::kr::dl::Register<runir::kr::dl::RoleTag>> role_registers;
-    IndexList<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>> concept_features;
-    IndexList<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::RoleTag>> role_features;
-    IndexList<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::BooleanTag>> boolean_features;
-    IndexList<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::NumericalTag>> numerical_features;
-    IndexList<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::ps::dl::QueryFeature>> query_features;
-    Index<runir::kr::ps::icp::MemoryState> entry_memory_state;
-    IndexList<runir::kr::ps::icp::MemoryState> memory_states;
-    IndexMatrix<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>> memory_transitions;
+    urd::index<runir::kr::ps::icp::Module> index;
+    urd::index<runir::kr::ps::icp::ModuleSymbol> symbol;
+    urd::flat_vector<urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> concept_registers;
+    urd::flat_vector<urd::index<runir::kr::dl::Register<runir::kr::dl::RoleTag>>> role_registers;
+    urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>>> concept_features;
+    urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::RoleTag>>> role_features;
+    urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::BooleanTag>>> boolean_features;
+    urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::NumericalTag>>> numerical_features;
+    urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::ps::dl::QueryFeature>>> query_features;
+    urd::index<runir::kr::ps::icp::MemoryState> entry_memory_state;
+    urd::flat_vector<urd::index<runir::kr::ps::icp::MemoryState>> memory_states;
+    urd::flat_vector<urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>>>> memory_transitions;
     ::cista::offset::vector<runir::kr::ps::icp::ResetPair> reset_pairs;
 
-    Data() = default;
+    data() = default;
     // Registers live in the description-logic repository, hence the separate context parameter.
-    Data(Index<runir::kr::ps::icp::ModuleSymbol> symbol_,
-         IndexList<runir::kr::dl::Register<runir::kr::dl::ConceptTag>> concept_registers_,
-         IndexList<runir::kr::dl::Register<runir::kr::dl::RoleTag>> role_registers_,
-         IndexList<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>> concept_features_,
-         IndexList<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::RoleTag>> role_features_,
-         IndexList<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::BooleanTag>> boolean_features_,
-         IndexList<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::NumericalTag>> numerical_features_,
-         IndexList<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::ps::dl::QueryFeature>> query_features_,
-         Index<runir::kr::ps::icp::MemoryState> entry_memory_state_,
-         IndexList<runir::kr::ps::icp::MemoryState> memory_states_,
-         IndexMatrix<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>> memory_transitions_,
+    data(urd::index<runir::kr::ps::icp::ModuleSymbol> symbol_,
+         urd::flat_vector<urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> concept_registers_,
+         urd::flat_vector<urd::index<runir::kr::dl::Register<runir::kr::dl::RoleTag>>> role_registers_,
+         urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>>> concept_features_,
+         urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::RoleTag>>> role_features_,
+         urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::BooleanTag>>> boolean_features_,
+         urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::NumericalTag>>> numerical_features_,
+         urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::ps::dl::QueryFeature>>> query_features_,
+         urd::index<runir::kr::ps::icp::MemoryState> entry_memory_state_,
+         urd::flat_vector<urd::index<runir::kr::ps::icp::MemoryState>> memory_states_,
+         urd::flat_vector<urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>>>> memory_transitions_,
          ::cista::offset::vector<runir::kr::ps::icp::ResetPair> reset_pairs_) :
         index(),
         symbol(symbol_),
@@ -63,85 +64,40 @@ struct Data<runir::kr::ps::icp::Module>
         reset_pairs(std::move(reset_pairs_))
     {
     }
-    template<typename C, typename D>
-    Data(::ygg::View<Index<runir::kr::ps::icp::ModuleSymbol>, C> symbol_,
-         const std::vector<::ygg::View<Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>, D>>& concept_registers_,
-         const std::vector<::ygg::View<Index<runir::kr::dl::Register<runir::kr::dl::RoleTag>>, D>>& role_registers_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>>, C>>& concept_features_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::RoleTag>>, C>>& role_features_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::BooleanTag>>, C>>& boolean_features_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::NumericalTag>>, C>>& numerical_features_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::ps::dl::QueryFeature>>, C>>& query_features_,
-         ::ygg::View<Index<runir::kr::ps::icp::MemoryState>, C> entry_memory_state_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::icp::MemoryState>, C>>& memory_states_,
-         const std::vector<std::vector<::ygg::View<Index<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>>, C>>>& memory_transitions_,
-         ::cista::offset::vector<runir::kr::ps::icp::ResetPair> reset_pairs_) :
-        index(),
-        symbol(),
-        concept_registers(),
-        role_registers(),
-        concept_features(),
-        role_features(),
-        boolean_features(),
-        numerical_features(),
-        query_features(),
-        entry_memory_state(),
-        memory_states(),
-        memory_transitions(),
-        reset_pairs(std::move(reset_pairs_))
-    {
-        set(symbol_, symbol);
-        set(concept_registers_, concept_registers);
-        set(role_registers_, role_registers);
-        set(concept_features_, concept_features);
-        set(role_features_, role_features);
-        set(boolean_features_, boolean_features);
-        set(numerical_features_, numerical_features);
-        set(query_features_, query_features);
-        set(entry_memory_state_, entry_memory_state);
-        set(memory_states_, memory_states);
-        memory_transitions.reserve(memory_transitions_.size());
-        for (const auto& row : memory_transitions_)
-        {
-            memory_transitions.emplace_back();
-            set(row, memory_transitions.back());
-        }
-    }
 
     static constexpr auto cista_members() noexcept
     {
-        return ygg::Members<&Data::index,
-                            &Data::symbol,
-                            &Data::concept_registers,
-                            &Data::role_registers,
-                            &Data::concept_features,
-                            &Data::role_features,
-                            &Data::boolean_features,
-                            &Data::numerical_features,
-                            &Data::query_features,
-                            &Data::entry_memory_state,
-                            &Data::memory_states,
-                            &Data::memory_transitions,
-                            &Data::reset_pairs> {};
+        return urd::Members<&data::index,
+                            &data::symbol,
+                            &data::concept_registers,
+                            &data::role_registers,
+                            &data::concept_features,
+                            &data::role_features,
+                            &data::boolean_features,
+                            &data::numerical_features,
+                            &data::query_features,
+                            &data::entry_memory_state,
+                            &data::memory_states,
+                            &data::memory_transitions,
+                            &data::reset_pairs> {};
     }
     static constexpr auto identifying_members() noexcept
     {
-        return ygg::Members<&Data::symbol,
-                            &Data::concept_registers,
-                            &Data::role_registers,
-                            &Data::concept_features,
-                            &Data::role_features,
-                            &Data::boolean_features,
-                            &Data::numerical_features,
-                            &Data::query_features,
-                            &Data::entry_memory_state,
-                            &Data::memory_states,
-                            &Data::memory_transitions,
-                            &Data::reset_pairs> {};
+        return urd::Members<&data::symbol,
+                            &data::concept_registers,
+                            &data::role_registers,
+                            &data::concept_features,
+                            &data::role_features,
+                            &data::boolean_features,
+                            &data::numerical_features,
+                            &data::query_features,
+                            &data::entry_memory_state,
+                            &data::memory_states,
+                            &data::memory_transitions,
+                            &data::reset_pairs> {};
     }
-    void clear() noexcept { ygg::clear_members(*this); }
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 #endif

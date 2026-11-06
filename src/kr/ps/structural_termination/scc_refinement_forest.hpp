@@ -12,6 +12,8 @@
 // marks of all its ancestors.
 
 #include <algorithm>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <cstddef>
 #include <cstdint>
@@ -38,8 +40,8 @@ public:
     {
         std::uint64_t booleans = 0;
         std::uint64_t numericals = 0;
-        std::vector<std::vector<std::size_t>> boolean_witnessing_rule_positions;
-        std::vector<std::vector<std::size_t>> numerical_witnessing_rule_positions;
+        urd::Store<urd::sequence<urd::Store<urd::sequence<std::size_t>>>> boolean_witnessing_rule_positions;
+        urd::Store<urd::sequence<urd::Store<urd::sequence<std::size_t>>>> numerical_witnessing_rule_positions;
 
         Marks(std::size_t num_booleans, std::size_t num_numericals) :
             boolean_witnessing_rule_positions(num_booleans),
@@ -75,7 +77,7 @@ public:
         }
 
     private:
-        static void insert_witness(std::vector<std::size_t>& positions, std::size_t rule_position)
+        static void insert_witness(urd::Store<urd::sequence<std::size_t>>& positions, std::size_t rule_position)
         {
             const auto insertion = std::lower_bound(positions.begin(), positions.end(), rule_position);
             if (insertion == positions.end() || *insertion != rule_position)
@@ -86,16 +88,16 @@ public:
     struct Node
     {
         std::optional<NodeIndex> parent;
-        std::vector<NodeIndex> children;
+        urd::Store<urd::sequence<NodeIndex>> children;
 
         // Stable global positions of memory states contained in this SCC.
-        std::vector<std::size_t> memory_positions;
+        urd::Store<urd::sequence<std::size_t>> memory_positions;
 
         // Only marks established while this node was a leaf. Inherited marks
         // remain represented by ancestors rather than being copied.
         Marks local_marks;
 
-        Node(std::optional<NodeIndex> parent_, std::vector<std::size_t> memory_positions_, std::size_t num_booleans, std::size_t num_numericals) :
+        Node(std::optional<NodeIndex> parent_, urd::Store<urd::sequence<std::size_t>> memory_positions_, std::size_t num_booleans, std::size_t num_numericals) :
             parent(parent_),
             memory_positions(std::move(memory_positions_)),
             local_marks(num_booleans, num_numericals)
@@ -111,7 +113,7 @@ public:
         num_numericals_(num_numericals),
         leaf_of_memory_(component_of.size())
     {
-        auto memories_by_component = std::vector<std::vector<std::size_t>>(num_components);
+        auto memories_by_component = urd::Store<urd::sequence<urd::Store<urd::sequence<std::size_t>>>>(num_components);
         for (std::size_t memory_position = 0; memory_position < component_of.size(); ++memory_position)
         {
             if (component_of[memory_position] >= num_components)
@@ -131,8 +133,8 @@ public:
         }
     }
 
-    [[nodiscard]] const std::vector<NodeIndex>& roots() const noexcept { return roots_; }
-    [[nodiscard]] const std::vector<Node>& nodes() const noexcept { return nodes_; }
+    [[nodiscard]] const urd::Store<urd::sequence<NodeIndex>>& roots() const noexcept { return roots_; }
+    [[nodiscard]] const urd::Store<urd::sequence<Node>>& nodes() const noexcept { return nodes_; }
 
     [[nodiscard]] NodeIndex leaf_of_memory(std::size_t memory_position) const { return leaf_of_memory_.at(memory_position); }
 
@@ -167,14 +169,14 @@ public:
     // removal. `child_memory_positions` must be a disjoint partition of the
     // parent's memory states. A one-part "split" is deliberately rejected:
     // callers should leave the existing leaf unchanged in that case.
-    std::vector<NodeIndex> split(NodeIndex leaf, std::span<const std::vector<std::size_t>> child_memory_positions)
+    urd::Store<urd::sequence<NodeIndex>> split(NodeIndex leaf, std::span<const urd::Store<urd::sequence<std::size_t>>> child_memory_positions)
     {
         require_leaf(leaf);
         if (child_memory_positions.size() < 2)
             throw std::invalid_argument("an SCC refinement requires at least two children");
         validate_partition(nodes_[leaf].memory_positions, child_memory_positions);
 
-        auto children = std::vector<NodeIndex> {};
+        auto children = urd::Store<urd::sequence<NodeIndex>> {};
         children.reserve(child_memory_positions.size());
         for (const auto& memory_positions : child_memory_positions)
         {
@@ -195,7 +197,7 @@ private:
         return result;
     }
 
-    NodeIndex append_node(std::optional<NodeIndex> parent, std::vector<std::size_t> memory_positions)
+    NodeIndex append_node(std::optional<NodeIndex> parent, urd::Store<urd::sequence<std::size_t>> memory_positions)
     {
         const auto result = nodes_.size();
         nodes_.emplace_back(parent, std::move(memory_positions), num_booleans_, num_numericals_);
@@ -208,7 +210,7 @@ private:
             leaf_of_memory_.at(memory_position) = leaf;
     }
 
-    static void validate_partition(std::span<const std::size_t> parent, std::span<const std::vector<std::size_t>> children)
+    static void validate_partition(std::span<const std::size_t> parent, std::span<const urd::Store<urd::sequence<std::size_t>>> children)
     {
         auto expected = boost::dynamic_bitset<>(parent.empty() ? 0 : (*std::max_element(parent.begin(), parent.end()) + 1));
         for (const auto memory_position : parent)
@@ -232,9 +234,9 @@ private:
 
     std::size_t num_booleans_;
     std::size_t num_numericals_;
-    std::vector<NodeIndex> roots_;
-    std::vector<Node> nodes_;
-    std::vector<NodeIndex> leaf_of_memory_;
+    urd::Store<urd::sequence<NodeIndex>> roots_;
+    urd::Store<urd::sequence<Node>> nodes_;
+    urd::Store<urd::sequence<NodeIndex>> leaf_of_memory_;
 };
 
 // Policy-facing facade for memory-aware incomplete elimination. Its API uses

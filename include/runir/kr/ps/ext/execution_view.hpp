@@ -12,83 +12,73 @@
 #include <type_traits>
 #include <tyr/formalism/object_view.hpp>
 #include <tyr/planning/state_repository.hpp>
-#include <yggdrasil/containers/optional.hpp>
-#include <yggdrasil/containers/pair.hpp>
-#include <yggdrasil/containers/vector.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
-
-namespace ygg
-{
 
 /// Getters shared by the index, data, and builder views of a module state. The builder
 /// view overrides the two that read inline construction data.
 template<tyr::TaskKind Kind, typename V>
-class ViewMixin<runir::kr::ps::ext::ModuleState<Kind>, V>
+struct urd::view_mixin<runir::kr::ps::ext::ModuleState<Kind>, V>
 {
+private:
     const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_state() const { return self().get_repository().get_state_repository().get_registered_state(self().get_data().state); }
-    auto get_module() const noexcept { return make_view(self().get_data().module_, self().get_repository().get_program_repository()); }
-    auto get_memory_state() const noexcept { return make_view(self().get_data().memory_state, self().get_repository().get_program_repository()); }
-    auto get_registers() const noexcept { return make_view(self().get_data().registers, self().get_repository().get_denotation_repository()); }
-    auto get_arguments() const noexcept { return make_view(self().get_data().arguments, self().get_repository().get_denotation_repository()); }
+    auto get_state() const { return get_repository(self().context()).get_state_repository().get_registered_state(self().data().state); }
+    auto get_module() const noexcept { return urd::resolve(self().data().module_, get_repository(self().context()).get_program_repository()); }
+    auto get_memory_state() const noexcept { return urd::resolve(self().data().memory_state, get_repository(self().context()).get_program_repository()); }
+    auto get_registers() const noexcept { return urd::resolve(self().data().registers, get_repository(self().context()).get_denotation_repository()); }
+    auto get_arguments() const noexcept { return urd::resolve(self().data().arguments, get_repository(self().context()).get_denotation_repository()); }
 };
 
 /// Getters shared by the index and data views of a call stack frame.
 template<typename V>
-class ViewMixin<runir::kr::ps::ext::CallStack, V>
+struct urd::view_mixin<runir::kr::ps::ext::CallStack, V>
 {
+private:
     const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_module() const noexcept { return make_view(self().get_data().module_, self().get_repository().get_program_repository()); }
-    auto get_return_memory_state() const noexcept { return make_view(self().get_data().return_memory_state, self().get_repository().get_program_repository()); }
-    auto get_registers() const noexcept { return make_view(self().get_data().registers, self().get_repository().get_denotation_repository()); }
-    auto get_arguments() const noexcept { return make_view(self().get_data().arguments, self().get_repository().get_denotation_repository()); }
+    auto get_module() const noexcept { return urd::resolve(self().data().module_, get_repository(self().context()).get_program_repository()); }
+    auto get_return_memory_state() const noexcept { return urd::resolve(self().data().return_memory_state, get_repository(self().context()).get_program_repository()); }
+    auto get_registers() const noexcept { return urd::resolve(self().data().registers, get_repository(self().context()).get_denotation_repository()); }
+    auto get_arguments() const noexcept { return urd::resolve(self().data().arguments, get_repository(self().context()).get_denotation_repository()); }
 
-    auto get_caller() const
-    {
-        const auto& caller = self().get_data().caller;
-        return caller ? std::optional(make_view(*caller, self().get_context())) : std::nullopt;
-    }
+    auto get_caller() const { return urd::resolve(self().data().caller, self().context()); }
 };
 
 /// Getters shared by the index, data, and builder views of a program state. A builder may move when
 /// search buffers grow; create a builder view only while its owner remains in place.
 template<tyr::TaskKind Kind, typename V>
-class ViewMixin<runir::kr::ps::ext::ProgramState<Kind>, V>
+struct urd::view_mixin<runir::kr::ps::ext::ProgramState<Kind>, V>
 {
+private:
     const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_program() const noexcept { return make_view(self().get_data().program, self().get_repository().get_program_repository()); }
-    auto get_module_state() const noexcept { return make_view(self().get_data().module_state, self().get_context()); }
+    auto get_program() const noexcept { return urd::resolve(self().data().program, get_repository(self().context()).get_program_repository()); }
+    auto get_module_state() const noexcept { return urd::resolve(self().data().module_state, self().context()); }
     auto get_state() const { return get_module_state().get_state(); }
 
     auto get_call_stack() const
     {
-        const auto& call_stack = self().get_data().call_stack;
-        return call_stack ? std::optional(make_view(*call_stack, self().get_context())) : std::nullopt;
+        const auto& call_stack = self().data().call_stack;
+        return call_stack ? std::optional(urd::resolve(*call_stack, self().context())) : std::nullopt;
     }
 };
 
 /// Borrows inline construction data: the state is not yet registered and the registers live in the
 /// formalism repository, so these two getters differ from the interned views.
-template<tyr::TaskKind Kind, typename C>
-class View<Builder<runir::kr::ps::ext::ModuleState<Kind>>, C> :
-    public ygg::BuilderViewBase<runir::kr::ps::ext::ModuleState<Kind>, C>,
-    public ViewMixin<runir::kr::ps::ext::ModuleState<Kind>, View<Builder<runir::kr::ps::ext::ModuleState<Kind>>, C>>
+template<tyr::TaskKind Kind, typename V>
+struct urd::view_mixin<urd::builder<runir::kr::ps::ext::ModuleState<Kind>>, V> : urd::view_mixin<runir::kr::ps::ext::ModuleState<Kind>, V>
 {
+private:
+    const V& self() const noexcept { return static_cast<const V&>(*this); }
+
 public:
-    using ygg::BuilderViewBase<runir::kr::ps::ext::ModuleState<Kind>, C>::BuilderViewBase;
-
-    auto get_state() const { return make_view(this->get_data().state, *this->get_repository().get_state_repository().get_task()); }
-    auto get_registers() const noexcept { return make_view(this->get_data().registers, this->get_repository().get_formalism_repository()); }
+    auto get_state() const { return urd::resolve(self().data().state, get_repository(self().context()).get_state_repository()); }
+    auto get_registers() const noexcept { return urd::resolve(self().data().registers, get_repository(self().context()).get_formalism_repository()); }
 };
-
-}  // namespace ygg
 
 namespace runir::kr::ps::ext
 {
@@ -100,8 +90,8 @@ concept ModuleStateViewConcept = tyr::TaskKind<Kind> && requires(const std::remo
     { state.get_memory_state() } -> std::same_as<MemoryStateView>;
     { state.get_registers() } -> runir::kr::dl::semantics::RegisterValuesViewConcept;
     { state.get_arguments() } -> std::same_as<runir::kr::dl::semantics::CallArgumentsView>;
-    state.get_data();
-    state.get_context();
+    state.data();
+    state.context();
 };
 
 /// Shared semantic access for indexed, borrowed-data and builder views; no registered identity is required.
@@ -111,8 +101,8 @@ concept ProgramStateViewConcept = tyr::TaskKind<Kind> && requires(const std::rem
     { state.get_program() } -> std::same_as<ProgramView>;
     { state.get_module_state() } -> ModuleStateViewConcept<Kind>;
     { state.get_call_stack() } -> std::same_as<std::optional<CallStackView<Kind>>>;
-    state.get_data();
-    state.get_context();
+    state.data();
+    state.context();
 };
 
 }  // namespace runir::kr::ps::ext

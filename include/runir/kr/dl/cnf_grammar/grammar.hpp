@@ -9,6 +9,5 @@
 #include "runir/kr/dl/cnf_grammar/generate.hpp"
 #include "runir/kr/dl/cnf_grammar/views.hpp"
 
-#include <yggdrasil/core/types.hpp>
 
 #endif

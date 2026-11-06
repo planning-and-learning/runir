@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_BASE_EVALUATION_ENVIRONMENT_HPP_
 
 #include "runir/kr/dl/semantics/evaluation_policy.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/dl/semantics/evaluation_storage.hpp"
 #include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/base/sketch_view.hpp"
@@ -27,7 +29,7 @@ private:
 
     static auto roots(SketchView sketch)
     {
-        auto result = std::vector<runir::kr::dl::semantics::incremental::EvaluationRoot> {};
+        auto result = urd::Store<urd::sequence<runir::kr::dl::semantics::incremental::EvaluationRoot>> {};
         for (const auto feature : sketch.get_features<runir::kr::dl::BooleanTag>())
             result.emplace_back(feature.get_expression());
         for (const auto feature : sketch.get_features<runir::kr::dl::NumericalTag>())

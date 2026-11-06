@@ -10,7 +10,7 @@ namespace ygg::serialization
 {
 
 template<typename Archive, typename C>
-void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::icp::Program>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::ps::icp::Program, C>>)
 {
     ar.field("module", [](const auto& value) { return value.get_module(); });
 }

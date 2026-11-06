@@ -8,28 +8,28 @@ namespace runir::kr::ps::ext
 {
 
 template<tyr::TaskKind Kind>
-bool is_canonical(const ygg::Data<ModuleState<Kind>>&) noexcept
+bool is_canonical(const urd::data<ModuleState<Kind>>&) noexcept
 { return true; }
 
-inline bool is_canonical(const ygg::Data<CallStack>&) noexcept { return true; }
+inline bool is_canonical(const urd::data<CallStack>&) noexcept { return true; }
 
 template<tyr::TaskKind Kind>
-bool is_canonical(const ygg::Data<ProgramState<Kind>>&) noexcept
+bool is_canonical(const urd::data<ProgramState<Kind>>&) noexcept
 { return true; }
 
 template<tyr::TaskKind Kind>
-void canonicalize(ygg::Data<ModuleState<Kind>>&) noexcept
+void canonicalize(urd::data<ModuleState<Kind>>&) noexcept
 {
     // Trivially canonical
 }
 
-inline void canonicalize(ygg::Data<CallStack>&) noexcept
+inline void canonicalize(urd::data<CallStack>&) noexcept
 {
     // Trivially canonical
 }
 
 template<tyr::TaskKind Kind>
-void canonicalize(ygg::Data<ProgramState<Kind>>&) noexcept
+void canonicalize(urd::data<ProgramState<Kind>>&) noexcept
 {
     // Trivially canonical
 }

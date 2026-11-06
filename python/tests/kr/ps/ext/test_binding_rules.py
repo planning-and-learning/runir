@@ -26,7 +26,7 @@ RULE_TYPES = {
 
 
 def _set_common_fields(
-    data: BindingRuleData, rule: BindingRule, effects: Sequence[ext.EffectVariantIndex] | None
+    data: BindingRuleData, rule: BindingRule, effects: Sequence[ext.dl.IncreasesNumericalEffectIndex] | None
 ) -> None:
     """Copy the fields every binding rule shares; ``effects=None`` leaves the data's effects untouched."""
     data.source = rule.get_source().get_index()
@@ -39,7 +39,7 @@ def _set_common_fields(
 def _interns_to(
     repository: ext.Repository,
     rule: BindingRule,
-    effects: Sequence[ext.EffectVariantIndex] | None,
+    effects: Sequence[ext.dl.IncreasesNumericalEffectIndex] | None,
     order: Sequence[ext.OrderTermIndex] | None = None,
 ) -> bool:
     """Rebuild ``rule``'s data with ``effects`` and ``order`` and report whether it interns to ``rule``."""
@@ -111,7 +111,9 @@ def test_binding_rules_parse_construct_and_serialize(
     register_table(dictionaries, ext.RuleVariant, "variants", "v")
     register_table(dictionaries, rule_type, "bindings", "r", fields=("source", "target", "effects"))
     register_table(dictionaries, ext.MemoryState, "memory", "m")
-    register_table(dictionaries, ext.EffectVariant, "effects", "e", project=lambda effect: {"text": str(effect)})
+    register_table(
+        dictionaries, ext.dl.IncreasesNumericalEffect, "effects", "e", project=lambda effect: {"text": str(effect)}
+    )
     assert serialize(dictionaries, variant) == "v0"
     assert table(dictionaries, ext.RuleVariant) == [{"symbol": "bind", "variant": "r0"}]
     assert table(dictionaries, rule_type) == [
@@ -121,7 +123,8 @@ def test_binding_rules_parse_construct_and_serialize(
             "effects": [f"e{i}" for i in range(len(rule.get_effects()))],
         }
     ]
-    assert table(dictionaries, ext.EffectVariant) == [{"text": str(effect)} for effect in rule.get_effects()]
+    effects_table = [{"text": str(effect)} for effect in rule.get_effects()]
+    assert table(dictionaries, ext.dl.IncreasesNumericalEffect) == effects_table
 
 
 @pytest.mark.parametrize(("category", "expression"), [("concept", "c_top"), ("role", "r_universal")])

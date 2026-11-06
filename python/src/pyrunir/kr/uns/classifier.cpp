@@ -13,7 +13,7 @@
 #include <runir/kr/uns/repository.hpp>
 #include <runir/kr/uns/syntactic_complexity.hpp>
 #include <tyr/planning/state_repository.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
@@ -24,17 +24,17 @@ void bind_classifier(nb::module_& m)
 {
     using namespace nb::literals;
     using Family = runir::kr::UnsFamilyTag;
-    using View = ygg::View<ygg::Index<Classifier>, Repository>;
-    ygg::bind_index<ygg::Index<Classifier>>(m, "ClassifierIndex");
+    using View = urd::view<Classifier, Repository>;
+    urd::python::bind_index<urd::index<Classifier>>(m, "ClassifierIndex");
     auto cls = nb::class_<View>(m, "Classifier")
-                   .def("get_index", &View::get_index)
+                   .def("get_index", &View::index)
                    .def("get_features", &View::get_features)
                    .def("get_clauses", &View::get_clauses)
                    .def("get_symbol", &View::get_symbol)
                    .def("syntactic_complexity", [](View view) { return syntactic_complexity(view); });
     ygg::add_print(cls);
-    ygg::add_comparison(cls);
-    ygg::add_hash(cls);
+    urd::python::add_comparison(cls);
+    urd::python::add_hash(cls);
     runir::kr::python::bind_ps_optimize<Family, Repository>(cls);
 
     m.def(

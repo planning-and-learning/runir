@@ -2,6 +2,9 @@
 #define RUNIR_KR_PS_ICP_DETAIL_PROOF_SEARCH_HPP_
 
 #include "runir/kr/ps/icp/detail/proof_graph.hpp"
+#include <urd/repr/maps/std_map.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/ps/icp/detail/search_space.hpp"
 #include "runir/kr/ps/icp/program_executor.hpp"
 #include "runir/kr/ps/icp/successor_expander.hpp"
@@ -36,16 +39,16 @@ auto search(const TaskContextPtr<Kind>& task, ProgramView program, const Program
     const auto static_goal = goal_strategy.is_static_goal_satisfied(*planning.task);
     const auto watch = options.max_time ? std::optional<ygg::CountdownWatch>(*options.max_time) : std::nullopt;
     const auto stop = [&]() { return watch && watch->has_finished(); };
-    std::vector<SearchNode<Kind>> nodes;
-    std::vector<Predecessor> predecessors;
-    std::unordered_map<ygg::uint_t, std::size_t> positions;
-    std::vector<std::size_t> pending;
+    urd::Store<urd::sequence<SearchNode<Kind>>> nodes;
+    urd::Store<urd::sequence<Predecessor>> predecessors;
+    urd::Store<urd::map<ygg::uint_t, std::size_t>, urd::stable_refs> positions;
+    urd::Store<urd::sequence<std::size_t>> pending;
     std::optional<std::size_t> goal;
     const auto admit = [&](ProgramStateView<Kind> state,
                            std::optional<std::size_t> parent,
                            std::optional<tyr::formalism::planning::ActionBindingView> action) -> std::optional<std::size_t>
     {
-        const auto found = positions.find(ygg::uint_t(state.get_index()));
+        const auto found = positions.find(ygg::uint_t(state.index().value));
         if (found != positions.end())
             return found->second;
         if (nodes.size() >= options.max_num_states)
@@ -54,7 +57,7 @@ auto search(const TaskContextPtr<Kind>& task, ProgramView program, const Program
         const auto is_goal = static_goal && goal_strategy.is_dynamic_goal_satisfied(initial.get_state(), state.get_state());
         const auto unsolvable = !is_goal && classifier.is_unsolvable(state.get_state());
         nodes.push_back({ state, parent, action, is_goal, unsolvable });
-        positions.emplace(ygg::uint_t(state.get_index()), index);
+        positions.emplace(ygg::uint_t(state.index().value), index);
         pending.push_back(index);
         return index;
     };

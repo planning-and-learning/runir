@@ -1,4 +1,6 @@
 #include "planning_fixtures.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 #include <algorithm>
 #include <array>
@@ -10,6 +12,7 @@
 #include <ranges>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/incremental/delta.hpp>
+#include <tyr/planning/factory.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
@@ -22,7 +25,7 @@ namespace runir::tests
 namespace
 {
 using Delta = kr::dl::semantics::incremental::Delta;
-using Object = ygg::Index<tyr::formalism::Object>;
+using Object = urd::index<tyr::formalism::Object>;
 using ConceptRegister = kr::dl::RegisterIdentifier<kr::dl::ConceptTag>;
 using RoleRegister = kr::dl::RegisterIdentifier<kr::dl::RoleTag>;
 
@@ -38,7 +41,7 @@ static_assert(HasRegisterChanges<Delta>);
 template<tyr::TaskKind Kind, tyr::formalism::FactKind Fact, typename State>
 auto atoms(const State& state)
 {
-    auto result = std::vector<tyr::formalism::planning::AtomView<tyr::GroundTag, Fact>> {};
+    auto result = urd::Store<urd::sequence<tyr::formalism::planning::AtomView<tyr::GroundTag, Fact>>> {};
     for (const auto atom : state.template get_atoms_view<Fact>())
         result.push_back(atom);
     std::ranges::sort(result);
@@ -60,12 +63,6 @@ auto capacities(const Delta& delta)
                         delta.added.role_registers.capacity(),  delta.removed.role_registers.capacity() };
 }
 
-/// A copy the test wants: borrowed views over copied builders, and a copied task, are other
-/// objects than the repository's own, which is what the assignments below must handle.
-template<typename T>
-T copied(const T& value)
-{ return value; }
-
 template<typename Side>
 void expect_same_side(const Side& lhs, const Side& rhs)
 {
@@ -79,10 +76,10 @@ template<tyr::TaskKind Kind>
 void check_state_delta(tyr::planning::StateView<Kind> source, tyr::planning::StateView<Kind> target)
 {
     auto delta = kr::dl::semantics::incremental::Delta {};
-    const auto source_builder = copied(source.get_state_builder());
-    const auto target_builder = copied(target.get_state_builder());
-    const auto borrowed_source = ygg::make_view(source_builder, source.get_task());
-    const auto borrowed_target = ygg::make_view(target_builder, target.get_task());
+    const auto source_builder = urd::builder<tyr::planning::State<Kind>> { source.data() };
+    const auto target_builder = urd::builder<tyr::planning::State<Kind>> { target.data() };
+    const auto borrowed_source = urd::resolve(source_builder, source.get_state_repository());
+    const auto borrowed_target = urd::resolve(target_builder, target.get_state_repository());
     delta.template assign<Kind>(borrowed_source, borrowed_target);
     EXPECT_FALSE(delta.empty());
     const auto expect_atoms = [&](const auto& before, const auto& after)
@@ -113,8 +110,8 @@ void check_state_delta(tyr::planning::StateView<Kind> source, tyr::planning::Sta
     delta.template assign<Kind>(target, source);
     expect_atoms(target, source);
     EXPECT_EQ(capacities(), reserved);
-    const auto other_task = copied(source.get_task());
-    EXPECT_THROW(delta.template assign<Kind>(source, ygg::make_view(source_builder, other_task)), std::invalid_argument);
+    const auto other_repository = tyr::planning::StateRepositoryFactory<Kind>().create(std::make_shared<tyr::planning::Task<Kind>>(source.get_task()));
+    EXPECT_THROW(delta.template assign<Kind>(source, urd::resolve(source_builder, *other_repository)), std::invalid_argument);
     expect_atoms(target, source);
     delta.template assign<Kind>(source, source);
     EXPECT_TRUE(delta.empty());
@@ -147,7 +144,7 @@ void check_delta()
     check_state_delta<Kind>(source, target);
 
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
-    auto source_registers = ygg::Data<kr::dl::semantics::RegisterValues> {};
+    auto source_registers = urd::data<kr::dl::semantics::RegisterValues> {};
     source_registers.concept_values.resize(3);
     source_registers.concept_values[0] = Object(0);
     source_registers.concept_values[1] = Object(1);
@@ -155,7 +152,7 @@ void check_delta()
     source_registers.role_values[0] = cista::pair(Object(0), Object(1));
     source_registers.role_values[1] = cista::pair(Object(1), Object(2));
     source_registers.role_values[2] = cista::pair(Object(0), Object(2));
-    auto target_registers = ygg::Data<kr::dl::semantics::RegisterValues> {};
+    auto target_registers = urd::data<kr::dl::semantics::RegisterValues> {};
     target_registers.concept_values.resize(4);
     target_registers.concept_values[0] = Object(1);
     target_registers.concept_values[2] = Object(2);
@@ -163,8 +160,8 @@ void check_delta()
     target_registers.role_values.resize(2);
     target_registers.role_values[0] = source_registers.role_values[0];
     target_registers.role_values[1] = cista::pair(Object(2), Object(0));
-    const auto source_register_view = ygg::make_view(source_registers, *search->task->get_repository());
-    const auto target_register_view = ygg::make_view(target_registers, *search->task->get_repository());
+    const auto source_register_view = urd::resolve(source_registers, *search->task->get_repository());
+    const auto target_register_view = urd::resolve(target_registers, *search->task->get_repository());
 
     auto delta = Delta {};
     const auto registered_registers = denotations.insert(source_registers).first;
@@ -172,10 +169,10 @@ void check_delta()
     EXPECT_TRUE(delta.empty());
 
     // Copied builders exercise the borrowed state path used by NONE and CHOICE search.
-    const auto source_builder = copied(source.get_state_builder());
-    const auto target_builder = copied(target.get_state_builder());
-    const auto borrowed_source = ygg::make_view(source_builder, *search->task);
-    const auto borrowed_target = ygg::make_view(target_builder, *search->task);
+    const auto source_builder = urd::builder<tyr::planning::State<Kind>> { source.data() };
+    const auto target_builder = urd::builder<tyr::planning::State<Kind>> { target.data() };
+    const auto borrowed_source = urd::resolve(source_builder, *search->state_repository);
+    const auto borrowed_target = urd::resolve(target_builder, *search->state_repository);
     const auto assign = [&] { delta.template assign<Kind>(borrowed_source, source_register_view, borrowed_target, target_register_view); };
     assign();
     EXPECT_FALSE(delta.empty());
@@ -183,17 +180,17 @@ void check_delta()
     EXPECT_TRUE(std::ranges::is_permutation(delta.added.fluent_atoms, difference(target_fluent, source_fluent)));
     EXPECT_TRUE(std::ranges::is_permutation(delta.removed.derived_atoms, difference(source_derived, target_derived)));
     EXPECT_TRUE(std::ranges::is_permutation(delta.added.derived_atoms, difference(target_derived, source_derived)));
-    const auto object = [&](ygg::uint_t index) { return ygg::make_view(Object(index), *search->task->get_repository()); };
+    const auto object = [&](ygg::uint_t index) { return urd::resolve(Object(index), *search->task->get_repository()); };
     const auto removed_concepts = std::vector { std::pair(ConceptRegister(0), object(0)), std::pair(ConceptRegister(1), object(1)) };
     const auto added_concepts =
         std::vector { std::pair(ConceptRegister(0), object(1)), std::pair(ConceptRegister(2), object(2)), std::pair(ConceptRegister(3), object(0)) };
     const auto removed_roles =
         std::vector { std::pair(RoleRegister(1), std::pair(object(1), object(2))), std::pair(RoleRegister(2), std::pair(object(0), object(2))) };
     const auto added_roles = std::vector { std::pair(RoleRegister(1), std::pair(object(2), object(0))) };
-    EXPECT_EQ(delta.removed.concept_registers, removed_concepts);
-    EXPECT_EQ(delta.added.concept_registers, added_concepts);
-    EXPECT_EQ(delta.removed.role_registers, removed_roles);
-    EXPECT_EQ(delta.added.role_registers, added_roles);
+    EXPECT_TRUE(std::ranges::equal(delta.removed.concept_registers, removed_concepts));
+    EXPECT_TRUE(std::ranges::equal(delta.added.concept_registers, added_concepts));
+    EXPECT_TRUE(std::ranges::equal(delta.removed.role_registers, removed_roles));
+    EXPECT_TRUE(std::ranges::equal(delta.added.role_registers, added_roles));
 
     const auto original = delta;
     auto inverse = Delta {};
@@ -218,7 +215,7 @@ void check_delta()
     auto resized_registers = source_registers;
     resized_registers.concept_values.resize(4);
     resized_registers.role_values.resize(4);
-    delta.template assign<Kind>(source, source_register_view, source, ygg::make_view(resized_registers, *search->task->get_repository()));
+    delta.template assign<Kind>(source, source_register_view, source, urd::resolve(resized_registers, *search->task->get_repository()));
     EXPECT_TRUE(delta.empty());
     EXPECT_TRUE(delta.added.concept_registers.empty());
     EXPECT_TRUE(delta.removed.concept_registers.empty());
@@ -235,10 +232,10 @@ void check_delta()
     source_registers.role_values[1] = cista::pair(Object(0), Object(0));
     target_registers.concept_values[0] = Object(2);
     target_registers.role_values[1] = cista::pair(Object(1), Object(1));
-    EXPECT_EQ(delta.removed.concept_registers, removed_concepts);
-    EXPECT_EQ(delta.added.concept_registers, added_concepts);
-    EXPECT_EQ(delta.removed.role_registers, removed_roles);
-    EXPECT_EQ(delta.added.role_registers, added_roles);
+    EXPECT_TRUE(std::ranges::equal(delta.removed.concept_registers, removed_concepts));
+    EXPECT_TRUE(std::ranges::equal(delta.added.concept_registers, added_concepts));
+    EXPECT_TRUE(std::ranges::equal(delta.removed.role_registers, removed_roles));
+    EXPECT_TRUE(std::ranges::equal(delta.added.role_registers, added_roles));
 }
 }  // namespace
 

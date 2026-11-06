@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_EXT_DL_AST_AST_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/parser/ast.hpp"
 #include "runir/kr/ps/base/dl/ast/ast.hpp"
@@ -79,10 +81,10 @@ struct NamedValue : boost::spirit::x3::position_tagged
 template<runir::kr::dl::CategoryTag Category>
 struct LoadRule : boost::spirit::x3::position_tagged
 {
-    std::vector<Condition> conditions;
+    urd::Store<urd::sequence<Condition>> conditions;
     Identifier feature;
     Identifier reg;
-    std::vector<Effect> effects;
+    urd::Store<urd::sequence<Effect>> effects;
 };
 
 struct OrderTerm : boost::spirit::x3::position_tagged
@@ -94,45 +96,45 @@ struct OrderTerm : boost::spirit::x3::position_tagged
 template<runir::kr::dl::CategoryTag Category>
 struct ChooseRule : boost::spirit::x3::position_tagged
 {
-    std::vector<Condition> conditions;
+    urd::Store<urd::sequence<Condition>> conditions;
     Identifier feature;
     Identifier reg;
-    std::vector<Effect> effects;
-    std::vector<OrderTerm> order;
+    urd::Store<urd::sequence<Effect>> effects;
+    urd::Store<urd::sequence<OrderTerm>> order;
 };
 
 struct SketchRule : boost::spirit::x3::position_tagged
 {
-    std::vector<Condition> conditions;
-    std::vector<Effect> effects;
+    urd::Store<urd::sequence<Condition>> conditions;
+    urd::Store<urd::sequence<Effect>> effects;
 };
 
 struct DoRule : boost::spirit::x3::position_tagged
 {
-    std::vector<Condition> conditions;
+    urd::Store<urd::sequence<Condition>> conditions;
     Identifier action;
-    std::vector<SymbolExpression> arguments;
-    std::vector<Effect> effects;
+    urd::Store<urd::sequence<SymbolExpression>> arguments;
+    urd::Store<urd::sequence<Effect>> effects;
 };
 
 struct ActionRule : boost::spirit::x3::position_tagged
 {
-    std::vector<Condition> conditions;
+    urd::Store<urd::sequence<Condition>> conditions;
     Identifier action;
     Identifier query_feature;
-    std::vector<Effect> effects;
+    urd::Store<urd::sequence<Effect>> effects;
 };
 
 struct CallRule : boost::spirit::x3::position_tagged
 {
-    std::vector<Condition> conditions;
+    urd::Store<urd::sequence<Condition>> conditions;
     Identifier callee;
-    std::vector<SymbolExpression> arguments;
+    urd::Store<urd::sequence<SymbolExpression>> arguments;
 };
 
 struct BacktrackRule : boost::spirit::x3::position_tagged
 {
-    std::vector<Condition> conditions;
+    urd::Store<urd::sequence<Condition>> conditions;
 };
 
 using Rule = PositionedVariant<LoadRule<runir::kr::dl::ConceptTag>,
@@ -150,24 +152,24 @@ struct RuleEntry : boost::spirit::x3::position_tagged
     Identifier symbol;
     Identifier source;
     boost::optional<Identifier> target;
-    std::vector<Rule> rules;
+    urd::Store<urd::sequence<Rule>> rules;
 };
 
 struct Module : boost::spirit::x3::position_tagged
 {
     Identifier name;
-    std::vector<ArgumentVariant> arguments;
-    std::vector<RegisterVariant> registers;
+    urd::Store<urd::sequence<ArgumentVariant>> arguments;
+    urd::Store<urd::sequence<RegisterVariant>> registers;
     Identifier entry;
-    std::vector<NamedValue> memory_states;
-    std::vector<FeatureVariant> features;
-    std::vector<RuleEntry> rule_entries;
+    urd::Store<urd::sequence<NamedValue>> memory_states;
+    urd::Store<urd::sequence<FeatureVariant>> features;
+    urd::Store<urd::sequence<RuleEntry>> rule_entries;
 };
 
 struct Program : boost::spirit::x3::position_tagged
 {
     Identifier entry;
-    std::vector<Module> modules;
+    urd::Store<urd::sequence<Module>> modules;
 };
 
 }  // namespace runir::kr::ps::ext::dl::ast

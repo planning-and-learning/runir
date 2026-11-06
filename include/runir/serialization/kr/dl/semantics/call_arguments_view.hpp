@@ -9,12 +9,12 @@ namespace ygg::serialization
 {
 
 template<typename Archive, typename C>
-void describe_fields(Archive& ar, std::type_identity<ygg::View<ygg::Index<::runir::kr::dl::semantics::CallArguments>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::view<::runir::kr::dl::semantics::CallArguments, C>>)
 {
-    ar.field("concept_arguments", [](const auto& value) -> decltype(auto) { return (value.template get<::runir::kr::dl::ConceptTag>()); });
-    ar.field("role_arguments", [](const auto& value) -> decltype(auto) { return (value.template get<::runir::kr::dl::RoleTag>()); });
-    ar.field("boolean_arguments", [](const auto& value) -> decltype(auto) { return (value.template get<::runir::kr::dl::BooleanTag>()); });
-    ar.field("numerical_arguments", [](const auto& value) -> decltype(auto) { return (value.template get<::runir::kr::dl::NumericalTag>()); });
+    ar.field("concept_arguments", [](const auto& value) -> decltype(auto) { return (value.template arguments<::runir::kr::dl::ConceptTag>()); });
+    ar.field("role_arguments", [](const auto& value) -> decltype(auto) { return (value.template arguments<::runir::kr::dl::RoleTag>()); });
+    ar.field("boolean_arguments", [](const auto& value) -> decltype(auto) { return (value.template arguments<::runir::kr::dl::BooleanTag>()); });
+    ar.field("numerical_arguments", [](const auto& value) -> decltype(auto) { return (value.template arguments<::runir::kr::dl::NumericalTag>()); });
 }
 
 }  // namespace ygg::serialization

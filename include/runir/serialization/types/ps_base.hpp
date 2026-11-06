@@ -7,7 +7,7 @@
 namespace runir::serialization
 {
 
-using BaseViews = ygg::MapTypeListSecondT<IndexView, kr::ps::base::Repository, kr::ps::base::RepositoryTypes>;
+using BaseViews = boost::mp11::mp_transform_q<boost::mp11::mp_bind_front<IndexView, kr::ps::base::Repository>, kr::ps::base::RepositoryTypes>;
 
 }  // namespace runir::serialization
 

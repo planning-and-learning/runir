@@ -6,13 +6,13 @@
 #include "runir/kr/uns/classifier_view.hpp"
 
 #include <cstddef>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 
 namespace runir::kr::uns
 {
 
 template<typename C>
-std::size_t syntactic_complexity(ygg::View<ygg::Index<Classifier>, C> view)
+std::size_t syntactic_complexity(urd::view<Classifier, C> view)
 {
     auto result = std::size_t { 0 };
     for (auto feature : view.get_features())

@@ -27,7 +27,7 @@ class RuleEvaluator<Kind, CruleTag>
 
     template<ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
     [[nodiscard]] std::optional<ygg::uint_t>
-    resolve(const ::cista::offset::variant<ArgumentPosition, ygg::Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>& reference,
+    resolve(const ::cista::offset::variant<ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>& reference,
             runir::kr::dl::semantics::RegisterValuesView registers,
             Binding binding) const
     {
@@ -35,12 +35,12 @@ class RuleEvaluator<Kind, CruleTag>
             [&]<typename Ref>(Ref ref) -> std::optional<ygg::uint_t>
             {
                 if constexpr (std::same_as<Ref, ArgumentPosition>)
-                    return ygg::uint_t(binding.get_objects().at(ygg::uint_t(ref)).get_index());
+                    return ygg::uint_t(binding.get_objects().at(ref.value).index().value);
                 else
                 {
-                    const auto reg = ygg::make_view(ref, m_rule.get_context().get_dl_repository());
+                    const auto reg = urd::resolve(ref, m_rule.context().get_dl_repository());
                     const auto object = registers.at(reg.get_identifier());
-                    return object ? std::optional(ygg::uint_t(object.value().get_index())) : std::nullopt;
+                    return object ? std::optional(ygg::uint_t(object.value().index().value)) : std::nullopt;
                 }
             });
     }
@@ -71,7 +71,7 @@ public:
             const auto object = resolve(condition.get_object_reference(), state.get_registers(), binding);
             if (!object)
                 return false;
-            const auto contains = evaluate<Kind>(condition.get_concept_feature(), context).get().test(*object);
+            const auto contains = evaluate<Kind>(condition.get_concept_feature(), context).value().test(*object);
             if (contains != (condition.get_operation() == ConditionOperation::BELONGS))
                 return false;
         }
@@ -89,7 +89,7 @@ public:
         const auto memory = state.get_memory_state();
         const auto source = m_rule.get_source();
         const auto action = candidate.label.get_relation();
-        if (&memory.get_context() != &source.get_context() || memory != source || &action.get_context() != &m_action.get_context() || action != m_action)
+        if (&memory.context() != &source.context() || memory != source || &action.context() != &m_action.context() || action != m_action)
             return false;
         auto source_context = context.make_dl_context(state);
         if (!is_applicable(source_context) || !xconditions_match(source_context, state, candidate.label))
@@ -100,8 +100,8 @@ public:
             const auto object = resolve(effect.get_object_reference(), state.get_registers(), candidate.label);
             if (!object)
                 return false;
-            const auto before = evaluate<Kind>(effect.get_concept_feature(), transition.get_source_context()).get().test(*object);
-            const auto after = evaluate<Kind>(effect.get_concept_feature(), transition.get_target_context()).get().test(*object);
+            const auto before = evaluate<Kind>(effect.get_concept_feature(), transition.get_source_context()).value().test(*object);
+            const auto after = evaluate<Kind>(effect.get_concept_feature(), transition.get_target_context()).value().test(*object);
             if (effect.get_operation() == EffectOperation::ENTER ? (before || !after) : (!before || after))
                 return false;
         }
@@ -115,10 +115,10 @@ public:
                             const tyr::planning::LabeledNode<Kind>& candidate,
                             HistoriesView<Kind> histories) const
     {
-        auto target = source.get_data();
-        target.state = candidate.node.get_state().get_index();
-        target.memory_state = m_rule.get_target().get_index();
-        target.histories = histories.get_index();
+        auto target = source.data();
+        target.state = candidate.node.get_state().index();
+        target.memory_state = m_rule.get_target().index();
+        target.histories = histories.index();
         auto step = ProgramStep<Kind>(ProgramOutcome::APPLIED, workspace.intern(target), workspace.get_task_context());
         step.rule = m_variant;
         step.planning_successor = candidate.pack();

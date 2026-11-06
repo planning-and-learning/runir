@@ -9,11 +9,11 @@
 namespace runir::kr::uns
 {
 
-inline void canonicalize(ygg::Data<ClassifierLiteral>&) noexcept {}
+inline void canonicalize(urd::data<ClassifierLiteral>&) noexcept {}
 
-inline void canonicalize(ygg::Data<ClassifierClause>& data) { ygg::canonicalize(data.literals); }
+inline void canonicalize(urd::data<ClassifierClause>& data) { ygg::canonicalize(data.literals); }
 
-inline void canonicalize(ygg::Data<Classifier>& data)
+inline void canonicalize(urd::data<Classifier>& data)
 {
     ygg::canonicalize(data.features);
     ygg::canonicalize(data.clauses);

@@ -14,7 +14,8 @@
 #include <runir/kr/uns/syntactic_complexity.hpp>
 #include <string>
 #include <tyr/formalism/planning/parser.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
+#include <yggdrasil/core/config.hpp>
 
 namespace runir::tests
 {
@@ -22,42 +23,39 @@ namespace
 {
 
 template<typename Entity>
-using View = ygg::View<ygg::Index<Entity>, kr::uns::Repository>;
+using View = urd::view<Entity, kr::uns::Repository>;
 
 template<typename Entity>
-concept IndexedDataView = std::constructible_from<ygg::Index<Entity>, ygg::uint_t> && std::totally_ordered<ygg::Index<Entity>>
-                          && std::totally_ordered<ygg::Data<Entity>> && std::totally_ordered<View<Entity>>;
+concept IndexedDataView = std::constructible_from<urd::index<Entity>, ygg::uint_t> && std::totally_ordered<urd::index<Entity>>
+                          && std::totally_ordered<urd::data<Entity>> && std::totally_ordered<View<Entity>>;
 
 using Literal = kr::uns::ClassifierLiteral;
 using Clause = kr::uns::ClassifierClause;
 using Classifier = kr::uns::Classifier;
 
 static_assert(IndexedDataView<Literal> && std::same_as<View<Literal>, kr::uns::ClassifierLiteralView>
-              && requires(ygg::Data<Literal>& data, const View<Literal>& view) {
+              && requires(urd::data<Literal>& data, const View<Literal>& view) {
                      data.index;
                      data.variant;
                      data.polarity;
-                     data.clear();
-                     view.get_index();
+                     view.index();
                      view.get_feature();
                      view.get_polarity();
                  });
 static_assert(IndexedDataView<Clause> && std::same_as<View<Clause>, kr::uns::ClassifierClauseView>
-              && requires(ygg::Data<Clause>& data, const View<Clause>& view) {
+              && requires(urd::data<Clause>& data, const View<Clause>& view) {
                      data.index;
                      data.literals;
-                     data.clear();
-                     view.get_index();
+                     view.index();
                      view.get_literals();
                  });
 static_assert(IndexedDataView<Classifier> && std::same_as<View<Classifier>, kr::uns::ClassifierView>
-              && requires(ygg::Data<Classifier>& data, const View<Classifier>& view) {
+              && requires(urd::data<Classifier>& data, const View<Classifier>& view) {
                      data.index;
                      data.symbol;
                      data.features;
                      data.clauses;
-                     data.clear();
-                     view.get_index();
+                     view.index();
                      view.get_symbol();
                      view.get_features();
                      view.get_clauses();
@@ -106,11 +104,11 @@ TEST(RunirTests, UnsClassifierParsesAndFormats)
     EXPECT_EQ(fmt::format("{}", classifier.get_clauses().front().get_literals()[1]), "(not no_object)");
 
     const auto feature = classifier.get_features().front();
-    const auto concrete_complexity = ygg::visit([](auto concrete) { return kr::ps::dl::syntactic_complexity(concrete); }, feature.get_variant());
+    const auto concrete_complexity = std::visit([](auto concrete) { return kr::ps::dl::syntactic_complexity(concrete); }, feature.get_variant());
     EXPECT_EQ(kr::ps::syntactic_complexity(feature), concrete_complexity);
     EXPECT_EQ(concrete_complexity, kr::dl::semantics::syntactic_complexity(feature.get_expression()));
     EXPECT_EQ(kr::uns::syntactic_complexity(classifier), 7);
-    auto empty_data = ygg::Data<kr::uns::Classifier>(std::string("empty"), {}, {});
+    auto empty_data = urd::data<kr::uns::Classifier>(std::string("empty"), {}, {});
     EXPECT_EQ(kr::uns::syntactic_complexity(fixture.repository->insert(empty_data).first), 0);
 
     const auto formatted = fmt::format("{}", classifier);
@@ -129,7 +127,7 @@ TEST(RunirTests, UnsClassifierInterningIsStructural)
 
     auto first = kr::uns::dl::parse_classifier(description, fixture.domain(), *fixture.repository);
     auto second = kr::uns::dl::parse_classifier(description, fixture.domain(), *fixture.repository);
-    EXPECT_EQ(first.get_index(), second.get_index());
+    EXPECT_EQ(first.index(), second.index());
 }
 
 TEST(RunirTests, UnsClassifierRejectsUnknownFeatureSymbol)

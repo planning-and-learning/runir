@@ -1,4 +1,7 @@
 #include "runir/kr/ps/dl/structural_termination.hpp"
+#include <urd/repr/values/std_set.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 #include "runir/graphs/cycle.hpp"
 #include "runir/graphs/declarations.hpp"
@@ -11,8 +14,8 @@
 #include <set>
 #include <string>
 #include <tuple>
+#include <urd/repr/containers/bitset_span.hpp>
 #include <utility>
-#include <yggdrasil/containers/dynamic_bitset.hpp>
 
 namespace runir::kr::ps::detail
 {
@@ -38,7 +41,7 @@ void validate_effects(std::size_t rule_position,
         throw std::invalid_argument("structural_termination: rule " + std::to_string(rule_position) + " has contradictory " + std::string(feature_kind)
                                     + " effects");
     auto expected = std::uint64_t { 0 };
-    ygg::BitsetSpan<std::uint64_t>(&expected, num_features).set();
+    urd::repr::BitsetSpan<std::uint64_t>(&expected, num_features).set();
     if ((first | second | unchanged | unconstrained) != expected)
         throw std::invalid_argument("structural_termination: rule " + std::to_string(rule_position) + " has missing " + std::string(feature_kind) + " effects");
 }
@@ -114,17 +117,17 @@ CounterexampleVertex materialize_vertex(std::size_t vertex, const detail::Projec
     };
 }
 
-std::vector<CounterexampleComponent> materialize_counterexamples(const detail::PolicySieveResult& sieve_result)
+urd::Store<urd::sequence<CounterexampleComponent>> materialize_counterexamples(const detail::PolicySieveResult& sieve_result)
 {
-    auto result = std::vector<CounterexampleComponent> {};
+    auto result = urd::Store<urd::sequence<CounterexampleComponent>> {};
     for (const auto& component : sieve_result.components)
     {
         const auto& projected = component.projected;
         const auto first_result = result.size();
         const auto missing = std::numeric_limits<std::size_t>::max();
         auto cyclic_scc = std::vector<bool>(component.sieve.component_of.size(), false);
-        auto result_of_scc = std::vector<std::size_t>(component.sieve.component_of.size(), missing);
-        auto vertex_remap = std::vector<std::size_t>(component.sieve.component_of.size(), missing);
+        auto result_of_scc = urd::Store<urd::sequence<std::size_t>>(component.sieve.component_of.size(), missing);
+        auto vertex_remap = urd::Store<urd::sequence<std::size_t>>(component.sieve.component_of.size(), missing);
 
         for (const auto& edge : component.edges)
             cyclic_scc[component.sieve.component_of[edge.source]] = true;
@@ -178,25 +181,25 @@ std::vector<CounterexampleComponent> materialize_counterexamples(const detail::P
 
 }  // namespace
 
-std::vector<std::size_t> IncompletePolicyResult::get_cyclic_rule_positions() const
+urd::Store<urd::sequence<std::size_t>> IncompletePolicyResult::get_cyclic_rule_positions() const
 {
-    auto result = std::vector<std::size_t> {};
+    auto result = urd::Store<urd::sequence<std::size_t>> {};
     result.reserve(surviving_rules.size());
     for (const auto& rule : surviving_rules)
         result.push_back(rule.rule_position);
     return result;
 }
 
-std::vector<std::size_t> StructuralTerminationResult::get_cyclic_rule_positions() const
+urd::Store<urd::sequence<std::size_t>> StructuralTerminationResult::get_cyclic_rule_positions() const
 {
-    auto result = std::set<std::size_t> {};
+    auto result = urd::Store<urd::set<std::size_t>, urd::sorted, urd::stable_refs> {};
     for (const auto& component : counterexample_components)
         for (const auto& edge : component.edges)
             result.insert(edge.rule_position);
     return { result.begin(), result.end() };
 }
 
-std::vector<std::size_t> CounterexampleComponent::get_cycle() const
+urd::Store<urd::sequence<std::size_t>> CounterexampleComponent::get_cycle() const
 {
     // Keep builder edge order identical to this component's public edge positions.
     auto graph = graphs::StaticGraphBuilder<> {};

@@ -4,7 +4,7 @@
 #include "runir/kr/dl/semantics/declarations.hpp"
 
 #include <variant>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 
 namespace runir::kr::dl::semantics::incremental
 {
@@ -22,8 +22,8 @@ struct QueryEvaluation
 };
 
 template<CategoryTag Category>
-using EvaluationIndex = ygg::Index<Evaluation<Category>>;
-using QueryEvaluationIndex = ygg::Index<QueryEvaluation>;
+using EvaluationIndex = urd::index<Evaluation<Category>>;
+using QueryEvaluationIndex = urd::index<QueryEvaluation>;
 
 /// Borrowed feature or query expression supplied when constructing a graph.
 using EvaluationRoot =

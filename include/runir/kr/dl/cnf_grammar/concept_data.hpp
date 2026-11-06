@@ -3,25 +3,25 @@
 
 #include "runir/kr/dl/cnf_grammar/data_helpers.hpp"
 
-namespace ygg
+namespace urd
 {
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::BotTag>> : runir::kr::dl::NullaryData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::BotTag>>
+struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::BotTag>> : runir::kr::dl::NullaryData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::BotTag>>
 {
     using Base = runir::kr::dl::NullaryData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::BotTag>>;
     using Base::Base;
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::TopTag>> : runir::kr::dl::NullaryData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::TopTag>>
+struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::TopTag>> : runir::kr::dl::NullaryData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::TopTag>>
 {
     using Base = runir::kr::dl::NullaryData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::TopTag>>;
     using Base::Base;
 };
 
 template<tyr::formalism::FactKind T>
-struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AtomicStateTag<T>>> :
+struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AtomicStateTag<T>>> :
     runir::kr::dl::PredicateData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AtomicStateTag<T>>, T>
 {
     using Base = runir::kr::dl::PredicateData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AtomicStateTag<T>>, T>;
@@ -29,7 +29,7 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AtomicStateTag<T>
 };
 
 template<tyr::formalism::FactKind T>
-struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AtomicGoalTag<T>>> :
+struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AtomicGoalTag<T>>> :
     runir::kr::dl::PredicateData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AtomicGoalTag<T>>, T>
 {
     using Base = runir::kr::dl::PredicateData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AtomicGoalTag<T>>, T>;
@@ -37,7 +37,7 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AtomicGoalTag<T>>
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::IntersectionTag>> :
+struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::IntersectionTag>> :
     runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::IntersectionTag>,
                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>,
                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>
@@ -49,7 +49,7 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::IntersectionTag>>
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::UnionTag>> :
+struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::UnionTag>> :
     runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::UnionTag>,
                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>,
                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>
@@ -61,7 +61,7 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::UnionTag>> :
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::NegationTag>> :
+struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::NegationTag>> :
     runir::kr::dl::UnaryData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::NegationTag>,
                              runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>
 {
@@ -71,7 +71,7 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::NegationTag>> :
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::ValueRestrictionTag>> :
+struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::ValueRestrictionTag>> :
     runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::ValueRestrictionTag>,
                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>,
                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>
@@ -83,7 +83,7 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::ValueRestrictionT
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::ExistentialQuantificationTag>> :
+struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::ExistentialQuantificationTag>> :
     runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::ExistentialQuantificationTag>,
                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>,
                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>
@@ -95,7 +95,7 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::ExistentialQuanti
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AtLeastNumberRestrictionTag>> :
+struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AtLeastNumberRestrictionTag>> :
     runir::kr::dl::cnf_grammar::NumberRestrictionData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AtLeastNumberRestrictionTag>>
 {
     using Base = runir::kr::dl::cnf_grammar::NumberRestrictionData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AtLeastNumberRestrictionTag>>;
@@ -103,7 +103,7 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AtLeastNumberRest
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AtMostNumberRestrictionTag>> :
+struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AtMostNumberRestrictionTag>> :
     runir::kr::dl::cnf_grammar::NumberRestrictionData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AtMostNumberRestrictionTag>>
 {
     using Base = runir::kr::dl::cnf_grammar::NumberRestrictionData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AtMostNumberRestrictionTag>>;
@@ -111,7 +111,7 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AtMostNumberRestr
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::ExactNumberRestrictionTag>> :
+struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::ExactNumberRestrictionTag>> :
     runir::kr::dl::cnf_grammar::NumberRestrictionData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::ExactNumberRestrictionTag>>
 {
     using Base = runir::kr::dl::cnf_grammar::NumberRestrictionData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::ExactNumberRestrictionTag>>;
@@ -119,7 +119,7 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::ExactNumberRestri
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>> :
+struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>> :
     runir::kr::dl::cnf_grammar::QualifiedNumberRestrictionData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>>
 {
     using Base =
@@ -128,7 +128,7 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::QualifiedAtLeastN
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::QualifiedAtMostNumberRestrictionTag>> :
+struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::QualifiedAtMostNumberRestrictionTag>> :
     runir::kr::dl::cnf_grammar::QualifiedNumberRestrictionData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::QualifiedAtMostNumberRestrictionTag>>
 {
     using Base =
@@ -137,7 +137,7 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::QualifiedAtMostNu
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::QualifiedExactNumberRestrictionTag>> :
+struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::QualifiedExactNumberRestrictionTag>> :
     runir::kr::dl::cnf_grammar::QualifiedNumberRestrictionData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::QualifiedExactNumberRestrictionTag>>
 {
     using Base =
@@ -146,7 +146,7 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::QualifiedExactNum
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RoleValueMapTag>> :
+struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RoleValueMapTag>> :
     runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RoleValueMapTag>,
                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>,
                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>
@@ -158,7 +158,7 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RoleValueMapTag>>
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AgreementTag>> :
+struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AgreementTag>> :
     runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AgreementTag>,
                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>,
                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>
@@ -170,7 +170,7 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AgreementTag>> :
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RoleFillersTag>> :
+struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RoleFillersTag>> :
     runir::kr::dl::cnf_grammar::RoleFillersData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RoleFillersTag>>
 {
     using Base = runir::kr::dl::cnf_grammar::RoleFillersData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RoleFillersTag>>;
@@ -178,7 +178,7 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RoleFillersTag>> 
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::OneOfTag>> :
+struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::OneOfTag>> :
     runir::kr::dl::ObjectListData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::OneOfTag>>
 {
     using Base = runir::kr::dl::ObjectListData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::OneOfTag>>;
@@ -186,7 +186,7 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::OneOfTag>> :
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::NominalTag>> :
+struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::NominalTag>> :
     runir::kr::dl::ObjectData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::NominalTag>>
 {
     using Base = runir::kr::dl::ObjectData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::NominalTag>>;
@@ -194,7 +194,7 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::NominalTag>> :
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RegisterTag>> :
+struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RegisterTag>> :
     runir::kr::dl::RegisterData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RegisterTag>, runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>
 {
     using Base = runir::kr::dl::RegisterData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RegisterTag>,
@@ -203,7 +203,7 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RegisterTag>> :
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>> :
+struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>> :
     runir::kr::dl::ArgumentData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>,
                                 runir::kr::dl::ArgumentIdentifier<runir::kr::dl::ConceptTag>>
 {
@@ -212,6 +212,6 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::ArgumentTag<runir
     using Base::Base;
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 #endif

@@ -6,7 +6,8 @@
 #include <runir/kr/ps/feature_data.hpp>
 #include <runir/kr/ps/feature_view.hpp>
 #include <utility>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
+#include <yggdrasil/core/config.hpp>
 
 namespace runir::tests
 {
@@ -15,19 +16,18 @@ namespace
 {
 
 template<typename Entity>
-using View = ygg::View<ygg::Index<Entity>, kr::ps::ext::Repository>;
+using View = urd::view<Entity, kr::ps::ext::Repository>;
 
 template<typename Entity, typename Concrete>
 concept FeatureContract =
-    std::constructible_from<ygg::Index<Entity>, ygg::uint_t> && std::totally_ordered<ygg::Index<Entity>> && std::totally_ordered<ygg::Data<Entity>>
-    && std::totally_ordered<View<Entity>> && std::same_as<typename ygg::Data<Entity>::Variant, ::cista::offset::variant<ygg::Index<Concrete>>>
-    && requires(ygg::Data<Entity>& data, const View<Entity>& view) {
+    std::constructible_from<urd::index<Entity>, ygg::uint_t> && std::totally_ordered<urd::index<Entity>> && std::totally_ordered<urd::data<Entity>>
+    && std::totally_ordered<View<Entity>> && std::same_as<typename urd::data<Entity>::Variant, ::cista::offset::variant<urd::index<Concrete>>>
+    && requires(urd::data<Entity>& data, const View<Entity>& view) {
            data.index;
            data.variant;
-           data.clear();
-           { ::cista::to_tuple(std::as_const(data)) } -> std::same_as<std::tuple<const ygg::Index<Entity>&, const typename ygg::Data<Entity>::Variant&>>;
-           requires std::same_as<ygg::IdentifyingMember<ygg::Data<Entity>, 0>, typename ygg::Data<Entity>::Variant>;
-           view.get_index();
+           { ::cista::to_tuple(std::as_const(data)) } -> std::same_as<std::tuple<const urd::index<Entity>&, const typename urd::data<Entity>::Variant&>>;
+           requires std::same_as<std::remove_cvref_t<std::tuple_element_t<0, urd::detail::identity_t<urd::data<Entity>>>>, typename urd::data<Entity>::Variant>;
+           view.index();
            view.get_variant();
            view.get_symbol();
            view.get_expression();

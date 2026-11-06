@@ -2,6 +2,9 @@
 #define PYRUNIR_KR_PS_DL_OPTIMIZATION_BINDINGS_HPP_
 
 #include <nanobind/nanobind.h>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
+#include <urd/python/sequences/sequence.hpp>
 #include <nanobind/stl/vector.h>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
@@ -37,7 +40,7 @@ void bind_ps_optimize(nanobind::class_<View>& cls)
             nb::keep_alive<0, 2>())
         .def(
             "collect_query_statistics",
-            [](const View& view, const std::vector<GroundContext*>& contexts)
+            [](const View& view, const urd::Store<urd::sequence<GroundContext*>>& contexts)
             {
                 auto warnings = ygg::diagnostics::Warnings();
                 auto statistics = runir::kr::ps::dl::collect_query_statistics<tyr::GroundTag>(view, contexts, warnings);
@@ -47,7 +50,7 @@ void bind_ps_optimize(nanobind::class_<View>& cls)
             nb::arg("contexts"))
         .def(
             "collect_query_statistics",
-            [](const View& view, const std::vector<LiftedContext*>& contexts)
+            [](const View& view, const urd::Store<urd::sequence<LiftedContext*>>& contexts)
             {
                 auto warnings = ygg::diagnostics::Warnings();
                 auto statistics = runir::kr::ps::dl::collect_query_statistics<tyr::LiftedTag>(view, contexts, warnings);

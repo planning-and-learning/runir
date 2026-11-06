@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_ICP_RULE_DATA_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/ps/declarations.hpp"
 #include "runir/kr/ps/icp/declarations.hpp"
 
@@ -10,32 +12,32 @@
 #include <string>
 #include <tuple>
 #include <utility>
+#include <variant>
 #include <vector>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
+#include <urd/elements/flat.hpp>
 
-namespace ygg
+namespace urd
 {
 
 template<runir::kr::dl::CategoryTag Category>
-struct Data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::LoadTag<Category>>>
+struct data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::LoadTag<Category>>>
 {
-    Index<runir::kr::ps::icp::Rule<runir::kr::ps::icp::LoadTag<Category>>> index;
-    Index<runir::kr::ps::icp::MemoryState> source;
-    Index<runir::kr::ps::icp::MemoryState> target;
-    IndexList<runir::kr::ps::ConditionVariant<runir::kr::IcpFamilyTag>> conditions;
-    Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, Category>> feature;
-    Index<runir::kr::dl::Register<Category>> reg;
-    IndexList<runir::kr::ps::EffectVariant<runir::kr::IcpFamilyTag>> effects;
+    urd::index<runir::kr::ps::icp::Rule<runir::kr::ps::icp::LoadTag<Category>>> index;
+    urd::index<runir::kr::ps::icp::MemoryState> source;
+    urd::index<runir::kr::ps::icp::MemoryState> target;
+    runir::kr::ps::ConditionList<runir::kr::IcpFamilyTag> conditions;
+    urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, Category>> feature;
+    urd::index<runir::kr::dl::Register<Category>> reg;
+    runir::kr::ps::EffectList<runir::kr::IcpFamilyTag> effects;
 
-    Data() = default;
+    data() = default;
     // Registers live in the description-logic repository, hence the separate context parameter.
-    Data(Index<runir::kr::ps::icp::MemoryState> source_,
-         Index<runir::kr::ps::icp::MemoryState> target_,
-         IndexList<runir::kr::ps::ConditionVariant<runir::kr::IcpFamilyTag>> conditions_,
-         Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, Category>> feature_,
-         Index<runir::kr::dl::Register<Category>> reg_,
-         IndexList<runir::kr::ps::EffectVariant<runir::kr::IcpFamilyTag>> effects_) :
+    data(urd::index<runir::kr::ps::icp::MemoryState> source_,
+         urd::index<runir::kr::ps::icp::MemoryState> target_,
+         runir::kr::ps::ConditionList<runir::kr::IcpFamilyTag> conditions_,
+         urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, Category>> feature_,
+         urd::index<runir::kr::dl::Register<Category>> reg_,
+         runir::kr::ps::EffectList<runir::kr::IcpFamilyTag> effects_) :
         index(),
         source(source_),
         target(target_),
@@ -45,58 +47,35 @@ struct Data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::LoadTag<Category>>>
         effects(std::move(effects_))
     {
     }
-    template<typename C, typename D>
-    Data(::ygg::View<Index<runir::kr::ps::icp::MemoryState>, C> source_,
-         ::ygg::View<Index<runir::kr::ps::icp::MemoryState>, C> target_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::ConditionVariant<runir::kr::IcpFamilyTag>>, C>>& conditions_,
-         ::ygg::View<Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, Category>>, C> feature_,
-         ::ygg::View<Index<runir::kr::dl::Register<Category>>, D> reg_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::EffectVariant<runir::kr::IcpFamilyTag>>, C>>& effects_) :
-        index(),
-        source(),
-        target(),
-        conditions(),
-        feature(),
-        reg(),
-        effects()
-    {
-        set(source_, source);
-        set(target_, target);
-        set(conditions_, conditions);
-        set(feature_, feature);
-        set(reg_, reg);
-        set(effects_, effects);
-    }
 
     static constexpr auto cista_members() noexcept
-    { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::feature, &Data::reg, &Data::effects> {}; }
+    { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::feature, &data::reg, &data::effects> {}; }
     static constexpr auto identifying_members() noexcept
-    { return ygg::Members<&Data::source, &Data::target, &Data::conditions, &Data::feature, &Data::reg, &Data::effects> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    { return urd::Members<&data::source, &data::target, &data::conditions, &data::feature, &data::reg, &data::effects> {}; }
 };
 
 template<>
-struct Data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>>
+struct data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>>
 {
-    Index<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>> index;
-    Index<runir::kr::ps::icp::MemoryState> source;
-    Index<runir::kr::ps::icp::MemoryState> target;
-    IndexList<runir::kr::ps::ConditionVariant<runir::kr::IcpFamilyTag>> conditions;
-    IndexList<runir::kr::ps::EffectVariant<runir::kr::IcpFamilyTag>> effects;
+    urd::index<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>> index;
+    urd::index<runir::kr::ps::icp::MemoryState> source;
+    urd::index<runir::kr::ps::icp::MemoryState> target;
+    runir::kr::ps::ConditionList<runir::kr::IcpFamilyTag> conditions;
+    runir::kr::ps::EffectList<runir::kr::IcpFamilyTag> effects;
     ::cista::offset::string action_name;
     ::cista::offset::vector<::cista::offset::string> argument_names;
-    IndexList<runir::kr::ps::icp::XCondition> xconditions;
-    IndexList<runir::kr::ps::icp::XEffect> xeffects;
+    urd::flat_vector<urd::index<runir::kr::ps::icp::XCondition>> xconditions;
+    urd::flat_vector<urd::index<runir::kr::ps::icp::XEffect>> xeffects;
 
-    Data() = default;
-    Data(Index<runir::kr::ps::icp::MemoryState> source_,
-         Index<runir::kr::ps::icp::MemoryState> target_,
-         IndexList<runir::kr::ps::ConditionVariant<runir::kr::IcpFamilyTag>> conditions_,
-         IndexList<runir::kr::ps::EffectVariant<runir::kr::IcpFamilyTag>> effects_,
+    data() = default;
+    data(urd::index<runir::kr::ps::icp::MemoryState> source_,
+         urd::index<runir::kr::ps::icp::MemoryState> target_,
+         runir::kr::ps::ConditionList<runir::kr::IcpFamilyTag> conditions_,
+         runir::kr::ps::EffectList<runir::kr::IcpFamilyTag> effects_,
          ::cista::offset::string action_name_,
          ::cista::offset::vector<::cista::offset::string> argument_names_,
-         IndexList<runir::kr::ps::icp::XCondition> xconditions_,
-         IndexList<runir::kr::ps::icp::XEffect> xeffects_) :
+         urd::flat_vector<urd::index<runir::kr::ps::icp::XCondition>> xconditions_,
+         urd::flat_vector<urd::index<runir::kr::ps::icp::XEffect>> xeffects_) :
         index(),
         source(source_),
         target(target_),
@@ -108,59 +87,32 @@ struct Data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>>
         xeffects(std::move(xeffects_))
     {
     }
-    template<typename C>
-    Data(::ygg::View<Index<runir::kr::ps::icp::MemoryState>, C> source_,
-         ::ygg::View<Index<runir::kr::ps::icp::MemoryState>, C> target_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::ConditionVariant<runir::kr::IcpFamilyTag>>, C>>& conditions_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::EffectVariant<runir::kr::IcpFamilyTag>>, C>>& effects_,
-         ::cista::offset::string action_name_,
-         ::cista::offset::vector<::cista::offset::string> argument_names_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::icp::XCondition>, C>>& xconditions_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::icp::XEffect>, C>>& xeffects_) :
-        index(),
-        source(),
-        target(),
-        conditions(),
-        effects(),
-        action_name(std::move(action_name_)),
-        argument_names(std::move(argument_names_)),
-        xconditions(),
-        xeffects()
-    {
-        set(source_, source);
-        set(target_, target);
-        set(conditions_, conditions);
-        set(effects_, effects);
-        set(xconditions_, xconditions);
-        set(xeffects_, xeffects);
-    }
 
     static constexpr auto cista_members() noexcept
     {
-        return ygg::Members<&Data::index,
-                            &Data::source,
-                            &Data::target,
-                            &Data::conditions,
-                            &Data::effects,
-                            &Data::action_name,
-                            &Data::argument_names,
-                            &Data::xconditions,
-                            &Data::xeffects> {};
+        return urd::Members<&data::index,
+                            &data::source,
+                            &data::target,
+                            &data::conditions,
+                            &data::effects,
+                            &data::action_name,
+                            &data::argument_names,
+                            &data::xconditions,
+                            &data::xeffects> {};
     }
     static constexpr auto identifying_members() noexcept
     {
-        return ygg::Members<&Data::source,
-                            &Data::target,
-                            &Data::conditions,
-                            &Data::effects,
-                            &Data::action_name,
-                            &Data::argument_names,
-                            &Data::xconditions,
-                            &Data::xeffects> {};
+        return urd::Members<&data::source,
+                            &data::target,
+                            &data::conditions,
+                            &data::effects,
+                            &data::action_name,
+                            &data::argument_names,
+                            &data::xconditions,
+                            &data::xeffects> {};
     }
-    void clear() noexcept { ygg::clear_members(*this); }
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 #endif

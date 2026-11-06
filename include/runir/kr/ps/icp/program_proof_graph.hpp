@@ -11,15 +11,13 @@
 #include <tyr/formalism/planning/repository.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <utility>
-#include <yggdrasil/semantics/comparison.hpp>
-#include <yggdrasil/serialization/cista_equal_to.hpp>
-#include <yggdrasil/serialization/cista_hash.hpp>
+#include <urd/elements/flat.hpp>
 
 namespace runir::kr::ps::icp
 {
 
 template<tyr::TaskKind Kind>
-struct ProgramProofVertexLabel : ygg::comparison::Mixin<ProgramProofVertexLabel<Kind>>
+struct ProgramProofVertexLabel : urd::compared_by_identity<ProgramProofVertexLabel<Kind>>
 {
     ProgramStateView<Kind> program_state;
     bool is_initial = false;
@@ -38,16 +36,16 @@ struct ProgramProofVertexLabel : ygg::comparison::Mixin<ProgramProofVertexLabel<
 
     static constexpr auto cista_members() noexcept
     {
-        return ygg::Members<&ProgramProofVertexLabel::program_state,
+        return urd::Members<&ProgramProofVertexLabel::program_state,
                             &ProgramProofVertexLabel::is_initial,
                             &ProgramProofVertexLabel::is_goal,
                             &ProgramProofVertexLabel::is_alive,
                             &ProgramProofVertexLabel::is_unsolvable> {};
     }
-    [[nodiscard]] auto identifying_members() const noexcept { return std::make_tuple(program_state, is_initial, is_goal, is_alive, is_unsolvable); }
+    static constexpr auto identifying_members() noexcept { return cista_members(); }
 };
 
-struct ProgramProofEdgeLabel : ygg::comparison::Mixin<ProgramProofEdgeLabel>
+struct ProgramProofEdgeLabel : urd::compared_by_identity<ProgramProofEdgeLabel>
 {
     ::cista::optional<tyr::formalism::planning::ActionBindingView> action;
     ::cista::optional<RuleVariantView> rule;
@@ -59,8 +57,8 @@ struct ProgramProofEdgeLabel : ygg::comparison::Mixin<ProgramProofEdgeLabel>
     {
     }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&ProgramProofEdgeLabel::action, &ProgramProofEdgeLabel::rule> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&ProgramProofEdgeLabel::action, &ProgramProofEdgeLabel::rule> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&ProgramProofEdgeLabel::action, &ProgramProofEdgeLabel::rule> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&ProgramProofEdgeLabel::action, &ProgramProofEdgeLabel::rule> {}; }
 };
 
 template<tyr::TaskKind Kind>

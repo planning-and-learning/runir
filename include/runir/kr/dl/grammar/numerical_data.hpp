@@ -7,47 +7,37 @@
 #include <tuple>
 #include <utility>
 #include <variant>
-#include <yggdrasil/containers/variant.hpp>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
+#include <urd/elements/flat.hpp>
+#include <boost/mp11.hpp>
+#include <yggdrasil/core/config.hpp>
 
-namespace ygg
+namespace urd
 {
 
 template<>
-struct Data<runir::kr::dl::grammar::Numerical<runir::kr::dl::CountTag>>
+struct data<runir::kr::dl::grammar::Numerical<runir::kr::dl::CountTag>>
 {
-    using ConstructorVariant = ::ygg::IndexVariant<GrammarArgumentTypes>;
-    using Arg = ConstructorVariant;
-    Index<runir::kr::dl::grammar::Numerical<runir::kr::dl::CountTag>> index;
-    ConstructorVariant arg;
-    Data() = default;
-    explicit Data(ConstructorVariant arg_) : index(), arg(std::move(arg_)) {}
-    template<typename C>
-    using ViewVariant = ::ygg::ViewVariant<ConstructorVariant, C>;
-    template<typename C>
-    explicit Data(const ViewVariant<C>& arg_) :
-        index(),
-        arg(std::visit([](const auto& view) -> ConstructorVariant { return ConstructorVariant(view.get_index()); }, arg_))
-    {
-    }
+    using Arg = boost::mp11::mp_apply<::cista::offset::variant, runir::kr::dl::grammar::GrammarArgumentTypes>;
+    urd::index<runir::kr::dl::grammar::Numerical<runir::kr::dl::CountTag>> index;
+    Arg arg;
+    data() = default;
+    explicit data(Arg arg_) : index(), arg(std::move(arg_)) {}
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::arg> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::arg> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::arg> {}; }
 };
 
 template<>
-struct Data<runir::kr::dl::grammar::Numerical<runir::kr::dl::DistanceTag>> :
-    runir::kr::dl::TernaryData<runir::kr::dl::grammar::Numerical<runir::kr::dl::DistanceTag>, GrammarConceptChoice, GrammarRoleChoice, GrammarConceptChoice>
+struct data<runir::kr::dl::grammar::Numerical<runir::kr::dl::DistanceTag>> :
+    runir::kr::dl::TernaryData<runir::kr::dl::grammar::Numerical<runir::kr::dl::DistanceTag>, runir::kr::dl::grammar::GrammarConceptChoice, runir::kr::dl::grammar::GrammarRoleChoice, runir::kr::dl::grammar::GrammarConceptChoice>
 {
     using Base = runir::kr::dl::
-        TernaryData<runir::kr::dl::grammar::Numerical<runir::kr::dl::DistanceTag>, GrammarConceptChoice, GrammarRoleChoice, GrammarConceptChoice>;
+        TernaryData<runir::kr::dl::grammar::Numerical<runir::kr::dl::DistanceTag>, runir::kr::dl::grammar::GrammarConceptChoice, runir::kr::dl::grammar::GrammarRoleChoice, runir::kr::dl::grammar::GrammarConceptChoice>;
     using Base::Base;
 };
 
 template<>
-struct Data<runir::kr::dl::grammar::Numerical<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>> :
+struct data<runir::kr::dl::grammar::Numerical<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>> :
     runir::kr::dl::ArgumentData<runir::kr::dl::grammar::Numerical<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
                                 runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>
 {
@@ -57,7 +47,7 @@ struct Data<runir::kr::dl::grammar::Numerical<runir::kr::dl::ArgumentTag<runir::
 };
 
 template<>
-struct Data<runir::kr::dl::grammar::Numerical<runir::kr::dl::NumericalConstantTag>> :
+struct data<runir::kr::dl::grammar::Numerical<runir::kr::dl::NumericalConstantTag>> :
     runir::kr::dl::IdentifierData<runir::kr::dl::grammar::Numerical<runir::kr::dl::NumericalConstantTag>, ygg::uint_t>
 {
     using Base = runir::kr::dl::IdentifierData<runir::kr::dl::grammar::Numerical<runir::kr::dl::NumericalConstantTag>, ygg::uint_t>;
@@ -65,7 +55,7 @@ struct Data<runir::kr::dl::grammar::Numerical<runir::kr::dl::NumericalConstantTa
 };
 
 template<runir::kr::dl::NumericalBinaryTag Tag>
-struct Data<runir::kr::dl::grammar::Numerical<Tag>> :
+struct data<runir::kr::dl::grammar::Numerical<Tag>> :
     runir::kr::dl::BinaryData<runir::kr::dl::grammar::Numerical<Tag>,
                               runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::NumericalTag>,
                               runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::NumericalTag>>
@@ -76,6 +66,6 @@ struct Data<runir::kr::dl::grammar::Numerical<Tag>> :
     using Base::Base;
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 #endif

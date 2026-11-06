@@ -1,4 +1,5 @@
 #include "pyrunir/kr/ps/base/bindings.hpp"
+#include <yggdrasil/python/type_casters.hpp>
 
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/base/repository.hpp>

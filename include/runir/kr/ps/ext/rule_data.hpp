@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_EXT_RULE_DATA_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/ps/declarations.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/ext/declarations.hpp"
@@ -13,41 +15,32 @@
 #include <string>
 #include <tuple>
 #include <utility>
+#include <variant>
 #include <vector>
-#include <yggdrasil/containers/variant.hpp>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
-#include <yggdrasil/semantics/comparison.hpp>
+#include <urd/elements/flat.hpp>
 
-namespace runir::kr::ps::ext
-{
-
-using CallArgument = ::ygg::IndexVariant<::ygg::MapTypeListSecondT<runir::kr::ps::Feature, runir::kr::ExtFamilyTag, runir::kr::dl::CategoryTags>>;
-
-}  // namespace runir::kr::ps::ext
-
-namespace ygg
+namespace urd
 {
 
 template<runir::kr::dl::CategoryTag Category>
-struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<Category>>>
+struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<Category>>>
 {
-    Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<Category>>> index;
-    Index<runir::kr::ps::ext::MemoryState> source;
-    Index<runir::kr::ps::ext::MemoryState> target;
-    IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions;
-    Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, Category>> feature;
-    Index<runir::kr::dl::Register<Category>> reg;
-    IndexList<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>> effects;
+    urd::index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<Category>>> index;
+    urd::index<runir::kr::ps::ext::MemoryState> source;
+    urd::index<runir::kr::ps::ext::MemoryState> target;
+    runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions;
+    urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, Category>> feature;
+    urd::index<runir::kr::dl::Register<Category>> reg;
+    runir::kr::ps::EffectList<runir::kr::ExtFamilyTag> effects;
 
-    Data() = default;
+    data() = default;
     // Registers live in the description-logic repository, hence the separate context parameter.
-    Data(Index<runir::kr::ps::ext::MemoryState> source_,
-         Index<runir::kr::ps::ext::MemoryState> target_,
-         IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions_,
-         Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, Category>> feature_,
-         Index<runir::kr::dl::Register<Category>> reg_,
-         IndexList<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>> effects_) :
+    data(urd::index<runir::kr::ps::ext::MemoryState> source_,
+         urd::index<runir::kr::ps::ext::MemoryState> target_,
+         runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions_,
+         urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, Category>> feature_,
+         urd::index<runir::kr::dl::Register<Category>> reg_,
+         runir::kr::ps::EffectList<runir::kr::ExtFamilyTag> effects_) :
         index(),
         source(source_),
         target(target_),
@@ -57,58 +50,35 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<Category>>>
         effects(std::move(effects_))
     {
     }
-    template<typename C, typename D>
-    Data(::ygg::View<Index<runir::kr::ps::ext::MemoryState>, C> source_,
-         ::ygg::View<Index<runir::kr::ps::ext::MemoryState>, C> target_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>, C>>& conditions_,
-         ::ygg::View<Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, Category>>, C> feature_,
-         ::ygg::View<Index<runir::kr::dl::Register<Category>>, D> reg_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>>, C>>& effects_) :
-        index(),
-        source(),
-        target(),
-        conditions(),
-        feature(),
-        reg(),
-        effects()
-    {
-        set(source_, source);
-        set(target_, target);
-        set(conditions_, conditions);
-        set(feature_, feature);
-        set(reg_, reg);
-        set(effects_, effects);
-    }
 
     static constexpr auto cista_members() noexcept
-    { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::feature, &Data::reg, &Data::effects> {}; }
+    { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::feature, &data::reg, &data::effects> {}; }
     static constexpr auto identifying_members() noexcept
-    { return ygg::Members<&Data::source, &Data::target, &Data::conditions, &Data::feature, &Data::reg, &Data::effects> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    { return urd::Members<&data::source, &data::target, &data::conditions, &data::feature, &data::reg, &data::effects> {}; }
 };
 
 template<runir::kr::dl::CategoryTag Category>
-struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ChooseTag<Category>>>
+struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ChooseTag<Category>>>
 {
-    Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ChooseTag<Category>>> index;
-    Index<runir::kr::ps::ext::MemoryState> source;
-    Index<runir::kr::ps::ext::MemoryState> target;
-    IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions;
-    Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, Category>> feature;
-    Index<runir::kr::dl::Register<Category>> reg;
-    IndexList<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>> effects;
+    urd::index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ChooseTag<Category>>> index;
+    urd::index<runir::kr::ps::ext::MemoryState> source;
+    urd::index<runir::kr::ps::ext::MemoryState> target;
+    runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions;
+    urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, Category>> feature;
+    urd::index<runir::kr::dl::Register<Category>> reg;
+    runir::kr::ps::EffectList<runir::kr::ExtFamilyTag> effects;
 
-    IndexList<runir::kr::ps::ext::OrderTerm> order;
+    urd::flat_vector<urd::index<runir::kr::ps::ext::OrderTerm>> order;
 
-    Data() = default;
+    data() = default;
     // Registers live in the description-logic repository, hence the separate context parameter.
-    Data(Index<runir::kr::ps::ext::MemoryState> source_,
-         Index<runir::kr::ps::ext::MemoryState> target_,
-         IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions_,
-         Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, Category>> feature_,
-         Index<runir::kr::dl::Register<Category>> reg_,
-         IndexList<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>> effects_,
-         IndexList<runir::kr::ps::ext::OrderTerm> order_) :
+    data(urd::index<runir::kr::ps::ext::MemoryState> source_,
+         urd::index<runir::kr::ps::ext::MemoryState> target_,
+         runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions_,
+         urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, Category>> feature_,
+         urd::index<runir::kr::dl::Register<Category>> reg_,
+         runir::kr::ps::EffectList<runir::kr::ExtFamilyTag> effects_,
+         urd::flat_vector<urd::index<runir::kr::ps::ext::OrderTerm>> order_) :
         index(),
         source(source_),
         target(target_),
@@ -119,53 +89,27 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ChooseTag<Category>>>
         order(std::move(order_))
     {
     }
-    template<typename C, typename D>
-    Data(::ygg::View<Index<runir::kr::ps::ext::MemoryState>, C> source_,
-         ::ygg::View<Index<runir::kr::ps::ext::MemoryState>, C> target_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>, C>>& conditions_,
-         ::ygg::View<Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, Category>>, C> feature_,
-         ::ygg::View<Index<runir::kr::dl::Register<Category>>, D> reg_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>>, C>>& effects_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::ext::OrderTerm>, C>>& order_) :
-        index(),
-        source(),
-        target(),
-        conditions(),
-        feature(),
-        reg(),
-        effects(),
-        order()
-    {
-        set(source_, source);
-        set(target_, target);
-        set(conditions_, conditions);
-        set(feature_, feature);
-        set(reg_, reg);
-        set(effects_, effects);
-        set(order_, order);
-    }
 
     static constexpr auto cista_members() noexcept
-    { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::feature, &Data::reg, &Data::effects, &Data::order> {}; }
+    { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::feature, &data::reg, &data::effects, &data::order> {}; }
     static constexpr auto identifying_members() noexcept
-    { return ygg::Members<&Data::source, &Data::target, &Data::conditions, &Data::feature, &Data::reg, &Data::effects, &Data::order> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    { return urd::Members<&data::source, &data::target, &data::conditions, &data::feature, &data::reg, &data::effects, &data::order> {}; }
 };
 
 template<>
-struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>>
+struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>>
 {
-    Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>> index;
-    Index<runir::kr::ps::ext::MemoryState> source;
-    Index<runir::kr::ps::ext::MemoryState> target;
-    IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions;
-    IndexList<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>> effects;
+    urd::index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>> index;
+    urd::index<runir::kr::ps::ext::MemoryState> source;
+    urd::index<runir::kr::ps::ext::MemoryState> target;
+    runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions;
+    runir::kr::ps::EffectList<runir::kr::ExtFamilyTag> effects;
 
-    Data() = default;
-    Data(Index<runir::kr::ps::ext::MemoryState> source_,
-         Index<runir::kr::ps::ext::MemoryState> target_,
-         IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions_,
-         IndexList<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>> effects_) :
+    data() = default;
+    data(urd::index<runir::kr::ps::ext::MemoryState> source_,
+         urd::index<runir::kr::ps::ext::MemoryState> target_,
+         runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions_,
+         runir::kr::ps::EffectList<runir::kr::ExtFamilyTag> effects_) :
         index(),
         source(source_),
         target(target_),
@@ -173,46 +117,29 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>>
         effects(std::move(effects_))
     {
     }
-    template<typename C>
-    Data(::ygg::View<Index<runir::kr::ps::ext::MemoryState>, C> source_,
-         ::ygg::View<Index<runir::kr::ps::ext::MemoryState>, C> target_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>, C>>& conditions_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>>, C>>& effects_) :
-        index(),
-        source(),
-        target(),
-        conditions(),
-        effects()
-    {
-        set(source_, source);
-        set(target_, target);
-        set(conditions_, conditions);
-        set(effects_, effects);
-    }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::effects> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::source, &Data::target, &Data::conditions, &Data::effects> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::effects> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::source, &data::target, &data::conditions, &data::effects> {}; }
 };
 
 template<>
-struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>
+struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>
 {
-    Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>> index;
-    Index<runir::kr::ps::ext::MemoryState> source;
-    Index<runir::kr::ps::ext::MemoryState> target;
-    IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions;
-    IndexList<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>> effects;
+    urd::index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>> index;
+    urd::index<runir::kr::ps::ext::MemoryState> source;
+    urd::index<runir::kr::ps::ext::MemoryState> target;
+    runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions;
+    runir::kr::ps::EffectList<runir::kr::ExtFamilyTag> effects;
     ::cista::offset::string action_name;
-    IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>> arguments;
+    urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>> arguments;
 
-    Data() = default;
-    Data(Index<runir::kr::ps::ext::MemoryState> source_,
-         Index<runir::kr::ps::ext::MemoryState> target_,
-         IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions_,
-         IndexList<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>> effects_,
+    data() = default;
+    data(urd::index<runir::kr::ps::ext::MemoryState> source_,
+         urd::index<runir::kr::ps::ext::MemoryState> target_,
+         runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions_,
+         runir::kr::ps::EffectList<runir::kr::ExtFamilyTag> effects_,
          ::cista::offset::string action_name_,
-         IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>> arguments_) :
+         urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>> arguments_) :
         index(),
         source(source_),
         target(target_),
@@ -222,53 +149,31 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>
         arguments(std::move(arguments_))
     {
     }
-    template<typename C>
-    Data(::ygg::View<Index<runir::kr::ps::ext::MemoryState>, C> source_,
-         ::ygg::View<Index<runir::kr::ps::ext::MemoryState>, C> target_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>, C>>& conditions_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>>, C>>& effects_,
-         ::cista::offset::string action_name_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>, C>>& arguments_) :
-        index(),
-        source(),
-        target(),
-        conditions(),
-        effects(),
-        action_name(std::move(action_name_)),
-        arguments()
-    {
-        set(source_, source);
-        set(target_, target);
-        set(conditions_, conditions);
-        set(effects_, effects);
-        set(arguments_, arguments);
-    }
 
     static constexpr auto cista_members() noexcept
-    { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::effects, &Data::action_name, &Data::arguments> {}; }
+    { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::effects, &data::action_name, &data::arguments> {}; }
     static constexpr auto identifying_members() noexcept
-    { return ygg::Members<&Data::source, &Data::target, &Data::conditions, &Data::effects, &Data::action_name, &Data::arguments> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    { return urd::Members<&data::source, &data::target, &data::conditions, &data::effects, &data::action_name, &data::arguments> {}; }
 };
 
 template<>
-struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>>
+struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>>
 {
-    Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>> index;
-    Index<runir::kr::ps::ext::MemoryState> source;
-    Index<runir::kr::ps::ext::MemoryState> target;
-    IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions;
-    IndexList<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>> effects;
+    urd::index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>> index;
+    urd::index<runir::kr::ps::ext::MemoryState> source;
+    urd::index<runir::kr::ps::ext::MemoryState> target;
+    runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions;
+    runir::kr::ps::EffectList<runir::kr::ExtFamilyTag> effects;
     ::cista::offset::string action_name;
-    Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>> query_feature;
+    urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>> query_feature;
 
-    Data() = default;
-    Data(Index<runir::kr::ps::ext::MemoryState> source_,
-         Index<runir::kr::ps::ext::MemoryState> target_,
-         IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions_,
-         IndexList<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>> effects_,
+    data() = default;
+    data(urd::index<runir::kr::ps::ext::MemoryState> source_,
+         urd::index<runir::kr::ps::ext::MemoryState> target_,
+         runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions_,
+         runir::kr::ps::EffectList<runir::kr::ExtFamilyTag> effects_,
          ::cista::offset::string action_name_,
-         Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>> query_feature_) :
+         urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>> query_feature_) :
         index(),
         source(source_),
         target(target_),
@@ -278,50 +183,28 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>>
         query_feature(query_feature_)
     {
     }
-    template<typename C>
-    Data(::ygg::View<Index<runir::kr::ps::ext::MemoryState>, C> source_,
-         ::ygg::View<Index<runir::kr::ps::ext::MemoryState>, C> target_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>, C>>& conditions_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>>, C>>& effects_,
-         ::cista::offset::string action_name_,
-         ::ygg::View<Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>, C> query_feature_) :
-        index(),
-        source(),
-        target(),
-        conditions(),
-        effects(),
-        action_name(std::move(action_name_)),
-        query_feature()
-    {
-        set(source_, source);
-        set(target_, target);
-        set(conditions_, conditions);
-        set(effects_, effects);
-        set(query_feature_, query_feature);
-    }
 
     static constexpr auto cista_members() noexcept
-    { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::effects, &Data::action_name, &Data::query_feature> {}; }
+    { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::effects, &data::action_name, &data::query_feature> {}; }
     static constexpr auto identifying_members() noexcept
-    { return ygg::Members<&Data::source, &Data::target, &Data::conditions, &Data::effects, &Data::action_name, &Data::query_feature> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    { return urd::Members<&data::source, &data::target, &data::conditions, &data::effects, &data::action_name, &data::query_feature> {}; }
 };
 
 template<>
-struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>>
+struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>>
 {
-    Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>> index;
-    Index<runir::kr::ps::ext::MemoryState> source;
-    Index<runir::kr::ps::ext::MemoryState> target;
-    IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions;
-    Index<runir::kr::ps::ext::ModuleSymbol> callee;
+    urd::index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>> index;
+    urd::index<runir::kr::ps::ext::MemoryState> source;
+    urd::index<runir::kr::ps::ext::MemoryState> target;
+    runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions;
+    urd::index<runir::kr::ps::ext::ModuleSymbol> callee;
     ::cista::offset::vector<runir::kr::ps::ext::CallArgument> arguments;
 
-    Data() = default;
-    Data(Index<runir::kr::ps::ext::MemoryState> source_,
-         Index<runir::kr::ps::ext::MemoryState> target_,
-         IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions_,
-         Index<runir::kr::ps::ext::ModuleSymbol> callee_,
+    data() = default;
+    data(urd::index<runir::kr::ps::ext::MemoryState> source_,
+         urd::index<runir::kr::ps::ext::MemoryState> target_,
+         runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions_,
+         urd::index<runir::kr::ps::ext::ModuleSymbol> callee_,
          ::cista::offset::vector<runir::kr::ps::ext::CallArgument> arguments_) :
         index(),
         source(source_),
@@ -331,62 +214,32 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>>
         arguments(std::move(arguments_))
     {
     }
-    template<typename C>
-    Data(::ygg::View<Index<runir::kr::ps::ext::MemoryState>, C> source_,
-         ::ygg::View<Index<runir::kr::ps::ext::MemoryState>, C> target_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>, C>>& conditions_,
-         ::ygg::View<Index<runir::kr::ps::ext::ModuleSymbol>, C> callee_,
-         ::cista::offset::vector<runir::kr::ps::ext::CallArgument> arguments_) :
-        index(),
-        source(),
-        target(),
-        conditions(),
-        callee(),
-        arguments(std::move(arguments_))
-    {
-        set(source_, source);
-        set(target_, target);
-        set(conditions_, conditions);
-        set(callee_, callee);
-    }
 
     static constexpr auto cista_members() noexcept
-    { return ygg::Members<&Data::index, &Data::source, &Data::target, &Data::conditions, &Data::callee, &Data::arguments> {}; }
+    { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::callee, &data::arguments> {}; }
     static constexpr auto identifying_members() noexcept
-    { return ygg::Members<&Data::source, &Data::target, &Data::conditions, &Data::callee, &Data::arguments> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    { return urd::Members<&data::source, &data::target, &data::conditions, &data::callee, &data::arguments> {}; }
 };
 
 template<>
-struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::BacktrackTag>>
+struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::BacktrackTag>>
 {
-    Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::BacktrackTag>> index;
-    Index<runir::kr::ps::ext::MemoryState> source;
-    IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions;
+    urd::index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::BacktrackTag>> index;
+    urd::index<runir::kr::ps::ext::MemoryState> source;
+    runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions;
 
-    Data() = default;
-    Data(Index<runir::kr::ps::ext::MemoryState> source_, IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions_) :
+    data() = default;
+    data(urd::index<runir::kr::ps::ext::MemoryState> source_, runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions_) :
         index(),
         source(source_),
         conditions(std::move(conditions_))
     {
     }
-    template<typename C>
-    Data(::ygg::View<Index<runir::kr::ps::ext::MemoryState>, C> source_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>, C>>& conditions_) :
-        index(),
-        source(),
-        conditions()
-    {
-        set(source_, source);
-        set(conditions_, conditions);
-    }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::source, &Data::conditions> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::source, &Data::conditions> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::source, &data::conditions> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::source, &data::conditions> {}; }
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 #endif

@@ -5,8 +5,9 @@
 #include <runir/kr/dl/cnf_grammar/role_data.hpp>
 #include <runir/kr/dl/cnf_grammar/role_view.hpp>
 #include <tyr/formalism/planning/repository.hpp>
-#include <yggdrasil/core/concepts.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
+#include <boost/mp11.hpp>
+#include <yggdrasil/core/config.hpp>
 
 namespace runir::tests
 {
@@ -16,36 +17,35 @@ namespace
 
 template<typename T, typename Repository>
 concept IndexedDataView =
-    std::constructible_from<ygg::Index<T>, ygg::uint_t> && ygg::Identifiable<ygg::Index<T>> && ygg::Identifiable<ygg::Data<T>>
-    && ygg::Identifiable<ygg::View<ygg::Index<T>, Repository>> && std::totally_ordered<ygg::Index<T>> && std::totally_ordered<ygg::Data<T>>
-    && std::totally_ordered<ygg::View<ygg::Index<T>, Repository>> && requires(ygg::Data<T>& data, const ygg::View<ygg::Index<T>, Repository>& view) {
+    std::constructible_from<urd::index<T>, ygg::uint_t> && urd::Identifiable<urd::index<T>> && urd::Identifiable<urd::data<T>>
+    && urd::Identifiable<urd::view<T, Repository>> && std::totally_ordered<urd::index<T>> && std::totally_ordered<urd::data<T>>
+    && std::totally_ordered<urd::view<T, Repository>> && requires(urd::data<T>& data, const urd::view<T, Repository>& view) {
            data.index;
-           data.clear();
-           view.get_index();
+           view.index();
        };
 
 template<typename... Ts>
-consteval bool indexed_data_views(ygg::TypeList<Ts...>)
+consteval bool indexed_data_views(boost::mp11::mp_list<Ts...>)
 { return (IndexedDataView<Ts, kr::dl::cnf_grammar::ConstructorRepository> && ...); }
 
 static_assert(indexed_data_views<>(kr::dl::cnf_grammar::RoleTypes {}));
 
-using PredicateTags = ygg::TypeList<kr::dl::AtomicStateTag<tyr::formalism::StaticTag>,
+using PredicateTags = boost::mp11::mp_list<kr::dl::AtomicStateTag<tyr::formalism::StaticTag>,
                                     kr::dl::AtomicStateTag<tyr::formalism::FluentTag>,
                                     kr::dl::AtomicStateTag<tyr::formalism::DerivedTag>,
                                     kr::dl::AtomicGoalTag<tyr::formalism::StaticTag>,
                                     kr::dl::AtomicGoalTag<tyr::formalism::FluentTag>,
                                     kr::dl::AtomicGoalTag<tyr::formalism::DerivedTag>>;
-using BinaryTags = ygg::TypeList<kr::dl::IntersectionTag, kr::dl::UnionTag, kr::dl::CompositionTag, kr::dl::RestrictionTag>;
+using BinaryTags = boost::mp11::mp_list<kr::dl::IntersectionTag, kr::dl::UnionTag, kr::dl::CompositionTag, kr::dl::RestrictionTag>;
 using UnaryTags =
-    ygg::TypeList<kr::dl::ComplementTag, kr::dl::InverseTag, kr::dl::TransitiveClosureTag, kr::dl::ReflexiveTransitiveClosureTag, kr::dl::IdentityTag>;
+    boost::mp11::mp_list<kr::dl::ComplementTag, kr::dl::InverseTag, kr::dl::TransitiveClosureTag, kr::dl::ReflexiveTransitiveClosureTag, kr::dl::IdentityTag>;
 
 template<typename Tag>
 consteval bool role_data_view()
 {
     using Entity = kr::dl::cnf_grammar::Role<Tag>;
-    using Data = ygg::Data<Entity>;
-    using View = ygg::View<ygg::Index<Entity>, kr::dl::cnf_grammar::ConstructorRepository>;
+    using Data = urd::data<Entity>;
+    using View = urd::view<Entity, kr::dl::cnf_grammar::ConstructorRepository>;
 
     static_assert(std::same_as<View, kr::dl::cnf_grammar::RoleView<Tag>>);
     if constexpr (false)
@@ -54,23 +54,23 @@ consteval bool role_data_view()
     if constexpr (std::same_as<Tag, kr::dl::UniversalTag>)
         return requires(Data& data, const View& view) {
             data.index;
-            view.get_index();
+            view.index();
         };
-    else if constexpr (ygg::InTypeList<Tag, PredicateTags>)
+    else if constexpr (boost::mp11::mp_contains<PredicateTags, Tag>::value)
         return requires(Data& data, const View& view) {
             data.predicate;
             data.polarity;
             view.get_predicate();
             view.get_polarity();
         };
-    else if constexpr (ygg::InTypeList<Tag, BinaryTags>)
+    else if constexpr (boost::mp11::mp_contains<BinaryTags, Tag>::value)
         return requires(Data& data, const View& view) {
             data.lhs;
             data.rhs;
             view.get_lhs();
             view.get_rhs();
         };
-    else if constexpr (ygg::InTypeList<Tag, UnaryTags>)
+    else if constexpr (boost::mp11::mp_contains<UnaryTags, Tag>::value)
         return requires(Data& data, const View& view) {
             data.arg;
             view.get_arg();
@@ -85,7 +85,7 @@ consteval bool role_data_view()
 }
 
 template<typename... Tags>
-consteval bool role_data_views(ygg::TypeList<Tags...>)
+consteval bool role_data_views(boost::mp11::mp_list<Tags...>)
 { return (role_data_view<Tags>() && ...); }
 
 static_assert(role_data_views(kr::dl::GenerationRoleConstructorTags {}));

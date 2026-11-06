@@ -4,14 +4,15 @@
 #include <concepts>
 #include <cstddef>
 #include <utility>
-#include <yggdrasil/core/type_list.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <boost/mp11.hpp>
+#include <urd/elements/flat.hpp>
+#include <yggdrasil/core/config.hpp>
 
 namespace runir::kr::detail
 {
 
 template<typename T, typename... Ts>
-consteval size_t type_position(ygg::TypeList<Ts...>) noexcept
+consteval size_t type_position(boost::mp11::mp_list<Ts...>) noexcept
 {
     size_t position = 0;
     static_cast<void>(((std::same_as<T, Ts> ? true : (++position, false)) || ...));
@@ -23,8 +24,8 @@ consteval size_t type_position(ygg::TypeList<Ts...>) noexcept
 using RecordKey = std::pair<size_t, ygg::uint_t>;
 
 template<typename Types, typename T, typename C>
-RecordKey record_key(const ygg::View<ygg::Index<T>, C>& view) noexcept
-{ return { type_position<T>(Types {}), view.get_index().get_value() }; }
+RecordKey record_key(const urd::view<T, C>& view) noexcept
+{ return { type_position<T>(Types {}), view.index().value }; }
 
 }  // namespace runir::kr::detail
 

@@ -18,15 +18,20 @@
 #include <stdexcept>
 #include <tuple>
 #include <type_traits>
+#include <urd/repr/core/dependent_false.hpp>
+#include <urd/repr/maps/std_map.hpp>
+#include <urd/repr/maps/unordered_flat_map.hpp>
+#include <urd/repr/values/std_set.hpp>
+#include <urd/repr/values/unordered_flat_set.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <variant>
 #include <vector>
-#include <yggdrasil/containers/associative_containers.hpp>
-#include <yggdrasil/core/children.hpp>
-#include <yggdrasil/core/concepts.hpp>
+#include <urd/elements/children.hpp>
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/core/dependent_false.hpp>
-#include <yggdrasil/core/type_list.hpp>
+#include <urd/config.hpp>
+#include <boost/mp11.hpp>
 #include <yggdrasil/database/optimization/optimization.hpp>
 #include <yggdrasil/database/syntax/query.hpp>
 #include <yggdrasil/diagnostics/warnings.hpp>
@@ -38,81 +43,81 @@ namespace runir::kr::dl
 struct QueryStatistics
 {
     std::optional<size_t> objects;
-    ygg::UnorderedMap<QueryView<>, ygg::database::RelationStatistics> leaves;
+    urd::Store<urd::map<QueryView<>, ygg::database::RelationStatistics>> leaves;
 };
 
 namespace detail
 {
 
-inline ygg::IndexList<QueryColumn> query_columns_from_labels(std::span<const ygg::Index<ygg::database::Column>> labels)
+inline urd::flat_vector<urd::index<QueryColumn>> query_columns_from_labels(std::span<const urd::index<ygg::database::Column>> labels)
 {
-    ygg::IndexList<QueryColumn> columns;
+    urd::flat_vector<urd::index<QueryColumn>> columns;
     for (const auto label : labels)
-        columns.push_back(ygg::Index<QueryColumn>(label.get_value()));
+        columns.push_back(urd::index<QueryColumn>(label.value));
     return columns;
 }
 
 template<typename Tag>
-QueryView<> insert_query(ConstructorRepository& repository, ygg::Data<Query<Tag>>& data)
+QueryView<> insert_query(ConstructorRepository& repository, urd::data<Query<Tag>>& data)
 {
     const auto concrete = runir::kr::dl::insert(repository, data).first;
-    auto wrapper = ygg::Data<Query<>>();
-    wrapper.variant = concrete.get_index();
+    auto wrapper = urd::data<Query<>>();
+    wrapper.variant = concrete.index();
     return runir::kr::dl::insert(repository, wrapper).first;
 }
 
 /// Inserts the runir counterparts of a plan's nodes; input slots map back to leaves. Returns the roots in plan order.
-inline std::vector<QueryView<>> lower(const ygg::database::QueryPlan& plan, std::span<const QueryView<>> leaves, ConstructorRepository& repository)
+inline urd::Store<urd::sequence<QueryView<>>> lower(const ygg::database::QueryPlan& plan, std::span<const QueryView<>> leaves, ConstructorRepository& repository)
 {
-    using YggIndex = ygg::Index<ygg::database::Query<>>;
-    std::vector<std::optional<QueryView<>>> lowered(plan.node_count());
-    const auto lowered_at = [&](YggIndex index) { return lowered.at(index.get_value()).value(); };
-    const auto child = [&](ygg::database::QueryView<> node) { return lowered_at(node.get_index()); };
+    using YggIndex = urd::index<ygg::database::Query<>>;
+    urd::Store<urd::sequence<std::optional<QueryView<>>>> lowered(plan.node_count());
+    const auto lowered_at = [&](YggIndex index) { return lowered.at(index.value).value(); };
+    const auto child = [&](ygg::database::QueryView<> node) { return lowered_at(node.index()); };
     for (size_t i = 0; i < plan.node_count(); ++i)
     {
-        lowered[i] = ygg::visit(
+        lowered[i] = std::visit(
             [&]<typename Tag>(ygg::database::QueryView<Tag> node) -> QueryView<>
             {
                 if constexpr (std::same_as<Tag, ygg::database::QueryInputTag>)
                     return leaves[node.get_input_slot()];
                 else if constexpr (std::same_as<Tag, ygg::database::QueryJoinTag>)
                 {
-                    auto data = ygg::Data<Query<QueryJoinTag>>(child(node.get_lhs()), child(node.get_rhs()));
+                    auto data = urd::data<Query<QueryJoinTag>>(child(node.get_lhs()).index(), child(node.get_rhs()).index());
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, ygg::database::QueryUnionTag>)
                 {
-                    auto data = ygg::Data<Query<QueryUnionTag>>(child(node.get_lhs()), child(node.get_rhs()));
+                    auto data = urd::data<Query<QueryUnionTag>>(child(node.get_lhs()).index(), child(node.get_rhs()).index());
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, ygg::database::QueryDifferenceTag>)
                 {
-                    auto data = ygg::Data<Query<QueryDifferenceTag>>(child(node.get_lhs()), child(node.get_rhs()));
+                    auto data = urd::data<Query<QueryDifferenceTag>>(child(node.get_lhs()).index(), child(node.get_rhs()).index());
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, ygg::database::QueryProjectTag>)
                 {
-                    auto data = ygg::Data<Query<QueryProjectTag>>(child(node.get_arg()).get_index(), query_columns_from_labels(node.get_labels()));
+                    auto data = urd::data<Query<QueryProjectTag>>(child(node.get_arg()).index(), query_columns_from_labels(node.get_labels()));
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, ygg::database::QueryRenameTag>)
                 {
-                    auto data = ygg::Data<Query<QueryRenameTag>>(child(node.get_arg()).get_index(), query_columns_from_labels(node.get_labels()));
+                    auto data = urd::data<Query<QueryRenameTag>>(child(node.get_arg()).index(), query_columns_from_labels(node.get_labels()));
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, ygg::database::QuerySelectEqualTag>)
                 {
-                    auto data = ygg::Data<Query<QuerySelectEqualTag>>(child(node.get_arg()).get_index(),
-                                                                      ygg::Index<QueryColumn>(node.get_lhs_column().get_value()),
-                                                                      ygg::Index<QueryColumn>(node.get_rhs_column().get_value()));
+                    auto data = urd::data<Query<QuerySelectEqualTag>>(child(node.get_arg()).index(),
+                                                                      urd::index<QueryColumn>(node.get_lhs_column().value),
+                                                                      urd::index<QueryColumn>(node.get_rhs_column().value));
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, ygg::database::QuerySelectValueTag>)
                 {
                     auto data =
-                        ygg::Data<Query<QuerySelectValueTag>>(child(node.get_arg()).get_index(),
-                                                              ygg::Index<QueryColumn>(node.get_column().get_value()),
-                                                              ygg::Index<tyr::formalism::Object>(ygg::ByteCodec<ygg::uint_t>::decode(node.get_constant())));
+                        urd::data<Query<QuerySelectValueTag>>(child(node.get_arg()).index(),
+                                                              urd::index<QueryColumn>(node.get_column().value),
+                                                              urd::index<tyr::formalism::Object>(ygg::ByteCodec<ygg::uint_t>::decode(node.get_constant())));
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, ygg::database::QueryGenericJoinTag>)
@@ -125,27 +130,27 @@ inline std::vector<QueryView<>> lower(const ygg::database::QueryPlan& plan, std:
                     {
                         // A single input only reorders its columns.
                         const auto input = lowered_at(inputs.front());
-                        if (std::ranges::equal(input.get_columns(), output_order, {}, [](auto column) { return column.get_index(); }))
+                        if (std::ranges::equal(input.get_columns(), output_order, {}, [](auto column) { return column.index(); }))
                             return input;
-                        auto data = ygg::Data<Query<QueryProjectTag>>(input.get_index(), output_order);
+                        auto data = urd::data<Query<QueryProjectTag>>(input.index(), output_order);
                         return insert_query(repository, data);
                     }
-                    ygg::IndexList<Query<>> args;
+                    urd::flat_vector<urd::index<Query<>>> args;
                     for (const auto input : inputs)
-                        args.push_back(lowered_at(input).get_index());
-                    auto data = ygg::Data<Query<QueryGenericJoinTag>>(std::move(args), query_columns_from_labels(node.get_variable_order()), output_order);
+                        args.push_back(lowered_at(input).index());
+                    auto data = urd::data<Query<QueryGenericJoinTag>>(std::move(args), query_columns_from_labels(node.get_variable_order()), output_order);
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, ygg::database::QueryEmptyTag>)
                 {
-                    ygg::IndexList<QueryColumn> columns;
+                    urd::flat_vector<urd::index<QueryColumn>> columns;
                     for (const auto column : node.columns())
                     {
                         if (column.type != ygg::type_id<ygg::uint_t>)
                             throw std::logic_error("Query optimization: an empty relation has a non-object column.");
-                        columns.push_back(ygg::Index<QueryColumn>(column.label.get_value()));
+                        columns.push_back(urd::index<QueryColumn>(column.label.value));
                     }
-                    auto data = ygg::Data<Query<QueryEmptyTag>>(std::move(columns));
+                    auto data = urd::data<Query<QueryEmptyTag>>(std::move(columns));
                     return insert_query(repository, data);
                 }
                 else
@@ -153,11 +158,11 @@ inline std::vector<QueryView<>> lower(const ygg::database::QueryPlan& plan, std:
             },
             plan[YggIndex(static_cast<ygg::uint_t>(i))].get_variant());
     }
-    std::vector<QueryView<>> roots;
+    urd::Store<urd::sequence<QueryView<>>> roots;
     for (const auto root : plan.roots())
     {
-        const auto& lowered_root = lowered.at(root.get_value());
-        YGG_ASSUME(lowered_root.has_value());  // Every plan node was lowered above.
+        const auto& lowered_root = lowered.at(root.value);
+        URD_ASSUME(lowered_root.has_value());  // Every plan node was lowered above.
         roots.push_back(*lowered_root);
     }
     return roots;
@@ -166,7 +171,7 @@ inline std::vector<QueryView<>> lower(const ygg::database::QueryPlan& plan, std:
 }  // namespace detail
 
 template<typename T>
-using RecordView = ygg::View<ygg::Index<T>, ConstructorRepository>;
+using RecordView = urd::view<T, ConstructorRepository>;
 
 /// Optimizes the queries of DL expressions with yggdrasil's optimizer. It rebuilds records bottom-up, replacing every
 /// maximal query (one reached from a non-query record) by its optimized form; records whose children are unchanged keep
@@ -188,23 +193,24 @@ public:
     }
 
 private:
-    using Labels = std::vector<ygg::Index<ygg::database::Column>>;
+    using Labels = urd::Store<urd::sequence<urd::index<ygg::database::Column>>>;
 
     template<typename T>
     RecordView<T> memoized(RecordView<T> view)
     {
         const auto key = runir::kr::detail::record_key<ConstructorRepositoryTypes>(view);
         if (const auto it = m_rewritten.find(key); it != m_rewritten.end())
-            return ygg::make_view(ygg::Index<T>(it->second), *m_repository);
+            return m_repository->view(urd::index<T>(it->second));
         const auto result = rewrite(view);
-        m_rewritten.emplace(key, result.get_index().get_value());
+        m_rewritten.emplace(key, result.index().value);
         return result;
     }
 
     template<typename T>
     RecordView<T> rewrite(RecordView<T> view)
     {
-        auto data = ygg::map_children<ConstructorRepositoryTypes>(view, [&]<typename U>(RecordView<U> child) { return optimize<U>(child); });
+        auto data = urd::map_children<ConstructorRepositoryTypes, T>(view.data(), view.context(),
+                                                                     [&]<typename U>(RecordView<U> child) { return optimize<U>(child).index(); });
         return runir::kr::dl::insert(*m_repository, data).first;
     }
 
@@ -213,8 +219,8 @@ private:
     template<ConceptOrRoleTag Category>
     RecordView<QueryProjection<Category>> rewrite(RecordView<QueryProjection<Category>> view)
     {
-        auto root = optimize_root(view.get_arg(), detail::query_labels(view.get_data().columns));
-        root = ygg::visit(
+        auto root = optimize_root(view.get_arg(), detail::query_labels(view.data().columns));
+        root = std::visit(
             [&]<typename Tag>(QueryView<Tag> concrete) -> QueryView<>
             {
                 if constexpr (std::same_as<Tag, QueryProjectTag>)
@@ -223,20 +229,20 @@ private:
                 return root;
             },
             root.get_variant());
-        auto data = ygg::Data<QueryProjection<Category>>(root.get_index(), view.get_data().columns);
+        auto data = urd::data<QueryProjection<Category>>(root.index(), view.data().columns);
         return runir::kr::dl::insert(*m_repository, data).first;
     }
 
     /// Only emptiness matters, so the optimizer may project the query onto no columns.
     RecordView<Boolean<NonemptyTag>> rewrite(RecordView<Boolean<NonemptyTag>> view)
     {
-        return ygg::visit(
+        return std::visit(
             [&]<typename V>(V arg) -> RecordView<Boolean<NonemptyTag>>
             {
                 if constexpr (std::same_as<V, QueryView<>>)
                 {
-                    auto data = ygg::Data<Boolean<NonemptyTag>>();
-                    data.arg = optimize_root(arg, Labels {}).get_index();
+                    auto data = urd::data<Boolean<NonemptyTag>>();
+                    data.arg = optimize_root(arg, Labels {}).index();
                     return runir::kr::dl::insert(*m_repository, data).first;
                 }
                 else
@@ -248,7 +254,7 @@ private:
     /// The edges of a distance are evaluated per vertex, with the source or the target columns bound, never fully.
     RecordView<Numerical<DistanceTag>> rewrite(RecordView<Numerical<DistanceTag>> view)
     {
-        using Data = ygg::Data<Numerical<DistanceTag>>;
+        using Data = urd::data<Numerical<DistanceTag>>;
         auto data = Data(optimize_argument<typename Data::Vertex>(view.get_lhs(), ygg::database::Evaluation::full),
                          optimize_argument<typename Data::Edge>(view.get_mid(), ygg::database::Evaluation::bound),
                          optimize_argument<typename Data::Vertex>(view.get_rhs(), ygg::database::Evaluation::full));
@@ -258,11 +264,11 @@ private:
     /// The edges of a must-pass query are explored per vertex, with the key and the source columns bound, never fully.
     RecordView<Query<QueryMustPassTag>> rewrite(RecordView<Query<QueryMustPassTag>> view)
     {
-        auto data = ygg::Data<Query<QueryMustPassTag>>(view.get_data().keys,
-                                                       optimize_root(view.get_sources(), std::nullopt).get_index(),
-                                                       optimize_root(view.get_edges(), std::nullopt, ygg::database::Evaluation::bound).get_index(),
-                                                       optimize_root(view.get_targets(), std::nullopt).get_index(),
-                                                       optimize_root(view.get_probes(), std::nullopt).get_index());
+        auto data = urd::data<Query<QueryMustPassTag>>(view.data().keys,
+                                                       optimize_root(view.get_sources(), std::nullopt).index(),
+                                                       optimize_root(view.get_edges(), std::nullopt, ygg::database::Evaluation::bound).index(),
+                                                       optimize_root(view.get_targets(), std::nullopt).index(),
+                                                       optimize_root(view.get_probes(), std::nullopt).index());
         return runir::kr::dl::insert(*m_repository, data).first;
     }
 
@@ -270,13 +276,13 @@ private:
     template<typename Result, typename Argument>
     Result optimize_argument(const Argument& arg, ygg::database::Evaluation evaluation)
     {
-        return ygg::visit(
+        return std::visit(
             [&]<typename V>(V child) -> Result
             {
                 if constexpr (std::same_as<V, QueryView<>>)
-                    return Result(optimize_root(child, std::nullopt, evaluation).get_index());
+                    return Result(optimize_root(child, std::nullopt, evaluation).index());
                 else
-                    return Result(optimize(child).get_index());
+                    return Result(optimize(child).index());
             },
             arg);
     }
@@ -294,8 +300,8 @@ private:
             translated = translator.project(translated, *required);
         auto statistics = ygg::database::Statistics();
         statistics.objects = m_statistics->objects;
-        const auto slot_leaves = translator.get_leaves(root.get_context());
-        auto leaves = std::vector<QueryView<>>();
+        const auto slot_leaves = translator.get_leaves(root.context());
+        auto leaves = urd::Store<urd::sequence<QueryView<>>>();
         for (size_t slot = 0; slot < slot_leaves.size(); ++slot)
         {
             const auto leaf = slot_leaves[slot];
@@ -314,10 +320,10 @@ private:
 
     ConstructorRepository* m_repository;
     const QueryStatistics* m_statistics;
-    ygg::UnorderedMap<runir::kr::detail::RecordKey, ygg::uint_t> m_rewritten;  ///< Rewritten record index by record.
-    ygg::UnorderedMap<std::pair<QueryView<>, Labels>, QueryView<>> m_optimized;
-    ygg::UnorderedMap<std::pair<QueryView<>, Labels>, QueryView<>> m_projected;
-    ygg::UnorderedMap<std::pair<QueryView<>, Labels>, QueryView<>> m_bound;
+    urd::Store<urd::map<runir::kr::detail::RecordKey, ygg::uint_t>> m_rewritten;  ///< Rewritten record index by record.
+    urd::Store<urd::map<std::pair<QueryView<>, Labels>, QueryView<>>> m_optimized;
+    urd::Store<urd::map<std::pair<QueryView<>, Labels>, QueryView<>>> m_projected;
+    urd::Store<urd::map<std::pair<QueryView<>, Labels>, QueryView<>>> m_bound;
 };
 
 /// Measures fixed query leaves one sample state at a time. Each add evaluates every leaf in one state, so a caller may
@@ -326,7 +332,7 @@ private:
 class QueryStatisticsSampler
 {
 public:
-    explicit QueryStatisticsSampler(std::vector<QueryView<>> leaves) : m_leaves(std::move(leaves)) {}
+    explicit QueryStatisticsSampler(urd::Store<urd::sequence<QueryView<>>> leaves) : m_leaves(std::move(leaves)) {}
 
     /// Evaluates every leaf in the state of context and adds the sample.
     template<tyr::TaskKind Kind, semantics::StateEvaluationContextConcept<Kind> Context>
@@ -351,7 +357,7 @@ public:
     }
 
 private:
-    std::vector<QueryView<>> m_leaves;
+    urd::Store<urd::sequence<QueryView<>>> m_leaves;
     ygg::database::StatisticsAccumulator<QueryView<>> m_accumulator;
     std::optional<size_t> m_objects;
 };
@@ -371,7 +377,7 @@ public:
     /// The statistics of the collected leaves over contexts, one state evaluation context per sample state, measured
     /// state by state (see QueryStatisticsSampler).
     template<tyr::TaskKind Kind, semantics::StateEvaluationContextConcept<Kind> Context>
-    QueryStatistics measure(const std::vector<Context*>& contexts, ygg::diagnostics::Warnings& warnings) const
+    QueryStatistics measure(const urd::Store<urd::sequence<Context*>>& contexts, ygg::diagnostics::Warnings& warnings) const
     {
         auto sampler = this->sampler();
         for (auto* context : contexts)
@@ -389,7 +395,7 @@ private:
         {
             auto translator = detail::QueryTranslator();
             translator.translate(view);
-            for (const auto leaf : translator.get_leaves(view.get_context()))
+            for (const auto leaf : translator.get_leaves(view.context()))
                 if (std::ranges::find(m_leaves, leaf) == m_leaves.end())
                 {
                     m_leaves.push_back(leaf);
@@ -403,7 +409,7 @@ private:
 
     template<typename T, typename F>
     static void for_each_child(RecordView<T> view, F&& f)
-    { ygg::for_each_child<ConstructorRepositoryTypes>(view, std::forward<F>(f)); }
+    { urd::for_each_child<ConstructorRepositoryTypes, T>(view.data(), view.context(), std::forward<F>(f)); }
 
     template<typename T>
     void collect_children(RecordView<T> view)
@@ -411,18 +417,18 @@ private:
         for_each_child(view, [&]<typename U>(RecordView<U> child) { collect<U>(child); });
     }
 
-    ygg::UnorderedSet<runir::kr::detail::RecordKey> m_visited;
-    std::vector<QueryView<>> m_leaves;
+    urd::Store<urd::set<runir::kr::detail::RecordKey>> m_visited;
+    urd::Store<urd::sequence<QueryView<>>> m_leaves;
 };
 
 /// Optimizes every query inside a DL expression (any constructor or query) with yggdrasil's optimizer and returns the
 /// rewritten expression in the same repository. Without statistics, join blocks are planned structurally (Yannakakis or
 /// generic join); with statistics for all leaves of a block, they are planned by cost.
 template<typename T>
-ygg::View<ygg::Index<T>, ConstructorRepository>
-optimize(ygg::View<ygg::Index<T>, ConstructorRepository> expression, ConstructorRepository& repository, const QueryStatistics& statistics = {})
+urd::view<T, ConstructorRepository>
+optimize(urd::view<T, ConstructorRepository> expression, ConstructorRepository& repository, const QueryStatistics& statistics = {})
 {
-    if (&expression.get_context() != &repository)
+    if (&expression.context() != &repository)
         throw std::invalid_argument("optimize: the expression belongs to another repository.");
     return QueryOptimizer(repository, statistics).template optimize<T>(expression);
 }
@@ -431,8 +437,8 @@ optimize(ygg::View<ygg::Index<T>, ConstructorRepository> expression, Constructor
 /// contexts holds one state evaluation context per sample state. The plan is fixed across states, so the statistics
 /// describe a typical state.
 template<tyr::TaskKind Kind, typename T, semantics::StateEvaluationContextConcept<Kind> Context>
-QueryStatistics collect_query_statistics(ygg::View<ygg::Index<T>, ConstructorRepository> expression,
-                                         const std::vector<Context*>& contexts,
+QueryStatistics collect_query_statistics(urd::view<T, ConstructorRepository> expression,
+                                         const urd::Store<urd::sequence<Context*>>& contexts,
                                          ygg::diagnostics::Warnings& warnings)
 {
     auto collector = QueryStatisticsCollector();

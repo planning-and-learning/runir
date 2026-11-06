@@ -5,13 +5,12 @@
 
 #include <cassert>
 #include <tuple>
-#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::graphs
 {
 
 template<typename G, Property P>
-class Edge : public ygg::comparison::Mixin<Edge<G, P>>
+class Edge : public urd::compared_by_identity<Edge<G, P>>
 {
 private:
     const G* m_graph;
@@ -45,7 +44,7 @@ public:
     [[nodiscard]] auto get_property_index() const noexcept -> PropertyIndexType { return m_property; }
     [[nodiscard]] auto get_property() const noexcept -> const P& { return get_parent().get_edge_property(m_property); }
 
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Edge::m_index, &Edge::m_source, &Edge::m_target, &Edge::m_property> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&Edge::m_index, &Edge::m_source, &Edge::m_target, &Edge::m_property> {}; }
 };
 
 }  // namespace runir::graphs

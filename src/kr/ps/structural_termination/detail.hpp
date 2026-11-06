@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_STRUCTURAL_TERMINATION_DETAIL_HPP_
 
 #include "runir/graphs/static_graph_builder.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/dl/structural_termination.hpp"
 
@@ -17,7 +19,8 @@
 #include <stdexcept>
 #include <utility>
 #include <vector>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
+#include <yggdrasil/core/config.hpp>
 
 namespace runir::kr::ps::detail
 {
@@ -31,7 +34,7 @@ void validate_policy(const QualitativePolicy& policy);
 template<runir::kr::FamilyTag Family, typename C>
 struct PolicyAnalysis
 {
-    std::vector<ygg::View<ygg::Index<runir::kr::ps::Rule<Family>>, C>> rules;
+    urd::Store<urd::sequence<urd::view<runir::kr::ps::Rule<Family>, C>>> rules;
     QualitativePolicy policy;
 };
 
@@ -47,7 +50,7 @@ std::size_t feature_position(const Features& features, Feature feature)
 template<runir::kr::FamilyTag Family, typename C, typename Definition, typename FeatureTag, typename ObservationTag>
 void record_condition(Definition definition,
                       RuleProfile& profile,
-                      ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition)
+                      urd::view<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, C> condition)
 {
     const auto position = feature_position(definition.template get_features<FeatureTag>(), condition.get_feature());
     profile.template conditions<ObservationTag>() |= std::uint64_t { 1 } << position;
@@ -56,7 +59,7 @@ void record_condition(Definition definition,
 template<runir::kr::FamilyTag Family, typename C, typename Definition, typename FeatureTag, typename ObservationTag>
 void record_effect(Definition definition,
                    RuleProfile& profile,
-                   ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> effect)
+                   urd::view<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, C> effect)
 {
     const auto position = feature_position(definition.template get_features<FeatureTag>(), effect.get_feature());
     const auto bit = std::uint64_t { 1 } << position;
@@ -75,51 +78,51 @@ struct PolicyEdge
 struct SieveResult
 {
     bool has_cycle;
-    std::vector<std::size_t> component_of;
+    urd::Store<urd::sequence<std::size_t>> component_of;
 };
 
 struct StrongComponents
 {
     std::size_t count;
-    std::vector<std::size_t> component_of;
+    urd::Store<urd::sequence<std::size_t>> component_of;
 };
 
 struct ProjectedPolicyComponent
 {
     QualitativePolicy policy;
-    std::vector<std::size_t> memory_positions;
-    std::vector<std::size_t> boolean_positions;
-    std::vector<std::size_t> numerical_positions;
-    std::vector<std::size_t> rule_positions;
+    urd::Store<urd::sequence<std::size_t>> memory_positions;
+    urd::Store<urd::sequence<std::size_t>> boolean_positions;
+    urd::Store<urd::sequence<std::size_t>> numerical_positions;
+    urd::Store<urd::sequence<std::size_t>> rule_positions;
 };
 
 struct SievedPolicyComponent
 {
     ProjectedPolicyComponent projected;
-    std::vector<PolicyEdge> edges;  // Live intra-SCC edges, in expansion order.
+    urd::Store<urd::sequence<PolicyEdge>> edges;  // Live intra-SCC edges, in expansion order.
     SieveResult sieve;
 };
 
-using ComponentSieveResult = std::vector<SievedPolicyComponent>;
+using ComponentSieveResult = urd::Store<urd::sequence<SievedPolicyComponent>>;
 
 struct SccFeaturePositions
 {
-    std::vector<std::size_t> boolean_positions;
-    std::vector<std::size_t> numerical_positions;
+    urd::Store<urd::sequence<std::size_t>> boolean_positions;
+    urd::Store<urd::sequence<std::size_t>> numerical_positions;
 };
 
 struct PolicySieveResult
 {
     ComponentSieveResult components;
-    std::optional<std::vector<SccFeaturePositions>> scc_feature_positions;
+    std::optional<urd::Store<urd::sequence<SccFeaturePositions>>> scc_feature_positions;
 };
 
 template<typename Graph>
-auto surviving_rules(const Graph& graph) -> std::vector<graphs::GraphEdgePropertyType<Graph>>
+auto surviving_rules(const Graph& graph) -> urd::Store<urd::sequence<graphs::GraphEdgePropertyType<Graph>>>
 {
     // Static counterexample graphs already intern exactly their retained edge labels.
     const auto& properties = graph.get_edge_property_map();
-    auto rules = std::vector<graphs::GraphEdgePropertyType<Graph>> {};
+    auto rules = urd::Store<urd::sequence<graphs::GraphEdgePropertyType<Graph>>> {};
     rules.reserve(properties.size());
     for (ygg::uint_t position = 0; position < properties.size(); ++position)
         rules.push_back(properties.get_value(typename Graph::EdgePropertyMapType::Index(position)));
@@ -127,10 +130,10 @@ auto surviving_rules(const Graph& graph) -> std::vector<graphs::GraphEdgePropert
 }
 
 template<runir::kr::FamilyTag Family, typename C, typename BooleanRange, typename NumericalRange>
-auto materialize_scc_results(const std::vector<SccFeaturePositions>& positions, const BooleanRange& booleans, const NumericalRange& numericals)
-    -> std::vector<dl::SccStructuralTerminationResult<Family, C>>
+auto materialize_scc_results(const urd::Store<urd::sequence<SccFeaturePositions>>& positions, const BooleanRange& booleans, const NumericalRange& numericals)
+    -> urd::Store<urd::sequence<dl::SccStructuralTerminationResult<Family, C>>>
 {
-    auto result = std::vector<dl::SccStructuralTerminationResult<Family, C>> {};
+    auto result = urd::Store<urd::sequence<dl::SccStructuralTerminationResult<Family, C>>> {};
     result.reserve(positions.size());
     for (const auto& scc : positions)
     {
@@ -197,7 +200,7 @@ Result materialize_result(Definition definition,
     for (const auto& component : sieve_result.components)
     {
         const auto& projected = component.projected;
-        auto vertex_remap = std::vector<std::size_t>(projected.policy.num_vertices(), std::numeric_limits<std::size_t>::max());
+        auto vertex_remap = urd::Store<urd::sequence<std::size_t>>(projected.policy.num_vertices(), std::numeric_limits<std::size_t>::max());
         const auto map_vertex = [&](std::size_t vertex)
         {
             if (vertex_remap[vertex] == std::numeric_limits<std::size_t>::max())
@@ -216,10 +219,10 @@ Result materialize_result(Definition definition,
     return result;
 }
 
-std::vector<PolicyEdge> build_policy_edges(const QualitativePolicy& policy);
-StrongComponents find_strong_components(const std::vector<PolicyEdge>& edges, std::size_t num_vertices);
-std::vector<ProjectedPolicyComponent> project_policy_components(const QualitativePolicy& policy, std::span<const std::size_t> rule_positions);
-SieveResult sieve_policy_graph(std::vector<PolicyEdge>& edges, const QualitativePolicy& policy);
+urd::Store<urd::sequence<PolicyEdge>> build_policy_edges(const QualitativePolicy& policy);
+StrongComponents find_strong_components(const urd::Store<urd::sequence<PolicyEdge>>& edges, std::size_t num_vertices);
+urd::Store<urd::sequence<ProjectedPolicyComponent>> project_policy_components(const QualitativePolicy& policy, std::span<const std::size_t> rule_positions);
+SieveResult sieve_policy_graph(urd::Store<urd::sequence<PolicyEdge>>& edges, const QualitativePolicy& policy);
 PolicySieveResult sieve_policy(const QualitativePolicy& policy, std::size_t max_features, const IncompletePolicyResult& incomplete_result);
 PolicySieveResult sieve_policy(const QualitativePolicy& policy, std::size_t max_features, bool use_incomplete_preprocessing);
 IncompletePolicyResult incomplete_structural_termination(const QualitativePolicy& policy, bool use_memory_scc_scope = dl::default_use_memory_scc_scope);

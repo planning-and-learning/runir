@@ -3,7 +3,7 @@ find_package(GTest CONFIG REQUIRED PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
 
 add_library(runir_test_fixtures STATIC unit/fixtures.cpp)
 target_include_directories(runir_test_fixtures PUBLIC ${PROJECT_SOURCE_DIR}/tests/unit)
-target_link_libraries(runir_test_fixtures PRIVATE Boost::json)
+target_link_libraries(runir_test_fixtures PRIVATE yggdrasil::yggdrasil Boost::json)
 target_compile_definitions(runir_test_fixtures PRIVATE ROOT_DIR="${PROJECT_SOURCE_DIR}")
 
 function(add_runir_test test_name source_file)
@@ -51,8 +51,6 @@ add_runir_test(runir_kr_dl_incremental_set_operations unit/kr/dl/semantics/incre
 set(RUNIR_KR_DL_GRAMMAR_TYPE_TEST_SOURCES
     unit/kr/dl/grammar/boolean.cpp
     unit/kr/dl/grammar/concept.cpp
-    unit/kr/dl/grammar/constructor.cpp
-    unit/kr/dl/grammar/constructor_or_non_terminal.cpp
     unit/kr/dl/grammar/derivation_rule.cpp
     unit/kr/dl/grammar/grammar.cpp
     unit/kr/dl/grammar/non_terminal.cpp
@@ -64,7 +62,6 @@ add_runir_test(runir_kr_dl_grammar_types "${RUNIR_KR_DL_GRAMMAR_TYPE_TEST_SOURCE
 set(RUNIR_KR_DL_CNF_GRAMMAR_TYPE_TEST_SOURCES
     unit/kr/dl/cnf_grammar/boolean.cpp
     unit/kr/dl/cnf_grammar/concept.cpp
-    unit/kr/dl/cnf_grammar/constructor.cpp
     unit/kr/dl/cnf_grammar/derivation_rule.cpp
     unit/kr/dl/cnf_grammar/grammar.cpp
     unit/kr/dl/cnf_grammar/non_terminal.cpp
@@ -77,15 +74,11 @@ add_runir_test(runir_kr_dl_cnf_grammar_types "${RUNIR_KR_DL_CNF_GRAMMAR_TYPE_TES
 set(RUNIR_KR_PS_TYPE_TEST_SOURCES
     unit/kr/ps/family_traits.cpp
     unit/kr/ps/evaluation_context.cpp
-    unit/kr/ps/base/condition.cpp
-    unit/kr/ps/base/effect.cpp
     unit/kr/ps/base/rule.cpp
     unit/kr/ps/base/sketch.cpp
     unit/kr/ps/base/dl/condition.cpp
     unit/kr/ps/base/dl/effect.cpp
     unit/kr/ps/base/dl/feature.cpp
-    unit/kr/ps/ext/condition.cpp
-    unit/kr/ps/ext/effect.cpp
     unit/kr/ps/ext/execution.cpp
     unit/kr/ps/ext/feature.cpp
     unit/kr/ps/ext/memory_state.cpp

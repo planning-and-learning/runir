@@ -2,6 +2,8 @@
 #define RUNIR_KR_DL_GRAMMAR_PARSER_PARSER_DEF_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/dl/grammar/ast/ast_adapted.hpp"
 #include "runir/kr/dl/grammar/parser/parsers.hpp"
 
@@ -23,7 +25,7 @@ using runir::kr::parser::keyword;
 using ygg::diagnostics::context;
 
 template<runir::kr::dl::CategoryTag Category, typename Tag>
-inline constexpr bool has_ast_constructor_tag_v = ygg::InTypeList<Tag, runir::kr::dl::grammar::ast::AstConstructorTagsT<Category>>;
+inline constexpr bool has_ast_constructor_tag_v = boost::mp11::mp_contains<runir::kr::dl::grammar::ast::AstConstructorTagsT<Category>, Tag>::value;
 
 template<bool Enabled, typename Parser>
     requires boost::spirit::x3::traits::is_parser<Parser>::value
@@ -98,13 +100,13 @@ constexpr auto object_name_string_parser()
 
 constexpr auto object_names_parser()
 {
-    return boost::spirit::x3::rule<class ObjectNamesClass, std::vector<runir::kr::dl::grammar::ast::Identifier>> { "object names" } =
+    return boost::spirit::x3::rule<class ObjectNamesClass, urd::Store<urd::sequence<runir::kr::dl::grammar::ast::Identifier>>> { "object names" } =
                +object_name_string_parser();
 }
 
 constexpr auto query_columns_parser()
 {
-    return boost::spirit::x3::rule<class QueryColumnsClass, std::vector<runir::kr::dl::grammar::ast::Identifier>> { "query columns" } =
+    return boost::spirit::x3::rule<class QueryColumnsClass, urd::Store<urd::sequence<runir::kr::dl::grammar::ast::Identifier>>> { "query columns" } =
                lit("(") > *identifier > lit(")");
 }
 
@@ -117,9 +119,9 @@ template<typename Choice>
     requires boost::spirit::x3::traits::is_parser<Choice>::value && requires { typename Choice::attribute_type; }
 constexpr auto derivation_choices_parser(const Choice& choice)
 {
-    const auto choices = boost::spirit::x3::rule<class DerivationChoiceList, std::vector<typename Choice::attribute_type>> { "constructor alternatives" } =
+    const auto choices = boost::spirit::x3::rule<class DerivationChoiceList, urd::Store<urd::sequence<typename Choice::attribute_type>>> { "constructor alternatives" } =
         choice % keyword("or");
-    return boost::spirit::x3::rule<class DerivationChoices, std::vector<typename Choice::attribute_type>> { "constructor or alternatives" } =
+    return boost::spirit::x3::rule<class DerivationChoices, urd::Store<urd::sequence<typename Choice::attribute_type>>> { "constructor or alternatives" } =
                boost::spirit::x3::repeat(1)[choice] | (lit("(") > choices > lit(")"));
 }
 

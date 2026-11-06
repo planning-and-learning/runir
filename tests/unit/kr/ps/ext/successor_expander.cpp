@@ -1,4 +1,6 @@
 #include "fixtures.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "module_fixtures.hpp"
 #include "planning_fixtures.hpp"
 #include "successor_fixtures.hpp"
@@ -116,20 +118,20 @@ static_assert(
 
 auto create_register(kr::ps::ext::Repository& repository, const std::string& name, ygg::uint_t identifier)
 {
-    auto data = ygg::Data<kr::dl::Register<kr::dl::ConceptTag>>(name, kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(identifier));
+    auto data = urd::data<kr::dl::Register<kr::dl::ConceptTag>>(name, kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(identifier));
     return repository.get_dl_repository().insert(data).first;
 }
 
 template<typename FeatureTag, kr::dl::CategoryTag Category>
-auto create_feature(kr::ps::ext::Repository& repository, ygg::Index<kr::dl::Constructor<Category>> expression, const std::string& name)
+auto create_feature(kr::ps::ext::Repository& repository, urd::index<kr::dl::Constructor<Category>> expression, const std::string& name)
 {
-    auto concrete_data = ygg::Data<kr::ps::ConcreteFeature<kr::ExtFamilyTag, kr::DlTag, FeatureTag>>(expression, name);
+    auto concrete_data = urd::data<kr::ps::ConcreteFeature<kr::ExtFamilyTag, kr::DlTag, FeatureTag>>(expression, name);
     const auto concrete = repository.insert(concrete_data).first;
-    auto feature_data = ygg::Data<kr::ps::Feature<kr::ExtFamilyTag, FeatureTag>>(concrete.get_index());
+    auto feature_data = urd::data<kr::ps::Feature<kr::ExtFamilyTag, FeatureTag>>(concrete.index());
     return repository.insert(feature_data).first;
 }
 
-auto create_concept_feature(kr::ps::ext::Repository& repository, ygg::Index<kr::dl::Constructor<kr::dl::ConceptTag>> expression, const std::string& name)
+auto create_concept_feature(kr::ps::ext::Repository& repository, urd::index<kr::dl::Constructor<kr::dl::ConceptTag>> expression, const std::string& name)
 { return create_feature<kr::dl::ConceptTag>(repository, expression, name); }
 
 template<tyr::TaskKind Kind>
@@ -222,14 +224,14 @@ void expect_module_return_preserves_callee_planning_state()
     {
         const auto moved = move.get_target();
         ASSERT_TRUE(move.planning_successor);
-        ASSERT_NE(moved.get_state().get_index(), initial.get_state().get_index());
+        ASSERT_NE(moved.get_state().index(), initial.get_state().index());
         EXPECT_EQ(move.planning_successor->node.get_state(), moved.get_state().pack());
         const auto returns = collect_steps(expander, moved);
         ASSERT_EQ(returns.size(), 1);
         EXPECT_EQ(returns.front().status, kr::ps::ext::detail::ProgramOutcome::RESTORED_CALLER);
         EXPECT_FALSE(returns.front().planning_successor);
         const auto returned = returns.front().get_target();
-        EXPECT_EQ(returned.get_state().get_index(), moved.get_state().get_index());
+        EXPECT_EQ(returned.get_state().index(), moved.get_state().index());
         EXPECT_EQ(returned.get_module_state().get_module(), suspended_callee->get_module());
         EXPECT_EQ(returned.get_module_state().get_memory_state(), suspended_callee->get_return_memory_state());
         EXPECT_EQ(returned.get_module_state().get_registers(), suspended_callee->get_registers());
@@ -241,14 +243,14 @@ void expect_module_return_preserves_callee_planning_state()
         EXPECT_EQ(outer_returns.front().status, kr::ps::ext::detail::ProgramOutcome::RESTORED_CALLER);
         EXPECT_FALSE(outer_returns.front().planning_successor);
         const auto caller = outer_returns.front().get_target();
-        EXPECT_EQ(caller.get_state().get_index(), moved.get_state().get_index());
+        EXPECT_EQ(caller.get_state().index(), moved.get_state().index());
         EXPECT_EQ(caller.get_module_state().get_module(), suspended->get_module());
         EXPECT_EQ(caller.get_module_state().get_memory_state(), suspended->get_return_memory_state());
         EXPECT_EQ(caller.get_module_state().get_registers(), suspended->get_registers());
         EXPECT_EQ(caller.get_module_state().get_arguments(), suspended->get_arguments());
         EXPECT_FALSE(caller.get_call_stack());
     }
-    EXPECT_EQ(callee.get_state().get_index(), initial.get_state().get_index());
+    EXPECT_EQ(callee.get_state().index(), initial.get_state().index());
 }
 
 template<tyr::TaskKind Kind>
@@ -280,7 +282,7 @@ void expect_borrowed_query_evaluation()
         EXPECT_EQ(kr::ps::evaluate<Kind>(feature, state_context).get_storage_address(), rows.get_storage_address());
         const auto& cached = environment.get_dl_caches().get_queries(false).at(query);
         EXPECT_EQ(rows.get_storage_address(), cached.get_storage_address());
-        EXPECT_EQ(rows.columns().data(), cached.columns().data());
+        EXPECT_EQ(rows.columns().span().data(), cached.columns().span().data());
         EXPECT_TRUE(std::ranges::equal(rows.columns(), query.get_schema()));
 
         const auto successors = search.successor_generator->get_labeled_successor_nodes(initial, *search.state_repository, *search.axiom_evaluator);
@@ -294,13 +296,15 @@ void expect_borrowed_query_evaluation()
         {
             const auto target_rows = kr::ps::evaluate<Kind>(feature, transition.get_target_context());
             ASSERT_EQ(target_rows.size(), 1);
-            EXPECT_NE(ygg::Index<tyr::formalism::Object>(target_rows[0].template get<ygg::uint_t>(size_t { 0 })),
-                      ygg::Index<tyr::formalism::Object>(rows[0].template get<ygg::uint_t>(size_t { 0 })));
+            EXPECT_NE(urd::index<tyr::formalism::Object>(target_rows[0].template get<ygg::uint_t>(size_t { 0 })),
+                      urd::index<tyr::formalism::Object>(rows[0].template get<ygg::uint_t>(size_t { 0 })));
             EXPECT_NE(target_rows.get_storage_address(), rows.get_storage_address());
 
             // The indexed program state supplies bindings; its prepared planning view may use builder storage.
-            const auto prepared_source = ygg::make_view(planning_node.get_state().get_state_builder(), *search.task);
-            const auto prepared_target = ygg::make_view(successors.front().node.get_state().get_state_builder(), *search.task);
+            const auto source_builder = urd::builder<tyr::planning::State<Kind>> { planning_node.get_state().data() };
+            const auto target_builder = urd::builder<tyr::planning::State<Kind>> { successors.front().node.get_state().data() };
+            const auto prepared_source = urd::resolve(source_builder, *search.state_repository);
+            const auto prepared_target = urd::resolve(target_builder, *search.state_repository);
             auto storage = kr::ps::ext::InternedExecutionStorage<Kind>(task_context, program);
             auto evaluators = kr::ps::ext::detail::RuleEvaluators<Kind, kr::dl::semantics::FullEvaluationPolicy<Kind>>(task_context, program);
             auto context = evaluators.make_context(storage, prepared_source);
@@ -308,8 +312,8 @@ void expect_borrowed_query_evaluation()
             static_assert(std::same_as<std::remove_cvref_t<decltype(prepared_context.get_state())>, tyr::planning::BuilderStateView<Kind>>);
             const auto prepared_rows = kr::ps::evaluate<Kind>(feature, prepared_context);
             ASSERT_EQ(prepared_rows.size(), rows.size());
-            EXPECT_EQ(ygg::Index<tyr::formalism::Object>(prepared_rows[0].template get<ygg::uint_t>(size_t { 0 })),
-                      ygg::Index<tyr::formalism::Object>(rows[0].template get<ygg::uint_t>(size_t { 0 })));
+            EXPECT_EQ(urd::index<tyr::formalism::Object>(prepared_rows[0].template get<ygg::uint_t>(size_t { 0 })),
+                      urd::index<tyr::formalism::Object>(rows[0].template get<ygg::uint_t>(size_t { 0 })));
             const auto candidate = tyr::planning::LabeledNode<Kind, tyr::planning::BuilderStateView<Kind>> {
                 successors.front().label,
                 tyr::planning::Node<Kind, tyr::planning::BuilderStateView<Kind>>(prepared_target, successors.front().node.get_metric())
@@ -317,11 +321,11 @@ void expect_borrowed_query_evaluation()
             auto prepared_transition = context.make_dl_transition_context(state, candidate);
             const auto prepared_target_rows = kr::ps::evaluate<Kind>(feature, prepared_transition.get_target_context());
             ASSERT_EQ(prepared_target_rows.size(), target_rows.size());
-            EXPECT_EQ(ygg::Index<tyr::formalism::Object>(prepared_target_rows[0].template get<ygg::uint_t>(size_t { 0 })),
-                      ygg::Index<tyr::formalism::Object>(target_rows[0].template get<ygg::uint_t>(size_t { 0 })));
-            EXPECT_EQ(ygg::Index<tyr::formalism::Object>(
+            EXPECT_EQ(urd::index<tyr::formalism::Object>(prepared_target_rows[0].template get<ygg::uint_t>(size_t { 0 })),
+                      urd::index<tyr::formalism::Object>(target_rows[0].template get<ygg::uint_t>(size_t { 0 })));
+            EXPECT_EQ(urd::index<tyr::formalism::Object>(
                           kr::ps::evaluate<Kind>(feature, prepared_transition.get_source_context())[0].template get<ygg::uint_t>(size_t { 0 })),
-                      ygg::Index<tyr::formalism::Object>(rows[0].template get<ygg::uint_t>(size_t { 0 })));
+                      urd::index<tyr::formalism::Object>(rows[0].template get<ygg::uint_t>(size_t { 0 })));
         }
         EXPECT_TRUE(environment.get_dl_target_caches().get_queries(false).contains(query));
         environment.reset_target();
@@ -388,39 +392,39 @@ void expect_binding_effects_and_empty_choices()
                     {
                         EXPECT_EQ(step.status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
                         const auto target = step.get_target();
-                        EXPECT_EQ(target.get_state().get_index(), initial.get_state().get_index());
+                        EXPECT_EQ(target.get_state().index(), initial.get_state().index());
                         EXPECT_EQ(target.get_module_state().get_memory_state().get_name(), "target");
                         EXPECT_FALSE(step.planning_successor.has_value());
                         ASSERT_TRUE(step.rule);
                         const auto values = target.get_module_state().get_registers();
                         if (role)
                         {
-                            ASSERT_TRUE(values.template get<kr::dl::RoleTag>()[0]);
-                            const auto pair = values.template get<kr::dl::RoleTag>()[0].value();
-                            EXPECT_EQ(pair.get_second().get_name(), "rooma");
+                            ASSERT_TRUE(values.template values<kr::dl::RoleTag>()[0]);
+                            const auto pair = values.template values<kr::dl::RoleTag>()[0].value();
+                            EXPECT_EQ(pair.second.get_name(), "rooma");
                             if (scenario == 1)
                             {
-                                EXPECT_EQ(pair.get_first().get_name(), "ball2");
+                                EXPECT_EQ(pair.first.get_name(), "ball2");
                             }
                         }
                         else
                         {
-                            ASSERT_TRUE(values.template get<kr::dl::ConceptTag>()[0]);
+                            ASSERT_TRUE(values.template values<kr::dl::ConceptTag>()[0]);
                             if (scenario == 1)
                             {
-                                EXPECT_EQ(values.template get<kr::dl::ConceptTag>()[0].value().get_name(), "ball2");
+                                EXPECT_EQ(values.template values<kr::dl::ConceptTag>()[0].value().get_name(), "ball2");
                             }
                         }
                     }
                     const auto applied = expander.apply(initial, *steps.front().rule);
                     ASSERT_TRUE(applied);
-                    EXPECT_EQ(applied->get_target().get_index(), steps.front().get_target().get_index());
+                    EXPECT_EQ(applied->get_target().index(), steps.front().get_target().index());
                 }
                 else if (choose && scenario != 4)
                 {
                     ASSERT_EQ(steps.size(), 1);
                     EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::FAILURE);
-                    EXPECT_EQ(steps.front().get_target().get_index(), initial.get_index());
+                    EXPECT_EQ(steps.front().get_target().index(), initial.index());
                     ASSERT_TRUE(steps.front().rule);
                 }
                 else
@@ -428,9 +432,9 @@ void expect_binding_effects_and_empty_choices()
                     ASSERT_EQ(steps.size(), 1);
                     EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::NO_APPLICABLE_ACTION);
                 }
-                for (const auto value : initial.get_module_state().get_registers().template get<kr::dl::ConceptTag>())
+                for (const auto value : initial.get_module_state().get_registers().template values<kr::dl::ConceptTag>())
                     EXPECT_FALSE(value);
-                for (const auto value : initial.get_module_state().get_registers().template get<kr::dl::RoleTag>())
+                for (const auto value : initial.get_module_state().get_registers().template values<kr::dl::RoleTag>())
                     EXPECT_FALSE(value);
                 EXPECT_EQ(initial.get_module_state().get_memory_state().get_name(), "source");
                 EXPECT_TRUE(collect_steps(expander, initial, false, [] { return true; }).empty());
@@ -484,7 +488,7 @@ void expect_lazy_do_successors()
         {
             size_t count = 0;
             for (const auto action : task_context->search_context->task->get_task().get_domain().get_actions())
-                count += task_context->search_context->task->get_repository()->size(action.get_index());
+                count += task_context->search_context->task->get_repository()->size(action.index());
             return count;
         };
         const auto initial_binding_count = count_bindings();
@@ -538,8 +542,8 @@ void expect_lazy_do_successors()
 
         const auto same_step = [](const auto& left, const auto& right)
         {
-            return left.status == right.status && left.get_target().get_index() == right.get_target().get_index()
-                   && left.rule.has_value() == right.rule.has_value() && (!left.rule || left.rule->get_index() == right.rule->get_index())
+            return left.status == right.status && left.get_target().index() == right.get_target().index()
+                   && left.rule.has_value() == right.rule.has_value() && (!left.rule || left.rule->index() == right.rule->index())
                    && left.planning_successor.has_value() == right.planning_successor.has_value()
                    && (!left.planning_successor.has_value() || left.planning_successor->label == right.planning_successor->label);
         };
@@ -594,12 +598,12 @@ void expect_control_only_steps_do_not_generate_planning_successors()
     for (const auto& step : steps)
     {
         EXPECT_EQ(step.status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
-        EXPECT_EQ(step.get_target().get_state().get_index(), initial.get_state().get_index());
+        EXPECT_EQ(step.get_target().get_state().index(), initial.get_state().index());
         EXPECT_FALSE(step.planning_successor.has_value());
         ASSERT_TRUE(step.rule);
         const auto applied = expander.apply(initial, step.rule.value());
         ASSERT_TRUE(applied);
-        EXPECT_EQ(applied.value().get_target().get_index(), step.get_target().get_index());
+        EXPECT_EQ(applied.value().get_target().index(), step.get_target().index());
         if (step.get_target().get_module_state().get_memory_state().get_name() == "skipped")
         {
             EXPECT_FALSE(expander.apply(step.get_target(), step.rule.value()));
@@ -644,7 +648,7 @@ TEST(RunirTests, ExtDistanceFeatureEvaluationDoesNotRetainTaskDenotations)
 
     const auto second = collect_steps(expander, initial_state);
     ASSERT_EQ(second.size(), 1);
-    EXPECT_EQ(second.front().get_target().get_index(), first.front().get_target().get_index());
+    EXPECT_EQ(second.front().get_target().index(), first.front().get_target().index());
     EXPECT_EQ(task_context->dl_denotation_repository->size<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>(), 0);
     EXPECT_EQ(initial_state.get_module_state().get_memory_state().get_name(), "source");
 }
@@ -679,37 +683,37 @@ TEST(RunirTests, ExtTransientProgramStatesRetainValuesAndInternCallers)
         ASSERT_EQ(bindings.size(), 2);
 
         const auto outer_caller = storage.save_caller(storage.view(initial), outer_return);
-        EXPECT_EQ(storage.save_caller(storage.view(initial), outer_return).get_index(), outer_caller.get_index());
+        EXPECT_EQ(storage.save_caller(storage.view(initial), outer_return).index(), outer_caller.index());
         EXPECT_EQ(executions.template size<kr::ps::ext::CallStack>(), 1);
         const auto initial_module = storage.view(initial).get_module_state();
         const auto callee = storage.store(source, module_, entry, initial_module.get_registers(), initial_module.get_arguments(), outer_caller);
         const auto inner_caller = storage.save_caller(storage.view(callee), inner_return);
-        EXPECT_EQ(storage.save_caller(storage.view(callee), inner_return).get_index(), inner_caller.get_index());
+        EXPECT_EQ(storage.save_caller(storage.view(callee), inner_return).index(), inner_caller.index());
         EXPECT_EQ(executions.template size<kr::ps::ext::CallStack>(), 2);
         ASSERT_TRUE(inner_caller.get_caller());
-        EXPECT_EQ(inner_caller.get_caller()->get_index(), outer_caller.get_index());
+        EXPECT_EQ(inner_caller.get_caller()->index(), outer_caller.index());
         EXPECT_FALSE(outer_caller.get_caller());
 
         const auto first = storage.successor(source, bindings.front());
-        const auto scratch = &first.get_state().get_state_builder();
+        const auto scratch = &first.get_state().data();
         const auto expected = *scratch;
         const auto retained = storage.store(first.get_state(), module_, entry, initial_module.get_registers(), initial_module.get_arguments(), inner_caller);
         ASSERT_TRUE(retained->call_stack);
-        EXPECT_EQ(*retained->call_stack, inner_caller.get_index());
+        EXPECT_EQ(*retained->call_stack, inner_caller.index());
 
         // Generating another candidate overwrites scratch, but not the accepted program state.
         const auto second = storage.successor(source, bindings.back());
-        EXPECT_EQ(&second.get_state().get_state_builder(), scratch);
-        EXPECT_TRUE(ygg::EqualTo<ygg::Builder<tyr::planning::State<Kind>>> {}(retained->module_state.state, expected));
-        EXPECT_FALSE(ygg::EqualTo<ygg::Builder<tyr::planning::State<Kind>>> {}(retained->module_state.state, second.get_state().get_state_builder()));
-        EXPECT_TRUE(ygg::EqualTo<ygg::Builder<tyr::planning::State<Kind>>> {}(initial->module_state.state, initial_node.get_state().get_state_builder()));
+        EXPECT_EQ(&second.get_state().data(), scratch);
+        EXPECT_TRUE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(retained->module_state.state, expected));
+        EXPECT_FALSE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(retained->module_state.state, second.get_state().data()));
+        EXPECT_TRUE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(initial->module_state.state, urd::builder<tyr::planning::State<Kind>> { initial_node.get_state().data() }));
 
         const auto copy = storage.retain(storage.view(retained));
         ASSERT_TRUE(copy->call_stack);
-        EXPECT_EQ(*copy->call_stack, inner_caller.get_index());
+        EXPECT_EQ(*copy->call_stack, inner_caller.index());
         const auto caller = storage.view(copy).get_call_stack();
         ASSERT_TRUE(caller);
-        EXPECT_EQ(caller->get_index(), inner_caller.get_index());
+        EXPECT_EQ(caller->index(), inner_caller.index());
         const auto returned = storage.store(storage.view(copy).get_state(),
                                             caller->get_module(),
                                             caller->get_return_memory_state(),
@@ -717,57 +721,57 @@ TEST(RunirTests, ExtTransientProgramStatesRetainValuesAndInternCallers)
                                             caller->get_arguments(),
                                             caller->get_caller());
         ASSERT_TRUE(returned->call_stack);
-        EXPECT_EQ(*returned->call_stack, outer_caller.get_index());
-        EXPECT_TRUE(ygg::EqualTo<kr::ps::ext::MemoryStateView> {}(storage.view(returned).get_module_state().get_memory_state(), inner_return));
+        EXPECT_EQ(*returned->call_stack, outer_caller.index());
+        EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(storage.view(returned).get_module_state().get_memory_state(), inner_return));
 
         const auto materialized = storage.materialize(storage.view(retained));
         const auto materialized_inner = materialized.get_call_stack();
         ASSERT_TRUE(materialized_inner);
-        EXPECT_EQ(materialized_inner->get_index(), inner_caller.get_index());
-        EXPECT_TRUE(ygg::EqualTo<kr::ps::ext::MemoryStateView> {}(materialized_inner->get_return_memory_state(), inner_return));
+        EXPECT_EQ(materialized_inner->index(), inner_caller.index());
+        EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(materialized_inner->get_return_memory_state(), inner_return));
         const auto materialized_outer = materialized_inner->get_caller();
         ASSERT_TRUE(materialized_outer);
-        EXPECT_EQ(materialized_outer->get_index(), outer_caller.get_index());
-        EXPECT_TRUE(ygg::EqualTo<kr::ps::ext::MemoryStateView> {}(materialized_outer->get_return_memory_state(), outer_return));
+        EXPECT_EQ(materialized_outer->index(), outer_caller.index());
+        EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(materialized_outer->get_return_memory_state(), outer_return));
         EXPECT_FALSE(materialized_outer->get_caller());
         EXPECT_EQ(executions.template size<kr::ps::ext::CallStack>(), 2);
 
         // Reusing a released slot must replace its values without replacing its buffers.
         auto planning_values = expected;
         planning_values.get_numeric_variables().values = { 3.0 };
-        const auto planning = ygg::make_view(planning_values, *search.task);
-        auto register_values = ygg::Data<kr::dl::semantics::RegisterValues>();
-        register_values.concept_values.emplace_back(ygg::Index<tyr::formalism::Object>(0));
-        register_values.role_values.emplace_back(::cista::pair { ygg::Index<tyr::formalism::Object>(0), ygg::Index<tyr::formalism::Object>(1) });
+        const auto planning = urd::resolve(planning_values, *search.state_repository);
+        auto register_values = urd::data<kr::dl::semantics::RegisterValues>();
+        register_values.concept_values.emplace_back(urd::index<tyr::formalism::Object>(0));
+        register_values.role_values.emplace_back(::cista::pair { urd::index<tyr::formalism::Object>(0), urd::index<tyr::formalism::Object>(1) });
         const auto registers = storage.registers(register_values);
         auto recycled = storage.store(planning, module_, inner_return, registers, initial_module.get_arguments(), inner_caller);
         const auto* slot = recycled.get();
-        const auto numeric_buffer = recycled->module_state.state.get_numeric_variables().values.data();
+        const auto numeric_buffer = std::ranges::data(recycled->module_state.state.get_numeric_variables().values);
         const auto numeric_capacity = recycled->module_state.state.get_numeric_variables().values.capacity();
         const auto concept_buffer = recycled->module_state.registers.concept_values.data();
         const auto concept_capacity = recycled->module_state.registers.concept_values.allocated_size_;
         const auto role_buffer = recycled->module_state.registers.role_values.data();
         const auto role_capacity = recycled->module_state.registers.role_values.allocated_size_;
         recycled = {};
-        planning_values = initial_node.get_state().get_state_builder();
+        planning_values.assign(initial_node.get_state().data());
         planning_values.get_numeric_variables().values = { 4.0 };
-        register_values.concept_values.front() = ygg::Index<tyr::formalism::Object>(1);
-        register_values.role_values.front().value().first = ygg::Index<tyr::formalism::Object>(1);
-        register_values.role_values.front().value().second = ygg::Index<tyr::formalism::Object>(0);
+        register_values.concept_values.front() = urd::index<tyr::formalism::Object>(1);
+        register_values.role_values.front().value().first = urd::index<tyr::formalism::Object>(1);
+        register_values.role_values.front().value().second = urd::index<tyr::formalism::Object>(0);
         const auto reused = storage.store(planning, module_, entry, registers, initial_module.get_arguments(), {});
         EXPECT_EQ(reused.get(), slot);
-        EXPECT_EQ(reused->module_state.state.get_numeric_variables().values.data(), numeric_buffer);
+        EXPECT_EQ(std::ranges::data(reused->module_state.state.get_numeric_variables().values), numeric_buffer);
         EXPECT_EQ(reused->module_state.state.get_numeric_variables().values.capacity(), numeric_capacity);
         EXPECT_EQ(reused->module_state.registers.concept_values.data(), concept_buffer);
         EXPECT_EQ(reused->module_state.registers.concept_values.allocated_size_, concept_capacity);
         EXPECT_EQ(reused->module_state.registers.role_values.data(), role_buffer);
         EXPECT_EQ(reused->module_state.registers.role_values.allocated_size_, role_capacity);
         EXPECT_EQ(reused->module_state.state.get_numeric_variables().values.front(), 4.0);
-        EXPECT_TRUE(ygg::EqualTo<ygg::Data<kr::dl::semantics::RegisterValues>> {}(reused->module_state.registers, register_values));
+        EXPECT_TRUE(urd::EqualTo<urd::data<kr::dl::semantics::RegisterValues>> {}(reused->module_state.registers, register_values));
         EXPECT_FALSE(storage.view(reused).get_call_stack());
-        EXPECT_EQ(storage.view(reused).get_module_state().get_memory_state().get_index(), entry.get_index());
-        EXPECT_TRUE(ygg::EqualTo<ygg::Builder<tyr::planning::State<Kind>>> {}(reused->module_state.state, planning_values));
-        EXPECT_TRUE(ygg::EqualTo<ygg::Builder<tyr::planning::State<Kind>>> {}(retained->module_state.state, expected));
+        EXPECT_EQ(storage.view(reused).get_module_state().get_memory_state().index(), entry.index());
+        EXPECT_TRUE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(reused->module_state.state, planning_values));
+        EXPECT_TRUE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(retained->module_state.state, expected));
     };
     check.template operator()<tyr::GroundTag>();
     check.template operator()<tyr::LiftedTag>();
@@ -804,7 +808,7 @@ TEST(RunirTests, ExtChooseUsesNaturalBindingOrder)
     const auto node = initial_planning_node(expander);
     const auto state = expander.initial_state(node.get_state());
     auto statistics = kr::ps::ext::ProgramSearchStatistics {};
-    auto counts = std::vector<std::size_t> {};
+    auto counts = urd::Store<urd::sequence<std::size_t>> {};
     ASSERT_TRUE(expander.for_each_successor(
         state,
         statistics,
@@ -833,7 +837,7 @@ TEST(RunirTests, ExtChooseUsesNaturalBindingOrder)
         [] { return false; }));
     EXPECT_EQ(statistics.num_generated, 0);
     std::ranges::sort(counts);
-    EXPECT_EQ(counts, (std::vector<std::size_t> { 0, 0, 1, 1, 2, 2 }));
+    EXPECT_EQ(counts, (urd::Store<urd::sequence<std::size_t>> { 0, 0, 1, 1, 2, 2 }));
 }
 
 TEST(RunirTests, ExtChoicesRetainBindingsAcrossChildEvaluationAndPoolReuse)
@@ -864,7 +868,7 @@ TEST(RunirTests, ExtChoicesRetainBindingsAcrossChildEvaluationAndPoolReuse)
         auto statistics = kr::ps::ext::ProgramSearchStatistics {};
         const auto choices = [&](const auto& state)
         {
-            auto result = std::vector<Choice> {};
+            auto result = urd::Store<urd::sequence<Choice>> {};
             EXPECT_TRUE(expander.for_each_successor(
                 expander.view(state),
                 statistics,
@@ -906,7 +910,7 @@ TEST(RunirTests, ExtChoicesRetainBindingsAcrossChildEvaluationAndPoolReuse)
         for (const auto binding : expected)
         {
             const auto target = expander.apply_choice(expander.view(initial), parent.front(), statistics).get_target();
-            const auto selected = expander.view(target).get_module_state().get_registers().template get<kr::dl::ConceptTag>()[0];
+            const auto selected = expander.view(target).get_module_state().get_registers().template values<kr::dl::ConceptTag>()[0];
             ASSERT_TRUE(selected);
             EXPECT_EQ(*selected, binding);
             parent.front().advance();
@@ -960,27 +964,27 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     const auto target = create_memory_state(*repository, "target");
     const auto reg = create_register(*repository, "r0", 0);
     const auto top_concept = create_top_concept(*dl_repository);
-    const auto top_feature = create_concept_feature(*repository, top_concept.get_index(), "top");
+    const auto top_feature = create_concept_feature(*repository, top_concept.index(), "top");
 
-    auto load_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::LoadTag<kr::dl::ConceptTag>>>();
-    load_data.source = source.get_index();
-    load_data.target = target.get_index();
-    load_data.feature = top_feature.get_index();
-    load_data.reg = reg.get_index();
+    auto load_data = urd::data<kr::ps::ext::Rule<kr::ps::ext::LoadTag<kr::dl::ConceptTag>>>();
+    load_data.source = source.index();
+    load_data.target = target.index();
+    load_data.feature = top_feature.index();
+    load_data.reg = reg.index();
     kr::ps::ext::canonicalize(load_data);
     const auto load = repository->insert(load_data).first;
 
-    auto variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>("", load.get_index());
+    auto variant_data = urd::data<kr::ps::Rule<kr::ExtFamilyTag>>("", load.index());
     const auto variant = repository->insert(variant_data).first;
 
     auto module_data = make_module_data(*repository, "module");
-    module_data.entry_memory_state = source.get_index();
-    module_data.memory_states.push_back(source.get_index());
-    module_data.memory_states.push_back(target.get_index());
-    module_data.concept_registers.push_back(reg.get_index());
-    module_data.concept_features.push_back(top_feature.get_index());
-    auto transition = ygg::IndexList<kr::ps::Rule<kr::ExtFamilyTag>>();
-    transition.push_back(variant.get_index());
+    module_data.entry_memory_state = source.index();
+    module_data.memory_states.push_back(source.index());
+    module_data.memory_states.push_back(target.index());
+    module_data.concept_registers.push_back(reg.index());
+    module_data.concept_features.push_back(top_feature.index());
+    auto transition = urd::flat_vector<urd::index<kr::ps::Rule<kr::ExtFamilyTag>>>();
+    transition.push_back(variant.index());
     ygg::canonicalize(transition);
     module_data.memory_transitions.push_back(std::move(transition));
     kr::ps::ext::canonicalize(module_data);
@@ -1005,11 +1009,11 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     {
         EXPECT_EQ(step.status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
         const auto target_state = step.get_target();
-        EXPECT_EQ(target_state.get_state().get_index(), initial_state.get_state().get_index());
-        EXPECT_EQ(target_state.get_module_state().get_memory_state().get_index(), target.get_index());
-        const auto loaded = target_state.get_module_state().get_registers().template get<kr::dl::ConceptTag>()[0];
+        EXPECT_EQ(target_state.get_state().index(), initial_state.get_state().index());
+        EXPECT_EQ(target_state.get_module_state().get_memory_state().index(), target.index());
+        const auto loaded = target_state.get_module_state().get_registers().template values<kr::dl::ConceptTag>()[0];
         ASSERT_TRUE(loaded);
-        loaded_objects.insert(static_cast<ygg::uint_t>(loaded.value().get_index()));
+        loaded_objects.insert(static_cast<ygg::uint_t>(loaded.value().index().value));
     }
     EXPECT_EQ(loaded_objects.size(), steps.size());
 
@@ -1025,11 +1029,11 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
 
     const auto edge = greedy.graph->get_out_edge_indices(0).front();
     const auto selected = greedy.graph->get_vertex(greedy.graph->get_target(edge)).get_property().program_state;
-    const auto actual_loaded = selected.get_module_state().get_registers().template get<kr::dl::ConceptTag>()[0];
-    const auto expected_loaded = steps.front().get_target().get_module_state().get_registers().template get<kr::dl::ConceptTag>()[0];
+    const auto actual_loaded = selected.get_module_state().get_registers().template values<kr::dl::ConceptTag>()[0];
+    const auto expected_loaded = steps.front().get_target().get_module_state().get_registers().template values<kr::dl::ConceptTag>()[0];
     ASSERT_TRUE(actual_loaded);
     ASSERT_TRUE(expected_loaded);
-    EXPECT_EQ(actual_loaded.value().get_index(), expected_loaded.value().get_index());
+    EXPECT_EQ(actual_loaded.value().index(), expected_loaded.value().index());
 
     auto options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
     options.max_num_states = 1;
@@ -1075,12 +1079,12 @@ TEST(RunirTests, ExtRoleLoadRuleEnumeratesAllPairsAndAdvancesMemory)
     {
         EXPECT_EQ(step.status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
         const auto target_state = step.get_target();
-        EXPECT_EQ(target_state.get_state().get_index(), initial_state.get_state().get_index());
+        EXPECT_EQ(target_state.get_state().index(), initial_state.get_state().index());
         EXPECT_EQ(target_state.get_module_state().get_memory_state().get_name(), "target");
-        const auto loaded = target_state.get_module_state().get_registers().template get<kr::dl::RoleTag>()[0];
+        const auto loaded = target_state.get_module_state().get_registers().template values<kr::dl::RoleTag>()[0];
         ASSERT_TRUE(loaded);
         const auto pair = loaded.value();
-        loaded_pairs.emplace(static_cast<ygg::uint_t>(pair.get_first().get_index()), static_cast<ygg::uint_t>(pair.get_second().get_index()));
+        loaded_pairs.emplace(static_cast<ygg::uint_t>(pair.first.index().value), static_cast<ygg::uint_t>(pair.second.index().value));
     }
     EXPECT_EQ(loaded_pairs.size(), steps.size());
 }
@@ -1155,22 +1159,22 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     const auto caller_entry = create_memory_state(*repository, "caller_entry");
     const auto caller_return = create_memory_state(*repository, "caller_return");
     const auto callee_entry = create_memory_state(*repository, "callee_entry");
-    auto concept_arg_data = ygg::Data<kr::dl::Argument<kr::dl::ConceptTag>>(std::string("x"), kr::dl::ArgumentIdentifier<kr::dl::ConceptTag>(0));
+    auto concept_arg_data = urd::data<kr::dl::Argument<kr::dl::ConceptTag>>(std::string("x"), kr::dl::ArgumentIdentifier<kr::dl::ConceptTag>(0));
     const auto concept_arg = dl_repository->insert(concept_arg_data).first;
-    auto role_arg_data = ygg::Data<kr::dl::Argument<kr::dl::RoleTag>>(std::string("r"), kr::dl::ArgumentIdentifier<kr::dl::RoleTag>(0));
+    auto role_arg_data = urd::data<kr::dl::Argument<kr::dl::RoleTag>>(std::string("r"), kr::dl::ArgumentIdentifier<kr::dl::RoleTag>(0));
     const auto role_arg = dl_repository->insert(role_arg_data).first;
-    auto boolean_arg_data = ygg::Data<kr::dl::Argument<kr::dl::BooleanTag>>(std::string("b"), kr::dl::ArgumentIdentifier<kr::dl::BooleanTag>(0));
+    auto boolean_arg_data = urd::data<kr::dl::Argument<kr::dl::BooleanTag>>(std::string("b"), kr::dl::ArgumentIdentifier<kr::dl::BooleanTag>(0));
     const auto boolean_arg = dl_repository->insert(boolean_arg_data).first;
-    auto numerical_arg_data = ygg::Data<kr::dl::Argument<kr::dl::NumericalTag>>(std::string("n"), kr::dl::ArgumentIdentifier<kr::dl::NumericalTag>(0));
+    auto numerical_arg_data = urd::data<kr::dl::Argument<kr::dl::NumericalTag>>(std::string("n"), kr::dl::ArgumentIdentifier<kr::dl::NumericalTag>(0));
     const auto numerical_arg = dl_repository->insert(numerical_arg_data).first;
 
     auto callee_data = make_module_data(*repository, "callee");
-    callee_data.entry_memory_state = callee_entry.get_index();
-    callee_data.memory_states.push_back(callee_entry.get_index());
-    callee_data.concept_arguments.push_back(concept_arg.get_index());
-    callee_data.role_arguments.push_back(role_arg.get_index());
-    callee_data.boolean_arguments.push_back(boolean_arg.get_index());
-    callee_data.numerical_arguments.push_back(numerical_arg.get_index());
+    callee_data.entry_memory_state = callee_entry.index();
+    callee_data.memory_states.push_back(callee_entry.index());
+    callee_data.concept_arguments.push_back(concept_arg.index());
+    callee_data.role_arguments.push_back(role_arg.index());
+    callee_data.boolean_arguments.push_back(boolean_arg.index());
+    callee_data.numerical_arguments.push_back(numerical_arg.index());
     kr::ps::ext::canonicalize(callee_data);
     const auto callee = repository->insert(callee_data).first;
 
@@ -1184,33 +1188,33 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
         kr::ps::ext::dl::parse_numerical(read_fixture("kr/ps/ext/executor/ext_module_parser_lowers_ext_dl_concept_and_role_expressions/case_7.dsl"),
                                          task->get_domain().get_domain(),
                                          *dl_repository);
-    auto call_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::CallTag>>();
-    call_data.source = caller_entry.get_index();
-    call_data.target = caller_return.get_index();
-    const auto top_feature = create_feature<kr::dl::ConceptTag>(*repository, top_concept.get_index(), "top");
-    const auto universal_feature = create_feature<kr::dl::RoleTag>(*repository, universal_role.get_index(), "universal");
-    const auto true_feature = create_feature<kr::dl::BooleanTag>(*repository, true_boolean.get_index(), "true");
-    const auto count_feature = create_feature<kr::dl::NumericalTag>(*repository, object_count.get_index(), "count");
-    call_data.callee = callee.get_symbol().get_index();
-    call_data.arguments.push_back(top_feature.get_index());
-    call_data.arguments.push_back(universal_feature.get_index());
-    call_data.arguments.push_back(true_feature.get_index());
-    call_data.arguments.push_back(count_feature.get_index());
+    auto call_data = urd::data<kr::ps::ext::Rule<kr::ps::ext::CallTag>>();
+    call_data.source = caller_entry.index();
+    call_data.target = caller_return.index();
+    const auto top_feature = create_feature<kr::dl::ConceptTag>(*repository, top_concept.index(), "top");
+    const auto universal_feature = create_feature<kr::dl::RoleTag>(*repository, universal_role.index(), "universal");
+    const auto true_feature = create_feature<kr::dl::BooleanTag>(*repository, true_boolean.index(), "true");
+    const auto count_feature = create_feature<kr::dl::NumericalTag>(*repository, object_count.index(), "count");
+    call_data.callee = callee.get_symbol().index();
+    call_data.arguments.push_back(top_feature.index());
+    call_data.arguments.push_back(universal_feature.index());
+    call_data.arguments.push_back(true_feature.index());
+    call_data.arguments.push_back(count_feature.index());
     kr::ps::ext::canonicalize(call_data);
     const auto call = repository->insert(call_data).first;
 
-    auto variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>("", call.get_index());
+    auto variant_data = urd::data<kr::ps::Rule<kr::ExtFamilyTag>>("", call.index());
     const auto variant = repository->insert(variant_data).first;
     auto caller_data = make_module_data(*repository, "caller");
-    caller_data.entry_memory_state = caller_entry.get_index();
-    caller_data.memory_states.push_back(caller_entry.get_index());
-    caller_data.memory_states.push_back(caller_return.get_index());
-    caller_data.concept_features.push_back(top_feature.get_index());
-    caller_data.role_features.push_back(universal_feature.get_index());
-    caller_data.boolean_features.push_back(true_feature.get_index());
-    caller_data.numerical_features.push_back(count_feature.get_index());
-    auto transition = ygg::IndexList<kr::ps::Rule<kr::ExtFamilyTag>> {};
-    transition.push_back(variant.get_index());
+    caller_data.entry_memory_state = caller_entry.index();
+    caller_data.memory_states.push_back(caller_entry.index());
+    caller_data.memory_states.push_back(caller_return.index());
+    caller_data.concept_features.push_back(top_feature.index());
+    caller_data.role_features.push_back(universal_feature.index());
+    caller_data.boolean_features.push_back(true_feature.index());
+    caller_data.numerical_features.push_back(count_feature.index());
+    auto transition = urd::flat_vector<urd::index<kr::ps::Rule<kr::ExtFamilyTag>>> {};
+    transition.push_back(variant.index());
     ygg::canonicalize(transition);
     caller_data.memory_transitions.push_back(std::move(transition));
     kr::ps::ext::canonicalize(caller_data);
@@ -1225,13 +1229,13 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     EXPECT_EQ(call_steps.front().status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
     const auto call_target = call_steps.front().get_target();
     const auto module_state = call_target.get_module_state();
-    EXPECT_EQ(module_state.get_module().get_index(), callee.get_index());
-    EXPECT_EQ(module_state.get_memory_state().get_index(), callee_entry.get_index());
+    EXPECT_EQ(module_state.get_module().index(), callee.index());
+    EXPECT_EQ(module_state.get_memory_state().index(), callee_entry.index());
     const auto arguments = module_state.get_arguments();
-    const auto concept_arguments = arguments.get<kr::dl::ConceptTag>();
-    const auto role_arguments = arguments.get<kr::dl::RoleTag>();
-    const auto boolean_arguments = arguments.get<kr::dl::BooleanTag>();
-    const auto numerical_arguments = arguments.get<kr::dl::NumericalTag>();
+    const auto concept_arguments = arguments.arguments<kr::dl::ConceptTag>();
+    const auto role_arguments = arguments.arguments<kr::dl::RoleTag>();
+    const auto boolean_arguments = arguments.arguments<kr::dl::BooleanTag>();
+    const auto numerical_arguments = arguments.arguments<kr::dl::NumericalTag>();
     ASSERT_EQ(concept_arguments.size(), 1);
     ASSERT_EQ(role_arguments.size(), 1);
     ASSERT_EQ(boolean_arguments.size(), 1);
@@ -1240,36 +1244,36 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     const auto concept_denotation = concept_arguments[0];
     const auto concept_first = concept_denotation.begin();
     ASSERT_NE(concept_first, concept_denotation.end());
-    EXPECT_EQ((*concept_first).get_index(), ygg::Index<tyr::formalism::Object>(0));
+    EXPECT_EQ((*concept_first).index(), urd::index<tyr::formalism::Object>(0));
 
     const auto role_denotation = role_arguments[0];
     const auto role_first = role_denotation.begin();
     ASSERT_NE(role_first, role_denotation.end());
     const auto role_pair = *role_first;
-    EXPECT_EQ(role_pair.first.get_index(), ygg::Index<tyr::formalism::Object>(0));
-    EXPECT_EQ(role_pair.second.get_index(), ygg::Index<tyr::formalism::Object>(0));
+    EXPECT_EQ(role_pair.first.index(), urd::index<tyr::formalism::Object>(0));
+    EXPECT_EQ(role_pair.second.index(), urd::index<tyr::formalism::Object>(0));
 
-    EXPECT_TRUE(boolean_arguments[0].get());
-    EXPECT_GT(numerical_arguments[0].get(), 0);
+    EXPECT_TRUE(boolean_arguments[0].value());
+    EXPECT_GT(numerical_arguments[0].value(), 0);
 
     // Contexts borrow the persistent data; preparing another context does not replace it.
     auto environment = kr::ps::ext::EvaluationEnvironment<tyr::GroundTag, kr::dl::semantics::FullEvaluationPolicy<tyr::GroundTag>>(*task_context, program);
     auto evaluation_context = environment.make_dl_context(call_target);
     const auto initial_context = environment.make_dl_context(initial_state);
-    EXPECT_TRUE(initial_context.arguments().template get<kr::dl::ConceptTag>().empty());
-    EXPECT_EQ(&evaluation_context.arguments().get_data(), &arguments.get_data());
-    EXPECT_EQ(&evaluation_context.registers().get_data(), &module_state.get_registers().get_data());
-    EXPECT_EQ(evaluation_context.arguments().template get<kr::dl::ConceptTag>()[0].get_index(), concept_arguments[0].get_index());
-    EXPECT_TRUE(evaluation_context.arguments().template get<kr::dl::BooleanTag>()[0].get());
-    EXPECT_EQ(evaluation_context.arguments().template get<kr::dl::NumericalTag>()[0].get(), numerical_arguments[0].get());
+    EXPECT_TRUE(initial_context.arguments().template arguments<kr::dl::ConceptTag>().empty());
+    EXPECT_EQ(&evaluation_context.arguments().data(), &arguments.data());
+    EXPECT_EQ(&evaluation_context.registers().data(), &module_state.get_registers().data());
+    EXPECT_EQ(evaluation_context.arguments().template arguments<kr::dl::ConceptTag>()[0].index(), concept_arguments[0].index());
+    EXPECT_TRUE(evaluation_context.arguments().template arguments<kr::dl::BooleanTag>()[0].value());
+    EXPECT_EQ(evaluation_context.arguments().template arguments<kr::dl::NumericalTag>()[0].value(), numerical_arguments[0].value());
 
     auto evaluation_transition = environment.make_dl_transition_context(call_target.get_state(),
                                                                         call_target.get_state(),
                                                                         arguments,
                                                                         module_state.get_registers(),
                                                                         module_state.get_registers());
-    EXPECT_EQ(&evaluation_transition.get_source_context().arguments().get_data(), &arguments.get_data());
-    EXPECT_EQ(&evaluation_transition.get_target_context().arguments().get_data(), &arguments.get_data());
+    EXPECT_EQ(&evaluation_transition.get_source_context().arguments().data(), &arguments.data());
+    EXPECT_EQ(&evaluation_transition.get_target_context().arguments().data(), &arguments.data());
 
     const auto caller_frame = call_target.get_call_stack();
     ASSERT_TRUE(caller_frame);
@@ -1277,12 +1281,12 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     ASSERT_EQ(return_steps.size(), 1);
     EXPECT_EQ(return_steps.front().status, kr::ps::ext::detail::ProgramOutcome::RESTORED_CALLER);
     EXPECT_EQ(return_steps.front().get_target().get_call_stack(), caller_frame.value().get_caller());
-    EXPECT_EQ(return_steps.front().get_target().get_module_state().get_module().get_index(), caller.get_index());
-    EXPECT_EQ(return_steps.front().get_target().get_module_state().get_memory_state().get_index(), caller_return.get_index());
+    EXPECT_EQ(return_steps.front().get_target().get_module_state().get_module().index(), caller.index());
+    EXPECT_EQ(return_steps.front().get_target().get_module_state().get_memory_state().index(), caller_return.index());
 
     const auto repeated_call_steps = collect_steps(expander, initial_state);
     ASSERT_EQ(repeated_call_steps.size(), 1);
-    EXPECT_EQ(repeated_call_steps.front().get_target().get_index(), call_target.get_index());
+    EXPECT_EQ(repeated_call_steps.front().get_target().index(), call_target.index());
 }
 
 TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
@@ -1299,21 +1303,21 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
     const auto callee_entry = create_memory_state(*repository, "callee_entry");
     const auto callee = create_module(*repository, "callee", callee_entry, { callee_entry });
 
-    auto call_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::CallTag>>();
-    call_data.source = caller_entry.get_index();
-    call_data.target = caller_return.get_index();
-    call_data.callee = callee.get_symbol().get_index();
+    auto call_data = urd::data<kr::ps::ext::Rule<kr::ps::ext::CallTag>>();
+    call_data.source = caller_entry.index();
+    call_data.target = caller_return.index();
+    call_data.callee = callee.get_symbol().index();
     kr::ps::ext::canonicalize(call_data);
     const auto call = repository->insert(call_data).first;
 
-    auto variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>("", call.get_index());
+    auto variant_data = urd::data<kr::ps::Rule<kr::ExtFamilyTag>>("", call.index());
     const auto variant = repository->insert(variant_data).first;
     auto caller_data = make_module_data(*repository, "caller");
-    caller_data.entry_memory_state = caller_entry.get_index();
-    caller_data.memory_states.push_back(caller_entry.get_index());
-    caller_data.memory_states.push_back(caller_return.get_index());
-    auto transition = ygg::IndexList<kr::ps::Rule<kr::ExtFamilyTag>> {};
-    transition.push_back(variant.get_index());
+    caller_data.entry_memory_state = caller_entry.index();
+    caller_data.memory_states.push_back(caller_entry.index());
+    caller_data.memory_states.push_back(caller_return.index());
+    auto transition = urd::flat_vector<urd::index<kr::ps::Rule<kr::ExtFamilyTag>>> {};
+    transition.push_back(variant.index());
     ygg::canonicalize(transition);
     caller_data.memory_transitions.push_back(std::move(transition));
     kr::ps::ext::canonicalize(caller_data);
@@ -1325,8 +1329,8 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
     const auto steps = collect_steps(expander, expander.initial_state(planning_node.get_state()));
     ASSERT_EQ(steps.size(), 1);
     EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
-    EXPECT_EQ(steps.front().get_target().get_module_state().get_module().get_index(), callee.get_index());
-    EXPECT_EQ(steps.front().get_target().get_module_state().get_memory_state().get_index(), callee_entry.get_index());
+    EXPECT_EQ(steps.front().get_target().get_module_state().get_module().index(), callee.index());
+    EXPECT_EQ(steps.front().get_target().get_module_state().get_memory_state().index(), callee_entry.index());
 }
 
 TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
@@ -1342,38 +1346,38 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     const auto target = create_memory_state(*repository, "target");
     const auto ball_feature =
         create_concept_feature(*repository,
-                               kr::ps::ext::dl::parse_concept("(c_atomic_state \"ball\")", task->get_domain().get_domain(), *dl_repository).get_index(),
+                               kr::ps::ext::dl::parse_concept("(c_atomic_state \"ball\")", task->get_domain().get_domain(), *dl_repository).index(),
                                "ball");
     const auto room_feature =
         create_concept_feature(*repository,
-                               kr::ps::ext::dl::parse_concept("(c_atomic_state \"room\")", task->get_domain().get_domain(), *dl_repository).get_index(),
+                               kr::ps::ext::dl::parse_concept("(c_atomic_state \"room\")", task->get_domain().get_domain(), *dl_repository).index(),
                                "room");
     const auto gripper_feature =
         create_concept_feature(*repository,
-                               kr::ps::ext::dl::parse_concept("(c_atomic_state \"gripper\")", task->get_domain().get_domain(), *dl_repository).get_index(),
+                               kr::ps::ext::dl::parse_concept("(c_atomic_state \"gripper\")", task->get_domain().get_domain(), *dl_repository).index(),
                                "gripper");
 
-    auto do_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::DoTag>>();
+    auto do_data = urd::data<kr::ps::ext::Rule<kr::ps::ext::DoTag>>();
     do_data.action_name = "pick";
-    do_data.source = source.get_index();
-    do_data.target = target.get_index();
-    do_data.arguments.push_back(ball_feature.get_index());
-    do_data.arguments.push_back(room_feature.get_index());
-    do_data.arguments.push_back(gripper_feature.get_index());
+    do_data.source = source.index();
+    do_data.target = target.index();
+    do_data.arguments.push_back(ball_feature.index());
+    do_data.arguments.push_back(room_feature.index());
+    do_data.arguments.push_back(gripper_feature.index());
     kr::ps::ext::canonicalize(do_data);
     const auto rule = repository->insert(do_data).first;
-    auto variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>("", rule.get_index());
+    auto variant_data = urd::data<kr::ps::Rule<kr::ExtFamilyTag>>("", rule.index());
     const auto variant = repository->insert(variant_data).first;
 
     auto module_data = make_module_data(*repository, "module");
-    module_data.entry_memory_state = source.get_index();
-    module_data.memory_states.push_back(source.get_index());
-    module_data.memory_states.push_back(target.get_index());
-    module_data.concept_features.push_back(ball_feature.get_index());
-    module_data.concept_features.push_back(room_feature.get_index());
-    module_data.concept_features.push_back(gripper_feature.get_index());
-    auto transition = ygg::IndexList<kr::ps::Rule<kr::ExtFamilyTag>> {};
-    transition.push_back(variant.get_index());
+    module_data.entry_memory_state = source.index();
+    module_data.memory_states.push_back(source.index());
+    module_data.memory_states.push_back(target.index());
+    module_data.concept_features.push_back(ball_feature.index());
+    module_data.concept_features.push_back(room_feature.index());
+    module_data.concept_features.push_back(gripper_feature.index());
+    auto transition = urd::flat_vector<urd::index<kr::ps::Rule<kr::ExtFamilyTag>>> {};
+    transition.push_back(variant.index());
     ygg::canonicalize(transition);
     module_data.memory_transitions.push_back(std::move(transition));
     kr::ps::ext::canonicalize(module_data);
@@ -1390,8 +1394,8 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
         EXPECT_EQ(step.status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
         ASSERT_TRUE(step.planning_successor.has_value());
         EXPECT_EQ(step.planning_successor.value().label.get_relation().get_name(), "pick");
-        EXPECT_EQ(step.get_target().get_module_state().get_memory_state().get_index(), target.get_index());
-        EXPECT_NE(step.get_target().get_state().get_index(), initial_state.get_state().get_index());
+        EXPECT_EQ(step.get_target().get_module_state().get_memory_state().index(), target.index());
+        EXPECT_NE(step.get_target().get_state().index(), initial_state.get_state().index());
     }
 
     auto greedy_options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
@@ -1406,8 +1410,8 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
 
     const auto edge = greedy.graph->get_out_edge_indices(0).front();
     const auto selected = greedy.graph->get_vertex(greedy.graph->get_target(edge)).get_property().program_state;
-    EXPECT_EQ(selected.get_state().get_index(), steps.front().get_target().get_state().get_index());
-    EXPECT_EQ(selected.get_module_state().get_memory_state().get_index(), steps.front().get_target().get_module_state().get_memory_state().get_index());
+    EXPECT_EQ(selected.get_state().index(), steps.front().get_target().get_state().index());
+    EXPECT_EQ(selected.get_module_state().get_memory_state().index(), steps.front().get_target().get_module_state().get_memory_state().index());
 }
 
 TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
@@ -1430,7 +1434,7 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
     const auto steps = collect_steps(expander, initial_state);
     ASSERT_EQ(steps.size(), 1);
     EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::NO_APPLICABLE_ACTION);
-    EXPECT_EQ(steps.front().get_target().get_state().get_index(), initial_state.get_state().get_index());
+    EXPECT_EQ(steps.front().get_target().get_state().index(), initial_state.get_state().index());
 
     auto options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
     options.universal = true;
@@ -1457,57 +1461,57 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     const auto pick_target = create_memory_state(*repository, "pick_target");
     const auto ball_feature =
         create_concept_feature(*repository,
-                               kr::ps::ext::dl::parse_concept("(c_atomic_state \"ball\")", task->get_domain().get_domain(), *dl_repository).get_index(),
+                               kr::ps::ext::dl::parse_concept("(c_atomic_state \"ball\")", task->get_domain().get_domain(), *dl_repository).index(),
                                "ball");
     const auto room_feature =
         create_concept_feature(*repository,
-                               kr::ps::ext::dl::parse_concept("(c_atomic_state \"room\")", task->get_domain().get_domain(), *dl_repository).get_index(),
+                               kr::ps::ext::dl::parse_concept("(c_atomic_state \"room\")", task->get_domain().get_domain(), *dl_repository).index(),
                                "room");
     const auto gripper_feature =
         create_concept_feature(*repository,
-                               kr::ps::ext::dl::parse_concept("(c_atomic_state \"gripper\")", task->get_domain().get_domain(), *dl_repository).get_index(),
+                               kr::ps::ext::dl::parse_concept("(c_atomic_state \"gripper\")", task->get_domain().get_domain(), *dl_repository).index(),
                                "gripper");
 
-    auto move_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::DoTag>>();
+    auto move_data = urd::data<kr::ps::ext::Rule<kr::ps::ext::DoTag>>();
     move_data.action_name = "pick";
-    move_data.source = source.get_index();
-    move_data.target = move_target.get_index();
-    move_data.arguments.push_back(ball_feature.get_index());
-    move_data.arguments.push_back(room_feature.get_index());
-    move_data.arguments.push_back(gripper_feature.get_index());
+    move_data.source = source.index();
+    move_data.target = move_target.index();
+    move_data.arguments.push_back(ball_feature.index());
+    move_data.arguments.push_back(room_feature.index());
+    move_data.arguments.push_back(gripper_feature.index());
     kr::ps::ext::canonicalize(move_data);
     const auto move_rule = repository->insert(move_data).first;
-    auto move_variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>("", move_rule.get_index());
+    auto move_variant_data = urd::data<kr::ps::Rule<kr::ExtFamilyTag>>("", move_rule.index());
     const auto move_variant = repository->insert(move_variant_data).first;
 
-    auto pick_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::DoTag>>();
+    auto pick_data = urd::data<kr::ps::ext::Rule<kr::ps::ext::DoTag>>();
     pick_data.action_name = "pick";
-    pick_data.source = source.get_index();
-    pick_data.target = pick_target.get_index();
-    pick_data.arguments.push_back(ball_feature.get_index());
-    pick_data.arguments.push_back(room_feature.get_index());
-    pick_data.arguments.push_back(gripper_feature.get_index());
+    pick_data.source = source.index();
+    pick_data.target = pick_target.index();
+    pick_data.arguments.push_back(ball_feature.index());
+    pick_data.arguments.push_back(room_feature.index());
+    pick_data.arguments.push_back(gripper_feature.index());
     kr::ps::ext::canonicalize(pick_data);
     const auto pick_rule = repository->insert(pick_data).first;
-    auto pick_variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>("", pick_rule.get_index());
+    auto pick_variant_data = urd::data<kr::ps::Rule<kr::ExtFamilyTag>>("", pick_rule.index());
     const auto pick_variant = repository->insert(pick_variant_data).first;
 
     auto module_data = make_module_data(*repository, "module");
-    module_data.entry_memory_state = source.get_index();
-    module_data.memory_states.push_back(source.get_index());
-    module_data.memory_states.push_back(move_target.get_index());
-    module_data.memory_states.push_back(pick_target.get_index());
-    module_data.concept_features.push_back(ball_feature.get_index());
-    module_data.concept_features.push_back(room_feature.get_index());
-    module_data.concept_features.push_back(gripper_feature.get_index());
+    module_data.entry_memory_state = source.index();
+    module_data.memory_states.push_back(source.index());
+    module_data.memory_states.push_back(move_target.index());
+    module_data.memory_states.push_back(pick_target.index());
+    module_data.concept_features.push_back(ball_feature.index());
+    module_data.concept_features.push_back(room_feature.index());
+    module_data.concept_features.push_back(gripper_feature.index());
 
-    auto move_transition = ygg::IndexList<kr::ps::Rule<kr::ExtFamilyTag>>();
-    move_transition.push_back(move_variant.get_index());
+    auto move_transition = urd::flat_vector<urd::index<kr::ps::Rule<kr::ExtFamilyTag>>>();
+    move_transition.push_back(move_variant.index());
     ygg::canonicalize(move_transition);
     module_data.memory_transitions.push_back(std::move(move_transition));
 
-    auto pick_transition = ygg::IndexList<kr::ps::Rule<kr::ExtFamilyTag>>();
-    pick_transition.push_back(pick_variant.get_index());
+    auto pick_transition = urd::flat_vector<urd::index<kr::ps::Rule<kr::ExtFamilyTag>>>();
+    pick_transition.push_back(pick_variant.index());
     ygg::canonicalize(pick_transition);
     module_data.memory_transitions.push_back(std::move(pick_transition));
 
@@ -1520,27 +1524,27 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     const auto steps = collect_steps(expander, expander.initial_state(planning_node.get_state()));
     ASSERT_GT(steps.size(), 2);
     EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
-    EXPECT_EQ(steps.front().get_target().get_module_state().get_memory_state().get_index(), move_target.get_index());
+    EXPECT_EQ(steps.front().get_target().get_module_state().get_memory_state().index(), move_target.index());
 
     auto reached_move_target = false;
     auto reached_pick_target = false;
     for (const auto& step : steps)
     {
         ASSERT_TRUE(step.planning_successor.has_value());
-        reached_move_target |= step.get_target().get_module_state().get_memory_state().get_index() == move_target.get_index();
-        reached_pick_target |= step.get_target().get_module_state().get_memory_state().get_index() == pick_target.get_index();
+        reached_move_target |= step.get_target().get_module_state().get_memory_state().index() == move_target.index();
+        reached_pick_target |= step.get_target().get_module_state().get_memory_state().index() == pick_target.index();
     }
     EXPECT_TRUE(reached_move_target);
     EXPECT_TRUE(reached_pick_target);
 
     // Explicit application also accepts a rule created after the program was prepared.
-    auto external_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>(std::string("external"), pick_rule.get_index());
+    auto external_data = urd::data<kr::ps::Rule<kr::ExtFamilyTag>>(std::string("external"), pick_rule.index());
     const auto external_rule = repository->insert(external_data).first;
     const auto external = expander.apply(expander.initial_state(planning_node.get_state()), external_rule, steps.front().planning_successor.value().unpack());
     ASSERT_TRUE(external);
     ASSERT_TRUE(external.value().rule);
-    EXPECT_EQ(external.value().rule.value().get_index(), external_rule.get_index());
-    EXPECT_EQ(external.value().get_target().get_module_state().get_memory_state().get_index(), pick_target.get_index());
+    EXPECT_EQ(external.value().rule.value().index(), external_rule.index());
+    EXPECT_EQ(external.value().get_target().get_module_state().get_memory_state().index(), pick_target.index());
 
     auto greedy_options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
     const auto greedy = kr::ps::ext::find_solution(task_context, program, greedy_options);
@@ -1578,8 +1582,8 @@ TEST(RunirTests, ExtExplicitApplicationDistinguishesCollidingRuleIdsAcrossReposi
     const auto distinct_module = make_module(*distinct_repository, "external");
     const auto prepared_rule = prepared_module.get_memory_transitions()[0][0];
     const auto foreign_rule = foreign_module.get_memory_transitions()[0][0];
-    ASSERT_EQ(prepared_rule.get_index(), foreign_rule.get_index());
-    ASSERT_NE(&prepared_rule.get_context(), &foreign_rule.get_context());
+    ASSERT_EQ(prepared_rule.index(), foreign_rule.index());
+    ASSERT_NE(&prepared_rule.context(), &foreign_rule.context());
 
     const auto program = create_program(repository, prepared_module, { prepared_module });
     auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(context, program);
@@ -1592,11 +1596,11 @@ TEST(RunirTests, ExtExplicitApplicationDistinguishesCollidingRuleIdsAcrossReposi
     ASSERT_TRUE(foreign.value().rule);
     EXPECT_EQ(prepared.value().get_target().get_module_state().get_memory_state().get_name(), "prepared");
     EXPECT_EQ(foreign.value().get_target().get_module_state().get_memory_state().get_name(), "external");
-    EXPECT_EQ(&foreign.value().rule.value().get_context(), &foreign_rule.get_context());
+    EXPECT_EQ(&foreign.value().rule.value().context(), &foreign_rule.context());
 
     // A colliding memory index from a different repository identity cannot
     // make a rule applicable to the current program state.
-    ASSERT_EQ(distinct_module.get_entry_memory_state().get_index(), initial.get_module_state().get_memory_state().get_index());
+    ASSERT_EQ(distinct_module.get_entry_memory_state().index(), initial.get_module_state().get_memory_state().index());
     ASSERT_NE(distinct_module.get_entry_memory_state(), initial.get_module_state().get_memory_state());
     EXPECT_FALSE(expander.apply(initial, distinct_module.get_memory_transitions()[0][0]));
 }
@@ -1620,18 +1624,18 @@ void expect_unknown_action_rejected_during_preparation()
                                                       repository);
     // Programmatic rules can bypass the parser's schema lookup. Even an
     // unreachable rule must have its action resolved when preparing the program.
-    auto action_data = ygg::Data<kr::ps::ext::Rule<Tag>> {};
-    action_data.source = create_memory_state(repository, "unreachable").get_index();
-    action_data.target = parsed.get_entry_memory_state().get_index();
+    auto action_data = urd::data<kr::ps::ext::Rule<Tag>> {};
+    action_data.source = create_memory_state(repository, "unreachable").index();
+    action_data.target = parsed.get_entry_memory_state().index();
     action_data.action_name = "missing-action";
     if constexpr (std::same_as<Tag, kr::ps::ext::ActionTag>)
-        action_data.query_feature = parsed.get_query_features()[0].get_index();
+        action_data.query_feature = parsed.get_query_features()[0].index();
     const auto action_rule = repository.insert(action_data).first;
-    auto variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>(std::string("missing-schema"), action_rule.get_index());
+    auto variant_data = urd::data<kr::ps::Rule<kr::ExtFamilyTag>>(std::string("missing-schema"), action_rule.index());
     const auto variant = repository.insert(variant_data).first;
-    auto module_data = parsed.get_data();
-    auto transition = ygg::IndexList<kr::ps::Rule<kr::ExtFamilyTag>> {};
-    transition.push_back(variant.get_index());
+    auto module_data = parsed.data();
+    auto transition = urd::flat_vector<urd::index<kr::ps::Rule<kr::ExtFamilyTag>>> {};
+    transition.push_back(variant.index());
     module_data.memory_transitions.push_back(std::move(transition));
     kr::ps::ext::canonicalize(module_data);
     const auto module_ = repository.insert(module_data).first;
@@ -1684,7 +1688,7 @@ void expect_query_action_contracts()
         const auto planning_node = initial_planning_node(expander);
         const auto initial = expander.initial_state(planning_node.get_state());
         const auto rule = module_.get_memory_transitions()[0][0];
-        auto lazy = std::vector<kr::ps::ext::detail::ProgramStep<Kind>> {};
+        auto lazy = urd::Store<urd::sequence<kr::ps::ext::detail::ProgramStep<Kind>>> {};
         if (scenario == 2)
         {
             // Effects filter Action transitions: no move decreases N, so none is offered or matched.
@@ -1726,7 +1730,7 @@ void expect_query_action_contracts()
             auto evaluators = kr::ps::ext::detail::RuleEvaluators<Kind>(task_context, program);
             auto context = evaluators.make_context(storage, planning_node.get_state());
             auto& generator = *task_context->search_context->successor_generator;
-            ygg::visit(
+            std::visit(
                 [&]<kr::ps::ext::RuleKind Tag>(kr::ps::ext::RuleView<Tag> concrete)
                 {
                     if constexpr (std::same_as<Tag, kr::ps::ext::ActionTag>)
@@ -1734,7 +1738,7 @@ void expect_query_action_contracts()
                             if (action.get_name().str() == concrete.get_action_name())
                             {
                                 const auto evaluator = kr::ps::ext::detail::ActionRuleEvaluator<Kind>(concrete, rule, action);
-                                const auto count = task_context->search_context->task->get_repository()->size(action.get_index());
+                                const auto count = task_context->search_context->task->get_repository()->size(action.index());
                                 auto matched = static_cast<size_t>(0);
                                 EXPECT_TRUE(generator.for_each_borrowed_applicable_action_binding(
                                     planning_node,
@@ -1752,7 +1756,7 @@ void expect_query_action_contracts()
                                         return true;
                                     }));
                                 EXPECT_EQ(matched, 2);
-                                EXPECT_EQ(task_context->search_context->task->get_repository()->size(action.get_index()), count);
+                                EXPECT_EQ(task_context->search_context->task->get_repository()->size(action.index()), count);
                             }
                 },
                 rule.get_variant());
@@ -1774,10 +1778,10 @@ void expect_query_action_contracts()
             EXPECT_EQ(step.get_target().get_module_state().get_memory_state().get_name(), "target");
             const auto matching = expander.matching_rule(initial, candidate);
             ASSERT_TRUE(matching);
-            EXPECT_EQ(matching.value().get_index(), rule.get_index());
+            EXPECT_EQ(matching.value().index(), rule.index());
             const auto applied = expander.apply(initial, rule, candidate);
             ASSERT_TRUE(applied);
-            EXPECT_EQ(applied.value().get_target().get_index(), step.get_target().get_index());
+            EXPECT_EQ(applied.value().get_target().index(), step.get_target().index());
         }
         EXPECT_FALSE(expander.apply(initial, rule));
     }
@@ -1839,11 +1843,11 @@ void expect_rule_occurrence_order()
 )",
                                                       domain,
                                                       repository);
-    auto data = parsed.get_data();
+    auto data = parsed.data();
     data.memory_transitions.clear();
     // Occurrences, including repetitions, retain module order rather than rule-index order.
     for (const auto row : { 1, 2, 0, 1 })
-        data.memory_transitions.push_back(parsed.get_data().memory_transitions[row]);
+        data.memory_transitions.push_back(parsed.data().memory_transitions[row]);
     const auto module_ = repository.insert(data).first;
     const auto other = kr::ps::ext::dl::parse_module(R"(
 (:module (:symbol other) (:arguments) (:registers)
@@ -1901,12 +1905,12 @@ void expect_callback_sketch_order_and_cancellation()
         {
             size_t count = 0;
             for (const auto action : task_context->search_context->task->get_task().get_domain().get_actions())
-                count += task_context->search_context->task->get_repository()->size(action.get_index());
+                count += task_context->search_context->task->get_repository()->size(action.index());
             return count;
         };
         const auto initial_binding_count = count_bindings();
         using Step = kr::ps::ext::detail::ProgramStep<Kind>;
-        auto selected = std::vector<Step> {};
+        auto selected = urd::Store<urd::sequence<Step>> {};
         auto statistics = kr::ps::ext::ProgramSearchStatistics {};
         const auto emit = [&](const auto& expansion)
         {
@@ -1933,7 +1937,7 @@ void expect_callback_sketch_order_and_cancellation()
         }
         ASSERT_EQ(selected.size(), 1);
         EXPECT_EQ(count_bindings(), initial_binding_count + (std::same_as<Kind, tyr::LiftedTag> ? 1 : 0));
-        auto complete = std::vector<Step> {};
+        auto complete = urd::Store<urd::sequence<Step>> {};
         EXPECT_TRUE(expander.for_each_successor(
             initial,
             statistics,
@@ -1947,7 +1951,7 @@ void expect_callback_sketch_order_and_cancellation()
             },
             [] { return false; }));
         ASSERT_GT(complete.size(), 1);
-        EXPECT_EQ(selected.front().get_target().get_index(), complete.front().get_target().get_index());
+        EXPECT_EQ(selected.front().get_target().index(), complete.front().get_target().index());
         EXPECT_EQ(selected.front().planning_successor.value().label, complete.front().planning_successor.value().label);
         EXPECT_EQ(statistics.num_expanded, 0);
     }
@@ -2052,10 +2056,10 @@ void expect_callback_expansion_counts()
   (:rules (:rule (:symbol select) (:expression (:source-memory source) (:target-memory target) {0}))))
 )",
                                         body);
-        auto counts = std::vector<size_t> {};
-        auto state_counts = std::vector<size_t> {};
-        auto binding_counts = std::vector<size_t> {};
-        auto first_bindings = std::vector<std::vector<std::string>> {};
+        auto counts = urd::Store<urd::sequence<size_t>> {};
+        auto state_counts = urd::Store<urd::sequence<size_t>> {};
+        auto binding_counts = urd::Store<urd::sequence<size_t>> {};
+        auto first_bindings = urd::Store<urd::sequence<urd::Store<urd::sequence<std::string>>>> {};
         for (const auto complete : { true, false })
         {
             const auto task_context =
@@ -2074,15 +2078,15 @@ void expect_callback_expansion_counts()
                 const auto& task = task_context->search_context->task;
                 size_t count = 0;
                 for (const auto action : task->get_domain().get_domain().get_actions())
-                    count += task->get_repository()->size(action.get_index());
+                    count += task->get_repository()->size(action.index());
                 binding_counts.push_back(count);
             }
             ASSERT_FALSE(steps.empty());
             EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
-            auto first = std::vector<std::string> {};
+            auto first = urd::Store<urd::sequence<std::string>> {};
             if (binding)
                 first.push_back(
-                    std::string(steps.front().get_target().get_module_state().get_registers().template get<kr::dl::ConceptTag>()[0].value().get_name().str()));
+                    std::string(steps.front().get_target().get_module_state().get_registers().template values<kr::dl::ConceptTag>()[0].value().get_name().str()));
             else
                 for (const auto object : steps.front().planning_successor->label.get_objects())
                     first.push_back(std::string(object.get_name().str()));

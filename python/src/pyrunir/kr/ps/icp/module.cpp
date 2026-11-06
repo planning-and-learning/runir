@@ -1,4 +1,5 @@
 #include "module.hpp"
+#include <yggdrasil/python/type_casters.hpp>
 
 #include "bindings.hpp"
 #include "pyrunir/kr/ps/icp/dl/module.hpp"
@@ -13,8 +14,6 @@ void bind_module_definitions(nb::module_& m)
     auto repository = RepositoryBinding(m, "Repository");
     bind_memory_state(m, repository);
     bind_module_symbol(m, repository);
-    bind_condition(m, repository);
-    bind_effect(m, repository);
     bind_indexical(m, repository);
     bind_rule(m, repository);
     bind_rule_variant(m, repository);

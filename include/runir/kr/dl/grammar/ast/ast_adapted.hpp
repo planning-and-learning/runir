@@ -2,6 +2,8 @@
 #define RUNIR_GRAMMAR_AST_AST_ADAPTED_HPP_
 
 #include "runir/kr/dl/grammar/ast/ast.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/parser/ast_adapted.hpp"
 
 #include <boost/fusion/include/adapt_struct.hpp>
@@ -85,7 +87,7 @@ BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::NumericalDistance,
                           (runir::kr::dl::grammar::ast::ConceptOrQueryVariant, lhs)(runir::kr::dl::grammar::ast::RoleOrQueryVariant,
                                                                                     mid)(runir::kr::dl::grammar::ast::ConceptOrQueryVariant, rhs))
 
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::Grammar, (std::vector<runir::kr::dl::grammar::ast::DerivationRuleVariant>, rules))
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::Grammar, (urd::Store<urd::sequence<runir::kr::dl::grammar::ast::DerivationRuleVariant>>, rules))
 
 // Boolean comparisons (two boolean choices).
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::BooleanEq,

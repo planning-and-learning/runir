@@ -19,10 +19,10 @@ namespace fmt
 {
 
 template<::tyr::formalism::FactKind T>
-struct formatter<ygg::View<ygg::Index<runir::datasets::PredicateColor<T>>, runir::datasets::ColorRepository>, char> : formatter<std::string_view>
+struct formatter<urd::view<runir::datasets::PredicateColor<T>, runir::datasets::ColorRepository>, char> : formatter<std::string_view>
 {
     template<typename FormatContext>
-    auto format(const ygg::View<ygg::Index<runir::datasets::PredicateColor<T>>, runir::datasets::ColorRepository>& color, FormatContext& ctx) const
+    auto format(const urd::view<runir::datasets::PredicateColor<T>, runir::datasets::ColorRepository>& color, FormatContext& ctx) const
     {
         const auto predicate = color.get_predicate();
         const auto context = color.get_predicate_context() == runir::datasets::PredicateContext::STATE ? "state" : "goal";
@@ -48,7 +48,7 @@ struct formatter<runir::datasets::StateGraphVertexLabel<Kind>, char> : formatter
     template<typename FormatContext>
     auto format(const runir::datasets::StateGraphVertexLabel<Kind>& label, FormatContext& ctx) const
     {
-        const auto text = fmt::format("state={}", label.state.get_index());
+        const auto text = fmt::format("state={}", label.state.index());
         return formatter<std::string_view>::format(text, ctx);
     }
 };
@@ -60,7 +60,7 @@ struct formatter<runir::datasets::AnnotatedStateGraphVertexLabel<Kind>, char> : 
     auto format(const runir::datasets::AnnotatedStateGraphVertexLabel<Kind>& label, FormatContext& ctx) const
     {
         const auto text = fmt::format("state={}\ngoal_distance={}\ninitial={}\ngoal={}\nalive={}\nunsolvable={}",
-                                      label.state.get_index(),
+                                      label.state.index(),
                                       label.goal_distance,
                                       label.is_initial,
                                       label.is_goal,

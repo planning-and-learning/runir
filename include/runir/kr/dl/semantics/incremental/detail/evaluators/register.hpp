@@ -2,6 +2,8 @@
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_EVALUATORS_REGISTER_HPP_
 
 #include "runir/kr/dl/semantics/detail/evaluation_helpers.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/dl/semantics/incremental/declarations.hpp"
 #include "runir/kr/dl/semantics/incremental/delta.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/denotation_state.hpp"
@@ -30,9 +32,9 @@ struct RegisterEvaluator
         if (slot)
         {
             if constexpr (std::same_as<Category, ConceptTag>)
-                builder.set(slot.value().get_index(), true);
+                builder.set(slot.value().index(), true);
             else
-                builder.set(slot.value().get_first().get_index(), slot.value().get_second().get_index(), true);
+                builder.set(slot.value().first.index(), slot.value().second.index(), true);
         }
     }
     void update(EvaluationGraph<Kind>&, const Delta& delta, ygg::database::Workspace&)
@@ -44,8 +46,8 @@ struct RegisterEvaluator
     }
 
 private:
-    void update_values(const std::vector<std::pair<RegisterIdentifier<Category>, DenotationElementView<Category>>>& added,
-                       const std::vector<std::pair<RegisterIdentifier<Category>, DenotationElementView<Category>>>& removed)
+    void update_values(const urd::Store<urd::sequence<std::pair<RegisterIdentifier<Category>, DenotationElementView<Category>>>>& added,
+                       const urd::Store<urd::sequence<std::pair<RegisterIdentifier<Category>, DenotationElementView<Category>>>>& removed)
     {
         for (const auto& [slot, element] : added)
             if (slot == identifier && value.contains(element))

@@ -2,6 +2,8 @@
 #define RUNIR_KR_DL_GRAMMAR_PARSER_PARSERS_HPP_
 
 #include "runir/kr/dl/grammar/ast/ast.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/dl/grammar/parser/parser.hpp"
 #include "runir/kr/parser/error_handler.hpp"
 
@@ -209,7 +211,7 @@ template<typename Dialect = FullDialectTag>
 using derivation_rule_variant_type = boost::spirit::x3::rule<DerivationRuleVariantClass<Dialect>, ast::DerivationRuleVariant>;
 
 template<typename Dialect = FullDialectTag>
-using grammar_body_type = boost::spirit::x3::rule<GrammarBodyClass<Dialect>, std::vector<ast::DerivationRuleVariant>>;
+using grammar_body_type = boost::spirit::x3::rule<GrammarBodyClass<Dialect>, urd::Store<urd::sequence<ast::DerivationRuleVariant>>>;
 
 template<typename Dialect = FullDialectTag>
 using grammar_type = boost::spirit::x3::rule<GrammarClass<Dialect>, ast::Grammar>;

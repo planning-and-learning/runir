@@ -147,9 +147,9 @@ def register_value(module_state: LiftedModuleState, rule: RuleVariant) -> str | 
     variant = rule.get_variant()
     registers = module_state.registers
     if isinstance(variant, ConceptChooseRule):
-        return object_name(registers.concept_values[variant.get_register().get_identifier().value()])
+        return object_name(registers.concept_values[variant.get_register().get_identifier().value])
     if isinstance(variant, RoleChooseRule):
-        return object_name(registers.role_values[variant.get_register().get_identifier().value()])
+        return object_name(registers.role_values[variant.get_register().get_identifier().value])
     msg = f"{rule.get_symbol()} is not a Choose rule"
     raise TypeError(msg)
 

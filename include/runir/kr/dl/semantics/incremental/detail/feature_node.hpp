@@ -2,6 +2,8 @@
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_FEATURE_NODE_HPP_
 
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/argument.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/atomic.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/count.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/distance.hpp"
@@ -49,7 +51,7 @@ public:
     { return state().changed(); }
 
 private:
-    using ConceptOperations = ygg::TypeList<AtomicEvaluator<Kind, Category, tyr::formalism::FluentTag>,
+    using ConceptOperations = boost::mp11::mp_list<AtomicEvaluator<Kind, Category, tyr::formalism::FluentTag>,
                                             AtomicEvaluator<Kind, Category, tyr::formalism::DerivedTag>,
                                             UnarySetEvaluator<Kind, Category, NegationTag, ConceptTag>,
                                             BinarySetEvaluator<Kind, Category, IntersectionTag, ConceptTag, ConceptTag>,
@@ -66,7 +68,7 @@ private:
                                             QualifiedNumberRestrictionEvaluator<Kind, QualifiedExactNumberRestrictionTag>,
                                             FillersEvaluator<Kind>,
                                             ProjectionEvaluator<Kind, Category>>;
-    using RoleOperations = ygg::TypeList<AtomicEvaluator<Kind, Category, tyr::formalism::FluentTag>,
+    using RoleOperations = boost::mp11::mp_list<AtomicEvaluator<Kind, Category, tyr::formalism::FluentTag>,
                                          AtomicEvaluator<Kind, Category, tyr::formalism::DerivedTag>,
                                          UnarySetEvaluator<Kind, Category, ComplementTag, RoleTag>,
                                          UnarySetEvaluator<Kind, Category, InverseTag, RoleTag>,
@@ -78,7 +80,7 @@ private:
                                          BinarySetEvaluator<Kind, Category, RestrictionTag, RoleTag, ConceptTag>,
                                          BinarySetEvaluator<Kind, Category, CompositionTag, RoleTag, RoleTag>,
                                          ProjectionEvaluator<Kind, Category>>;
-    using BooleanOperations = ygg::TypeList<AtomicEvaluator<Kind, Category, tyr::formalism::FluentTag>,
+    using BooleanOperations = boost::mp11::mp_list<AtomicEvaluator<Kind, Category, tyr::formalism::FluentTag>,
                                             AtomicEvaluator<Kind, Category, tyr::formalism::DerivedTag>,
                                             NonemptyEvaluator<Kind>,
                                             LogicalNotEvaluator<Kind>,
@@ -96,7 +98,7 @@ private:
                                             ScalarBinaryEvaluator<Kind, Category, NumericalLeTag, NumericalTag>,
                                             ScalarBinaryEvaluator<Kind, Category, NumericalGtTag, NumericalTag>,
                                             ScalarBinaryEvaluator<Kind, Category, NumericalGeTag, NumericalTag>>;
-    using NumericalOperations = ygg::TypeList<CountEvaluator<Kind>,
+    using NumericalOperations = boost::mp11::mp_list<CountEvaluator<Kind>,
                                               RoleEdgeDistanceEvaluator<Kind>,
                                               QueryEdgeDistanceEvaluator<Kind>,
                                               ScalarBinaryEvaluator<Kind, Category, AddTag, NumericalTag>,
@@ -112,19 +114,19 @@ private:
                                                              std::conditional_t<std::same_as<Category, BooleanTag>, BooleanOperations, NumericalOperations>>>;
     using InvocationOperations = std::conditional_t<true,
                                                     std::conditional_t<ConceptOrRoleTag<Category>,
-                                                                       ygg::TypeList<RegisterEvaluator<Kind, Category>, ArgumentEvaluator<Kind, Category>>,
-                                                                       ygg::TypeList<ArgumentEvaluator<Kind, Category>>>,
-                                                    ygg::TypeList<>>;
+                                                                       boost::mp11::mp_list<RegisterEvaluator<Kind, Category>, ArgumentEvaluator<Kind, Category>>,
+                                                                       boost::mp11::mp_list<ArgumentEvaluator<Kind, Category>>>,
+                                                    boost::mp11::mp_list<>>;
     using Evaluators =
-        ygg::ApplyTypeListT<std::variant, ygg::ConcatTypeListsT<ygg::TypeList<StaticEvaluator<Kind, Category>>, Operations, InvocationOperations>>;
+        boost::mp11::mp_apply<std::variant, boost::mp11::mp_append<boost::mp11::mp_list<StaticEvaluator<Kind, Category>>, Operations, InvocationOperations>>;
 
     ConstructorView<Category> m_expression;
-    std::vector<ygg::uint_t> m_dependencies;
+    urd::Store<urd::sequence<ygg::uint_t>> m_dependencies;
     Evaluators m_evaluator;
 
     template<ConceptOrRoleTag Projected, typename C>
-    Evaluators prepare(ygg::View<ygg::Index<QueryProjection<Projected>>, C> expression, GraphBuilder<Kind>& graph)
-    { return ProjectionEvaluator<Kind, Category>(graph.prepare(expression.get_arg(), m_dependencies), expression.get_data().plan); }
+    Evaluators prepare(urd::view<QueryProjection<Projected>, C> expression, GraphBuilder<Kind>& graph)
+    { return ProjectionEvaluator<Kind, Category>(graph.prepare(expression.get_arg(), m_dependencies), expression.data().plan); }
 
     Evaluators prepare_distance(NumericalView<DistanceTag> expression, ConstructorView<RoleTag>, GraphBuilder<Kind>& graph)
     { return RoleEdgeDistanceEvaluator<Kind>(expression, graph, m_dependencies); }
@@ -133,7 +135,7 @@ private:
     { return QueryEdgeDistanceEvaluator<Kind>(expression, edges, graph, m_dependencies); }
 
     template<template<typename> typename Expression, typename Tag, typename C>
-    Evaluators prepare(ygg::View<ygg::Index<Expression<Tag>>, C> expression, GraphBuilder<Kind>& graph)
+    Evaluators prepare(urd::view<Expression<Tag>, C> expression, GraphBuilder<Kind>& graph)
     {
         if constexpr (std::same_as<Tag, AtomicStateTag<tyr::formalism::FluentTag>>)
             return AtomicEvaluator<Kind, Category, tyr::formalism::FluentTag>(expression.get_predicate(), expression.get_polarity());
@@ -144,11 +146,11 @@ private:
         else if constexpr (std::same_as<Tag, ArgumentTag<Category>>)
             return ArgumentEvaluator<Kind, Category>(expression.get_argument().get_identifier());
         else if constexpr (std::same_as<Tag, DistanceTag>)
-            return ygg::visit([&](auto edges) { return prepare_distance(expression, edges, graph); }, expression.get_mid());
+            return std::visit([&](auto edges) { return prepare_distance(expression, edges, graph); }, expression.get_mid());
         else if constexpr (std::same_as<Tag, CountTag>)
-            return ygg::visit([&](auto child) -> Evaluators { return CountEvaluator<Kind>(graph.prepare(child, m_dependencies)); }, expression.get_arg());
+            return std::visit([&](auto child) -> Evaluators { return CountEvaluator<Kind>(graph.prepare(child, m_dependencies)); }, expression.get_arg());
         else if constexpr (std::same_as<Tag, NonemptyTag>)
-            return ygg::visit([&](auto child) -> Evaluators { return NonemptyEvaluator<Kind>(graph.prepare(child, m_dependencies)); }, expression.get_arg());
+            return std::visit([&](auto child) -> Evaluators { return NonemptyEvaluator<Kind>(graph.prepare(child, m_dependencies)); }, expression.get_arg());
         else if constexpr (std::same_as<Tag, QualifiedAtLeastNumberRestrictionTag> || std::same_as<Tag, QualifiedAtMostNumberRestrictionTag>
                            || std::same_as<Tag, QualifiedExactNumberRestrictionTag>)
             return QualifiedNumberRestrictionEvaluator<Kind, Tag>(graph.prepare(expression.get_role(), m_dependencies),
@@ -198,7 +200,7 @@ template<tyr::TaskKind Kind, CategoryTag Category>
 FeatureNode<Kind, Category>::FeatureNode(ConstructorView<Category> expression, GraphBuilder<Kind>& graph) :
     m_expression(expression),
     m_evaluator(expression.is_static() ? Evaluators(StaticEvaluator<Kind, Category>(expression)) :
-                                         ygg::visit([&](auto concrete) { return prepare(concrete, graph); }, expression.get_variant()))
+                                         std::visit([&](auto concrete) { return prepare(concrete, graph); }, expression.get_variant()))
 {
 }
 

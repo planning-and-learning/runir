@@ -7,26 +7,24 @@
 #include <string>
 #include <tuple>
 #include <utility>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
+#include <urd/elements/flat.hpp>
 
-namespace ygg
+namespace urd
 {
 
 template<>
-struct Data<runir::kr::ps::ext::ModuleSymbol>
+struct data<runir::kr::ps::ext::ModuleSymbol>
 {
-    Index<runir::kr::ps::ext::ModuleSymbol> index;
+    urd::index<runir::kr::ps::ext::ModuleSymbol> index;
     ::cista::offset::string name;
 
-    Data() = default;
-    Data(::cista::offset::string name_) : index(), name(std::move(name_)) {}
+    data() = default;
+    data(::cista::offset::string name_) : index(), name(std::move(name_)) {}
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::name> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::name> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::name> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::name> {}; }
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 #endif

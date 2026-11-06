@@ -3,7 +3,6 @@
 
 #include "runir/kr/dl/cnf_grammar/boolean_view.hpp"
 #include "runir/kr/dl/cnf_grammar/concept_view.hpp"
-#include "runir/kr/dl/cnf_grammar/constructor_view.hpp"
 #include "runir/kr/dl/cnf_grammar/derivation_rule_view.hpp"
 #include "runir/kr/dl/cnf_grammar/grammar_view.hpp"
 #include "runir/kr/dl/cnf_grammar/non_terminal_view.hpp"

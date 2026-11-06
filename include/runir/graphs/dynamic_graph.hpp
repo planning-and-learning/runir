@@ -26,10 +26,10 @@ public:
     using EdgePropertyMapType = EdgePropertyMap<EP>;
 
 private:
-    using VertexMap = ygg::UnorderedMap<VertexIndex, VertexType>;
-    using EdgeMap = ygg::UnorderedMap<EdgeIndex, EdgeType>;
+    using VertexMap = urd::Store<urd::map<VertexIndex, VertexType>>;
+    using EdgeMap = urd::Store<urd::map<EdgeIndex, EdgeType>>;
     using VertexPropertyMapType = VertexPropertyMap<VP>;
-    using AdjacentEdgeMap = ygg::UnorderedMap<VertexIndex, EdgeIndexSet>;
+    using AdjacentEdgeMap = urd::Store<urd::map<VertexIndex, EdgeIndexSet>>;
 
     VertexMap m_vertices;
     VertexIndexList m_free_vertices;
@@ -127,7 +127,7 @@ public:
     auto add_vertex(P&& property) -> VertexIndex
     {
         const auto index = next_index(m_next_vertex_index, m_free_vertices);
-        auto [property_index, _] = m_vertex_properties.insert(ygg::Data<VertexProperty<VP>>(std::forward<P>(property)));
+        auto [property_index, _] = m_vertex_properties.insert(urd::data<VertexProperty<VP>>(std::forward<P>(property)));
 
         m_vertices.emplace(index, VertexType(index, property_index, *this));
         m_out_edges[index].clear();
@@ -151,7 +151,7 @@ public:
         assert_valid_vertex(target);
 
         const auto index = next_index(m_next_edge_index, m_free_edges);
-        auto [property_index, _] = m_edge_properties.insert(ygg::Data<EdgeProperty<EP>>(std::forward<P>(property)));
+        auto [property_index, _] = m_edge_properties.insert(urd::data<EdgeProperty<EP>>(std::forward<P>(property)));
 
         m_edges.emplace(index, EdgeType(index, source, target, property_index, *this));
         m_out_edges.at(source).insert(index);

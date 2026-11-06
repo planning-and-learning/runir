@@ -14,19 +14,19 @@ namespace runir::kr::ps::ext
 void bind_memory_state(nb::module_& m, RepositoryBinding& repository)
 {
     using T = MemoryState;
-    using Data = ygg::Data<T>;
-    using View = ygg::View<ygg::Index<T>, Repository>;
-    ygg::bind_index<ygg::Index<T>>(m, "MemoryStateIndex");
+    using Data = urd::data<T>;
+    using View = urd::view<T, Repository>;
+    urd::python::bind_index<urd::index<T>>(m, "MemoryStateIndex");
     auto data = nb::class_<Data>(m, "MemoryStateData")
                     .def(nb::init<>())
                     .def(nb::init<::cista::offset::string>(), nb::arg("name"))
                     .def_rw("index", &Data::index)
                     .def_rw("name", &Data::name);
-    ygg::add_comparison(data);
-    auto view = nb::class_<View>(m, "MemoryState").def("get_index", &View::get_index).def("get_name", &View::get_name);
+    urd::python::add_comparison(data);
+    auto view = nb::class_<View>(m, "MemoryState").def("get_index", &View::index).def("get_name", &View::get_name);
     ygg::add_print(view);
-    ygg::add_comparison(view);
-    ygg::add_hash(view);
+    urd::python::add_comparison(view);
+    urd::python::add_hash(view);
     runir::kr::python::bind_insert<T>(repository);
 }
 

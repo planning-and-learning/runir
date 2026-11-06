@@ -2,6 +2,8 @@
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_EVALUATORS_MUST_PASS_HPP_
 
 #include "runir/kr/dl/semantics/distance_evaluation.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/dl/semantics/incremental/declarations.hpp"
 #include "runir/kr/dl/semantics/incremental/delta.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/query.hpp"
@@ -23,18 +25,18 @@ namespace runir::kr::dl::semantics::incremental::detail
 template<tyr::TaskKind Kind>
 struct QueryMustPassEvaluator : QueryValue
 {
-    QueryMustPassEvaluator(QueryView<QueryMustPassTag> expression, GraphBuilder<Kind>& graph, std::vector<ygg::uint_t>& dependencies) :
+    QueryMustPassEvaluator(QueryView<QueryMustPassTag> expression, GraphBuilder<Kind>& graph, urd::Store<urd::sequence<ygg::uint_t>>& dependencies) :
         QueryValue(expression.get_schema().span()),
         sources(graph.prepare(expression.get_sources(), dependencies)),
         targets(graph.prepare(expression.get_targets(), dependencies)),
         probes(graph.prepare(expression.get_probes(), dependencies)),
-        feature(semantics::detail::make_must_pass_feature(expression.get_data().plan, expression.get_edges())),
+        feature(semantics::detail::make_must_pass_feature(expression.data().plan, expression.get_edges())),
         computed(expression.get_schema().span())
     {
         const auto edges = expression.get_edges();
         for (const auto& slot : feature.slots)
             slots.push_back(
-                visit_slot<>(slot, edges.get_context(), [&](auto argument) { return graph.prepare_relation(argument, slot.columns, dependencies); }));
+                visit_slot<>(slot, edges.context(), [&](auto argument) { return graph.prepare_relation(argument, slot.columns, dependencies); }));
     }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context)
@@ -69,20 +71,20 @@ private:
     QueryEvaluationIndex targets;
     QueryEvaluationIndex probes;
     MustPassFeature feature;
-    std::vector<QueryEvaluationIndex> slots;         ///< The graph node of each input slot.
-    ygg::Builder<ygg::database::Relation> computed;  ///< The recomputed result; kept to avoid allocations.
-    std::vector<std::byte> removed;                  ///< Rows of the previous result that are gone.
+    urd::Store<urd::sequence<QueryEvaluationIndex>> slots;         ///< The graph node of each input slot.
+    urd::builder<ygg::database::Relation> computed;  ///< The recomputed result; kept to avoid allocations.
+    urd::Store<urd::sequence<std::byte>> removed;                  ///< Rows of the previous result that are gone.
 
     ygg::uint_t num_objects = 0;
 
-    void compute(EvaluationGraph<Kind>& graph, ygg::Builder<ygg::database::Relation>& out)
+    void compute(EvaluationGraph<Kind>& graph, urd::builder<ygg::database::Relation>& out)
     {
         auto& heuristic = semantics::detail::must_pass_heuristic(feature, num_objects, input(graph), graph.result(targets));
         feature.must_pass.must_pass(input(graph), graph.result(sources), graph.result(targets), graph.result(probes), out, heuristic);
     }
     auto input(const EvaluationGraph<Kind>& graph) const
     {
-        return [this, &graph](size_t slot) -> const ygg::Builder<ygg::database::Relation>& { return graph.result(slots[slot]); };
+        return [this, &graph](size_t slot) -> const urd::builder<ygg::database::Relation>& { return graph.result(slots[slot]); };
     }
     static bool modified(const EvaluationGraph<Kind>& graph, QueryEvaluationIndex index)
     { return !graph.change(index).added.empty() || !graph.change(index).removed.empty(); }

@@ -1,10 +1,8 @@
 #ifndef RUNIR_KR_PS_EXT_VIEWS_HPP_
 #define RUNIR_KR_PS_EXT_VIEWS_HPP_
 
-#include "runir/kr/ps/condition_view.hpp"
 #include "runir/kr/ps/dl/condition_view.hpp"
 #include "runir/kr/ps/dl/effect_view.hpp"
-#include "runir/kr/ps/effect_view.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
 #include "runir/kr/ps/ext/memory_state_view.hpp"
 #include "runir/kr/ps/ext/module_symbol_view.hpp"

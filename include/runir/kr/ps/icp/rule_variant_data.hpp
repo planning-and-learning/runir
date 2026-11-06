@@ -9,39 +9,28 @@
 #include <tuple>
 #include <utility>
 #include <variant>
-#include <yggdrasil/containers/variant.hpp>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
+#include <urd/elements/flat.hpp>
+#include <boost/mp11.hpp>
 
-namespace ygg
+namespace urd
 {
 
 template<>
-struct Data<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>>
+struct data<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>>
 {
-    using Variant = ::ygg::IndexVariant<runir::kr::ps::icp::ConcreteRuleTypes>;
+    using Variant = urd::index_variant<runir::kr::ps::icp::ConcreteRuleTypes>;
 
-    Index<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>> index;
+    urd::index<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>> index;
     ::cista::offset::string symbol;
     Variant variant;
 
-    Data() = default;
-    Data(::cista::offset::string symbol_, Variant variant_) : index(), symbol(std::move(symbol_)), variant(std::move(variant_)) {}
-    template<typename C>
-    using ViewVariant = ::ygg::ViewVariant<Variant, C>;
-    template<typename C>
-    Data(::cista::offset::string symbol_, const ViewVariant<C>& variant_) :
-        index(),
-        symbol(std::move(symbol_)),
-        variant(std::visit([](const auto& view) -> Variant { return Variant(view.get_index()); }, variant_))
-    {
-    }
+    data() = default;
+    data(::cista::offset::string symbol_, Variant variant_) : index(), symbol(std::move(symbol_)), variant(std::move(variant_)) {}
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::symbol, &Data::variant> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::symbol, &Data::variant> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::symbol, &data::variant> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::symbol, &data::variant> {}; }
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 #endif

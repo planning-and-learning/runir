@@ -10,15 +10,17 @@
 #include <optional>
 #include <span>
 #include <tuple>
+#include <urd/repr/sequences/segmented.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
-#include <yggdrasil/containers/segmented_vector.hpp>
 
 namespace runir::kr::ps::base::detail
 {
 
 template<tyr::TaskKind Kind>
 void build_proof_graph(SketchProofResults<Kind>& result,
-                       const ygg::SegmentedVector<SearchNode<Kind>>& nodes,
+                       const urd::Store<urd::sequence<SearchNode<Kind>>, urd::stable_refs>& nodes,
                        std::span<const Predecessor<Kind>> predecessors,
                        std::optional<tyr::planning::PackedStateView<Kind>> initial)
 {
@@ -26,13 +28,13 @@ void build_proof_graph(SketchProofResults<Kind>& result,
     using Edge = std::tuple<graphs::VertexIndex, graphs::VertexIndex, SketchProofEdgeLabel>;
     constexpr auto no_vertex = std::numeric_limits<graphs::VertexIndex>::max();
 
-    auto graph_indices = std::vector<graphs::VertexIndex>(nodes.size(), no_vertex);
-    auto vertices = std::vector<VertexLabel> {};
+    auto graph_indices = graphs::VertexIndexList(nodes.size(), no_vertex);
+    auto vertices = urd::Store<urd::sequence<VertexLabel>> {};
     result.deadend_states.clear();
     result.open_states.clear();
     const auto add_vertex = [&](const tyr::planning::PackedStateView<Kind>& state)
     {
-        const auto index = ygg::uint_t(state.get_index());
+        const auto index = ygg::uint_t(state.index().value);
         auto& vertex = graph_indices[index];
         if (vertex != no_vertex)
             return vertex;
@@ -48,7 +50,7 @@ void build_proof_graph(SketchProofResults<Kind>& result,
     if (initial)
         add_vertex(*initial);
 
-    auto edges = std::vector<Edge> {};
+    auto edges = urd::Store<urd::sequence<Edge>> {};
     edges.reserve(predecessors.size());
     for (const auto& predecessor : predecessors)
     {

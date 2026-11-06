@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_EXT_DL_PARSER_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/ps/ext/declarations.hpp"
 
 #include <string>
@@ -40,7 +42,7 @@ ModuleView parse_module(const std::string& description, tyr::formalism::planning
 
 ProgramView parse_program(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository);
 
-std::vector<ModuleView> parse_modules(const std::vector<std::string>& descriptions, tyr::formalism::planning::DomainView domain, Repository& repository);
+urd::Store<urd::sequence<ModuleView>> parse_modules(const urd::Store<urd::sequence<std::string>>& descriptions, tyr::formalism::planning::DomainView domain, Repository& repository);
 
 }  // namespace runir::kr::ps::ext::dl
 

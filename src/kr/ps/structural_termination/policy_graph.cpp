@@ -1,10 +1,12 @@
 #include "detail.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/graphs/declarations.hpp"
 
 #include <bit>
 #include <limits>
+#include <urd/repr/containers/bitset_span.hpp>
 #include <utility>
-#include <yggdrasil/containers/dynamic_bitset.hpp>
 
 namespace runir::kr::ps::detail
 {
@@ -19,7 +21,7 @@ std::uint64_t vertex_booleans(std::size_t vertex, const QualitativePolicy& polic
 {
     if (policy.num_booleans == 0)
         return 0;
-    return (vertex / policy.num_memory_states) & ygg::BitsetSpan<const std::uint64_t>::last_mask(policy.num_booleans);
+    return (vertex / policy.num_memory_states) & urd::repr::BitsetSpan<const std::uint64_t>::last_mask(policy.num_booleans);
 }
 
 std::uint64_t vertex_numericals(std::size_t vertex, const QualitativePolicy& policy)
@@ -32,7 +34,7 @@ std::uint64_t vertex_numericals(std::size_t vertex, const QualitativePolicy& pol
 namespace
 {
 
-void append_rule_edges(const QualitativePolicy& policy, std::size_t rule_position, std::vector<PolicyEdge>& edges)
+void append_rule_edges(const QualitativePolicy& policy, std::size_t rule_position, urd::Store<urd::sequence<PolicyEdge>>& edges)
 {
     const auto& profile = policy.rule_profiles[rule_position];
     for (std::size_t source_valuation = 0; source_valuation < policy.num_valuations(); ++source_valuation)
@@ -68,15 +70,15 @@ void append_rule_edges(const QualitativePolicy& policy, std::size_t rule_positio
     }
 }
 
-std::vector<std::size_t> positions(std::uint64_t selected)
+urd::Store<urd::sequence<std::size_t>> positions(std::uint64_t selected)
 {
-    auto result = std::vector<std::size_t> {};
+    auto result = urd::Store<urd::sequence<std::size_t>> {};
     for (; selected; selected &= selected - 1)
         result.push_back(std::countr_zero(selected));
     return result;
 }
 
-std::vector<std::size_t> relevant_booleans(const QualitativePolicy& policy, std::span<const std::size_t> rule_positions)
+urd::Store<urd::sequence<std::size_t>> relevant_booleans(const QualitativePolicy& policy, std::span<const std::size_t> rule_positions)
 {
     auto selected = std::uint64_t { 0 };
     for (const auto rule_position : rule_positions)
@@ -88,7 +90,7 @@ std::vector<std::size_t> relevant_booleans(const QualitativePolicy& policy, std:
     return positions(selected);
 }
 
-std::vector<std::size_t> relevant_numericals(const QualitativePolicy& policy, std::span<const std::size_t> rule_positions)
+urd::Store<urd::sequence<std::size_t>> relevant_numericals(const QualitativePolicy& policy, std::span<const std::size_t> rule_positions)
 {
     auto selected = std::uint64_t { 0 };
     for (const auto rule_position : rule_positions)
@@ -100,7 +102,7 @@ std::vector<std::size_t> relevant_numericals(const QualitativePolicy& policy, st
     return positions(selected);
 }
 
-std::uint64_t project_mask(std::uint64_t mask, const std::vector<std::size_t>& positions)
+std::uint64_t project_mask(std::uint64_t mask, const urd::Store<urd::sequence<std::size_t>>& positions)
 {
     auto projected = std::uint64_t { 0 };
     for (std::size_t local = 0; local < positions.size(); ++local)
@@ -108,7 +110,7 @@ std::uint64_t project_mask(std::uint64_t mask, const std::vector<std::size_t>& p
     return projected;
 }
 
-std::uint64_t unproject_mask(std::uint64_t mask, const std::vector<std::size_t>& positions)
+std::uint64_t unproject_mask(std::uint64_t mask, const urd::Store<urd::sequence<std::size_t>>& positions)
 {
     auto unprojected = std::uint64_t { 0 };
     for (std::size_t local = 0; local < positions.size(); ++local)
@@ -117,9 +119,9 @@ std::uint64_t unproject_mask(std::uint64_t mask, const std::vector<std::size_t>&
 }
 
 RuleProfile project_profile(const RuleProfile& profile,
-                            const std::vector<std::size_t>& memory_position_map,
-                            const std::vector<std::size_t>& boolean_positions,
-                            const std::vector<std::size_t>& numerical_positions)
+                            const urd::Store<urd::sequence<std::size_t>>& memory_position_map,
+                            const urd::Store<urd::sequence<std::size_t>>& boolean_positions,
+                            const urd::Store<urd::sequence<std::size_t>>& numerical_positions)
 {
     auto projected = RuleProfile(boolean_positions.size(),
                                  numerical_positions.size(),
@@ -148,17 +150,17 @@ std::pair<std::uint64_t, std::uint64_t> unproject_vertex(std::size_t vertex, con
              unproject_mask(vertex_numericals(vertex, projected.policy), projected.numerical_positions) };
 }
 
-std::vector<PolicyEdge> build_policy_edges(const QualitativePolicy& policy)
+urd::Store<urd::sequence<PolicyEdge>> build_policy_edges(const QualitativePolicy& policy)
 {
-    auto edges = std::vector<PolicyEdge> {};
+    auto edges = urd::Store<urd::sequence<PolicyEdge>> {};
     for (std::size_t rule_position = 0; rule_position < policy.rule_profiles.size(); ++rule_position)
         append_rule_edges(policy, rule_position, edges);
     return edges;
 }
 
-std::vector<ProjectedPolicyComponent> project_policy_components(const QualitativePolicy& policy, std::span<const std::size_t> rule_positions)
+urd::Store<urd::sequence<ProjectedPolicyComponent>> project_policy_components(const QualitativePolicy& policy, std::span<const std::size_t> rule_positions)
 {
-    auto memory_edges = std::vector<PolicyEdge> {};
+    auto memory_edges = urd::Store<urd::sequence<PolicyEdge>> {};
     memory_edges.reserve(rule_positions.size());
     for (const auto rule_position : rule_positions)
     {
@@ -167,11 +169,11 @@ std::vector<ProjectedPolicyComponent> project_policy_components(const Qualitativ
     }
 
     const auto components = find_strong_components(memory_edges, policy.num_memory_states);
-    auto memories_by_component = std::vector<std::vector<std::size_t>>(components.count);
+    auto memories_by_component = urd::Store<urd::sequence<urd::Store<urd::sequence<std::size_t>>>>(components.count);
     for (std::size_t memory_position = 0; memory_position < policy.num_memory_states; ++memory_position)
         memories_by_component[components.component_of[memory_position]].push_back(memory_position);
 
-    auto rules_by_component = std::vector<std::vector<std::size_t>>(components.count);
+    auto rules_by_component = urd::Store<urd::sequence<urd::Store<urd::sequence<std::size_t>>>>(components.count);
     for (const auto rule_position : rule_positions)
     {
         const auto& profile = policy.rule_profiles[rule_position];
@@ -180,7 +182,7 @@ std::vector<ProjectedPolicyComponent> project_policy_components(const Qualitativ
             rules_by_component[source_component].push_back(rule_position);
     }
 
-    auto result = std::vector<ProjectedPolicyComponent> {};
+    auto result = urd::Store<urd::sequence<ProjectedPolicyComponent>> {};
     auto emitted = std::vector<bool>(components.count, false);
     for (std::size_t memory_position = 0; memory_position < policy.num_memory_states; ++memory_position)
     {
@@ -195,7 +197,7 @@ std::vector<ProjectedPolicyComponent> project_policy_components(const Qualitativ
         auto numerical_positions = relevant_numericals(policy, rule_positions_);
         auto projected_policy = QualitativePolicy(memory_positions.size(), boolean_positions.size(), numerical_positions.size());
 
-        auto memory_position_map = std::vector<std::size_t>(policy.num_memory_states);
+        auto memory_position_map = urd::Store<urd::sequence<std::size_t>>(policy.num_memory_states);
         for (std::size_t local = 0; local < memory_positions.size(); ++local)
             memory_position_map[memory_positions[local]] = local;
         for (const auto rule_position : rule_positions_)

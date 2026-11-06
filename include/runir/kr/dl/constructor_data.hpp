@@ -8,10 +8,8 @@
 #include <tuple>
 #include <utility>
 #include <variant>
-#include <yggdrasil/containers/variant.hpp>
-#include <yggdrasil/core/type_list.hpp>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
+#include <boost/mp11.hpp>
+#include <urd/elements/flat.hpp>
 
 namespace runir::kr::dl::detail
 {
@@ -25,9 +23,9 @@ struct ConstructorDataTraits<ConceptTag>
     using Tags = ConceptConstructorTags;
 
     template<typename Tag>
-    using Index = ygg::Index<Concept<Tag>>;
+    using Index = urd::index<Concept<Tag>>;
 
-    using Indices = ygg::ConcatTypeListsT<ygg::MapTypeListT<Index, Tags>, ygg::TypeList<ygg::Index<QueryProjection<ConceptTag>>>>;
+    using Indices = boost::mp11::mp_append<boost::mp11::mp_transform<Index, Tags>, boost::mp11::mp_list<urd::index<QueryProjection<ConceptTag>>>>;
 };
 
 template<>
@@ -36,9 +34,9 @@ struct ConstructorDataTraits<RoleTag>
     using Tags = RoleConstructorTags;
 
     template<typename Tag>
-    using Index = ygg::Index<Role<Tag>>;
+    using Index = urd::index<Role<Tag>>;
 
-    using Indices = ygg::ConcatTypeListsT<ygg::MapTypeListT<Index, Tags>, ygg::TypeList<ygg::Index<QueryProjection<RoleTag>>>>;
+    using Indices = boost::mp11::mp_append<boost::mp11::mp_transform<Index, Tags>, boost::mp11::mp_list<urd::index<QueryProjection<RoleTag>>>>;
 };
 
 template<>
@@ -47,9 +45,9 @@ struct ConstructorDataTraits<BooleanTag>
     using Tags = BooleanConstructorTags;
 
     template<typename Tag>
-    using Index = ygg::Index<Boolean<Tag>>;
+    using Index = urd::index<Boolean<Tag>>;
 
-    using Indices = ygg::MapTypeListT<Index, Tags>;
+    using Indices = boost::mp11::mp_transform<Index, Tags>;
 };
 
 template<>
@@ -58,45 +56,36 @@ struct ConstructorDataTraits<NumericalTag>
     using Tags = NumericalConstructorTags;
 
     template<typename Tag>
-    using Index = ygg::Index<Numerical<Tag>>;
+    using Index = urd::index<Numerical<Tag>>;
 
-    using Indices = ygg::MapTypeListT<Index, Tags>;
+    using Indices = boost::mp11::mp_transform<Index, Tags>;
 };
 
 template<CategoryTag Category>
-using ConstructorDataVariant = ygg::ApplyTypeListT<::cista::offset::variant, typename ConstructorDataTraits<Category>::Indices>;
+using ConstructorDataVariant = boost::mp11::mp_apply<::cista::offset::variant, typename ConstructorDataTraits<Category>::Indices>;
 
 }  // namespace runir::kr::dl::detail
 
-namespace ygg
+namespace urd
 {
 
 template<runir::kr::dl::CategoryTag Category>
-struct Data<runir::kr::dl::Constructor<Category>>
+struct data<runir::kr::dl::Constructor<Category>>
 {
     using Variant = runir::kr::dl::detail::ConstructorDataVariant<Category>;
 
-    Index<runir::kr::dl::Constructor<Category>> index;
+    urd::index<runir::kr::dl::Constructor<Category>> index;
     Variant variant;
     bool is_static = false;
 
-    Data() = default;
+    data() = default;
     // is_static is derived during insertion and therefore not a constructor parameter.
-    explicit Data(Variant variant_) : index(), variant(std::move(variant_)) {}
-    template<typename C>
-    using ViewVariant = ::ygg::ViewVariant<Variant, C>;
-    template<typename C>
-    explicit Data(const ViewVariant<C>& variant_) :
-        index(),
-        variant(std::visit([](const auto& view) -> Variant { return Variant(view.get_index()); }, variant_))
-    {
-    }
+    explicit data(Variant variant_) : index(), variant(std::move(variant_)) {}
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::variant, &Data::is_static> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::variant> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::variant, &data::is_static> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::variant> {}; }
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 #endif

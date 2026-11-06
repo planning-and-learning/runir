@@ -2,6 +2,8 @@
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_QUERY_NODE_HPP_
 
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/must_pass.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/query.hpp"
 
 #include <algorithm>
@@ -23,7 +25,7 @@ public:
     /// A concept or role lifted into a relation with the given columns; it has no query expression.
     template<ConceptOrRoleTag Category>
     QueryNode(EvaluationIndex<Category> argument, std::span<const ygg::database::ColumnLayout> columns) :
-        m_dependencies { ygg::uint_t(argument) },
+        m_dependencies { ygg::uint_t(argument.value) },
         m_operation(QueryFromDenotationEvaluator<Kind, Category>(argument, columns))
     {
     }
@@ -39,7 +41,7 @@ public:
     void initialize(EvaluationGraph<Kind>& graph, Context& context);
     void update(EvaluationGraph<Kind>& graph, const Delta& delta, ygg::database::Workspace& workspace);
     [[nodiscard]] std::span<const ygg::uint_t> get_dependencies() const noexcept { return m_dependencies; }
-    [[nodiscard]] const ygg::Builder<ygg::database::Relation>& get_result() const;
+    [[nodiscard]] const urd::builder<ygg::database::Relation>& get_result() const;
     [[nodiscard]] const ygg::database::incremental::Delta& get_delta() const;
 
 private:
@@ -59,7 +61,7 @@ private:
                                    QueryMustPassEvaluator<Kind>>;
 
     std::optional<QueryView<>> m_expression;
-    std::vector<ygg::uint_t> m_dependencies;
+    urd::Store<urd::sequence<ygg::uint_t>> m_dependencies;
     Operation m_operation;
     Operation prepare_operation(QueryView<> expression, GraphBuilder<Kind>& graph);
 };
@@ -83,7 +85,7 @@ void QueryNode<Kind>::update(EvaluationGraph<Kind>& graph, const Delta& delta, y
 }
 
 template<tyr::TaskKind Kind>
-const ygg::Builder<ygg::database::Relation>& QueryNode<Kind>::get_result() const
+const urd::builder<ygg::database::Relation>& QueryNode<Kind>::get_result() const
 {
     return std::visit([](const auto& operation) -> const auto& { return operation.get_result(); }, m_operation);
 }
@@ -99,7 +101,7 @@ auto QueryNode<Kind>::prepare_operation(QueryView<> expression, GraphBuilder<Kin
 {
     if (expression.is_static())
         return QueryStaticEvaluator<Kind>(expression);
-    return ygg::visit(
+    return std::visit(
         [&]<typename Tag>(QueryView<Tag> concrete) -> Operation
         {
             if constexpr (std::same_as<Tag, AtomicStateTag<tyr::formalism::FluentTag>>)
@@ -107,17 +109,17 @@ auto QueryNode<Kind>::prepare_operation(QueryView<> expression, GraphBuilder<Kin
             else if constexpr (std::same_as<Tag, AtomicStateTag<tyr::formalism::DerivedTag>>)
                 return QueryAtomicEvaluator<Kind, tyr::formalism::DerivedTag>(concrete);
             else if constexpr (std::same_as<Tag, QueryProjectTag>)
-                return QueryProjectionEvaluator<Kind>(graph.prepare(concrete.get_arg(), m_dependencies), concrete.get_data().plan);
+                return QueryProjectionEvaluator<Kind>(graph.prepare(concrete.get_arg(), m_dependencies), concrete.data().plan);
             else if constexpr (std::same_as<Tag, QueryJoinTag>)
                 return QueryJoinEvaluator<Kind>(graph.prepare(concrete.get_lhs(), m_dependencies),
                                                 graph.prepare(concrete.get_rhs(), m_dependencies),
-                                                concrete.get_data().plan);
+                                                concrete.data().plan);
             else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
             {
-                auto args = std::vector<QueryEvaluationIndex> {};
+                auto args = urd::Store<urd::sequence<QueryEvaluationIndex>> {};
                 for (const auto arg : concrete.get_args())
                     args.push_back(graph.prepare(arg, m_dependencies));
-                return QueryGenericJoinEvaluator<Kind>(std::move(args), concrete.get_data().plan);
+                return QueryGenericJoinEvaluator<Kind>(std::move(args), concrete.data().plan);
             }
             else if constexpr (std::same_as<Tag, QueryConceptTag>)
                 return QueryFromDenotationEvaluator<Kind, ConceptTag>(graph.prepare(concrete.get_arg(), m_dependencies), concrete.get_schema().span());

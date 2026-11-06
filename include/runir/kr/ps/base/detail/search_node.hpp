@@ -8,7 +8,8 @@
 #include <tyr/formalism/binding_view.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <tyr/planning/state_repository.hpp>
-#include <yggdrasil/containers/segmented_vector.hpp>
+#include <urd/repr/sequences/segmented.hpp>
+#include <urd/store.hpp>
 
 namespace runir::kr::ps::base::detail
 {
@@ -25,9 +26,9 @@ struct SearchNode
 };
 
 template<tyr::TaskKind Kind>
-SearchNode<Kind>& get_or_create_search_node(const tyr::planning::PackedStateView<Kind>& state, ygg::SegmentedVector<SearchNode<Kind>>& search_nodes)
+SearchNode<Kind>& get_or_create_search_node(const tyr::planning::PackedStateView<Kind>& state, urd::Store<urd::sequence<SearchNode<Kind>>, urd::stable_refs>& search_nodes)
 {
-    const auto index = ygg::uint_t(state.get_index());
+    const auto index = ygg::uint_t(state.index().value);
     while (index >= search_nodes.size())
         search_nodes.push_back(SearchNode<Kind> {});
 

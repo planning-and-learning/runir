@@ -31,14 +31,14 @@ void bind_sketch_proof_types(nb::module_& m, const char* prefix)
     using VertexLabel = SketchProofVertexLabel<Kind>;
 
     auto vertex_label = nb::class_<VertexLabel>(m, (std::string(prefix) + "SketchProofVertexLabel").c_str())
-                            .def_ro("state", &VertexLabel::state, nb::rv_policy::copy)
+                            .def_ro("state", &VertexLabel::state, nb::rv_policy::copy, nb::keep_alive<0, 1>())
                             .def_ro("is_initial", &VertexLabel::is_initial)
                             .def_ro("is_goal", &VertexLabel::is_goal)
                             .def_ro("is_alive", &VertexLabel::is_alive)
                             .def_ro("is_unsolvable", &VertexLabel::is_unsolvable);
     ygg::add_print(vertex_label);
-    ygg::add_comparison(vertex_label);
-    ygg::add_hash(vertex_label);
+    urd::python::add_comparison(vertex_label);
+    urd::python::add_hash(vertex_label);
 
     auto graph = nb::class_<Graph>(m, (std::string(prefix) + "SketchProofGraph").c_str());
     graph.def(nb::init<>());
@@ -48,7 +48,7 @@ void bind_sketch_proof_types(nb::module_& m, const char* prefix)
     nb::class_<Results>(m, (std::string(prefix) + "SketchProofResults").c_str())
         .def_ro("status", &Results::status)
         .def_ro("graph", &Results::graph, nb::keep_alive<0, 1>())
-        .def_ro("plan", &Results::plan, nb::rv_policy::copy)
+        .def_ro("plan", &Results::plan, nb::rv_policy::copy, nb::keep_alive<0, 1>())
         .def_ro("deadend_states", &Results::deadend_states)
         .def_ro("open_states", &Results::open_states)
         .def_ro("cycle", &Results::cycle)
@@ -82,8 +82,8 @@ void bind_sketch_executor(nb::module_& m)
     auto edge_label =
         nb::class_<SketchProofEdgeLabel>(m, "SketchProofEdgeLabel").def_ro("action", &SketchProofEdgeLabel::action).def_ro("rule", &SketchProofEdgeLabel::rule);
     ygg::add_print(edge_label);
-    ygg::add_comparison(edge_label);
-    ygg::add_hash(edge_label);
+    urd::python::add_comparison(edge_label);
+    urd::python::add_hash(edge_label);
 
     nb::enum_<SketchProofStatus>(m, "SketchProofStatus")
         .value("SUCCESS", SketchProofStatus::SUCCESS)
@@ -106,8 +106,18 @@ void bind_sketch_executor(nb::module_& m)
             [](Expander& self,
                tyr::planning::StateView<Kind> state,
                SketchSearchStatistics& statistics,
-               const std::function<bool(tyr::planning::LabeledNode<Kind>, RuleView)>& emit,
-               const std::function<bool()>& stop) { return self.for_each_successor(state, statistics, emit, stop); },
+               const nb::typed<nb::callable, bool(tyr::planning::LabeledNode<Kind>, RuleView)>& emit,
+               const std::function<bool()>& stop)
+            {
+                // The successors borrow the expander's state repository: each keeps the expander alive.
+                const auto owner = nb::cast(&self, nb::rv_policy::reference);
+                return self.for_each_successor(
+                    state,
+                    statistics,
+                    [&](tyr::planning::LabeledNode<Kind> node, RuleView rule)
+                    { return nb::cast<bool>(emit(nb::cast(std::move(node), nb::rv_policy::move, owner), rule)); },
+                    stop);
+            },
             "state"_a,
             "statistics"_a,
             "emit"_a,

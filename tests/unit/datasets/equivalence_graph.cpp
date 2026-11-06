@@ -1,4 +1,6 @@
 #include "fixtures.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "planning_fixtures.hpp"
 
 #include <boost/json.hpp>
@@ -14,7 +16,7 @@
 #include <tyr/planning/ground/task.hpp>
 #include <utility>
 #include <vector>
-#include <yggdrasil/serialization/json_loader.hpp>
+#include <yggdrasil/serialization/json_suite.hpp>
 
 namespace runir::tests
 {
@@ -33,7 +35,7 @@ struct EquivalenceGraphFigureCase
 {
     std::string name;
     std::filesystem::path domain_file;
-    std::vector<std::filesystem::path> task_files;
+    urd::Store<urd::sequence<std::filesystem::path>> task_files;
     datasets::EquivalencePolicyMode equivalence_policy;
     std::size_t expected_num_vertices = 0;
     std::size_t expected_num_edges = 0;
@@ -50,7 +52,7 @@ auto parse_equivalence_policy_mode(std::string_view value) -> datasets::Equivale
 
 EquivalenceGraphFigureCase parse_case(const boost::json::object& object)
 {
-    auto task_files = std::vector<std::filesystem::path> {};
+    auto task_files = urd::Store<urd::sequence<std::filesystem::path>> {};
     for (const auto& task_file : ygg::common::as_array(*object.if_contains("task_files"), "case.task_files"))
         task_files.push_back(benchmark_path(std::string(task_file.as_string())));
 
@@ -62,7 +64,7 @@ EquivalenceGraphFigureCase parse_case(const boost::json::object& object)
                                         ygg::common::as_size(object, "expected_num_edges", "case") };
 }
 
-std::vector<EquivalenceGraphFigureCase> load_cases()
+urd::Store<urd::sequence<EquivalenceGraphFigureCase>> load_cases()
 {
     const auto suite = load_fixture_json("datasets/equivalence_graph.json");
     const auto& suite_object = ygg::common::as_object(suite, "suite");
@@ -70,7 +72,7 @@ std::vector<EquivalenceGraphFigureCase> load_cases()
     if (!tests_value)
         throw std::runtime_error("suite.tests is required.");
 
-    auto result = std::vector<EquivalenceGraphFigureCase> {};
+    auto result = urd::Store<urd::sequence<EquivalenceGraphFigureCase>> {};
     for (const auto& case_value : ygg::common::as_array(*tests_value, "suite.tests"))
         result.push_back(parse_case(ygg::common::as_object(case_value, "case")));
     return result;

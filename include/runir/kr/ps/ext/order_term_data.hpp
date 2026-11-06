@@ -9,39 +9,28 @@
 #include <tuple>
 #include <utility>
 #include <variant>
-#include <yggdrasil/containers/variant.hpp>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
+#include <urd/elements/flat.hpp>
+#include <boost/mp11.hpp>
 
-namespace ygg
+namespace urd
 {
 
 template<>
-struct Data<runir::kr::ps::ext::OrderTerm>
+struct data<runir::kr::ps::ext::OrderTerm>
 {
-    using Feature = ::ygg::IndexVariant<::ygg::MapTypeListSecondT<runir::kr::ps::Feature, runir::kr::ExtFamilyTag, runir::kr::dl::BooleanOrNumericalTags>>;
+    using Feature = urd::index_variant<boost::mp11::mp_transform_q<boost::mp11::mp_bind_front<runir::kr::ps::Feature, runir::kr::ExtFamilyTag>, runir::kr::dl::BooleanOrNumericalTags>>;
 
-    Index<runir::kr::ps::ext::OrderTerm> index;
+    urd::index<runir::kr::ps::ext::OrderTerm> index;
     runir::kr::ps::ext::OrderDirection direction = runir::kr::ps::ext::OrderDirection::MIN;
     Feature feature;
 
-    Data() = default;
-    Data(runir::kr::ps::ext::OrderDirection direction_, Feature feature_) : index(), direction(direction_), feature(std::move(feature_)) {}
-    template<typename C>
-    using ViewVariant = ::ygg::ViewVariant<Feature, C>;
-    template<typename C>
-    Data(runir::kr::ps::ext::OrderDirection direction_, const ViewVariant<C>& feature_) :
-        index(),
-        direction(direction_),
-        feature(std::visit([](const auto& view) -> Feature { return Feature(view.get_index()); }, feature_))
-    {
-    }
+    data() = default;
+    data(runir::kr::ps::ext::OrderDirection direction_, Feature feature_) : index(), direction(direction_), feature(std::move(feature_)) {}
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::direction, &Data::feature> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::direction, &Data::feature> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::direction, &data::feature> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::direction, &data::feature> {}; }
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 #endif

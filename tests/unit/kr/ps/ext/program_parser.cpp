@@ -31,11 +31,11 @@ namespace
 {
 
 template<typename FeatureTag, kr::dl::CategoryTag Category>
-auto create_feature(kr::ps::ext::Repository& repository, ygg::Index<kr::dl::Constructor<Category>> expression, const std::string& name)
+auto create_feature(kr::ps::ext::Repository& repository, urd::index<kr::dl::Constructor<Category>> expression, const std::string& name)
 {
-    auto concrete_data = ygg::Data<kr::ps::ConcreteFeature<kr::ExtFamilyTag, kr::DlTag, FeatureTag>>(expression, name);
+    auto concrete_data = urd::data<kr::ps::ConcreteFeature<kr::ExtFamilyTag, kr::DlTag, FeatureTag>>(expression, name);
     const auto concrete = repository.insert(concrete_data).first;
-    auto feature_data = ygg::Data<kr::ps::Feature<kr::ExtFamilyTag, FeatureTag>>(concrete.get_index());
+    auto feature_data = urd::data<kr::ps::Feature<kr::ExtFamilyTag, FeatureTag>>(concrete.index());
     return repository.insert(feature_data).first;
 }
 
@@ -52,14 +52,14 @@ TEST(RunirTests, ExtSyntacticComplexityAggregatesDeclaredFeatures)
     const auto role = kr::ps::ext::dl::parse_role("(r_universal)", planning_domain.get_domain(), *dl_repository);
     const auto boolean = kr::ps::ext::dl::parse_boolean("(b_nonempty (c_top))", planning_domain.get_domain(), *dl_repository);
     const auto numerical = kr::ps::ext::dl::parse_numerical("(n_count (c_top))", planning_domain.get_domain(), *dl_repository);
-    const auto concept_feature = create_feature<kr::dl::ConceptTag>(*repository, concept_expression.get_index(), "concept");
-    const auto role_feature = create_feature<kr::dl::RoleTag>(*repository, role.get_index(), "role");
-    const auto boolean_feature = create_feature<kr::dl::BooleanTag>(*repository, boolean.get_index(), "boolean");
-    const auto numerical_feature = create_feature<kr::dl::NumericalTag>(*repository, numerical.get_index(), "numerical");
+    const auto concept_feature = create_feature<kr::dl::ConceptTag>(*repository, concept_expression.index(), "concept");
+    const auto role_feature = create_feature<kr::dl::RoleTag>(*repository, role.index(), "role");
+    const auto boolean_feature = create_feature<kr::dl::BooleanTag>(*repository, boolean.index(), "boolean");
+    const auto numerical_feature = create_feature<kr::dl::NumericalTag>(*repository, numerical.index(), "numerical");
 
     const auto expect_feature_complexity = [](auto feature, std::size_t expected)
     {
-        const auto concrete = ygg::visit([](auto view) { return kr::ps::dl::syntactic_complexity(view); }, feature.get_variant());
+        const auto concrete = std::visit([](auto view) { return kr::ps::dl::syntactic_complexity(view); }, feature.get_variant());
         EXPECT_EQ(kr::ps::syntactic_complexity(feature), concrete);
         EXPECT_EQ(concrete, kr::dl::semantics::syntactic_complexity(feature.get_expression()));
         EXPECT_EQ(concrete, expected);
@@ -71,21 +71,21 @@ TEST(RunirTests, ExtSyntacticComplexityAggregatesDeclaredFeatures)
 
     const auto all_entry = create_memory_state(*repository, "all_entry");
     auto all_data = make_module_data(*repository, "all");
-    all_data.entry_memory_state = all_entry.get_index();
-    all_data.memory_states.push_back(all_entry.get_index());
-    all_data.concept_features.push_back(concept_feature.get_index());
-    all_data.role_features.push_back(role_feature.get_index());
-    all_data.boolean_features.push_back(boolean_feature.get_index());
-    all_data.numerical_features.push_back(numerical_feature.get_index());
+    all_data.entry_memory_state = all_entry.index();
+    all_data.memory_states.push_back(all_entry.index());
+    all_data.concept_features.push_back(concept_feature.index());
+    all_data.role_features.push_back(role_feature.index());
+    all_data.boolean_features.push_back(boolean_feature.index());
+    all_data.numerical_features.push_back(numerical_feature.index());
     kr::ps::ext::canonicalize(all_data);
     const auto all = repository->insert(all_data).first;
 
-    const auto shared_feature = create_feature<kr::dl::BooleanTag>(*repository, boolean.get_index(), "shared");
+    const auto shared_feature = create_feature<kr::dl::BooleanTag>(*repository, boolean.index(), "shared");
     const auto shared_entry = create_memory_state(*repository, "shared_entry");
     auto shared_data = make_module_data(*repository, "shared");
-    shared_data.entry_memory_state = shared_entry.get_index();
-    shared_data.memory_states.push_back(shared_entry.get_index());
-    shared_data.boolean_features.push_back(shared_feature.get_index());
+    shared_data.entry_memory_state = shared_entry.index();
+    shared_data.memory_states.push_back(shared_entry.index());
+    shared_data.boolean_features.push_back(shared_feature.index());
     kr::ps::ext::canonicalize(shared_data);
     const auto shared = repository->insert(shared_data).first;
 
@@ -146,11 +146,11 @@ TEST(RunirTests, ExtModuleParserLowersNamedCalleesWithoutPreexistingModules)
     EXPECT_EQ(modules[0].get_name(), "caller");
     EXPECT_EQ(modules[1].get_name(), "callee");
 
-    ASSERT_EQ(modules[0].get_data().memory_transitions.size(), 1);
+    ASSERT_EQ(modules[0].data().memory_transitions.size(), 1);
     const auto rules = modules[0].get_memory_transitions()[0];
     ASSERT_FALSE(rules.empty());
     auto found_call_rule = false;
-    ygg::visit(
+    std::visit(
         [&](auto rule)
         {
             using RuleView = std::decay_t<decltype(rule)>;
@@ -597,13 +597,13 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
     const auto load_rules = module_.get_memory_transitions()[0];
     ASSERT_EQ(load_rules.size(), 1);
     EXPECT_EQ(load_rules[0].get_symbol(), "load-edge");
-    EXPECT_TRUE(ygg::visit(
+    EXPECT_TRUE(std::visit(
         [](auto rule)
         {
             using View = std::decay_t<decltype(rule)>;
-            using Expected = ygg::View<ygg::Index<kr::ps::ext::Rule<kr::ps::ext::LoadTag<kr::dl::ConceptTag>>>, kr::ps::ext::Repository>;
+            using Expected = urd::view<kr::ps::ext::Rule<kr::ps::ext::LoadTag<kr::dl::ConceptTag>>, kr::ps::ext::Repository>;
             if constexpr (std::same_as<View, Expected>)
-                return ygg::uint_t(rule.get_register().get_identifier()) == 0 && rule.get_conditions().size() == 1;
+                return ygg::uint_t(rule.get_register().get_identifier().value) == 0 && rule.get_conditions().size() == 1;
             else
                 return false;
         },
@@ -614,11 +614,11 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
 
     const auto do_rules = module_.get_memory_transitions()[2];
     ASSERT_EQ(do_rules.size(), 1);
-    EXPECT_TRUE(ygg::visit(
+    EXPECT_TRUE(std::visit(
         [](auto rule)
         {
             using View = std::decay_t<decltype(rule)>;
-            using Expected = ygg::View<ygg::Index<kr::ps::ext::Rule<kr::ps::ext::DoTag>>, kr::ps::ext::Repository>;
+            using Expected = urd::view<kr::ps::ext::Rule<kr::ps::ext::DoTag>, kr::ps::ext::Repository>;
             if constexpr (std::same_as<View, Expected>)
                 return rule.get_action_name() == "pick" && rule.get_action_arguments().size() == 3 && rule.get_effects().size() == 1;
             else
@@ -662,7 +662,7 @@ TEST(RunirTests, ExtBindingRulesParseEffectsAndRoundTrip)
                 const auto expected_effects = std::string(effects).find("unchanged") == std::string::npos ? 0U : 2U;
                 const auto rules = module_.get_memory_transitions()[0];
                 ASSERT_EQ(rules.size(), 1U);
-                ygg::visit(
+                std::visit(
                     [&](auto rule)
                     {
                         using R = decltype(rule);
@@ -672,9 +672,9 @@ TEST(RunirTests, ExtBindingRulesParseEffectsAndRoundTrip)
                             EXPECT_EQ(rule.get_feature().get_symbol(), "F");
                             EXPECT_EQ(rule.get_register().get_name(), "r");
                             EXPECT_EQ(rule.get_effects().size(), expected_effects);
-                            auto data = rule.get_data();
+                            auto data = rule.data();
                             EXPECT_TRUE(kr::ps::ext::is_canonical(data));
-                            data.clear();
+                            urd::clear_members(data);
                             EXPECT_TRUE(data.effects.empty());
                         }
                         else
@@ -683,7 +683,7 @@ TEST(RunirTests, ExtBindingRulesParseEffectsAndRoundTrip)
                     rules[0].get_variant());
                 const auto formatted = fmt::format("{}", module_);
                 EXPECT_EQ(formatted.find("(:effects") != std::string::npos, expected_effects != 0U);
-                EXPECT_EQ(parse(formatted).get_index(), module_.get_index());
+                EXPECT_EQ(parse(formatted).index(), module_.index());
                 EXPECT_EQ(fmt::format("{}", parse(formatted)), formatted);
             }
 
@@ -707,13 +707,13 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
         kr::ps::ext::dl::parse_concept(read_fixture("kr/ps/ext/executor/ext_module_parser_lowers_ext_dl_concept_and_role_expressions/case_1.dsl"),
                                        planning_task.get_domain().get_domain(),
                                        *dl_repository);
-    EXPECT_TRUE(ygg::visit(
+    EXPECT_TRUE(std::visit(
         [](auto child)
         {
             using View = std::decay_t<decltype(child)>;
-            using Expected = ygg::View<ygg::Index<kr::dl::Concept<kr::dl::ArgumentTag<kr::dl::ConceptTag>>>, kr::dl::ConstructorRepository>;
+            using Expected = urd::view<kr::dl::Concept<kr::dl::ArgumentTag<kr::dl::ConceptTag>>, kr::dl::ConstructorRepository>;
             if constexpr (std::same_as<View, Expected>)
-                return ygg::uint_t(child.get_argument().get_identifier()) == 0;
+                return ygg::uint_t(child.get_argument().get_identifier().value) == 0;
             else
                 return false;
         },
@@ -723,13 +723,13 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
         kr::ps::ext::dl::parse_concept(read_fixture("kr/ps/ext/executor/ext_module_parser_lowers_ext_dl_concept_and_role_expressions/case_2.dsl"),
                                        planning_task.get_domain().get_domain(),
                                        *dl_repository);
-    EXPECT_TRUE(ygg::visit(
+    EXPECT_TRUE(std::visit(
         [](auto child)
         {
             using View = std::decay_t<decltype(child)>;
-            using Expected = ygg::View<ygg::Index<kr::dl::Concept<kr::dl::RegisterTag>>, kr::dl::ConstructorRepository>;
+            using Expected = urd::view<kr::dl::Concept<kr::dl::RegisterTag>, kr::dl::ConstructorRepository>;
             if constexpr (std::same_as<View, Expected>)
-                return ygg::uint_t(child.get_register().get_identifier()) == 1;
+                return ygg::uint_t(child.get_register().get_identifier().value) == 1;
             else
                 return false;
         },
@@ -739,13 +739,13 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
         kr::ps::ext::dl::parse_role(read_fixture("kr/ps/ext/executor/ext_module_parser_lowers_ext_dl_concept_and_role_expressions/case_3.dsl"),
                                     planning_task.get_domain().get_domain(),
                                     *dl_repository);
-    EXPECT_TRUE(ygg::visit(
+    EXPECT_TRUE(std::visit(
         [](auto child)
         {
             using View = std::decay_t<decltype(child)>;
-            using Expected = ygg::View<ygg::Index<kr::dl::Role<kr::dl::ArgumentTag<kr::dl::RoleTag>>>, kr::dl::ConstructorRepository>;
+            using Expected = urd::view<kr::dl::Role<kr::dl::ArgumentTag<kr::dl::RoleTag>>, kr::dl::ConstructorRepository>;
             if constexpr (std::same_as<View, Expected>)
-                return ygg::uint_t(child.get_argument().get_identifier()) == 0;
+                return ygg::uint_t(child.get_argument().get_identifier().value) == 0;
             else
                 return false;
         },
@@ -826,26 +826,26 @@ TEST(RunirTests, ExtChooseOrderRoundTrip)
         const auto parse = [&](const std::string& text) { return kr::ps::ext::dl::parse_module(text, domain.get_domain(), *repository); };
         const auto module_ = parse(source("(:order (max flag) (min score) (max flag))"));
         EXPECT_EQ(parse(fmt::format("{}", module_)), module_);
-        ygg::visit(
+        std::visit(
             [&](auto rule)
             {
                 if constexpr (kr::ps::ext::ChooseRuleView<decltype(rule)>)
                 {
                     ASSERT_EQ(rule.get_order().size(), 3U);
                     EXPECT_EQ(rule.get_order()[0].get_direction(), kr::ps::ext::OrderDirection::MAX);
-                    auto bytes = cista::serialize(rule.get_data());
-                    using Data = std::remove_cvref_t<decltype(rule.get_data())>;
+                    auto bytes = cista::serialize(rule.data());
+                    using Data = std::remove_cvref_t<decltype(rule.data())>;
                     const auto* decoded = cista::deserialize<Data>(bytes);
                     EXPECT_EQ(decoded->order.size(), 3U);
-                    EXPECT_EQ(decoded->order[1], rule.get_order()[1].get_index());
+                    EXPECT_EQ(decoded->order[1], rule.get_order()[1].index());
                     EXPECT_EQ(decoded->order[0], decoded->order[2]);
                     const auto term = rule.get_order()[1];
-                    const auto& term_data = term.get_data();
+                    const auto& term_data = term.data();
                     auto term_bytes = cista::serialize(term_data);
-                    const auto* decoded_term = cista::deserialize<ygg::Data<kr::ps::ext::OrderTerm>>(term_bytes);
-                    EXPECT_TRUE(ygg::EqualTo<ygg::Data<kr::ps::ext::OrderTerm>> {}(*decoded_term, term_data));
+                    const auto* decoded_term = cista::deserialize<urd::data<kr::ps::ext::OrderTerm>>(term_bytes);
+                    EXPECT_TRUE(urd::EqualTo<urd::data<kr::ps::ext::OrderTerm>> {}(*decoded_term, term_data));
                     EXPECT_EQ(decoded_term->direction, kr::ps::ext::OrderDirection::MIN);
-                    EXPECT_TRUE(ygg::EqualTo<Data> {}(*decoded, rule.get_data()));
+                    EXPECT_TRUE(urd::EqualTo<Data> {}(*decoded, rule.data()));
                 }
             },
             module_.get_memory_transitions()[0][0].get_variant());

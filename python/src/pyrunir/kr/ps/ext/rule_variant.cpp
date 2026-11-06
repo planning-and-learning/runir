@@ -15,22 +15,22 @@ namespace runir::kr::ps::ext
 void bind_rule_variant(nb::module_& m, RepositoryBinding& repository)
 {
     using T = runir::kr::ps::Rule<runir::kr::ExtFamilyTag>;
-    using Data = ygg::Data<T>;
-    using View = ygg::View<ygg::Index<T>, Repository>;
-    ygg::bind_index<ygg::Index<T>>(m, "RuleVariantIndex");
+    using Data = urd::data<T>;
+    using View = urd::view<T, Repository>;
+    urd::python::bind_index<urd::index<T>>(m, "RuleVariantIndex");
     auto data = nb::class_<Data>(m, "RuleVariantData")
                     .def(nb::init<>())
                     .def(nb::init<::cista::offset::string, Data::Variant>(), nb::arg("symbol"), nb::arg("variant"))
-                    .def(nb::init<::cista::offset::string, Data::ViewVariant<Repository>>(), nb::arg("symbol"), nb::arg("variant"))
+                    .def(urd::python::init_from_views<::cista::offset::string, urd::resolved_t<Data::Variant, Repository>>(), nb::arg("symbol"), nb::arg("variant"))
                     .def_rw("index", &Data::index)
                     .def_rw("symbol", &Data::symbol)
                     .def_rw("variant", &Data::variant);
-    ygg::add_comparison(data);
+    urd::python::add_comparison(data);
     auto view =
-        nb::class_<View>(m, "RuleVariant").def("get_index", &View::get_index).def("get_symbol", &View::get_symbol).def("get_variant", &View::get_variant);
+        nb::class_<View>(m, "RuleVariant").def("get_index", &View::index).def("get_symbol", &View::get_symbol).def("get_variant", &View::get_variant);
     ygg::add_print(view);
-    ygg::add_comparison(view);
-    ygg::add_hash(view);
+    urd::python::add_comparison(view);
+    urd::python::add_hash(view);
     runir::kr::python::bind_insert<T>(repository);
 }
 

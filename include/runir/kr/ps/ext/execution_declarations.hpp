@@ -5,8 +5,9 @@
 
 #include <memory>
 #include <tyr/planning/declarations.hpp>
-#include <yggdrasil/containers/shared_object_pool.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/repr/slots/slots.hpp>
+#include <urd/store.hpp>
+#include <urd/elements/flat.hpp>
 
 namespace runir::kr::ps::ext
 {
@@ -38,28 +39,28 @@ template<tyr::TaskKind Kind>
 using ExecutionRepositoryFactoryPtr = std::shared_ptr<ExecutionRepositoryFactory<Kind>>;
 
 template<tyr::TaskKind Kind>
-using ModuleStateView = ygg::View<ygg::Index<ModuleState<Kind>>, ExecutionRepository<Kind>>;
+using ModuleStateView = urd::view<ModuleState<Kind>, ExecutionRepository<Kind>>;
 
 template<tyr::TaskKind Kind>
-using CallStackView = ygg::View<ygg::Index<CallStack>, ExecutionRepository<Kind>>;
+using CallStackView = urd::view<CallStack, ExecutionRepository<Kind>>;
 
 template<tyr::TaskKind Kind>
-using ProgramStateView = ygg::View<ygg::Index<ProgramState<Kind>>, ExecutionRepository<Kind>>;
+using ProgramStateView = urd::view<ProgramState<Kind>, ExecutionRepository<Kind>>;
 
 template<tyr::TaskKind Kind>
-using BorrowedModuleStateView = ygg::View<ygg::Data<ModuleState<Kind>>, ExecutionRepository<Kind>>;
+using BorrowedModuleStateView = urd::borrowed_view<ModuleState<Kind>, ExecutionRepository<Kind>>;
 
 template<tyr::TaskKind Kind>
-using BorrowedCallStackView = ygg::View<ygg::Data<CallStack>, ExecutionRepository<Kind>>;
+using BorrowedCallStackView = urd::borrowed_view<CallStack, ExecutionRepository<Kind>>;
 
 template<tyr::TaskKind Kind>
-using BorrowedProgramStateView = ygg::View<ygg::Data<ProgramState<Kind>>, ExecutionRepository<Kind>>;
+using BorrowedProgramStateView = urd::borrowed_view<ProgramState<Kind>, ExecutionRepository<Kind>>;
 
 template<tyr::TaskKind Kind>
-using BuilderModuleStateView = ygg::View<ygg::Builder<ModuleState<Kind>>, ExecutionRepository<Kind>>;
+using BuilderModuleStateView = urd::borrowed_view<ModuleState<Kind>, ExecutionRepository<Kind>, urd::builder<ModuleState<Kind>>>;
 
 template<tyr::TaskKind Kind>
-using BuilderProgramStateView = ygg::View<ygg::Builder<ProgramState<Kind>>, ExecutionRepository<Kind>>;
+using BuilderProgramStateView = urd::borrowed_view<ProgramState<Kind>, ExecutionRepository<Kind>, urd::builder<ProgramState<Kind>>>;
 
 }  // namespace runir::kr::ps::ext
 

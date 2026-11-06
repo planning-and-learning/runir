@@ -16,6 +16,8 @@
  */
 
 #include "runir/datasets/state_graph.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 #include "runir/graphs/bgl/algorithms.hpp"
 #include "state_graph_fragment.hpp"
@@ -41,7 +43,7 @@ namespace
 {
 
 template<typename G>
-auto compute_goal_distances(const G& graph, const std::vector<graphs::VertexIndex>& goal_vertices, StateGraphCostMode cost_mode)
+auto compute_goal_distances(const G& graph, const graphs::VertexIndexList& goal_vertices, StateGraphCostMode cost_mode)
 {
     switch (cost_mode)
     {
@@ -50,7 +52,7 @@ auto compute_goal_distances(const G& graph, const std::vector<graphs::VertexInde
             const auto [predecessors, distances] = graphs::bgl::breadth_first_search(graph, goal_vertices);
             static_cast<void>(predecessors);
 
-            auto result = std::vector<ygg::float_t>(distances.size(), std::numeric_limits<ygg::float_t>::infinity());
+            auto result = urd::Store<urd::sequence<ygg::float_t>>(distances.size(), std::numeric_limits<ygg::float_t>::infinity());
             for (graphs::VertexIndex vertex = 0; vertex < distances.size(); ++vertex)
                 if (distances[vertex] != std::numeric_limits<ygg::uint_t>::max())
                     result[vertex] = static_cast<ygg::float_t>(distances[vertex]);
@@ -58,7 +60,7 @@ auto compute_goal_distances(const G& graph, const std::vector<graphs::VertexInde
         }
         case StateGraphCostMode::ACTION_COST:
         {
-            auto weights = std::vector<ygg::float_t>(graph.get_num_edges(), 0);
+            auto weights = urd::Store<urd::sequence<ygg::float_t>>(graph.get_num_edges(), 0);
             for (auto edge : graph.get_edge_indices())
                 weights[edge] = graph.get_edge(edge).get_property().cost;
 
@@ -117,7 +119,7 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kin
     const auto packed_initial_state = initial_state.pack();
 
     auto is_goal = std::vector<bool>(forward_graph.get_num_vertices(), false);
-    auto goal_vertices = std::vector<graphs::VertexIndex> {};
+    auto goal_vertices = graphs::VertexIndexList {};
 
     for (auto vertex_index : forward_graph.get_vertex_indices())
     {

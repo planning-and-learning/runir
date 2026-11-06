@@ -1,4 +1,6 @@
 #include "runir/graphs/algorithms.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/ps/ext/dl/structural_termination.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
 #include "structural_termination/detail.hpp"
@@ -34,7 +36,7 @@ void analyze_modules(ProgramView program,
 struct ModuleCallGraph
 {
     graphs::StaticGraph<std::tuple<>, RuleVariantView> graph;
-    std::vector<RuleVariantView> unresolved_rules;
+    urd::Store<urd::sequence<RuleVariantView>> unresolved_rules;
 };
 
 std::optional<std::size_t> find_module(ProgramView program, ModuleSymbolView symbol)
@@ -53,17 +55,17 @@ ModuleCallGraph build_module_call_graph(ProgramView program)
     for (std::size_t position = 0; position < modules.size(); ++position)
         builder.add_vertex();
 
-    auto unresolved_rules = std::vector<RuleVariantView> {};
+    auto unresolved_rules = urd::Store<urd::sequence<RuleVariantView>> {};
     for (std::size_t source_module = 0; source_module < modules.size(); ++source_module)
     {
         for (auto transition : modules[source_module].get_memory_transitions())
         {
             for (auto rule_variant : transition)
             {
-                ygg::visit(
+                std::visit(
                     [&]<typename RuleViewT>(RuleViewT rule)
                     {
-                        if constexpr (std::same_as<RuleViewT, ygg::View<ygg::Index<Rule<CallTag>>, Repository>>)
+                        if constexpr (std::same_as<RuleViewT, urd::view<Rule<CallTag>, Repository>>)
                         {
                             const auto target_module = find_module(program, rule.get_callee());
                             if (!target_module)
@@ -86,7 +88,7 @@ ModuleCallGraph build_module_call_graph(ProgramView program)
 
 }  // namespace
 
-std::vector<RuleVariantView> find_recursive_call_rules(ProgramView program)
+urd::Store<urd::sequence<RuleVariantView>> find_recursive_call_rules(ProgramView program)
 {
     const auto call_graph = build_module_call_graph(program);
     auto result = call_graph.unresolved_rules;

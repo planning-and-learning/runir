@@ -5,8 +5,9 @@
 #include <runir/kr/dl/grammar/concept_view.hpp>
 #include <runir/kr/dl/grammar/constructor_repository.hpp>
 #include <tyr/formalism/planning/repository.hpp>
-#include <yggdrasil/core/concepts.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
+#include <boost/mp11.hpp>
+#include <yggdrasil/core/config.hpp>
 
 namespace runir::tests
 {
@@ -16,61 +17,60 @@ namespace
 
 template<typename T, typename Repository>
 concept IndexedDataView =
-    std::constructible_from<ygg::Index<T>, ygg::uint_t> && ygg::Identifiable<ygg::Index<T>> && ygg::Identifiable<ygg::Data<T>>
-    && ygg::Identifiable<ygg::View<ygg::Index<T>, Repository>> && std::totally_ordered<ygg::Index<T>> && std::totally_ordered<ygg::Data<T>>
-    && std::totally_ordered<ygg::View<ygg::Index<T>, Repository>> && requires(ygg::Data<T>& data, const ygg::View<ygg::Index<T>, Repository>& view) {
+    std::constructible_from<urd::index<T>, ygg::uint_t> && urd::Identifiable<urd::index<T>> && urd::Identifiable<urd::data<T>>
+    && urd::Identifiable<urd::view<T, Repository>> && std::totally_ordered<urd::index<T>> && std::totally_ordered<urd::data<T>>
+    && std::totally_ordered<urd::view<T, Repository>> && requires(urd::data<T>& data, const urd::view<T, Repository>& view) {
            data.index;
-           data.clear();
-           view.get_index();
+           view.index();
        };
 
 template<typename... Ts>
-consteval bool indexed_data_views(ygg::TypeList<Ts...>)
+consteval bool indexed_data_views(boost::mp11::mp_list<Ts...>)
 { return (IndexedDataView<Ts, kr::dl::grammar::ConstructorRepository> && ...); }
 
 static_assert(indexed_data_views<>(kr::dl::grammar::ConceptTypes {}));
 
-using NullaryTags = ygg::TypeList<kr::dl::BotTag, kr::dl::TopTag>;
-using PredicateTags = ygg::TypeList<kr::dl::AtomicStateTag<tyr::formalism::StaticTag>,
+using NullaryTags = boost::mp11::mp_list<kr::dl::BotTag, kr::dl::TopTag>;
+using PredicateTags = boost::mp11::mp_list<kr::dl::AtomicStateTag<tyr::formalism::StaticTag>,
                                     kr::dl::AtomicStateTag<tyr::formalism::FluentTag>,
                                     kr::dl::AtomicStateTag<tyr::formalism::DerivedTag>,
                                     kr::dl::AtomicGoalTag<tyr::formalism::StaticTag>,
                                     kr::dl::AtomicGoalTag<tyr::formalism::FluentTag>,
                                     kr::dl::AtomicGoalTag<tyr::formalism::DerivedTag>>;
-using BinaryTags = ygg::TypeList<kr::dl::IntersectionTag,
+using BinaryTags = boost::mp11::mp_list<kr::dl::IntersectionTag,
                                  kr::dl::UnionTag,
                                  kr::dl::ValueRestrictionTag,
                                  kr::dl::ExistentialQuantificationTag,
                                  kr::dl::RoleValueMapTag,
                                  kr::dl::AgreementTag>;
-using NumberRestrictionTags = ygg::TypeList<kr::dl::AtLeastNumberRestrictionTag, kr::dl::AtMostNumberRestrictionTag, kr::dl::ExactNumberRestrictionTag>;
+using NumberRestrictionTags = boost::mp11::mp_list<kr::dl::AtLeastNumberRestrictionTag, kr::dl::AtMostNumberRestrictionTag, kr::dl::ExactNumberRestrictionTag>;
 using QualifiedNumberRestrictionTags =
-    ygg::TypeList<kr::dl::QualifiedAtLeastNumberRestrictionTag, kr::dl::QualifiedAtMostNumberRestrictionTag, kr::dl::QualifiedExactNumberRestrictionTag>;
+    boost::mp11::mp_list<kr::dl::QualifiedAtLeastNumberRestrictionTag, kr::dl::QualifiedAtMostNumberRestrictionTag, kr::dl::QualifiedExactNumberRestrictionTag>;
 
 template<typename Tag>
 consteval bool concept_data_view()
 {
     using Entity = kr::dl::grammar::Concept<Tag>;
-    using Data = ygg::Data<Entity>;
-    using View = ygg::View<ygg::Index<Entity>, kr::dl::grammar::ConstructorRepository>;
+    using Data = urd::data<Entity>;
+    using View = urd::view<Entity, kr::dl::grammar::ConstructorRepository>;
 
     static_assert(std::same_as<View, kr::dl::grammar::ConceptView<Tag>>);
     if constexpr (false)
         static_assert(std::same_as<View, kr::dl::grammar::ConceptView<Tag>>);
 
-    if constexpr (ygg::InTypeList<Tag, NullaryTags>)
+    if constexpr (boost::mp11::mp_contains<NullaryTags, Tag>::value)
         return requires(Data& data, const View& view) {
             data.index;
-            view.get_index();
+            view.index();
         };
-    else if constexpr (ygg::InTypeList<Tag, PredicateTags>)
+    else if constexpr (boost::mp11::mp_contains<PredicateTags, Tag>::value)
         return requires(Data& data, const View& view) {
             data.predicate;
             data.polarity;
             view.get_predicate();
             view.get_polarity();
         };
-    else if constexpr (ygg::InTypeList<Tag, BinaryTags>)
+    else if constexpr (boost::mp11::mp_contains<BinaryTags, Tag>::value)
         return requires(Data& data, const View& view) {
             data.lhs;
             data.rhs;
@@ -82,14 +82,14 @@ consteval bool concept_data_view()
             data.arg;
             view.get_arg();
         };
-    else if constexpr (ygg::InTypeList<Tag, NumberRestrictionTags>)
+    else if constexpr (boost::mp11::mp_contains<NumberRestrictionTags, Tag>::value)
         return requires(Data& data, const View& view) {
             data.n;
             data.role;
             view.get_n();
             view.get_role();
         };
-    else if constexpr (ygg::InTypeList<Tag, QualifiedNumberRestrictionTags>)
+    else if constexpr (boost::mp11::mp_contains<QualifiedNumberRestrictionTags, Tag>::value)
         return requires(Data& data, const View& view) {
             data.n;
             data.role;
@@ -125,7 +125,7 @@ consteval bool concept_data_view()
 }
 
 template<typename... Tags>
-consteval bool concept_data_views(ygg::TypeList<Tags...>)
+consteval bool concept_data_views(boost::mp11::mp_list<Tags...>)
 { return (concept_data_view<Tags>() && ...); }
 
 static_assert(concept_data_views(kr::dl::GenerationConceptConstructorTags {}));

@@ -2,6 +2,8 @@
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_EVALUATORS_DISTANCE_HPP_
 
 #include "runir/kr/dl/semantics/distance_evaluation.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/dl/semantics/incremental/declarations.hpp"
 #include "runir/kr/dl/semantics/incremental/delta.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/denotation_state.hpp"
@@ -16,22 +18,19 @@
 #include <stdexcept>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
+#include <urd/config.hpp>
 #include <yggdrasil/database/semantics/incremental/distance.hpp>
 #include <yggdrasil/database/semantics/incremental/min_distance.hpp>
 
 namespace runir::kr::dl::semantics::incremental::detail
 {
 
-using VertexArgumentView = ygg::View<ygg::IndexVariant<ygg::VertexArgumentTypes>, ConstructorRepository>;
-using EdgeArgumentView = ygg::View<ygg::IndexVariant<ygg::EdgeArgumentTypes>, ConstructorRepository>;
-
 /// The graph node of a distance argument (sources, edges or targets), lifted into `columns`.
 template<tyr::TaskKind Kind, typename Argument>
-    requires(std::same_as<Argument, VertexArgumentView> || std::same_as<Argument, EdgeArgumentView>)
 QueryEvaluationIndex
-prepare_argument(Argument argument, std::span<const ygg::database::ColumnLayout> columns, GraphBuilder<Kind>& graph, std::vector<ygg::uint_t>& dependencies)
+prepare_argument(Argument argument, std::span<const ygg::database::ColumnLayout> columns, GraphBuilder<Kind>& graph, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
 {
-    return ygg::visit([&](auto child) { return graph.prepare_relation(child, columns, dependencies); }, argument);
+    return std::visit([&](auto child) { return graph.prepare_relation(child, columns, dependencies); }, argument);
 }
 
 /// Distances over role edges: every argument is a relation in the graph (a query, or a concept or role lifted by the
@@ -46,11 +45,11 @@ struct RoleEdgeDistanceEvaluator
     ygg::database::incremental::SourceMinDistance operation;
     DenotationState<NumericalTag> value;
 
-    RoleEdgeDistanceEvaluator(NumericalView<DistanceTag> expression, GraphBuilder<Kind>& graph, std::vector<ygg::uint_t>& dependencies) :
-        sources(prepare_argument(expression.get_lhs(), expression.get_data().plan.source_columns().span(), graph, dependencies)),
-        edges(prepare_argument(expression.get_mid(), expression.get_data().plan.edge_columns().span(), graph, dependencies)),
-        targets(prepare_argument(expression.get_rhs(), expression.get_data().plan.target_columns().span(), graph, dependencies)),
-        operation(expression.get_data().plan)
+    RoleEdgeDistanceEvaluator(NumericalView<DistanceTag> expression, GraphBuilder<Kind>& graph, urd::Store<urd::sequence<ygg::uint_t>>& dependencies) :
+        sources(prepare_argument(expression.get_lhs(), expression.data().plan.source_columns().span(), graph, dependencies)),
+        edges(prepare_argument(expression.get_mid(), expression.data().plan.edge_columns().span(), graph, dependencies)),
+        targets(prepare_argument(expression.get_rhs(), expression.data().plan.target_columns().span(), graph, dependencies)),
+        operation(expression.data().plan)
     {
     }
     template<StateEvaluationContextConcept<Kind> Context>
@@ -79,22 +78,22 @@ struct QueryEdgeDistanceEvaluator
     QueryEvaluationIndex sources;
     QueryEvaluationIndex targets;
     DistanceFeature<Distance> feature;
-    std::vector<QueryEvaluationIndex> slots;                   ///< The graph node of each input slot.
+    urd::Store<urd::sequence<QueryEvaluationIndex>> slots;                   ///< The graph node of each input slot.
     std::optional<heuristics::ProjectionHeuristic> heuristic;  ///< Built at the first initialize(), from the bound leaves.
     DenotationState<NumericalTag> value;
     std::vector<bool> slot_changed;  ///< Per slot, whether update()'s delta changed it; kept to avoid allocations.
 
     /// `edges_` is the edge argument of `expression_`.
-    QueryEdgeDistanceEvaluator(NumericalView<DistanceTag> expression_, QueryView<> edges_, GraphBuilder<Kind>& graph, std::vector<ygg::uint_t>& dependencies) :
+    QueryEdgeDistanceEvaluator(NumericalView<DistanceTag> expression_, QueryView<> edges_, GraphBuilder<Kind>& graph, urd::Store<urd::sequence<ygg::uint_t>>& dependencies) :
         expression(expression_),
         edges(edges_),
-        sources(prepare_argument(expression_.get_lhs(), expression_.get_data().plan.source_columns().span(), graph, dependencies)),
-        targets(prepare_argument(expression_.get_rhs(), expression_.get_data().plan.target_columns().span(), graph, dependencies)),
-        feature(semantics::detail::make_distance_feature<Distance>(expression_.get_data().plan, edges_))
+        sources(prepare_argument(expression_.get_lhs(), expression_.data().plan.source_columns().span(), graph, dependencies)),
+        targets(prepare_argument(expression_.get_rhs(), expression_.data().plan.target_columns().span(), graph, dependencies)),
+        feature(semantics::detail::make_distance_feature<Distance>(expression_.data().plan, edges_))
     {
         for (const auto& slot : feature.slots)
             slots.push_back(
-                visit_slot<>(slot, edges.get_context(), [&](auto argument) { return graph.prepare_relation(argument, slot.columns, dependencies); }));
+                visit_slot<>(slot, edges.context(), [&](auto argument) { return graph.prepare_relation(argument, slot.columns, dependencies); }));
     }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context)
@@ -103,9 +102,9 @@ struct QueryEdgeDistanceEvaluator
         if (!heuristic)
             heuristic =
                 semantics::detail::make_heuristic(feature,
-                                                  expression.get_data().plan,
+                                                  expression.data().plan,
                                                   semantics::detail::num_objects<Kind>(context),
-                                                  [&](size_t slot) -> const ygg::Builder<ygg::database::Relation>& { return feature.distance.input(slot); });
+                                                  [&](size_t slot) -> const urd::builder<ygg::database::Relation>& { return feature.distance.input(slot); });
         set_targets(graph);
         evaluate(graph);
     }
@@ -131,19 +130,19 @@ struct QueryEdgeDistanceEvaluator
 private:
     [[nodiscard]] auto input(const EvaluationGraph<Kind>& graph) const
     {
-        return [this, &graph](size_t slot) -> const ygg::Builder<ygg::database::Relation>& { return graph.result(slots[slot]); };
+        return [this, &graph](size_t slot) -> const urd::builder<ygg::database::Relation>& { return graph.result(slots[slot]); };
     }
     static bool modified(const EvaluationGraph<Kind>& graph, QueryEvaluationIndex index)
     { return !graph.change(index).added.empty() || !graph.change(index).removed.empty(); }
     void set_targets(const EvaluationGraph<Kind>& graph)
     {
-        YGG_ASSUME(heuristic.has_value());  // Built by initialize(), which precedes every update().
+        URD_ASSUME(heuristic.has_value());  // Built by initialize(), which precedes every update().
         feature.distance.set_targets(graph.result(targets));
         heuristic->update(graph.result(targets));
     }
     void evaluate(const EvaluationGraph<Kind>& graph)
     {
-        YGG_ASSUME(heuristic.has_value());  // Built by initialize(), which precedes every update().
+        URD_ASSUME(heuristic.has_value());  // Built by initialize(), which precedes every update().
         value.set(feature.distance.min_distance(graph.result(sources), *heuristic));
     }
 };

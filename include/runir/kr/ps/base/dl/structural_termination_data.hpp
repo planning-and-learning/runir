@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_BASE_DL_STRUCTURAL_TERMINATION_DATA_HPP_
 
 #include "runir/graphs/static_graph.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/graphs/static_graph_builder.hpp"
 #include "runir/kr/ps/base/dl/incomplete_structural_termination_data.hpp"
 #include "runir/kr/ps/base/repository.hpp"
@@ -11,8 +13,7 @@
 #include <memory>
 #include <optional>
 #include <vector>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/semantics/comparison.hpp>
+#include <urd/elements/flat.hpp>
 
 namespace runir::kr::ps::base::dl
 {
@@ -26,7 +27,7 @@ enum class StructuralTerminationStatus : std::uint8_t
 /// Feature valuation; bit i corresponds to position i in the originating
 /// sketch's declared Boolean (resp. numerical) feature order. A numerical bit
 /// encodes n > 0.
-struct PolicyGraphVertexLabel : ygg::comparison::Mixin<PolicyGraphVertexLabel>
+struct PolicyGraphVertexLabel : urd::compared_by_identity<PolicyGraphVertexLabel>
 {
     std::uint64_t boolean_values;
     std::uint64_t numerical_values;
@@ -38,9 +39,9 @@ struct PolicyGraphVertexLabel : ygg::comparison::Mixin<PolicyGraphVertexLabel>
     }
 
     static constexpr auto cista_members() noexcept
-    { return ygg::Members<&PolicyGraphVertexLabel::boolean_values, &PolicyGraphVertexLabel::numerical_values> {}; }
+    { return urd::Members<&PolicyGraphVertexLabel::boolean_values, &PolicyGraphVertexLabel::numerical_values> {}; }
     static constexpr auto identifying_members() noexcept
-    { return ygg::Members<&PolicyGraphVertexLabel::boolean_values, &PolicyGraphVertexLabel::numerical_values> {}; }
+    { return urd::Members<&PolicyGraphVertexLabel::boolean_values, &PolicyGraphVertexLabel::numerical_values> {}; }
 };
 
 using PolicyGraphBuilder = graphs::StaticGraphBuilder<PolicyGraphVertexLabel, RuleView>;
@@ -50,10 +51,10 @@ using SccStructuralTerminationResult = runir::kr::ps::dl::SccStructuralTerminati
 struct SieveStructuralTerminationResult
 {
     std::shared_ptr<PolicyGraph> counterexample;  ///< nullptr iff terminating; otherwise a surviving counterexample graph.
-    std::vector<SccStructuralTerminationResult> scc_results;
+    urd::Store<urd::sequence<SccStructuralTerminationResult>> scc_results;
 
     /// Distinct rules labeling all retained policy-graph edges; empty if terminating.
-    std::vector<RuleView> surviving_rules;
+    urd::Store<urd::sequence<RuleView>> surviving_rules;
 
     [[nodiscard]] bool is_terminating() const noexcept { return !counterexample; }
 };

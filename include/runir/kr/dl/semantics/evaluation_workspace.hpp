@@ -2,12 +2,14 @@
 #define RUNIR_SEMANTICS_EVALUATION_WORKSPACE_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
+#include <urd/repr/sequences/segmented.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/dl/semantics/distance/feature.hpp"
 #include "runir/kr/dl/semantics/heuristics/projection.hpp"
 
 #include <algorithm>
 #include <concepts>
-#include <deque>
 #include <limits>
 #include <memory>
 #include <optional>
@@ -46,9 +48,9 @@ private:
         ygg::uint_t constructor = 0;
         Feature feature;
     };
-    std::deque<KeyedFeature<FullDistanceFeature>> m_distance_features;  ///< A deque keeps references stable.
-    std::deque<KeyedFeature<MustPassFeature>> m_must_pass_features;
-    std::vector<ygg::database::GenericJoinWorkspace> m_generic_join_workspaces;  ///< One per generic join plan.
+    urd::Store<urd::sequence<KeyedFeature<FullDistanceFeature>>, urd::stable_refs> m_distance_features;  ///< Stable references: callers keep the features they get.
+    urd::Store<urd::sequence<KeyedFeature<MustPassFeature>>, urd::stable_refs> m_must_pass_features;
+    urd::Store<urd::sequence<ygg::database::GenericJoinWorkspace>> m_generic_join_workspaces;  ///< One per generic join plan.
     ygg::database::Workspace m_database_workspace;
 
     // ponytail: linear scan, and entries of dead repositories are kept; a constructor repository freed and replaced at
@@ -56,7 +58,7 @@ private:
     // cache if that happens.
     template<typename Feature, std::invocable Make>
         requires std::same_as<std::invoke_result_t<Make&>, Feature>
-    static Feature& find_or_make(std::deque<KeyedFeature<Feature>>& features,
+    static Feature& find_or_make(urd::Store<urd::sequence<KeyedFeature<Feature>>, urd::stable_refs>& features,
                                  const std::shared_ptr<tyr::formalism::planning::Repository>& formalism,
                                  const ConstructorRepository& constructors,
                                  ygg::uint_t constructor,

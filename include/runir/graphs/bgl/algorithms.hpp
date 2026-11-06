@@ -2,6 +2,8 @@
 #define RUNIR_GRAPHS_BGL_ALGORITHMS_HPP_
 
 #include "runir/graphs/bgl/graph_adapters.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/graphs/bgl/property_maps.hpp"
 
 #if defined(__GNUC__) || defined(__clang__)
@@ -76,10 +78,10 @@ template<typename G>
 inline constexpr bool IsDenseGraphV = IsDenseGraph<std::remove_cvref_t<G>>;
 
 template<typename G, typename Value>
-using VertexMapStorage = std::conditional_t<IsDenseGraphV<G>, std::vector<Value>, ygg::UnorderedMap<VertexIndex, Value>>;
+using VertexMapStorage = std::conditional_t<IsDenseGraphV<G>, urd::Store<urd::sequence<Value>>, urd::Store<urd::map<VertexIndex, Value>>>;
 
 template<typename G, typename Value>
-using EdgeMapStorage = std::conditional_t<IsDenseGraphV<G>, std::vector<Value>, ygg::UnorderedMap<EdgeIndex, Value>>;
+using EdgeMapStorage = std::conditional_t<IsDenseGraphV<G>, urd::Store<urd::sequence<Value>>, urd::Store<urd::map<EdgeIndex, Value>>>;
 
 template<typename G, typename Value>
 using VertexReadWritePropertyMap =
@@ -93,7 +95,7 @@ using VertexIndexPropertyMap = std::conditional_t<IsDenseGraphV<G>, IdentityRead
 
 template<typename G, typename Value>
 using DistanceMatrixStorage =
-    std::conditional_t<IsDenseGraphV<G>, std::vector<std::vector<Value>>, ygg::UnorderedMap<VertexIndex, ygg::UnorderedMap<VertexIndex, Value>>>;
+    std::conditional_t<IsDenseGraphV<G>, urd::Store<urd::sequence<urd::Store<urd::sequence<Value>>>>, urd::Store<urd::map<VertexIndex, urd::Store<urd::map<VertexIndex, Value>>>>>;
 
 template<typename G, typename Value>
 using BasicMatrix = std::conditional_t<IsDenseGraphV<G>, DenseBasicMatrix<VertexIndex, Value>, SparseBasicMatrix<VertexIndex, Value>>;
@@ -108,7 +110,7 @@ auto make_vertex_index_map(const G& graph)
     }
     else
     {
-        auto remap = ygg::UnorderedMap<VertexIndex, VertexIndex>();
+        auto remap = urd::Store<urd::map<VertexIndex, VertexIndex>>();
         VertexIndex index = 0;
         for (auto vertex : graph.get_vertex_indices())
             remap.emplace(vertex, index++);
@@ -177,7 +179,7 @@ auto breadth_first_visit(const G& graph, SourceInputIterator first, SourceInputI
 { return breadth_first_visit(graph, first, last, BoostTraversalVisitor<G>(visitor)); }
 
 template<IsGraph G>
-auto breadth_first_visit(const G& graph, const std::vector<VertexIndex>& sources, TraversalVisitor<G>& visitor)
+auto breadth_first_visit(const G& graph, const VertexIndexList& sources, TraversalVisitor<G>& visitor)
 { return breadth_first_visit(graph, sources.begin(), sources.end(), visitor); }
 
 template<IsGraph G, std::input_iterator SourceInputIterator>
@@ -224,7 +226,7 @@ auto breadth_first_search(const G& graph, SourceInputIterator first, SourceInput
 }
 
 template<IsGraph G>
-auto breadth_first_search(const G& graph, const std::vector<VertexIndex>& sources)
+auto breadth_first_search(const G& graph, const VertexIndexList& sources)
 { return breadth_first_search(graph, sources.begin(), sources.end()); }
 
 template<IsGraph G, std::input_iterator SourceInputIterator>
@@ -247,7 +249,7 @@ auto depth_first_visit(const G& graph, SourceInputIterator first, SourceInputIte
 { return depth_first_visit(graph, first, last, BoostTraversalVisitor<G>(visitor)); }
 
 template<IsGraph G>
-auto depth_first_visit(const G& graph, const std::vector<VertexIndex>& sources, TraversalVisitor<G>& visitor)
+auto depth_first_visit(const G& graph, const VertexIndexList& sources, TraversalVisitor<G>& visitor)
 { return depth_first_visit(graph, sources.begin(), sources.end(), visitor); }
 
 template<IsGraph G, std::input_iterator SourceInputIterator>
@@ -277,7 +279,7 @@ auto depth_first_search(const G& graph, SourceInputIterator first, SourceInputIt
 }
 
 template<IsGraph G>
-auto depth_first_search(const G& graph, const std::vector<VertexIndex>& sources)
+auto depth_first_search(const G& graph, const VertexIndexList& sources)
 { return depth_first_search(graph, sources.begin(), sources.end()); }
 
 template<IsGraph G>
@@ -285,7 +287,7 @@ auto topological_sort(const G& graph)
 {
     using Vertex = VertexIndex;
 
-    auto result = std::vector<Vertex>();
+    auto result = urd::Store<urd::sequence<Vertex>>();
     auto colors = make_vertex_map_storage(graph, boost::white_color);
     auto color_map = VertexReadWritePropertyMap<G, boost::default_color_type>(colors);
 
@@ -348,22 +350,22 @@ auto dijkstra_shortest_paths_impl(const G& graph, const EdgeMapStorage<G, Cost>&
 
 template<IsGraph G, typename Cost, std::input_iterator SourceInputIterator>
     requires IsDenseGraphV<G> && std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
-auto dijkstra_shortest_paths(const G& graph, const std::vector<Cost>& weights, SourceInputIterator first, SourceInputIterator last)
+auto dijkstra_shortest_paths(const G& graph, const urd::Store<urd::sequence<Cost>>& weights, SourceInputIterator first, SourceInputIterator last)
 { return dijkstra_shortest_paths_impl<G, Cost>(graph, weights, first, last); }
 
 template<IsGraph G, typename Cost>
     requires IsDenseGraphV<G>
-auto dijkstra_shortest_paths(const G& graph, const std::vector<Cost>& weights, const std::vector<VertexIndex>& sources)
+auto dijkstra_shortest_paths(const G& graph, const urd::Store<urd::sequence<Cost>>& weights, const VertexIndexList& sources)
 { return dijkstra_shortest_paths(graph, weights, sources.begin(), sources.end()); }
 
 template<IsGraph G, typename Cost, std::input_iterator SourceInputIterator>
     requires(!IsDenseGraphV<G>) && std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
-auto dijkstra_shortest_paths(const G& graph, const ygg::UnorderedMap<EdgeIndex, Cost>& weights, SourceInputIterator first, SourceInputIterator last)
+auto dijkstra_shortest_paths(const G& graph, const urd::Store<urd::map<EdgeIndex, Cost>>& weights, SourceInputIterator first, SourceInputIterator last)
 { return dijkstra_shortest_paths_impl<G, Cost>(graph, weights, first, last); }
 
 template<IsGraph G, typename Cost>
     requires(!IsDenseGraphV<G>)
-auto dijkstra_shortest_paths(const G& graph, const ygg::UnorderedMap<EdgeIndex, Cost>& weights, const std::vector<VertexIndex>& sources)
+auto dijkstra_shortest_paths(const G& graph, const urd::Store<urd::map<EdgeIndex, Cost>>& weights, const VertexIndexList& sources)
 { return dijkstra_shortest_paths(graph, weights, sources.begin(), sources.end()); }
 
 template<IsGraph G, typename Cost>
@@ -372,7 +374,7 @@ auto floyd_warshall_all_pairs_shortest_paths_impl(const G& graph, const EdgeMapS
     auto distances = DistanceMatrixStorage<G, Cost>();
 
     if constexpr (IsDenseGraphV<G>)
-        distances.assign(graph.get_num_vertices(), std::vector<Cost>(graph.get_num_vertices()));
+        distances.assign(graph.get_num_vertices(), urd::Store<urd::sequence<Cost>>(graph.get_num_vertices()));
 
     auto distance_matrix = BasicMatrix<G, Cost>(distances);
     auto weight_map = EdgeReadPropertyMap<G, Cost>(weights);
@@ -384,12 +386,12 @@ auto floyd_warshall_all_pairs_shortest_paths_impl(const G& graph, const EdgeMapS
 
 template<IsGraph G, typename Cost>
     requires IsDenseGraphV<G>
-auto floyd_warshall_all_pairs_shortest_paths(const G& graph, const std::vector<Cost>& weights)
+auto floyd_warshall_all_pairs_shortest_paths(const G& graph, const urd::Store<urd::sequence<Cost>>& weights)
 { return floyd_warshall_all_pairs_shortest_paths_impl<G, Cost>(graph, weights); }
 
 template<IsGraph G, typename Cost>
     requires(!IsDenseGraphV<G>)
-auto floyd_warshall_all_pairs_shortest_paths(const G& graph, const ygg::UnorderedMap<EdgeIndex, Cost>& weights)
+auto floyd_warshall_all_pairs_shortest_paths(const G& graph, const urd::Store<urd::map<EdgeIndex, Cost>>& weights)
 { return floyd_warshall_all_pairs_shortest_paths_impl<G, Cost>(graph, weights); }
 
 }  // namespace runir::graphs::bgl

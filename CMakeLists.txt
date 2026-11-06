@@ -1,7 +1,19 @@
 cmake_minimum_required(VERSION 3.21)
 
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/read_project_version.cmake")
-runir_read_project_version(RUNIR_PROJECT_VERSION "${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml")
+# brokkr (pybrokkr): build helpers, found through scikit-build-core in wheel builds, else asked of the Python that has it.
+find_package(brokkr QUIET)
+if(NOT brokkr_FOUND)
+    if(Python_EXECUTABLE)
+        set(_brokkr_python "${Python_EXECUTABLE}")
+    else()
+        find_program(_brokkr_python NAMES python3 python REQUIRED)
+    endif()
+    execute_process(COMMAND "${_brokkr_python}" -m pybrokkr --cmake-dir
+                    OUTPUT_VARIABLE _brokkr_dir OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+    set(brokkr_DIR "${_brokkr_dir}" CACHE PATH "The directory holding brokkrConfig.cmake" FORCE)
+    find_package(brokkr REQUIRED)
+endif()
+brokkr_read_project_version(RUNIR_PROJECT_VERSION "${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml")
 
 project(runir VERSION "${RUNIR_PROJECT_VERSION}" LANGUAGES CXX)
 
@@ -120,9 +132,8 @@ endif()
 set(RUNIR_YGGDRASIL_REQUIRED_VERSION 0.6.0)
 set(RUNIR_TYR_REQUIRED_VERSION 0.7.0)
 
-list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
-
-include("${PROJECT_SOURCE_DIR}/cmake/bootstrap_pyyggdrasil.cmake")
+brokkr_find_python_native_prefix(pyurd URD_NATIVE_PREFIX)
+brokkr_find_python_native_prefix(pyyggdrasil YGGDRASIL_NATIVE_PREFIX)
 
 find_package(
     yggdrasil ${RUNIR_YGGDRASIL_REQUIRED_VERSION}
@@ -134,11 +145,12 @@ if(yggdrasil_FOUND)
     message(STATUS "Found yggdrasil: ${yggdrasil_DIR} (found version ${yggdrasil_VERSION})")
 endif()
 
-yggdrasil_find_python_native_prefix(pypddl LOKI_NATIVE_PREFIX)
-yggdrasil_find_python_native_prefix(pytyr TYR_NATIVE_PREFIX)
-yggdrasil_register_python_native_runtime_prefix("pypddl/native" "${LOKI_NATIVE_PREFIX}")
-yggdrasil_register_python_native_runtime_prefix("pytyr/native" "${TYR_NATIVE_PREFIX}")
-yggdrasil_register_python_native_runtime_prefix("pyyggdrasil" "${YGGDRASIL_NATIVE_PREFIX}")
+brokkr_find_python_native_prefix(pypddl LOKI_NATIVE_PREFIX)
+brokkr_find_python_native_prefix(pytyr TYR_NATIVE_PREFIX)
+brokkr_register_python_native_runtime_prefix("pypddl/native" "${LOKI_NATIVE_PREFIX}")
+brokkr_register_python_native_runtime_prefix("pytyr/native" "${TYR_NATIVE_PREFIX}")
+brokkr_register_python_native_runtime_prefix("pyyggdrasil" "${YGGDRASIL_NATIVE_PREFIX}")
+brokkr_register_python_native_runtime_prefix("pyurd" "${URD_NATIVE_PREFIX}")
 
 find_package(fmt CONFIG REQUIRED PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
 if(fmt_FOUND)
@@ -217,11 +229,8 @@ install(
     COMPONENT runir
 )
 
-install(
-    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake/"
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/runir/cmake"
-    COMPONENT runir
-)
+
+brokkr_install_locator(DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/runir/cmake" COMPONENT runir)
 
 include(CMakePackageConfigHelpers)
 

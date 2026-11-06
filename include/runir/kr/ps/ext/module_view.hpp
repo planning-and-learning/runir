@@ -10,34 +10,33 @@
 
 #include <concepts>
 #include <tuple>
-#include <yggdrasil/containers/vector.hpp>
-#include <yggdrasil/core/dependent_false.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/repr/core/dependent_false.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
 
-namespace ygg
+namespace urd
 {
+template<typename V>
+struct view_mixin<runir::kr::ps::ext::Module, V>
+{
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
-template<formalism::SymbolContextFor<runir::kr::ps::ext::Module> C>
-class View<Index<runir::kr::ps::ext::Module>, C> : public ygg::IndexViewBase<runir::kr::ps::ext::Module, C>
-{
 public:
-    using ygg::IndexViewBase<runir::kr::ps::ext::Module, C>::IndexViewBase;
-
-    auto get_symbol() const noexcept { return make_view(this->get_data().symbol, this->get_context()); }
+    auto get_symbol() const noexcept { return self().template get<&urd::record_of<V>::symbol>(); }
     const auto& get_name() const noexcept { return get_symbol().get_name(); }
 
     template<runir::kr::dl::CategoryTag Category>
     auto get_arguments() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return make_view(this->get_data().concept_arguments, this->get_repository().get_dl_repository());
+            return urd::resolve(self().data().concept_arguments, get_repository(self().context()).get_dl_repository());
         else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return make_view(this->get_data().role_arguments, this->get_repository().get_dl_repository());
+            return urd::resolve(self().data().role_arguments, get_repository(self().context()).get_dl_repository());
         else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-            return make_view(this->get_data().boolean_arguments, this->get_repository().get_dl_repository());
+            return urd::resolve(self().data().boolean_arguments, get_repository(self().context()).get_dl_repository());
         else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-            return make_view(this->get_data().numerical_arguments, this->get_repository().get_dl_repository());
+            return urd::resolve(self().data().numerical_arguments, get_repository(self().context()).get_dl_repository());
     }
 
     template<runir::kr::dl::CategoryTag Category>
@@ -45,37 +44,36 @@ public:
         requires(std::same_as<Category, runir::kr::dl::ConceptTag> || std::same_as<Category, runir::kr::dl::RoleTag>)
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return make_view(this->get_data().concept_registers, this->get_repository().get_dl_repository());
+            return urd::resolve(self().data().concept_registers, get_repository(self().context()).get_dl_repository());
         else
-            return make_view(this->get_data().role_registers, this->get_repository().get_dl_repository());
+            return urd::resolve(self().data().role_registers, get_repository(self().context()).get_dl_repository());
     }
 
     template<typename FeatureTag>
     auto get_features() const noexcept
     {
         if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)
-            return make_view(this->get_data().concept_features, this->get_context());
+            return self().template get<&urd::record_of<V>::concept_features>();
         else if constexpr (std::same_as<FeatureTag, runir::kr::dl::RoleTag>)
-            return make_view(this->get_data().role_features, this->get_context());
+            return self().template get<&urd::record_of<V>::role_features>();
         else if constexpr (std::same_as<FeatureTag, runir::kr::dl::BooleanTag>)
-            return make_view(this->get_data().boolean_features, this->get_context());
+            return self().template get<&urd::record_of<V>::boolean_features>();
         else if constexpr (std::same_as<FeatureTag, runir::kr::dl::NumericalTag>)
-            return make_view(this->get_data().numerical_features, this->get_context());
+            return self().template get<&urd::record_of<V>::numerical_features>();
         else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::QueryFeature>)
-            return make_view(this->get_data().query_features, this->get_context());
+            return self().template get<&urd::record_of<V>::query_features>();
         else
         {
-            static_assert(ygg::dependent_false<FeatureTag>::value, "unhandled feature tag in Module::get_features");
+            static_assert(urd::repr::dependent_false<FeatureTag>::value, "unhandled feature tag in Module::get_features");
         }
     }
 
     auto get_query_features() const noexcept { return get_features<runir::kr::ps::dl::QueryFeature>(); }
 
-    auto get_entry_memory_state() const noexcept { return make_view(this->get_data().entry_memory_state, this->get_context()); }
-    auto get_memory_states() const noexcept { return make_view(this->get_data().memory_states, this->get_context()); }
-    auto get_memory_transitions() const noexcept { return make_view(this->get_data().memory_transitions, this->get_context()); }
+    auto get_entry_memory_state() const noexcept { return self().template get<&urd::record_of<V>::entry_memory_state>(); }
+    auto get_memory_states() const noexcept { return self().template get<&urd::record_of<V>::memory_states>(); }
+    auto get_memory_transitions() const noexcept { return self().template get<&urd::record_of<V>::memory_transitions>(); }
 };
-
-}  // namespace ygg
+}  // namespace urd
 
 #endif

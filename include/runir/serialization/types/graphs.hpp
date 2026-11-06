@@ -13,19 +13,19 @@ namespace runir::serialization
 {
 
 template<tyr::TaskKind Kind>
-using StateProperties = ygg::TypeList<datasets::StateGraphVertexLabel<Kind>,
+using StateProperties = boost::mp11::mp_list<datasets::StateGraphVertexLabel<Kind>,
                                       datasets::AnnotatedStateGraphVertexLabel<Kind>,
                                       kr::ps::base::SketchProofVertexLabel<Kind>,
                                       kr::ps::ext::ProgramProofVertexLabel<Kind>,
                                       kr::ps::icp::ProgramProofVertexLabel<Kind>>;
 
-using GraphProperties = ygg::ConcatTypeListsT<
+using GraphProperties = boost::mp11::mp_append<
     StateProperties<tyr::GroundTag>,
     StateProperties<tyr::LiftedTag>,
-    ygg::TypeList<datasets::StateGraphEdgeLabel, kr::ps::base::SketchProofEdgeLabel, kr::ps::ext::ProgramProofEdgeLabel, kr::ps::icp::ProgramProofEdgeLabel>>;
+    boost::mp11::mp_list<datasets::StateGraphEdgeLabel, kr::ps::base::SketchProofEdgeLabel, kr::ps::ext::ProgramProofEdgeLabel, kr::ps::icp::ProgramProofEdgeLabel>>;
 
 template<tyr::TaskKind Kind>
-using StateGraphs = ygg::TypeList<datasets::StaticStateGraph<Kind>,
+using StateGraphs = boost::mp11::mp_list<datasets::StaticStateGraph<Kind>,
                                   datasets::StateGraph<Kind>,
                                   datasets::StaticAnnotatedStateGraph<Kind>,
                                   datasets::AnnotatedStateGraph<Kind>,
@@ -33,7 +33,7 @@ using StateGraphs = ygg::TypeList<datasets::StaticStateGraph<Kind>,
                                   kr::ps::ext::ProgramProofGraph<Kind>,
                                   kr::ps::icp::ProgramProofGraph<Kind>>;
 
-using Graphs = ygg::ConcatTypeListsT<StateGraphs<tyr::GroundTag>, StateGraphs<tyr::LiftedTag>>;
+using Graphs = boost::mp11::mp_append<StateGraphs<tyr::GroundTag>, StateGraphs<tyr::LiftedTag>>;
 
 }  // namespace runir::serialization
 

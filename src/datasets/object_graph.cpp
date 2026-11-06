@@ -16,6 +16,8 @@
  */
 
 #include "runir/datasets/object_graph.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 #include <cstddef>
 #include <stdexcept>
@@ -25,7 +27,8 @@
 #include <tyr/planning/lifted/task.hpp>
 #include <utility>
 #include <vector>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
+#include <yggdrasil/core/config.hpp>
 #include <yggdrasil/formalism/detail/basic_symbol_repository_impl.hpp>
 
 namespace runir::datasets
@@ -41,9 +44,9 @@ private:
     using Edge = std::pair<graphs::VertexIndex, graphs::VertexIndex>;
 
     ColorRepository* m_repository;
-    ygg::UnorderedMap<ObjectView, graphs::VertexIndex> m_object_to_vertex;
-    std::vector<ygg::Data<Color>::VariantList> m_vertex_colors;
-    ygg::UnorderedSet<Edge> m_edges;
+    urd::Store<urd::map<ObjectView, graphs::VertexIndex>> m_object_to_vertex;
+    urd::Store<urd::sequence<urd::data<Color>::VariantList>> m_vertex_colors;
+    urd::Store<urd::set<Edge>> m_edges;
 
     auto get_or_create_vertex(ObjectView object) -> graphs::VertexIndex
     {
@@ -76,7 +79,7 @@ public:
     void add_atom(tyr::formalism::planning::AtomView<::tyr::GroundTag, T> atom)
     {
         const auto objects = atom.get_row().get_objects();
-        auto vertices = std::vector<graphs::VertexIndex> {};
+        auto vertices = graphs::VertexIndexList {};
         vertices.reserve(objects.size());
 
         for (std::size_t i = 0; i < objects.size(); ++i)
@@ -84,9 +87,9 @@ public:
             const auto vertex = get_or_create_vertex(objects[i]);
             vertices.push_back(vertex);
 
-            auto predicate_color_data = ygg::Data<PredicateColor<T>>(atom.get_predicate().get_index(), static_cast<ygg::uint_t>(i), Context);
+            auto predicate_color_data = urd::data<PredicateColor<T>>(atom.get_predicate().index(), static_cast<ygg::uint_t>(i), Context);
             const auto predicate_color = m_repository->insert(predicate_color_data).first;
-            m_vertex_colors[vertex].emplace_back(predicate_color.get_index());
+            m_vertex_colors[vertex].emplace_back(predicate_color.index());
         }
 
         for (std::size_t i = 0; i < vertices.size(); ++i)
@@ -100,7 +103,7 @@ public:
 
         for (auto& colors : m_vertex_colors)
         {
-            auto color_data = ygg::Data<Color>(std::move(colors));
+            auto color_data = urd::data<Color>(std::move(colors));
             builder.add_vertex(m_repository->insert(color_data).first);
         }
 
@@ -114,7 +117,7 @@ public:
 template<tyr::TaskKind Kind>
 void add_objects(tyr::planning::StateView<Kind> state, ObjectGraphConstructionContext& context)
 {
-    const auto task = state.get_state_repository()->get_task()->get_task();
+    const auto task = state.get_state_repository().get_task()->get_task();
 
     for (auto object : task.get_domain().get_constants())
         context.add_object(object);
@@ -137,7 +140,7 @@ void add_atoms(tyr::planning::StateView<Kind> state, ObjectGraphConstructionCont
 template<tyr::TaskKind Kind>
 void add_goal_atoms(tyr::planning::StateView<Kind> state, ObjectGraphConstructionContext& context)
 {
-    const auto goal = state.get_state_repository()->get_task()->get_task().get_goal();
+    const auto goal = state.get_state_repository().get_task()->get_task().get_goal();
 
     for (auto literal : goal.template get_literals<tyr::formalism::StaticTag>())
         context.template add_atom<PredicateContext::GOAL>(literal.get_atom());

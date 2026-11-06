@@ -13,10 +13,13 @@
 #include <optional>
 #include <span>
 #include <tuple>
+#include <urd/repr/sequences/segmented.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
-#include <yggdrasil/containers/segmented_vector.hpp>
 #include <yggdrasil/core/config.hpp>
+#include <urd/config.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
@@ -25,21 +28,21 @@ namespace runir::kr::ps::ext::detail
 /// Open/deadend/cycle diagnostics describe the explored graph; they do not override the search's AND/OR result.
 template<tyr::TaskKind Kind>
 void build_proof_graph(ProgramProofResults<Kind>& result,
-                       const ygg::SegmentedVector<SearchNode<Kind>>& nodes,
-                       const std::vector<Predecessor<Kind>>& predecessors,
+                       const urd::Store<urd::sequence<SearchNode<Kind>>, urd::stable_refs>& nodes,
+                       const urd::Store<urd::sequence<Predecessor<Kind>>>& predecessors,
                        std::optional<ProgramStateView<Kind>> initial)
 {
     using VertexLabel = ProgramProofVertexLabel<Kind>;
     using Edge = std::tuple<graphs::VertexIndex, graphs::VertexIndex, ProgramProofEdgeLabel>;
     constexpr auto no_vertex = std::numeric_limits<graphs::VertexIndex>::max();
 
-    auto graph_indices = std::vector<graphs::VertexIndex>(nodes.size(), no_vertex);
-    auto vertices = std::vector<VertexLabel> {};
+    auto graph_indices = graphs::VertexIndexList(nodes.size(), no_vertex);
+    auto vertices = urd::Store<urd::sequence<VertexLabel>> {};
     result.deadend_states.clear();
     result.open_states.clear();
     const auto add_vertex = [&](ProgramStateView<Kind> state)
     {
-        const auto index = ygg::uint_t(state.get_index());
+        const auto index = ygg::uint_t(state.index().value);
         auto& vertex = graph_indices[index];
         if (vertex != no_vertex)
             return vertex;
@@ -54,7 +57,7 @@ void build_proof_graph(ProgramProofResults<Kind>& result,
     };
     if (initial)
         add_vertex(*initial);
-    auto edges = std::vector<Edge> {};
+    auto edges = urd::Store<urd::sequence<Edge>> {};
     edges.reserve(predecessors.size());
     for (const auto& predecessor : predecessors)
     {
@@ -75,24 +78,24 @@ void build_proof_graph(ProgramProofResults<Kind>& result,
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
 void build_witness_graph(ProgramProofResults<Kind>& result,
                          SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>& expander,
-                         const ygg::SharedObjectPoolPtr<SearchPath<Kind, ExecutionStorage>>& witness)
+                         const std::shared_ptr<SearchPath<Kind, ExecutionStorage>>& witness)
 {
-    using PathPtr = ygg::SharedObjectPoolPtr<SearchPath<Kind, ExecutionStorage>>;
-    auto path = std::vector<PathPtr> {};
+    using PathPtr = std::shared_ptr<SearchPath<Kind, ExecutionStorage>>;
+    auto path = urd::Store<urd::sequence<PathPtr>> {};
     for (auto current = witness; current; current = current->parent)
         path.push_back(current);
     std::ranges::reverse(path);
     using Vertex = ProgramProofVertexLabel<Kind>;
     using Edge = std::tuple<graphs::VertexIndex, graphs::VertexIndex, ProgramProofEdgeLabel>;
-    auto vertices = std::vector<Vertex> {};
-    auto edges = std::vector<Edge> {};
+    auto vertices = urd::Store<urd::sequence<Vertex>> {};
+    auto edges = urd::Store<urd::sequence<Edge>> {};
     vertices.reserve(path.size());
     for (std::size_t i = 0; i < path.size(); ++i)
     {
         const auto& entry = *path[i];
         const auto index = static_cast<graphs::VertexIndex>(i);
         // Retained paths are initialized; only released pool entries lack a state.
-        YGG_ASSUME(entry.state.has_value());
+        URD_ASSUME(entry.state.has_value());
         vertices.emplace_back(expander.materialize(expander.view(*entry.state)), i == 0, entry.is_goal, !entry.is_unsolvable, entry.is_unsolvable);
         if (entry.is_deadend)
             result.deadend_states.push_back(index);

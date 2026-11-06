@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_DL_OPTIMIZATION_HPP_
 
 #include "runir/kr/dl/optimization.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/ps/dl/feature_view.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 #include "runir/kr/ps/optimization.hpp"
@@ -31,7 +33,7 @@ public:
         const auto optimized = m_optimizer.optimize(expression);
         if (optimized == expression)
             return view;
-        auto data = ygg::Data<ConcreteFeature<Family, DlTag, FeatureTag>>(optimized, view.get_symbol());
+        auto data = urd::data<ConcreteFeature<Family, DlTag, FeatureTag>>(optimized.index(), view.get_symbol());
         return ygg::formalism::insert(repository, data).first;
     }
 
@@ -61,7 +63,7 @@ RecordView<Family, RepositoryTypes, T> optimize(RecordView<Family, RepositoryTyp
                                                 BasicRepository<Family, RepositoryTypes>& repository,
                                                 const runir::kr::dl::QueryStatistics& statistics = {})
 {
-    if (&object.get_context() != &repository)
+    if (&object.context() != &repository)
         throw std::invalid_argument("optimize: the object belongs to another repository.");
     auto optimizer =
         RecordOptimizer<Family, RepositoryTypes, FeatureOptimizer<Family>>(repository, FeatureOptimizer<Family>(repository.get_dl_repository(), statistics));
@@ -72,7 +74,7 @@ RecordView<Family, RepositoryTypes, T> optimize(RecordView<Family, RepositoryTyp
 /// empty in every sample are reported in warnings.
 template<tyr::TaskKind Kind, FamilyTag Family, typename T, typename RepositoryTypes, runir::kr::dl::semantics::StateEvaluationContextConcept<Kind> Context>
 runir::kr::dl::QueryStatistics
-collect_query_statistics(RecordView<Family, RepositoryTypes, T> object, const std::vector<Context*>& contexts, ygg::diagnostics::Warnings& warnings)
+collect_query_statistics(RecordView<Family, RepositoryTypes, T> object, const urd::Store<urd::sequence<Context*>>& contexts, ygg::diagnostics::Warnings& warnings)
 {
     auto collector = RecordCollector<Family, RepositoryTypes, FeatureStatisticsCollector<Family>>();
     collector.template add<T>(object);

@@ -4,21 +4,12 @@
 #include "runir/kr/ps/icp/memory_state_data.hpp"
 
 #include <tuple>
-#include <yggdrasil/core/types.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
 
-namespace ygg
+template<typename V>
+struct urd::view_mixin<runir::kr::ps::icp::MemoryState, V>
 {
-
-template<formalism::SymbolContextFor<runir::kr::ps::icp::MemoryState> C>
-class View<Index<runir::kr::ps::icp::MemoryState>, C> : public ygg::IndexViewBase<runir::kr::ps::icp::MemoryState, C>
-{
-public:
-    using ygg::IndexViewBase<runir::kr::ps::icp::MemoryState, C>::IndexViewBase;
-
-    const auto& get_name() const noexcept { return this->get_data().name; }
+    const auto& get_name() const noexcept { return static_cast<const V&>(*this).data().name; }
 };
-
-}  // namespace ygg
 
 #endif

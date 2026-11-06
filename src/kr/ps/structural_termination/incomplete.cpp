@@ -1,4 +1,6 @@
 #include "detail.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "scc_refinement_forest.hpp"
 
 #include <algorithm>
@@ -20,7 +22,7 @@ struct RuleChanges
 
 struct SieveState
 {
-    std::vector<RuleChanges> changes;
+    urd::Store<urd::sequence<RuleChanges>> changes;
     std::vector<bool> remaining;
     ResidualMemorySccs memory_sccs;
 
@@ -34,7 +36,7 @@ struct SieveState
 struct OpposingRuleSet
 {
     bool has_raw_opponent = false;
-    std::vector<std::size_t> undiscounted;
+    urd::Store<urd::sequence<std::size_t>> undiscounted;
 };
 
 RuleChanges make_changes(const RuleProfile& profile)
@@ -57,9 +59,9 @@ bool r3_discounts(const RuleProfile& rule, const RuleProfile& opposing, const Sc
            || (rule.numerical_zero_conditions & opposing.numerical_greater_conditions & marks.numericals);
 }
 
-std::vector<std::size_t> remaining_rule_positions(const SieveState& state)
+urd::Store<urd::sequence<std::size_t>> remaining_rule_positions(const SieveState& state)
 {
-    auto result = std::vector<std::size_t> {};
+    auto result = urd::Store<urd::sequence<std::size_t>> {};
     result.reserve(state.remaining.size());
     for (std::size_t rule_position = 0; rule_position < state.remaining.size(); ++rule_position)
         if (state.remaining[rule_position])
@@ -191,10 +193,10 @@ SieveState run_sieve(const QualitativePolicy& policy, bool use_memory_scc_scope)
     }
 }
 
-std::vector<IncompletePolicyResult::ResidualMemoryScope> make_residual_scopes(const SieveState& state)
+urd::Store<urd::sequence<IncompletePolicyResult::ResidualMemoryScope>> make_residual_scopes(const SieveState& state)
 {
     const auto& forest = state.memory_sccs.refinement_forest();
-    auto result = std::vector<IncompletePolicyResult::ResidualMemoryScope> {};
+    auto result = urd::Store<urd::sequence<IncompletePolicyResult::ResidualMemoryScope>> {};
     for (SccRefinementForest::NodeIndex node_position = 0; node_position < forest.nodes().size(); ++node_position)
     {
         const auto& node = forest.node(node_position);

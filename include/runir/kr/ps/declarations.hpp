@@ -38,26 +38,10 @@ class TransitionEvaluationContext;
 
 // Condition
 
-template<FamilyTag Family>
-struct ConditionVariant
-{
-};
-
-template<FamilyTag Family, typename LanguageTag>
-struct ConcreteConditionVariant;
-
 template<FamilyTag Family, typename LanguageTag, typename FeatureTag, typename ObservationTag>
 struct ConcreteCondition;
 
 // Effect
-
-template<FamilyTag Family>
-struct EffectVariant
-{
-};
-
-template<FamilyTag Family, typename LanguageTag>
-struct ConcreteEffectVariant;
 
 template<FamilyTag Family, typename LanguageTag, typename FeatureTag, typename ObservationTag>
 struct ConcreteEffect;

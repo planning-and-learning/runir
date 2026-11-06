@@ -1,4 +1,6 @@
 #include <fmt/format.h>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <gtest/gtest.h>
 #include <iterator>
 #include <ranges>
@@ -47,7 +49,7 @@ static_assert(!graphs::IsGraph<PropertyOnlyGraph>);
 
 struct OwningVertexRange : StaticGraph
 {
-    [[nodiscard]] std::vector<graphs::VertexIndex> get_vertex_indices() const;
+    [[nodiscard]] urd::Store<urd::sequence<graphs::VertexIndex>> get_vertex_indices() const;
 };
 struct WrongEdgeRange : StaticGraph
 {
@@ -91,7 +93,7 @@ auto make_dynamic_graph()
 template<typename Range>
 auto materialize(Range&& range)
 {
-    auto result = std::vector<std::ranges::range_value_t<Range>>();
+    auto result = urd::Store<urd::sequence<std::ranges::range_value_t<Range>>>();
     for (auto value : std::forward<Range>(range))
         result.push_back(value);
     return result;
@@ -108,9 +110,9 @@ void expect_forward_adjacency(const Graph& graph)
     EXPECT_EQ(graph.get_target(edge), target);
     EXPECT_EQ(graph.get_out_degree(source), 1);
     EXPECT_EQ(graph.get_out_degree(target), 0);
-    EXPECT_EQ(materialize(graph.get_out_edge_indices(source)), std::vector<graphs::EdgeIndex>({ edge }));
+    EXPECT_EQ(materialize(graph.get_out_edge_indices(source)), urd::Store<urd::sequence<graphs::EdgeIndex>>({ edge }));
     EXPECT_TRUE(materialize(graph.get_out_edge_indices(target)).empty());
-    EXPECT_EQ(materialize(graph.get_successor_indices(source)), std::vector<graphs::VertexIndex>({ target }));
+    EXPECT_EQ(materialize(graph.get_successor_indices(source)), urd::Store<urd::sequence<graphs::VertexIndex>>({ target }));
     EXPECT_TRUE(materialize(graph.get_successor_indices(target)).empty());
     auto out_edges = graph.get_out_edges(source);
     auto successors = graph.get_successors(source);
@@ -122,9 +124,9 @@ void expect_forward_adjacency(const Graph& graph)
         EXPECT_EQ(graph.get_in_degree(source), 0);
         EXPECT_EQ(graph.get_in_degree(target), 1);
         EXPECT_TRUE(materialize(graph.get_in_edge_indices(source)).empty());
-        EXPECT_EQ(materialize(graph.get_in_edge_indices(target)), std::vector<graphs::EdgeIndex>({ edge }));
+        EXPECT_EQ(materialize(graph.get_in_edge_indices(target)), urd::Store<urd::sequence<graphs::EdgeIndex>>({ edge }));
         EXPECT_TRUE(materialize(graph.get_predecessor_indices(source)).empty());
-        EXPECT_EQ(materialize(graph.get_predecessor_indices(target)), std::vector<graphs::VertexIndex>({ source }));
+        EXPECT_EQ(materialize(graph.get_predecessor_indices(target)), urd::Store<urd::sequence<graphs::VertexIndex>>({ source }));
         auto in_edges = graph.get_in_edges(target);
         auto predecessors = graph.get_predecessors(target);
         EXPECT_EQ(&*in_edges.begin(), &graph.get_edge(edge));
@@ -202,9 +204,9 @@ TEST(GraphContainersTest, TraversalHelpersExposeForwardAndReverseAdjacency)
     EXPECT_EQ(backward_graph.get_out_degree(source), 0);
     EXPECT_EQ(backward_graph.get_out_degree(target), 1);
     EXPECT_TRUE(materialize(backward_graph.get_out_edge_indices(source)).empty());
-    EXPECT_EQ(materialize(backward_graph.get_out_edge_indices(target)), std::vector<graphs::EdgeIndex>({ edge }));
+    EXPECT_EQ(materialize(backward_graph.get_out_edge_indices(target)), urd::Store<urd::sequence<graphs::EdgeIndex>>({ edge }));
     EXPECT_TRUE(materialize(backward_graph.get_successor_indices(source)).empty());
-    EXPECT_EQ(materialize(backward_graph.get_successor_indices(target)), std::vector<graphs::VertexIndex>({ source }));
+    EXPECT_EQ(materialize(backward_graph.get_successor_indices(target)), urd::Store<urd::sequence<graphs::VertexIndex>>({ source }));
     auto backward_out_edges = backward_graph.get_out_edges(target);
     auto backward_successors = backward_graph.get_successors(target);
     EXPECT_EQ(&*backward_out_edges.begin(), &backward_graph.get_edge(edge));
@@ -219,13 +221,13 @@ TEST(GraphContainersTest, StaticGraphBuilderBglAdaptersExposeStableIterators)
     const auto edge = graphs::EdgeIndex { 0 };
 
     const auto [vertex_begin, vertex_end] = graphs::vertices(builder);
-    EXPECT_EQ(std::vector<graphs::VertexIndex>(vertex_begin, vertex_end), std::vector<graphs::VertexIndex>({ source, target }));
+    EXPECT_EQ(urd::Store<urd::sequence<graphs::VertexIndex>>(vertex_begin, vertex_end), urd::Store<urd::sequence<graphs::VertexIndex>>({ source, target }));
 
     const auto [edge_begin, edge_end] = graphs::edges(builder);
-    EXPECT_EQ(std::vector<graphs::EdgeIndex>(edge_begin, edge_end), std::vector<graphs::EdgeIndex>({ edge }));
+    EXPECT_EQ(urd::Store<urd::sequence<graphs::EdgeIndex>>(edge_begin, edge_end), urd::Store<urd::sequence<graphs::EdgeIndex>>({ edge }));
 
     const auto [out_begin, out_end] = graphs::out_edges(source, builder);
-    EXPECT_EQ(std::vector<graphs::EdgeIndex>(out_begin, out_end), std::vector<graphs::EdgeIndex>({ edge }));
+    EXPECT_EQ(urd::Store<urd::sequence<graphs::EdgeIndex>>(out_begin, out_end), urd::Store<urd::sequence<graphs::EdgeIndex>>({ edge }));
 
     EXPECT_FALSE(graphs::is_symmetric(builder));
 }
@@ -260,9 +262,9 @@ TEST(GraphContainersTest, StaticGraphMoveRebindsVertexAndEdgeParents)
 
 TEST(GraphContainersTest, BulkStaticGraphMatchesBuilderOrderAndProperties)
 {
-    const auto vertices = std::vector<std::string> { "source", "target", "target", "isolated" };
+    const auto vertices = urd::Store<urd::sequence<std::string>> { "source", "target", "target", "isolated" };
     const auto edges =
-        std::vector<std::tuple<graphs::VertexIndex, graphs::VertexIndex, std::string>> { { 2, 1, "late" },     { 0, 1, "shared" }, { 2, 0, "shared" },
+        urd::Store<urd::sequence<std::tuple<graphs::VertexIndex, graphs::VertexIndex, std::string>>> { { 2, 1, "late" },     { 0, 1, "shared" }, { 2, 0, "shared" },
                                                                                          { 0, 1, "parallel" }, { 0, 1, "shared" }, { 1, 1, "loop" } };
     auto builder = Builder();
     for (const auto& property : vertices)
@@ -295,13 +297,13 @@ TEST(GraphContainersTest, BulkStaticGraphMatchesBuilderOrderAndProperties)
 
 TEST(GraphContainersTest, BulkStaticGraphAcceptsEmptyEdgesAndVertices)
 {
-    const auto edges = std::vector<std::tuple<graphs::VertexIndex, graphs::VertexIndex, std::string>> {};
-    const auto empty = StaticGraph(std::vector<std::string> {}, edges);
+    const auto edges = urd::Store<urd::sequence<std::tuple<graphs::VertexIndex, graphs::VertexIndex, std::string>>> {};
+    const auto empty = StaticGraph(urd::Store<urd::sequence<std::string>> {}, edges);
     EXPECT_EQ(empty.get_num_vertices(), 0);
     EXPECT_EQ(empty.get_num_edges(), 0);
     EXPECT_TRUE(graphs::find_cycle(empty).empty());
 
-    const auto isolated = StaticGraph(std::vector<std::string> { "a", "b" }, edges);
+    const auto isolated = StaticGraph(urd::Store<urd::sequence<std::string>> { "a", "b" }, edges);
     EXPECT_EQ(isolated.get_num_vertices(), 2);
     EXPECT_EQ(isolated.get_num_edges(), 0);
     EXPECT_EQ(isolated.get_out_degree(0), 0);
@@ -311,9 +313,9 @@ TEST(GraphContainersTest, BulkStaticGraphAcceptsEmptyEdgesAndVertices)
 
 TEST(GraphContainersTest, CycleParentsSupportDenseAndSparseVertexIndices)
 {
-    const auto vertices = std::vector<std::string> { "prefix", "a", "b" };
+    const auto vertices = urd::Store<urd::sequence<std::string>> { "prefix", "a", "b" };
     const auto edges =
-        std::vector<std::tuple<graphs::VertexIndex, graphs::VertexIndex, std::string>> { { 0, 1, "prefix" }, { 1, 2, "forward" }, { 2, 1, "back" } };
+        urd::Store<urd::sequence<std::tuple<graphs::VertexIndex, graphs::VertexIndex, std::string>>> { { 0, 1, "prefix" }, { 1, 2, "forward" }, { 2, 1, "back" } };
     const auto graph = StaticGraph(vertices, edges);
     EXPECT_EQ(graphs::find_cycle(graph), (graphs::VertexIndexList { 1, 2, 1 }));
     EXPECT_EQ(graphs::find_edge_cycle(graph), (graphs::EdgeIndexList { 1, 2 }));

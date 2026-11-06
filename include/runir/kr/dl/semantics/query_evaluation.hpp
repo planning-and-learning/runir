@@ -2,6 +2,8 @@
 #define RUNIR_KR_DL_SEMANTICS_QUERY_EVALUATION_HPP_
 
 #include "runir/kr/dl/object_rows.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/dl/query_view.hpp"
 #include "runir/kr/dl/semantics/detail/evaluation_helpers.hpp"
 #include "runir/kr/dl/semantics/evaluation_decl.hpp"
@@ -18,9 +20,9 @@ namespace runir::kr::dl::semantics::detail
 /// Materialize rows into an empty, matching builder without publishing the root.
 template<tyr::TaskKind Kind, typename Tag, typename C, StateEvaluationContextConcept<Kind> Context>
     requires(!std::same_as<Tag, void>)
-void evaluate_query(ygg::View<ygg::Index<Query<Tag>>, C> constructor, Context& context, ygg::Builder<ygg::database::Relation>& result)
+void evaluate_query(urd::view<Query<Tag>, C> constructor, Context& context, urd::builder<ygg::database::Relation>& result)
 {
-    const auto& data = constructor.get_data();
+    const auto& data = constructor.data();
     auto children = context.child_context();
     if constexpr (std::same_as<Tag, QueryRenameTag>)
     {
@@ -33,7 +35,7 @@ void evaluate_query(ygg::View<ygg::Index<Query<Tag>>, C> constructor, Context& c
         auto& row = context.get_workspace().get_database_workspace().row;
         const auto predicate = constructor.get_predicate();
         for (const auto atom : context.get_state().get_atoms_view(predicate))
-            result.insert(encode_object_row(atom.get_row().get_data(), row));
+            result.insert(encode_object_row(atom.get_row().data().objects, row));
     }
     else if constexpr (is_atomic_goal_tag_v<Tag>)
     {
@@ -41,7 +43,7 @@ void evaluate_query(ygg::View<ygg::Index<Query<Tag>>, C> constructor, Context& c
         const auto predicate = constructor.get_predicate();
         for (const auto atom :
              context.get_state().get_task().get_task().get_goal().template get_atoms_view<TagFactKind<Tag>>(constructor.get_polarity(), predicate))
-            result.insert(encode_object_row(atom.get_row().get_data(), row));
+            result.insert(encode_object_row(atom.get_row().data().objects, row));
     }
     else if constexpr (std::same_as<Tag, QueryConceptTag>)
         insert_denotation_rows<ConceptTag>(evaluate<Kind>(constructor.get_arg(), children), result);
@@ -78,18 +80,18 @@ void evaluate_query(ygg::View<ygg::Index<Query<Tag>>, C> constructor, Context& c
     {
         const auto child = evaluate<Kind>(constructor.get_arg(), children);
         ygg::database::select_equal_columns(child,
-                                            ygg::Index<ygg::database::Column>(data.lhs_column.get_value()),
-                                            ygg::Index<ygg::database::Column>(data.rhs_column.get_value()),
+                                            urd::index<ygg::database::Column>(data.lhs_column.value),
+                                            urd::index<ygg::database::Column>(data.rhs_column.value),
                                             result);
     }
     else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
     {
         const auto child = evaluate<Kind>(constructor.get_arg(), children);
-        ygg::database::select_equal_value(child, ygg::Index<ygg::database::Column>(data.column.get_value()), data.object.get_value(), result);
+        ygg::database::select_equal_value(child, urd::index<ygg::database::Column>(data.column.value), data.object.value, result);
     }
     else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
     {
-        std::vector<QueryDenotationView> inputs;
+        urd::Store<urd::sequence<QueryDenotationView>> inputs;
         for (const auto arg : constructor.get_args())
             inputs.push_back(evaluate<Kind>(arg, children));
         ygg::database::generic_join(inputs, data.plan, result, context.get_workspace().get_generic_join_workspace(data.plan));
@@ -102,7 +104,7 @@ void evaluate_query(ygg::View<ygg::Index<Query<Tag>>, C> constructor, Context& c
         on_demand_must_pass<Kind>(constructor, context, result);
     else
     {
-        static_assert(ygg::dependent_false<Tag>::value, "unhandled relational query constructor");
+        static_assert(urd::repr::dependent_false<Tag>::value, "unhandled relational query constructor");
     }
 }
 

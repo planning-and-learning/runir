@@ -28,7 +28,7 @@ void bind_structural_termination(nb::module_& m)
     auto vertex_label = nb::class_<PolicyGraphVertexLabel>(m, "PolicyGraphVertexLabel")
                             .def_ro("boolean_values", &PolicyGraphVertexLabel::boolean_values)
                             .def_ro("numerical_values", &PolicyGraphVertexLabel::numerical_values);
-    ygg::add_comparison(vertex_label);
+    urd::python::add_comparison(vertex_label);
 
     auto policy_graph = nb::class_<PolicyGraph>(m, "PolicyGraph");
     bind_readable_graph_methods<true>(policy_graph);

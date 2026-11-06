@@ -5,45 +5,43 @@
 
 #include <concepts>
 #include <tuple>
-#include <yggdrasil/containers/variant.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
 
-namespace ygg
+namespace urd
 {
-
-template<typename Tag, formalism::SymbolContextFor<runir::kr::dl::cnf_grammar::Numerical<Tag>> C>
+template<typename Tag, typename V>
     requires runir::kr::dl::NumericalConstructorTag<Tag>
-class View<Index<runir::kr::dl::cnf_grammar::Numerical<Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::cnf_grammar::Numerical<Tag>, C>
+struct view_mixin<runir::kr::dl::cnf_grammar::Numerical<Tag>, V>
 {
-public:
-    using ygg::IndexViewBase<runir::kr::dl::cnf_grammar::Numerical<Tag>, C>::IndexViewBase;
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
+public:
     auto get_identifier() const noexcept
         requires std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>
-    { return this->get_data().identifier; }
+    { return self().data().identifier; }
 
     auto get_arg() const noexcept
         requires std::same_as<Tag, runir::kr::dl::CountTag>
-    { return make_view(this->get_data().arg, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::arg>(); }
 
     auto get_lhs() const noexcept
         requires(std::same_as<Tag, runir::kr::dl::DistanceTag> || runir::kr::dl::NumericalBinaryTag<Tag>)
-    { return make_view(this->get_data().lhs, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::lhs>(); }
 
     auto get_mid() const noexcept
         requires std::same_as<Tag, runir::kr::dl::DistanceTag>
-    { return make_view(this->get_data().mid, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::mid>(); }
 
     auto get_rhs() const noexcept
         requires(std::same_as<Tag, runir::kr::dl::DistanceTag> || runir::kr::dl::NumericalBinaryTag<Tag>)
-    { return make_view(this->get_data().rhs, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::rhs>(); }
 
     auto get_value() const noexcept
         requires std::same_as<Tag, runir::kr::dl::NumericalConstantTag>
-    { return this->get_data().identifier; }
+    { return self().data().identifier; }
 };
-
-}
+}  // namespace urd
 
 #endif

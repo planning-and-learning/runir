@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_ICP_DETAIL_RULE_EVALUATORS_HPP_
 
 #include "runir/kr/ps/icp/detail/rule_evaluation/crule.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/ps/icp/detail/rule_evaluation/load.hpp"
 #include "runir/kr/ps/rule_evaluator_concepts.hpp"
 
@@ -27,14 +29,14 @@ class RuleEvaluators
     struct ActionRules
     {
         Action action;
-        std::vector<CruleEvaluator> rules;
+        urd::Store<urd::sequence<CruleEvaluator>> rules;
     };
 
     RuleEvaluationWorkspace<Kind, EvaluationPolicy> m_workspace;
-    std::vector<Evaluator> m_evaluators;
+    urd::Store<urd::sequence<Evaluator>> m_evaluators;
     // Groups retain their inner capacities even when fewer actions are enabled.
-    std::vector<ActionRules> m_enabled;
-    std::vector<CruleEvaluator> m_matching;
+    urd::Store<urd::sequence<ActionRules>> m_enabled;
+    urd::Store<urd::sequence<CruleEvaluator>> m_matching;
 
     template<EmitConcept<ProgramStep<Kind>> Emit, StopConcept Stop>
     bool emit_crules(runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy>& context,
@@ -99,7 +101,7 @@ public:
     {
         for (const auto transition : program.get_module().get_memory_transitions())
             for (const auto variant : transition)
-                m_evaluators.push_back(ygg::visit([&]<RuleKind Tag>(RuleView<Tag> rule) -> Evaluator
+                m_evaluators.push_back(std::visit([&]<RuleKind Tag>(RuleView<Tag> rule) -> Evaluator
                                                   { return RuleEvaluator<Kind, Tag>(*get_task_context(), rule, variant); },
                                                   variant.get_variant()));
         m_matching.reserve(m_evaluators.size());

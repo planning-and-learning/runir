@@ -13,7 +13,7 @@ auto formatter_fragment(std::string_view name) -> std::string;
 
 auto create_memory_state(kr::ps::ext::Repository& repository, const std::string& name) -> kr::ps::ext::MemoryStateView;
 
-auto make_module_data(kr::ps::ext::Repository& repository, const std::string& name) -> ygg::Data<kr::ps::ext::Module>;
+auto make_module_data(kr::ps::ext::Repository& repository, const std::string& name) -> urd::data<kr::ps::ext::Module>;
 
 auto create_module(kr::ps::ext::Repository& repository,
                    const std::string& name,

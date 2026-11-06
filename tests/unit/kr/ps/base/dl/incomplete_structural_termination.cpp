@@ -49,9 +49,9 @@ TEST(RunirTests, IncompleteStructuralTerminationBooleanOscillatorReportsBlocking
         ASSERT_EQ(surviving.blocking_reasons.size(), 1);
         const auto& reason = surviving.blocking_reasons.front();
         ASSERT_TRUE(std::holds_alternative<kr::ps::base::dl::BooleanFeatureView>(reason.feature));
-        EXPECT_EQ(std::get<kr::ps::base::dl::BooleanFeatureView>(reason.feature).get_index(), booleans.front().get_index());
+        EXPECT_EQ(std::get<kr::ps::base::dl::BooleanFeatureView>(reason.feature).index(), booleans.front().index());
         ASSERT_EQ(reason.opposing_rules.size(), 1);
-        EXPECT_NE(reason.opposing_rules.front().get_index(), surviving.rule.get_index());
+        EXPECT_NE(reason.opposing_rules.front().index(), surviving.rule.index());
     }
 }
 

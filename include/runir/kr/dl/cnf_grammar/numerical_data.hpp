@@ -7,37 +7,30 @@
 #include <tuple>
 #include <utility>
 #include <variant>
-#include <yggdrasil/containers/variant.hpp>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
+#include <urd/elements/flat.hpp>
+#include <boost/mp11.hpp>
+#include <yggdrasil/core/config.hpp>
 
-namespace ygg
+namespace urd
 {
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::CountTag>>
+struct data<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::CountTag>>
 {
-    using Arg = ::ygg::IndexVariant<::ygg::MapTypeListT<runir::kr::dl::cnf_grammar::NonTerminal, runir::kr::dl::ConceptOrRoleTags>>;
+    using Arg = urd::index_variant<boost::mp11::mp_transform<runir::kr::dl::cnf_grammar::NonTerminal, runir::kr::dl::ConceptOrRoleTags>>;
 
-    Index<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::CountTag>> index;
+    urd::index<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::CountTag>> index;
     Arg arg;
 
-    Data() = default;
-    explicit Data(Arg arg_) : index(), arg(std::move(arg_)) {}
-    template<typename C>
-    using ViewVariant = ::ygg::ViewVariant<Arg, C>;
-    template<typename C>
-    explicit Data(const ViewVariant<C>& arg_) : index(), arg(std::visit([](const auto& view) -> Arg { return Arg(view.get_index()); }, arg_))
-    {
-    }
+    data() = default;
+    explicit data(Arg arg_) : index(), arg(std::move(arg_)) {}
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::arg> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::arg> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::arg> {}; }
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::DistanceTag>> :
+struct data<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::DistanceTag>> :
     runir::kr::dl::TernaryData<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::DistanceTag>,
                                runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>,
                                runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>,
@@ -51,7 +44,7 @@ struct Data<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::DistanceTag>> :
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>> :
+struct data<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>> :
     runir::kr::dl::ArgumentData<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
                                 runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>
 {
@@ -61,7 +54,7 @@ struct Data<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::ArgumentTag<run
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::NumericalConstantTag>> :
+struct data<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::NumericalConstantTag>> :
     runir::kr::dl::IdentifierData<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::NumericalConstantTag>, ygg::uint_t>
 {
     using Base = runir::kr::dl::IdentifierData<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::NumericalConstantTag>, ygg::uint_t>;
@@ -69,7 +62,7 @@ struct Data<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::NumericalConsta
 };
 
 template<runir::kr::dl::NumericalBinaryTag Tag>
-struct Data<runir::kr::dl::cnf_grammar::Numerical<Tag>> :
+struct data<runir::kr::dl::cnf_grammar::Numerical<Tag>> :
     runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Numerical<Tag>,
                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::NumericalTag>,
                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::NumericalTag>>
@@ -80,6 +73,6 @@ struct Data<runir::kr::dl::cnf_grammar::Numerical<Tag>> :
     using Base::Base;
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 #endif

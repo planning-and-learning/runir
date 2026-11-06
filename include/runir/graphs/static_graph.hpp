@@ -4,6 +4,8 @@
 #include "runir/graphs/static_graph_builder.hpp"
 
 #include <cassert>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <limits>
 #include <ranges>
 #include <span>
@@ -25,10 +27,10 @@ public:
     using EdgePropertyMapType = EdgePropertyMap<EP>;
 
 private:
-    using VertexList = std::vector<VertexType>;
-    using EdgeList = std::vector<EdgeType>;
+    using VertexList = urd::Store<urd::sequence<VertexType>>;
+    using EdgeList = urd::Store<urd::sequence<EdgeType>>;
     using VertexPropertyMapType = VertexPropertyMap<VP>;
-    using EdgeOffsetList = std::vector<ygg::uint_t>;
+    using EdgeOffsetList = urd::Store<urd::sequence<ygg::uint_t>>;
 
     VertexList m_vertices;
     EdgeList m_edges;
@@ -59,7 +61,7 @@ private:
 
         for (const auto& vertex : builder.get_vertices())
         {
-            auto [property_index, _] = m_vertex_properties.insert(ygg::Data<VertexProperty<VP>>(vertex.get_property()));
+            auto [property_index, _] = m_vertex_properties.insert(urd::data<VertexProperty<VP>>(vertex.get_property()));
             m_vertices.emplace_back(vertex.get_index(), property_index, *this);
         }
 
@@ -70,7 +72,7 @@ private:
             m_out_edge_offsets[source] = index;
             for (const auto& edge : builder.get_out_edges(source))
             {
-                auto [property_index, _] = m_edge_properties.insert(ygg::Data<EdgeProperty<EP>>(edge.get_property()));
+                auto [property_index, _] = m_edge_properties.insert(urd::data<EdgeProperty<EP>>(edge.get_property()));
                 m_edges.emplace_back(index++, source, edge.get_target(), property_index, *this);
             }
         }
@@ -121,7 +123,7 @@ public:
         m_edges.reserve(edges.size());
         for (const auto& property : vertices)
         {
-            auto [property_index, _] = m_vertex_properties.insert(ygg::Data<VertexProperty<VP>>(property));
+            auto [property_index, _] = m_vertex_properties.insert(urd::data<VertexProperty<VP>>(property));
             m_vertices.emplace_back(static_cast<VertexIndex>(m_vertices.size()), property_index, *this);
         }
 
@@ -142,7 +144,7 @@ public:
         for (auto input_index : ordered_edges)
         {
             const auto& [source, target, property] = edges[input_index];
-            auto [property_index, _] = m_edge_properties.insert(ygg::Data<EdgeProperty<EP>>(property));
+            auto [property_index, _] = m_edge_properties.insert(urd::data<EdgeProperty<EP>>(property));
             m_edges.emplace_back(static_cast<EdgeIndex>(m_edges.size()), source, target, property_index, *this);
         }
     }

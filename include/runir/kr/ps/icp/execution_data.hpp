@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_ICP_EXECUTION_DATA_HPP_
 
 #include "runir/kr/dl/semantics/declarations.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/ps/declarations.hpp"
 #include "runir/kr/ps/icp/declarations.hpp"
 #include "runir/kr/ps/icp/execution_declarations.hpp"
@@ -11,48 +13,41 @@
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
-#include <yggdrasil/serialization/cista_equal_to.hpp>
-#include <yggdrasil/serialization/cista_hash.hpp>
+#include <urd/elements/flat.hpp>
 
-namespace ygg
+namespace urd
 {
 
 template<>
-struct Data<runir::kr::ps::icp::Histories>
+struct data<runir::kr::ps::icp::Histories>
 {
-    Index<runir::kr::ps::icp::Histories> index;
-    IndexList<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>> concepts;
+    urd::index<runir::kr::ps::icp::Histories> index;
+    urd::flat_vector<urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>> concepts;
 
-    Data() = default;
-    Data(IndexList<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>> concepts_) : index(), concepts(std::move(concepts_)) {}
-    template<typename C>
-    Data(const std::vector<::ygg::View<Index<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>, C>>& concepts_) : index(), concepts()
-    { set(concepts_, concepts); }
+    data() = default;
+    data(urd::flat_vector<urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>> concepts_) : index(), concepts(std::move(concepts_)) {}
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::concepts> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::concepts> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::concepts> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::concepts> {}; }
 };
 
 template<tyr::TaskKind Kind>
-struct Data<runir::kr::ps::icp::ProgramState<Kind>>
+struct data<runir::kr::ps::icp::ProgramState<Kind>>
 {
-    Index<runir::kr::ps::icp::ProgramState<Kind>> index;
-    Index<runir::kr::ps::icp::Program> program;
-    Index<runir::kr::ps::icp::MemoryState> memory_state;
-    Index<runir::kr::dl::semantics::RegisterValues> registers;
-    Index<runir::kr::ps::icp::Histories> histories;
-    Index<tyr::planning::State<Kind>> state;
+    urd::index<runir::kr::ps::icp::ProgramState<Kind>> index;
+    urd::index<runir::kr::ps::icp::Program> program;
+    urd::index<runir::kr::ps::icp::MemoryState> memory_state;
+    urd::index<runir::kr::dl::semantics::RegisterValues> registers;
+    urd::index<runir::kr::ps::icp::Histories> histories;
+    urd::index<tyr::planning::State<Kind>> state;
 
-    Data() = default;
+    data() = default;
     // The referenced indices live in different repositories, hence the separate context parameters.
-    Data(Index<runir::kr::ps::icp::Program> program_,
-         Index<runir::kr::ps::icp::MemoryState> memory_state_,
-         Index<runir::kr::dl::semantics::RegisterValues> registers_,
-         Index<runir::kr::ps::icp::Histories> histories_,
-         Index<tyr::planning::State<Kind>> state_) :
+    data(urd::index<runir::kr::ps::icp::Program> program_,
+         urd::index<runir::kr::ps::icp::MemoryState> memory_state_,
+         urd::index<runir::kr::dl::semantics::RegisterValues> registers_,
+         urd::index<runir::kr::ps::icp::Histories> histories_,
+         urd::index<tyr::planning::State<Kind>> state_) :
         index(),
         program(program_),
         memory_state(memory_state_),
@@ -61,33 +56,13 @@ struct Data<runir::kr::ps::icp::ProgramState<Kind>>
         state(std::move(state_))
     {
     }
-    template<typename P, typename D, typename S>
-    Data(::ygg::View<Index<runir::kr::ps::icp::Program>, P> program_,
-         ::ygg::View<Index<runir::kr::ps::icp::MemoryState>, P> memory_state_,
-         ::ygg::View<Index<runir::kr::dl::semantics::RegisterValues>, D> registers_,
-         ::ygg::View<Index<runir::kr::ps::icp::Histories>, D> histories_,
-         ::ygg::View<Index<tyr::planning::State<Kind>>, S> state_) :
-        index(),
-        program(),
-        memory_state(),
-        registers(),
-        histories(),
-        state()
-    {
-        set(program_, program);
-        set(memory_state_, memory_state);
-        set(registers_, registers);
-        set(histories_, histories);
-        set(state_, state);
-    }
 
     static constexpr auto cista_members() noexcept
-    { return ygg::Members<&Data::index, &Data::program, &Data::memory_state, &Data::registers, &Data::histories, &Data::state> {}; }
+    { return urd::Members<&data::index, &data::program, &data::memory_state, &data::registers, &data::histories, &data::state> {}; }
     static constexpr auto identifying_members() noexcept
-    { return ygg::Members<&Data::program, &Data::memory_state, &Data::registers, &Data::histories, &Data::state> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    { return urd::Members<&data::program, &data::memory_state, &data::registers, &data::histories, &data::state> {}; }
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 #endif

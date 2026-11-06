@@ -1,4 +1,5 @@
 #include "bindings.hpp"
+#include <yggdrasil/python/type_casters.hpp>
 
 namespace runir::serialization
 {

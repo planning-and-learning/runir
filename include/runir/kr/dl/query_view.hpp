@@ -5,138 +5,138 @@
 
 #include <tyr/formalism/object_view.hpp>
 #include <tyr/formalism/predicate_view.hpp>
-#include <yggdrasil/containers/variant.hpp>
-#include <yggdrasil/containers/vector.hpp>
+#include <urd/elements/flat.hpp>
 
-namespace ygg
+namespace urd
 {
+template<typename V>
+struct view_mixin<runir::kr::dl::QueryColumn, V>
+{
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
-template<typename C>
-class View<Index<runir::kr::dl::QueryColumn>, C> : public ygg::IndexViewBase<runir::kr::dl::QueryColumn, C>
-{
 public:
-    using ygg::IndexViewBase<runir::kr::dl::QueryColumn, C>::IndexViewBase;
-
-    const auto& get_name() const noexcept { return this->get_data().name; }
+    const auto& get_name() const noexcept { return self().data().name; }
 };
 
-template<typename Tag, typename C>
-class View<Index<runir::kr::dl::Query<Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::Query<Tag>, C>
+template<typename Tag, typename V>
+struct view_mixin<runir::kr::dl::Query<Tag>, V>
 {
-public:
-    using ygg::IndexViewBase<runir::kr::dl::Query<Tag>, C>::IndexViewBase;
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
+public:
     auto get_variant() const noexcept
         requires std::same_as<Tag, void>
-    { return make_view(this->get_data().variant, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::variant>(); }
 
     [[nodiscard]] bool is_static() const noexcept
         requires std::same_as<Tag, void>
-    { return this->get_data().is_static; }
+    { return self().data().is_static; }
 
     auto get_arg() const noexcept
         requires(std::same_as<Tag, runir::kr::dl::QueryConceptTag> || std::same_as<Tag, runir::kr::dl::QueryRoleTag>
                  || std::same_as<Tag, runir::kr::dl::QueryProjectTag> || std::same_as<Tag, runir::kr::dl::QueryRenameTag>
                  || std::same_as<Tag, runir::kr::dl::QuerySelectEqualTag> || std::same_as<Tag, runir::kr::dl::QuerySelectValueTag>)
-    { return make_view(this->get_data().arg, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::arg>(); }
 
     auto get_lhs() const noexcept
         requires(std::same_as<Tag, runir::kr::dl::QueryJoinTag> || std::same_as<Tag, runir::kr::dl::QueryUnionTag>
                  || std::same_as<Tag, runir::kr::dl::QueryDifferenceTag>)
-    { return make_view(this->get_data().lhs, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::lhs>(); }
 
     auto get_rhs() const noexcept
         requires(std::same_as<Tag, runir::kr::dl::QueryJoinTag> || std::same_as<Tag, runir::kr::dl::QueryUnionTag>
                  || std::same_as<Tag, runir::kr::dl::QueryDifferenceTag>)
-    { return make_view(this->get_data().rhs, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::rhs>(); }
 
     auto get_args() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag>
-    { return make_view(this->get_data().args, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::args>(); }
 
     auto get_variable_order() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag>
-    { return make_view(this->get_data().variable_order, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::variable_order>(); }
 
     auto get_output_order() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag>
-    { return make_view(this->get_data().output_order, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::output_order>(); }
 
     auto get_keys() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
-    { return make_view(this->get_data().keys, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::keys>(); }
 
     auto get_sources() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
-    { return make_view(this->get_data().sources, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::sources>(); }
 
     auto get_edges() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
-    { return make_view(this->get_data().edges, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::edges>(); }
 
     auto get_targets() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
-    { return make_view(this->get_data().targets, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::targets>(); }
 
     auto get_probes() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
-    { return make_view(this->get_data().probes, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::probes>(); }
 
     auto get_columns() const noexcept
     {
         if constexpr (std::same_as<Tag, void>)
-            return ygg::visit([](auto concrete) { return concrete.get_columns(); }, get_variant());
+            return std::visit([](auto concrete) { return concrete.get_columns(); }, get_variant());
         else
-            return make_view(this->get_data().columns, this->get_context());
+            return self().template get<&urd::record_of<V>::columns>();
     }
 
     auto get_schema() const noexcept
     {
         if constexpr (std::same_as<Tag, void>)
-            return ygg::visit([](auto concrete) { return concrete.get_schema(); }, get_variant());
+            return std::visit([](auto concrete) { return concrete.get_schema(); }, get_variant());
         else if constexpr (std::same_as<Tag, runir::kr::dl::QueryJoinTag> || std::same_as<Tag, runir::kr::dl::QueryProjectTag>)
-            return make_view(this->get_data().plan.output_columns().get_record(), this->get_context());
+            return urd::resolve(self().data().plan.output_columns().data().get_data(), self().context());
         else if constexpr (std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag>)
-            return make_view(this->get_data().plan.output_columns().get_data(), this->get_context());
+            return urd::resolve(self().data().plan.output_columns().get_data(), self().context());
         else
-            return make_view(this->get_data().schema.get_data(), this->get_context());
+            return urd::resolve(self().data().schema.get_data(), self().context());
     }
 
     auto get_lhs_column() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QuerySelectEqualTag>
-    { return make_view(this->get_data().lhs_column, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::lhs_column>(); }
 
     auto get_rhs_column() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QuerySelectEqualTag>
-    { return make_view(this->get_data().rhs_column, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::rhs_column>(); }
 
     auto get_column() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QuerySelectValueTag>
-    { return make_view(this->get_data().column, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::column>(); }
 
     auto get_predicate() const noexcept
         requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)
-    { return make_view(this->get_data().predicate, this->get_context().get_planning_repository()); }
+    { return urd::resolve(self().data().predicate, self().context().get_planning_repository()); }
 
     auto get_object() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QuerySelectValueTag>
-    { return make_view(this->get_data().object, this->get_context().get_planning_repository()); }
+    { return urd::resolve(self().data().object, self().context().get_planning_repository()); }
 
     auto get_polarity() const noexcept
         requires runir::kr::dl::is_atomic_goal_tag_v<Tag>
-    { return this->get_data().polarity; }
+    { return self().data().polarity; }
 };
 
-template<runir::kr::dl::ConceptOrRoleTag Category, typename C>
-class View<Index<runir::kr::dl::QueryProjection<Category>>, C> : public ygg::IndexViewBase<runir::kr::dl::QueryProjection<Category>, C>
+template<runir::kr::dl::ConceptOrRoleTag Category, typename V>
+struct view_mixin<runir::kr::dl::QueryProjection<Category>, V>
 {
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
+
 public:
-    using ygg::IndexViewBase<runir::kr::dl::QueryProjection<Category>, C>::IndexViewBase;
-
-    auto get_arg() const noexcept { return make_view(this->get_data().arg, this->get_context()); }
-    auto get_columns() const noexcept { return make_view(this->get_data().columns, this->get_context()); }
+    auto get_arg() const noexcept { return self().template get<&urd::record_of<V>::arg>(); }
+    auto get_columns() const noexcept { return self().template get<&urd::record_of<V>::columns>(); }
 };
-
-}  // namespace ygg
+}  // namespace urd
 
 #endif

@@ -5,7 +5,7 @@
 
 #include <memory>
 #include <tyr/planning/declarations.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 
 namespace runir::kr::ps::icp
 {
@@ -29,10 +29,10 @@ template<tyr::TaskKind Kind>
 using ExecutionRepositoryPtr = std::shared_ptr<ExecutionRepository<Kind>>;
 
 template<tyr::TaskKind Kind>
-using ProgramStateView = ygg::View<ygg::Index<ProgramState<Kind>>, ExecutionRepository<Kind>>;
+using ProgramStateView = urd::view<ProgramState<Kind>, ExecutionRepository<Kind>>;
 
 template<tyr::TaskKind Kind>
-using HistoriesView = ygg::View<ygg::Index<Histories>, ExecutionRepository<Kind>>;
+using HistoriesView = urd::view<Histories, ExecutionRepository<Kind>>;
 
 }
 

@@ -2,6 +2,8 @@
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_EVALUATORS_QUERY_HPP_
 
 #include "runir/kr/dl/semantics/detail/evaluation_helpers.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/dl/semantics/incremental/declarations.hpp"
 #include "runir/kr/dl/semantics/incremental/delta.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/atomic_query.hpp"
@@ -20,7 +22,7 @@
 namespace runir::kr::dl::semantics::incremental::detail
 {
 
-using ObjectIndex = ygg::Index<tyr::formalism::Object>;
+using ObjectIndex = urd::index<tyr::formalism::Object>;
 
 /// A maintained query result with the last update's exact delta.
 struct QueryValue : ygg::database::incremental::detail::QueryValue
@@ -48,7 +50,7 @@ struct QueryStaticEvaluator : QueryValue
         {
             auto& result_rows = this->clear();
             auto output = context.for_result(true);
-            ygg::visit([&](auto concrete) { semantics::detail::evaluate_query<Kind>(concrete, output, result_rows); }, expression.get_variant());
+            std::visit([&](auto concrete) { semantics::detail::evaluate_query<Kind>(concrete, output, result_rows); }, expression.get_variant());
             initialized = true;
         }
         this->delta.clear();
@@ -111,9 +113,9 @@ struct QueryJoinEvaluator : ygg::database::incremental::JoinEvaluator
 template<tyr::TaskKind Kind>
 struct QueryGenericJoinEvaluator : ygg::database::incremental::GenericJoinEvaluator
 {
-    std::vector<QueryEvaluationIndex> args;
+    urd::Store<urd::sequence<QueryEvaluationIndex>> args;
 
-    QueryGenericJoinEvaluator(std::vector<QueryEvaluationIndex> args_, const ygg::database::GenericJoinPlan& plan) :
+    QueryGenericJoinEvaluator(urd::Store<urd::sequence<QueryEvaluationIndex>> args_, const ygg::database::GenericJoinPlan& plan) :
         ygg::database::incremental::GenericJoinEvaluator(plan),
         args(std::move(args_))
     {
@@ -145,9 +147,9 @@ struct QueryFromDenotationEvaluator : QueryValue
     {
         const auto columns = this->result.columns().span();
         if constexpr (std::same_as<Category, ConceptTag>)
-            this->set(ygg::database::encode_row(std::tuple { element.get_index().get_value() }, columns), present);
+            this->set(ygg::database::encode_row(std::tuple { element.index().value }, columns), present);
         else
-            this->set(ygg::database::encode_row(std::tuple { element.first.get_index().get_value(), element.second.get_index().get_value() }, columns),
+            this->set(ygg::database::encode_row(std::tuple { element.first.index().value, element.second.index().value }, columns),
                       present);
     }
     template<StateEvaluationContextConcept<Kind> Context>
@@ -237,13 +239,13 @@ struct QuerySelectionEvaluator : QueryValue
             const auto typed = ygg::database::Row(row, rows.columns().span());
             if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
             {
-                if (ObjectIndex(typed.template get<ygg::uint_t>(expression.get_data().lhs_position))
-                    != ObjectIndex(typed.template get<ygg::uint_t>(expression.get_data().rhs_position)))
+                if (ObjectIndex(typed.template get<ygg::uint_t>(expression.data().lhs_position))
+                    != ObjectIndex(typed.template get<ygg::uint_t>(expression.data().rhs_position)))
                     continue;
             }
             else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
             {
-                if (ObjectIndex(typed.template get<ygg::uint_t>(expression.get_data().position)) != expression.get_data().object)
+                if (ObjectIndex(typed.template get<ygg::uint_t>(expression.data().position)) != expression.data().object)
                     continue;
             }
             emit(row);

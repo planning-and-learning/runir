@@ -57,17 +57,15 @@ int run(std::span<char*> args)
     const auto domain = search->task->get_domain().get_domain();
     auto repository = runir::kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
     const auto count = runir::kr::ps::ext::dl::parse_numerical("(n_count " + text + ")", domain, *repository);
-    const auto query = count.get_variant()
-                           .template get<ygg::Index<runir::kr::dl::Numerical<runir::kr::dl::CountTag>>>()
-                           .get_arg()
-                           .template get<ygg::Index<runir::kr::dl::Query<>>>();
-    const auto must_pass = query.get_variant().template get<ygg::Index<runir::kr::dl::Query<runir::kr::dl::QueryMustPassTag>>>();
+    const auto query = std::get<urd::view<runir::kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(
+        std::get<urd::view<runir::kr::dl::Numerical<runir::kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant()).get_arg());
+    const auto must_pass = std::get<urd::view<runir::kr::dl::Query<runir::kr::dl::QueryMustPassTag>, runir::kr::dl::ConstructorRepository>>(query.get_variant());
 
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     auto builder = runir::kr::dl::semantics::Builder();
     auto denotations = runir::kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
-    auto empty_arguments = ygg::Data<runir::kr::dl::semantics::CallArguments>();
-    auto register_data = ygg::Data<runir::kr::dl::semantics::RegisterValues>();
+    auto empty_arguments = urd::data<runir::kr::dl::semantics::CallArguments>();
+    auto register_data = urd::data<runir::kr::dl::semantics::RegisterValues>();
     register_data.concept_values.resize(1);
     register_data.role_values.resize(1);
     const auto arguments = runir::kr::dl::semantics::insert(denotations, empty_arguments).first;
@@ -85,14 +83,14 @@ int run(std::span<char*> args)
         const auto arguments_time = seconds_since(start);
         start = std::chrono::steady_clock::now();
         if (!feature)
-            feature.emplace(runir::kr::dl::semantics::detail::make_must_pass_feature(must_pass.get_data().plan, must_pass.get_edges()));
+            feature.emplace(runir::kr::dl::semantics::detail::make_must_pass_feature(must_pass.data().plan, must_pass.get_edges()));
         const auto translate_time = seconds_since(start);
         const auto edges = must_pass.get_edges();
         auto slot_time = 0.0;
         const auto input = [&](size_t slot)
         {
             const auto begin = std::chrono::steady_clock::now();
-            const auto rows = runir::kr::dl::semantics::detail::evaluate_slot<Kind>(feature->slots[slot], edges.get_context(), context);
+            const auto rows = runir::kr::dl::semantics::detail::evaluate_slot<Kind>(feature->slots[slot], edges.context(), context);
             slot_time += seconds_since(begin);
             return rows;
         };
@@ -100,7 +98,7 @@ int run(std::span<char*> args)
         auto& heuristic =
             runir::kr::dl::semantics::detail::must_pass_heuristic(*feature, runir::kr::dl::semantics::detail::num_objects<Kind>(context), input, targets);
         const auto heuristic_time = seconds_since(start);
-        auto out = ygg::Builder<ygg::database::Relation>(must_pass.get_schema().span());
+        auto out = urd::builder<ygg::database::Relation>(must_pass.get_schema().span());
         const auto before = feature->must_pass.statistics();
         start = std::chrono::steady_clock::now();
         feature->must_pass.must_pass(input, sources, targets, probes, out, heuristic);

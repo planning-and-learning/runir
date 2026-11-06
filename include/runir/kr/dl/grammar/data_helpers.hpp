@@ -4,7 +4,6 @@
 #include "runir/kr/dl/data_helpers.hpp"
 #include "runir/kr/dl/grammar/declarations.hpp"
 
-#include <yggdrasil/core/types.hpp>
 
 namespace runir::kr::dl::grammar
 {

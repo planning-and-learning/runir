@@ -4,14 +4,16 @@
 #include "runir/kr/ps/icp/datas.hpp"
 
 #include <algorithm>
+#include "runir/kr/ps/canonicalization.hpp"
+
 #include <yggdrasil/semantics/canonicalization.hpp>
 
 namespace runir::kr::ps
 {
 
-inline bool is_canonical(const ygg::Data<Rule<IcpFamilyTag>>&) noexcept { return true; }
+inline bool is_canonical(const urd::data<Rule<IcpFamilyTag>>&) noexcept { return true; }
 
-inline void canonicalize(ygg::Data<Rule<IcpFamilyTag>>&) noexcept {}
+inline void canonicalize(urd::data<Rule<IcpFamilyTag>>&) noexcept {}
 
 }
 
@@ -19,16 +21,16 @@ namespace runir::kr::ps::icp
 {
 
 template<typename T>
-bool is_canonical(const ygg::Data<T>&) noexcept
+bool is_canonical(const urd::data<T>&) noexcept
 { return true; }
 
 template<typename T>
-void canonicalize(ygg::Data<T>&) noexcept
+void canonicalize(urd::data<T>&) noexcept
 {
 }
 
 template<RuleKind Kind>
-bool is_canonical(const ygg::Data<Rule<Kind>>& data) noexcept
+bool is_canonical(const urd::data<Rule<Kind>>& data) noexcept
 {
     bool result = ygg::is_canonical(data.conditions) && ygg::is_canonical(data.effects);
     if constexpr (std::same_as<Kind, CruleTag>)
@@ -37,7 +39,7 @@ bool is_canonical(const ygg::Data<Rule<Kind>>& data) noexcept
 }
 
 template<RuleKind Kind>
-void canonicalize(ygg::Data<Rule<Kind>>& data)
+void canonicalize(urd::data<Rule<Kind>>& data)
 {
     ygg::canonicalize(data.conditions);
     ygg::canonicalize(data.effects);
@@ -48,7 +50,7 @@ void canonicalize(ygg::Data<Rule<Kind>>& data)
     }
 }
 
-inline bool is_canonical(const ygg::Data<Module>& data) noexcept
+inline bool is_canonical(const urd::data<Module>& data) noexcept
 {
     return ygg::is_canonical(data.concept_features) && ygg::is_canonical(data.role_features) && ygg::is_canonical(data.boolean_features)
            && ygg::is_canonical(data.numerical_features) && ygg::is_canonical(data.query_features) && ygg::is_canonical(data.memory_states)
@@ -57,7 +59,7 @@ inline bool is_canonical(const ygg::Data<Module>& data) noexcept
            && std::adjacent_find(data.reset_pairs.begin(), data.reset_pairs.end()) == data.reset_pairs.end();
 }
 
-inline void canonicalize(ygg::Data<Module>& data)
+inline void canonicalize(urd::data<Module>& data)
 {
     ygg::canonicalize(data.concept_features);
     ygg::canonicalize(data.role_features);

@@ -37,7 +37,7 @@ struct PyObjectProperty
 
 }  // namespace runir::graphs
 
-namespace ygg
+namespace urd
 {
 
 template<>
@@ -64,7 +64,7 @@ struct EqualTo<runir::graphs::PyObjectProperty>
     }
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 namespace fmt
 {
@@ -291,40 +291,40 @@ inline void bind_graph_certificates(nb::module_& m)
                                             .def_rw("color", &WeisfeilerLeman2Signature::color)
                                             .def_rw("neighbor_colors", &WeisfeilerLeman2Signature::neighbor_colors);
     ygg::add_print(weisfeiler_leman_2_signature);
-    ygg::add_comparison(weisfeiler_leman_2_signature);
-    ygg::add_hash(weisfeiler_leman_2_signature);
+    urd::python::add_comparison(weisfeiler_leman_2_signature);
+    urd::python::add_hash(weisfeiler_leman_2_signature);
 
     auto weisfeiler_leman_3_signature = nb::class_<WeisfeilerLeman3Signature>(m, "WeisfeilerLeman3Signature")  //
                                             .def(nb::init<>())
                                             .def_rw("color", &WeisfeilerLeman3Signature::color)
                                             .def_rw("neighbor_colors", &WeisfeilerLeman3Signature::neighbor_colors);
     ygg::add_print(weisfeiler_leman_3_signature);
-    ygg::add_comparison(weisfeiler_leman_3_signature);
-    ygg::add_hash(weisfeiler_leman_3_signature);
+    urd::python::add_comparison(weisfeiler_leman_3_signature);
+    urd::python::add_hash(weisfeiler_leman_3_signature);
 
     auto color_refinement_certificate = nb::class_<ColorRefinementCertificate>(m, "ColorRefinementCertificate")  //
                                             .def(nb::init<>())
                                             .def("get_round_summaries", &ColorRefinementCertificate::get_round_summaries)
                                             .def("get_colors", &ColorRefinementCertificate::get_colors);
     ygg::add_print(color_refinement_certificate);
-    ygg::add_comparison(color_refinement_certificate);
-    ygg::add_hash(color_refinement_certificate);
+    urd::python::add_comparison(color_refinement_certificate);
+    urd::python::add_hash(color_refinement_certificate);
 
     auto weisfeiler_leman_2_certificate = nb::class_<WeisfeilerLeman2Certificate>(m, "WeisfeilerLeman2Certificate")  //
                                               .def(nb::init<>())
                                               .def("get_round_summaries", &WeisfeilerLeman2Certificate::get_round_summaries)
                                               .def("get_colors", &WeisfeilerLeman2Certificate::get_colors);
     ygg::add_print(weisfeiler_leman_2_certificate);
-    ygg::add_comparison(weisfeiler_leman_2_certificate);
-    ygg::add_hash(weisfeiler_leman_2_certificate);
+    urd::python::add_comparison(weisfeiler_leman_2_certificate);
+    urd::python::add_hash(weisfeiler_leman_2_certificate);
 
     auto weisfeiler_leman_3_certificate = nb::class_<WeisfeilerLeman3Certificate>(m, "WeisfeilerLeman3Certificate")  //
                                               .def(nb::init<>())
                                               .def("get_round_summaries", &WeisfeilerLeman3Certificate::get_round_summaries)
                                               .def("get_colors", &WeisfeilerLeman3Certificate::get_colors);
     ygg::add_print(weisfeiler_leman_3_certificate);
-    ygg::add_comparison(weisfeiler_leman_3_certificate);
-    ygg::add_hash(weisfeiler_leman_3_certificate);
+    urd::python::add_comparison(weisfeiler_leman_3_certificate);
+    urd::python::add_hash(weisfeiler_leman_3_certificate);
 }
 
 template<typename Graph>
@@ -349,7 +349,8 @@ void bind_labeled_constructible_graph(nb::class_<Graph>& cls)
     cls.def(
            "add_vertex",
            [](Graph& graph, const VertexProperty& property) { return graph.add_vertex(property); },
-           "property"_a)
+           "property"_a,
+           nb::keep_alive<1, 2>())
         .def(
             "add_directed_edge",
             [](Graph& graph, graphs::VertexIndex source, graphs::VertexIndex target, const EdgeProperty& property)

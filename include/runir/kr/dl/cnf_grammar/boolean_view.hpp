@@ -6,49 +6,47 @@
 #include <concepts>
 #include <tuple>
 #include <tyr/formalism/predicate_view.hpp>
-#include <yggdrasil/containers/variant.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
 
-namespace ygg
+namespace urd
 {
-
-template<typename Tag, formalism::SymbolContextFor<runir::kr::dl::cnf_grammar::Boolean<Tag>> C>
+template<typename Tag, typename V>
     requires runir::kr::dl::BooleanConstructorTag<Tag>
-class View<Index<runir::kr::dl::cnf_grammar::Boolean<Tag>>, C> : public ygg::IndexViewBase<runir::kr::dl::cnf_grammar::Boolean<Tag>, C>
+struct view_mixin<runir::kr::dl::cnf_grammar::Boolean<Tag>, V>
 {
-public:
-    using ygg::IndexViewBase<runir::kr::dl::cnf_grammar::Boolean<Tag>, C>::IndexViewBase;
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
+public:
     auto get_identifier() const noexcept
         requires std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>
-    { return this->get_data().identifier; }
+    { return self().data().identifier; }
 
     auto get_predicate() const noexcept
         requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)
-    { return make_view(this->get_data().predicate, this->get_context().get_planning_repository()); }
+    { return urd::resolve(self().data().predicate, self().context().get_planning_repository()); }
 
     auto get_polarity() const noexcept
         requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)
-    { return this->get_data().polarity; }
+    { return self().data().polarity; }
 
     auto get_arg() const noexcept
         requires(std::same_as<Tag, runir::kr::dl::NonemptyTag> || std::same_as<Tag, runir::kr::dl::NotTag>)
-    { return make_view(this->get_data().arg, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::arg>(); }
 
     auto get_lhs() const noexcept
         requires(runir::kr::dl::ComparisonTag<Tag> || runir::kr::dl::LogicalBinaryTag<Tag>)
-    { return make_view(this->get_data().lhs, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::lhs>(); }
 
     auto get_rhs() const noexcept
         requires(runir::kr::dl::ComparisonTag<Tag> || runir::kr::dl::LogicalBinaryTag<Tag>)
-    { return make_view(this->get_data().rhs, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::rhs>(); }
 
     auto get_value() const noexcept
         requires std::same_as<Tag, runir::kr::dl::BooleanConstantTag>
-    { return this->get_data().identifier; }
+    { return self().data().identifier; }
 };
-
-}
+}  // namespace urd
 
 #endif

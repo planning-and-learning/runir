@@ -11,8 +11,6 @@ template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::Feature<runi
 template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>>;
 template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::dl::NumericalTag>>;
-template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>>;
-template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ConcreteConditionVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>>;
 template class ygg::formalism::BasicSymbolRepository<
     runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>>;
 template class ygg::formalism::BasicSymbolRepository<
@@ -21,8 +19,6 @@ template class ygg::formalism::BasicSymbolRepository<
     runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::EqualZero>>;
 template class ygg::formalism::BasicSymbolRepository<
     runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::GreaterZero>>;
-template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>>;
-template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ConcreteEffectVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>>;
 template class ygg::formalism::BasicSymbolRepository<
     runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>>;
 template class ygg::formalism::BasicSymbolRepository<
@@ -48,8 +44,6 @@ template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ConcreteFeat
 template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::dl::NumericalTag>>;
 template class ygg::formalism::BasicSymbolRepository<
     runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::QueryFeature>>;
-template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>;
-template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ConcreteConditionVariant<runir::kr::ExtFamilyTag, runir::kr::DlTag>>;
 template class ygg::formalism::BasicSymbolRepository<
     runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>>;
 template class ygg::formalism::BasicSymbolRepository<
@@ -58,8 +52,6 @@ template class ygg::formalism::BasicSymbolRepository<
     runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::EqualZero>>;
 template class ygg::formalism::BasicSymbolRepository<
     runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::GreaterZero>>;
-template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>>;
-template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ConcreteEffectVariant<runir::kr::ExtFamilyTag, runir::kr::DlTag>>;
 template class ygg::formalism::BasicSymbolRepository<
     runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>>;
 template class ygg::formalism::BasicSymbolRepository<
@@ -98,8 +90,6 @@ template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ConcreteFeat
 template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ConcreteFeature<runir::kr::IcpFamilyTag, runir::kr::DlTag, runir::kr::dl::NumericalTag>>;
 template class ygg::formalism::BasicSymbolRepository<
     runir::kr::ps::ConcreteFeature<runir::kr::IcpFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::QueryFeature>>;
-template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ConditionVariant<runir::kr::IcpFamilyTag>>;
-template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ConcreteConditionVariant<runir::kr::IcpFamilyTag, runir::kr::DlTag>>;
 template class ygg::formalism::BasicSymbolRepository<
     runir::kr::ps::ConcreteCondition<runir::kr::IcpFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>>;
 template class ygg::formalism::BasicSymbolRepository<
@@ -108,8 +98,6 @@ template class ygg::formalism::BasicSymbolRepository<
     runir::kr::ps::ConcreteCondition<runir::kr::IcpFamilyTag, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::EqualZero>>;
 template class ygg::formalism::BasicSymbolRepository<
     runir::kr::ps::ConcreteCondition<runir::kr::IcpFamilyTag, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::GreaterZero>>;
-template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::EffectVariant<runir::kr::IcpFamilyTag>>;
-template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::ConcreteEffectVariant<runir::kr::IcpFamilyTag, runir::kr::DlTag>>;
 template class ygg::formalism::BasicSymbolRepository<
     runir::kr::ps::ConcreteEffect<runir::kr::IcpFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>>;
 template class ygg::formalism::BasicSymbolRepository<

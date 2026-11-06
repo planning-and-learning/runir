@@ -25,7 +25,6 @@
 #include <utility>
 #include <variant>
 #include <vector>
-#include <yggdrasil/containers/variant.hpp>
 
 namespace runir::kr::ps::ext
 {
@@ -37,7 +36,7 @@ SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::SuccessorExpander(r
     m_storage(m_task_context, m_program),
     m_rule_evaluators(m_task_context, m_program)
 {
-    if (&m_program.get_context() != m_task_context->domain_context->ext_repository.get())
+    if (&m_program.context() != m_task_context->domain_context->ext_repository.get())
         throw std::invalid_argument("SuccessorExpander requires a program from the domain context repository.");
 }
 
@@ -139,23 +138,18 @@ template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, run
 template<tyr::planning::StateViewConcept<Kind> S>
 void SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::validate_planning_state(const S& state) const
 {
-    if constexpr (requires { state.get_state_repository(); })
-    {
-        if (state.get_state_repository().get() != m_task_context->search_context->state_repository.get())
-            throw std::invalid_argument("SuccessorExpander requires a planning state from the selected task's state repository.");
-    }
-    else if (&state.get_task() != m_task_context->search_context->task.get())
-        throw std::invalid_argument("SuccessorExpander requires a planning state from the selected task.");
+    if (&state.get_state_repository() != m_task_context->search_context->state_repository.get())
+        throw std::invalid_argument("SuccessorExpander requires a planning state from the selected task's state repository.");
 }
 
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
 template<ProgramStateViewConcept<Kind> S>
 void SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::validate_source(S state) const
 {
-    if (&state.get_context() != m_task_context->execution_repository.get())
+    if (&state.context() != m_task_context->execution_repository.get())
         throw std::invalid_argument("SuccessorExpander requires an execution state from the selected task.");
     const auto program = state.get_program();
-    if (&program.get_context() != &m_program.get_context() || program != m_program)
+    if (&program.context() != &m_program.context() || program != m_program)
         throw std::invalid_argument("SuccessorExpander requires an execution state from the selected program.");
 }
 

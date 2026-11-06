@@ -5,13 +5,12 @@
 
 #include <cassert>
 #include <tuple>
-#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::graphs
 {
 
 template<typename G, Property P>
-class Vertex : public ygg::comparison::Mixin<Vertex<G, P>>
+class Vertex : public urd::compared_by_identity<Vertex<G, P>>
 {
 private:
     const G* m_graph;
@@ -34,7 +33,7 @@ public:
     [[nodiscard]] auto get_property_index() const noexcept -> PropertyIndexType { return m_property; }
     [[nodiscard]] auto get_property() const noexcept -> const P& { return get_parent().get_vertex_property(m_property); }
 
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Vertex::m_index, &Vertex::m_property> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&Vertex::m_index, &Vertex::m_property> {}; }
 };
 
 }  // namespace runir::graphs

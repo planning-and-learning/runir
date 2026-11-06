@@ -2,6 +2,8 @@
 #define RUNIR_SRC_GRAPHS_ALGORITHMS_NAUTY_IMPL_HPP_
 
 #include <cstddef>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <nausparse.h>
 #include <nauty.h>
 #include <vector>
@@ -14,17 +16,17 @@ class SparseGraphImpl
 {
 private:
     std::size_t m_nde;
-    std::vector<std::size_t> m_offsets;
+    urd::Store<urd::sequence<std::size_t>> m_offsets;
     int m_num_vertices;
-    std::vector<int> m_degrees;
-    std::vector<int> m_edges;
-    std::vector<int> m_labels;
-    std::vector<int> m_partitions;
-    std::vector<int> m_orbits;
-    std::vector<ygg::uint_t> m_coloring;
+    urd::Store<urd::sequence<int>> m_degrees;
+    urd::Store<urd::sequence<int>> m_edges;
+    urd::Store<urd::sequence<int>> m_labels;
+    urd::Store<urd::sequence<int>> m_partitions;
+    urd::Store<urd::sequence<int>> m_orbits;
+    urd::Store<urd::sequence<ygg::uint_t>> m_coloring;
     bool m_is_canonical;
-    std::vector<int> m_permutation;
-    std::vector<int> m_inverse_permutation;
+    urd::Store<urd::sequence<int>> m_permutation;
+    urd::Store<urd::sequence<int>> m_inverse_permutation;
 
     sparsegraph m_graph;
 
@@ -32,13 +34,13 @@ private:
 
 public:
     SparseGraphImpl(std::size_t nde,
-                    std::vector<std::size_t> offsets,
+                    urd::Store<urd::sequence<std::size_t>> offsets,
                     int num_vertices,
-                    std::vector<int> degrees,
-                    std::vector<int> edges,
-                    std::vector<int> labels,
-                    std::vector<int> partitions,
-                    std::vector<ygg::uint_t> coloring);
+                    urd::Store<urd::sequence<int>> degrees,
+                    urd::Store<urd::sequence<int>> edges,
+                    urd::Store<urd::sequence<int>> labels,
+                    urd::Store<urd::sequence<int>> partitions,
+                    urd::Store<urd::sequence<ygg::uint_t>> coloring);
 
     SparseGraphImpl(const SparseGraphImpl& other);
     auto operator=(const SparseGraphImpl& other) -> SparseGraphImpl&;
@@ -50,15 +52,15 @@ public:
 
     [[nodiscard]] auto get_num_directed_edges() const noexcept -> std::size_t;
     [[nodiscard]] auto get_num_vertices() const noexcept -> int;
-    [[nodiscard]] auto get_offsets() const noexcept -> const std::vector<std::size_t>&;
-    [[nodiscard]] auto get_degrees() const noexcept -> const std::vector<int>&;
-    [[nodiscard]] auto get_edges() const noexcept -> const std::vector<int>&;
-    [[nodiscard]] auto get_labels() const noexcept -> const std::vector<int>&;
-    [[nodiscard]] auto get_partitions() const noexcept -> const std::vector<int>&;
-    [[nodiscard]] auto get_orbits() const noexcept -> const std::vector<int>&;
-    [[nodiscard]] auto get_coloring() const noexcept -> const std::vector<ygg::uint_t>&;
-    [[nodiscard]] auto get_permutation() const -> const std::vector<int>&;
-    [[nodiscard]] auto get_inverse_permutation() const -> const std::vector<int>&;
+    [[nodiscard]] auto get_offsets() const noexcept -> const urd::Store<urd::sequence<std::size_t>>&;
+    [[nodiscard]] auto get_degrees() const noexcept -> const urd::Store<urd::sequence<int>>&;
+    [[nodiscard]] auto get_edges() const noexcept -> const urd::Store<urd::sequence<int>>&;
+    [[nodiscard]] auto get_labels() const noexcept -> const urd::Store<urd::sequence<int>>&;
+    [[nodiscard]] auto get_partitions() const noexcept -> const urd::Store<urd::sequence<int>>&;
+    [[nodiscard]] auto get_orbits() const noexcept -> const urd::Store<urd::sequence<int>>&;
+    [[nodiscard]] auto get_coloring() const noexcept -> const urd::Store<urd::sequence<ygg::uint_t>>&;
+    [[nodiscard]] auto get_permutation() const -> const urd::Store<urd::sequence<int>>&;
+    [[nodiscard]] auto get_inverse_permutation() const -> const urd::Store<urd::sequence<int>>&;
 };
 
 }  // namespace runir::graphs::nauty::details

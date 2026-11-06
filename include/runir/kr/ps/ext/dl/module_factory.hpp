@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_EXT_DL_MODULE_FACTORY_HPP_
 
 #include "runir/kr/ps/ext/declarations.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 #include <cstdint>
 #include <string>
@@ -28,8 +30,8 @@ public:
     static std::string create_empty_description();
     static std::string create_description(ModuleSpecification specification);
 
-    static std::vector<ModuleView> create_bonet_et_al_icaps2024_modules(tyr::formalism::planning::DomainView domain, Repository& repository);
-    static std::vector<std::string> create_bonet_et_al_icaps2024_descriptions();
+    static urd::Store<urd::sequence<ModuleView>> create_bonet_et_al_icaps2024_modules(tyr::formalism::planning::DomainView domain, Repository& repository);
+    static urd::Store<urd::sequence<std::string>> create_bonet_et_al_icaps2024_descriptions();
     static std::string create_bonet_et_al_icaps2024_program_description();
     static ProgramView create_bonet_et_al_icaps2024_program(tyr::formalism::planning::DomainView domain, Repository& repository);
 

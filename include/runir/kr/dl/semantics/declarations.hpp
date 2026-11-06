@@ -11,9 +11,8 @@
 #include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <vector>
-#include <yggdrasil/containers/span.hpp>
-#include <yggdrasil/core/type_list.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <boost/mp11.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/database/declarations.hpp>
 #include <yggdrasil/database/syntax/row.hpp>
 
@@ -31,26 +30,29 @@ struct CallArguments
 template<CategoryTag Category>
 struct Denotation;
 
-using DenotationTypes = ygg::TypeList<Denotation<BooleanTag>, Denotation<NumericalTag>, Denotation<ConceptTag>, Denotation<RoleTag>>;
-using DenotationRecordTypes = ygg::ConcatTypeListsT<DenotationTypes, ygg::TypeList<RegisterValues, CallArguments>>;
+using DenotationTypes = boost::mp11::mp_list<Denotation<BooleanTag>, Denotation<NumericalTag>, Denotation<ConceptTag>, Denotation<RoleTag>>;
+using DenotationRecordTypes = boost::mp11::mp_append<DenotationTypes, boost::mp11::mp_list<RegisterValues, CallArguments>>;
 
 class Builder;
 class DenotationRepository;
+/// The repository owning what is viewed through a DenotationRepository: itself (denotation_repository.hpp). Declared
+/// with the class, so that a view's constraints find it whenever they are first checked.
+const DenotationRepository& get_repository(const DenotationRepository& repository) noexcept;
 class DenotationRepositoryFactory;
 class EvaluationWorkspace;
 
 class DenotationCaches;
 class EvaluationStorage;
 
-using RegisterValuesView = ygg::View<ygg::Index<RegisterValues>, DenotationRepository>;
-using CallArgumentsView = ygg::View<ygg::Index<CallArguments>, DenotationRepository>;
-using BorrowedRegisterValuesView = ygg::View<ygg::Data<RegisterValues>, tyr::formalism::planning::Repository>;
+using RegisterValuesView = urd::view<RegisterValues, DenotationRepository>;
+using CallArgumentsView = urd::view<CallArguments, DenotationRepository>;
+using BorrowedRegisterValuesView = urd::borrowed_view<RegisterValues, tyr::formalism::planning::Repository>;
 
 template<CategoryTag Category>
-using DenotationView = ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>;
+using DenotationView = urd::view<Denotation<Category>, DenotationRepository>;
 
 template<CategoryTag Category>
-using BorrowedDenotationView = ygg::View<ygg::Builder<Denotation<Category>>, tyr::formalism::planning::Repository>;
+using BorrowedDenotationView = urd::borrowed_view<Denotation<Category>, tyr::formalism::planning::Repository, urd::builder<Denotation<Category>>>;
 
 using ConceptDenotationView = DenotationView<ConceptTag>;
 using QueryDenotationView = ygg::database::RelationView;

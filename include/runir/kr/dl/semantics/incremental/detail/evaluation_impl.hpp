@@ -31,7 +31,7 @@ template<CategoryTag Category>
 { return node(index).get_result(repository()); }
 
 template<tyr::TaskKind Kind>
-const ygg::Builder<ygg::database::Relation>& EvaluationGraph<Kind>::result(QueryEvaluationIndex index) const
+const urd::builder<ygg::database::Relation>& EvaluationGraph<Kind>::result(QueryEvaluationIndex index) const
 { return node(index).get_result(); }
 
 template<tyr::TaskKind Kind>
@@ -95,7 +95,7 @@ template<tyr::TaskKind Kind>
 template<BooleanOrNumericalTag Category>
 [[nodiscard]] bool IncrementalEvaluation<Kind>::changed(EvaluationIndex<Category> index) const
 {
-    require_exact(ygg::uint_t(index));
+    require_exact(ygg::uint_t(index.value));
     return m_graph.node(index).changed();
 }
 

@@ -1,4 +1,6 @@
 #include <concepts>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <runir/kr/detail/interning_contracts.hpp>
 #include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
 #include <runir/kr/dl/cnf_grammar/generate.hpp>
@@ -74,7 +76,7 @@ static_assert(!QueryProjectionCategory<kr::dl::BooleanTag> && !QueryProjectionCa
 template<typename Kind>
 concept GeneratesConstructors =
     requires(kr::dl::cnf_grammar::GrammarView grammar,
-             const std::vector<tyr::planning::PackedStateView<Kind>>& states,
+             const urd::Store<urd::sequence<tyr::planning::PackedStateView<Kind>>>& states,
              kr::dl::ConstructorRepository& constructors,
              kr::dl::semantics::DenotationRepository& denotations,
              const kr::dl::cnf_grammar::GenerateOptions& options) { kr::dl::cnf_grammar::generate<Kind>(grammar, states, constructors, denotations, options); };

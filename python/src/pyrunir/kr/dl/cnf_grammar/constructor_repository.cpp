@@ -1,4 +1,5 @@
 #include "bindings.hpp"
+#include <yggdrasil/python/type_casters.hpp>
 
 #include <memory>
 #include <nanobind/stl/shared_ptr.h>

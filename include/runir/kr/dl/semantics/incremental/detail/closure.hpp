@@ -2,6 +2,8 @@
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_CLOSURE_HPP_
 
 #include "runir/kr/dl/semantics/denotation_builder.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -10,6 +12,7 @@
 #include <cstdint>
 #include <iterator>
 #include <span>
+#include <urd/repr/containers/bitset_span.hpp>
 #include <vector>
 
 namespace runir::kr::dl::semantics::incremental::detail
@@ -20,14 +23,14 @@ struct ClosureWorkspace
     struct Frame
     {
         ygg::uint_t vertex;
-        ygg::SetBitIndices<ygg::uint_t>::Iterator next;
+        urd::repr::SetBitIndices<ygg::uint_t>::Iterator next;
     };
-    std::vector<size_t> discovery;
-    std::vector<size_t> lowlink;
-    std::vector<std::uint8_t> active;
-    std::vector<Frame> frames;
-    std::vector<ygg::uint_t> active_stack;
-    std::vector<ygg::uint_t> component;
+    urd::Store<urd::sequence<size_t>> discovery;
+    urd::Store<urd::sequence<size_t>> lowlink;
+    urd::Store<urd::sequence<std::uint8_t>> active;
+    urd::Store<urd::sequence<Frame>> frames;
+    urd::Store<urd::sequence<ygg::uint_t>> active_stack;
+    urd::Store<urd::sequence<ygg::uint_t>> component;
 
     void initialize(ygg::uint_t num_objects)
     {
@@ -47,13 +50,13 @@ struct ClosureWorkspace
 // in the style of Purdom (doi:10.1007/BF01940892). Clean rows must already be final;
 // dirty successor SCCs finish first. emit must immediately write each row to result
 // so later components can reuse it.
-template<BaseRoleConstructorTag Tag, std::invocable<ygg::Index<tyr::formalism::Object>, ygg::BitsetSpan<const ygg::uint_t>> Emit>
+template<BaseRoleConstructorTag Tag, std::invocable<urd::index<tyr::formalism::Object>, urd::repr::BitsetSpan<const ygg::uint_t>> Emit>
 void evaluate_closure(Tag,
-                      const ygg::Builder<Denotation<RoleTag>>& result,
-                      const ygg::Builder<Denotation<RoleTag>>& role,
-                      std::span<const ygg::Index<tyr::formalism::Object>> rows,
+                      const urd::builder<Denotation<RoleTag>>& result,
+                      const urd::builder<Denotation<RoleTag>>& role,
+                      std::span<const urd::index<tyr::formalism::Object>> rows,
                       std::span<const std::uint8_t> dirty,
-                      ygg::Builder<Denotation<ConceptTag>>& row,
+                      urd::builder<Denotation<ConceptTag>>& row,
                       ClosureWorkspace& scratch,
                       Emit emit)
 {
@@ -61,7 +64,7 @@ void evaluate_closure(Tag,
     assert(scratch.discovery.size() == role.get_num_objects() && dirty.size() == role.get_num_objects());
     for (const auto source : rows)
     {
-        const auto vertex = static_cast<ygg::uint_t>(source);
+        const auto vertex = static_cast<ygg::uint_t>(source.value);
         assert(dirty[vertex]);
         scratch.discovery[vertex] = scratch.lowlink[vertex] = scratch.active[vertex] = 0;
     }
@@ -74,13 +77,13 @@ void evaluate_closure(Tag,
         scratch.discovery[vertex] = scratch.lowlink[vertex] = ++index;
         scratch.active[vertex] = 1;
         scratch.active_stack.push_back(vertex);
-        scratch.frames.push_back({ vertex, ygg::set_bit_indices(role.get(vertex)).begin() });
+        scratch.frames.push_back({ vertex, urd::repr::set_bit_indices(role.get(vertex)).begin() });
     };
     for (const auto source : rows)
     {
-        if (scratch.discovery[static_cast<ygg::uint_t>(source)])
+        if (scratch.discovery[static_cast<ygg::uint_t>(source.value)])
             continue;
-        discover(static_cast<ygg::uint_t>(source));
+        discover(static_cast<ygg::uint_t>(source.value));
         while (!scratch.frames.empty())
         {
             auto& frame = scratch.frames.back();
@@ -123,7 +126,7 @@ void evaluate_closure(Tag,
                 for (const auto member : scratch.component)
                     reached.set(member);
             for (const auto member : scratch.component)
-                for (const auto neighbor : ygg::set_bit_indices(role.get(member)))
+                for (const auto neighbor : urd::repr::set_bit_indices(role.get(member)))
                 {
                     const auto target = static_cast<ygg::uint_t>(neighbor);
                     if (!reached.test(target))
@@ -138,7 +141,7 @@ void evaluate_closure(Tag,
                     }
                 }
             for (const auto member : scratch.component)
-                emit(ygg::Index<tyr::formalism::Object>(member), ygg::BitsetSpan<const ygg::uint_t>(reached));
+                emit(urd::index<tyr::formalism::Object>(member), urd::repr::BitsetSpan<const ygg::uint_t>(reached));
         }
     }
 }

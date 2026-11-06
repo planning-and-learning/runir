@@ -5,26 +5,28 @@
 
 #include <algorithm>
 #include <tuple>
+#include <urd/repr/values/indexed.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
-#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::graphs::color_refinement
 {
 
 using Color = ygg::uint_t;
-using ColorList = std::vector<Color>;
-using ColorAssignmentList = std::vector<std::pair<Color, VertexIndex>>;
+using ColorList = urd::Store<urd::sequence<Color>>;
+using ColorAssignmentList = urd::Store<urd::sequence<std::pair<Color, VertexIndex>>>;
 
 template<IsGraph G>
-using Coloring = std::conditional_t<IsDenseGraph<G>, ColorList, ygg::UnorderedMap<VertexIndex, Color>>;
+using Coloring = std::conditional_t<IsDenseGraph<G>, ColorList, urd::Store<urd::map<VertexIndex, Color>>>;
 
 template<typename VertexProperty>
-class Certificate : public ygg::comparison::Mixin<Certificate<VertexProperty>>
+class Certificate : public urd::compared_by_identity<Certificate<VertexProperty>>
 {
 public:
     using Signature = std::pair<Color, ColorList>;
-    using RoundSummary = std::vector<std::pair<Signature, std::size_t>>;
-    using RoundSummaryList = std::vector<RoundSummary>;
+    using RoundSummary = urd::Store<urd::sequence<std::pair<Signature, std::size_t>>>;
+    using RoundSummaryList = urd::Store<urd::sequence<RoundSummary>>;
 
 private:
     RoundSummaryList m_round_summaries;
@@ -38,36 +40,17 @@ public:
     [[nodiscard]] auto get_round_summaries() const noexcept -> const RoundSummaryList& { return m_round_summaries; }
     [[nodiscard]] auto get_colors() const noexcept -> const ColorAssignmentList& { return m_colors; }
 
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Certificate::m_colors, &Certificate::m_round_summaries> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&Certificate::m_colors, &Certificate::m_round_summaries> {}; }
 };
 
+/// Signatures by color: a signature's color is its position, a new one gets the next.
 template<typename Signature>
-class SignatureInterner
-{
-private:
-    std::vector<std::pair<Signature, Color>> m_data;
-    ygg::UnorderedMap<Signature, Color> m_index;
+using SignatureInterner = urd::Store<urd::set<Signature>, urd::positional>;
 
-public:
-    void clear()
-    {
-        m_data.clear();
-        m_index.clear();
-    }
-
-    auto insert(const Signature& signature) -> Color
-    {
-        const auto color = static_cast<Color>(m_data.size());
-        const auto [it, inserted] = m_index.emplace(std::move(signature), color);
-        if (!inserted)
-            return it->second;
-
-        m_data.emplace_back(it->first, color);
-        return color;
-    }
-
-    auto release() && { return std::move(m_data); }
-};
+/// The color of `signature`, interned.
+template<typename Signature, typename Element>
+Color intern(SignatureInterner<Signature>& interner, Element&& signature)
+{ return static_cast<Color>(interner.index(interner.insert(std::forward<Element>(signature)).first).value); }
 
 template<IsGraph G>
 auto to_dense_vertex_order(const G& graph)
@@ -117,16 +100,16 @@ auto compute_certificate(const G& graph)
 
     for (auto vertex : vertices)
     {
-        const auto color = static_cast<Color>(graph.get_vertex(vertex).get_property_index());
+        const auto color = static_cast<Color>(graph.get_vertex(vertex).get_property_index().value);
         set_color<G>(colors, vertex, color);
     }
 
     auto round_summaries = typename Result::RoundSummaryList();
-    auto vertex_signatures = std::vector<std::pair<VertexIndex, Signature>>();
+    auto vertex_signatures = urd::Store<urd::sequence<std::pair<VertexIndex, Signature>>>();
     vertex_signatures.reserve(vertices.size());
     auto next_colors = make_coloring_storage(graph);
     auto neighbor_colors = ColorList();
-    auto interner = SignatureInterner<Signature>();
+    auto interner = SignatureInterner<Signature>(urd::layer { 0 });
     auto changed = true;
     while (changed)
     {
@@ -163,7 +146,7 @@ auto compute_certificate(const G& graph)
         // Refine vertex colors.
         for (auto& [vertex, signature] : vertex_signatures)
         {
-            const auto next_color = interner.insert(std::move(signature));
+            const auto next_color = intern(interner, std::move(signature));
             set_color<G>(next_colors, vertex, next_color);
             changed = changed || next_color != get_color<G>(colors, vertex);
         }

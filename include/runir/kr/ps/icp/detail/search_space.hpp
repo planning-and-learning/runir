@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_ICP_DETAIL_SEARCH_SPACE_HPP_
 
 #include "runir/kr/ps/icp/detail/search_node.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/task_context.hpp"
 
 #include <algorithm>
@@ -15,11 +17,11 @@ namespace runir::kr::ps::icp::detail
 
 template<tyr::TaskKind Kind>
 tyr::planning::PackedPlan<Kind> extract_total_ordered_plan(std::size_t goal,
-                                                           const std::vector<SearchNode<Kind>>& nodes,
+                                                           const urd::Store<urd::sequence<SearchNode<Kind>>>& nodes,
                                                            const tyr::planning::PackedNode<Kind>& initial_node,
                                                            runir::kr::TaskContext<Kind>& context)
 {
-    auto actions = std::vector<tyr::formalism::planning::ActionBindingView> {};
+    auto actions = urd::Store<urd::sequence<tyr::formalism::planning::ActionBindingView>> {};
     auto index = goal;
     while (true)
     {

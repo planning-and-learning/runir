@@ -4,7 +4,8 @@
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/rule_data.hpp>
 #include <runir/kr/ps/ext/rule_view.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
+#include <yggdrasil/core/config.hpp>
 
 namespace runir::tests
 {
@@ -16,29 +17,28 @@ template<kr::ps::ext::RuleKind Kind>
 using Entity = kr::ps::ext::Rule<Kind>;
 
 template<kr::ps::ext::RuleKind Kind>
-using View = ygg::View<ygg::Index<Entity<Kind>>, kr::ps::ext::Repository>;
+using View = urd::view<Entity<Kind>, kr::ps::ext::Repository>;
 
 template<typename Kind>
-concept RuleContract = kr::ps::ext::RuleKind<Kind> && std::constructible_from<ygg::Index<Entity<Kind>>, ygg::uint_t>
-                       && std::totally_ordered<ygg::Index<Entity<Kind>>> && std::totally_ordered<ygg::Data<Entity<Kind>>> && std::totally_ordered<View<Kind>>
-                       && std::same_as<View<Kind>, kr::ps::ext::RuleView<Kind>> && requires(ygg::Data<Entity<Kind>>& data, const View<Kind>& view) {
+concept RuleContract = kr::ps::ext::RuleKind<Kind> && std::constructible_from<urd::index<Entity<Kind>>, ygg::uint_t>
+                       && std::totally_ordered<urd::index<Entity<Kind>>> && std::totally_ordered<urd::data<Entity<Kind>>> && std::totally_ordered<View<Kind>>
+                       && std::same_as<View<Kind>, kr::ps::ext::RuleView<Kind>> && requires(urd::data<Entity<Kind>>& data, const View<Kind>& view) {
                               data.index;
                               data.source;
                               data.conditions;
-                              data.clear();
-                              view.get_index();
+                              view.index();
                               view.get_source();
                               view.get_conditions();
                           };
 
 template<typename Kind>
-concept TransitionRuleContract = RuleContract<Kind> && requires(ygg::Data<Entity<Kind>>& data, const View<Kind>& view) {
+concept TransitionRuleContract = RuleContract<Kind> && requires(urd::data<Entity<Kind>>& data, const View<Kind>& view) {
     data.target;
     view.get_target();
 };
 
 template<typename Kind>
-concept HasEffects = requires(ygg::Data<Entity<Kind>>& data, const View<Kind>& view) {
+concept HasEffects = requires(urd::data<Entity<Kind>>& data, const View<Kind>& view) {
     data.effects;
     view.get_effects();
 };
@@ -48,7 +48,7 @@ using Load = kr::ps::ext::LoadTag<Category>;
 
 template<typename Kind>
 concept BindingRuleContract =
-    kr::ps::ext::BindingRuleKind<Kind> && TransitionRuleContract<Kind> && requires(ygg::Data<Entity<Kind>>& data, const View<Kind>& view) {
+    kr::ps::ext::BindingRuleKind<Kind> && TransitionRuleContract<Kind> && requires(urd::data<Entity<Kind>>& data, const View<Kind>& view) {
         data.feature;
         data.reg;
         data.effects;
@@ -73,11 +73,11 @@ static_assert(BindingRuleContract<kr::ps::ext::ChooseTag<kr::dl::ConceptTag>>);
 static_assert(BindingRuleContract<kr::ps::ext::ChooseTag<kr::dl::RoleTag>>);
 static_assert(kr::ps::ext::ChooseRuleView<View<kr::ps::ext::ChooseTag<kr::dl::ConceptTag>>>);
 static_assert(!kr::ps::ext::LoadRuleView<View<kr::ps::ext::ChooseTag<kr::dl::RoleTag>>>);
-static_assert(TransitionRuleContract<Sketch> && requires(ygg::Data<Entity<Sketch>>& data, const View<Sketch>& view) {
+static_assert(TransitionRuleContract<Sketch> && requires(urd::data<Entity<Sketch>>& data, const View<Sketch>& view) {
     data.effects;
     view.get_effects();
 });
-static_assert(TransitionRuleContract<Do> && requires(ygg::Data<Entity<Do>>& data, const View<Do>& view) {
+static_assert(TransitionRuleContract<Do> && requires(urd::data<Entity<Do>>& data, const View<Do>& view) {
     data.effects;
     data.action_name;
     data.arguments;
@@ -85,7 +85,7 @@ static_assert(TransitionRuleContract<Do> && requires(ygg::Data<Entity<Do>>& data
     view.get_action_name();
     view.get_action_arguments();
 });
-static_assert(TransitionRuleContract<Action> && requires(ygg::Data<Entity<Action>>& data, const View<Action>& view) {
+static_assert(TransitionRuleContract<Action> && requires(urd::data<Entity<Action>>& data, const View<Action>& view) {
     data.effects;
     data.action_name;
     data.query_feature;
@@ -93,7 +93,7 @@ static_assert(TransitionRuleContract<Action> && requires(ygg::Data<Entity<Action
     view.get_action_name();
     view.get_query_feature();
 });
-static_assert(TransitionRuleContract<Call> && requires(ygg::Data<Entity<Call>>& data, const View<Call>& view) {
+static_assert(TransitionRuleContract<Call> && requires(urd::data<Entity<Call>>& data, const View<Call>& view) {
     data.callee;
     data.arguments;
     view.get_callee();

@@ -3,6 +3,7 @@
 
 #include "runir/kr/dl/semantics/incremental/denotation_delta.hpp"
 #include "runir/kr/dl/semantics/interning.hpp"
+#include <urd/repr/containers/bitset_span.hpp>
 
 namespace runir::kr::dl::semantics::incremental::detail
 {
@@ -15,7 +16,7 @@ class DenotationState;
 template<ConceptOrRoleTag Category>
 class DenotationState<Category>
 {
-    ygg::Builder<Denotation<Category>> m_result;
+    urd::builder<Denotation<Category>> m_result;
     DenotationDelta<Category> m_delta;
 
 public:
@@ -50,9 +51,9 @@ public:
     [[nodiscard]] bool contains(DenotationElementView<Category> value) const noexcept
     {
         if constexpr (std::same_as<Category, ConceptTag>)
-            return m_result.contains(value.get_index());
+            return m_result.contains(value.index());
         else
-            return m_result.contains(value.first.get_index(), value.second.get_index());
+            return m_result.contains(value.first.index(), value.second.index());
     }
 
     /// Update membership and record its change exactly once.
@@ -62,39 +63,39 @@ public:
             return;
         (present ? m_delta.added : m_delta.removed).push_back(value);
         if constexpr (std::same_as<Category, ConceptTag>)
-            m_result.set(value.get_index(), present);
+            m_result.set(value.index(), present);
         else
-            m_result.set(value.first.get_index(), value.second.get_index(), present);
+            m_result.set(value.first.index(), value.second.index(), present);
     }
 
     /// Internal computations use indices; construct views only for recorded changes.
-    void set(ygg::Index<tyr::formalism::Object> object, bool present, const tyr::formalism::planning::Repository& repository)
+    void set(urd::index<tyr::formalism::Object> object, bool present, const tyr::formalism::planning::Repository& repository)
         requires std::same_as<Category, ConceptTag>
     {
         if (m_result.contains(object) != present)
-            set(ygg::make_view(object, repository), present);
+            set(urd::resolve(object, repository), present);
     }
 
-    void set(ygg::Index<tyr::formalism::Object> source,
-             ygg::Index<tyr::formalism::Object> target,
+    void set(urd::index<tyr::formalism::Object> source,
+             urd::index<tyr::formalism::Object> target,
              bool present,
              const tyr::formalism::planning::Repository& repository)
         requires std::same_as<Category, RoleTag>
     {
         if (m_result.contains(source, target) != present)
-            set(std::pair(ygg::make_view(source, repository), ygg::make_view(target, repository)), present);
+            set(std::pair(urd::resolve(source, repository), urd::resolve(target, repository)), present);
     }
 
     /// Row computations produce a complete row; dependent evaluators need only changed pairs.
     /// Compare old and new membership before overwriting it, recording the exact delta.
-    void update_row(ygg::Index<tyr::formalism::Object> source, ygg::BitsetSpan<const ygg::uint_t> row, const tyr::formalism::planning::Repository& repository)
+    void update_row(urd::index<tyr::formalism::Object> source, urd::repr::BitsetSpan<const ygg::uint_t> row, const tyr::formalism::planning::Repository& repository)
         requires std::same_as<Category, RoleTag>
     {
         // Each XOR word is captured before its changed memberships are updated.
-        ygg::for_each_bit(
+        urd::repr::for_each_bit(
             [&](size_t target)
             {
-                const auto object = ygg::Index<tyr::formalism::Object>(static_cast<ygg::uint_t>(target));
+                const auto object = urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(target));
                 set(source, object, row.test(static_cast<ygg::uint_t>(target)), repository);
             },
             [](auto before, auto after) { return before ^ after; },
@@ -103,13 +104,13 @@ public:
     }
 
     [[nodiscard]] BorrowedDenotationView<Category> get_result(const tyr::formalism::planning::Repository& repository) const noexcept
-    { return ygg::make_view(m_result, repository); }
+    { return urd::resolve(m_result, repository); }
 };
 
 template<BooleanOrNumericalTag Category>
 class DenotationState<Category>
 {
-    ygg::Builder<Denotation<Category>> m_result;
+    urd::builder<Denotation<Category>> m_result;
     bool m_changed = false;
 
 public:
@@ -122,7 +123,7 @@ public:
     [[nodiscard]] const auto& get_builder() const noexcept { return m_result; }
     [[nodiscard]] auto get_value() const noexcept { return m_result.get(); }
     [[nodiscard]] bool changed() const noexcept { return m_changed; }
-    void assign(DenotationView<Category> source) { initialize(source.get()); }
+    void assign(DenotationView<Category> source) { initialize(source.value()); }
     void assign(BorrowedDenotationView<Category> source) { initialize(source.get()); }
     void set(DenotationElementView<Category> value) noexcept
     {
@@ -130,7 +131,7 @@ public:
         m_result.get() = value;
     }
     [[nodiscard]] BorrowedDenotationView<Category> get_result(const tyr::formalism::planning::Repository& repository) const noexcept
-    { return ygg::make_view(m_result, repository); }
+    { return urd::resolve(m_result, repository); }
 };
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

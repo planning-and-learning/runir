@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_ICP_FORMATTER_HPP_
 
 #include "runir/kr/ps/formatter.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/ps/icp/module_view.hpp"
 #include "runir/kr/ps/icp/repository.hpp"
 #include "runir/kr/ps/icp/rule_view.hpp"
@@ -18,7 +20,7 @@
 #include <tyr/formalism/planning/formatter.hpp>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/io/iostream.hpp>
 
 namespace runir::kr::ps::icp
@@ -62,7 +64,7 @@ void append_indexical(std::ostream& os, Predicate predicate, const ArgumentNames
             if constexpr (std::same_as<Reference, ArgumentPosition>)
             {
                 os << " (:argument ";
-                const auto position = ygg::uint_t(reference);
+                const auto position = reference.value;
                 if (position < arguments.size())
                     os << arguments.at(position);
                 else
@@ -70,13 +72,13 @@ void append_indexical(std::ostream& os, Predicate predicate, const ArgumentNames
                 os << ')';
             }
             else
-                os << " (:register (:concept " << ygg::make_view(reference, predicate.get_context().get_dl_repository()).get_name() << "))";
+                os << " (:register (:concept " << urd::resolve(reference, predicate.context().get_dl_repository()).get_name() << "))";
         });
     os << " (:concept " << predicate.get_concept_feature().get_symbol() << "))";
 }
 
 template<runir::kr::ps::icp::RuleKind Kind, typename C>
-void append_rule_body(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::icp::Rule<Kind>>, C> view)
+void append_rule_body(std::ostream& os, urd::view<runir::kr::ps::icp::Rule<Kind>, C> view)
 {
     if constexpr (std::same_as<Kind, CruleTag>)
     {
@@ -104,7 +106,7 @@ void append_rule_body(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::icp:
 }
 
 template<runir::kr::ps::icp::RuleKind Kind, typename C>
-void append_rule(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::icp::Rule<Kind>>, C> view)
+void append_rule(std::ostream& os, urd::view<runir::kr::ps::icp::Rule<Kind>, C> view)
 {
     os << ygg::print_indent << "(:" << Kind::keyword << "\n";
     {
@@ -115,9 +117,9 @@ void append_rule(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::icp::Rule
 }
 
 template<typename C>
-void append_rule(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>>, C> view)
+void append_rule(std::ostream& os, urd::view<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>, C> view)
 {
-    ygg::visit([&](auto rule) { append_rule(os, rule); }, view.get_variant());
+    std::visit([&](auto rule) { append_rule(os, rule); }, view.get_variant());
 }
 
 template<typename View>
@@ -136,7 +138,7 @@ void append_declarations(std::ostream& os, Arguments arguments)
 }
 
 template<typename C>
-void append_module(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::icp::Module>, C> view)
+void append_module(std::ostream& os, urd::view<runir::kr::ps::icp::Module, C> view)
 {
     os << ygg::print_indent << "(:module\n";
     {
@@ -190,7 +192,7 @@ void append_module(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::icp::Mo
                     os << ygg::print_indent << "(:expression\n";
                     {
                         ygg::IndentScope expression_scope(os);
-                        ygg::visit(
+                        std::visit(
                             [&](auto first_rule)
                             {
                                 os << ygg::print_indent << "(:source-memory " << first_rule.get_source().get_name() << ")\n";
@@ -211,15 +213,15 @@ void append_module(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::icp::Mo
         os << ygg::print_indent << ")\n";
         os << ygg::print_indent << "(:reset-spo";
         for (const auto& pair : view.get_reset_pairs())
-            os << " (:prec " << ygg::make_view(pair.before, view.get_context()).get_symbol() << ' '
-               << ygg::make_view(pair.after, view.get_context()).get_symbol() << ')';
+            os << " (:prec " << urd::resolve(pair.before, view.context()).get_symbol() << ' '
+               << urd::resolve(pair.after, view.context()).get_symbol() << ')';
         os << ")\n";
     }
     os << ygg::print_indent << ')';
 }
 
 template<typename C>
-std::string module(ygg::View<ygg::Index<runir::kr::ps::icp::Module>, C> view)
+std::string module(urd::view<runir::kr::ps::icp::Module, C> view)
 {
     auto os = std::ostringstream {};
     append_module(os, view);
@@ -227,7 +229,7 @@ std::string module(ygg::View<ygg::Index<runir::kr::ps::icp::Module>, C> view)
 }
 
 template<typename C>
-void append_program(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::icp::Program>, C> view)
+void append_program(std::ostream& os, urd::view<runir::kr::ps::icp::Program, C> view)
 {
     os << ygg::print_indent << "(:program\n";
     {
@@ -240,7 +242,7 @@ void append_program(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::icp::P
 }
 
 template<typename C>
-std::string program(ygg::View<ygg::Index<runir::kr::ps::icp::Program>, C> view)
+std::string program(urd::view<runir::kr::ps::icp::Program, C> view)
 {
     auto os = std::ostringstream {};
     append_program(os, view);
@@ -250,61 +252,61 @@ std::string program(ygg::View<ygg::Index<runir::kr::ps::icp::Program>, C> view)
 }  // namespace runir::kr::ps::icp
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::icp::MemoryState>, C>>
+struct fmt::formatter<urd::view<runir::kr::ps::icp::MemoryState, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(auto view, format_context& context) const { return fmt::format_to(context.out(), "{}", view.get_name()); }
 };
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::icp::ModuleSymbol>, C>>
+struct fmt::formatter<urd::view<runir::kr::ps::icp::ModuleSymbol, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(auto view, format_context& context) const { return fmt::format_to(context.out(), "{}", view.get_name()); }
 };
 
 template<runir::kr::ps::icp::RuleKind Kind, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::icp::Rule<Kind>>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::view<runir::kr::ps::icp::Rule<Kind>, C>> : fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::icp::rule(view), context); }
 };
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::view<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>, C>> : fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::icp::rule(view), context); }
 };
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::icp::Module>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::view<runir::kr::ps::icp::Module, C>> : fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::icp::module(view), context); }
 };
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::icp::Program>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::view<runir::kr::ps::icp::Program, C>> : fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::icp::program(view), context); }
 };
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::icp::XCondition>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::view<runir::kr::ps::icp::XCondition, C>> : fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const
     {
         std::ostringstream os;
-        runir::kr::ps::icp::append_indexical(os, view, std::vector<std::string> {});
+        runir::kr::ps::icp::append_indexical(os, view, urd::Store<urd::sequence<std::string>> {});
         return fmt::formatter<std::string_view>::format(os.str(), context);
     }
 };
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::icp::XEffect>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::view<runir::kr::ps::icp::XEffect, C>> : fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const
     {
         std::ostringstream os;
-        runir::kr::ps::icp::append_indexical(os, view, std::vector<std::string> {});
+        runir::kr::ps::icp::append_indexical(os, view, urd::Store<urd::sequence<std::string>> {});
         return fmt::formatter<std::string_view>::format(os.str(), context);
     }
 };

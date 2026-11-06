@@ -15,7 +15,7 @@ namespace ygg::serialization
 
 template<typename Archive, typename T, typename C>
     requires(std::same_as<T, runir::kr::ps::icp::XCondition> || std::same_as<T, runir::kr::ps::icp::XEffect>)
-void describe_fields(Archive& ar, std::type_identity<View<Index<T>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::view<T, C>>)
 {
     ar.field("operation",
              [](const auto& value)
@@ -29,17 +29,17 @@ void describe_fields(Archive& ar, std::type_identity<View<Index<T>, C>>)
              [](const auto& value) -> std::optional<ygg::uint_t>
              {
                  if (::cista::holds_alternative<runir::kr::ps::icp::ArgumentPosition>(value.get_object_reference()))
-                     return ygg::uint_t(value.get_object_reference().template as<runir::kr::ps::icp::ArgumentPosition>());
+                     return value.get_object_reference().template as<runir::kr::ps::icp::ArgumentPosition>().value;
                  return std::nullopt;
              });
     ar.field("register",
              [](const auto& value)
              {
-                 using RegisterIndex = Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>;
-                 using RegisterView = decltype(make_view(RegisterIndex {}, get_repository(value.get_context()).get_dl_repository()));
+                 using RegisterIndex = urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>;
+                 using RegisterView = decltype(urd::resolve(RegisterIndex {}, get_repository(value.context()).get_dl_repository()));
                  std::optional<RegisterView> result;
                  if (::cista::holds_alternative<RegisterIndex>(value.get_object_reference()))
-                     result = make_view(value.get_object_reference().template as<RegisterIndex>(), get_repository(value.get_context()).get_dl_repository());
+                     result = urd::resolve(value.get_object_reference().template as<RegisterIndex>(), get_repository(value.context()).get_dl_repository());
                  return result;
              });
     ar.field("concept", [](const auto& value) { return value.get_concept_feature(); });

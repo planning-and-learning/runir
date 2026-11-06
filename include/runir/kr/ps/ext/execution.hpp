@@ -9,6 +9,5 @@
 #include "runir/kr/ps/ext/execution_view.hpp"
 #include "runir/kr/ps/ext/successor_expander.hpp"
 
-#include <yggdrasil/core/types.hpp>
 
 #endif

@@ -12,9 +12,12 @@
 #include <memory>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <utility>
-#include <yggdrasil/containers/raw_vector_set.hpp>
+#include <urd/repr/pools/pools.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/config.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/database/semantics/relation_repository.hpp>
 #include <yggdrasil/formalism/interning.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>
@@ -44,7 +47,8 @@ class DenotationRepository : public ygg::formalism::SymbolRepositoryBase<Denotat
 
     friend class DenotationRepositoryFactory;
 
-    using VectorRepository = ygg::RawVectorSet<ygg::uint_t, ygg::uint_t>;
+    /// The denotations' blocks, interned in a urd pool (stored flat): a handle's value is a vec_index.
+    using VectorRepository = urd::Store<urd::pool<urd::Store<urd::sequence<ygg::uint_t>, urd::frozen>>>;
 
     VectorRepository m_vector_repository;
     ygg::database::RelationRepository m_relation_repository;
@@ -64,6 +68,8 @@ public:
     DenotationRepository& operator=(DenotationRepository&&) = delete;
 
     [[nodiscard]] const auto& get_index() const noexcept { return m_index; }
+    /// The repository's number, as urd::view asks of a context.
+    [[nodiscard]] std::size_t layer() const noexcept { return m_index; }
     [[nodiscard]] auto get_factory() const noexcept { return m_factory; }
     [[nodiscard]] const tyr::formalism::planning::Repository& get_formalism_repository() const noexcept
     {
@@ -83,29 +89,34 @@ public:
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
-    const ygg::Data<T>& operator[](ygg::Index<T> index) const noexcept
+    const urd::data<T>& operator[](urd::index<T> index) const noexcept
     {
         assert(this->template is_local<T>(index));
         return this->template local<T>(index);
     }
 
+    /// An index as its view here (urd's resolves contract).
     template<typename T>
         requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
-    [[nodiscard]] const DenotationRepository& get_canonical_context(ygg::Index<T>) const noexcept
-    { return *this; }
+    [[nodiscard]] urd::view<T, DenotationRepository> view(urd::index<T> index) const noexcept
+    { return { index, *this }; }
 
-    [[nodiscard]] const auto& get_vector_repository() const noexcept { return m_vector_repository; }
-    auto& get_vector_repository() noexcept { return m_vector_repository; }
+    /// The blocks of vec_index `index`.
+    [[nodiscard]] std::span<const ygg::uint_t> vector(ygg::uint_t index) const { return m_vector_repository.view(VectorRepository::handle_type(index)); }
+    /// How many distinct block vectors are stored.
+    [[nodiscard]] std::size_t vector_count() const noexcept { return m_vector_repository.size(); }
+    /// The vec_index of these blocks, stored where they are new.
+    ygg::uint_t insert_vector(std::span<const ygg::uint_t> blocks) { return m_vector_repository.insert(blocks).first.value; }
     [[nodiscard]] const auto& get_relation_repository() const noexcept { return m_relation_repository; }
     auto& get_relation_repository() noexcept { return m_relation_repository; }
 };
 
 /// A repository owns the records viewed through it.
-inline const DenotationRepository& get_repository(const DenotationRepository& repository YGG_LIFETIMEBOUND) noexcept { return repository; }
+inline const DenotationRepository& get_repository(const DenotationRepository& repository URD_LIFETIMEBOUND) noexcept { return repository; }
 
 template<typename T>
     requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
-void prepare_for_insert(DenotationRepository&, ygg::Data<T>& data)
+void prepare_for_insert(DenotationRepository&, urd::data<T>& data)
 { canonicalize(data); }
 
 using ygg::formalism::insert;

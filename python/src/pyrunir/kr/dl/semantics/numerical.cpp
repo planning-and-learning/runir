@@ -17,13 +17,13 @@ namespace
 template<typename Tag>
 void bind_numerical_data(nb::module_& m, const char* name)
 {
-    using Data = ygg::Data<Numerical<Tag>>;
+    using Data = urd::data<Numerical<Tag>>;
     auto cls = nb::class_<Data>(m, name).def(nb::init<>()).def_rw("index", &Data::index);
-    ygg::add_comparison(cls);
+    urd::python::add_comparison(cls);
     python::def_numerical_data_constructors<Tag,
-                                            ygg::Index<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>,
-                                            ygg::Index<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>,
-                                            ygg::Index<runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>>,
+                                            urd::index<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>,
+                                            urd::index<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>,
+                                            urd::index<runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>>,
                                             runir::kr::dl::ConstructorRepository>(cls);
 
     if constexpr (std::same_as<Tag, CountTag>)
@@ -42,11 +42,11 @@ template<typename Tag>
 void bind_numerical_view(nb::module_& m, const char* name)
 {
     using Type = Numerical<Tag>;
-    using View = ygg::View<ygg::Index<Type>, ConstructorRepository>;
-    auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index);
+    using View = urd::view<Type, ConstructorRepository>;
+    auto cls = nb::class_<View>(m, name).def("get_index", &View::index);
     ygg::add_print(cls);
-    ygg::add_comparison(cls);
-    ygg::add_hash(cls);
+    urd::python::add_comparison(cls);
+    urd::python::add_hash(cls);
     cls.def("syntactic_complexity", [](View view) { return semantics::syntactic_complexity(view); });
 
     if constexpr (std::same_as<Tag, CountTag>)
@@ -67,31 +67,31 @@ void bind_numerical_view(nb::module_& m, const char* name)
 
 void bind_semantics_numerical(nb::module_& m)
 {
-    ygg::bind_index<ygg::Index<Numerical<NumericalConstantTag>>>(m, "NumericalConstantIndex");
+    urd::python::bind_index<urd::index<Numerical<NumericalConstantTag>>>(m, "NumericalConstantIndex");
     bind_numerical_data<NumericalConstantTag>(m, "NumericalConstantData");
     bind_numerical_view<NumericalConstantTag>(m, "NumericalConstant");
 
-    ygg::bind_index<ygg::Index<Numerical<AddTag>>>(m, "NumericalAddIndex");
+    urd::python::bind_index<urd::index<Numerical<AddTag>>>(m, "NumericalAddIndex");
     bind_numerical_data<AddTag>(m, "NumericalAddData");
     bind_numerical_view<AddTag>(m, "NumericalAdd");
 
-    ygg::bind_index<ygg::Index<Numerical<SubTag>>>(m, "NumericalSubIndex");
+    urd::python::bind_index<urd::index<Numerical<SubTag>>>(m, "NumericalSubIndex");
     bind_numerical_data<SubTag>(m, "NumericalSubData");
     bind_numerical_view<SubTag>(m, "NumericalSub");
 
-    ygg::bind_index<ygg::Index<Numerical<MulTag>>>(m, "NumericalMulIndex");
+    urd::python::bind_index<urd::index<Numerical<MulTag>>>(m, "NumericalMulIndex");
     bind_numerical_data<MulTag>(m, "NumericalMulData");
     bind_numerical_view<MulTag>(m, "NumericalMul");
 
-    ygg::bind_index<ygg::Index<Numerical<DivTag>>>(m, "NumericalDivIndex");
+    urd::python::bind_index<urd::index<Numerical<DivTag>>>(m, "NumericalDivIndex");
     bind_numerical_data<DivTag>(m, "NumericalDivData");
     bind_numerical_view<DivTag>(m, "NumericalDiv");
 
-    ygg::bind_index<ygg::Index<Numerical<MinTag>>>(m, "NumericalMinIndex");
+    urd::python::bind_index<urd::index<Numerical<MinTag>>>(m, "NumericalMinIndex");
     bind_numerical_data<MinTag>(m, "NumericalMinData");
     bind_numerical_view<MinTag>(m, "NumericalMin");
 
-    ygg::bind_index<ygg::Index<Numerical<MaxTag>>>(m, "NumericalMaxIndex");
+    urd::python::bind_index<urd::index<Numerical<MaxTag>>>(m, "NumericalMaxIndex");
     bind_numerical_data<MaxTag>(m, "NumericalMaxData");
     bind_numerical_view<MaxTag>(m, "NumericalMax");
 
@@ -99,9 +99,9 @@ void bind_semantics_numerical(nb::module_& m)
     using Distance = Numerical<DistanceTag>;
     using ArgumentReference = Numerical<ArgumentTag<NumericalTag>>;
 
-    ygg::bind_index<ygg::Index<Count>>(m, "NumericalCountIndex");
-    ygg::bind_index<ygg::Index<Distance>>(m, "NumericalDistanceIndex");
-    ygg::bind_index<ygg::Index<ArgumentReference>>(m, "NumericalArgumentIndex");
+    urd::python::bind_index<urd::index<Count>>(m, "NumericalCountIndex");
+    urd::python::bind_index<urd::index<Distance>>(m, "NumericalDistanceIndex");
+    urd::python::bind_index<urd::index<ArgumentReference>>(m, "NumericalArgumentIndex");
 
     bind_numerical_data<CountTag>(m, "NumericalCountData");
     bind_numerical_data<DistanceTag>(m, "NumericalDistanceData");

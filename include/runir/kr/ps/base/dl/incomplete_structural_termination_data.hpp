@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_BASE_DL_INCOMPLETE_STRUCTURAL_TERMINATION_DATA_HPP_
 
 #include "runir/kr/ps/base/declarations.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/base/rule_view.hpp"
 #include "runir/kr/ps/feature_view.hpp"
@@ -9,7 +11,6 @@
 #include <cstdint>
 #include <variant>
 #include <vector>
-#include <yggdrasil/core/types.hpp>
 
 namespace runir::kr::ps::base::dl
 {
@@ -28,7 +29,7 @@ struct IncompleteBlockingReason
     std::variant<BooleanFeatureView, NumericalFeatureView> feature;
     /// The remaining rules that oppose the change and survive R3's
     /// marked-complementary-condition check.
-    std::vector<RuleView> opposing_rules;
+    urd::Store<urd::sequence<RuleView>> opposing_rules;
 };
 
 struct IncompleteSurvivingRule
@@ -36,13 +37,13 @@ struct IncompleteSurvivingRule
     RuleView rule;
     /// One entry per feature the rule changes strictly (numerical) or flips
     /// (Boolean); empty iff the rule performs no eliminating change at all.
-    std::vector<IncompleteBlockingReason> blocking_reasons;
+    urd::Store<urd::sequence<IncompleteBlockingReason>> blocking_reasons;
 };
 
 struct IncompleteStructuralTerminationResult
 {
     IncompleteStructuralTerminationStatus status = IncompleteStructuralTerminationStatus::TERMINATING;
-    std::vector<IncompleteSurvivingRule> surviving_rules;  ///< empty iff terminating.
+    urd::Store<urd::sequence<IncompleteSurvivingRule>> surviving_rules;  ///< empty iff terminating.
 
     [[nodiscard]] bool is_terminating() const noexcept { return status == IncompleteStructuralTerminationStatus::TERMINATING; }
 };

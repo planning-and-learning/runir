@@ -6,13 +6,13 @@
 #include "runir/kr/ps/syntactic_complexity.hpp"
 
 #include <cstddef>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 
 namespace runir::kr::ps::ext
 {
 
 template<typename C>
-std::size_t syntactic_complexity(ygg::View<ygg::Index<Module>, C> view)
+std::size_t syntactic_complexity(urd::view<Module, C> view)
 {
     auto result = std::size_t { 0 };
     for (auto feature : view.template get_features<runir::kr::dl::ConceptTag>())
@@ -29,7 +29,7 @@ std::size_t syntactic_complexity(ygg::View<ygg::Index<Module>, C> view)
 }
 
 template<typename C>
-std::size_t syntactic_complexity(ygg::View<ygg::Index<Program>, C> view)
+std::size_t syntactic_complexity(urd::view<Program, C> view)
 {
     auto result = std::size_t { 0 };
     for (auto module_ : view.get_modules())

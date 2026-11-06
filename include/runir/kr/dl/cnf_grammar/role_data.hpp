@@ -3,11 +3,11 @@
 
 #include "runir/kr/dl/cnf_grammar/data_helpers.hpp"
 
-namespace ygg
+namespace urd
 {
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::UniversalTag>> :
+struct data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::UniversalTag>> :
     runir::kr::dl::NullaryData<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::UniversalTag>>
 {
     using Base = runir::kr::dl::NullaryData<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::UniversalTag>>;
@@ -15,7 +15,7 @@ struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::UniversalTag>> :
 };
 
 template<tyr::formalism::FactKind T>
-struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::AtomicStateTag<T>>> :
+struct data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::AtomicStateTag<T>>> :
     runir::kr::dl::PredicateData<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::AtomicStateTag<T>>, T>
 {
     using Base = runir::kr::dl::PredicateData<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::AtomicStateTag<T>>, T>;
@@ -23,7 +23,7 @@ struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::AtomicStateTag<T>>> 
 };
 
 template<tyr::formalism::FactKind T>
-struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::AtomicGoalTag<T>>> :
+struct data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::AtomicGoalTag<T>>> :
     runir::kr::dl::PredicateData<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::AtomicGoalTag<T>>, T>
 {
     using Base = runir::kr::dl::PredicateData<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::AtomicGoalTag<T>>, T>;
@@ -31,7 +31,7 @@ struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::AtomicGoalTag<T>>> :
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::IntersectionTag>> :
+struct data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::IntersectionTag>> :
     runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::IntersectionTag>,
                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>,
                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>
@@ -43,7 +43,7 @@ struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::IntersectionTag>> :
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::UnionTag>> :
+struct data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::UnionTag>> :
     runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::UnionTag>,
                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>,
                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>
@@ -55,7 +55,7 @@ struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::UnionTag>> :
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::ComplementTag>> :
+struct data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::ComplementTag>> :
     runir::kr::dl::UnaryData<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::ComplementTag>, runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>
 {
     using Base = runir::kr::dl::UnaryData<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::ComplementTag>,
@@ -64,7 +64,7 @@ struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::ComplementTag>> :
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::InverseTag>> :
+struct data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::InverseTag>> :
     runir::kr::dl::UnaryData<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::InverseTag>, runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>
 {
     using Base =
@@ -73,7 +73,7 @@ struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::InverseTag>> :
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::CompositionTag>> :
+struct data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::CompositionTag>> :
     runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::CompositionTag>,
                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>,
                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>
@@ -85,7 +85,7 @@ struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::CompositionTag>> :
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::TransitiveClosureTag>> :
+struct data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::TransitiveClosureTag>> :
     runir::kr::dl::UnaryData<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::TransitiveClosureTag>,
                              runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>
 {
@@ -95,7 +95,7 @@ struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::TransitiveClosureTag
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::ReflexiveTransitiveClosureTag>> :
+struct data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::ReflexiveTransitiveClosureTag>> :
     runir::kr::dl::UnaryData<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::ReflexiveTransitiveClosureTag>,
                              runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>
 {
@@ -105,7 +105,7 @@ struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::ReflexiveTransitiveC
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::RestrictionTag>> :
+struct data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::RestrictionTag>> :
     runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::RestrictionTag>,
                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>,
                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>
@@ -117,7 +117,7 @@ struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::RestrictionTag>> :
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::IdentityTag>> :
+struct data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::IdentityTag>> :
     runir::kr::dl::UnaryData<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::IdentityTag>, runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>
 {
     using Base = runir::kr::dl::UnaryData<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::IdentityTag>,
@@ -126,7 +126,7 @@ struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::IdentityTag>> :
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::RegisterTag>> :
+struct data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::RegisterTag>> :
     runir::kr::dl::RegisterData<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::RegisterTag>, runir::kr::dl::RegisterIdentifier<runir::kr::dl::RoleTag>>
 {
     using Base =
@@ -135,7 +135,7 @@ struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::RegisterTag>> :
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>> :
+struct data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>> :
     runir::kr::dl::ArgumentData<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>,
                                 runir::kr::dl::ArgumentIdentifier<runir::kr::dl::RoleTag>>
 {
@@ -144,6 +144,6 @@ struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::dl::ArgumentTag<runir::k
     using Base::Base;
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 #endif

@@ -1,4 +1,6 @@
 #include "kr/ps/structural_termination/detail.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "kr/ps/structural_termination/scc_refinement_forest.hpp"
 
 #include <array>
@@ -18,9 +20,9 @@ kr::ps::detail::RuleProfile explicit_effects(kr::ps::detail::RuleProfile profile
 }
 
 // Previous per-feature assignment enumeration, retained as an ordered oracle.
-std::vector<kr::ps::detail::PolicyEdge> reference_policy_edges(const kr::ps::detail::QualitativePolicy& policy)
+urd::Store<urd::sequence<kr::ps::detail::PolicyEdge>> reference_policy_edges(const kr::ps::detail::QualitativePolicy& policy)
 {
-    auto edges = std::vector<kr::ps::detail::PolicyEdge> {};
+    auto edges = urd::Store<urd::sequence<kr::ps::detail::PolicyEdge>> {};
     for (std::size_t rule_position = 0; rule_position < policy.rule_profiles.size(); ++rule_position)
     {
         const auto& profile = policy.rule_profiles[rule_position];
@@ -36,7 +38,7 @@ std::vector<kr::ps::detail::PolicyEdge> reference_policy_edges(const kr::ps::det
 
             auto target_booleans = profile.boolean_positive_effects | (profile.boolean_unchanged_effects & booleans);
             auto target_numericals = profile.numerical_increase_effects | (profile.numerical_unchanged_effects & numericals);
-            auto free_positions = std::vector<std::pair<bool, std::size_t>> {};
+            auto free_positions = urd::Store<urd::sequence<std::pair<bool, std::size_t>>> {};
             for (std::size_t position = 0; position < policy.num_booleans; ++position)
                 if (profile.boolean_unconstrained_effects & (std::uint64_t { 1 } << position))
                     free_positions.emplace_back(true, position);
@@ -80,9 +82,9 @@ bool monolithic_sieve_has_cycle(const kr::ps::detail::QualitativePolicy& policy)
 void expect_hybrid_matches_monolithic(const kr::ps::detail::QualitativePolicy& policy)
 { EXPECT_EQ(!kr::ps::detail::sieve_policy(policy, 4, true).components.empty(), monolithic_sieve_has_cycle(policy)); }
 
-std::vector<kr::ps::detail::RuleProfile> numerical_rule_universe()
+urd::Store<urd::sequence<kr::ps::detail::RuleProfile>> numerical_rule_universe()
 {
-    auto result = std::vector<kr::ps::detail::RuleProfile> {};
+    auto result = urd::Store<urd::sequence<kr::ps::detail::RuleProfile>> {};
     for (std::size_t source = 0; source < 2; ++source)
         for (std::size_t target = 0; target < 2; ++target)
             for (std::size_t condition = 0; condition < 3; ++condition)
@@ -104,9 +106,9 @@ std::vector<kr::ps::detail::RuleProfile> numerical_rule_universe()
     return result;
 }
 
-std::vector<kr::ps::detail::RuleProfile> boolean_rule_universe()
+urd::Store<urd::sequence<kr::ps::detail::RuleProfile>> boolean_rule_universe()
 {
-    auto result = std::vector<kr::ps::detail::RuleProfile> {};
+    auto result = urd::Store<urd::sequence<kr::ps::detail::RuleProfile>> {};
     for (std::size_t source = 0; source < 2; ++source)
         for (std::size_t target = 0; target < 2; ++target)
             for (std::size_t condition = 0; condition < 3; ++condition)
@@ -128,7 +130,7 @@ std::vector<kr::ps::detail::RuleProfile> boolean_rule_universe()
     return result;
 }
 
-void expect_universe_matches_monolithic(const std::vector<kr::ps::detail::RuleProfile>& profiles, std::size_t num_booleans, std::size_t num_numericals)
+void expect_universe_matches_monolithic(const urd::Store<urd::sequence<kr::ps::detail::RuleProfile>>& profiles, std::size_t num_booleans, std::size_t num_numericals)
 {
     expect_hybrid_matches_monolithic(kr::ps::detail::QualitativePolicy(2, num_booleans, num_numericals));
     for (std::size_t first = 0; first < profiles.size(); ++first)
@@ -308,11 +310,11 @@ TEST(RunirTests, CommonSieveStartsWithIncompleteRuleElimination)
 
     ASSERT_TRUE(monolithic_sieve_has_cycle(policy));
     ASSERT_EQ(result.components.size(), 1);
-    EXPECT_EQ(result.components.front().projected.rule_positions, std::vector<std::size_t>({ 1 }));
+    EXPECT_EQ(result.components.front().projected.rule_positions, urd::Store<urd::sequence<std::size_t>>({ 1 }));
 
     const auto without_preprocessing = kr::ps::detail::sieve_policy(policy, 16, false);
     ASSERT_EQ(without_preprocessing.components.size(), 1);
-    EXPECT_EQ(without_preprocessing.components.front().projected.rule_positions, std::vector<std::size_t>({ 0, 1 }));
+    EXPECT_EQ(without_preprocessing.components.front().projected.rule_positions, urd::Store<urd::sequence<std::size_t>>({ 0, 1 }));
     const auto& edges = without_preprocessing.components.front().edges;
     ASSERT_EQ(edges.size(), 2);
     for (std::size_t position = 0; position < edges.size(); ++position)
@@ -357,10 +359,10 @@ TEST(RunirTests, CommonSieveSplitsResidualMemoryGraph)
 
     ASSERT_TRUE(monolithic_sieve_has_cycle(policy));
     ASSERT_EQ(result.components.size(), 2);
-    EXPECT_EQ(result.components[0].projected.memory_positions, std::vector<std::size_t>({ 0 }));
-    EXPECT_EQ(result.components[0].projected.rule_positions, std::vector<std::size_t>({ 2 }));
-    EXPECT_EQ(result.components[1].projected.memory_positions, std::vector<std::size_t>({ 1 }));
-    EXPECT_EQ(result.components[1].projected.rule_positions, std::vector<std::size_t>({ 3 }));
+    EXPECT_EQ(result.components[0].projected.memory_positions, urd::Store<urd::sequence<std::size_t>>({ 0 }));
+    EXPECT_EQ(result.components[0].projected.rule_positions, urd::Store<urd::sequence<std::size_t>>({ 2 }));
+    EXPECT_EQ(result.components[1].projected.memory_positions, urd::Store<urd::sequence<std::size_t>>({ 1 }));
+    EXPECT_EQ(result.components[1].projected.rule_positions, urd::Store<urd::sequence<std::size_t>>({ 3 }));
 }
 
 TEST(RunirTests, CommonSieveProjectsTestedAndChangedFeatures)
@@ -379,8 +381,8 @@ TEST(RunirTests, CommonSieveProjectsTestedAndChangedFeatures)
     const auto projected = kr::ps::detail::project_policy_components(policy, rule_positions);
 
     ASSERT_EQ(projected.size(), 1);
-    EXPECT_EQ(projected.front().boolean_positions, std::vector<std::size_t>({ 0, 2 }));
-    EXPECT_EQ(projected.front().numerical_positions, std::vector<std::size_t>({ 0, 2 }));
+    EXPECT_EQ(projected.front().boolean_positions, urd::Store<urd::sequence<std::size_t>>({ 0, 2 }));
+    EXPECT_EQ(projected.front().numerical_positions, urd::Store<urd::sequence<std::size_t>>({ 0, 2 }));
 }
 
 TEST(RunirTests, UnprojectVertexRestoresOriginalFeaturePositions)
@@ -434,8 +436,8 @@ TEST(RunirTests, CommonSieveAppliesFeatureLimitPerResidualComponent)
     EXPECT_EQ(result.components[1].projected.policy.num_numericals, 8);
     ASSERT_TRUE(result.scc_feature_positions);
     ASSERT_EQ(result.scc_feature_positions.value().size(), 2);
-    EXPECT_EQ(result.scc_feature_positions.value().front().numerical_positions, std::vector<std::size_t>({ 0, 1, 2, 3, 4, 5, 6, 7 }));
-    EXPECT_EQ(result.scc_feature_positions.value().back().numerical_positions, std::vector<std::size_t>({ 8, 9, 10, 11, 12, 13, 14, 15 }));
+    EXPECT_EQ(result.scc_feature_positions.value().front().numerical_positions, urd::Store<urd::sequence<std::size_t>>({ 0, 1, 2, 3, 4, 5, 6, 7 }));
+    EXPECT_EQ(result.scc_feature_positions.value().back().numerical_positions, urd::Store<urd::sequence<std::size_t>>({ 8, 9, 10, 11, 12, 13, 14, 15 }));
 }
 
 TEST(RunirTests, CommonSieveRejectsOversizedResidualComponent)
@@ -489,8 +491,8 @@ TEST(RunirTests, CommonIncompleteSieveCanUseGlobalOpponentScope)
 
     EXPECT_FALSE(result.is_terminating());
     ASSERT_EQ(result.surviving_rules.size(), 2);
-    EXPECT_EQ(result.surviving_rules[0].blocking_reasons[0].opposing_rule_positions, std::vector<std::size_t>({ 1 }));
-    EXPECT_EQ(result.surviving_rules[1].blocking_reasons[0].opposing_rule_positions, std::vector<std::size_t>({ 0 }));
+    EXPECT_EQ(result.surviving_rules[0].blocking_reasons[0].opposing_rule_positions, urd::Store<urd::sequence<std::size_t>>({ 1 }));
+    EXPECT_EQ(result.surviving_rules[1].blocking_reasons[0].opposing_rule_positions, urd::Store<urd::sequence<std::size_t>>({ 0 }));
 }
 
 TEST(RunirTests, GlobalMemoryScopeRefinementPreservesMarks)
@@ -508,38 +510,38 @@ TEST(RunirTests, GlobalMemoryScopeRefinementPreservesMarks)
         const auto& forest = scopes.refinement_forest();
         ASSERT_EQ(forest.roots().size(), 1);
         ASSERT_EQ(forest.nodes().size(), 1);
-        EXPECT_EQ(forest.node(forest.roots().front()).memory_positions, std::vector<std::size_t>({ 0, 1 }));
+        EXPECT_EQ(forest.node(forest.roots().front()).memory_positions, urd::Store<urd::sequence<std::size_t>>({ 0, 1 }));
         const auto marks = scopes.marks_for(0);
         EXPECT_EQ(marks.booleans, 1);
         EXPECT_EQ(marks.numericals, 1);
-        EXPECT_EQ(marks.boolean_witnessing_rule_positions[0], std::vector<std::size_t>({ 0 }));
-        EXPECT_EQ(marks.numerical_witnessing_rule_positions[0], std::vector<std::size_t>({ 0 }));
+        EXPECT_EQ(marks.boolean_witnessing_rule_positions[0], urd::Store<urd::sequence<std::size_t>>({ 0 }));
+        EXPECT_EQ(marks.numerical_witnessing_rule_positions[0], urd::Store<urd::sequence<std::size_t>>({ 0 }));
     }
 }
 
 TEST(RunirTests, SccRefinementForestInheritsMarksAcrossSplits)
 {
-    const auto component_of = std::vector<std::size_t> { 0, 0, 0 };
+    const auto component_of = urd::Store<urd::sequence<std::size_t>> { 0, 0, 0 };
     auto forest = kr::ps::detail::SccRefinementForest(component_of, 1, 1, 1);
     const auto root = forest.roots().front();
     forest.mark_numerical(root, 0, 0);
     forest.mark_numerical(root, 0, 2);
     forest.mark_numerical(root, 0, 0);
 
-    const auto partitions = std::vector<std::vector<std::size_t>> { { 0 }, { 1, 2 } };
+    const auto partitions = urd::Store<urd::sequence<urd::Store<urd::sequence<std::size_t>>>> { { 0 }, { 1, 2 } };
     const auto children = forest.split(root, partitions);
     forest.mark_boolean(children[1], 0, 1);
 
     const auto first_marks = forest.effective_marks(children[0]);
     EXPECT_TRUE((first_marks.numericals & 1) != 0);
     EXPECT_FALSE((first_marks.booleans & 1) != 0);
-    EXPECT_EQ(first_marks.numerical_witnessing_rule_positions[0], std::vector<std::size_t>({ 0, 2 }));
+    EXPECT_EQ(first_marks.numerical_witnessing_rule_positions[0], urd::Store<urd::sequence<std::size_t>>({ 0, 2 }));
 
     const auto second_marks = forest.effective_marks(children[1]);
     EXPECT_TRUE((second_marks.numericals & 1) != 0);
     EXPECT_TRUE((second_marks.booleans & 1) != 0);
-    EXPECT_EQ(second_marks.numerical_witnessing_rule_positions[0], std::vector<std::size_t>({ 0, 2 }));
-    EXPECT_EQ(second_marks.boolean_witnessing_rule_positions[0], std::vector<std::size_t>({ 1 }));
+    EXPECT_EQ(second_marks.numerical_witnessing_rule_positions[0], urd::Store<urd::sequence<std::size_t>>({ 0, 2 }));
+    EXPECT_EQ(second_marks.boolean_witnessing_rule_positions[0], urd::Store<urd::sequence<std::size_t>>({ 1 }));
 }
 
 TEST(RunirTests, CommonIncompleteSieveOnlyEliminatesAcyclicMemoryRuleWithSccScope)
@@ -587,7 +589,7 @@ TEST(RunirTests, CommonIncompleteSieveDoesNotLeakMarksAcrossMemoryComponents)
     EXPECT_EQ(result.surviving_rules[0].rule_position, 1);
     EXPECT_EQ(result.surviving_rules[1].rule_position, 2);
     ASSERT_EQ(result.surviving_rules[0].blocking_reasons.size(), 1);
-    EXPECT_EQ(result.surviving_rules[0].blocking_reasons[0].opposing_rule_positions, std::vector<std::size_t>({ 2 }));
+    EXPECT_EQ(result.surviving_rules[0].blocking_reasons[0].opposing_rule_positions, urd::Store<urd::sequence<std::size_t>>({ 2 }));
 }
 
 TEST(RunirTests, CommonIncompleteSieveInheritsMarksWhenMemoryComponentSplits)
@@ -775,7 +777,7 @@ TEST(RunirTests, CommonIncompleteSieveTreatsUnconstrainedBooleanEffectAsOpponent
     ASSERT_EQ(result.surviving_rules.size(), 2);
     ASSERT_EQ(result.surviving_rules.front().blocking_reasons.size(), 1);
     EXPECT_EQ(result.surviving_rules.front().blocking_reasons.front().feature_kind, kr::ps::detail::IncompletePolicyResult::FeatureKind::BOOLEAN);
-    EXPECT_EQ(result.surviving_rules.front().blocking_reasons.front().opposing_rule_positions, std::vector<std::size_t>({ 1 }));
+    EXPECT_EQ(result.surviving_rules.front().blocking_reasons.front().opposing_rule_positions, urd::Store<urd::sequence<std::size_t>>({ 1 }));
 }
 
 TEST(RunirTests, CommonIncompleteSieveHasNoFeatureLimit)
@@ -826,17 +828,17 @@ TEST(RunirTests, CommonIncompleteSievePreservesOriginalPositionsAndReasonOrder)
     ASSERT_EQ(result.surviving_rules[0].blocking_reasons.size(), 2);
     EXPECT_EQ(result.surviving_rules[0].blocking_reasons[0].feature_kind, FeatureKind::NUMERICAL);
     EXPECT_EQ(result.surviving_rules[0].blocking_reasons[0].feature_position, 0);
-    EXPECT_EQ(result.surviving_rules[0].blocking_reasons[0].opposing_rule_positions, std::vector<std::size_t>({ 2 }));
+    EXPECT_EQ(result.surviving_rules[0].blocking_reasons[0].opposing_rule_positions, urd::Store<urd::sequence<std::size_t>>({ 2 }));
     EXPECT_EQ(result.surviving_rules[0].blocking_reasons[1].feature_kind, FeatureKind::BOOLEAN);
     EXPECT_EQ(result.surviving_rules[0].blocking_reasons[1].feature_position, 0);
-    EXPECT_EQ(result.surviving_rules[0].blocking_reasons[1].opposing_rule_positions, std::vector<std::size_t>({ 2 }));
+    EXPECT_EQ(result.surviving_rules[0].blocking_reasons[1].opposing_rule_positions, urd::Store<urd::sequence<std::size_t>>({ 2 }));
 
     ASSERT_EQ(result.surviving_rules[1].blocking_reasons.size(), 2);
     EXPECT_EQ(result.surviving_rules[1].blocking_reasons[0].feature_kind, FeatureKind::NUMERICAL);
     EXPECT_EQ(result.surviving_rules[1].blocking_reasons[0].feature_position, 0);
-    EXPECT_EQ(result.surviving_rules[1].blocking_reasons[0].opposing_rule_positions, std::vector<std::size_t>({ 1 }));
+    EXPECT_EQ(result.surviving_rules[1].blocking_reasons[0].opposing_rule_positions, urd::Store<urd::sequence<std::size_t>>({ 1 }));
     EXPECT_EQ(result.surviving_rules[1].blocking_reasons[1].feature_kind, FeatureKind::BOOLEAN);
-    EXPECT_EQ(result.surviving_rules[1].blocking_reasons[1].opposing_rule_positions, std::vector<std::size_t>({ 1 }));
+    EXPECT_EQ(result.surviving_rules[1].blocking_reasons[1].opposing_rule_positions, urd::Store<urd::sequence<std::size_t>>({ 1 }));
 }
 
 TEST(RunirTests, CommonIncompleteSieveDoesNotMarkFeatureAfterR3Elimination)
@@ -883,11 +885,11 @@ TEST(RunirTests, CommonIncompleteSieveDoesNotMarkFeatureAfterR3Elimination)
     EXPECT_EQ(result.surviving_rules[0].rule_position, 2);
     EXPECT_EQ(result.surviving_rules[1].rule_position, 3);
     ASSERT_EQ(result.surviving_rules[0].blocking_reasons.size(), 2);
-    EXPECT_EQ(result.surviving_rules[0].blocking_reasons[0].opposing_rule_positions, std::vector<std::size_t>({ 3 }));
-    EXPECT_EQ(result.surviving_rules[0].blocking_reasons[1].opposing_rule_positions, std::vector<std::size_t>({ 3 }));
+    EXPECT_EQ(result.surviving_rules[0].blocking_reasons[0].opposing_rule_positions, urd::Store<urd::sequence<std::size_t>>({ 3 }));
+    EXPECT_EQ(result.surviving_rules[0].blocking_reasons[1].opposing_rule_positions, urd::Store<urd::sequence<std::size_t>>({ 3 }));
     ASSERT_EQ(result.surviving_rules[1].blocking_reasons.size(), 2);
-    EXPECT_EQ(result.surviving_rules[1].blocking_reasons[0].opposing_rule_positions, std::vector<std::size_t>({ 2 }));
-    EXPECT_EQ(result.surviving_rules[1].blocking_reasons[1].opposing_rule_positions, std::vector<std::size_t>({ 2 }));
+    EXPECT_EQ(result.surviving_rules[1].blocking_reasons[0].opposing_rule_positions, urd::Store<urd::sequence<std::size_t>>({ 2 }));
+    EXPECT_EQ(result.surviving_rules[1].blocking_reasons[1].opposing_rule_positions, urd::Store<urd::sequence<std::size_t>>({ 2 }));
 
     EXPECT_EQ(!kr::ps::detail::sieve_policy(policy, 16, true).components.empty(), monolithic_sieve_has_cycle(policy));
 }
@@ -905,7 +907,7 @@ TEST(RunirTests, CommonSieveReportsProjectedSccBeforeCompleteFiltering)
     ASSERT_TRUE(result.scc_feature_positions);
     ASSERT_EQ(result.scc_feature_positions.value().size(), 1);
     EXPECT_TRUE(result.scc_feature_positions.value().front().boolean_positions.empty());
-    EXPECT_EQ(result.scc_feature_positions.value().front().numerical_positions, std::vector<std::size_t>({ 0 }));
+    EXPECT_EQ(result.scc_feature_positions.value().front().numerical_positions, urd::Store<urd::sequence<std::size_t>>({ 0 }));
 }
 
 TEST(RunirTests, CommonSieveReportsEngagedEmptySccsWhenCompleteStageRuns)

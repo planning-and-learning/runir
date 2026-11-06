@@ -44,13 +44,9 @@ struct UnsFamilyTag
 template<typename T>
 concept FamilyTag = std::same_as<T, BaseFamilyTag> || std::same_as<T, ExtFamilyTag> || std::same_as<T, UnsFamilyTag> || std::same_as<T, IcpFamilyTag>;
 
-/// Index variant of a `ygg::Data<T>` record.
+/// Index variant of a `urd::data<T>` record.
 template<typename Data>
 using DataVariant = typename Data::Variant;
-
-/// View variant of a `ygg::Data<T>` record over context `C`.
-template<typename Data, typename C>
-using DataViewVariant = typename Data::template ViewVariant<C>;
 
 }  // namespace runir::kr
 

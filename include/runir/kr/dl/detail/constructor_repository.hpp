@@ -7,9 +7,9 @@
 #include <memory>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <utility>
-#include <yggdrasil/core/config.hpp>
-#include <yggdrasil/core/type_list.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/config.hpp>
+#include <boost/mp11.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>
 
 namespace runir::kr::dl::detail
@@ -42,6 +42,8 @@ public:
     ~BasicConstructorRepository() = default;
 
     [[nodiscard]] const auto& get_index() const noexcept { return m_index; }
+    /// The repository's number, as urd::view asks of a context.
+    [[nodiscard]] std::size_t layer() const noexcept { return m_index; }
     [[nodiscard]] const tyr::formalism::planning::Repository& get_planning_repository() const noexcept
     {
         assert(m_planning_repository);
@@ -52,16 +54,17 @@ public:
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<BasicConstructorRepository, T>
-    const ygg::Data<T>& operator[](ygg::Index<T> index) const noexcept
+    const urd::data<T>& operator[](urd::index<T> index) const noexcept
     {
         assert(this->template is_local<T>(index));
         return this->template local<T>(index);
     }
 
+    /// An index as its view here (urd's resolves contract).
     template<typename T>
         requires ygg::formalism::SupportsSymbol<BasicConstructorRepository, T>
-    [[nodiscard]] const BasicConstructorRepository& get_canonical_context(ygg::Index<T>) const noexcept
-    { return *this; }
+    [[nodiscard]] urd::view<T, BasicConstructorRepository> view(urd::index<T> index) const noexcept
+    { return { index, *this }; }
 };
 
 template<typename RepositoryTypes>
@@ -80,7 +83,7 @@ public:
 
 template<typename RepositoryTypes>
 inline const BasicConstructorRepository<RepositoryTypes>&
-get_repository(const BasicConstructorRepository<RepositoryTypes>& repository YGG_LIFETIMEBOUND) noexcept
+get_repository(const BasicConstructorRepository<RepositoryTypes>& repository URD_LIFETIMEBOUND) noexcept
 { return repository; }
 
 template<typename RepositoryTypes>

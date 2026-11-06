@@ -24,12 +24,12 @@
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/state_repository.hpp>
 #include <tyr/planning/lifted/task.hpp>
+#include <urd/repr/core/dependent_false.hpp>
 #include <utility>
-#include <yggdrasil/containers/dynamic_bitset.hpp>
-#include <yggdrasil/containers/unique_object_pool.hpp>
+#include <urd/repr/slots/slots.hpp>
+#include <urd/store.hpp>
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/core/dependent_false.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/database/semantics/distance.hpp>
 
 namespace runir::kr::dl::semantics::detail
@@ -51,13 +51,13 @@ auto make_role_builder(Context& context)
 { return context.get_builder().template get_builder<Denotation<RoleTag>>(num_objects<Kind>(context)); }
 
 template<tyr::formalism::FactKind T>
-auto object_index(tyr::formalism::planning::AtomView<::tyr::GroundTag, T> atom, size_t position) -> ygg::Index<tyr::formalism::Object>
-{ return atom.get_row().get_objects()[position].get_index(); }
+auto object_index(tyr::formalism::planning::AtomView<::tyr::GroundTag, T> atom, size_t position) -> urd::index<tyr::formalism::Object>
+{ return atom.get_row().get_objects()[position].index(); }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-void evaluate_atomic_state_concept(ygg::View<ygg::Index<Concept<AtomicStateTag<T>>>, C> constructor,
+void evaluate_atomic_state_concept(urd::view<Concept<AtomicStateTag<T>>, C> constructor,
                                    Context& context,
-                                   ygg::Builder<Denotation<ConceptTag>>& result)
+                                   urd::builder<Denotation<ConceptTag>>& result)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
     auto bitset = result.get();
@@ -66,8 +66,8 @@ void evaluate_atomic_state_concept(ygg::View<ygg::Index<Concept<AtomicStateTag<T
     for (const auto atom : context.get_state().get_atoms_view(predicate))
     {
         const auto object = detail::object_index(atom, 0);
-        assert(ygg::uint_t(object) < num_objects);
-        bitset.set(ygg::uint_t(object));
+        assert(ygg::uint_t(object.value) < num_objects);
+        bitset.set(ygg::uint_t(object.value));
     }
 
     if (!constructor.get_polarity())
@@ -75,9 +75,9 @@ void evaluate_atomic_state_concept(ygg::View<ygg::Index<Concept<AtomicStateTag<T
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-void evaluate_atomic_goal_concept(ygg::View<ygg::Index<Concept<AtomicGoalTag<T>>>, C> constructor,
+void evaluate_atomic_goal_concept(urd::view<Concept<AtomicGoalTag<T>>, C> constructor,
                                   Context& context,
-                                  ygg::Builder<Denotation<ConceptTag>>& result)
+                                  urd::builder<Denotation<ConceptTag>>& result)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
     auto bitset = result.get();
@@ -86,13 +86,13 @@ void evaluate_atomic_goal_concept(ygg::View<ygg::Index<Concept<AtomicGoalTag<T>>
     for (const auto atom : context.get_state().get_task().get_task().get_goal().template get_atoms_view<T>(constructor.get_polarity(), predicate))
     {
         const auto object = detail::object_index(atom, 0);
-        assert(ygg::uint_t(object) < num_objects);
-        bitset.set(ygg::uint_t(object));
+        assert(ygg::uint_t(object.value) < num_objects);
+        bitset.set(ygg::uint_t(object.value));
     }
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-void evaluate_atomic_state_role(ygg::View<ygg::Index<Role<AtomicStateTag<T>>>, C> constructor, Context& context, ygg::Builder<Denotation<RoleTag>>& result)
+void evaluate_atomic_state_role(urd::view<Role<AtomicStateTag<T>>, C> constructor, Context& context, urd::builder<Denotation<RoleTag>>& result)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
 
@@ -101,9 +101,9 @@ void evaluate_atomic_state_role(ygg::View<ygg::Index<Role<AtomicStateTag<T>>>, C
     {
         const auto lhs = detail::object_index(atom, 0);
         const auto rhs = detail::object_index(atom, 1);
-        assert(ygg::uint_t(lhs) < num_objects);
-        assert(ygg::uint_t(rhs) < num_objects);
-        result.get(lhs).set(ygg::uint_t(rhs));
+        assert(ygg::uint_t(lhs.value) < num_objects);
+        assert(ygg::uint_t(rhs.value) < num_objects);
+        result.get(lhs).set(ygg::uint_t(rhs.value));
     }
 
     if (!constructor.get_polarity())
@@ -112,7 +112,7 @@ void evaluate_atomic_state_role(ygg::View<ygg::Index<Role<AtomicStateTag<T>>>, C
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-void evaluate_atomic_goal_role(ygg::View<ygg::Index<Role<AtomicGoalTag<T>>>, C> constructor, Context& context, ygg::Builder<Denotation<RoleTag>>& result)
+void evaluate_atomic_goal_role(urd::view<Role<AtomicGoalTag<T>>, C> constructor, Context& context, urd::builder<Denotation<RoleTag>>& result)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
 
@@ -121,14 +121,14 @@ void evaluate_atomic_goal_role(ygg::View<ygg::Index<Role<AtomicGoalTag<T>>>, C> 
     {
         const auto lhs = detail::object_index(atom, 0);
         const auto rhs = detail::object_index(atom, 1);
-        assert(ygg::uint_t(lhs) < num_objects);
-        assert(ygg::uint_t(rhs) < num_objects);
-        result.get(lhs).set(ygg::uint_t(rhs));
+        assert(ygg::uint_t(lhs.value) < num_objects);
+        assert(ygg::uint_t(rhs.value) < num_objects);
+        result.get(lhs).set(ygg::uint_t(rhs.value));
     }
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-bool evaluate_atomic_state_boolean(ygg::View<ygg::Index<Boolean<AtomicStateTag<T>>>, C> constructor, Context& context)
+bool evaluate_atomic_state_boolean(urd::view<Boolean<AtomicStateTag<T>>, C> constructor, Context& context)
 {
     auto atoms = context.get_state().get_atoms_view(constructor.get_predicate());
     const auto value = atoms.begin() != atoms.end();
@@ -136,17 +136,17 @@ bool evaluate_atomic_state_boolean(ygg::View<ygg::Index<Boolean<AtomicStateTag<T
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-bool evaluate_atomic_goal_boolean(ygg::View<ygg::Index<Boolean<AtomicGoalTag<T>>>, C> constructor, Context& context)
+bool evaluate_atomic_goal_boolean(urd::view<Boolean<AtomicGoalTag<T>>, C> constructor, Context& context)
 {
     auto atoms = context.get_state().get_task().get_task().get_goal().template get_atoms_view<T>(constructor.get_polarity(), constructor.get_predicate());
     return atoms.begin() != atoms.end();
 }
 
-inline bool nonempty(DenotationView<ConceptTag> value) { return value.get().any(); }
+inline bool nonempty(DenotationView<ConceptTag> value) { return value.value().any(); }
 inline bool nonempty(DenotationView<RoleTag> value) { return value.any(); }
 inline bool nonempty(QueryDenotationView value) { return !value.empty(); }
 
-inline ygg::uint_t count(DenotationView<ConceptTag> value) { return ygg::to_uint_t(value.get().count()); }
+inline ygg::uint_t count(DenotationView<ConceptTag> value) { return ygg::to_uint_t(value.value().count()); }
 inline ygg::uint_t count(DenotationView<RoleTag> value) { return ygg::to_uint_t(value.count()); }
 inline ygg::uint_t count(QueryDenotationView value) { return ygg::to_uint_t(value.size()); }
 
@@ -224,28 +224,28 @@ constexpr ygg::uint_t apply_numerical_binary(ygg::uint_t lhs, ygg::uint_t rhs) n
 
 /// Inserts a concept's objects or a role's pairs as rows of a 1- or 2-column relation.
 template<ConceptOrRoleTag Category, DenotationViewConcept<Category> Denotation>
-void insert_denotation_rows(const Denotation& denotation, ygg::Builder<ygg::database::Relation>& result)
+void insert_denotation_rows(const Denotation& denotation, urd::builder<ygg::database::Relation>& result)
 {
     for (const auto element : denotation.indices())
     {
         if constexpr (std::same_as<Category, ConceptTag>)
-            result.insert(std::tuple { element.get_value() });
+            result.insert(std::tuple { element.value });
         else
         {
             const auto [source, target] = element;
-            result.insert(std::tuple { source.get_value(), target.get_value() });
+            result.insert(std::tuple { source.value, target.value });
         }
     }
 }
 
 /// A distance argument as a relation over the plan's columns for it.
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
-auto evaluate_relation(ygg::View<ygg::Index<Query<>>, C> argument, std::span<const ygg::database::ColumnLayout>, Context& context) -> QueryDenotationView
+auto evaluate_relation(urd::view<Query<>, C> argument, std::span<const ygg::database::ColumnLayout>, Context& context) -> QueryDenotationView
 { return evaluate<Kind>(argument, context); }
 
 /// Concepts and roles are lifted, so all argument forms share one distance evaluation.
 template<tyr::TaskKind Kind, ConceptOrRoleTag Category, StateEvaluationContextConcept<Kind> Context, typename C>
-auto evaluate_relation(ygg::View<ygg::Index<Constructor<Category>>, C> argument, std::span<const ygg::database::ColumnLayout> columns, Context& context)
+auto evaluate_relation(urd::view<Constructor<Category>, C> argument, std::span<const ygg::database::ColumnLayout> columns, Context& context)
     -> QueryDenotationView
 {
     const auto denotation = evaluate<Kind>(argument, context);

@@ -11,11 +11,11 @@ namespace ygg::serialization
 {
 
 template<typename Archive, runir::kr::dl::CategoryTag Category, typename C>
-void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::semantics::Denotation<Category>>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::dl::semantics::Denotation<Category>, C>>)
 {
     if constexpr (runir::kr::dl::BooleanOrNumericalTag<Category>)
     {
-        ar.field("value", [](const auto& value) -> decltype(auto) { return (value.get()); });
+        ar.field("value", [](const auto& value) -> decltype(auto) { return (value.value()); });
     }
     else
     {

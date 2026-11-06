@@ -1,10 +1,10 @@
 #include "bindings.hpp"
+#include <yggdrasil/python/type_casters.hpp>
 
 #include <runir/kr/dl/grammar/constructor_repository.hpp>
 #include <runir/kr/dl/grammar/formatter.hpp>
 #include <runir/kr/dl/grammar/non_terminal_view.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters/string.hpp>
 
 namespace runir::kr::dl
 {
@@ -14,24 +14,24 @@ namespace
 template<CategoryTag Category>
 void bind_non_terminal_data(nb::module_& m, const char* name)
 {
-    using Data = ygg::Data<runir::kr::dl::grammar::NonTerminal<Category>>;
+    using Data = urd::data<runir::kr::dl::grammar::NonTerminal<Category>>;
     auto cls = nb::class_<Data>(m, name)
                    .def(nb::init<>())
                    .def(nb::init<::cista::offset::string>(), nb::arg("name"))
                    .def_rw("index", &Data::index)
                    .def_rw("name", &Data::name);
-    ygg::add_comparison(cls);
+    urd::python::add_comparison(cls);
 }
 
 template<CategoryTag Category>
 void bind_non_terminal_view(nb::module_& m, const char* name)
 {
     using Type = runir::kr::dl::grammar::NonTerminal<Category>;
-    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::grammar::ConstructorRepository>;
-    auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index).def("get_name", &View::get_name);
+    using View = urd::view<Type, runir::kr::dl::grammar::ConstructorRepository>;
+    auto cls = nb::class_<View>(m, name).def("get_index", &View::index).def("get_name", &View::get_name);
     ygg::add_print(cls);
-    ygg::add_comparison(cls);
-    ygg::add_hash(cls);
+    urd::python::add_comparison(cls);
+    urd::python::add_hash(cls);
 }
 
 }  // namespace
@@ -43,10 +43,10 @@ void bind_grammar_non_terminal(nb::module_& m)
     using Boolean = runir::kr::dl::grammar::NonTerminal<BooleanTag>;
     using Numerical = runir::kr::dl::grammar::NonTerminal<NumericalTag>;
 
-    ygg::bind_index<ygg::Index<Concept>>(m, "ConceptNonTerminalIndex");
-    ygg::bind_index<ygg::Index<Role>>(m, "RoleNonTerminalIndex");
-    ygg::bind_index<ygg::Index<Boolean>>(m, "BooleanNonTerminalIndex");
-    ygg::bind_index<ygg::Index<Numerical>>(m, "NumericalNonTerminalIndex");
+    urd::python::bind_index<urd::index<Concept>>(m, "ConceptNonTerminalIndex");
+    urd::python::bind_index<urd::index<Role>>(m, "RoleNonTerminalIndex");
+    urd::python::bind_index<urd::index<Boolean>>(m, "BooleanNonTerminalIndex");
+    urd::python::bind_index<urd::index<Numerical>>(m, "NumericalNonTerminalIndex");
 
     bind_non_terminal_data<ConceptTag>(m, "ConceptNonTerminalData");
     bind_non_terminal_data<RoleTag>(m, "RoleNonTerminalData");

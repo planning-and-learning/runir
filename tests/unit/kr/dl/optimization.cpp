@@ -1,4 +1,6 @@
 #include "planning_fixtures.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 #include <filesystem>
 #include <fmt/format.h>
@@ -48,21 +50,21 @@ void check_optimized_queries()
     using Context = kr::dl::semantics::StateEvaluationContext<Kind>;
     auto builder = kr::dl::semantics::Builder();
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
-    auto empty_arguments = ygg::Data<kr::dl::semantics::CallArguments>();
-    auto register_data = ygg::Data<kr::dl::semantics::RegisterValues>();
+    auto empty_arguments = urd::data<kr::dl::semantics::CallArguments>();
+    auto register_data = urd::data<kr::dl::semantics::RegisterValues>();
     register_data.concept_values.resize(1);
     register_data.role_values.resize(1);
     const auto arguments = kr::dl::semantics::insert(denotations, empty_arguments).first;
     const auto registers = kr::dl::semantics::insert(denotations, register_data).first;
     // One storage per state, so dynamic results are never shared across states.
-    auto storages = std::vector<std::unique_ptr<kr::dl::semantics::EvaluationStorage>>();
-    auto contexts = std::vector<std::unique_ptr<Context>>();
+    auto storages = urd::Store<urd::sequence<std::unique_ptr<kr::dl::semantics::EvaluationStorage>>>();
+    auto contexts = urd::Store<urd::sequence<std::unique_ptr<Context>>>();
     for (const auto& state : states)
     {
         storages.push_back(std::make_unique<kr::dl::semantics::EvaluationStorage>(denotations));
         contexts.push_back(std::make_unique<Context>(state, builder, *storages.back(), arguments, registers));
     }
-    auto context_pointers = std::vector<Context*>();
+    auto context_pointers = urd::Store<urd::sequence<Context*>>();
     for (const auto& context : contexts)
         context_pointers.push_back(context.get());
 
@@ -80,7 +82,7 @@ void check_optimized_queries()
             ++result;
         return result;
     };
-    const auto expressions = std::vector<std::string> {
+    const auto expressions = urd::Store<urd::sequence<std::string>> {
         triangle,
         R"((n_count (q_project (x) (q_join (q_atomic_state "assignment" (x y z w)) (q_atomic_state "required" (x y z))))))",
         "(n_count (q_join " + triple + R"( (q_role (x y) (r_atomic_state "edge")))))",
@@ -102,7 +104,7 @@ void check_optimized_queries()
         EXPECT_NE(warnings.get()[0].message.find(never + " was empty in all"), std::string::npos) << warnings.get()[0].message;
         const auto optimized = kr::dl::optimize(original, *repository, statistics);
         for (auto* context : context_pointers)
-            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(optimized, *context).get(), kr::dl::semantics::evaluate<Kind>(original, *context).get());
+            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(optimized, *context).value(), kr::dl::semantics::evaluate<Kind>(original, *context).value());
     }
 
     for (const auto& text : expressions)
@@ -137,7 +139,7 @@ void check_optimized_queries()
             const auto formatted = fmt::format("{}", optimized);
             EXPECT_EQ(kr::ps::ext::dl::parse_numerical(formatted, domain, *repository), optimized) << formatted;
             for (auto* context : context_pointers)
-                EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(optimized, *context).get(), kr::dl::semantics::evaluate<Kind>(original, *context).get())
+                EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(optimized, *context).value(), kr::dl::semantics::evaluate<Kind>(original, *context).value())
                     << text << " => " << formatted;
             if (text == triangle)
             {

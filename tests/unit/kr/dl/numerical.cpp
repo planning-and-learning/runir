@@ -2,7 +2,6 @@
 #include <gtest/gtest.h>
 #include <runir/kr/dl/repository.hpp>
 #include <tyr/formalism/planning/repository.hpp>
-#include <yggdrasil/core/concepts.hpp>
 
 namespace runir::tests
 {
@@ -12,16 +11,15 @@ namespace
 
 template<typename T, typename Repository>
 concept IndexedDataView =
-    std::constructible_from<ygg::Index<T>, ygg::uint_t> && ygg::Identifiable<ygg::Index<T>> && ygg::Identifiable<ygg::Data<T>>
-    && ygg::Identifiable<ygg::View<ygg::Index<T>, Repository>> && std::totally_ordered<ygg::Index<T>> && std::totally_ordered<ygg::Data<T>>
-    && std::totally_ordered<ygg::View<ygg::Index<T>, Repository>> && requires(ygg::Data<T>& data, const ygg::View<ygg::Index<T>, Repository>& view) {
+    std::constructible_from<urd::index<T>, ygg::uint_t> && urd::Identifiable<urd::index<T>> && urd::Identifiable<urd::data<T>>
+    && urd::Identifiable<urd::view<T, Repository>> && std::totally_ordered<urd::index<T>> && std::totally_ordered<urd::data<T>>
+    && std::totally_ordered<urd::view<T, Repository>> && requires(urd::data<T>& data, const urd::view<T, Repository>& view) {
            data.index;
-           data.clear();
-           view.get_index();
+           view.index();
        };
 
 template<typename... Ts>
-consteval bool indexed_data_views(ygg::TypeList<Ts...>)
+consteval bool indexed_data_views(boost::mp11::mp_list<Ts...>)
 { return (IndexedDataView<Ts, kr::dl::ConstructorRepository> && ...); }
 
 static_assert(indexed_data_views<>(kr::dl::NumericalTypes {}));
@@ -30,8 +28,8 @@ template<typename Tag>
 consteval bool numerical_data_view()
 {
     using Entity = kr::dl::Numerical<Tag>;
-    using Data = ygg::Data<Entity>;
-    using View = ygg::View<ygg::Index<Entity>, kr::dl::ConstructorRepository>;
+    using Data = urd::data<Entity>;
+    using View = urd::view<Entity, kr::dl::ConstructorRepository>;
 
     static_assert(std::same_as<View, kr::dl::NumericalView<Tag>>);
     if constexpr (false)
@@ -65,7 +63,7 @@ consteval bool numerical_data_view()
             data.identifier;
             view.get_value();
         };
-    else if constexpr (ygg::InTypeList<Tag, kr::dl::NumericalBinaryConstructorTags>)
+    else if constexpr (boost::mp11::mp_contains<kr::dl::NumericalBinaryConstructorTags, Tag>::value)
         return requires(Data& data, const View& view) {
             data.lhs;
             data.rhs;
@@ -77,7 +75,7 @@ consteval bool numerical_data_view()
 }
 
 template<typename... Tags>
-consteval bool numerical_data_views(ygg::TypeList<Tags...>)
+consteval bool numerical_data_views(boost::mp11::mp_list<Tags...>)
 { return (numerical_data_view<Tags>() && ...); }
 
 static_assert(numerical_data_views<>(kr::dl::NumericalConstructorTags {}));
@@ -92,24 +90,24 @@ TEST(RunirKrDlNumerical, RoutesValueBinaryAndDistanceData)
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_repository);
 
-    auto constant_data = ygg::Data<kr::dl::Numerical<kr::dl::NumericalConstantTag>>(7);
+    auto constant_data = urd::data<kr::dl::Numerical<kr::dl::NumericalConstantTag>>(7);
     EXPECT_EQ(repository->insert(constant_data).first.get_value(), 7);
 
-    auto binary_data = ygg::Data<kr::dl::Numerical<kr::dl::AddTag>>(ygg::Index<Numerical>(1), ygg::Index<Numerical>(2));
+    auto binary_data = urd::data<kr::dl::Numerical<kr::dl::AddTag>>(urd::index<Numerical>(1), urd::index<Numerical>(2));
     const auto binary = repository->insert(binary_data).first;
-    EXPECT_EQ(binary.get_lhs().get_index(), ygg::Index<Numerical>(1));
-    EXPECT_EQ(binary.get_rhs().get_index(), ygg::Index<Numerical>(2));
+    EXPECT_EQ(binary.get_lhs().index(), urd::index<Numerical>(1));
+    EXPECT_EQ(binary.get_rhs().index(), urd::index<Numerical>(2));
 
     // Vertices are concept-or-query and edges role-or-query variants.
     using Query = kr::dl::Query<>;
-    using DistanceData = ygg::Data<kr::dl::Numerical<kr::dl::DistanceTag>>;
-    static_assert(std::same_as<DistanceData::Vertex, ygg::IndexVariant<ygg::TypeList<Concept, Query>>>);
-    static_assert(std::same_as<DistanceData::Edge, ygg::IndexVariant<ygg::TypeList<Role, Query>>>);
-    auto distance_data = DistanceData(ygg::Index<Concept>(3), ygg::Index<Query>(4), ygg::Index<Query>(5));
+    using DistanceData = urd::data<kr::dl::Numerical<kr::dl::DistanceTag>>;
+    static_assert(std::same_as<DistanceData::Vertex, urd::index_variant<boost::mp11::mp_list<Concept, Query>>>);
+    static_assert(std::same_as<DistanceData::Edge, urd::index_variant<boost::mp11::mp_list<Role, Query>>>);
+    auto distance_data = DistanceData(urd::index<Concept>(3), urd::index<Query>(4), urd::index<Query>(5));
     const auto distance = repository->insert(distance_data).first;
-    EXPECT_EQ(distance.get_lhs().get<ygg::Index<Concept>>().get_index(), ygg::Index<Concept>(3));
-    EXPECT_EQ(distance.get_mid().get<ygg::Index<Query>>().get_index(), ygg::Index<Query>(4));
-    EXPECT_EQ(distance.get_rhs().get<ygg::Index<Query>>().get_index(), ygg::Index<Query>(5));
-    EXPECT_TRUE(distance.get_mid().is<ygg::Index<Query>>());
+    EXPECT_EQ((std::get<urd::view<Concept, runir::kr::dl::ConstructorRepository>>(distance.get_lhs()).index()), urd::index<Concept>(3));
+    EXPECT_EQ((std::get<urd::view<Query, runir::kr::dl::ConstructorRepository>>(distance.get_mid()).index()), urd::index<Query>(4));
+    EXPECT_EQ((std::get<urd::view<Query, runir::kr::dl::ConstructorRepository>>(distance.get_rhs()).index()), urd::index<Query>(5));
+    EXPECT_TRUE((std::holds_alternative<urd::view<Query, runir::kr::dl::ConstructorRepository>>(distance.get_mid())));
 }
 }

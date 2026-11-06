@@ -6,7 +6,8 @@
 #include <runir/kr/ps/dl/feature_data.hpp>
 #include <runir/kr/ps/dl/feature_view.hpp>
 #include <utility>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
+#include <yggdrasil/core/config.hpp>
 
 namespace runir::tests
 {
@@ -15,23 +16,22 @@ namespace
 {
 
 template<typename Entity>
-using View = ygg::View<ygg::Index<Entity>, kr::ps::base::Repository>;
+using View = urd::view<Entity, kr::ps::base::Repository>;
 
 template<typename Entity>
-concept IndexedDataView = std::constructible_from<ygg::Index<Entity>, ygg::uint_t> && std::totally_ordered<ygg::Index<Entity>>
-                          && std::totally_ordered<ygg::Data<Entity>> && std::totally_ordered<View<Entity>>;
+concept IndexedDataView = std::constructible_from<urd::index<Entity>, ygg::uint_t> && std::totally_ordered<urd::index<Entity>>
+                          && std::totally_ordered<urd::data<Entity>> && std::totally_ordered<View<Entity>>;
 
 template<typename Entity, typename Concrete>
-concept FeatureContract = IndexedDataView<Entity> && std::same_as<typename ygg::Data<Entity>::Variant, ::cista::offset::variant<ygg::Index<Concrete>>>
-                          && requires(ygg::Data<Entity>& data, const View<Entity>& view) {
+concept FeatureContract = IndexedDataView<Entity> && std::same_as<typename urd::data<Entity>::Variant, ::cista::offset::variant<urd::index<Concrete>>>
+                          && requires(urd::data<Entity>& data, const View<Entity>& view) {
                                  data.index;
                                  data.variant;
-                                 data.clear();
                                  {
                                      ::cista::to_tuple(std::as_const(data))
-                                 } -> std::same_as<std::tuple<const ygg::Index<Entity>&, const typename ygg::Data<Entity>::Variant&>>;
-                                 requires std::same_as<ygg::IdentifyingMember<ygg::Data<Entity>, 0>, typename ygg::Data<Entity>::Variant>;
-                                 view.get_index();
+                                 } -> std::same_as<std::tuple<const urd::index<Entity>&, const typename urd::data<Entity>::Variant&>>;
+                                 requires std::same_as<std::remove_cvref_t<std::tuple_element_t<0, urd::detail::identity_t<urd::data<Entity>>>>, typename urd::data<Entity>::Variant>;
+                                 view.index();
                                  view.get_variant();
                                  view.get_symbol();
                                  view.get_expression();
@@ -40,19 +40,18 @@ concept FeatureContract = IndexedDataView<Entity> && std::same_as<typename ygg::
 
 template<typename Entity, typename Expression>
 concept ConcreteFeatureContract =
-    IndexedDataView<Entity> && std::constructible_from<ygg::Data<Entity>, ygg::Index<Expression>, ::cista::offset::string>
-    && std::constructible_from<ygg::Data<Entity>, ygg::Index<Expression>, const std::string&> && requires(ygg::Data<Entity>& data, const View<Entity>& view) {
+    IndexedDataView<Entity> && std::constructible_from<urd::data<Entity>, urd::index<Expression>, ::cista::offset::string>
+    && std::constructible_from<urd::data<Entity>, urd::index<Expression>, const std::string&> && requires(urd::data<Entity>& data, const View<Entity>& view) {
            data.index;
            data.feature;
            data.symbol;
-           data.clear();
-           { data.feature } -> std::same_as<ygg::Index<Expression>&>;
+           { data.feature } -> std::same_as<urd::index<Expression>&>;
            {
                ::cista::to_tuple(std::as_const(data))
-           } -> std::same_as<std::tuple<const ygg::Index<Entity>&, const ygg::Index<Expression>&, const ::cista::offset::string&>>;
-           requires std::same_as<ygg::IdentifyingMember<ygg::Data<Entity>, 0>, ygg::Index<Expression>>;
-           requires std::same_as<ygg::IdentifyingMember<ygg::Data<Entity>, 1>, ::cista::offset::string>;
-           view.get_index();
+           } -> std::same_as<std::tuple<const urd::index<Entity>&, const urd::index<Expression>&, const ::cista::offset::string&>>;
+           requires std::same_as<std::remove_cvref_t<std::tuple_element_t<0, urd::detail::identity_t<urd::data<Entity>>>>, urd::index<Expression>>;
+           requires std::same_as<std::remove_cvref_t<std::tuple_element_t<1, urd::detail::identity_t<urd::data<Entity>>>>, ::cista::offset::string>;
+           view.index();
            view.get_expression();
            view.get_feature();
            view.get_symbol();

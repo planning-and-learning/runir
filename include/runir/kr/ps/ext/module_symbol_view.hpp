@@ -4,21 +4,20 @@
 #include "runir/kr/ps/ext/module_symbol_data.hpp"
 
 #include <tuple>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
 
-namespace ygg
+namespace urd
 {
+template<typename V>
+struct view_mixin<runir::kr::ps::ext::ModuleSymbol, V>
+{
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
-template<formalism::SymbolContextFor<runir::kr::ps::ext::ModuleSymbol> C>
-class View<Index<runir::kr::ps::ext::ModuleSymbol>, C> : public ygg::IndexViewBase<runir::kr::ps::ext::ModuleSymbol, C>
-{
 public:
-    using ygg::IndexViewBase<runir::kr::ps::ext::ModuleSymbol, C>::IndexViewBase;
-
-    const auto& get_name() const noexcept { return this->get_data().name; }
+    const auto& get_name() const noexcept { return self().data().name; }
 };
-
-}  // namespace ygg
+}  // namespace urd
 
 #endif

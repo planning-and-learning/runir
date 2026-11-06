@@ -8,8 +8,8 @@ namespace runir::serialization
 {
 
 using ExtTypes =
-    ygg::ConcatTypeListsT<kr::ps::ext::FeatureTypes, kr::ps::ext::ConditionTypes, kr::ps::ext::EffectTypes, kr::ps::ext::RuleTypes, kr::ps::ext::ProgramTypes>;
-using ExtViews = ygg::MapTypeListSecondT<IndexView, kr::ps::ext::Repository, ExtTypes>;
+    boost::mp11::mp_append<kr::ps::ext::FeatureTypes, kr::ps::ext::ConditionTypes, kr::ps::ext::EffectTypes, kr::ps::ext::RuleTypes, kr::ps::ext::ProgramTypes>;
+using ExtViews = boost::mp11::mp_transform_q<boost::mp11::mp_bind_front<IndexView, kr::ps::ext::Repository>, ExtTypes>;
 
 }  // namespace runir::serialization
 

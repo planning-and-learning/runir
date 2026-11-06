@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_PS_REPOSITORY_HPP_
 #define RUNIR_KR_PS_REPOSITORY_HPP_
 
+#include "runir/kr/dl/repository.hpp"
 #include "runir/kr/ps/canonicalization.hpp"
 #include "runir/kr/ps/declarations.hpp"
 #include "runir/kr/ps/family_traits.hpp"
@@ -8,9 +9,9 @@
 #include <cassert>
 #include <memory>
 #include <utility>
-#include <yggdrasil/core/config.hpp>
-#include <yggdrasil/core/type_list.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/config.hpp>
+#include <boost/mp11.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>
 
 namespace runir::kr::ps
@@ -45,6 +46,8 @@ public:
     ~BasicRepository() = default;
 
     [[nodiscard]] const auto& get_index() const noexcept { return m_index; }
+    /// The repository's number, as urd::view asks of a context.
+    [[nodiscard]] std::size_t layer() const noexcept { return m_index; }
     // Dereference the raw pointer: operator* on the shared_ptr would complete the DL repository type for its lookup.
     auto& get_dl_repository() noexcept { return *m_dl_repository.get(); }
     [[nodiscard]] const auto& get_dl_repository() const noexcept { return *m_dl_repository.get(); }
@@ -52,13 +55,14 @@ public:
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<BasicRepository, T>
-    const ygg::Data<T>& operator[](ygg::Index<T> index) const noexcept
+    const urd::data<T>& operator[](urd::index<T> index) const noexcept
     { return this->template local<T>(index); }
 
+    /// An index as its view here (urd's resolves contract).
     template<typename T>
         requires ygg::formalism::SupportsSymbol<BasicRepository, T>
-    [[nodiscard]] const BasicRepository& get_canonical_context(ygg::Index<T>) const noexcept
-    { return *this; }
+    [[nodiscard]] urd::view<T, BasicRepository> view(urd::index<T> index) const noexcept
+    { return { index, *this }; }
 };
 
 template<FamilyTag Family, typename RepositoryTypes>
@@ -76,7 +80,7 @@ public:
 };
 
 template<FamilyTag Family, typename RepositoryTypes>
-inline const BasicRepository<Family, RepositoryTypes>& get_repository(const BasicRepository<Family, RepositoryTypes>& repository YGG_LIFETIMEBOUND) noexcept
+inline const BasicRepository<Family, RepositoryTypes>& get_repository(const BasicRepository<Family, RepositoryTypes>& repository URD_LIFETIMEBOUND) noexcept
 { return repository; }
 
 template<FamilyTag Family, typename RepositoryTypes>

@@ -1,4 +1,7 @@
 #include "runir/kr/ps/base/dl/parser.hpp"
+#include <urd/repr/maps/std_map.hpp>
+#include <urd/repr/values/std_set.hpp>
+#include <urd/store.hpp>
 
 #include "kr/parser/ext_constructors.hpp"
 #include "kr/parser/observations.hpp"
@@ -42,30 +45,30 @@ using runir::kr::parser::ext_constructors::LanguageCapabilities;
 inline constexpr auto sketch_capabilities = LanguageCapabilities { "sketches", false, false };
 
 template<typename T>
-auto intern(runir::kr::ps::base::Repository& repository, ygg::Data<T>& data)
+auto intern(runir::kr::ps::base::Repository& repository, urd::data<T>& data)
 { return runir::kr::ps::base::insert(repository, data).first; }
 
 auto parse_feature(const runir::kr::ps::base::dl::ast::BooleanFeature<runir::kr::BaseFamilyTag>& node,
                    tyr::formalism::planning::DomainView domain,
                    Repository& repository,
                    Builders& builders,
-                   std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>>& boolean_features,
-                   std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>>&,
-                   ygg::Data<runir::kr::ps::base::Sketch>& sketch_data,
+                   urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs>& boolean_features,
+                   urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>>, urd::stable_refs>&,
+                   urd::data<runir::kr::ps::base::Sketch>& sketch_data,
                    const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     const auto constructor =
         parse_constructor(node.feature, domain, ConstructorContext { repository.get_dl_repository(), *builders.dl, diagnostics, nullptr, sketch_capabilities });
     auto concrete_data =
         runir::kr::ps::base::checkout<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>>(*builders.ps);
-    concrete_data->feature = constructor.get_index();
+    concrete_data->feature = constructor.index();
     concrete_data->symbol = node.symbol.text;
     const auto concrete = intern(repository, *concrete_data);
     auto data = runir::kr::ps::base::checkout<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>(*builders.ps);
-    data->variant = concrete.get_index();
+    data->variant = concrete.index();
     const auto feature = intern(repository, *data);
-    boolean_features.emplace(node.symbol.text, feature.get_index());
-    sketch_data.boolean_features.push_back(feature.get_index());
+    boolean_features.emplace(node.symbol.text, feature.index());
+    sketch_data.boolean_features.push_back(feature.index());
 }
 
 auto parse_feature(
@@ -73,23 +76,23 @@ auto parse_feature(
     tyr::formalism::planning::DomainView domain,
     Repository& repository,
     Builders& builders,
-    std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>>&,
-    std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>>& numerical_features,
-    ygg::Data<runir::kr::ps::base::Sketch>& sketch_data,
+    urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs>&,
+    urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>>, urd::stable_refs>& numerical_features,
+    urd::data<runir::kr::ps::base::Sketch>& sketch_data,
     const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     const auto constructor =
         parse_constructor(node.feature, domain, ConstructorContext { repository.get_dl_repository(), *builders.dl, diagnostics, nullptr, sketch_capabilities });
     auto concrete_data =
         runir::kr::ps::base::checkout<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::dl::NumericalTag>>(*builders.ps);
-    concrete_data->feature = constructor.get_index();
+    concrete_data->feature = constructor.index();
     concrete_data->symbol = node.symbol.text;
     const auto concrete = intern(repository, *concrete_data);
     auto data = runir::kr::ps::base::checkout<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>(*builders.ps);
-    data->variant = concrete.get_index();
+    data->variant = concrete.index();
     const auto feature = intern(repository, *data);
-    numerical_features.emplace(node.symbol.text, feature.get_index());
-    sketch_data.numerical_features.push_back(feature.get_index());
+    numerical_features.emplace(node.symbol.text, feature.index());
+    sketch_data.numerical_features.push_back(feature.index());
 }
 
 using runir::kr::parser::observations::parse_condition;
@@ -99,19 +102,19 @@ auto parse_rule(
     const runir::kr::ps::base::dl::ast::Rule<runir::kr::BaseFamilyTag>& node,
     Repository& repository,
     runir::kr::ps::base::Builder& builder,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>>& boolean_features,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>>& numerical_features,
+    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs>& boolean_features,
+    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>>, urd::stable_refs>& numerical_features,
     const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     auto data = runir::kr::ps::base::checkout<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>(builder);
     data->symbol = node.symbol.text;
     data->conditions.reserve(node.conditions.size());
     for (const auto& condition : node.conditions)
-        data->conditions.push_back(parse_condition(repository, builder, condition, boolean_features, numerical_features, diagnostics).get_index());
+        data->conditions.push_back(parse_condition(repository, builder, condition, boolean_features, numerical_features, diagnostics));
 
     data->effects.reserve(node.effects.size());
     for (const auto& effect : node.effects)
-        data->effects.push_back(parse_effect(repository, builder, effect, boolean_features, numerical_features, diagnostics).get_index());
+        data->effects.push_back(parse_effect(repository, builder, effect, boolean_features, numerical_features, diagnostics));
     return intern(repository, *data);
 }
 
@@ -132,9 +135,9 @@ SketchView parse_sketch(const std::string& description, tyr::formalism::planning
     auto ps_builder = runir::kr::ps::base::Builder {};
     auto builders = Builders { &dl_builder, &ps_builder };
 
-    auto boolean_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>> {};
-    auto numerical_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>> {};
-    auto feature_symbols = std::unordered_set<std::string> {};
+    auto boolean_features = urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs> {};
+    auto numerical_features = urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>>, urd::stable_refs> {};
+    auto feature_symbols = urd::Store<urd::set<std::string>, urd::stable_refs> {};
     auto data = runir::kr::ps::base::checkout<runir::kr::ps::base::Sketch>(ps_builder);
     data->boolean_features.reserve(ast.features.size());
     data->numerical_features.reserve(ast.features.size());
@@ -150,12 +153,12 @@ SketchView parse_sketch(const std::string& description, tyr::formalism::planning
             },
             feature.get());
 
-    auto rule_symbols = std::unordered_set<std::string> {};
+    auto rule_symbols = urd::Store<urd::set<std::string>, urd::stable_refs> {};
     for (const auto& rule : ast.rules)
     {
         if (!rule_symbols.emplace(rule.symbol.text).second)
             diagnostics.throw_at(rule.symbol, runir::kr::DuplicateDefinitionError("rule", rule.symbol.text));
-        data->rules.push_back(parse_rule(rule, repository, ps_builder, boolean_features, numerical_features, diagnostics).get_index());
+        data->rules.push_back(parse_rule(rule, repository, ps_builder, boolean_features, numerical_features, diagnostics).index());
     }
 
     return intern(repository, *data);

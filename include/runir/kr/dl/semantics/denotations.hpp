@@ -8,6 +8,5 @@
 #include "runir/kr/dl/semantics/denotation_view.hpp"
 
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/core/types.hpp>
 
 #endif

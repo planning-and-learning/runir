@@ -161,7 +161,7 @@ def test_rule_text_requires_an_explicit_projection(gripper_planning_domain: fp.P
 
     dictionaries = Dictionaries()
     register_table(dictionaries, base.Rule, "rules", "r")
-    with pytest.raises(ValueError, match=r"^Unregistered serialization type: .*ConditionVariant"):
+    with pytest.raises(ValueError, match=r"^Unregistered serialization type: .*Condition"):
         serialize(dictionaries, rule)
 
     dictionaries = Dictionaries()
@@ -237,7 +237,6 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
     dictionaries = Dictionaries()
     tyr_serialization.register_table(dictionaries, ground.State, "states", "s")
     tyr_serialization.register_table(dictionaries, fp.FluentGroundAtom, "atoms", "a", fields=())
-    tyr_serialization.register_table(dictionaries, fp.FunctionExpression, "expressions", "x")
     register_table(dictionaries, ext.GroundProgramState, "program_states", "e")
     register_table(dictionaries, ext.GroundModuleState, "module_states", "z")
     register_table(dictionaries, ext.GroundCallStack, "call_stacks", "c")
@@ -256,9 +255,6 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
         },
     )
 
-    constant = domain.get_repository().create(fp.FunctionExpressionData(3.5))
-    assert tyr_serialization.serialize(dictionaries, constant) == "x0"
-    assert tyr_serialization.table(dictionaries, fp.FunctionExpression) == [{"variant": 3.5}]
     assert serialize(dictionaries, initial) == "e0"
     assert tyr_serialization.serialize(dictionaries, initial.state) == "s0"
     assert serialize(dictionaries, step.target) == "e1"

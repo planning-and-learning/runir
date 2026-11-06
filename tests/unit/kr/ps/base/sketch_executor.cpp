@@ -1,4 +1,6 @@
 #include "fixtures.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "planning_fixtures.hpp"
 
 #include <algorithm>
@@ -44,7 +46,7 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         kr::ps::base::dl::SketchSpecification specification;
     };
 
-    const auto cases = std::vector<Case> {
+    const auto cases = urd::Store<urd::sequence<Case>> {
         { benchmark_path("classical/tests/gripper/domain.pddl"),
           benchmark_path("classical/tests/gripper/test-1.pddl"),
           kr::ps::base::dl::SketchSpecification::GRIPPER_FRANCE_ET_AL_AAAI2021 },
@@ -95,19 +97,19 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         EXPECT_EQ(plan.get_length(), fragment.graph->get_num_edges()) << test_case.domain;
         auto& generator = *context->successor_generator;
         auto replay = generator.get_initial_node(*context->state_repository, *context->axiom_evaluator);
-        EXPECT_EQ(plan.get_start_node().get_state().get_index(), replay.get_state().get_index());
+        EXPECT_EQ(plan.get_start_node().get_state().index(), replay.get_state().index());
         EXPECT_EQ(plan.get_start_node().get_metric(), replay.get_metric());
         for (const auto& step : plan.get_labeled_succ_nodes())
         {
             replay = generator.get_successor_node(replay, step.label, *context->state_repository, *context->axiom_evaluator);
-            EXPECT_EQ(step.node.get_state().get_index(), replay.get_state().get_index());
+            EXPECT_EQ(step.node.get_state().index(), replay.get_state().index());
             EXPECT_EQ(step.node.get_metric(), replay.get_metric());
         }
         EXPECT_EQ(plan.get_cost(), replay.get_metric());
         EXPECT_EQ(plan.get_cost(), plan.get_length());
         const auto& terminal = fragment.graph->get_vertex(fragment.graph->get_num_vertices() - 1).get_property();
         EXPECT_TRUE(terminal.is_goal);
-        EXPECT_EQ(replay.get_state().get_index(), terminal.state.get_index());
+        EXPECT_EQ(replay.get_state().index(), terminal.state.index());
 
         auto expander = kr::ps::base::SuccessorExpander<tyr::GroundTag, kr::dl::semantics::FullEvaluationPolicy<tyr::GroundTag>>(*task_context, sketch);
         const auto state = context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator).get_state();
@@ -141,7 +143,7 @@ TEST(RunirTests, BaseMatchingDistinguishesCollidingStateIdsAcrossStorage)
 
     const auto target_repository = tyr::planning::StateRepositoryFactory<tyr::GroundTag> {}.create(task);
     const auto target = tyr::planning::materialize_state(successor->node.get_state(), *target_repository, *search_context->axiom_evaluator);
-    ASSERT_EQ(initial.get_state().get_index(), target.get_index());
+    ASSERT_EQ(initial.get_state().index(), target.index());
     ASSERT_NE(initial.get_state(), target);
     EXPECT_TRUE(expander.matching_rule(initial.get_state(), target));
     EXPECT_FALSE(expander.matching_rule(initial.get_state(), initial.get_state()));
@@ -191,8 +193,8 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
 
     for (const auto edge : universal.graph->get_out_edge_indices(0))
     {
-        const auto target_state = universal.graph->get_vertex(universal.graph->get_target(edge)).get_property().state.get_index();
-        EXPECT_NE(std::ranges::find_if(immediate, [&](const auto& successor) { return successor.node.get_state().get_index() == target_state; }),
+        const auto target_state = universal.graph->get_vertex(universal.graph->get_target(edge)).get_property().state.index();
+        EXPECT_NE(std::ranges::find_if(immediate, [&](const auto& successor) { return successor.node.get_state().index() == target_state; }),
                   immediate.end());
     }
 
@@ -211,7 +213,7 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     // The first move stays in the current room: it is generated but rejected by sketch matching.
     EXPECT_EQ(bounded.statistics.num_generated, 2);
     const auto& packed_state = bounded.graph->get_vertex(0).get_property().state;
-    EXPECT_EQ(packed_state.get_index(), state.get_index());
+    EXPECT_EQ(packed_state.index(), state.index());
     EXPECT_EQ(packed_state.unpack().pack(), packed_state);
 
     const auto two_step_only = kr::ps::base::dl::parse_sketch(
@@ -276,7 +278,7 @@ void check_base_successor_early_stop(const datasets::TaskSearchContextPtr<Kind>&
     {
         size_t count = 0;
         for (const auto action : task->get_task().get_domain().get_actions())
-            count += task->get_repository()->size(action.get_index());
+            count += task->get_repository()->size(action.index());
         return count;
     };
     const auto initial_binding_count = count_bindings();
@@ -295,7 +297,7 @@ void check_base_successor_early_stop(const datasets::TaskSearchContextPtr<Kind>&
     {
         ++num_emitted;
         EXPECT_GT(statistics.num_generated, 0);
-        EXPECT_NE(successor.node.get_state().get_index(), state.get_index());
+        EXPECT_NE(successor.node.get_state().index(), state.index());
         EXPECT_EQ(rule, sketch.get_rules().front());
         return false;
     };

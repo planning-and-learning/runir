@@ -6,15 +6,4 @@
 
 #include <yggdrasil/serialization/dictionaries.hpp>
 
-namespace ygg::serialization
-{
-
-template<typename Archive, typename C>
-void describe_fields(Archive& ar, std::type_identity<View<runir::kr::ps::ext::CallArgument, C>>)
-{
-    ar.variant([](const auto& value) -> decltype(auto) { return (value); });
-}
-
-}
-
 #endif

@@ -49,9 +49,9 @@ TEST(RunirTests, GrammarFactoryFixturesMatch)
         EXPECT_EQ(formatted, read_fixture(ygg::common::as_string(test_case, "grammar_file", "case")));
         const auto reparsed_grammar = kr::dl::grammar::parse_grammar(formatted, domain, *repository);
         EXPECT_EQ(grammar, reparsed_grammar);
-        EXPECT_EQ(grammar.get_index(), ygg::Index<GrammarTag>(0));
-        EXPECT_EQ(reparsed_grammar.get_index(), grammar.get_index());
-        EXPECT_EQ(grammar.get_context().template size<GrammarTag>(), 1);
+        EXPECT_EQ(grammar.index(), urd::index<GrammarTag>(0));
+        EXPECT_EQ(reparsed_grammar.index(), grammar.index());
+        EXPECT_EQ(grammar.context().template size<GrammarTag>(), 1);
 
         auto cnf_repository = kr::dl::cnf_grammar::ConstructorRepositoryFactory().create(planning_domain.get_repository());
         const auto cnf = kr::dl::cnf_grammar::translate(grammar, *cnf_repository);
@@ -59,8 +59,8 @@ TEST(RunirTests, GrammarFactoryFixturesMatch)
         EXPECT_EQ(cnf_formatted, read_fixture(ygg::common::as_string(test_case, "cnf_file", "case")));
         const auto reparsed = kr::dl::grammar::parse_grammar(cnf_formatted, domain, *repository);
         EXPECT_EQ(cnf, kr::dl::cnf_grammar::translate(reparsed, *cnf_repository));
-        EXPECT_EQ(reparsed.get_index(), ygg::Index<GrammarTag>(1));
-        EXPECT_EQ(grammar.get_context().template size<GrammarTag>(), 2);
+        EXPECT_EQ(reparsed.index(), urd::index<GrammarTag>(1));
+        EXPECT_EQ(grammar.context().template size<GrammarTag>(), 2);
     }
 }
 

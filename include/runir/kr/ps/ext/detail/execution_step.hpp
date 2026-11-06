@@ -19,8 +19,8 @@
 #include <tyr/planning/node.hpp>
 #include <utility>
 #include <variant>
-#include <yggdrasil/containers/unique_object_pool.hpp>
-#include <yggdrasil/core/concepts.hpp>
+#include <urd/repr/slots/slots.hpp>
+#include <urd/store.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
@@ -116,14 +116,15 @@ template<runir::kr::dl::CategoryTag Category>
 struct Choice
 {
 private:
-    ygg::UniqueObjectPoolPtr<runir::kr::dl::semantics::DenotationElementViewList<Category>> m_bindings;
+    urd::unique_slot_ptr<runir::kr::dl::semantics::DenotationElementViewList<Category>> m_bindings;
     RuleVariantView m_rule;
     size_t m_position = 0;
 
 public:
-    template<ygg::InputRangeOf<runir::kr::dl::semantics::DenotationElementView<Category>> Denotation>
-    Choice(RuleVariantView rule_, Denotation denotation, ygg::UniqueObjectPool<runir::kr::dl::semantics::DenotationElementViewList<Category>>& pool) :
-        m_bindings(pool.get_or_allocate()),
+    template<typename Denotation>
+        requires std::ranges::input_range<Denotation> && std::same_as<std::ranges::range_value_t<Denotation>, runir::kr::dl::semantics::DenotationElementView<Category>>
+    Choice(RuleVariantView rule_, Denotation denotation, urd::Store<urd::slots<runir::kr::dl::semantics::DenotationElementViewList<Category>>>& pool) :
+        m_bindings(pool.acquire_unique()),
         m_rule(rule_)
     {
         m_bindings->clear();

@@ -1,4 +1,6 @@
 #include "nauty_impl.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 #include <algorithm>
 #include <cstddef>
@@ -14,23 +16,23 @@ void SparseGraphImpl::initialize_sparse_graph()
 {
     SG_INIT(m_graph);
     m_graph.nde = m_nde;
-    m_graph.v = m_offsets.data();
+    m_graph.v = std::ranges::data(m_offsets);
     m_graph.nv = m_num_vertices;
-    m_graph.d = m_degrees.data();
-    m_graph.e = m_edges.data();
+    m_graph.d = std::ranges::data(m_degrees);
+    m_graph.e = std::ranges::data(m_edges);
     m_graph.vlen = m_offsets.size();
     m_graph.dlen = m_degrees.size();
     m_graph.elen = m_edges.size();
 }
 
 SparseGraphImpl::SparseGraphImpl(std::size_t nde,
-                                 std::vector<std::size_t> offsets,
+                                 urd::Store<urd::sequence<std::size_t>> offsets,
                                  int num_vertices,
-                                 std::vector<int> degrees,
-                                 std::vector<int> edges,
-                                 std::vector<int> labels,
-                                 std::vector<int> partitions,
-                                 std::vector<ygg::uint_t> coloring) :
+                                 urd::Store<urd::sequence<int>> degrees,
+                                 urd::Store<urd::sequence<int>> edges,
+                                 urd::Store<urd::sequence<int>> labels,
+                                 urd::Store<urd::sequence<int>> partitions,
+                                 urd::Store<urd::sequence<ygg::uint_t>> coloring) :
     m_nde(nde),
     m_offsets(std::move(offsets)),
     m_num_vertices(num_vertices),
@@ -139,7 +141,7 @@ void SparseGraphImpl::canonize()
     auto canonical_graph = sparsegraph {};
     SG_INIT(canonical_graph);
 
-    sparsenauty(&m_graph, canonical.m_labels.data(), canonical.m_partitions.data(), canonical.m_orbits.data(), &options, &stats, &canonical_graph);
+    sparsenauty(&m_graph, std::ranges::data(canonical.m_labels), std::ranges::data(canonical.m_partitions), std::ranges::data(canonical.m_orbits), &options, &stats, &canonical_graph);
     sortlists_sg(&canonical_graph);
 
     canonical.m_nde = canonical_graph.nde;
@@ -154,8 +156,8 @@ void SparseGraphImpl::canonize()
     SG_FREE(canonical_graph);
     canonical.initialize_sparse_graph();
 
-    auto label_to_index = std::vector<int>(static_cast<std::size_t>(m_num_vertices));
-    auto canonical_label_to_index = std::vector<int>(static_cast<std::size_t>(m_num_vertices));
+    auto label_to_index = urd::Store<urd::sequence<int>>(static_cast<std::size_t>(m_num_vertices));
+    auto canonical_label_to_index = urd::Store<urd::sequence<int>>(static_cast<std::size_t>(m_num_vertices));
     for (int i = 0; i < m_num_vertices; ++i)
     {
         label_to_index[m_labels[i]] = i;
@@ -176,22 +178,22 @@ void SparseGraphImpl::canonize()
 
 auto SparseGraphImpl::get_num_directed_edges() const noexcept -> std::size_t { return m_nde; }
 auto SparseGraphImpl::get_num_vertices() const noexcept -> int { return m_num_vertices; }
-auto SparseGraphImpl::get_offsets() const noexcept -> const std::vector<std::size_t>& { return m_offsets; }
-auto SparseGraphImpl::get_degrees() const noexcept -> const std::vector<int>& { return m_degrees; }
-auto SparseGraphImpl::get_edges() const noexcept -> const std::vector<int>& { return m_edges; }
-auto SparseGraphImpl::get_labels() const noexcept -> const std::vector<int>& { return m_labels; }
-auto SparseGraphImpl::get_partitions() const noexcept -> const std::vector<int>& { return m_partitions; }
-auto SparseGraphImpl::get_orbits() const noexcept -> const std::vector<int>& { return m_orbits; }
-auto SparseGraphImpl::get_coloring() const noexcept -> const std::vector<ygg::uint_t>& { return m_coloring; }
+auto SparseGraphImpl::get_offsets() const noexcept -> const urd::Store<urd::sequence<std::size_t>>& { return m_offsets; }
+auto SparseGraphImpl::get_degrees() const noexcept -> const urd::Store<urd::sequence<int>>& { return m_degrees; }
+auto SparseGraphImpl::get_edges() const noexcept -> const urd::Store<urd::sequence<int>>& { return m_edges; }
+auto SparseGraphImpl::get_labels() const noexcept -> const urd::Store<urd::sequence<int>>& { return m_labels; }
+auto SparseGraphImpl::get_partitions() const noexcept -> const urd::Store<urd::sequence<int>>& { return m_partitions; }
+auto SparseGraphImpl::get_orbits() const noexcept -> const urd::Store<urd::sequence<int>>& { return m_orbits; }
+auto SparseGraphImpl::get_coloring() const noexcept -> const urd::Store<urd::sequence<ygg::uint_t>>& { return m_coloring; }
 
-auto SparseGraphImpl::get_permutation() const -> const std::vector<int>&
+auto SparseGraphImpl::get_permutation() const -> const urd::Store<urd::sequence<int>>&
 {
     if (!m_is_canonical)
         throw std::runtime_error("runir::graphs::nauty::SparseGraphImpl::get_permutation: graph is not canonical.");
     return m_permutation;
 }
 
-auto SparseGraphImpl::get_inverse_permutation() const -> const std::vector<int>&
+auto SparseGraphImpl::get_inverse_permutation() const -> const urd::Store<urd::sequence<int>>&
 {
     if (!m_is_canonical)
         throw std::runtime_error("runir::graphs::nauty::SparseGraphImpl::get_inverse_permutation: graph is not canonical.");

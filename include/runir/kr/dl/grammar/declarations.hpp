@@ -3,8 +3,13 @@
 
 #include "runir/kr/dl/declarations.hpp"
 
+#include <cista/containers/variant.h>
+#include <concepts>
 #include <memory>
-#include <yggdrasil/core/types.hpp>
+#include <type_traits>
+#include <variant>
+#include <urd/elements/flat.hpp>
+#include <boost/mp11.hpp>
 
 namespace runir::kr::dl::grammar
 {
@@ -26,43 +31,46 @@ template<typename Tag>
 struct Numerical;
 
 template<runir::kr::dl::CategoryTag Category>
-struct Constructor;
-
-template<runir::kr::dl::CategoryTag Category>
 struct NonTerminal;
-
-template<runir::kr::dl::CategoryTag Category>
-struct ConstructorOrNonTerminal;
 
 template<runir::kr::dl::CategoryTag Category>
 struct DerivationRule;
 
 struct GrammarTag;
 
-using ConceptTypes = ygg::MapTypeListT<Concept, runir::kr::dl::GenerationConceptConstructorTags>;
+using ConceptTypes = boost::mp11::mp_transform<Concept, runir::kr::dl::GenerationConceptConstructorTags>;
 
-using RoleTypes = ygg::MapTypeListT<Role, runir::kr::dl::GenerationRoleConstructorTags>;
+using RoleTypes = boost::mp11::mp_transform<Role, runir::kr::dl::GenerationRoleConstructorTags>;
 
-using BooleanTypes = ygg::MapTypeListT<Boolean, runir::kr::dl::GenerationBooleanConstructorTags>;
+using BooleanTypes = boost::mp11::mp_transform<Boolean, runir::kr::dl::GenerationBooleanConstructorTags>;
 
-using NumericalTypes = ygg::MapTypeListT<Numerical, runir::kr::dl::GenerationNumericalConstructorTags>;
+using NumericalTypes = boost::mp11::mp_transform<Numerical, runir::kr::dl::GenerationNumericalConstructorTags>;
 
-using ConstructorTypes = ygg::MapTypeListT<Constructor, runir::kr::dl::CategoryTags>;
+/// The records a constructor of Category can be.
+template<runir::kr::dl::CategoryTag Category>
+using CategoryTypes = std::conditional_t<
+    std::same_as<Category, runir::kr::dl::ConceptTag>,
+    ConceptTypes,
+    std::conditional_t<std::same_as<Category, runir::kr::dl::RoleTag>, RoleTypes, std::conditional_t<std::same_as<Category, runir::kr::dl::BooleanTag>, BooleanTypes, NumericalTypes>>>;
 
-using ConstructorOrNonTerminalTypes = ygg::MapTypeListT<ConstructorOrNonTerminal, runir::kr::dl::CategoryTags>;
+/// A constructor: one of Category's records. Stored as it is, not interned.
+template<runir::kr::dl::CategoryTag Category>
+using Constructor = urd::index_variant<CategoryTypes<Category>>;
 
-using NonTerminalTypes = ygg::MapTypeListT<NonTerminal, runir::kr::dl::CategoryTags>;
+/// A grammar symbol of Category: a non-terminal or a constructor. Stored as it is, not interned.
+template<runir::kr::dl::CategoryTag Category>
+using ConstructorOrNonTerminal = ::cista::offset::variant<urd::index<NonTerminal<Category>>, Constructor<Category>>;
 
-using DerivationRuleTypes = ygg::MapTypeListT<DerivationRule, runir::kr::dl::CategoryTags>;
+using NonTerminalTypes = boost::mp11::mp_transform<NonTerminal, runir::kr::dl::CategoryTags>;
 
-using GrammarTypes = ygg::TypeList<GrammarTag>;
+using DerivationRuleTypes = boost::mp11::mp_transform<DerivationRule, runir::kr::dl::CategoryTags>;
 
-using ConstructorRepositoryTypes = ygg::ConcatTypeListsT<ConceptTypes,
+using GrammarTypes = boost::mp11::mp_list<GrammarTag>;
+
+using ConstructorRepositoryTypes = boost::mp11::mp_append<ConceptTypes,
                                                          RoleTypes,
                                                          BooleanTypes,
                                                          NumericalTypes,
-                                                         ConstructorTypes,
-                                                         ConstructorOrNonTerminalTypes,
                                                          NonTerminalTypes,
                                                          DerivationRuleTypes,
                                                          GrammarTypes>;
@@ -75,33 +83,38 @@ using ConstructorRepositoryFactory = runir::kr::dl::detail::BasicConstructorRepo
 
 template<typename Tag>
     requires runir::kr::dl::ConceptConstructorTag<Tag>
-using ConceptView = ygg::View<ygg::Index<Concept<Tag>>, ConstructorRepository>;
+using ConceptView = urd::view<Concept<Tag>, ConstructorRepository>;
 
 template<typename Tag>
     requires runir::kr::dl::RoleConstructorTag<Tag>
-using RoleView = ygg::View<ygg::Index<Role<Tag>>, ConstructorRepository>;
+using RoleView = urd::view<Role<Tag>, ConstructorRepository>;
 
 template<typename Tag>
     requires runir::kr::dl::BooleanConstructorTag<Tag>
-using BooleanView = ygg::View<ygg::Index<Boolean<Tag>>, ConstructorRepository>;
+using BooleanView = urd::view<Boolean<Tag>, ConstructorRepository>;
 
 template<typename Tag>
     requires runir::kr::dl::NumericalConstructorTag<Tag>
-using NumericalView = ygg::View<ygg::Index<Numerical<Tag>>, ConstructorRepository>;
+using NumericalView = urd::view<Numerical<Tag>, ConstructorRepository>;
+
+template<typename T>
+using EntityView = urd::view<T, ConstructorRepository>;
+
+/// A constructor read through the repository: the view of the record it holds.
+template<runir::kr::dl::CategoryTag Category>
+using ConstructorView = boost::mp11::mp_apply<std::variant, boost::mp11::mp_transform<EntityView, CategoryTypes<Category>>>;
 
 template<runir::kr::dl::CategoryTag Category>
-using ConstructorView = ygg::View<ygg::Index<Constructor<Category>>, ConstructorRepository>;
+using NonTerminalView = urd::view<NonTerminal<Category>, ConstructorRepository>;
+
+/// A grammar symbol read through the repository: its non-terminal's or its constructor's view.
+template<runir::kr::dl::CategoryTag Category>
+using ConstructorOrNonTerminalView = std::variant<NonTerminalView<Category>, ConstructorView<Category>>;
 
 template<runir::kr::dl::CategoryTag Category>
-using ConstructorOrNonTerminalView = ygg::View<ygg::Index<ConstructorOrNonTerminal<Category>>, ConstructorRepository>;
+using DerivationRuleView = urd::view<DerivationRule<Category>, ConstructorRepository>;
 
-template<runir::kr::dl::CategoryTag Category>
-using NonTerminalView = ygg::View<ygg::Index<NonTerminal<Category>>, ConstructorRepository>;
-
-template<runir::kr::dl::CategoryTag Category>
-using DerivationRuleView = ygg::View<ygg::Index<DerivationRule<Category>>, ConstructorRepository>;
-
-using GrammarView = ygg::View<ygg::Index<GrammarTag>, ConstructorRepository>;
+using GrammarView = urd::view<GrammarTag, ConstructorRepository>;
 
 }  // namespace runir::kr::dl::grammar
 

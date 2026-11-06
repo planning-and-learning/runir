@@ -1,4 +1,8 @@
 #include "runir/kr/ps/icp/dl/parser.hpp"
+#include <urd/repr/maps/std_map.hpp>
+#include <urd/repr/values/std_set.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 #include "kr/parser/ext_constructors.hpp"
 #include "kr/parser/observations.hpp"
@@ -26,7 +30,7 @@ using runir::kr::parser::ext_constructors::ModuleReferences;
 using runir::kr::parser::ext_constructors::parse;
 
 template<typename T>
-auto intern(Repository& repository, ygg::Data<T>& data)
+auto intern(Repository& repository, urd::data<T>& data)
 { return insert(repository, data).first; }
 
 using runir::kr::parser::observations::append_conditions;
@@ -67,14 +71,14 @@ auto require(const Map& values, const ast::Identifier& name, const char* kind, c
 }
 
 template<typename FeatureTag, typename Expression>
-auto make_feature(Repository& repository, Builder& builder, ygg::Index<Expression> expression, const std::string& symbol)
+auto make_feature(Repository& repository, Builder& builder, urd::index<Expression> expression, const std::string& symbol)
 {
     auto concrete = checkout<runir::kr::ps::ConcreteFeature<IcpFamilyTag, DlTag, FeatureTag>>(builder);
     concrete->feature = expression;
     concrete->symbol = symbol;
     auto data = checkout<runir::kr::ps::Feature<IcpFamilyTag, FeatureTag>>(builder);
-    data->variant = intern(repository, *concrete).get_index();
-    return intern(repository, *data).get_index();
+    data->variant = intern(repository, *concrete).index();
+    return intern(repository, *data).index();
 }
 
 ModuleView lower_module(const ast::Module& module,
@@ -88,14 +92,14 @@ ModuleView lower_module(const ast::Module& module,
     auto data = checkout<Module>(builder);
     auto symbol = checkout<ModuleSymbol>(builder);
     symbol->name = module.name.text;
-    data->symbol = intern(repository, *symbol).get_index();
+    data->symbol = intern(repository, *symbol).index();
 
-    auto memories = std::unordered_map<std::string, ygg::Index<MemoryState>> {};
+    auto memories = urd::Store<urd::map<std::string, urd::index<MemoryState>>, urd::stable_refs> {};
     for (const auto& memory : module.memory_states)
     {
         auto value = checkout<MemoryState>(builder);
         value->name = memory.value.text;
-        const auto index = intern(repository, *value).get_index();
+        const auto index = intern(repository, *value).index();
         if (!memories.emplace(memory.value.text, index).second)
             diagnostics.throw_at(memory.value, DuplicateDefinitionError("memory state", memory.value.text));
         data->memory_states.push_back(index);
@@ -121,7 +125,7 @@ ModuleView lower_module(const ast::Module& module,
                 auto value = runir::kr::dl::checkout<runir::kr::dl::Register<Category>>(dl_builder);
                 value->name = concrete.symbol.text;
                 value->identifier = runir::kr::dl::RegisterIdentifier<Category>(declarations.by_identifier.size());
-                const auto index = runir::kr::dl::insert(repository.get_dl_repository(), *value).first.get_index();
+                const auto index = runir::kr::dl::insert(repository.get_dl_repository(), *value).first.index();
                 declarations.by_name.emplace(concrete.symbol.text, index);
                 declarations.by_identifier.push_back(index);
                 if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
@@ -131,11 +135,11 @@ ModuleView lower_module(const ast::Module& module,
             },
             reg.get());
 
-    auto concepts = std::unordered_map<std::string, ygg::Index<ps::Feature<IcpFamilyTag, runir::kr::dl::ConceptTag>>> {};
-    auto roles = std::unordered_map<std::string, ygg::Index<ps::Feature<IcpFamilyTag, runir::kr::dl::RoleTag>>> {};
-    auto booleans = std::unordered_map<std::string, ygg::Index<ps::Feature<IcpFamilyTag, runir::kr::dl::BooleanTag>>> {};
-    auto numericals = std::unordered_map<std::string, ygg::Index<ps::Feature<IcpFamilyTag, runir::kr::dl::NumericalTag>>> {};
-    auto feature_names = std::unordered_set<std::string> {};
+    auto concepts = urd::Store<urd::map<std::string, urd::index<ps::Feature<IcpFamilyTag, runir::kr::dl::ConceptTag>>>, urd::stable_refs> {};
+    auto roles = urd::Store<urd::map<std::string, urd::index<ps::Feature<IcpFamilyTag, runir::kr::dl::RoleTag>>>, urd::stable_refs> {};
+    auto booleans = urd::Store<urd::map<std::string, urd::index<ps::Feature<IcpFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs> {};
+    auto numericals = urd::Store<urd::map<std::string, urd::index<ps::Feature<IcpFamilyTag, runir::kr::dl::NumericalTag>>>, urd::stable_refs> {};
+    auto feature_names = urd::Store<urd::set<std::string>, urd::stable_refs> {};
     const auto context = ConstructorContext { repository.get_dl_repository(),
                                               dl_builder,
                                               diagnostics,
@@ -150,7 +154,7 @@ ModuleView lower_module(const ast::Module& module,
                 if constexpr (std::same_as<Concrete, ast::QueryFeature>)
                 {
                     const auto expression = parse(concrete.expression, domain, context);
-                    data->query_features.push_back(make_feature<ps::dl::QueryFeature>(repository, builder, expression.get_index(), concrete.symbol.text));
+                    data->query_features.push_back(make_feature<ps::dl::QueryFeature>(repository, builder, expression.index(), concrete.symbol.text));
                 }
                 else
                 {
@@ -158,25 +162,25 @@ ModuleView lower_module(const ast::Module& module,
                     const auto expression = parse_constructor(concrete.expression, domain, context);
                     if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
                     {
-                        const auto index = make_feature<Category>(repository, builder, expression.get_index(), concrete.symbol.text);
+                        const auto index = make_feature<Category>(repository, builder, expression.index(), concrete.symbol.text);
                         concepts.emplace(concrete.symbol.text, index);
                         data->concept_features.push_back(index);
                     }
                     else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
                     {
-                        const auto index = make_feature<Category>(repository, builder, expression.get_index(), concrete.symbol.text);
+                        const auto index = make_feature<Category>(repository, builder, expression.index(), concrete.symbol.text);
                         roles.emplace(concrete.symbol.text, index);
                         data->role_features.push_back(index);
                     }
                     else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
                     {
-                        const auto index = make_feature<runir::kr::dl::BooleanTag>(repository, builder, expression.get_index(), concrete.symbol.text);
+                        const auto index = make_feature<runir::kr::dl::BooleanTag>(repository, builder, expression.index(), concrete.symbol.text);
                         booleans.emplace(concrete.symbol.text, index);
                         data->boolean_features.push_back(index);
                     }
                     else
                     {
-                        const auto index = make_feature<runir::kr::dl::NumericalTag>(repository, builder, expression.get_index(), concrete.symbol.text);
+                        const auto index = make_feature<runir::kr::dl::NumericalTag>(repository, builder, expression.index(), concrete.symbol.text);
                         numericals.emplace(concrete.symbol.text, index);
                         data->numerical_features.push_back(index);
                     }
@@ -191,7 +195,7 @@ ModuleView lower_module(const ast::Module& module,
         append_conditions(repository, builder, source.conditions, booleans, numericals, diagnostics, target.conditions);
         append_effects(repository, builder, source.effects, booleans, numericals, diagnostics, target.effects);
     };
-    auto rule_names = std::unordered_set<std::string> {};
+    auto rule_names = urd::Store<urd::set<std::string>, urd::stable_refs> {};
     for (const auto& entry : module.rule_entries)
     {
         if (!rule_names.emplace(entry.symbol.text).second)
@@ -220,7 +224,7 @@ ModuleView lower_module(const ast::Module& module,
                             diagnostics.throw_at(concrete.action,
                                                  ArityMismatchError("action " + concrete.action.text, action->get_original_arity(), concrete.arguments.size()));
                         rule->action_name = concrete.action.text;
-                        auto arguments = std::unordered_map<std::string, ygg::uint_t> {};
+                        auto arguments = urd::Store<urd::map<std::string, ygg::uint_t>, urd::stable_refs> {};
                         for (const auto& argument : concrete.arguments)
                         {
                             if (!arguments.emplace(argument.text, arguments.size()).second)
@@ -231,7 +235,7 @@ ModuleView lower_module(const ast::Module& module,
                         {
                             return boost::apply_visitor(
                                 [&]<typename Value>(const Value& value)
-                                    -> ::cista::offset::variant<ArgumentPosition, ygg::Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>
+                                    -> ::cista::offset::variant<ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>
                                 {
                                     if constexpr (std::same_as<Value, ast::ArgumentObject>)
                                         return ArgumentPosition { require(arguments, value.name, "action argument", diagnostics) };
@@ -246,7 +250,7 @@ ModuleView lower_module(const ast::Module& module,
                             value->operation = condition.belongs ? ConditionOperation::BELONGS : ConditionOperation::NOT_BELONGS;
                             value->object = object(condition.object);
                             value->feature = require_feature(concepts, condition.feature, diagnostics);
-                            rule->xconditions.push_back(intern(repository, *value).get_index());
+                            rule->xconditions.push_back(intern(repository, *value).index());
                         }
                         for (const auto& effect : concrete.xeffects)
                         {
@@ -254,9 +258,9 @@ ModuleView lower_module(const ast::Module& module,
                             value->operation = effect.enter ? EffectOperation::ENTER : EffectOperation::EXIT;
                             value->object = object(effect.object);
                             value->feature = require_feature(concepts, effect.feature, diagnostics);
-                            rule->xeffects.push_back(intern(repository, *value).get_index());
+                            rule->xeffects.push_back(intern(repository, *value).index());
                         }
-                        variant->variant = intern(repository, *rule).get_index();
+                        variant->variant = intern(repository, *rule).index();
                     }
                     else
                     {
@@ -273,15 +277,15 @@ ModuleView lower_module(const ast::Module& module,
                             rule->feature = require_feature(roles, concrete.feature, diagnostics);
                             rule->reg = require(references.role_registers.by_name, concrete.reg, "role register", diagnostics);
                         }
-                        variant->variant = intern(repository, *rule).get_index();
+                        variant->variant = intern(repository, *rule).index();
                     }
-                    data->memory_transitions.back().push_back(intern(repository, *variant).get_index());
+                    data->memory_transitions.back().push_back(intern(repository, *variant).index());
                 },
                 body.get());
     }
 
     const auto width = data->concept_features.size();
-    auto closure = std::vector<std::vector<bool>>(width, std::vector<bool>(width));
+    auto closure = urd::Store<urd::sequence<std::vector<bool>>>(width, std::vector<bool>(width));
     const auto ordinal = [&](auto index)
     { return std::find(data->concept_features.begin(), data->concept_features.end(), index) - data->concept_features.begin(); };
     for (const auto& pair : module.reset_pairs)
@@ -328,8 +332,8 @@ ProgramView parse_program(const std::string& description, tyr::formalism::planni
     auto scope = runir::kr::parser::DiagnosticContext::Scope(diagnostics, handler);
     if (node.entry.text != node.module.name.text)
         diagnostics.throw_at(node.entry, UndefinedSymbolError("entry module", node.entry.text));
-    auto data = ygg::Data<Program> {};
-    data.module = lower_module(node.module, domain, repository, diagnostics).get_index();
+    auto data = urd::data<Program> {};
+    data.module = lower_module(node.module, domain, repository, diagnostics).index();
     return intern(repository, data);
 }
 

@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_EXT_DETAIL_RULE_EVALUATION_ACTION_HPP_
 
 #include "runir/kr/dl/object_rows.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/ps/dl/evaluation.hpp"
 #include "runir/kr/ps/ext/compatibility.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
@@ -24,6 +26,7 @@
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
+#include <urd/config.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
@@ -35,9 +38,10 @@ class ActionRuleEvaluator
     RuleVariantView m_variant;
     tyr::formalism::planning::ActionView<tyr::LiftedTag> m_action;
     // Retained scratch for decoding query rows; each use completes before any callback.
-    mutable std::vector<ygg::uint_t> m_values;
-    mutable std::vector<ygg::Index<tyr::formalism::Object>> m_objects;
-    mutable std::vector<std::byte> m_row;
+    mutable urd::Store<urd::sequence<ygg::uint_t>> m_values;
+    /// The offered binding (the action and the row's objects), read through the planning repository when checked.
+    mutable urd::data<tyr::formalism::RelationBinding<tyr::formalism::planning::Action<tyr::LiftedTag>>> m_offer;
+    mutable urd::Store<urd::sequence<std::byte>> m_row;
 
     static void require_applicable(tyr::planning::ActionBindingStatus status)
     {
@@ -54,6 +58,7 @@ public:
         m_variant(variant),
         m_action(action)
     {
+        m_offer.relation = action.index();
     }
     auto get_rule() const noexcept { return m_rule; }
     auto get_variant() const noexcept { return m_variant; }
@@ -97,19 +102,17 @@ public:
         {
             if (stop())
                 return false;
-            m_objects.clear();
-            for (const auto value : row.get_data().get_all(m_values))
-                m_objects.emplace_back(value);
+            m_offer.objects.clear();
+            for (const auto value : row.get_all(m_values))
+                m_offer.objects.emplace_back(value);
             // Policy applicability has no carried path metric.
             const auto offered = (*context.task_context)
                                      ->search_context->successor_generator->try_get_applicable_action_binding(
                                          tyr::planning::Node<Kind, PlanningState>(planning_state, 0),
-                                         m_action,
-                                         tyr::formalism::planning::ObjectSpanView(std::span<const ygg::Index<tyr::formalism::Object>>(m_objects),
-                                                                                  *planning_state.get_formalism_repository()));
+                                         urd::resolve(m_offer, *planning_state.get_formalism_repository()));
             require_applicable(offered.status);
             // An applicable offer carries its binding.
-            YGG_ASSUME(offered.binding.has_value());
+            URD_ASSUME(offered.binding.has_value());
             const auto candidate = context.storage->successor(planning_state, *offered.binding);
             // Effects filter the offered transitions, as for Do rules.
             if (!effects_hold(context, state, candidate))
@@ -137,7 +140,7 @@ public:
         auto state_context = context.make_dl_context(state);
         const auto query = evaluate<Kind>(rule.get_query_feature(), state_context);
         const auto objects = candidate.label.get_objects();
-        if (objects.size() != query.arity() || !query.contains(runir::kr::dl::encode_object_row(objects.get_data(), m_row)))
+        if (objects.size() != query.arity() || !query.contains(runir::kr::dl::encode_object_row(objects.base(), m_row)))
             return false;
         auto& generator = *(*context.task_context)->search_context->successor_generator;
         const auto node = tyr::planning::Node<Kind, PlanningState>(planning_state, 0);

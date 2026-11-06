@@ -8,47 +8,46 @@
 #include "runir/kr/ps/icp/xcondition_view.hpp"
 #include "runir/kr/ps/icp/xeffect_view.hpp"
 
-#include <yggdrasil/containers/vector.hpp>
+#include <urd/elements/flat.hpp>
 
-namespace ygg
+namespace urd
 {
+template<runir::kr::ps::icp::RuleKind Kind, typename V>
+struct view_mixin<runir::kr::ps::icp::Rule<Kind>, V>
+{
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
-template<runir::kr::ps::icp::RuleKind Kind, typename C>
-class View<Index<runir::kr::ps::icp::Rule<Kind>>, C> : public ygg::IndexViewBase<runir::kr::ps::icp::Rule<Kind>, C>
-{
 public:
-    using ygg::IndexViewBase<runir::kr::ps::icp::Rule<Kind>, C>::IndexViewBase;
-
-    auto get_source() const noexcept { return make_view(this->get_data().source, this->get_context()); }
-    auto get_target() const noexcept { return make_view(this->get_data().target, this->get_context()); }
-    auto get_conditions() const noexcept { return make_view(this->get_data().conditions, this->get_context()); }
-    auto get_effects() const noexcept { return make_view(this->get_data().effects, this->get_context()); }
+    auto get_source() const noexcept { return self().template get<&urd::record_of<V>::source>(); }
+    auto get_target() const noexcept { return self().template get<&urd::record_of<V>::target>(); }
+    auto get_conditions() const noexcept { return self().template get<&urd::record_of<V>::conditions>(); }
+    auto get_effects() const noexcept { return self().template get<&urd::record_of<V>::effects>(); }
 
     auto get_feature() const noexcept
         requires runir::kr::ps::icp::BindingRuleKind<Kind>
-    { return make_view(this->get_data().feature, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::feature>(); }
 
     auto get_register() const noexcept
         requires runir::kr::ps::icp::BindingRuleKind<Kind>
-    { return make_view(this->get_data().reg, this->get_repository().get_dl_repository()); }
+    { return urd::resolve(self().data().reg, get_repository(self().context()).get_dl_repository()); }
 
     const auto& get_action_name() const noexcept
         requires std::same_as<Kind, runir::kr::ps::icp::CruleTag>
-    { return this->get_data().action_name; }
+    { return self().data().action_name; }
 
     const auto& get_argument_names() const noexcept
         requires std::same_as<Kind, runir::kr::ps::icp::CruleTag>
-    { return this->get_data().argument_names; }
+    { return self().data().argument_names; }
 
     auto get_xconditions() const noexcept
         requires std::same_as<Kind, runir::kr::ps::icp::CruleTag>
-    { return make_view(this->get_data().xconditions, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::xconditions>(); }
 
     auto get_xeffects() const noexcept
         requires std::same_as<Kind, runir::kr::ps::icp::CruleTag>
-    { return make_view(this->get_data().xeffects, this->get_context()); }
+    { return self().template get<&urd::record_of<V>::xeffects>(); }
 };
-
-}
+}  // namespace urd
 
 #endif

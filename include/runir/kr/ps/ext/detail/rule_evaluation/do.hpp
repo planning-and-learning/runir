@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_EXT_DETAIL_RULE_EVALUATION_DO_HPP_
 
 #include "runir/kr/ps/dl/evaluation.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/ps/ext/compatibility.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
 #include "runir/kr/ps/ext/detail/rule_evaluation/context.hpp"
@@ -14,6 +16,7 @@
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <tyr/planning/node.hpp>
+#include <urd/repr/containers/bitset_span.hpp>
 #include <utility>
 #include <vector>
 
@@ -22,7 +25,7 @@ namespace runir::kr::ps::ext::detail
 
 struct DoRuleWorkspace
 {
-    std::vector<ygg::BitsetSpan<const ygg::uint_t>> denotations;
+    urd::Store<urd::sequence<urd::repr::BitsetSpan<const ygg::uint_t>>> denotations;
 };
 
 template<tyr::TaskKind Kind>
@@ -58,7 +61,7 @@ private:
         denotations.clear();
         auto state_context = context.make_dl_context(state);
         for (auto argument : arguments)
-            denotations.push_back(evaluate<Kind>(argument, state_context).get());
+            denotations.push_back(evaluate<Kind>(argument, state_context).value());
         return denotations;
     }
 
@@ -72,7 +75,7 @@ private:
         if (objects.size() != denotations.size())
             return false;
         for (size_t i = 0; i < denotations.size(); ++i)
-            if (!denotations[i].test(ygg::uint_t(objects[i].get_index())))
+            if (!denotations[i].test(ygg::uint_t(objects[i].index().value)))
                 return false;
         return true;
     }

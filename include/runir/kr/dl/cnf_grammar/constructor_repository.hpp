@@ -8,24 +8,24 @@
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/detail/constructor_repository.hpp"
 
-#include <yggdrasil/core/type_list.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <boost/mp11.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/builder.hpp>
 #include <yggdrasil/formalism/interning.hpp>
 
 namespace runir::kr::dl::cnf_grammar
 {
 
-using ConstructorSymbolRepository = ygg::ApplyTypeListT<ygg::formalism::SymbolRepository, ConstructorRepositoryTypes>;
+using ConstructorSymbolRepository = boost::mp11::mp_apply<ygg::formalism::SymbolRepository, ConstructorRepositoryTypes>;
 
-using Builder = ygg::ApplyTypeListT<ygg::formalism::BuilderStorage, ConstructorRepositoryTypes>;
+using Builder = boost::mp11::mp_apply<ygg::formalism::BuilderStorage, ConstructorRepositoryTypes>;
 
 using runir::kr::dl::detail::get_repository;
 using ygg::formalism::checkout;
 
 template<typename T>
     requires ygg::formalism::SupportsSymbol<ConstructorRepository, T>
-void prepare_for_insert(ConstructorRepository&, ygg::Data<T>& data)
+void prepare_for_insert(ConstructorRepository&, urd::data<T>& data)
 { canonicalize(data); }
 
 using ygg::formalism::insert;

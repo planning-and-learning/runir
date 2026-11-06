@@ -57,14 +57,6 @@ extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::gramm
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::grammar::Boolean<runir::kr::dl::NonemptyTag>>;
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::grammar::Numerical<runir::kr::dl::CountTag>>;
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::grammar::Numerical<runir::kr::dl::DistanceTag>>;
-extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::grammar::Constructor<runir::kr::dl::ConceptTag>>;
-extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::grammar::Constructor<runir::kr::dl::RoleTag>>;
-extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::grammar::Constructor<runir::kr::dl::BooleanTag>>;
-extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::grammar::Constructor<runir::kr::dl::NumericalTag>>;
-extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::ConceptTag>>;
-extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>>;
-extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::BooleanTag>>;
-extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::NumericalTag>>;
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::grammar::NonTerminal<runir::kr::dl::ConceptTag>>;
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::grammar::NonTerminal<runir::kr::dl::RoleTag>>;
 extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::grammar::NonTerminal<runir::kr::dl::BooleanTag>>;

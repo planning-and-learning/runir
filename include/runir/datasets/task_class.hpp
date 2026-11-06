@@ -19,6 +19,8 @@
 #define RUNIR_DATASETS_TASK_CLASS_HPP_
 
 #include <concepts>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <memory>
 #include <tuple>
 #include <type_traits>
@@ -26,21 +28,20 @@
 #include <utility>
 #include <vector>
 #include <yggdrasil/execution/declarations.hpp>
-#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::datasets
 {
 
 template<tyr::TaskKind Kind>
-struct TaskClass : ygg::comparison::Mixin<TaskClass<Kind>>
+struct TaskClass : urd::compared_by_identity<TaskClass<Kind>>
 {
-    std::vector<tyr::planning::TaskPtr<Kind>> tasks;
+    urd::Store<urd::sequence<tyr::planning::TaskPtr<Kind>>> tasks;
 
     TaskClass() = default;
-    explicit TaskClass(std::vector<tyr::planning::TaskPtr<Kind>> tasks_) : tasks(std::move(tasks_)) {}
+    explicit TaskClass(urd::Store<urd::sequence<tyr::planning::TaskPtr<Kind>>> tasks_) : tasks(std::move(tasks_)) {}
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&TaskClass::tasks> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&TaskClass::tasks> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&TaskClass::tasks> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&TaskClass::tasks> {}; }
 };
 
 template<tyr::TaskKind Kind>
@@ -86,7 +87,7 @@ template<tyr::TaskKind Kind>
 using TaskSearchContextPtr = std::shared_ptr<TaskSearchContext<Kind>>;
 
 template<tyr::TaskKind Kind>
-using TaskSearchContextList = std::vector<TaskSearchContextPtr<Kind>>;
+using TaskSearchContextList = urd::Store<urd::sequence<TaskSearchContextPtr<Kind>>>;
 
 template<tyr::TaskKind Kind>
 struct TaskClassSearchContexts

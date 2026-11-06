@@ -1,4 +1,6 @@
 #include "fixtures.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 #include <concepts>
 #include <fmt/format.h>
@@ -124,7 +126,7 @@ TEST(RunirTests, ExtendedBacktrackRulesRoundTripWithoutTargetOrEffects)
     ASSERT_EQ(rules.size(), 2);
     size_t condition_count = 0;
     for (const auto variant : rules)
-        ygg::visit(
+        std::visit(
             [&](auto rule)
             {
                 if constexpr (std::same_as<decltype(rule), kr::ps::ext::RuleView<kr::ps::ext::BacktrackTag>>)
@@ -175,7 +177,7 @@ TEST(RunirTests, RelationalExpressionsRoundTripAndRejectGenerationGrammars)
     auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
     auto grammar_repository = kr::dl::grammar::ConstructorRepositoryFactory().create(planning_domain.get_repository());
 
-    const std::vector<std::string> expressions {
+    const urd::Store<urd::sequence<std::string>> expressions {
         R"((n_count (q_project () (q_atomic_state "at" (X Y)))))",
         R"((n_count (q_atomic_goal "at" false (X Y))))",
         R"((n_count (q_join (q_rename (X) (q_concept a (c_top))) (q_concept Y (c_top)))))",
@@ -216,7 +218,7 @@ TEST(RunirTests, RelationalExpressionsRoundTripAndRejectGenerationGrammars)
                                 "Relational expressions are not supported in generation grammars");
 
     // Generation grammars accept only what generation enumerates.
-    for (const auto& [grammar, expected] : std::vector<std::pair<std::string, std::string>> {
+    for (const auto& [grammar, expected] : urd::Store<urd::sequence<std::pair<std::string, std::string>>> {
              { "((c_0 (c_register 0)))", "Registers are not supported in generation grammars" },
              { "((b_0 (b_argument 0)))", "Arguments are not supported in generation grammars" },
              { "((b_0 (b_and (b_nonempty (c_top)) (b_nonempty (c_bot)))))", "Boolean comparisons and connectives are not supported in generation grammars" },
@@ -244,7 +246,7 @@ TEST(RunirTests, RelationalExpressionsRoundTripAndRejectGenerationGrammars)
     }
     EXPECT_THROW(kr::ps::ext::dl::parse_numerical("(n_count (q_concept X c_0))", domain, *repository), kr::InvalidExpressionError);
     // Generic join errors name the offending column, so a model writing the expression can repair it.
-    for (const auto& [expression, message] : std::vector<std::pair<std::string, std::string>> {
+    for (const auto& [expression, message] : urd::Store<urd::sequence<std::pair<std::string, std::string>>> {
              { R"((n_count (q_generic_join (X) (X Y) (q_atomic_state "at" (X Y)) (q_concept X (c_top)))))", "variable order is missing column `Y`" },
              { R"((n_count (q_generic_join (X Y Y) (X Y) (q_atomic_state "at" (X Y)) (q_concept X (c_top)))))", "variable order lists column `Y` twice" },
              { R"((n_count (q_generic_join (X Y) (X Z) (q_atomic_state "at" (X Y)) (q_concept X (c_top)))))",
@@ -345,7 +347,7 @@ TEST(RunirTests, ExtendedQueryFeatureActionRuleRoundTrip)
 
     ASSERT_EQ(module_.get_memory_transitions().size(), 1);
     ASSERT_EQ(module_.get_memory_transitions().front().size(), 1);
-    ygg::visit(
+    std::visit(
         [&](auto rule)
         {
             using R = std::remove_cvref_t<decltype(rule)>;

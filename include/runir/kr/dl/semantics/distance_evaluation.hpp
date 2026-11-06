@@ -35,7 +35,7 @@ template<typename Distance>
 DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePlan& plan, ConstructorView<RoleTag> edges)
 {
     const auto columns = plan.edge_columns().span();
-    return { { QuerySlot { QuerySlot::Kind::ROLE, static_cast<ygg::uint_t>(edges.get_index()), { columns.begin(), columns.end() }, edges.is_static() } },
+    return { { QuerySlot { QuerySlot::Kind::ROLE, static_cast<ygg::uint_t>(edges.index().value), { columns.begin(), columns.end() }, edges.is_static() } },
              Distance(plan, edges.is_static()),
              std::nullopt };
 }
@@ -69,39 +69,39 @@ make_heuristic(const DistanceFeature<Distance>& feature, const ygg::database::Di
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
 ygg::uint_t on_demand_distance(NumericalView<DistanceTag> constructor, Context& context)
 {
-    const auto& plan = constructor.get_data().plan;
+    const auto& plan = constructor.data().plan;
     auto children = context.child_context();
     const auto relation = [&](auto argument, auto columns)
-    { return ygg::visit([&](auto child) { return evaluate_relation<Kind>(child, columns.span(), children); }, argument); };
+    { return std::visit([&](auto child) { return evaluate_relation<Kind>(child, columns.span(), children); }, argument); };
     const auto sources = relation(constructor.get_lhs(), plan.source_columns());
     const auto targets = relation(constructor.get_rhs(), plan.target_columns());
-    return ygg::visit(
+    return std::visit(
         [&]<typename Edges>(Edges edges) -> ygg::uint_t
         {
             auto& feature = context.get_workspace().get_distance_feature(
                 context.get_state().get_formalism_repository(),
-                constructor.get_context(),
-                static_cast<ygg::uint_t>(constructor.get_index()),
+                constructor.context(),
+                static_cast<ygg::uint_t>(constructor.index().value),
                 [&]
                 {
                     auto edge_feature = make_distance_feature<ygg::database::MinDistance<heuristics::ProjectionHeuristic>>(plan, edges);
                     auto heuristic = make_heuristic(edge_feature,
                                                     plan,
                                                     detail::num_objects<Kind>(context),
-                                                    [&](size_t slot) { return evaluate_slot<Kind>(edge_feature.slots[slot], edges.get_context(), children); });
+                                                    [&](size_t slot) { return evaluate_slot<Kind>(edge_feature.slots[slot], edges.context(), children); });
                     return FullDistanceFeature { std::move(edge_feature), std::move(heuristic) };
                 });
             feature.heuristic.update(targets);
-            const auto input = [&](size_t slot) { return evaluate_slot<Kind>(feature.edges.slots[slot], edges.get_context(), children); };
+            const auto input = [&](size_t slot) { return evaluate_slot<Kind>(feature.edges.slots[slot], edges.context(), children); };
             return feature.edges.distance.min_distance(input, sources, targets, feature.heuristic);
         },
         constructor.get_mid());
 }
 
 /// The vertex part of keyed columns, laid out on its own.
-inline ygg::Builder<ygg::database::Columns> vertex_columns(std::span<const ygg::database::ColumnLayout> columns, size_t keys)
+inline urd::builder<ygg::database::Columns> vertex_columns(std::span<const ygg::database::ColumnLayout> columns, size_t keys)
 {
-    auto result = ygg::Builder<ygg::database::Columns>();
+    auto result = urd::builder<ygg::database::Columns>();
     for (const auto& column : columns.subspan(keys))
         result.push_back(column.label, column.type);
     return result;
@@ -148,7 +148,7 @@ heuristics::KeyedProjectionHeuristic& must_pass_heuristic(MustPassFeature& featu
 /// The must-pass probe objects of every key, from the state alone (full evaluation): sources, targets, probes and the
 /// edge query's slots are evaluated in the state, and the edges are explored on demand.
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
-void on_demand_must_pass(ygg::View<ygg::Index<Query<QueryMustPassTag>>, C> constructor, Context& context, ygg::Builder<ygg::database::Relation>& result)
+void on_demand_must_pass(urd::view<Query<QueryMustPassTag>, C> constructor, Context& context, urd::builder<ygg::database::Relation>& result)
 {
     auto children = context.child_context();
     const auto sources = evaluate<Kind>(constructor.get_sources(), children);
@@ -156,10 +156,10 @@ void on_demand_must_pass(ygg::View<ygg::Index<Query<QueryMustPassTag>>, C> const
     const auto probes = evaluate<Kind>(constructor.get_probes(), children);
     const auto edges = constructor.get_edges();
     auto& feature = context.get_workspace().get_must_pass_feature(context.get_state().get_formalism_repository(),
-                                                                  constructor.get_context(),
-                                                                  static_cast<ygg::uint_t>(constructor.get_index()),
-                                                                  [&] { return make_must_pass_feature(constructor.get_data().plan, edges); });
-    const auto input = [&](size_t slot) { return evaluate_slot<Kind>(feature.slots[slot], edges.get_context(), children); };
+                                                                  constructor.context(),
+                                                                  static_cast<ygg::uint_t>(constructor.index().value),
+                                                                  [&] { return make_must_pass_feature(constructor.data().plan, edges); });
+    const auto input = [&](size_t slot) { return evaluate_slot<Kind>(feature.slots[slot], edges.context(), children); };
     auto& heuristic = must_pass_heuristic(feature, detail::num_objects<Kind>(context), input, targets);
     feature.must_pass.must_pass(input, sources, targets, probes, result, heuristic);
 }

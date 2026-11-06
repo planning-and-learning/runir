@@ -6,15 +6,15 @@
 
 #include <algorithm>
 #include <concepts>
+#include <urd/repr/core/dependent_false.hpp>
 #include <variant>
-#include <yggdrasil/core/dependent_false.hpp>
 
 namespace runir::kr::dl::detail
 {
 
 // Static means constant for a fixed task, including its goal and object universe.
 template<template<typename> typename Expression, typename Tag, typename C>
-bool infer_is_static(ygg::View<ygg::Index<Expression<Tag>>, C> constructor)
+bool infer_is_static(urd::view<Expression<Tag>, C> constructor)
 {
     if constexpr (is_atomic_state_tag_v<Tag>)
         return std::same_as<TagFactKind<Tag>, tyr::formalism::StaticTag>;
@@ -29,18 +29,28 @@ bool infer_is_static(ygg::View<ygg::Index<Expression<Tag>>, C> constructor)
                && constructor.get_probes().is_static();
     else if constexpr (requires { constructor.get_mid(); })
     {
-        const auto is_static = [](auto argument) { return ygg::visit([](auto child) { return child.is_static(); }, argument); };
+        const auto is_static = [](auto argument) { return std::visit([](auto child) { return child.is_static(); }, argument); };
         return is_static(constructor.get_lhs()) && is_static(constructor.get_mid()) && is_static(constructor.get_rhs());
     }
     else if constexpr (requires {
                            constructor.get_lhs();
                            constructor.get_rhs();
                        })
-        return constructor.get_lhs().is_static() && constructor.get_rhs().is_static();
+    {
+        // An operand is a view, or a variant of views (comparisons of scalars).
+        const auto is_static = [](auto argument)
+        {
+            if constexpr (requires { argument.is_static(); })
+                return argument.is_static();
+            else
+                return std::visit([](auto child) { return child.is_static(); }, argument);
+        };
+        return is_static(constructor.get_lhs()) && is_static(constructor.get_rhs());
+    }
     else if constexpr (requires { constructor.get_args(); })
         return std::ranges::all_of(constructor.get_args(), [](auto child) { return child.is_static(); });
     else if constexpr (std::same_as<Tag, CountTag> || std::same_as<Tag, NonemptyTag>)
-        return ygg::visit([](auto child) { return child.is_static(); }, constructor.get_arg());
+        return std::visit([](auto child) { return child.is_static(); }, constructor.get_arg());
     else if constexpr (requires { constructor.get_arg(); })
         return constructor.get_arg().is_static();
     else if constexpr (requires {
@@ -51,16 +61,16 @@ bool infer_is_static(ygg::View<ygg::Index<Expression<Tag>>, C> constructor)
     else if constexpr (requires { constructor.get_role(); })
         return constructor.get_role().is_static();
     else
-        static_assert(ygg::dependent_false<Tag>::value, "unhandled DL constructor staticness");
+        static_assert(urd::repr::dependent_false<Tag>::value, "unhandled DL constructor staticness");
 }
 
 template<CategoryTag Category, typename Repository>
-void prepare(ygg::Data<Constructor<Category>>& data, const Repository& repository)
+void prepare(urd::data<Constructor<Category>>& data, const Repository& repository)
 {
-    data.is_static = std::visit([&](auto index) { return infer_is_static(ygg::make_view(index, repository)); }, data.variant);
+    data.is_static = std::visit([&](auto index) { return infer_is_static(repository.view(index)); }, data.variant);
 }
 
-void prepare(ygg::Data<Query<>>& data, const ConstructorRepository& repository);
+void prepare(urd::data<Query<>>& data, const ConstructorRepository& repository);
 
 }  // namespace runir::kr::dl::detail
 

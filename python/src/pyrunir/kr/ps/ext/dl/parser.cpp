@@ -1,4 +1,8 @@
 #include "pyrunir/kr/ps/ext/dl/bindings.hpp"
+#include <yggdrasil/python/type_casters.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
+#include <urd/python/sequences/sequence.hpp>
 
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
@@ -32,7 +36,7 @@ void bind_parser(nb::module_& m)
 
     m.def(
         "parse_modules",
-        [](const std::vector<std::string>& descriptions, const tyr::formalism::planning::PlanningDomain& domain, runir::kr::ps::ext::Repository& repository)
+        [](const urd::Store<urd::sequence<std::string>>& descriptions, const tyr::formalism::planning::PlanningDomain& domain, runir::kr::ps::ext::Repository& repository)
         { return runir::kr::ps::ext::dl::parse_modules(descriptions, domain.get_domain(), repository); },
         "descriptions"_a,
         "domain"_a,

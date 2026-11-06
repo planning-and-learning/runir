@@ -1,4 +1,6 @@
 #include "runir/kr/dl/query_construction.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 #include "runir/kr/dl/construction_metadata.hpp"
 #include "runir/kr/dl/repository.hpp"
@@ -10,11 +12,11 @@ namespace runir::kr::dl::detail
 {
 
 void require_generic_join_order(std::string_view name,
-                                const ygg::IndexList<QueryColumn>& order,
-                                const std::vector<ygg::Index<QueryColumn>>& input_columns,
+                                const urd::flat_vector<urd::index<QueryColumn>>& order,
+                                const urd::Store<urd::sequence<urd::index<QueryColumn>>>& input_columns,
                                 const ConstructorRepository& repository)
 {
-    const auto column_name = [&](ygg::Index<QueryColumn> column) { return std::string(ygg::make_view(column, repository).get_name()); };
+    const auto column_name = [&](urd::index<QueryColumn> column) { return std::string(urd::resolve(column, repository).get_name()); };
     for (size_t i = 0; i < order.size(); ++i)
     {
         if (std::ranges::find(input_columns, order[i]) == input_columns.end())
@@ -28,25 +30,25 @@ void require_generic_join_order(std::string_view name,
             throw std::invalid_argument("q_generic_join: " + std::string(name) + " is missing column `" + column_name(column) + "`.");
 }
 
-const ygg::IndexList<QueryColumn>& get_query_columns(ygg::Index<Query<>> index, const ConstructorRepository& repository)
+const urd::flat_vector<urd::index<QueryColumn>>& get_query_columns(urd::index<Query<>> index, const ConstructorRepository& repository)
 {
-    return std::visit([&](auto concrete) -> const ygg::IndexList<QueryColumn>& { return repository[concrete].columns; }, repository[index].variant);
+    return std::visit([&](auto concrete) -> const urd::flat_vector<urd::index<QueryColumn>>& { return repository[concrete].columns; }, repository[index].variant);
 }
 
-void prepare(ygg::Data<Query<>>& data, const ConstructorRepository& repository)
+void prepare(urd::data<Query<>>& data, const ConstructorRepository& repository)
 {
-    data.is_static = std::visit([&](auto index) { return infer_is_static(ygg::make_view(index, repository)); }, data.variant);
+    data.is_static = std::visit([&](auto index) { return infer_is_static(repository.view(index)); }, data.variant);
 }
 
-void prepare(ygg::Data<Numerical<DistanceTag>>& data, const ConstructorRepository& repository)
+void prepare(urd::data<Numerical<DistanceTag>>& data, const ConstructorRepository& repository)
 {
     const auto columns = [&](const auto& argument)
     {
         return std::visit(
-            [&]<typename T>(ygg::Index<T> index) -> ygg::Builder<ygg::database::Columns>
+            [&]<typename T>(urd::index<T> index) -> urd::builder<ygg::database::Columns>
             {
                 if constexpr (std::same_as<T, Query<>>)
-                    return ygg::Builder<ygg::database::Columns>(ygg::make_view(index, repository).get_schema().span());
+                    return urd::builder<ygg::database::Columns>(repository.view(index).get_schema().span());
                 else
                     return lifted_columns(std::same_as<T, Constructor<ConceptTag>> ? 1 : 2);
             },

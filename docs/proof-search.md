@@ -84,7 +84,7 @@ reconstruction, even with a zero state budget; this is not a search memo entry,
 and other reduced-mode successors stay pooled until the selected path is
 materialized.
 Transient execution builders own child values in their lowest-level construction
-representation: `Builder<T>` where available, otherwise `Data<T>`. This means an
+representation: `urd::builder<T>` where available, otherwise `urd::data<T>`. This means an
 inline planning-state builder and register data. Definitions and interned call
 arguments are referenced by indices; borrowed views interpret them using the
 execution repository. Saved callers form an immutable chain: each call-stack

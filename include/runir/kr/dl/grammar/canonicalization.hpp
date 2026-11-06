@@ -5,118 +5,100 @@
 #include "runir/kr/dl/grammar/datas.hpp"
 #include "runir/kr/dl/grammar/declarations.hpp"
 
+#include <algorithm>
 #include <yggdrasil/semantics/canonicalization.hpp>
-#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::kr::dl::grammar
 {
 
 template<typename Tag>
     requires runir::kr::dl::ConceptConstructorTag<Tag>
-bool is_canonical(const ygg::Data<Concept<Tag>>&) noexcept
+bool is_canonical(const urd::data<Concept<Tag>>&) noexcept
 { return true; }
 
 template<typename Tag>
     requires runir::kr::dl::RoleConstructorTag<Tag>
-bool is_canonical(const ygg::Data<Role<Tag>>&) noexcept
+bool is_canonical(const urd::data<Role<Tag>>&) noexcept
 { return true; }
 
 template<typename Tag>
     requires runir::kr::dl::BooleanConstructorTag<Tag>
-bool is_canonical(const ygg::Data<Boolean<Tag>>&) noexcept
+bool is_canonical(const urd::data<Boolean<Tag>>&) noexcept
 { return true; }
 
 template<typename Tag>
     requires runir::kr::dl::NumericalConstructorTag<Tag>
-bool is_canonical(const ygg::Data<Numerical<Tag>>&) noexcept
+bool is_canonical(const urd::data<Numerical<Tag>>&) noexcept
 { return true; }
 
 template<runir::kr::dl::CategoryTag Category>
-bool is_canonical(const ygg::Data<Constructor<Category>>&) noexcept
+bool is_canonical(const urd::data<NonTerminal<Category>>&) noexcept
 { return true; }
 
-template<runir::kr::dl::CategoryTag Category>
-bool is_canonical(const ygg::Data<ConstructorOrNonTerminal<Category>>&) noexcept
-{ return true; }
+inline bool is_canonical(const urd::data<Concept<runir::kr::dl::IntersectionTag>>& data) noexcept { return data.lhs <= data.rhs; }
 
-template<runir::kr::dl::CategoryTag Category>
-bool is_canonical(const ygg::Data<NonTerminal<Category>>&) noexcept
-{ return true; }
+inline bool is_canonical(const urd::data<Concept<runir::kr::dl::UnionTag>>& data) noexcept { return data.lhs <= data.rhs; }
 
-inline bool is_canonical(const ygg::Data<Concept<runir::kr::dl::IntersectionTag>>& data) noexcept { return data.lhs <= data.rhs; }
+inline bool is_canonical(const urd::data<Concept<runir::kr::dl::AgreementTag>>& data) noexcept { return data.lhs <= data.rhs; }
 
-inline bool is_canonical(const ygg::Data<Concept<runir::kr::dl::UnionTag>>& data) noexcept { return data.lhs <= data.rhs; }
+inline bool is_canonical(const urd::data<Role<runir::kr::dl::IntersectionTag>>& data) noexcept { return data.lhs <= data.rhs; }
 
-inline bool is_canonical(const ygg::Data<Concept<runir::kr::dl::AgreementTag>>& data) noexcept { return data.lhs <= data.rhs; }
-
-inline bool is_canonical(const ygg::Data<Role<runir::kr::dl::IntersectionTag>>& data) noexcept { return data.lhs <= data.rhs; }
-
-inline bool is_canonical(const ygg::Data<Role<runir::kr::dl::UnionTag>>& data) noexcept { return data.lhs <= data.rhs; }
+inline bool is_canonical(const urd::data<Role<runir::kr::dl::UnionTag>>& data) noexcept { return data.lhs <= data.rhs; }
 
 template<typename Tag>
     requires runir::kr::dl::ConceptConstructorTag<Tag>
-void canonicalize(ygg::Data<Concept<Tag>>&) noexcept
+void canonicalize(urd::data<Concept<Tag>>&) noexcept
 {
 }
 
 template<typename Tag>
     requires runir::kr::dl::RoleConstructorTag<Tag>
-void canonicalize(ygg::Data<Role<Tag>>&) noexcept
+void canonicalize(urd::data<Role<Tag>>&) noexcept
 {
 }
 
 template<typename Tag>
     requires runir::kr::dl::BooleanConstructorTag<Tag>
-void canonicalize(ygg::Data<Boolean<Tag>>&) noexcept
+void canonicalize(urd::data<Boolean<Tag>>&) noexcept
 {
 }
 
 template<typename Tag>
     requires runir::kr::dl::NumericalConstructorTag<Tag>
-void canonicalize(ygg::Data<Numerical<Tag>>&) noexcept
+void canonicalize(urd::data<Numerical<Tag>>&) noexcept
 {
 }
 
 template<runir::kr::dl::CategoryTag Category>
-void canonicalize(ygg::Data<Constructor<Category>>&) noexcept
+void canonicalize(urd::data<NonTerminal<Category>>&) noexcept
 {
 }
 
-template<runir::kr::dl::CategoryTag Category>
-void canonicalize(ygg::Data<ConstructorOrNonTerminal<Category>>&) noexcept
-{
-}
+inline void canonicalize(urd::data<Concept<runir::kr::dl::IntersectionTag>>& data) noexcept { runir::kr::dl::canonicalize_commutative_binary(data); }
+
+inline void canonicalize(urd::data<Concept<runir::kr::dl::UnionTag>>& data) noexcept { runir::kr::dl::canonicalize_commutative_binary(data); }
+
+inline void canonicalize(urd::data<Concept<runir::kr::dl::AgreementTag>>& data) noexcept { runir::kr::dl::canonicalize_commutative_binary(data); }
+
+inline void canonicalize(urd::data<Role<runir::kr::dl::IntersectionTag>>& data) noexcept { runir::kr::dl::canonicalize_commutative_binary(data); }
+
+inline void canonicalize(urd::data<Role<runir::kr::dl::UnionTag>>& data) noexcept { runir::kr::dl::canonicalize_commutative_binary(data); }
 
 template<runir::kr::dl::CategoryTag Category>
-void canonicalize(ygg::Data<NonTerminal<Category>>&) noexcept
-{
-}
-
-inline void canonicalize(ygg::Data<Concept<runir::kr::dl::IntersectionTag>>& data) noexcept { runir::kr::dl::canonicalize_commutative_binary(data); }
-
-inline void canonicalize(ygg::Data<Concept<runir::kr::dl::UnionTag>>& data) noexcept { runir::kr::dl::canonicalize_commutative_binary(data); }
-
-inline void canonicalize(ygg::Data<Concept<runir::kr::dl::AgreementTag>>& data) noexcept { runir::kr::dl::canonicalize_commutative_binary(data); }
-
-inline void canonicalize(ygg::Data<Role<runir::kr::dl::IntersectionTag>>& data) noexcept { runir::kr::dl::canonicalize_commutative_binary(data); }
-
-inline void canonicalize(ygg::Data<Role<runir::kr::dl::UnionTag>>& data) noexcept { runir::kr::dl::canonicalize_commutative_binary(data); }
+inline bool is_canonical(const urd::data<DerivationRule<Category>>& data)
+{ return std::ranges::is_sorted(data.rhs) && std::ranges::adjacent_find(data.rhs) == data.rhs.end(); }
 
 template<runir::kr::dl::CategoryTag Category>
-inline bool is_canonical(const ygg::Data<DerivationRule<Category>>& data)
-{ return ygg::is_canonical(data.rhs); }
-
-template<runir::kr::dl::CategoryTag Category>
-inline void canonicalize(ygg::Data<DerivationRule<Category>>& data)
+inline void canonicalize(urd::data<DerivationRule<Category>>& data)
 { ygg::canonicalize(data.rhs); }
 
-inline bool is_canonical(const ygg::Data<GrammarTag>& data)
+inline bool is_canonical(const urd::data<GrammarTag>& data)
 {
     return ygg::is_canonical(data.concept_derivation_rules) && ygg::is_canonical(data.role_derivation_rules) && ygg::is_canonical(data.boolean_derivation_rules)
            && ygg::is_canonical(data.numerical_derivation_rules);
 }
 
-inline void canonicalize(ygg::Data<GrammarTag>& data)
+inline void canonicalize(urd::data<GrammarTag>& data)
 {
     ygg::canonicalize(data.concept_derivation_rules);
     ygg::canonicalize(data.role_derivation_rules);

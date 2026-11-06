@@ -7,73 +7,54 @@
 #include <tuple>
 #include <utility>
 #include <variant>
-#include <yggdrasil/containers/variant.hpp>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
+#include <urd/elements/flat.hpp>
+#include <boost/mp11.hpp>
+#include <yggdrasil/core/config.hpp>
 #include <yggdrasil/database/semantics/distance_plan.hpp>
 
-namespace ygg
+namespace urd
 {
 
 template<>
-struct Data<runir::kr::dl::Numerical<runir::kr::dl::CountTag>>
+struct data<runir::kr::dl::Numerical<runir::kr::dl::CountTag>>
 {
-    using ConstructorVariant = ::ygg::IndexVariant<DlArgumentTypes>;
+    using ConstructorVariant = urd::index_variant<runir::kr::dl::DlArgumentTypes>;
     using Arg = ConstructorVariant;
 
-    Index<runir::kr::dl::Numerical<runir::kr::dl::CountTag>> index;
+    urd::index<runir::kr::dl::Numerical<runir::kr::dl::CountTag>> index;
     ConstructorVariant arg;
 
-    Data() = default;
-    explicit Data(ConstructorVariant arg_) : index(), arg(std::move(arg_)) {}
-    template<typename C>
-    using ViewVariant = std::variant<::ygg::View<Index<DlConcept>, C>, ::ygg::View<Index<DlRole>, C>, ::ygg::View<Index<runir::kr::dl::Query<>>, C>>;
-    template<typename C>
-    explicit Data(ViewVariant<C> arg_) :
-        index(),
-        arg(std::visit([](const auto& view) -> ConstructorVariant { return ConstructorVariant(view.get_index()); }, arg_))
-    {
-    }
+    data() = default;
+    explicit data(ConstructorVariant arg_) : index(), arg(std::move(arg_)) {}
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::arg> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::arg> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::arg> {}; }
 };
 
 /// n_distance(sources, edges, targets): sources/targets are k-column vertices
 /// (a concept is k = 1), edges are 2k columns (a role is k = 1).
 template<>
-struct Data<runir::kr::dl::Numerical<runir::kr::dl::DistanceTag>>
+struct data<runir::kr::dl::Numerical<runir::kr::dl::DistanceTag>>
 {
-    using Vertex = ::ygg::IndexVariant<VertexArgumentTypes>;
-    using Edge = ::ygg::IndexVariant<EdgeArgumentTypes>;
+    using Vertex = urd::index_variant<runir::kr::dl::VertexArgumentTypes>;
+    using Edge = urd::index_variant<runir::kr::dl::EdgeArgumentTypes>;
 
-    Index<runir::kr::dl::Numerical<runir::kr::dl::DistanceTag>> index;
+    urd::index<runir::kr::dl::Numerical<runir::kr::dl::DistanceTag>> index;
     Vertex lhs;
     Edge mid;
     Vertex rhs;
     /// Derived on insertion from the argument schemas; not identifying.
-    database::DistancePlan plan;
+    ygg::database::DistancePlan plan;
 
-    Data() = default;
-    Data(Vertex lhs_, Edge mid_, Vertex rhs_) : index(), lhs(std::move(lhs_)), mid(std::move(mid_)), rhs(std::move(rhs_)), plan() {}
-    template<typename C>
-    Data(const ::ygg::ViewVariant<Vertex, C>& lhs_, const ::ygg::ViewVariant<Edge, C>& mid_, const ::ygg::ViewVariant<Vertex, C>& rhs_) :
-        index(),
-        lhs(std::visit([](const auto& view) -> Vertex { return Vertex(view.get_index()); }, lhs_)),
-        mid(std::visit([](const auto& view) -> Edge { return Edge(view.get_index()); }, mid_)),
-        rhs(std::visit([](const auto& view) -> Vertex { return Vertex(view.get_index()); }, rhs_)),
-        plan()
-    {
-    }
+    data() = default;
+    data(Vertex lhs_, Edge mid_, Vertex rhs_) : index(), lhs(std::move(lhs_)), mid(std::move(mid_)), rhs(std::move(rhs_)), plan() {}
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::lhs, &Data::mid, &Data::rhs, &Data::plan> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::lhs, &Data::mid, &Data::rhs> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::lhs, &data::mid, &data::rhs, &data::plan> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::lhs, &data::mid, &data::rhs> {}; }
 };
 
 template<>
-struct Data<runir::kr::dl::Numerical<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>> :
+struct data<runir::kr::dl::Numerical<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>> :
     runir::kr::dl::ReferenceData<runir::kr::dl::Numerical<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
                                  runir::kr::dl::Argument<runir::kr::dl::NumericalTag>>
 {
@@ -83,7 +64,7 @@ struct Data<runir::kr::dl::Numerical<runir::kr::dl::ArgumentTag<runir::kr::dl::N
 };
 
 template<>
-struct Data<runir::kr::dl::Numerical<runir::kr::dl::NumericalConstantTag>> :
+struct data<runir::kr::dl::Numerical<runir::kr::dl::NumericalConstantTag>> :
     runir::kr::dl::IdentifierData<runir::kr::dl::Numerical<runir::kr::dl::NumericalConstantTag>, ygg::uint_t>
 {
     using Base = runir::kr::dl::IdentifierData<runir::kr::dl::Numerical<runir::kr::dl::NumericalConstantTag>, ygg::uint_t>;
@@ -92,7 +73,7 @@ struct Data<runir::kr::dl::Numerical<runir::kr::dl::NumericalConstantTag>> :
 
 // Binary numerical operators (add/sub/mul/div/min/max): a Numerical over two Numerical operands.
 template<runir::kr::dl::NumericalBinaryTag Tag>
-struct Data<runir::kr::dl::Numerical<Tag>> :
+struct data<runir::kr::dl::Numerical<Tag>> :
     runir::kr::dl::BinaryData<runir::kr::dl::Numerical<Tag>,
                               runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>,
                               runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>>
@@ -103,6 +84,6 @@ struct Data<runir::kr::dl::Numerical<Tag>> :
     using Base::Base;
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 #endif

@@ -1,4 +1,6 @@
 #include "fixtures.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 #include <cstdint>
 #include <fmt/format.h>
@@ -20,7 +22,6 @@
 #include <tyr/formalism/planning/parser.hpp>
 #include <utility>
 #include <vector>
-#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::tests
 {
@@ -154,7 +155,7 @@ TEST(RunirTests, ExtStructuralTerminationActionRulesUseEffectOverapproximation)
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
 
     for (const auto& [effect, terminating] :
-         std::vector<std::pair<std::string, bool>> { { "(unchanged n)", true }, { "(decreases n)", true }, { "(increases n)", false }, { "", false } })
+         urd::Store<urd::sequence<std::pair<std::string, bool>>> { { "(unchanged n)", true }, { "(decreases n)", true }, { "(increases n)", false }, { "", false } })
     {
         SCOPED_TRACE(effect);
         const auto module_source = [&](bool action_rule)
@@ -357,14 +358,14 @@ TEST(RunirTests, ExtStructuralTerminationUnconstrainedReturnIsNotTerminating)
     ASSERT_NE(result.sieve_result.value().counterexample, nullptr);
 
     // The counterexample cycle uses both rules and spans both memory states.
-    auto rule_indices = std::set<ygg::Index<kr::ps::Rule<kr::ExtFamilyTag>>> {};
+    auto rule_indices = std::set<urd::index<kr::ps::Rule<kr::ExtFamilyTag>>> {};
     for (const auto& edge : result.sieve_result.value().counterexample->get_edges())
-        rule_indices.insert(edge.get_property().get_index());
+        rule_indices.insert(edge.get_property().index());
     EXPECT_EQ(rule_indices.size(), 2);
 
-    auto memory_state_indices = std::set<ygg::Index<kr::ps::ext::MemoryState>> {};
+    auto memory_state_indices = std::set<urd::index<kr::ps::ext::MemoryState>> {};
     for (const auto& vertex : result.sieve_result.value().counterexample->get_vertices())
-        memory_state_indices.insert(vertex.get_property().memory_state.get_index());
+        memory_state_indices.insert(vertex.get_property().memory_state.index());
     EXPECT_EQ(memory_state_indices.size(), 2);
 }
 
@@ -377,15 +378,15 @@ TEST(RunirTests, ExtStructuralTerminationPreservesSparseMemoryStateIdentities)
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
     for (const auto* name : { "unused_before", "m1", "unused_between", "m0" })
     {
-        auto data = ygg::Data<kr::ps::ext::MemoryState>(std::string(name));
+        auto data = urd::data<kr::ps::ext::MemoryState>(std::string(name));
         repository->insert(data);
     }
     const auto module_ =
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/non_terminating.module"), planning_task.get_domain().get_domain(), *repository);
     const auto memory_states = module_.get_memory_states();
     ASSERT_EQ(memory_states.size(), 2);
-    EXPECT_EQ(memory_states[0].get_index(), ygg::Index<kr::ps::ext::MemoryState>(1));
-    EXPECT_EQ(memory_states[1].get_index(), ygg::Index<kr::ps::ext::MemoryState>(3));
+    EXPECT_EQ(memory_states[0].index(), urd::index<kr::ps::ext::MemoryState>(1));
+    EXPECT_EQ(memory_states[1].index(), urd::index<kr::ps::ext::MemoryState>(3));
     EXPECT_EQ(memory_states[0].get_name(), "m1");
     EXPECT_EQ(memory_states[1].get_name(), "m0");
 
@@ -399,12 +400,12 @@ TEST(RunirTests, ExtStructuralTerminationPreservesSparseMemoryStateIdentities)
         const auto& graph = *result.sieve_result.value().counterexample;
         ASSERT_GT(graph.get_num_edges(), 0);
         for (const auto& edge : graph.get_edges())
-            ygg::visit(
+            std::visit(
                 [&](auto rule)
                 {
-                    EXPECT_EQ(graph.get_vertex(edge.get_source()).get_property().memory_state.get_index(), rule.get_source().get_index());
+                    EXPECT_EQ(graph.get_vertex(edge.get_source()).get_property().memory_state.index(), rule.get_source().index());
                     if constexpr (requires { rule.get_target(); })
-                        EXPECT_EQ(graph.get_vertex(edge.get_target()).get_property().memory_state.get_index(), rule.get_target().get_index());
+                        EXPECT_EQ(graph.get_vertex(edge.get_target()).get_property().memory_state.index(), rule.get_target().index());
                     else
                         ADD_FAILURE() << "Terminal rules cannot label structural termination edges.";
                 },
@@ -430,9 +431,9 @@ TEST(RunirTests, ExtStructuralTerminationIgnoresOneWayBridgeBetweenMemoryCycles)
     ASSERT_TRUE(result.sieve_result.has_value());
     ASSERT_NE(result.sieve_result.value().counterexample, nullptr);
 
-    auto rules = std::set<ygg::Index<kr::ps::Rule<kr::ExtFamilyTag>>> {};
+    auto rules = std::set<urd::index<kr::ps::Rule<kr::ExtFamilyTag>>> {};
     for (const auto& edge : result.sieve_result.value().counterexample->get_edges())
-        rules.insert(edge.get_property().get_index());
+        rules.insert(edge.get_property().index());
     EXPECT_EQ(rules.size(), 2);
 
     auto memory_states = std::set<std::string> {};
@@ -625,11 +626,11 @@ TEST(RunirTests, ExtStructuralTerminationPreservesCallLabelsAndOrder)
 
     for (const auto omit_target : { false, true })
     {
-        auto data = original.get_data();
+        auto data = original.data();
         if (omit_target)
             data.modules.pop_back();
         const auto program = repository->insert(data).first;
-        auto expected = std::vector<std::string> { "self", "first", "second", "back", "unreachable" };
+        auto expected = urd::Store<urd::sequence<std::string>> { "self", "first", "second", "back", "unreachable" };
         if (omit_target)
             expected.insert(expected.begin(), "missing");
         const auto check = [&](const auto& result)
@@ -638,7 +639,7 @@ TEST(RunirTests, ExtStructuralTerminationPreservesCallLabelsAndOrder)
             EXPECT_EQ(result.module_results.size(), omit_target ? 3 : 4);
             for (const auto& module_result : result.module_results)
                 EXPECT_TRUE(module_result.is_terminating());
-            auto actual = std::vector<std::string> {};
+            auto actual = urd::Store<urd::sequence<std::string>> {};
             for (const auto& rule : result.recursive_call_rules)
                 actual.emplace_back(rule.get_symbol());
             EXPECT_EQ(actual, expected);

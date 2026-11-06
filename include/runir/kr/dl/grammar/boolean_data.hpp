@@ -7,15 +7,14 @@
 #include <tuple>
 #include <utility>
 #include <variant>
-#include <yggdrasil/containers/variant.hpp>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
+#include <urd/elements/flat.hpp>
+#include <boost/mp11.hpp>
 
-namespace ygg
+namespace urd
 {
 
 template<tyr::formalism::FactKind T>
-struct Data<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicStateTag<T>>> :
+struct data<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicStateTag<T>>> :
     runir::kr::dl::PredicateData<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicStateTag<T>>, T>
 {
     using Base = runir::kr::dl::PredicateData<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicStateTag<T>>, T>;
@@ -23,7 +22,7 @@ struct Data<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicStateTag<T>>> :
 };
 
 template<tyr::formalism::FactKind T>
-struct Data<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicGoalTag<T>>> :
+struct data<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicGoalTag<T>>> :
     runir::kr::dl::PredicateData<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicGoalTag<T>>, T>
 {
     using Base = runir::kr::dl::PredicateData<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicGoalTag<T>>, T>;
@@ -31,30 +30,20 @@ struct Data<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicGoalTag<T>>> :
 };
 
 template<>
-struct Data<runir::kr::dl::grammar::Boolean<runir::kr::dl::NonemptyTag>>
+struct data<runir::kr::dl::grammar::Boolean<runir::kr::dl::NonemptyTag>>
 {
-    using ConstructorVariant = ::ygg::IndexVariant<GrammarArgumentTypes>;
-    using Arg = ConstructorVariant;
-    Index<runir::kr::dl::grammar::Boolean<runir::kr::dl::NonemptyTag>> index;
-    ConstructorVariant arg;
-    Data() = default;
-    explicit Data(ConstructorVariant arg_) : index(), arg(std::move(arg_)) {}
-    template<typename C>
-    using ViewVariant = ::ygg::ViewVariant<ConstructorVariant, C>;
-    template<typename C>
-    explicit Data(const ViewVariant<C>& arg_) :
-        index(),
-        arg(std::visit([](const auto& view) -> ConstructorVariant { return ConstructorVariant(view.get_index()); }, arg_))
-    {
-    }
+    using Arg = boost::mp11::mp_apply<::cista::offset::variant, runir::kr::dl::grammar::GrammarArgumentTypes>;
+    urd::index<runir::kr::dl::grammar::Boolean<runir::kr::dl::NonemptyTag>> index;
+    Arg arg;
+    data() = default;
+    explicit data(Arg arg_) : index(), arg(std::move(arg_)) {}
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::arg> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::arg> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::arg> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::arg> {}; }
 };
 
 template<>
-struct Data<runir::kr::dl::grammar::Boolean<runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>> :
+struct data<runir::kr::dl::grammar::Boolean<runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>> :
     runir::kr::dl::ArgumentData<runir::kr::dl::grammar::Boolean<runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>,
                                 runir::kr::dl::ArgumentIdentifier<runir::kr::dl::BooleanTag>>
 {
@@ -64,7 +53,7 @@ struct Data<runir::kr::dl::grammar::Boolean<runir::kr::dl::ArgumentTag<runir::kr
 };
 
 template<runir::kr::dl::ComparisonTag Tag>
-struct Data<runir::kr::dl::grammar::Boolean<Tag>> :
+struct data<runir::kr::dl::grammar::Boolean<Tag>> :
     runir::kr::dl::BinaryData<runir::kr::dl::grammar::Boolean<Tag>,
                               runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::comparison_operand_t<Tag>>,
                               runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::comparison_operand_t<Tag>>>
@@ -76,7 +65,7 @@ struct Data<runir::kr::dl::grammar::Boolean<Tag>> :
 };
 
 template<>
-struct Data<runir::kr::dl::grammar::Boolean<runir::kr::dl::BooleanConstantTag>> :
+struct data<runir::kr::dl::grammar::Boolean<runir::kr::dl::BooleanConstantTag>> :
     runir::kr::dl::IdentifierData<runir::kr::dl::grammar::Boolean<runir::kr::dl::BooleanConstantTag>, bool>
 {
     using Base = runir::kr::dl::IdentifierData<runir::kr::dl::grammar::Boolean<runir::kr::dl::BooleanConstantTag>, bool>;
@@ -84,7 +73,7 @@ struct Data<runir::kr::dl::grammar::Boolean<runir::kr::dl::BooleanConstantTag>> 
 };
 
 template<runir::kr::dl::LogicalBinaryTag Tag>
-struct Data<runir::kr::dl::grammar::Boolean<Tag>> :
+struct data<runir::kr::dl::grammar::Boolean<Tag>> :
     runir::kr::dl::BinaryData<runir::kr::dl::grammar::Boolean<Tag>,
                               runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::BooleanTag>,
                               runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::BooleanTag>>
@@ -96,7 +85,7 @@ struct Data<runir::kr::dl::grammar::Boolean<Tag>> :
 };
 
 template<>
-struct Data<runir::kr::dl::grammar::Boolean<runir::kr::dl::NotTag>> :
+struct data<runir::kr::dl::grammar::Boolean<runir::kr::dl::NotTag>> :
     runir::kr::dl::UnaryData<runir::kr::dl::grammar::Boolean<runir::kr::dl::NotTag>,
                              runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::BooleanTag>>
 {
@@ -105,6 +94,6 @@ struct Data<runir::kr::dl::grammar::Boolean<runir::kr::dl::NotTag>> :
     using Base::Base;
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 #endif

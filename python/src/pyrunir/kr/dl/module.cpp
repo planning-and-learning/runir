@@ -1,4 +1,5 @@
 #include "module.hpp"
+#include <yggdrasil/python/type_casters.hpp>
 
 #include "bindings.hpp"
 #include "cnf_grammar/module.hpp"

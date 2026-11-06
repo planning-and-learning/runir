@@ -10,6 +10,5 @@
 #include "runir/kr/dl/grammar/parser.hpp"
 #include "runir/kr/dl/grammar/views.hpp"
 
-#include <yggdrasil/core/types.hpp>
 
 #endif

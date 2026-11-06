@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_ICP_DETAIL_PROOF_GRAPH_HPP_
 
 #include "runir/graphs/cycle.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/ps/icp/detail/search_node.hpp"
 #include "runir/kr/ps/icp/program_executor_data.hpp"
 
@@ -17,12 +19,12 @@ namespace runir::kr::ps::icp::detail
 
 /// Materialize reached states and recorded transitions in discovery order, preserving parallel edges.
 template<tyr::TaskKind Kind>
-void build_proof_graph(ProgramProofResults<Kind>& result, const std::vector<SearchNode<Kind>>& nodes, std::span<const Predecessor> predecessors)
+void build_proof_graph(ProgramProofResults<Kind>& result, const urd::Store<urd::sequence<SearchNode<Kind>>>& nodes, std::span<const Predecessor> predecessors)
 {
     using VertexLabel = ProgramProofVertexLabel<Kind>;
     using Edge = std::tuple<graphs::VertexIndex, graphs::VertexIndex, ProgramProofEdgeLabel>;
 
-    auto vertices = std::vector<VertexLabel> {};
+    auto vertices = urd::Store<urd::sequence<VertexLabel>> {};
     vertices.reserve(nodes.size());
     result.deadend_states.clear();
     result.open_states.clear();
@@ -35,7 +37,7 @@ void build_proof_graph(ProgramProofResults<Kind>& result, const std::vector<Sear
         if (node.is_open)
             result.open_states.push_back(i);
     }
-    auto edges = std::vector<Edge> {};
+    auto edges = urd::Store<urd::sequence<Edge>> {};
     edges.reserve(predecessors.size());
     for (const auto& predecessor : predecessors)
     {

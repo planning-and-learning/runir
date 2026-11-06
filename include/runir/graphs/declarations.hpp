@@ -6,35 +6,38 @@
 #include <ranges>
 #include <tuple>
 #include <type_traits>
+#include <urd/elements/equal_to.hpp>
+#include <urd/elements/hash.hpp>
+#include <urd/repr/maps/unordered_flat_map.hpp>
+#include <urd/repr/values/std_set.hpp>
+#include <urd/repr/values/unordered_flat_set.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
-#include <yggdrasil/containers/associative_containers.hpp>
-#include <yggdrasil/core/concepts.hpp>
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/semantics/equal_to.hpp>
-#include <yggdrasil/semantics/hash.hpp>
+#include <urd/elements/flat.hpp>
 
 namespace runir::graphs
 {
 
 using VertexIndex = ygg::uint_t;
-using VertexIndexList = std::vector<VertexIndex>;
-using VertexIndexSet = ygg::UnorderedSet<VertexIndex>;
+using VertexIndexList = urd::Store<urd::sequence<VertexIndex>>;
+using VertexIndexSet = urd::Store<urd::set<VertexIndex>>;
 
 using EdgeIndex = ygg::uint_t;
-using EdgeIndexList = std::vector<EdgeIndex>;
-using EdgeIndexSet = ygg::UnorderedSet<EdgeIndex>;
+using EdgeIndexList = urd::Store<urd::sequence<EdgeIndex>>;
+using EdgeIndexSet = urd::Store<urd::set<EdgeIndex>>;
 
 using Degree = ygg::uint_t;
-using DegreeList = std::vector<Degree>;
+using DegreeList = urd::Store<urd::sequence<Degree>>;
 
 struct DenseIndexRangeTag;
 struct SparseIndexRangeTag;
 
 template<typename T>
 concept Property = requires(const T& lhs, const T& rhs) {
-    { ygg::Hash<T> {}(lhs) } -> std::convertible_to<std::size_t>;
-    { ygg::EqualTo<T> {}(lhs, rhs) } -> std::same_as<bool>;
+    { urd::Hash<T> {}(lhs) } -> std::convertible_to<std::size_t>;
+    { urd::EqualTo<T> {}(lhs, rhs) } -> std::same_as<bool>;
 };
 
 template<Property VertexProperty, Property EdgeProperty>
@@ -86,10 +89,10 @@ template<Property P>
 struct EdgeProperty;
 
 template<Property P>
-using VertexPropertyIndex = ygg::Index<VertexProperty<P>>;
+using VertexPropertyIndex = urd::index<VertexProperty<P>>;
 
 template<Property P>
-using EdgePropertyIndex = ygg::Index<EdgeProperty<P>>;
+using EdgePropertyIndex = urd::index<EdgeProperty<P>>;
 
 template<typename Tag>
 class PropertyMap;
@@ -116,15 +119,15 @@ concept IsGraph =
         { graph.get_out_degree(vertex) } -> std::convertible_to<Degree>;
 
         // The Boost adapter returns these iterators after the range wrapper is destroyed.
-        { graph.get_vertex_indices() } -> ygg::InputRangeOf<VertexIndex>;
+        requires std::same_as<std::ranges::range_value_t<decltype(graph.get_vertex_indices())>, VertexIndex>;
         { graph.get_vertex_indices() } -> std::ranges::forward_range;
         { graph.get_vertex_indices() } -> std::ranges::common_range;
         { graph.get_vertex_indices() } -> std::ranges::borrowed_range;
-        { graph.get_edge_indices() } -> ygg::InputRangeOf<EdgeIndex>;
+        requires std::same_as<std::ranges::range_value_t<decltype(graph.get_edge_indices())>, EdgeIndex>;
         { graph.get_edge_indices() } -> std::ranges::forward_range;
         { graph.get_edge_indices() } -> std::ranges::common_range;
         { graph.get_edge_indices() } -> std::ranges::borrowed_range;
-        { graph.get_out_edge_indices(vertex) } -> ygg::InputRangeOf<EdgeIndex>;
+        requires std::same_as<std::ranges::range_value_t<decltype(graph.get_out_edge_indices(vertex))>, EdgeIndex>;
         { graph.get_out_edge_indices(vertex) } -> std::ranges::forward_range;
         { graph.get_out_edge_indices(vertex) } -> std::ranges::common_range;
         { graph.get_out_edge_indices(vertex) } -> std::ranges::borrowed_range;

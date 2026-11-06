@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_DL_STRUCTURAL_TERMINATION_HPP_
 
 #include "runir/kr/ps/dl/declarations.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/ps/feature_view.hpp"
 
 #include <concepts>
@@ -10,9 +12,10 @@
 #include <limits>
 #include <optional>
 #include <stdexcept>
+#include <urd/repr/containers/bitset_span.hpp>
+#include <urd/repr/core/dependent_false.hpp>
 #include <vector>
-#include <yggdrasil/containers/dynamic_bitset.hpp>
-#include <yggdrasil/core/dependent_false.hpp>
+#include <urd/elements/flat.hpp>
 
 namespace runir::kr::ps::dl
 {
@@ -52,8 +55,8 @@ struct RuleProfile
         target_memory_position(target_memory_position_)
     {
         validate_feature_capacity(num_booleans, num_numericals);
-        ygg::BitsetSpan<std::uint64_t>(&boolean_unconstrained_effects, num_booleans).set();
-        ygg::BitsetSpan<std::uint64_t>(&numerical_unconstrained_effects, num_numericals).set();
+        urd::repr::BitsetSpan<std::uint64_t>(&boolean_unconstrained_effects, num_booleans).set();
+        urd::repr::BitsetSpan<std::uint64_t>(&numerical_unconstrained_effects, num_numericals).set();
     }
 
     template<typename ObservationTag>
@@ -68,7 +71,7 @@ struct RuleProfile
         else if constexpr (std::same_as<ObservationTag, EqualZero>)
             return numerical_zero_conditions;
         else
-            static_assert(ygg::dependent_false<ObservationTag>::value, "unhandled condition observation tag");
+            static_assert(urd::repr::dependent_false<ObservationTag>::value, "unhandled condition observation tag");
     }
 
     template<typename FeatureTag, typename ObservationTag>
@@ -91,7 +94,7 @@ struct RuleProfile
         else if constexpr (std::same_as<FeatureTag, runir::kr::dl::NumericalTag> && std::same_as<ObservationTag, Unconstrained>)
             return numerical_unconstrained_effects;
         else
-            static_assert(ygg::dependent_false<ObservationTag>::value, "unhandled effect feature or observation tag");
+            static_assert(urd::repr::dependent_false<ObservationTag>::value, "unhandled effect feature or observation tag");
     }
 };
 
@@ -100,7 +103,7 @@ struct QualitativePolicy
     std::size_t num_memory_states;
     std::size_t num_booleans;
     std::size_t num_numericals;
-    std::vector<RuleProfile> rule_profiles;
+    urd::Store<urd::sequence<RuleProfile>> rule_profiles;
 
     QualitativePolicy(std::size_t num_memory_states_, std::size_t num_booleans_, std::size_t num_numericals_) :
         num_memory_states(num_memory_states_),
@@ -144,36 +147,36 @@ struct IncompletePolicyResult
         FeatureKind feature_kind;
         std::size_t feature_position;
         /// Original policy-rule positions that established this mark.
-        std::vector<std::size_t> witnessing_rule_positions;
+        urd::Store<urd::sequence<std::size_t>> witnessing_rule_positions;
     };
 
     struct ResidualMemoryScope
     {
         /// Original memory positions in this final residual SCC.
-        std::vector<std::size_t> memory_positions;
+        urd::Store<urd::sequence<std::size_t>> memory_positions;
         /// Effective marks, including marks inherited through SCC refinement.
-        std::vector<MarkedFeature> marked_features;
+        urd::Store<urd::sequence<MarkedFeature>> marked_features;
     };
 
     struct BlockingReason
     {
         FeatureKind feature_kind;
         std::size_t feature_position;
-        std::vector<std::size_t> opposing_rule_positions;
+        urd::Store<urd::sequence<std::size_t>> opposing_rule_positions;
     };
 
     struct SurvivingRule
     {
         std::size_t rule_position;
-        std::vector<BlockingReason> blocking_reasons;
+        urd::Store<urd::sequence<BlockingReason>> blocking_reasons;
     };
 
-    std::vector<ResidualMemoryScope> residual_scopes;
-    std::vector<SurvivingRule> surviving_rules;
+    urd::Store<urd::sequence<ResidualMemoryScope>> residual_scopes;
+    urd::Store<urd::sequence<SurvivingRule>> surviving_rules;
 
     [[nodiscard]] bool is_terminating() const noexcept { return surviving_rules.empty(); }
     /// Original rule positions not ruled out by incomplete elimination.
-    [[nodiscard]] std::vector<std::size_t> get_cyclic_rule_positions() const;
+    [[nodiscard]] urd::Store<urd::sequence<std::size_t>> get_cyclic_rule_positions() const;
 };
 
 enum class StructuralTerminationStatus : std::uint8_t
@@ -201,14 +204,14 @@ struct CounterexampleEdge
 struct CounterexampleComponent
 {
     /// Original positions participating in this final cyclic SCC.
-    std::vector<std::size_t> memory_positions;
-    std::vector<std::size_t> boolean_positions;
-    std::vector<std::size_t> numerical_positions;
-    std::vector<CounterexampleVertex> vertices;
-    std::vector<CounterexampleEdge> edges;
+    urd::Store<urd::sequence<std::size_t>> memory_positions;
+    urd::Store<urd::sequence<std::size_t>> boolean_positions;
+    urd::Store<urd::sequence<std::size_t>> numerical_positions;
+    urd::Store<urd::sequence<CounterexampleVertex>> vertices;
+    urd::Store<urd::sequence<CounterexampleEdge>> edges;
 
     /// One closed path of positions into edges, preserving the rule labels.
-    [[nodiscard]] std::vector<std::size_t> get_cycle() const;
+    [[nodiscard]] urd::Store<urd::sequence<std::size_t>> get_cycle() const;
 };
 
 struct StructuralTerminationResult
@@ -217,12 +220,12 @@ struct StructuralTerminationResult
     /// Present only on failure when incomplete preprocessing was enabled.
     std::optional<IncompletePolicyResult> incomplete_frontier;
     /// One normalized component per final cyclic SCC; empty iff terminating.
-    std::vector<CounterexampleComponent> counterexample_components;
+    urd::Store<urd::sequence<CounterexampleComponent>> counterexample_components;
 
     [[nodiscard]] bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }
     /// Sorted unique original rule positions on any final residual cycle.
     /// Hybrid results use the final SIEVE frontier, not the incomplete prefix.
-    [[nodiscard]] std::vector<std::size_t> get_cyclic_rule_positions() const;
+    [[nodiscard]] urd::Store<urd::sequence<std::size_t>> get_cyclic_rule_positions() const;
 };
 
 /// Sound incomplete elimination; surviving rules are potentially cyclic.
@@ -241,8 +244,8 @@ StructuralTerminationResult structural_termination(const QualitativePolicy& poli
 template<runir::kr::FamilyTag Family, typename C>
 struct SccStructuralTerminationResult
 {
-    std::vector<ygg::View<ygg::Index<runir::kr::ps::Feature<Family, runir::kr::dl::BooleanTag>>, C>> booleans;
-    std::vector<ygg::View<ygg::Index<runir::kr::ps::Feature<Family, runir::kr::dl::NumericalTag>>, C>> numericals;
+    urd::Store<urd::sequence<urd::view<runir::kr::ps::Feature<Family, runir::kr::dl::BooleanTag>, C>>> booleans;
+    urd::Store<urd::sequence<urd::view<runir::kr::ps::Feature<Family, runir::kr::dl::NumericalTag>, C>>> numericals;
 };
 
 }  // namespace runir::kr::ps::dl

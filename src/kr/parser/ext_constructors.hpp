@@ -2,6 +2,9 @@
 #define RUNIR_SRC_KR_PARSER_EXT_CONSTRUCTORS_HPP_
 
 #include "kr/parser/constructors.hpp"
+#include <urd/repr/maps/std_map.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/parser/diagnostics.hpp"
 
 #include <string>
@@ -20,8 +23,8 @@ using constructors::Unwrapped;
 template<typename Entity>
 struct ReferenceTable
 {
-    std::unordered_map<std::string, ygg::Index<Entity>> by_name;
-    std::vector<ygg::Index<Entity>> by_identifier;
+    urd::Store<urd::map<std::string, urd::index<Entity>>, urd::stable_refs> by_name;
+    urd::Store<urd::sequence<urd::index<Entity>>> by_identifier;
 };
 
 struct ModuleReferences
@@ -113,11 +116,11 @@ inline auto parse(const runir::kr::dl::grammar::ast::ConstructorOrNonTerminal<Ca
 }
 
 template<typename Entity, typename Identifier, typename Reference>
-ygg::Index<Entity>
+urd::index<Entity>
 resolve_reference(const Reference& reference, const ReferenceTable<Entity>* declarations, const char* kind, const ConstructorContext& context)
 {
     return boost::apply_visitor(
-        [&]<typename Concrete>(const Concrete& concrete) -> ygg::Index<Entity>
+        [&]<typename Concrete>(const Concrete& concrete) -> urd::index<Entity>
         {
             if constexpr (std::same_as<Concrete, runir::kr::dl::grammar::ast::NumericReference>)
             {
@@ -133,7 +136,7 @@ resolve_reference(const Reference& reference, const ReferenceTable<Entity>* decl
                     auto data = runir::kr::dl::checkout<Entity>(context.builder());
                     data->name = std::to_string(concrete.value);
                     data->identifier = Identifier(concrete.value);
-                    return intern(context, *data).get_index();
+                    return intern(context, *data).index();
                 }
                 catch (const std::out_of_range&)
                 {
@@ -164,7 +167,7 @@ inline auto parse(const runir::kr::dl::grammar::ast::ConceptRegister& node, tyr:
         context.references() ? &context.references()->concept_registers : nullptr,
         "concept register",
         context);
-    return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
+    return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).index());
 }
 
 inline auto parse(const runir::kr::dl::grammar::ast::ConceptArgument& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
@@ -176,7 +179,7 @@ inline auto parse(const runir::kr::dl::grammar::ast::ConceptArgument& node, tyr:
         context.references() ? &context.references()->concept_arguments : nullptr,
         "concept argument",
         context);
-    return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
+    return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).index());
 }
 
 inline auto parse(const runir::kr::dl::grammar::ast::RoleRegister& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
@@ -188,7 +191,7 @@ inline auto parse(const runir::kr::dl::grammar::ast::RoleRegister& node, tyr::fo
         context.references() ? &context.references()->role_registers : nullptr,
         "role register",
         context);
-    return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).get_index());
+    return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).index());
 }
 
 inline auto parse(const runir::kr::dl::grammar::ast::RoleArgument& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
@@ -200,7 +203,7 @@ inline auto parse(const runir::kr::dl::grammar::ast::RoleArgument& node, tyr::fo
         context.references() ? &context.references()->role_arguments : nullptr,
         "role argument",
         context);
-    return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).get_index());
+    return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).index());
 }
 
 inline auto parse(const runir::kr::dl::grammar::ast::BooleanArgument& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
@@ -212,7 +215,7 @@ inline auto parse(const runir::kr::dl::grammar::ast::BooleanArgument& node, tyr:
         context.references() ? &context.references()->boolean_arguments : nullptr,
         "boolean argument",
         context);
-    return intern_constructor<runir::kr::dl::BooleanTag>(context, intern(context, *data).get_index());
+    return intern_constructor<runir::kr::dl::BooleanTag>(context, intern(context, *data).index());
 }
 
 inline auto parse(const runir::kr::dl::grammar::ast::NumericalArgument& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
@@ -224,7 +227,7 @@ inline auto parse(const runir::kr::dl::grammar::ast::NumericalArgument& node, ty
         context.references() ? &context.references()->numerical_arguments : nullptr,
         "numerical argument",
         context);
-    return intern_constructor<runir::kr::dl::NumericalTag>(context, intern(context, *data).get_index());
+    return intern_constructor<runir::kr::dl::NumericalTag>(context, intern(context, *data).index());
 }
 
 }  // namespace runir::kr::parser::ext_constructors

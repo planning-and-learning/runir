@@ -10,8 +10,6 @@ namespace runir::kr::ps::base
 
 using RepositoryBinding = nb::class_<Repository>;
 
-void bind_condition(nb::module_& m, RepositoryBinding& repository);
-void bind_effect(nb::module_& m, RepositoryBinding& repository);
 void bind_rule(nb::module_& m, RepositoryBinding& repository);
 void bind_sketch(nb::module_& m, RepositoryBinding& repository);
 void bind_repository(nb::module_& m, RepositoryBinding& repository);

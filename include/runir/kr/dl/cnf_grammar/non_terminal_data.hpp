@@ -7,24 +7,22 @@
 #include <string>
 #include <tuple>
 #include <utility>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
+#include <urd/elements/flat.hpp>
 
-namespace ygg
+namespace urd
 {
 
 template<runir::kr::dl::CategoryTag Category>
-struct Data<runir::kr::dl::cnf_grammar::NonTerminal<Category>>
+struct data<runir::kr::dl::cnf_grammar::NonTerminal<Category>>
 {
-    Index<runir::kr::dl::cnf_grammar::NonTerminal<Category>> index;
+    urd::index<runir::kr::dl::cnf_grammar::NonTerminal<Category>> index;
     ::cista::offset::string name;
 
-    Data() = default;
-    Data(::cista::offset::string name_) : index(), name(std::move(name_)) {}
+    data() = default;
+    data(::cista::offset::string name_) : index(), name(std::move(name_)) {}
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::name> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::name> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::name> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::name> {}; }
 };
 
 }

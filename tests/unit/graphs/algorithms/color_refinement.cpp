@@ -1,4 +1,6 @@
 #include "fixtures.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 #include <atomic>
 #include <boost/json.hpp>
@@ -22,14 +24,14 @@ namespace runir::tests
 namespace
 {
 
-struct VertexColor : ygg::comparison::Mixin<VertexColor>
+struct VertexColor : urd::compared_by_identity<VertexColor>
 {
     ygg::uint_t value = 0;
 
     VertexColor() = default;
     explicit VertexColor(ygg::uint_t value_) : value(value_) {}
 
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&VertexColor::value> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&VertexColor::value> {}; }
 };
 
 using GraphBuilder = graphs::StaticGraphBuilder<VertexColor>;
@@ -58,7 +60,7 @@ auto find_graph_case(std::string_view name) -> const boost::json::object&
 auto make_graph(const boost::json::object& object) -> Graph
 {
     auto builder = GraphBuilder();
-    auto vertices = std::vector<graphs::VertexIndex> {};
+    auto vertices = urd::Store<urd::sequence<graphs::VertexIndex>> {};
     const auto num_vertices = ygg::common::as_size(object, "num_vertices", "graph");
     vertices.reserve(num_vertices);
     for (std::size_t i = 0; i < num_vertices; ++i)
@@ -143,7 +145,7 @@ TEST(RunirTests, NautyCanonicalizationIsThreadSafe)
     auto matches = std::atomic(true);
 
     {
-        auto workers = std::vector<std::jthread> {};
+        auto workers = urd::Store<urd::sequence<std::jthread>> {};
         workers.reserve(8);
         for (size_t i = 0; i < 8; ++i)
         {

@@ -9,7 +9,8 @@
 #include <cstddef>
 #include <optional>
 #include <utility>
-#include <yggdrasil/containers/shared_object_pool.hpp>
+#include <urd/repr/slots/slots.hpp>
+#include <urd/store.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
@@ -22,7 +23,7 @@ struct SearchPath
 {
     using StoredState = StorageStoredState<Storage>;
     std::optional<StoredState> state;
-    ygg::SharedObjectPoolPtr<SearchPath<Kind, Storage>> parent;
+    std::shared_ptr<SearchPath<Kind, Storage>> parent;
     std::optional<datasets::StateGraphEdgeLabel> transition;
     std::optional<RuleVariantView> rule;
     ygg::uint_t choice_depth = 0;
@@ -33,7 +34,7 @@ struct SearchPath
     bool is_open = false;
 
     void initialize(StoredState state_,
-                    ygg::SharedObjectPoolPtr<SearchPath<Kind, Storage>> parent_,
+                    std::shared_ptr<SearchPath<Kind, Storage>> parent_,
                     std::optional<datasets::StateGraphEdgeLabel> transition_,
                     std::optional<RuleVariantView> rule_,
                     ygg::uint_t choice_depth_,
@@ -52,7 +53,7 @@ struct SearchPath
     {
         state.reset();
         // Releasing a long witness must not recursively destroy the entire parent chain.
-        while (parent && parent.ref_count() == 1)
+        while (parent && parent.use_count() == 1)
         {
             auto previous = std::move(parent);
             parent = std::move(previous->parent);

@@ -4,7 +4,6 @@
 #include <runir/kr/dl/repository.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <utility>
-#include <yggdrasil/core/concepts.hpp>
 
 namespace runir::tests
 {
@@ -14,25 +13,24 @@ namespace
 
 template<typename T, typename Repository>
 concept IndexedDataView =
-    std::constructible_from<ygg::Index<T>, ygg::uint_t> && ygg::Identifiable<ygg::Index<T>> && ygg::Identifiable<ygg::Data<T>>
-    && ygg::Identifiable<ygg::View<ygg::Index<T>, Repository>> && std::totally_ordered<ygg::Index<T>> && std::totally_ordered<ygg::Data<T>>
-    && std::totally_ordered<ygg::View<ygg::Index<T>, Repository>> && requires(ygg::Data<T>& data, const ygg::View<ygg::Index<T>, Repository>& view) {
+    std::constructible_from<urd::index<T>, ygg::uint_t> && urd::Identifiable<urd::index<T>> && urd::Identifiable<urd::data<T>>
+    && urd::Identifiable<urd::view<T, Repository>> && std::totally_ordered<urd::index<T>> && std::totally_ordered<urd::data<T>>
+    && std::totally_ordered<urd::view<T, Repository>> && requires(urd::data<T>& data, const urd::view<T, Repository>& view) {
            data.index;
            data.variant;
-           data.clear();
-           view.get_index();
+           view.index();
            view.get_variant();
        };
 
 template<typename... Ts>
-consteval bool indexed_data_views(ygg::TypeList<Ts...>)
+consteval bool indexed_data_views(boost::mp11::mp_list<Ts...>)
 { return (IndexedDataView<Ts, kr::dl::ConstructorRepository> && ...); }
 
 template<typename Category>
 consteval bool view_alias()
 {
     using Entity = kr::dl::Constructor<Category>;
-    using View = ygg::View<ygg::Index<Entity>, kr::dl::ConstructorRepository>;
+    using View = urd::view<Entity, kr::dl::ConstructorRepository>;
     static_assert(std::same_as<View, kr::dl::ConstructorView<Category>>);
     if constexpr (false)
         return std::same_as<View, kr::dl::ConstructorView<Category>>;
@@ -43,7 +41,7 @@ consteval bool view_alias()
 }
 
 template<typename... Categories>
-consteval bool view_aliases(ygg::TypeList<Categories...>)
+consteval bool view_aliases(boost::mp11::mp_list<Categories...>)
 { return (view_alias<Categories>() && ...); }
 
 template<typename Category>
@@ -51,9 +49,9 @@ consteval bool query_projection_contract()
 {
     using Entity = kr::dl::QueryProjection<Category>;
     using Repository = kr::dl::ConstructorRepository;
-    using View = ygg::View<ygg::Index<Entity>, Repository>;
-    return ygg::ViewConcept<ygg::Index<Entity>, Repository>&&
-        requires(ygg::Data<Entity> & data, const View& view)
+    using View = urd::view<Entity, Repository>;
+    return urd::resolves<Repository, Entity>&&
+        requires(urd::data<Entity> & data, const View& view)
     {
         data.arg;
         data.columns;
@@ -64,12 +62,12 @@ consteval bool query_projection_contract()
 }
 
 template<typename... Tags>
-consteval bool query_view_contracts(ygg::TypeList<Tags...>)
+consteval bool query_view_contracts(boost::mp11::mp_list<Tags...>)
 {
     using Repository = kr::dl::ConstructorRepository;
-    return ygg::ViewConcept<ygg::Index<kr::dl::QueryColumn>, Repository> && ygg::ViewConcept<ygg::Index<kr::dl::Query<>>, Repository>
+    return urd::resolves<Repository, kr::dl::QueryColumn> && urd::resolves<Repository, kr::dl::Query<>>
            && query_projection_contract<kr::dl::ConceptTag>() && query_projection_contract<kr::dl::RoleTag>()
-           && (ygg::ViewConcept<ygg::Index<kr::dl::Query<Tags>>, Repository> && ...);
+           && (urd::resolves<Repository, kr::dl::Query<Tags>> && ...);
 }
 
 static_assert(query_view_contracts<>(kr::dl::QueryConstructorTags {}));
@@ -85,11 +83,11 @@ TEST(RunirKrDlConstructor, PreservesConcreteVariant)
     using Constructor = kr::dl::Constructor<kr::dl::ConceptTag>;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_repository);
-    auto data = ygg::Data<Constructor>(ygg::Index<Concrete>(6));
+    auto data = urd::data<Constructor>(urd::index<Concrete>(6));
     const auto constructor = repository->insert(data).first;
 
-    ASSERT_TRUE(constructor.get_variant().template is<ygg::Index<Concrete>>());
-    EXPECT_EQ(constructor.get_variant().template get<ygg::Index<Concrete>>().get_index(), ygg::Index<Concrete>(6));
+    ASSERT_TRUE((std::holds_alternative<urd::view<Concrete, runir::kr::dl::ConstructorRepository>>(constructor.get_variant())));
+    EXPECT_EQ((std::get<urd::view<Concrete, runir::kr::dl::ConstructorRepository>>(constructor.get_variant()).index()), urd::index<Concrete>(6));
 }
 
 TEST(RunirKrDlConstructor, SharedInterningCanonicalizesAndPrepares)
@@ -98,25 +96,25 @@ TEST(RunirKrDlConstructor, SharedInterningCanonicalizesAndPrepares)
     {
         auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
         auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_repository);
-        auto top = ygg::Data<kr::dl::Concept<kr::dl::TopTag>>();
-        auto bot = ygg::Data<kr::dl::Concept<kr::dl::BotTag>>();
-        auto first_data = ygg::Data<kr::dl::Constructor<kr::dl::ConceptTag>>(ygg::formalism::insert(*repository, top).first.get_index());
-        auto second_data = ygg::Data<kr::dl::Constructor<kr::dl::ConceptTag>>(ygg::formalism::insert(*repository, bot).first.get_index());
+        auto top = urd::data<kr::dl::Concept<kr::dl::TopTag>>();
+        auto bot = urd::data<kr::dl::Concept<kr::dl::BotTag>>();
+        auto first_data = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(ygg::formalism::insert(*repository, top).first.index());
+        auto second_data = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(ygg::formalism::insert(*repository, bot).first.index());
         const auto first = ygg::formalism::insert(*repository, first_data).first;
         const auto second = ygg::formalism::insert(*repository, second_data).first;
         EXPECT_TRUE(first.is_static());
         EXPECT_TRUE(second.is_static());
 
-        auto data = ygg::Data<kr::dl::Concept<kr::dl::IntersectionTag>>(second.get_index(), first.get_index());
+        auto data = urd::data<kr::dl::Concept<kr::dl::IntersectionTag>>(second.index(), first.index());
         ASSERT_FALSE(kr::dl::is_canonical(data));
         const auto [intersection, created] = ygg::formalism::insert(*repository, data);
         EXPECT_TRUE(created);
         EXPECT_TRUE(kr::dl::is_canonical(data));
-        EXPECT_EQ(data.lhs, first.get_index());
+        EXPECT_EQ(data.lhs, first.index());
         std::swap(data.lhs, data.rhs);
         const auto [same, duplicate_created] = kr::dl::insert(*repository, data);
         EXPECT_FALSE(duplicate_created);
-        EXPECT_EQ(same.get_index(), intersection.get_index());
+        EXPECT_EQ(same.index(), intersection.index());
     };
     check();
 }

@@ -4,17 +4,17 @@
 #include "runir/kr/ps/icp/execution_data.hpp"
 
 #include <tyr/declarations.hpp>
-#include <yggdrasil/core/type_list.hpp>
+#include <boost/mp11.hpp>
 #include <yggdrasil/formalism/builder.hpp>
 
 namespace runir::kr::ps::icp
 {
 
 template<tyr::TaskKind Kind>
-using ExecutionRepositoryTypes = ygg::TypeList<Histories, ProgramState<Kind>>;
+using ExecutionRepositoryTypes = boost::mp11::mp_list<Histories, ProgramState<Kind>>;
 
 template<tyr::TaskKind Kind>
-using ExecutionBuilder = ygg::ApplyTypeListT<ygg::formalism::BuilderStorage, ExecutionRepositoryTypes<Kind>>;
+using ExecutionBuilder = boost::mp11::mp_apply<ygg::formalism::BuilderStorage, ExecutionRepositoryTypes<Kind>>;
 
 }
 

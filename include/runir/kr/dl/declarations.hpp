@@ -9,8 +9,8 @@
 #include <stdexcept>
 #include <type_traits>
 #include <tyr/formalism/declarations.hpp>
-#include <yggdrasil/core/type_list.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <boost/mp11.hpp>
+#include <urd/elements/flat.hpp>
 
 namespace runir::kr::dl
 {
@@ -48,9 +48,9 @@ concept ConceptOrRoleTag = std::same_as<T, ConceptTag> || std::same_as<T, RoleTa
 template<typename T>
 concept BooleanOrNumericalTag = std::same_as<T, BooleanTag> || std::same_as<T, NumericalTag>;
 
-using CategoryTags = ygg::TypeList<ConceptTag, RoleTag, BooleanTag, NumericalTag>;
-using ConceptOrRoleTags = ygg::TypeList<ConceptTag, RoleTag>;
-using BooleanOrNumericalTags = ygg::TypeList<BooleanTag, NumericalTag>;
+using CategoryTags = boost::mp11::mp_list<ConceptTag, RoleTag, BooleanTag, NumericalTag>;
+using ConceptOrRoleTags = boost::mp11::mp_list<ConceptTag, RoleTag>;
+using BooleanOrNumericalTags = boost::mp11::mp_list<BooleanTag, NumericalTag>;
 
 /**
  * Truth values
@@ -363,10 +363,10 @@ struct ArgumentSlot
 };
 
 template<ConceptOrRoleTag Category>
-using RegisterIdentifier = ygg::Index<RegisterSlot<Category>>;
+using RegisterIdentifier = urd::index<RegisterSlot<Category>>;
 
 template<CategoryTag Category>
-using ArgumentIdentifier = ygg::Index<ArgumentSlot<Category>>;
+using ArgumentIdentifier = urd::index<ArgumentSlot<Category>>;
 
 /**
  * Uns family constructors
@@ -714,7 +714,7 @@ struct QueryMustPassTag
     static constexpr auto keyword = "q_must_pass";
 };
 
-using QueryConstructorTags = ygg::TypeList<AtomicStateTag<tyr::formalism::StaticTag>,
+using QueryConstructorTags = boost::mp11::mp_list<AtomicStateTag<tyr::formalism::StaticTag>,
                                            AtomicStateTag<tyr::formalism::FluentTag>,
                                            AtomicStateTag<tyr::formalism::DerivedTag>,
                                            AtomicGoalTag<tyr::formalism::StaticTag>,
@@ -733,7 +733,7 @@ using QueryConstructorTags = ygg::TypeList<AtomicStateTag<tyr::formalism::Static
                                            QueryEmptyTag,
                                            QueryMustPassTag>;
 
-using BaseConceptConstructorTags = ygg::TypeList<BotTag,
+using BaseConceptConstructorTags = boost::mp11::mp_list<BotTag,
                                                  TopTag,
                                                  AtomicStateTag<tyr::formalism::StaticTag>,
                                                  AtomicStateTag<tyr::formalism::FluentTag>,
@@ -758,7 +758,7 @@ using BaseConceptConstructorTags = ygg::TypeList<BotTag,
                                                  OneOfTag,
                                                  NominalTag>;
 
-using BaseRoleConstructorTags = ygg::TypeList<UniversalTag,
+using BaseRoleConstructorTags = boost::mp11::mp_list<UniversalTag,
                                               AtomicStateTag<tyr::formalism::StaticTag>,
                                               AtomicStateTag<tyr::formalism::FluentTag>,
                                               AtomicStateTag<tyr::formalism::DerivedTag>,
@@ -775,7 +775,7 @@ using BaseRoleConstructorTags = ygg::TypeList<UniversalTag,
                                               RestrictionTag,
                                               IdentityTag>;
 
-using BaseBooleanConstructorTags = ygg::TypeList<AtomicStateTag<tyr::formalism::StaticTag>,
+using BaseBooleanConstructorTags = boost::mp11::mp_list<AtomicStateTag<tyr::formalism::StaticTag>,
                                                  AtomicStateTag<tyr::formalism::FluentTag>,
                                                  AtomicStateTag<tyr::formalism::DerivedTag>,
                                                  AtomicGoalTag<tyr::formalism::StaticTag>,
@@ -783,12 +783,12 @@ using BaseBooleanConstructorTags = ygg::TypeList<AtomicStateTag<tyr::formalism::
                                                  AtomicGoalTag<tyr::formalism::DerivedTag>,
                                                  NonemptyTag>;
 
-using BaseNumericalConstructorTags = ygg::TypeList<CountTag, DistanceTag>;
+using BaseNumericalConstructorTags = boost::mp11::mp_list<CountTag, DistanceTag>;
 
-using NumericalBinaryConstructorTags = ygg::TypeList<AddTag, SubTag, MulTag, DivTag, MinTag, MaxTag>;
-using ArithmeticConstructorTags = ygg::ConcatTypeListsT<ygg::TypeList<NumericalConstantTag>, NumericalBinaryConstructorTags>;
+using NumericalBinaryConstructorTags = boost::mp11::mp_list<AddTag, SubTag, MulTag, DivTag, MinTag, MaxTag>;
+using ArithmeticConstructorTags = boost::mp11::mp_append<boost::mp11::mp_list<NumericalConstantTag>, NumericalBinaryConstructorTags>;
 
-using ComparisonConstructorTags = ygg::TypeList<EqTag<BooleanTag>,
+using ComparisonConstructorTags = boost::mp11::mp_list<EqTag<BooleanTag>,
                                                 NeqTag<BooleanTag>,
                                                 LtTag<BooleanTag>,
                                                 LeTag<BooleanTag>,
@@ -801,17 +801,17 @@ using ComparisonConstructorTags = ygg::TypeList<EqTag<BooleanTag>,
                                                 GtTag<NumericalTag>,
                                                 GeTag<NumericalTag>>;
 
-using LogicalConstructorTags = ygg::TypeList<AndTag, OrTag, NotTag>;
+using LogicalConstructorTags = boost::mp11::mp_list<AndTag, OrTag, NotTag>;
 
 /// Every language shares one constructor set; a language's parser rejects what it does not support.
-using ConceptConstructorTags = ygg::ConcatTypeListsT<BaseConceptConstructorTags, ygg::TypeList<RegisterTag, ArgumentTag<ConceptTag>>>;
-using RoleConstructorTags = ygg::ConcatTypeListsT<BaseRoleConstructorTags, ygg::TypeList<RegisterTag, ArgumentTag<RoleTag>>>;
-using BooleanConstructorTags = ygg::ConcatTypeListsT<BaseBooleanConstructorTags,
+using ConceptConstructorTags = boost::mp11::mp_append<BaseConceptConstructorTags, boost::mp11::mp_list<RegisterTag, ArgumentTag<ConceptTag>>>;
+using RoleConstructorTags = boost::mp11::mp_append<BaseRoleConstructorTags, boost::mp11::mp_list<RegisterTag, ArgumentTag<RoleTag>>>;
+using BooleanConstructorTags = boost::mp11::mp_append<BaseBooleanConstructorTags,
                                                      ComparisonConstructorTags,
-                                                     ygg::TypeList<BooleanConstantTag>,
+                                                     boost::mp11::mp_list<BooleanConstantTag>,
                                                      LogicalConstructorTags,
-                                                     ygg::TypeList<ArgumentTag<BooleanTag>>>;
-using NumericalConstructorTags = ygg::ConcatTypeListsT<BaseNumericalConstructorTags, ArithmeticConstructorTags, ygg::TypeList<ArgumentTag<NumericalTag>>>;
+                                                     boost::mp11::mp_list<ArgumentTag<BooleanTag>>>;
+using NumericalConstructorTags = boost::mp11::mp_append<BaseNumericalConstructorTags, ArithmeticConstructorTags, boost::mp11::mp_list<ArgumentTag<NumericalTag>>>;
 
 /// Feature generation grammars and their CNF build only these constructors.
 using GenerationConceptConstructorTags = BaseConceptConstructorTags;
@@ -820,28 +820,28 @@ using GenerationBooleanConstructorTags = BaseBooleanConstructorTags;
 using GenerationNumericalConstructorTags = BaseNumericalConstructorTags;
 
 template<typename T>
-concept ConceptConstructorTag = ygg::InTypeList<T, ConceptConstructorTags>;
+concept ConceptConstructorTag = boost::mp11::mp_contains<ConceptConstructorTags, T>::value;
 
 template<typename T>
-concept RoleConstructorTag = ygg::InTypeList<T, RoleConstructorTags>;
+concept RoleConstructorTag = boost::mp11::mp_contains<RoleConstructorTags, T>::value;
 
 template<typename T>
-concept BooleanConstructorTag = ygg::InTypeList<T, BooleanConstructorTags>;
+concept BooleanConstructorTag = boost::mp11::mp_contains<BooleanConstructorTags, T>::value;
 
 template<typename T>
-concept NumericalConstructorTag = ygg::InTypeList<T, NumericalConstructorTags>;
+concept NumericalConstructorTag = boost::mp11::mp_contains<NumericalConstructorTags, T>::value;
 
 template<typename T>
-concept BaseConceptConstructorTag = ygg::InTypeList<T, BaseConceptConstructorTags>;
+concept BaseConceptConstructorTag = boost::mp11::mp_contains<BaseConceptConstructorTags, T>::value;
 
 template<typename T>
-concept BaseRoleConstructorTag = ygg::InTypeList<T, BaseRoleConstructorTags>;
+concept BaseRoleConstructorTag = boost::mp11::mp_contains<BaseRoleConstructorTags, T>::value;
 
 template<typename T>
-concept BaseBooleanConstructorTag = ygg::InTypeList<T, BaseBooleanConstructorTags>;
+concept BaseBooleanConstructorTag = boost::mp11::mp_contains<BaseBooleanConstructorTags, T>::value;
 
 template<typename T>
-concept BaseNumericalConstructorTag = ygg::InTypeList<T, BaseNumericalConstructorTags>;
+concept BaseNumericalConstructorTag = boost::mp11::mp_contains<BaseNumericalConstructorTags, T>::value;
 
 template<typename Tag>
     requires ConceptConstructorTag<Tag>
@@ -873,31 +873,31 @@ class BasicConstructorRepositoryFactory;
 
 }  // namespace detail
 
-using ConceptTypes = ygg::MapTypeListT<Concept, ConceptConstructorTags>;
+using ConceptTypes = boost::mp11::mp_transform<Concept, ConceptConstructorTags>;
 
-using RoleTypes = ygg::MapTypeListT<Role, RoleConstructorTags>;
+using RoleTypes = boost::mp11::mp_transform<Role, RoleConstructorTags>;
 
-using BooleanTypes = ygg::MapTypeListT<Boolean, BooleanConstructorTags>;
+using BooleanTypes = boost::mp11::mp_transform<Boolean, BooleanConstructorTags>;
 
-using NumericalTypes = ygg::MapTypeListT<Numerical, NumericalConstructorTags>;
+using NumericalTypes = boost::mp11::mp_transform<Numerical, NumericalConstructorTags>;
 
-using ConstructorTypes = ygg::MapTypeListT<Constructor, CategoryTags>;
+using ConstructorTypes = boost::mp11::mp_transform<Constructor, CategoryTags>;
 
-using QueryTypes = ygg::MapTypeListT<Query, QueryConstructorTags>;
+using QueryTypes = boost::mp11::mp_transform<Query, QueryConstructorTags>;
 
 using ReferenceTypes = std::conditional_t<
     true,
-    ygg::TypeList<Argument<ConceptTag>, Argument<RoleTag>, Argument<BooleanTag>, Argument<NumericalTag>, Register<ConceptTag>, Register<RoleTag>>,
-    ygg::TypeList<>>;
+    boost::mp11::mp_list<Argument<ConceptTag>, Argument<RoleTag>, Argument<BooleanTag>, Argument<NumericalTag>, Register<ConceptTag>, Register<RoleTag>>,
+    boost::mp11::mp_list<>>;
 
-using ConstructorRepositoryTypes = ygg::ConcatTypeListsT<ConceptTypes,
+using ConstructorRepositoryTypes = boost::mp11::mp_append<ConceptTypes,
                                                          RoleTypes,
                                                          BooleanTypes,
                                                          NumericalTypes,
                                                          ConstructorTypes,
                                                          ReferenceTypes,
                                                          QueryTypes,
-                                                         ygg::TypeList<Query<>, QueryColumn, QueryProjection<ConceptTag>, QueryProjection<RoleTag>>>;
+                                                         boost::mp11::mp_list<Query<>, QueryColumn, QueryProjection<ConceptTag>, QueryProjection<RoleTag>>>;
 
 using ConstructorRepository = runir::kr::dl::detail::BasicConstructorRepository<ConstructorRepositoryTypes>;
 
@@ -907,31 +907,31 @@ using ConstructorRepositoryFactory = runir::kr::dl::detail::BasicConstructorRepo
 
 template<typename Tag>
     requires ConceptConstructorTag<Tag>
-using ConceptView = ygg::View<ygg::Index<Concept<Tag>>, ConstructorRepository>;
+using ConceptView = urd::view<Concept<Tag>, ConstructorRepository>;
 
 template<typename Tag>
     requires RoleConstructorTag<Tag>
-using RoleView = ygg::View<ygg::Index<Role<Tag>>, ConstructorRepository>;
+using RoleView = urd::view<Role<Tag>, ConstructorRepository>;
 
 template<typename Tag>
     requires BooleanConstructorTag<Tag>
-using BooleanView = ygg::View<ygg::Index<Boolean<Tag>>, ConstructorRepository>;
+using BooleanView = urd::view<Boolean<Tag>, ConstructorRepository>;
 
 template<typename Tag>
     requires NumericalConstructorTag<Tag>
-using NumericalView = ygg::View<ygg::Index<Numerical<Tag>>, ConstructorRepository>;
+using NumericalView = urd::view<Numerical<Tag>, ConstructorRepository>;
 
 template<CategoryTag Category>
-using ConstructorView = ygg::View<ygg::Index<Constructor<Category>>, ConstructorRepository>;
+using ConstructorView = urd::view<Constructor<Category>, ConstructorRepository>;
 
 template<typename Tag = void>
-using QueryView = ygg::View<ygg::Index<Query<Tag>>, ConstructorRepository>;
+using QueryView = urd::view<Query<Tag>, ConstructorRepository>;
 
 template<CategoryTag Category>
-using ArgumentView = ygg::View<ygg::Index<Argument<Category>>, ConstructorRepository>;
+using ArgumentView = urd::view<Argument<Category>, ConstructorRepository>;
 
 template<ConceptOrRoleTag Category>
-using RegisterView = ygg::View<ygg::Index<Register<Category>>, ConstructorRepository>;
+using RegisterView = urd::view<Register<Category>, ConstructorRepository>;
 }
 
 #endif

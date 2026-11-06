@@ -1,4 +1,7 @@
 #include "bindings.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
+#include <urd/python/sequences/sequence.hpp>
 #include "pyrunir/kr/binding_utils.hpp"
 
 #include <nanobind/stl/vector.h>
@@ -24,26 +27,26 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
 {
     using namespace nb::literals;
     using T = runir::kr::ps::Rule<runir::kr::BaseFamilyTag>;
-    using Data = ygg::Data<T>;
-    using View = ygg::View<ygg::Index<T>, Repository>;
+    using Data = urd::data<T>;
+    using View = urd::view<T, Repository>;
     using GroundContext = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>;
     using LiftedContext = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
 
-    ygg::bind_index<ygg::Index<T>>(m, "RuleIndex");
+    urd::python::bind_index<urd::index<T>>(m, "RuleIndex");
 
-    using ConditionIndex = ygg::Index<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>>;
-    using EffectIndex = ygg::Index<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>>;
+    using ConditionIndex = runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>;
+    using EffectIndex = runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>;
     auto data = nb::class_<Data>(m, "RuleData")
                     .def(nb::init<>())
                     .def(nb::init<::cista::offset::string,
-                                  ygg::IndexList<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>>,
-                                  ygg::IndexList<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>>>(),
+                                  runir::kr::ps::ConditionList<runir::kr::BaseFamilyTag>,
+                                  runir::kr::ps::EffectList<runir::kr::BaseFamilyTag>>(),
                          "symbol"_a,
                          "conditions"_a,
                          "effects"_a)
-                    .def(nb::init<::cista::offset::string,
-                                  const std::vector<ygg::View<ConditionIndex, Repository>>&,
-                                  const std::vector<ygg::View<EffectIndex, Repository>>&>(),
+                    .def(urd::python::init_from_views<::cista::offset::string,
+                                  const urd::Store<urd::sequence<urd::resolved_t<ConditionIndex, Repository>>>&,
+                                  const urd::Store<urd::sequence<urd::resolved_t<EffectIndex, Repository>>>&>(),
                          "symbol"_a,
                          "conditions"_a,
                          "effects"_a)
@@ -51,16 +54,16 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
                     .def_rw("symbol", &Data::symbol)
                     .def_rw("conditions", &Data::conditions)
                     .def_rw("effects", &Data::effects);
-    ygg::add_comparison(data);
+    urd::python::add_comparison(data);
 
     auto view = nb::class_<View>(m, "Rule")
-                    .def("get_index", &View::get_index)
+                    .def("get_index", &View::index)
                     .def("get_symbol", &View::get_symbol)
                     .def("get_conditions", &View::get_conditions)
                     .def("get_effects", &View::get_effects);
     ygg::add_print(view);
-    ygg::add_comparison(view);
-    ygg::add_hash(view);
+    urd::python::add_comparison(view);
+    urd::python::add_hash(view);
     view.def(
             "is_compatible_with",
             [](View value, GroundContext& context) { return runir::kr::ps::base::is_compatible_with<tyr::GroundTag>(value, context); },

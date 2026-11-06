@@ -7,27 +7,25 @@
 #include <string>
 #include <tuple>
 #include <utility>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
+#include <urd/elements/flat.hpp>
 
-namespace ygg
+namespace urd
 {
 
 template<runir::kr::dl::CategoryTag Category>
-struct Data<runir::kr::dl::Argument<Category>>
+struct data<runir::kr::dl::Argument<Category>>
 {
-    Index<runir::kr::dl::Argument<Category>> index;
+    urd::index<runir::kr::dl::Argument<Category>> index;
     ::cista::offset::string name;
     runir::kr::dl::ArgumentIdentifier<Category> identifier;
 
-    Data() = default;
-    Data(::cista::offset::string name_, runir::kr::dl::ArgumentIdentifier<Category> identifier_) : index(), name(std::move(name_)), identifier(identifier_) {}
+    data() = default;
+    data(::cista::offset::string name_, runir::kr::dl::ArgumentIdentifier<Category> identifier_) : index(), name(std::move(name_)), identifier(identifier_) {}
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::name, &Data::identifier> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::name, &Data::identifier> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::name, &data::identifier> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::name, &data::identifier> {}; }
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 #endif

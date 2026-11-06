@@ -13,13 +13,9 @@ ps::dl::RuleProfile make_rule_profile(SketchView sketch, RuleView rule)
 {
     auto profile = ps::dl::RuleProfile(sketch.get_features<runir::kr::dl::BooleanTag>().size(), sketch.get_features<runir::kr::dl::NumericalTag>().size());
     for (auto condition : rule.get_conditions())
-        ygg::visit([&](auto concrete_variant)
-                   { ygg::visit([&](auto concrete) { ps::detail::record_condition(sketch, profile, concrete); }, concrete_variant.get_variant()); },
-                   condition.get_variant());
+        std::visit([&](auto concrete) { ps::detail::record_condition(sketch, profile, concrete); }, condition);
     for (auto effect : rule.get_effects())
-        ygg::visit([&](auto concrete_variant)
-                   { ygg::visit([&](auto concrete) { ps::detail::record_effect(sketch, profile, concrete); }, concrete_variant.get_variant()); },
-                   effect.get_variant());
+        std::visit([&](auto concrete) { ps::detail::record_effect(sketch, profile, concrete); }, effect);
     return profile;
 }
 

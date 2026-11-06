@@ -10,8 +10,8 @@
 #include <concepts>
 #include <cstdint>
 #include <memory>
-#include <yggdrasil/core/type_list.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <boost/mp11.hpp>
+#include <urd/elements/flat.hpp>
 
 namespace runir::kr::ps::ext
 {
@@ -100,34 +100,36 @@ struct Program
 {
 };
 
-using LoadRuleTypes = ygg::TypeList<Rule<LoadTag<runir::kr::dl::ConceptTag>>, Rule<LoadTag<runir::kr::dl::RoleTag>>>;
-using ChooseRuleTypes = ygg::TypeList<Rule<ChooseTag<runir::kr::dl::ConceptTag>>, Rule<ChooseTag<runir::kr::dl::RoleTag>>>;
-using ConcreteRuleTypes = ygg::ConcatTypeListsT<LoadRuleTypes,
-                                                ygg::MapTypeListT<Rule, ygg::TypeList<SketchTag, DoTag, CallTag>>,
+using LoadRuleTypes = boost::mp11::mp_list<Rule<LoadTag<runir::kr::dl::ConceptTag>>, Rule<LoadTag<runir::kr::dl::RoleTag>>>;
+using ChooseRuleTypes = boost::mp11::mp_list<Rule<ChooseTag<runir::kr::dl::ConceptTag>>, Rule<ChooseTag<runir::kr::dl::RoleTag>>>;
+using ConcreteRuleTypes = boost::mp11::mp_append<LoadRuleTypes,
+                                                boost::mp11::mp_transform<Rule, boost::mp11::mp_list<SketchTag, DoTag, CallTag>>,
                                                 ChooseRuleTypes,
-                                                ygg::MapTypeListT<Rule, ygg::TypeList<ActionTag, BacktrackTag>>>;
-using RuleTypes = ygg::ConcatTypeListsT<ygg::TypeList<ps::Rule<ExtFamilyTag>>, ConcreteRuleTypes>;
+                                                boost::mp11::mp_transform<Rule, boost::mp11::mp_list<ActionTag, BacktrackTag>>>;
+using RuleTypes = boost::mp11::mp_append<boost::mp11::mp_list<ps::Rule<ExtFamilyTag>>, ConcreteRuleTypes>;
 using FeatureTypes = runir::kr::ps::PsFeatureTypes<runir::kr::ExtFamilyTag>;
 using ConditionTypes = runir::kr::ps::PsConditionTypes<runir::kr::ExtFamilyTag>;
 using EffectTypes = runir::kr::ps::PsEffectTypes<runir::kr::ExtFamilyTag>;
-using ProgramTypes = ygg::TypeList<MemoryState, ModuleSymbol, Module, Program, OrderTerm>;
+/// A call rule's argument: a feature of any category.
+using CallArgument = urd::index_variant<boost::mp11::mp_transform_q<boost::mp11::mp_bind_front<runir::kr::ps::Feature, runir::kr::ExtFamilyTag>, runir::kr::dl::CategoryTags>>;
+using ProgramTypes = boost::mp11::mp_list<MemoryState, ModuleSymbol, Module, Program, OrderTerm>;
 using RepositoryTypes =
-    ygg::ConcatTypeListsT<runir::kr::ps::base::RepositoryTypes, runir::kr::ps::PsCoreTypes<runir::kr::ExtFamilyTag>, RuleTypes, ProgramTypes>;
+    boost::mp11::mp_append<runir::kr::ps::base::RepositoryTypes, runir::kr::ps::PsCoreTypes<runir::kr::ExtFamilyTag>, RuleTypes, ProgramTypes>;
 using Repository = runir::kr::ps::BasicRepository<runir::kr::ExtFamilyTag, RepositoryTypes>;
 using RepositoryPtr = std::shared_ptr<Repository>;
 using RepositoryFactory = runir::kr::ps::BasicRepositoryFactory<runir::kr::ExtFamilyTag, RepositoryTypes>;
 
-using ConceptRegisterView = ygg::View<ygg::Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>, runir::kr::dl::ConstructorRepository>;
-using RoleRegisterView = ygg::View<ygg::Index<runir::kr::dl::Register<runir::kr::dl::RoleTag>>, runir::kr::dl::ConstructorRepository>;
-using OrderTermView = ygg::View<ygg::Index<OrderTerm>, Repository>;
-using MemoryStateView = ygg::View<ygg::Index<MemoryState>, Repository>;
-using ModuleSymbolView = ygg::View<ygg::Index<ModuleSymbol>, Repository>;
-using ModuleView = ygg::View<ygg::Index<Module>, Repository>;
-using ProgramView = ygg::View<ygg::Index<Program>, Repository>;
-using RuleVariantView = ygg::View<ygg::Index<ps::Rule<ExtFamilyTag>>, Repository>;
+using ConceptRegisterView = urd::view<runir::kr::dl::Register<runir::kr::dl::ConceptTag>, runir::kr::dl::ConstructorRepository>;
+using RoleRegisterView = urd::view<runir::kr::dl::Register<runir::kr::dl::RoleTag>, runir::kr::dl::ConstructorRepository>;
+using OrderTermView = urd::view<OrderTerm, Repository>;
+using MemoryStateView = urd::view<MemoryState, Repository>;
+using ModuleSymbolView = urd::view<ModuleSymbol, Repository>;
+using ModuleView = urd::view<Module, Repository>;
+using ProgramView = urd::view<Program, Repository>;
+using RuleVariantView = urd::view<ps::Rule<ExtFamilyTag>, Repository>;
 
 template<RuleKind Kind>
-using RuleView = ygg::View<ygg::Index<Rule<Kind>>, Repository>;
+using RuleView = urd::view<Rule<Kind>, Repository>;
 
 template<typename R>
 concept LoadRuleView = std::same_as<R, RuleView<LoadTag<runir::kr::dl::ConceptTag>>> || std::same_as<R, RuleView<LoadTag<runir::kr::dl::RoleTag>>>;
@@ -143,9 +145,9 @@ concept BindingRuleView = LoadRuleView<R> || ChooseRuleView<R>;
 namespace runir::kr::ps::ext::dl
 {
 
-using BooleanFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>, Repository>;
-using NumericalFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>, Repository>;
-using QueryFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>, Repository>;
+using BooleanFeatureView = urd::view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>, Repository>;
+using NumericalFeatureView = urd::view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>, Repository>;
+using QueryFeatureView = urd::view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>, Repository>;
 
 }  // namespace runir::kr::ps::ext::dl
 

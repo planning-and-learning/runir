@@ -13,12 +13,12 @@ class SuccessorExpander
 
     void validate(tyr::planning::StateView<Kind> state) const
     {
-        if (state.get_state_repository().get() != get_task_context()->search_context->state_repository.get())
+        if (&state.get_state_repository() != get_task_context()->search_context->state_repository.get())
             throw std::invalid_argument("ICP requires a planning state from the selected task.");
     }
     void validate(ProgramStateView<Kind> state) const
     {
-        if (&state.get_context() != get_task_context()->icp_execution_repository.get() || state.get_program() != m_rules.get_program())
+        if (&state.context() != get_task_context()->icp_execution_repository.get() || state.get_program() != m_rules.get_program())
             throw std::invalid_argument("ICP requires an execution state from the selected task and program.");
     }
 

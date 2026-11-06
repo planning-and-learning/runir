@@ -5,27 +5,27 @@
 #include "runir/kr/dl/data_helpers.hpp"
 
 #include <concepts>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 
-namespace ygg
+namespace urd
 {
 
 template<>
-struct Data<runir::kr::dl::Role<runir::kr::dl::UniversalTag>> : runir::kr::dl::NullaryData<runir::kr::dl::Role<runir::kr::dl::UniversalTag>>
+struct data<runir::kr::dl::Role<runir::kr::dl::UniversalTag>> : runir::kr::dl::NullaryData<runir::kr::dl::Role<runir::kr::dl::UniversalTag>>
 {
     using Base = runir::kr::dl::NullaryData<runir::kr::dl::Role<runir::kr::dl::UniversalTag>>;
     using Base::Base;
 };
 
 template<tyr::formalism::FactKind T>
-struct Data<runir::kr::dl::Role<runir::kr::dl::AtomicStateTag<T>>> : runir::kr::dl::PredicateData<runir::kr::dl::Role<runir::kr::dl::AtomicStateTag<T>>, T>
+struct data<runir::kr::dl::Role<runir::kr::dl::AtomicStateTag<T>>> : runir::kr::dl::PredicateData<runir::kr::dl::Role<runir::kr::dl::AtomicStateTag<T>>, T>
 {
     using Base = runir::kr::dl::PredicateData<runir::kr::dl::Role<runir::kr::dl::AtomicStateTag<T>>, T>;
     using Base::Base;
 };
 
 template<tyr::formalism::FactKind T>
-struct Data<runir::kr::dl::Role<runir::kr::dl::AtomicGoalTag<T>>> : runir::kr::dl::PredicateData<runir::kr::dl::Role<runir::kr::dl::AtomicGoalTag<T>>, T>
+struct data<runir::kr::dl::Role<runir::kr::dl::AtomicGoalTag<T>>> : runir::kr::dl::PredicateData<runir::kr::dl::Role<runir::kr::dl::AtomicGoalTag<T>>, T>
 {
     using Base = runir::kr::dl::PredicateData<runir::kr::dl::Role<runir::kr::dl::AtomicGoalTag<T>>, T>;
     using Base::Base;
@@ -34,38 +34,38 @@ struct Data<runir::kr::dl::Role<runir::kr::dl::AtomicGoalTag<T>>> : runir::kr::d
 template<typename Tag>
     requires(std::same_as<Tag, runir::kr::dl::IntersectionTag> || std::same_as<Tag, runir::kr::dl::UnionTag>
              || std::same_as<Tag, runir::kr::dl::CompositionTag>)
-struct Data<runir::kr::dl::Role<Tag>> : runir::kr::dl::BinaryData<runir::kr::dl::Role<Tag>, DlRole, DlRole>
+struct data<runir::kr::dl::Role<Tag>> : runir::kr::dl::BinaryData<runir::kr::dl::Role<Tag>, runir::kr::dl::DlRole, runir::kr::dl::DlRole>
 {
-    using Base = runir::kr::dl::BinaryData<runir::kr::dl::Role<Tag>, DlRole, DlRole>;
+    using Base = runir::kr::dl::BinaryData<runir::kr::dl::Role<Tag>, runir::kr::dl::DlRole, runir::kr::dl::DlRole>;
     using Base::Base;
 };
 
 template<typename Tag>
     requires(std::same_as<Tag, runir::kr::dl::ComplementTag> || std::same_as<Tag, runir::kr::dl::InverseTag>
              || std::same_as<Tag, runir::kr::dl::TransitiveClosureTag> || std::same_as<Tag, runir::kr::dl::ReflexiveTransitiveClosureTag>)
-struct Data<runir::kr::dl::Role<Tag>> : runir::kr::dl::UnaryData<runir::kr::dl::Role<Tag>, DlRole>
+struct data<runir::kr::dl::Role<Tag>> : runir::kr::dl::UnaryData<runir::kr::dl::Role<Tag>, runir::kr::dl::DlRole>
 {
-    using Base = runir::kr::dl::UnaryData<runir::kr::dl::Role<Tag>, DlRole>;
+    using Base = runir::kr::dl::UnaryData<runir::kr::dl::Role<Tag>, runir::kr::dl::DlRole>;
     using Base::Base;
 };
 
 template<>
-struct Data<runir::kr::dl::Role<runir::kr::dl::RestrictionTag>> :
-    runir::kr::dl::BinaryData<runir::kr::dl::Role<runir::kr::dl::RestrictionTag>, DlRole, DlConcept>
+struct data<runir::kr::dl::Role<runir::kr::dl::RestrictionTag>> :
+    runir::kr::dl::BinaryData<runir::kr::dl::Role<runir::kr::dl::RestrictionTag>, runir::kr::dl::DlRole, runir::kr::dl::DlConcept>
 {
-    using Base = runir::kr::dl::BinaryData<runir::kr::dl::Role<runir::kr::dl::RestrictionTag>, DlRole, DlConcept>;
+    using Base = runir::kr::dl::BinaryData<runir::kr::dl::Role<runir::kr::dl::RestrictionTag>, runir::kr::dl::DlRole, runir::kr::dl::DlConcept>;
     using Base::Base;
 };
 
 template<>
-struct Data<runir::kr::dl::Role<runir::kr::dl::IdentityTag>> : runir::kr::dl::UnaryData<runir::kr::dl::Role<runir::kr::dl::IdentityTag>, DlConcept>
+struct data<runir::kr::dl::Role<runir::kr::dl::IdentityTag>> : runir::kr::dl::UnaryData<runir::kr::dl::Role<runir::kr::dl::IdentityTag>, runir::kr::dl::DlConcept>
 {
-    using Base = runir::kr::dl::UnaryData<runir::kr::dl::Role<runir::kr::dl::IdentityTag>, DlConcept>;
+    using Base = runir::kr::dl::UnaryData<runir::kr::dl::Role<runir::kr::dl::IdentityTag>, runir::kr::dl::DlConcept>;
     using Base::Base;
 };
 
 template<>
-struct Data<runir::kr::dl::Role<runir::kr::dl::RegisterTag>> :
+struct data<runir::kr::dl::Role<runir::kr::dl::RegisterTag>> :
     runir::kr::dl::ReferenceData<runir::kr::dl::Role<runir::kr::dl::RegisterTag>, runir::kr::dl::Register<runir::kr::dl::RoleTag>>
 {
     using Base = runir::kr::dl::ReferenceData<runir::kr::dl::Role<runir::kr::dl::RegisterTag>, runir::kr::dl::Register<runir::kr::dl::RoleTag>>;
@@ -73,7 +73,7 @@ struct Data<runir::kr::dl::Role<runir::kr::dl::RegisterTag>> :
 };
 
 template<>
-struct Data<runir::kr::dl::Role<runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>> :
+struct data<runir::kr::dl::Role<runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>> :
     runir::kr::dl::ReferenceData<runir::kr::dl::Role<runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>, runir::kr::dl::Argument<runir::kr::dl::RoleTag>>
 {
     using Base =
@@ -81,6 +81,6 @@ struct Data<runir::kr::dl::Role<runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTa
     using Base::Base;
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 #endif

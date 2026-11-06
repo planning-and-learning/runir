@@ -2,18 +2,17 @@
 #define RUNIR_SERIALIZATION_TYPES_VIEWS_HPP_
 
 #include <type_traits>
-#include <yggdrasil/core/concepts.hpp>
-#include <yggdrasil/core/type_list.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <boost/mp11.hpp>
+#include <urd/elements/flat.hpp>
 
 namespace runir::serialization
 {
 
 template<typename Context, typename T>
-using IndexView = ygg::View<ygg::Index<T>, Context>;
+using IndexView = urd::view<T, Context>;
 
 template<typename T>
-using HashableTypeList = std::conditional_t<ygg::Hashable<T>, ygg::TypeList<T>, ygg::TypeList<>>;
+using HashableTypeList = std::conditional_t<urd::Hashable<T>, boost::mp11::mp_list<T>, boost::mp11::mp_list<>>;
 
 }  // namespace runir::serialization
 

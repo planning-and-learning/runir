@@ -2,6 +2,8 @@
 #define RUNIR_TESTS_EXT_SUCCESSOR_FIXTURES_HPP_
 
 #include <concepts>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <functional>
 #include <runir/kr/ps/ext/detail/successor_expander_impl.hpp>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
@@ -29,7 +31,7 @@ auto collect_steps(
     using Step = kr::ps::ext::detail::ProgramStep<Kind>;
     using Expansion = std::variant<Step, kr::ps::ext::detail::Choice<kr::dl::ConceptTag>, kr::ps::ext::detail::Choice<kr::dl::RoleTag>>;
     auto statistics = kr::ps::ext::ProgramSearchStatistics {};
-    auto expansions = std::vector<Expansion> {};
+    auto expansions = urd::Store<urd::sequence<Expansion>> {};
     expander.for_each_successor(
         state,
         statistics,
@@ -39,7 +41,7 @@ auto collect_steps(
             return !first_only;
         },
         stop);
-    auto result = std::vector<Step> {};
+    auto result = urd::Store<urd::sequence<Step>> {};
     for (auto& expansion : expansions)
         std::visit(
             [&](auto candidate)

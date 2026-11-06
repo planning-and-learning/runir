@@ -14,7 +14,8 @@
 #include <tyr/planning/declarations.hpp>
 #include <utility>
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/config.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/builder.hpp>
 #include <yggdrasil/formalism/interning.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>
@@ -57,6 +58,8 @@ public:
     ~ExecutionRepository() = default;
 
     [[nodiscard]] const auto& get_index() const noexcept { return m_index; }
+    /// The repository's number, as urd::view asks of a context.
+    [[nodiscard]] std::size_t layer() const noexcept { return m_index; }
     [[nodiscard]] auto& get_state_repository() const noexcept { return *m_state_repository; }
     [[nodiscard]] const auto& get_denotation_repository() const noexcept { return *m_denotation_repository; }
     [[nodiscard]] const auto& get_program_repository() const noexcept { return *m_program_repository; }
@@ -64,20 +67,21 @@ public:
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<ExecutionRepository, T>
-    const ygg::Data<T>& operator[](ygg::Index<T> index) const
+    const urd::data<T>& operator[](urd::index<T> index) const
     {
         assert(this->template is_local<T>(index));
         return this->template at_local<T>(index);
     }
 
+    /// An index as its view here (urd's resolves contract).
     template<typename T>
         requires ygg::formalism::SupportsSymbol<ExecutionRepository, T>
-    [[nodiscard]] const ExecutionRepository& get_canonical_context(ygg::Index<T>) const noexcept
-    { return *this; }
+    [[nodiscard]] urd::view<T, ExecutionRepository> view(urd::index<T> index) const noexcept
+    { return { index, *this }; }
 };
 
 template<tyr::TaskKind Kind>
-inline const ExecutionRepository<Kind>& get_repository(const ExecutionRepository<Kind>& context YGG_LIFETIMEBOUND) noexcept
+inline const ExecutionRepository<Kind>& get_repository(const ExecutionRepository<Kind>& context URD_LIFETIMEBOUND) noexcept
 { return context; }
 
 template<tyr::TaskKind Kind>
@@ -98,7 +102,7 @@ public:
 
 template<tyr::TaskKind Kind, typename T>
     requires ygg::formalism::SupportsSymbol<ExecutionRepository<Kind>, T>
-void prepare_for_insert(ExecutionRepository<Kind>&, ygg::Data<T>&)
+void prepare_for_insert(ExecutionRepository<Kind>&, urd::data<T>&)
 {
 }
 

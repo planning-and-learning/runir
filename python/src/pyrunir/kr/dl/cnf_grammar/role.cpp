@@ -17,12 +17,12 @@ namespace
 template<typename Tag>
 void bind_role_data(nb::module_& m, const char* name)
 {
-    using Data = ygg::Data<runir::kr::dl::cnf_grammar::Role<Tag>>;
+    using Data = urd::data<runir::kr::dl::cnf_grammar::Role<Tag>>;
     auto cls = nb::class_<Data>(m, name).def(nb::init<>()).def_rw("index", &Data::index);
-    ygg::add_comparison(cls);
+    urd::python::add_comparison(cls);
     python::def_role_data_constructors<Tag,
-                                       ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>,
-                                       ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>,
+                                       urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>,
+                                       urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>,
                                        runir::kr::dl::cnf_grammar::ConstructorRepository>(cls);
 
     if constexpr (is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag>)
@@ -38,11 +38,11 @@ template<typename Tag>
 void bind_role_view(nb::module_& m, const char* name)
 {
     using Type = runir::kr::dl::cnf_grammar::Role<Tag>;
-    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::cnf_grammar::ConstructorRepository>;
-    auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index);
+    using View = urd::view<Type, runir::kr::dl::cnf_grammar::ConstructorRepository>;
+    auto cls = nb::class_<View>(m, name).def("get_index", &View::index);
     ygg::add_print(cls);
-    ygg::add_comparison(cls);
-    ygg::add_hash(cls);
+    urd::python::add_comparison(cls);
+    urd::python::add_hash(cls);
 
     if constexpr (is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag>)
         cls.def("get_predicate", &View::get_predicate, nb::keep_alive<0, 1>()).def("get_polarity", &View::get_polarity);
@@ -74,22 +74,22 @@ void bind_cnf_grammar_role(nb::module_& m)
     using Restriction = runir::kr::dl::cnf_grammar::Role<RestrictionTag>;
     using Identity = runir::kr::dl::cnf_grammar::Role<IdentityTag>;
 
-    ygg::bind_index<ygg::Index<Universal>>(m, "RoleUniversalIndex");
-    ygg::bind_index<ygg::Index<StaticState>>(m, "RoleAtomicStateStaticIndex");
-    ygg::bind_index<ygg::Index<FluentState>>(m, "RoleAtomicStateFluentIndex");
-    ygg::bind_index<ygg::Index<DerivedState>>(m, "RoleAtomicStateDerivedIndex");
-    ygg::bind_index<ygg::Index<StaticGoal>>(m, "RoleAtomicGoalStaticIndex");
-    ygg::bind_index<ygg::Index<FluentGoal>>(m, "RoleAtomicGoalFluentIndex");
-    ygg::bind_index<ygg::Index<DerivedGoal>>(m, "RoleAtomicGoalDerivedIndex");
-    ygg::bind_index<ygg::Index<Intersection>>(m, "RoleIntersectionIndex");
-    ygg::bind_index<ygg::Index<Union>>(m, "RoleUnionIndex");
-    ygg::bind_index<ygg::Index<Complement>>(m, "RoleComplementIndex");
-    ygg::bind_index<ygg::Index<Inverse>>(m, "RoleInverseIndex");
-    ygg::bind_index<ygg::Index<Composition>>(m, "RoleCompositionIndex");
-    ygg::bind_index<ygg::Index<TransitiveClosure>>(m, "RoleTransitiveClosureIndex");
-    ygg::bind_index<ygg::Index<ReflexiveTransitiveClosure>>(m, "RoleReflexiveTransitiveClosureIndex");
-    ygg::bind_index<ygg::Index<Restriction>>(m, "RoleRestrictionIndex");
-    ygg::bind_index<ygg::Index<Identity>>(m, "RoleIdentityIndex");
+    urd::python::bind_index<urd::index<Universal>>(m, "RoleUniversalIndex");
+    urd::python::bind_index<urd::index<StaticState>>(m, "RoleAtomicStateStaticIndex");
+    urd::python::bind_index<urd::index<FluentState>>(m, "RoleAtomicStateFluentIndex");
+    urd::python::bind_index<urd::index<DerivedState>>(m, "RoleAtomicStateDerivedIndex");
+    urd::python::bind_index<urd::index<StaticGoal>>(m, "RoleAtomicGoalStaticIndex");
+    urd::python::bind_index<urd::index<FluentGoal>>(m, "RoleAtomicGoalFluentIndex");
+    urd::python::bind_index<urd::index<DerivedGoal>>(m, "RoleAtomicGoalDerivedIndex");
+    urd::python::bind_index<urd::index<Intersection>>(m, "RoleIntersectionIndex");
+    urd::python::bind_index<urd::index<Union>>(m, "RoleUnionIndex");
+    urd::python::bind_index<urd::index<Complement>>(m, "RoleComplementIndex");
+    urd::python::bind_index<urd::index<Inverse>>(m, "RoleInverseIndex");
+    urd::python::bind_index<urd::index<Composition>>(m, "RoleCompositionIndex");
+    urd::python::bind_index<urd::index<TransitiveClosure>>(m, "RoleTransitiveClosureIndex");
+    urd::python::bind_index<urd::index<ReflexiveTransitiveClosure>>(m, "RoleReflexiveTransitiveClosureIndex");
+    urd::python::bind_index<urd::index<Restriction>>(m, "RoleRestrictionIndex");
+    urd::python::bind_index<urd::index<Identity>>(m, "RoleIdentityIndex");
 
     bind_role_data<UniversalTag>(m, "RoleUniversalData");
     bind_role_data<AtomicStateTag<tyr::formalism::StaticTag>>(m, "RoleAtomicStateStaticData");

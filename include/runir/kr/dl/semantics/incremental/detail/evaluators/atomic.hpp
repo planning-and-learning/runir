@@ -42,9 +42,9 @@ struct AtomicEvaluator
             {
                 const auto objects = atom.get_row().get_objects();
                 if constexpr (std::same_as<Category, ConceptTag>)
-                    builder.set(objects[0].get_index(), true);
+                    builder.set(objects[0].index(), true);
                 else
-                    builder.set(objects[0].get_index(), objects[1].get_index(), true);
+                    builder.set(objects[0].index(), objects[1].index(), true);
             }
             if (!polarity)
                 builder.flip();

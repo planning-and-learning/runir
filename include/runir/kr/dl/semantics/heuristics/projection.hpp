@@ -5,6 +5,8 @@
 #include "runir/kr/dl/translations/ygg_query.hpp"
 
 #include <algorithm>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <array>
 #include <cassert>
 #include <cstddef>
@@ -41,7 +43,7 @@ struct PatternDatabase
     size_t v_position = 0;                       ///< The position of v[i] in the columns of edges.
     size_t predecessors = 0;                     ///< The binding of edges with v[i] bound.
     std::vector<bool> targets {};                ///< α_i(T), for which h was computed.
-    std::vector<ygg::uint_t> h {};               ///< Abstract distance to α_i(T); ygg::database::infinity if unreachable.
+    urd::Store<urd::sequence<ygg::uint_t>> h {};             ///< Abstract distance to α_i(T); ygg::database::infinity if unreachable.
 
     /// Whether h has been computed, for some abstract targets.
     [[nodiscard]] bool computed() const noexcept { return !h.empty(); }
@@ -60,7 +62,7 @@ class ProjectionHeuristic
 {
 public:
     ProjectionHeuristic() = default;
-    ProjectionHeuristic(std::vector<PatternDatabase> databases,
+    ProjectionHeuristic(urd::Store<urd::sequence<PatternDatabase>> databases,
                         std::span<const ygg::database::ColumnLayout> vertex_columns,
                         std::span<const ygg::database::ColumnLayout> target_columns,
                         ygg::uint_t num_objects) :
@@ -96,7 +98,7 @@ public:
     }
 
     /// The tables of every pattern database for other targets, without changing this heuristic's own.
-    using Tables = std::vector<std::vector<ygg::uint_t>>;
+    using Tables = urd::Store<urd::sequence<urd::Store<urd::sequence<ygg::uint_t>>>, urd::monotone>;
     template<ygg::database::RelationViewConcept Targets>
     Tables tables(const Targets& targets)
     {
@@ -124,13 +126,13 @@ public:
     [[nodiscard]] bool blind() const noexcept { return m_databases.empty(); }
 
 private:
-    std::vector<PatternDatabase> m_databases;
-    std::vector<ygg::database::ColumnLayout> m_vertex_columns;
-    std::vector<ygg::database::ColumnLayout> m_target_columns;
+    urd::Store<urd::sequence<PatternDatabase>> m_databases;
+    urd::Store<urd::sequence<ygg::database::ColumnLayout>> m_vertex_columns;
+    urd::Store<urd::sequence<ygg::database::ColumnLayout>> m_target_columns;
     ygg::uint_t m_num_objects = 0;
     std::vector<bool> m_abstract_targets;  ///< Scratch of update_table(), kept with m_queue to avoid allocations.
-    std::vector<ygg::uint_t> m_queue;
-    std::vector<std::byte> m_vertex;  ///< The bound abstract vertex, kept to avoid allocations.
+    urd::Store<urd::sequence<ygg::uint_t>> m_queue;
+    urd::Store<urd::sequence<std::byte>> m_vertex;  ///< The bound abstract vertex, kept to avoid allocations.
 
     /// A backward breadth-first search from α_i(T) in the abstract graph. The table is built aside and committed with
     /// its targets only when the search succeeds: a throw leaves computed() false, so the next update() rebuilds it.
@@ -154,14 +156,14 @@ private:
         for (size_t r = 0; r < targets.size(); ++r)
             m_abstract_targets[Row(targets.row(r), m_target_columns).get<ygg::uint_t>(database.pattern)] = true;
     }
-    std::vector<ygg::uint_t> breadth_first(PatternDatabase& database)
+    Tables::value_type breadth_first(PatternDatabase& database)
     {
-        auto h = std::vector<ygg::uint_t>();
+        auto h = Tables::value_type();
         breadth_first(database, h);
         return h;
     }
     /// The backward breadth-first distances from m_abstract_targets in the database's abstract graph, into h.
-    void breadth_first(PatternDatabase& database, std::vector<ygg::uint_t>& h)
+    void breadth_first(PatternDatabase& database, Tables::value_type& h)
     {
         h.assign(m_num_objects, ygg::database::infinity);
         m_queue.clear();
@@ -234,11 +236,11 @@ public:
         if (m_rows == m_previous)
             return;
         std::swap(m_rows, m_previous);
-        auto grouped = std::map<std::vector<std::byte>, std::vector<std::vector<std::byte>>, detail::ByteStringLess>();
+        auto grouped = std::map<urd::Store<urd::sequence<std::byte>>, urd::Store<urd::sequence<urd::Store<urd::sequence<std::byte>>>>, detail::ByteStringLess>();
         for (size_t r = 0; r < targets.size(); ++r)
         {
             const auto row = targets.row(r);
-            grouped[std::vector<std::byte>(row.begin(), row.begin() + static_cast<std::ptrdiff_t>(m_key_size))].emplace_back(
+            grouped[urd::Store<urd::sequence<std::byte>>(row.begin(), row.begin() + static_cast<std::ptrdiff_t>(m_key_size))].emplace_back(
                 row.begin() + static_cast<std::ptrdiff_t>(m_key_size),
                 row.end());
         }
@@ -248,7 +250,7 @@ public:
             auto& entry = m_keys[key];
             if (entry.tables.empty() || entry.targets != rows)
             {
-                auto relation = ygg::Builder<ygg::database::Relation>(std::span<const ygg::database::ColumnLayout>(m_target_columns));
+                auto relation = urd::builder<ygg::database::Relation>(std::span<const ygg::database::ColumnLayout>(m_target_columns));
                 for (const auto& vertex : rows)
                     relation.insert(std::span<const std::byte>(vertex));
                 entry.tables = m_heuristic.tables(relation);
@@ -269,16 +271,16 @@ public:
 private:
     struct Key
     {
-        std::vector<std::vector<std::byte>> targets;  ///< The vertices the tables were computed for, sorted.
+        urd::Store<urd::sequence<urd::Store<urd::sequence<std::byte>>>> targets;  ///< The vertices the tables were computed for, sorted.
         ProjectionHeuristic::Tables tables;
     };
     ProjectionHeuristic m_heuristic;
     size_t m_key_size = 0;
-    std::vector<ygg::database::ColumnLayout> m_target_columns;  ///< The vertex columns of a target, without the key.
-    std::map<std::vector<std::byte>, Key, detail::ByteStringLess> m_keys;
-    mutable std::vector<std::byte> m_key;  ///< Scratch of estimate().
-    std::vector<std::byte> m_previous;     ///< The rows of the targets of the last update().
-    std::vector<std::byte> m_rows;         ///< Scratch of update().
+    urd::Store<urd::sequence<ygg::database::ColumnLayout>> m_target_columns;  ///< The vertex columns of a target, without the key.
+    std::map<urd::Store<urd::sequence<std::byte>>, Key, detail::ByteStringLess> m_keys;
+    mutable urd::Store<urd::sequence<std::byte>> m_key;  ///< Scratch of estimate().
+    urd::Store<urd::sequence<std::byte>> m_previous;     ///< The rows of the targets of the last update().
+    urd::Store<urd::sequence<std::byte>> m_rows;         ///< Scratch of update().
 };
 
 /// The abstract edges of the pattern databases as queries, built once per feature from the translated edge query Q.
@@ -289,15 +291,15 @@ private:
 struct EdgeAbstraction
 {
     ygg::database::QueryPlan plan;  ///< Plan root r is the abstract edge query of column patterns[r].
-    std::vector<size_t> patterns;
-    std::vector<size_t> slots;  ///< The edge query's slot of each input of the plan.
+    urd::Store<urd::sequence<size_t>> patterns;
+    urd::Store<urd::sequence<size_t>> slots;  ///< The edge query's slot of each input of the plan.
 };
 
 namespace detail
 {
 /// Defined in the library: the call in abstract_edges() does not depend on its template parameter, so an inline
 /// definition would instantiate the query compiler in every includer (template rule 4).
-ygg::database::QueryPlan compile_edge_plan(const std::vector<ygg::database::QueryView<>>& roots);
+ygg::database::QueryPlan compile_edge_plan(const urd::Store<urd::sequence<ygg::database::QueryView<>>>& roots);
 }
 
 /// The abstraction of a translated edge query, or nullopt if no column is constrained at both ends (blind search).
@@ -308,14 +310,14 @@ inline std::optional<EdgeAbstraction> abstract_edges(dl::detail::QueryTranslator
                                                      std::span<const ygg::database::ColumnLayout> to)
 {
     const auto k = from.size();
-    auto projections = std::vector<ygg::database::QueryView<>>();
+    auto projections = urd::Store<urd::sequence<ygg::database::QueryView<>>>();
     for (size_t i = 0; i < k; ++i)
         projections.push_back(translator.project(edges, std::array { from[i].label, to[i].label }));
     const auto& slots = translator.get_slots();
     const auto relaxation = translator.relax(projections, [&](size_t slot) { return slots[slot].is_static; });
 
-    auto roots = std::vector<ygg::database::QueryView<>>();
-    auto patterns = std::vector<size_t>();
+    auto roots = urd::Store<urd::sequence<ygg::database::QueryView<>>>();
+    auto patterns = urd::Store<urd::sequence<size_t>>();
     for (size_t i = 0; i < k; ++i)
         if (const auto& relaxed = relaxation.queries[i]; relaxed && relaxed->columns().size() == 2)
         {
@@ -347,7 +349,7 @@ ProjectionHeuristic make_projection_heuristic(const EdgeAbstraction& abstraction
                                               ygg::uint_t num_objects,
                                               const SlotRows& slot_rows)
 {
-    auto databases = std::vector<PatternDatabase>();
+    auto databases = urd::Store<urd::sequence<PatternDatabase>>();
     for (size_t r = 0; r < abstraction.patterns.size(); ++r)
     {
         const auto i = abstraction.patterns[r];

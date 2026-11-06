@@ -1,4 +1,6 @@
 #include "incremental_root_evaluators.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "planning_fixtures.hpp"
 
 #include <algorithm>
@@ -33,17 +35,17 @@ namespace
 {
 using Fluent = tyr::formalism::FluentTag;
 using Derived = tyr::formalism::DerivedTag;
-using Object = ygg::Index<tyr::formalism::Object>;
+using Object = urd::index<tyr::formalism::Object>;
 
 auto parse_query(const std::string& expression, tyr::formalism::planning::DomainView domain, kr::dl::ConstructorRepository& repository)
 {
     const auto count = kr::ps::ext::dl::parse_numerical("(n_count " + expression + ")", domain, repository);
-    return count.get_variant().template get<ygg::Index<kr::dl::Numerical<kr::dl::CountTag>>>().get_arg().template get<ygg::Index<kr::dl::Query<>>>();
+    return std::get<urd::view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::view<kr::dl::Numerical<kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant()).get_arg());
 }
 
 auto rows(const auto& relation)
 {
-    auto result = std::vector<std::vector<Object>> {};
+    auto result = urd::Store<urd::sequence<urd::Store<urd::sequence<Object>>>> {};
     for (size_t i = 0; i < relation.size(); ++i)
     {
         const auto row = ygg::database::Row(relation.row(i), relation.columns().span());
@@ -88,12 +90,12 @@ void check_atomic_projection()
     }();
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     const auto domain = search->task->get_domain().get_domain();
-    const auto a = domain.get_constants()[0].get_index();
+    const auto a = domain.get_constants()[0].index();
     const auto first_candidates = search->successor_generator->get_labeled_successor_nodes(initial, *search->state_repository, *search->axiom_evaluator);
-    const auto first = std::ranges::find_if(first_candidates, [&](const auto& candidate) { return candidate.label.get_objects()[0].get_index() == a; });
+    const auto first = std::ranges::find_if(first_candidates, [&](const auto& candidate) { return candidate.label.get_objects()[0].index() == a; });
     ASSERT_NE(first, first_candidates.end());
     const auto second_candidates = search->successor_generator->get_labeled_successor_nodes(first->node, *search->state_repository, *search->axiom_evaluator);
-    const auto second = std::ranges::find_if(second_candidates, [&](const auto& candidate) { return candidate.label.get_objects()[0].get_index() == a; });
+    const auto second = std::ranges::find_if(second_candidates, [&](const auto& candidate) { return candidate.label.get_objects()[0].index() == a; });
     ASSERT_NE(second, second_candidates.end());
 
     auto constructors = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
@@ -103,22 +105,22 @@ void check_atomic_projection()
     const auto projected_triple = parse_query(R"((q_project (x) (q_atomic_state "triple" (x y z))))", domain, *constructors);
     const auto projected_copied = parse_query(R"((q_project (x) (q_atomic_state "copied" (x y z))))", domain, *constructors);
     auto triple_leaf = kr::dl::semantics::incremental::detail::AtomicQueryEvaluator<Fluent>(
-        triple.get_variant().template get<ygg::Index<kr::dl::Query<kr::dl::AtomicStateTag<Fluent>>>>());
+        std::get<urd::view<kr::dl::Query<kr::dl::AtomicStateTag<Fluent>>, runir::kr::dl::ConstructorRepository>>(triple.get_variant()));
     auto copied_leaf = kr::dl::semantics::incremental::detail::AtomicQueryEvaluator<Derived>(
-        copied.get_variant().template get<ygg::Index<kr::dl::Query<kr::dl::AtomicStateTag<Derived>>>>());
+        std::get<urd::view<kr::dl::Query<kr::dl::AtomicStateTag<Derived>>, runir::kr::dl::ConstructorRepository>>(copied.get_variant()));
     auto ready_leaf = kr::dl::semantics::incremental::detail::AtomicQueryEvaluator<Fluent>(
-        ready.get_variant().template get<ygg::Index<kr::dl::Query<kr::dl::AtomicStateTag<Fluent>>>>());
+        std::get<urd::view<kr::dl::Query<kr::dl::AtomicStateTag<Fluent>>, runir::kr::dl::ConstructorRepository>>(ready.get_variant()));
     auto triple_projection = ygg::database::incremental::ProjectionEvaluator(
-        projected_triple.get_variant().template get<ygg::Index<kr::dl::Query<kr::dl::QueryProjectTag>>>().get_data().plan);
+        std::get<urd::view<kr::dl::Query<kr::dl::QueryProjectTag>, runir::kr::dl::ConstructorRepository>>(projected_triple.get_variant()).data().plan);
     auto copied_projection = ygg::database::incremental::ProjectionEvaluator(
-        projected_copied.get_variant().template get<ygg::Index<kr::dl::Query<kr::dl::QueryProjectTag>>>().get_data().plan);
+        std::get<urd::view<kr::dl::Query<kr::dl::QueryProjectTag>, runir::kr::dl::ConstructorRepository>>(projected_copied.get_variant()).data().plan);
     auto workspace = ygg::database::Workspace {};
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto builder = kr::dl::semantics::Builder {};
-    auto register_data = ygg::Data<kr::dl::semantics::RegisterValues> {};
-    const auto registers = ygg::make_view(register_data, *search->task->get_repository());
-    auto argument_data = ygg::Data<kr::dl::semantics::CallArguments> {};
+    auto register_data = urd::data<kr::dl::semantics::RegisterValues> {};
+    const auto registers = urd::resolve(register_data, *search->task->get_repository());
+    auto argument_data = urd::data<kr::dl::semantics::CallArguments> {};
     const auto arguments = denotations.insert(argument_data).first;
     const auto publications = [&] { return storage.get_denotation_repository(false).get_relation_repository().size(); };
     const auto compare_full = [&](auto state)
@@ -184,21 +186,21 @@ void check_atomic_projection()
     EXPECT_EQ(triple_leaf.get_delta().removed.size(), 1);
     EXPECT_EQ(ready_leaf.get_delta().removed.size(), 1);
     EXPECT_TRUE(ready_leaf.get_delta().removed.contains(std::tuple<> {}));
-    EXPECT_TRUE(triple_projection.get_result().contains(std::tuple { a.get_value() }));
+    EXPECT_TRUE(triple_projection.get_result().contains(std::tuple { a.value }));
     expect_empty_delta(triple_projection);
     expect_empty_delta(copied_projection);
 
     auto second_delta = kr::dl::semantics::incremental::Delta {};
     second_delta.template assign<Kind>(first->node.get_state(), registers, second->node.get_state(), registers);
     update(second_delta, second->node.get_state());
-    EXPECT_FALSE(triple_projection.get_result().contains(std::tuple { a.get_value() }));
-    EXPECT_TRUE(triple_projection.get_delta().removed.contains(std::tuple { a.get_value() }));
-    EXPECT_TRUE(copied_projection.get_delta().removed.contains(std::tuple { a.get_value() }));
+    EXPECT_FALSE(triple_projection.get_result().contains(std::tuple { a.value }));
+    EXPECT_TRUE(triple_projection.get_delta().removed.contains(std::tuple { a.value }));
+    EXPECT_TRUE(copied_projection.get_delta().removed.contains(std::tuple { a.value }));
     expect_empty_delta(ready_leaf);
 
     second_delta.reverse();
     update(second_delta, first->node.get_state());
-    EXPECT_TRUE(triple_projection.get_delta().added.contains(std::tuple { a.get_value() }));
+    EXPECT_TRUE(triple_projection.get_delta().added.contains(std::tuple { a.value }));
     first_delta.reverse();
     update(first_delta, initial.get_state());
     expect_empty_delta(triple_projection);
@@ -206,10 +208,10 @@ void check_atomic_projection()
     EXPECT_TRUE(ready_leaf.get_delta().added.contains(std::tuple<> {}));
 
     // Reinitialization replaces the baseline and clears every previously emitted delta.
-    const auto borrowed_builder = second->node.get_state().get_state_builder();
-    initialize(ygg::make_view(borrowed_builder, *search->task));
+    const auto borrowed_builder = urd::builder<tyr::planning::State<Kind>> { second->node.get_state().data() };
+    initialize(urd::resolve(borrowed_builder, *search->state_repository));
     EXPECT_EQ(triple_leaf.get_result().size(), 2);
-    EXPECT_FALSE(triple_projection.get_result().contains(std::tuple { a.get_value() }));
+    EXPECT_FALSE(triple_projection.get_result().contains(std::tuple { a.value }));
     EXPECT_TRUE(ready_leaf.get_result().empty());
     EXPECT_TRUE(denotations.get_relation_repository().empty());
 }
@@ -226,7 +228,7 @@ void check_query_graph()
             return make_lifted_context(directory / "domain.pddl", directory / "task.pddl");
     };
     const auto search = make_search();
-    auto nodes = std::vector<tyr::planning::Node<Kind>> { search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator) };
+    auto nodes = urd::Store<urd::sequence<tyr::planning::Node<Kind>>> { search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator) };
     for (size_t i = 0; i < 4; ++i)
     {
         const auto successors = search->successor_generator->get_labeled_successor_nodes(nodes.back(), *search->state_repository, *search->axiom_evaluator);
@@ -239,13 +241,13 @@ void check_query_graph()
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto builder = kr::dl::semantics::Builder {};
-    auto register_data = ygg::Data<kr::dl::semantics::RegisterValues> {};
-    const auto registers = ygg::make_view(register_data, *search->task->get_repository());
-    auto argument_data = ygg::Data<kr::dl::semantics::CallArguments> {};
+    auto register_data = urd::data<kr::dl::semantics::RegisterValues> {};
+    const auto registers = urd::resolve(register_data, *search->task->get_repository());
+    auto argument_data = urd::data<kr::dl::semantics::CallArguments> {};
     const auto arguments = denotations.insert(argument_data).first;
     const auto context_for = [&](auto state)
     { return kr::dl::semantics::StateEvaluationContext<Kind, decltype(state)>(state, builder, storage, arguments, registers); };
-    auto deltas = std::vector<kr::dl::semantics::incremental::Delta>(4);
+    auto deltas = urd::Store<urd::sequence<kr::dl::semantics::incremental::Delta>>(4);
     for (size_t i = 0; i < deltas.size(); ++i)
         deltas[i].template assign<Kind>(nodes[i].get_state(), registers, nodes[i + 1].get_state(), registers);
     auto workspace = ygg::database::Workspace {};
@@ -254,7 +256,7 @@ void check_query_graph()
     const auto copied = std::string(R"((q_atomic_state "copied" (x y z)))");
     const auto fixed = std::string(R"((q_atomic_state "fixed" (x y z)))");
     const auto static_role = std::string(R"((q_role (x y) (r_complement (r_identity (c_top)))))");
-    const auto expressions = std::vector<std::string> {
+    const auto expressions = urd::Store<urd::sequence<std::string>> {
         triple,
         fixed,
         static_role,
@@ -355,8 +357,8 @@ void check_query_graph()
         EXPECT_EQ(before_reset, current);
         storage.reset_all();
         EXPECT_EQ(rows(retained), before_reset);
-        const auto borrowed_builder = nodes.back().get_state().get_state_builder();
-        auto final_context = context_for(ygg::make_view(borrowed_builder, *search->task));
+        const auto borrowed_builder = urd::builder<tyr::planning::State<Kind>> { nodes.back().get_state().data() };
+        auto final_context = context_for(urd::resolve(borrowed_builder, *search->state_repository));
         auto final_state = evaluator.initialize(final_context);
         expect_unpublished();
         EXPECT_TRUE(storage.get_caches().get_queries(true).empty());
@@ -373,8 +375,8 @@ void check_query_graph()
     const auto other_initial = other->successor_generator->get_initial_node(*other->state_repository, *other->axiom_evaluator);
     auto other_denotations = kr::dl::semantics::DenotationRepositoryFactory().create(other->task->get_repository());
     auto other_storage = kr::dl::semantics::EvaluationStorage(other_denotations);
-    const auto other_registers = ygg::make_view(register_data, *other->task->get_repository());
-    auto other_argument_data = ygg::Data<kr::dl::semantics::CallArguments> {};
+    const auto other_registers = urd::resolve(register_data, *other->task->get_repository());
+    auto other_argument_data = urd::data<kr::dl::semantics::CallArguments> {};
     const auto other_arguments = other_denotations.insert(other_argument_data).first;
     auto other_context = kr::dl::semantics::StateEvaluationContext<Kind, tyr::planning::StateView<Kind>>(other_initial.get_state(),
                                                                                                          builder,

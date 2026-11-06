@@ -9,7 +9,7 @@
 #include <concepts>
 #include <span>
 #include <stdexcept>
-#include <tyr/planning/state_data.hpp>
+#include <tyr/planning/state_repository.hpp>
 #include <utility>
 
 namespace runir::kr::dl::semantics
@@ -46,7 +46,7 @@ auto evaluate(runir::kr::dl::ConstructorView<Category> expression, incremental::
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
 auto evaluate(runir::kr::dl::QueryView<> expression, incremental::StateEvaluation<Kind, Context>& context)
-{ return ygg::make_view(context.evaluate(context.graph().get_index(expression)), *context.context().get_state().get_task().get_repository()); }
+{ return urd::resolve(context.evaluate(context.graph().get_index(expression)), *context.context().get_state().get_task().get_repository()); }
 
 /// Independent source and target evaluations retain their input snapshots and result buffers.
 /// Differences are computed between evaluations, including backward search moves;
@@ -58,8 +58,8 @@ class DeltaEvaluationPolicy
     {
         const tyr::planning::Task<Kind>* m_task;
         incremental::IncrementalEvaluation<Kind> m_evaluation;
-        ygg::Builder<tyr::planning::State<Kind>> m_state;
-        ygg::Data<RegisterValues> m_registers;
+        urd::builder<tyr::planning::State<Kind>> m_state;  ///< A copy: the entered state may be a builder view of scratch storage.
+        urd::data<RegisterValues> m_registers;
         incremental::Delta m_delta;
         bool m_has_previous = false;  ///< m_state holds the previously entered state.
         bool m_entered = false;       ///< The current state is entered.
@@ -81,13 +81,13 @@ class DeltaEvaluationPolicy
             {
                 if (!std::exchange(m_has_previous, false))
                     return m_evaluation.enter(context);
-                m_delta.template assign<Kind>(ygg::make_view(m_state, task),
-                                              ygg::make_view(m_registers, *task.get_repository()),
+                m_delta.template assign<Kind>(urd::resolve(m_state, context.get_state().context()),
+                                              urd::resolve(m_registers, *task.get_repository()),
                                               context.get_state(),
                                               context.registers());
                 return m_evaluation.enter(context, m_delta, detail::get_database_workspace(context.get_workspace()));
             }();
-            m_state = context.get_state().get_state_builder();
+            m_state.assign(context.get_state().data());
             assign(m_registers, context.registers());
             m_has_previous = m_entered = true;
             return evaluation;

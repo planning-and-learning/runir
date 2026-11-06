@@ -7,7 +7,7 @@
 namespace runir::serialization
 {
 
-using UnsViews = ygg::MapTypeListSecondT<IndexView, kr::uns::Repository, kr::uns::RepositoryTypes>;
+using UnsViews = boost::mp11::mp_transform_q<boost::mp11::mp_bind_front<IndexView, kr::uns::Repository>, kr::uns::RepositoryTypes>;
 
 }  // namespace runir::serialization
 

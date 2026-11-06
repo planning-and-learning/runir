@@ -2,11 +2,14 @@
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_SET_OPERATION_WORKSPACE_HPP_
 
 #include "runir/kr/dl/semantics/denotation_builder.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include "runir/kr/dl/semantics/incremental/detail/closure.hpp"
 
 #include <cstdint>
 #include <vector>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
+#include <yggdrasil/core/config.hpp>
 
 namespace runir::kr::dl::semantics::incremental::detail
 {
@@ -14,9 +17,9 @@ namespace runir::kr::dl::semantics::incremental::detail
 /// Scratch shared by sequential constructor updates; no denotation owns it.
 struct SetOperationWorkspace
 {
-    std::vector<ygg::Index<tyr::formalism::Object>> rows;
-    std::vector<std::uint8_t> marked;
-    ygg::Builder<Denotation<ConceptTag>> row;
+    urd::Store<urd::sequence<urd::index<tyr::formalism::Object>>> rows;
+    urd::Store<urd::sequence<std::uint8_t>> marked;
+    urd::builder<Denotation<ConceptTag>> row;
     ClosureWorkspace closure;
 
     void initialize(ygg::uint_t num_objects)
@@ -28,9 +31,9 @@ struct SetOperationWorkspace
         closure.initialize(num_objects);
     }
 
-    void mark(ygg::Index<tyr::formalism::Object> source)
+    void mark(urd::index<tyr::formalism::Object> source)
     {
-        const auto index = static_cast<ygg::uint_t>(source);
+        const auto index = static_cast<ygg::uint_t>(source.value);
         if (!marked[index])
         {
             rows.push_back(source);
@@ -41,7 +44,7 @@ struct SetOperationWorkspace
     void clear_rows() noexcept
     {
         for (const auto source : rows)
-            marked[static_cast<ygg::uint_t>(source)] = 0;
+            marked[static_cast<ygg::uint_t>(source.value)] = 0;
         rows.clear();
     }
 
@@ -49,7 +52,7 @@ struct SetOperationWorkspace
     {
         clear_rows();
         for (ygg::uint_t source = 0; source < marked.size(); ++source)
-            mark(ygg::Index<tyr::formalism::Object>(source));
+            mark(urd::index<tyr::formalism::Object>(source));
     }
 };
 

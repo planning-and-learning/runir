@@ -43,7 +43,7 @@ template<tyr::TaskKind Kind, runir::kr::ps::dl::FeatureTag FeatureTag>
 void bind_feature_evaluation(nb::module_& m)
 {
     using namespace nb::literals;
-    using FeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, FeatureTag>>, Repository>;
+    using FeatureView = urd::view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, FeatureTag>, Repository>;
     using Context = runir::kr::dl::semantics::StateEvaluationContext<Kind>;
 
     m.def(
@@ -94,8 +94,8 @@ void bind_execution_types(nb::module_& m, const char* prefix)
 
     auto histories = nb::class_<HistoryView>(m, (std::string(prefix) + "Histories").c_str())
                          .def_prop_ro("concepts", &HistoryView::get_concepts, nb::rv_policy::reference_internal);
-    ygg::add_comparison(histories);
-    ygg::add_hash(histories);
+    urd::python::add_comparison(histories);
+    urd::python::add_hash(histories);
 
     auto program_state = nb::class_<StateView>(m, (std::string(prefix) + "ProgramState").c_str())
                              .def_prop_ro("state", &StateView::get_state, nb::keep_alive<0, 1>())
@@ -104,8 +104,8 @@ void bind_execution_types(nb::module_& m, const char* prefix)
                              .def_prop_ro("memory_state", &StateView::get_memory_state, nb::keep_alive<0, 1>())
                              .def_prop_ro("registers", &StateView::get_registers, nb::keep_alive<0, 1>())
                              .def_prop_ro("histories", &StateView::get_histories, nb::keep_alive<0, 1>());
-    ygg::add_comparison(program_state);
-    ygg::add_hash(program_state);
+    urd::python::add_comparison(program_state);
+    urd::python::add_hash(program_state);
 
     auto vertex_label = nb::class_<VertexLabel>(m, (std::string(prefix) + "ProgramProofVertexLabel").c_str())
                             .def_ro("program_state", &VertexLabel::program_state)
@@ -117,8 +117,8 @@ void bind_execution_types(nb::module_& m, const char* prefix)
                             .def_ro("is_goal", &VertexLabel::is_goal)
                             .def_ro("is_alive", &VertexLabel::is_alive)
                             .def_ro("is_unsolvable", &VertexLabel::is_unsolvable);
-    ygg::add_comparison(vertex_label);
-    ygg::add_hash(vertex_label);
+    urd::python::add_comparison(vertex_label);
+    urd::python::add_hash(vertex_label);
 
     auto graph = nb::class_<Graph>(m, (std::string(prefix) + "ProgramProofGraph").c_str());
     graph.def(nb::init<>());
@@ -128,7 +128,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     nb::class_<Results>(m, (std::string(prefix) + "ProgramProofResults").c_str())
         .def_ro("status", &Results::status)
         .def_ro("graph", &Results::graph, nb::keep_alive<0, 1>())
-        .def_ro("plan", &Results::plan, nb::rv_policy::copy)
+        .def_ro("plan", &Results::plan, nb::rv_policy::copy, nb::keep_alive<0, 1>())
         .def_ro("deadend_states", &Results::deadend_states)
         .def_ro("open_states", &Results::open_states)
         .def_ro("cycle", &Results::cycle)
@@ -147,15 +147,24 @@ void bind_execution_types(nb::module_& m, const char* prefix)
         .def_prop_ro("target", &Step::get_target, nb::keep_alive<0, 1>())
         .def_prop_ro("state_transition", &Step::get_state_transition, nb::keep_alive<0, 1>())
         .def_prop_ro("rule", &Step::get_rule, nb::keep_alive<0, 1>())
-        .def_ro("planning_successor", &Step::planning_successor, nb::rv_policy::copy);
+        .def_ro("planning_successor", &Step::planning_successor, nb::rv_policy::copy, nb::keep_alive<0, 1>());
 
     nb::class_<Expander>(m, (std::string(prefix) + "SuccessorExpander").c_str())
         .def(nb::init<runir::kr::TaskContextPtr<Kind>, ProgramView>(), "task_context"_a, "program"_a, nb::keep_alive<1, 3>())
         .def("initial_state", &Expander::initial_state, "state"_a, nb::keep_alive<0, 1>())
         .def(
             "for_each_successor",
-            [](Expander& self, StateView state, ProgramSearchStatistics& statistics, const std::function<bool(Step)>& emit, const std::function<bool()>& stop)
-            { return self.for_each_successor(state, statistics, emit, stop); },
+            [](Expander& self, StateView state, ProgramSearchStatistics& statistics, const nb::typed<nb::callable, bool(Step)>& emit, const std::function<bool()>& stop)
+            {
+                const auto owner = nb::cast(&self, nb::rv_policy::reference);
+                // Steps borrow the expander's own repositories and pools: each keeps the expander alive.
+                const auto keep_expander = nb::cpp_function([](nb::object value, nb::handle) { return value; }, nb::keep_alive<0, 2>());
+                return self.for_each_successor(
+                    state,
+                    statistics,
+                    [&](Step step) { return nb::cast<bool>(emit(keep_expander(nb::cast(std::move(step)), owner))); },
+                    stop);
+            },
             "state"_a,
             "statistics"_a,
             "emit"_a,
@@ -181,8 +190,8 @@ void bind_program_executor(nb::module_& m)
     auto edge_label = nb::class_<ProgramProofEdgeLabel>(m, "ProgramProofEdgeLabel")
                           .def_ro("action", &ProgramProofEdgeLabel::action)
                           .def_ro("rule", &ProgramProofEdgeLabel::rule);
-    ygg::add_comparison(edge_label);
-    ygg::add_hash(edge_label);
+    urd::python::add_comparison(edge_label);
+    urd::python::add_hash(edge_label);
     m.attr("GroundProgramProofEdgeLabel") = edge_label;
     m.attr("LiftedProgramProofEdgeLabel") = edge_label;
 

@@ -66,9 +66,9 @@ SearchResults = icp.GroundProgramProofResults | icp.LiftedProgramProofResults
 
 
 def test_argument_position_binding_and_indexical_data() -> None:
-    assert icp.ArgumentPosition().is_max()
+    assert int(icp.ArgumentPosition()) == 0
     position = icp.ArgumentPosition(0)
-    assert int(position) == position.value() == 0
+    assert int(position) == position.value == 0
     for data_type in (icp.XConditionData, icp.XEffectData):
         data = data_type()
         data.object = position

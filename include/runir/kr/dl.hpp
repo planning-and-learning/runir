@@ -17,6 +17,5 @@
 #include "runir/kr/dl/semantics/formatter.hpp"
 #include "runir/kr/dl/semantics/views.hpp"
 
-#include <yggdrasil/core/types.hpp>
 
 #endif

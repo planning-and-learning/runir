@@ -5,8 +5,9 @@
 #include <runir/kr/dl/grammar/grammar_data.hpp>
 #include <runir/kr/dl/grammar/grammar_view.hpp>
 #include <tyr/formalism/planning/repository.hpp>
-#include <yggdrasil/core/concepts.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
+#include <boost/mp11.hpp>
+#include <yggdrasil/core/config.hpp>
 
 namespace runir::tests
 {
@@ -16,9 +17,9 @@ namespace
 
 template<typename T, typename Repository>
 concept IndexedDataView =
-    std::constructible_from<ygg::Index<T>, ygg::uint_t> && ygg::Identifiable<ygg::Index<T>> && ygg::Identifiable<ygg::Data<T>>
-    && ygg::Identifiable<ygg::View<ygg::Index<T>, Repository>> && std::totally_ordered<ygg::Index<T>> && std::totally_ordered<ygg::Data<T>>
-    && std::totally_ordered<ygg::View<ygg::Index<T>, Repository>> && requires(ygg::Data<T>& data, const ygg::View<ygg::Index<T>, Repository>& view) {
+    std::constructible_from<urd::index<T>, ygg::uint_t> && urd::Identifiable<urd::index<T>> && urd::Identifiable<urd::data<T>>
+    && urd::Identifiable<urd::view<T, Repository>> && std::totally_ordered<urd::index<T>> && std::totally_ordered<urd::data<T>>
+    && std::totally_ordered<urd::view<T, Repository>> && requires(urd::data<T>& data, const urd::view<T, Repository>& view) {
            data.index;
            data.concept_start;
            data.role_start;
@@ -29,8 +30,7 @@ concept IndexedDataView =
            data.boolean_derivation_rules;
            data.numerical_derivation_rules;
            data.domain;
-           data.clear();
-           view.get_index();
+           view.index();
            view.template get_start<kr::dl::ConceptTag>();
            view.template get_start<kr::dl::RoleTag>();
            view.template get_start<kr::dl::BooleanTag>();
@@ -43,13 +43,13 @@ concept IndexedDataView =
        };
 
 template<typename... Ts>
-consteval bool indexed_data_views(ygg::TypeList<Ts...>)
+consteval bool indexed_data_views(boost::mp11::mp_list<Ts...>)
 { return (IndexedDataView<Ts, kr::dl::grammar::ConstructorRepository> && ...); }
 
 static_assert(indexed_data_views<>(kr::dl::grammar::GrammarTypes {}));
-static_assert(std::same_as<kr::dl::grammar::GrammarView, ygg::View<ygg::Index<kr::dl::grammar::GrammarTag>, kr::dl::grammar::ConstructorRepository>>);
-static_assert(std::same_as<kr::dl::grammar::GrammarView, ygg::View<ygg::Index<kr::dl::grammar::GrammarTag>, kr::dl::grammar::ConstructorRepository>>);
-static_assert(std::same_as<kr::dl::grammar::GrammarView, ygg::View<ygg::Index<kr::dl::grammar::GrammarTag>, kr::dl::grammar::ConstructorRepository>>);
+static_assert(std::same_as<kr::dl::grammar::GrammarView, urd::view<kr::dl::grammar::GrammarTag, kr::dl::grammar::ConstructorRepository>>);
+static_assert(std::same_as<kr::dl::grammar::GrammarView, urd::view<kr::dl::grammar::GrammarTag, kr::dl::grammar::ConstructorRepository>>);
+static_assert(std::same_as<kr::dl::grammar::GrammarView, urd::view<kr::dl::grammar::GrammarTag, kr::dl::grammar::ConstructorRepository>>);
 static_assert(std::same_as<kr::dl::grammar::GrammarView, kr::dl::grammar::GrammarView>);
 static_assert(std::same_as<kr::dl::grammar::GrammarView, kr::dl::grammar::GrammarView>);
 static_assert(std::same_as<kr::dl::grammar::GrammarView, kr::dl::grammar::GrammarView>);

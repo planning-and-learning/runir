@@ -6,43 +6,43 @@
 #include "runir/kr/uns/classifier_data.hpp"
 
 #include <tuple>
-#include <yggdrasil/containers/variant.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
 
-namespace ygg
+namespace urd
 {
+template<typename V>
+struct view_mixin<runir::kr::uns::ClassifierLiteral, V>
+{
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
-template<formalism::SymbolContextFor<runir::kr::uns::ClassifierLiteral> C>
-class View<Index<runir::kr::uns::ClassifierLiteral>, C> : public ygg::IndexViewBase<runir::kr::uns::ClassifierLiteral, C>
-{
 public:
-    using ygg::IndexViewBase<runir::kr::uns::ClassifierLiteral, C>::IndexViewBase;
-
-    auto get_feature() const noexcept { return make_view(this->get_data().variant, this->get_context()); }
-    auto get_polarity() const noexcept { return this->get_data().polarity; }
+    auto get_feature() const noexcept { return self().template get<&urd::record_of<V>::variant>(); }
+    auto get_polarity() const noexcept { return self().data().polarity; }
 };
 
-template<formalism::SymbolContextFor<runir::kr::uns::ClassifierClause> C>
-class View<Index<runir::kr::uns::ClassifierClause>, C> : public ygg::IndexViewBase<runir::kr::uns::ClassifierClause, C>
+template<typename V>
+struct view_mixin<runir::kr::uns::ClassifierClause, V>
 {
-public:
-    using ygg::IndexViewBase<runir::kr::uns::ClassifierClause, C>::IndexViewBase;
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
-    auto get_literals() const noexcept { return make_view(this->get_data().literals, this->get_context()); }
+public:
+    auto get_literals() const noexcept { return self().template get<&urd::record_of<V>::literals>(); }
 };
 
-template<formalism::SymbolContextFor<runir::kr::uns::Classifier> C>
-class View<Index<runir::kr::uns::Classifier>, C> : public ygg::IndexViewBase<runir::kr::uns::Classifier, C>
+template<typename V>
+struct view_mixin<runir::kr::uns::Classifier, V>
 {
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
+
 public:
-    using ygg::IndexViewBase<runir::kr::uns::Classifier, C>::IndexViewBase;
-
-    const auto& get_symbol() const noexcept { return this->get_data().symbol; }
-    auto get_features() const noexcept { return make_view(this->get_data().features, this->get_context()); }
-    auto get_clauses() const noexcept { return make_view(this->get_data().clauses, this->get_context()); }
+    const auto& get_symbol() const noexcept { return self().data().symbol; }
+    auto get_features() const noexcept { return self().template get<&urd::record_of<V>::features>(); }
+    auto get_clauses() const noexcept { return self().template get<&urd::record_of<V>::clauses>(); }
 };
-
-}  // namespace ygg
+}  // namespace urd
 
 #endif

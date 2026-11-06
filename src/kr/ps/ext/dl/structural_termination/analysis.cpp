@@ -17,7 +17,7 @@ using RegisterConstructor = std::conditional_t<std::same_as<Category, runir::kr:
                                                runir::kr::dl::Role<runir::kr::dl::RegisterTag>>;
 
 template<runir::kr::dl::CategoryTag Category>
-using RegisterConstructorView = ygg::View<ygg::Index<RegisterConstructor<Category>>, runir::kr::dl::ConstructorRepository>;
+using RegisterConstructorView = urd::view<RegisterConstructor<Category>, runir::kr::dl::ConstructorRepository>;
 
 template<runir::kr::dl::CategoryTag Category, typename VariantView>
 bool variant_references_register(VariantView view, runir::kr::dl::RegisterIdentifier<Category> reg);
@@ -65,14 +65,14 @@ bool references_register(View view, runir::kr::dl::RegisterIdentifier<Category> 
 template<runir::kr::dl::CategoryTag Category, typename VariantView>
 bool variant_references_register(VariantView view, runir::kr::dl::RegisterIdentifier<Category> reg)
 {
-    return ygg::visit([&](auto child) { return references_register(child, reg); }, view);
+    return std::visit([&](auto child) { return references_register(child, reg); }, view);
 }
 
 template<typename FeatureTag, typename C, runir::kr::dl::CategoryTag Category>
-bool feature_references_register(ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, C> feature,
+bool feature_references_register(urd::view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>, C> feature,
                                  runir::kr::dl::RegisterIdentifier<Category> reg)
 {
-    return ygg::visit([&](auto concrete) { return references_register(concrete.get_expression(), reg); }, feature.get_variant());
+    return std::visit([&](auto concrete) { return references_register(concrete.get_expression(), reg); }, feature.get_variant());
 }
 
 template<runir::kr::dl::CategoryTag Category>
@@ -115,7 +115,7 @@ Analysis analyze_module(ModuleView module_)
 
     for (auto transition : module_.get_memory_transitions())
         for (auto rule : transition)
-            ygg::visit(
+            std::visit(
                 [&](auto concrete_rule)
                 {
                     // Terminal rules have no outgoing qualitative transition.
@@ -125,23 +125,11 @@ Analysis analyze_module(ModuleView module_)
                         profile.source_memory_position = memory_position(concrete_rule.get_source());
                         profile.target_memory_position = memory_position(concrete_rule.get_target());
                         for (auto condition : concrete_rule.get_conditions())
-                            ygg::visit(
-                                [&](auto concrete_variant)
-                                {
-                                    ygg::visit([&](auto concrete) { ps::detail::record_condition(module_, profile, concrete); },
-                                               concrete_variant.get_variant());
-                                },
-                                condition.get_variant());
+                            std::visit([&](auto concrete) { ps::detail::record_condition(module_, profile, concrete); }, condition);
                         if constexpr (requires { concrete_rule.get_effects(); })
                         {
                             for (auto effect : concrete_rule.get_effects())
-                                ygg::visit(
-                                    [&](auto concrete_variant)
-                                    {
-                                        ygg::visit([&](auto concrete) { ps::detail::record_effect(module_, profile, concrete); },
-                                                   concrete_variant.get_variant());
-                                    },
-                                    effect.get_variant());
+                                std::visit([&](auto concrete) { ps::detail::record_effect(module_, profile, concrete); }, effect);
                         }
                         if constexpr (requires { concrete_rule.get_register(); })
                             record_binding_effects(module_, profile, concrete_rule.get_register().get_identifier());

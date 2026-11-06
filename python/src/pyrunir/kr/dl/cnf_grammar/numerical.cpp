@@ -16,13 +16,13 @@ namespace
 template<typename Tag>
 void bind_numerical_data(nb::module_& m, const char* name)
 {
-    using Data = ygg::Data<runir::kr::dl::cnf_grammar::Numerical<Tag>>;
+    using Data = urd::data<runir::kr::dl::cnf_grammar::Numerical<Tag>>;
     auto cls = nb::class_<Data>(m, name).def(nb::init<>()).def_rw("index", &Data::index);
-    ygg::add_comparison(cls);
+    urd::python::add_comparison(cls);
     python::def_numerical_data_constructors<Tag,
-                                            ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>,
-                                            ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>,
-                                            ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::NumericalTag>>,
+                                            urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>,
+                                            urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>,
+                                            urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::NumericalTag>>,
                                             runir::kr::dl::cnf_grammar::ConstructorRepository>(cls);
 
     if constexpr (std::same_as<Tag, CountTag>)
@@ -35,11 +35,11 @@ template<typename Tag>
 void bind_numerical_view(nb::module_& m, const char* name)
 {
     using Type = runir::kr::dl::cnf_grammar::Numerical<Tag>;
-    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::cnf_grammar::ConstructorRepository>;
-    auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index);
+    using View = urd::view<Type, runir::kr::dl::cnf_grammar::ConstructorRepository>;
+    auto cls = nb::class_<View>(m, name).def("get_index", &View::index);
     ygg::add_print(cls);
-    ygg::add_comparison(cls);
-    ygg::add_hash(cls);
+    urd::python::add_comparison(cls);
+    urd::python::add_hash(cls);
 
     if constexpr (std::same_as<Tag, CountTag>)
         cls.def("get_arg", &View::get_arg, nb::keep_alive<0, 1>());
@@ -56,8 +56,8 @@ void bind_cnf_grammar_numerical(nb::module_& m)
     using Count = runir::kr::dl::cnf_grammar::Numerical<CountTag>;
     using Distance = runir::kr::dl::cnf_grammar::Numerical<DistanceTag>;
 
-    ygg::bind_index<ygg::Index<Count>>(m, "NumericalCountIndex");
-    ygg::bind_index<ygg::Index<Distance>>(m, "NumericalDistanceIndex");
+    urd::python::bind_index<urd::index<Count>>(m, "NumericalCountIndex");
+    urd::python::bind_index<urd::index<Distance>>(m, "NumericalDistanceIndex");
     bind_numerical_data<CountTag>(m, "NumericalCountData");
     bind_numerical_data<DistanceTag>(m, "NumericalDistanceData");
     bind_numerical_view<CountTag>(m, "NumericalCount");

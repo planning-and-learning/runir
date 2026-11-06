@@ -2,7 +2,6 @@
 #include <gtest/gtest.h>
 #include <runir/kr/dl/repository.hpp>
 #include <tyr/formalism/planning/repository.hpp>
-#include <yggdrasil/core/concepts.hpp>
 
 namespace runir::tests
 {
@@ -12,36 +11,35 @@ namespace
 
 template<typename T, typename Repository>
 concept IndexedDataView =
-    std::constructible_from<ygg::Index<T>, ygg::uint_t> && ygg::Identifiable<ygg::Index<T>> && ygg::Identifiable<ygg::Data<T>>
-    && ygg::Identifiable<ygg::View<ygg::Index<T>, Repository>> && std::totally_ordered<ygg::Index<T>> && std::totally_ordered<ygg::Data<T>>
-    && std::totally_ordered<ygg::View<ygg::Index<T>, Repository>> && requires(ygg::Data<T>& data, const ygg::View<ygg::Index<T>, Repository>& view) {
+    std::constructible_from<urd::index<T>, ygg::uint_t> && urd::Identifiable<urd::index<T>> && urd::Identifiable<urd::data<T>>
+    && urd::Identifiable<urd::view<T, Repository>> && std::totally_ordered<urd::index<T>> && std::totally_ordered<urd::data<T>>
+    && std::totally_ordered<urd::view<T, Repository>> && requires(urd::data<T>& data, const urd::view<T, Repository>& view) {
            data.index;
            data.name;
            data.identifier;
-           data.clear();
-           view.get_index();
+           view.index();
            view.get_name();
            view.get_identifier();
        };
 
 template<typename Repository, typename... Ts>
-consteval bool indexed_data_views(ygg::TypeList<Ts...>)
+consteval bool indexed_data_views(boost::mp11::mp_list<Ts...>)
 { return (IndexedDataView<Ts, Repository> && ...); }
 
-using RegisterTypes = ygg::TypeList<kr::dl::Register<kr::dl::ConceptTag>, kr::dl::Register<kr::dl::RoleTag>>;
-using RegisterIdentifierTypes = ygg::TypeList<kr::dl::RegisterIdentifier<kr::dl::ConceptTag>, kr::dl::RegisterIdentifier<kr::dl::RoleTag>>;
+using RegisterTypes = boost::mp11::mp_list<kr::dl::Register<kr::dl::ConceptTag>, kr::dl::Register<kr::dl::RoleTag>>;
+using RegisterIdentifierTypes = boost::mp11::mp_list<kr::dl::RegisterIdentifier<kr::dl::ConceptTag>, kr::dl::RegisterIdentifier<kr::dl::RoleTag>>;
 
 template<typename... Ts>
-consteval bool identifiers(ygg::TypeList<Ts...>)
-{ return ((std::constructible_from<Ts, ygg::uint_t> && ygg::Identifiable<Ts> && std::totally_ordered<Ts>) && ...); }
+consteval bool identifiers(boost::mp11::mp_list<Ts...>)
+{ return ((std::constructible_from<Ts, ygg::uint_t> && urd::Identifiable<Ts> && std::totally_ordered<Ts>) && ...); }
 
 template<typename... Categories>
-consteval bool view_aliases(ygg::TypeList<Categories...>)
-{ return (std::same_as<kr::dl::RegisterView<Categories>, ygg::View<ygg::Index<kr::dl::Register<Categories>>, kr::dl::ConstructorRepository>> && ...); }
+consteval bool view_aliases(boost::mp11::mp_list<Categories...>)
+{ return (std::same_as<kr::dl::RegisterView<Categories>, urd::view<kr::dl::Register<Categories>, kr::dl::ConstructorRepository>> && ...); }
 
 static_assert(indexed_data_views<kr::dl::ConstructorRepository>(RegisterTypes {}));
 static_assert(identifiers(RegisterIdentifierTypes {}));
-static_assert(view_aliases(ygg::TypeList<kr::dl::ConceptTag, kr::dl::RoleTag> {}));
+static_assert(view_aliases(boost::mp11::mp_list<kr::dl::ConceptTag, kr::dl::RoleTag> {}));
 
 }  // namespace
 
@@ -49,7 +47,7 @@ TEST(RunirKrDlRegister, ExposesNameAndUnboundedIdentifier)
 {
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_repository);
-    auto data = ygg::Data<kr::dl::Register<kr::dl::RoleTag>>(std::string("target"), kr::dl::RegisterIdentifier<kr::dl::RoleTag>(1024));
+    auto data = urd::data<kr::dl::Register<kr::dl::RoleTag>>(std::string("target"), kr::dl::RegisterIdentifier<kr::dl::RoleTag>(1024));
     const auto reg = repository->insert(data).first;
 
     EXPECT_EQ(reg.get_name(), "target");

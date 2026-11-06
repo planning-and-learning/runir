@@ -5,6 +5,7 @@
 #include <string>
 #include <tyr/formalism/object_data.hpp>
 #include <tyr/formalism/planning/repository.hpp>
+#include <urd/repr/containers/bitset_span.hpp>
 
 namespace runir::tests
 {
@@ -19,12 +20,12 @@ void check_composition_and_closures()
     auto repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     for (ygg::uint_t i = 0; i < size; ++i)
     {
-        auto data = ygg::Data<tyr::formalism::Object>("o" + std::to_string(i));
+        auto data = urd::data<tyr::formalism::Object>("o" + std::to_string(i));
         (void) repository->insert(data);
     }
-    const auto object = [&](ygg::uint_t index) { return ygg::make_view(ygg::Index<tyr::formalism::Object>(index), *repository); };
-    auto lhs = ygg::Builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size);
-    auto rhs = ygg::Builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size);
+    const auto object = [&](ygg::uint_t index) { return repository->view(urd::index<tyr::formalism::Object>(index)); };
+    auto lhs = urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size);
+    auto rhs = urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size);
     for (ygg::uint_t i = 0; i < size; ++i)
     {
         lhs.get(i).set((i + 1) % size);
@@ -37,11 +38,11 @@ void check_composition_and_closures()
     auto reflexive = kr::dl::semantics::incremental::detail::DenotationState<kr::dl::RoleTag>();
     auto workspace = kr::dl::semantics::incremental::detail::SetOperationWorkspace();
     workspace.initialize(size);
-    const auto lhs_view = ygg::make_view(lhs, *repository);
-    const auto rhs_view = ygg::make_view(rhs, *repository);
+    const auto lhs_view = urd::resolve(lhs, *repository);
+    const auto rhs_view = urd::resolve(rhs, *repository);
 
     const auto check_result = [&](const kr::dl::semantics::incremental::detail::DenotationState<kr::dl::RoleTag>& output,
-                                  const ygg::Builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>& previous,
+                                  const urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>& previous,
                                   const std::array<bool, cells>& expected,
                                   bool initialized)
     {
@@ -49,14 +50,14 @@ void check_composition_and_closures()
         auto removed = std::array<bool, cells> {};
         for (const auto& [source, target] : output.get_delta().added)
         {
-            const auto position = static_cast<ygg::uint_t>(source.get_index()) * size + static_cast<ygg::uint_t>(target.get_index());
+            const auto position = static_cast<ygg::uint_t>(source.index().value) * size + static_cast<ygg::uint_t>(target.index().value);
             ASSERT_LT(position, added.size());
             EXPECT_FALSE(added[position]);
             added[position] = true;
         }
         for (const auto& [source, target] : output.get_delta().removed)
         {
-            const auto position = static_cast<ygg::uint_t>(source.get_index()) * size + static_cast<ygg::uint_t>(target.get_index());
+            const auto position = static_cast<ygg::uint_t>(source.index().value) * size + static_cast<ygg::uint_t>(target.index().value);
             ASSERT_LT(position, removed.size());
             EXPECT_FALSE(removed[position]);
             removed[position] = true;
@@ -90,9 +91,9 @@ void check_composition_and_closures()
                 if (rhs.get(source)[target] != previous_rhs.get(source)[target])
                     (rhs.get(source)[target] ? rhs_delta.added : rhs_delta.removed).emplace_back(object(source), object(target));
             }
-        const auto old_composition = initialize ? ygg::Builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) : composition.get_builder();
-        const auto old_transitive = initialize ? ygg::Builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) : transitive.get_builder();
-        const auto old_reflexive = initialize ? ygg::Builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) : reflexive.get_builder();
+        const auto old_composition = initialize ? urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) : composition.get_builder();
+        const auto old_transitive = initialize ? urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) : transitive.get_builder();
+        const auto old_reflexive = initialize ? urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) : reflexive.get_builder();
         if (initialize)
         {
             kr::dl::semantics::incremental::detail::initialize_set(kr::dl::CompositionTag {}, composition, lhs_view, lhs_delta, rhs_view, rhs_delta, workspace);
@@ -213,29 +214,29 @@ TEST(RunirIncrementalSetOperations, CompositionAndClosuresMatchFreshResultsAndEx
 {
     check_composition_and_closures<1>();
     check_composition_and_closures<10>();
-    check_composition_and_closures<static_cast<ygg::uint_t>(ygg::BitsetSpan<const ygg::uint_t>::Digits + 3)>();
+    check_composition_and_closures<static_cast<ygg::uint_t>(urd::repr::BitsetSpan<const ygg::uint_t>::Digits + 3)>();
 }
 
 TEST(RunirIncrementalSetOperations, ConceptIntersectionAndUnionAcrossWordBoundaries)
 {
-    constexpr auto digits = static_cast<ygg::uint_t>(ygg::BitsetSpan<const ygg::uint_t>::Digits), size = digits + 2;
+    constexpr auto digits = static_cast<ygg::uint_t>(urd::repr::BitsetSpan<const ygg::uint_t>::Digits), size = digits + 2;
     auto repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     for (ygg::uint_t i = 0; i < size; ++i)
     {
-        auto data = ygg::Data<tyr::formalism::Object>("o" + std::to_string(i));
+        auto data = urd::data<tyr::formalism::Object>("o" + std::to_string(i));
         (void) repository->insert(data);
     }
-    const auto object = [&](ygg::uint_t i) { return ygg::make_view(ygg::Index<tyr::formalism::Object>(i), *repository); };
+    const auto object = [&](ygg::uint_t i) { return repository->view(urd::index<tyr::formalism::Object>(i)); };
     const auto check = [&](auto tag)
     {
         constexpr auto intersection = std::same_as<decltype(tag), kr::dl::IntersectionTag>;
         SCOPED_TRACE(intersection);
-        auto lhs = ygg::Builder<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(size), rhs = lhs;
+        auto lhs = urd::builder<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(size), rhs = lhs;
         for (const auto i : { digits - 1, digits, digits + 1 })
             lhs.get().set(i);
         for (const auto i : { ygg::uint_t { 0 }, digits, digits + 1 })
             rhs.get().set(i);
-        const auto left = ygg::make_view(lhs, *repository), right = ygg::make_view(rhs, *repository);
+        const auto left = urd::resolve(lhs, *repository), right = urd::resolve(rhs, *repository);
         auto lhs_delta = kr::dl::semantics::incremental::DenotationDelta<kr::dl::ConceptTag>(), rhs_delta = lhs_delta;
         auto output = kr::dl::semantics::incremental::detail::DenotationState<kr::dl::ConceptTag>();
         auto workspace = kr::dl::semantics::incremental::detail::SetOperationWorkspace();
@@ -253,8 +254,8 @@ TEST(RunirIncrementalSetOperations, ConceptIntersectionAndUnionAcrossWordBoundar
         lhs_delta.added = { object(1) };
         rhs_delta.added = { object(digits - 1) };
         kr::dl::semantics::incremental::detail::update_set(tag, output, left, lhs_delta, right, rhs_delta, workspace);
-        EXPECT_EQ(output.get_delta().added, std::vector { object(intersection ? digits - 1 : 1) });
-        EXPECT_EQ(output.get_delta().removed, std::vector { object(digits + 1) });
+        EXPECT_TRUE(std::ranges::equal(output.get_delta().added, std::vector { object(intersection ? digits - 1 : 1) }));
+        EXPECT_TRUE(std::ranges::equal(output.get_delta().removed, std::vector { object(digits + 1) }));
         for (ygg::uint_t i = 0; i < size; ++i)
             EXPECT_EQ(output.contains(object(i)), i == digits || i == digits - 1 || (!intersection && (i == 0 || i == 1)));
         EXPECT_EQ(output.size(), intersection ? 2 : 4);
@@ -266,16 +267,16 @@ TEST(RunirIncrementalSetOperations, ConceptIntersectionAndUnionAcrossWordBoundar
 
 TEST(RunirIncrementalSetOperations, RestrictionBatchesConceptChangesWithChangedRoleRows)
 {
-    constexpr auto size = static_cast<ygg::uint_t>(ygg::BitsetSpan<const ygg::uint_t>::Digits + 3);
+    constexpr auto size = static_cast<ygg::uint_t>(urd::repr::BitsetSpan<const ygg::uint_t>::Digits + 3);
     auto repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     for (ygg::uint_t i = 0; i < size; ++i)
     {
-        auto data = ygg::Data<tyr::formalism::Object>("o" + std::to_string(i));
+        auto data = urd::data<tyr::formalism::Object>("o" + std::to_string(i));
         (void) repository->insert(data);
     }
-    const auto object = [&](ygg::uint_t i) { return ygg::make_view(ygg::Index<tyr::formalism::Object>(i), *repository); };
-    auto role = ygg::Builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size);
-    auto concept_ = ygg::Builder<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(size);
+    const auto object = [&](ygg::uint_t i) { return repository->view(urd::index<tyr::formalism::Object>(i)); };
+    auto role = urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size);
+    auto concept_ = urd::builder<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(size);
     role.get(0).set(1);
     role.get(1).set(size - 1);
     role.get(2).set(1);
@@ -288,8 +289,8 @@ TEST(RunirIncrementalSetOperations, RestrictionBatchesConceptChangesWithChangedR
     auto existential = kr::dl::semantics::incremental::detail::DenotationState<kr::dl::ConceptTag>();
     auto workspace = kr::dl::semantics::incremental::detail::SetOperationWorkspace();
     workspace.initialize(size);
-    const auto role_view = ygg::make_view(role, *repository);
-    const auto concept_view = ygg::make_view(concept_, *repository);
+    const auto role_view = urd::resolve(role, *repository);
+    const auto concept_view = urd::resolve(concept_, *repository);
     kr::dl::semantics::incremental::detail::initialize_set(kr::dl::RestrictionTag {},
                                                            restricted,
                                                            role_view,
@@ -329,21 +330,21 @@ TEST(RunirIncrementalSetOperations, RestrictionBatchesConceptChangesWithChangedR
     }
     EXPECT_EQ(restricted.get_delta().added.size(), 3);
     EXPECT_EQ(restricted.get_delta().removed.size(), 2);
-    EXPECT_EQ(existential.get_delta().added, std::vector { object(1) });
+    EXPECT_TRUE(std::ranges::equal(existential.get_delta().added, std::vector { object(1) }));
     EXPECT_TRUE(existential.get_delta().removed.empty());
 }
 
 TEST(RunirIncrementalSetOperations, InverseAndComplementPreservePaddingAcrossWordBoundaries)
 {
-    constexpr auto size = static_cast<ygg::uint_t>(ygg::BitsetSpan<const ygg::uint_t>::Digits + 3);
+    constexpr auto size = static_cast<ygg::uint_t>(urd::repr::BitsetSpan<const ygg::uint_t>::Digits + 3);
     auto repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     for (ygg::uint_t i = 0; i < size; ++i)
     {
-        auto data = ygg::Data<tyr::formalism::Object>("o" + std::to_string(i));
+        auto data = urd::data<tyr::formalism::Object>("o" + std::to_string(i));
         (void) repository->insert(data);
     }
-    const auto object = [&](ygg::uint_t index) { return ygg::make_view(ygg::Index<tyr::formalism::Object>(index), *repository); };
-    auto role = ygg::Builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size);
+    const auto object = [&](ygg::uint_t index) { return repository->view(urd::index<tyr::formalism::Object>(index)); };
+    auto role = urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size);
     role.get(0).set(size - 1);
     role.get(size - 1).set(1);
     auto inverse = kr::dl::semantics::incremental::detail::DenotationState<kr::dl::RoleTag>();
@@ -351,7 +352,7 @@ TEST(RunirIncrementalSetOperations, InverseAndComplementPreservePaddingAcrossWor
     auto delta = kr::dl::semantics::incremental::DenotationDelta<kr::dl::RoleTag>();
     auto workspace = kr::dl::semantics::incremental::detail::SetOperationWorkspace();
     workspace.initialize(size);
-    const auto view = ygg::make_view(role, *repository);
+    const auto view = urd::resolve(role, *repository);
     kr::dl::semantics::incremental::detail::initialize_set(kr::dl::InverseTag {}, inverse, view, delta, workspace);
     kr::dl::semantics::incremental::detail::initialize_set(kr::dl::ComplementTag {}, complement, view, delta, workspace);
     for (const auto* output : { &inverse, &complement })

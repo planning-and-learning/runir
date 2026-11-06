@@ -30,7 +30,7 @@ public:
             return false;
         const auto memory = source.get_memory_state();
         const auto required_memory = m_rule.get_source();
-        if (&memory.get_context() != &required_memory.get_context() || memory != required_memory)
+        if (&memory.context() != &required_memory.context() || memory != required_memory)
             return true;
         using Registers = runir::kr::dl::semantics::RegisterValues;
         auto& workspace = *context.workspace;
@@ -61,10 +61,10 @@ public:
             const auto histories = workspace.update_histories(source, transition, std::nullopt, stop);
             if (!histories)
                 continue;
-            auto target = source.get_data();
-            target.memory_state = m_rule.get_target().get_index();
-            target.registers = target_registers.get_index();
-            target.histories = histories->get_index();
+            auto target = source.data();
+            target.memory_state = m_rule.get_target().index();
+            target.registers = target_registers.index();
+            target.histories = histories->index();
             auto step = ProgramStep<Kind>(ProgramOutcome::APPLIED, workspace.intern(target), task);
             step.rule = m_variant;
             if (!output(std::move(step)))

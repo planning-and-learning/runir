@@ -1,4 +1,7 @@
 #include "bindings.hpp"
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
+#include <urd/python/sequences/sequence.hpp>
 #include "pyrunir/kr/binding_utils.hpp"
 #include "pyrunir/kr/ps/dl/optimization_bindings.hpp"
 
@@ -21,28 +24,28 @@ namespace runir::kr::ps::ext
 void bind_module(nb::module_& m, RepositoryBinding& repository)
 {
     using T = Module;
-    using Data = ygg::Data<T>;
-    using View = ygg::View<ygg::Index<T>, Repository>;
-    ygg::bind_index<ygg::Index<T>>(m, "ModuleIndex");
+    using Data = urd::data<T>;
+    using View = urd::view<T, Repository>;
+    urd::python::bind_index<urd::index<T>>(m, "ModuleIndex");
     using DlRepository = runir::kr::dl::ConstructorRepository;
     auto data =
         nb::class_<Data>(m, "ModuleData")
             .def(nb::init<>())
-            .def(nb::init<ygg::Index<ModuleSymbol>,
-                          ygg::IndexList<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>>,
-                          ygg::IndexList<runir::kr::dl::Argument<runir::kr::dl::RoleTag>>,
-                          ygg::IndexList<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>>,
-                          ygg::IndexList<runir::kr::dl::Argument<runir::kr::dl::NumericalTag>>,
-                          ygg::IndexList<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>,
-                          ygg::IndexList<runir::kr::dl::Register<runir::kr::dl::RoleTag>>,
-                          ygg::IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>,
-                          ygg::IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>,
-                          ygg::IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>,
-                          ygg::IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>,
-                          ygg::IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>,
-                          ygg::Index<MemoryState>,
-                          ygg::IndexList<MemoryState>,
-                          ygg::IndexMatrix<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>>(),
+            .def(nb::init<urd::index<ModuleSymbol>,
+                          urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>>>,
+                          urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::RoleTag>>>,
+                          urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>>>,
+                          urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::NumericalTag>>>,
+                          urd::flat_vector<urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>,
+                          urd::flat_vector<urd::index<runir::kr::dl::Register<runir::kr::dl::RoleTag>>>,
+                          urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>,
+                          urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>,
+                          urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>>,
+                          urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>>,
+                          urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>>,
+                          urd::index<MemoryState>,
+                          urd::flat_vector<urd::index<MemoryState>>,
+                          urd::flat_vector<urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>>>>(),
                  nb::arg("symbol"),
                  nb::arg("concept_arguments"),
                  nb::arg("role_arguments"),
@@ -58,22 +61,22 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
                  nb::arg("entry_memory_state"),
                  nb::arg("memory_states"),
                  nb::arg("memory_transitions"))
-            .def(nb::init<
-                     ygg::View<ygg::Index<ModuleSymbol>, Repository>,
-                     const std::vector<ygg::View<ygg::Index<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>>, DlRepository>>&,
-                     const std::vector<ygg::View<ygg::Index<runir::kr::dl::Argument<runir::kr::dl::RoleTag>>, DlRepository>>&,
-                     const std::vector<ygg::View<ygg::Index<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>>, DlRepository>>&,
-                     const std::vector<ygg::View<ygg::Index<runir::kr::dl::Argument<runir::kr::dl::NumericalTag>>, DlRepository>>&,
-                     const std::vector<ygg::View<ygg::Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>, DlRepository>>&,
-                     const std::vector<ygg::View<ygg::Index<runir::kr::dl::Register<runir::kr::dl::RoleTag>>, DlRepository>>&,
-                     const std::vector<ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>, Repository>>&,
-                     const std::vector<ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>, Repository>>&,
-                     const std::vector<ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>, Repository>>&,
-                     const std::vector<ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>, Repository>>&,
-                     const std::vector<ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>, Repository>>&,
-                     ygg::View<ygg::Index<MemoryState>, Repository>,
-                     const std::vector<ygg::View<ygg::Index<MemoryState>, Repository>>&,
-                     const std::vector<std::vector<ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>, Repository>>>&>(),
+            .def(urd::python::init_from_views<
+                     urd::view<ModuleSymbol, Repository>,
+                     const urd::Store<urd::sequence<urd::view<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>, DlRepository>>>&,
+                     const urd::Store<urd::sequence<urd::view<runir::kr::dl::Argument<runir::kr::dl::RoleTag>, DlRepository>>>&,
+                     const urd::Store<urd::sequence<urd::view<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>, DlRepository>>>&,
+                     const urd::Store<urd::sequence<urd::view<runir::kr::dl::Argument<runir::kr::dl::NumericalTag>, DlRepository>>>&,
+                     const urd::Store<urd::sequence<urd::view<runir::kr::dl::Register<runir::kr::dl::ConceptTag>, DlRepository>>>&,
+                     const urd::Store<urd::sequence<urd::view<runir::kr::dl::Register<runir::kr::dl::RoleTag>, DlRepository>>>&,
+                     const urd::Store<urd::sequence<urd::view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>, Repository>>>&,
+                     const urd::Store<urd::sequence<urd::view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>, Repository>>>&,
+                     const urd::Store<urd::sequence<urd::view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>, Repository>>>&,
+                     const urd::Store<urd::sequence<urd::view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>, Repository>>>&,
+                     const urd::Store<urd::sequence<urd::view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>, Repository>>>&,
+                     urd::view<MemoryState, Repository>,
+                     const urd::Store<urd::sequence<urd::view<MemoryState, Repository>>>&,
+                     const urd::Store<urd::sequence<urd::Store<urd::sequence<urd::view<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>, Repository>>>>>&>(),
                  nb::arg("symbol"),
                  nb::arg("concept_arguments"),
                  nb::arg("role_arguments"),
@@ -105,9 +108,9 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
             .def_rw("entry_memory_state", &Data::entry_memory_state)
             .def_rw("memory_states", &Data::memory_states)
             .def_rw("memory_transitions", &Data::memory_transitions);
-    ygg::add_comparison(data);
+    urd::python::add_comparison(data);
     auto view = nb::class_<View>(m, "Module")
-                    .def("get_index", &View::get_index)
+                    .def("get_index", &View::index)
                     .def("get_name", &View::get_name)
                     .def("get_symbol", &View::get_symbol)
                     .def("get_concept_arguments", &View::template get_arguments<runir::kr::dl::ConceptTag>)
@@ -126,8 +129,8 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
                     .def("get_memory_transitions", &View::get_memory_transitions)
                     .def("syntactic_complexity", [](View value) { return runir::kr::ps::ext::syntactic_complexity(value); });
     ygg::add_print(view);
-    ygg::add_comparison(view);
-    ygg::add_hash(view);
+    urd::python::add_comparison(view);
+    urd::python::add_hash(view);
     runir::kr::python::bind_ps_optimize<runir::kr::ExtFamilyTag, Repository>(view);
     runir::kr::python::bind_insert<T>(repository);
 }

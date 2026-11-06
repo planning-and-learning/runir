@@ -13,11 +13,13 @@
 #include <tyr/planning/algorithms/strategies/goal.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
+#include <urd/repr/sequences/segmented.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
-#include <yggdrasil/containers/segmented_vector.hpp>
 #include <yggdrasil/core/chrono.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/config.hpp>
 
 namespace runir::kr::ps::base
 {
@@ -32,8 +34,8 @@ SketchProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
                                      const tyr::planning::PackedStateView<Kind>& initial,
                                      const SketchSearchOptions<Kind>& options,
                                      Unsolvability& classifier,
-                                     ygg::SegmentedVector<SearchNode<Kind>>& nodes,
-                                     std::vector<Predecessor<Kind>>& predecessors,
+                                     urd::Store<urd::sequence<SearchNode<Kind>>, urd::stable_refs>& nodes,
+                                     urd::Store<urd::sequence<Predecessor<Kind>>>& predecessors,
                                      SketchSearchStatistics& statistics,
                                      std::optional<tyr::planning::PackedStateView<Kind>>& goal)
 {
@@ -51,7 +53,7 @@ SketchProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
 
     const auto get_or_create_state = [&](const tyr::planning::StateView<Kind>& state) -> std::optional<bool>
     {
-        const auto position = static_cast<std::size_t>(ygg::uint_t(state.get_index()));
+        const auto position = static_cast<std::size_t>(ygg::uint_t(state.index().value));
         if ((num_reached > 0 && state == initial_state) || (position < nodes.size() && nodes[position].parent_state))
             return false;
         if (num_reached >= options.max_num_states)
@@ -66,7 +68,7 @@ SketchProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
     const auto admitted = get_or_create_state(initial_state);
     if (!admitted)
         return SketchProofStatus::OUT_OF_STATES;
-    auto open = std::vector<tyr::planning::PackedStateView<Kind>> { initial };
+    auto open = urd::Store<urd::sequence<tyr::planning::PackedStateView<Kind>>> { initial };
 
     while (!open.empty())
     {
@@ -143,8 +145,8 @@ auto find_solution(const runir::kr::TaskContextPtr<Kind>& task_context_owner,
     const auto& search_context = *task_context.search_context;
     auto expander = SuccessorExpander<Kind>(task_context, sketch);
     const auto initial_node = search_context.successor_generator->get_packed_initial_node(*search_context.state_repository, *search_context.axiom_evaluator);
-    auto nodes = ygg::SegmentedVector<SearchNode<Kind>> {};
-    auto predecessors = std::vector<Predecessor<Kind>> {};
+    auto nodes = urd::Store<urd::sequence<SearchNode<Kind>>, urd::stable_refs> {};
+    auto predecessors = urd::Store<urd::sequence<Predecessor<Kind>>> {};
     auto statistics = SketchSearchStatistics {};
     auto goal = std::optional<tyr::planning::PackedStateView<Kind>> {};
 

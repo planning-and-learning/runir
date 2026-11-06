@@ -43,7 +43,7 @@ constructors also prepare schema and staticness metadata. Both new and existing
 symbol results update the input's index and retain the canonical owning context,
 including an ancestor repository.
 
-`make_view` reads an existing representation. `assign` extracts mutable values,
+`urd::resolve` (or `context.view(index)`) reads an existing representation. `assign` extracts mutable values,
 `insert` publishes compatible contents, and `copy` resolves repository-local
 payloads in its destination. Stored relation records contain column/row-set
 indices and stored denotations contain vector indices; copying those records

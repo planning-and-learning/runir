@@ -3,28 +3,24 @@
 
 #include "runir/kr/ps/base/declarations.hpp"
 #include "runir/kr/ps/base/rule_data.hpp"
-#include "runir/kr/ps/condition_view.hpp"
-#include "runir/kr/ps/effect_view.hpp"
 
 #include <tuple>
-#include <yggdrasil/containers/vector.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
 
-namespace ygg
+namespace urd
 {
+template<typename V>
+struct view_mixin<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, V>
+{
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
-template<formalism::SymbolContextFor<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>> C>
-class View<Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C> : public ygg::IndexViewBase<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C>
-{
 public:
-    using ygg::IndexViewBase<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C>::IndexViewBase;
-
-    const auto& get_symbol() const noexcept { return this->get_data().symbol; }
-    auto get_conditions() const noexcept { return make_view(this->get_data().conditions, this->get_context()); }
-    auto get_effects() const noexcept { return make_view(this->get_data().effects, this->get_context()); }
+    const auto& get_symbol() const noexcept { return self().data().symbol; }
+    auto get_conditions() const noexcept { return self().template get<&urd::record_of<V>::conditions>(); }
+    auto get_effects() const noexcept { return self().template get<&urd::record_of<V>::effects>(); }
 };
-
-}  // namespace ygg
+}  // namespace urd
 
 #endif
