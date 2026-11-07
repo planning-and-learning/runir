@@ -37,8 +37,8 @@ private:
     EdgeMap m_edges;
     EdgeIndexList m_free_edges;
     ygg::uint_t m_next_edge_index = 0;
-    VertexPropertyMapType m_vertex_properties;
-    EdgePropertyMapType m_edge_properties;
+    VertexPropertyMapType m_vertex_properties { urd::layer { 0 } };
+    EdgePropertyMapType m_edge_properties { urd::layer { 0 } };
     AdjacentEdgeMap m_out_edges;
     AdjacentEdgeMap m_in_edges;
 
@@ -217,8 +217,8 @@ public:
     [[nodiscard]] auto get_edges() const noexcept -> const EdgeMap& { return m_edges; }
     [[nodiscard]] auto get_vertex_property_map() const noexcept -> const VertexPropertyMapType& { return m_vertex_properties; }
     [[nodiscard]] auto get_edge_property_map() const noexcept -> const EdgePropertyMapType& { return m_edge_properties; }
-    [[nodiscard]] auto get_vertex_property(VertexPropertyIndex<VP> property) const noexcept -> const VP& { return m_vertex_properties.get_value(property); }
-    [[nodiscard]] auto get_edge_property(EdgePropertyIndex<EP> property) const noexcept -> const EP& { return m_edge_properties.get_value(property); }
+    [[nodiscard]] auto get_vertex_property(VertexPropertyIndex<VP> property) const noexcept -> const VP& { return m_vertex_properties[property].value; }
+    [[nodiscard]] auto get_edge_property(EdgePropertyIndex<EP> property) const noexcept -> const EP& { return m_edge_properties[property].value; }
 
     [[nodiscard]] auto get_vertex(VertexIndex vertex) const -> const VertexType&
     {

@@ -47,8 +47,8 @@ class DenotationRepository : public ygg::formalism::SymbolRepositoryBase<Denotat
 
     friend class DenotationRepositoryFactory;
 
-    /// The denotations' blocks, interned in a urd pool (stored flat): a handle's value is a vec_index.
-    using VectorRepository = urd::Store<urd::pool<urd::Store<urd::sequence<ygg::uint_t>, urd::frozen>>>;
+    /// The denotations' blocks, interned in a urd pool (stored flat): a handle is a vec_index.
+    using VectorRepository = urd::Store<urd::pool<DenotationBlocks>>;
 
     VectorRepository m_vector_repository;
     ygg::database::RelationRepository m_relation_repository;
@@ -101,12 +101,8 @@ public:
     [[nodiscard]] urd::view<T, DenotationRepository> view(urd::index<T> index) const noexcept
     { return { index, *this }; }
 
-    /// The blocks of vec_index `index`.
-    [[nodiscard]] std::span<const ygg::uint_t> vector(ygg::uint_t index) const { return m_vector_repository.view(VectorRepository::handle_type(index)); }
-    /// How many distinct block vectors are stored.
-    [[nodiscard]] std::size_t vector_count() const noexcept { return m_vector_repository.size(); }
-    /// The vec_index of these blocks, stored where they are new.
-    ygg::uint_t insert_vector(std::span<const ygg::uint_t> blocks) { return m_vector_repository.insert(blocks).first.value; }
+    [[nodiscard]] const auto& get_vector_repository() const noexcept { return m_vector_repository; }
+    auto& get_vector_repository() noexcept { return m_vector_repository; }
     [[nodiscard]] const auto& get_relation_repository() const noexcept { return m_relation_repository; }
     auto& get_relation_repository() noexcept { return m_relation_repository; }
 };

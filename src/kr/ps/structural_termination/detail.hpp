@@ -124,8 +124,8 @@ auto surviving_rules(const Graph& graph) -> urd::Store<urd::sequence<graphs::Gra
     const auto& properties = graph.get_edge_property_map();
     auto rules = urd::Store<urd::sequence<graphs::GraphEdgePropertyType<Graph>>> {};
     rules.reserve(properties.size());
-    for (ygg::uint_t position = 0; position < properties.size(); ++position)
-        rules.push_back(properties.get_value(typename Graph::EdgePropertyMapType::Index(position)));
+    for (const auto& property : properties)
+        rules.push_back(property.value);
     return rules;
 }
 

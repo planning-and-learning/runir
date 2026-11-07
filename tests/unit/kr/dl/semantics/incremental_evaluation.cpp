@@ -367,7 +367,7 @@ void check_incremental_evaluation()
         auto final_state = evaluator.initialize(final_context);
         expect_no_delta(final_state);
         expect_unpublished();
-        EXPECT_TRUE(storage.get_denotation_repository(true).vector_count() == 0);
+        EXPECT_TRUE(storage.get_denotation_repository(true).get_vector_repository().empty());
         EXPECT_TRUE(storage.get_caches().template get<Category>(true).empty());
         compare_full(final_state, final_context);
 

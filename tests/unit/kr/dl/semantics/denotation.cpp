@@ -150,7 +150,7 @@ TEST(RunirKrDlSemanticsDenotation, CountsRolePairs)
 
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     auto repository = kr::dl::semantics::DenotationRepositoryFactory().create(planning_repository);
-    const auto vec_index = repository.insert_vector(builder.blocks);
+    const auto vec_index = repository.get_vector_repository().insert(builder.blocks).first;
     auto data = urd::data<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(builder.get_num_objects(), vec_index);
     const auto view = repository.insert(data).first;
 
@@ -305,7 +305,7 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsOutliveViewWrappers)
     auto concept_builder = urd::builder<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(3);
     concept_builder.get().set(0);
     concept_builder.get().set(2);
-    auto concept_data = urd::data<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(3, repository.insert_vector(concept_builder.blocks));
+    auto concept_data = urd::data<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(3, repository.get_vector_repository().insert(concept_builder.blocks).first);
     const auto concept_view = repository.insert(concept_data).first;
     const auto concept_copy = concept_view;
     EXPECT_TRUE(concept_view.begin() == concept_copy.begin());
@@ -320,7 +320,7 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsOutliveViewWrappers)
     auto role_builder = urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(3);
     role_builder.get(0).set(1);
     role_builder.get(2).set(0);
-    auto role_data = urd::data<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(3, repository.insert_vector(role_builder.blocks));
+    auto role_data = urd::data<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(3, repository.get_vector_repository().insert(role_builder.blocks).first);
     const auto role_view = repository.insert(role_data).first;
     const auto role_copy = role_view;
     EXPECT_TRUE(role_view.begin() == role_copy.begin());
@@ -367,7 +367,7 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsSurviveRepositoryGrowthAndSkipRolePa
     concept_builder.get().set(0);
     concept_builder.get().set(64);
     concept_builder.get().set(129);
-    auto concept_data = urd::data<Concept>(num_objects, repository.insert_vector(concept_builder.blocks));
+    auto concept_data = urd::data<Concept>(num_objects, repository.get_vector_repository().insert(concept_builder.blocks).first);
     const auto concept_view = repository.insert(concept_data).first;
     auto concept_iterator = ConceptView(concept_view).begin();
     const auto concept_end = ConceptView(concept_view).end();
@@ -384,7 +384,7 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsSurviveRepositoryGrowthAndSkipRolePa
     auto role_builder = urd::builder<Role>(num_objects);
     role_builder.get(0).set(64);
     role_builder.get(129).set(1);
-    auto role_data = urd::data<Role>(num_objects, repository.insert_vector(role_builder.blocks));
+    auto role_data = urd::data<Role>(num_objects, repository.get_vector_repository().insert(role_builder.blocks).first);
     const auto role_view = repository.insert(role_data).first;
     auto role_iterator = RoleView(role_view).begin();
     const auto role_end = RoleView(role_view).end();
@@ -412,7 +412,7 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsSurviveRepositoryGrowthAndSkipRolePa
     {
         concept_builder.initialize(num_objects);
         concept_builder.blocks.front() = i;
-        auto data = urd::data<Concept>(num_objects, repository.insert_vector(concept_builder.blocks));
+        auto data = urd::data<Concept>(num_objects, repository.get_vector_repository().insert(concept_builder.blocks).first);
         (void) repository.insert(data);
     }
 
@@ -488,7 +488,7 @@ TEST(RunirKrDlSemanticsDenotation, RoleStorageBitsetsPreserveRowPadding)
             }
             EXPECT_EQ(result.count(), count);
             EXPECT_EQ(result.any(), count != 0);
-            auto data = urd::data<Role>(size, repository.insert_vector(result.blocks));
+            auto data = urd::data<Role>(size, repository.get_vector_repository().insert(result.blocks).first);
             const auto view = repository.insert(data).first;
             EXPECT_EQ(view.storage_bits(), std::as_const(result).storage_bits());
             EXPECT_EQ(view.count(), count);

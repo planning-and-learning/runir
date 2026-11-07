@@ -39,8 +39,8 @@ private:
     /// Each vertex's out and in edges, in the order added.
     urd::Store<urd::map<VertexIndex, EdgeIndex>, urd::multi, urd::dense> m_out_edges;
     urd::Store<urd::map<VertexIndex, EdgeIndex>, urd::multi, urd::dense> m_in_edges;
-    VertexPropertyMapType m_vertex_properties;
-    EdgePropertyMapType m_edge_properties;
+    VertexPropertyMapType m_vertex_properties { urd::layer { 0 } };
+    EdgePropertyMapType m_edge_properties { urd::layer { 0 } };
 
     static auto next_index(std::size_t size) noexcept -> ygg::uint_t
     {
@@ -159,8 +159,8 @@ public:
     [[nodiscard]] auto get_edges() const noexcept -> const EdgeList& { return m_edges; }
     [[nodiscard]] auto get_vertex_property_map() const noexcept -> const VertexPropertyMapType& { return m_vertex_properties; }
     [[nodiscard]] auto get_edge_property_map() const noexcept -> const EdgePropertyMapType& { return m_edge_properties; }
-    [[nodiscard]] auto get_vertex_property(VertexPropertyIndex<VP> property) const noexcept -> const VP& { return m_vertex_properties.get_value(property); }
-    [[nodiscard]] auto get_edge_property(EdgePropertyIndex<EP> property) const noexcept -> const EP& { return m_edge_properties.get_value(property); }
+    [[nodiscard]] auto get_vertex_property(VertexPropertyIndex<VP> property) const noexcept -> const VP& { return m_vertex_properties[property].value; }
+    [[nodiscard]] auto get_edge_property(EdgePropertyIndex<EP> property) const noexcept -> const EP& { return m_edge_properties[property].value; }
 
     [[nodiscard]] auto get_vertex(VertexIndex vertex) const noexcept -> const VertexType&
     {

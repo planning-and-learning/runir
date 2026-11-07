@@ -88,14 +88,12 @@ struct VertexProperty;
 template<Property P>
 struct EdgeProperty;
 
+/// A property's handle in its graph's property pool (VertexPropertyMap, EdgePropertyMap).
 template<Property P>
-using VertexPropertyIndex = urd::index<VertexProperty<P>>;
+using VertexPropertyIndex = urd::index<urd::data<VertexProperty<P>>>;
 
 template<Property P>
-using EdgePropertyIndex = urd::index<EdgeProperty<P>>;
-
-template<typename Tag>
-class PropertyMap;
+using EdgePropertyIndex = urd::index<urd::data<EdgeProperty<P>>>;
 
 template<typename G, typename VP, typename EP>
 concept IsGraphWithProperties = requires(const G& graph, VertexPropertyIndex<VP> vertex_property, EdgePropertyIndex<EP> edge_property) {
