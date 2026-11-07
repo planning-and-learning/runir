@@ -13,7 +13,7 @@ void bind_cnf_grammar_constructor_repository(nb::module_& m)
 {
     auto repository = nb::class_<runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "ConstructorRepository");
     repository.def("clear", &runir::kr::dl::cnf_grammar::ConstructorRepository::clear)
-        .def("get_index", &runir::kr::dl::cnf_grammar::ConstructorRepository::get_index);
+        .def("layer", &runir::kr::dl::cnf_grammar::ConstructorRepository::layer);
 
     auto factory = nb::class_<runir::kr::dl::cnf_grammar::ConstructorRepositoryFactory>(m, "ConstructorRepositoryFactory");
     factory.def(nb::init<>())

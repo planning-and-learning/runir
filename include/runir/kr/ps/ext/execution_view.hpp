@@ -4,7 +4,9 @@
 #include "runir/kr/dl/semantics/call_arguments_view.hpp"
 #include "runir/kr/dl/semantics/register_values_view.hpp"
 #include "runir/kr/ps/ext/execution_builder.hpp"
-#include "runir/kr/ps/ext/execution_repository.hpp"
+#include "runir/kr/ps/execution_repository.hpp"
+#include "runir/kr/ps/ext/execution_data.hpp"
+#include "runir/kr/ps/ext/repository.hpp"
 #include "runir/kr/ps/ext/program_view.hpp"
 
 #include <optional>

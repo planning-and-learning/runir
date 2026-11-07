@@ -160,7 +160,7 @@ def _ints(row: Iterable[object]) -> tuple[int, ...]:
 def _register_value(state: ProgramState) -> int:
     value = state.module_state.registers.concept_values[0]
     assert value is not None
-    return int(value.get_index())
+    return int(value.index())
 
 
 def _runtime(
@@ -230,22 +230,22 @@ def test_action_and_query_feature_bindings_round_trip_and_serialize() -> None:
 
     concrete = dl.ConcreteQueryFeatureData()
     concrete.symbol = feature.get_symbol()
-    concrete.feature = feature.get_expression().get_index()
+    concrete.feature = feature.get_expression().index()
     assert repository.insert(concrete)[0] == feature.get_variant()
     wrapped = dl.QueryFeatureData()
-    wrapped.variant = feature.get_variant().get_index()
+    wrapped.variant = feature.get_variant().index()
     assert repository.insert(wrapped)[0] == feature
     data = ext.ActionRuleData()
-    data.source = rule.get_source().get_index()
-    data.target = rule.get_target().get_index()
-    data.conditions = [condition.get_index() for condition in rule.get_conditions()]
-    data.effects = [effect.get_index() for effect in rule.get_effects()]
+    data.source = rule.get_source().index()
+    data.target = rule.get_target().index()
+    data.conditions = [condition.index() for condition in rule.get_conditions()]
+    data.effects = [effect.index() for effect in rule.get_effects()]
     data.action_name = rule.get_action_name()
-    data.query_feature = feature.get_index()
+    data.query_feature = feature.index()
     assert repository.insert(data)[0] == rule
     module_data = ext.ModuleData()
-    module_data.query_features = [feature.get_index()]
-    assert module_data.query_features == [feature.get_index()]
+    module_data.query_features = [feature.index()]
+    assert module_data.query_features == [feature.index()]
 
     dictionaries = Dictionaries()
     register_table(dictionaries, ext.RuleVariant, "rules", "r")
@@ -305,7 +305,7 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
 
     steps = collect_steps(expander, state)
     assert len(steps) == 2
-    assert rows == {tuple(int(object_.get_index()) for object_ in _action(step).get_objects()) for step in steps}
+    assert rows == {tuple(int(object_.index()) for object_ in _action(step).get_objects()) for step in steps}
     for step in steps:
         rule = _rule(step)
         assert isinstance(rule.get_variant(), ext.ActionRule)

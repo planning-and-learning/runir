@@ -6,7 +6,8 @@
 #include <urd/store.hpp>
 #include "runir/serialization/kr/dl/argument_view.hpp"
 #include "runir/serialization/kr/dl/register_view.hpp"
-#include "runir/serialization/kr/ps/icp/rule_variant_view.hpp"
+#include "runir/serialization/kr/ps/rule_variant_view.hpp"
+#include "runir/serialization/kr/ps/icp/rule_view.hpp"
 
 #include <utility>
 #include <vector>

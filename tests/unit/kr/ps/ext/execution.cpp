@@ -3,7 +3,8 @@
 
 #include <concepts>
 #include <runir/kr/ps/ext/execution_data.hpp>
-#include <runir/kr/ps/ext/execution_repository.hpp>
+#include <runir/kr/ps/execution_repository.hpp>
+#include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/execution_view.hpp>
 #include <runir/kr/ps/icp/execution_view.hpp>
 #include <tyr/planning/state_builder.hpp>
@@ -29,18 +30,15 @@ using Register = kr::dl::Register<kr::dl::ConceptTag>;
 using Denotations = kr::dl::semantics::DenotationRepository;
 using Registers = kr::dl::semantics::RegisterValues;
 static_assert(flat_view_is_nothrow<Constructors, Register>);
-static_assert(indexed_access_is_nothrow<Constructors, Register>);
 static_assert(flat_view_is_nothrow<Denotations, Registers>);
-static_assert(indexed_access_is_nothrow<Denotations, Registers>);
-static_assert(flat_view_is_nothrow<kr::ps::ext::Repository, kr::ps::ext::MemoryState>);
-static_assert(indexed_access_is_nothrow<kr::ps::ext::Repository, kr::ps::ext::MemoryState>);
-static_assert(flat_view_is_nothrow<kr::ps::ext::ExecutionRepository<tyr::GroundTag>, kr::ps::ext::ModuleState<tyr::GroundTag>>);
-static_assert(!indexed_access_is_nothrow<kr::ps::ext::ExecutionRepository<tyr::GroundTag>, kr::ps::ext::ModuleState<tyr::GroundTag>>);
-static_assert(flat_view_is_nothrow<kr::ps::icp::ExecutionRepository<tyr::GroundTag>, kr::ps::icp::Histories>);
-static_assert(!indexed_access_is_nothrow<kr::ps::icp::ExecutionRepository<tyr::GroundTag>, kr::ps::icp::Histories>);
+static_assert(flat_view_is_nothrow<kr::ps::ext::Repository, kr::ps::MemoryState<kr::ExtFamilyTag>>);
+static_assert(flat_view_is_nothrow<kr::ps::ExecutionRepository<kr::ExtFamilyTag, tyr::GroundTag>, kr::ps::ext::ModuleState<tyr::GroundTag>>);
+static_assert(!indexed_access_is_nothrow<kr::ps::ExecutionRepository<kr::ExtFamilyTag, tyr::GroundTag>, kr::ps::ext::ModuleState<tyr::GroundTag>>);
+static_assert(flat_view_is_nothrow<kr::ps::ExecutionRepository<kr::IcpFamilyTag, tyr::GroundTag>, kr::ps::icp::Histories>);
+static_assert(!indexed_access_is_nothrow<kr::ps::ExecutionRepository<kr::IcpFamilyTag, tyr::GroundTag>, kr::ps::icp::Histories>);
 
 template<typename Entity, tyr::TaskKind Kind>
-using View = urd::index_view<Entity, kr::ps::ext::ExecutionRepository<Kind>>;
+using View = urd::index_view<Entity, kr::ps::ExecutionRepository<kr::ExtFamilyTag, Kind>>;
 
 template<typename Entity, typename Kind>
 concept IndexedDataView = tyr::TaskKind<Kind> && std::constructible_from<urd::index<Entity>, ygg::uint_t> && std::totally_ordered<urd::index<Entity>>

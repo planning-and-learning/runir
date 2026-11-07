@@ -66,7 +66,6 @@ public:
     DenotationRepository(DenotationRepository&&) = delete;
     DenotationRepository& operator=(DenotationRepository&&) = delete;
 
-    [[nodiscard]] const auto& get_index() const noexcept { return m_index; }
     /// The repository's number, as urd's views ask of a context.
     [[nodiscard]] std::size_t layer() const noexcept { return m_index; }
     [[nodiscard]] auto get_factory() const noexcept { return m_factory; }
@@ -84,14 +83,6 @@ public:
         Base::clear();
         m_vector_repository.clear();
         m_relation_repository.clear();
-    }
-
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
-    const urd::data<T>& operator[](urd::index<T> index) const noexcept
-    {
-        assert(this->template is_local<T>(index));
-        return this->template local<T>(index);
     }
 
     [[nodiscard]] const auto& get_vector_repository() const noexcept { return m_vector_repository; }

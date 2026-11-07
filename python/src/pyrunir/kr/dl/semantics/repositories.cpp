@@ -11,15 +11,16 @@
 #include <optional>
 #include <pyrunir/kr/binding_utils.hpp>
 #include <pyrunir/kr/dl/evaluation_bindings.hpp>
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/call_arguments_view.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <yggdrasil/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <runir/kr/dl/semantics/register_values_view.hpp>
-#include <runir/kr/ps/ext/detail/repository_instantiations.hpp>
+#include <runir/kr/ps/ext/repository.hpp>
 #include <tyr/formalism/planning/planning_domain.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/task.hpp>
@@ -94,14 +95,14 @@ void bind_semantics_repositories(nb::module_& m)
     using ObjectView = tyr::formalism::planning::ObjectView;
     auto register_values =
         nb::class_<RegisterValuesView>(m, "RegisterValues")
-            .def("get_index", &RegisterValuesView::index)
+            .def("index", &RegisterValuesView::index)
             .def_prop_ro("concept_values", [](const RegisterValuesView& self) { return self.values<ConceptTag>(); })
             .def_prop_ro("role_values", [](const RegisterValuesView& self) { return self.values<RoleTag>(); });
     ygg::add_print(register_values);
     urd::python::add_comparison(register_values);
     urd::python::add_hash(register_values);
 
-    auto call_arguments = nb::class_<CallArgumentsView>(m, "CallArguments").def("get_index", &CallArgumentsView::index);
+    auto call_arguments = nb::class_<CallArgumentsView>(m, "CallArguments").def("index", &CallArgumentsView::index);
     const auto bind_arguments = [&]<CategoryTag Category>(const char* name)
     {
         call_arguments.def_prop_ro(name, [](const CallArgumentsView& self) { return self.template arguments<Category>(); });
@@ -117,7 +118,7 @@ void bind_semantics_repositories(nb::module_& m)
     nb::class_<runir::kr::dl::semantics::Builder>(m, "Builder").def(nb::init<>());
 
     auto denotations = nb::class_<DenotationRepository>(m, "DenotationRepository")
-                           .def("get_index", &DenotationRepository::get_index)
+                           .def("layer", &DenotationRepository::layer)
                            .def(
                                "get_relation_repository",
                                [](DenotationRepository& self) -> auto& { return self.get_relation_repository(); },
@@ -143,7 +144,7 @@ void bind_semantics_repositories(nb::module_& m)
     runir::kr::python::bind_state_evaluation_context<tyr::LiftedTag>(m, "LiftedStateEvaluationContext");
 
     auto repository = nb::class_<runir::kr::dl::ConstructorRepository>(m, "ConstructorRepository");
-    repository.def("clear", &runir::kr::dl::ConstructorRepository::clear).def("get_index", &runir::kr::dl::ConstructorRepository::get_index);
+    repository.def("clear", &runir::kr::dl::ConstructorRepository::clear).def("layer", &runir::kr::dl::ConstructorRepository::layer);
     bind_constructors(repository, ConstructorRepositoryTypes {});
 
     auto factory = nb::class_<runir::kr::dl::ConstructorRepositoryFactory>(m, "ConstructorRepositoryFactory");

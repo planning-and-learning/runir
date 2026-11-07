@@ -14,22 +14,6 @@
 namespace runir::kr::dl::grammar
 {
 
-template<typename Tag>
-    requires runir::kr::dl::BaseConceptConstructorTag<Tag>
-struct Concept;
-
-template<typename Tag>
-    requires runir::kr::dl::BaseRoleConstructorTag<Tag>
-struct Role;
-
-template<typename Tag>
-    requires runir::kr::dl::BaseBooleanConstructorTag<Tag>
-struct Boolean;
-
-template<typename Tag>
-    requires runir::kr::dl::BaseNumericalConstructorTag<Tag>
-struct Numerical;
-
 template<runir::kr::dl::CategoryTag Category>
 struct NonTerminal;
 
@@ -38,28 +22,38 @@ struct DerivationRule;
 
 struct GrammarTag;
 
-using ConceptTypes = boost::mp11::mp_transform<Concept, runir::kr::dl::BaseConceptConstructorTags>;
+struct GrammarFamily;
 
-using RoleTypes = boost::mp11::mp_transform<Role, runir::kr::dl::BaseRoleConstructorTags>;
+/// Grammar constructors: the base constructor tags, operands stored as grammar symbols (a non-terminal or a constructor).
+/// The records name the family's tags, so the symbol type is spelled here, after Tags, rather than before the family.
+struct GrammarFamily
+{
+    template<runir::kr::dl::CategoryTag Category>
+    using Tags = runir::kr::dl::BaseConstructorTags<Category>;
 
-using BooleanTypes = boost::mp11::mp_transform<Boolean, runir::kr::dl::BaseBooleanConstructorTags>;
+    template<runir::kr::dl::CategoryTag Category>
+    using Operand = urd::flat_variant<urd::index<NonTerminal<Category>>, urd::index_variant<runir::kr::dl::RecordTypes<GrammarFamily, Category>>>;
 
-using NumericalTypes = boost::mp11::mp_transform<Numerical, runir::kr::dl::BaseNumericalConstructorTags>;
-
-/// The records a constructor of Category can be.
-template<runir::kr::dl::CategoryTag Category>
-using CategoryTypes = std::conditional_t<
-    std::same_as<Category, runir::kr::dl::ConceptTag>,
-    ConceptTypes,
-    std::conditional_t<std::same_as<Category, runir::kr::dl::RoleTag>, RoleTypes, std::conditional_t<std::same_as<Category, runir::kr::dl::BooleanTag>, BooleanTypes, NumericalTypes>>>;
+    using Argument = urd::flat_variant<Operand<runir::kr::dl::ConceptTag>, Operand<runir::kr::dl::RoleTag>>;
+    using Vertex = Operand<runir::kr::dl::ConceptTag>;
+    using Edge = Operand<runir::kr::dl::RoleTag>;
+};
 
 /// A constructor: one of Category's records. Stored as it is, not interned.
 template<runir::kr::dl::CategoryTag Category>
-using Constructor = urd::index_variant<CategoryTypes<Category>>;
+using Constructor = urd::index_variant<runir::kr::dl::RecordTypes<GrammarFamily, Category>>;
 
 /// A grammar symbol of Category: a non-terminal or a constructor. Stored as it is, not interned.
 template<runir::kr::dl::CategoryTag Category>
-using ConstructorOrNonTerminal = urd::flat_variant<urd::index<NonTerminal<Category>>, Constructor<Category>>;
+using ConstructorOrNonTerminal = GrammarFamily::Operand<Category>;
+
+using ConceptTypes = runir::kr::dl::RecordTypes<GrammarFamily, runir::kr::dl::ConceptTag>;
+
+using RoleTypes = runir::kr::dl::RecordTypes<GrammarFamily, runir::kr::dl::RoleTag>;
+
+using BooleanTypes = runir::kr::dl::RecordTypes<GrammarFamily, runir::kr::dl::BooleanTag>;
+
+using NumericalTypes = runir::kr::dl::RecordTypes<GrammarFamily, runir::kr::dl::NumericalTag>;
 
 using NonTerminalTypes = boost::mp11::mp_transform<NonTerminal, runir::kr::dl::CategoryTags>;
 
@@ -81,28 +75,24 @@ using ConstructorRepositoryPtr = std::shared_ptr<ConstructorRepository>;
 
 using ConstructorRepositoryFactory = runir::kr::dl::detail::BasicConstructorRepositoryFactory<ConstructorRepositoryTypes>;
 
-template<typename Tag>
-    requires runir::kr::dl::BaseConceptConstructorTag<Tag>
-using ConceptView = urd::index_view<Concept<Tag>, ConstructorRepository>;
+template<runir::kr::dl::ConstructorOf<GrammarFamily, runir::kr::dl::ConceptTag> Tag>
+using ConceptView = urd::index_view<runir::kr::dl::Concept<GrammarFamily, Tag>, ConstructorRepository>;
 
-template<typename Tag>
-    requires runir::kr::dl::BaseRoleConstructorTag<Tag>
-using RoleView = urd::index_view<Role<Tag>, ConstructorRepository>;
+template<runir::kr::dl::ConstructorOf<GrammarFamily, runir::kr::dl::RoleTag> Tag>
+using RoleView = urd::index_view<runir::kr::dl::Role<GrammarFamily, Tag>, ConstructorRepository>;
 
-template<typename Tag>
-    requires runir::kr::dl::BaseBooleanConstructorTag<Tag>
-using BooleanView = urd::index_view<Boolean<Tag>, ConstructorRepository>;
+template<runir::kr::dl::ConstructorOf<GrammarFamily, runir::kr::dl::BooleanTag> Tag>
+using BooleanView = urd::index_view<runir::kr::dl::Boolean<GrammarFamily, Tag>, ConstructorRepository>;
 
-template<typename Tag>
-    requires runir::kr::dl::BaseNumericalConstructorTag<Tag>
-using NumericalView = urd::index_view<Numerical<Tag>, ConstructorRepository>;
+template<runir::kr::dl::ConstructorOf<GrammarFamily, runir::kr::dl::NumericalTag> Tag>
+using NumericalView = urd::index_view<runir::kr::dl::Numerical<GrammarFamily, Tag>, ConstructorRepository>;
 
 template<typename T>
 using EntityView = urd::index_view<T, ConstructorRepository>;
 
 /// A constructor read through the repository: the view of the record it holds.
 template<runir::kr::dl::CategoryTag Category>
-using ConstructorView = boost::mp11::mp_apply<std::variant, boost::mp11::mp_transform<EntityView, CategoryTypes<Category>>>;
+using ConstructorView = boost::mp11::mp_apply<std::variant, boost::mp11::mp_transform<EntityView, runir::kr::dl::RecordTypes<GrammarFamily, Category>>>;
 
 template<runir::kr::dl::CategoryTag Category>
 using NonTerminalView = urd::index_view<NonTerminal<Category>, ConstructorRepository>;

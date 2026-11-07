@@ -234,27 +234,27 @@ private:
     }
 
     /// Only emptiness matters, so the optimizer may project the query onto no columns.
-    RecordView<Boolean<NonemptyTag>> rewrite(RecordView<Boolean<NonemptyTag>> view)
+    RecordView<Boolean<SemanticFamily, NonemptyTag>> rewrite(RecordView<Boolean<SemanticFamily, NonemptyTag>> view)
     {
         return std::visit(
-            [&]<typename V>(V arg) -> RecordView<Boolean<NonemptyTag>>
+            [&]<typename V>(V arg) -> RecordView<Boolean<SemanticFamily, NonemptyTag>>
             {
                 if constexpr (std::same_as<V, QueryView<>>)
                 {
-                    auto data = urd::data<Boolean<NonemptyTag>>();
+                    auto data = urd::data<Boolean<SemanticFamily, NonemptyTag>>();
                     data.arg = optimize_root(arg, Labels {}).index();
                     return runir::kr::dl::insert(*m_repository, data).first;
                 }
                 else
-                    return rewrite<Boolean<NonemptyTag>>(view);
+                    return rewrite<Boolean<SemanticFamily, NonemptyTag>>(view);
             },
             view.get_arg());
     }
 
     /// The edges of a distance are evaluated per vertex, with the source or the target columns bound, never fully.
-    RecordView<Numerical<DistanceTag>> rewrite(RecordView<Numerical<DistanceTag>> view)
+    RecordView<Numerical<SemanticFamily, DistanceTag>> rewrite(RecordView<Numerical<SemanticFamily, DistanceTag>> view)
     {
-        using Data = urd::data<Numerical<DistanceTag>>;
+        using Data = urd::data<Numerical<SemanticFamily, DistanceTag>>;
         auto data = Data(optimize_argument<typename Data::Vertex>(view.get_lhs(), ygg::database::Evaluation::full),
                          optimize_argument<typename Data::Edge>(view.get_mid(), ygg::database::Evaluation::bound),
                          optimize_argument<typename Data::Vertex>(view.get_rhs(), ygg::database::Evaluation::full));

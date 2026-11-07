@@ -41,7 +41,7 @@ auto bind_variant(nb::module_& m, nb::class_<Repository>& repository, const std:
                     .def_rw("index", &Data::index)
                     .def_rw("variant", &Data::variant);
     urd::python::add_comparison(data);
-    auto view = nb::class_<View>(m, name.c_str()).def("get_index", &View::index).def("get_variant", &View::get_variant);
+    auto view = nb::class_<View>(m, name.c_str()).def("index", &View::index).def("get_variant", &View::get_variant);
     ygg::add_print(view);
     urd::python::add_comparison(view);
     urd::python::add_hash(view);
@@ -78,7 +78,7 @@ auto bind_feature(nb::module_& m, nb::class_<Repository>& repository, const std:
                     .def_rw("symbol", &Data::symbol);
     urd::python::add_comparison(data);
     auto concrete = nb::class_<ConcreteView>(m, concrete_name.c_str())
-                        .def("get_index", &ConcreteView::index)
+                        .def("index", &ConcreteView::index)
                         .def("get_feature", &ConcreteView::get_feature)
                         .def("get_expression", &ConcreteView::get_expression)
                         .def("get_symbol", &ConcreteView::get_symbol)
@@ -120,12 +120,48 @@ auto bind_observation(nb::module_& m, nb::class_<Repository>& repository, const 
                     .def_rw("index", &Data::index)
                     .def_rw("feature", &Data::feature);
     urd::python::add_comparison(data);
-    auto view = nb::class_<View>(m, name.c_str()).def("get_index", &View::index).def("get_feature", &View::get_feature);
+    auto view = nb::class_<View>(m, name.c_str()).def("index", &View::index).def("get_feature", &View::get_feature);
     ygg::add_print(view);
     urd::python::add_comparison(view);
     urd::python::add_hash(view);
     ygg::bind_insert<T>(repository);
     return view;
+}
+
+// The DL features, conditions and effects of a program family (ext, icp).
+
+template<runir::kr::ps::ProgramFamilyTag Family, typename Repository>
+void bind_program_features(nb::module_& m, nb::class_<Repository>& repository)
+{
+    bind_feature<Family, runir::kr::dl::ConceptTag>(m, repository, "ConceptFeature");
+    bind_feature<Family, runir::kr::dl::RoleTag>(m, repository, "RoleFeature");
+    bind_feature<Family, runir::kr::dl::BooleanTag>(m, repository, "BooleanFeature");
+    bind_feature<Family, runir::kr::dl::NumericalTag>(m, repository, "NumericalFeature");
+    bind_feature<Family, runir::kr::ps::dl::QueryFeature>(m, repository, "QueryFeature");
+}
+
+template<runir::kr::ps::ProgramFamilyTag Family, typename Repository>
+void bind_program_conditions(nb::module_& m, nb::class_<Repository>& repository)
+{
+    using runir::kr::DlTag;
+    using namespace runir::kr::ps::dl;
+    bind_observation<runir::kr::ps::ConcreteCondition<Family, DlTag, runir::kr::dl::BooleanTag, Positive>>(m, repository, "PositiveBooleanCondition");
+    bind_observation<runir::kr::ps::ConcreteCondition<Family, DlTag, runir::kr::dl::BooleanTag, Negative>>(m, repository, "NegativeBooleanCondition");
+    bind_observation<runir::kr::ps::ConcreteCondition<Family, DlTag, runir::kr::dl::NumericalTag, EqualZero>>(m, repository, "EqualZeroNumericalCondition");
+    bind_observation<runir::kr::ps::ConcreteCondition<Family, DlTag, runir::kr::dl::NumericalTag, GreaterZero>>(m, repository, "GreaterZeroNumericalCondition");
+}
+
+template<runir::kr::ps::ProgramFamilyTag Family, typename Repository>
+void bind_program_effects(nb::module_& m, nb::class_<Repository>& repository)
+{
+    using runir::kr::DlTag;
+    using namespace runir::kr::ps::dl;
+    bind_observation<runir::kr::ps::ConcreteEffect<Family, DlTag, runir::kr::dl::BooleanTag, Positive>>(m, repository, "PositiveBooleanEffect");
+    bind_observation<runir::kr::ps::ConcreteEffect<Family, DlTag, runir::kr::dl::BooleanTag, Negative>>(m, repository, "NegativeBooleanEffect");
+    bind_observation<runir::kr::ps::ConcreteEffect<Family, DlTag, runir::kr::dl::BooleanTag, Unchanged>>(m, repository, "UnchangedBooleanEffect");
+    bind_observation<runir::kr::ps::ConcreteEffect<Family, DlTag, runir::kr::dl::NumericalTag, Increases>>(m, repository, "IncreasesNumericalEffect");
+    bind_observation<runir::kr::ps::ConcreteEffect<Family, DlTag, runir::kr::dl::NumericalTag, Decreases>>(m, repository, "DecreasesNumericalEffect");
+    bind_observation<runir::kr::ps::ConcreteEffect<Family, DlTag, runir::kr::dl::NumericalTag, Unchanged>>(m, repository, "UnchangedNumericalEffect");
 }
 
 }  // namespace runir::kr::python

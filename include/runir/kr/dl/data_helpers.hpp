@@ -18,15 +18,6 @@
 namespace runir::kr::dl
 {
 
-template<typename T>
-inline constexpr bool is_cista_variant_v = false;
-template<typename... Ts>
-inline constexpr bool is_cista_variant_v<urd::flat_variant<Ts...>> = true;
-
-/// How a record stores an operand of type T: an interned record by its index, a variant (a grammar symbol) as it is.
-template<typename T>
-using Operand = std::conditional_t<is_cista_variant_v<T>, T, urd::index<T>>;
-
 template<typename Self>
 struct NullaryData
 {
@@ -51,23 +42,11 @@ struct IdentifierData
     static constexpr auto identifying_members() noexcept { return urd::Members<&IdentifierData::identifier> {}; }
 };
 
-template<typename Self, typename Identifier>
-struct RegisterData : IdentifierData<Self, Identifier>
-{
-    using Base = IdentifierData<Self, Identifier>;
-    using Base::Base;
-};
-
-template<typename Self, typename Identifier>
-struct ArgumentData : IdentifierData<Self, Identifier>
-{
-    using Base = IdentifierData<Self, Identifier>;
-    using Base::Base;
-};
-
 template<typename Self, typename Reference>
 struct ReferenceData
 {
+    using Referenced = Reference;
+
     urd::index<Self> index;
     urd::index<Reference> reference;
 
@@ -78,14 +57,17 @@ struct ReferenceData
     static constexpr auto identifying_members() noexcept { return urd::Members<&ReferenceData::reference> {}; }
 };
 
-template<typename Self, typename Arg>
+/// The operand types below are as stored: an index, or a variant of them (a grammar symbol, a semantic collection).
+template<typename Self, typename A>
 struct UnaryData
 {
+    using Arg = A;
+
     urd::index<Self> index;
-    Operand<Arg> arg;
+    Arg arg;
 
     UnaryData() = default;
-    UnaryData(Operand<Arg> arg_) : index(), arg(std::move(arg_)) {}
+    UnaryData(Arg arg_) : index(), arg(std::move(arg_)) {}
 
     static constexpr auto cista_members() noexcept { return urd::Members<&UnaryData::index, &UnaryData::arg> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&UnaryData::arg> {}; }
@@ -95,30 +77,30 @@ template<typename Self, typename Lhs, typename Rhs>
 struct BinaryData
 {
     urd::index<Self> index;
-    Operand<Lhs> lhs;
-    Operand<Rhs> rhs;
+    Lhs lhs;
+    Rhs rhs;
 
     BinaryData() = default;
-    BinaryData(Operand<Lhs> lhs_, Operand<Rhs> rhs_) : index(), lhs(std::move(lhs_)), rhs(std::move(rhs_)) {}
+    BinaryData(Lhs lhs_, Rhs rhs_) : index(), lhs(std::move(lhs_)), rhs(std::move(rhs_)) {}
 
     static constexpr auto cista_members() noexcept { return urd::Members<&BinaryData::index, &BinaryData::lhs, &BinaryData::rhs> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&BinaryData::lhs, &BinaryData::rhs> {}; }
 };
 
-template<typename Self, typename Lhs, typename Mid, typename Rhs>
+/// Distance: sources and targets are vertices, the middle operand edges.
+template<typename Self, typename V, typename E>
 struct TernaryData
 {
-    /// Operand types under the names of the semantic distance record; grammars accept no queries.
-    using Vertex = Operand<Lhs>;
-    using Edge = Operand<Mid>;
+    using Vertex = V;
+    using Edge = E;
 
     urd::index<Self> index;
-    Operand<Lhs> lhs;
-    Operand<Mid> mid;
-    Operand<Rhs> rhs;
+    Vertex lhs;
+    Edge mid;
+    Vertex rhs;
 
     TernaryData() = default;
-    TernaryData(Operand<Lhs> lhs_, Operand<Mid> mid_, Operand<Rhs> rhs_) : index(), lhs(std::move(lhs_)), mid(std::move(mid_)), rhs(std::move(rhs_)) {}
+    TernaryData(Vertex lhs_, Edge mid_, Vertex rhs_) : index(), lhs(std::move(lhs_)), mid(std::move(mid_)), rhs(std::move(rhs_)) {}
 
     static constexpr auto cista_members() noexcept { return urd::Members<&TernaryData::index, &TernaryData::lhs, &TernaryData::mid, &TernaryData::rhs> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&TernaryData::lhs, &TernaryData::mid, &TernaryData::rhs> {}; }
@@ -156,10 +138,10 @@ struct NumberRestrictionData
 {
     urd::index<Self> index;
     ygg::uint_t n = 0;
-    Operand<Role> role;
+    Role role;
 
     NumberRestrictionData() = default;
-    NumberRestrictionData(ygg::uint_t n_, Operand<Role> role_) : index(), n(n_), role(std::move(role_)) {}
+    NumberRestrictionData(ygg::uint_t n_, Role role_) : index(), n(n_), role(std::move(role_)) {}
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&NumberRestrictionData::index, &NumberRestrictionData::n, &NumberRestrictionData::role> {}; }
@@ -171,11 +153,11 @@ struct QualifiedNumberRestrictionData
 {
     urd::index<Self> index;
     ygg::uint_t n = 0;
-    Operand<Role> role;
-    Operand<Concept> concept_;
+    Role role;
+    Concept concept_;
 
     QualifiedNumberRestrictionData() = default;
-    QualifiedNumberRestrictionData(ygg::uint_t n_, Operand<Role> role_, Operand<Concept> concept_arg) :
+    QualifiedNumberRestrictionData(ygg::uint_t n_, Role role_, Concept concept_arg) :
         index(),
         n(n_),
         role(std::move(role_)),
@@ -198,11 +180,11 @@ template<typename Self, typename Role>
 struct RoleFillersData
 {
     urd::index<Self> index;
-    Operand<Role> role;
+    Role role;
     urd::flat_vector<urd::index<tyr::formalism::Object>> objects;
 
     RoleFillersData() = default;
-    RoleFillersData(Operand<Role> role_, urd::flat_vector<urd::index<tyr::formalism::Object>> objects_) : index(), role(std::move(role_)), objects(std::move(objects_)) {}
+    RoleFillersData(Role role_, urd::flat_vector<urd::index<tyr::formalism::Object>> objects_) : index(), role(std::move(role_)), objects(std::move(objects_)) {}
     // Roles and objects live in different repositories, hence the separate context parameters.
 
     static constexpr auto cista_members() noexcept { return urd::Members<&RoleFillersData::index, &RoleFillersData::role, &RoleFillersData::objects> {}; }

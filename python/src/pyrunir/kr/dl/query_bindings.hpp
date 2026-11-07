@@ -112,7 +112,7 @@ void bind_query(nb::module_& m, const char* name)
             .def_rw("targets", &Data::targets)
             .def_rw("probes", &Data::probes);
 
-    auto view = nb::class_<View>(m, name).def("get_index", &View::index);
+    auto view = nb::class_<View>(m, name).def("index", &View::index);
     ygg::add_print(view);
     urd::python::add_comparison(view);
     urd::python::add_hash(view);
@@ -170,7 +170,7 @@ void bind_query_projection(nb::module_& m, const char* name)
                     .def_rw("columns", &Data::columns);
     urd::python::add_comparison(data);
     auto view = nb::class_<View>(m, name)
-                    .def("get_index", &View::index)
+                    .def("index", &View::index)
                     .def("get_arg", &View::get_arg)
                     .def("syntactic_complexity", [](View value) { return semantics::syntactic_complexity(value); });
     view.def("get_columns", &View::get_columns);
@@ -182,7 +182,7 @@ void bind_query_projection(nb::module_& m, const char* name)
 inline void bind_queries(nb::module_& m)
 {
     using ColumnView = urd::index_view<QueryColumn, ConstructorRepository>;
-    auto column = nb::class_<ColumnView>(m, "QueryColumn").def("get_index", &ColumnView::index).def("get_name", &ColumnView::get_name);
+    auto column = nb::class_<ColumnView>(m, "QueryColumn").def("index", &ColumnView::index).def("get_name", &ColumnView::get_name);
     ygg::add_print(column);
     urd::python::add_comparison(column);
     urd::python::add_hash(column);

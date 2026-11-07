@@ -4,12 +4,9 @@
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include "runir/kr/dl/cnf_grammar/grammar_view.hpp"
-#include "runir/kr/dl/cnf_grammar/boolean_view.hpp"
-#include "runir/kr/dl/cnf_grammar/concept_view.hpp"
+#include "runir/kr/dl/formatter.hpp"
 #include "runir/kr/dl/cnf_grammar/derivation_rule_view.hpp"
 #include "runir/kr/dl/cnf_grammar/non_terminal_view.hpp"
-#include "runir/kr/dl/cnf_grammar/numerical_view.hpp"
-#include "runir/kr/dl/cnf_grammar/role_view.hpp"
 #include "runir/kr/dl/cnf_grammar/substitution_rule_view.hpp"
 #include "runir/kr/dl/declarations.hpp"
 
@@ -26,166 +23,9 @@
 namespace runir::kr::dl::cnf_grammar
 {
 
-inline std::string boolean(bool value) { return value ? runir::kr::dl::TrueTag::keyword : runir::kr::dl::FalseTag::keyword; }
-
-template<typename Objects>
-urd::Store<urd::sequence<std::string>> quoted_object_names(Objects objects)
-{
-    auto result = urd::Store<urd::sequence<std::string>> {};
-    for (auto object : objects)
-        result.push_back(fmt::format("{:?}", object.get_name().view()));
-    return result;
-}
-
-template<typename Tag, typename C>
-    requires runir::kr::dl::BaseConceptConstructorTag<Tag>
-std::string concept_constructor(urd::index_view<Concept<Tag>, C> view)
-{
-    if constexpr (std::same_as<Tag, runir::kr::dl::BotTag>)
-        return fmt::format("{}", runir::kr::dl::BotTag::keyword);
-    else if constexpr (std::same_as<Tag, runir::kr::dl::TopTag>)
-        return fmt::format("{}", runir::kr::dl::TopTag::keyword);
-    else if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
-        return fmt::format("{} {}", runir::kr::dl::ConceptAtomicStateSyntaxTag::keyword, fmt::format("{:?}", view.get_predicate().get_name().view()));
-    else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
-        return fmt::format("{} {} {}",
-                           runir::kr::dl::ConceptAtomicGoalSyntaxTag::keyword,
-                           fmt::format("{:?}", view.get_predicate().get_name().view()),
-                           boolean(view.get_polarity()));
-    else if constexpr (std::same_as<Tag, runir::kr::dl::IntersectionTag>)
-        return fmt::format("{} {} {}", runir::kr::dl::ConceptIntersectionSyntaxTag::keyword, view.get_lhs(), view.get_rhs());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::UnionTag>)
-        return fmt::format("{} {} {}", runir::kr::dl::ConceptUnionSyntaxTag::keyword, view.get_lhs(), view.get_rhs());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::NegationTag>)
-        return fmt::format("{} {}", runir::kr::dl::NegationTag::keyword, view.get_arg());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::ValueRestrictionTag>)
-        return fmt::format("{} {} {}", runir::kr::dl::ValueRestrictionTag::keyword, view.get_lhs(), view.get_rhs());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::ExistentialQuantificationTag>)
-        return fmt::format("{} {} {}", runir::kr::dl::ExistentialQuantificationTag::keyword, view.get_lhs(), view.get_rhs());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::AtLeastNumberRestrictionTag>)
-        return fmt::format("{} {} {}", runir::kr::dl::AtLeastNumberRestrictionTag::keyword, view.get_n(), view.get_role());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::AtMostNumberRestrictionTag>)
-        return fmt::format("{} {} {}", runir::kr::dl::AtMostNumberRestrictionTag::keyword, view.get_n(), view.get_role());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::ExactNumberRestrictionTag>)
-        return fmt::format("{} {} {}", runir::kr::dl::ExactNumberRestrictionTag::keyword, view.get_n(), view.get_role());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>)
-        return fmt::format("{} {} {} {}", runir::kr::dl::QualifiedAtLeastNumberRestrictionTag::keyword, view.get_n(), view.get_role(), view.get_concept());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::QualifiedAtMostNumberRestrictionTag>)
-        return fmt::format("{} {} {} {}", runir::kr::dl::QualifiedAtMostNumberRestrictionTag::keyword, view.get_n(), view.get_role(), view.get_concept());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::QualifiedExactNumberRestrictionTag>)
-        return fmt::format("{} {} {} {}", runir::kr::dl::QualifiedExactNumberRestrictionTag::keyword, view.get_n(), view.get_role(), view.get_concept());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::RoleValueMapTag>)
-        return fmt::format("{} {} {}", runir::kr::dl::RoleValueMapTag::keyword, view.get_lhs(), view.get_rhs());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::AgreementTag>)
-        return fmt::format("{} {} {}", runir::kr::dl::AgreementTag::keyword, view.get_lhs(), view.get_rhs());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::RoleFillersTag>)
-        return fmt::format("{} {} {}", runir::kr::dl::RoleFillersTag::keyword, view.get_role(), fmt::join(quoted_object_names(view.get_objects()), " "));
-    else if constexpr (std::same_as<Tag, runir::kr::dl::OneOfTag>)
-        return fmt::format("{} {}", runir::kr::dl::OneOfTag::keyword, fmt::join(quoted_object_names(view.get_objects()), " "));
-    else if constexpr (std::same_as<Tag, runir::kr::dl::NominalTag>)
-        return fmt::format("{} {}", runir::kr::dl::NominalTag::keyword, fmt::format("{:?}", view.get_object().get_name().view()));
-    else
-    {
-        static_assert(urd::repr::dependent_false<Tag>::value, "unhandled DL concept constructor tag in concept_constructor");
-    }
-}
-
-template<typename Tag, typename C>
-    requires runir::kr::dl::BaseRoleConstructorTag<Tag>
-std::string role(urd::index_view<Role<Tag>, C> view)
-{
-    if constexpr (std::same_as<Tag, runir::kr::dl::UniversalTag>)
-        return fmt::format("{}", runir::kr::dl::UniversalTag::keyword);
-    else if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
-        return fmt::format("{} {}", runir::kr::dl::RoleAtomicStateSyntaxTag::keyword, fmt::format("{:?}", view.get_predicate().get_name().view()));
-    else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
-        return fmt::format("{} {} {}",
-                           runir::kr::dl::RoleAtomicGoalSyntaxTag::keyword,
-                           fmt::format("{:?}", view.get_predicate().get_name().view()),
-                           boolean(view.get_polarity()));
-    else if constexpr (std::same_as<Tag, runir::kr::dl::IntersectionTag>)
-        return fmt::format("{} {} {}", runir::kr::dl::RoleIntersectionSyntaxTag::keyword, view.get_lhs(), view.get_rhs());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::UnionTag>)
-        return fmt::format("{} {} {}", runir::kr::dl::RoleUnionSyntaxTag::keyword, view.get_lhs(), view.get_rhs());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::ComplementTag>)
-        return fmt::format("{} {}", runir::kr::dl::ComplementTag::keyword, view.get_arg());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::InverseTag>)
-        return fmt::format("{} {}", runir::kr::dl::InverseTag::keyword, view.get_arg());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::CompositionTag>)
-        return fmt::format("{} {} {}", runir::kr::dl::CompositionTag::keyword, view.get_lhs(), view.get_rhs());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::TransitiveClosureTag>)
-        return fmt::format("{} {}", runir::kr::dl::TransitiveClosureTag::keyword, view.get_arg());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::ReflexiveTransitiveClosureTag>)
-        return fmt::format("{} {}", runir::kr::dl::ReflexiveTransitiveClosureTag::keyword, view.get_arg());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::RestrictionTag>)
-        return fmt::format("{} {} {}", runir::kr::dl::RestrictionTag::keyword, view.get_lhs(), view.get_rhs());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::IdentityTag>)
-        return fmt::format("{} {}", runir::kr::dl::IdentityTag::keyword, view.get_arg());
-    else
-    {
-        static_assert(urd::repr::dependent_false<Tag>::value, "unhandled DL role constructor tag in role");
-    }
-}
-
-template<typename Tag, typename C>
-    requires runir::kr::dl::BaseBooleanConstructorTag<Tag>
-std::string boolean_constructor(urd::index_view<Boolean<Tag>, C> view)
-{
-    if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
-        return fmt::format("{} {} {}",
-                           runir::kr::dl::BooleanAtomicStateSyntaxTag::keyword,
-                           fmt::format("{:?}", view.get_predicate().get_name().view()),
-                           boolean(view.get_polarity()));
-    else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
-        return fmt::format("{} {} {}",
-                           runir::kr::dl::BooleanAtomicGoalSyntaxTag::keyword,
-                           fmt::format("{:?}", view.get_predicate().get_name().view()),
-                           boolean(view.get_polarity()));
-    else if constexpr (std::same_as<Tag, runir::kr::dl::NonemptyTag>)
-        return fmt::format("{} {}", runir::kr::dl::NonemptyTag::keyword, view.get_arg());
-    else
-    {
-        static_assert(urd::repr::dependent_false<Tag>::value, "unhandled DL boolean constructor tag in boolean_constructor");
-    }
-}
-
-template<typename Tag, typename C>
-    requires runir::kr::dl::BaseNumericalConstructorTag<Tag>
-std::string numerical(urd::index_view<Numerical<Tag>, C> view)
-{
-    if constexpr (std::same_as<Tag, runir::kr::dl::CountTag>)
-        return fmt::format("{} {}", runir::kr::dl::CountTag::keyword, view.get_arg());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::DistanceTag>)
-        return fmt::format("{} {} {} {}", runir::kr::dl::DistanceTag::keyword, view.get_lhs(), view.get_mid(), view.get_rhs());
-    else
-    {
-        static_assert(urd::repr::dependent_false<Tag>::value, "unhandled DL numerical constructor tag in numerical");
-    }
-}
-
-template<typename Tag, typename C>
-    requires runir::kr::dl::BaseConceptConstructorTag<Tag>
-std::string constructor_body(urd::index_view<Concept<Tag>, C> view)
-{ return concept_constructor(view); }
-
-template<typename Tag, typename C>
-    requires runir::kr::dl::BaseRoleConstructorTag<Tag>
-std::string constructor_body(urd::index_view<Role<Tag>, C> view)
-{ return role(view); }
-
-template<typename Tag, typename C>
-    requires runir::kr::dl::BaseBooleanConstructorTag<Tag>
-std::string constructor_body(urd::index_view<Boolean<Tag>, C> view)
-{ return boolean_constructor(view); }
-
-template<typename Tag, typename C>
-    requires runir::kr::dl::BaseNumericalConstructorTag<Tag>
-std::string constructor_body(urd::index_view<Numerical<Tag>, C> view)
-{ return numerical(view); }
-
 template<typename... Views>
 std::string constructor_body(const std::variant<Views...>& view)
-{ return std::visit([](auto arg) { return constructor_body(arg); }, view); }
+{ return std::visit([](auto arg) { return runir::kr::dl::record_body(arg); }, view); }
 
 template<runir::kr::dl::CategoryTag Category, typename C>
 std::string rule(urd::index_view<DerivationRule<Category>, C> view)
@@ -219,54 +59,6 @@ std::string grammar(View view)
 }
 
 }  // namespace runir::kr::dl::cnf_grammar
-
-template<typename Tag, typename C>
-    requires runir::kr::dl::BaseConceptConstructorTag<Tag>
-struct fmt::formatter<urd::index_view<runir::kr::dl::cnf_grammar::Concept<Tag>, C>> : fmt::formatter<std::string_view>
-{
-    using View = urd::index_view<runir::kr::dl::cnf_grammar::Concept<Tag>, C>;
-    auto format(View view, format_context& ctx) const
-    {
-        const auto text = fmt::format("({})", runir::kr::dl::cnf_grammar::concept_constructor(view));
-        return fmt::formatter<std::string_view>::format(text, ctx);
-    }
-};
-
-template<typename Tag, typename C>
-    requires runir::kr::dl::BaseRoleConstructorTag<Tag>
-struct fmt::formatter<urd::index_view<runir::kr::dl::cnf_grammar::Role<Tag>, C>> : fmt::formatter<std::string_view>
-{
-    using View = urd::index_view<runir::kr::dl::cnf_grammar::Role<Tag>, C>;
-    auto format(View view, format_context& ctx) const
-    {
-        const auto text = fmt::format("({})", runir::kr::dl::cnf_grammar::role(view));
-        return fmt::formatter<std::string_view>::format(text, ctx);
-    }
-};
-
-template<typename Tag, typename C>
-    requires runir::kr::dl::BaseBooleanConstructorTag<Tag>
-struct fmt::formatter<urd::index_view<runir::kr::dl::cnf_grammar::Boolean<Tag>, C>> : fmt::formatter<std::string_view>
-{
-    using View = urd::index_view<runir::kr::dl::cnf_grammar::Boolean<Tag>, C>;
-    auto format(View view, format_context& ctx) const
-    {
-        const auto text = fmt::format("({})", runir::kr::dl::cnf_grammar::boolean_constructor(view));
-        return fmt::formatter<std::string_view>::format(text, ctx);
-    }
-};
-
-template<typename Tag, typename C>
-    requires runir::kr::dl::BaseNumericalConstructorTag<Tag>
-struct fmt::formatter<urd::index_view<runir::kr::dl::cnf_grammar::Numerical<Tag>, C>> : fmt::formatter<std::string_view>
-{
-    using View = urd::index_view<runir::kr::dl::cnf_grammar::Numerical<Tag>, C>;
-    auto format(View view, format_context& ctx) const
-    {
-        const auto text = fmt::format("({})", runir::kr::dl::cnf_grammar::numerical(view));
-        return fmt::formatter<std::string_view>::format(text, ctx);
-    }
-};
 
 template<runir::kr::dl::CategoryTag Category, typename C>
 struct fmt::formatter<urd::index_view<runir::kr::dl::cnf_grammar::NonTerminal<Category>, C>> : fmt::formatter<std::string_view>

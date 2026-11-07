@@ -39,7 +39,7 @@ void check_classifier_failures(const datasets::TaskSearchContextPtr<Kind>& searc
     options.classifier = classifier;
     const auto result = kr::ps::base::find_solution(task_context, sketch, options);
 
-    EXPECT_EQ(result.status, kr::ps::base::SketchProofStatus::FAILURE);
+    EXPECT_EQ(result.status, kr::ps::ProofStatus::FAILURE);
     EXPECT_EQ(result.statistics.num_expanded, 0);
     EXPECT_EQ(result.statistics.num_generated, 0);
     ASSERT_TRUE(result.graph);
@@ -55,7 +55,7 @@ void check_classifier_failures(const datasets::TaskSearchContextPtr<Kind>& searc
 
     options.max_time = std::chrono::steady_clock::duration::zero();
     const auto timed_out = kr::ps::base::find_solution(task_context, sketch, options);
-    EXPECT_EQ(timed_out.status, kr::ps::base::SketchProofStatus::OUT_OF_TIME);
+    EXPECT_EQ(timed_out.status, kr::ps::ProofStatus::OUT_OF_TIME);
     EXPECT_TRUE(timed_out.deadend_states.empty());
     EXPECT_TRUE(timed_out.open_states.empty());
     ASSERT_TRUE(timed_out.graph);

@@ -2,7 +2,8 @@
 #define RUNIR_KR_PS_BASE_DL_INCOMPLETE_STRUCTURAL_TERMINATION_HPP_
 
 #include "runir/kr/ps/base/declarations.hpp"
-#include "runir/kr/ps/base/dl/incomplete_structural_termination_data.hpp"
+#include "runir/kr/ps/dl/incomplete_structural_termination_data.hpp"
+#include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/dl/structural_termination.hpp"
 
 namespace runir::kr::ps::base::dl
@@ -15,7 +16,7 @@ namespace runir::kr::ps::base::dl
 /// structural_termination() for the complete test. On an unknown verdict,
 /// the result lists the surviving rules with their blocking reasons. Disable
 /// use_memory_scc_scope to use one global opponent scope.
-IncompleteStructuralTerminationResult incomplete_structural_termination(SketchView sketch,
+runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::BaseFamilyTag> incomplete_structural_termination(SketchView sketch,
                                                                         bool use_memory_scc_scope = runir::kr::ps::dl::default_use_memory_scc_scope);
 
 }  // namespace runir::kr::ps::base::dl

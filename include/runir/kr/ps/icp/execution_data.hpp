@@ -36,7 +36,7 @@ struct data<runir::kr::ps::icp::ProgramState<Kind>>
 {
     urd::index<runir::kr::ps::icp::ProgramState<Kind>> index;
     urd::index<runir::kr::ps::icp::Program> program;
-    urd::index<runir::kr::ps::icp::MemoryState> memory_state;
+    urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> memory_state;
     urd::index<runir::kr::dl::semantics::RegisterValues> registers;
     urd::index<runir::kr::ps::icp::Histories> histories;
     urd::index<tyr::planning::State<Kind>> state;
@@ -44,7 +44,7 @@ struct data<runir::kr::ps::icp::ProgramState<Kind>>
     data() = default;
     // The referenced indices live in different repositories, hence the separate context parameters.
     data(urd::index<runir::kr::ps::icp::Program> program_,
-         urd::index<runir::kr::ps::icp::MemoryState> memory_state_,
+         urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> memory_state_,
          urd::index<runir::kr::dl::semantics::RegisterValues> registers_,
          urd::index<runir::kr::ps::icp::Histories> histories_,
          urd::index<tyr::planning::State<Kind>> state_) :

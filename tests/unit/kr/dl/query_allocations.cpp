@@ -12,7 +12,8 @@
 #include <limits>
 #include <new>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <yggdrasil/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/incremental/delta.hpp>
 #include <runir/kr/dl/semantics/incremental/detail/atomic_query.hpp>
 #include <runir/kr/dl/semantics/incremental/evaluation.hpp>
@@ -291,7 +292,7 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
     const auto count = kr::ps::ext::dl::parse_numerical(R"((n_count (q_project (x) (q_atomic_state "triple" (x y z)))))",
                                                         search->task->get_domain().get_domain(),
                                                         *repository);
-    const auto query = std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::index_view<kr::dl::Numerical<kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant()).get_arg());
+    const auto query = std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::index_view<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant()).get_arg());
     const auto projected = std::get<urd::index_view<kr::dl::Query<kr::dl::QueryProjectTag>, runir::kr::dl::ConstructorRepository>>(query.get_variant());
     const auto atomic = std::get<urd::index_view<kr::dl::Query<kr::dl::AtomicStateTag<Fluent>>, runir::kr::dl::ConstructorRepository>>(projected.get_arg().get_variant());
     auto leaf = kr::dl::semantics::incremental::detail::AtomicQueryEvaluator<Fluent>(atomic);
@@ -311,7 +312,7 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
                 (q_join (q_atomic_state "triple" (x y z)) (q_project () (q_atomic_state "fixed" (x y z))))))))",
         search->task->get_domain().get_domain(),
         *repository);
-    const auto graph_query = std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::index_view<kr::dl::Numerical<kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(graph_count.get_variant()).get_arg());
+    const auto graph_query = std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::index_view<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(graph_count.get_variant()).get_arg());
     auto graph = QueryRootEvaluator<tyr::GroundTag>(*search->task, graph_query);
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
@@ -757,7 +758,7 @@ TEST(RunirSearch, WarmedProgramSearchAllocationsGrowWithContainerCapacity)
                     const auto counts = measured.finish();
                     if (!warmup)
                         allocations[scale] = counts.allocated;
-                    ASSERT_EQ(status, kr::ps::ext::ProgramProofStatus::SUCCESS);
+                    ASSERT_EQ(status, kr::ps::ProofStatus::SUCCESS);
                     EXPECT_EQ(statistics.num_expanded, length + 2);
                     EXPECT_EQ(statistics.num_generated, length + 2);
                     ASSERT_TRUE(first_goal);
@@ -820,9 +821,9 @@ void expect_warmed_action_expansions(const kr::TaskContextPtr<Kind>& context, kr
             statistics,
             [&](const auto& step)
             {
-                if constexpr (std::same_as<std::remove_cvref_t<decltype(step)>, kr::ps::ext::detail::ProgramStep<Kind, Storage>>)
+                if constexpr (std::same_as<std::remove_cvref_t<decltype(step)>, kr::ps::ProgramStep<kr::ExtFamilyTag, Kind, kr::ps::ext::StorageStoredState<Storage>>>)
                 {
-                    valid &= step.status == kr::ps::ext::detail::ProgramOutcome::APPLIED && step.state_transition.has_value();
+                    valid &= step.status == kr::ps::ProgramOutcome::APPLIED && step.state_transition.has_value();
                     ++emitted;
                 }
                 else

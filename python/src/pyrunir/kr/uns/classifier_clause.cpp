@@ -16,7 +16,7 @@ void bind_classifier_clause(nb::module_& m)
 {
     using View = urd::index_view<ClassifierClause, Repository>;
     urd::python::bind_index<urd::index<ClassifierClause>>(m, "ClassifierClauseIndex");
-    auto cls = nb::class_<View>(m, "ClassifierClause").def("get_index", &View::index).def("get_literals", &View::get_literals);
+    auto cls = nb::class_<View>(m, "ClassifierClause").def("index", &View::index).def("get_literals", &View::get_literals);
     ygg::add_print(cls);
     urd::python::add_comparison(cls);
     urd::python::add_hash(cls);

@@ -6,9 +6,10 @@
 #include "pyrunir/kr/ps/dl/optimization_bindings.hpp"
 
 #include <nanobind/stl/vector.h>
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
-#include <runir/kr/ps/ext/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <yggdrasil/database/syntax/query_repository.hpp>
+#include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/module_data.hpp>
 #include <runir/kr/ps/ext/module_view.hpp>
@@ -31,7 +32,7 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
     auto data =
         nb::class_<Data>(m, "ModuleData")
             .def(nb::init<>())
-            .def(nb::init<urd::index<ModuleSymbol>,
+            .def(nb::init<urd::index<ModuleSymbol<ExtFamilyTag>>,
                           urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>>>,
                           urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::RoleTag>>>,
                           urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>>>,
@@ -43,8 +44,8 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
                           urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>>,
                           urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>>,
                           urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>>,
-                          urd::index<MemoryState>,
-                          urd::flat_vector<urd::index<MemoryState>>,
+                          urd::index<MemoryState<ExtFamilyTag>>,
+                          urd::flat_vector<urd::index<MemoryState<ExtFamilyTag>>>,
                           urd::flat_vector<urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>>>>(),
                  nb::arg("symbol"),
                  nb::arg("concept_arguments"),
@@ -62,7 +63,7 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
                  nb::arg("memory_states"),
                  nb::arg("memory_transitions"))
             .def(urd::python::init_from_views<
-                     urd::index_view<ModuleSymbol, Repository>,
+                     urd::index_view<ModuleSymbol<ExtFamilyTag>, Repository>,
                      const urd::Store<urd::sequence<urd::index_view<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>, DlRepository>>>&,
                      const urd::Store<urd::sequence<urd::index_view<runir::kr::dl::Argument<runir::kr::dl::RoleTag>, DlRepository>>>&,
                      const urd::Store<urd::sequence<urd::index_view<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>, DlRepository>>>&,
@@ -74,8 +75,8 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
                      const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>, Repository>>>&,
                      const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>, Repository>>>&,
                      const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>, Repository>>>&,
-                     urd::index_view<MemoryState, Repository>,
-                     const urd::Store<urd::sequence<urd::index_view<MemoryState, Repository>>>&,
+                     urd::index_view<MemoryState<ExtFamilyTag>, Repository>,
+                     const urd::Store<urd::sequence<urd::index_view<MemoryState<ExtFamilyTag>, Repository>>>&,
                      const urd::Store<urd::sequence<urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>, Repository>>>>>&>(),
                  nb::arg("symbol"),
                  nb::arg("concept_arguments"),
@@ -110,7 +111,7 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
             .def_rw("memory_transitions", &Data::memory_transitions);
     urd::python::add_comparison(data);
     auto view = nb::class_<View>(m, "Module")
-                    .def("get_index", &View::index)
+                    .def("index", &View::index)
                     .def("get_name", &View::get_name)
                     .def("get_symbol", &View::get_symbol)
                     .def("get_concept_arguments", &View::template get_arguments<runir::kr::dl::ConceptTag>)

@@ -23,8 +23,8 @@ template<runir::kr::dl::CategoryTag Category>
 struct data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::LoadTag<Category>>>
 {
     urd::index<runir::kr::ps::icp::Rule<runir::kr::ps::icp::LoadTag<Category>>> index;
-    urd::index<runir::kr::ps::icp::MemoryState> source;
-    urd::index<runir::kr::ps::icp::MemoryState> target;
+    urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> source;
+    urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> target;
     runir::kr::ps::ConditionList<runir::kr::IcpFamilyTag> conditions;
     urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, Category>> feature;
     urd::index<runir::kr::dl::Register<Category>> reg;
@@ -32,8 +32,8 @@ struct data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::LoadTag<Category>>>
 
     data() = default;
     // Registers live in the description-logic repository, hence the separate context parameter.
-    data(urd::index<runir::kr::ps::icp::MemoryState> source_,
-         urd::index<runir::kr::ps::icp::MemoryState> target_,
+    data(urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> source_,
+         urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> target_,
          runir::kr::ps::ConditionList<runir::kr::IcpFamilyTag> conditions_,
          urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, Category>> feature_,
          urd::index<runir::kr::dl::Register<Category>> reg_,
@@ -58,8 +58,8 @@ template<>
 struct data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>>
 {
     urd::index<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>> index;
-    urd::index<runir::kr::ps::icp::MemoryState> source;
-    urd::index<runir::kr::ps::icp::MemoryState> target;
+    urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> source;
+    urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> target;
     runir::kr::ps::ConditionList<runir::kr::IcpFamilyTag> conditions;
     runir::kr::ps::EffectList<runir::kr::IcpFamilyTag> effects;
     urd::flat_string action_name;
@@ -68,8 +68,8 @@ struct data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>>
     urd::flat_vector<urd::index<runir::kr::ps::icp::XEffect>> xeffects;
 
     data() = default;
-    data(urd::index<runir::kr::ps::icp::MemoryState> source_,
-         urd::index<runir::kr::ps::icp::MemoryState> target_,
+    data(urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> source_,
+         urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> target_,
          runir::kr::ps::ConditionList<runir::kr::IcpFamilyTag> conditions_,
          runir::kr::ps::EffectList<runir::kr::IcpFamilyTag> effects_,
          urd::flat_string action_name_,

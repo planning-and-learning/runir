@@ -40,7 +40,7 @@ void prepare(urd::data<Query<>>& data, const ConstructorRepository& repository)
     data.is_static = std::visit([&](auto index) { return infer_is_static(repository.view(index)); }, data.variant);
 }
 
-void prepare(urd::data<Numerical<DistanceTag>>& data, const ConstructorRepository& repository)
+void prepare(urd::data<Numerical<SemanticFamily, DistanceTag>>& data, const ConstructorRepository& repository)
 {
     const auto columns = [&](const auto& argument)
     {

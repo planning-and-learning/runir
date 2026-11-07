@@ -32,8 +32,8 @@ void build_proof_graph(ProgramProofResults<Kind>& result,
                        const urd::Store<urd::sequence<Predecessor<Kind>>>& predecessors,
                        std::optional<ProgramStateView<Kind>> initial)
 {
-    using VertexLabel = ProgramProofVertexLabel<Kind>;
-    using Edge = std::tuple<graphs::VertexIndex, graphs::VertexIndex, ProgramProofEdgeLabel>;
+    using VertexLabel = ProgramProofVertexLabel<ExtFamilyTag, Kind>;
+    using Edge = std::tuple<graphs::VertexIndex, graphs::VertexIndex, ProgramProofEdgeLabel<ExtFamilyTag>>;
     constexpr auto no_vertex = std::numeric_limits<graphs::VertexIndex>::max();
 
     auto graph_indices = graphs::VertexIndexList(nodes.size(), no_vertex);
@@ -63,14 +63,14 @@ void build_proof_graph(ProgramProofResults<Kind>& result,
     {
         const auto source = add_vertex(predecessor.source);
         const auto target = add_vertex(predecessor.target);
-        auto label = ProgramProofEdgeLabel {};
+        auto label = ProgramProofEdgeLabel<ExtFamilyTag> {};
         if (predecessor.action)
             label.action = *predecessor.action;
         if (predecessor.rule)
             label.rule = *predecessor.rule;
         edges.emplace_back(source, target, std::move(label));
     }
-    result.graph = std::make_shared<ProgramProofGraph<Kind>>(std::span<const VertexLabel>(vertices), std::span<const Edge>(edges));
+    result.graph = std::make_shared<ProgramProofGraph<ExtFamilyTag, Kind>>(std::span<const VertexLabel>(vertices), std::span<const Edge>(edges));
     result.cycle = graphs::find_cycle(*result.graph);
 }
 
@@ -85,8 +85,8 @@ void build_witness_graph(ProgramProofResults<Kind>& result,
     for (auto current = witness; current; current = current->parent)
         path.push_back(current);
     std::ranges::reverse(path);
-    using Vertex = ProgramProofVertexLabel<Kind>;
-    using Edge = std::tuple<graphs::VertexIndex, graphs::VertexIndex, ProgramProofEdgeLabel>;
+    using Vertex = ProgramProofVertexLabel<ExtFamilyTag, Kind>;
+    using Edge = std::tuple<graphs::VertexIndex, graphs::VertexIndex, ProgramProofEdgeLabel<ExtFamilyTag>>;
     auto vertices = urd::Store<urd::sequence<Vertex>> {};
     auto edges = urd::Store<urd::sequence<Edge>> {};
     vertices.reserve(path.size());
@@ -103,7 +103,7 @@ void build_witness_graph(ProgramProofResults<Kind>& result,
             result.open_states.push_back(index);
         if (i)
         {
-            auto label = ProgramProofEdgeLabel {};
+            auto label = ProgramProofEdgeLabel<ExtFamilyTag> {};
             if (entry.transition)
                 label.action = entry.transition->action;
             if (entry.rule)
@@ -111,7 +111,7 @@ void build_witness_graph(ProgramProofResults<Kind>& result,
             edges.emplace_back(index - 1, index, std::move(label));
         }
     }
-    result.graph = std::make_shared<ProgramProofGraph<Kind>>(std::span<const Vertex>(vertices), std::span<const Edge>(edges));
+    result.graph = std::make_shared<ProgramProofGraph<ExtFamilyTag, Kind>>(std::span<const Vertex>(vertices), std::span<const Edge>(edges));
 }
 
 }  // namespace runir::kr::ps::ext::detail

@@ -1,3 +1,4 @@
+#include <fmt/format.h>
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
 #include <runir/kr/uns.hpp>
@@ -15,7 +16,7 @@ std::string make_graph_dot()
     const auto source = builder.add_vertex(std::string("source"));
     const auto target = builder.add_vertex(std::string("target"));
     builder.add_directed_edge(source, target, std::string("edge"));
-    return runir::to_string(builder);
+    return fmt::format("{}", builder);
 }
 
 }  // namespace

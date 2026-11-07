@@ -119,7 +119,7 @@ std::string sketch_proof_results(const runir::kr::ps::base::SketchProofResults<K
 {
     return fmt::format("SketchProofResults(status={}, num_expanded={}, num_generated={}, graph_vertices={}, graph_edges={}, "
                        "deadend_states={}, open_states={}, cycle={})",
-                       runir::kr::ps::base::to_string(result.status),
+                       runir::kr::ps::to_string(result.status),
                        result.statistics.num_expanded,
                        result.statistics.num_generated,
                        result.graph ? result.graph->get_num_vertices() : 0,
@@ -145,12 +145,6 @@ struct fmt::formatter<urd::index_view<runir::kr::ps::base::Sketch, C>> : fmt::fo
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::sketch(view), ctx); }
 };
 
-template<>
-struct fmt::formatter<runir::kr::ps::base::SketchProofStatus> : fmt::formatter<std::string_view>
-{
-    auto format(runir::kr::ps::base::SketchProofStatus status, format_context& ctx) const
-    { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::to_string(status), ctx); }
-};
 
 template<tyr::TaskKind Kind>
 struct fmt::formatter<runir::kr::ps::base::SketchProofResults<Kind>> : fmt::formatter<std::string_view>

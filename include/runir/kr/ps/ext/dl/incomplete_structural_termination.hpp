@@ -11,7 +11,7 @@ namespace runir::kr::ps::ext::dl
 /// Applies the sound but incomplete syntactic proof inside the recurrent
 /// components of a module. Disable use_memory_scc_scope to use one global
 /// opponent scope. An unknown result is not a proof of non-termination.
-ModuleIncompleteStructuralTerminationResult incomplete_structural_termination(ModuleView module_,
+runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::ExtFamilyTag> incomplete_structural_termination(ModuleView module_,
                                                                               bool use_memory_scc_scope = runir::kr::ps::dl::default_use_memory_scc_scope);
 
 /// Applies the incomplete proof to every module and additionally rejects

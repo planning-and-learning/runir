@@ -26,22 +26,18 @@ void bind_structural_termination(nb::module_& m)
         .value("TERMINATING", StructuralTerminationStatus::TERMINATING)
         .value("NON_TERMINATING", StructuralTerminationStatus::NON_TERMINATING);
 
-    nb::enum_<IncompleteStructuralTerminationStatus>(m, "IncompleteStructuralTerminationStatus")
-        .value("TERMINATING", IncompleteStructuralTerminationStatus::TERMINATING)
-        .value("UNKNOWN", IncompleteStructuralTerminationStatus::UNKNOWN);
+    nb::class_<runir::kr::ps::dl::IncompleteBlockingReason<runir::kr::ExtFamilyTag>>(m, "IncompleteBlockingReason")
+        .def_ro("feature", &runir::kr::ps::dl::IncompleteBlockingReason<runir::kr::ExtFamilyTag>::feature)
+        .def_ro("opposing_rules", &runir::kr::ps::dl::IncompleteBlockingReason<runir::kr::ExtFamilyTag>::opposing_rules);
 
-    nb::class_<IncompleteBlockingReason>(m, "IncompleteBlockingReason")
-        .def_ro("feature", &IncompleteBlockingReason::feature)
-        .def_ro("opposing_rules", &IncompleteBlockingReason::opposing_rules);
+    nb::class_<runir::kr::ps::dl::IncompleteSurvivingRule<runir::kr::ExtFamilyTag>>(m, "IncompleteSurvivingRule")
+        .def_ro("rule", &runir::kr::ps::dl::IncompleteSurvivingRule<runir::kr::ExtFamilyTag>::rule)
+        .def_ro("blocking_reasons", &runir::kr::ps::dl::IncompleteSurvivingRule<runir::kr::ExtFamilyTag>::blocking_reasons);
 
-    nb::class_<IncompleteSurvivingRule>(m, "IncompleteSurvivingRule")
-        .def_ro("rule", &IncompleteSurvivingRule::rule)
-        .def_ro("blocking_reasons", &IncompleteSurvivingRule::blocking_reasons);
-
-    nb::class_<ModuleIncompleteStructuralTerminationResult>(m, "ModuleIncompleteStructuralTerminationResult")
-        .def_ro("status", &ModuleIncompleteStructuralTerminationResult::status)
-        .def_ro("surviving_rules", &ModuleIncompleteStructuralTerminationResult::surviving_rules)
-        .def("is_terminating", &ModuleIncompleteStructuralTerminationResult::is_terminating);
+    nb::class_<runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::ExtFamilyTag>>(m, "ModuleIncompleteStructuralTerminationResult")
+        .def_ro("status", &runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::ExtFamilyTag>::status)
+        .def_ro("surviving_rules", &runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::ExtFamilyTag>::surviving_rules)
+        .def("is_terminating", &runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::ExtFamilyTag>::is_terminating);
 
     nb::class_<ProgramIncompleteStructuralTerminationResult>(m, "ProgramIncompleteStructuralTerminationResult")
         .def_ro("status", &ProgramIncompleteStructuralTerminationResult::status)

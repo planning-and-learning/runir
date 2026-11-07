@@ -176,7 +176,7 @@ inline urd::builder<ygg::database::Columns> lifted_columns(size_t arity)
 }
 
 /// Constructing the plan rejects arguments whose arities are not k, 2k, k.
-void prepare(urd::data<Numerical<DistanceTag>>& data, const ConstructorRepository& repository);
+void prepare(urd::data<Numerical<SemanticFamily, DistanceTag>>& data, const ConstructorRepository& repository);
 
 }  // namespace runir::kr::dl::detail
 

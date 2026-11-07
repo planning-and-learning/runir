@@ -17,7 +17,7 @@ using Analysis = runir::kr::ps::detail::PolicyAnalysis<runir::kr::ExtFamilyTag, 
 Analysis analyze_module(ModuleView module_);
 
 ModuleStructuralTerminationResult make_result(ModuleView module_, const Analysis& analysis, const runir::kr::ps::detail::PolicySieveResult& sieve_result);
-ModuleIncompleteStructuralTerminationResult
+runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::ExtFamilyTag>
 make_incomplete_result(ModuleView module_, const Analysis& analysis, const runir::kr::ps::detail::IncompletePolicyResult& policy_result);
 
 urd::Store<urd::sequence<RuleVariantView>> find_recursive_call_rules(ProgramView program);

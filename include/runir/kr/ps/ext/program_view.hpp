@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_EXT_PROGRAM_VIEW_HPP_
 #define RUNIR_KR_PS_EXT_PROGRAM_VIEW_HPP_
 
-#include "runir/kr/ps/ext/module_symbol_view.hpp"
+#include "runir/kr/ps/module_symbol_view.hpp"
 #include "runir/kr/ps/ext/module_view.hpp"
 #include "runir/kr/ps/ext/program_data.hpp"
 

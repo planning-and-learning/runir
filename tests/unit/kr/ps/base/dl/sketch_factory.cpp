@@ -2,11 +2,12 @@
 
 #include <fmt/format.h>
 #include <gtest/gtest.h>
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <yggdrasil/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
-#include <runir/kr/ps/base/detail/repository_instantiations.hpp>
+#include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/dl/parser.hpp>
 #include <runir/kr/ps/base/dl/sketch_factory.hpp>
 #include <runir/kr/ps/base/formatter.hpp>

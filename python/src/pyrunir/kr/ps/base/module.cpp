@@ -4,6 +4,8 @@
 #include "bindings.hpp"
 #include "pyrunir/kr/ps/base/dl/module.hpp"
 
+#include "pyrunir/kr/ps/program_bindings.hpp"
+
 #include <runir/kr/ps/base/repository.hpp>
 
 namespace runir::kr::ps::base
@@ -14,7 +16,7 @@ void bind_module_definitions(nb::module_& m)
     auto repository = RepositoryBinding(m, "Repository");
     bind_rule(m, repository);
     bind_sketch(m, repository);
-    bind_repository(m, repository);
+    runir::kr::python::bind_repository(m, repository);
     bind_sketch_executor(m);
     bind_syntactic_complexity(m);
 

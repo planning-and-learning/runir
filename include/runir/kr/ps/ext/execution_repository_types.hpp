@@ -12,9 +12,6 @@ namespace runir::kr::ps::ext
 {
 
 template<tyr::TaskKind Kind>
-using ExecutionRepositoryTypes = boost::mp11::mp_list<ModuleState<Kind>, CallStack, ProgramState<Kind>>;
-
-template<tyr::TaskKind Kind>
 using ExecutionBuilder = boost::mp11::mp_apply<ygg::formalism::BuilderStorage, ExecutionRepositoryTypes<Kind>>;
 
 }

@@ -5,6 +5,7 @@
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 
 #include <algorithm>
+#include <boost/mp11.hpp>
 #include <concepts>
 #include <urd/repr/core/dependent_false.hpp>
 #include <variant>
@@ -13,9 +14,10 @@ namespace runir::kr::dl::detail
 {
 
 // Static means constant for a fixed task, including its goal and object universe.
-template<template<typename> typename Expression, typename Tag, typename C>
-bool infer_is_static(urd::index_view<Expression<Tag>, C> constructor)
+template<template<typename...> typename Expression, typename... Args, typename C>
+bool infer_is_static(urd::index_view<Expression<Args...>, C> constructor)
 {
+    using Tag = boost::mp11::mp_back<boost::mp11::mp_list<Args...>>;
     if constexpr (is_atomic_state_tag_v<Tag>)
         return std::same_as<TagFactKind<Tag>, tyr::formalism::StaticTag>;
     else if constexpr (is_atomic_goal_tag_v<Tag> || std::same_as<Tag, BotTag> || std::same_as<Tag, TopTag> || std::same_as<Tag, UniversalTag>

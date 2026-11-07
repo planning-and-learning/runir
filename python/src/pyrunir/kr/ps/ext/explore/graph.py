@@ -12,12 +12,12 @@ from collections.abc import Mapping
 from pytyr.formalism.planning import Object
 from pytyr.planning import lifted
 
+from pyrunir.kr.ps import ProofStatus
 from pyrunir.kr.ps.ext import (
     ConceptChooseRule,
     LiftedModuleState,
     LiftedProgramProofGraph,
     LiftedProgramProofResults,
-    ProgramProofStatus,
     RoleChooseRule,
     RuleVariant,
 )
@@ -34,7 +34,7 @@ def failure_category(result: LiftedProgramProofResults) -> str | None:
 
     Open and dead-end states also occur in failed branches of a success.
     """
-    if result.status == ProgramProofStatus.SUCCESS:
+    if result.status == ProofStatus.SUCCESS:
         return None
     if result.open_states:
         return "open_state"

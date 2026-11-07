@@ -186,7 +186,6 @@ public:
     ColorRepository& operator=(ColorRepository&&) = delete;
     ~ColorRepository() = default;
 
-    [[nodiscard]] const auto& get_index() const noexcept { return m_index; }
     /// The repository's number, as urd's views ask of a context.
     [[nodiscard]] std::size_t layer() const noexcept { return m_index; }
     [[nodiscard]] const auto& get_planning_repository() const noexcept
@@ -202,8 +201,8 @@ public:
     std::optional<urd::index_view<T, ColorRepository>> find(const urd::data<T>& data) const noexcept
     {
         assert(is_canonical(data));
-        if (const auto index = m_symbol_repository.find_local<T>(data))
-            return urd::index_view<T, ColorRepository>(*index, this);
+        if (const auto index = m_symbol_repository.get<T>().find(data); !index.is_none())
+            return urd::index_view<T, ColorRepository>(index, this);
         return std::nullopt;
     }
 
@@ -212,7 +211,7 @@ public:
     {
         canonicalize(data);
         assert(is_canonical(data));
-        const auto [index, created] = m_symbol_repository.insert_local<T>(data);
+        const auto [index, created] = ygg::formalism::intern(m_symbol_repository.get<T>(), data);
         return { urd::index_view<T, ColorRepository>(index, this), created };
     }
 
@@ -223,14 +222,11 @@ public:
 
     template<typename T>
     const urd::data<T>& operator[](urd::index<T> index) const noexcept
-    {
-        assert(m_symbol_repository.is_local<T>(index));
-        return m_symbol_repository.local<T>(index);
-    }
+    { return m_symbol_repository[index]; }
 
     template<typename T>
     [[nodiscard]] std::size_t size() const noexcept
-    { return m_symbol_repository.local_size<T>(); }
+    { return m_symbol_repository.size<T>(); }
 };
 
 class ColorRepositoryFactory

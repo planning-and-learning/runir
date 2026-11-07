@@ -1,6 +1,6 @@
 #include <concepts>
 #include <gtest/gtest.h>
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <utility>
@@ -79,7 +79,7 @@ static_assert(view_aliases<>(kr::dl::CategoryTags {}));
 
 TEST(RunirKrDlConstructor, PreservesConcreteVariant)
 {
-    using Concrete = kr::dl::Concept<kr::dl::TopTag>;
+    using Concrete = kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::TopTag>;
     using Constructor = kr::dl::Constructor<kr::dl::ConceptTag>;
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_repository);
@@ -96,8 +96,8 @@ TEST(RunirKrDlConstructor, SharedInterningCanonicalizesAndPrepares)
     {
         auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
         auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_repository);
-        auto top = urd::data<kr::dl::Concept<kr::dl::TopTag>>();
-        auto bot = urd::data<kr::dl::Concept<kr::dl::BotTag>>();
+        auto top = urd::data<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::TopTag>>();
+        auto bot = urd::data<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::BotTag>>();
         auto first_data = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(ygg::formalism::insert(*repository, top).first.index());
         auto second_data = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(ygg::formalism::insert(*repository, bot).first.index());
         const auto first = ygg::formalism::insert(*repository, first_data).first;
@@ -105,7 +105,7 @@ TEST(RunirKrDlConstructor, SharedInterningCanonicalizesAndPrepares)
         EXPECT_TRUE(first.is_static());
         EXPECT_TRUE(second.is_static());
 
-        auto data = urd::data<kr::dl::Concept<kr::dl::IntersectionTag>>(second.index(), first.index());
+        auto data = urd::data<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::IntersectionTag>>(second.index(), first.index());
         ASSERT_FALSE(kr::dl::is_canonical(data));
         const auto [intersection, created] = ygg::formalism::insert(*repository, data);
         EXPECT_TRUE(created);

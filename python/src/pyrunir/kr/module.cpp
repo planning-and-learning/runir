@@ -15,8 +15,7 @@ namespace
 
 void bind_errors(nb::module_& m)
 {
-    auto semantic_error = ygg::bind_diagnostic_exception<SemanticError>(m, "SemanticError");
-    ygg::bind_diagnostic_exception<ParseError>(m, "ParseError", semantic_error.ptr());
+    const nb::object semantic_error = nb::module_::import_("pyyggdrasil.diagnostics").attr("SemanticError");
     ygg::bind_diagnostic_exception<UndefinedSymbolError>(m, "UndefinedSymbolError", semantic_error.ptr());
     ygg::bind_diagnostic_exception<DuplicateDefinitionError>(m, "DuplicateDefinitionError", semantic_error.ptr());
     ygg::bind_diagnostic_exception<ArityMismatchError>(m, "ArityMismatchError", semantic_error.ptr());

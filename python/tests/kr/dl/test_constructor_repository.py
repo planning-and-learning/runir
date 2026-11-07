@@ -55,48 +55,48 @@ def _check_queries(
     if category == "Concept":
         concept = _created(
             lambda: repository.insert(
-                semantics.ConceptData(_created(lambda: repository.insert(semantics.ConceptTopData())).get_index())
+                semantics.ConceptData(_created(lambda: repository.insert(semantics.ConceptTopData())).index())
             )
         )
-        atom = _created(lambda: repository.insert(semantics.QueryConceptData(concept.get_index(), columns)))
+        atom = _created(lambda: repository.insert(semantics.QueryConceptData(concept.index(), columns)))
         num_tuples = sum(1 for _ in concept.evaluate(context))
     else:
         role = _created(
             lambda: repository.insert(
-                semantics.RoleData(_created(lambda: repository.insert(semantics.RoleUniversalData())).get_index())
+                semantics.RoleData(_created(lambda: repository.insert(semantics.RoleUniversalData())).index())
             )
         )
-        atom = _created(lambda: repository.insert(semantics.QueryRoleData(role.get_index(), columns)))
+        atom = _created(lambda: repository.insert(semantics.QueryRoleData(role.index(), columns)))
         num_tuples = sum(1 for _ in role.evaluate(context))
-    query = _created(lambda: repository.insert(semantics.QueryData(atom.get_index())))
-    joined = _created(lambda: repository.insert(semantics.QueryJoinData(query.get_index(), query.get_index())))
+    query = _created(lambda: repository.insert(semantics.QueryData(atom.index())))
+    joined = _created(lambda: repository.insert(semantics.QueryJoinData(query.index(), query.index())))
     assert [column.get_name() for column in joined.get_columns()] == names
-    query = _created(lambda: repository.insert(semantics.QueryData(joined.get_index())))
+    query = _created(lambda: repository.insert(semantics.QueryData(joined.index())))
     if category == "Concept":
         concept_projected = _created(
-            lambda: repository.insert(semantics.ConceptProjectData(query.get_index(), columns[::-1]))
+            lambda: repository.insert(semantics.ConceptProjectData(query.index(), columns[::-1]))
         )
         assert [column.get_name() for column in concept_projected.get_columns()] == names[::-1]
-        concept_projection = _created(lambda: repository.insert(semantics.ConceptData(concept_projected.get_index())))
+        concept_projection = _created(lambda: repository.insert(semantics.ConceptData(concept_projected.index())))
         concept_projection_variant = concept_projection.get_variant()
         assert isinstance(concept_projection_variant, semantics.ConceptProject)
         assert concept_projection_variant == concept_projected
-        projection_index: dl.semantics.ConceptIndex | dl.semantics.RoleIndex = concept_projection.get_index()
+        projection_index: dl.semantics.ConceptIndex | dl.semantics.RoleIndex = concept_projection.index()
     else:
         role_projected = _created(
-            lambda: repository.insert(semantics.RoleProjectData(query.get_index(), columns[::-1]))
+            lambda: repository.insert(semantics.RoleProjectData(query.index(), columns[::-1]))
         )
         assert [column.get_name() for column in role_projected.get_columns()] == names[::-1]
-        role_projection = _created(lambda: repository.insert(semantics.RoleData(role_projected.get_index())))
+        role_projection = _created(lambda: repository.insert(semantics.RoleData(role_projected.index())))
         role_projection_variant = role_projection.get_variant()
         assert isinstance(role_projection_variant, semantics.RoleProject)
         assert role_projection_variant == role_projected
-        projection_index = role_projection.get_index()
+        projection_index = role_projection.index()
 
     count = _created(lambda: repository.insert(semantics.NumericalCountData(projection_index)))
-    numerical = _created(lambda: repository.insert(semantics.NumericalData(count.get_index())))
-    nonempty = _created(lambda: repository.insert(semantics.BooleanNonemptyData(query.get_index())))
-    boolean = _created(lambda: repository.insert(semantics.BooleanData(nonempty.get_index())))
+    numerical = _created(lambda: repository.insert(semantics.NumericalData(count.index())))
+    nonempty = _created(lambda: repository.insert(semantics.BooleanNonemptyData(query.index())))
+    boolean = _created(lambda: repository.insert(semantics.BooleanData(nonempty.index())))
     numerical_variant = numerical.get_variant()
     assert isinstance(numerical_variant, semantics.NumericalCount)
     assert numerical_variant == count
@@ -123,7 +123,7 @@ def test_repository_constructs_queries_and_semantic_wrappers(
     for name in names:
         data = dl.semantics.QueryColumnData()
         data.name = name
-        columns.append(repository.insert(data)[0].get_index())
+        columns.append(repository.insert(data)[0].index())
 
     search = ground_gripper_search_context
     task = GroundTaskContext(DomainContext(gripper_planning_domain), search)

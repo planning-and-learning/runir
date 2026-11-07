@@ -8,7 +8,8 @@
 #include <chrono>
 #include <filesystem>
 #include <gtest/gtest.h>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <yggdrasil/database/syntax/query_repository.hpp>
 #include <runir/kr/ps/icp/detail/rule_evaluation/context.hpp>
 #include <runir/kr/ps/icp/dl/parser.hpp>
 #include <runir/kr/ps/icp/program_executor.hpp>
@@ -23,8 +24,8 @@ namespace runir::tests
 namespace
 {
 
-using Status = kr::ps::icp::ProgramProofStatus;
-using Outcome = kr::ps::icp::detail::ProgramOutcome;
+using Status = kr::ps::ProofStatus;
+using Outcome = kr::ps::ProgramOutcome;
 
 std::string rule(const std::string& name, const std::string& source, const std::string& target, const std::string& body)
 { return "(:rule (:symbol " + name + ") (:expression (:source-memory " + source + ") (:target-memory " + target + ") " + body + "))"; }
@@ -472,7 +473,7 @@ void check_load_evaluator_entry_checks()
         const auto states_before = task->icp_execution_repository->template size<kr::ps::icp::ProgramState<Kind>>();
         const auto histories_before = task->icp_execution_repository->template size<kr::ps::icp::Histories>();
         const auto registers_before = task->dl_denotation_repository->template size<kr::dl::semantics::RegisterValues>();
-        auto steps = urd::Store<urd::sequence<kr::ps::icp::detail::ProgramStep<Kind>>> {};
+        auto steps = urd::Store<urd::sequence<kr::ps::ProgramStep<kr::IcpFamilyTag, Kind>>> {};
         for (const auto rules : policy.get_module().get_memory_transitions())
             for (const auto variant : rules)
                 std::visit(

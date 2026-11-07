@@ -6,12 +6,13 @@
 #include <concepts>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <yggdrasil/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <runir/kr/errors.hpp>
-#include <runir/kr/ps/ext/detail/repository_instantiations.hpp>
+#include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/dl/module_factory.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <runir/kr/ps/ext/dl/parser/parser.hpp>
@@ -233,7 +234,7 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidDoActions)
     }
 
     const auto inline_argument_expression = read_fixture("kr/ps/ext/executor/ext_module_parser_rejects_invalid_do_actions/inline_argument_expression.module");
-    EXPECT_THROW(kr::ps::ext::dl::parse_module(inline_argument_expression, planning_task.get_domain().get_domain(), *repository), kr::ParseError);
+    EXPECT_THROW(kr::ps::ext::dl::parse_module(inline_argument_expression, planning_task.get_domain().get_domain(), *repository), ygg::diagnostics::ParseError);
 }
 
 TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
@@ -690,7 +691,7 @@ TEST(RunirTests, ExtBindingRulesParseEffectsAndRoundTrip)
             EXPECT_THROW(parse(description("missing", category, "")), kr::UndefinedSymbolError);
             EXPECT_THROW(parse(description("F", category, "(:effects (unchanged missing))")), kr::UndefinedSymbolError);
             EXPECT_THROW(parse(description("F", category, "(:effects (increases b))")), kr::UndefinedSymbolError);
-            EXPECT_THROW(parse(description("F", std::string(category) == "concept" ? "role" : "concept", "")), kr::ParseError);
+            EXPECT_THROW(parse(description("F", std::string(category) == "concept" ? "role" : "concept", "")), ygg::diagnostics::ParseError);
         }
 }
 
@@ -711,7 +712,7 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
         [](auto child)
         {
             using View = std::decay_t<decltype(child)>;
-            using Expected = urd::index_view<kr::dl::Concept<kr::dl::ArgumentTag<kr::dl::ConceptTag>>, kr::dl::ConstructorRepository>;
+            using Expected = urd::index_view<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::ArgumentTag<kr::dl::ConceptTag>>, kr::dl::ConstructorRepository>;
             if constexpr (std::same_as<View, Expected>)
                 return ygg::uint_t(child.get_argument().get_identifier().value) == 0;
             else
@@ -727,7 +728,7 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
         [](auto child)
         {
             using View = std::decay_t<decltype(child)>;
-            using Expected = urd::index_view<kr::dl::Concept<kr::dl::RegisterTag>, kr::dl::ConstructorRepository>;
+            using Expected = urd::index_view<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::RegisterTag>, kr::dl::ConstructorRepository>;
             if constexpr (std::same_as<View, Expected>)
                 return ygg::uint_t(child.get_register().get_identifier().value) == 1;
             else
@@ -743,7 +744,7 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
         [](auto child)
         {
             using View = std::decay_t<decltype(child)>;
-            using Expected = urd::index_view<kr::dl::Role<kr::dl::ArgumentTag<kr::dl::RoleTag>>, kr::dl::ConstructorRepository>;
+            using Expected = urd::index_view<kr::dl::Role<kr::dl::SemanticFamily, kr::dl::ArgumentTag<kr::dl::RoleTag>>, kr::dl::ConstructorRepository>;
             if constexpr (std::same_as<View, Expected>)
                 return ygg::uint_t(child.get_argument().get_identifier().value) == 0;
             else

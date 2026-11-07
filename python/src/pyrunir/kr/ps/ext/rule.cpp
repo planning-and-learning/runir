@@ -7,9 +7,10 @@
 #include <nanobind/stl/list.h>
 #include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
-#include <runir/kr/ps/ext/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <yggdrasil/database/syntax/query_repository.hpp>
+#include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/rule_data.hpp>
@@ -45,7 +46,7 @@ auto bind_rule_view(nb::module_& m, const char* name)
 {
     using View = urd::index_view<T, Repository>;
     auto cls = nb::class_<View>(m, name)
-                   .def("get_index", &View::index)
+                   .def("index", &View::index)
                    .def("get_source", &View::get_source)
                    .def("get_conditions", &View::get_conditions);
     if constexpr (requires(View view) { view.get_target(); })
@@ -78,7 +79,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     urd::python::add_comparison(term);
     using TermView = OrderTermView;
     auto term_view = nb::class_<TermView>(m, "OrderTerm")
-                         .def("get_index", &TermView::index)
+                         .def("index", &TermView::index)
                          .def("get_direction", &TermView::get_direction)
                          .def("get_feature", &TermView::get_feature);
     urd::python::add_comparison(term_view);
@@ -105,7 +106,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     urd::python::bind_index<urd::index<Call>>(m, "CallRuleIndex");
     urd::python::bind_index<urd::index<Backtrack>>(m, "BacktrackRuleIndex");
 
-    using MemoryStateIndex = urd::index<MemoryState>;
+    using MemoryStateIndex = urd::index<MemoryState<ExtFamilyTag>>;
     using ConditionIndexList = runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag>;
     using ConditionViewList = urd::Store<urd::sequence<urd::resolved_t<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>, Repository>>>;
     using EffectIndexList = runir::kr::ps::EffectList<runir::kr::ExtFamilyTag>;
@@ -269,7 +270,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
         .def_rw("action_name", &urd::data<Do>::action_name)
         .def_rw("arguments", &urd::data<Do>::arguments);
     bind_rule_data<Call>(m, "CallRuleData")
-        .def(nb::init<MemoryStateIndex, MemoryStateIndex, ConditionIndexList, urd::index<ModuleSymbol>, urd::flat_vector<CallArgument>>(),
+        .def(nb::init<MemoryStateIndex, MemoryStateIndex, ConditionIndexList, urd::index<ModuleSymbol<ExtFamilyTag>>, urd::flat_vector<CallArgument>>(),
              "source"_a,
              "target"_a,
              "conditions"_a,
@@ -278,7 +279,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
         .def(urd::python::init_from_views<MemoryStateView,
                       MemoryStateView,
                       const ConditionViewList&,
-                      urd::index_view<ModuleSymbol, Repository>,
+                      urd::index_view<ModuleSymbol<ExtFamilyTag>, Repository>,
                       urd::flat_vector<CallArgument>>(),
              "source"_a,
              "target"_a,

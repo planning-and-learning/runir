@@ -2,6 +2,7 @@
 #define RUNIR_KR_DL_SEMANTICS_DENOTATION_CACHES_HPP_
 
 #include "runir/kr/dl/repository.hpp"
+#include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/dl/semantics/denotation_view.hpp"
 
 #include <array>

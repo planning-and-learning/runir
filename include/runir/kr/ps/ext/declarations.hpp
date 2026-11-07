@@ -5,6 +5,7 @@
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/ps/base/declarations.hpp"
 #include "runir/kr/ps/declarations.hpp"
+#include "runir/kr/ps/ext/execution_declarations.hpp"
 #include "runir/kr/ps/family_traits.hpp"
 
 #include <concepts>
@@ -15,14 +16,6 @@
 
 namespace runir::kr::ps::ext
 {
-
-struct MemoryState
-{
-};
-
-struct ModuleSymbol
-{
-};
 
 struct OrderTerm
 {
@@ -112,7 +105,7 @@ using ConditionTypes = runir::kr::ps::PsConditionTypes<runir::kr::ExtFamilyTag>;
 using EffectTypes = runir::kr::ps::PsEffectTypes<runir::kr::ExtFamilyTag>;
 /// A call rule's argument: a feature of any category.
 using CallArgument = urd::index_variant<boost::mp11::mp_transform_q<boost::mp11::mp_bind_front<runir::kr::ps::Feature, runir::kr::ExtFamilyTag>, runir::kr::dl::CategoryTags>>;
-using ProgramTypes = boost::mp11::mp_list<MemoryState, ModuleSymbol, Module, Program, OrderTerm>;
+using ProgramTypes = boost::mp11::mp_list<MemoryState<ExtFamilyTag>, ModuleSymbol<ExtFamilyTag>, Module, Program, OrderTerm>;
 using RepositoryTypes =
     boost::mp11::mp_append<runir::kr::ps::base::RepositoryTypes, runir::kr::ps::PsCoreTypes<runir::kr::ExtFamilyTag>, RuleTypes, ProgramTypes>;
 using Repository = runir::kr::ps::BasicRepository<runir::kr::ExtFamilyTag, RepositoryTypes>;
@@ -122,8 +115,8 @@ using RepositoryFactory = runir::kr::ps::BasicRepositoryFactory<runir::kr::ExtFa
 using ConceptRegisterView = urd::index_view<runir::kr::dl::Register<runir::kr::dl::ConceptTag>, runir::kr::dl::ConstructorRepository>;
 using RoleRegisterView = urd::index_view<runir::kr::dl::Register<runir::kr::dl::RoleTag>, runir::kr::dl::ConstructorRepository>;
 using OrderTermView = urd::index_view<OrderTerm, Repository>;
-using MemoryStateView = urd::index_view<MemoryState, Repository>;
-using ModuleSymbolView = urd::index_view<ModuleSymbol, Repository>;
+using MemoryStateView = urd::index_view<MemoryState<ExtFamilyTag>, Repository>;
+using ModuleSymbolView = urd::index_view<ModuleSymbol<ExtFamilyTag>, Repository>;
 using ModuleView = urd::index_view<Module, Repository>;
 using ProgramView = urd::index_view<Program, Repository>;
 using RuleVariantView = urd::index_view<ps::Rule<ExtFamilyTag>, Repository>;
@@ -141,6 +134,17 @@ template<typename R>
 concept BindingRuleView = LoadRuleView<R> || ChooseRuleView<R>;
 
 }  // namespace runir::kr::ps::ext
+
+template<>
+struct runir::kr::ps::FamilyTypes<runir::kr::ExtFamilyTag>
+{
+    using Repository = runir::kr::ps::ext::Repository;
+    using ConcreteRuleTypes = runir::kr::ps::ext::ConcreteRuleTypes;
+    template<tyr::TaskKind Kind>
+    using ExecutionRepositoryTypes = runir::kr::ps::ext::ExecutionRepositoryTypes<Kind>;
+    template<tyr::TaskKind Kind>
+    using ProgramState = runir::kr::ps::ext::ProgramState<Kind>;
+};
 
 namespace runir::kr::ps::ext::dl
 {

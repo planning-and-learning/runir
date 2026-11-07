@@ -2,7 +2,7 @@
 #define RUNIR_KR_PS_EXT_DETAIL_SEARCH_NODE_HPP_
 
 #include "runir/kr/ps/ext/execution_view.hpp"
-#include "runir/kr/ps/ext/rule_variant_view.hpp"
+#include "runir/kr/ps/rule_variant_view.hpp"
 
 #include <cstddef>
 #include <cstdint>

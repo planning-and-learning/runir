@@ -110,7 +110,7 @@ public:
 
     /// Apply a match after the aggregate admits shared histories and publishes the binding.
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
-    ProgramStep<Kind> apply(RuleEvaluationWorkspace<Kind, EvaluationPolicy>& workspace,
+    ProgramStep<IcpFamilyTag, Kind> apply(RuleEvaluationWorkspace<Kind, EvaluationPolicy>& workspace,
                             ProgramStateView<Kind> source,
                             const tyr::planning::LabeledNode<Kind>& candidate,
                             HistoriesView<Kind> histories) const
@@ -119,7 +119,7 @@ public:
         target.state = candidate.node.get_state().index();
         target.memory_state = m_rule.get_target().index();
         target.histories = histories.index();
-        auto step = ProgramStep<Kind>(ProgramOutcome::APPLIED, workspace.intern(target), workspace.get_task_context());
+        auto step = ProgramStep<IcpFamilyTag, Kind>(ProgramOutcome::APPLIED, workspace.intern(target), workspace.get_task_context());
         step.rule = m_variant;
         step.planning_successor = candidate.pack();
         step.state_transition = datasets::StateGraphEdgeLabel { candidate.label, static_cast<ygg::float_t>(1) };

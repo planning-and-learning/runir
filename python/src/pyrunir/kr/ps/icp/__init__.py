@@ -50,7 +50,6 @@ from pyrunir._pyrunir.kr.ps.icp import (
     ProgramData as ProgramData,
     ProgramIndex as ProgramIndex,
     ProgramProofEdgeLabel as ProgramProofEdgeLabel,
-    ProgramProofStatus as ProgramProofStatus,
     ProgramSearchStatistics as ProgramSearchStatistics,
     Repository as Repository,
     RepositoryFactory as RepositoryFactory,

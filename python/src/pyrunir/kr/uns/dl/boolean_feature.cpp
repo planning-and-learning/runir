@@ -2,11 +2,12 @@
 #include "pyrunir/module.hpp"
 #include "pyrunir/kr/ps/dl/binding_utils.hpp"
 
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <yggdrasil/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/ps/dl/evaluation.hpp>
-#include <runir/kr/uns/detail/repository_instantiations.hpp>
+#include <runir/kr/uns/repository.hpp>
 #include <runir/kr/uns/repository.hpp>
 
 namespace runir::kr::uns::dl

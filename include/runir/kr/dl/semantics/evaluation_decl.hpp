@@ -34,19 +34,19 @@ auto evaluate_impl(ConstructorView<Category> constructor, Context& context) -> D
 
 template<tyr::TaskKind Kind, typename Tag, StateEvaluationContextConcept<Kind> Context, typename C>
     requires ConceptConstructorTag<Tag>
-auto evaluate_impl(urd::index_view<Concept<Tag>, C> constructor, Context& context) -> DenotationView<ConceptTag>;
+auto evaluate_impl(urd::index_view<Concept<SemanticFamily, Tag>, C> constructor, Context& context) -> DenotationView<ConceptTag>;
 
 template<tyr::TaskKind Kind, typename Tag, StateEvaluationContextConcept<Kind> Context, typename C>
     requires RoleConstructorTag<Tag>
-auto evaluate_impl(urd::index_view<Role<Tag>, C> constructor, Context& context) -> DenotationView<RoleTag>;
+auto evaluate_impl(urd::index_view<Role<SemanticFamily, Tag>, C> constructor, Context& context) -> DenotationView<RoleTag>;
 
 template<tyr::TaskKind Kind, typename Tag, StateEvaluationContextConcept<Kind> Context, typename C>
     requires BooleanConstructorTag<Tag>
-auto evaluate_impl(urd::index_view<Boolean<Tag>, C> constructor, Context& context) -> DenotationView<BooleanTag>;
+auto evaluate_impl(urd::index_view<Boolean<SemanticFamily, Tag>, C> constructor, Context& context) -> DenotationView<BooleanTag>;
 
 template<tyr::TaskKind Kind, typename Tag, StateEvaluationContextConcept<Kind> Context, typename C>
     requires NumericalConstructorTag<Tag>
-auto evaluate_impl(urd::index_view<Numerical<Tag>, C> constructor, Context& context) -> DenotationView<NumericalTag>;
+auto evaluate_impl(urd::index_view<Numerical<SemanticFamily, Tag>, C> constructor, Context& context) -> DenotationView<NumericalTag>;
 
 template<tyr::TaskKind Kind, CategoryTag Category, StateEvaluationContextConcept<Kind> Context>
 auto evaluate(ConstructorView<Category> constructor, Context& context) -> DenotationView<Category>;

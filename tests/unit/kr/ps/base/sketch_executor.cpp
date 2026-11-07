@@ -10,14 +10,15 @@
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <runir/datasets/state_graph.hpp>
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <yggdrasil/database/syntax/query_repository.hpp>
 #include <runir/kr/ps/base/dl/parser.hpp>
 #include <runir/kr/ps/base/dl/sketch_factory.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/sketch_executor.hpp>
 #include <runir/kr/ps/base/successor_expander.hpp>
-#include <tyr/planning/factory.hpp>
+#include <tyr/planning/axiom_evaluator.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <tyr/planning/state_repository.hpp>
@@ -27,14 +28,14 @@
 namespace runir::tests
 {
 
-TEST(RunirTests, SketchProofStatusToString)
+TEST(RunirTests, ProofStatusToString)
 {
-    using kr::ps::base::SketchProofStatus;
-    EXPECT_EQ(kr::ps::base::to_string(SketchProofStatus::SUCCESS), "success");
-    EXPECT_EQ(kr::ps::base::to_string(SketchProofStatus::FAILURE), "failure");
-    EXPECT_EQ(kr::ps::base::to_string(SketchProofStatus::OUT_OF_TIME), "out_of_time");
-    EXPECT_EQ(kr::ps::base::to_string(SketchProofStatus::OUT_OF_STATES), "out_of_states");
-    EXPECT_THROW((void) kr::ps::base::to_string(static_cast<SketchProofStatus>(255)), std::invalid_argument);
+    using kr::ps::ProofStatus;
+    EXPECT_EQ(kr::ps::to_string(ProofStatus::SUCCESS), "success");
+    EXPECT_EQ(kr::ps::to_string(ProofStatus::FAILURE), "failure");
+    EXPECT_EQ(kr::ps::to_string(ProofStatus::OUT_OF_TIME), "out_of_time");
+    EXPECT_EQ(kr::ps::to_string(ProofStatus::OUT_OF_STATES), "out_of_states");
+    EXPECT_THROW((void) kr::ps::to_string(static_cast<ProofStatus>(255)), std::invalid_argument);
 }
 
 TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
@@ -141,7 +142,7 @@ TEST(RunirTests, BaseMatchingDistinguishesCollidingStateIdsAcrossStorage)
     const auto successor = std::ranges::find_if(successors, [&](const auto& candidate) { return candidate.node.get_state() != initial.get_state(); });
     ASSERT_NE(successor, successors.end());
 
-    const auto target_repository = tyr::planning::StateRepositoryFactory<tyr::GroundTag> {}.create(task);
+    const auto target_repository = std::make_shared<tyr::planning::StateRepository<tyr::GroundTag>>(task);
     const auto target = tyr::planning::materialize_state(successor->node.get_state(), *target_repository, *search_context->axiom_evaluator);
     ASSERT_EQ(initial.get_state().index(), target.index());
     ASSERT_NE(initial.get_state(), target);
@@ -186,7 +187,7 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     ASSERT_TRUE(greedy.graph);
     ASSERT_TRUE(universal.graph);
     // Moving between rooms and back closes a cycle before either state satisfies the goal.
-    EXPECT_EQ(universal.status, kr::ps::base::SketchProofStatus::FAILURE);
+    EXPECT_EQ(universal.status, kr::ps::ProofStatus::FAILURE);
     EXPECT_FALSE(universal.cycle.empty());
     EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
     EXPECT_EQ(universal.graph->get_out_degree(0), num_accepted);
@@ -204,7 +205,7 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     auto bounded_search = datasets::TaskSearchContext<tyr::GroundTag>::create(task, ygg::ExecutionContext::create(1));
     auto bounded_context = kr::TaskContext<tyr::GroundTag>::create(task_context->domain_context, bounded_search);
     const auto bounded = kr::ps::base::find_solution(bounded_context, sketch, options);
-    EXPECT_EQ(bounded.status, kr::ps::base::SketchProofStatus::OUT_OF_STATES);
+    EXPECT_EQ(bounded.status, kr::ps::ProofStatus::OUT_OF_STATES);
     EXPECT_FALSE(bounded.plan);
     ASSERT_TRUE(bounded.graph);
     EXPECT_EQ(bounded.graph->get_num_vertices(), 1);
@@ -235,7 +236,7 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
 
     auto rejected_options = kr::ps::base::SketchSearchOptions<tyr::GroundTag> {};
     const auto rejected = kr::ps::base::find_solution(task_context, two_step_only, rejected_options);
-    EXPECT_EQ(rejected.status, kr::ps::base::SketchProofStatus::FAILURE);
+    EXPECT_EQ(rejected.status, kr::ps::ProofStatus::FAILURE);
     EXPECT_FALSE(rejected.plan);
     ASSERT_TRUE(rejected.graph);
     EXPECT_EQ(rejected.graph->get_num_vertices(), 1);
@@ -247,7 +248,7 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
 
     rejected_options.max_time = std::chrono::steady_clock::duration::zero();
     const auto timed_out = kr::ps::base::find_solution(task_context, two_step_only, rejected_options);
-    EXPECT_EQ(timed_out.status, kr::ps::base::SketchProofStatus::OUT_OF_TIME);
+    EXPECT_EQ(timed_out.status, kr::ps::ProofStatus::OUT_OF_TIME);
     EXPECT_FALSE(timed_out.plan);
     EXPECT_EQ(timed_out.statistics.num_expanded, 0);
     EXPECT_EQ(timed_out.statistics.num_generated, 0);

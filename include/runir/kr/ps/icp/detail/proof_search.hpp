@@ -63,12 +63,12 @@ auto search(const TaskContextPtr<Kind>& task, ProgramView program, const Program
         return index;
     };
     if (!admit(initial, std::nullopt, std::nullopt))
-        result.status = ProgramProofStatus::OUT_OF_STATES;
-    while (!pending.empty() && result.status == ProgramProofStatus::SUCCESS)
+        result.status = ProofStatus::OUT_OF_STATES;
+    while (!pending.empty() && result.status == ProofStatus::SUCCESS)
     {
         if (stop())
         {
-            result.status = ProgramProofStatus::OUT_OF_TIME;
+            result.status = ProofStatus::OUT_OF_TIME;
             break;
         }
         const auto index = pending.back();
@@ -92,11 +92,11 @@ auto search(const TaskContextPtr<Kind>& task, ProgramView program, const Program
         expander.for_each_successor(
             state,
             result.statistics,
-            [&](ProgramStep<Kind> step)
+            [&](ProgramStep<IcpFamilyTag, Kind> step)
             {
                 if (stop())
                 {
-                    result.status = ProgramProofStatus::OUT_OF_TIME;
+                    result.status = ProofStatus::OUT_OF_TIME;
                     return false;
                 }
                 if (step.status != ProgramOutcome::APPLIED)
@@ -111,7 +111,7 @@ auto search(const TaskContextPtr<Kind>& task, ProgramView program, const Program
                 const auto target = admit(step.target, index, action);
                 if (!target)
                 {
-                    result.status = ProgramProofStatus::OUT_OF_STATES;
+                    result.status = ProofStatus::OUT_OF_STATES;
                     return false;
                 }
                 predecessors.push_back({ index, *target, action, step.rule });
@@ -119,12 +119,12 @@ auto search(const TaskContextPtr<Kind>& task, ProgramView program, const Program
             },
             stop,
             options.universal);
-        if (result.status == ProgramProofStatus::SUCCESS && stop())
-            result.status = ProgramProofStatus::OUT_OF_TIME;
+        if (result.status == ProofStatus::SUCCESS && stop())
+            result.status = ProofStatus::OUT_OF_TIME;
     }
     build_proof_graph(result, nodes, predecessors);
-    if (result.status == ProgramProofStatus::SUCCESS && (!result.deadend_states.empty() || !result.open_states.empty() || !result.cycle.empty()))
-        result.status = ProgramProofStatus::FAILURE;
+    if (result.status == ProofStatus::SUCCESS && (!result.deadend_states.empty() || !result.open_states.empty() || !result.cycle.empty()))
+        result.status = ProofStatus::FAILURE;
     if (goal && result.is_successful())
         result.plan = runir::kr::ps::detail::extract_total_ordered_plan<Kind>(
             nodes[*goal],

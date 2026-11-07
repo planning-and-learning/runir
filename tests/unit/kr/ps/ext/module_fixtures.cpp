@@ -17,13 +17,13 @@ auto formatter_fragment(std::string_view name) -> std::string
 
 auto create_memory_state(kr::ps::ext::Repository& repository, const std::string& name) -> kr::ps::ext::MemoryStateView
 {
-    auto data = urd::data<kr::ps::ext::MemoryState>(name);
+    auto data = urd::data<kr::ps::MemoryState<kr::ExtFamilyTag>>(name);
     return repository.insert(data).first;
 }
 
 auto make_module_data(kr::ps::ext::Repository& repository, const std::string& name) -> urd::data<kr::ps::ext::Module>
 {
-    auto symbol_data = urd::data<kr::ps::ext::ModuleSymbol>(name);
+    auto symbol_data = urd::data<kr::ps::ModuleSymbol<kr::ExtFamilyTag>>(name);
     const auto symbol = repository.insert(symbol_data).first;
     auto data = urd::data<kr::ps::ext::Module>();
     data.symbol = symbol.index();
@@ -56,7 +56,7 @@ auto create_program(kr::ps::ext::Repository& repository, kr::ps::ext::ModuleView
 
 auto create_top_concept(kr::dl::ConstructorRepository& repository) -> kr::dl::ConstructorView<kr::dl::ConceptTag>
 {
-    auto top_data = urd::data<kr::dl::Concept<kr::dl::TopTag>>();
+    auto top_data = urd::data<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::TopTag>>();
     const auto top = repository.insert(top_data).first;
     auto constructor_data = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(top.index());
     return kr::dl::insert(repository, constructor_data).first;

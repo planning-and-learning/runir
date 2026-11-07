@@ -161,7 +161,7 @@ resolve_reference(const Reference& reference, const ReferenceTable<Entity>* decl
 inline auto parse(const runir::kr::dl::grammar::ast::ConceptRegister& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     require_registers(node, context);
-    auto data = runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::dl::RegisterTag>>(context.builder());
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::RegisterTag>>(context.builder());
     data->reference = resolve_reference<runir::kr::dl::Register<runir::kr::dl::ConceptTag>, runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>(
         node.reference,
         context.references() ? &context.references()->concept_registers : nullptr,
@@ -173,7 +173,7 @@ inline auto parse(const runir::kr::dl::grammar::ast::ConceptRegister& node, tyr:
 inline auto parse(const runir::kr::dl::grammar::ast::ConceptArgument& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     require_arguments(node, context);
-    auto data = runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>>(context.builder());
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>>(context.builder());
     data->reference = resolve_reference<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>, runir::kr::dl::ArgumentIdentifier<runir::kr::dl::ConceptTag>>(
         node.reference,
         context.references() ? &context.references()->concept_arguments : nullptr,
@@ -185,7 +185,7 @@ inline auto parse(const runir::kr::dl::grammar::ast::ConceptArgument& node, tyr:
 inline auto parse(const runir::kr::dl::grammar::ast::RoleRegister& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     require_registers(node, context);
-    auto data = runir::kr::dl::checkout<runir::kr::dl::Role<runir::kr::dl::RegisterTag>>(context.builder());
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Role<runir::kr::dl::SemanticFamily, runir::kr::dl::RegisterTag>>(context.builder());
     data->reference = resolve_reference<runir::kr::dl::Register<runir::kr::dl::RoleTag>, runir::kr::dl::RegisterIdentifier<runir::kr::dl::RoleTag>>(
         node.reference,
         context.references() ? &context.references()->role_registers : nullptr,
@@ -197,7 +197,7 @@ inline auto parse(const runir::kr::dl::grammar::ast::RoleRegister& node, tyr::fo
 inline auto parse(const runir::kr::dl::grammar::ast::RoleArgument& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     require_arguments(node, context);
-    auto data = runir::kr::dl::checkout<runir::kr::dl::Role<runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>>(context.builder());
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Role<runir::kr::dl::SemanticFamily, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>>(context.builder());
     data->reference = resolve_reference<runir::kr::dl::Argument<runir::kr::dl::RoleTag>, runir::kr::dl::ArgumentIdentifier<runir::kr::dl::RoleTag>>(
         node.reference,
         context.references() ? &context.references()->role_arguments : nullptr,
@@ -209,7 +209,7 @@ inline auto parse(const runir::kr::dl::grammar::ast::RoleArgument& node, tyr::fo
 inline auto parse(const runir::kr::dl::grammar::ast::BooleanArgument& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     require_arguments(node, context);
-    auto data = runir::kr::dl::checkout<runir::kr::dl::Boolean<runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>>(context.builder());
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Boolean<runir::kr::dl::SemanticFamily, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>>(context.builder());
     data->reference = resolve_reference<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>, runir::kr::dl::ArgumentIdentifier<runir::kr::dl::BooleanTag>>(
         node.reference,
         context.references() ? &context.references()->boolean_arguments : nullptr,
@@ -221,7 +221,7 @@ inline auto parse(const runir::kr::dl::grammar::ast::BooleanArgument& node, tyr:
 inline auto parse(const runir::kr::dl::grammar::ast::NumericalArgument& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     require_arguments(node, context);
-    auto data = runir::kr::dl::checkout<runir::kr::dl::Numerical<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>>(context.builder());
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>>(context.builder());
     data->reference = resolve_reference<runir::kr::dl::Argument<runir::kr::dl::NumericalTag>, runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>(
         node.reference,
         context.references() ? &context.references()->numerical_arguments : nullptr,

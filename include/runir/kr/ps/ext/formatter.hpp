@@ -8,10 +8,10 @@
 #include "runir/kr/ps/ext/rule_view.hpp"
 #include "runir/kr/ps/dl/condition_view.hpp"
 #include "runir/kr/ps/dl/effect_view.hpp"
-#include "runir/kr/ps/ext/memory_state_view.hpp"
-#include "runir/kr/ps/ext/module_symbol_view.hpp"
+#include "runir/kr/ps/memory_state_view.hpp"
+#include "runir/kr/ps/module_symbol_view.hpp"
 #include "runir/kr/ps/ext/program_view.hpp"
-#include "runir/kr/ps/ext/rule_variant_view.hpp"
+#include "runir/kr/ps/rule_variant_view.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 #include "runir/kr/ps/formatter.hpp"
 
@@ -30,30 +30,6 @@
 
 namespace runir::kr::ps::ext
 {
-
-template<typename Values, typename Append>
-void append_inline_section(std::ostream& os, std::string_view name, Values values, Append append)
-{
-    os << ygg::print_indent << "(:" << name;
-    for (auto value : values)
-    {
-        os << ' ';
-        append(os, value);
-    }
-    os << ")\n";
-}
-
-template<typename Conditions>
-void append_conditions(std::ostream& os, Conditions conditions)
-{
-    append_inline_section(os, "conditions", conditions, [](std::ostream& output, auto value) { condition(value, std::ostream_iterator<char>(output)); });
-}
-
-template<typename Effects>
-void append_effects(std::ostream& os, Effects effects)
-{
-    append_inline_section(os, "effects", effects, [](std::ostream& output, auto value) { effect(value, std::ostream_iterator<char>(output)); });
-}
 
 template<runir::kr::ps::ext::RuleKind Kind, typename C>
 void append_rule_body(std::ostream& os, urd::index_view<runir::kr::ps::ext::Rule<Kind>, C> view)
@@ -120,27 +96,6 @@ void append_rule(std::ostream& os, urd::index_view<runir::kr::ps::ext::Rule<Kind
 }
 
 template<typename C>
-void append_rule(std::ostream& os, urd::index_view<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>, C> view)
-{
-    std::visit([&](auto rule) { append_rule(os, rule); }, view.get_variant());
-}
-
-template<typename View>
-std::string rule(View view)
-{
-    auto os = std::ostringstream {};
-    append_rule(os, view);
-    return os.str();
-}
-
-template<runir::kr::dl::CategoryTag Category, typename Arguments>
-void append_declarations(std::ostream& os, Arguments arguments)
-{
-    for (auto argument : arguments)
-        os << " (:" << Category::name << ' ' << argument.get_name() << ')';
-}
-
-template<typename C>
 void append_module(std::ostream& os, urd::index_view<runir::kr::ps::ext::Module, C> view)
 {
     os << ygg::print_indent << "(:module\n";
@@ -155,81 +110,9 @@ void append_module(std::ostream& os, urd::index_view<runir::kr::ps::ext::Module,
         append_declarations<runir::kr::dl::NumericalTag>(os, view.template get_arguments<runir::kr::dl::NumericalTag>());
         os << ")\n";
 
-        os << ygg::print_indent << "(:registers";
-        append_declarations<runir::kr::dl::ConceptTag>(os, view.template get_registers<runir::kr::dl::ConceptTag>());
-        append_declarations<runir::kr::dl::RoleTag>(os, view.template get_registers<runir::kr::dl::RoleTag>());
-        os << ")\n";
-
-        os << ygg::print_indent << "(:entry " << view.get_entry_memory_state().get_name() << ")\n";
-        os << ygg::print_indent << "(:memory";
-        for (auto state : view.get_memory_states())
-            os << ' ' << state.get_name();
-        os << ")\n";
-
-        os << ygg::print_indent << "(:features\n";
-        {
-            ygg::IndentScope feature_scope(os);
-            const auto append_features = [&](auto features)
-            {
-                for (auto feature : features)
-                {
-                    append_feature(os, feature);
-                    os << '\n';
-                }
-            };
-            append_features(view.template get_features<runir::kr::dl::ConceptTag>());
-            append_features(view.template get_features<runir::kr::dl::RoleTag>());
-            append_features(view.template get_features<runir::kr::dl::BooleanTag>());
-            append_features(view.template get_features<runir::kr::dl::NumericalTag>());
-            append_features(view.get_query_features());
-        }
-        os << ygg::print_indent << ")\n";
-
-        os << ygg::print_indent << "(:rules\n";
-        {
-            ygg::IndentScope rules_scope(os);
-            for (const auto& transition : view.get_memory_transitions())
-            {
-                if (transition.empty())
-                    continue;
-                const auto first = transition.front();
-                os << ygg::print_indent << "(:rule\n";
-                {
-                    ygg::IndentScope rule_scope(os);
-                    os << ygg::print_indent << "(:symbol " << first.get_symbol() << ")\n";
-                    os << ygg::print_indent << "(:expression\n";
-                    {
-                        ygg::IndentScope expression_scope(os);
-                        std::visit(
-                            [&](auto first_rule)
-                            {
-                                os << ygg::print_indent << "(:source-memory " << first_rule.get_source().get_name() << ")\n";
-                                if constexpr (requires { first_rule.get_target(); })
-                                    os << ygg::print_indent << "(:target-memory " << first_rule.get_target().get_name() << ")\n";
-                            },
-                            first.get_variant());
-                        for (auto item : transition)
-                        {
-                            append_rule(os, item);
-                            os << '\n';
-                        }
-                    }
-                    os << ygg::print_indent << ")\n";
-                }
-                os << ygg::print_indent << ")\n";
-            }
-        }
-        os << ygg::print_indent << ")\n";
+        append_module_body(os, view);
     }
     os << ygg::print_indent << ')';
-}
-
-template<typename C>
-std::string module(urd::index_view<runir::kr::ps::ext::Module, C> view)
-{
-    auto os = std::ostringstream {};
-    append_module(os, view);
-    return os.str();
 }
 
 template<typename C>
@@ -248,52 +131,24 @@ void append_program(std::ostream& os, urd::index_view<runir::kr::ps::ext::Progra
     os << ygg::print_indent << ')';
 }
 
-template<typename C>
-std::string program(urd::index_view<runir::kr::ps::ext::Program, C> view)
-{
-    auto os = std::ostringstream {};
-    append_program(os, view);
-    return os.str();
-}
-
 }  // namespace runir::kr::ps::ext
-
-template<typename C>
-struct fmt::formatter<urd::index_view<runir::kr::ps::ext::MemoryState, C>>
-{
-    constexpr auto parse(format_parse_context& context) { return context.begin(); }
-    auto format(auto view, format_context& context) const { return fmt::format_to(context.out(), "{}", view.get_name()); }
-};
-
-template<typename C>
-struct fmt::formatter<urd::index_view<runir::kr::ps::ext::ModuleSymbol, C>>
-{
-    constexpr auto parse(format_parse_context& context) { return context.begin(); }
-    auto format(auto view, format_context& context) const { return fmt::format_to(context.out(), "{}", view.get_name()); }
-};
 
 template<runir::kr::ps::ext::RuleKind Kind, typename C>
 struct fmt::formatter<urd::index_view<runir::kr::ps::ext::Rule<Kind>, C>> : fmt::formatter<std::string_view>
 {
-    auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::rule(view), context); }
-};
-
-template<typename C>
-struct fmt::formatter<urd::index_view<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>, C>> : fmt::formatter<std::string_view>
-{
-    auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::rule(view), context); }
+    auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::rule(view), context); }
 };
 
 template<typename C>
 struct fmt::formatter<urd::index_view<runir::kr::ps::ext::Module, C>> : fmt::formatter<std::string_view>
 {
-    auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::module(view), context); }
+    auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::module(view), context); }
 };
 
 template<typename C>
 struct fmt::formatter<urd::index_view<runir::kr::ps::ext::Program, C>> : fmt::formatter<std::string_view>
 {
-    auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::program(view), context); }
+    auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::program(view), context); }
 };
 
 template<tyr::TaskKind Kind, typename C>
@@ -343,7 +198,7 @@ struct fmt::formatter<urd::index_view<runir::kr::ps::ext::ProgramState<Kind>, C>
 };
 
 template<tyr::TaskKind Kind>
-struct fmt::formatter<runir::kr::ps::ext::ProgramProofVertexLabel<Kind>>
+struct fmt::formatter<runir::kr::ps::ProgramProofVertexLabel<runir::kr::ExtFamilyTag, Kind>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(const auto& label, format_context& context) const
@@ -360,18 +215,6 @@ struct fmt::formatter<runir::kr::ps::ext::ProgramProofVertexLabel<Kind>>
     }
 };
 
-template<>
-struct fmt::formatter<runir::kr::ps::ext::ProgramProofEdgeLabel>
-{
-    constexpr auto parse(format_parse_context& context) { return context.begin(); }
-    auto format(const auto& label, format_context& context) const
-    {
-        if (label.rule)
-            return fmt::format_to(context.out(), "rule={}", label.rule->get_symbol());
-        return fmt::format_to(context.out(), "rule=<none>");
-    }
-};
-
 template<tyr::TaskKind Kind>
 struct fmt::formatter<runir::kr::ps::ext::ProgramProofResults<Kind>>
 {
@@ -381,7 +224,7 @@ struct fmt::formatter<runir::kr::ps::ext::ProgramProofResults<Kind>>
         return fmt::format_to(context.out(),
                               "ProgramProofResults(status={}, graph_vertices={}, graph_edges={}, deadend_states={}, open_states={}, cycle={}, "
                               "num_expanded={}, num_generated={}, num_backtracks={}, choice_depth={}, choice_width={})",
-                              runir::kr::ps::ext::to_string(result.status),
+                              runir::kr::ps::to_string(result.status),
                               result.graph ? result.graph->get_num_vertices() : 0,
                               result.graph ? result.graph->get_num_edges() : 0,
                               result.deadend_states.size(),

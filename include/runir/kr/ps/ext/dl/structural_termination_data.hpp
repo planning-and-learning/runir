@@ -7,7 +7,7 @@
 #include "runir/graphs/static_graph_builder.hpp"
 #include "runir/kr/ps/dl/structural_termination.hpp"
 #include "runir/kr/ps/ext/dl/incomplete_structural_termination_data.hpp"
-#include "runir/kr/ps/ext/memory_state_view.hpp"
+#include "runir/kr/ps/memory_state_view.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
 
 #include <cstdint>
@@ -72,7 +72,7 @@ struct ModuleSieveStructuralTerminationResult
 struct ModuleStructuralTerminationResult
 {
     StructuralTerminationStatus status = StructuralTerminationStatus::TERMINATING;
-    std::optional<ModuleIncompleteStructuralTerminationResult> incomplete_result;  ///< Populated iff incomplete preprocessing was enabled.
+    std::optional<runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::ExtFamilyTag>> incomplete_result;  ///< Populated iff incomplete preprocessing was enabled.
     std::optional<ModuleSieveStructuralTerminationResult> sieve_result;            ///< Populated iff complete SIEVE was run.
 
     [[nodiscard]] bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }

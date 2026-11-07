@@ -6,11 +6,12 @@
 #include "pyrunir/kr/ps/dl/optimization_bindings.hpp"
 
 #include <nanobind/stl/vector.h>
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <yggdrasil/database/syntax/query_repository.hpp>
 #include <runir/kr/ps/base/compatibility.hpp>
-#include <runir/kr/ps/base/detail/repository_instantiations.hpp>
+#include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/sketch_data.hpp>
@@ -59,7 +60,7 @@ void bind_sketch(nb::module_& m, RepositoryBinding& repository)
     urd::python::add_comparison(data);
 
     auto view = nb::class_<View>(m, "Sketch")
-                    .def("get_index", &View::index)
+                    .def("index", &View::index)
                     .def("get_boolean_features", &View::template get_features<runir::kr::dl::BooleanTag>)
                     .def("get_numerical_features", &View::template get_features<runir::kr::dl::NumericalTag>)
                     .def("get_rules", &View::get_rules)

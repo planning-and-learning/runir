@@ -82,7 +82,7 @@ struct BaseFeatureStorage
 {
     const BaseCustomRepository* repository;
     [[nodiscard]] const auto& get_dl_repository() const { return repository->get_dl_repository(); }
-    [[nodiscard]] const auto& get_index() const { return repository->get_index(); }
+    [[nodiscard]] std::size_t layer() const { return repository->layer(); }
     friend const BaseCustomRepository& get_repository(const BaseFeatureStorage& storage) { return *storage.repository; }
     template<typename T>
     [[nodiscard]] decltype(auto) operator[](urd::index<T> index) const

@@ -28,7 +28,7 @@ void bind_non_terminal_view(nb::module_& m, const char* name)
 {
     using Type = runir::kr::dl::grammar::NonTerminal<Category>;
     using View = urd::index_view<Type, runir::kr::dl::grammar::ConstructorRepository>;
-    auto cls = nb::class_<View>(m, name).def("get_index", &View::index).def("get_name", &View::get_name);
+    auto cls = nb::class_<View>(m, name).def("index", &View::index).def("get_name", &View::get_name);
     ygg::add_print(cls);
     urd::python::add_comparison(cls);
     urd::python::add_hash(cls);

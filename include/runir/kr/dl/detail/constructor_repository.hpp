@@ -41,7 +41,6 @@ public:
     BasicConstructorRepository& operator=(BasicConstructorRepository&&) = delete;
     ~BasicConstructorRepository() = default;
 
-    [[nodiscard]] const auto& get_index() const noexcept { return m_index; }
     /// The repository's number, as urd's views ask of a context.
     [[nodiscard]] std::size_t layer() const noexcept { return m_index; }
     [[nodiscard]] const tyr::formalism::planning::Repository& get_planning_repository() const noexcept
@@ -51,14 +50,6 @@ public:
         return *m_planning_repository.get();
     }
     [[nodiscard]] const auto& get_planning_repository_ptr() const noexcept { return m_planning_repository; }
-
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<BasicConstructorRepository, T>
-    const urd::data<T>& operator[](urd::index<T> index) const noexcept
-    {
-        assert(this->template is_local<T>(index));
-        return this->template local<T>(index);
-    }
 };
 
 template<typename RepositoryTypes>

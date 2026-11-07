@@ -35,12 +35,12 @@ void expect_diagnostic(Parse parse,
                        std::size_t start,
                        const std::string& expected = "")
 {
-    std::optional<kr::ParseError> error;
+    std::optional<ygg::diagnostics::ParseError> error;
     try
     {
         static_cast<void>(parse(source));
     }
-    catch (const kr::ParseError& caught)
+    catch (const ygg::diagnostics::ParseError& caught)
     {
         error = caught;
     }
@@ -66,7 +66,7 @@ void expect_diagnostic(Parse parse,
 void check_dl_expression_diagnostics()
 {
     const auto parse = [](const std::string& source) { return kr::dl::grammar::parser::parse_concept_ast<>(source); };
-    EXPECT_THROW(parse("c_top"), kr::ParseError);
+    EXPECT_THROW(parse("c_top"), ygg::diagnostics::ParseError);
     EXPECT_NO_THROW(parse("(c_top)"));
     EXPECT_NO_THROW(parse("(c_and (c_top) (c_bot))"));
     EXPECT_NO_THROW(parse("(c_and c_0 c_1)"));
@@ -77,9 +77,9 @@ void check_dl_expression_diagnostics()
     EXPECT_EQ(object_names[0].text, "a");
     EXPECT_EQ(object_names[1].text, "b");
     EXPECT_NO_THROW(parse("(c_fillers (r_universal) \"a\" \"b\")"));
-    EXPECT_THROW(kr::dl::grammar::parser::parse_role_ast<>("r_universal"), kr::ParseError);
-    EXPECT_THROW(kr::dl::grammar::parser::parse_boolean_ast<>("b_nonempty (c_top)"), kr::ParseError);
-    EXPECT_THROW(kr::dl::grammar::parser::parse_numerical_ast<>("n_count (c_top)"), kr::ParseError);
+    EXPECT_THROW(kr::dl::grammar::parser::parse_role_ast<>("r_universal"), ygg::diagnostics::ParseError);
+    EXPECT_THROW(kr::dl::grammar::parser::parse_boolean_ast<>("b_nonempty (c_top)"), ygg::diagnostics::ParseError);
+    EXPECT_THROW(kr::dl::grammar::parser::parse_numerical_ast<>("n_count (c_top)"), ygg::diagnostics::ParseError);
     for (const auto* keyword : { "c_at_least", "c_at_most", "c_exactly" })
     {
         SCOPED_TRACE(keyword);
@@ -148,9 +148,9 @@ void check_dl_expression_diagnostics()
     using SearchFree = kr::dl::grammar::parser::SearchFreeDialectTag;
     EXPECT_NO_THROW((kr::dl::grammar::parser::parse_role_ast<SearchFree>("(r_inverse (r_atomic_state \"at\"))")));
     EXPECT_NO_THROW((kr::dl::grammar::parser::parse_role_ast<>("(r_transitive_closure (r_atomic_state \"at\"))")));
-    EXPECT_THROW((kr::dl::grammar::parser::parse_role_ast<SearchFree>("(r_transitive_closure (r_atomic_state \"at\"))")), kr::ParseError);
-    EXPECT_THROW((kr::dl::grammar::parser::parse_concept_ast<SearchFree>("(c_some (r_reflexive_transitive_closure (r_universal)) (c_top))")), kr::ParseError);
-    EXPECT_THROW((kr::dl::grammar::parser::parse_numerical_ast<SearchFree>("(n_distance (c_top) (r_universal) (c_top))")), kr::ParseError);
+    EXPECT_THROW((kr::dl::grammar::parser::parse_role_ast<SearchFree>("(r_transitive_closure (r_atomic_state \"at\"))")), ygg::diagnostics::ParseError);
+    EXPECT_THROW((kr::dl::grammar::parser::parse_concept_ast<SearchFree>("(c_some (r_reflexive_transitive_closure (r_universal)) (c_top))")), ygg::diagnostics::ParseError);
+    EXPECT_THROW((kr::dl::grammar::parser::parse_numerical_ast<SearchFree>("(n_distance (c_top) (r_universal) (c_top))")), ygg::diagnostics::ParseError);
 
     const auto parse_grammar = [](const std::string& source) { return kr::dl::grammar::parser::parse_grammar_ast<>(source); };
     const auto empty_derivation = std::string("((c_0 ))");
@@ -203,7 +203,7 @@ TEST(RunirTests, LookupErrorsPreserveIdentifierSpansAcrossLanguages)
                 parse(source);
                 FAIL() << "Expected lookup to fail";
             }
-            catch (const kr::SemanticError& error)
+            catch (const ygg::diagnostics::SemanticError& error)
             {
                 EXPECT_EQ(typeid(error), std::string(name) == "at" ? typeid(kr::ArityMismatchError) : typeid(kr::UndefinedSymbolError));
                 const auto& diagnostic = error.diagnostic();
@@ -320,7 +320,7 @@ TEST(RunirTests, ParserDiagnosticOutlivesInputAndErrorHandler)
         {
             static_cast<void>(kr::ps::base::dl::parser::parse_sketch_ast(source));
         }
-        catch (const kr::ParseError& error)
+        catch (const ygg::diagnostics::ParseError& error)
         {
             return error.diagnostic();
         }

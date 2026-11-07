@@ -10,74 +10,75 @@
 namespace urd
 {
 
-template<>
-struct data<runir::kr::dl::Role<runir::kr::dl::UniversalTag>> : runir::kr::dl::NullaryData<runir::kr::dl::Role<runir::kr::dl::UniversalTag>>
+template<typename F>
+struct data<runir::kr::dl::Role<F, runir::kr::dl::UniversalTag>> : runir::kr::dl::NullaryData<runir::kr::dl::Role<F, runir::kr::dl::UniversalTag>>
 {
-    using Base = runir::kr::dl::NullaryData<runir::kr::dl::Role<runir::kr::dl::UniversalTag>>;
+    using Base = runir::kr::dl::NullaryData<runir::kr::dl::Role<F, runir::kr::dl::UniversalTag>>;
     using Base::Base;
 };
 
-template<tyr::formalism::FactKind T>
-struct data<runir::kr::dl::Role<runir::kr::dl::AtomicStateTag<T>>> : runir::kr::dl::PredicateData<runir::kr::dl::Role<runir::kr::dl::AtomicStateTag<T>>, T>
+template<typename F, typename Tag>
+    requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)
+struct data<runir::kr::dl::Role<F, Tag>> : runir::kr::dl::PredicateData<runir::kr::dl::Role<F, Tag>, runir::kr::dl::TagFactKind<Tag>>
 {
-    using Base = runir::kr::dl::PredicateData<runir::kr::dl::Role<runir::kr::dl::AtomicStateTag<T>>, T>;
+    using Base = runir::kr::dl::PredicateData<runir::kr::dl::Role<F, Tag>, runir::kr::dl::TagFactKind<Tag>>;
     using Base::Base;
 };
 
-template<tyr::formalism::FactKind T>
-struct data<runir::kr::dl::Role<runir::kr::dl::AtomicGoalTag<T>>> : runir::kr::dl::PredicateData<runir::kr::dl::Role<runir::kr::dl::AtomicGoalTag<T>>, T>
-{
-    using Base = runir::kr::dl::PredicateData<runir::kr::dl::Role<runir::kr::dl::AtomicGoalTag<T>>, T>;
-    using Base::Base;
-};
-
-template<typename Tag>
+template<typename F, typename Tag>
     requires(std::same_as<Tag, runir::kr::dl::IntersectionTag> || std::same_as<Tag, runir::kr::dl::UnionTag>
              || std::same_as<Tag, runir::kr::dl::CompositionTag>)
-struct data<runir::kr::dl::Role<Tag>> : runir::kr::dl::BinaryData<runir::kr::dl::Role<Tag>, runir::kr::dl::DlRole, runir::kr::dl::DlRole>
-{
-    using Base = runir::kr::dl::BinaryData<runir::kr::dl::Role<Tag>, runir::kr::dl::DlRole, runir::kr::dl::DlRole>;
-    using Base::Base;
-};
-
-template<typename Tag>
-    requires(std::same_as<Tag, runir::kr::dl::ComplementTag> || std::same_as<Tag, runir::kr::dl::InverseTag>
-             || std::same_as<Tag, runir::kr::dl::TransitiveClosureTag> || std::same_as<Tag, runir::kr::dl::ReflexiveTransitiveClosureTag>)
-struct data<runir::kr::dl::Role<Tag>> : runir::kr::dl::UnaryData<runir::kr::dl::Role<Tag>, runir::kr::dl::DlRole>
-{
-    using Base = runir::kr::dl::UnaryData<runir::kr::dl::Role<Tag>, runir::kr::dl::DlRole>;
-    using Base::Base;
-};
-
-template<>
-struct data<runir::kr::dl::Role<runir::kr::dl::RestrictionTag>> :
-    runir::kr::dl::BinaryData<runir::kr::dl::Role<runir::kr::dl::RestrictionTag>, runir::kr::dl::DlRole, runir::kr::dl::DlConcept>
-{
-    using Base = runir::kr::dl::BinaryData<runir::kr::dl::Role<runir::kr::dl::RestrictionTag>, runir::kr::dl::DlRole, runir::kr::dl::DlConcept>;
-    using Base::Base;
-};
-
-template<>
-struct data<runir::kr::dl::Role<runir::kr::dl::IdentityTag>> : runir::kr::dl::UnaryData<runir::kr::dl::Role<runir::kr::dl::IdentityTag>, runir::kr::dl::DlConcept>
-{
-    using Base = runir::kr::dl::UnaryData<runir::kr::dl::Role<runir::kr::dl::IdentityTag>, runir::kr::dl::DlConcept>;
-    using Base::Base;
-};
-
-template<>
-struct data<runir::kr::dl::Role<runir::kr::dl::RegisterTag>> :
-    runir::kr::dl::ReferenceData<runir::kr::dl::Role<runir::kr::dl::RegisterTag>, runir::kr::dl::Register<runir::kr::dl::RoleTag>>
-{
-    using Base = runir::kr::dl::ReferenceData<runir::kr::dl::Role<runir::kr::dl::RegisterTag>, runir::kr::dl::Register<runir::kr::dl::RoleTag>>;
-    using Base::Base;
-};
-
-template<>
-struct data<runir::kr::dl::Role<runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>> :
-    runir::kr::dl::ReferenceData<runir::kr::dl::Role<runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>, runir::kr::dl::Argument<runir::kr::dl::RoleTag>>
+struct data<runir::kr::dl::Role<F, Tag>> :
+    runir::kr::dl::BinaryData<runir::kr::dl::Role<F, Tag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>>
 {
     using Base =
-        runir::kr::dl::ReferenceData<runir::kr::dl::Role<runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>, runir::kr::dl::Argument<runir::kr::dl::RoleTag>>;
+        runir::kr::dl::BinaryData<runir::kr::dl::Role<F, Tag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>>;
+    using Base::Base;
+};
+
+template<typename F, typename Tag>
+    requires(std::same_as<Tag, runir::kr::dl::ComplementTag> || std::same_as<Tag, runir::kr::dl::InverseTag>
+             || std::same_as<Tag, runir::kr::dl::TransitiveClosureTag> || std::same_as<Tag, runir::kr::dl::ReflexiveTransitiveClosureTag>)
+struct data<runir::kr::dl::Role<F, Tag>> : runir::kr::dl::UnaryData<runir::kr::dl::Role<F, Tag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>>
+{
+    using Base = runir::kr::dl::UnaryData<runir::kr::dl::Role<F, Tag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>>;
+    using Base::Base;
+};
+
+template<typename F>
+struct data<runir::kr::dl::Role<F, runir::kr::dl::RestrictionTag>> :
+    runir::kr::dl::BinaryData<runir::kr::dl::Role<F, runir::kr::dl::RestrictionTag>,
+                              runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>,
+                              runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag>>
+{
+    using Base = runir::kr::dl::BinaryData<runir::kr::dl::Role<F, runir::kr::dl::RestrictionTag>,
+                                           runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>,
+                                           runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag>>;
+    using Base::Base;
+};
+
+template<typename F>
+struct data<runir::kr::dl::Role<F, runir::kr::dl::IdentityTag>> :
+    runir::kr::dl::UnaryData<runir::kr::dl::Role<F, runir::kr::dl::IdentityTag>, runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag>>
+{
+    using Base = runir::kr::dl::UnaryData<runir::kr::dl::Role<F, runir::kr::dl::IdentityTag>, runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag>>;
+    using Base::Base;
+};
+
+template<typename F>
+struct data<runir::kr::dl::Role<F, runir::kr::dl::RegisterTag>> :
+    runir::kr::dl::ReferenceData<runir::kr::dl::Role<F, runir::kr::dl::RegisterTag>, runir::kr::dl::Register<runir::kr::dl::RoleTag>>
+{
+    using Base = runir::kr::dl::ReferenceData<runir::kr::dl::Role<F, runir::kr::dl::RegisterTag>, runir::kr::dl::Register<runir::kr::dl::RoleTag>>;
+    using Base::Base;
+};
+
+template<typename F>
+struct data<runir::kr::dl::Role<F, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>> :
+    runir::kr::dl::ReferenceData<runir::kr::dl::Role<F, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>, runir::kr::dl::Argument<runir::kr::dl::RoleTag>>
+{
+    using Base =
+        runir::kr::dl::ReferenceData<runir::kr::dl::Role<F, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>, runir::kr::dl::Argument<runir::kr::dl::RoleTag>>;
     using Base::Base;
 };
 

@@ -12,8 +12,9 @@
 #include <nanobind/stl/vector.h>
 #include <optional>
 #include <pyrunir/graphs/graph.hpp>
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <yggdrasil/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_policy.hpp>
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/declarations.hpp"
@@ -21,7 +22,7 @@
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include <runir/kr/ps/dl/declarations.hpp>
 #include <runir/kr/ps/dl/evaluation.hpp>
-#include <runir/kr/ps/icp/detail/repository_instantiations.hpp>
+#include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/ps/icp/evaluation_environment.hpp>
 #include <runir/kr/ps/icp/formatter.hpp>
 #include <runir/kr/ps/icp/program_executor.hpp>
@@ -63,17 +64,17 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     using namespace nb::literals;
     using HistoryView = HistoriesView<Kind>;
     using StateView = ProgramStateView<Kind>;
-    using VertexLabel = ProgramProofVertexLabel<Kind>;
-    using Graph = ProgramProofGraph<Kind>;
+    using VertexLabel = ProgramProofVertexLabel<IcpFamilyTag, Kind>;
+    using Graph = ProgramProofGraph<IcpFamilyTag, Kind>;
     using Results = ProgramProofResults<Kind>;
     using Options = ProgramSearchOptions<Kind>;
-    using Step = detail::ProgramStep<Kind>;
+    using Step = ProgramStep<IcpFamilyTag, Kind>;
     using Expander = SuccessorExpander<Kind>;
     // Standalone Python evaluation returns the registered contexts with interned results.
     using Environment = EvaluationEnvironment<Kind, runir::kr::dl::semantics::FullEvaluationPolicy<Kind>>;
 
     // Registered without methods so Python can hold and pass these handles.
-    const auto execution_repository = nb::class_<ExecutionRepository<Kind>>(m, (std::string(prefix) + "ExecutionRepository").c_str());
+    const auto execution_repository = nb::class_<ExecutionRepository<IcpFamilyTag, Kind>>(m, (std::string(prefix) + "ExecutionRepository").c_str());
     const auto execution_builder = nb::class_<ExecutionBuilder<Kind>>(m, (std::string(prefix) + "ExecutionBuilder").c_str());
 
     nb::class_<Environment>(m, (std::string(prefix) + "EvaluationEnvironment").c_str())
@@ -184,15 +185,9 @@ void bind_program_executor(nb::module_& m)
         .def_ro("num_expanded", &ProgramSearchStatistics::num_expanded)
         .def_ro("num_generated", &ProgramSearchStatistics::num_generated);
 
-    nb::enum_<ProgramProofStatus>(m, "ProgramProofStatus")
-        .value("SUCCESS", ProgramProofStatus::SUCCESS)
-        .value("FAILURE", ProgramProofStatus::FAILURE)
-        .value("OUT_OF_TIME", ProgramProofStatus::OUT_OF_TIME)
-        .value("OUT_OF_STATES", ProgramProofStatus::OUT_OF_STATES);
-
-    auto edge_label = nb::class_<ProgramProofEdgeLabel>(m, "ProgramProofEdgeLabel")
-                          .def_ro("action", &ProgramProofEdgeLabel::action)
-                          .def_ro("rule", &ProgramProofEdgeLabel::rule);
+    auto edge_label = nb::class_<ProgramProofEdgeLabel<IcpFamilyTag>>(m, "ProgramProofEdgeLabel")
+                          .def_ro("action", &ProgramProofEdgeLabel<IcpFamilyTag>::action)
+                          .def_ro("rule", &ProgramProofEdgeLabel<IcpFamilyTag>::rule);
     urd::python::add_comparison(edge_label);
     urd::python::add_hash(edge_label);
     m.attr("GroundProgramProofEdgeLabel") = edge_label;

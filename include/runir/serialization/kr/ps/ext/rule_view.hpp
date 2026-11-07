@@ -5,8 +5,8 @@
 #include "runir/serialization/kr/ps/dl/condition_view.hpp"
 #include "runir/serialization/kr/ps/dl/effect_view.hpp"
 #include "runir/serialization/kr/dl/register_view.hpp"
-#include "runir/serialization/kr/ps/ext/memory_state_view.hpp"
-#include "runir/serialization/kr/ps/ext/module_symbol_view.hpp"
+#include "runir/serialization/kr/ps/memory_state_view.hpp"
+#include "runir/serialization/kr/ps/module_symbol_view.hpp"
 #include "runir/kr/ps/ext/rule_data.hpp"
 #include "runir/serialization/kr/ps/feature_view.hpp"
 

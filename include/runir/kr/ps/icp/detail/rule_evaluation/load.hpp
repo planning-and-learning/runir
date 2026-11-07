@@ -20,7 +20,7 @@ public:
 
     [[nodiscard]] auto get_rule() const noexcept { return m_rule; }
 
-    template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy, EmitConcept<ProgramStep<Kind>> Emit, StopConcept Stop>
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy, EmitConcept<ProgramStep<IcpFamilyTag, Kind>> Emit, StopConcept Stop>
     bool emit(runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy>& context,
               ProgramStateView<Kind> source,
               const Emit& output,
@@ -42,7 +42,7 @@ public:
         const auto denotation = evaluate<Kind>(m_rule.get_feature(), source_context);
         if (denotation.begin() == denotation.end())
         {
-            auto step = ProgramStep<Kind>(ProgramOutcome::FAILURE, source, task);
+            auto step = ProgramStep<IcpFamilyTag, Kind>(ProgramOutcome::FAILURE, source, task);
             step.rule = m_variant;
             return output(std::move(step));
         }
@@ -65,7 +65,7 @@ public:
             target.memory_state = m_rule.get_target().index();
             target.registers = target_registers.index();
             target.histories = histories->index();
-            auto step = ProgramStep<Kind>(ProgramOutcome::APPLIED, workspace.intern(target), task);
+            auto step = ProgramStep<IcpFamilyTag, Kind>(ProgramOutcome::APPLIED, workspace.intern(target), task);
             step.rule = m_variant;
             if (!output(std::move(step)))
                 return false;

@@ -32,6 +32,12 @@ using RuleView = urd::index_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, 
 
 }  // namespace runir::kr::ps::base
 
+template<>
+struct runir::kr::ps::FamilyTypes<runir::kr::BaseFamilyTag>
+{
+    using Repository = runir::kr::ps::base::Repository;
+};
+
 namespace runir::kr::ps::base::dl
 {
 

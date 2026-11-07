@@ -64,7 +64,7 @@ ProgramStateView<Kind> SuccessorExpander<Kind, ExecutionStorage, EvaluationPolic
 
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
 template<ProgramStateViewConcept<Kind> S, typename Emit, StopConcept Stop>
-    requires EmitConcept<Emit, detail::ProgramStep<Kind, ExecutionStorage>> && EmitConcept<Emit, detail::Choice<runir::kr::dl::ConceptTag>>
+    requires EmitConcept<Emit, ProgramStep<ExtFamilyTag, Kind, StorageStoredState<ExecutionStorage>>> && EmitConcept<Emit, detail::Choice<runir::kr::dl::ConceptTag>>
              && EmitConcept<Emit, detail::Choice<runir::kr::dl::RoleTag>>
 bool SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::for_each_successor(S state,
                                                                                      ProgramSearchStatistics& statistics,
@@ -82,7 +82,7 @@ bool SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::for_each_succe
     {
         emitted = true;
         if constexpr (std::same_as<std::remove_cvref_t<Expansion>, Step>)
-            statistics.num_generated += expansion.status == detail::ProgramOutcome::APPLIED || expansion.status == detail::ProgramOutcome::RESTORED_CALLER;
+            statistics.num_generated += expansion.status == ProgramOutcome::APPLIED || expansion.status == ProgramOutcome::RESTORED_CALLER;
         return emit(std::forward<Expansion>(expansion));
     };
     auto context = m_rule_evaluators.make_context(m_storage, state.get_state());
@@ -102,7 +102,7 @@ auto SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::apply_choice(S
     validate_source(state);
     auto context = m_rule_evaluators.make_context(m_storage, state.get_state());
     auto step = m_rule_evaluators.apply_choice(context, state, choice);
-    statistics.num_generated += step.status == detail::ProgramOutcome::APPLIED;
+    statistics.num_generated += step.status == ProgramOutcome::APPLIED;
     return step;
 }
 
@@ -165,9 +165,9 @@ auto SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::fallback(S sta
                                       caller->get_registers(),
                                       caller->get_arguments(),
                                       caller->get_caller());
-        return detail::make_step<Kind, ExecutionStorage>(detail::ProgramOutcome::RESTORED_CALLER, std::move(target), m_task_context);
+        return detail::make_step<Kind, ExecutionStorage>(ProgramOutcome::RESTORED_CALLER, std::move(target), m_task_context);
     }
-    return detail::make_step<Kind, ExecutionStorage>(detail::ProgramOutcome::NO_APPLICABLE_ACTION, m_storage.retain(state), m_task_context);
+    return detail::make_step<Kind, ExecutionStorage>(ProgramOutcome::NO_APPLICABLE_ACTION, m_storage.retain(state), m_task_context);
 }
 
 }  // namespace runir::kr::ps::ext

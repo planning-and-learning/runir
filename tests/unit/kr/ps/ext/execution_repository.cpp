@@ -5,7 +5,8 @@
 #include <cista/serialization.h>
 #include <gtest/gtest.h>
 #include <optional>
-#include <runir/kr/ps/ext/execution_repository.hpp>
+#include <runir/kr/ps/execution_repository.hpp>
+#include <runir/kr/ps/ext/execution_data.hpp>
 #include <runir/kr/ps/ext/execution_view.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/task_context.hpp>
@@ -35,7 +36,7 @@ void expect_execution_records_round_trip()
         auto data = builder.template checkout<kr::ps::ext::ModuleState<Kind>>();
         data->state = urd::index<tyr::planning::State<Kind>>(5);
         data->module_ = urd::index<kr::ps::ext::Module>(1);
-        data->memory_state = urd::index<kr::ps::ext::MemoryState>(2);
+        data->memory_state = urd::index<kr::ps::MemoryState<kr::ExtFamilyTag>>(2);
         data->registers = urd::index<kr::dl::semantics::RegisterValues>(3);
         data->arguments = urd::index<kr::dl::semantics::CallArguments>(4);
         expect_cista_round_trip(*data);
@@ -43,7 +44,7 @@ void expect_execution_records_round_trip()
     {
         auto data = builder.template checkout<kr::ps::ext::CallStack>();
         data->module_ = urd::index<kr::ps::ext::Module>(1);
-        data->return_memory_state = urd::index<kr::ps::ext::MemoryState>(2);
+        data->return_memory_state = urd::index<kr::ps::MemoryState<kr::ExtFamilyTag>>(2);
         data->registers = urd::index<kr::dl::semantics::RegisterValues>(3);
         data->arguments = urd::index<kr::dl::semantics::CallArguments>(4);
         expect_cista_round_trip(*data);
@@ -187,7 +188,6 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         data->memory_state = urd::to_stored(caller_return);
         data->registers = urd::to_stored(registers);
         data->arguments = urd::to_stored(arguments);
-        canonicalize(*data);
         return execution_repository->insert(*data).first;
     }();
 
@@ -199,7 +199,6 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         data->memory_state = urd::to_stored(callee_entry);
         data->registers = urd::to_stored(registers);
         data->arguments = urd::to_stored(arguments);
-        canonicalize(*data);
         return execution_repository->insert(*data).first;
     }();
 
@@ -239,7 +238,6 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         data->return_memory_state = urd::to_stored(caller_return);
         data->registers = urd::to_stored(registers);
         data->arguments = urd::to_stored(arguments);
-        canonicalize(*data);
         return execution_repository->insert(*data).first;
     }();
     const auto callee_frame = [&]()
@@ -250,7 +248,6 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         data->registers = urd::to_stored(registers);
         data->arguments = urd::to_stored(arguments);
         data->caller = urd::to_stored(std::optional { caller_frame });
-        canonicalize(*data);
         return execution_repository->insert(*data).first;
     }();
     {
@@ -288,7 +285,6 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         auto data = execution_builder.checkout<kr::ps::ext::ProgramState<tyr::GroundTag>>();
         data->program = urd::to_stored(program);
         data->module_state = urd::to_stored(caller_configuration);
-        canonicalize(*data);
         return execution_repository->insert(*data).first;
     }();
     EXPECT_EQ(returned_state.get_module_state().get_module().get_name(), "caller");

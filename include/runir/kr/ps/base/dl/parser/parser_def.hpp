@@ -19,7 +19,7 @@ using boost::spirit::x3::eoi;
 using boost::spirit::x3::lexeme;
 using boost::spirit::x3::lit;
 using boost::spirit::x3::raw;
-using runir::kr::parser::keyword;
+using ygg::diagnostics::keyword;
 using ygg::diagnostics::context;
 
 using boost::spirit::x3::ascii::alnum;

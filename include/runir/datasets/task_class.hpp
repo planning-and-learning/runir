@@ -24,7 +24,10 @@
 #include <memory>
 #include <tuple>
 #include <type_traits>
-#include <tyr/planning/factory.hpp>
+#include <tyr/planning/axiom_evaluator.hpp>
+#include <tyr/planning/ground/successor_generator.hpp>
+#include <tyr/planning/lifted/successor_generator.hpp>
+#include <tyr/planning/state_repository.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/execution/declarations.hpp>
@@ -49,9 +52,6 @@ struct TaskSearchContext
 {
     tyr::planning::TaskPtr<Kind> task;
     ygg::ExecutionContextPtr execution_context;
-    tyr::planning::AxiomEvaluatorFactory<Kind> axiom_evaluator_factory;
-    tyr::planning::StateRepositoryFactory<Kind> state_repository_factory;
-    tyr::planning::SuccessorGeneratorFactory<Kind> successor_generator_factory;
     tyr::planning::AxiomEvaluatorPtr<Kind> axiom_evaluator;
     tyr::planning::StateRepositoryPtr<Kind> state_repository;
     tyr::planning::SuccessorGeneratorPtr<Kind> successor_generator;
@@ -73,12 +73,9 @@ private:
     TaskSearchContext(tyr::planning::TaskPtr<Kind> task_, ygg::ExecutionContextPtr execution_context_) :
         task(std::move(task_)),
         execution_context(std::move(execution_context_)),
-        axiom_evaluator_factory(),
-        state_repository_factory(),
-        successor_generator_factory(),
-        axiom_evaluator(axiom_evaluator_factory.create(task, execution_context)),
-        state_repository(state_repository_factory.create(task)),
-        successor_generator(successor_generator_factory.create(task, execution_context))
+        axiom_evaluator(std::make_shared<tyr::planning::AxiomEvaluator<Kind>>(task, execution_context)),
+        state_repository(std::make_shared<tyr::planning::StateRepository<Kind>>(task)),
+        successor_generator(std::make_shared<tyr::planning::SuccessorGenerator<Kind>>(task, execution_context))
     {
     }
 };

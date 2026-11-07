@@ -5,6 +5,7 @@
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/ps/declarations.hpp"
 #include "runir/kr/ps/family_traits.hpp"
+#include "runir/kr/ps/icp/execution_declarations.hpp"
 
 #include <concepts>
 #include <cstdint>
@@ -15,14 +16,6 @@
 
 namespace runir::kr::ps::icp
 {
-
-struct MemoryState
-{
-};
-
-struct ModuleSymbol
-{
-};
 
 struct Module
 {
@@ -85,14 +78,14 @@ using RuleTypes = boost::mp11::mp_append<boost::mp11::mp_list<ps::Rule<IcpFamily
 using FeatureTypes = ps::PsFeatureTypes<IcpFamilyTag>;
 using ConditionTypes = ps::PsConditionTypes<IcpFamilyTag>;
 using EffectTypes = ps::PsEffectTypes<IcpFamilyTag>;
-using ProgramTypes = boost::mp11::mp_list<MemoryState, ModuleSymbol, Module, Program>;
+using ProgramTypes = boost::mp11::mp_list<MemoryState<IcpFamilyTag>, ModuleSymbol<IcpFamilyTag>, Module, Program>;
 using IndexicalTypes = boost::mp11::mp_list<XCondition, XEffect>;
 using RepositoryTypes = boost::mp11::mp_append<ps::PsCoreTypes<runir::kr::IcpFamilyTag>, RuleTypes, ProgramTypes, IndexicalTypes>;
 using Repository = ps::BasicRepository<IcpFamilyTag, RepositoryTypes>;
 using RepositoryPtr = std::shared_ptr<Repository>;
 using RepositoryFactory = ps::BasicRepositoryFactory<IcpFamilyTag, RepositoryTypes>;
-using MemoryStateView = urd::index_view<MemoryState, Repository>;
-using ModuleSymbolView = urd::index_view<ModuleSymbol, Repository>;
+using MemoryStateView = urd::index_view<MemoryState<IcpFamilyTag>, Repository>;
+using ModuleSymbolView = urd::index_view<ModuleSymbol<IcpFamilyTag>, Repository>;
 using ModuleView = urd::index_view<Module, Repository>;
 using ProgramView = urd::index_view<Program, Repository>;
 using RuleVariantView = urd::index_view<ps::Rule<IcpFamilyTag>, Repository>;
@@ -107,6 +100,17 @@ class RuleEvaluator;
 }
 
 }
+
+template<>
+struct runir::kr::ps::FamilyTypes<runir::kr::IcpFamilyTag>
+{
+    using Repository = runir::kr::ps::icp::Repository;
+    using ConcreteRuleTypes = runir::kr::ps::icp::ConcreteRuleTypes;
+    template<tyr::TaskKind Kind>
+    using ExecutionRepositoryTypes = runir::kr::ps::icp::ExecutionRepositoryTypes<Kind>;
+    template<tyr::TaskKind Kind>
+    using ProgramState = runir::kr::ps::icp::ProgramState<Kind>;
+};
 
 namespace runir::kr::ps::icp::dl
 {

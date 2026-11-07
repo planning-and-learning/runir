@@ -11,7 +11,11 @@
 #include <tyr/planning/formatter.hpp>
 #include <tyr/serialization/formalism/enums.hpp>
 #include <tyr/serialization/formalism/planning/planning.hpp>
-#include <tyr/serialization/planning/planning.hpp>
+#include <tyr/serialization/planning/ground/task.hpp>
+#include <tyr/serialization/planning/lifted/task.hpp>
+#include <tyr/serialization/planning/node.hpp>
+#include <tyr/serialization/planning/plan.hpp>
+#include <tyr/serialization/planning/state_view.hpp>
 #include <yggdrasil/serialization/dictionaries.hpp>
 
 namespace runir::serialization

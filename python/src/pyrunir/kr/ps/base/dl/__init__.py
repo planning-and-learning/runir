@@ -25,7 +25,6 @@ from pyrunir._pyrunir.kr.ps.base.dl import (
     GroundTransitionEvaluationContext as GroundTransitionEvaluationContext,
     IncompleteBlockingReason as IncompleteBlockingReason,
     IncompleteStructuralTerminationResult as IncompleteStructuralTerminationResult,
-    IncompleteStructuralTerminationStatus as IncompleteStructuralTerminationStatus,
     IncompleteSurvivingRule as IncompleteSurvivingRule,
     IncreasesNumericalEffect as IncreasesNumericalEffect,
     IncreasesNumericalEffectData as IncreasesNumericalEffectData,

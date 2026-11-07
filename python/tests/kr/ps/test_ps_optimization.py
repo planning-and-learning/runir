@@ -12,7 +12,7 @@ from pyyggdrasil.execution import ExecutionContext
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext, LiftedTaskContext
 from pyrunir.kr.dl import semantics
-from pyrunir.kr.ps import icp
+from pyrunir.kr.ps import ProofStatus, icp
 from pyrunir.kr.ps.base.dl import parse_sketch
 from pyrunir.kr.ps.ext.dl import parse_program
 from pyrunir.kr.uns import classify
@@ -189,7 +189,7 @@ def test_icp_program(kind: str) -> None:
             icp.find_lifted_solution(lifted_context, candidate, lifted_options).status
             for candidate in (program, optimized)
         ]
-    assert statuses == [icp.ProgramProofStatus.SUCCESS] * 2
+    assert statuses == [ProofStatus.SUCCESS] * 2
 
 
 def test_uns_classifier(

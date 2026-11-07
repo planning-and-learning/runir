@@ -3,8 +3,8 @@
 
 #include "runir/kr/dl/register_view.hpp"
 #include "runir/kr/ps/dl/feature_view.hpp"
-#include "runir/kr/ps/ext/memory_state_view.hpp"
-#include "runir/kr/ps/ext/module_symbol_view.hpp"
+#include "runir/kr/ps/memory_state_view.hpp"
+#include "runir/kr/ps/module_symbol_view.hpp"
 #include "runir/kr/ps/ext/order_term_view.hpp"
 #include "runir/kr/ps/ext/rule_data.hpp"
 #include "runir/kr/ps/feature_view.hpp"

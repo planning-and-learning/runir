@@ -304,7 +304,7 @@ public:
                RuleVariantView rule,
                const std::optional<tyr::planning::LabeledNode<Kind, PlanningState>>& candidate)
     {
-        using Result = std::optional<ProgramStep<Kind, Storage>>;
+        using Result = std::optional<ProgramStep<ExtFamilyTag, Kind, StorageStoredState<Storage>>>;
         return with_rule(
             rule,
             [&]<typename Concrete>(const Concrete& evaluator) -> Result
@@ -342,7 +342,7 @@ public:
              tyr::planning::StateViewConcept<Kind> PlanningState>
     auto apply_choice(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, const Choice<Category>& choice)
     {
-        using Step = ProgramStep<Kind, Storage>;
+        using Step = ProgramStep<ExtFamilyTag, Kind, StorageStoredState<Storage>>;
         return with_rule(choice.get_rule(),
                          [&]<typename Concrete>(const Concrete& evaluator) -> Step
                          {

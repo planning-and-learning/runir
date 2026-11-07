@@ -85,12 +85,6 @@ void bind_sketch_executor(nb::module_& m)
     urd::python::add_comparison(edge_label);
     urd::python::add_hash(edge_label);
 
-    nb::enum_<SketchProofStatus>(m, "SketchProofStatus")
-        .value("SUCCESS", SketchProofStatus::SUCCESS)
-        .value("FAILURE", SketchProofStatus::FAILURE)
-        .value("OUT_OF_TIME", SketchProofStatus::OUT_OF_TIME)
-        .value("OUT_OF_STATES", SketchProofStatus::OUT_OF_STATES);
-
     bind_sketch_proof_types<tyr::GroundTag>(m, "Ground");
     bind_sketch_proof_types<tyr::LiftedTag>(m, "Lifted");
     bind_sketch_search_options<tyr::GroundTag>(m, "GroundSketchSearchOptions");

@@ -38,7 +38,7 @@ class RuleEvaluators
     urd::Store<urd::sequence<ActionRules>> m_enabled;
     urd::Store<urd::sequence<CruleEvaluator>> m_matching;
 
-    template<EmitConcept<ProgramStep<Kind>> Emit, StopConcept Stop>
+    template<EmitConcept<ProgramStep<IcpFamilyTag, Kind>> Emit, StopConcept Stop>
     bool emit_crules(runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy>& context,
                      Action action,
                      std::span<const CruleEvaluator> rules,
@@ -113,7 +113,7 @@ public:
     auto initial_state(tyr::planning::StateView<Kind> state) { return m_workspace.initial_state(state); }
 
     /// Callbacks borrow shared scratch and must not reenter the evaluators or planning generator.
-    template<EmitConcept<ProgramStep<Kind>> Emit, StopConcept Stop>
+    template<EmitConcept<ProgramStep<IcpFamilyTag, Kind>> Emit, StopConcept Stop>
     bool for_each_successor(ProgramStateView<Kind> state, const Emit& emit, const Stop& stop, bool grouped)
     {
         if (stop())
@@ -124,7 +124,7 @@ public:
         auto context = runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy> { &m_workspace,
                                                                                                                                           state.get_state() };
         bool emitted = false;
-        const auto output = [&](ProgramStep<Kind>&& step)
+        const auto output = [&](ProgramStep<IcpFamilyTag, Kind>&& step)
         {
             emitted = true;
             return emit(std::move(step));
@@ -172,7 +172,7 @@ public:
                 return false;
         if (stop())
             return false;
-        return emitted || output(ProgramStep<Kind>(ProgramOutcome::NO_APPLICABLE_ACTION, state, get_task_context()));
+        return emitted || output(ProgramStep<IcpFamilyTag, Kind>(ProgramOutcome::NO_APPLICABLE_ACTION, state, get_task_context()));
     }
 };
 

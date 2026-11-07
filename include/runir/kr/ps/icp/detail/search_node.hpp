@@ -2,7 +2,7 @@
 #define RUNIR_KR_PS_ICP_DETAIL_SEARCH_NODE_HPP_
 
 #include "runir/kr/ps/icp/execution_view.hpp"
-#include "runir/kr/ps/icp/rule_variant_view.hpp"
+#include "runir/kr/ps/rule_variant_view.hpp"
 
 #include <cstddef>
 #include <optional>

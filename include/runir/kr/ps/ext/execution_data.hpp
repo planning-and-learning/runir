@@ -24,7 +24,7 @@ struct data<runir::kr::ps::ext::ModuleState<Kind>>
     urd::index<runir::kr::ps::ext::ModuleState<Kind>> index;
     urd::index<tyr::planning::State<Kind>> state;
     urd::index<runir::kr::ps::ext::Module> module_;
-    urd::index<runir::kr::ps::ext::MemoryState> memory_state;
+    urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> memory_state;
     urd::index<runir::kr::dl::semantics::RegisterValues> registers;
     urd::index<runir::kr::dl::semantics::CallArguments> arguments;
 
@@ -32,7 +32,7 @@ struct data<runir::kr::ps::ext::ModuleState<Kind>>
     // The referenced indices live in different repositories, hence the separate context parameters.
     data(urd::index<tyr::planning::State<Kind>> state_,
          urd::index<runir::kr::ps::ext::Module> module_index,
-         urd::index<runir::kr::ps::ext::MemoryState> memory_state_,
+         urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> memory_state_,
          urd::index<runir::kr::dl::semantics::RegisterValues> registers_,
          urd::index<runir::kr::dl::semantics::CallArguments> arguments_) :
         index(),
@@ -55,7 +55,7 @@ struct data<runir::kr::ps::ext::CallStack>
 {
     urd::index<runir::kr::ps::ext::CallStack> index;
     urd::index<runir::kr::ps::ext::Module> module_;
-    urd::index<runir::kr::ps::ext::MemoryState> return_memory_state;
+    urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> return_memory_state;
     urd::index<runir::kr::dl::semantics::RegisterValues> registers;
     urd::index<runir::kr::dl::semantics::CallArguments> arguments;
     urd::flat_optional<urd::index<runir::kr::ps::ext::CallStack>> caller;
@@ -63,7 +63,7 @@ struct data<runir::kr::ps::ext::CallStack>
     data() = default;
     // The referenced indices live in different repositories, hence the separate context parameters.
     data(urd::index<runir::kr::ps::ext::Module> module_index,
-         urd::index<runir::kr::ps::ext::MemoryState> return_memory_state_,
+         urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> return_memory_state_,
          urd::index<runir::kr::dl::semantics::RegisterValues> registers_,
          urd::index<runir::kr::dl::semantics::CallArguments> arguments_,
          urd::flat_optional<urd::index<runir::kr::ps::ext::CallStack>> caller_) :

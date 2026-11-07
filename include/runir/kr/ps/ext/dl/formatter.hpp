@@ -60,11 +60,11 @@ struct fmt::formatter<runir::kr::ps::ext::dl::ProgramStructuralTerminationResult
 };
 
 template<>
-struct fmt::formatter<runir::kr::ps::ext::dl::ModuleIncompleteStructuralTerminationResult>
+struct fmt::formatter<runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::ExtFamilyTag>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
 
-    auto format(const runir::kr::ps::ext::dl::ModuleIncompleteStructuralTerminationResult& result, format_context& context) const
+    auto format(const runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::ExtFamilyTag>& result, format_context& context) const
     {
         if (result.is_terminating())
             return fmt::format_to(context.out(), "ModuleIncompleteStructuralTerminationResult(terminating)");

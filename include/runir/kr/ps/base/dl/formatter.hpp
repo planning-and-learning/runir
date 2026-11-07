@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_BASE_DL_FORMATTER_HPP_
 #define RUNIR_KR_PS_BASE_DL_FORMATTER_HPP_
 
-#include "runir/kr/ps/base/dl/incomplete_structural_termination_data.hpp"
+#include "runir/kr/ps/dl/incomplete_structural_termination_data.hpp"
 #include "runir/kr/ps/base/dl/structural_termination_data.hpp"
 #include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/dl/condition_view.hpp"
@@ -51,10 +51,10 @@ struct fmt::formatter<runir::kr::ps::base::dl::StructuralTerminationResult, char
 };
 
 template<>
-struct fmt::formatter<runir::kr::ps::base::dl::IncompleteStructuralTerminationResult, char> : fmt::formatter<std::string_view>
+struct fmt::formatter<runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::BaseFamilyTag>, char> : fmt::formatter<std::string_view>
 {
     template<typename FormatContext>
-    auto format(const runir::kr::ps::base::dl::IncompleteStructuralTerminationResult& result, FormatContext& ctx) const
+    auto format(const runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::BaseFamilyTag>& result, FormatContext& ctx) const
     {
         const auto text = result.is_terminating() ?
                               std::string { "IncompleteStructuralTerminationResult(terminating)" } :

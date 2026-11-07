@@ -17,7 +17,7 @@ from pyyggdrasil.serialization import Dictionaries
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext, LiftedTaskContext
 from pyrunir.kr.dl.semantics import ConceptDenotation, GroundStateEvaluationContext, LiftedStateEvaluationContext
-from pyrunir.kr.ps import icp
+from pyrunir.kr.ps import ProofStatus, icp
 from pyrunir.serialization import register_table, serialize, table
 
 PROGRAM = """(:program (:entry main)
@@ -152,7 +152,7 @@ def test_search_and_round_trip(kind: str, *, universal: bool) -> None:
     options = search_options(context)
     options.universal = universal
     result = find_solution(context, program, options)
-    assert result.status == icp.ProgramProofStatus.SUCCESS
+    assert result.status == ProofStatus.SUCCESS
     assert result.is_successful()
     assert result.statistics.num_expanded >= 4
     assert result.statistics.num_generated >= 4
@@ -228,7 +228,7 @@ def check_loaded_features(
     assert len(rows) == 2
     assert len({ball for ball, _ in rows}) == 2
     robot = next(feature for feature in module.get_concept_features() if feature.get_symbol() == "robot")
-    assert {room for _, room in rows} == {int(room.get_index()) for room in icp.evaluate(robot, dl_context)}
+    assert {room for _, room in rows} == {int(room.index()) for room in icp.evaluate(robot, dl_context)}
 
 
 def check_history_tables(
@@ -322,10 +322,10 @@ def test_resource_limits(kind: str) -> None:
     context, program = context_and_program(kind)
     options = search_options(context)
     options.max_num_states = 0
-    assert find_solution(context, program, options).status == icp.ProgramProofStatus.OUT_OF_STATES
+    assert find_solution(context, program, options).status == ProofStatus.OUT_OF_STATES
     options.max_num_states = 100
     options.max_time = timedelta(0)
-    assert find_solution(context, program, options).status == icp.ProgramProofStatus.OUT_OF_TIME
+    assert find_solution(context, program, options).status == ProofStatus.OUT_OF_TIME
 
 
 def test_serialization_fields_and_program_projection() -> None:

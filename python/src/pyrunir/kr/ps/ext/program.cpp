@@ -6,9 +6,10 @@
 #include "pyrunir/kr/ps/dl/optimization_bindings.hpp"
 
 #include <nanobind/stl/vector.h>
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
-#include <runir/kr/ps/ext/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <yggdrasil/database/syntax/query_repository.hpp>
+#include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/program_data.hpp>
 #include <runir/kr/ps/ext/program_view.hpp>
@@ -38,7 +39,7 @@ void bind_program(nb::module_& m, RepositoryBinding& repository)
                     .def_rw("modules", &Data::modules);
     urd::python::add_comparison(data);
     auto view = nb::class_<View>(m, "Program")
-                    .def("get_index", &View::index)
+                    .def("index", &View::index)
                     .def("get_entry_module", &View::get_entry_module, nb::keep_alive<0, 1>())
                     .def("get_modules", &View::get_modules)
                     .def("syntactic_complexity", [](View value) { return runir::kr::ps::ext::syntactic_complexity(value); });

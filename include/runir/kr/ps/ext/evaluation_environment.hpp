@@ -49,7 +49,7 @@ private:
 
     runir::kr::dl::semantics::Builder* m_dl_builder;
     runir::kr::dl::semantics::DenotationRepository* m_dl_denotation_repository;
-    ExecutionRepository<Kind>* m_execution_repository;
+    ExecutionRepository<ExtFamilyTag, Kind>* m_execution_repository;
     runir::kr::dl::semantics::EvaluationStorage m_dl_storage;
     runir::kr::dl::semantics::EvaluationStorage m_dl_target_storage;
     runir::kr::dl::semantics::DenotationCaches m_call_caches;

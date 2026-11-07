@@ -27,7 +27,7 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
     auto data =
         nb::class_<Data>(m, "ModuleData")
             .def(nb::init<>())
-            .def(nb::init<urd::index<ModuleSymbol>,
+            .def(nb::init<urd::index<ModuleSymbol<IcpFamilyTag>>,
                           urd::flat_vector<urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>,
                           urd::flat_vector<urd::index<runir::kr::dl::Register<runir::kr::dl::RoleTag>>>,
                           urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>>>,
@@ -35,8 +35,8 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
                           urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::BooleanTag>>>,
                           urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::NumericalTag>>>,
                           urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::ps::dl::QueryFeature>>>,
-                          urd::index<MemoryState>,
-                          urd::flat_vector<urd::index<MemoryState>>,
+                          urd::index<MemoryState<IcpFamilyTag>>,
+                          urd::flat_vector<urd::index<MemoryState<IcpFamilyTag>>>,
                           urd::flat_vector<urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>>>>,
                           urd::flat_vector<ResetPair>>(),
                  nb::arg("symbol"),
@@ -52,7 +52,7 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
                  nb::arg("memory_transitions"),
                  nb::arg("reset_pairs"))
             .def(urd::python::init_from_views<
-                     urd::index_view<ModuleSymbol, Repository>,
+                     urd::index_view<ModuleSymbol<IcpFamilyTag>, Repository>,
                      const urd::Store<urd::sequence<urd::index_view<runir::kr::dl::Register<runir::kr::dl::ConceptTag>, DlRepository>>>&,
                      const urd::Store<urd::sequence<urd::index_view<runir::kr::dl::Register<runir::kr::dl::RoleTag>, DlRepository>>>&,
                      const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>, Repository>>>&,
@@ -60,8 +60,8 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
                      const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::BooleanTag>, Repository>>>&,
                      const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::NumericalTag>, Repository>>>&,
                      const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::ps::dl::QueryFeature>, Repository>>>&,
-                     urd::index_view<MemoryState, Repository>,
-                     const urd::Store<urd::sequence<urd::index_view<MemoryState, Repository>>>&,
+                     urd::index_view<MemoryState<IcpFamilyTag>, Repository>,
+                     const urd::Store<urd::sequence<urd::index_view<MemoryState<IcpFamilyTag>, Repository>>>&,
                      const urd::Store<urd::sequence<urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>, Repository>>>>>&,
                      urd::flat_vector<ResetPair>>(),
                  nb::arg("symbol"),
@@ -91,7 +91,7 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
             .def_rw("reset_pairs", &Data::reset_pairs);
     urd::python::add_comparison(data);
     auto view = nb::class_<View>(m, "Module")
-                    .def("get_index", &View::index)
+                    .def("index", &View::index)
                     .def("get_name", &View::get_name)
                     .def("get_symbol", &View::get_symbol)
                     .def("get_concept_registers", &View::template get_registers<runir::kr::dl::ConceptTag>)

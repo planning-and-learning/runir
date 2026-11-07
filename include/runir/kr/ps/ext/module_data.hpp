@@ -20,7 +20,7 @@ template<>
 struct data<runir::kr::ps::ext::Module>
 {
     urd::index<runir::kr::ps::ext::Module> index;
-    urd::index<runir::kr::ps::ext::ModuleSymbol> symbol;
+    urd::index<runir::kr::ps::ModuleSymbol<runir::kr::ExtFamilyTag>> symbol;
     urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>>> concept_arguments;
     urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::RoleTag>>> role_arguments;
     urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>>> boolean_arguments;
@@ -32,12 +32,12 @@ struct data<runir::kr::ps::ext::Module>
     urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>> boolean_features;
     urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>> numerical_features;
     urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>> query_features;
-    urd::index<runir::kr::ps::ext::MemoryState> entry_memory_state;
-    urd::flat_vector<urd::index<runir::kr::ps::ext::MemoryState>> memory_states;
+    urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> entry_memory_state;
+    urd::flat_vector<urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>>> memory_states;
     urd::flat_vector<urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>>> memory_transitions;
     data() = default;
     // Arguments and registers live in the description-logic repository, hence the separate context parameter.
-    data(urd::index<runir::kr::ps::ext::ModuleSymbol> symbol_,
+    data(urd::index<runir::kr::ps::ModuleSymbol<runir::kr::ExtFamilyTag>> symbol_,
          urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>>> concept_arguments_,
          urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::RoleTag>>> role_arguments_,
          urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>>> boolean_arguments_,
@@ -49,8 +49,8 @@ struct data<runir::kr::ps::ext::Module>
          urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>> boolean_features_,
          urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>> numerical_features_,
          urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>> query_features_,
-         urd::index<runir::kr::ps::ext::MemoryState> entry_memory_state_,
-         urd::flat_vector<urd::index<runir::kr::ps::ext::MemoryState>> memory_states_,
+         urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> entry_memory_state_,
+         urd::flat_vector<urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>>> memory_states_,
          urd::flat_vector<urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>>> memory_transitions_) :
         index(),
         symbol(symbol_),

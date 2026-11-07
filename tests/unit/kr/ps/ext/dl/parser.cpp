@@ -9,7 +9,8 @@
 #include <runir/kr/dl/grammar/constructor_repository.hpp>
 #include <runir/kr/dl/grammar/parser.hpp>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <yggdrasil/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <runir/kr/errors.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
@@ -167,7 +168,7 @@ TEST(RunirTests, ExtendedBacktrackRulesRejectInvalidTargetsAndConditions)
     expect_error_containing([&] { parse("(:target-memory done) (:sketch (:conditions) (:effects)) (:backtrack (:conditions))"); },
                             "Backtrack rules must not declare a target");
     EXPECT_THROW(parse("(:backtrack (:conditions (positive missing)))"), kr::UndefinedSymbolError);
-    EXPECT_THROW(parse("(:backtrack (:conditions) (:effects))"), kr::ParseError);
+    EXPECT_THROW(parse("(:backtrack (:conditions) (:effects))"), ygg::diagnostics::ParseError);
 }
 
 TEST(RunirTests, RelationalExpressionsRoundTripAndRejectGenerationGrammars)
@@ -263,7 +264,7 @@ TEST(RunirTests, RelationalExpressionsRoundTripAndRejectGenerationGrammars)
         }
     }
     EXPECT_THROW(kr::ps::ext::dl::parse_numerical(R"((n_count (q_generic_join (X Y) (X Y) (q_atomic_state "at" (X Y)))))", domain, *repository),
-                 kr::ParseError);
+                 ygg::diagnostics::ParseError);
     EXPECT_THROW(kr::ps::ext::dl::parse_numerical("(n_count (q_select_value X \"missing\" (q_concept X (c_top))))", domain, *repository),
                  kr::UndefinedSymbolError);
 }
@@ -396,7 +397,7 @@ TEST(RunirTests, ExtendedQueryActionRuleRejectsInvalidReferencesAndArity)
         EXPECT_EQ(error.message(), fmt::format("Undefined action in domain '{}': missing", domain.get_name().str()));
         EXPECT_TRUE(error.diagnostic().location.has_value()) << error.what();
     }
-    EXPECT_THROW(parse("move", "(q_role (X Y) (r_universal))", ""), kr::ParseError);
+    EXPECT_THROW(parse("move", "(q_role (X Y) (r_universal))", ""), ygg::diagnostics::ParseError);
     EXPECT_THROW(parse("move", "missing", binary), kr::UndefinedSymbolError);
     EXPECT_THROW(parse("move", "Q", "(:concept (:symbol Q) (:expression (c_top)))"), kr::UndefinedSymbolError);
     EXPECT_THROW(parse("move", "Q", "(:query (:symbol Q) (:expression (q_concept X (c_top))))"), kr::ArityMismatchError);

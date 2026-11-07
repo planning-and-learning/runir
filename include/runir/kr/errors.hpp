@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
-#include <yggdrasil/diagnostics/diagnostic.hpp>
+#include <yggdrasil/diagnostics/errors.hpp>
 
 #if defined(__clang__) || defined(__GNUC__)
 #define RUNIR_KR_ERROR_API __attribute__((visibility("default")))
@@ -16,57 +16,31 @@
 namespace runir::kr
 {
 
-class RUNIR_KR_ERROR_API SemanticError : public std::runtime_error
+class RUNIR_KR_ERROR_API UndefinedSymbolError : public ygg::diagnostics::SemanticError
 {
 public:
-    explicit SemanticError(std::string message) : std::runtime_error(message), m_diagnostic { std::move(message) }, m_display_message(m_diagnostic.message) {}
-
-    [[nodiscard]] const char* what() const noexcept override { return m_display_message.c_str(); }
-    [[nodiscard]] const std::string& message() const noexcept { return m_diagnostic.message; }
-    [[nodiscard]] const ygg::diagnostics::Diagnostic& diagnostic() const noexcept { return m_diagnostic; }
-    void set_display_message(std::string display_message) { m_display_message = std::move(display_message); }
-    void set_diagnostic(ygg::diagnostics::Diagnostic diagnostic)
-    {
-        m_diagnostic = std::move(diagnostic);
-        m_display_message = ygg::diagnostics::format_diagnostic(m_diagnostic);
-    }
-
-private:
-    ygg::diagnostics::Diagnostic m_diagnostic;
-    std::string m_display_message;
+    UndefinedSymbolError(const std::string& kind, const std::string& name) : ygg::diagnostics::SemanticError("Undefined " + kind + ": " + name) {}
 };
 
-class RUNIR_KR_ERROR_API ParseError : public SemanticError
+class RUNIR_KR_ERROR_API DuplicateDefinitionError : public ygg::diagnostics::SemanticError
 {
 public:
-    explicit ParseError(std::string message) : SemanticError(std::move(message)) {}
+    DuplicateDefinitionError(const std::string& kind, const std::string& name) : ygg::diagnostics::SemanticError("Duplicate " + kind + " definition: " + name) {}
 };
 
-class RUNIR_KR_ERROR_API UndefinedSymbolError : public SemanticError
-{
-public:
-    UndefinedSymbolError(const std::string& kind, const std::string& name) : SemanticError("Undefined " + kind + ": " + name) {}
-};
-
-class RUNIR_KR_ERROR_API DuplicateDefinitionError : public SemanticError
-{
-public:
-    DuplicateDefinitionError(const std::string& kind, const std::string& name) : SemanticError("Duplicate " + kind + " definition: " + name) {}
-};
-
-class RUNIR_KR_ERROR_API ArityMismatchError : public SemanticError
+class RUNIR_KR_ERROR_API ArityMismatchError : public ygg::diagnostics::SemanticError
 {
 public:
     ArityMismatchError(const std::string& subject, std::size_t expected, std::size_t actual) :
-        SemanticError("Arity mismatch for " + subject + ": expected " + std::to_string(expected) + ", got " + std::to_string(actual))
+        ygg::diagnostics::SemanticError("Arity mismatch for " + subject + ": expected " + std::to_string(expected) + ", got " + std::to_string(actual))
     {
     }
 };
 
-class RUNIR_KR_ERROR_API InvalidExpressionError : public SemanticError
+class RUNIR_KR_ERROR_API InvalidExpressionError : public ygg::diagnostics::SemanticError
 {
 public:
-    explicit InvalidExpressionError(std::string message) : SemanticError(std::move(message)) {}
+    explicit InvalidExpressionError(std::string message) : ygg::diagnostics::SemanticError(std::move(message)) {}
 };
 
 }  // namespace runir::kr

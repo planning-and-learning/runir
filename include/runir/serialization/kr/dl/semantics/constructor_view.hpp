@@ -3,11 +3,8 @@
 
 #include "runir/kr/dl/query_view.hpp"
 #include "runir/kr/dl/repository.hpp"
-#include "runir/kr/dl/semantics/boolean_view.hpp"
-#include "runir/kr/dl/semantics/concept_view.hpp"
+#include "runir/kr/dl/record_view.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
-#include "runir/kr/dl/semantics/numerical_view.hpp"
-#include "runir/kr/dl/semantics/role_view.hpp"
 #include "runir/serialization/kr/dl/argument_view.hpp"
 #include "runir/serialization/kr/dl/register_view.hpp"
 
@@ -72,9 +69,9 @@ void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::
 
 template<typename Archive, typename Tag, typename C>
     requires runir::kr::dl::BooleanConstructorTag<Tag>
-void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::dl::Boolean<Tag>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::dl::Boolean<runir::kr::dl::SemanticFamily, Tag>, C>>)
 {
-    using Value = urd::index_view<runir::kr::dl::Boolean<Tag>, C>;
+    using Value = urd::index_view<runir::kr::dl::Boolean<runir::kr::dl::SemanticFamily, Tag>, C>;
 
     if constexpr (requires(const Value& value) { value.get_predicate(); })
         ar.field("predicate", [](const auto& value) -> decltype(auto) { return (value.get_predicate()); });
@@ -94,9 +91,9 @@ void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::
 
 template<typename Archive, typename Tag, typename C>
     requires runir::kr::dl::ConceptConstructorTag<Tag>
-void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::dl::Concept<Tag>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, Tag>, C>>)
 {
-    using Value = urd::index_view<runir::kr::dl::Concept<Tag>, C>;
+    using Value = urd::index_view<runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, Tag>, C>;
 
     if constexpr (requires(const Value& value) { value.get_predicate(); })
         ar.field("predicate", [](const auto& value) -> decltype(auto) { return (value.get_predicate()); });
@@ -126,9 +123,9 @@ void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::
 
 template<typename Archive, typename Tag, typename C>
     requires runir::kr::dl::NumericalConstructorTag<Tag>
-void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::dl::Numerical<Tag>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, Tag>, C>>)
 {
-    using Value = urd::index_view<runir::kr::dl::Numerical<Tag>, C>;
+    using Value = urd::index_view<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, Tag>, C>;
 
     if constexpr (requires(const Value& value) { value.get_argument(); })
         ar.field("argument", [](const auto& value) -> decltype(auto) { return (value.get_argument()); });
@@ -146,9 +143,9 @@ void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::
 
 template<typename Archive, typename Tag, typename C>
     requires runir::kr::dl::RoleConstructorTag<Tag>
-void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::dl::Role<Tag>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::dl::Role<runir::kr::dl::SemanticFamily, Tag>, C>>)
 {
-    using Value = urd::index_view<runir::kr::dl::Role<Tag>, C>;
+    using Value = urd::index_view<runir::kr::dl::Role<runir::kr::dl::SemanticFamily, Tag>, C>;
 
     if constexpr (requires(const Value& value) { value.get_predicate(); })
         ar.field("predicate", [](const auto& value) -> decltype(auto) { return (value.get_predicate()); });

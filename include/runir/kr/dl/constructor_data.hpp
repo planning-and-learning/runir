@@ -14,55 +14,11 @@
 namespace runir::kr::dl::detail
 {
 
+/// A semantic constructor of Category: one of its records, or (concepts and roles) a query projection.
 template<CategoryTag Category>
-struct ConstructorDataTraits;
-
-template<>
-struct ConstructorDataTraits<ConceptTag>
-{
-    using Tags = ConceptConstructorTags;
-
-    template<typename Tag>
-    using Index = urd::index<Concept<Tag>>;
-
-    using Indices = boost::mp11::mp_append<boost::mp11::mp_transform<Index, Tags>, boost::mp11::mp_list<urd::index<QueryProjection<ConceptTag>>>>;
-};
-
-template<>
-struct ConstructorDataTraits<RoleTag>
-{
-    using Tags = RoleConstructorTags;
-
-    template<typename Tag>
-    using Index = urd::index<Role<Tag>>;
-
-    using Indices = boost::mp11::mp_append<boost::mp11::mp_transform<Index, Tags>, boost::mp11::mp_list<urd::index<QueryProjection<RoleTag>>>>;
-};
-
-template<>
-struct ConstructorDataTraits<BooleanTag>
-{
-    using Tags = BooleanConstructorTags;
-
-    template<typename Tag>
-    using Index = urd::index<Boolean<Tag>>;
-
-    using Indices = boost::mp11::mp_transform<Index, Tags>;
-};
-
-template<>
-struct ConstructorDataTraits<NumericalTag>
-{
-    using Tags = NumericalConstructorTags;
-
-    template<typename Tag>
-    using Index = urd::index<Numerical<Tag>>;
-
-    using Indices = boost::mp11::mp_transform<Index, Tags>;
-};
-
-template<CategoryTag Category>
-using ConstructorDataVariant = boost::mp11::mp_apply<::cista::offset::variant, typename ConstructorDataTraits<Category>::Indices>;
+using ConstructorDataVariant = urd::index_variant<boost::mp11::mp_append<
+    RecordTypes<SemanticFamily, Category>,
+    by_category<Category, boost::mp11::mp_list<QueryProjection<ConceptTag>>, boost::mp11::mp_list<QueryProjection<RoleTag>>, boost::mp11::mp_list<>, boost::mp11::mp_list<>>>>;
 
 }  // namespace runir::kr::dl::detail
 

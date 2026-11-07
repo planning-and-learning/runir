@@ -2,10 +2,11 @@
 
 #include <gtest/gtest.h>
 #include <runir/graphs/cycle.hpp>
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
-#include <runir/kr/ps/base/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <yggdrasil/database/syntax/query_repository.hpp>
+#include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/dl/parser.hpp>
 #include <runir/kr/ps/base/dl/sketch_factory.hpp>
 #include <runir/kr/ps/base/dl/structural_termination.hpp>
@@ -72,7 +73,7 @@ TEST(RunirTests, StructuralTerminationEmptySketchIsTerminating)
     const auto without_incomplete = kr::ps::base::dl::structural_termination(sketch, kr::ps::dl::default_max_features, false);
     EXPECT_TRUE(result.is_terminating());
     ASSERT_TRUE(result.incomplete_result.has_value());
-    EXPECT_EQ(result.incomplete_result.value().status, kr::ps::base::dl::IncompleteStructuralTerminationStatus::TERMINATING);
+    EXPECT_EQ(result.incomplete_result.value().status, kr::ps::dl::IncompleteStructuralTerminationStatus::TERMINATING);
     EXPECT_FALSE(result.sieve_result.has_value());
     EXPECT_TRUE(without_incomplete.is_terminating());
     EXPECT_FALSE(without_incomplete.incomplete_result.has_value());
@@ -93,7 +94,7 @@ TEST(RunirTests, StructuralTerminationBooleanOscillatorCounterexample)
     const auto booleans = sketch.get_features<kr::dl::BooleanTag>();
     ASSERT_FALSE(result.is_terminating());
     ASSERT_TRUE(result.incomplete_result.has_value());
-    EXPECT_EQ(result.incomplete_result.value().status, kr::ps::base::dl::IncompleteStructuralTerminationStatus::UNKNOWN);
+    EXPECT_EQ(result.incomplete_result.value().status, kr::ps::dl::IncompleteStructuralTerminationStatus::UNKNOWN);
     ASSERT_TRUE(result.sieve_result.has_value());
     ASSERT_NE(result.sieve_result.value().counterexample, nullptr);
     EXPECT_EQ(result.sieve_result.value().counterexample->get_num_vertices(), 2);
@@ -167,7 +168,7 @@ TEST(RunirTests, StructuralTerminationTppDetails)
     const auto without_incomplete = kr::ps::base::dl::structural_termination(sketch, 3, false);
     EXPECT_TRUE(result.is_terminating());
     ASSERT_TRUE(result.incomplete_result.has_value());
-    EXPECT_EQ(result.incomplete_result.value().status, kr::ps::base::dl::IncompleteStructuralTerminationStatus::TERMINATING);
+    EXPECT_EQ(result.incomplete_result.value().status, kr::ps::dl::IncompleteStructuralTerminationStatus::TERMINATING);
     EXPECT_FALSE(result.sieve_result.has_value());
     ASSERT_TRUE(without_incomplete.sieve_result.has_value());
     EXPECT_EQ(without_incomplete.sieve_result.value().counterexample, nullptr);

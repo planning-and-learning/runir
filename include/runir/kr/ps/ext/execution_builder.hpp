@@ -22,7 +22,7 @@ struct builder<runir::kr::ps::ext::ModuleState<Kind>>
 {
     urd::builder<tyr::planning::State<Kind>> state;
     urd::index<runir::kr::ps::ext::Module> module_;
-    urd::index<runir::kr::ps::ext::MemoryState> memory_state;
+    urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> memory_state;
     urd::data<runir::kr::dl::semantics::RegisterValues> registers;
     urd::index<runir::kr::dl::semantics::CallArguments> arguments;
 

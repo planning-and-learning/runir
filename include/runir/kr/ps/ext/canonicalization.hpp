@@ -3,12 +3,12 @@
 
 #include "runir/kr/ps/dl/condition_data.hpp"
 #include "runir/kr/ps/dl/effect_data.hpp"
-#include "runir/kr/ps/ext/memory_state_data.hpp"
+#include "runir/kr/ps/memory_state_data.hpp"
 #include "runir/kr/ps/ext/module_data.hpp"
-#include "runir/kr/ps/ext/module_symbol_data.hpp"
+#include "runir/kr/ps/module_symbol_data.hpp"
 #include "runir/kr/ps/ext/program_data.hpp"
 #include "runir/kr/ps/ext/rule_data.hpp"
-#include "runir/kr/ps/ext/rule_variant_data.hpp"
+#include "runir/kr/ps/rule_variant_data.hpp"
 #include "runir/kr/ps/feature_data.hpp"
 
 #include <algorithm>
@@ -16,39 +16,10 @@
 
 #include <yggdrasil/semantics/canonicalization.hpp>
 
-namespace runir::kr::ps
-{
-
-inline bool is_canonical(const urd::data<Rule<runir::kr::ExtFamilyTag>>&) noexcept { return true; }
-
-inline void canonicalize(urd::data<Rule<runir::kr::ExtFamilyTag>>&) noexcept {}
-
-}  // namespace runir::kr::ps
-
 namespace runir::kr::ps::ext
 {
 
 inline bool is_canonical(const urd::data<OrderTerm>&) noexcept { return true; }
-
-inline bool is_canonical(const urd::data<MemoryState>&) noexcept { return true; }
-
-inline bool is_canonical(const urd::data<ModuleSymbol>&) noexcept { return true; }
-
-template<typename FeatureTag>
-bool is_canonical(const urd::data<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>&) noexcept
-{ return true; }
-
-template<typename FeatureTag>
-bool is_canonical(const urd::data<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>&) noexcept
-{ return true; }
-
-template<typename FeatureTag, typename ObservationTag>
-bool is_canonical(const urd::data<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>&) noexcept
-{ return true; }
-
-template<typename FeatureTag, typename ObservationTag>
-bool is_canonical(const urd::data<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>&) noexcept
-{ return true; }
 
 template<RuleKind Kind>
 bool is_canonical(const urd::data<Rule<Kind>>& data) noexcept
@@ -68,30 +39,6 @@ inline bool is_canonical(const urd::data<Module>& data) noexcept
 inline bool is_canonical(const urd::data<Program>&) noexcept { return true; }
 
 inline void canonicalize(urd::data<OrderTerm>&) noexcept {}
-
-inline void canonicalize(urd::data<MemoryState>&) noexcept {}
-
-inline void canonicalize(urd::data<ModuleSymbol>&) noexcept {}
-
-template<typename FeatureTag>
-void canonicalize(urd::data<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>&) noexcept
-{
-}
-
-template<typename FeatureTag>
-void canonicalize(urd::data<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>&) noexcept
-{
-}
-
-template<typename FeatureTag, typename ObservationTag>
-void canonicalize(urd::data<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>&) noexcept
-{
-}
-
-template<typename FeatureTag, typename ObservationTag>
-void canonicalize(urd::data<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>&) noexcept
-{
-}
 
 template<RuleKind Kind>
 void canonicalize(urd::data<Rule<Kind>>& data)

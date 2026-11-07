@@ -67,10 +67,10 @@ private:
         const auto same_formalism = [&](const KeyedFeature<Feature>& entry)
         { return !entry.formalism.owner_before(formalism) && !formalism.owner_before(entry.formalism); };
         for (auto& entry : features)
-            if (entry.constructors == &constructors && entry.constructors_index == constructors.get_index() && entry.constructor == constructor
+            if (entry.constructors == &constructors && entry.constructors_index == constructors.layer() && entry.constructor == constructor
                 && same_formalism(entry))
                 return entry.feature;
-        return features.emplace_back(KeyedFeature<Feature> { formalism, &constructors, constructors.get_index(), constructor, make() }).feature;
+        return features.emplace_back(KeyedFeature<Feature> { formalism, &constructors, constructors.layer(), constructor, make() }).feature;
     }
 
 public:

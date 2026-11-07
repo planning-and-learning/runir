@@ -13,8 +13,8 @@ namespace
 
 template<runir::kr::dl::CategoryTag Category>
 using RegisterConstructor = std::conditional_t<std::same_as<Category, runir::kr::dl::ConceptTag>,
-                                               runir::kr::dl::Concept<runir::kr::dl::RegisterTag>,
-                                               runir::kr::dl::Role<runir::kr::dl::RegisterTag>>;
+                                               runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::RegisterTag>,
+                                               runir::kr::dl::Role<runir::kr::dl::SemanticFamily, runir::kr::dl::RegisterTag>>;
 
 template<runir::kr::dl::CategoryTag Category>
 using RegisterConstructorView = urd::index_view<RegisterConstructor<Category>, runir::kr::dl::ConstructorRepository>;

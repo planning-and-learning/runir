@@ -7,9 +7,9 @@
 
 #include "kr/parser/ext_constructors.hpp"
 #include "kr/parser/observations.hpp"
-#include "runir/kr/dl/detail/repository_instantiations.hpp"
+#include "runir/kr/dl/repository.hpp"
 #include "runir/kr/ps/icp/canonicalization.hpp"
-#include "runir/kr/ps/icp/detail/repository_instantiations.hpp"
+#include "runir/kr/ps/icp/repository.hpp"
 #include "runir/kr/ps/icp/dl/parser/parser.hpp"
 #include "runir/kr/ps/icp/repository.hpp"
 
@@ -91,14 +91,14 @@ ModuleView lower_module(const ast::Module& module,
     auto dl_builder = runir::kr::dl::Builder {};
     auto references = ModuleReferences {};
     auto data = checkout<Module>(builder);
-    auto symbol = checkout<ModuleSymbol>(builder);
+    auto symbol = checkout<ModuleSymbol<IcpFamilyTag>>(builder);
     symbol->name = module.name.text;
     data->symbol = intern(repository, *symbol).index();
 
-    auto memories = urd::Store<urd::map<std::string, urd::index<MemoryState>>, urd::stable_refs> {};
+    auto memories = urd::Store<urd::map<std::string, urd::index<MemoryState<IcpFamilyTag>>>, urd::stable_refs> {};
     for (const auto& memory : module.memory_states)
     {
-        auto value = checkout<MemoryState>(builder);
+        auto value = checkout<MemoryState<IcpFamilyTag>>(builder);
         value->name = memory.value.text;
         const auto index = intern(repository, *value).index();
         if (!memories.emplace(memory.value.text, index).second)

@@ -5,12 +5,12 @@
 #include "runir/kr/ps/dl/effect_data.hpp"
 #include "runir/kr/ps/dl/feature_data.hpp"
 #include "runir/kr/ps/feature_data.hpp"
-#include "runir/kr/ps/icp/memory_state_data.hpp"
+#include "runir/kr/ps/memory_state_data.hpp"
 #include "runir/kr/ps/icp/module_data.hpp"
-#include "runir/kr/ps/icp/module_symbol_data.hpp"
+#include "runir/kr/ps/module_symbol_data.hpp"
 #include "runir/kr/ps/icp/program_data.hpp"
 #include "runir/kr/ps/icp/rule_data.hpp"
-#include "runir/kr/ps/icp/rule_variant_data.hpp"
+#include "runir/kr/ps/rule_variant_data.hpp"
 #include "runir/kr/ps/icp/xcondition_data.hpp"
 #include "runir/kr/ps/icp/xeffect_data.hpp"
 
@@ -18,15 +18,6 @@
 #include "runir/kr/ps/canonicalization.hpp"
 
 #include <yggdrasil/semantics/canonicalization.hpp>
-
-namespace runir::kr::ps
-{
-
-inline bool is_canonical(const urd::data<Rule<IcpFamilyTag>>&) noexcept { return true; }
-
-inline void canonicalize(urd::data<Rule<IcpFamilyTag>>&) noexcept {}
-
-}
 
 namespace runir::kr::ps::icp
 {

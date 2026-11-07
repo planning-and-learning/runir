@@ -21,8 +21,8 @@ namespace runir::kr::ps::icp::detail
 template<tyr::TaskKind Kind>
 void build_proof_graph(ProgramProofResults<Kind>& result, const urd::Store<urd::sequence<SearchNode<Kind>>>& nodes, std::span<const Predecessor> predecessors)
 {
-    using VertexLabel = ProgramProofVertexLabel<Kind>;
-    using Edge = std::tuple<graphs::VertexIndex, graphs::VertexIndex, ProgramProofEdgeLabel>;
+    using VertexLabel = ProgramProofVertexLabel<IcpFamilyTag, Kind>;
+    using Edge = std::tuple<graphs::VertexIndex, graphs::VertexIndex, ProgramProofEdgeLabel<IcpFamilyTag>>;
 
     auto vertices = urd::Store<urd::sequence<VertexLabel>> {};
     vertices.reserve(nodes.size());
@@ -41,14 +41,14 @@ void build_proof_graph(ProgramProofResults<Kind>& result, const urd::Store<urd::
     edges.reserve(predecessors.size());
     for (const auto& predecessor : predecessors)
     {
-        auto label = ProgramProofEdgeLabel {};
+        auto label = ProgramProofEdgeLabel<IcpFamilyTag> {};
         if (predecessor.action)
             label.action = *predecessor.action;
         if (predecessor.rule)
             label.rule = *predecessor.rule;
         edges.emplace_back(predecessor.source, predecessor.target, std::move(label));
     }
-    result.graph = std::make_shared<ProgramProofGraph<Kind>>(std::span<const VertexLabel>(vertices), std::span<const Edge>(edges));
+    result.graph = std::make_shared<ProgramProofGraph<IcpFamilyTag, Kind>>(std::span<const VertexLabel>(vertices), std::span<const Edge>(edges));
     result.cycle = graphs::find_cycle(*result.graph);
 }
 

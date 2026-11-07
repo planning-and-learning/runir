@@ -3,10 +3,7 @@
 
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/query_view.hpp"
-#include "runir/kr/dl/semantics/boolean_view.hpp"
-#include "runir/kr/dl/semantics/concept_view.hpp"
-#include "runir/kr/dl/semantics/numerical_view.hpp"
-#include "runir/kr/dl/semantics/role_view.hpp"
+#include "runir/kr/dl/record_view.hpp"
 
 #include <tuple>
 #include <urd/elements/flat.hpp>

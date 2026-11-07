@@ -12,7 +12,7 @@
 #include <ranges>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/incremental/delta.hpp>
-#include <tyr/planning/factory.hpp>
+#include <tyr/planning/state_repository.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
@@ -110,7 +110,7 @@ void check_state_delta(tyr::planning::StateView<Kind> source, tyr::planning::Sta
     delta.template assign<Kind>(target, source);
     expect_atoms(target, source);
     EXPECT_EQ(capacities(), reserved);
-    const auto other_repository = tyr::planning::StateRepositoryFactory<Kind>().create(std::make_shared<tyr::planning::Task<Kind>>(source.get_task()));
+    const auto other_repository = std::make_shared<tyr::planning::StateRepository<Kind>>(std::make_shared<tyr::planning::Task<Kind>>(source.get_task()));
     EXPECT_THROW(delta.template assign<Kind>(source, urd::resolve(source_builder, *other_repository)), std::invalid_argument);
     expect_atoms(target, source);
     delta.template assign<Kind>(source, source);

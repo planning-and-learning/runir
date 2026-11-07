@@ -21,7 +21,6 @@ from pyrunir._pyrunir.kr.ps.base import (
     SketchData as SketchData,
     SketchIndex as SketchIndex,
     SketchProofEdgeLabel as SketchProofEdgeLabel,
-    SketchProofStatus as SketchProofStatus,
     SketchSearchStatistics as SketchSearchStatistics,
     SuccessorExpander as SuccessorExpander,
     find_ground_solution as find_ground_solution,

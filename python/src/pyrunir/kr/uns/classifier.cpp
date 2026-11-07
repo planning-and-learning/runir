@@ -2,13 +2,14 @@
 #include "pyrunir/kr/ps/dl/optimization_bindings.hpp"
 #include "runir/kr/uns/declarations.hpp"
 
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <yggdrasil/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/uns/classifier_view.hpp>
 #include <runir/kr/uns/classify.hpp>
-#include <runir/kr/uns/detail/repository_instantiations.hpp>
+#include <runir/kr/uns/repository.hpp>
 #include <runir/kr/uns/formatter.hpp>
 #include <runir/kr/uns/repository.hpp>
 #include <runir/kr/uns/syntactic_complexity.hpp>
@@ -27,7 +28,7 @@ void bind_classifier(nb::module_& m)
     using View = urd::index_view<Classifier, Repository>;
     urd::python::bind_index<urd::index<Classifier>>(m, "ClassifierIndex");
     auto cls = nb::class_<View>(m, "Classifier")
-                   .def("get_index", &View::index)
+                   .def("index", &View::index)
                    .def("get_features", &View::get_features)
                    .def("get_clauses", &View::get_clauses)
                    .def("get_symbol", &View::get_symbol)

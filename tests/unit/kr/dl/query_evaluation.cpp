@@ -9,14 +9,15 @@
 #include <gtest/gtest.h>
 #include <limits>
 #include <optional>
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/object_rows.hpp>
 #include <runir/kr/dl/query_data.hpp>
 #include <runir/kr/dl/query_view.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/detail/evaluation_helpers.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <yggdrasil/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include "runir/kr/dl/datas.hpp"
@@ -71,7 +72,7 @@ auto query_search_context()
 auto parse_query(const std::string& expression, tyr::formalism::planning::DomainView domain, kr::dl::ConstructorRepository& repository)
 {
     const auto count = kr::ps::ext::dl::parse_numerical("(n_count " + expression + ")", domain, repository);
-    return std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::index_view<kr::dl::Numerical<kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant()).get_arg());
+    return std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::index_view<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant()).get_arg());
 }
 
 template<typename Data, typename Check>
@@ -497,7 +498,7 @@ void check_distance_queries()
     EXPECT_EQ(number("(n_distance " + pair("b") + " " + with_triple("c") + " " + pair("c") + ")"), 1);
 
     // Insertion requires arities k, 2k, k.
-    using Distance = urd::data<kr::dl::Numerical<kr::dl::DistanceTag>>;
+    using Distance = urd::data<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::DistanceTag>>;
     const auto source = kr::ps::ext::dl::parse_concept(R"((c_nominal "a"))", domain, *repository);
     const auto role = kr::ps::ext::dl::parse_role(edge, domain, *repository);
     auto mismatched = Distance(source.index(), role.index(), parse_query(pair("c"), domain, *repository).index());
@@ -525,7 +526,7 @@ void check_cached_queries()
     const auto x = kr::dl::insert(repo, column_data).first.index();
     column_data.name = "renamed";
     const auto renamed_column = kr::dl::insert(repo, column_data).first.index();
-    auto top_data = urd::data<kr::dl::Concept<kr::dl::TopTag>>();
+    auto top_data = urd::data<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::TopTag>>();
     auto top_wrapper = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(kr::dl::insert(repo, top_data).first.index());
     const auto top = kr::dl::insert(repo, top_wrapper).first;
     using Lift = kr::dl::Query<kr::dl::QueryConceptTag>;
@@ -723,7 +724,7 @@ void check_cached_queries()
     value_data.object = search->task->get_domain().get_domain().get_constants()[0].index();
     check_inferred_schema(value_data);
 
-    auto count_data = urd::data<kr::dl::Numerical<kr::dl::CountTag>>(renamed.index());
+    auto count_data = urd::data<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>>(renamed.index());
     auto count_wrapper = urd::data<kr::dl::Constructor<kr::dl::NumericalTag>>(kr::dl::insert(repo, count_data).first.index());
     const auto count = kr::dl::insert(repo, count_wrapper).first;
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(count, context).value(), 3);
@@ -772,7 +773,7 @@ void check_cached_queries()
 
     // Repositories from one factory have distinct identities even when query indices match.
     auto& other_repo = *other_repository;
-    EXPECT_NE(other_repo.get_index(), repo.get_index());
+    EXPECT_NE(other_repo.layer(), repo.layer());
     column_data.name = "unused";
     static_cast<void>(kr::dl::insert(other_repo, column_data));
     column_data.name = "other";
@@ -1098,15 +1099,15 @@ void check_predicate_repository_identity()
         auto context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.get_state(), builder, storage);
         const auto check = [&]<typename Tag>()
         {
-            auto concept_data = urd::data<kr::dl::Concept<Tag>>(predicates[1], true);
+            auto concept_data = urd::data<kr::dl::Concept<kr::dl::SemanticFamily, Tag>>(predicates[1], true);
             auto concept_wrapper = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(kr::dl::insert(*repository, concept_data).first.index());
             EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(kr::dl::insert(*repository, concept_wrapper).first, context).value().count(), size_t(expected));
 
-            auto role_data = urd::data<kr::dl::Role<Tag>>(predicates[2], true);
+            auto role_data = urd::data<kr::dl::Role<kr::dl::SemanticFamily, Tag>>(predicates[2], true);
             auto role_wrapper = urd::data<kr::dl::Constructor<kr::dl::RoleTag>>(kr::dl::insert(*repository, role_data).first.index());
             EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(kr::dl::insert(*repository, role_wrapper).first, context).count(), size_t(expected));
 
-            auto boolean_data = urd::data<kr::dl::Boolean<Tag>>(predicates[0], true);
+            auto boolean_data = urd::data<kr::dl::Boolean<kr::dl::SemanticFamily, Tag>>(predicates[0], true);
             auto boolean_wrapper = urd::data<kr::dl::Constructor<kr::dl::BooleanTag>>(kr::dl::insert(*repository, boolean_data).first.index());
             EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(kr::dl::insert(*repository, boolean_wrapper).first, context).value(), expected);
 

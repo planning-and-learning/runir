@@ -18,6 +18,7 @@ from pyrunir.kr.dl.semantics import (
     LiftedStateEvaluationContext,
     syntactic_complexity as dl_syntactic_complexity,
 )
+from pyrunir.kr.ps import ProofStatus
 from pyrunir.kr.ps.base import (
     GroundSketchProofGraph,
     GroundSketchSearchOptions,
@@ -25,7 +26,6 @@ from pyrunir.kr.ps.base import (
     RepositoryFactory as SketchRepositoryFactory,
     Rule,
     SketchProofEdgeLabel,
-    SketchProofStatus,
     SketchSearchStatistics,
     SuccessorExpander,
     find_ground_solution,
@@ -94,7 +94,7 @@ def _check_successor_callbacks(
     expected = search.successor_generator.get_labeled_successor_nodes(
         node, search.state_repository, search.axiom_evaluator
     )
-    accepted = [step for step in expected if step.node.get_state().get_index() != state.get_index()]
+    accepted = [step for step in expected if step.node.get_state().index() != state.index()]
     assert accepted
     actual: list[tuple[LabeledNode, Rule]] = []
     statistics = SketchSearchStatistics()
@@ -113,7 +113,7 @@ def _check_successor_callbacks(
     )
     assert all(expander.matching_rule(state, step.node.get_state()) == rule for step, rule in actual)
     first_accepted = next(
-        i for i, step in enumerate(expected) if step.node.get_state().get_index() != state.get_index()
+        i for i, step in enumerate(expected) if step.node.get_state().index() != state.index()
     )
     assert expander.for_each_successor(state, statistics, lambda _step, _rule: False, lambda: False) is False
     generated += first_accepted + 1
@@ -225,7 +225,7 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
     assert dl_syntactic_complexity(dl_constructor) == dl_constructor.syntactic_complexity()
     assert feature.syntactic_complexity() == concrete_feature.syntactic_complexity()
     assert syntactic_complexity(sketch) == sketch.syntactic_complexity()
-    assert dl_denotation.get_index() is not None
+    assert dl_denotation.index() is not None
     same_sketch = sketch
     assert sketch == same_sketch
     assert not sketch < same_sketch
@@ -247,7 +247,7 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
     proof_options = GroundSketchSearchOptions()
     proof_options.universal = True
     proof_result = find_ground_solution(task_context, sketch, proof_options)
-    assert proof_result.status == SketchProofStatus.SUCCESS
+    assert proof_result.status == ProofStatus.SUCCESS
     assert proof_result.is_successful()
     assert proof_result.deadend_states == []
     assert proof_result.open_states == []
@@ -267,7 +267,7 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
 
     search_options = GroundSketchSearchOptions()
     search_result = find_ground_solution(task_context, sketch, search_options)
-    assert search_result.status == SketchProofStatus.SUCCESS
+    assert search_result.status == ProofStatus.SUCCESS
     assert search_result.is_successful()
     assert search_result.deadend_states == []
     assert search_result.open_states == []
@@ -291,12 +291,12 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
     lifted_options = LiftedSketchSearchOptions()
     assert lifted_options.classifier is None
     lifted_options.classifier = classifier
-    assert lifted_options.classifier.get_index() == classifier.get_index()
+    assert lifted_options.classifier.index() == classifier.index()
 
     del classifier, classifier_repository, classifier_dl_repository
     gc.collect()
     classified_result = find_ground_solution(task_context, sketch, classified_options)
-    assert classified_result.status == SketchProofStatus.FAILURE
+    assert classified_result.status == ProofStatus.FAILURE
     assert classified_result.graph.get_num_vertices() == 1
     assert classified_result.graph.get_num_edges() == 0
     assert len(classified_result.deadend_states) == 1

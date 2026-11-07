@@ -32,43 +32,24 @@ add_runir_test(runir_graphs_static_graph unit/graphs/static_graph.cpp runir::gra
 
 set(RUNIR_KR_DL_TYPE_TEST_SOURCES
     unit/kr/dl/argument.cpp
-    unit/kr/dl/boolean.cpp
-    unit/kr/dl/concept.cpp
     unit/kr/dl/constructor.cpp
+    unit/kr/dl/constructors.cpp
     unit/kr/dl/family_traits.cpp
-    unit/kr/dl/numerical.cpp
     unit/kr/dl/register.cpp
-    unit/kr/dl/role.cpp
     unit/kr/dl/semantics/denotation.cpp
+    unit/kr/dl/grammar/derivation_rule.cpp
+    unit/kr/dl/grammar/grammar.cpp
+    unit/kr/dl/grammar/non_terminal.cpp
+    unit/kr/dl/cnf_grammar/derivation_rule.cpp
+    unit/kr/dl/cnf_grammar/grammar.cpp
+    unit/kr/dl/cnf_grammar/non_terminal.cpp
+    unit/kr/dl/cnf_grammar/substitution_rule.cpp
 )
 add_runir_test(runir_kr_dl_types "${RUNIR_KR_DL_TYPE_TEST_SOURCES}" runir::kr)
 add_runir_test(runir_kr_dl_delta unit/kr/dl/semantics/delta.cpp runir::kr runir_test_planning_fixtures)
 add_runir_test(runir_kr_dl_incremental_query unit/kr/dl/semantics/incremental_query.cpp runir::kr runir_test_planning_fixtures)
 add_runir_test(runir_kr_dl_incremental_evaluation unit/kr/dl/semantics/incremental_evaluation.cpp runir::kr runir_test_planning_fixtures)
 add_runir_test(runir_kr_dl_incremental_set_operations unit/kr/dl/semantics/incremental_set_operations.cpp runir::kr)
-
-set(RUNIR_KR_DL_GRAMMAR_TYPE_TEST_SOURCES
-    unit/kr/dl/grammar/boolean.cpp
-    unit/kr/dl/grammar/concept.cpp
-    unit/kr/dl/grammar/derivation_rule.cpp
-    unit/kr/dl/grammar/grammar.cpp
-    unit/kr/dl/grammar/non_terminal.cpp
-    unit/kr/dl/grammar/numerical.cpp
-    unit/kr/dl/grammar/role.cpp
-)
-add_runir_test(runir_kr_dl_grammar_types "${RUNIR_KR_DL_GRAMMAR_TYPE_TEST_SOURCES}" runir::kr)
-
-set(RUNIR_KR_DL_CNF_GRAMMAR_TYPE_TEST_SOURCES
-    unit/kr/dl/cnf_grammar/boolean.cpp
-    unit/kr/dl/cnf_grammar/concept.cpp
-    unit/kr/dl/cnf_grammar/derivation_rule.cpp
-    unit/kr/dl/cnf_grammar/grammar.cpp
-    unit/kr/dl/cnf_grammar/non_terminal.cpp
-    unit/kr/dl/cnf_grammar/numerical.cpp
-    unit/kr/dl/cnf_grammar/role.cpp
-    unit/kr/dl/cnf_grammar/substitution_rule.cpp
-)
-add_runir_test(runir_kr_dl_cnf_grammar_types "${RUNIR_KR_DL_CNF_GRAMMAR_TYPE_TEST_SOURCES}" runir::kr)
 
 set(RUNIR_KR_PS_TYPE_TEST_SOURCES
     unit/kr/ps/family_traits.cpp

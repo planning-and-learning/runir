@@ -1,5 +1,6 @@
 #include "runir/kr/dl/semantics/detail/evaluation_impl.hpp"
-#include "runir/kr/dl/semantics/detail/repository_instantiations.hpp"
+#include "runir/kr/dl/semantics/denotation_repository.hpp"
+#include <yggdrasil/database/syntax/query_repository.hpp>
 #include "runir/kr/dl/semantics/incremental/detail/evaluation_impl.hpp"
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/declarations.hpp"

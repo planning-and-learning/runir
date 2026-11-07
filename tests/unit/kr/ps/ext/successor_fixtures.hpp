@@ -28,7 +28,7 @@ auto collect_steps(
     bool first_only = false,
     const std::function<bool()>& stop = [] { return false; })
 {
-    using Step = kr::ps::ext::detail::ProgramStep<Kind>;
+    using Step = kr::ps::ProgramStep<kr::ExtFamilyTag, Kind>;
     using Expansion = std::variant<Step, kr::ps::ext::detail::Choice<kr::dl::ConceptTag>, kr::ps::ext::detail::Choice<kr::dl::RoleTag>>;
     auto statistics = kr::ps::ext::ProgramSearchStatistics {};
     auto expansions = urd::Store<urd::sequence<Expansion>> {};

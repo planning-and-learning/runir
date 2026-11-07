@@ -2,7 +2,9 @@
 #define RUNIR_KR_PS_ICP_EXECUTION_VIEW_HPP_
 
 #include "runir/kr/dl/semantics/register_values_view.hpp"
-#include "runir/kr/ps/icp/execution_repository.hpp"
+#include "runir/kr/ps/execution_repository.hpp"
+#include "runir/kr/ps/icp/execution_data.hpp"
+#include "runir/kr/ps/icp/repository.hpp"
 
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/declarations.hpp>

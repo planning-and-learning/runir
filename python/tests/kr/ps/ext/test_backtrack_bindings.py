@@ -38,7 +38,7 @@ def test_backtrack_rule_construct_format_and_serialize(
     variant = module.get_memory_transitions()[0][0]
     rule = variant.get_variant()
     assert isinstance(rule, ext.BacktrackRule)
-    assert isinstance(rule.get_index(), ext.BacktrackRuleIndex)
+    assert isinstance(rule.index(), ext.BacktrackRuleIndex)
     assert rule.get_source().get_name() == "m"
     assert len(rule.get_conditions()) == bool(conditions)
     assert not hasattr(rule, "get_target")
@@ -48,8 +48,8 @@ def test_backtrack_rule_construct_format_and_serialize(
     assert str(parse_module(str(module), gripper_planning_domain, repository)) == str(module)
 
     data = ext.BacktrackRuleData()
-    data.source = rule.get_source().get_index()
-    data.conditions = [condition.get_index() for condition in rule.get_conditions()]
+    data.source = rule.get_source().index()
+    data.conditions = [condition.index() for condition in rule.get_conditions()]
     assert not hasattr(data, "target")
     assert not hasattr(data, "effects")
     assert repository.insert(data)[0] == rule

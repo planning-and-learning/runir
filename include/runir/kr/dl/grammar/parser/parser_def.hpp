@@ -21,7 +21,7 @@ using boost::spirit::x3::ascii::alnum;
 using boost::spirit::x3::ascii::alpha;
 using boost::spirit::x3::ascii::char_;
 using boost::spirit::x3::ascii::digit;
-using runir::kr::parser::keyword;
+using ygg::diagnostics::keyword;
 using ygg::diagnostics::context;
 
 template<runir::kr::dl::CategoryTag Category, typename Tag>

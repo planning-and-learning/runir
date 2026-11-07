@@ -41,24 +41,20 @@ void canonicalize_commutative_binary(urd::data<T>& data) noexcept
         std::swap(data.lhs, data.rhs);
 }
 
-template<typename Tag>
-    requires ConceptConstructorTag<Tag>
-bool is_canonical(const urd::data<Concept<Tag>>&) noexcept
+template<typename F, typename Tag>
+bool is_canonical(const urd::data<Concept<F, Tag>>&) noexcept
 { return true; }
 
-template<typename Tag>
-    requires RoleConstructorTag<Tag>
-bool is_canonical(const urd::data<Role<Tag>>&) noexcept
+template<typename F, typename Tag>
+bool is_canonical(const urd::data<Role<F, Tag>>&) noexcept
 { return true; }
 
-template<typename Tag>
-    requires BooleanConstructorTag<Tag>
-bool is_canonical(const urd::data<Boolean<Tag>>&) noexcept
+template<typename F, typename Tag>
+bool is_canonical(const urd::data<Boolean<F, Tag>>&) noexcept
 { return true; }
 
-template<typename Tag>
-    requires NumericalConstructorTag<Tag>
-bool is_canonical(const urd::data<Numerical<Tag>>&) noexcept
+template<typename F, typename Tag>
+bool is_canonical(const urd::data<Numerical<F, Tag>>&) noexcept
 { return true; }
 
 template<CategoryTag Category>
@@ -73,30 +69,26 @@ template<ConceptOrRoleTag Category>
 bool is_canonical(const urd::data<Register<Category>>&) noexcept
 { return true; }
 
-template<typename Tag>
-    requires ConceptConstructorTag<Tag>
-void canonicalize(urd::data<Concept<Tag>>&) noexcept
+template<typename F, typename Tag>
+void canonicalize(urd::data<Concept<F, Tag>>&) noexcept
 {
     // Trivially canonical
 }
 
-template<typename Tag>
-    requires RoleConstructorTag<Tag>
-void canonicalize(urd::data<Role<Tag>>&) noexcept
+template<typename F, typename Tag>
+void canonicalize(urd::data<Role<F, Tag>>&) noexcept
 {
     // Trivially canonical
 }
 
-template<typename Tag>
-    requires BooleanConstructorTag<Tag>
-void canonicalize(urd::data<Boolean<Tag>>&) noexcept
+template<typename F, typename Tag>
+void canonicalize(urd::data<Boolean<F, Tag>>&) noexcept
 {
     // Trivially canonical
 }
 
-template<typename Tag>
-    requires NumericalConstructorTag<Tag>
-void canonicalize(urd::data<Numerical<Tag>>&) noexcept
+template<typename F, typename Tag>
+void canonicalize(urd::data<Numerical<F, Tag>>&) noexcept
 {
     // Trivially canonical
 }
@@ -119,25 +111,45 @@ void canonicalize(urd::data<Register<Category>>&) noexcept
     // Trivially canonical
 }
 
-inline bool is_canonical(const urd::data<Concept<IntersectionTag>>& data) noexcept { return data.lhs <= data.rhs; }
+template<typename F>
+bool is_canonical(const urd::data<Concept<F, IntersectionTag>>& data) noexcept
+{ return data.lhs <= data.rhs; }
 
-inline bool is_canonical(const urd::data<Concept<UnionTag>>& data) noexcept { return data.lhs <= data.rhs; }
+template<typename F>
+bool is_canonical(const urd::data<Concept<F, UnionTag>>& data) noexcept
+{ return data.lhs <= data.rhs; }
 
-inline bool is_canonical(const urd::data<Concept<AgreementTag>>& data) noexcept { return data.lhs <= data.rhs; }
+template<typename F>
+bool is_canonical(const urd::data<Concept<F, AgreementTag>>& data) noexcept
+{ return data.lhs <= data.rhs; }
 
-inline bool is_canonical(const urd::data<Role<IntersectionTag>>& data) noexcept { return data.lhs <= data.rhs; }
+template<typename F>
+bool is_canonical(const urd::data<Role<F, IntersectionTag>>& data) noexcept
+{ return data.lhs <= data.rhs; }
 
-inline bool is_canonical(const urd::data<Role<UnionTag>>& data) noexcept { return data.lhs <= data.rhs; }
+template<typename F>
+bool is_canonical(const urd::data<Role<F, UnionTag>>& data) noexcept
+{ return data.lhs <= data.rhs; }
 
-inline void canonicalize(urd::data<Concept<IntersectionTag>>& data) noexcept { canonicalize_commutative_binary(data); }
+template<typename F>
+void canonicalize(urd::data<Concept<F, IntersectionTag>>& data) noexcept
+{ canonicalize_commutative_binary(data); }
 
-inline void canonicalize(urd::data<Concept<UnionTag>>& data) noexcept { canonicalize_commutative_binary(data); }
+template<typename F>
+void canonicalize(urd::data<Concept<F, UnionTag>>& data) noexcept
+{ canonicalize_commutative_binary(data); }
 
-inline void canonicalize(urd::data<Concept<AgreementTag>>& data) noexcept { canonicalize_commutative_binary(data); }
+template<typename F>
+void canonicalize(urd::data<Concept<F, AgreementTag>>& data) noexcept
+{ canonicalize_commutative_binary(data); }
 
-inline void canonicalize(urd::data<Role<IntersectionTag>>& data) noexcept { canonicalize_commutative_binary(data); }
+template<typename F>
+void canonicalize(urd::data<Role<F, IntersectionTag>>& data) noexcept
+{ canonicalize_commutative_binary(data); }
 
-inline void canonicalize(urd::data<Role<UnionTag>>& data) noexcept { canonicalize_commutative_binary(data); }
+template<typename F>
+void canonicalize(urd::data<Role<F, UnionTag>>& data) noexcept
+{ canonicalize_commutative_binary(data); }
 
 }  // namespace runir
 

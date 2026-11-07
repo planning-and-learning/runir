@@ -12,7 +12,6 @@ using RepositoryBinding = nb::class_<Repository>;
 
 void bind_rule(nb::module_& m, RepositoryBinding& repository);
 void bind_sketch(nb::module_& m, RepositoryBinding& repository);
-void bind_repository(nb::module_& m, RepositoryBinding& repository);
 void bind_sketch_executor(nb::module_& m);
 void bind_syntactic_complexity(nb::module_& m);
 

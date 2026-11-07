@@ -4,7 +4,7 @@
 #include "runir/datasets/state_graph.hpp"
 #include "runir/kr/ps/ext/execution_storage.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
-#include "runir/kr/ps/ext/rule_variant_view.hpp"
+#include "runir/kr/ps/rule_variant_view.hpp"
 
 #include <cstddef>
 #include <optional>

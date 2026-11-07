@@ -18,11 +18,11 @@ namespace runir::kr::ps::ext::dl
 ModuleView ModuleFactory::create_empty(Repository& repository)
 {
     auto builder = runir::kr::ps::ext::Builder {};
-    auto entry_data = runir::kr::ps::ext::checkout<MemoryState>(builder);
+    auto entry_data = runir::kr::ps::ext::checkout<MemoryState<ExtFamilyTag>>(builder);
     entry_data->name = "m0";
     const auto entry = runir::kr::ps::ext::insert(repository, *entry_data).first;
 
-    auto symbol_data = runir::kr::ps::ext::checkout<ModuleSymbol>(builder);
+    auto symbol_data = runir::kr::ps::ext::checkout<ModuleSymbol<ExtFamilyTag>>(builder);
     symbol_data->name = "empty";
     const auto symbol = runir::kr::ps::ext::insert(repository, *symbol_data).first;
     auto data = runir::kr::ps::ext::checkout<Module>(builder);

@@ -33,7 +33,7 @@ void bind_register_view(nb::module_& m, const char* name)
 {
     using Type = Register<Category>;
     using View = urd::index_view<Type, ConstructorRepository>;
-    auto view = nb::class_<View>(m, name).def("get_index", &View::index).def("get_name", &View::get_name).def("get_identifier", &View::get_identifier);
+    auto view = nb::class_<View>(m, name).def("index", &View::index).def("get_name", &View::get_name).def("get_identifier", &View::get_identifier);
     ygg::add_print(view);
     urd::python::add_comparison(view);
     urd::python::add_hash(view);

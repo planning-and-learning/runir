@@ -120,7 +120,7 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
     relations = task.dl_denotation_repository.get_relation_repository()
     assert isinstance(relations, database.RelationRepository)
     assert isinstance(retained_query, database.RelationView)
-    assert isinstance(retained_query.get_index(), database.RelationIndex)
+    assert isinstance(retained_query.index(), database.RelationIndex)
     assert all(isinstance(row, database.RelationRow) for row in retained_query)
     assert all(
         isinstance(repository.get_object(ObjectIndex(object_)), Object) for object_ in _row_values(retained_query)
@@ -167,8 +167,8 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
     assert hasattr(semantics.QueryAtomicGoalFluent, "get_polarity")
     assert hasattr(semantics.QueryAtomicGoalFluentData(), "polarity")
     data = semantics.QueryData()
-    data.variant = atom.get_index()
-    assert data.variant == atom.get_index()
+    data.variant = atom.index()
+    assert data.variant == atom.index()
     assert [column.get_name() for column in atom.get_columns()] == ["ball", "room"]
     assert list(semantics.QueryProject.Fields.__members__) == ["columns", "arg"]
     assert list(semantics.QueryColumn.Fields.__members__) == ["name"]
@@ -401,22 +401,22 @@ def test_query_column_retains_owner_after_list_and_repository_scope(
         for name in ("left", "right"):
             data = semantics.QueryColumnData()
             data.name = name
-            column_indices.append(repository.insert(data)[0].get_index())
+            column_indices.append(repository.insert(data)[0].index())
 
         role_data = semantics.RoleData()
-        role_data.variant = repository.insert(semantics.RoleUniversalData())[0].get_index()
+        role_data.variant = repository.insert(semantics.RoleUniversalData())[0].index()
         role = repository.insert(role_data)[0]
         concrete_data = semantics.QueryRoleData()
-        concrete_data.arg = role.get_index()
+        concrete_data.arg = role.index()
         concrete_data.columns = column_indices
         concrete = repository.insert(concrete_data)[0]
         query_data = semantics.QueryData()
-        query_data.variant = concrete.get_index()
+        query_data.variant = concrete.index()
         query = repository.insert(query_data)[0]
 
         if owner_kind in ("concept", "role"):
             data = semantics.ConceptProjectData() if owner_kind == "concept" else semantics.RoleProjectData()
-            data.arg = query.get_index()
+            data.arg = query.index()
             data.columns = column_indices[1:] if owner_kind == "concept" else column_indices[::-1]
             owner = repository.insert(data)[0]
             expected = ["right"] if owner_kind == "concept" else ["right", "left"]
@@ -458,18 +458,18 @@ def test_native_ext_query_construction_derives_schema_and_evaluates(
     original = query_arg.get_variant()
     assert isinstance(original, semantics.QueryJoin)
     join_data = semantics.QueryJoinData()
-    join_data.lhs = original.get_rhs().get_index()
-    join_data.rhs = original.get_lhs().get_index()
+    join_data.lhs = original.get_rhs().index()
+    join_data.rhs = original.get_lhs().index()
     joined = repository.insert(join_data)[0]
     assert [column.get_name() for column in joined.get_columns()] == ["room", "ball"]
     query_data = semantics.QueryData()
-    query_data.variant = joined.get_index()
+    query_data.variant = joined.index()
     query = repository.insert(query_data)[0]
     count_data = semantics.NumericalCountData()
-    count_data.arg = query.get_index()
+    count_data.arg = query.index()
     count = repository.insert(count_data)[0]
     numerical_data = semantics.NumericalData()
-    numerical_data.variant = count.get_index()
+    numerical_data.variant = count.index()
     rewritten = repository.insert(numerical_data)[0]
 
     search = ground_gripper_search_context

@@ -15,7 +15,7 @@ namespace
 
 using boost::spirit::x3::attr;
 using boost::spirit::x3::lit;
-using runir::kr::parser::keyword;
+using ygg::diagnostics::keyword;
 using runir::kr::ps::ext::dl::parser::action_section;
 using runir::kr::ps::ext::dl::parser::concept_feature_section_def;
 using runir::kr::ps::ext::dl::parser::concept_load_rule;

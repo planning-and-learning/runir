@@ -1,8 +1,8 @@
 #include "runir/kr/ps/ext/declarations.hpp"
 
 #include <concepts>
-#include <runir/kr/ps/ext/module_symbol_data.hpp>
-#include <runir/kr/ps/ext/module_symbol_view.hpp>
+#include <runir/kr/ps/module_symbol_data.hpp>
+#include <runir/kr/ps/module_symbol_view.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/core/config.hpp>
@@ -10,7 +10,7 @@
 namespace runir::tests
 {
 
-using Entity = kr::ps::ext::ModuleSymbol;
+using Entity = kr::ps::ModuleSymbol<kr::ExtFamilyTag>;
 using Index = urd::index<Entity>;
 using Data = urd::data<Entity>;
 using View = urd::index_view<Entity, kr::ps::ext::Repository>;

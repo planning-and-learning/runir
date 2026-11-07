@@ -35,7 +35,6 @@ from pyrunir._pyrunir.kr.ps.ext.dl import (
     GreaterZeroNumericalConditionData as GreaterZeroNumericalConditionData,
     GreaterZeroNumericalConditionIndex as GreaterZeroNumericalConditionIndex,
     IncompleteBlockingReason as IncompleteBlockingReason,
-    IncompleteStructuralTerminationStatus as IncompleteStructuralTerminationStatus,
     IncompleteSurvivingRule as IncompleteSurvivingRule,
     IncreasesNumericalEffect as IncreasesNumericalEffect,
     IncreasesNumericalEffectData as IncreasesNumericalEffectData,

@@ -33,7 +33,7 @@ void bind_indexical_type(nb::module_& m, RepositoryBinding& repository, const ch
                     .def_rw("feature", &Data::feature);
     urd::python::add_comparison(data);
     auto view = nb::class_<View>(m, name)
-                    .def("get_index", &View::index)
+                    .def("index", &View::index)
                     .def("get_operation", &View::get_operation)
                     .def("get_object_reference", &View::get_object_reference)
                     .def("get_concept_feature", &View::get_concept_feature, nb::keep_alive<0, 1>());

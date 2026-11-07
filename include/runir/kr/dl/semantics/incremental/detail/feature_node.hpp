@@ -134,8 +134,8 @@ private:
     Evaluators prepare_distance(NumericalView<DistanceTag> expression, QueryView<> edges, GraphBuilder<Kind>& graph)
     { return QueryEdgeDistanceEvaluator<Kind>(expression, edges, graph, m_dependencies); }
 
-    template<template<typename> typename Expression, typename Tag, typename C>
-    Evaluators prepare(urd::index_view<Expression<Tag>, C> expression, GraphBuilder<Kind>& graph)
+    template<template<typename, typename> typename Expression, typename Tag, typename C>
+    Evaluators prepare(urd::index_view<Expression<SemanticFamily, Tag>, C> expression, GraphBuilder<Kind>& graph)
     {
         if constexpr (std::same_as<Tag, AtomicStateTag<tyr::formalism::FluentTag>>)
             return AtomicEvaluator<Kind, Category, tyr::formalism::FluentTag>(expression.get_predicate(), expression.get_polarity());

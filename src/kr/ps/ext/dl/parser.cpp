@@ -8,14 +8,14 @@
 #include "kr/parser/observations.hpp"
 #include "kr/parser/resolution.hpp"
 #include "runir/kr/dl/canonicalization.hpp"
-#include "runir/kr/dl/detail/repository_instantiations.hpp"
+#include "runir/kr/dl/repository.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/grammar/parser/parser.hpp"
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/errors.hpp"
 #include "runir/kr/parser/diagnostics.hpp"
 #include "runir/kr/ps/ext/canonicalization.hpp"
-#include "runir/kr/ps/ext/detail/repository_instantiations.hpp"
+#include "runir/kr/ps/ext/repository.hpp"
 #include "runir/kr/ps/ext/dl/parser/parser.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
 
@@ -472,7 +472,7 @@ auto intern_rule_variant(Repository& repository, runir::kr::ps::ext::Builder& bu
     return intern(repository, *variant_data);
 }
 
-auto require_memory_state(const urd::Store<urd::map<std::string, urd::index<MemoryState>>, urd::stable_refs>& memory_states,
+auto require_memory_state(const urd::Store<urd::map<std::string, urd::index<MemoryState<ExtFamilyTag>>>, urd::stable_refs>& memory_states,
                           const ast::Identifier& name,
                           const runir::kr::parser::DiagnosticContext& diagnostics)
 {
@@ -491,10 +491,10 @@ auto require_register(const RegisterMap& registers, const ast::Identifier& name,
     return it->second;
 }
 
-auto find_module(const urd::Store<urd::map<std::string, urd::index<ModuleSymbol>>, urd::stable_refs>& modules, const std::string& name)
+auto find_module(const urd::Store<urd::map<std::string, urd::index<ModuleSymbol<ExtFamilyTag>>>, urd::stable_refs>& modules, const std::string& name)
 {
     const auto it = modules.find(name);
-    return it == modules.end() ? std::optional<urd::index<ModuleSymbol>> {} : std::optional(it->second);
+    return it == modules.end() ? std::optional<urd::index<ModuleSymbol<ExtFamilyTag>>> {} : std::optional(it->second);
 }
 
 auto find_action(tyr::formalism::planning::DomainView domain, const std::string& name)
@@ -520,8 +520,8 @@ auto parse_binding_rule(
     Repository& repository,
     runir::kr::ps::ext::Builder& builder,
     const RuleAst& rule,
-    urd::index<MemoryState> source,
-    urd::index<MemoryState> target,
+    urd::index<MemoryState<ExtFamilyTag>> source,
+    urd::index<MemoryState<ExtFamilyTag>> target,
     const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>, urd::stable_refs>& concept_features,
     const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>, urd::stable_refs>& role_features,
     const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs>& boolean_features,
@@ -566,10 +566,10 @@ auto parse_rule(
     Repository& repository,
     runir::kr::ps::ext::Builder& builder,
     const ast::Rule& rule,
-    urd::index<MemoryState> source,
-    std::optional<urd::index<MemoryState>> target,
+    urd::index<MemoryState<ExtFamilyTag>> source,
+    std::optional<urd::index<MemoryState<ExtFamilyTag>>> target,
     tyr::formalism::planning::DomainView domain,
-    const urd::Store<urd::map<std::string, urd::index<ModuleSymbol>>, urd::stable_refs>& modules,
+    const urd::Store<urd::map<std::string, urd::index<ModuleSymbol<ExtFamilyTag>>>, urd::stable_refs>& modules,
     const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>, urd::stable_refs>& concept_features,
     const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>, urd::stable_refs>& role_features,
     const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs>& boolean_features,
@@ -651,7 +651,7 @@ auto parse_rule(
                     data->callee = *callee;
                 else
                 {
-                    auto symbol_data = runir::kr::ps::ext::checkout<ModuleSymbol>(builder);
+                    auto symbol_data = runir::kr::ps::ext::checkout<ModuleSymbol<ExtFamilyTag>>(builder);
                     symbol_data->name = concrete.callee.text;
                     data->callee = intern(repository, *symbol_data).index();
                 }
@@ -841,15 +841,15 @@ ModuleView lower_module(const ast::Module& ast,
                         Repository& repository,
                         Builders& builders,
                         runir::kr::parser::DiagnosticContext& diagnostics,
-                        const urd::Store<urd::map<std::string, urd::index<ModuleSymbol>>, urd::stable_refs>& module_symbols)
+                        const urd::Store<urd::map<std::string, urd::index<ModuleSymbol<ExtFamilyTag>>>, urd::stable_refs>& module_symbols)
 {
     validate_module_declarations(ast, diagnostics);
     auto references = ModuleReferences {};
 
-    auto memory_states = urd::Store<urd::map<std::string, urd::index<MemoryState>>, urd::stable_refs> {};
+    auto memory_states = urd::Store<urd::map<std::string, urd::index<MemoryState<ExtFamilyTag>>>, urd::stable_refs> {};
     for (const auto& state : ast.memory_states)
     {
-        auto state_data = runir::kr::ps::ext::checkout<MemoryState>(*builders.ps);
+        auto state_data = runir::kr::ps::ext::checkout<MemoryState<ExtFamilyTag>>(*builders.ps);
         state_data->name = state.value.text;
         if (!memory_states.emplace(state.value.text, intern(repository, *state_data).index()).second)
             diagnostics.throw_at(state.value, runir::kr::DuplicateDefinitionError("memory state", state.value.text));
@@ -1075,9 +1075,9 @@ ModuleView parse_module(const std::string& description, tyr::formalism::planning
     auto dl_builder = runir::kr::dl::Builder {};
     auto ps_builder = runir::kr::ps::ext::Builder {};
     auto builders = Builders { &dl_builder, &ps_builder };
-    auto symbol_data = runir::kr::ps::ext::checkout<ModuleSymbol>(ps_builder);
+    auto symbol_data = runir::kr::ps::ext::checkout<ModuleSymbol<ExtFamilyTag>>(ps_builder);
     symbol_data->name = ast.name.text;
-    auto module_symbols = urd::Store<urd::map<std::string, urd::index<ModuleSymbol>>, urd::stable_refs> { { ast.name.text, intern(repository, *symbol_data).index() } };
+    auto module_symbols = urd::Store<urd::map<std::string, urd::index<ModuleSymbol<ExtFamilyTag>>>, urd::stable_refs> { { ast.name.text, intern(repository, *symbol_data).index() } };
     return lower_module(ast, domain, repository, builders, diagnostics, module_symbols);
 }
 
@@ -1094,10 +1094,10 @@ ProgramView parse_program(const std::string& description, tyr::formalism::planni
     auto dl_builder = runir::kr::dl::Builder {};
     auto ps_builder = runir::kr::ps::ext::Builder {};
     auto builders = Builders { &dl_builder, &ps_builder };
-    auto module_symbols = urd::Store<urd::map<std::string, urd::index<ModuleSymbol>>, urd::stable_refs> {};
+    auto module_symbols = urd::Store<urd::map<std::string, urd::index<ModuleSymbol<ExtFamilyTag>>>, urd::stable_refs> {};
     for (const auto& module_ : ast.modules)
     {
-        auto symbol_data = runir::kr::ps::ext::checkout<ModuleSymbol>(ps_builder);
+        auto symbol_data = runir::kr::ps::ext::checkout<ModuleSymbol<ExtFamilyTag>>(ps_builder);
         symbol_data->name = module_.name.text;
         module_symbols.emplace(module_.name.text, intern(repository, *symbol_data).index());
     }
@@ -1139,10 +1139,10 @@ urd::Store<urd::sequence<ModuleView>> parse_modules(const urd::Store<urd::sequen
     auto builders = Builders { &dl_builder, &ps_builder };
     auto result = urd::Store<urd::sequence<ModuleView>> {};
     result.reserve(asts.size());
-    auto module_symbols = urd::Store<urd::map<std::string, urd::index<ModuleSymbol>>, urd::stable_refs> {};
+    auto module_symbols = urd::Store<urd::map<std::string, urd::index<ModuleSymbol<ExtFamilyTag>>>, urd::stable_refs> {};
     for (const auto& ast : asts)
     {
-        auto symbol_data = runir::kr::ps::ext::checkout<ModuleSymbol>(ps_builder);
+        auto symbol_data = runir::kr::ps::ext::checkout<ModuleSymbol<ExtFamilyTag>>(ps_builder);
         symbol_data->name = ast.name.text;
         module_symbols.emplace(ast.name.text, intern(repository, *symbol_data).index());
     }

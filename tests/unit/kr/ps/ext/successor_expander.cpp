@@ -11,14 +11,16 @@
 #include <filesystem>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
-#include <runir/kr/ps/ext/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <yggdrasil/database/syntax/query_repository.hpp>
+#include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/detail/rule_evaluation/context.hpp>
 #include <runir/kr/ps/ext/detail/successor_expander_impl.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
-#include <runir/kr/ps/ext/execution_repository.hpp>
+#include <runir/kr/ps/execution_repository.hpp>
+#include <runir/kr/ps/ext/execution_data.hpp>
 #include <runir/kr/ps/ext/execution_storage.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/program_executor.hpp>
@@ -93,8 +95,8 @@ static_assert(!kr::ps::ext::ExecutionStateViewConcept<int, kr::ps::ext::Interned
 static_assert(!kr::ps::ext::ExecutionStateViewConcept<int, kr::ps::ext::TransientExecutionStorage<tyr::GroundTag>>);
 static_assert(!kr::ps::ext::ExecutionStateViewConcept<int, kr::ps::ext::TransientExecutionStorage<tyr::LiftedTag>>);
 
-static_assert(kr::ps::EmitConcept<bool (*)(kr::ps::ext::detail::ProgramStep<tyr::GroundTag>), kr::ps::ext::detail::ProgramStep<tyr::GroundTag>>);
-static_assert(!kr::ps::EmitConcept<void (*)(kr::ps::ext::detail::ProgramStep<tyr::GroundTag>), kr::ps::ext::detail::ProgramStep<tyr::GroundTag>>);
+static_assert(kr::ps::EmitConcept<bool (*)(kr::ps::ProgramStep<kr::ExtFamilyTag, tyr::GroundTag>), kr::ps::ProgramStep<kr::ExtFamilyTag, tyr::GroundTag>>);
+static_assert(!kr::ps::EmitConcept<void (*)(kr::ps::ProgramStep<kr::ExtFamilyTag, tyr::GroundTag>), kr::ps::ProgramStep<kr::ExtFamilyTag, tyr::GroundTag>>);
 static_assert(kr::ps::StopConcept<bool (*)()>);
 static_assert(!kr::ps::StopConcept<void (*)()>);
 
@@ -108,7 +110,7 @@ static_assert(
                                                       Storage,
                                                       tyr::planning::StateView<tyr::GroundTag>,
                                                       kr::dl::semantics::FullEvaluationPolicy<tyr::GroundTag>>;
-        using Step = kr::ps::ext::detail::ProgramStep<tyr::GroundTag, Storage>;
+        using Step = kr::ps::ProgramStep<kr::ExtFamilyTag, tyr::GroundTag, kr::ps::ext::StorageStoredState<Storage>>;
         return !requires(const kr::ps::ext::detail::ActionRuleEvaluator<tyr::GroundTag>& evaluator,
                          Context& context,
                          State state,
@@ -228,7 +230,7 @@ void expect_module_return_preserves_callee_planning_state()
         EXPECT_EQ(move.planning_successor->node.get_state(), moved.get_state().pack());
         const auto returns = collect_steps(expander, moved);
         ASSERT_EQ(returns.size(), 1);
-        EXPECT_EQ(returns.front().status, kr::ps::ext::detail::ProgramOutcome::RESTORED_CALLER);
+        EXPECT_EQ(returns.front().status, kr::ps::ProgramOutcome::RESTORED_CALLER);
         EXPECT_FALSE(returns.front().planning_successor);
         const auto returned = returns.front().get_target();
         EXPECT_EQ(returned.get_state().index(), moved.get_state().index());
@@ -240,7 +242,7 @@ void expect_module_return_preserves_callee_planning_state()
 
         const auto outer_returns = collect_steps(expander, returned);
         ASSERT_EQ(outer_returns.size(), 1);
-        EXPECT_EQ(outer_returns.front().status, kr::ps::ext::detail::ProgramOutcome::RESTORED_CALLER);
+        EXPECT_EQ(outer_returns.front().status, kr::ps::ProgramOutcome::RESTORED_CALLER);
         EXPECT_FALSE(outer_returns.front().planning_successor);
         const auto caller = outer_returns.front().get_target();
         EXPECT_EQ(caller.get_state().index(), moved.get_state().index());
@@ -390,7 +392,7 @@ void expect_binding_effects_and_empty_choices()
                     ASSERT_EQ(steps.size(), scenario == 0 ? 2 : 1);
                     for (const auto& step : steps)
                     {
-                        EXPECT_EQ(step.status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
+                        EXPECT_EQ(step.status, kr::ps::ProgramOutcome::APPLIED);
                         const auto target = step.get_target();
                         EXPECT_EQ(target.get_state().index(), initial.get_state().index());
                         EXPECT_EQ(target.get_module_state().get_memory_state().get_name(), "target");
@@ -423,14 +425,14 @@ void expect_binding_effects_and_empty_choices()
                 else if (choose && scenario != 4)
                 {
                     ASSERT_EQ(steps.size(), 1);
-                    EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::FAILURE);
+                    EXPECT_EQ(steps.front().status, kr::ps::ProgramOutcome::FAILURE);
                     EXPECT_EQ(steps.front().get_target().index(), initial.index());
                     ASSERT_TRUE(steps.front().rule);
                 }
                 else
                 {
                     ASSERT_EQ(steps.size(), 1);
-                    EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::NO_APPLICABLE_ACTION);
+                    EXPECT_EQ(steps.front().status, kr::ps::ProgramOutcome::NO_APPLICABLE_ACTION);
                 }
                 for (const auto value : initial.get_module_state().get_registers().template values<kr::dl::ConceptTag>())
                     EXPECT_FALSE(value);
@@ -517,7 +519,7 @@ void expect_lazy_do_successors()
             auto moves = static_cast<std::size_t>(0);
             for (const auto& step : steps)
             {
-                EXPECT_EQ(step.status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
+                EXPECT_EQ(step.status, kr::ps::ProgramOutcome::APPLIED);
                 ASSERT_TRUE(step.planning_successor.has_value());
                 const auto action = step.planning_successor->label;
                 if (action.get_relation().get_name() == "pick")
@@ -537,7 +539,7 @@ void expect_lazy_do_successors()
         else
         {
             ASSERT_EQ(steps.size(), 1);
-            EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::NO_APPLICABLE_ACTION);
+            EXPECT_EQ(steps.front().status, kr::ps::ProgramOutcome::NO_APPLICABLE_ACTION);
         }
 
         const auto same_step = [](const auto& left, const auto& right)
@@ -597,7 +599,7 @@ void expect_control_only_steps_do_not_generate_planning_successors()
     ASSERT_EQ(steps.size(), 4);
     for (const auto& step : steps)
     {
-        EXPECT_EQ(step.status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
+        EXPECT_EQ(step.status, kr::ps::ProgramOutcome::APPLIED);
         EXPECT_EQ(step.get_target().get_state().index(), initial.get_state().index());
         EXPECT_FALSE(step.planning_successor.has_value());
         ASSERT_TRUE(step.rule);
@@ -614,7 +616,7 @@ void expect_control_only_steps_do_not_generate_planning_successors()
     {
         auto options = kr::ps::ext::ProgramSearchOptions<Kind> {};
         options.universal = universal;
-        EXPECT_EQ(kr::ps::ext::find_solution(task_context, program, options).status, kr::ps::ext::ProgramProofStatus::FAILURE);
+        EXPECT_EQ(kr::ps::ext::find_solution(task_context, program, options).status, kr::ps::ProofStatus::FAILURE);
         EXPECT_EQ(states.num_states(), 1);
     }
     auto& search = *task_context->search_context;
@@ -643,7 +645,7 @@ TEST(RunirTests, ExtDistanceFeatureEvaluationDoesNotRetainTaskDenotations)
     const auto initial_state = expander.initial_state(planning_node.get_state());
     const auto first = collect_steps(expander, initial_state);
     ASSERT_EQ(first.size(), 1);
-    EXPECT_EQ(first.front().status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
+    EXPECT_EQ(first.front().status, kr::ps::ProgramOutcome::APPLIED);
     EXPECT_EQ(task_context->dl_denotation_repository->size<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>(), 0);
 
     const auto second = collect_steps(expander, initial_state);
@@ -814,7 +816,7 @@ TEST(RunirTests, ExtChooseUsesNaturalBindingOrder)
         statistics,
         [&](auto&& choice)
         {
-            if constexpr (std::same_as<std::remove_cvref_t<decltype(choice)>, kr::ps::ext::detail::ProgramStep<tyr::GroundTag>>)
+            if constexpr (std::same_as<std::remove_cvref_t<decltype(choice)>, kr::ps::ProgramStep<kr::ExtFamilyTag, tyr::GroundTag>>)
                 ADD_FAILURE() << "Expected a compact Choice descriptor";
             else
             {
@@ -1007,7 +1009,7 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     auto loaded_objects = std::set<ygg::uint_t> {};
     for (const auto& step : steps)
     {
-        EXPECT_EQ(step.status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
+        EXPECT_EQ(step.status, kr::ps::ProgramOutcome::APPLIED);
         const auto target_state = step.get_target();
         EXPECT_EQ(target_state.get_state().index(), initial_state.get_state().index());
         EXPECT_EQ(target_state.get_module_state().get_memory_state().index(), target.index());
@@ -1039,7 +1041,7 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     options.max_num_states = 1;
     options.universal = true;
     const auto bounded = kr::ps::ext::find_solution(task_context, program, options);
-    EXPECT_EQ(bounded.status, kr::ps::ext::ProgramProofStatus::OUT_OF_STATES);
+    EXPECT_EQ(bounded.status, kr::ps::ProofStatus::OUT_OF_STATES);
     ASSERT_TRUE(bounded.graph);
     EXPECT_EQ(bounded.graph->get_num_vertices(), 1);
 }
@@ -1077,7 +1079,7 @@ TEST(RunirTests, ExtRoleLoadRuleEnumeratesAllPairsAndAdvancesMemory)
     auto loaded_pairs = std::set<std::pair<ygg::uint_t, ygg::uint_t>> {};
     for (const auto& step : steps)
     {
-        EXPECT_EQ(step.status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
+        EXPECT_EQ(step.status, kr::ps::ProgramOutcome::APPLIED);
         const auto target_state = step.get_target();
         EXPECT_EQ(target_state.get_state().index(), initial_state.get_state().index());
         EXPECT_EQ(target_state.get_module_state().get_memory_state().get_name(), "target");
@@ -1111,7 +1113,7 @@ TEST(RunirTests, ExtSuccessorEnumerationCombinesAllApplicableRuleKinds)
     auto sketch_steps = static_cast<std::size_t>(0);
     for (const auto& step : steps)
     {
-        EXPECT_EQ(step.status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
+        EXPECT_EQ(step.status, kr::ps::ProgramOutcome::APPLIED);
         const auto& target = step.get_target();
         const auto memory = target.get_module_state().get_memory_state().get_name();
         if (memory == "load-target")
@@ -1226,7 +1228,7 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     const auto initial_state = expander.initial_state(planning_node.get_state());
     const auto call_steps = collect_steps(expander, initial_state);
     ASSERT_EQ(call_steps.size(), 1);
-    EXPECT_EQ(call_steps.front().status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
+    EXPECT_EQ(call_steps.front().status, kr::ps::ProgramOutcome::APPLIED);
     const auto call_target = call_steps.front().get_target();
     const auto module_state = call_target.get_module_state();
     EXPECT_EQ(module_state.get_module().index(), callee.index());
@@ -1279,7 +1281,7 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     ASSERT_TRUE(caller_frame);
     const auto return_steps = collect_steps(expander, call_target);
     ASSERT_EQ(return_steps.size(), 1);
-    EXPECT_EQ(return_steps.front().status, kr::ps::ext::detail::ProgramOutcome::RESTORED_CALLER);
+    EXPECT_EQ(return_steps.front().status, kr::ps::ProgramOutcome::RESTORED_CALLER);
     EXPECT_EQ(return_steps.front().get_target().get_call_stack(), caller_frame.value().get_caller());
     EXPECT_EQ(return_steps.front().get_target().get_module_state().get_module().index(), caller.index());
     EXPECT_EQ(return_steps.front().get_target().get_module_state().get_memory_state().index(), caller_return.index());
@@ -1328,7 +1330,7 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
     const auto planning_node = initial_planning_node(expander);
     const auto steps = collect_steps(expander, expander.initial_state(planning_node.get_state()));
     ASSERT_EQ(steps.size(), 1);
-    EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
+    EXPECT_EQ(steps.front().status, kr::ps::ProgramOutcome::APPLIED);
     EXPECT_EQ(steps.front().get_target().get_module_state().get_module().index(), callee.index());
     EXPECT_EQ(steps.front().get_target().get_module_state().get_memory_state().index(), callee_entry.index());
 }
@@ -1391,7 +1393,7 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
 
     for (const auto& step : steps)
     {
-        EXPECT_EQ(step.status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
+        EXPECT_EQ(step.status, kr::ps::ProgramOutcome::APPLIED);
         ASSERT_TRUE(step.planning_successor.has_value());
         EXPECT_EQ(step.planning_successor.value().label.get_relation().get_name(), "pick");
         EXPECT_EQ(step.get_target().get_module_state().get_memory_state().index(), target.index());
@@ -1433,13 +1435,13 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
     const auto initial_state = expander.initial_state(planning_node.get_state());
     const auto steps = collect_steps(expander, initial_state);
     ASSERT_EQ(steps.size(), 1);
-    EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::NO_APPLICABLE_ACTION);
+    EXPECT_EQ(steps.front().status, kr::ps::ProgramOutcome::NO_APPLICABLE_ACTION);
     EXPECT_EQ(steps.front().get_target().get_state().index(), initial_state.get_state().index());
 
     auto options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
     options.universal = true;
     const auto result = kr::ps::ext::find_solution(task_context, program, options);
-    EXPECT_EQ(result.status, kr::ps::ext::ProgramProofStatus::FAILURE);
+    EXPECT_EQ(result.status, kr::ps::ProofStatus::FAILURE);
     ASSERT_TRUE(result.graph);
     EXPECT_EQ(result.graph->get_num_vertices(), 1);
     EXPECT_EQ(result.graph->get_num_edges(), 0);
@@ -1523,7 +1525,7 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     const auto planning_node = initial_planning_node(expander);
     const auto steps = collect_steps(expander, expander.initial_state(planning_node.get_state()));
     ASSERT_GT(steps.size(), 2);
-    EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
+    EXPECT_EQ(steps.front().status, kr::ps::ProgramOutcome::APPLIED);
     EXPECT_EQ(steps.front().get_target().get_module_state().get_memory_state().index(), move_target.index());
 
     auto reached_move_target = false;
@@ -1688,7 +1690,7 @@ void expect_query_action_contracts()
         const auto planning_node = initial_planning_node(expander);
         const auto initial = expander.initial_state(planning_node.get_state());
         const auto rule = module_.get_memory_transitions()[0][0];
-        auto lazy = urd::Store<urd::sequence<kr::ps::ext::detail::ProgramStep<Kind>>> {};
+        auto lazy = urd::Store<urd::sequence<kr::ps::ProgramStep<kr::ExtFamilyTag, Kind>>> {};
         if (scenario == 2)
         {
             // Effects filter Action transitions: no move decreases N, so none is offered or matched.
@@ -1696,7 +1698,7 @@ void expect_query_action_contracts()
             {
                 const auto steps = collect_steps(expander, initial, first_only);
                 ASSERT_EQ(steps.size(), 1);
-                EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::NO_APPLICABLE_ACTION);
+                EXPECT_EQ(steps.front().status, kr::ps::ProgramOutcome::NO_APPLICABLE_ACTION);
             }
             auto& search = *task_context->search_context;
             const auto successors = search.successor_generator->get_labeled_successor_nodes(planning_node, *search.state_repository, *search.axiom_evaluator);
@@ -1716,7 +1718,7 @@ void expect_query_action_contracts()
             // greedy execution and remains a contract violation exhaustively.
             lazy = collect_steps(expander, initial, true);
             ASSERT_EQ(lazy.size(), 1);
-            EXPECT_EQ(lazy.front().status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
+            EXPECT_EQ(lazy.front().status, kr::ps::ProgramOutcome::APPLIED);
             auto options = kr::ps::ext::ProgramSearchOptions<Kind> {};
             EXPECT_NO_THROW(kr::ps::ext::find_solution(task_context, program, options));
             options.universal = true;
@@ -1765,7 +1767,7 @@ void expect_query_action_contracts()
         if (scenario == 1)
         {
             ASSERT_EQ(steps.size(), 1);
-            EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::NO_APPLICABLE_ACTION);
+            EXPECT_EQ(steps.front().status, kr::ps::ProgramOutcome::NO_APPLICABLE_ACTION);
             EXPECT_EQ(task_context->search_context->state_repository->num_states(), 1);
             continue;
         }
@@ -1909,7 +1911,7 @@ void expect_callback_sketch_order_and_cancellation()
             return count;
         };
         const auto initial_binding_count = count_bindings();
-        using Step = kr::ps::ext::detail::ProgramStep<Kind>;
+        using Step = kr::ps::ProgramStep<kr::ExtFamilyTag, Kind>;
         auto selected = urd::Store<urd::sequence<Step>> {};
         auto statistics = kr::ps::ext::ProgramSearchStatistics {};
         const auto emit = [&](const auto& expansion)
@@ -2019,12 +2021,12 @@ void expect_query_action_nullary_binding()
         ASSERT_EQ(steps.size(), 1);
         if (empty)
         {
-            EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::NO_APPLICABLE_ACTION);
+            EXPECT_EQ(steps.front().status, kr::ps::ProgramOutcome::NO_APPLICABLE_ACTION);
             EXPECT_EQ(task_context->search_context->state_repository->num_states(), 1);
         }
         else
         {
-            EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
+            EXPECT_EQ(steps.front().status, kr::ps::ProgramOutcome::APPLIED);
             ASSERT_TRUE(steps.front().planning_successor.has_value());
             EXPECT_TRUE(steps.front().planning_successor.value().label.get_objects().empty());
             EXPECT_TRUE(is_planning_goal(expander, steps.front().get_target().get_state()));
@@ -2082,7 +2084,7 @@ void expect_callback_expansion_counts()
                 binding_counts.push_back(count);
             }
             ASSERT_FALSE(steps.empty());
-            EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
+            EXPECT_EQ(steps.front().status, kr::ps::ProgramOutcome::APPLIED);
             auto first = urd::Store<urd::sequence<std::string>> {};
             if (binding)
                 first.push_back(

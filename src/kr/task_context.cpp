@@ -2,10 +2,14 @@
 
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
-#include "runir/kr/dl/semantics/detail/repository_instantiations.hpp"
+#include "runir/kr/dl/semantics/denotation_repository.hpp"
+#include <yggdrasil/database/syntax/query_repository.hpp>
 #include "runir/kr/ps/base/repository.hpp"
-#include "runir/kr/ps/ext/execution_repository.hpp"
-#include "runir/kr/ps/icp/execution_repository.hpp"
+#include "runir/kr/ps/execution_repository.hpp"
+#include "runir/kr/ps/ext/execution_data.hpp"
+#include "runir/kr/ps/ext/repository.hpp"
+#include "runir/kr/ps/icp/execution_data.hpp"
+#include "runir/kr/ps/icp/repository.hpp"
 
 #include <stdexcept>
 #include <tyr/planning/ground/task.hpp>
@@ -35,11 +39,11 @@ TaskContext<Kind>::TaskContext(DomainContextPtr domain_context_, runir::datasets
     dl_builder(),
     dl_denotation_repository(runir::kr::dl::semantics::DenotationRepositoryFactory().create_shared(search_context->task->get_repository())),
     execution_builder(),
-    execution_repository(runir::kr::ps::ext::ExecutionRepositoryFactory<Kind>().create_shared(search_context->state_repository,
+    execution_repository(runir::kr::ps::ExecutionRepositoryFactory<runir::kr::ExtFamilyTag, Kind>().create_shared(search_context->state_repository,
                                                                                               dl_denotation_repository,
                                                                                               domain_context->ext_repository)),
     icp_execution_builder(),
-    icp_execution_repository(runir::kr::ps::icp::ExecutionRepositoryFactory<Kind>().create_shared(search_context->state_repository,
+    icp_execution_repository(runir::kr::ps::ExecutionRepositoryFactory<runir::kr::IcpFamilyTag, Kind>().create_shared(search_context->state_repository,
                                                                                                   dl_denotation_repository,
                                                                                                   domain_context->icp_repository))
 {

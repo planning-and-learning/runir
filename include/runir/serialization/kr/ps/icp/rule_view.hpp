@@ -6,8 +6,8 @@
 #include "runir/serialization/kr/ps/dl/effect_view.hpp"
 #include "runir/serialization/kr/dl/register_view.hpp"
 #include "runir/serialization/kr/ps/icp/indexical_view.hpp"
-#include "runir/serialization/kr/ps/icp/memory_state_view.hpp"
-#include "runir/serialization/kr/ps/icp/module_symbol_view.hpp"
+#include "runir/serialization/kr/ps/memory_state_view.hpp"
+#include "runir/serialization/kr/ps/module_symbol_view.hpp"
 
 #include <yggdrasil/serialization/dictionaries.hpp>
 

@@ -45,19 +45,12 @@ public:
     BasicRepository& operator=(BasicRepository&&) = delete;
     ~BasicRepository() = default;
 
-    [[nodiscard]] const auto& get_index() const noexcept { return m_index; }
     /// The repository's number, as urd's views ask of a context.
     [[nodiscard]] std::size_t layer() const noexcept { return m_index; }
     // Dereference the raw pointer: operator* on the shared_ptr would complete the DL repository type for its lookup.
     auto& get_dl_repository() noexcept { return *m_dl_repository.get(); }
     [[nodiscard]] const auto& get_dl_repository() const noexcept { return *m_dl_repository.get(); }
     [[nodiscard]] const auto& get_dl_repository_ptr() const noexcept { return m_dl_repository; }
-
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<BasicRepository, T>
-    const urd::data<T>& operator[](urd::index<T> index) const noexcept
-    { return this->template local<T>(index); }
-
 };
 
 template<FamilyTag Family, typename RepositoryTypes>

@@ -14,7 +14,7 @@ from pyyggdrasil.execution import ExecutionContext
 
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext, LiftedTaskContext
-from pyrunir.kr.ps import base
+from pyrunir.kr.ps import ProofStatus, base
 
 TaskContext: TypeAlias = GroundTaskContext | LiftedTaskContext
 SearchOptions: TypeAlias = base.GroundSketchSearchOptions | base.LiftedSketchSearchOptions
@@ -92,7 +92,7 @@ def test_search_statistics_count_generation_before_filtering_and_deduplication(t
     options = _options(context)
 
     greedy = _find_solution(context, sketch, options)
-    assert greedy.status == base.SketchProofStatus.SUCCESS
+    assert greedy.status == ProofStatus.SUCCESS
     assert isinstance(greedy.statistics, base.SketchSearchStatistics)
     assert greedy.statistics.num_expanded == 1
     assert greedy.statistics.num_generated == 1
@@ -110,7 +110,7 @@ def test_search_statistics_count_generation_before_filtering_and_deduplication(t
 
     options.universal = True
     universal = _find_solution(context, sketch, options)
-    assert universal.status == base.SketchProofStatus.SUCCESS
+    assert universal.status == ProofStatus.SUCCESS
     assert universal.plan is None
     assert universal.statistics.num_expanded == 1
     assert universal.statistics.num_generated == 2
@@ -121,7 +121,7 @@ def test_search_statistics_count_generation_before_filtering_and_deduplication(t
 
     empty = base.dl.SketchFactory.create_empty(context.domain_context.base_repository)
     rejected = _find_solution(context, empty, options)
-    assert rejected.status == base.SketchProofStatus.FAILURE
+    assert rejected.status == ProofStatus.FAILURE
     assert rejected.plan is None
     assert rejected.statistics.num_expanded == 1
     assert rejected.statistics.num_generated == 2
@@ -132,7 +132,7 @@ def test_search_statistics_count_generation_before_filtering_and_deduplication(t
 
     options.max_num_states = 1
     bounded = _find_solution(context, sketch, options)
-    assert bounded.status == base.SketchProofStatus.OUT_OF_STATES
+    assert bounded.status == ProofStatus.OUT_OF_STATES
     assert bounded.plan is None
     assert bounded.statistics.num_expanded == 1
     assert bounded.statistics.num_generated == 1
@@ -141,7 +141,7 @@ def test_search_statistics_count_generation_before_filtering_and_deduplication(t
 
     options.max_time = timedelta(0)
     expired = _find_solution(context, sketch, options)
-    assert expired.status == base.SketchProofStatus.OUT_OF_TIME
+    assert expired.status == ProofStatus.OUT_OF_TIME
     assert expired.plan is None
     assert expired.statistics.num_expanded == 0
     assert expired.statistics.num_generated == 0
@@ -151,7 +151,7 @@ def test_search_statistics_count_generation_before_filtering_and_deduplication(t
     # Initial admission precedes the deadline check and must not leave a phantom root.
     options.max_num_states = 0
     unadmitted = _find_solution(context, sketch, options)
-    assert unadmitted.status == base.SketchProofStatus.OUT_OF_STATES
+    assert unadmitted.status == ProofStatus.OUT_OF_STATES
     assert unadmitted.plan is None
     assert unadmitted.graph.get_num_vertices() == 0
     assert unadmitted.graph.get_num_edges() == 0
@@ -168,7 +168,7 @@ def test_search_preserves_cumulative_node_metrics(tmp_path: Path, kind: str) -> 
     options = _options(context)
     result = _find_solution(context, sketch, options)
 
-    assert result.status == base.SketchProofStatus.SUCCESS
+    assert result.status == ProofStatus.SUCCESS
     assert result.plan is not None
     unpacked = result.plan.unpack()
     for plan in (result.plan, unpacked, unpacked.pack()):
@@ -183,7 +183,7 @@ def test_initial_goal_is_not_expanded(tmp_path: Path, kind: str) -> None:
     context, sketch = _context(tmp_path, kind, initial_goal=True, action_costs=True)
     options = _options(context)
     result = _find_solution(context, sketch, options)
-    assert result.status == base.SketchProofStatus.SUCCESS
+    assert result.status == ProofStatus.SUCCESS
     assert result.statistics.num_expanded == 0
     assert result.statistics.num_generated == 0
     assert result.plan is not None
@@ -197,5 +197,5 @@ def test_initial_goal_is_not_expanded(tmp_path: Path, kind: str) -> None:
 
     options.universal = True
     universal = _find_solution(context, sketch, options)
-    assert universal.status == base.SketchProofStatus.SUCCESS
+    assert universal.status == ProofStatus.SUCCESS
     assert universal.plan is None

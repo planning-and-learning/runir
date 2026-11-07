@@ -3,7 +3,7 @@
 
 #include "runir/kr/ps/compatibility.hpp"
 #include "runir/kr/ps/ext/evaluation_environment.hpp"
-#include "runir/kr/ps/ext/rule_variant_view.hpp"
+#include "runir/kr/ps/rule_variant_view.hpp"
 #include "runir/kr/ps/ext/rule_view.hpp"
 
 #include <concepts>

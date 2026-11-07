@@ -6,7 +6,8 @@
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <yggdrasil/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
@@ -34,47 +35,47 @@ auto wrap_numerical(runir::kr::dl::ConstructorRepository& repository, auto numer
 
 auto boolean_constant(runir::kr::dl::ConstructorRepository& repository, bool value)
 {
-    auto data = urd::data<runir::kr::dl::Boolean<runir::kr::dl::BooleanConstantTag>>(value);
+    auto data = urd::data<runir::kr::dl::Boolean<runir::kr::dl::SemanticFamily, runir::kr::dl::BooleanConstantTag>>(value);
     return wrap_boolean(repository, repository.insert(data).first);
 }
 
 auto numerical_constant(runir::kr::dl::ConstructorRepository& repository, ygg::uint_t value)
 {
-    auto data = urd::data<runir::kr::dl::Numerical<runir::kr::dl::NumericalConstantTag>>(value);
+    auto data = urd::data<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::NumericalConstantTag>>(value);
     return wrap_numerical(repository, repository.insert(data).first);
 }
 
 template<runir::kr::dl::ComparisonTag Tag>
 auto numerical_comparison(runir::kr::dl::ConstructorRepository& repository, auto lhs, auto rhs)
 {
-    auto data = urd::data<runir::kr::dl::Boolean<Tag>>(lhs.index(), rhs.index());
+    auto data = urd::data<runir::kr::dl::Boolean<runir::kr::dl::SemanticFamily, Tag>>(lhs.index(), rhs.index());
     return wrap_boolean(repository, repository.insert(data).first);
 }
 
 template<runir::kr::dl::ComparisonTag Tag>
 auto boolean_comparison(runir::kr::dl::ConstructorRepository& repository, auto lhs, auto rhs)
 {
-    auto data = urd::data<runir::kr::dl::Boolean<Tag>>(lhs.index(), rhs.index());
+    auto data = urd::data<runir::kr::dl::Boolean<runir::kr::dl::SemanticFamily, Tag>>(lhs.index(), rhs.index());
     return wrap_boolean(repository, repository.insert(data).first);
 }
 
 template<runir::kr::dl::NumericalBinaryTag Tag>
 auto numerical_binary(runir::kr::dl::ConstructorRepository& repository, auto lhs, auto rhs)
 {
-    auto data = urd::data<runir::kr::dl::Numerical<Tag>>(lhs.index(), rhs.index());
+    auto data = urd::data<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, Tag>>(lhs.index(), rhs.index());
     return wrap_numerical(repository, repository.insert(data).first);
 }
 
 template<runir::kr::dl::LogicalBinaryTag Tag>
 auto logical_binary(runir::kr::dl::ConstructorRepository& repository, auto lhs, auto rhs)
 {
-    auto data = urd::data<runir::kr::dl::Boolean<Tag>>(lhs.index(), rhs.index());
+    auto data = urd::data<runir::kr::dl::Boolean<runir::kr::dl::SemanticFamily, Tag>>(lhs.index(), rhs.index());
     return wrap_boolean(repository, repository.insert(data).first);
 }
 
 auto logical_not(runir::kr::dl::ConstructorRepository& repository, auto boolean)
 {
-    auto data = urd::data<runir::kr::dl::Boolean<runir::kr::dl::NotTag>>(boolean.index());
+    auto data = urd::data<runir::kr::dl::Boolean<runir::kr::dl::SemanticFamily, runir::kr::dl::NotTag>>(boolean.index());
     return wrap_boolean(repository, repository.insert(data).first);
 }
 
@@ -90,12 +91,12 @@ TEST(RunirTests, ComparisonsAndConstantsEvaluateAndFormat)
     auto& repo = *repository;
 
     // c_top -> n_count(c_top)
-    auto top_data = urd::data<runir::kr::dl::Concept<runir::kr::dl::TopTag>>();
+    auto top_data = urd::data<runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::TopTag>>();
     auto top = repo.insert(top_data).first;
     auto top_ctor_data = urd::data<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>(top.index());
     auto top_ctor = repo.insert(top_ctor_data).first;
 
-    auto count_data = urd::data<runir::kr::dl::Numerical<runir::kr::dl::CountTag>>(top_ctor.index());
+    auto count_data = urd::data<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::CountTag>>(top_ctor.index());
     auto count = repo.insert(count_data).first;
     auto count_ctor = wrap_numerical(repo, count);
 

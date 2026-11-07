@@ -66,7 +66,6 @@ from pyrunir._pyrunir.kr.ps.ext import (
     ProgramData as ProgramData,
     ProgramIndex as ProgramIndex,
     ProgramProofEdgeLabel as ProgramProofEdgeLabel,
-    ProgramProofStatus as ProgramProofStatus,
     ProgramSearchStatistics as ProgramSearchStatistics,
     Repository as Repository,
     RepositoryFactory as RepositoryFactory,

@@ -40,7 +40,7 @@ template<tyr::TaskKind Kind,
          runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
          StateMemorization Memorization,
          UnsolvabilityConcept<Kind> Unsolvability>
-ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>& expander,
+ProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>& expander,
                                       const tyr::planning::PackedStateView<Kind>& initial_state,
                                       const StorageStoredState<ExecutionStorage>& initial,
                                       const ProgramSearchOptions<Kind>& options,
@@ -51,7 +51,7 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
                                       std::shared_ptr<SearchPath<Kind, ExecutionStorage>>& first_goal,
                                       std::shared_ptr<SearchPath<Kind, ExecutionStorage>>& witness)
 {
-    using Step = ProgramStep<Kind, ExecutionStorage>;
+    using Step = ProgramStep<ExtFamilyTag, Kind, StorageStoredState<ExecutionStorage>>;
     using PathPtr = std::shared_ptr<SearchPath<Kind, ExecutionStorage>>;
     struct Frame
     {
@@ -73,7 +73,7 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
     auto stack = urd::Store<urd::sequence<Frame>> {};
     auto successors = urd::Store<urd::sequence<Step>> {};
     auto choices = urd::Store<urd::sequence<std::variant<Choice<runir::kr::dl::ConceptTag>, Choice<runir::kr::dl::RoleTag>>>> {};
-    auto status = ProgramProofStatus::SUCCESS;
+    auto status = ProofStatus::SUCCESS;
     auto first_failure = PathPtr {};
     auto next = PathPtr {};
     auto completed = std::optional<bool> {};
@@ -105,14 +105,14 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
     if (storage.admit(expander.view(initial), classify))
         next = make_path(initial, {}, {}, {}, 0);
     else
-        status = ProgramProofStatus::OUT_OF_STATES;
+        status = ProofStatus::OUT_OF_STATES;
 
     while (next || !stack.empty())
     {
         witness = next ? next : stack.back().path;
         if (out_of_time())
         {
-            status = ProgramProofStatus::OUT_OF_TIME;
+            status = ProofStatus::OUT_OF_TIME;
             break;
         }
         if (next)
@@ -147,7 +147,7 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
             ++statistics.num_expanded;
             auto frame = Frame { std::move(path), successors.size(), choices.size(), memo_state };
             frame.succeeded = !and_backtracking;
-            auto limit = std::optional<ProgramProofStatus> {};
+            auto limit = std::optional<ProofStatus> {};
             expander.for_each_successor(
                 state,
                 statistics,
@@ -155,7 +155,7 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
                 {
                     if (out_of_time())
                     {
-                        limit = ProgramProofStatus::OUT_OF_TIME;
+                        limit = ProofStatus::OUT_OF_TIME;
                         return false;
                     }
                     if constexpr (std::same_as<Expansion, Step>)
@@ -163,7 +163,7 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
                         if (expansion.status == ProgramOutcome::APPLIED || expansion.status == ProgramOutcome::RESTORED_CALLER)
                         {
                             if (!record_transition(state, expansion, 0))
-                                limit = ProgramProofStatus::OUT_OF_STATES;
+                                limit = ProofStatus::OUT_OF_STATES;
                             else
                                 successors.push_back(std::move(expansion));
                         }
@@ -206,7 +206,7 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
                 out_of_time);
             storage.record_flags(state, *frame.path);
             if (out_of_time() && !limit)
-                limit = ProgramProofStatus::OUT_OF_TIME;
+                limit = ProofStatus::OUT_OF_TIME;
             if (limit)
             {
                 status = *limit;
@@ -283,7 +283,7 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
             }
             if (!record_transition(state, *step, choice_width))
             {
-                status = ProgramProofStatus::OUT_OF_STATES;
+                status = ProofStatus::OUT_OF_STATES;
                 break;
             }
             frame.choice_child = true;
@@ -297,7 +297,7 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
     }
     if (completed && stack.empty())
     {
-        status = *completed ? ProgramProofStatus::SUCCESS : ProgramProofStatus::FAILURE;
+        status = *completed ? ProofStatus::SUCCESS : ProofStatus::FAILURE;
         witness = *completed ? first_goal : first_failure;
     }
     return status;
@@ -338,7 +338,7 @@ ProgramProofResults<Kind> find_solution(SuccessorExpander<Kind, ExecutionStorage
         if constexpr (Memorization == StateMemorization::CHOICE)
             storage.memo.clear();
         build_witness_graph(result, expander, witness);
-        if (status == ProgramProofStatus::SUCCESS && first_goal)
+        if (status == ProofStatus::SUCCESS && first_goal)
         {
             result.statistics.choice_depth = first_goal->choice_depth;
             result.statistics.choice_width = first_goal->choice_width;
@@ -361,7 +361,7 @@ ProgramProofResults<Kind> find_solution(SuccessorExpander<Kind, ExecutionStorage
     else
     {
         build_proof_graph(result, storage.nodes, storage.predecessors, storage.num_reached ? std::optional(initial) : std::nullopt);
-        if (status == ProgramProofStatus::SUCCESS && first_goal)
+        if (status == ProofStatus::SUCCESS && first_goal)
         {
             URD_ASSUME(first_goal->state.has_value());
             const auto goal = *first_goal->state;

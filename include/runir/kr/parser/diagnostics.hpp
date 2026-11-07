@@ -32,14 +32,14 @@ struct DiagnosticContext
         std::optional<std::reference_wrapper<const ErrorHandlerType>> previous;
     };
 
-    static ParseError parse_error(const ErrorHandlerType& error_handler, const std::string& fallback, Iterator position)
+    static ygg::diagnostics::ParseError parse_error(const ErrorHandlerType& error_handler, const std::string& fallback, Iterator position)
     {
-        auto error = ParseError(fallback);
+        auto error = ygg::diagnostics::ParseError(fallback);
         error.set_diagnostic(error_handler.diagnostic(fallback, position));
         return error;
     }
 
-    template<std::derived_from<SemanticError> Error>
+    template<std::derived_from<ygg::diagnostics::SemanticError> Error>
     [[noreturn]] void throw_at(const boost::spirit::x3::position_tagged& node, Error error) const
     {
         if (active)
@@ -47,7 +47,7 @@ struct DiagnosticContext
         throw error;
     }
 
-    template<std::derived_from<SemanticError> Error>
+    template<std::derived_from<ygg::diagnostics::SemanticError> Error>
     [[noreturn]] void throw_at(Iterator position, Error error) const
     {
         if (active)

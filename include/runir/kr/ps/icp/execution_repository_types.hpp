@@ -11,9 +11,6 @@ namespace runir::kr::ps::icp
 {
 
 template<tyr::TaskKind Kind>
-using ExecutionRepositoryTypes = boost::mp11::mp_list<Histories, ProgramState<Kind>>;
-
-template<tyr::TaskKind Kind>
 using ExecutionBuilder = boost::mp11::mp_apply<ygg::formalism::BuilderStorage, ExecutionRepositoryTypes<Kind>>;
 
 }

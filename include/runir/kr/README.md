@@ -74,8 +74,11 @@ Every language accepts the other constructors. A rejected constructor is a parse
 error at its source position.
 
 The four denotation categories are `ConceptTag`, `RoleTag`, `BooleanTag`, and
-`NumericalTag`. `Concept<Tag>`, `Role<Tag>`, `Boolean<Tag>`, and `Numerical<Tag>`
-identify concrete operators; `Constructor<Category>` wraps the alternatives for a
+`NumericalTag`. `Concept<Family, Tag>`, `Role<Family, Tag>`, `Boolean<Family, Tag>`,
+and `Numerical<Family, Tag>` identify concrete operators of a family: the semantic
+constructors (`SemanticFamily`), grammars (`grammar::GrammarFamily`) and CNF grammars
+(`cnf_grammar::CnfGrammarFamily`). A family names its constructor tags and how its
+records store operands. `Constructor<Category>` wraps the semantic alternatives for a
 category. The `*ConstructorTag` concepts check membership in the corresponding
 list.
 

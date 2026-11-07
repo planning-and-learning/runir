@@ -3,9 +3,9 @@
 
 #include "runir/kr/dl/canonicalization.hpp"
 #include "runir/kr/dl/cnf_grammar/constructor_repository.hpp"
-#include "runir/kr/dl/cnf_grammar/detail/repository_instantiations.hpp"
+#include "runir/kr/dl/cnf_grammar/constructor_repository.hpp"
 #include "runir/kr/dl/datas.hpp"
-#include "runir/kr/dl/detail/repository_instantiations.hpp"
+#include "runir/kr/dl/repository.hpp"
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/denotation_caches.hpp"
@@ -399,7 +399,7 @@ private:
         return generate_nullary(lhs,
                                 [&]
                                 {
-                                    return intern_predicate<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::AtomicStateTag<T>>>(
+                                    return intern_predicate<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::AtomicStateTag<T>>>(
                                         constructor.data().predicate,
                                         constructor.data().polarity);
                                 });
@@ -411,7 +411,7 @@ private:
         return generate_nullary(lhs,
                                 [&]
                                 {
-                                    return intern_predicate<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::AtomicGoalTag<T>>>(
+                                    return intern_predicate<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::AtomicGoalTag<T>>>(
                                         constructor.data().predicate,
                                         constructor.data().polarity);
                                 });
@@ -419,12 +419,12 @@ private:
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::BotTag>)
     {
-        return generate_nullary(lhs, [&] { return intern_nullary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::BotTag>>(); });
+        return generate_nullary(lhs, [&] { return intern_nullary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::BotTag>>(); });
     }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::TopTag>)
     {
-        return generate_nullary(lhs, [&] { return intern_nullary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::TopTag>>(); });
+        return generate_nullary(lhs, [&] { return intern_nullary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::TopTag>>(); });
     }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::NominalTag> constructor)
@@ -432,7 +432,7 @@ private:
         return generate_nullary(lhs,
                                 [&]
                                 {
-                                    return intern_wrapped<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::NominalTag>>(
+                                    return intern_wrapped<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::NominalTag>>(
                                         [&](auto& data) { data.object = constructor.data().object; });
                                 });
     }
@@ -445,7 +445,7 @@ private:
             constructor.get_rhs(),
             true,
             [&](auto child_lhs, auto child_rhs)
-            { return intern_binary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::IntersectionTag>>(child_lhs, child_rhs); });
+            { return intern_binary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::IntersectionTag>>(child_lhs, child_rhs); });
     }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::UnionTag> constructor)
@@ -455,14 +455,14 @@ private:
                                constructor.get_rhs(),
                                true,
                                [&](auto child_lhs, auto child_rhs)
-                               { return intern_binary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::UnionTag>>(child_lhs, child_rhs); });
+                               { return intern_binary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::UnionTag>>(child_lhs, child_rhs); });
     }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::NegationTag> constructor)
     {
         return generate_unary(lhs,
                               constructor.get_arg(),
-                              [&](auto arg) { return intern_unary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::NegationTag>>(arg); });
+                              [&](auto arg) { return intern_unary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::NegationTag>>(arg); });
     }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::ValueRestrictionTag> constructor)
@@ -473,7 +473,7 @@ private:
             constructor.get_rhs(),
             false,
             [&](auto child_lhs, auto child_rhs)
-            { return intern_binary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::ValueRestrictionTag>>(child_lhs, child_rhs); });
+            { return intern_binary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::ValueRestrictionTag>>(child_lhs, child_rhs); });
     }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::ExistentialQuantificationTag> constructor)
@@ -484,7 +484,7 @@ private:
             constructor.get_rhs(),
             false,
             [&](auto child_lhs, auto child_rhs)
-            { return intern_binary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::ExistentialQuantificationTag>>(child_lhs, child_rhs); });
+            { return intern_binary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::ExistentialQuantificationTag>>(child_lhs, child_rhs); });
     }
 
     template<typename Tag>
@@ -494,7 +494,7 @@ private:
                               constructor.get_role(),
                               [&](auto role)
                               {
-                                  return intern_wrapped<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<Tag>>(
+                                  return intern_wrapped<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, Tag>>(
                                       [&](auto& data)
                                       {
                                           data.n = constructor.get_n();
@@ -521,7 +521,7 @@ private:
                                false,
                                [&](auto role, auto concept_)
                                {
-                                   return intern_wrapped<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<Tag>>(
+                                   return intern_wrapped<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, Tag>>(
                                        [&](auto& data)
                                        {
                                            data.n = constructor.get_n();
@@ -548,7 +548,7 @@ private:
             constructor.get_rhs(),
             false,
             [&](auto child_lhs, auto child_rhs)
-            { return intern_binary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::RoleValueMapTag>>(child_lhs, child_rhs); });
+            { return intern_binary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::RoleValueMapTag>>(child_lhs, child_rhs); });
     }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::AgreementTag> constructor)
@@ -558,7 +558,7 @@ private:
                                constructor.get_rhs(),
                                true,
                                [&](auto child_lhs, auto child_rhs)
-                               { return intern_binary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::AgreementTag>>(child_lhs, child_rhs); });
+                               { return intern_binary<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::AgreementTag>>(child_lhs, child_rhs); });
     }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::RoleFillersTag> constructor)
@@ -567,7 +567,7 @@ private:
                               constructor.get_role(),
                               [&](auto role)
                               {
-                                  return intern_wrapped<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::RoleFillersTag>>(
+                                  return intern_wrapped<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::RoleFillersTag>>(
                                       [&](auto& data)
                                       {
                                           data.role = role;
@@ -582,7 +582,7 @@ private:
         return generate_nullary(lhs,
                                 [&]()
                                 {
-                                    return intern_wrapped<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::OneOfTag>>(
+                                    return intern_wrapped<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::OneOfTag>>(
                                         [&](auto& data)
                                         {
                                             for (auto object : constructor.data().objects)
@@ -597,7 +597,7 @@ private:
         return generate_nullary(lhs,
                                 [&]
                                 {
-                                    return intern_predicate<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::AtomicStateTag<T>>>(
+                                    return intern_predicate<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::SemanticFamily, runir::kr::dl::AtomicStateTag<T>>>(
                                         constructor.data().predicate,
                                         constructor.data().polarity);
                                 });
@@ -609,7 +609,7 @@ private:
         return generate_nullary(lhs,
                                 [&]
                                 {
-                                    return intern_predicate<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::AtomicGoalTag<T>>>(
+                                    return intern_predicate<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::SemanticFamily, runir::kr::dl::AtomicGoalTag<T>>>(
                                         constructor.data().predicate,
                                         constructor.data().polarity);
                                 });
@@ -617,7 +617,7 @@ private:
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::RoleTag> lhs, RoleView<runir::kr::dl::UniversalTag>)
     {
-        return generate_nullary(lhs, [&] { return intern_nullary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::UniversalTag>>(); });
+        return generate_nullary(lhs, [&] { return intern_nullary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::SemanticFamily, runir::kr::dl::UniversalTag>>(); });
     }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::RoleTag> lhs, RoleView<runir::kr::dl::IntersectionTag> constructor)
@@ -627,7 +627,7 @@ private:
                                constructor.get_rhs(),
                                true,
                                [&](auto child_lhs, auto child_rhs)
-                               { return intern_binary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::IntersectionTag>>(child_lhs, child_rhs); });
+                               { return intern_binary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::SemanticFamily, runir::kr::dl::IntersectionTag>>(child_lhs, child_rhs); });
     }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::RoleTag> lhs, RoleView<runir::kr::dl::UnionTag> constructor)
@@ -637,21 +637,21 @@ private:
                                constructor.get_rhs(),
                                true,
                                [&](auto child_lhs, auto child_rhs)
-                               { return intern_binary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::UnionTag>>(child_lhs, child_rhs); });
+                               { return intern_binary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::SemanticFamily, runir::kr::dl::UnionTag>>(child_lhs, child_rhs); });
     }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::RoleTag> lhs, RoleView<runir::kr::dl::ComplementTag> constructor)
     {
         return generate_unary(lhs,
                               constructor.get_arg(),
-                              [&](auto arg) { return intern_unary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::ComplementTag>>(arg); });
+                              [&](auto arg) { return intern_unary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::SemanticFamily, runir::kr::dl::ComplementTag>>(arg); });
     }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::RoleTag> lhs, RoleView<runir::kr::dl::InverseTag> constructor)
     {
         return generate_unary(lhs,
                               constructor.get_arg(),
-                              [&](auto arg) { return intern_unary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::InverseTag>>(arg); });
+                              [&](auto arg) { return intern_unary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::SemanticFamily, runir::kr::dl::InverseTag>>(arg); });
     }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::RoleTag> lhs, RoleView<runir::kr::dl::CompositionTag> constructor)
@@ -661,14 +661,14 @@ private:
                                constructor.get_rhs(),
                                false,
                                [&](auto child_lhs, auto child_rhs)
-                               { return intern_binary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::CompositionTag>>(child_lhs, child_rhs); });
+                               { return intern_binary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::SemanticFamily, runir::kr::dl::CompositionTag>>(child_lhs, child_rhs); });
     }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::RoleTag> lhs, RoleView<runir::kr::dl::TransitiveClosureTag> constructor)
     {
         return generate_unary(lhs,
                               constructor.get_arg(),
-                              [&](auto arg) { return intern_unary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::TransitiveClosureTag>>(arg); });
+                              [&](auto arg) { return intern_unary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::SemanticFamily, runir::kr::dl::TransitiveClosureTag>>(arg); });
     }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::RoleTag> lhs, RoleView<runir::kr::dl::ReflexiveTransitiveClosureTag> constructor)
@@ -676,7 +676,7 @@ private:
         return generate_unary(lhs,
                               constructor.get_arg(),
                               [&](auto arg)
-                              { return intern_unary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::ReflexiveTransitiveClosureTag>>(arg); });
+                              { return intern_unary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::SemanticFamily, runir::kr::dl::ReflexiveTransitiveClosureTag>>(arg); });
     }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::RoleTag> lhs, RoleView<runir::kr::dl::RestrictionTag> constructor)
@@ -686,14 +686,14 @@ private:
                                constructor.get_rhs(),
                                false,
                                [&](auto child_lhs, auto child_rhs)
-                               { return intern_binary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::RestrictionTag>>(child_lhs, child_rhs); });
+                               { return intern_binary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::SemanticFamily, runir::kr::dl::RestrictionTag>>(child_lhs, child_rhs); });
     }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::RoleTag> lhs, RoleView<runir::kr::dl::IdentityTag> constructor)
     {
         return generate_unary(lhs,
                               constructor.get_arg(),
-                              [&](auto arg) { return intern_unary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::IdentityTag>>(arg); });
+                              [&](auto arg) { return intern_unary<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::SemanticFamily, runir::kr::dl::IdentityTag>>(arg); });
     }
 
     template<tyr::formalism::FactKind T>
@@ -702,7 +702,7 @@ private:
         return generate_nullary(lhs,
                                 [&]
                                 {
-                                    return intern_predicate<runir::kr::dl::BooleanTag, runir::kr::dl::Boolean<runir::kr::dl::AtomicStateTag<T>>>(
+                                    return intern_predicate<runir::kr::dl::BooleanTag, runir::kr::dl::Boolean<runir::kr::dl::SemanticFamily, runir::kr::dl::AtomicStateTag<T>>>(
                                         constructor.data().predicate,
                                         constructor.data().polarity);
                                 });
@@ -714,7 +714,7 @@ private:
         return generate_nullary(lhs,
                                 [&]
                                 {
-                                    return intern_predicate<runir::kr::dl::BooleanTag, runir::kr::dl::Boolean<runir::kr::dl::AtomicGoalTag<T>>>(
+                                    return intern_predicate<runir::kr::dl::BooleanTag, runir::kr::dl::Boolean<runir::kr::dl::SemanticFamily, runir::kr::dl::AtomicGoalTag<T>>>(
                                         constructor.data().predicate,
                                         constructor.data().polarity);
                                 });
@@ -728,7 +728,7 @@ private:
                 return generate_unary(lhs,
                                       arg,
                                       [&](auto child)
-                                      { return intern_unary<runir::kr::dl::BooleanTag, runir::kr::dl::Boolean<runir::kr::dl::NonemptyTag>>(child); });
+                                      { return intern_unary<runir::kr::dl::BooleanTag, runir::kr::dl::Boolean<runir::kr::dl::SemanticFamily, runir::kr::dl::NonemptyTag>>(child); });
             },
             constructor.get_arg());
     }
@@ -741,7 +741,7 @@ private:
                 return generate_unary(lhs,
                                       arg,
                                       [&](auto child)
-                                      { return intern_unary<runir::kr::dl::NumericalTag, runir::kr::dl::Numerical<runir::kr::dl::CountTag>>(child); });
+                                      { return intern_unary<runir::kr::dl::NumericalTag, runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::CountTag>>(child); });
             },
             constructor.get_arg());
     }
@@ -754,7 +754,7 @@ private:
                                 constructor.get_rhs(),
                                 [&](auto child_lhs, auto child_mid, auto child_rhs)
                                 {
-                                    return intern_wrapped<runir::kr::dl::NumericalTag, runir::kr::dl::Numerical<runir::kr::dl::DistanceTag>>(
+                                    return intern_wrapped<runir::kr::dl::NumericalTag, runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::DistanceTag>>(
                                         [&](auto& data)
                                         {
                                             data.lhs = child_lhs;

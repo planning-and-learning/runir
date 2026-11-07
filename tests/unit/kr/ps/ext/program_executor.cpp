@@ -12,7 +12,8 @@
 #include <gtest/gtest.h>
 #include <limits>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <yggdrasil/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation.hpp>
 #include <runir/kr/ps/ext/detail/search_path.hpp>
 #include <runir/kr/ps/ext/detail/successor_expander_impl.hpp>
@@ -40,20 +41,13 @@ namespace runir::tests
 
 TEST(RunirTests, ProgramStatusesToString)
 {
-    using kr::ps::ext::ProgramProofStatus;
-    EXPECT_EQ(kr::ps::ext::to_string(ProgramProofStatus::SUCCESS), "success");
-    EXPECT_EQ(kr::ps::ext::to_string(ProgramProofStatus::FAILURE), "failure");
-    EXPECT_EQ(kr::ps::ext::to_string(ProgramProofStatus::OUT_OF_TIME), "out_of_time");
-    EXPECT_EQ(kr::ps::ext::to_string(ProgramProofStatus::OUT_OF_STATES), "out_of_states");
-    EXPECT_THROW((void) kr::ps::ext::to_string(static_cast<ProgramProofStatus>(255)), std::invalid_argument);
-
-    using kr::ps::ext::detail::ProgramOutcome;
-    EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::APPLIED), "applied");
-    EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::RESTORED_CALLER), "restored_caller");
-    EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::FAILURE), "failure");
-    EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::NO_APPLICABLE_ACTION), "no_applicable_action");
-    EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::MALFORMED_CALL), "malformed_call");
-    EXPECT_THROW((void) kr::ps::ext::detail::to_string(static_cast<ProgramOutcome>(255)), std::invalid_argument);
+    using kr::ps::ProgramOutcome;
+    EXPECT_EQ(kr::ps::to_string(ProgramOutcome::APPLIED), "applied");
+    EXPECT_EQ(kr::ps::to_string(ProgramOutcome::RESTORED_CALLER), "restored_caller");
+    EXPECT_EQ(kr::ps::to_string(ProgramOutcome::FAILURE), "failure");
+    EXPECT_EQ(kr::ps::to_string(ProgramOutcome::NO_APPLICABLE_ACTION), "no_applicable_action");
+    EXPECT_EQ(kr::ps::to_string(ProgramOutcome::MALFORMED_CALL), "malformed_call");
+    EXPECT_THROW((void) kr::ps::to_string(static_cast<ProgramOutcome>(255)), std::invalid_argument);
 }
 
 TEST(RunirTests, ExtFindSolutionTreatsClassifierMatchesAsTerminalFailures)
@@ -80,7 +74,7 @@ TEST(RunirTests, ExtFindSolutionTreatsClassifierMatchesAsTerminalFailures)
     EXPECT_THROW((void) kr::ps::ext::find_solution(kr::TaskContextPtr<tyr::GroundTag> {}, program, options), std::invalid_argument);
     const auto result = kr::ps::ext::find_solution(task_context, program, options);
 
-    EXPECT_EQ(result.status, kr::ps::ext::ProgramProofStatus::FAILURE);
+    EXPECT_EQ(result.status, kr::ps::ProofStatus::FAILURE);
     ASSERT_TRUE(result.graph);
     ASSERT_EQ(result.graph->get_num_vertices(), 1);
     EXPECT_EQ(result.graph->get_num_edges(), 0);
@@ -167,11 +161,11 @@ TEST(RunirTests, ExtSketchUsesOnlyImmediateOutcomesAndUniversalPreservesParallel
     const auto two_step_state = two_step_expander.initial_state(planning_node.get_state());
     const auto two_step_outcomes = collect_steps(two_step_expander, two_step_state);
     ASSERT_EQ(two_step_outcomes.size(), 1);
-    EXPECT_EQ(two_step_outcomes.front().status, kr::ps::ext::detail::ProgramOutcome::NO_APPLICABLE_ACTION);
+    EXPECT_EQ(two_step_outcomes.front().status, kr::ps::ProgramOutcome::NO_APPLICABLE_ACTION);
 
     auto rejected_options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
     const auto rejected = kr::ps::ext::find_solution(task_context, two_step_program, rejected_options);
-    EXPECT_EQ(rejected.status, kr::ps::ext::ProgramProofStatus::FAILURE);
+    EXPECT_EQ(rejected.status, kr::ps::ProofStatus::FAILURE);
     ASSERT_TRUE(rejected.graph);
     EXPECT_EQ(rejected.graph->get_num_vertices(), 1);
     EXPECT_EQ(rejected.graph->get_num_edges(), 0);
@@ -236,7 +230,7 @@ TEST(RunirTests, ExtExecutorFixtureOutcomesMatch)
         const auto result = kr::ps::ext::find_solution(task_context, program, options);
 
         const auto status = ygg::common::as_string(test_case, "status", "case");
-        EXPECT_EQ(kr::ps::ext::to_string(result.status), status);
+        EXPECT_EQ(kr::ps::to_string(result.status), status);
         ASSERT_TRUE(result.graph);
         EXPECT_EQ(result.graph->get_num_vertices(), ygg::common::as_size(test_case, "num_vertices", "case"));
         EXPECT_EQ(result.graph->get_num_edges(), ygg::common::as_size(test_case, "num_edges", "case"));
@@ -282,9 +276,9 @@ std::string backtrack_rule(const std::string& name, const std::string& source, c
 template<tyr::TaskKind Kind>
 void check_backtrack_execution()
 {
-    using Status = kr::ps::ext::ProgramProofStatus;
+    using Status = kr::ps::ProofStatus;
     using Mode = kr::ps::ext::StateMemorization;
-    using Outcome = kr::ps::ext::detail::ProgramOutcome;
+    using Outcome = kr::ps::ProgramOutcome;
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
     const auto search = [&]
     {
@@ -408,7 +402,7 @@ void check_backtrack_execution()
 template<tyr::TaskKind Kind>
 void check_and_backtracking()
 {
-    using Status = kr::ps::ext::ProgramProofStatus;
+    using Status = kr::ps::ProofStatus;
     using Mode = kr::ps::ext::StateMemorization;
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
     const auto search = [&]
@@ -505,8 +499,8 @@ void check_backtrack_evaluation_policy(const kr::TaskContextPtr<tyr::GroundTag>&
                                        kr::ps::ext::ProgramStateView<tyr::GroundTag> good)
 {
     using Kind = tyr::GroundTag;
-    using Step = kr::ps::ext::detail::ProgramStep<Kind>;
-    using Outcome = kr::ps::ext::detail::ProgramOutcome;
+    using Step = kr::ps::ProgramStep<kr::ExtFamilyTag, Kind>;
+    using Outcome = kr::ps::ProgramOutcome;
     auto expander = kr::ps::ext::SuccessorExpander<Kind, kr::ps::ext::InternedExecutionStorage<Kind>, Policy>(context, program);
     // Revisit an earlier binding after a different register value, as DFS backtracking does.
     for (const auto source : { bad, good, bad })
@@ -540,7 +534,7 @@ void check_backtrack_evaluation_policy(const kr::TaskContextPtr<tyr::GroundTag>&
 template<tyr::TaskKind Kind>
 void check_choice_execution()
 {
-    using Status = kr::ps::ext::ProgramProofStatus;
+    using Status = kr::ps::ProofStatus;
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
     auto search_context = [&]()
     {
@@ -1017,7 +1011,7 @@ void check_ordinary_execution_keeps_complete_graph()
 
         auto options = kr::ps::ext::ProgramSearchOptions<Kind> {};
         const auto greedy = kr::ps::ext::find_solution(context, program, options);
-        EXPECT_EQ(greedy.status, kr::ps::ext::ProgramProofStatus::FAILURE);
+        EXPECT_EQ(greedy.status, kr::ps::ProofStatus::FAILURE);
         ASSERT_TRUE(greedy.graph);
         EXPECT_EQ(greedy.graph->get_num_vertices(), diamond ? 5 : 4);
         EXPECT_EQ(greedy.graph->get_num_edges(), diamond ? 4 : 3);
@@ -1031,7 +1025,7 @@ void check_ordinary_execution_keeps_complete_graph()
             SCOPED_TRACE(classify);
             options.classifier = classify ? std::optional(classifier) : std::nullopt;
             const auto complete = kr::ps::ext::find_solution(context, program, options);
-            EXPECT_EQ(complete.status, kr::ps::ext::ProgramProofStatus::FAILURE);
+            EXPECT_EQ(complete.status, kr::ps::ProofStatus::FAILURE);
             ASSERT_TRUE(complete.graph);
             EXPECT_EQ(complete.graph->get_num_vertices(), diamond ? 9 : 7);
             EXPECT_EQ(complete.graph->get_num_edges(), diamond ? 9 : 7);
@@ -1086,7 +1080,7 @@ template<tyr::TaskKind Kind>
 void check_state_memorization()
 {
     using Mode = kr::ps::ext::StateMemorization;
-    using Status = kr::ps::ext::ProgramProofStatus;
+    using Status = kr::ps::ProofStatus;
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
     // Fresh repositories make retained-state assertions independent of previous searches.
     const auto run = [&](const std::string& modules, const kr::ps::ext::ProgramSearchOptions<Kind>& options)
@@ -1536,8 +1530,7 @@ void check_transient_builder_values_and_reuse()
         facts.values = { 1, 0 };
     else
     {
-        facts.indices.resize(2);
-        facts.indices.set(0);
+        facts.indices.insert(0);
     }
     first_module.state.numeric_storage.values = { 3.0 };
 
@@ -1577,13 +1570,13 @@ void check_transient_builder_values_and_reuse()
     EXPECT_EQ(*separate->call_stack, *first->call_stack);
     EXPECT_TRUE(urd::EqualTo<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
     EXPECT_EQ(urd::Hash<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first), urd::Hash<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*separate));
-    separate_module.state.atom_storage.indices.resize(1, true);
+    separate_module.state.atom_storage.indices.insert(0);
     EXPECT_TRUE(urd::EqualTo<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
     EXPECT_EQ(urd::Hash<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first), urd::Hash<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*separate));
     if constexpr (std::same_as<Kind, tyr::GroundTag>)
         separate_module.state.fact_storage.values.front() = 0;
     else
-        separate_module.state.fact_storage.indices.flip(0);
+        separate_module.state.fact_storage.indices.erase(0);
     EXPECT_FALSE(urd::EqualTo<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
     separate_module.state = first_module.state;
     separate_module.state.numeric_storage.values.front() = 4.0;

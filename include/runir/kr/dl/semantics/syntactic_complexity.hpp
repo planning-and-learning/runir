@@ -2,14 +2,11 @@
 #define RUNIR_KR_DL_SEMANTICS_SYNTACTIC_COMPLEXITY_HPP_
 
 #include "runir/kr/dl/query_view.hpp"
-#include "runir/kr/dl/semantics/boolean_view.hpp"
+#include "runir/kr/dl/record_view.hpp"
 #include "runir/kr/dl/semantics/call_arguments_view.hpp"
-#include "runir/kr/dl/semantics/concept_view.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/dl/semantics/denotation_view.hpp"
-#include "runir/kr/dl/semantics/numerical_view.hpp"
 #include "runir/kr/dl/semantics/register_values_view.hpp"
-#include "runir/kr/dl/semantics/role_view.hpp"
 
 #include <concepts>
 #include <cstddef>
@@ -20,19 +17,19 @@ namespace runir::kr::dl::semantics
 
 template<typename Tag, typename C>
     requires runir::kr::dl::ConceptConstructorTag<Tag>
-std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Concept<Tag>, C> view);
+std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, Tag>, C> view);
 
 template<typename Tag, typename C>
     requires runir::kr::dl::RoleConstructorTag<Tag>
-std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Role<Tag>, C> view);
+std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Role<runir::kr::dl::SemanticFamily, Tag>, C> view);
 
 template<typename Tag, typename C>
     requires runir::kr::dl::BooleanConstructorTag<Tag>
-std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Boolean<Tag>, C> view);
+std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Boolean<runir::kr::dl::SemanticFamily, Tag>, C> view);
 
 template<typename Tag, typename C>
     requires runir::kr::dl::NumericalConstructorTag<Tag>
-std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Numerical<Tag>, C> view);
+std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, Tag>, C> view);
 
 template<typename Tag, typename C>
 std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Query<Tag>, C> view);
@@ -48,7 +45,7 @@ std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Constructor<Cate
 
 template<typename Tag, typename C>
     requires runir::kr::dl::ConceptConstructorTag<Tag>
-std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Concept<Tag>, C> view)
+std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, Tag>, C> view)
 {
     if constexpr (requires { view.get_arg(); })
         return 1 + syntactic_complexity(view.get_arg());
@@ -70,7 +67,7 @@ std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Concept<Tag>, C>
 
 template<typename Tag, typename C>
     requires runir::kr::dl::RoleConstructorTag<Tag>
-std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Role<Tag>, C> view)
+std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Role<runir::kr::dl::SemanticFamily, Tag>, C> view)
 {
     if constexpr (requires { view.get_arg(); })
         return 1 + syntactic_complexity(view.get_arg());
@@ -85,7 +82,7 @@ std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Role<Tag>, C> vi
 
 template<typename Tag, typename C>
     requires runir::kr::dl::BooleanConstructorTag<Tag>
-std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Boolean<Tag>, C> view)
+std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Boolean<runir::kr::dl::SemanticFamily, Tag>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::NonemptyTag>)
         return 1 + std::visit([](auto child) { return syntactic_complexity(child); }, view.get_arg());
@@ -102,7 +99,7 @@ std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Boolean<Tag>, C>
 
 template<typename Tag, typename C>
     requires runir::kr::dl::NumericalConstructorTag<Tag>
-std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Numerical<Tag>, C> view)
+std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, Tag>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::CountTag>)
         return 1 + std::visit([](auto child) { return syntactic_complexity(child); }, view.get_arg());

@@ -22,7 +22,7 @@ template<>
 struct data<runir::kr::ps::icp::Module>
 {
     urd::index<runir::kr::ps::icp::Module> index;
-    urd::index<runir::kr::ps::icp::ModuleSymbol> symbol;
+    urd::index<runir::kr::ps::ModuleSymbol<runir::kr::IcpFamilyTag>> symbol;
     urd::flat_vector<urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> concept_registers;
     urd::flat_vector<urd::index<runir::kr::dl::Register<runir::kr::dl::RoleTag>>> role_registers;
     urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>>> concept_features;
@@ -30,14 +30,14 @@ struct data<runir::kr::ps::icp::Module>
     urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::BooleanTag>>> boolean_features;
     urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::NumericalTag>>> numerical_features;
     urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::ps::dl::QueryFeature>>> query_features;
-    urd::index<runir::kr::ps::icp::MemoryState> entry_memory_state;
-    urd::flat_vector<urd::index<runir::kr::ps::icp::MemoryState>> memory_states;
+    urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> entry_memory_state;
+    urd::flat_vector<urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>>> memory_states;
     urd::flat_vector<urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>>>> memory_transitions;
     urd::flat_vector<runir::kr::ps::icp::ResetPair> reset_pairs;
 
     data() = default;
     // Registers live in the description-logic repository, hence the separate context parameter.
-    data(urd::index<runir::kr::ps::icp::ModuleSymbol> symbol_,
+    data(urd::index<runir::kr::ps::ModuleSymbol<runir::kr::IcpFamilyTag>> symbol_,
          urd::flat_vector<urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> concept_registers_,
          urd::flat_vector<urd::index<runir::kr::dl::Register<runir::kr::dl::RoleTag>>> role_registers_,
          urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>>> concept_features_,
@@ -45,8 +45,8 @@ struct data<runir::kr::ps::icp::Module>
          urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::BooleanTag>>> boolean_features_,
          urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::NumericalTag>>> numerical_features_,
          urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::ps::dl::QueryFeature>>> query_features_,
-         urd::index<runir::kr::ps::icp::MemoryState> entry_memory_state_,
-         urd::flat_vector<urd::index<runir::kr::ps::icp::MemoryState>> memory_states_,
+         urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> entry_memory_state_,
+         urd::flat_vector<urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>>> memory_states_,
          urd::flat_vector<urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>>>> memory_transitions_,
          urd::flat_vector<runir::kr::ps::icp::ResetPair> reset_pairs_) :
         index(),

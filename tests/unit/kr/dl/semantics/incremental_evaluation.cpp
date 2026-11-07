@@ -10,10 +10,11 @@
 #include <gtest/gtest.h>
 #include <iterator>
 #include <ranges>
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <yggdrasil/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_policy.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include <runir/kr/dl/semantics/incremental/evaluation.hpp>
@@ -25,7 +26,7 @@
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <string>
 #include <type_traits>
-#include <tyr/planning/factory.hpp>
+#include <tyr/planning/state_repository.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
@@ -91,14 +92,14 @@ auto negative_atomic(kr::dl::ConstructorView<Category> positive, kr::dl::Constru
 {
     if constexpr (std::same_as<Category, kr::dl::ConceptTag>)
     {
-        auto data = std::get<urd::index_view<kr::dl::Concept<kr::dl::AtomicStateTag<Fact>>, runir::kr::dl::ConstructorRepository>>(positive.get_variant()).data();
+        auto data = std::get<urd::index_view<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::AtomicStateTag<Fact>>, runir::kr::dl::ConstructorRepository>>(positive.get_variant()).data();
         data.polarity = false;
         auto wrapper = urd::data<kr::dl::Constructor<Category>>(kr::dl::insert(repository, data).first.index());
         return kr::dl::insert(repository, wrapper).first;
     }
     else
     {
-        auto data = std::get<urd::index_view<kr::dl::Role<kr::dl::AtomicStateTag<Fact>>, runir::kr::dl::ConstructorRepository>>(positive.get_variant()).data();
+        auto data = std::get<urd::index_view<kr::dl::Role<kr::dl::SemanticFamily, kr::dl::AtomicStateTag<Fact>>, runir::kr::dl::ConstructorRepository>>(positive.get_variant()).data();
         data.polarity = false;
         auto wrapper = urd::data<kr::dl::Constructor<Category>>(kr::dl::insert(repository, data).first.index());
         return kr::dl::insert(repository, wrapper).first;
@@ -124,7 +125,7 @@ void check_planning_graph(tyr::planning::StateView<Kind> source, tyr::planning::
         {
             if (predicate.get_arity() != 1)
                 continue;
-            auto atom = urd::data<kr::dl::Concept<kr::dl::AtomicStateTag<Fact>>>(predicate.index(), true);
+            auto atom = urd::data<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::AtomicStateTag<Fact>>>(predicate.index(), true);
             auto concept_data = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(kr::dl::insert(*constructors, atom).first.index());
             const auto concept_ = kr::dl::insert(*constructors, concept_data).first;
             auto query_data = urd::data<kr::dl::Query<kr::dl::QueryConceptTag>> {};
@@ -132,7 +133,7 @@ void check_planning_graph(tyr::planning::StateView<Kind> source, tyr::planning::
             query_data.columns.push_back(x);
             auto query_wrapper = urd::data<kr::dl::Query<>>(kr::dl::insert(*constructors, query_data).first.index());
             const auto query = kr::dl::insert(*constructors, query_wrapper).first;
-            auto count_data = urd::data<kr::dl::Numerical<kr::dl::CountTag>>(query.index());
+            auto count_data = urd::data<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>>(query.index());
             auto count_wrapper = urd::data<kr::dl::Constructor<kr::dl::NumericalTag>>(kr::dl::insert(*constructors, count_data).first.index());
             const auto count = kr::dl::insert(*constructors, count_wrapper).first;
             auto evaluation = kr::dl::semantics::incremental::IncrementalEvaluation<Kind>(task, { count });
@@ -412,10 +413,10 @@ void check_incremental_evaluation()
     const auto check_leaf = [&]<kr::dl::ConceptOrRoleTag Category>(kr::dl::ConstructorView<Category> expression)
     {
         check(expression);
-        auto count = urd::data<kr::dl::Numerical<kr::dl::CountTag>>(expression.index());
+        auto count = urd::data<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>>(expression.index());
         auto count_wrapper = urd::data<kr::dl::Constructor<kr::dl::NumericalTag>>(kr::dl::insert(*constructors, count).first.index());
         check(kr::dl::insert(*constructors, count_wrapper).first);
-        auto nonempty = urd::data<kr::dl::Boolean<kr::dl::NonemptyTag>>(expression.index());
+        auto nonempty = urd::data<kr::dl::Boolean<kr::dl::SemanticFamily, kr::dl::NonemptyTag>>(expression.index());
         auto nonempty_wrapper = urd::data<kr::dl::Constructor<kr::dl::BooleanTag>>(kr::dl::insert(*constructors, nonempty).first.index());
         check(kr::dl::insert(*constructors, nonempty_wrapper).first);
     };
@@ -563,7 +564,7 @@ void check_incremental_evaluation()
     const auto self_distance = kr::ps::ext::dl::parse_numerical("(n_distance (c_register 0) " + edge_text + " (c_register 0))", domain, *constructors);
     const auto query_count = kr::ps::ext::dl::parse_numerical("(n_count (q_role (x y) " + edge_text + "))", domain, *constructors);
     const auto query =
-        std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::index_view<kr::dl::Numerical<kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(query_count.get_variant()).get_arg());
+        std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::index_view<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(query_count.get_variant()).get_arg());
     // Duplicate roots and explicitly requested shared children do not duplicate nodes.
     auto evaluation = kr::dl::semantics::incremental::IncrementalEvaluation<Kind>(
         *search->task,
@@ -631,7 +632,7 @@ void check_incremental_evaluation()
     storage.reset_all();
     auto initial_context = context_for(nodes.front().get_state(), 0, arguments);
     // Copying the task preserves the formalism repository but changes task identity.
-    const auto other_repository = tyr::planning::StateRepositoryFactory<Kind>().create(std::make_shared<tyr::planning::Task<Kind>>(*search->task));
+    const auto other_repository = std::make_shared<tyr::planning::StateRepository<Kind>>(std::make_shared<tyr::planning::Task<Kind>>(*search->task));
     const auto borrowed_builder = urd::builder<tyr::planning::State<Kind>> { nodes.front().get_state().data() };
     auto foreign_context = context_for(urd::resolve(borrowed_builder, *other_repository), 0, arguments);
     const auto policy_roots = std::array<kr::dl::semantics::incremental::EvaluationRoot, 1> { source_count };

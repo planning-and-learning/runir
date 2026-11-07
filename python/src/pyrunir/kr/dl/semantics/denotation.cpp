@@ -26,7 +26,7 @@ void bind_denotation_view(nb::module_& m, const char* name)
     using Type = runir::kr::dl::semantics::Denotation<Category>;
     using View = urd::index_view<Type, runir::kr::dl::semantics::DenotationRepository>;
 
-    auto cls = nb::class_<View>(m, name).def("get_index", &View::index);
+    auto cls = nb::class_<View>(m, name).def("index", &View::index);
     ygg::add_print(cls);
     urd::python::add_comparison(cls);
     urd::python::add_hash(cls);

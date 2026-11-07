@@ -3,6 +3,7 @@
 
 #include "runir/graphs/declarations.hpp"
 #include "runir/kr/declarations.hpp"
+#include "runir/kr/ps/proof_status.hpp"
 #include "runir/kr/ps/base/sketch_proof_graph.hpp"
 #include "runir/kr/uns/classifier_view.hpp"
 #include "runir/kr/uns/declarations.hpp"
@@ -12,37 +13,11 @@
 #include <limits>
 #include <memory>
 #include <optional>
-#include <stdexcept>
-#include <string_view>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/plan.hpp>
 
 namespace runir::kr::ps::base
 {
-
-enum class SketchProofStatus : std::uint8_t
-{
-    SUCCESS,
-    FAILURE,
-    OUT_OF_TIME,
-    OUT_OF_STATES,
-};
-
-constexpr std::string_view to_string(SketchProofStatus status)
-{
-    switch (status)
-    {
-        case SketchProofStatus::SUCCESS:
-            return "success";
-        case SketchProofStatus::FAILURE:
-            return "failure";
-        case SketchProofStatus::OUT_OF_TIME:
-            return "out_of_time";
-        case SketchProofStatus::OUT_OF_STATES:
-            return "out_of_states";
-    }
-    throw std::invalid_argument("invalid SketchProofStatus");
-}
 
 struct SketchSearchStatistics
 {
@@ -56,7 +31,7 @@ struct SketchSearchStatistics
 template<tyr::TaskKind Kind>
 struct SketchProofResults
 {
-    SketchProofStatus status = SketchProofStatus::SUCCESS;
+    ProofStatus status = ProofStatus::SUCCESS;
     runir::kr::TaskContextPtr<Kind> task_context_owner;
     std::shared_ptr<SketchProofGraph<Kind>> graph;
     std::optional<tyr::planning::PackedPlan<Kind>> plan = std::nullopt;
@@ -65,7 +40,7 @@ struct SketchProofResults
     runir::graphs::VertexIndexList cycle;
     SketchSearchStatistics statistics;
 
-    [[nodiscard]] bool is_successful() const noexcept { return status == SketchProofStatus::SUCCESS; }
+    [[nodiscard]] bool is_successful() const noexcept { return status == ProofStatus::SUCCESS; }
 };
 
 template<tyr::TaskKind Kind>

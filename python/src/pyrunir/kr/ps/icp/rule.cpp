@@ -41,7 +41,7 @@ auto bind_rule_view(nb::module_& m, const char* name)
 {
     using View = urd::index_view<T, Repository>;
     auto cls = nb::class_<View>(m, name)
-                   .def("get_index", &View::index)
+                   .def("index", &View::index)
                    .def("get_source", &View::get_source)
                    .def("get_target", &View::get_target)
                    .def("get_conditions", &View::get_conditions);
@@ -66,7 +66,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     urd::python::bind_index<urd::index<RoleLoad>>(m, "RoleLoadRuleIndex");
     urd::python::bind_index<urd::index<Crule>>(m, "CruleRuleIndex");
     using DlRepository = runir::kr::dl::ConstructorRepository;
-    using MemoryStateIndex = urd::index<MemoryState>;
+    using MemoryStateIndex = urd::index<MemoryState<IcpFamilyTag>>;
     using ConditionIndexList = runir::kr::ps::ConditionList<runir::kr::IcpFamilyTag>;
     using ConditionViewList = urd::Store<urd::sequence<urd::resolved_t<runir::kr::ps::ConditionVariant<runir::kr::IcpFamilyTag>, Repository>>>;
     using EffectIndexList = runir::kr::ps::EffectList<runir::kr::IcpFamilyTag>;

@@ -4,14 +4,6 @@
 #include <memory>
 #include <utility>
 #include <yggdrasil/database/syntax/query_repository.hpp>
-#include <yggdrasil/formalism/detail/basic_symbol_repository_impl.hpp>
-
-template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>>;
-template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>>;
-template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>;
-template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>;
-template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::semantics::RegisterValues>;
-template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::semantics::CallArguments>;
 
 namespace runir::kr::dl::semantics
 {

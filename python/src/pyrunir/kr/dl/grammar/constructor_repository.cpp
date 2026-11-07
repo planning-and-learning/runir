@@ -12,7 +12,7 @@ namespace runir::kr::dl
 void bind_grammar_constructor_repository(nb::module_& m)
 {
     auto repository = nb::class_<runir::kr::dl::grammar::ConstructorRepository>(m, "ConstructorRepository");
-    repository.def("clear", &runir::kr::dl::grammar::ConstructorRepository::clear).def("get_index", &runir::kr::dl::grammar::ConstructorRepository::get_index);
+    repository.def("clear", &runir::kr::dl::grammar::ConstructorRepository::clear).def("layer", &runir::kr::dl::grammar::ConstructorRepository::layer);
 
     auto factory = nb::class_<runir::kr::dl::grammar::ConstructorRepositoryFactory>(m, "ConstructorRepositoryFactory");
     factory.def(nb::init<>())

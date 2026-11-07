@@ -2,8 +2,8 @@
 
 #include <concepts>
 #include <runir/kr/ps/ext/repository.hpp>
-#include <runir/kr/ps/ext/rule_variant_data.hpp>
-#include <runir/kr/ps/ext/rule_variant_view.hpp>
+#include <runir/kr/ps/rule_variant_data.hpp>
+#include <runir/kr/ps/rule_variant_view.hpp>
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/core/config.hpp>
 

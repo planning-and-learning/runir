@@ -57,7 +57,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     urd::python::add_comparison(data);
 
     auto view = nb::class_<View>(m, "Rule")
-                    .def("get_index", &View::index)
+                    .def("index", &View::index)
                     .def("get_symbol", &View::get_symbol)
                     .def("get_conditions", &View::get_conditions)
                     .def("get_effects", &View::get_effects);

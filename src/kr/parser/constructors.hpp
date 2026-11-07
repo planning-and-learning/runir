@@ -21,17 +21,7 @@ namespace runir::kr::parser::constructors
 
 struct SemanticTarget
 {
-    template<typename Tag>
-    using Concept = runir::kr::dl::Concept<Tag>;
-
-    template<typename Tag>
-    using Role = runir::kr::dl::Role<Tag>;
-
-    template<typename Tag>
-    using Boolean = runir::kr::dl::Boolean<Tag>;
-
-    template<typename Tag>
-    using Numerical = runir::kr::dl::Numerical<Tag>;
+    using Family = runir::kr::dl::SemanticFamily;
 
     template<runir::kr::dl::CategoryTag Category>
     using Constructor = runir::kr::dl::Constructor<Category>;
@@ -42,17 +32,7 @@ struct SemanticTarget
 
 struct GrammarTarget
 {
-    template<typename Tag>
-    using Concept = runir::kr::dl::grammar::Concept<Tag>;
-
-    template<typename Tag>
-    using Role = runir::kr::dl::grammar::Role<Tag>;
-
-    template<typename Tag>
-    using Boolean = runir::kr::dl::grammar::Boolean<Tag>;
-
-    template<typename Tag>
-    using Numerical = runir::kr::dl::grammar::Numerical<Tag>;
+    using Family = runir::kr::dl::grammar::GrammarFamily;
 
     template<runir::kr::dl::CategoryTag Category>
     using Constructor = runir::kr::dl::grammar::Constructor<Category>;
@@ -62,16 +42,16 @@ struct GrammarTarget
 };
 
 template<typename Context, typename Tag>
-using TargetConcept = typename Context::Target::template Concept<Tag>;
+using TargetConcept = runir::kr::dl::Concept<typename Context::Target::Family, Tag>;
 
 template<typename Context, typename Tag>
-using TargetRole = typename Context::Target::template Role<Tag>;
+using TargetRole = runir::kr::dl::Role<typename Context::Target::Family, Tag>;
 
 template<typename Context, typename Tag>
-using TargetBoolean = typename Context::Target::template Boolean<Tag>;
+using TargetBoolean = runir::kr::dl::Boolean<typename Context::Target::Family, Tag>;
 
 template<typename Context, typename Tag>
-using TargetNumerical = typename Context::Target::template Numerical<Tag>;
+using TargetNumerical = runir::kr::dl::Numerical<typename Context::Target::Family, Tag>;
 
 template<typename T>
 const T& unwrap(const T& value URD_LIFETIMEBOUND) noexcept
@@ -110,7 +90,7 @@ template<runir::kr::dl::CategoryTag Category, typename Context, typename T>
 auto intern_constructor(const Context& context, urd::index<T> index)
 {
     using Constructor = typename Context::Target::template Constructor<Category>;
-    if constexpr (runir::kr::dl::is_cista_variant_v<Constructor>)
+    if constexpr (urd::is_flat_variant<Constructor>)
         return Constructor(index);
     else
     {

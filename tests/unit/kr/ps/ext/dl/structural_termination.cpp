@@ -6,15 +6,16 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <runir/graphs/cycle.hpp>
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
-#include <runir/kr/ps/ext/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <yggdrasil/database/syntax/query_repository.hpp>
+#include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/dl/incomplete_structural_termination.hpp>
 #include <runir/kr/ps/ext/dl/module_factory.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <runir/kr/ps/ext/dl/structural_termination.hpp>
-#include <runir/kr/ps/ext/memory_state_data.hpp>
+#include <runir/kr/ps/memory_state_data.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/rule_view.hpp>
 #include <set>
@@ -364,7 +365,7 @@ TEST(RunirTests, ExtStructuralTerminationUnconstrainedReturnIsNotTerminating)
         rule_indices.insert(counterexample.get_edge_property(edge).index());
     EXPECT_EQ(rule_indices.size(), 2);
 
-    auto memory_state_indices = std::set<urd::index<kr::ps::ext::MemoryState>> {};
+    auto memory_state_indices = std::set<urd::index<kr::ps::MemoryState<kr::ExtFamilyTag>>> {};
     for (const auto vertex : counterexample.get_vertex_indices())
         memory_state_indices.insert(counterexample.get_vertex_property(vertex).memory_state.index());
     EXPECT_EQ(memory_state_indices.size(), 2);
@@ -379,15 +380,15 @@ TEST(RunirTests, ExtStructuralTerminationPreservesSparseMemoryStateIdentities)
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
     for (const auto* name : { "unused_before", "m1", "unused_between", "m0" })
     {
-        auto data = urd::data<kr::ps::ext::MemoryState>(std::string(name));
+        auto data = urd::data<kr::ps::MemoryState<kr::ExtFamilyTag>>(std::string(name));
         repository->insert(data);
     }
     const auto module_ =
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/non_terminating.module"), planning_task.get_domain().get_domain(), *repository);
     const auto memory_states = module_.get_memory_states();
     ASSERT_EQ(memory_states.size(), 2);
-    EXPECT_EQ(memory_states[0].index(), urd::index<kr::ps::ext::MemoryState>(1));
-    EXPECT_EQ(memory_states[1].index(), urd::index<kr::ps::ext::MemoryState>(3));
+    EXPECT_EQ(memory_states[0].index(), urd::index<kr::ps::MemoryState<kr::ExtFamilyTag>>(1));
+    EXPECT_EQ(memory_states[1].index(), urd::index<kr::ps::MemoryState<kr::ExtFamilyTag>>(3));
     EXPECT_EQ(memory_states[0].get_name(), "m1");
     EXPECT_EQ(memory_states[1].get_name(), "m0");
 

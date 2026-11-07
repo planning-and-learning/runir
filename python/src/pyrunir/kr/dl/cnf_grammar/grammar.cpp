@@ -17,7 +17,7 @@ void bind_cnf_grammar_grammar(nb::module_& m)
     using View = urd::index_view<Type, runir::kr::dl::cnf_grammar::ConstructorRepository>;
 
     urd::python::bind_index<urd::index<Type>>(m, "GrammarIndex");
-    auto cls = nb::class_<View>(m, "Grammar").def("get_index", &View::index);
+    auto cls = nb::class_<View>(m, "Grammar").def("index", &View::index);
     ygg::add_print(cls);
     urd::python::add_comparison(cls);
     urd::python::add_hash(cls);
