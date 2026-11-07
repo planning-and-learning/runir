@@ -38,13 +38,13 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     using EffectIndex = runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>;
     auto data = nb::class_<Data>(m, "RuleData")
                     .def(nb::init<>())
-                    .def(nb::init<::cista::offset::string,
+                    .def(nb::init<urd::flat_string,
                                   runir::kr::ps::ConditionList<runir::kr::BaseFamilyTag>,
                                   runir::kr::ps::EffectList<runir::kr::BaseFamilyTag>>(),
                          "symbol"_a,
                          "conditions"_a,
                          "effects"_a)
-                    .def(urd::python::init_from_views<::cista::offset::string,
+                    .def(urd::python::init_from_views<urd::flat_string,
                                   const urd::Store<urd::sequence<urd::resolved_t<ConditionIndex, Repository>>>&,
                                   const urd::Store<urd::sequence<urd::resolved_t<EffectIndex, Repository>>>&>(),
                          "symbol"_a,
@@ -73,7 +73,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
             [](View value, LiftedContext& context) { return runir::kr::ps::base::is_compatible_with<tyr::LiftedTag>(value, context); },
             "context"_a);
 
-    runir::kr::python::bind_insert<T>(repository);
+    ygg::bind_insert<T>(repository);
 }
 
 }  // namespace runir::kr::ps::base

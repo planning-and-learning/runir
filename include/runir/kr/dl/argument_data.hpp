@@ -16,11 +16,11 @@ template<runir::kr::dl::CategoryTag Category>
 struct data<runir::kr::dl::Argument<Category>>
 {
     urd::index<runir::kr::dl::Argument<Category>> index;
-    ::cista::offset::string name;
+    urd::flat_string name;
     runir::kr::dl::ArgumentIdentifier<Category> identifier;
 
     data() = default;
-    data(::cista::offset::string name_, runir::kr::dl::ArgumentIdentifier<Category> identifier_) : index(), name(std::move(name_)), identifier(identifier_) {}
+    data(urd::flat_string name_, runir::kr::dl::ArgumentIdentifier<Category> identifier_) : index(), name(std::move(name_)), identifier(identifier_) {}
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::name, &data::identifier> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::name, &data::identifier> {}; }

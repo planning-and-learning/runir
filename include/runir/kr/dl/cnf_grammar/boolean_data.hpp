@@ -44,57 +44,6 @@ struct data<runir::kr::dl::cnf_grammar::Boolean<runir::kr::dl::NonemptyTag>>
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::arg> {}; }
 };
 
-template<>
-struct data<runir::kr::dl::cnf_grammar::Boolean<runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>> :
-    runir::kr::dl::ArgumentData<runir::kr::dl::cnf_grammar::Boolean<runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>,
-                                runir::kr::dl::ArgumentIdentifier<runir::kr::dl::BooleanTag>>
-{
-    using Base = runir::kr::dl::ArgumentData<runir::kr::dl::cnf_grammar::Boolean<runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>,
-                                             runir::kr::dl::ArgumentIdentifier<runir::kr::dl::BooleanTag>>;
-    using Base::Base;
-};
-
-template<runir::kr::dl::ComparisonTag Tag>
-struct data<runir::kr::dl::cnf_grammar::Boolean<Tag>> :
-    runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Boolean<Tag>,
-                              runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::comparison_operand_t<Tag>>,
-                              runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::comparison_operand_t<Tag>>>
-{
-    using Base = runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Boolean<Tag>,
-                                           runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::comparison_operand_t<Tag>>,
-                                           runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::comparison_operand_t<Tag>>>;
-    using Base::Base;
-};
-
-template<>
-struct data<runir::kr::dl::cnf_grammar::Boolean<runir::kr::dl::BooleanConstantTag>> :
-    runir::kr::dl::IdentifierData<runir::kr::dl::cnf_grammar::Boolean<runir::kr::dl::BooleanConstantTag>, bool>
-{
-    using Base = runir::kr::dl::IdentifierData<runir::kr::dl::cnf_grammar::Boolean<runir::kr::dl::BooleanConstantTag>, bool>;
-    using Base::Base;
-};
-
-template<runir::kr::dl::LogicalBinaryTag Tag>
-struct data<runir::kr::dl::cnf_grammar::Boolean<Tag>> :
-    runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Boolean<Tag>,
-                              runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::BooleanTag>,
-                              runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::BooleanTag>>
-{
-    using Base = runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Boolean<Tag>,
-                                           runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::BooleanTag>,
-                                           runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::BooleanTag>>;
-    using Base::Base;
-};
-
-template<>
-struct data<runir::kr::dl::cnf_grammar::Boolean<runir::kr::dl::NotTag>> :
-    runir::kr::dl::UnaryData<runir::kr::dl::cnf_grammar::Boolean<runir::kr::dl::NotTag>, runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::BooleanTag>>
-{
-    using Base = runir::kr::dl::UnaryData<runir::kr::dl::cnf_grammar::Boolean<runir::kr::dl::NotTag>,
-                                          runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::BooleanTag>>;
-    using Base::Base;
-};
-
 }  // namespace urd
 
 #endif

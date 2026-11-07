@@ -11,23 +11,19 @@
 namespace urd
 {
 template<typename Tag, typename V>
-    requires runir::kr::dl::NumericalConstructorTag<Tag>
+    requires runir::kr::dl::BaseNumericalConstructorTag<Tag>
 struct view_mixin<runir::kr::dl::cnf_grammar::Numerical<Tag>, V>
 {
 private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_identifier() const noexcept
-        requires std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>
-    { return self().data().identifier; }
-
     auto get_arg() const noexcept
         requires std::same_as<Tag, runir::kr::dl::CountTag>
     { return self().template get<&urd::record_of<V>::arg>(); }
 
     auto get_lhs() const noexcept
-        requires(std::same_as<Tag, runir::kr::dl::DistanceTag> || runir::kr::dl::NumericalBinaryTag<Tag>)
+        requires std::same_as<Tag, runir::kr::dl::DistanceTag>
     { return self().template get<&urd::record_of<V>::lhs>(); }
 
     auto get_mid() const noexcept
@@ -35,12 +31,8 @@ public:
     { return self().template get<&urd::record_of<V>::mid>(); }
 
     auto get_rhs() const noexcept
-        requires(std::same_as<Tag, runir::kr::dl::DistanceTag> || runir::kr::dl::NumericalBinaryTag<Tag>)
+        requires std::same_as<Tag, runir::kr::dl::DistanceTag>
     { return self().template get<&urd::record_of<V>::rhs>(); }
-
-    auto get_value() const noexcept
-        requires std::same_as<Tag, runir::kr::dl::NumericalConstantTag>
-    { return self().data().identifier; }
 };
 }  // namespace urd
 

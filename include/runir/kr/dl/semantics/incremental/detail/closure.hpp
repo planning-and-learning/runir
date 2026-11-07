@@ -77,7 +77,7 @@ void evaluate_closure(Tag,
         scratch.discovery[vertex] = scratch.lowlink[vertex] = ++index;
         scratch.active[vertex] = 1;
         scratch.active_stack.push_back(vertex);
-        scratch.frames.push_back({ vertex, urd::repr::set_bit_indices(role.get(vertex)).begin() });
+        scratch.frames.push_back({ vertex, urd::repr::set_bit_indices(role.get(urd::index<tyr::formalism::Object>(vertex))).begin() });
     };
     for (const auto source : rows)
     {
@@ -126,7 +126,7 @@ void evaluate_closure(Tag,
                 for (const auto member : scratch.component)
                     reached.set(member);
             for (const auto member : scratch.component)
-                for (const auto neighbor : urd::repr::set_bit_indices(role.get(member)))
+                for (const auto neighbor : urd::repr::set_bit_indices(role.get(urd::index<tyr::formalism::Object>(member))))
                 {
                     const auto target = static_cast<ygg::uint_t>(neighbor);
                     if (!reached.test(target))
@@ -136,7 +136,7 @@ void evaluate_closure(Tag,
                         if (target != member)
                         {
                             assert(!dirty[target] || (scratch.discovery[target] && !scratch.active[target]));
-                            reached |= result.get(target);
+                            reached |= result.get(urd::index<tyr::formalism::Object>(target));
                         }
                     }
                 }

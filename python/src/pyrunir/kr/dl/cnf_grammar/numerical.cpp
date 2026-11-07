@@ -42,11 +42,11 @@ void bind_numerical_view(nb::module_& m, const char* name)
     urd::python::add_hash(cls);
 
     if constexpr (std::same_as<Tag, CountTag>)
-        cls.def("get_arg", &View::get_arg, nb::keep_alive<0, 1>());
+        cls.def("get_arg", &View::get_arg);
     else
-        cls.def("get_lhs", &View::get_lhs, nb::keep_alive<0, 1>())
-            .def("get_mid", &View::get_mid, nb::keep_alive<0, 1>())
-            .def("get_rhs", &View::get_rhs, nb::keep_alive<0, 1>());
+        cls.def("get_lhs", &View::get_lhs)
+            .def("get_mid", &View::get_mid)
+            .def("get_rhs", &View::get_rhs);
 }
 
 }  // namespace

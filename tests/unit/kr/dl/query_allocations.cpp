@@ -16,7 +16,10 @@
 #include <runir/kr/dl/semantics/incremental/delta.hpp>
 #include <runir/kr/dl/semantics/incremental/detail/atomic_query.hpp>
 #include <runir/kr/dl/semantics/incremental/evaluation.hpp>
-#include <runir/kr/dl/semantics/state_evaluation.hpp>
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include <runir/kr/ps/ext/detail/proof_search.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <runir/kr/ps/ext/program_executor.hpp>

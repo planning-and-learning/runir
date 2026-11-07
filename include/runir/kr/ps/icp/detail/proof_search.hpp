@@ -5,7 +5,8 @@
 #include <urd/repr/maps/std_map.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
-#include "runir/kr/ps/icp/detail/search_space.hpp"
+#include "runir/kr/ps/icp/detail/search_node.hpp"
+#include "runir/kr/ps/detail/search_space.hpp"
 #include "runir/kr/ps/icp/program_executor.hpp"
 #include "runir/kr/ps/icp/successor_expander.hpp"
 #include "runir/kr/ps/unsolvability.hpp"
@@ -125,7 +126,11 @@ auto search(const TaskContextPtr<Kind>& task, ProgramView program, const Program
     if (result.status == ProgramProofStatus::SUCCESS && (!result.deadend_states.empty() || !result.open_states.empty() || !result.cycle.empty()))
         result.status = ProgramProofStatus::FAILURE;
     if (goal && result.is_successful())
-        result.plan = extract_total_ordered_plan(*goal, nodes, initial_node, *task);
+        result.plan = runir::kr::ps::detail::extract_total_ordered_plan<Kind>(
+            nodes[*goal],
+            [&](const auto& node) { return node.parent ? &nodes[*node.parent] : nullptr; },
+            initial_node,
+            *task);
     return result;
 }
 

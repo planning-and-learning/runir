@@ -75,13 +75,11 @@ static_assert(requires(urd::data<Role>& data, const urd::builder<Role>& builder,
     data.num_objects;
     data.vec_index;
     builder.get(object);
-    builder.get(ygg::uint_t {});
     builder.get_num_objects();
     builder.storage_bits();
     builder.any();
     builder.count();
     view.value(object);
-    view.value(ygg::uint_t {});
     view.get_num_objects();
     view.storage_bits();
     view.any();
@@ -143,8 +141,8 @@ TEST(RunirKrDlSemanticsDenotation, CountsRolePairs)
     EXPECT_FALSE(builder.any());
     EXPECT_EQ(builder.count(), 0);
 
-    builder.get(0).set(1);
-    builder.get(2).set(0);
+    builder.get(urd::index<tyr::formalism::Object>(0)).set(1);
+    builder.get(urd::index<tyr::formalism::Object>(2)).set(0);
     EXPECT_TRUE(builder.any());
     EXPECT_EQ(builder.count(), 2);
 
@@ -234,7 +232,7 @@ TEST(RunirKrDlSemanticsDenotation, RoleMutationsClearIdentityAndPreserveRowPaddi
     EXPECT_EQ(builder.count(), static_cast<size_t>(size) * size - 3);
     for (ygg::uint_t i = 0; i < size; ++i)
     {
-        EXPECT_TRUE(builder.get(i).trailing_bits_zero());
+        EXPECT_TRUE(builder.get(urd::index<tyr::formalism::Object>(i)).trailing_bits_zero());
         for (ygg::uint_t j = 0; j < size; ++j)
         {
             const auto before = (i == size - 1 && (j == 0 || j == digits)) || (i == 0 && j == size - 1);
@@ -261,7 +259,7 @@ TEST(RunirKrDlSemanticsDenotation, BorrowedAssignmentClearsIdentityAndRetainsBuf
             if constexpr (std::same_as<Category, kr::dl::ConceptTag>)
                 source.get().set(size - 1);
             else
-                source.get(size - 1).set(0);
+                source.get(urd::index<tyr::formalism::Object>(size - 1)).set(0);
         }
         else
             source.initialize(7);
@@ -318,8 +316,8 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsOutliveViewWrappers)
     EXPECT_TRUE(++concept_iterator == concept_end);
 
     auto role_builder = urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(3);
-    role_builder.get(0).set(1);
-    role_builder.get(2).set(0);
+    role_builder.get(urd::index<tyr::formalism::Object>(0)).set(1);
+    role_builder.get(urd::index<tyr::formalism::Object>(2)).set(0);
     auto role_data = urd::data<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(3, repository.get_vector_repository().insert(role_builder.blocks).first);
     const auto role_view = repository.insert(role_data).first;
     const auto role_copy = role_view;
@@ -382,8 +380,8 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsSurviveRepositoryGrowthAndSkipRolePa
     check_indices(borrowed_concept_indices, expected_concept_indices);
 
     auto role_builder = urd::builder<Role>(num_objects);
-    role_builder.get(0).set(64);
-    role_builder.get(129).set(1);
+    role_builder.get(urd::index<tyr::formalism::Object>(0)).set(64);
+    role_builder.get(urd::index<tyr::formalism::Object>(129)).set(1);
     auto role_data = urd::data<Role>(num_objects, repository.get_vector_repository().insert(role_builder.blocks).first);
     const auto role_view = repository.insert(role_data).first;
     auto role_iterator = RoleView(role_view).begin();
@@ -461,8 +459,8 @@ TEST(RunirKrDlSemanticsDenotation, RoleStorageBitsetsPreserveRowPadding)
         for (ygg::uint_t source = 0; source < size; ++source)
             for (ygg::uint_t target = 0; target < size; ++target)
             {
-                lhs.get(source).set(target, (source + 2 * target) % 7 == 0);
-                rhs.get(source).set(target, (2 * source + target) % 11 == 0);
+                lhs.get(urd::index<tyr::formalism::Object>(source)).set(target, (source + 2 * target) % 7 == 0);
+                rhs.get(urd::index<tyr::formalism::Object>(source)).set(target, (2 * source + target) % 11 == 0);
             }
 
         for (const auto intersection : { false, true })
@@ -476,13 +474,13 @@ TEST(RunirKrDlSemanticsDenotation, RoleStorageBitsetsPreserveRowPadding)
             auto count = size_t { 0 };
             for (ygg::uint_t source = 0; source < size; ++source)
             {
-                EXPECT_TRUE(result.get(source).trailing_bits_zero());
+                EXPECT_TRUE(result.get(urd::index<tyr::formalism::Object>(source)).trailing_bits_zero());
                 for (ygg::uint_t target = 0; target < size; ++target)
                 {
-                    const auto left = lhs.get(source).test(target);
-                    const auto right = rhs.get(source).test(target);
+                    const auto left = lhs.get(urd::index<tyr::formalism::Object>(source)).test(target);
+                    const auto right = rhs.get(urd::index<tyr::formalism::Object>(source)).test(target);
                     const auto expected = intersection ? left && right : left || right;
-                    EXPECT_EQ(result.get(source).test(target), expected);
+                    EXPECT_EQ(result.get(urd::index<tyr::formalism::Object>(source)).test(target), expected);
                     count += expected;
                 }
             }

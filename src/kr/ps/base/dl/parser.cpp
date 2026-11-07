@@ -10,7 +10,7 @@
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/parser/diagnostics.hpp"
-#include "runir/kr/parser/parser.hpp"
+#include "runir/kr/parser/config.hpp"
 #include "runir/kr/ps/base/canonicalization.hpp"
 #include "runir/kr/ps/base/detail/repository_instantiations.hpp"
 #include "runir/kr/ps/base/dl/parser/parser.hpp"
@@ -127,7 +127,7 @@ SketchView parse_sketch(const std::string& description, tyr::formalism::planning
     auto ast = runir::kr::ps::base::dl::ast::Sketch<runir::kr::BaseFamilyTag> {};
     auto errors = std::ostringstream {};
     auto error_handler = runir::kr::parser::ErrorHandlerType(first, last, errors);
-    if (!runir::kr::parser::parse_full(first, last, parser::sketch_root_parser(), ast, error_handler))
+    if (!ygg::diagnostics::parse_full(first, last, parser::sketch_root_parser(), ast, error_handler))
         throw runir::kr::parser::DiagnosticContext::parse_error(error_handler, "Failed to parse DL general sketch description.", first);
     auto diagnostics = runir::kr::parser::DiagnosticContext {};
     const auto scope = runir::kr::parser::DiagnosticContext::Scope(diagnostics, error_handler);

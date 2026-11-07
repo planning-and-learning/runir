@@ -22,9 +22,8 @@
 #include <stdexcept>
 #include <tuple>
 #include <type_traits>
-#include <tyr/planning/ground/state_repository.hpp>
+#include <tyr/planning/state_builder.hpp>
 #include <tyr/planning/ground/task.hpp>
-#include <tyr/planning/lifted/state_repository.hpp>
 #include <tyr/planning/lifted/task.hpp>
 #include <tyr/planning/state_repository.hpp>
 #include <urd/repr/maps/postings.hpp>

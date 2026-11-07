@@ -86,7 +86,7 @@ or roles. `ConceptOrRoleTag` restricts projection and register types to these
 two categories.
 
 The `dl::grammar` and `dl::cnf_grammar` namespaces represent generation grammars,
-separately from evaluable expressions. They contain the `Generation*ConstructorTags`
+separately from evaluable expressions. They contain the `Base*ConstructorTags`
 only: no registers, arguments, arithmetic, Boolean operators, relational queries,
 or projections; the grammar parser rejects these. `cnf_grammar::generate` writes
 the generated constructors into the DL repository.

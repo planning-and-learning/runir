@@ -5,7 +5,8 @@
 #include <memory>
 #include <runir/datasets/state_graph.hpp>
 #include <stdexcept>
-#include <tyr/planning/ground/state_repository.hpp>
+#include <tyr/planning/state_builder.hpp>
+#include <tyr/planning/state_repository.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 
 namespace runir::tests

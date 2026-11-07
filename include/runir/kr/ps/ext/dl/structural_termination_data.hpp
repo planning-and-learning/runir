@@ -55,7 +55,6 @@ struct ModulePolicyGraphVertexLabel : urd::compared_by_identity<ModulePolicyGrap
     }
 };
 
-using ModulePolicyGraphBuilder = graphs::StaticGraphBuilder<ModulePolicyGraphVertexLabel, RuleVariantView>;
 using ModulePolicyGraph = graphs::StaticGraph<ModulePolicyGraphVertexLabel, RuleVariantView>;
 using SccStructuralTerminationResult = runir::kr::ps::dl::SccStructuralTerminationResult<runir::kr::ExtFamilyTag, runir::kr::ps::ext::Repository>;
 

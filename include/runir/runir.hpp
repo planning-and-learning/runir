@@ -2,7 +2,6 @@
 #define RUNIR_RUNIR_HPP_
 
 #include "runir/datasets/datasets.hpp"
-#include "runir/formatter.hpp"
 #include "runir/graphs/graphs.hpp"
 #include "runir/kr/declarations.hpp"
 #include "runir/kr/dl.hpp"

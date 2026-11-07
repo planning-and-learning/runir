@@ -94,12 +94,6 @@ public:
         return this->template local<T>(index);
     }
 
-    /// An index as its view here (urd's resolves contract).
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
-    [[nodiscard]] urd::index_view<T, DenotationRepository> view(urd::index<T> index) const noexcept
-    { return { index, this }; }
-
     [[nodiscard]] const auto& get_vector_repository() const noexcept { return m_vector_repository; }
     auto& get_vector_repository() noexcept { return m_vector_repository; }
     [[nodiscard]] const auto& get_relation_repository() const noexcept { return m_relation_repository; }

@@ -4,7 +4,7 @@
 #include "runir/kr/dl/grammar/parser/parsers.hpp"
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
-#include "runir/kr/parser/error_handler.hpp"
+#include "runir/kr/parser/config.hpp"
 #include "runir/kr/ps/base/dl/ast/ast_adapted.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/ext/dl/ast/ast_adapted.hpp"
@@ -454,10 +454,10 @@ struct ModuleClass : boost::spirit::x3::annotate_on_success
 struct ProgramClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct ModuleRootClass : runir::kr::parser::ErrorHandlerBase
+struct ModuleRootClass : ygg::diagnostics::ErrorHandlerBase
 {
 };
-struct ProgramRootClass : runir::kr::parser::ErrorHandlerBase
+struct ProgramRootClass : ygg::diagnostics::ErrorHandlerBase
 {
 };
 

@@ -44,7 +44,6 @@ struct PolicyGraphVertexLabel : urd::compared_by_identity<PolicyGraphVertexLabel
     { return urd::Members<&PolicyGraphVertexLabel::boolean_values, &PolicyGraphVertexLabel::numerical_values> {}; }
 };
 
-using PolicyGraphBuilder = graphs::StaticGraphBuilder<PolicyGraphVertexLabel, RuleView>;
 using PolicyGraph = graphs::StaticGraph<PolicyGraphVertexLabel, RuleView>;
 using SccStructuralTerminationResult = runir::kr::ps::dl::SccStructuralTerminationResult<runir::kr::BaseFamilyTag, runir::kr::ps::base::Repository>;
 

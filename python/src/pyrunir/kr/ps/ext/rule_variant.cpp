@@ -20,8 +20,8 @@ void bind_rule_variant(nb::module_& m, RepositoryBinding& repository)
     urd::python::bind_index<urd::index<T>>(m, "RuleVariantIndex");
     auto data = nb::class_<Data>(m, "RuleVariantData")
                     .def(nb::init<>())
-                    .def(nb::init<::cista::offset::string, Data::Variant>(), nb::arg("symbol"), nb::arg("variant"))
-                    .def(urd::python::init_from_views<::cista::offset::string, urd::resolved_t<Data::Variant, Repository>>(), nb::arg("symbol"), nb::arg("variant"))
+                    .def(nb::init<urd::flat_string, Data::Variant>(), nb::arg("symbol"), nb::arg("variant"))
+                    .def(urd::python::init_from_views<urd::flat_string, urd::resolved_t<Data::Variant, Repository>>(), nb::arg("symbol"), nb::arg("variant"))
                     .def_rw("index", &Data::index)
                     .def_rw("symbol", &Data::symbol)
                     .def_rw("variant", &Data::variant);
@@ -31,7 +31,7 @@ void bind_rule_variant(nb::module_& m, RepositoryBinding& repository)
     ygg::add_print(view);
     urd::python::add_comparison(view);
     urd::python::add_hash(view);
-    runir::kr::python::bind_insert<T>(repository);
+    ygg::bind_insert<T>(repository);
 }
 
 }  // namespace runir::kr::ps::ext

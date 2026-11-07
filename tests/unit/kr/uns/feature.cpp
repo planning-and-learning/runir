@@ -29,7 +29,7 @@ static_assert(std::totally_ordered<Index>);
 static_assert(std::totally_ordered<Data>);
 static_assert(std::totally_ordered<View>);
 static_assert(std::same_as<View, kr::uns::dl::BooleanFeatureView>);
-static_assert(std::same_as<Data::Variant, ::cista::offset::variant<urd::index<Concrete>>>);
+static_assert(std::same_as<Data::Variant, urd::flat_variant<urd::index<Concrete>>>);
 static_assert(requires(Data& data) {
     data.index;
     data.variant;

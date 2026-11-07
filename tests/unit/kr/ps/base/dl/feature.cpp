@@ -23,7 +23,7 @@ concept IndexedDataView = std::constructible_from<urd::index<Entity>, ygg::uint_
                           && std::totally_ordered<urd::data<Entity>> && std::totally_ordered<View<Entity>>;
 
 template<typename Entity, typename Concrete>
-concept FeatureContract = IndexedDataView<Entity> && std::same_as<typename urd::data<Entity>::Variant, ::cista::offset::variant<urd::index<Concrete>>>
+concept FeatureContract = IndexedDataView<Entity> && std::same_as<typename urd::data<Entity>::Variant, urd::flat_variant<urd::index<Concrete>>>
                           && requires(urd::data<Entity>& data, const View<Entity>& view) {
                                  data.index;
                                  data.variant;
@@ -40,7 +40,7 @@ concept FeatureContract = IndexedDataView<Entity> && std::same_as<typename urd::
 
 template<typename Entity, typename Expression>
 concept ConcreteFeatureContract =
-    IndexedDataView<Entity> && std::constructible_from<urd::data<Entity>, urd::index<Expression>, ::cista::offset::string>
+    IndexedDataView<Entity> && std::constructible_from<urd::data<Entity>, urd::index<Expression>, urd::flat_string>
     && std::constructible_from<urd::data<Entity>, urd::index<Expression>, const std::string&> && requires(urd::data<Entity>& data, const View<Entity>& view) {
            data.index;
            data.feature;
@@ -48,9 +48,9 @@ concept ConcreteFeatureContract =
            { data.feature } -> std::same_as<urd::index<Expression>&>;
            {
                ::cista::to_tuple(std::as_const(data))
-           } -> std::same_as<std::tuple<const urd::index<Entity>&, const urd::index<Expression>&, const ::cista::offset::string&>>;
+           } -> std::same_as<std::tuple<const urd::index<Entity>&, const urd::index<Expression>&, const urd::flat_string&>>;
            requires std::same_as<std::remove_cvref_t<std::tuple_element_t<0, urd::detail::identity_t<urd::data<Entity>>>>, urd::index<Expression>>;
-           requires std::same_as<std::remove_cvref_t<std::tuple_element_t<1, urd::detail::identity_t<urd::data<Entity>>>>, ::cista::offset::string>;
+           requires std::same_as<std::remove_cvref_t<std::tuple_element_t<1, urd::detail::identity_t<urd::data<Entity>>>>, urd::flat_string>;
            view.index();
            view.get_expression();
            view.get_feature();

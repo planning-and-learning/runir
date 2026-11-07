@@ -17,6 +17,7 @@
 
 #include "runir/datasets/state_graph.hpp"
 #include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/dense_set.hpp>
 #include <urd/store.hpp>
 
 #include "runir/graphs/bgl/algorithms.hpp"
@@ -118,15 +119,17 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kin
     const auto initial_state = context.successor_generator->get_initial_node(*context.state_repository, *context.axiom_evaluator).get_state();
     const auto packed_initial_state = initial_state.pack();
 
-    auto is_goal = std::vector<bool>(forward_graph.get_num_vertices(), false);
+    auto is_goal = urd::Store<urd::set<graphs::VertexIndex>, urd::dense> {};
     auto goal_vertices = graphs::VertexIndexList {};
 
     for (auto vertex_index : forward_graph.get_vertex_indices())
     {
         const auto state = forward_graph.get_vertex_property(vertex_index).state.unpack();
-        is_goal[vertex_index] = static_goal_satisfied && goal_strategy.is_dynamic_goal_satisfied(initial_state, state);
-        if (is_goal[vertex_index])
+        if (static_goal_satisfied && goal_strategy.is_dynamic_goal_satisfied(initial_state, state))
+        {
+            is_goal.insert(vertex_index);
             goal_vertices.push_back(vertex_index);
+        }
     }
 
     const auto goal_distance = compute_goal_distances(graph.get_backward_graph(), goal_vertices, cost_mode);
@@ -139,7 +142,7 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kin
         [[maybe_unused]] const auto added = builder.add_vertex(AnnotatedStateGraphVertexLabel<Kind> { state,
                                                                                                       goal_distance[vertex_index],
                                                                                                       state == packed_initial_state,
-                                                                                                      is_goal[vertex_index],
+                                                                                                      is_goal.contains(vertex_index),
                                                                                                       is_alive,
                                                                                                       !is_alive });
         assert(added == vertex_index);

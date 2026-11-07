@@ -1,5 +1,6 @@
 #include "detail.hpp"
 #include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/dense_set.hpp>
 #include <urd/store.hpp>
 #include "runir/graphs/declarations.hpp"
 
@@ -183,13 +184,12 @@ urd::Store<urd::sequence<ProjectedPolicyComponent>> project_policy_components(co
     }
 
     auto result = urd::Store<urd::sequence<ProjectedPolicyComponent>> {};
-    auto emitted = std::vector<bool>(components.count, false);
+    auto emitted = urd::Store<urd::set<std::size_t>, urd::dense> {};
     for (std::size_t memory_position = 0; memory_position < policy.num_memory_states; ++memory_position)
     {
         const auto component = components.component_of[memory_position];
-        if (emitted[component] || rules_by_component[component].empty())
+        if (rules_by_component[component].empty() || !emitted.insert(component).second)
             continue;
-        emitted[component] = true;
 
         auto memory_positions = std::move(memories_by_component[component]);
         auto rule_positions_ = std::move(rules_by_component[component]);

@@ -17,7 +17,7 @@ void bind_non_terminal_data(nb::module_& m, const char* name)
     using Data = urd::data<runir::kr::dl::grammar::NonTerminal<Category>>;
     auto cls = nb::class_<Data>(m, name)
                    .def(nb::init<>())
-                   .def(nb::init<::cista::offset::string>(), nb::arg("name"))
+                   .def(nb::init<urd::flat_string>(), nb::arg("name"))
                    .def_rw("index", &Data::index)
                    .def_rw("name", &Data::name);
     urd::python::add_comparison(cls);

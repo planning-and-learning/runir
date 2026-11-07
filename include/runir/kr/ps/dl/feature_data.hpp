@@ -41,10 +41,10 @@ struct data<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>
 
     urd::index<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>> index;
     urd::index<Expression> feature;
-    ::cista::offset::string symbol;
+    urd::flat_string symbol;
 
     data() = default;
-    data(urd::index<Expression> feature_, ::cista::offset::string symbol_) : index(), feature(std::move(feature_)), symbol(std::move(symbol_)) {}
+    data(urd::index<Expression> feature_, urd::flat_string symbol_) : index(), feature(std::move(feature_)), symbol(std::move(symbol_)) {}
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::feature, &data::symbol> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::feature, &data::symbol> {}; }

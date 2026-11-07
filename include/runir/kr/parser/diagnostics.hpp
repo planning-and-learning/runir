@@ -2,7 +2,7 @@
 #define RUNIR_KR_PARSER_DIAGNOSTICS_HPP_
 
 #include "runir/kr/errors.hpp"
-#include "runir/kr/parser/error_handler.hpp"
+#include "runir/kr/parser/config.hpp"
 
 #include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
 #include <concepts>

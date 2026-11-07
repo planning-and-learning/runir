@@ -1,7 +1,6 @@
 #ifndef RUNIR_GRAPHS_FORMATTER_HPP_
 #define RUNIR_GRAPHS_FORMATTER_HPP_
 
-#include "runir/formatter.hpp"
 #include "runir/graphs/algorithms/color_refinement.hpp"
 #include "runir/graphs/algorithms/weisfeiler_leman.hpp"
 #include "runir/graphs/backward_static_graph_view.hpp"

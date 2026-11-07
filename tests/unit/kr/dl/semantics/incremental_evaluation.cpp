@@ -18,7 +18,10 @@
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include <runir/kr/dl/semantics/incremental/evaluation.hpp>
 #include <runir/kr/dl/semantics/interning.hpp>
-#include <runir/kr/dl/semantics/state_evaluation.hpp>
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <string>
 #include <type_traits>

@@ -90,11 +90,6 @@ inline auto object_pair_indices(DenotationBits bits, ygg::uint_t num_objects) no
     return urd::transform(urd::repr::set_bit_indices(bits),
                           ObjectPairOfBit { static_cast<std::size_t>(DenotationBits::num_blocks(num_objects) * DenotationBits::Digits) });
 }
-
-/// Indices (of objects, or pairs of them) as the views of the formalism repository: a borrowed range.
-template<typename Indices>
-auto object_views(const Indices& indices, const tyr::formalism::planning::Repository& repository) noexcept
-{ return urd::resolved_range<Indices, tyr::formalism::planning::Repository>(indices, urd::resolver<tyr::formalism::planning::Repository> { &repository }); }
 }  // namespace detail
 
 }  // namespace runir::kr::dl::semantics
@@ -116,21 +111,11 @@ public:
 
     [[nodiscard]] bool any() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    {
-        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return value().any();
-        else
-            return storage_bits().any();
-    }
+    { return storage_bits().any(); }
 
     [[nodiscard]] size_t count() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    {
-        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return value().count();
-        else
-            return storage_bits().count();
-    }
+    { return storage_bits().count(); }
 
     // Internal interface: raw values, bitsets and typed indices avoid constructing object views.
 
@@ -141,10 +126,6 @@ public:
     auto value(urd::index<tyr::formalism::Object> object) const noexcept
         requires std::same_as<Category, runir::kr::dl::RoleTag>
     { return self().data().get(object); }
-
-    auto value(ygg::uint_t object) const noexcept
-        requires std::same_as<Category, runir::kr::dl::RoleTag>
-    { return value(urd::index<tyr::formalism::Object>(object)); }
 
     /// Includes zero padding: trailing concept bits or padding after each role row.
     auto storage_bits() const noexcept
@@ -168,12 +149,12 @@ public:
 
     auto views() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    { return runir::kr::dl::semantics::detail::object_views(indices(), get_formalism_repository()); }
+    { return urd::resolve(indices(), get_formalism_repository()); }
 
     /// Objects reached from this source.
     auto views(tyr::formalism::planning::ObjectView source) const noexcept
         requires std::same_as<Category, runir::kr::dl::RoleTag>
-    { return runir::kr::dl::semantics::detail::object_views(indices(source.index()), get_formalism_repository()); }
+    { return urd::resolve(indices(source.index()), get_formalism_repository()); }
 
     auto begin() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
@@ -214,21 +195,11 @@ public:
 
     [[nodiscard]] bool any() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    {
-        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return value().any();
-        else
-            return storage_bits().any();
-    }
+    { return storage_bits().any(); }
 
     [[nodiscard]] size_t count() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    {
-        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return value().count();
-        else
-            return storage_bits().count();
-    }
+    { return storage_bits().count(); }
 
     // Internal interface: raw values, bitsets and typed indices avoid constructing object views.
 
@@ -265,10 +236,6 @@ public:
         return Bitset(vector.data() + Layout::row_block_offset(object, data.num_objects), data.num_objects);
     }
 
-    auto value(ygg::uint_t object) const noexcept
-        requires(std::same_as<Category, runir::kr::dl::RoleTag>)
-    { return value(urd::index<::tyr::formalism::Object>(object)); }
-
     /// Includes zero padding: trailing concept bits or padding after each role row.
     auto storage_bits() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
@@ -295,12 +262,12 @@ public:
 
     auto views() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    { return runir::kr::dl::semantics::detail::object_views(indices(), get_formalism_repository()); }
+    { return urd::resolve(indices(), get_formalism_repository()); }
 
     /// Objects reached from this source.
     auto views(tyr::formalism::planning::ObjectView source) const noexcept
         requires std::same_as<Category, runir::kr::dl::RoleTag>
-    { return runir::kr::dl::semantics::detail::object_views(indices(source.index()), get_formalism_repository()); }
+    { return urd::resolve(indices(source.index()), get_formalism_repository()); }
 
     auto begin() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>

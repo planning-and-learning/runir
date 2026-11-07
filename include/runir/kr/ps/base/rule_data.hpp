@@ -21,12 +21,12 @@ template<>
 struct data<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>
 {
     urd::index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>> index;
-    ::cista::offset::string symbol;
+    urd::flat_string symbol;
     runir::kr::ps::ConditionList<runir::kr::BaseFamilyTag> conditions;
     runir::kr::ps::EffectList<runir::kr::BaseFamilyTag> effects;
 
     data() = default;
-    data(::cista::offset::string symbol_,
+    data(urd::flat_string symbol_,
          runir::kr::ps::ConditionList<runir::kr::BaseFamilyTag> conditions_,
          runir::kr::ps::EffectList<runir::kr::BaseFamilyTag> effects_) :
         index(),

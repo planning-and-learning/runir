@@ -813,12 +813,6 @@ using BooleanConstructorTags = boost::mp11::mp_append<BaseBooleanConstructorTags
                                                      boost::mp11::mp_list<ArgumentTag<BooleanTag>>>;
 using NumericalConstructorTags = boost::mp11::mp_append<BaseNumericalConstructorTags, ArithmeticConstructorTags, boost::mp11::mp_list<ArgumentTag<NumericalTag>>>;
 
-/// Feature generation grammars and their CNF build only these constructors.
-using GenerationConceptConstructorTags = BaseConceptConstructorTags;
-using GenerationRoleConstructorTags = BaseRoleConstructorTags;
-using GenerationBooleanConstructorTags = BaseBooleanConstructorTags;
-using GenerationNumericalConstructorTags = BaseNumericalConstructorTags;
-
 template<typename T>
 concept ConceptConstructorTag = boost::mp11::mp_contains<ConceptConstructorTags, T>::value;
 
@@ -885,10 +879,8 @@ using ConstructorTypes = boost::mp11::mp_transform<Constructor, CategoryTags>;
 
 using QueryTypes = boost::mp11::mp_transform<Query, QueryConstructorTags>;
 
-using ReferenceTypes = std::conditional_t<
-    true,
-    boost::mp11::mp_list<Argument<ConceptTag>, Argument<RoleTag>, Argument<BooleanTag>, Argument<NumericalTag>, Register<ConceptTag>, Register<RoleTag>>,
-    boost::mp11::mp_list<>>;
+using ReferenceTypes =
+    boost::mp11::mp_list<Argument<ConceptTag>, Argument<RoleTag>, Argument<BooleanTag>, Argument<NumericalTag>, Register<ConceptTag>, Register<RoleTag>>;
 
 using ConstructorRepositoryTypes = boost::mp11::mp_append<ConceptTypes,
                                                          RoleTypes,

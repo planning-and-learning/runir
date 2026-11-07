@@ -2,7 +2,10 @@
 #define RUNIR_KR_PS_DL_COMPATIBILITY_HPP_
 
 #include "runir/kr/dl/semantics/evaluation_context.hpp"
-#include "runir/kr/dl/semantics/state_evaluation.hpp"
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include "runir/kr/ps/dl/condition_view.hpp"
 #include "runir/kr/ps/dl/effect_view.hpp"
 #include "runir/kr/ps/dl/evaluation.hpp"

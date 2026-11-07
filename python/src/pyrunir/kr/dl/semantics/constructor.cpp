@@ -37,7 +37,7 @@ void bind_constructor_view(nb::module_& m, const char* name)
 {
     using Type = Constructor<Category>;
     using View = urd::index_view<Type, ConstructorRepository>;
-    auto cls = nb::class_<View>(m, name).def("get_index", &View::index).def("get_variant", &View::get_variant, nb::keep_alive<0, 1>());
+    auto cls = nb::class_<View>(m, name).def("get_index", &View::index).def("get_variant", &View::get_variant);
     ygg::add_print(cls);
     urd::python::add_comparison(cls);
     urd::python::add_hash(cls);

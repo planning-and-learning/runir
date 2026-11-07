@@ -6,7 +6,10 @@
 #include "runir/kr/dl/semantics/evaluation_decl.hpp"
 #include "runir/kr/dl/semantics/evaluation_storage.hpp"
 #include "runir/kr/dl/semantics/query_evaluation.hpp"
-#include "runir/kr/dl/semantics/state_evaluation.hpp"
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include <urd/repr/containers/bitset_span.hpp>
 
 namespace runir::kr::dl::semantics
@@ -64,7 +67,7 @@ auto evaluate_impl(urd::index_view<Concept<Tag>, C> constructor, Context& contex
         result_bitset.set();
         for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
-            if (!role.value(object).is_subset_of(concept_bitset))
+            if (!role.value(urd::index<tyr::formalism::Object>(object)).is_subset_of(concept_bitset))
                 result_bitset.reset(object);
         }
     }
@@ -76,7 +79,7 @@ auto evaluate_impl(urd::index_view<Concept<Tag>, C> constructor, Context& contex
 
         for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
-            if (role.value(object).intersects(concept_bitset))
+            if (role.value(urd::index<tyr::formalism::Object>(object)).intersects(concept_bitset))
                 result_bitset.set(object);
         }
     }
@@ -86,7 +89,7 @@ auto evaluate_impl(urd::index_view<Concept<Tag>, C> constructor, Context& contex
         const auto role = evaluate<Kind>(constructor.get_role(), children);
         for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
-            const auto count = static_cast<ygg::uint_t>(role.value(object).count());
+            const auto count = static_cast<ygg::uint_t>(role.value(urd::index<tyr::formalism::Object>(object)).count());
             if constexpr (std::same_as<Tag, AtLeastNumberRestrictionTag>)
             {
                 if (count >= constructor.get_n())
@@ -113,7 +116,7 @@ auto evaluate_impl(urd::index_view<Concept<Tag>, C> constructor, Context& contex
 
         for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
-            const auto count = role.value(object).count_intersection(concept_bitset);
+            const auto count = role.value(urd::index<tyr::formalism::Object>(object)).count_intersection(concept_bitset);
             if constexpr (std::same_as<Tag, QualifiedAtLeastNumberRestrictionTag>)
             {
                 if (count >= constructor.get_n())
@@ -139,7 +142,7 @@ auto evaluate_impl(urd::index_view<Concept<Tag>, C> constructor, Context& contex
         result_bitset.set();
         for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
-            if (!lhs.value(object).is_subset_of(rhs.value(object)))
+            if (!lhs.value(urd::index<tyr::formalism::Object>(object)).is_subset_of(rhs.value(urd::index<tyr::formalism::Object>(object))))
                 result_bitset.reset(object);
         }
     }
@@ -151,7 +154,7 @@ auto evaluate_impl(urd::index_view<Concept<Tag>, C> constructor, Context& contex
         result_bitset.set();
         for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
-            if (lhs.value(object) != rhs.value(object))
+            if (lhs.value(urd::index<tyr::formalism::Object>(object)) != rhs.value(urd::index<tyr::formalism::Object>(object)))
                 result_bitset.reset(object);
         }
     }
@@ -166,7 +169,7 @@ auto evaluate_impl(urd::index_view<Concept<Tag>, C> constructor, Context& contex
         const auto role = evaluate<Kind>(constructor.get_role(), children);
         for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
-            auto row = role.value(object);
+            auto row = role.value(urd::index<tyr::formalism::Object>(object));
             auto contains_all_fillers = true;
             for (auto filler : constructor.get_objects())
             {
@@ -205,7 +208,7 @@ auto evaluate_impl(urd::index_view<Role<Tag>, C> constructor, Context& context) 
     if constexpr (std::same_as<Tag, UniversalTag>)
     {
         for (ygg::uint_t object = 0; object < num_objects; ++object)
-            result->get(object).set();
+            result->get(urd::index<tyr::formalism::Object>(object)).set();
     }
     else if constexpr (is_atomic_state_tag_v<Tag>)
     {
@@ -239,8 +242,8 @@ auto evaluate_impl(urd::index_view<Role<Tag>, C> constructor, Context& context) 
 
         for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
-            auto row = result->get(object);
-            row.copy_from(arg.value(object));
+            auto row = result->get(urd::index<tyr::formalism::Object>(object));
+            row.copy_from(arg.value(urd::index<tyr::formalism::Object>(object)));
             row.flip();
         }
     }
@@ -250,9 +253,9 @@ auto evaluate_impl(urd::index_view<Role<Tag>, C> constructor, Context& context) 
 
         for (ygg::uint_t lhs = 0; lhs < num_objects; ++lhs)
         {
-            const auto row = arg.value(lhs);
+            const auto row = arg.value(urd::index<tyr::formalism::Object>(lhs));
             for (const auto rhs : urd::repr::set_bit_indices(row))
-                result->get(static_cast<ygg::uint_t>(rhs)).set(lhs);
+                result->get(urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(rhs))).set(lhs);
         }
     }
     else if constexpr (std::same_as<Tag, CompositionTag>)
@@ -262,11 +265,11 @@ auto evaluate_impl(urd::index_view<Role<Tag>, C> constructor, Context& context) 
 
         for (ygg::uint_t source = 0; source < num_objects; ++source)
         {
-            auto result_row = result->get(source);
-            const auto lhs_row = lhs.value(source);
+            auto result_row = result->get(urd::index<tyr::formalism::Object>(source));
+            const auto lhs_row = lhs.value(urd::index<tyr::formalism::Object>(source));
 
             for (const auto mid : urd::repr::set_bit_indices(lhs_row))
-                result_row |= rhs.value(static_cast<ygg::uint_t>(mid));
+                result_row |= rhs.value(urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(mid)));
         }
     }
     else if constexpr (std::same_as<Tag, TransitiveClosureTag> || std::same_as<Tag, ReflexiveTransitiveClosureTag>)
@@ -279,15 +282,15 @@ auto evaluate_impl(urd::index_view<Role<Tag>, C> constructor, Context& context) 
         {
             for (ygg::uint_t source = 0; source < num_objects; ++source)
             {
-                auto source_row = result->get(source);
+                auto source_row = result->get(urd::index<tyr::formalism::Object>(source));
                 if (source_row[mid])
-                    source_row |= result->get(mid);
+                    source_row |= result->get(urd::index<tyr::formalism::Object>(mid));
             }
         }
 
         if constexpr (std::same_as<Tag, ReflexiveTransitiveClosureTag>)
             for (ygg::uint_t object = 0; object < num_objects; ++object)
-                result->get(object).set(object);
+                result->get(urd::index<tyr::formalism::Object>(object)).set(object);
     }
     else if constexpr (std::same_as<Tag, RestrictionTag>)
     {
@@ -297,8 +300,8 @@ auto evaluate_impl(urd::index_view<Role<Tag>, C> constructor, Context& context) 
 
         for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
-            auto row = result->get(object);
-            row.copy_from(role.value(object));
+            auto row = result->get(urd::index<tyr::formalism::Object>(object));
+            row.copy_from(role.value(urd::index<tyr::formalism::Object>(object)));
             row &= concept_bitset;
         }
     }
@@ -308,7 +311,7 @@ auto evaluate_impl(urd::index_view<Role<Tag>, C> constructor, Context& context) 
         const auto bitset = concept_denotation.value();
 
         for (const auto object : urd::repr::set_bit_indices(bitset))
-            result->get(static_cast<ygg::uint_t>(object)).set(object);
+            result->get(urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(object))).set(object);
     }
     else
     {
@@ -477,7 +480,7 @@ auto evaluate_impl(urd::index_view<QueryProjection<Category>, C> constructor, Co
         const auto source = position(0);
         const auto target = position(1);
         for (const auto row : relation)
-            result->get(row.template get<ygg::uint_t>(source)).set(row.template get<ygg::uint_t>(target));
+            result->get(urd::index<tyr::formalism::Object>(row.template get<ygg::uint_t>(source))).set(row.template get<ygg::uint_t>(target));
     }
     return insert(context.get_denotation_repository(), *result, context.get_builder()).first;
 }

@@ -11,8 +11,7 @@
 #include "runir/serialization/kr/dl/argument_view.hpp"
 #include "runir/serialization/kr/dl/register_view.hpp"
 
-#include <tyr/serialization/formalism/object_view.hpp>
-#include <tyr/serialization/formalism/predicate_view.hpp>
+#include <tyr/serialization/formalism/planning/planning.hpp>
 #include <yggdrasil/serialization/dictionaries.hpp>
 
 /// Serialization of DL constructors of every category and of queries: their fields refer to each other, so they are

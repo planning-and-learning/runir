@@ -8,7 +8,7 @@
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/parser/diagnostics.hpp"
-#include "runir/kr/parser/parser.hpp"
+#include "runir/kr/parser/config.hpp"
 #include "runir/kr/uns/detail/repository_instantiations.hpp"
 #include "runir/kr/uns/dl/parser/parser.hpp"
 #include "runir/kr/uns/dl/parser/parsers.hpp"
@@ -68,7 +68,7 @@ ClassifierView parse_classifier(const std::string& description, tyr::formalism::
     auto ast = runir::kr::uns::dl::ast::Classifier {};
     auto errors = std::ostringstream {};
     auto error_handler = runir::kr::parser::ErrorHandlerType(first, last, errors);
-    if (!runir::kr::parser::parse_full(first, last, parser::classifier_root_parser(), ast, error_handler))
+    if (!ygg::diagnostics::parse_full(first, last, parser::classifier_root_parser(), ast, error_handler))
         throw runir::kr::parser::DiagnosticContext::parse_error(error_handler, "Failed to parse DL classifier description.", first);
     auto diagnostics = runir::kr::parser::DiagnosticContext {};
     const auto scope = runir::kr::parser::DiagnosticContext::Scope(diagnostics, error_handler);

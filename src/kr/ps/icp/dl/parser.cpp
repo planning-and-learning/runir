@@ -1,5 +1,6 @@
 #include "runir/kr/ps/icp/dl/parser.hpp"
 #include <urd/repr/maps/std_map.hpp>
+#include <urd/repr/values/dense_set.hpp>
 #include <urd/repr/values/std_set.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
@@ -13,7 +14,7 @@
 #include "runir/kr/ps/icp/repository.hpp"
 
 #include <algorithm>
-#include <cista/containers/variant.h>
+#include <urd/elements/flat.hpp>
 #include <sstream>
 #include <tyr/formalism/planning/repository.hpp>
 #include <unordered_set>
@@ -235,7 +236,7 @@ ModuleView lower_module(const ast::Module& module,
                         {
                             return boost::apply_visitor(
                                 [&]<typename Value>(const Value& value)
-                                    -> ::cista::offset::variant<ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>
+                                    -> urd::flat_variant<ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>
                                 {
                                     if constexpr (std::same_as<Value, ast::ArgumentObject>)
                                         return ArgumentPosition { require(arguments, value.name, "action argument", diagnostics) };
@@ -285,27 +286,26 @@ ModuleView lower_module(const ast::Module& module,
     }
 
     const auto width = data->concept_features.size();
-    auto closure = urd::Store<urd::sequence<std::vector<bool>>>(width, std::vector<bool>(width));
+    using Successors = urd::Store<urd::set<std::size_t>, urd::dense>;
+    auto closure = urd::Store<urd::sequence<Successors>>(width, Successors {});
     const auto ordinal = [&](auto index)
     { return std::find(data->concept_features.begin(), data->concept_features.end(), index) - data->concept_features.begin(); };
     for (const auto& pair : module.reset_pairs)
     {
         const auto before = ordinal(require_feature(concepts, pair.before, diagnostics));
         const auto after = ordinal(require_feature(concepts, pair.after, diagnostics));
-        closure[before][after] = true;
+        closure[before].insert(after);
     }
     for (std::size_t middle = 0; middle < width; ++middle)
         for (std::size_t before = 0; before < width; ++before)
-            if (closure[before][middle])
-                for (std::size_t after = 0; after < width; ++after)
-                    closure[before][after] = closure[before][after] || closure[middle][after];
+            if (closure[before].contains(middle))
+                closure[before] |= closure[middle];
     for (const auto& pair : module.reset_pairs)
-        if (closure[ordinal(require_feature(concepts, pair.before, diagnostics))][ordinal(require_feature(concepts, pair.before, diagnostics))])
+        if (const auto before = ordinal(require_feature(concepts, pair.before, diagnostics)); closure[before].contains(before))
             diagnostics.throw_at(pair, InvalidExpressionError("Reset precedence must be acyclic and irreflexive."));
     for (std::size_t before = 0; before < width; ++before)
-        for (std::size_t after = 0; after < width; ++after)
-            if (closure[before][after])
-                data->reset_pairs.push_back({ data->concept_features[before], data->concept_features[after] });
+        for (const auto after : closure[before])
+            data->reset_pairs.push_back({ data->concept_features[before], data->concept_features[after] });
     return intern(repository, *data);
 }
 

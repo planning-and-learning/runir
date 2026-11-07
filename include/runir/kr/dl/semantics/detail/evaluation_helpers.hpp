@@ -6,7 +6,11 @@
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/dl/semantics/denotation_caches.hpp"
-#include "runir/kr/dl/semantics/denotations.hpp"
+#include "runir/kr/dl/semantics/declarations.hpp"
+#include "runir/kr/dl/semantics/denotation_builder.hpp"
+#include "runir/kr/dl/semantics/denotation_data.hpp"
+#include "runir/kr/dl/semantics/denotation_repository.hpp"
+#include "runir/kr/dl/semantics/denotation_view.hpp"
 #include "runir/kr/dl/semantics/evaluation_decl.hpp"
 #include "runir/kr/dl/semantics/evaluation_workspace.hpp"
 #include "runir/kr/dl/semantics/interning.hpp"
@@ -20,9 +24,9 @@
 #include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/planning/conjunctive_condition_view.hpp>
 #include <tyr/formalism/planning/repository.hpp>
-#include <tyr/planning/ground/state_repository.hpp>
+#include <tyr/planning/state_builder.hpp>
+#include <tyr/planning/state_repository.hpp>
 #include <tyr/planning/ground/task.hpp>
-#include <tyr/planning/lifted/state_repository.hpp>
 #include <tyr/planning/lifted/task.hpp>
 #include <urd/repr/core/dependent_false.hpp>
 #include <utility>
@@ -108,7 +112,7 @@ void evaluate_atomic_state_role(urd::index_view<Role<AtomicStateTag<T>>, C> cons
 
     if (!constructor.get_polarity())
         for (ygg::uint_t object = 0; object < num_objects; ++object)
-            result.get(object).flip();
+            result.get(urd::index<tyr::formalism::Object>(object)).flip();
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>

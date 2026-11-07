@@ -1,11 +1,16 @@
 #ifndef RUNIR_CNF_GRAMMAR_FORMATTER_HPP_
 #define RUNIR_CNF_GRAMMAR_FORMATTER_HPP_
 
-#include "runir/formatter.hpp"
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include "runir/kr/dl/cnf_grammar/grammar_view.hpp"
-#include "runir/kr/dl/cnf_grammar/views.hpp"
+#include "runir/kr/dl/cnf_grammar/boolean_view.hpp"
+#include "runir/kr/dl/cnf_grammar/concept_view.hpp"
+#include "runir/kr/dl/cnf_grammar/derivation_rule_view.hpp"
+#include "runir/kr/dl/cnf_grammar/non_terminal_view.hpp"
+#include "runir/kr/dl/cnf_grammar/numerical_view.hpp"
+#include "runir/kr/dl/cnf_grammar/role_view.hpp"
+#include "runir/kr/dl/cnf_grammar/substitution_rule_view.hpp"
 #include "runir/kr/dl/declarations.hpp"
 
 #include <fmt/format.h>
@@ -33,7 +38,7 @@ urd::Store<urd::sequence<std::string>> quoted_object_names(Objects objects)
 }
 
 template<typename Tag, typename C>
-    requires runir::kr::dl::ConceptConstructorTag<Tag>
+    requires runir::kr::dl::BaseConceptConstructorTag<Tag>
 std::string concept_constructor(urd::index_view<Concept<Tag>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::BotTag>)
@@ -79,10 +84,6 @@ std::string concept_constructor(urd::index_view<Concept<Tag>, C> view)
         return fmt::format("{} {}", runir::kr::dl::OneOfTag::keyword, fmt::join(quoted_object_names(view.get_objects()), " "));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NominalTag>)
         return fmt::format("{} {}", runir::kr::dl::NominalTag::keyword, fmt::format("{:?}", view.get_object().get_name().view()));
-    else if constexpr (std::same_as<Tag, runir::kr::dl::RegisterTag>)
-        return fmt::format("{} {}", runir::kr::dl::ConceptRegisterSyntaxTag::keyword, ygg::uint_t(view.get_identifier()));
-    else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>)
-        return fmt::format("{} {}", runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>::keyword, ygg::uint_t(view.get_identifier()));
     else
     {
         static_assert(urd::repr::dependent_false<Tag>::value, "unhandled DL concept constructor tag in concept_constructor");
@@ -90,7 +91,7 @@ std::string concept_constructor(urd::index_view<Concept<Tag>, C> view)
 }
 
 template<typename Tag, typename C>
-    requires runir::kr::dl::RoleConstructorTag<Tag>
+    requires runir::kr::dl::BaseRoleConstructorTag<Tag>
 std::string role(urd::index_view<Role<Tag>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::UniversalTag>)
@@ -120,10 +121,6 @@ std::string role(urd::index_view<Role<Tag>, C> view)
         return fmt::format("{} {} {}", runir::kr::dl::RestrictionTag::keyword, view.get_lhs(), view.get_rhs());
     else if constexpr (std::same_as<Tag, runir::kr::dl::IdentityTag>)
         return fmt::format("{} {}", runir::kr::dl::IdentityTag::keyword, view.get_arg());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::RegisterTag>)
-        return fmt::format("{} {}", runir::kr::dl::RoleRegisterSyntaxTag::keyword, ygg::uint_t(view.get_identifier()));
-    else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>)
-        return fmt::format("{} {}", runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>::keyword, ygg::uint_t(view.get_identifier()));
     else
     {
         static_assert(urd::repr::dependent_false<Tag>::value, "unhandled DL role constructor tag in role");
@@ -131,7 +128,7 @@ std::string role(urd::index_view<Role<Tag>, C> view)
 }
 
 template<typename Tag, typename C>
-    requires runir::kr::dl::BooleanConstructorTag<Tag>
+    requires runir::kr::dl::BaseBooleanConstructorTag<Tag>
 std::string boolean_constructor(urd::index_view<Boolean<Tag>, C> view)
 {
     if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
@@ -146,8 +143,6 @@ std::string boolean_constructor(urd::index_view<Boolean<Tag>, C> view)
                            boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NonemptyTag>)
         return fmt::format("{} {}", runir::kr::dl::NonemptyTag::keyword, view.get_arg());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>)
-        return fmt::format("{} {}", runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>::keyword, ygg::uint_t(view.get_identifier()));
     else
     {
         static_assert(urd::repr::dependent_false<Tag>::value, "unhandled DL boolean constructor tag in boolean_constructor");
@@ -155,15 +150,13 @@ std::string boolean_constructor(urd::index_view<Boolean<Tag>, C> view)
 }
 
 template<typename Tag, typename C>
-    requires runir::kr::dl::NumericalConstructorTag<Tag>
+    requires runir::kr::dl::BaseNumericalConstructorTag<Tag>
 std::string numerical(urd::index_view<Numerical<Tag>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::CountTag>)
         return fmt::format("{} {}", runir::kr::dl::CountTag::keyword, view.get_arg());
     else if constexpr (std::same_as<Tag, runir::kr::dl::DistanceTag>)
         return fmt::format("{} {} {} {}", runir::kr::dl::DistanceTag::keyword, view.get_lhs(), view.get_mid(), view.get_rhs());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>)
-        return fmt::format("{} {}", runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>::keyword, ygg::uint_t(view.get_identifier()));
     else
     {
         static_assert(urd::repr::dependent_false<Tag>::value, "unhandled DL numerical constructor tag in numerical");
@@ -171,22 +164,22 @@ std::string numerical(urd::index_view<Numerical<Tag>, C> view)
 }
 
 template<typename Tag, typename C>
-    requires runir::kr::dl::ConceptConstructorTag<Tag>
+    requires runir::kr::dl::BaseConceptConstructorTag<Tag>
 std::string constructor_body(urd::index_view<Concept<Tag>, C> view)
 { return concept_constructor(view); }
 
 template<typename Tag, typename C>
-    requires runir::kr::dl::RoleConstructorTag<Tag>
+    requires runir::kr::dl::BaseRoleConstructorTag<Tag>
 std::string constructor_body(urd::index_view<Role<Tag>, C> view)
 { return role(view); }
 
 template<typename Tag, typename C>
-    requires runir::kr::dl::BooleanConstructorTag<Tag>
+    requires runir::kr::dl::BaseBooleanConstructorTag<Tag>
 std::string constructor_body(urd::index_view<Boolean<Tag>, C> view)
 { return boolean_constructor(view); }
 
 template<typename Tag, typename C>
-    requires runir::kr::dl::NumericalConstructorTag<Tag>
+    requires runir::kr::dl::BaseNumericalConstructorTag<Tag>
 std::string constructor_body(urd::index_view<Numerical<Tag>, C> view)
 { return numerical(view); }
 
@@ -228,7 +221,7 @@ std::string grammar(View view)
 }  // namespace runir::kr::dl::cnf_grammar
 
 template<typename Tag, typename C>
-    requires runir::kr::dl::ConceptConstructorTag<Tag>
+    requires runir::kr::dl::BaseConceptConstructorTag<Tag>
 struct fmt::formatter<urd::index_view<runir::kr::dl::cnf_grammar::Concept<Tag>, C>> : fmt::formatter<std::string_view>
 {
     using View = urd::index_view<runir::kr::dl::cnf_grammar::Concept<Tag>, C>;
@@ -240,7 +233,7 @@ struct fmt::formatter<urd::index_view<runir::kr::dl::cnf_grammar::Concept<Tag>, 
 };
 
 template<typename Tag, typename C>
-    requires runir::kr::dl::RoleConstructorTag<Tag>
+    requires runir::kr::dl::BaseRoleConstructorTag<Tag>
 struct fmt::formatter<urd::index_view<runir::kr::dl::cnf_grammar::Role<Tag>, C>> : fmt::formatter<std::string_view>
 {
     using View = urd::index_view<runir::kr::dl::cnf_grammar::Role<Tag>, C>;
@@ -252,7 +245,7 @@ struct fmt::formatter<urd::index_view<runir::kr::dl::cnf_grammar::Role<Tag>, C>>
 };
 
 template<typename Tag, typename C>
-    requires runir::kr::dl::BooleanConstructorTag<Tag>
+    requires runir::kr::dl::BaseBooleanConstructorTag<Tag>
 struct fmt::formatter<urd::index_view<runir::kr::dl::cnf_grammar::Boolean<Tag>, C>> : fmt::formatter<std::string_view>
 {
     using View = urd::index_view<runir::kr::dl::cnf_grammar::Boolean<Tag>, C>;
@@ -264,7 +257,7 @@ struct fmt::formatter<urd::index_view<runir::kr::dl::cnf_grammar::Boolean<Tag>, 
 };
 
 template<typename Tag, typename C>
-    requires runir::kr::dl::NumericalConstructorTag<Tag>
+    requires runir::kr::dl::BaseNumericalConstructorTag<Tag>
 struct fmt::formatter<urd::index_view<runir::kr::dl::cnf_grammar::Numerical<Tag>, C>> : fmt::formatter<std::string_view>
 {
     using View = urd::index_view<runir::kr::dl::cnf_grammar::Numerical<Tag>, C>;

@@ -23,7 +23,7 @@ namespace urd
 template<>
 struct data<runir::kr::uns::ClassifierLiteral>
 {
-    using Variant = ::cista::offset::variant<urd::index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>>>;
+    using Variant = urd::flat_variant<urd::index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>>>;
 
     urd::index<runir::kr::uns::ClassifierLiteral> index;
     Variant variant;
@@ -55,12 +55,12 @@ template<>
 struct data<runir::kr::uns::Classifier>
 {
     urd::index<runir::kr::uns::Classifier> index;
-    ::cista::offset::string symbol;
+    urd::flat_string symbol;
     urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>>> features;
     urd::flat_vector<urd::index<runir::kr::uns::ClassifierClause>> clauses;
 
     data() = default;
-    data(::cista::offset::string symbol_,
+    data(urd::flat_string symbol_,
          urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>>> features_,
          urd::flat_vector<urd::index<runir::kr::uns::ClassifierClause>> clauses_) :
         index(),

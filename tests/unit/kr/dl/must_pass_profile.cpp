@@ -16,7 +16,9 @@
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/distance_evaluation.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
-#include <runir/kr/dl/semantics/state_evaluation.hpp>
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <span>

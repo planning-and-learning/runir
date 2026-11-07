@@ -7,7 +7,10 @@
 #include "runir/kr/dl/semantics/incremental/declarations.hpp"
 #include "runir/kr/dl/semantics/incremental/delta.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/query.hpp"
-#include "runir/kr/dl/semantics/state_evaluation.hpp"
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
 #include <algorithm>
 #include <cstddef>

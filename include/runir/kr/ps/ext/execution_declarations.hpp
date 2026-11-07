@@ -36,9 +36,6 @@ template<tyr::TaskKind Kind>
 using ExecutionRepositoryPtr = std::shared_ptr<ExecutionRepository<Kind>>;
 
 template<tyr::TaskKind Kind>
-using ExecutionRepositoryFactoryPtr = std::shared_ptr<ExecutionRepositoryFactory<Kind>>;
-
-template<tyr::TaskKind Kind>
 using ModuleStateView = urd::index_view<ModuleState<Kind>, ExecutionRepository<Kind>>;
 
 template<tyr::TaskKind Kind>
@@ -46,12 +43,6 @@ using CallStackView = urd::index_view<CallStack, ExecutionRepository<Kind>>;
 
 template<tyr::TaskKind Kind>
 using ProgramStateView = urd::index_view<ProgramState<Kind>, ExecutionRepository<Kind>>;
-
-template<tyr::TaskKind Kind>
-using BorrowedModuleStateView = urd::borrowed_view<ModuleState<Kind>, ExecutionRepository<Kind>>;
-
-template<tyr::TaskKind Kind>
-using BorrowedCallStackView = urd::borrowed_view<CallStack, ExecutionRepository<Kind>>;
 
 template<tyr::TaskKind Kind>
 using BorrowedProgramStateView = urd::borrowed_view<ProgramState<Kind>, ExecutionRepository<Kind>>;

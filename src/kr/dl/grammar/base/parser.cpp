@@ -20,10 +20,6 @@ namespace runir::kr::dl::grammar
 namespace
 {
 
-/// Generation grammars produce Base grammar records from the union AST, rejecting what generation does not support.
-using GrammarFamily = runir::kr::BaseFamilyTag;
-using AstFamily = runir::kr::ExtFamilyTag;
-
 class ConstructorContext
 {
     ConstructorRepository* m_repository;

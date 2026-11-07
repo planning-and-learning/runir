@@ -19,7 +19,7 @@ void bind_module_symbol(nb::module_& m, RepositoryBinding& repository)
     urd::python::bind_index<urd::index<T>>(m, "ModuleSymbolIndex");
     auto data = nb::class_<Data>(m, "ModuleSymbolData")
                     .def(nb::init<>())
-                    .def(nb::init<::cista::offset::string>(), nb::arg("name"))
+                    .def(nb::init<urd::flat_string>(), nb::arg("name"))
                     .def_rw("index", &Data::index)
                     .def_rw("name", &Data::name);
     urd::python::add_comparison(data);
@@ -27,7 +27,7 @@ void bind_module_symbol(nb::module_& m, RepositoryBinding& repository)
     ygg::add_print(view);
     urd::python::add_comparison(view);
     urd::python::add_hash(view);
-    runir::kr::python::bind_insert<T>(repository);
+    ygg::bind_insert<T>(repository);
 }
 
 }  // namespace runir::kr::ps::ext

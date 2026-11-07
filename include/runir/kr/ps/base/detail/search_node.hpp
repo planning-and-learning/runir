@@ -5,7 +5,8 @@
 #include "runir/kr/ps/base/rule_view.hpp"
 
 #include <optional>
-#include <tyr/formalism/binding_view.hpp>
+#include <tyr/formalism/declarations.hpp>
+#include <yggdrasil/formalism/binding_view.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <tyr/planning/state_repository.hpp>
 #include <urd/repr/sequences/segmented.hpp>

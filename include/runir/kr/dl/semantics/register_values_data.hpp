@@ -27,12 +27,12 @@ template<>
 struct data<runir::kr::dl::semantics::RegisterValues>
 {
     urd::index<runir::kr::dl::semantics::RegisterValues> index;
-    ::cista::offset::vector<::cista::optional<urd::index<tyr::formalism::Object>>> concept_values;
-    ::cista::offset::vector<::cista::optional<::cista::pair<urd::index<tyr::formalism::Object>, urd::index<tyr::formalism::Object>>>> role_values;
+    urd::flat_vector<urd::flat_optional<urd::index<tyr::formalism::Object>>> concept_values;
+    urd::flat_vector<urd::flat_optional<urd::flat_pair<urd::index<tyr::formalism::Object>, urd::index<tyr::formalism::Object>>>> role_values;
 
     data() = default;
-    data(::cista::offset::vector<::cista::optional<urd::index<tyr::formalism::Object>>> concept_values_,
-         ::cista::offset::vector<::cista::optional<::cista::pair<urd::index<tyr::formalism::Object>, urd::index<tyr::formalism::Object>>>> role_values_) :
+    data(urd::flat_vector<urd::flat_optional<urd::index<tyr::formalism::Object>>> concept_values_,
+         urd::flat_vector<urd::flat_optional<urd::flat_pair<urd::index<tyr::formalism::Object>, urd::index<tyr::formalism::Object>>>> role_values_) :
         index(),
         concept_values(std::move(concept_values_)),
         role_values(std::move(role_values_))

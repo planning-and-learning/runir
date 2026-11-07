@@ -17,12 +17,12 @@ struct data<runir::kr::ps::icp::XCondition>
 {
     urd::index<runir::kr::ps::icp::XCondition> index;
     runir::kr::ps::icp::ConditionOperation operation {};
-    ::cista::offset::variant<runir::kr::ps::icp::ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> object;
+    urd::flat_variant<runir::kr::ps::icp::ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> object;
     urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>> feature;
 
     data() = default;
     data(runir::kr::ps::icp::ConditionOperation operation_,
-         ::cista::offset::variant<runir::kr::ps::icp::ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> object_,
+         urd::flat_variant<runir::kr::ps::icp::ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> object_,
          urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>> feature_) :
         index(),
         operation(operation_),

@@ -37,7 +37,7 @@ public:
         const auto& task = workspace.get_task_context();
         auto& environment = workspace.get_environment();
         auto source_context = context.make_dl_context(source);
-        if (!conditions_are_compatible<Kind>(m_rule, source_context))
+        if (!runir::kr::ps::all_compatible<Kind, IcpFamilyTag>(m_rule.get_conditions(), source_context))
             return true;
         const auto denotation = evaluate<Kind>(m_rule.get_feature(), source_context);
         if (denotation.begin() == denotation.end())

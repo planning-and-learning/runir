@@ -27,7 +27,6 @@ template<tyr::TaskKind Kind,
 class SuccessorExpander
 {
 public:
-    using StorageType = ExecutionStorage;
     using StoredState = StorageStoredState<ExecutionStorage>;
     using Step = detail::ProgramStep<Kind, ExecutionStorage>;
 
@@ -89,9 +88,6 @@ private:
     ExecutionStorage m_storage;
     detail::RuleEvaluators<Kind, EvaluationPolicy> m_rule_evaluators;
 };
-
-template<tyr::TaskKind Kind>
-using TransientSuccessorExpander = SuccessorExpander<Kind, TransientExecutionStorage<Kind>>;
 
 #ifndef RUNIR_HEADER_INSTANTIATION
 

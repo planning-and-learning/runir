@@ -3,9 +3,22 @@
 
 #include "runir/kr/dl/detail/constructor_repository.hpp"
 #include "runir/kr/dl/grammar/canonicalization.hpp"
-#include "runir/kr/dl/grammar/datas.hpp"
+#include "runir/kr/dl/canonicalization.hpp"
+#include "runir/kr/dl/grammar/boolean_data.hpp"
+#include "runir/kr/dl/grammar/concept_data.hpp"
+#include "runir/kr/dl/grammar/derivation_rule_data.hpp"
+#include "runir/kr/dl/grammar/grammar_data.hpp"
+#include "runir/kr/dl/grammar/non_terminal_data.hpp"
+#include "runir/kr/dl/grammar/numerical_data.hpp"
+#include "runir/kr/dl/grammar/role_data.hpp"
 #include "runir/kr/dl/grammar/declarations.hpp"
-#include "runir/kr/dl/grammar/views.hpp"
+#include "runir/kr/dl/grammar/boolean_view.hpp"
+#include "runir/kr/dl/grammar/concept_view.hpp"
+#include "runir/kr/dl/grammar/derivation_rule_view.hpp"
+#include "runir/kr/dl/grammar/grammar_view.hpp"
+#include "runir/kr/dl/grammar/non_terminal_view.hpp"
+#include "runir/kr/dl/grammar/numerical_view.hpp"
+#include "runir/kr/dl/grammar/role_view.hpp"
 
 #include <boost/mp11.hpp>
 #include <urd/elements/flat.hpp>

@@ -28,8 +28,8 @@ void check_composition_and_closures()
     auto rhs = urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size);
     for (ygg::uint_t i = 0; i < size; ++i)
     {
-        lhs.get(i).set((i + 1) % size);
-        rhs.get(i).set((i + 2) % size);
+        lhs.get(urd::index<tyr::formalism::Object>(i)).set((i + 1) % size);
+        rhs.get(urd::index<tyr::formalism::Object>(i)).set((i + 2) % size);
     }
     auto previous_lhs = lhs;
     auto previous_rhs = rhs;
@@ -65,12 +65,12 @@ void check_composition_and_closures()
         size_t count = 0;
         for (ygg::uint_t source = 0; source < size; ++source)
         {
-            EXPECT_TRUE(output.get_builder().get(source).trailing_bits_zero());
+            EXPECT_TRUE(output.get_builder().get(urd::index<tyr::formalism::Object>(source)).trailing_bits_zero());
             for (ygg::uint_t target = 0; target < size; ++target)
             {
                 const auto position = source * size + target;
-                const auto before = previous.get(source)[target];
-                EXPECT_EQ(output.get_builder().get(source)[target], expected[position]);
+                const auto before = previous.get(urd::index<tyr::formalism::Object>(source))[target];
+                EXPECT_EQ(output.get_builder().get(urd::index<tyr::formalism::Object>(source))[target], expected[position]);
                 EXPECT_EQ(added[position], !initialized && !before && expected[position]);
                 EXPECT_EQ(removed[position], !initialized && before && !expected[position]);
                 count += expected[position];
@@ -86,10 +86,10 @@ void check_composition_and_closures()
         for (ygg::uint_t source = 0; source < size; ++source)
             for (ygg::uint_t target = 0; target < size; ++target)
             {
-                if (lhs.get(source)[target] != previous_lhs.get(source)[target])
-                    (lhs.get(source)[target] ? lhs_delta.added : lhs_delta.removed).emplace_back(object(source), object(target));
-                if (rhs.get(source)[target] != previous_rhs.get(source)[target])
-                    (rhs.get(source)[target] ? rhs_delta.added : rhs_delta.removed).emplace_back(object(source), object(target));
+                if (lhs.get(urd::index<tyr::formalism::Object>(source))[target] != previous_lhs.get(urd::index<tyr::formalism::Object>(source))[target])
+                    (lhs.get(urd::index<tyr::formalism::Object>(source))[target] ? lhs_delta.added : lhs_delta.removed).emplace_back(object(source), object(target));
+                if (rhs.get(urd::index<tyr::formalism::Object>(source))[target] != previous_rhs.get(urd::index<tyr::formalism::Object>(source))[target])
+                    (rhs.get(urd::index<tyr::formalism::Object>(source))[target] ? rhs_delta.added : rhs_delta.removed).emplace_back(object(source), object(target));
             }
         const auto old_composition = initialize ? urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) : composition.get_builder();
         const auto old_transitive = initialize ? urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) : transitive.get_builder();
@@ -112,9 +112,9 @@ void check_composition_and_closures()
         for (ygg::uint_t source = 0; source < size; ++source)
             for (ygg::uint_t target = 0; target < size; ++target)
             {
-                expected_closure[source * size + target] = lhs.get(source)[target];
+                expected_closure[source * size + target] = lhs.get(urd::index<tyr::formalism::Object>(source))[target];
                 for (ygg::uint_t middle = 0; middle < size; ++middle)
-                    if (lhs.get(source)[middle] && rhs.get(middle)[target])
+                    if (lhs.get(urd::index<tyr::formalism::Object>(source))[middle] && rhs.get(urd::index<tyr::formalism::Object>(middle))[target])
                         expected_composition[source * size + target] = true;
             }
         // Independent Floyd-Warshall reference, including nonempty paths to self.
@@ -141,43 +141,43 @@ void check_composition_and_closures()
     if constexpr (size >= 5)
     {
         // Repeated changed middle objects must be discovered once, including simultaneous left changes.
-        rhs.get(1).set(0);
-        rhs.get(1).set(1);
-        rhs.get(1).set(size - 1);
-        lhs.get(0).set(1);
-        lhs.get(2).set(1);
+        rhs.get(urd::index<tyr::formalism::Object>(1)).set(0);
+        rhs.get(urd::index<tyr::formalism::Object>(1)).set(1);
+        rhs.get(urd::index<tyr::formalism::Object>(1)).set(size - 1);
+        lhs.get(urd::index<tyr::formalism::Object>(0)).set(1);
+        lhs.get(urd::index<tyr::formalism::Object>(2)).set(1);
         check();
-        rhs.get(1).reset(0);
-        rhs.get(1).reset(1);
-        rhs.get(2).set(size - 1);
-        lhs.get(0).reset(1);
+        rhs.get(urd::index<tyr::formalism::Object>(1)).reset(0);
+        rhs.get(urd::index<tyr::formalism::Object>(1)).reset(1);
+        rhs.get(urd::index<tyr::formalism::Object>(2)).set(size - 1);
+        lhs.get(urd::index<tyr::formalism::Object>(0)).reset(1);
         check();
 
         SCOPED_TRACE("directed SCC splits, merges, and a clean suffix");
         lhs.storage_bits().reset();
-        lhs.get(0).set(1);
-        lhs.get(1).set(2);
-        lhs.get(2).set(1);
-        lhs.get(2).set(3);
-        lhs.get(3).set(size - 1);
+        lhs.get(urd::index<tyr::formalism::Object>(0)).set(1);
+        lhs.get(urd::index<tyr::formalism::Object>(1)).set(2);
+        lhs.get(urd::index<tyr::formalism::Object>(2)).set(1);
+        lhs.get(urd::index<tyr::formalism::Object>(2)).set(3);
+        lhs.get(urd::index<tyr::formalism::Object>(3)).set(size - 1);
         check();
 
         // The surviving cycle must not preserve reachability from the disconnected source.
-        lhs.get(0).reset(1);
+        lhs.get(urd::index<tyr::formalism::Object>(0)).reset(1);
         check();
-        lhs.get(0).set(1);
+        lhs.get(urd::index<tyr::formalism::Object>(0)).set(1);
         check();
 
         // Split and merge the cycle while the downstream suffix stays clean.
-        lhs.get(2).reset(1);
+        lhs.get(urd::index<tyr::formalism::Object>(2)).reset(1);
         check();
-        lhs.get(2).set(1);
+        lhs.get(urd::index<tyr::formalism::Object>(2)).set(1);
         check();
 
         // Merge the suffix into the cycle, then split it back out.
-        lhs.get(size - 1).set(1);
+        lhs.get(urd::index<tyr::formalism::Object>(size - 1)).set(1);
         check();
-        lhs.get(size - 1).reset(1);
+        lhs.get(urd::index<tyr::formalism::Object>(size - 1)).reset(1);
         check();
         check();
     }
@@ -192,13 +192,13 @@ void check_composition_and_closures()
         {
             const auto source = static_cast<ygg::uint_t>(random() % size);
             const auto target = static_cast<ygg::uint_t>(random() % size);
-            (random() % 2 == 0 ? lhs : rhs).get(source).set(target, random() % 5 == 0);
+            (random() % 2 == 0 ? lhs : rhs).get(urd::index<tyr::formalism::Object>(source)).set(target, random() % 5 == 0);
         }
         if (iteration % 23 == 0)
             lhs.storage_bits().reset();
         if (iteration % 29 == 0)
             for (ygg::uint_t object_index = 0; object_index < size; ++object_index)
-                lhs.get(object_index).set((object_index + 1) % size);
+                lhs.get(urd::index<tyr::formalism::Object>(object_index)).set((object_index + 1) % size);
         check();
         check();  // No changes must clear previous output deltas.
         if (iteration % 3 == 0)
@@ -277,11 +277,11 @@ TEST(RunirIncrementalSetOperations, RestrictionBatchesConceptChangesWithChangedR
     const auto object = [&](ygg::uint_t i) { return repository->view(urd::index<tyr::formalism::Object>(i)); };
     auto role = urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size);
     auto concept_ = urd::builder<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(size);
-    role.get(0).set(1);
-    role.get(1).set(size - 1);
-    role.get(2).set(1);
-    role.get(2).set(size - 1);
-    role.get(3).set(2);
+    role.get(urd::index<tyr::formalism::Object>(0)).set(1);
+    role.get(urd::index<tyr::formalism::Object>(1)).set(size - 1);
+    role.get(urd::index<tyr::formalism::Object>(2)).set(1);
+    role.get(urd::index<tyr::formalism::Object>(2)).set(size - 1);
+    role.get(urd::index<tyr::formalism::Object>(3)).set(2);
     concept_.get().set(1);
     auto role_delta = kr::dl::semantics::incremental::DenotationDelta<kr::dl::RoleTag>();
     auto concept_delta = kr::dl::semantics::incremental::DenotationDelta<kr::dl::ConceptTag>();
@@ -306,8 +306,8 @@ TEST(RunirIncrementalSetOperations, RestrictionBatchesConceptChangesWithChangedR
                                                            concept_delta,
                                                            workspace);
 
-    role.get(0).reset(1);
-    role.get(0).set(size - 1);
+    role.get(urd::index<tyr::formalism::Object>(0)).reset(1);
+    role.get(urd::index<tyr::formalism::Object>(0)).set(size - 1);
     role_delta.removed.emplace_back(object(0), object(1));
     role_delta.added.emplace_back(object(0), object(size - 1));
     concept_.get().reset(1);
@@ -326,7 +326,7 @@ TEST(RunirIncrementalSetOperations, RestrictionBatchesConceptChangesWithChangedR
     {
         EXPECT_EQ(existential.get_builder().get().test(source), source < 3);
         for (ygg::uint_t target = 0; target < size; ++target)
-            EXPECT_EQ(restricted.get_builder().get(source).test(target), source < 3 && target == size - 1);
+            EXPECT_EQ(restricted.get_builder().get(urd::index<tyr::formalism::Object>(source)).test(target), source < 3 && target == size - 1);
     }
     EXPECT_EQ(restricted.get_delta().added.size(), 3);
     EXPECT_EQ(restricted.get_delta().removed.size(), 2);
@@ -345,8 +345,8 @@ TEST(RunirIncrementalSetOperations, InverseAndComplementPreservePaddingAcrossWor
     }
     const auto object = [&](ygg::uint_t index) { return repository->view(urd::index<tyr::formalism::Object>(index)); };
     auto role = urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size);
-    role.get(0).set(size - 1);
-    role.get(size - 1).set(1);
+    role.get(urd::index<tyr::formalism::Object>(0)).set(size - 1);
+    role.get(urd::index<tyr::formalism::Object>(size - 1)).set(1);
     auto inverse = kr::dl::semantics::incremental::detail::DenotationState<kr::dl::RoleTag>();
     auto complement = kr::dl::semantics::incremental::detail::DenotationState<kr::dl::RoleTag>();
     auto delta = kr::dl::semantics::incremental::DenotationDelta<kr::dl::RoleTag>();
@@ -361,8 +361,8 @@ TEST(RunirIncrementalSetOperations, InverseAndComplementPreservePaddingAcrossWor
         EXPECT_EQ(output->get_delta().added.capacity(), 0);
         EXPECT_EQ(output->get_delta().removed.capacity(), 0);
     }
-    role.get(0).reset(size - 1);
-    role.get(size - 2).set(size - 1);
+    role.get(urd::index<tyr::formalism::Object>(0)).reset(size - 1);
+    role.get(urd::index<tyr::formalism::Object>(size - 2)).set(size - 1);
     delta.removed.emplace_back(object(0), object(size - 1));
     delta.added.emplace_back(object(size - 2), object(size - 1));
     kr::dl::semantics::incremental::detail::update_set(kr::dl::InverseTag {}, inverse, view, delta, workspace);
@@ -381,19 +381,19 @@ TEST(RunirIncrementalSetOperations, InverseAndComplementPreservePaddingAcrossWor
     {
         for (ygg::uint_t source = 0; source < size; ++source)
         {
-            EXPECT_TRUE(inverse.get_builder().get(source).trailing_bits_zero());
-            EXPECT_TRUE(complement.get_builder().get(source).trailing_bits_zero());
+            EXPECT_TRUE(inverse.get_builder().get(urd::index<tyr::formalism::Object>(source)).trailing_bits_zero());
+            EXPECT_TRUE(complement.get_builder().get(urd::index<tyr::formalism::Object>(source)).trailing_bits_zero());
             for (ygg::uint_t target = 0; target < size; ++target)
             {
-                EXPECT_EQ(inverse.get_builder().get(source)[target], role.get(target)[source]);
-                EXPECT_EQ(complement.get_builder().get(source)[target], !role.get(source)[target]);
+                EXPECT_EQ(inverse.get_builder().get(urd::index<tyr::formalism::Object>(source))[target], role.get(urd::index<tyr::formalism::Object>(target))[source]);
+                EXPECT_EQ(complement.get_builder().get(urd::index<tyr::formalism::Object>(source))[target], !role.get(urd::index<tyr::formalism::Object>(source))[target]);
             }
         }
     };
     check_result();
     const auto inverse_capacity = std::pair(inverse.get_delta().added.capacity(), inverse.get_delta().removed.capacity());
     const auto complement_capacity = std::pair(complement.get_delta().added.capacity(), complement.get_delta().removed.capacity());
-    role.get(2).set(3);
+    role.get(urd::index<tyr::formalism::Object>(2)).set(3);
     kr::dl::semantics::incremental::detail::initialize_set(kr::dl::InverseTag {}, inverse, view, delta, workspace);
     kr::dl::semantics::incremental::detail::initialize_set(kr::dl::ComplementTag {}, complement, view, delta, workspace);
     EXPECT_TRUE(inverse.get_delta().empty());

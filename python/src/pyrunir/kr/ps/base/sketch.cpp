@@ -77,7 +77,7 @@ void bind_sketch(nb::module_& m, RepositoryBinding& repository)
     urd::python::add_hash(view);
     runir::kr::python::bind_ps_optimize<runir::kr::BaseFamilyTag, Repository>(view);
 
-    runir::kr::python::bind_insert<T>(repository);
+    ygg::bind_insert<T>(repository);
 }
 
 }  // namespace runir::kr::ps::base

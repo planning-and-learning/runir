@@ -41,7 +41,7 @@ inline void mark_predecessors(SetOperationWorkspace& workspace, const urd::build
 {
     const auto index = static_cast<ygg::uint_t>(target.value);
     for (ygg::uint_t source = 0; source < role.get_num_objects(); ++source)
-        if (!workspace.marked[source] && role.get(source).test(index))
+        if (!workspace.marked[source] && role.get(urd::index<tyr::formalism::Object>(source)).test(index))
             workspace.mark(urd::index<tyr::formalism::Object>(source));
 }
 
@@ -71,7 +71,7 @@ void mark_predecessors(SetOperationWorkspace& workspace, const urd::builder<Deno
         return;
     }
     for (ygg::uint_t source = 0; source < role.get_num_objects(); ++source)
-        if (!workspace.marked[source] && role.get(source).intersects(targets))
+        if (!workspace.marked[source] && role.get(urd::index<tyr::formalism::Object>(source)).intersects(targets))
             workspace.mark(urd::index<tyr::formalism::Object>(source));
 }
 
@@ -177,7 +177,7 @@ void evaluate_rows(CompositionTag, BorrowedDenotationView<RoleTag> lhs, Borrowed
         auto row = workspace.row.get();
         row.reset();
         for (const auto middle : urd::repr::set_bit_indices(lhs.value(source)))
-            row |= rhs.value(static_cast<ygg::uint_t>(middle));
+            row |= rhs.value(urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(middle)));
         emit(source, urd::repr::BitsetSpan<const ygg::uint_t>(row));
     }
 }

@@ -48,16 +48,16 @@ void bind_role_view(nb::module_& m, const char* name)
     cls.def("syntactic_complexity", [](View view) { return semantics::syntactic_complexity(view); });
 
     if constexpr (is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag>)
-        cls.def("get_predicate", &View::get_predicate, nb::keep_alive<0, 1>()).def("get_polarity", &View::get_polarity);
+        cls.def("get_predicate", &View::get_predicate).def("get_polarity", &View::get_polarity);
     else if constexpr (std::same_as<Tag, IntersectionTag> || std::same_as<Tag, UnionTag> || std::same_as<Tag, CompositionTag>
                        || std::same_as<Tag, RestrictionTag>)
-        cls.def("get_lhs", &View::get_lhs, nb::keep_alive<0, 1>()).def("get_rhs", &View::get_rhs, nb::keep_alive<0, 1>());
+        cls.def("get_lhs", &View::get_lhs).def("get_rhs", &View::get_rhs);
     else if constexpr (std::same_as<Tag, RegisterTag>)
-        cls.def("get_register", &View::get_register, nb::keep_alive<0, 1>());
+        cls.def("get_register", &View::get_register);
     else if constexpr (std::same_as<Tag, ArgumentTag<RoleTag>>)
-        cls.def("get_argument", &View::get_argument, nb::keep_alive<0, 1>());
+        cls.def("get_argument", &View::get_argument);
     else if constexpr (!std::same_as<Tag, UniversalTag>)
-        cls.def("get_arg", &View::get_arg, nb::keep_alive<0, 1>());
+        cls.def("get_arg", &View::get_arg);
 }
 
 }  // namespace

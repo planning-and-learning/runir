@@ -1,7 +1,7 @@
 #include "runir/kr/ps/icp/dl/parser/parser.hpp"
 
 #include "runir/kr/parser/diagnostics.hpp"
-#include "runir/kr/parser/parser.hpp"
+#include "runir/kr/parser/config.hpp"
 #include "runir/kr/ps/ext/dl/parser/parser_def.hpp"
 #include "runir/kr/ps/icp/dl/ast/ast_adapted.hpp"
 
@@ -79,11 +79,11 @@ constexpr boost::spirit::x3::rule<ResetPairClass, ast::ResetPair> reset_pair = "
 constexpr boost::spirit::x3::rule<ModuleClass, ast::Module> module = "module";
 constexpr boost::spirit::x3::rule<ProgramClass, ast::Program> program = "program";
 
-struct ModuleRoot : runir::kr::parser::ErrorHandlerBase
+struct ModuleRoot : ygg::diagnostics::ErrorHandlerBase
 {
 };
 
-struct ProgramRoot : runir::kr::parser::ErrorHandlerBase
+struct ProgramRoot : ygg::diagnostics::ErrorHandlerBase
 {
 };
 
@@ -133,7 +133,7 @@ template<typename Parser, typename Ast>
 void parse_ast(const std::string& description, const Parser& parser, Ast& result, runir::kr::parser::ErrorHandlerType& error_handler)
 {
     auto first = description.cbegin();
-    if (!runir::kr::parser::parse_full(first, description.cend(), parser, result, error_handler))
+    if (!ygg::diagnostics::parse_full(first, description.cend(), parser, result, error_handler))
         throw runir::kr::parser::DiagnosticContext::parse_error(error_handler, "Failed to parse ICP description.", first);
 }
 

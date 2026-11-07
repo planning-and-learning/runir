@@ -5,13 +5,13 @@
 #include "runir/kr/dl/translations/ygg_query.hpp"
 
 #include <algorithm>
+#include <urd/repr/maps/std_map.hpp>
 #include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/dense_set.hpp>
 #include <urd/store.hpp>
 #include <array>
 #include <cassert>
 #include <cstddef>
-#include <cstring>
-#include <map>
 #include <optional>
 #include <span>
 #include <tyr/formalism/declarations.hpp>
@@ -42,13 +42,13 @@ struct PatternDatabase
     size_t u_position = 0;                       ///< The position of u[i] in the columns of edges.
     size_t v_position = 0;                       ///< The position of v[i] in the columns of edges.
     size_t predecessors = 0;                     ///< The binding of edges with v[i] bound.
-    std::vector<bool> targets {};                ///< α_i(T), for which h was computed.
+    urd::Store<urd::set<ygg::uint_t>, urd::dense> targets {};  ///< α_i(T), for which h was computed.
     urd::Store<urd::sequence<ygg::uint_t>> h {};             ///< Abstract distance to α_i(T); ygg::database::infinity if unreachable.
 
     /// Whether h has been computed, for some abstract targets.
     [[nodiscard]] bool computed() const noexcept { return !h.empty(); }
     /// Whether h must be computed for `abstract_targets`: it never was, or it was for other abstract targets.
-    [[nodiscard]] bool needs_update(const std::vector<bool>& abstract_targets) const { return !computed() || targets != abstract_targets; }
+    [[nodiscard]] bool needs_update(const urd::Store<urd::set<ygg::uint_t>, urd::dense>& abstract_targets) const { return !computed() || targets != abstract_targets; }
 };
 
 /// h(v) = max_i h_i(α_i(v)) over single-column pattern databases (Culberson & Schaeffer, "Pattern Databases",
@@ -130,7 +130,7 @@ private:
     urd::Store<urd::sequence<ygg::database::ColumnLayout>> m_vertex_columns;
     urd::Store<urd::sequence<ygg::database::ColumnLayout>> m_target_columns;
     ygg::uint_t m_num_objects = 0;
-    std::vector<bool> m_abstract_targets;  ///< Scratch of update_table(), kept with m_queue to avoid allocations.
+    urd::Store<urd::set<ygg::uint_t>, urd::dense> m_abstract_targets;  ///< Scratch of update_table(), kept with m_queue to avoid allocations.
     urd::Store<urd::sequence<ygg::uint_t>> m_queue;
     urd::Store<urd::sequence<std::byte>> m_vertex;  ///< The bound abstract vertex, kept to avoid allocations.
 
@@ -152,9 +152,9 @@ private:
     template<ygg::database::RelationViewConcept Targets>
     void abstract_targets(const PatternDatabase& database, const Targets& targets)
     {
-        m_abstract_targets.assign(m_num_objects, false);
+        m_abstract_targets.clear();
         for (size_t r = 0; r < targets.size(); ++r)
-            m_abstract_targets[Row(targets.row(r), m_target_columns).get<ygg::uint_t>(database.pattern)] = true;
+            m_abstract_targets.insert(Row(targets.row(r), m_target_columns).get<ygg::uint_t>(database.pattern));
     }
     Tables::value_type breadth_first(PatternDatabase& database)
     {
@@ -167,12 +167,11 @@ private:
     {
         h.assign(m_num_objects, ygg::database::infinity);
         m_queue.clear();
-        for (ygg::uint_t o = 0; o < m_num_objects; ++o)
-            if (m_abstract_targets[o])
-            {
-                h[o] = 0;
-                m_queue.push_back(o);
-            }
+        for (const auto o : m_abstract_targets)
+        {
+            h[o] = 0;
+            m_queue.push_back(o);
+        }
         for (size_t head = 0; head < m_queue.size(); ++head)
         {
             const auto o = m_queue[head];
@@ -192,22 +191,6 @@ private:
         }
     }
 };
-
-namespace detail
-{
-/// Byte strings in std::vector's order. The comparison is spelled out because GCC 13 and 14 report the memcmp inlined
-/// from std::vector's operator< as an overread (-Wstringop-overread).
-struct ByteStringLess
-{
-    bool operator()(std::span<const std::byte> lhs, std::span<const std::byte> rhs) const noexcept
-    {
-        const auto size = std::min(lhs.size(), rhs.size());
-        if (const auto order = size == 0 ? 0 : std::memcmp(lhs.data(), rhs.data(), size); order != 0)
-            return order < 0;
-        return lhs.size() < rhs.size();
-    }
-};
-}
 
 /// A ProjectionHeuristic for keyed vertices (ygg::database::MustPass): estimates from a key followed by a vertex, with
 /// tables per key for the key's targets. The abstract edges ignore the key, a superset of every key's projected edges,
@@ -236,7 +219,7 @@ public:
         if (m_rows == m_previous)
             return;
         std::swap(m_rows, m_previous);
-        auto grouped = std::map<urd::Store<urd::sequence<std::byte>>, urd::Store<urd::sequence<urd::Store<urd::sequence<std::byte>>>>, detail::ByteStringLess>();
+        auto grouped = urd::Store<urd::map<urd::Store<urd::sequence<std::byte>>, urd::Store<urd::sequence<urd::Store<urd::sequence<std::byte>>>>>, urd::sorted> {};
         for (size_t r = 0; r < targets.size(); ++r)
         {
             const auto row = targets.row(r);
@@ -246,7 +229,7 @@ public:
         }
         for (auto& [key, rows] : grouped)
         {
-            std::ranges::sort(rows, detail::ByteStringLess {});
+            std::ranges::sort(rows);
             auto& entry = m_keys[key];
             if (entry.tables.empty() || entry.targets != rows)
             {
@@ -277,7 +260,7 @@ private:
     ProjectionHeuristic m_heuristic;
     size_t m_key_size = 0;
     urd::Store<urd::sequence<ygg::database::ColumnLayout>> m_target_columns;  ///< The vertex columns of a target, without the key.
-    std::map<urd::Store<urd::sequence<std::byte>>, Key, detail::ByteStringLess> m_keys;
+    urd::Store<urd::map<urd::Store<urd::sequence<std::byte>>, Key>, urd::sorted> m_keys;
     mutable urd::Store<urd::sequence<std::byte>> m_key;  ///< Scratch of estimate().
     urd::Store<urd::sequence<std::byte>> m_previous;     ///< The rows of the targets of the last update().
     urd::Store<urd::sequence<std::byte>> m_rows;         ///< Scratch of update().

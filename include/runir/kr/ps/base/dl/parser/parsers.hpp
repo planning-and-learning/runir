@@ -72,27 +72,6 @@ BOOST_SPIRIT_DECLARE(positive_effect_type,
                      base_effect_type)
 BOOST_SPIRIT_DECLARE(base_rule_type, base_sketch_type, base_sketch_root_type)
 
-base_boolean_feature_type const& boolean_feature_parser();
-base_numerical_feature_type const& numerical_feature_parser();
-base_feature_type const& feature_parser();
-
-positive_condition_type const& positive_condition_parser();
-negative_condition_type const& negative_condition_parser();
-equal_zero_condition_type const& equal_zero_condition_parser();
-greater_zero_condition_type const& greater_zero_condition_parser();
-base_condition_observation_type const& condition_observation_parser();
-base_condition_type const& condition_parser();
-
-positive_effect_type const& positive_effect_parser();
-negative_effect_type const& negative_effect_parser();
-unchanged_effect_type const& unchanged_effect_parser();
-increases_effect_type const& increases_effect_parser();
-decreases_effect_type const& decreases_effect_parser();
-base_effect_observation_type const& effect_observation_parser();
-base_effect_type const& effect_parser();
-
-base_rule_type const& rule_parser();
-base_sketch_type const& sketch_parser();
 base_sketch_root_type const& sketch_root_parser();
 
 }  // namespace runir::kr::ps::base::dl::parser

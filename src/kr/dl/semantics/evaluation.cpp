@@ -1,7 +1,10 @@
 #include "runir/kr/dl/semantics/detail/evaluation_impl.hpp"
 #include "runir/kr/dl/semantics/detail/repository_instantiations.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/evaluation_impl.hpp"
-#include "runir/kr/dl/semantics/state_evaluation.hpp"
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
 namespace runir::kr::dl::semantics
 {

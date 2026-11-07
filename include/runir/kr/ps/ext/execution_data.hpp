@@ -58,7 +58,7 @@ struct data<runir::kr::ps::ext::CallStack>
     urd::index<runir::kr::ps::ext::MemoryState> return_memory_state;
     urd::index<runir::kr::dl::semantics::RegisterValues> registers;
     urd::index<runir::kr::dl::semantics::CallArguments> arguments;
-    ::cista::optional<urd::index<runir::kr::ps::ext::CallStack>> caller;
+    urd::flat_optional<urd::index<runir::kr::ps::ext::CallStack>> caller;
 
     data() = default;
     // The referenced indices live in different repositories, hence the separate context parameters.
@@ -66,7 +66,7 @@ struct data<runir::kr::ps::ext::CallStack>
          urd::index<runir::kr::ps::ext::MemoryState> return_memory_state_,
          urd::index<runir::kr::dl::semantics::RegisterValues> registers_,
          urd::index<runir::kr::dl::semantics::CallArguments> arguments_,
-         ::cista::optional<urd::index<runir::kr::ps::ext::CallStack>> caller_) :
+         urd::flat_optional<urd::index<runir::kr::ps::ext::CallStack>> caller_) :
         index(),
         module_(module_index),
         return_memory_state(return_memory_state_),
@@ -88,13 +88,13 @@ struct data<runir::kr::ps::ext::ProgramState<Kind>>
     urd::index<runir::kr::ps::ext::ProgramState<Kind>> index;
     urd::index<runir::kr::ps::ext::Program> program;
     urd::index<runir::kr::ps::ext::ModuleState<Kind>> module_state;
-    ::cista::optional<urd::index<runir::kr::ps::ext::CallStack>> call_stack;
+    urd::flat_optional<urd::index<runir::kr::ps::ext::CallStack>> call_stack;
 
     data() = default;
     // The referenced indices live in different repositories, hence the separate context parameters.
     data(urd::index<runir::kr::ps::ext::Program> program_,
          urd::index<runir::kr::ps::ext::ModuleState<Kind>> module_state_,
-         ::cista::optional<urd::index<runir::kr::ps::ext::CallStack>> call_stack_) :
+         urd::flat_optional<urd::index<runir::kr::ps::ext::CallStack>> call_stack_) :
         index(),
         program(program_),
         module_state(std::move(module_state_)),

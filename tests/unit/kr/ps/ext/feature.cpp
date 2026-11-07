@@ -21,7 +21,7 @@ using View = urd::index_view<Entity, kr::ps::ext::Repository>;
 template<typename Entity, typename Concrete>
 concept FeatureContract =
     std::constructible_from<urd::index<Entity>, ygg::uint_t> && std::totally_ordered<urd::index<Entity>> && std::totally_ordered<urd::data<Entity>>
-    && std::totally_ordered<View<Entity>> && std::same_as<typename urd::data<Entity>::Variant, ::cista::offset::variant<urd::index<Concrete>>>
+    && std::totally_ordered<View<Entity>> && std::same_as<typename urd::data<Entity>::Variant, urd::flat_variant<urd::index<Concrete>>>
     && requires(urd::data<Entity>& data, const View<Entity>& view) {
            data.index;
            data.variant;

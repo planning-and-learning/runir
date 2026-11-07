@@ -36,7 +36,7 @@ namespace
 
 template<typename... Types>
 void bind_constructors(nb::class_<ConstructorRepository>& repository, boost::mp11::mp_list<Types...>)
-{ (runir::kr::python::bind_insert<Types>(repository), ...); }
+{ (ygg::bind_insert<Types>(repository), ...); }
 
 }  // namespace
 
@@ -79,8 +79,8 @@ void bind_semantics_repositories(nb::module_& m)
         .def_rw("numerical_arguments", &CallArgumentsData::numerical_arguments);
     nb::class_<RegisterValuesData>(m, "RegisterValuesData")
         .def(nb::init<>())
-        .def(nb::init<::cista::offset::vector<::cista::optional<urd::index<tyr::formalism::Object>>>,
-                      ::cista::offset::vector<::cista::optional<::cista::pair<urd::index<tyr::formalism::Object>, urd::index<tyr::formalism::Object>>>>>(),
+        .def(nb::init<urd::flat_vector<urd::flat_optional<urd::index<tyr::formalism::Object>>>,
+                      urd::flat_vector<urd::flat_optional<urd::flat_pair<urd::index<tyr::formalism::Object>, urd::index<tyr::formalism::Object>>>>>(),
              nb::arg("concept_values"),
              nb::arg("role_values"))
         .def(urd::python::init_from_views<const urd::Store<urd::sequence<std::optional<tyr::formalism::planning::ObjectView>>>&,
@@ -126,10 +126,9 @@ void bind_semantics_repositories(nb::module_& m)
                                "get_object",
                                [](const DenotationRepository& self, urd::index<tyr::formalism::Object> index) -> tyr::formalism::planning::ObjectView
                                { return self.get_formalism_repository().view(index); },
-                               nb::arg("index"),
-                               nb::keep_alive<0, 1>());
-    runir::kr::python::bind_insert<semantics::CallArguments>(denotations);
-    runir::kr::python::bind_insert<semantics::RegisterValues>(denotations);
+                               nb::arg("index"));
+    ygg::bind_insert<semantics::CallArguments>(denotations);
+    ygg::bind_insert<semantics::RegisterValues>(denotations);
 
     nb::class_<runir::kr::dl::semantics::DenotationRepositoryFactory>(m, "DenotationRepositoryFactory")
         .def(nb::init<>())

@@ -12,17 +12,13 @@
 namespace urd
 {
 template<typename Tag, typename V>
-    requires runir::kr::dl::BooleanConstructorTag<Tag>
+    requires runir::kr::dl::BaseBooleanConstructorTag<Tag>
 struct view_mixin<runir::kr::dl::grammar::Boolean<Tag>, V>
 {
 private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_identifier() const noexcept
-        requires std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>
-    { return self().data().identifier; }
-
     auto get_predicate() const noexcept
         requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)
     { return urd::resolve(self().data().predicate, self().context().get_planning_repository()); }
@@ -32,20 +28,8 @@ public:
     { return self().data().polarity; }
 
     auto get_arg() const noexcept
-        requires(std::same_as<Tag, runir::kr::dl::NonemptyTag> || std::same_as<Tag, runir::kr::dl::NotTag>)
+        requires std::same_as<Tag, runir::kr::dl::NonemptyTag>
     { return self().template get<&urd::record_of<V>::arg>(); }
-
-    auto get_lhs() const noexcept
-        requires(runir::kr::dl::ComparisonTag<Tag> || runir::kr::dl::LogicalBinaryTag<Tag>)
-    { return self().template get<&urd::record_of<V>::lhs>(); }
-
-    auto get_rhs() const noexcept
-        requires(runir::kr::dl::ComparisonTag<Tag> || runir::kr::dl::LogicalBinaryTag<Tag>)
-    { return self().template get<&urd::record_of<V>::rhs>(); }
-
-    auto get_value() const noexcept
-        requires std::same_as<Tag, runir::kr::dl::BooleanConstantTag>
-    { return self().data().identifier; }
 };
 }  // namespace urd
 

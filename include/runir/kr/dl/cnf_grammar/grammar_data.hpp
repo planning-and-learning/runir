@@ -20,10 +20,10 @@ template<>
 struct data<runir::kr::dl::cnf_grammar::Grammar>
 {
     urd::index<runir::kr::dl::cnf_grammar::Grammar> index;
-    ::cista::optional<urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>> concept_start;
-    ::cista::optional<urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>> role_start;
-    ::cista::optional<urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::BooleanTag>>> boolean_start;
-    ::cista::optional<urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::NumericalTag>>> numerical_start;
+    urd::flat_optional<urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>> concept_start;
+    urd::flat_optional<urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>> role_start;
+    urd::flat_optional<urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::BooleanTag>>> boolean_start;
+    urd::flat_optional<urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::NumericalTag>>> numerical_start;
     urd::flat_vector<urd::index<runir::kr::dl::cnf_grammar::DerivationRule<runir::kr::dl::ConceptTag>>> concept_derivation_rules;
     urd::flat_vector<urd::index<runir::kr::dl::cnf_grammar::DerivationRule<runir::kr::dl::RoleTag>>> role_derivation_rules;
     urd::flat_vector<urd::index<runir::kr::dl::cnf_grammar::DerivationRule<runir::kr::dl::BooleanTag>>> boolean_derivation_rules;
@@ -35,10 +35,10 @@ struct data<runir::kr::dl::cnf_grammar::Grammar>
     urd::index<::tyr::formalism::planning::Domain> domain;
 
     data() = default;
-    data(::cista::optional<urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>> concept_start_,
-         ::cista::optional<urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>> role_start_,
-         ::cista::optional<urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::BooleanTag>>> boolean_start_,
-         ::cista::optional<urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::NumericalTag>>> numerical_start_,
+    data(urd::flat_optional<urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>> concept_start_,
+         urd::flat_optional<urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>> role_start_,
+         urd::flat_optional<urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::BooleanTag>>> boolean_start_,
+         urd::flat_optional<urd::index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::NumericalTag>>> numerical_start_,
          urd::flat_vector<urd::index<runir::kr::dl::cnf_grammar::DerivationRule<runir::kr::dl::ConceptTag>>> concept_derivation_rules_,
          urd::flat_vector<urd::index<runir::kr::dl::cnf_grammar::DerivationRule<runir::kr::dl::RoleTag>>> role_derivation_rules_,
          urd::flat_vector<urd::index<runir::kr::dl::cnf_grammar::DerivationRule<runir::kr::dl::BooleanTag>>> boolean_derivation_rules_,

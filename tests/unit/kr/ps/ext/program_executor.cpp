@@ -1521,7 +1521,7 @@ void check_transient_builder_values_and_reuse()
     EXPECT_FALSE(program_state.get_call_stack());
     first_module.registers.concept_values.emplace_back(urd::index<tyr::formalism::Object>(0));
     first_module.registers.role_values.emplace_back(
-        ::cista::pair<urd::index<tyr::formalism::Object>, urd::index<tyr::formalism::Object>>(urd::index<tyr::formalism::Object>(0),
+        urd::flat_pair<urd::index<tyr::formalism::Object>, urd::index<tyr::formalism::Object>>(urd::index<tyr::formalism::Object>(0),
                                                                                               urd::index<tyr::formalism::Object>(1)));
     const auto registered_registers = kr::dl::semantics::insert(*context->dl_denotation_repository, first_module.registers).first;
     const auto borrowed_registers = module_state.get_registers();
@@ -1531,7 +1531,7 @@ void check_transient_builder_values_and_reuse()
     EXPECT_EQ(&borrowed_registers.at(concept_id).value().context(), &registered_registers.at(concept_id).value().context());
     EXPECT_EQ(borrowed_registers.at(role_id).value().first.index(), registered_registers.at(role_id).value().first.index());
     EXPECT_EQ(borrowed_registers.at(role_id).value().second.index(), registered_registers.at(role_id).value().second.index());
-    auto& facts = first_module.state.template get_atom_storage<tyr::formalism::FluentTag>();
+    auto& facts = first_module.state.fact_storage;
     if constexpr (std::same_as<Kind, tyr::GroundTag>)
         facts.values = { 1, 0 };
     else
@@ -1539,7 +1539,7 @@ void check_transient_builder_values_and_reuse()
         facts.indices.resize(2);
         facts.indices.set(0);
     }
-    first_module.state.get_numeric_variables().values = { 3.0 };
+    first_module.state.numeric_storage.values = { 3.0 };
 
     // Transient module values use the same interned callers as registered execution states.
     auto tail_data =
@@ -1572,22 +1572,22 @@ void check_transient_builder_values_and_reuse()
     auto separate = pool.acquire_shared();
     *separate = *first;
     auto& separate_module = separate->module_state;
-    EXPECT_NE(std::ranges::data(separate_module.state.get_numeric_variables().values), std::ranges::data(first_module.state.get_numeric_variables().values));
+    EXPECT_NE(std::ranges::data(separate_module.state.numeric_storage.values), std::ranges::data(first_module.state.numeric_storage.values));
     EXPECT_NE(separate_module.registers.concept_values.data(), first_module.registers.concept_values.data());
     EXPECT_EQ(*separate->call_stack, *first->call_stack);
     EXPECT_TRUE(urd::EqualTo<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
     EXPECT_EQ(urd::Hash<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first), urd::Hash<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*separate));
-    separate_module.state.template get_atom_storage<tyr::formalism::DerivedTag>().indices.resize(1, true);
+    separate_module.state.atom_storage.indices.resize(1, true);
     EXPECT_TRUE(urd::EqualTo<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
     EXPECT_EQ(urd::Hash<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first), urd::Hash<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*separate));
     if constexpr (std::same_as<Kind, tyr::GroundTag>)
-        separate_module.state.template get_atom_storage<tyr::formalism::FluentTag>().values.front() = 0;
+        separate_module.state.fact_storage.values.front() = 0;
     else
-        separate_module.state.template get_atom_storage<tyr::formalism::FluentTag>().indices.flip(0);
+        separate_module.state.fact_storage.indices.flip(0);
     EXPECT_FALSE(urd::EqualTo<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
     separate_module.state = first_module.state;
-    separate_module.state.get_numeric_variables().values.front() = 4.0;
-    EXPECT_EQ(first_module.state.get_numeric_variables().values.front(), 3.0);
+    separate_module.state.numeric_storage.values.front() = 4.0;
+    EXPECT_EQ(first_module.state.numeric_storage.values.front(), 3.0);
     EXPECT_FALSE(urd::EqualTo<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
     separate_module.state = first_module.state;
     separate_module.registers.concept_values.front() = urd::index<tyr::formalism::Object>(1);
@@ -1600,15 +1600,15 @@ void check_transient_builder_values_and_reuse()
 
     // Releasing a program retains its mutable module buffers for reuse.
     const auto slot = separate.get();
-    const auto buffer = std::ranges::data(separate_module.state.get_numeric_variables().values);
-    const auto capacity = separate_module.state.get_numeric_variables().values.capacity();
+    const auto buffer = std::ranges::data(separate_module.state.numeric_storage.values);
+    const auto capacity = separate_module.state.numeric_storage.values.capacity();
     const auto concept_buffer = separate_module.registers.concept_values.data();
     const auto role_buffer = separate_module.registers.role_values.data();
     separate = {};
     auto reused = pool.acquire_shared();
     EXPECT_EQ(reused.get(), slot);
-    EXPECT_EQ(std::ranges::data(reused->module_state.state.get_numeric_variables().values), buffer);
-    EXPECT_EQ(reused->module_state.state.get_numeric_variables().values.capacity(), capacity);
+    EXPECT_EQ(std::ranges::data(reused->module_state.state.numeric_storage.values), buffer);
+    EXPECT_EQ(reused->module_state.state.numeric_storage.values.capacity(), capacity);
     EXPECT_EQ(reused->module_state.registers.concept_values.data(), concept_buffer);
     EXPECT_EQ(reused->module_state.registers.role_values.data(), role_buffer);
     EXPECT_EQ(caller.value().get_registers().at(concept_id).value().index(), urd::index<tyr::formalism::Object>(0));

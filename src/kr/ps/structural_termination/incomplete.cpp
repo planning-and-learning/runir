@@ -1,5 +1,6 @@
 #include "detail.hpp"
 #include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/dense_set.hpp>
 #include <urd/store.hpp>
 #include "scc_refinement_forest.hpp"
 
@@ -23,13 +24,14 @@ struct RuleChanges
 struct SieveState
 {
     urd::Store<urd::sequence<RuleChanges>> changes;
-    std::vector<bool> remaining;
+    urd::Store<urd::set<std::size_t>, urd::dense> remaining;
     ResidualMemorySccs memory_sccs;
 
     SieveState(const QualitativePolicy& policy, bool use_memory_scc_scope) :
-        remaining(policy.rule_profiles.size(), true),
         memory_sccs(policy, use_memory_scc_scope)
     {
+        for (std::size_t rule_position = 0; rule_position < policy.rule_profiles.size(); ++rule_position)
+            remaining.insert(rule_position);
     }
 };
 
@@ -63,9 +65,8 @@ urd::Store<urd::sequence<std::size_t>> remaining_rule_positions(const SieveState
 {
     auto result = urd::Store<urd::sequence<std::size_t>> {};
     result.reserve(state.remaining.size());
-    for (std::size_t rule_position = 0; rule_position < state.remaining.size(); ++rule_position)
-        if (state.remaining[rule_position])
-            result.push_back(rule_position);
+    for (const auto rule_position : state.remaining)
+        result.push_back(rule_position);
     return result;
 }
 
@@ -74,11 +75,11 @@ bool remove_acyclic_rules(const QualitativePolicy& policy, SieveState& state)
     auto removed = false;
     for (std::size_t rule_position = 0; rule_position < policy.rule_profiles.size(); ++rule_position)
     {
-        if (!state.remaining[rule_position])
+        if (!state.remaining.contains(rule_position))
             continue;
         if (!state.memory_sccs.is_cross_scc_rule(rule_position))
             continue;
-        state.remaining[rule_position] = false;
+        state.remaining.erase(rule_position);
         removed = true;
     }
     return removed;
@@ -96,7 +97,7 @@ OpposingRuleSet opposing_rules(const QualitativePolicy& policy,
     const auto marks = state.memory_sccs.marks_for(rule_position);
     for (std::size_t other = 0; other < policy.rule_profiles.size(); ++other)
     {
-        if (other == rule_position || !state.remaining[other] || !state.memory_sccs.share_opponent_scope(rule_position, other))
+        if (other == rule_position || !state.remaining.contains(other) || !state.memory_sccs.share_opponent_scope(rule_position, other))
             continue;
 
         const auto& profile = policy.rule_profiles[other];
@@ -138,7 +139,7 @@ bool eliminate_one_rule(const QualitativePolicy& policy, SieveState& state, Elim
 {
     for (std::size_t rule_position = 0; rule_position < policy.rule_profiles.size(); ++rule_position)
     {
-        if (!state.remaining[rule_position])
+        if (!state.remaining.contains(rule_position))
             continue;
 
         for (std::size_t position = 0; position < policy.num_numericals; ++position)
@@ -151,7 +152,7 @@ bool eliminate_one_rule(const QualitativePolicy& policy, SieveState& state, Elim
             const auto opposing = opposing_rules(policy, state, rule_position, IncompletePolicyResult::FeatureKind::NUMERICAL, position, increases);
             if (eligible(opposing, pass))
             {
-                state.remaining[rule_position] = false;
+                state.remaining.erase(rule_position);
                 if (pass == EliminationPass::MARKING)
                     state.memory_sccs.establish_r1_mark(rule_position, position);
                 return true;
@@ -167,7 +168,7 @@ bool eliminate_one_rule(const QualitativePolicy& policy, SieveState& state, Elim
             const auto opposing = opposing_rules(policy, state, rule_position, IncompletePolicyResult::FeatureKind::BOOLEAN, position, to_true);
             if (eligible(opposing, pass))
             {
-                state.remaining[rule_position] = false;
+                state.remaining.erase(rule_position);
                 if (pass == EliminationPass::MARKING)
                     state.memory_sccs.establish_r2_mark(rule_position, position);
                 return true;
@@ -229,7 +230,7 @@ IncompletePolicyResult incomplete_structural_termination(const QualitativePolicy
     auto result = IncompletePolicyResult { make_residual_scopes(state), {} };
     for (std::size_t rule_position = 0; rule_position < policy.rule_profiles.size(); ++rule_position)
     {
-        if (!state.remaining[rule_position])
+        if (!state.remaining.contains(rule_position))
             continue;
 
         auto surviving = IncompletePolicyResult::SurvivingRule { rule_position, {} };

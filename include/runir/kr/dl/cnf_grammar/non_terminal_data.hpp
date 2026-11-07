@@ -16,10 +16,10 @@ template<runir::kr::dl::CategoryTag Category>
 struct data<runir::kr::dl::cnf_grammar::NonTerminal<Category>>
 {
     urd::index<runir::kr::dl::cnf_grammar::NonTerminal<Category>> index;
-    ::cista::offset::string name;
+    urd::flat_string name;
 
     data() = default;
-    data(::cista::offset::string name_) : index(), name(std::move(name_)) {}
+    data(urd::flat_string name_) : index(), name(std::move(name_)) {}
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::name> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::name> {}; }

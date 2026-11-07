@@ -193,25 +193,6 @@ struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::NominalTag>> :
     using Base::Base;
 };
 
-template<>
-struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RegisterTag>> :
-    runir::kr::dl::RegisterData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RegisterTag>, runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>
-{
-    using Base = runir::kr::dl::RegisterData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RegisterTag>,
-                                             runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>;
-    using Base::Base;
-};
-
-template<>
-struct data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>> :
-    runir::kr::dl::ArgumentData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>,
-                                runir::kr::dl::ArgumentIdentifier<runir::kr::dl::ConceptTag>>
-{
-    using Base = runir::kr::dl::ArgumentData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>,
-                                             runir::kr::dl::ArgumentIdentifier<runir::kr::dl::ConceptTag>>;
-    using Base::Base;
-};
-
 }  // namespace urd
 
 #endif

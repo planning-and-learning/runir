@@ -4,9 +4,12 @@
 #include "runir/kr/dl/semantics/interning.hpp"
 #include <urd/repr/maps/std_map.hpp>
 #include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/dense_set.hpp>
 #include <urd/store.hpp>
 #include "runir/kr/ps/dl/evaluation.hpp"
-#include "runir/kr/ps/icp/compatibility.hpp"
+#include "runir/kr/ps/compatibility.hpp"
+#include "runir/kr/ps/icp/rule_variant_view.hpp"
+#include "runir/kr/ps/icp/rule_view.hpp"
 #include "runir/kr/ps/icp/detail/execution_step.hpp"
 #include "runir/kr/ps/icp/evaluation_environment.hpp"
 #include "runir/kr/ps/rule_evaluator_concepts.hpp"
@@ -28,7 +31,7 @@ class RuleEvaluationWorkspace
     ProgramView m_program;
     EvaluationEnvironment<Kind, EvaluationPolicy> m_environment;
     urd::Store<urd::sequence<urd::Store<urd::sequence<std::size_t>>>> m_reset_predecessors;
-    std::vector<bool> m_changed;
+    urd::Store<urd::set<std::size_t>, urd::dense, urd::proportional_clear> m_changed;
     urd::index<Denotation> m_empty;
 
 public:
@@ -86,7 +89,7 @@ public:
         *histories = state.get_histories().data();
         const auto previous = state.get_histories().get_concepts();
         const auto features = m_program.get_module().template get_features<Concept>();
-        m_changed.assign(features.size(), false);
+        m_changed.clear();
         bool progress = !binding;
         for (std::size_t i = 0; i < features.size(); ++i)
         {
@@ -99,7 +102,8 @@ public:
             entered->get() -= before.value();
             if (entered->get().intersects(previous[i].value()))
                 return std::nullopt;
-            m_changed[i] = before.value() != after.value();
+            if (before.value() != after.value())
+                m_changed.insert(i);
             if (entered->get().any())
             {
                 if (binding && !progress)
@@ -116,10 +120,9 @@ public:
         if (!progress)
             return std::nullopt;
         // Reset after admission and accumulation, including predecessors entering in this step.
-        for (std::size_t i = 0; i < m_changed.size(); ++i)
-            if (m_changed[i])
-                for (const auto predecessor : m_reset_predecessors[i])
-                    histories->concepts[predecessor] = m_empty;
+        for (const auto i : m_changed)
+            for (const auto predecessor : m_reset_predecessors[i])
+                histories->concepts[predecessor] = m_empty;
         return insert(*m_task->icp_execution_repository, *histories).first;
     }
 };

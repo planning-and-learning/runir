@@ -95,7 +95,7 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
     const auto formatted = fmt::format("{}", sketch);
     EXPECT_EQ(fmt::format("{}", kr::ps::base::dl::parse_sketch(formatted, planning_domain.get_domain(), *repository)), formatted);
     const auto feature = sketch.template get_features<kr::dl::BooleanTag>().front();
-    const auto concrete_complexity = std::visit([](auto concrete) { return kr::ps::dl::syntactic_complexity(concrete); }, feature.get_variant());
+    const auto concrete_complexity = std::visit([](auto concrete) { return kr::dl::semantics::syntactic_complexity(concrete.get_feature()); }, feature.get_variant());
     EXPECT_EQ(kr::ps::syntactic_complexity(feature), concrete_complexity);
     EXPECT_EQ(concrete_complexity, kr::dl::semantics::syntactic_complexity(feature.get_expression()));
     EXPECT_EQ(kr::ps::base::syntactic_complexity(sketch), 6);

@@ -8,7 +8,8 @@
 #include "runir/kr/ps/ext/execution_view.hpp"
 #include "runir/kr/ps/ext/program_view.hpp"
 #include "runir/kr/task_context.hpp"
-#include "tyr/formalism/binding_view.hpp"
+#include <tyr/formalism/declarations.hpp>
+#include <yggdrasil/formalism/binding_view.hpp>
 #include "tyr/planning/successor_generator_concepts.hpp"
 
 #include <concepts>

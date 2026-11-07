@@ -130,7 +130,7 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>
     urd::index<runir::kr::ps::ext::MemoryState> target;
     runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions;
     runir::kr::ps::EffectList<runir::kr::ExtFamilyTag> effects;
-    ::cista::offset::string action_name;
+    urd::flat_string action_name;
     urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>> arguments;
 
     data() = default;
@@ -138,7 +138,7 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>
          urd::index<runir::kr::ps::ext::MemoryState> target_,
          runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions_,
          runir::kr::ps::EffectList<runir::kr::ExtFamilyTag> effects_,
-         ::cista::offset::string action_name_,
+         urd::flat_string action_name_,
          urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>> arguments_) :
         index(),
         source(source_),
@@ -164,7 +164,7 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>>
     urd::index<runir::kr::ps::ext::MemoryState> target;
     runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions;
     runir::kr::ps::EffectList<runir::kr::ExtFamilyTag> effects;
-    ::cista::offset::string action_name;
+    urd::flat_string action_name;
     urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>> query_feature;
 
     data() = default;
@@ -172,7 +172,7 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>>
          urd::index<runir::kr::ps::ext::MemoryState> target_,
          runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions_,
          runir::kr::ps::EffectList<runir::kr::ExtFamilyTag> effects_,
-         ::cista::offset::string action_name_,
+         urd::flat_string action_name_,
          urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>> query_feature_) :
         index(),
         source(source_),
@@ -198,14 +198,14 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>>
     urd::index<runir::kr::ps::ext::MemoryState> target;
     runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions;
     urd::index<runir::kr::ps::ext::ModuleSymbol> callee;
-    ::cista::offset::vector<runir::kr::ps::ext::CallArgument> arguments;
+    urd::flat_vector<runir::kr::ps::ext::CallArgument> arguments;
 
     data() = default;
     data(urd::index<runir::kr::ps::ext::MemoryState> source_,
          urd::index<runir::kr::ps::ext::MemoryState> target_,
          runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions_,
          urd::index<runir::kr::ps::ext::ModuleSymbol> callee_,
-         ::cista::offset::vector<runir::kr::ps::ext::CallArgument> arguments_) :
+         urd::flat_vector<runir::kr::ps::ext::CallArgument> arguments_) :
         index(),
         source(source_),
         target(target_),

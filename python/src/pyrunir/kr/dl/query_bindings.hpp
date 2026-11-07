@@ -27,26 +27,6 @@
 namespace runir::kr::dl::python
 {
 
-/// Binds a getter returning a range of views as a Python list whose elements keep the owner alive.
-template<typename Element, typename View, typename Getter>
-void bind_view_list(nb::class_<View>& cls, const char* name, Getter getter)
-{
-    cls.def(name,
-            [getter](const View& self)
-            {
-                auto result = std::vector<Element>();
-                for (auto element : getter(self))
-                    result.push_back(std::move(element));
-                return result;
-            });
-}
-
-template<typename View>
-void bind_query_columns(nb::class_<View>& cls)
-{
-    bind_view_list<urd::index_view<QueryColumn, ConstructorRepository>>(cls, "get_columns", [](const View& value) { return value.get_columns(); });
-}
-
 template<typename Tag, typename Class>
 void def_query_data_constructors(Class& cls)
 {
@@ -139,38 +119,35 @@ void bind_query(nb::module_& m, const char* name)
     view.def("syntactic_complexity", [](View value) { return semantics::syntactic_complexity(value); });
     if constexpr (std::same_as<Tag, void>)
     {
-        view.def("get_variant", &View::get_variant, nb::keep_alive<0, 1>());
+        view.def("get_variant", &View::get_variant);
         runir::kr::python::bind_evaluate(view);
         runir::kr::python::bind_optimize(view);
         m.def("syntactic_complexity", [](View value) { return semantics::syntactic_complexity(value); }, nb::arg("query"));
     }
     if constexpr (requires(View value) { value.get_predicate(); })
-        view.def("get_predicate", &View::get_predicate, nb::keep_alive<0, 1>());
+        view.def("get_predicate", &View::get_predicate);
     if constexpr (requires(View value) { value.get_polarity(); })
         view.def("get_polarity", &View::get_polarity);
-    bind_query_columns<>(view);
+    view.def("get_columns", &View::get_columns);
     if constexpr (requires(View value) { value.get_arg(); })
-        view.def("get_arg", &View::get_arg, nb::keep_alive<0, 1>());
+        view.def("get_arg", &View::get_arg);
     if constexpr (requires(View value) { value.get_args(); })
     {
-        using ColumnView = urd::index_view<QueryColumn, ConstructorRepository>;
-        bind_view_list<urd::index_view<Query<>, ConstructorRepository>>(view, "get_args", [](const View& value) { return value.get_args(); });
-        bind_view_list<ColumnView>(view, "get_variable_order", [](const View& value) { return value.get_variable_order(); });
-        bind_view_list<ColumnView>(view, "get_output_order", [](const View& value) { return value.get_output_order(); });
+        view.def("get_args", &View::get_args).def("get_variable_order", &View::get_variable_order).def("get_output_order", &View::get_output_order);
     }
     if constexpr (requires(View value) { value.get_lhs(); })
-        view.def("get_lhs", &View::get_lhs, nb::keep_alive<0, 1>()).def("get_rhs", &View::get_rhs, nb::keep_alive<0, 1>());
+        view.def("get_lhs", &View::get_lhs).def("get_rhs", &View::get_rhs);
     if constexpr (requires(View value) { value.get_lhs_column(); })
-        view.def("get_lhs_column", &View::get_lhs_column, nb::keep_alive<0, 1>()).def("get_rhs_column", &View::get_rhs_column, nb::keep_alive<0, 1>());
+        view.def("get_lhs_column", &View::get_lhs_column).def("get_rhs_column", &View::get_rhs_column);
     if constexpr (requires(View value) { value.get_column(); })
-        view.def("get_column", &View::get_column, nb::keep_alive<0, 1>()).def("get_object", &View::get_object, nb::keep_alive<0, 1>());
+        view.def("get_column", &View::get_column).def("get_object", &View::get_object);
     if constexpr (requires(View value) { value.get_keys(); })
     {
-        bind_view_list<urd::index_view<QueryColumn, ConstructorRepository>>(view, "get_keys", [](const View& value) { return value.get_keys(); });
-        view.def("get_sources", &View::get_sources, nb::keep_alive<0, 1>())
-            .def("get_edges", &View::get_edges, nb::keep_alive<0, 1>())
-            .def("get_targets", &View::get_targets, nb::keep_alive<0, 1>())
-            .def("get_probes", &View::get_probes, nb::keep_alive<0, 1>());
+        view.def("get_keys", &View::get_keys)
+            .def("get_sources", &View::get_sources)
+            .def("get_edges", &View::get_edges)
+            .def("get_targets", &View::get_targets)
+            .def("get_probes", &View::get_probes);
     }
 }
 
@@ -194,9 +171,9 @@ void bind_query_projection(nb::module_& m, const char* name)
     urd::python::add_comparison(data);
     auto view = nb::class_<View>(m, name)
                     .def("get_index", &View::index)
-                    .def("get_arg", &View::get_arg, nb::keep_alive<0, 1>())
+                    .def("get_arg", &View::get_arg)
                     .def("syntactic_complexity", [](View value) { return semantics::syntactic_complexity(value); });
-    bind_query_columns<>(view);
+    view.def("get_columns", &View::get_columns);
     ygg::add_print(view);
     urd::python::add_comparison(view);
     urd::python::add_hash(view);

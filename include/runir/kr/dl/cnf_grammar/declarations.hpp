@@ -16,19 +16,19 @@ namespace runir::kr::dl::cnf_grammar
 struct Grammar;
 
 template<typename Tag>
-    requires runir::kr::dl::ConceptConstructorTag<Tag>
+    requires runir::kr::dl::BaseConceptConstructorTag<Tag>
 struct Concept;
 
 template<typename Tag>
-    requires runir::kr::dl::RoleConstructorTag<Tag>
+    requires runir::kr::dl::BaseRoleConstructorTag<Tag>
 struct Role;
 
 template<typename Tag>
-    requires runir::kr::dl::BooleanConstructorTag<Tag>
+    requires runir::kr::dl::BaseBooleanConstructorTag<Tag>
 struct Boolean;
 
 template<typename Tag>
-    requires runir::kr::dl::NumericalConstructorTag<Tag>
+    requires runir::kr::dl::BaseNumericalConstructorTag<Tag>
 struct Numerical;
 
 template<runir::kr::dl::CategoryTag Category>
@@ -40,13 +40,13 @@ struct DerivationRule;
 template<runir::kr::dl::CategoryTag Category>
 struct SubstitutionRule;
 
-using ConceptTypes = boost::mp11::mp_transform<Concept, runir::kr::dl::GenerationConceptConstructorTags>;
+using ConceptTypes = boost::mp11::mp_transform<Concept, runir::kr::dl::BaseConceptConstructorTags>;
 
-using RoleTypes = boost::mp11::mp_transform<Role, runir::kr::dl::GenerationRoleConstructorTags>;
+using RoleTypes = boost::mp11::mp_transform<Role, runir::kr::dl::BaseRoleConstructorTags>;
 
-using BooleanTypes = boost::mp11::mp_transform<Boolean, runir::kr::dl::GenerationBooleanConstructorTags>;
+using BooleanTypes = boost::mp11::mp_transform<Boolean, runir::kr::dl::BaseBooleanConstructorTags>;
 
-using NumericalTypes = boost::mp11::mp_transform<Numerical, runir::kr::dl::GenerationNumericalConstructorTags>;
+using NumericalTypes = boost::mp11::mp_transform<Numerical, runir::kr::dl::BaseNumericalConstructorTags>;
 
 /// The records a constructor of Category can be.
 template<runir::kr::dl::CategoryTag Category>
@@ -83,19 +83,19 @@ using ConstructorRepositoryPtr = std::shared_ptr<ConstructorRepository>;
 using ConstructorRepositoryFactory = runir::kr::dl::detail::BasicConstructorRepositoryFactory<ConstructorRepositoryTypes>;
 
 template<typename Tag>
-    requires runir::kr::dl::ConceptConstructorTag<Tag>
+    requires runir::kr::dl::BaseConceptConstructorTag<Tag>
 using ConceptView = urd::index_view<Concept<Tag>, ConstructorRepository>;
 
 template<typename Tag>
-    requires runir::kr::dl::RoleConstructorTag<Tag>
+    requires runir::kr::dl::BaseRoleConstructorTag<Tag>
 using RoleView = urd::index_view<Role<Tag>, ConstructorRepository>;
 
 template<typename Tag>
-    requires runir::kr::dl::BooleanConstructorTag<Tag>
+    requires runir::kr::dl::BaseBooleanConstructorTag<Tag>
 using BooleanView = urd::index_view<Boolean<Tag>, ConstructorRepository>;
 
 template<typename Tag>
-    requires runir::kr::dl::NumericalConstructorTag<Tag>
+    requires runir::kr::dl::BaseNumericalConstructorTag<Tag>
 using NumericalView = urd::index_view<Numerical<Tag>, ConstructorRepository>;
 
 template<typename T>

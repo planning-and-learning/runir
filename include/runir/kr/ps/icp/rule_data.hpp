@@ -62,8 +62,8 @@ struct data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>>
     urd::index<runir::kr::ps::icp::MemoryState> target;
     runir::kr::ps::ConditionList<runir::kr::IcpFamilyTag> conditions;
     runir::kr::ps::EffectList<runir::kr::IcpFamilyTag> effects;
-    ::cista::offset::string action_name;
-    ::cista::offset::vector<::cista::offset::string> argument_names;
+    urd::flat_string action_name;
+    urd::flat_vector<urd::flat_string> argument_names;
     urd::flat_vector<urd::index<runir::kr::ps::icp::XCondition>> xconditions;
     urd::flat_vector<urd::index<runir::kr::ps::icp::XEffect>> xeffects;
 
@@ -72,8 +72,8 @@ struct data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>>
          urd::index<runir::kr::ps::icp::MemoryState> target_,
          runir::kr::ps::ConditionList<runir::kr::IcpFamilyTag> conditions_,
          runir::kr::ps::EffectList<runir::kr::IcpFamilyTag> effects_,
-         ::cista::offset::string action_name_,
-         ::cista::offset::vector<::cista::offset::string> argument_names_,
+         urd::flat_string action_name_,
+         urd::flat_vector<urd::flat_string> argument_names_,
          urd::flat_vector<urd::index<runir::kr::ps::icp::XCondition>> xconditions_,
          urd::flat_vector<urd::index<runir::kr::ps::icp::XEffect>> xeffects_) :
         index(),

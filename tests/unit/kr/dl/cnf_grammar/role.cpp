@@ -75,11 +75,6 @@ consteval bool role_data_view()
             data.arg;
             view.get_arg();
         };
-    else if constexpr (std::same_as<Tag, kr::dl::RegisterTag> || std::same_as<Tag, kr::dl::ArgumentTag<kr::dl::RoleTag>>)
-        return requires(Data& data, const View& view) {
-            data.identifier;
-            view.get_identifier();
-        };
     else
         return false;
 }
@@ -88,7 +83,7 @@ template<typename... Tags>
 consteval bool role_data_views(boost::mp11::mp_list<Tags...>)
 { return (role_data_view<Tags>() && ...); }
 
-static_assert(role_data_views(kr::dl::GenerationRoleConstructorTags {}));
+static_assert(role_data_views(kr::dl::BaseRoleConstructorTags {}));
 
 }  // namespace
 

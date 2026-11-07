@@ -14,22 +14,22 @@ namespace runir::kr::dl::cnf_grammar
 {
 
 template<typename Tag>
-    requires runir::kr::dl::ConceptConstructorTag<Tag>
+    requires runir::kr::dl::BaseConceptConstructorTag<Tag>
 bool is_canonical(const urd::data<Concept<Tag>>&) noexcept
 { return true; }
 
 template<typename Tag>
-    requires runir::kr::dl::RoleConstructorTag<Tag>
+    requires runir::kr::dl::BaseRoleConstructorTag<Tag>
 bool is_canonical(const urd::data<Role<Tag>>&) noexcept
 { return true; }
 
 template<typename Tag>
-    requires runir::kr::dl::BooleanConstructorTag<Tag>
+    requires runir::kr::dl::BaseBooleanConstructorTag<Tag>
 bool is_canonical(const urd::data<Boolean<Tag>>&) noexcept
 { return true; }
 
 template<typename Tag>
-    requires runir::kr::dl::NumericalConstructorTag<Tag>
+    requires runir::kr::dl::BaseNumericalConstructorTag<Tag>
 bool is_canonical(const urd::data<Numerical<Tag>>&) noexcept
 { return true; }
 
@@ -48,28 +48,28 @@ inline bool is_canonical(const urd::data<Role<runir::kr::dl::IntersectionTag>>& 
 inline bool is_canonical(const urd::data<Role<runir::kr::dl::UnionTag>>& data) noexcept { return data.lhs <= data.rhs; }
 
 template<typename Tag>
-    requires runir::kr::dl::ConceptConstructorTag<Tag>
+    requires runir::kr::dl::BaseConceptConstructorTag<Tag>
 void canonicalize(urd::data<Concept<Tag>>&) noexcept
 {
     // Trivially canonical
 }
 
 template<typename Tag>
-    requires runir::kr::dl::RoleConstructorTag<Tag>
+    requires runir::kr::dl::BaseRoleConstructorTag<Tag>
 void canonicalize(urd::data<Role<Tag>>&) noexcept
 {
     // Trivially canonical
 }
 
 template<typename Tag>
-    requires runir::kr::dl::BooleanConstructorTag<Tag>
+    requires runir::kr::dl::BaseBooleanConstructorTag<Tag>
 void canonicalize(urd::data<Boolean<Tag>>&) noexcept
 {
     // Trivially canonical
 }
 
 template<typename Tag>
-    requires runir::kr::dl::NumericalConstructorTag<Tag>
+    requires runir::kr::dl::BaseNumericalConstructorTag<Tag>
 void canonicalize(urd::data<Numerical<Tag>>&) noexcept
 {
     // Trivially canonical

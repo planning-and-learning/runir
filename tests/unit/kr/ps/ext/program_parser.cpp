@@ -59,7 +59,7 @@ TEST(RunirTests, ExtSyntacticComplexityAggregatesDeclaredFeatures)
 
     const auto expect_feature_complexity = [](auto feature, std::size_t expected)
     {
-        const auto concrete = std::visit([](auto view) { return kr::ps::dl::syntactic_complexity(view); }, feature.get_variant());
+        const auto concrete = std::visit([](auto view) { return kr::dl::semantics::syntactic_complexity(view.get_feature()); }, feature.get_variant());
         EXPECT_EQ(kr::ps::syntactic_complexity(feature), concrete);
         EXPECT_EQ(concrete, kr::dl::semantics::syntactic_complexity(feature.get_expression()));
         EXPECT_EQ(concrete, expected);

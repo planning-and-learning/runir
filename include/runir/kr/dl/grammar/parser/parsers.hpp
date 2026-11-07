@@ -5,7 +5,7 @@
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include "runir/kr/dl/grammar/parser/parser.hpp"
-#include "runir/kr/parser/error_handler.hpp"
+#include "runir/kr/parser/config.hpp"
 
 #include <boost/spirit/home/x3.hpp>
 #include <boost/spirit/home/x3/support/utility/annotate_on_success.hpp>
@@ -16,18 +16,17 @@ namespace runir::kr::dl::grammar::parser
 
 using iterator_type = runir::kr::parser::Iterator;
 using context_type = runir::kr::parser::Context;
-using ErrorHandlerBase = runir::kr::parser::ErrorHandlerBase;
 
 template<typename Ast, typename Dialect = FullDialectTag>
 struct QueryClass : boost::spirit::x3::annotate_on_success
 {
 };
 
-struct PredicateNameClass : ErrorHandlerBase
+struct PredicateNameClass : ygg::diagnostics::ErrorHandlerBase
 {
 };
 
-struct ObjectNameClass : ErrorHandlerBase
+struct ObjectNameClass : ygg::diagnostics::ErrorHandlerBase
 {
 };
 
@@ -71,7 +70,7 @@ struct RegisterReferenceClass : boost::spirit::x3::annotate_on_success
 };
 
 template<runir::kr::dl::CategoryTag Category>
-struct NonTerminalNameClass : ErrorHandlerBase
+struct NonTerminalNameClass : ygg::diagnostics::ErrorHandlerBase
 {
 };
 
@@ -81,7 +80,7 @@ struct ConstructorClass : boost::spirit::x3::annotate_on_success
 };
 
 template<runir::kr::dl::CategoryTag Category, typename Dialect = FullDialectTag>
-struct ConstructorRootClass : ErrorHandlerBase
+struct ConstructorRootClass : ygg::diagnostics::ErrorHandlerBase
 {
 };
 
@@ -126,7 +125,7 @@ struct GrammarClass : boost::spirit::x3::annotate_on_success
 };
 
 template<typename Dialect = FullDialectTag>
-struct GrammarRootClass : ErrorHandlerBase
+struct GrammarRootClass : ygg::diagnostics::ErrorHandlerBase
 {
 };
 
@@ -308,74 +307,39 @@ inline constexpr dl_search_free_numerical_type dl_search_free_numerical = "numer
 inline constexpr dl_search_free_query_type dl_search_free_query = "query";
 
 template<typename Dialect = FullDialectTag>
-concept_type<Dialect> const& concept_parser();
-
-template<typename Dialect = FullDialectTag>
 concept_root_type<Dialect> const& concept_root_parser();
-
-template<typename Dialect = FullDialectTag>
-role_type<Dialect> const& role_parser();
 
 template<typename Dialect = FullDialectTag>
 role_root_type<Dialect> const& role_root_parser();
 
 template<typename Dialect = FullDialectTag>
-boolean_type<Dialect> const& boolean_parser();
-
-template<typename Dialect = FullDialectTag>
 boolean_root_type<Dialect> const& boolean_root_parser();
-
-template<typename Dialect = FullDialectTag>
-numerical_type<Dialect> const& numerical_parser();
 
 template<typename Dialect = FullDialectTag>
 numerical_root_type<Dialect> const& numerical_root_parser();
 
 template<typename Dialect = FullDialectTag>
-query_type<Dialect> const& query_parser();
-
-template<typename Dialect = FullDialectTag>
 grammar_root_type<Dialect> const& grammar_root_parser();
 
 template<>
-concept_type<FullDialectTag> const& concept_parser<FullDialectTag>();
-template<>
 concept_root_type<FullDialectTag> const& concept_root_parser<FullDialectTag>();
-template<>
-role_type<FullDialectTag> const& role_parser<FullDialectTag>();
 template<>
 role_root_type<FullDialectTag> const& role_root_parser<FullDialectTag>();
 template<>
-boolean_type<FullDialectTag> const& boolean_parser<FullDialectTag>();
-template<>
 boolean_root_type<FullDialectTag> const& boolean_root_parser<FullDialectTag>();
 template<>
-numerical_type<FullDialectTag> const& numerical_parser<FullDialectTag>();
-template<>
 numerical_root_type<FullDialectTag> const& numerical_root_parser<FullDialectTag>();
-template<>
-query_type<FullDialectTag> const& query_parser<FullDialectTag>();
 template<>
 grammar_root_type<FullDialectTag> const& grammar_root_parser<FullDialectTag>();
 
 template<>
-concept_type<SearchFreeDialectTag> const& concept_parser<SearchFreeDialectTag>();
-template<>
 concept_root_type<SearchFreeDialectTag> const& concept_root_parser<SearchFreeDialectTag>();
-template<>
-role_type<SearchFreeDialectTag> const& role_parser<SearchFreeDialectTag>();
 template<>
 role_root_type<SearchFreeDialectTag> const& role_root_parser<SearchFreeDialectTag>();
 template<>
-boolean_type<SearchFreeDialectTag> const& boolean_parser<SearchFreeDialectTag>();
-template<>
 boolean_root_type<SearchFreeDialectTag> const& boolean_root_parser<SearchFreeDialectTag>();
 template<>
-numerical_type<SearchFreeDialectTag> const& numerical_parser<SearchFreeDialectTag>();
-template<>
 numerical_root_type<SearchFreeDialectTag> const& numerical_root_parser<SearchFreeDialectTag>();
-template<>
-query_type<SearchFreeDialectTag> const& query_parser<SearchFreeDialectTag>();
 template<>
 grammar_root_type<SearchFreeDialectTag> const& grammar_root_parser<SearchFreeDialectTag>();
 

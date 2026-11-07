@@ -115,11 +115,6 @@ consteval bool concept_data_view()
             data.object;
             view.get_object();
         };
-    else if constexpr (std::same_as<Tag, kr::dl::RegisterTag> || std::same_as<Tag, kr::dl::ArgumentTag<kr::dl::ConceptTag>>)
-        return requires(Data& data, const View& view) {
-            data.identifier;
-            view.get_identifier();
-        };
     else
         return false;
 }
@@ -128,7 +123,7 @@ template<typename... Tags>
 consteval bool concept_data_views(boost::mp11::mp_list<Tags...>)
 { return (concept_data_view<Tags>() && ...); }
 
-static_assert(concept_data_views(kr::dl::GenerationConceptConstructorTags {}));
+static_assert(concept_data_views(kr::dl::BaseConceptConstructorTags {}));
 
 }  // namespace
 

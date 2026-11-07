@@ -139,8 +139,6 @@ using program_root_type = boost::spirit::x3::rule<ProgramRootClass, ast::Program
 
 BOOST_SPIRIT_DECLARE(module_type, program_type, module_root_type, program_root_type)
 
-module_type const& module_parser();
-program_type const& program_parser();
 module_root_type const& module_root_parser();
 program_root_type const& program_root_parser();
 

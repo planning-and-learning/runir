@@ -5,7 +5,7 @@
 #include "runir/kr/ps/dl/evaluation.hpp"
 #include "runir/kr/ps/dl/feature_data.hpp"
 #include "runir/kr/ps/dl/feature_view.hpp"
-#include "runir/kr/ps/dl/syntactic_complexity.hpp"
+#include "runir/kr/ps/syntactic_complexity.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 #include "runir/kr/uns/classifier_data.hpp"
 #include "runir/kr/uns/classifier_view.hpp"

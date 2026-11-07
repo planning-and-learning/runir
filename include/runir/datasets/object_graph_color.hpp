@@ -98,7 +98,7 @@ struct data<runir::datasets::Color>
 {
     using Variant =
         urd::index_variant<boost::mp11::mp_transform<runir::datasets::PredicateColor, boost::mp11::mp_list<::tyr::formalism::StaticTag, ::tyr::formalism::FluentTag>>>;
-    using VariantList = cista::offset::vector<Variant>;
+    using VariantList = urd::flat_vector<Variant>;
 
     urd::index<runir::datasets::Color> index;
     VariantList values;

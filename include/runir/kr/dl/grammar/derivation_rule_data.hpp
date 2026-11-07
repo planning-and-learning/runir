@@ -17,9 +17,9 @@ struct data<runir::kr::dl::grammar::DerivationRule<Category>>
 {
     urd::index<runir::kr::dl::grammar::DerivationRule<Category>> index;
     urd::index<runir::kr::dl::grammar::NonTerminal<Category>> lhs;
-    ::cista::offset::vector<runir::kr::dl::grammar::ConstructorOrNonTerminal<Category>> rhs;
+    urd::flat_vector<runir::kr::dl::grammar::ConstructorOrNonTerminal<Category>> rhs;
     data() = default;
-    data(urd::index<runir::kr::dl::grammar::NonTerminal<Category>> lhs_, ::cista::offset::vector<runir::kr::dl::grammar::ConstructorOrNonTerminal<Category>> rhs_) :
+    data(urd::index<runir::kr::dl::grammar::NonTerminal<Category>> lhs_, urd::flat_vector<runir::kr::dl::grammar::ConstructorOrNonTerminal<Category>> rhs_) :
         index(),
         lhs(std::move(lhs_)),
         rhs(std::move(rhs_))

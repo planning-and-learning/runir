@@ -37,7 +37,7 @@ struct builder<runir::kr::ps::ext::ProgramState<Kind>>
 {
     urd::index<runir::kr::ps::ext::Program> program;
     urd::builder<runir::kr::ps::ext::ModuleState<Kind>> module_state;
-    ::cista::optional<urd::index<runir::kr::ps::ext::CallStack>> call_stack;
+    urd::flat_optional<urd::index<runir::kr::ps::ext::CallStack>> call_stack;
 
     static constexpr auto identifying_members() noexcept { return urd::Members<&builder::program, &builder::module_state, &builder::call_stack> {}; }
 };

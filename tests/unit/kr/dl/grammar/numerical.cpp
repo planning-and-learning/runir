@@ -56,23 +56,6 @@ consteval bool numerical_data_view()
             view.get_mid();
             view.get_rhs();
         };
-    else if constexpr (std::same_as<Tag, kr::dl::ArgumentTag<kr::dl::NumericalTag>>)
-        return requires(Data& data, const View& view) {
-            data.identifier;
-            view.get_identifier();
-        };
-    else if constexpr (std::same_as<Tag, kr::dl::NumericalConstantTag>)
-        return requires(Data& data, const View& view) {
-            data.identifier;
-            view.get_value();
-        };
-    else if constexpr (boost::mp11::mp_contains<kr::dl::NumericalBinaryConstructorTags, Tag>::value)
-        return requires(Data& data, const View& view) {
-            data.lhs;
-            data.rhs;
-            view.get_lhs();
-            view.get_rhs();
-        };
     else
         return false;
 }
@@ -81,7 +64,7 @@ template<typename... Tags>
 consteval bool numerical_data_views(boost::mp11::mp_list<Tags...>)
 { return (numerical_data_view<Tags>() && ...); }
 
-static_assert(numerical_data_views(kr::dl::GenerationNumericalConstructorTags {}));
+static_assert(numerical_data_views(kr::dl::BaseNumericalConstructorTags {}));
 
 }  // namespace
 

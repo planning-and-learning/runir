@@ -95,8 +95,6 @@ using MemoryStateView = urd::index_view<MemoryState, Repository>;
 using ModuleSymbolView = urd::index_view<ModuleSymbol, Repository>;
 using ModuleView = urd::index_view<Module, Repository>;
 using ProgramView = urd::index_view<Program, Repository>;
-using XConditionView = urd::index_view<XCondition, Repository>;
-using XEffectView = urd::index_view<XEffect, Repository>;
 using RuleVariantView = urd::index_view<ps::Rule<IcpFamilyTag>, Repository>;
 
 template<RuleKind Kind>

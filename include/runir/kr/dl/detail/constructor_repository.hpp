@@ -59,12 +59,6 @@ public:
         assert(this->template is_local<T>(index));
         return this->template local<T>(index);
     }
-
-    /// An index as its view here (urd's resolves contract).
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<BasicConstructorRepository, T>
-    [[nodiscard]] urd::index_view<T, BasicConstructorRepository> view(urd::index<T> index) const noexcept
-    { return { index, this }; }
 };
 
 template<typename RepositoryTypes>

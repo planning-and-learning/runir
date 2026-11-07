@@ -738,7 +738,7 @@ TEST(RunirTests, ExtTransientProgramStatesRetainValuesAndInternCallers)
 
         // Reusing a released slot must replace its values without replacing its buffers.
         auto planning_values = expected;
-        planning_values.get_numeric_variables().values = { 3.0 };
+        planning_values.numeric_storage.values = { 3.0 };
         const auto planning = urd::resolve(planning_values, *search.state_repository);
         auto register_values = urd::data<kr::dl::semantics::RegisterValues>();
         register_values.concept_values.emplace_back(urd::index<tyr::formalism::Object>(0));
@@ -746,27 +746,27 @@ TEST(RunirTests, ExtTransientProgramStatesRetainValuesAndInternCallers)
         const auto registers = storage.registers(register_values);
         auto recycled = storage.store(planning, module_, inner_return, registers, initial_module.get_arguments(), inner_caller);
         const auto* slot = recycled.get();
-        const auto numeric_buffer = std::ranges::data(recycled->module_state.state.get_numeric_variables().values);
-        const auto numeric_capacity = recycled->module_state.state.get_numeric_variables().values.capacity();
+        const auto numeric_buffer = std::ranges::data(recycled->module_state.state.numeric_storage.values);
+        const auto numeric_capacity = recycled->module_state.state.numeric_storage.values.capacity();
         const auto concept_buffer = recycled->module_state.registers.concept_values.data();
         const auto concept_capacity = recycled->module_state.registers.concept_values.allocated_size_;
         const auto role_buffer = recycled->module_state.registers.role_values.data();
         const auto role_capacity = recycled->module_state.registers.role_values.allocated_size_;
         recycled = {};
         planning_values.assign(initial_node.get_state().data());
-        planning_values.get_numeric_variables().values = { 4.0 };
+        planning_values.numeric_storage.values = { 4.0 };
         register_values.concept_values.front() = urd::index<tyr::formalism::Object>(1);
         register_values.role_values.front().value().first = urd::index<tyr::formalism::Object>(1);
         register_values.role_values.front().value().second = urd::index<tyr::formalism::Object>(0);
         const auto reused = storage.store(planning, module_, entry, registers, initial_module.get_arguments(), {});
         EXPECT_EQ(reused.get(), slot);
-        EXPECT_EQ(std::ranges::data(reused->module_state.state.get_numeric_variables().values), numeric_buffer);
-        EXPECT_EQ(reused->module_state.state.get_numeric_variables().values.capacity(), numeric_capacity);
+        EXPECT_EQ(std::ranges::data(reused->module_state.state.numeric_storage.values), numeric_buffer);
+        EXPECT_EQ(reused->module_state.state.numeric_storage.values.capacity(), numeric_capacity);
         EXPECT_EQ(reused->module_state.registers.concept_values.data(), concept_buffer);
         EXPECT_EQ(reused->module_state.registers.concept_values.allocated_size_, concept_capacity);
         EXPECT_EQ(reused->module_state.registers.role_values.data(), role_buffer);
         EXPECT_EQ(reused->module_state.registers.role_values.allocated_size_, role_capacity);
-        EXPECT_EQ(reused->module_state.state.get_numeric_variables().values.front(), 4.0);
+        EXPECT_EQ(reused->module_state.state.numeric_storage.values.front(), 4.0);
         EXPECT_TRUE(urd::EqualTo<urd::data<kr::dl::semantics::RegisterValues>> {}(reused->module_state.registers, register_values));
         EXPECT_FALSE(storage.view(reused).get_call_stack());
         EXPECT_EQ(storage.view(reused).get_module_state().get_memory_state().index(), entry.index());

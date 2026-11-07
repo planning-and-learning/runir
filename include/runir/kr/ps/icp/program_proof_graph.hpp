@@ -7,7 +7,8 @@
 
 #include <cista/containers/optional.h>
 #include <tuple>
-#include <tyr/formalism/binding_view.hpp>
+#include <tyr/formalism/declarations.hpp>
+#include <yggdrasil/formalism/binding_view.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <utility>
@@ -47,11 +48,11 @@ struct ProgramProofVertexLabel : urd::compared_by_identity<ProgramProofVertexLab
 
 struct ProgramProofEdgeLabel : urd::compared_by_identity<ProgramProofEdgeLabel>
 {
-    ::cista::optional<tyr::formalism::planning::ActionBindingView> action;
-    ::cista::optional<RuleVariantView> rule;
+    urd::flat_optional<tyr::formalism::planning::ActionBindingView> action;
+    urd::flat_optional<RuleVariantView> rule;
 
     ProgramProofEdgeLabel() = default;
-    ProgramProofEdgeLabel(::cista::optional<tyr::formalism::planning::ActionBindingView> action_, ::cista::optional<RuleVariantView> rule_) :
+    ProgramProofEdgeLabel(urd::flat_optional<tyr::formalism::planning::ActionBindingView> action_, urd::flat_optional<RuleVariantView> rule_) :
         action(std::move(action_)),
         rule(std::move(rule_))
     {

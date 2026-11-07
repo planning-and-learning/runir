@@ -5,7 +5,10 @@
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include "runir/kr/dl/query_view.hpp"
-#include "runir/kr/dl/semantics/state_evaluation.hpp"
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
 #include <algorithm>
 #include <concepts>

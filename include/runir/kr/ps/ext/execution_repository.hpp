@@ -90,12 +90,6 @@ public:
         assert(this->template is_local<T>(index));
         return this->template at_local<T>(index);
     }
-
-    /// An index as its view here (urd's resolves contract).
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<ExecutionRepository, T>
-    [[nodiscard]] urd::index_view<T, ExecutionRepository> view(urd::index<T> index) const noexcept
-    { return { index, this }; }
 };
 
 template<tyr::TaskKind Kind>

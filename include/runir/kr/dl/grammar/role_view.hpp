@@ -12,17 +12,13 @@
 namespace urd
 {
 template<typename Tag, typename V>
-    requires runir::kr::dl::RoleConstructorTag<Tag>
+    requires runir::kr::dl::BaseRoleConstructorTag<Tag>
 struct view_mixin<runir::kr::dl::grammar::Role<Tag>, V>
 {
 private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_identifier() const noexcept
-        requires(std::same_as<Tag, runir::kr::dl::RegisterTag> || std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>)
-    { return self().data().identifier; }
-
     auto get_predicate() const noexcept
         requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)
     { return urd::resolve(self().data().predicate, self().context().get_planning_repository()); }

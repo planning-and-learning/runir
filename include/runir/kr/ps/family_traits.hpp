@@ -42,11 +42,11 @@ using PsConcreteEffectTypes = boost::mp11::mp_list<ConcreteEffect<Family, runir:
 template<runir::kr::FamilyTag Family>
 using ConditionVariant = urd::index_variant<detail::PsConcreteConditionTypes<Family>>;
 template<runir::kr::FamilyTag Family>
-using ConditionList = ::cista::offset::vector<ConditionVariant<Family>>;
+using ConditionList = urd::flat_vector<ConditionVariant<Family>>;
 template<runir::kr::FamilyTag Family>
 using EffectVariant = urd::index_variant<detail::PsConcreteEffectTypes<Family>>;
 template<runir::kr::FamilyTag Family>
-using EffectList = ::cista::offset::vector<EffectVariant<Family>>;
+using EffectList = urd::flat_vector<EffectVariant<Family>>;
 
 template<runir::kr::FamilyTag Family>
 struct PsFamilyTraits;

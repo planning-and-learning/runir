@@ -30,7 +30,8 @@
 #include <memory>
 #include <optional>
 #include <tuple>
-#include <tyr/formalism/binding_view.hpp>
+#include <tyr/formalism/declarations.hpp>
+#include <yggdrasil/formalism/binding_view.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <tyr/planning/algorithms/declarations.hpp>

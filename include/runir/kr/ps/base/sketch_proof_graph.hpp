@@ -8,7 +8,8 @@
 #include "runir/kr/ps/base/rule_view.hpp"
 
 #include <tuple>
-#include <tyr/formalism/binding_view.hpp>
+#include <tyr/formalism/declarations.hpp>
+#include <yggdrasil/formalism/binding_view.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/state_repository.hpp>
 #include <utility>
@@ -62,9 +63,6 @@ struct SketchProofEdgeLabel : urd::compared_by_identity<SketchProofEdgeLabel>
     static constexpr auto cista_members() noexcept { return urd::Members<&SketchProofEdgeLabel::action, &SketchProofEdgeLabel::rule> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&SketchProofEdgeLabel::action, &SketchProofEdgeLabel::rule> {}; }
 };
-
-template<tyr::TaskKind Kind>
-using SketchProofGraphBuilder = graphs::StaticGraphBuilder<SketchProofVertexLabel<Kind>, SketchProofEdgeLabel>;
 
 template<tyr::TaskKind Kind>
 using SketchProofGraph = graphs::StaticGraph<SketchProofVertexLabel<Kind>, SketchProofEdgeLabel>;

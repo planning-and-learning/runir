@@ -60,28 +60,28 @@ void bind_concept_view(nb::module_& m, const char* name)
     cls.def("syntactic_complexity", [](View view) { return semantics::syntactic_complexity(view); });
 
     if constexpr (is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag>)
-        cls.def("get_predicate", &View::get_predicate, nb::keep_alive<0, 1>()).def("get_polarity", &View::get_polarity);
+        cls.def("get_predicate", &View::get_predicate).def("get_polarity", &View::get_polarity);
     else if constexpr (std::same_as<Tag, IntersectionTag> || std::same_as<Tag, UnionTag> || std::same_as<Tag, ValueRestrictionTag>
                        || std::same_as<Tag, ExistentialQuantificationTag> || std::same_as<Tag, RoleValueMapTag> || std::same_as<Tag, AgreementTag>)
-        cls.def("get_lhs", &View::get_lhs, nb::keep_alive<0, 1>()).def("get_rhs", &View::get_rhs, nb::keep_alive<0, 1>());
+        cls.def("get_lhs", &View::get_lhs).def("get_rhs", &View::get_rhs);
     else if constexpr (std::same_as<Tag, NegationTag>)
-        cls.def("get_arg", &View::get_arg, nb::keep_alive<0, 1>());
+        cls.def("get_arg", &View::get_arg);
     else if constexpr (std::same_as<Tag, AtLeastNumberRestrictionTag> || std::same_as<Tag, AtMostNumberRestrictionTag>
                        || std::same_as<Tag, ExactNumberRestrictionTag>)
-        cls.def("get_n", &View::get_n).def("get_role", &View::get_role, nb::keep_alive<0, 1>());
+        cls.def("get_n", &View::get_n).def("get_role", &View::get_role);
     else if constexpr (std::same_as<Tag, QualifiedAtLeastNumberRestrictionTag> || std::same_as<Tag, QualifiedAtMostNumberRestrictionTag>
                        || std::same_as<Tag, QualifiedExactNumberRestrictionTag>)
-        cls.def("get_n", &View::get_n).def("get_role", &View::get_role, nb::keep_alive<0, 1>()).def("get_concept", &View::get_concept, nb::keep_alive<0, 1>());
+        cls.def("get_n", &View::get_n).def("get_role", &View::get_role).def("get_concept", &View::get_concept);
     else if constexpr (std::same_as<Tag, RoleFillersTag>)
-        cls.def("get_role", &View::get_role, nb::keep_alive<0, 1>()).def("get_objects", &View::get_objects);
+        cls.def("get_role", &View::get_role).def("get_objects", &View::get_objects);
     else if constexpr (std::same_as<Tag, OneOfTag>)
         cls.def("get_objects", &View::get_objects);
     else if constexpr (std::same_as<Tag, NominalTag>)
-        cls.def("get_object", &View::get_object, nb::keep_alive<0, 1>());
+        cls.def("get_object", &View::get_object);
     else if constexpr (std::same_as<Tag, RegisterTag>)
-        cls.def("get_register", &View::get_register, nb::keep_alive<0, 1>());
+        cls.def("get_register", &View::get_register);
     else if constexpr (std::same_as<Tag, ArgumentTag<ConceptTag>>)
-        cls.def("get_argument", &View::get_argument, nb::keep_alive<0, 1>());
+        cls.def("get_argument", &View::get_argument);
 }
 
 }  // namespace

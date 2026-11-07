@@ -14,7 +14,10 @@
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include <runir/kr/dl/semantics/interning.hpp>
-#include <runir/kr/dl/semantics/state_evaluation.hpp>
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <span>
 #include <stdexcept>
@@ -72,7 +75,7 @@ TEST(RunirEvaluationStorage, DenotationBuildersInternValuesAndUpdateTheirIndices
             if constexpr (std::same_as<Category, kr::dl::ConceptTag>)
                 source.get().set(1);
             else
-                source.get(0).set(2);
+                source.get(urd::index<tyr::formalism::Object>(0)).set(2);
         }
         else if constexpr (std::same_as<Category, kr::dl::BooleanTag>)
             source.get() = true;
@@ -102,7 +105,7 @@ TEST(RunirEvaluationStorage, DenotationBuildersInternValuesAndUpdateTheirIndices
         {
             EXPECT_EQ(view.get_num_objects(), 3);
             EXPECT_EQ(view.count(), 1);
-            EXPECT_TRUE(view.value(0).test(2));
+            EXPECT_TRUE(view.value(urd::index<tyr::formalism::Object>(0)).test(2));
         }
         else
             EXPECT_EQ(view.value(), expected.get());
@@ -165,9 +168,9 @@ TEST(RunirEvaluationStorage, BorrowedDenotationsExposeReadOnlyValuesAndMatchInde
             {
                 static_assert(std::same_as<decltype(borrowed.value(ObjectIndex(0))), urd::repr::BitsetSpan<const ygg::uint_t>>);
                 static_assert(std::same_as<decltype(borrowed.storage_bits()), urd::repr::BitsetSpan<const ygg::uint_t>>);
-                builder.get(0).set(num_objects - 1);
-                builder.get(digits).set(1);
-                builder.get(num_objects - 1).set(digits);
+                builder.get(urd::index<tyr::formalism::Object>(0)).set(num_objects - 1);
+                builder.get(urd::index<tyr::formalism::Object>(digits)).set(1);
+                builder.get(urd::index<tyr::formalism::Object>(num_objects - 1)).set(digits);
                 return std::array { std::pair(object(0), object(num_objects - 1)),
                                     std::pair(object(digits), object(1)),
                                     std::pair(object(num_objects - 1), object(digits)) };
@@ -206,9 +209,9 @@ TEST(RunirEvaluationStorage, BorrowedDenotationsExposeReadOnlyValuesAndMatchInde
             static_assert(std::same_as<decltype(borrowed.begin(object(0))), decltype(indexed.begin(object(0)))>);
             static_assert(std::same_as<std::iter_value_t<decltype(borrowed.begin(object(0)))>, tyr::formalism::planning::ObjectView>);
             EXPECT_EQ(borrowed.begin(object(0)), borrowed_row.begin());
-            EXPECT_EQ(borrowed.end(object(0)), borrowed_row.end());
+            static_assert(std::same_as<decltype(borrowed.end(object(0))), decltype(borrowed_row.end())>);  // the bits' sentinel
             EXPECT_EQ(indexed.begin(object(0)), indexed_row.begin());
-            EXPECT_EQ(indexed.end(object(0)), indexed_row.end());
+            static_assert(std::same_as<decltype(indexed.end(object(0))), decltype(indexed_row.end())>);  // the bits' sentinel
             const auto targets = std::array { object(num_objects - 1) };
             EXPECT_TRUE(std::ranges::equal(borrowed_row, targets));
             EXPECT_TRUE(std::ranges::equal(indexed_row, targets));
@@ -340,7 +343,7 @@ TEST(RunirEvaluationStorage, DenotationConversionsResolvePayloadsAndReuseDestina
             if constexpr (std::same_as<Category, kr::dl::ConceptTag>)
                 payload.get().set(1);
             else
-                payload.get(1).set(2);
+                payload.get(urd::index<tyr::formalism::Object>(1)).set(2);
         }
         else
             payload.value = 1;

@@ -20,7 +20,7 @@ void bind_indexical_type(nb::module_& m, RepositoryBinding& repository, const ch
     using namespace nb::literals;
     using Data = urd::data<T>;
     using View = urd::index_view<T, Repository>;
-    using ObjectReference = ::cista::offset::variant<ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>;
+    using ObjectReference = urd::flat_variant<ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>;
     using FeatureIndex = urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>>;
     urd::python::bind_index<urd::index<T>>(m, std::string(name) + "Index");
     auto data = nb::class_<Data>(m, (std::string(name) + "Data").c_str())
@@ -40,7 +40,7 @@ void bind_indexical_type(nb::module_& m, RepositoryBinding& repository, const ch
     ygg::add_print(view);
     urd::python::add_comparison(view);
     urd::python::add_hash(view);
-    runir::kr::python::bind_insert<T>(repository);
+    ygg::bind_insert<T>(repository);
 }
 
 }

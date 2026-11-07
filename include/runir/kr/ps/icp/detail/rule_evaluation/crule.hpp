@@ -3,7 +3,7 @@
 
 #include "runir/kr/ps/icp/detail/rule_evaluation/context.hpp"
 
-#include <cista/containers/variant.h>
+#include <urd/elements/flat.hpp>
 #include <tyr/formalism/planning/action_view.hpp>
 
 namespace runir::kr::ps::icp::detail
@@ -27,7 +27,7 @@ class RuleEvaluator<Kind, CruleTag>
 
     template<ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
     [[nodiscard]] std::optional<ygg::uint_t>
-    resolve(const ::cista::offset::variant<ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>& reference,
+    resolve(const urd::flat_variant<ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>& reference,
             runir::kr::dl::semantics::RegisterValuesView registers,
             Binding binding) const
     {
@@ -59,7 +59,7 @@ public:
     /// Skip disabled rules before action enumeration; matches() also checks this for direct callers.
     template<runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context>
     bool is_applicable(Context& context) const
-    { return conditions_are_compatible<Kind>(m_rule, context); }
+    { return all_compatible<Kind, IcpFamilyTag>(m_rule.get_conditions(), context); }
 
     /// Reject a binding before generating its target; matches() also checks this for direct callers.
     template<runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context,

@@ -49,13 +49,13 @@ void bind_boolean_view(nb::module_& m, const char* name)
     cls.def("syntactic_complexity", [](View view) { return semantics::syntactic_complexity(view); });
 
     if constexpr (is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag>)
-        cls.def("get_predicate", &View::get_predicate, nb::keep_alive<0, 1>()).def("get_polarity", &View::get_polarity);
+        cls.def("get_predicate", &View::get_predicate).def("get_polarity", &View::get_polarity);
     else if constexpr (std::same_as<Tag, ArgumentTag<BooleanTag>>)
-        cls.def("get_argument", &View::get_argument, nb::keep_alive<0, 1>());
+        cls.def("get_argument", &View::get_argument);
     else if constexpr (std::same_as<Tag, NonemptyTag> || std::same_as<Tag, NotTag>)
-        cls.def("get_arg", &View::get_arg, nb::keep_alive<0, 1>());
+        cls.def("get_arg", &View::get_arg);
     else if constexpr (ComparisonTag<Tag> || LogicalBinaryTag<Tag>)
-        cls.def("get_lhs", &View::get_lhs, nb::keep_alive<0, 1>()).def("get_rhs", &View::get_rhs, nb::keep_alive<0, 1>());
+        cls.def("get_lhs", &View::get_lhs).def("get_rhs", &View::get_rhs);
     else
         cls.def("get_value", &View::get_value);
 }

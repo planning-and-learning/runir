@@ -36,36 +36,6 @@ struct data<runir::kr::dl::grammar::Numerical<runir::kr::dl::DistanceTag>> :
     using Base::Base;
 };
 
-template<>
-struct data<runir::kr::dl::grammar::Numerical<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>> :
-    runir::kr::dl::ArgumentData<runir::kr::dl::grammar::Numerical<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
-                                runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>
-{
-    using Base = runir::kr::dl::ArgumentData<runir::kr::dl::grammar::Numerical<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
-                                             runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>;
-    using Base::Base;
-};
-
-template<>
-struct data<runir::kr::dl::grammar::Numerical<runir::kr::dl::NumericalConstantTag>> :
-    runir::kr::dl::IdentifierData<runir::kr::dl::grammar::Numerical<runir::kr::dl::NumericalConstantTag>, ygg::uint_t>
-{
-    using Base = runir::kr::dl::IdentifierData<runir::kr::dl::grammar::Numerical<runir::kr::dl::NumericalConstantTag>, ygg::uint_t>;
-    using Base::Base;
-};
-
-template<runir::kr::dl::NumericalBinaryTag Tag>
-struct data<runir::kr::dl::grammar::Numerical<Tag>> :
-    runir::kr::dl::BinaryData<runir::kr::dl::grammar::Numerical<Tag>,
-                              runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::NumericalTag>,
-                              runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::NumericalTag>>
-{
-    using Base = runir::kr::dl::BinaryData<runir::kr::dl::grammar::Numerical<Tag>,
-                                           runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::NumericalTag>,
-                                           runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::NumericalTag>>;
-    using Base::Base;
-};
-
 }  // namespace urd
 
 #endif

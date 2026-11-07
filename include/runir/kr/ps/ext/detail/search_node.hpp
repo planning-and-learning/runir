@@ -7,7 +7,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <optional>
-#include <tyr/formalism/binding_view.hpp>
+#include <tyr/formalism/declarations.hpp>
+#include <yggdrasil/formalism/binding_view.hpp>
 #include <urd/repr/sequences/segmented.hpp>
 #include <urd/store.hpp>
 

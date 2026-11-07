@@ -7,7 +7,8 @@
 #include "runir/serialization/kr/dl/register_view.hpp"
 #include "runir/serialization/kr/ps/ext/memory_state_view.hpp"
 #include "runir/serialization/kr/ps/ext/module_symbol_view.hpp"
-#include "runir/serialization/kr/ps/ext/rule_data.hpp"
+#include "runir/kr/ps/ext/rule_data.hpp"
+#include "runir/serialization/kr/ps/feature_view.hpp"
 
 #include <yggdrasil/serialization/dictionaries.hpp>
 

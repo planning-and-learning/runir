@@ -2,7 +2,8 @@
 #define RUNIR_KR_PS_BASE_DETAIL_PROOF_SEARCH_HPP_
 
 #include "runir/kr/ps/base/detail/proof_graph.hpp"
-#include "runir/kr/ps/base/detail/search_space.hpp"
+#include "runir/kr/ps/base/detail/search_node.hpp"
+#include "runir/kr/ps/detail/search_space.hpp"
 #include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/base/sketch_executor.hpp"
 #include "runir/kr/ps/base/successor_expander.hpp"
@@ -161,7 +162,11 @@ auto find_solution(const runir::kr::TaskContextPtr<Kind>& task_context_owner,
     if (result.status == SketchProofStatus::SUCCESS && (!result.deadend_states.empty() || !result.open_states.empty() || !result.cycle.empty()))
         result.status = SketchProofStatus::FAILURE;
     if (goal && result.is_successful())
-        result.plan = extract_total_ordered_plan(*goal, nodes, initial_node, task_context);
+        result.plan = runir::kr::ps::detail::extract_total_ordered_plan<Kind>(
+            nodes[ygg::uint_t(goal->index().value)],
+            [&](const auto& node) { return node.parent_state ? &nodes[ygg::uint_t(node.parent_state->index().value)] : nullptr; },
+            initial_node,
+            task_context);
     return result;
 }
 

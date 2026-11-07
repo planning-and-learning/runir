@@ -38,7 +38,7 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
                           urd::index<MemoryState>,
                           urd::flat_vector<urd::index<MemoryState>>,
                           urd::flat_vector<urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>>>>,
-                          ::cista::offset::vector<ResetPair>>(),
+                          urd::flat_vector<ResetPair>>(),
                  nb::arg("symbol"),
                  nb::arg("concept_registers"),
                  nb::arg("role_registers"),
@@ -63,7 +63,7 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
                      urd::index_view<MemoryState, Repository>,
                      const urd::Store<urd::sequence<urd::index_view<MemoryState, Repository>>>&,
                      const urd::Store<urd::sequence<urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>, Repository>>>>>&,
-                     ::cista::offset::vector<ResetPair>>(),
+                     urd::flat_vector<ResetPair>>(),
                  nb::arg("symbol"),
                  nb::arg("concept_registers"),
                  nb::arg("role_registers"),
@@ -109,7 +109,7 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
     ygg::add_print(view);
     urd::python::add_comparison(view);
     urd::python::add_hash(view);
-    runir::kr::python::bind_insert<T>(repository);
+    ygg::bind_insert<T>(repository);
 }
 
 }  // namespace runir::kr::ps::icp

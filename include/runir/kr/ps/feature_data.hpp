@@ -16,7 +16,7 @@ namespace urd
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag>
 struct data<runir::kr::ps::Feature<Family, FeatureTag>>
 {
-    using Variant = ::cista::offset::variant<urd::index<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>>>;
+    using Variant = urd::flat_variant<urd::index<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>>>;
 
     urd::index<runir::kr::ps::Feature<Family, FeatureTag>> index;
     Variant variant;

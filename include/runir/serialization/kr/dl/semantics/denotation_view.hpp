@@ -4,7 +4,7 @@
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/dl/semantics/denotation_view.hpp"
 
-#include <tyr/serialization/formalism/object_view.hpp>
+#include <tyr/serialization/formalism/planning/planning.hpp>
 #include <yggdrasil/serialization/dictionaries.hpp>
 
 namespace ygg::serialization

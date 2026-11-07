@@ -46,10 +46,10 @@ auto bind_rule_view(nb::module_& m, const char* name)
     using View = urd::index_view<T, Repository>;
     auto cls = nb::class_<View>(m, name)
                    .def("get_index", &View::index)
-                   .def("get_source", &View::get_source, nb::keep_alive<0, 1>())
+                   .def("get_source", &View::get_source)
                    .def("get_conditions", &View::get_conditions);
     if constexpr (requires(View view) { view.get_target(); })
-        cls.def("get_target", &View::get_target, nb::keep_alive<0, 1>());
+        cls.def("get_target", &View::get_target);
     if constexpr (requires { &View::get_effects; })
         cls.def("get_effects", &View::get_effects);
     if constexpr (requires(View view) { view.get_order(); })
@@ -80,10 +80,10 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     auto term_view = nb::class_<TermView>(m, "OrderTerm")
                          .def("get_index", &TermView::index)
                          .def("get_direction", &TermView::get_direction)
-                         .def("get_feature", &TermView::get_feature, nb::keep_alive<0, 1>());
+                         .def("get_feature", &TermView::get_feature);
     urd::python::add_comparison(term_view);
     urd::python::add_hash(term_view);
-    runir::kr::python::bind_insert<OrderTerm>(repository);
+    ygg::bind_insert<OrderTerm>(repository);
 
     using ConceptLoad = Rule<LoadTag<runir::kr::dl::ConceptTag>>;
     using RoleLoad = Rule<LoadTag<runir::kr::dl::RoleTag>>;
@@ -220,7 +220,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
              "conditions"_a,
              "effects"_a);
     bind_rule_data<Action>(m, "ActionRuleData")
-        .def(nb::init<MemoryStateIndex, MemoryStateIndex, ConditionIndexList, EffectIndexList, ::cista::offset::string, QueryFeatureIndex>(),
+        .def(nb::init<MemoryStateIndex, MemoryStateIndex, ConditionIndexList, EffectIndexList, urd::flat_string, QueryFeatureIndex>(),
              "source"_a,
              "target"_a,
              "conditions"_a,
@@ -231,7 +231,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
                       MemoryStateView,
                       const ConditionViewList&,
                       const EffectViewList&,
-                      ::cista::offset::string,
+                      urd::flat_string,
                       urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>, Repository>>(),
              "source"_a,
              "target"_a,
@@ -246,7 +246,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
                       MemoryStateIndex,
                       ConditionIndexList,
                       EffectIndexList,
-                      ::cista::offset::string,
+                      urd::flat_string,
                       urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>>(),
              "source"_a,
              "target"_a,
@@ -258,7 +258,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
                       MemoryStateView,
                       const ConditionViewList&,
                       const EffectViewList&,
-                      ::cista::offset::string,
+                      urd::flat_string,
                       const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>, Repository>>>&>(),
              "source"_a,
              "target"_a,
@@ -269,7 +269,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
         .def_rw("action_name", &urd::data<Do>::action_name)
         .def_rw("arguments", &urd::data<Do>::arguments);
     bind_rule_data<Call>(m, "CallRuleData")
-        .def(nb::init<MemoryStateIndex, MemoryStateIndex, ConditionIndexList, urd::index<ModuleSymbol>, ::cista::offset::vector<CallArgument>>(),
+        .def(nb::init<MemoryStateIndex, MemoryStateIndex, ConditionIndexList, urd::index<ModuleSymbol>, urd::flat_vector<CallArgument>>(),
              "source"_a,
              "target"_a,
              "conditions"_a,
@@ -279,7 +279,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
                       MemoryStateView,
                       const ConditionViewList&,
                       urd::index_view<ModuleSymbol, Repository>,
-                      ::cista::offset::vector<CallArgument>>(),
+                      urd::flat_vector<CallArgument>>(),
              "source"_a,
              "target"_a,
              "conditions"_a,
@@ -292,39 +292,39 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
         .def(urd::python::init_from_views<MemoryStateView, const ConditionViewList&>(), "source"_a, "conditions"_a);
 
     bind_rule_view<ConceptLoad>(m, "ConceptLoadRule")
-        .def("get_feature", &urd::index_view<ConceptLoad, Repository>::get_feature, nb::keep_alive<0, 1>())
-        .def("get_register", &urd::index_view<ConceptLoad, Repository>::get_register, nb::keep_alive<0, 1>());
+        .def("get_feature", &urd::index_view<ConceptLoad, Repository>::get_feature)
+        .def("get_register", &urd::index_view<ConceptLoad, Repository>::get_register);
     bind_rule_view<RoleLoad>(m, "RoleLoadRule")
-        .def("get_feature", &urd::index_view<RoleLoad, Repository>::get_feature, nb::keep_alive<0, 1>())
-        .def("get_register", &urd::index_view<RoleLoad, Repository>::get_register, nb::keep_alive<0, 1>());
+        .def("get_feature", &urd::index_view<RoleLoad, Repository>::get_feature)
+        .def("get_register", &urd::index_view<RoleLoad, Repository>::get_register);
     bind_rule_view<ConceptChoose>(m, "ConceptChooseRule")
-        .def("get_feature", &urd::index_view<ConceptChoose, Repository>::get_feature, nb::keep_alive<0, 1>())
-        .def("get_register", &urd::index_view<ConceptChoose, Repository>::get_register, nb::keep_alive<0, 1>());
+        .def("get_feature", &urd::index_view<ConceptChoose, Repository>::get_feature)
+        .def("get_register", &urd::index_view<ConceptChoose, Repository>::get_register);
     bind_rule_view<RoleChoose>(m, "RoleChooseRule")
-        .def("get_feature", &urd::index_view<RoleChoose, Repository>::get_feature, nb::keep_alive<0, 1>())
-        .def("get_register", &urd::index_view<RoleChoose, Repository>::get_register, nb::keep_alive<0, 1>());
+        .def("get_feature", &urd::index_view<RoleChoose, Repository>::get_feature)
+        .def("get_register", &urd::index_view<RoleChoose, Repository>::get_register);
     bind_rule_view<Sketch>(m, "SketchRule");
     bind_rule_view<Action>(m, "ActionRule")
         .def("get_action_name", &urd::index_view<Action, Repository>::get_action_name)
-        .def("get_query_feature", &urd::index_view<Action, Repository>::get_query_feature, nb::keep_alive<0, 1>());
+        .def("get_query_feature", &urd::index_view<Action, Repository>::get_query_feature);
     bind_rule_view<Do>(m, "DoRule")
         .def("get_action_name", &urd::index_view<Do, Repository>::get_action_name)
         .def("get_action_arguments", &urd::index_view<Do, Repository>::get_action_arguments);
     using CallView = urd::index_view<Call, Repository>;
     bind_rule_view<Call>(m, "CallRule")
-        .def("get_callee", &CallView::get_callee, nb::keep_alive<0, 1>())
+        .def("get_callee", &CallView::get_callee)
         .def("get_call_arguments", &CallView::get_call_arguments);
     bind_rule_view<Backtrack>(m, "BacktrackRule");
 
-    runir::kr::python::bind_insert<ConceptLoad>(repository);
-    runir::kr::python::bind_insert<RoleLoad>(repository);
-    runir::kr::python::bind_insert<ConceptChoose>(repository);
-    runir::kr::python::bind_insert<RoleChoose>(repository);
-    runir::kr::python::bind_insert<Sketch>(repository);
-    runir::kr::python::bind_insert<Do>(repository);
-    runir::kr::python::bind_insert<Action>(repository);
-    runir::kr::python::bind_insert<Call>(repository);
-    runir::kr::python::bind_insert<Backtrack>(repository);
+    ygg::bind_insert<ConceptLoad>(repository);
+    ygg::bind_insert<RoleLoad>(repository);
+    ygg::bind_insert<ConceptChoose>(repository);
+    ygg::bind_insert<RoleChoose>(repository);
+    ygg::bind_insert<Sketch>(repository);
+    ygg::bind_insert<Do>(repository);
+    ygg::bind_insert<Action>(repository);
+    ygg::bind_insert<Call>(repository);
+    ygg::bind_insert<Backtrack>(repository);
 }
 
 }  // namespace runir::kr::ps::ext

@@ -10,8 +10,6 @@
 namespace runir::kr::parser
 {
 
-using ErrorHandlerTag = ygg::diagnostics::ErrorHandlerTag;
-
 constexpr auto keyword(const char* value)
 {
     return boost::spirit::x3::rule<class Keyword> { value } =

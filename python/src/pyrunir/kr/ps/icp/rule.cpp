@@ -42,8 +42,8 @@ auto bind_rule_view(nb::module_& m, const char* name)
     using View = urd::index_view<T, Repository>;
     auto cls = nb::class_<View>(m, name)
                    .def("get_index", &View::index)
-                   .def("get_source", &View::get_source, nb::keep_alive<0, 1>())
-                   .def("get_target", &View::get_target, nb::keep_alive<0, 1>())
+                   .def("get_source", &View::get_source)
+                   .def("get_target", &View::get_target)
                    .def("get_conditions", &View::get_conditions);
     if constexpr (requires { &View::get_effects; })
         cls.def("get_effects", &View::get_effects);
@@ -125,8 +125,8 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
                       MemoryStateIndex,
                       ConditionIndexList,
                       EffectIndexList,
-                      ::cista::offset::string,
-                      ::cista::offset::vector<::cista::offset::string>,
+                      urd::flat_string,
+                      urd::flat_vector<urd::flat_string>,
                       urd::flat_vector<urd::index<XCondition>>,
                       urd::flat_vector<urd::index<XEffect>>>(),
              "source"_a,
@@ -141,8 +141,8 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
                       MemoryStateView,
                       const ConditionViewList&,
                       const EffectViewList&,
-                      ::cista::offset::string,
-                      ::cista::offset::vector<::cista::offset::string>,
+                      urd::flat_string,
+                      urd::flat_vector<urd::flat_string>,
                       const urd::Store<urd::sequence<urd::index_view<XCondition, Repository>>>&,
                       const urd::Store<urd::sequence<urd::index_view<XEffect, Repository>>>&>(),
              "source"_a,
@@ -158,19 +158,19 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
         .def_rw("xconditions", &urd::data<Crule>::xconditions)
         .def_rw("xeffects", &urd::data<Crule>::xeffects);
     bind_rule_view<ConceptLoad>(m, "ConceptLoadRule")
-        .def("get_feature", &RuleView<LoadTag<runir::kr::dl::ConceptTag>>::get_feature, nb::keep_alive<0, 1>())
-        .def("get_register", &RuleView<LoadTag<runir::kr::dl::ConceptTag>>::get_register, nb::keep_alive<0, 1>());
+        .def("get_feature", &RuleView<LoadTag<runir::kr::dl::ConceptTag>>::get_feature)
+        .def("get_register", &RuleView<LoadTag<runir::kr::dl::ConceptTag>>::get_register);
     bind_rule_view<RoleLoad>(m, "RoleLoadRule")
-        .def("get_feature", &RuleView<LoadTag<runir::kr::dl::RoleTag>>::get_feature, nb::keep_alive<0, 1>())
-        .def("get_register", &RuleView<LoadTag<runir::kr::dl::RoleTag>>::get_register, nb::keep_alive<0, 1>());
+        .def("get_feature", &RuleView<LoadTag<runir::kr::dl::RoleTag>>::get_feature)
+        .def("get_register", &RuleView<LoadTag<runir::kr::dl::RoleTag>>::get_register);
     bind_rule_view<Crule>(m, "CruleRule")
         .def("get_action_name", &RuleView<CruleTag>::get_action_name)
         .def("get_argument_names", &RuleView<CruleTag>::get_argument_names)
         .def("get_xconditions", &RuleView<CruleTag>::get_xconditions)
         .def("get_xeffects", &RuleView<CruleTag>::get_xeffects);
-    runir::kr::python::bind_insert<ConceptLoad>(repository);
-    runir::kr::python::bind_insert<RoleLoad>(repository);
-    runir::kr::python::bind_insert<Crule>(repository);
+    ygg::bind_insert<ConceptLoad>(repository);
+    ygg::bind_insert<RoleLoad>(repository);
+    ygg::bind_insert<Crule>(repository);
 }
 
 }  // namespace runir::kr::ps::icp

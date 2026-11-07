@@ -146,7 +146,7 @@ public:
     {
         assert_valid_num_blocks(blocks.size(), num_objects);
         for (ygg::uint_t object = 0; object < num_objects; ++object)
-            assert(get(object).trailing_bits_zero());
+            assert(get(urd::index<tyr::formalism::Object>(object)).trailing_bits_zero());
     }
 
     void initialize(ygg::uint_t num_objects_)
@@ -178,8 +178,6 @@ public:
         return ConstBitset(std::span(blocks).subspan(row_block_offset(object, num_objects)).data(), num_objects);
     }
 
-    auto get(ygg::uint_t object) noexcept -> Bitset { return get(urd::index<tyr::formalism::Object>(object)); }
-    [[nodiscard]] auto get(ygg::uint_t object) const noexcept -> ConstBitset { return get(urd::index<tyr::formalism::Object>(object)); }
     [[nodiscard]] auto get_num_objects() const noexcept { return num_objects; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&builder::num_objects, &builder::blocks> {}; }
 
@@ -205,7 +203,7 @@ public:
     void flip() noexcept
     {
         for (ygg::uint_t source = 0; source < num_objects; ++source)
-            get(source).flip();
+            get(urd::index<tyr::formalism::Object>(source)).flip();
         index = {};
     }
 

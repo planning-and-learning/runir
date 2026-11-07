@@ -6,8 +6,8 @@
 #include <runir/kr/ps/ext/execution_repository.hpp>
 #include <runir/kr/ps/ext/execution_view.hpp>
 #include <runir/kr/ps/icp/execution_view.hpp>
-#include <tyr/planning/ground/state_repository.hpp>
-#include <tyr/planning/lifted/state_repository.hpp>
+#include <tyr/planning/state_builder.hpp>
+#include <tyr/planning/state_repository.hpp>
 #include <utility>
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/core/config.hpp>

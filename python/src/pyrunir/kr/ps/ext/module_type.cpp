@@ -132,7 +132,7 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
     urd::python::add_comparison(view);
     urd::python::add_hash(view);
     runir::kr::python::bind_ps_optimize<runir::kr::ExtFamilyTag, Repository>(view);
-    runir::kr::python::bind_insert<T>(repository);
+    ygg::bind_insert<T>(repository);
 }
 
 }  // namespace runir::kr::ps::ext

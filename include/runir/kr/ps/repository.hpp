@@ -58,11 +58,6 @@ public:
     const urd::data<T>& operator[](urd::index<T> index) const noexcept
     { return this->template local<T>(index); }
 
-    /// An index as its view here (urd's resolves contract).
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<BasicRepository, T>
-    [[nodiscard]] urd::index_view<T, BasicRepository> view(urd::index<T> index) const noexcept
-    { return { index, this }; }
 };
 
 template<FamilyTag Family, typename RepositoryTypes>

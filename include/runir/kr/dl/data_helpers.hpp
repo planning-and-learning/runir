@@ -21,7 +21,7 @@ namespace runir::kr::dl
 template<typename T>
 inline constexpr bool is_cista_variant_v = false;
 template<typename... Ts>
-inline constexpr bool is_cista_variant_v<::cista::offset::variant<Ts...>> = true;
+inline constexpr bool is_cista_variant_v<urd::flat_variant<Ts...>> = true;
 
 /// How a record stores an operand of type T: an interned record by its index, a variant (a grammar symbol) as it is.
 template<typename T>

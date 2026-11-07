@@ -98,8 +98,6 @@ public:
     EvaluationEnvironment& operator=(EvaluationEnvironment&&) = delete;
     ~EvaluationEnvironment() = default;
 
-    auto& get_dl_storage() noexcept { return m_dl_storage; }
-    auto& get_dl_target_storage() noexcept { return m_dl_target_storage; }
     auto& get_dl_caches() noexcept { return m_dl_storage.get_caches(); }
     auto& get_dl_target_caches() noexcept { return m_dl_target_storage.get_caches(); }
 

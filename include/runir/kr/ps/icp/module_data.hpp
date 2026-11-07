@@ -33,7 +33,7 @@ struct data<runir::kr::ps::icp::Module>
     urd::index<runir::kr::ps::icp::MemoryState> entry_memory_state;
     urd::flat_vector<urd::index<runir::kr::ps::icp::MemoryState>> memory_states;
     urd::flat_vector<urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>>>> memory_transitions;
-    ::cista::offset::vector<runir::kr::ps::icp::ResetPair> reset_pairs;
+    urd::flat_vector<runir::kr::ps::icp::ResetPair> reset_pairs;
 
     data() = default;
     // Registers live in the description-logic repository, hence the separate context parameter.
@@ -48,7 +48,7 @@ struct data<runir::kr::ps::icp::Module>
          urd::index<runir::kr::ps::icp::MemoryState> entry_memory_state_,
          urd::flat_vector<urd::index<runir::kr::ps::icp::MemoryState>> memory_states_,
          urd::flat_vector<urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>>>> memory_transitions_,
-         ::cista::offset::vector<runir::kr::ps::icp::ResetPair> reset_pairs_) :
+         urd::flat_vector<runir::kr::ps::icp::ResetPair> reset_pairs_) :
         index(),
         symbol(symbol_),
         concept_registers(std::move(concept_registers_)),

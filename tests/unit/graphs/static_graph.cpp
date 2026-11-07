@@ -149,20 +149,22 @@ TEST(GraphContainersTest, DotFormatterEscapesVertexAndEdgeLabels)
     EXPECT_NE(dot.find("edge\\n\\\"quoted\\\"\\\\slashcarriage"), std::string::npos);
 }
 
-TEST(GraphContainersTest, PropertyOwningGraphContainersAreMoveOnly)
+TEST(GraphContainersTest, PropertyOwningGraphContainersCopyExceptTheBidirectionalGraph)
 {
-    static_assert(!std::is_copy_constructible_v<Builder>);
-    static_assert(!std::is_copy_assignable_v<Builder>);
+    // Builders and graphs follow the rule of zero (vertices and edges hold no back-pointers); a bidirectional graph's
+    // backward view points into it.
+    static_assert(std::is_copy_constructible_v<Builder>);
+    static_assert(std::is_copy_assignable_v<Builder>);
     static_assert(std::is_move_constructible_v<Builder>);
     static_assert(std::is_move_assignable_v<Builder>);
 
-    static_assert(!std::is_copy_constructible_v<StaticGraph>);
-    static_assert(!std::is_copy_assignable_v<StaticGraph>);
+    static_assert(std::is_copy_constructible_v<StaticGraph>);
+    static_assert(std::is_copy_assignable_v<StaticGraph>);
     static_assert(std::is_move_constructible_v<StaticGraph>);
     static_assert(std::is_move_assignable_v<StaticGraph>);
 
-    static_assert(!std::is_copy_constructible_v<DynamicGraph>);
-    static_assert(!std::is_copy_assignable_v<DynamicGraph>);
+    static_assert(std::is_copy_constructible_v<DynamicGraph>);
+    static_assert(std::is_copy_assignable_v<DynamicGraph>);
     static_assert(std::is_move_constructible_v<DynamicGraph>);
     static_assert(std::is_move_assignable_v<DynamicGraph>);
 

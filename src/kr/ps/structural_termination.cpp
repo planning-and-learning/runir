@@ -1,6 +1,7 @@
 #include "runir/kr/ps/dl/structural_termination.hpp"
 #include <urd/repr/values/std_set.hpp>
 #include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/dense_set.hpp>
 #include <urd/store.hpp>
 
 #include "runir/graphs/cycle.hpp"
@@ -125,17 +126,17 @@ urd::Store<urd::sequence<CounterexampleComponent>> materialize_counterexamples(c
         const auto& projected = component.projected;
         const auto first_result = result.size();
         const auto missing = std::numeric_limits<std::size_t>::max();
-        auto cyclic_scc = std::vector<bool>(component.sieve.component_of.size(), false);
+        auto cyclic_scc = urd::Store<urd::set<std::size_t>, urd::dense> {};
         auto result_of_scc = urd::Store<urd::sequence<std::size_t>>(component.sieve.component_of.size(), missing);
         auto vertex_remap = urd::Store<urd::sequence<std::size_t>>(component.sieve.component_of.size(), missing);
 
         for (const auto& edge : component.edges)
-            cyclic_scc[component.sieve.component_of[edge.source]] = true;
+            cyclic_scc.insert(component.sieve.component_of[edge.source]);
 
         for (std::size_t vertex = 0; vertex < component.sieve.component_of.size(); ++vertex)
         {
             const auto scc = component.sieve.component_of[vertex];
-            if (!cyclic_scc[scc])
+            if (!cyclic_scc.contains(scc))
                 continue;
             if (result_of_scc[scc] == missing)
             {

@@ -6,7 +6,8 @@
 
 #include <cstddef>
 #include <optional>
-#include <tyr/formalism/binding_view.hpp>
+#include <tyr/formalism/declarations.hpp>
+#include <yggdrasil/formalism/binding_view.hpp>
 
 namespace runir::kr::ps::icp::detail
 {

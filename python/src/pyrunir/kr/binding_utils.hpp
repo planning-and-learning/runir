@@ -4,19 +4,10 @@
 #include <cstddef>
 #include <nanobind/nanobind.h>
 #include <utility>
-#include <urd/elements/flat.hpp>
-#include <yggdrasil/formalism/interning.hpp>
-#include <urd/python/owner.hpp>
+#include <yggdrasil/python/bindings.hpp>
 
 namespace runir::kr::python
 {
-
-template<typename T, typename Repository>
-void bind_insert(nanobind::class_<Repository>& repository)
-{
-    namespace nb = nanobind;
-    repository.def("insert", [](Repository& self, urd::data<T>& data) { return ygg::formalism::insert(self, data); }, nb::arg("data"));
-}
 
 namespace detail
 {

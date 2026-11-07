@@ -15,7 +15,10 @@
 #include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/semantics/evaluation_policy.hpp>
-#include <runir/kr/dl/semantics/state_evaluation.hpp>
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include <runir/kr/ps/dl/declarations.hpp>
 #include <runir/kr/ps/dl/evaluation.hpp>
 #include <runir/kr/ps/icp/detail/repository_instantiations.hpp>

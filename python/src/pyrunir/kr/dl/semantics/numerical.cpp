@@ -50,17 +50,17 @@ void bind_numerical_view(nb::module_& m, const char* name)
     cls.def("syntactic_complexity", [](View view) { return semantics::syntactic_complexity(view); });
 
     if constexpr (std::same_as<Tag, CountTag>)
-        cls.def("get_arg", &View::get_arg, nb::keep_alive<0, 1>());
+        cls.def("get_arg", &View::get_arg);
     else if constexpr (std::same_as<Tag, DistanceTag>)
-        cls.def("get_lhs", &View::get_lhs, nb::keep_alive<0, 1>())
-            .def("get_mid", &View::get_mid, nb::keep_alive<0, 1>())
-            .def("get_rhs", &View::get_rhs, nb::keep_alive<0, 1>());
+        cls.def("get_lhs", &View::get_lhs)
+            .def("get_mid", &View::get_mid)
+            .def("get_rhs", &View::get_rhs);
     else if constexpr (std::same_as<Tag, NumericalConstantTag>)
         cls.def("get_value", &View::get_value);
     else if constexpr (NumericalBinaryTag<Tag>)
-        cls.def("get_lhs", &View::get_lhs, nb::keep_alive<0, 1>()).def("get_rhs", &View::get_rhs, nb::keep_alive<0, 1>());
+        cls.def("get_lhs", &View::get_lhs).def("get_rhs", &View::get_rhs);
     else
-        cls.def("get_argument", &View::get_argument, nb::keep_alive<0, 1>());
+        cls.def("get_argument", &View::get_argument);
 }
 
 }  // namespace

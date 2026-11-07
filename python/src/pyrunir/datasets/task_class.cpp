@@ -4,12 +4,11 @@
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/vector.h>
 #include <runir/datasets/task_class.hpp>
-#include <tyr/planning/ground/axiom_evaluator.hpp>
-#include <tyr/planning/ground/state_repository.hpp>
+#include <tyr/planning/axiom_evaluator.hpp>
+#include <tyr/planning/state_builder.hpp>
+#include <tyr/planning/state_repository.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/ground/task.hpp>
-#include <tyr/planning/lifted/axiom_evaluator.hpp>
-#include <tyr/planning/lifted/state_repository.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <tyr/planning/lifted/task.hpp>
 #include <utility>

@@ -5,7 +5,8 @@
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include "runir/kr/ps/ext/detail/search_path.hpp"
-#include "runir/kr/ps/ext/detail/search_space.hpp"
+#include "runir/kr/ps/ext/detail/search_node.hpp"
+#include "runir/kr/ps/detail/search_space.hpp"
 #include "runir/kr/ps/ext/detail/search_storage.hpp"
 #include "runir/kr/ps/ext/detail/successor_expander_impl.hpp"
 #include "runir/kr/ps/ext/dl/structural_termination.hpp"
@@ -348,7 +349,12 @@ ProgramProofResults<Kind> find_solution(SuccessorExpander<Kind, ExecutionStorage
                     if (path->transition)
                         actions.push_back(path->transition->action);
                 std::ranges::reverse(actions);
-                result.plan = extract_total_ordered_plan<Kind>(actions, initial_node, *task_context);
+                auto& search_context = *task_context->search_context;
+                result.plan = tyr::planning::replay_plan<Kind>(initial_node,
+                                                               actions,
+                                                               *search_context.successor_generator,
+                                                               *search_context.state_repository,
+                                                               *search_context.axiom_evaluator);
             }
         }
     }
@@ -362,7 +368,11 @@ ProgramProofResults<Kind> find_solution(SuccessorExpander<Kind, ExecutionStorage
             result.statistics.choice_depth = storage.node(goal).choice_depth;
             result.statistics.choice_width = storage.node(goal).choice_width;
             if (!options.universal && !start)
-                result.plan = extract_total_ordered_plan(goal, storage.nodes, initial_node, *task_context);
+                result.plan = runir::kr::ps::detail::extract_total_ordered_plan<Kind>(
+                    storage.nodes[ygg::uint_t(goal.index().value)],
+                    [&](const auto& node) { return node.parent_state ? &storage.nodes[ygg::uint_t(node.parent_state->index().value)] : nullptr; },
+                    initial_node,
+                    *task_context);
         }
     }
     return result;
