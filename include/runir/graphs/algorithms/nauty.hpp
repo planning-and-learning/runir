@@ -50,15 +50,8 @@ public:
     template<IsGraph G>
     explicit SparseGraph(const G& graph) : SparseGraph()
     {
-        auto vertices = VertexIndexList();
-        vertices.reserve(graph.get_num_vertices());
-        for (auto vertex : graph.get_vertex_indices())
-            vertices.push_back(vertex);
-        std::sort(vertices.begin(), vertices.end());
-
-        auto vertex_to_dense = urd::Store<urd::map<VertexIndex, ygg::uint_t>>();
-        for (ygg::uint_t i = 0; i < vertices.size(); ++i)
-            vertex_to_dense.emplace(vertices[i], i);
+        const auto vertices = dense_vertex_indices(graph);
+        const auto dense = [&vertices](VertexIndex vertex) { return static_cast<ygg::uint_t>(vertices.position(vertices.find(vertex))); };
 
         if (!is_loopless(graph))
             throw std::runtime_error("runir::graphs::nauty::SparseGraph: loop edges are not supported.");
@@ -72,9 +65,7 @@ public:
         auto edge_set = urd::Store<urd::set<std::pair<ygg::uint_t, ygg::uint_t>>, urd::sorted, urd::stable_refs>();
         for (auto edge : graph.get_edge_indices())
         {
-            const auto source = vertex_to_dense.at(graph.get_source(edge));
-            const auto target = vertex_to_dense.at(graph.get_target(edge));
-            edge_set.emplace(source, target);
+            edge_set.emplace(dense(graph.get_source(edge)), dense(graph.get_target(edge)));
         }
 
         auto offsets = urd::Store<urd::sequence<std::size_t>>();
@@ -103,7 +94,7 @@ public:
         auto color_vertex_pairs = urd::Store<urd::sequence<std::pair<ygg::uint_t, int>>>();
         color_vertex_pairs.reserve(vertices.size());
         for (ygg::uint_t dense_vertex = 0; dense_vertex < vertices.size(); ++dense_vertex)
-            color_vertex_pairs.emplace_back(static_cast<ygg::uint_t>(color_index(get_vertex_color(graph.get_vertex(vertices[dense_vertex])))),
+            color_vertex_pairs.emplace_back(static_cast<ygg::uint_t>(color_index(get_vertex_color(graph, vertices[dense_vertex]))),
                                             static_cast<int>(dense_vertex));
         std::sort(color_vertex_pairs.begin(), color_vertex_pairs.end());
 

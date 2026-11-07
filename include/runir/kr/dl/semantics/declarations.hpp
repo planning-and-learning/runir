@@ -44,12 +44,12 @@ class EvaluationWorkspace;
 class DenotationCaches;
 class EvaluationStorage;
 
-using RegisterValuesView = urd::view<RegisterValues, DenotationRepository>;
-using CallArgumentsView = urd::view<CallArguments, DenotationRepository>;
+using RegisterValuesView = urd::index_view<RegisterValues, DenotationRepository>;
+using CallArgumentsView = urd::index_view<CallArguments, DenotationRepository>;
 using BorrowedRegisterValuesView = urd::borrowed_view<RegisterValues, tyr::formalism::planning::Repository>;
 
 template<CategoryTag Category>
-using DenotationView = urd::view<Denotation<Category>, DenotationRepository>;
+using DenotationView = urd::index_view<Denotation<Category>, DenotationRepository>;
 
 template<CategoryTag Category>
 using BorrowedDenotationView = urd::borrowed_view<Denotation<Category>, tyr::formalism::planning::Repository, urd::builder<Denotation<Category>>>;

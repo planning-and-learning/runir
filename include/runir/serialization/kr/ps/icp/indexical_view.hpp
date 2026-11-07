@@ -15,7 +15,7 @@ namespace ygg::serialization
 
 template<typename Archive, typename T, typename C>
     requires(std::same_as<T, runir::kr::ps::icp::XCondition> || std::same_as<T, runir::kr::ps::icp::XEffect>)
-void describe_fields(Archive& ar, std::type_identity<urd::view<T, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<T, C>>)
 {
     ar.field("operation",
              [](const auto& value)

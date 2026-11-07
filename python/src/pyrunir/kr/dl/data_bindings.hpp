@@ -13,7 +13,7 @@
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 namespace runir::kr::dl::python
 {
@@ -37,7 +37,7 @@ void def_unary_data_constructors(Class& cls)
     using namespace nb::literals;
     cls.def(nb::init<ArgIndex>(), "arg"_a);
     if constexpr (urd::is_index_type<ArgIndex>)
-        cls.def(urd::python::init_from_views<urd::view<typename ArgIndex::element_type, Repository>>(), "arg"_a);
+        cls.def(urd::python::init_from_views<urd::index_view<typename ArgIndex::element_type, Repository>>(), "arg"_a);
 }
 
 template<typename LhsIndex, typename RhsIndex, typename Repository, typename Class>
@@ -46,14 +46,14 @@ void def_binary_data_constructors(Class& cls)
     using namespace nb::literals;
     cls.def(nb::init<LhsIndex, RhsIndex>(), "lhs"_a, "rhs"_a);
     if constexpr (urd::is_index_type<LhsIndex>)
-        cls.def(urd::python::init_from_views<urd::view<typename LhsIndex::element_type, Repository>, urd::view<typename RhsIndex::element_type, Repository>>(), "lhs"_a, "rhs"_a);
+        cls.def(urd::python::init_from_views<urd::index_view<typename LhsIndex::element_type, Repository>, urd::index_view<typename RhsIndex::element_type, Repository>>(), "lhs"_a, "rhs"_a);
 }
 
 template<typename ReferenceIndex, typename Repository, typename Class>
 void def_reference_data_constructors(Class& cls)
 {
     using namespace nb::literals;
-    cls.def(nb::init<ReferenceIndex>(), "reference"_a).def(urd::python::init_from_views<urd::view<typename ReferenceIndex::element_type, Repository>>(), "reference"_a);
+    cls.def(nb::init<ReferenceIndex>(), "reference"_a).def(urd::python::init_from_views<urd::index_view<typename ReferenceIndex::element_type, Repository>>(), "reference"_a);
 }
 
 template<typename Tag, typename ConceptIndex, typename RoleIndex, typename Repository, typename Class>
@@ -75,20 +75,20 @@ void def_concept_data_constructors(Class& cls)
     {
         cls.def(nb::init<ygg::uint_t, RoleIndex>(), "n"_a, "role"_a);
         if constexpr (urd::is_index_type<RoleIndex>)
-            cls.def(urd::python::init_from_views<ygg::uint_t, urd::view<typename RoleIndex::element_type, Repository>>(), "n"_a, "role"_a);
+            cls.def(urd::python::init_from_views<ygg::uint_t, urd::index_view<typename RoleIndex::element_type, Repository>>(), "n"_a, "role"_a);
     }
     else if constexpr (std::same_as<Tag, QualifiedAtLeastNumberRestrictionTag> || std::same_as<Tag, QualifiedAtMostNumberRestrictionTag>
                        || std::same_as<Tag, QualifiedExactNumberRestrictionTag>)
     {
         cls.def(nb::init<ygg::uint_t, RoleIndex, ConceptIndex>(), "n"_a, "role"_a, "concept"_a);
         if constexpr (urd::is_index_type<RoleIndex>)
-            cls.def(urd::python::init_from_views<ygg::uint_t, urd::view<typename RoleIndex::element_type, Repository>, urd::view<typename ConceptIndex::element_type, Repository>>(), "n"_a, "role"_a, "concept"_a);
+            cls.def(urd::python::init_from_views<ygg::uint_t, urd::index_view<typename RoleIndex::element_type, Repository>, urd::index_view<typename ConceptIndex::element_type, Repository>>(), "n"_a, "role"_a, "concept"_a);
     }
     else if constexpr (std::same_as<Tag, RoleFillersTag>)
     {
         cls.def(nb::init<RoleIndex, urd::flat_vector<urd::index<tyr::formalism::Object>>>(), "role"_a, "objects"_a);
         if constexpr (urd::is_index_type<RoleIndex>)
-            cls.def(urd::python::init_from_views<urd::view<typename RoleIndex::element_type, Repository>, const tyr::formalism::planning::ObjectViewList&>(), "role"_a, "objects"_a);
+            cls.def(urd::python::init_from_views<urd::index_view<typename RoleIndex::element_type, Repository>, const tyr::formalism::planning::ObjectViewList&>(), "role"_a, "objects"_a);
     }
     else if constexpr (std::same_as<Tag, OneOfTag>)
         cls.def(nb::init<urd::flat_vector<urd::index<tyr::formalism::Object>>>(), "objects"_a).def(urd::python::init_from_views<const tyr::formalism::planning::ObjectViewList&>(), "objects"_a);
@@ -168,7 +168,7 @@ void def_numerical_data_constructors(Class& cls)
         cls.def(nb::init<Vertex, Edge, Vertex>(), "lhs"_a, "mid"_a, "rhs"_a);
         // Semantic operands are concept/role-or-query variants; grammar operands are concept/role indices.
         if constexpr (std::same_as<Vertex, ConceptIndex> && urd::is_index_type<Vertex>)
-            cls.def(urd::python::init_from_views<urd::view<typename ConceptIndex::element_type, Repository>, urd::view<typename RoleIndex::element_type, Repository>, urd::view<typename ConceptIndex::element_type, Repository>>(),
+            cls.def(urd::python::init_from_views<urd::index_view<typename ConceptIndex::element_type, Repository>, urd::index_view<typename RoleIndex::element_type, Repository>, urd::index_view<typename ConceptIndex::element_type, Repository>>(),
                     "lhs"_a,
                     "mid"_a,
                     "rhs"_a);

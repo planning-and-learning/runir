@@ -10,7 +10,7 @@ namespace ygg::serialization
 {
 
 template<typename Archive, runir::kr::FamilyTag Family, typename FeatureTag, typename C>
-void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>, C>>)
 {
     ar.field("symbol", [](const auto& value) -> decltype(auto) { return (value.get_symbol()); });
     ar.field("expression", [](const auto& value) -> decltype(auto) { return (value.get_expression()); });

@@ -7,7 +7,7 @@
 #include <runir/kr/ps/ext/rule_variant_data.hpp>
 #include <runir/kr/ps/ext/rule_variant_view.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 namespace runir::kr::ps::ext
 {
@@ -16,7 +16,7 @@ void bind_rule_variant(nb::module_& m, RepositoryBinding& repository)
 {
     using T = runir::kr::ps::Rule<runir::kr::ExtFamilyTag>;
     using Data = urd::data<T>;
-    using View = urd::view<T, Repository>;
+    using View = urd::index_view<T, Repository>;
     urd::python::bind_index<urd::index<T>>(m, "RuleVariantIndex");
     auto data = nb::class_<Data>(m, "RuleVariantData")
                     .def(nb::init<>())

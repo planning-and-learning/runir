@@ -21,7 +21,7 @@ namespace runir::tests
 using Entity = kr::ps::ConcreteFeature<kr::UnsFamilyTag, kr::DlTag, kr::dl::BooleanTag>;
 using Index = urd::index<Entity>;
 using Data = urd::data<Entity>;
-using View = urd::view<Entity, kr::uns::Repository>;
+using View = urd::index_view<Entity, kr::uns::Repository>;
 using ExpressionIndex = urd::index<kr::dl::Constructor<kr::dl::BooleanTag>>;
 
 static_assert(std::constructible_from<Index, ygg::uint_t>);

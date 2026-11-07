@@ -6,7 +6,7 @@
 #include <runir/kr/ps/icp/xcondition_view.hpp>
 #include <runir/kr/ps/icp/xeffect_view.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 namespace runir::kr::ps::icp
 {
@@ -19,14 +19,14 @@ void bind_indexical_type(nb::module_& m, RepositoryBinding& repository, const ch
 {
     using namespace nb::literals;
     using Data = urd::data<T>;
-    using View = urd::view<T, Repository>;
+    using View = urd::index_view<T, Repository>;
     using ObjectReference = ::cista::offset::variant<ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>;
     using FeatureIndex = urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>>;
     urd::python::bind_index<urd::index<T>>(m, std::string(name) + "Index");
     auto data = nb::class_<Data>(m, (std::string(name) + "Data").c_str())
                     .def(nb::init<>())
                     .def(nb::init<Operation, ObjectReference, FeatureIndex>(), "operation"_a, "object"_a, "feature"_a)
-                    .def(urd::python::init_from_views<Operation, ObjectReference, urd::view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>, Repository>>(), "operation"_a, "object"_a, "feature"_a)
+                    .def(urd::python::init_from_views<Operation, ObjectReference, urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>, Repository>>(), "operation"_a, "object"_a, "feature"_a)
                     .def_rw("index", &Data::index)
                     .def_rw("operation", &Data::operation)
                     .def_rw("object", &Data::object)

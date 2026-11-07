@@ -288,9 +288,9 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
     const auto count = kr::ps::ext::dl::parse_numerical(R"((n_count (q_project (x) (q_atomic_state "triple" (x y z)))))",
                                                         search->task->get_domain().get_domain(),
                                                         *repository);
-    const auto query = std::get<urd::view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::view<kr::dl::Numerical<kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant()).get_arg());
-    const auto projected = std::get<urd::view<kr::dl::Query<kr::dl::QueryProjectTag>, runir::kr::dl::ConstructorRepository>>(query.get_variant());
-    const auto atomic = std::get<urd::view<kr::dl::Query<kr::dl::AtomicStateTag<Fluent>>, runir::kr::dl::ConstructorRepository>>(projected.get_arg().get_variant());
+    const auto query = std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::index_view<kr::dl::Numerical<kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant()).get_arg());
+    const auto projected = std::get<urd::index_view<kr::dl::Query<kr::dl::QueryProjectTag>, runir::kr::dl::ConstructorRepository>>(query.get_variant());
+    const auto atomic = std::get<urd::index_view<kr::dl::Query<kr::dl::AtomicStateTag<Fluent>>, runir::kr::dl::ConstructorRepository>>(projected.get_arg().get_variant());
     auto leaf = kr::dl::semantics::incremental::detail::AtomicQueryEvaluator<Fluent>(atomic);
     auto projection = ygg::database::incremental::ProjectionEvaluator(projected.data().plan);
     auto workspace = ygg::database::Workspace {};
@@ -308,7 +308,7 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
                 (q_join (q_atomic_state "triple" (x y z)) (q_project () (q_atomic_state "fixed" (x y z))))))))",
         search->task->get_domain().get_domain(),
         *repository);
-    const auto graph_query = std::get<urd::view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::view<kr::dl::Numerical<kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(graph_count.get_variant()).get_arg());
+    const auto graph_query = std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::index_view<kr::dl::Numerical<kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(graph_count.get_variant()).get_arg());
     auto graph = QueryRootEvaluator<tyr::GroundTag>(*search->task, graph_query);
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);

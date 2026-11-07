@@ -93,7 +93,7 @@ template<CategoryTag Category>
 {
     if (&source.context() == &context.repository())
         return { source, false };
-    return copy(BorrowedRegisterValuesView(source.data(), source.get_formalism_repository()), context);
+    return copy(BorrowedRegisterValuesView(&source.data(), &source.get_formalism_repository()), context);
 }
 
 template<CategoryTag Category>

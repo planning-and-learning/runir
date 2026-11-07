@@ -1,4 +1,4 @@
-#include "runir/graphs/algorithms.hpp"
+#include "runir/graphs/bgl/algorithms.hpp"
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include "runir/kr/ps/ext/dl/structural_termination.hpp"
@@ -65,7 +65,7 @@ ModuleCallGraph build_module_call_graph(ProgramView program)
                 std::visit(
                     [&]<typename RuleViewT>(RuleViewT rule)
                     {
-                        if constexpr (std::same_as<RuleViewT, urd::view<Rule<CallTag>, Repository>>)
+                        if constexpr (std::same_as<RuleViewT, urd::index_view<Rule<CallTag>, Repository>>)
                         {
                             const auto target_module = find_module(program, rule.get_callee());
                             if (!target_module)
@@ -92,11 +92,11 @@ urd::Store<urd::sequence<RuleVariantView>> find_recursive_call_rules(ProgramView
 {
     const auto call_graph = build_module_call_graph(program);
     auto result = call_graph.unresolved_rules;
-    const auto [num_components, component_of] = graphs::algorithms::strong_components(call_graph.graph);
+    const auto [num_components, component_of] = graphs::bgl::strong_components(call_graph.graph);
     static_cast<void>(num_components);
     for (const auto& edge : call_graph.graph.get_edges())
         if (component_of[edge.get_source()] == component_of[edge.get_target()])
-            result.push_back(edge.get_property());
+            result.push_back(call_graph.graph.get_edge_property(edge.get_index()));
     return result;
 }
 

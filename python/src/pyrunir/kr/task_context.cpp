@@ -1,5 +1,5 @@
 #include "module.hpp"
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 #include <nanobind/stl/shared_ptr.h>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>

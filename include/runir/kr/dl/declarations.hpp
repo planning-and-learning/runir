@@ -907,31 +907,31 @@ using ConstructorRepositoryFactory = runir::kr::dl::detail::BasicConstructorRepo
 
 template<typename Tag>
     requires ConceptConstructorTag<Tag>
-using ConceptView = urd::view<Concept<Tag>, ConstructorRepository>;
+using ConceptView = urd::index_view<Concept<Tag>, ConstructorRepository>;
 
 template<typename Tag>
     requires RoleConstructorTag<Tag>
-using RoleView = urd::view<Role<Tag>, ConstructorRepository>;
+using RoleView = urd::index_view<Role<Tag>, ConstructorRepository>;
 
 template<typename Tag>
     requires BooleanConstructorTag<Tag>
-using BooleanView = urd::view<Boolean<Tag>, ConstructorRepository>;
+using BooleanView = urd::index_view<Boolean<Tag>, ConstructorRepository>;
 
 template<typename Tag>
     requires NumericalConstructorTag<Tag>
-using NumericalView = urd::view<Numerical<Tag>, ConstructorRepository>;
+using NumericalView = urd::index_view<Numerical<Tag>, ConstructorRepository>;
 
 template<CategoryTag Category>
-using ConstructorView = urd::view<Constructor<Category>, ConstructorRepository>;
+using ConstructorView = urd::index_view<Constructor<Category>, ConstructorRepository>;
 
 template<typename Tag = void>
-using QueryView = urd::view<Query<Tag>, ConstructorRepository>;
+using QueryView = urd::index_view<Query<Tag>, ConstructorRepository>;
 
 template<CategoryTag Category>
-using ArgumentView = urd::view<Argument<Category>, ConstructorRepository>;
+using ArgumentView = urd::index_view<Argument<Category>, ConstructorRepository>;
 
 template<ConceptOrRoleTag Category>
-using RegisterView = urd::view<Register<Category>, ConstructorRepository>;
+using RegisterView = urd::index_view<Register<Category>, ConstructorRepository>;
 }
 
 #endif

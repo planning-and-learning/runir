@@ -7,14 +7,14 @@
 #include <runir/kr/uns/repository.hpp>
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 namespace runir::kr::uns
 {
 
 void bind_classifier_literal(nb::module_& m)
 {
-    using View = urd::view<ClassifierLiteral, Repository>;
+    using View = urd::index_view<ClassifierLiteral, Repository>;
     urd::python::bind_index<urd::index<ClassifierLiteral>>(m, "ClassifierLiteralIndex");
     auto cls = nb::class_<View>(m, "ClassifierLiteral")
                    .def("get_index", &View::index)

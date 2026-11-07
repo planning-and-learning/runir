@@ -17,7 +17,7 @@ template<kr::ps::ext::RuleKind Kind>
 using Entity = kr::ps::ext::Rule<Kind>;
 
 template<kr::ps::ext::RuleKind Kind>
-using View = urd::view<Entity<Kind>, kr::ps::ext::Repository>;
+using View = urd::index_view<Entity<Kind>, kr::ps::ext::Repository>;
 
 template<typename Kind>
 concept RuleContract = kr::ps::ext::RuleKind<Kind> && std::constructible_from<urd::index<Entity<Kind>>, ygg::uint_t>

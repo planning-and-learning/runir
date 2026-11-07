@@ -15,7 +15,7 @@
 #include <tyr/planning/state_repository.hpp>
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 namespace runir::kr::uns
 {
@@ -24,7 +24,7 @@ void bind_classifier(nb::module_& m)
 {
     using namespace nb::literals;
     using Family = runir::kr::UnsFamilyTag;
-    using View = urd::view<Classifier, Repository>;
+    using View = urd::index_view<Classifier, Repository>;
     urd::python::bind_index<urd::index<Classifier>>(m, "ClassifierIndex");
     auto cls = nb::class_<View>(m, "Classifier")
                    .def("get_index", &View::index)

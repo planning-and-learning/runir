@@ -14,7 +14,7 @@ namespace runir::kr::dl::semantics
 
 template<tyr::TaskKind Kind, typename Tag, StateEvaluationContextConcept<Kind> Context, typename C>
     requires ConceptConstructorTag<Tag>
-auto evaluate_impl(urd::view<Concept<Tag>, C> constructor, Context& context) -> DenotationView<ConceptTag>
+auto evaluate_impl(urd::index_view<Concept<Tag>, C> constructor, Context& context) -> DenotationView<ConceptTag>
 {
     [[maybe_unused]] auto children = context.child_context();
     auto& repository = context.get_denotation_repository();
@@ -195,7 +195,7 @@ auto evaluate_impl(urd::view<Concept<Tag>, C> constructor, Context& context) -> 
 
 template<tyr::TaskKind Kind, typename Tag, StateEvaluationContextConcept<Kind> Context, typename C>
     requires RoleConstructorTag<Tag>
-auto evaluate_impl(urd::view<Role<Tag>, C> constructor, Context& context) -> DenotationView<RoleTag>
+auto evaluate_impl(urd::index_view<Role<Tag>, C> constructor, Context& context) -> DenotationView<RoleTag>
 {
     [[maybe_unused]] auto children = context.child_context();
     auto& repository = context.get_denotation_repository();
@@ -320,7 +320,7 @@ auto evaluate_impl(urd::view<Role<Tag>, C> constructor, Context& context) -> Den
 
 template<tyr::TaskKind Kind, typename Tag, StateEvaluationContextConcept<Kind> Context, typename C>
     requires BooleanConstructorTag<Tag>
-auto evaluate_impl(urd::view<Boolean<Tag>, C> constructor, Context& context) -> DenotationView<BooleanTag>
+auto evaluate_impl(urd::index_view<Boolean<Tag>, C> constructor, Context& context) -> DenotationView<BooleanTag>
 {
     [[maybe_unused]] auto children = context.child_context();
     auto& repository = context.get_denotation_repository();
@@ -371,7 +371,7 @@ auto evaluate_impl(urd::view<Boolean<Tag>, C> constructor, Context& context) -> 
 
 template<tyr::TaskKind Kind, typename Tag, StateEvaluationContextConcept<Kind> Context, typename C>
     requires NumericalConstructorTag<Tag>
-auto evaluate_impl(urd::view<Numerical<Tag>, C> constructor, Context& context) -> DenotationView<NumericalTag>
+auto evaluate_impl(urd::index_view<Numerical<Tag>, C> constructor, Context& context) -> DenotationView<NumericalTag>
 {
     [[maybe_unused]] auto children = context.child_context();
     auto& repository = context.get_denotation_repository();
@@ -423,7 +423,7 @@ auto evaluate(ConstructorView<Category> constructor, Context& context) -> Denota
 }
 
 template<tyr::TaskKind Kind, typename C, StateEvaluationContextConcept<Kind> Context>
-auto evaluate_impl(urd::view<Query<QueryRenameTag>, C> constructor, Context& context) -> QueryDenotationView
+auto evaluate_impl(urd::index_view<Query<QueryRenameTag>, C> constructor, Context& context) -> QueryDenotationView
 {
     // Keep rows in their owning output partition, even when a low-level query
     // wrapper conservatively marks a static child as dynamic.
@@ -437,7 +437,7 @@ auto evaluate_impl(urd::view<Query<QueryRenameTag>, C> constructor, Context& con
 
 template<tyr::TaskKind Kind, typename Tag, typename C, StateEvaluationContextConcept<Kind> Context>
     requires(!std::same_as<Tag, void> && !std::same_as<Tag, QueryRenameTag>)
-auto evaluate_impl(urd::view<Query<Tag>, C> constructor, Context& context) -> QueryDenotationView
+auto evaluate_impl(urd::index_view<Query<Tag>, C> constructor, Context& context) -> QueryDenotationView
 {
     auto result = context.get_builder().template get_builder<ygg::database::Relation>(constructor.get_schema().span());
     detail::evaluate_query<Kind>(constructor, context, *result);
@@ -445,7 +445,7 @@ auto evaluate_impl(urd::view<Query<Tag>, C> constructor, Context& context) -> Qu
 }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
-auto evaluate(urd::view<Query<>, C> constructor, Context& context) -> QueryDenotationView
+auto evaluate(urd::index_view<Query<>, C> constructor, Context& context) -> QueryDenotationView
 {
     auto& cache = context.get_caches().get_queries(constructor.is_static());
     if (const auto it = cache.find(constructor); it != cache.end())
@@ -457,7 +457,7 @@ auto evaluate(urd::view<Query<>, C> constructor, Context& context) -> QueryDenot
 }
 
 template<tyr::TaskKind Kind, ConceptOrRoleTag Category, StateEvaluationContextConcept<Kind> Context, typename C>
-auto evaluate_impl(urd::view<QueryProjection<Category>, C> constructor, Context& context) -> DenotationView<Category>
+auto evaluate_impl(urd::index_view<QueryProjection<Category>, C> constructor, Context& context) -> DenotationView<Category>
 {
     const auto& columns = constructor.data().columns;
     auto children = context.child_context();
@@ -483,7 +483,7 @@ auto evaluate_impl(urd::view<QueryProjection<Category>, C> constructor, Context&
 }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
-auto evaluate_impl(urd::view<Concept<RegisterTag>, C> constructor, Context& context) -> DenotationView<ConceptTag>
+auto evaluate_impl(urd::index_view<Concept<RegisterTag>, C> constructor, Context& context) -> DenotationView<ConceptTag>
 {
     auto result = detail::make_concept_builder<Kind>(context);
     auto result_bitset = result->get();
@@ -496,7 +496,7 @@ auto evaluate_impl(urd::view<Concept<RegisterTag>, C> constructor, Context& cont
 }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
-auto evaluate_impl(urd::view<Role<RegisterTag>, C> constructor, Context& context) -> DenotationView<RoleTag>
+auto evaluate_impl(urd::index_view<Role<RegisterTag>, C> constructor, Context& context) -> DenotationView<RoleTag>
 {
     auto result = detail::make_role_builder<Kind>(context);
 
@@ -511,19 +511,19 @@ auto evaluate_impl(urd::view<Role<RegisterTag>, C> constructor, Context& context
 }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
-auto evaluate_impl(urd::view<Concept<ArgumentTag<ConceptTag>>, C> constructor, Context& context) -> DenotationView<ConceptTag>
+auto evaluate_impl(urd::index_view<Concept<ArgumentTag<ConceptTag>>, C> constructor, Context& context) -> DenotationView<ConceptTag>
 { return argument_value(context, constructor.get_argument().get_identifier()); }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
-auto evaluate_impl(urd::view<Role<ArgumentTag<RoleTag>>, C> constructor, Context& context) -> DenotationView<RoleTag>
+auto evaluate_impl(urd::index_view<Role<ArgumentTag<RoleTag>>, C> constructor, Context& context) -> DenotationView<RoleTag>
 { return argument_value(context, constructor.get_argument().get_identifier()); }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
-auto evaluate_impl(urd::view<Boolean<ArgumentTag<BooleanTag>>, C> constructor, Context& context) -> DenotationView<BooleanTag>
+auto evaluate_impl(urd::index_view<Boolean<ArgumentTag<BooleanTag>>, C> constructor, Context& context) -> DenotationView<BooleanTag>
 { return argument_value(context, constructor.get_argument().get_identifier()); }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
-auto evaluate_impl(urd::view<Numerical<ArgumentTag<NumericalTag>>, C> constructor, Context& context) -> DenotationView<NumericalTag>
+auto evaluate_impl(urd::index_view<Numerical<ArgumentTag<NumericalTag>>, C> constructor, Context& context) -> DenotationView<NumericalTag>
 { return argument_value(context, constructor.get_argument().get_identifier()); }
 
 }  // namespace runir::kr::dl::semantics

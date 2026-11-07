@@ -40,7 +40,7 @@ using Object = urd::index<tyr::formalism::Object>;
 auto parse_query(const std::string& expression, tyr::formalism::planning::DomainView domain, kr::dl::ConstructorRepository& repository)
 {
     const auto count = kr::ps::ext::dl::parse_numerical("(n_count " + expression + ")", domain, repository);
-    return std::get<urd::view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::view<kr::dl::Numerical<kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant()).get_arg());
+    return std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::index_view<kr::dl::Numerical<kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant()).get_arg());
 }
 
 auto rows(const auto& relation)
@@ -105,15 +105,15 @@ void check_atomic_projection()
     const auto projected_triple = parse_query(R"((q_project (x) (q_atomic_state "triple" (x y z))))", domain, *constructors);
     const auto projected_copied = parse_query(R"((q_project (x) (q_atomic_state "copied" (x y z))))", domain, *constructors);
     auto triple_leaf = kr::dl::semantics::incremental::detail::AtomicQueryEvaluator<Fluent>(
-        std::get<urd::view<kr::dl::Query<kr::dl::AtomicStateTag<Fluent>>, runir::kr::dl::ConstructorRepository>>(triple.get_variant()));
+        std::get<urd::index_view<kr::dl::Query<kr::dl::AtomicStateTag<Fluent>>, runir::kr::dl::ConstructorRepository>>(triple.get_variant()));
     auto copied_leaf = kr::dl::semantics::incremental::detail::AtomicQueryEvaluator<Derived>(
-        std::get<urd::view<kr::dl::Query<kr::dl::AtomicStateTag<Derived>>, runir::kr::dl::ConstructorRepository>>(copied.get_variant()));
+        std::get<urd::index_view<kr::dl::Query<kr::dl::AtomicStateTag<Derived>>, runir::kr::dl::ConstructorRepository>>(copied.get_variant()));
     auto ready_leaf = kr::dl::semantics::incremental::detail::AtomicQueryEvaluator<Fluent>(
-        std::get<urd::view<kr::dl::Query<kr::dl::AtomicStateTag<Fluent>>, runir::kr::dl::ConstructorRepository>>(ready.get_variant()));
+        std::get<urd::index_view<kr::dl::Query<kr::dl::AtomicStateTag<Fluent>>, runir::kr::dl::ConstructorRepository>>(ready.get_variant()));
     auto triple_projection = ygg::database::incremental::ProjectionEvaluator(
-        std::get<urd::view<kr::dl::Query<kr::dl::QueryProjectTag>, runir::kr::dl::ConstructorRepository>>(projected_triple.get_variant()).data().plan);
+        std::get<urd::index_view<kr::dl::Query<kr::dl::QueryProjectTag>, runir::kr::dl::ConstructorRepository>>(projected_triple.get_variant()).data().plan);
     auto copied_projection = ygg::database::incremental::ProjectionEvaluator(
-        std::get<urd::view<kr::dl::Query<kr::dl::QueryProjectTag>, runir::kr::dl::ConstructorRepository>>(projected_copied.get_variant()).data().plan);
+        std::get<urd::index_view<kr::dl::Query<kr::dl::QueryProjectTag>, runir::kr::dl::ConstructorRepository>>(projected_copied.get_variant()).data().plan);
     auto workspace = ygg::database::Workspace {};
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);

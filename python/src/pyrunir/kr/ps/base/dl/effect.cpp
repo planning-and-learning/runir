@@ -1,5 +1,5 @@
 #include "bindings.hpp"
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 #include "pyrunir/kr/ps/dl/binding_utils.hpp"
 
 #include <runir/kr/dl/detail/repository_instantiations.hpp>
@@ -18,7 +18,7 @@ namespace
 template<typename T>
 void bind_observation(nb::module_& m, RepositoryBinding& repository, const char* name)
 {
-    using View = urd::view<T, Repository>;
+    using View = urd::index_view<T, Repository>;
     using GroundContext = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>;
     using LiftedContext = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
     runir::kr::python::bind_observation<T>(m, repository, name)

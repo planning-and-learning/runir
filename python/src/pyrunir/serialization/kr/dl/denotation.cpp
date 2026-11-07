@@ -1,5 +1,5 @@
 #include "pyrunir/serialization/binding_utils.hpp"
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 #include "pyrunir/serialization/bindings.hpp"
 
 #include <runir/serialization/kr/dl/semantics/call_arguments_view.hpp>

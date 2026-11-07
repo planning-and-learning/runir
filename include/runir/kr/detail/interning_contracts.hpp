@@ -14,7 +14,7 @@ namespace runir::kr::detail
 /// almost nothing, while a test checking them instantiates every repository again (template rule 17).
 template<typename Repository, typename T>
 concept InternsData = requires(Repository& repository, urd::data<T>& data) {
-    { ygg::formalism::insert(repository, data) } -> std::same_as<std::pair<urd::view<T, Repository>, bool>>;
+    { ygg::formalism::insert(repository, data) } -> std::same_as<std::pair<urd::index_view<T, Repository>, bool>>;
 };
 
 template<typename Repository, typename T>

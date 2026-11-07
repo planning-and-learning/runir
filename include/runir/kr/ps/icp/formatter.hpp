@@ -78,7 +78,7 @@ void append_indexical(std::ostream& os, Predicate predicate, const ArgumentNames
 }
 
 template<runir::kr::ps::icp::RuleKind Kind, typename C>
-void append_rule_body(std::ostream& os, urd::view<runir::kr::ps::icp::Rule<Kind>, C> view)
+void append_rule_body(std::ostream& os, urd::index_view<runir::kr::ps::icp::Rule<Kind>, C> view)
 {
     if constexpr (std::same_as<Kind, CruleTag>)
     {
@@ -106,7 +106,7 @@ void append_rule_body(std::ostream& os, urd::view<runir::kr::ps::icp::Rule<Kind>
 }
 
 template<runir::kr::ps::icp::RuleKind Kind, typename C>
-void append_rule(std::ostream& os, urd::view<runir::kr::ps::icp::Rule<Kind>, C> view)
+void append_rule(std::ostream& os, urd::index_view<runir::kr::ps::icp::Rule<Kind>, C> view)
 {
     os << ygg::print_indent << "(:" << Kind::keyword << "\n";
     {
@@ -117,7 +117,7 @@ void append_rule(std::ostream& os, urd::view<runir::kr::ps::icp::Rule<Kind>, C> 
 }
 
 template<typename C>
-void append_rule(std::ostream& os, urd::view<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>, C> view)
+void append_rule(std::ostream& os, urd::index_view<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>, C> view)
 {
     std::visit([&](auto rule) { append_rule(os, rule); }, view.get_variant());
 }
@@ -138,7 +138,7 @@ void append_declarations(std::ostream& os, Arguments arguments)
 }
 
 template<typename C>
-void append_module(std::ostream& os, urd::view<runir::kr::ps::icp::Module, C> view)
+void append_module(std::ostream& os, urd::index_view<runir::kr::ps::icp::Module, C> view)
 {
     os << ygg::print_indent << "(:module\n";
     {
@@ -221,7 +221,7 @@ void append_module(std::ostream& os, urd::view<runir::kr::ps::icp::Module, C> vi
 }
 
 template<typename C>
-std::string module(urd::view<runir::kr::ps::icp::Module, C> view)
+std::string module(urd::index_view<runir::kr::ps::icp::Module, C> view)
 {
     auto os = std::ostringstream {};
     append_module(os, view);
@@ -229,7 +229,7 @@ std::string module(urd::view<runir::kr::ps::icp::Module, C> view)
 }
 
 template<typename C>
-void append_program(std::ostream& os, urd::view<runir::kr::ps::icp::Program, C> view)
+void append_program(std::ostream& os, urd::index_view<runir::kr::ps::icp::Program, C> view)
 {
     os << ygg::print_indent << "(:program\n";
     {
@@ -242,7 +242,7 @@ void append_program(std::ostream& os, urd::view<runir::kr::ps::icp::Program, C> 
 }
 
 template<typename C>
-std::string program(urd::view<runir::kr::ps::icp::Program, C> view)
+std::string program(urd::index_view<runir::kr::ps::icp::Program, C> view)
 {
     auto os = std::ostringstream {};
     append_program(os, view);
@@ -252,45 +252,45 @@ std::string program(urd::view<runir::kr::ps::icp::Program, C> view)
 }  // namespace runir::kr::ps::icp
 
 template<typename C>
-struct fmt::formatter<urd::view<runir::kr::ps::icp::MemoryState, C>>
+struct fmt::formatter<urd::index_view<runir::kr::ps::icp::MemoryState, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(auto view, format_context& context) const { return fmt::format_to(context.out(), "{}", view.get_name()); }
 };
 
 template<typename C>
-struct fmt::formatter<urd::view<runir::kr::ps::icp::ModuleSymbol, C>>
+struct fmt::formatter<urd::index_view<runir::kr::ps::icp::ModuleSymbol, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(auto view, format_context& context) const { return fmt::format_to(context.out(), "{}", view.get_name()); }
 };
 
 template<runir::kr::ps::icp::RuleKind Kind, typename C>
-struct fmt::formatter<urd::view<runir::kr::ps::icp::Rule<Kind>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::ps::icp::Rule<Kind>, C>> : fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::icp::rule(view), context); }
 };
 
 template<typename C>
-struct fmt::formatter<urd::view<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>, C>> : fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::icp::rule(view), context); }
 };
 
 template<typename C>
-struct fmt::formatter<urd::view<runir::kr::ps::icp::Module, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::ps::icp::Module, C>> : fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::icp::module(view), context); }
 };
 
 template<typename C>
-struct fmt::formatter<urd::view<runir::kr::ps::icp::Program, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::ps::icp::Program, C>> : fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::icp::program(view), context); }
 };
 
 template<typename C>
-struct fmt::formatter<urd::view<runir::kr::ps::icp::XCondition, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::ps::icp::XCondition, C>> : fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const
     {
@@ -301,7 +301,7 @@ struct fmt::formatter<urd::view<runir::kr::ps::icp::XCondition, C>> : fmt::forma
 };
 
 template<typename C>
-struct fmt::formatter<urd::view<runir::kr::ps::icp::XEffect, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::ps::icp::XEffect, C>> : fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const
     {

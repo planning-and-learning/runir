@@ -16,7 +16,7 @@ namespace
 {
 
 template<typename Entity>
-using View = urd::view<Entity, kr::ps::ext::Repository>;
+using View = urd::index_view<Entity, kr::ps::ext::Repository>;
 
 template<typename Entity, typename Expression>
 concept ConcreteFeatureContract =

@@ -99,19 +99,15 @@ auto hash_to_tuple(std::size_t hash, std::size_t num_vertices) -> VertexTuple<K>
 }
 
 template<std::size_t K, IsGraph G>
-auto initial_tuple_colors(const G& graph, const VertexIndexList& vertices)
+auto initial_tuple_colors(const G& graph, const DenseVertexIndices& vertices)
 {
     using InitialSignature = std::tuple<ColorList, BoolList, BoolList>;
 
     const auto n = vertices.size();
-    auto vertex_to_dense = urd::Store<urd::map<VertexIndex, VertexIndex>>();
-    for (VertexIndex i = 0; i < n; ++i)
-        vertex_to_dense.emplace(vertices[i], i);
-
     auto adjacency = urd::Store<urd::sequence<BoolList>>(n, BoolList(n, false));
-    for (auto vertex : vertices)
-        for (auto edge : graph.get_out_edge_indices(vertex))
-            adjacency.at(vertex_to_dense.at(vertex)).at(vertex_to_dense.at(graph.get_target(edge))) = true;
+    for (std::size_t position = 0; position < n; ++position)
+        for (auto edge : graph.get_out_edge_indices(vertices[position]))
+            adjacency.at(position).at(vertices.position(vertices.find(graph.get_target(edge)))) = true;
 
     auto interner = color_refinement::SignatureInterner<InitialSignature>(urd::layer { 0 });
     auto colors = ColorList(num_tuples<K>(n));
@@ -147,7 +143,7 @@ auto initial_tuple_colors(const G& graph, const VertexIndexList& vertices)
 template<std::size_t K, IsGraph G>
 auto compute_certificate(const G& graph)
 {
-    const auto vertices = color_refinement::to_dense_vertex_order(graph);
+    const auto vertices = dense_vertex_indices(graph);
     const auto n = vertices.size();
     auto colors = initial_tuple_colors<K>(graph, vertices);
 

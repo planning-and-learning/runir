@@ -10,7 +10,7 @@ namespace ygg::serialization
 {
 
 template<typename Archive, typename C>
-void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::ps::base::Sketch, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::ps::base::Sketch, C>>)
 {
     ar.field("boolean_features", [](const auto& value) -> decltype(auto) { return (value.template get_features<runir::kr::dl::BooleanTag>()); });
     ar.field("numerical_features", [](const auto& value) -> decltype(auto) { return (value.template get_features<runir::kr::dl::NumericalTag>()); });

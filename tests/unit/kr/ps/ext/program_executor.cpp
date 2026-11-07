@@ -86,7 +86,7 @@ TEST(RunirTests, ExtFindSolutionTreatsClassifierMatchesAsTerminalFailures)
     EXPECT_EQ(result.graph->get_num_edges(), 0);
     ASSERT_EQ(result.deadend_states.size(), 1);
     EXPECT_TRUE(result.open_states.empty());
-    const auto& label = result.graph->get_vertex(result.deadend_states.front()).get_property();
+    const auto& label = result.graph->get_vertex_property(result.deadend_states.front());
     EXPECT_FALSE(label.is_goal);
     EXPECT_FALSE(label.is_alive);
     EXPECT_TRUE(label.is_unsolvable);
@@ -369,7 +369,7 @@ void check_backtrack_execution()
             EXPECT_EQ(rejected.graph->get_num_edges(), 0);
             ASSERT_EQ(rejected.deadend_states.size(), 1);
             EXPECT_TRUE(rejected.open_states.empty());
-            EXPECT_FALSE(rejected.graph->get_vertex(rejected.deadend_states.front()).get_property().is_unsolvable);
+            EXPECT_FALSE(rejected.graph->get_vertex_property(rejected.deadend_states.front()).is_unsolvable);
 
             const auto selected = kr::ps::ext::find_solution(context, choices, options);
             ASSERT_EQ(selected.status, Status::SUCCESS);
@@ -381,7 +381,7 @@ void check_backtrack_execution()
             if (mode == Mode::ALL)
             {
                 ASSERT_EQ(selected.deadend_states.size(), 1);
-                EXPECT_FALSE(selected.graph->get_vertex(selected.deadend_states.front()).get_property().is_unsolvable);
+                EXPECT_FALSE(selected.graph->get_vertex_property(selected.deadend_states.front()).is_unsolvable);
             }
             if (!universal)
             {
@@ -397,7 +397,7 @@ void check_backtrack_execution()
             ASSERT_TRUE(blocked.graph);
             ASSERT_EQ(blocked.deadend_states.size(), 1);
             EXPECT_TRUE(blocked.open_states.empty());
-            const auto& deadend = blocked.graph->get_vertex(blocked.deadend_states.front()).get_property();
+            const auto& deadend = blocked.graph->get_vertex_property(blocked.deadend_states.front());
             EXPECT_FALSE(deadend.is_unsolvable);
             EXPECT_EQ(deadend.program_state.get_module_state().get_module().get_name(), "callee");
             EXPECT_EQ(deadend.program_state.get_module_state().get_memory_state().get_name(), "m2");
@@ -564,7 +564,7 @@ void check_choice_execution()
         auto expandable = static_cast<std::size_t>(0);
         for (const auto vertex : result.graph->get_vertex_indices())
         {
-            const auto& label = result.graph->get_vertex(vertex).get_property();
+            const auto& label = result.graph->get_vertex_property(vertex);
             expandable += !label.is_goal && !label.is_unsolvable;
         }
         EXPECT_EQ(result.statistics.num_expanded, expandable);
@@ -829,12 +829,12 @@ void check_choice_execution()
         EXPECT_EQ(replay_first.deadend_states, replay_second.deadend_states);
         EXPECT_EQ(replay_first.cycle, replay_second.cycle);
         for (const auto vertex : replay_first.graph->get_vertex_indices())
-            EXPECT_TRUE(replay_first.graph->get_vertex(vertex).get_property() == replay_second.graph->get_vertex(vertex).get_property());
+            EXPECT_TRUE(replay_first.graph->get_vertex_property(vertex) == replay_second.graph->get_vertex_property(vertex));
         for (const auto edge : replay_first.graph->get_edge_indices())
         {
             EXPECT_EQ(replay_first.graph->get_source(edge), replay_second.graph->get_source(edge));
             EXPECT_EQ(replay_first.graph->get_target(edge), replay_second.graph->get_target(edge));
-            EXPECT_TRUE(replay_first.graph->get_edge(edge).get_property() == replay_second.graph->get_edge(edge).get_property());
+            EXPECT_TRUE(replay_first.graph->get_edge_property(edge) == replay_second.graph->get_edge_property(edge));
         }
     }
 
@@ -878,7 +878,7 @@ void check_choice_execution()
     for (const auto edge : shared_choice_result.graph->get_out_edge_indices(0))
     {
         shared_targets.insert(shared_choice_result.graph->get_target(edge));
-        const auto& rule = shared_choice_result.graph->get_edge(edge).get_property().rule;
+        const auto& rule = shared_choice_result.graph->get_edge_property(edge).rule;
         ASSERT_TRUE(rule);
         shared_rules.insert(std::string(rule->get_symbol()));
     }
@@ -930,7 +930,7 @@ void check_choice_execution()
     auto failed_bindings = 0;
     for (const auto vertex : required_choice_result.graph->get_vertex_indices())
     {
-        const auto& label = required_choice_result.graph->get_vertex(vertex).get_property();
+        const auto& label = required_choice_result.graph->get_vertex_property(vertex);
         goals += label.is_goal;
         failed_bindings += label.program_state.get_module_state().get_memory_state().get_name() == "m6";
     }
@@ -1042,11 +1042,11 @@ void check_ordinary_execution_keeps_complete_graph()
             EXPECT_FALSE(complete.plan);
             auto goals = 0;
             for (const auto vertex : complete.graph->get_vertex_indices())
-                goals += complete.graph->get_vertex(vertex).get_property().is_goal;
+                goals += complete.graph->get_vertex_property(vertex).is_goal;
             EXPECT_EQ(goals, 1);  // A failing load outcome must not prevent exploration of the other outcome.
             const auto& failures = classify ? complete.deadend_states : complete.open_states;
             ASSERT_EQ(failures.size(), 1);
-            const auto& failure = complete.graph->get_vertex(failures.front()).get_property();
+            const auto& failure = complete.graph->get_vertex_property(failures.front());
             EXPECT_FALSE(failure.is_goal);
             EXPECT_EQ(failure.is_alive, !classify);
             EXPECT_EQ(failure.is_unsolvable, classify);
@@ -1063,12 +1063,12 @@ void check_ordinary_execution_keeps_complete_graph()
             EXPECT_EQ(first.deadend_states, second.deadend_states);
             EXPECT_EQ(first.cycle, second.cycle);
             for (const auto vertex : first.graph->get_vertex_indices())
-                EXPECT_TRUE(first.graph->get_vertex(vertex).get_property() == second.graph->get_vertex(vertex).get_property());
+                EXPECT_TRUE(first.graph->get_vertex_property(vertex) == second.graph->get_vertex_property(vertex));
             for (const auto edge : first.graph->get_edge_indices())
             {
                 EXPECT_EQ(first.graph->get_source(edge), second.graph->get_source(edge));
                 EXPECT_EQ(first.graph->get_target(edge), second.graph->get_target(edge));
-                EXPECT_TRUE(first.graph->get_edge(edge).get_property() == second.graph->get_edge(edge).get_property());
+                EXPECT_TRUE(first.graph->get_edge_property(edge) == second.graph->get_edge_property(edge));
             }
         }
     }
@@ -1266,7 +1266,7 @@ void check_state_memorization()
             auto child_states = 0;
             for (const auto vertex : called.graph->get_vertex_indices())
             {
-                const auto frame = called.graph->get_vertex(vertex).get_property().program_state.get_module_state();
+                const auto frame = called.graph->get_vertex_property(vertex).program_state.get_module_state();
                 if (frame.get_module().get_name() == "child")
                 {
                     ++child_states;
@@ -1294,7 +1294,7 @@ void check_state_memorization()
             auto grandchild_states = 0;
             for (const auto vertex : nested_called.graph->get_vertex_indices())
             {
-                const auto state = nested_called.graph->get_vertex(vertex).get_property().program_state;
+                const auto state = nested_called.graph->get_vertex_property(vertex).program_state;
                 if (state.get_module_state().get_module().get_name() != "grandchild")
                     continue;
                 ++grandchild_states;
@@ -1323,7 +1323,7 @@ void check_state_memorization()
             auto restored_callers = 0;
             for (const auto vertex : recalled.graph->get_vertex_indices())
             {
-                const auto frame = recalled.graph->get_vertex(vertex).get_property().program_state.get_module_state();
+                const auto frame = recalled.graph->get_vertex_property(vertex).program_state.get_module_state();
                 const auto memory = frame.get_memory_state().get_name();
                 if (frame.get_module().get_name() == "child" && (memory == "first" || memory == "second"))
                 {

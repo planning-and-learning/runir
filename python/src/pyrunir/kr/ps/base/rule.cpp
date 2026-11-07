@@ -18,7 +18,7 @@
 #include <tyr/planning/state_repository.hpp>
 #include <vector>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 namespace runir::kr::ps::base
 {
@@ -28,7 +28,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     using namespace nb::literals;
     using T = runir::kr::ps::Rule<runir::kr::BaseFamilyTag>;
     using Data = urd::data<T>;
-    using View = urd::view<T, Repository>;
+    using View = urd::index_view<T, Repository>;
     using GroundContext = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>;
     using LiftedContext = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
 

@@ -71,9 +71,9 @@ inline constexpr bool is_query_leaf_tag_v = is_atomic_state_tag_v<Tag> || is_ato
 template<typename V>
 inline constexpr bool is_complement_view_v = false;
 template<typename C>
-inline constexpr bool is_complement_view_v<urd::view<Role<ComplementTag>, C>> = true;
+inline constexpr bool is_complement_view_v<urd::index_view<Role<ComplementTag>, C>> = true;
 template<typename C>
-inline constexpr bool is_complement_view_v<urd::view<Concept<NegationTag>, C>> = true;
+inline constexpr bool is_complement_view_v<urd::index_view<Concept<NegationTag>, C>> = true;
 
 /// Calls f(argument) if the query is a role or concept leaf over a complement (r_complement, c_not); returns whether.
 template<typename F>

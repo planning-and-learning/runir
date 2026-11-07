@@ -49,10 +49,8 @@ namespace
 class GeneratedSentences
 {
 private:
-    using Key = std::pair<std::uint64_t, size_t>;
-
     template<runir::kr::dl::CategoryTag Category>
-    using Sentences = urd::Store<urd::map<Key, urd::index<runir::kr::dl::Constructor<Category>>>, urd::multi>;
+    using Sentences = urd::Store<urd::map<std::pair<urd::index<NonTerminal<Category>>, size_t>, urd::index<runir::kr::dl::Constructor<Category>>>, urd::multi>;
 
     std::tuple<Sentences<runir::kr::dl::ConceptTag>,
                Sentences<runir::kr::dl::RoleTag>,
@@ -60,18 +58,14 @@ private:
                Sentences<runir::kr::dl::NumericalTag>>
         m_sentences;
 
-    template<runir::kr::dl::CategoryTag Category>
-    static Key key(NonTerminalView<Category> nonterminal, size_t complexity)
-    { return { static_cast<std::uint64_t>(ygg::uint_t(nonterminal.index().value)), complexity }; }
-
 public:
     template<runir::kr::dl::CategoryTag Category>
     void add(NonTerminalView<Category> nonterminal, size_t complexity, urd::index<runir::kr::dl::Constructor<Category>> constructor)
-    { std::get<Sentences<Category>>(m_sentences).insert({ key(nonterminal, complexity), constructor }); }
+    { std::get<Sentences<Category>>(m_sentences).insert({ { nonterminal.index(), complexity }, constructor }); }
 
     template<runir::kr::dl::CategoryTag Category>
     [[nodiscard]] auto get(NonTerminalView<Category> nonterminal, size_t complexity) const
-    { return std::get<Sentences<Category>>(m_sentences).values(key(nonterminal, complexity)); }
+    { return std::get<Sentences<Category>>(m_sentences).values({ nonterminal.index(), complexity }); }
 };
 
 class Timeout
@@ -386,7 +380,7 @@ private:
         const auto source = m_sentences.get(rule.get_rhs(), m_complexity);
         for (auto constructor : source)
         {
-            auto view = runir::kr::dl::ConstructorView<Category>(constructor, *m_output_repository);
+            auto view = m_output_repository->view(constructor);
             if (!m_pruning.should_prune(rule.get_lhs(), view))
             {
                 keep(rule.get_lhs(), constructor);
@@ -801,7 +795,7 @@ private:
             auto& target = m_result.template get_constructors<Category>();
             for (size_t complexity = 0; complexity <= m_options->max_syntactic_complexity; ++complexity)
                 for (auto constructor : m_sentences.get(*start, complexity))
-                    target.emplace_back(constructor, *m_output_repository);
+                    target.push_back(m_output_repository->view(constructor));
         }
     }
 

@@ -1,7 +1,7 @@
 #ifndef RUNIR_GRAPHS_CYCLE_HPP_
 #define RUNIR_GRAPHS_CYCLE_HPP_
 
-#include "runir/graphs/algorithms.hpp"
+#include "runir/graphs/bgl/algorithms.hpp"
 
 #include <algorithm>
 
@@ -48,7 +48,7 @@ auto find_cycle(const Graph& graph) -> VertexIndexList
     for (auto vertex : graph.get_vertex_indices())
         sources.push_back(vertex);
 
-    algorithms::depth_first_visit(graph, sources, visitor);
+    bgl::depth_first_visit(graph, sources, visitor);
     return visitor.get_cycle();
 }
 

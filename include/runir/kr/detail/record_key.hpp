@@ -24,7 +24,7 @@ consteval size_t type_position(boost::mp11::mp_list<Ts...>) noexcept
 using RecordKey = std::pair<size_t, ygg::uint_t>;
 
 template<typename Types, typename T, typename C>
-RecordKey record_key(const urd::view<T, C>& view) noexcept
+RecordKey record_key(const urd::index_view<T, C>& view) noexcept
 { return { type_position<T>(Types {}), view.index().value }; }
 
 }  // namespace runir::kr::detail

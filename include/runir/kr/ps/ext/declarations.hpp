@@ -119,17 +119,17 @@ using Repository = runir::kr::ps::BasicRepository<runir::kr::ExtFamilyTag, Repos
 using RepositoryPtr = std::shared_ptr<Repository>;
 using RepositoryFactory = runir::kr::ps::BasicRepositoryFactory<runir::kr::ExtFamilyTag, RepositoryTypes>;
 
-using ConceptRegisterView = urd::view<runir::kr::dl::Register<runir::kr::dl::ConceptTag>, runir::kr::dl::ConstructorRepository>;
-using RoleRegisterView = urd::view<runir::kr::dl::Register<runir::kr::dl::RoleTag>, runir::kr::dl::ConstructorRepository>;
-using OrderTermView = urd::view<OrderTerm, Repository>;
-using MemoryStateView = urd::view<MemoryState, Repository>;
-using ModuleSymbolView = urd::view<ModuleSymbol, Repository>;
-using ModuleView = urd::view<Module, Repository>;
-using ProgramView = urd::view<Program, Repository>;
-using RuleVariantView = urd::view<ps::Rule<ExtFamilyTag>, Repository>;
+using ConceptRegisterView = urd::index_view<runir::kr::dl::Register<runir::kr::dl::ConceptTag>, runir::kr::dl::ConstructorRepository>;
+using RoleRegisterView = urd::index_view<runir::kr::dl::Register<runir::kr::dl::RoleTag>, runir::kr::dl::ConstructorRepository>;
+using OrderTermView = urd::index_view<OrderTerm, Repository>;
+using MemoryStateView = urd::index_view<MemoryState, Repository>;
+using ModuleSymbolView = urd::index_view<ModuleSymbol, Repository>;
+using ModuleView = urd::index_view<Module, Repository>;
+using ProgramView = urd::index_view<Program, Repository>;
+using RuleVariantView = urd::index_view<ps::Rule<ExtFamilyTag>, Repository>;
 
 template<RuleKind Kind>
-using RuleView = urd::view<Rule<Kind>, Repository>;
+using RuleView = urd::index_view<Rule<Kind>, Repository>;
 
 template<typename R>
 concept LoadRuleView = std::same_as<R, RuleView<LoadTag<runir::kr::dl::ConceptTag>>> || std::same_as<R, RuleView<LoadTag<runir::kr::dl::RoleTag>>>;
@@ -145,9 +145,9 @@ concept BindingRuleView = LoadRuleView<R> || ChooseRuleView<R>;
 namespace runir::kr::ps::ext::dl
 {
 
-using BooleanFeatureView = urd::view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>, Repository>;
-using NumericalFeatureView = urd::view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>, Repository>;
-using QueryFeatureView = urd::view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>, Repository>;
+using BooleanFeatureView = urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>, Repository>;
+using NumericalFeatureView = urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>, Repository>;
+using QueryFeatureView = urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>, Repository>;
 
 }  // namespace runir::kr::ps::ext::dl
 

@@ -187,7 +187,7 @@ public:
     ~ColorRepository() = default;
 
     [[nodiscard]] const auto& get_index() const noexcept { return m_index; }
-    /// The repository's number, as urd::view asks of a context.
+    /// The repository's number, as urd's views ask of a context.
     [[nodiscard]] std::size_t layer() const noexcept { return m_index; }
     [[nodiscard]] const auto& get_planning_repository() const noexcept
     {
@@ -199,27 +199,27 @@ public:
     void clear() noexcept { m_symbol_repository.clear(); }
 
     template<typename T>
-    std::optional<urd::view<T, ColorRepository>> find(const urd::data<T>& data) const noexcept
+    std::optional<urd::index_view<T, ColorRepository>> find(const urd::data<T>& data) const noexcept
     {
         assert(is_canonical(data));
         if (const auto index = m_symbol_repository.find_local<T>(data))
-            return urd::view<T, ColorRepository>(*index, *this);
+            return urd::index_view<T, ColorRepository>(*index, this);
         return std::nullopt;
     }
 
     template<typename T>
-    std::pair<urd::view<T, ColorRepository>, bool> insert(urd::data<T>& data)
+    std::pair<urd::index_view<T, ColorRepository>, bool> insert(urd::data<T>& data)
     {
         canonicalize(data);
         assert(is_canonical(data));
         const auto [index, created] = m_symbol_repository.insert_local<T>(data);
-        return { urd::view<T, ColorRepository>(index, *this), created };
+        return { urd::index_view<T, ColorRepository>(index, this), created };
     }
 
     /// An index as its view here (urd's resolves contract): what compositions of indices are read through (urd::resolve).
     template<typename T>
-    [[nodiscard]] urd::view<T, ColorRepository> view(urd::index<T> index) const noexcept
-    { return { index, *this }; }
+    [[nodiscard]] urd::index_view<T, ColorRepository> view(urd::index<T> index) const noexcept
+    { return { index, this }; }
 
     template<typename T>
     const urd::data<T>& operator[](urd::index<T> index) const noexcept
@@ -243,7 +243,7 @@ public:
     { return std::shared_ptr<ColorRepository>(new ColorRepository(m_next_index++, std::move(planning_repository))); }
 };
 
-using ColorView = urd::view<Color, ColorRepository>;
+using ColorView = urd::index_view<Color, ColorRepository>;
 
 inline const ColorRepository& get_repository(const ColorRepository& repository URD_LIFETIMEBOUND) noexcept { return repository; }
 inline ColorRepository& get_repository(ColorRepository& repository URD_LIFETIMEBOUND) noexcept { return repository; }

@@ -9,7 +9,7 @@ namespace runir::serialization
 {
 
 template<typename Context, typename T>
-using IndexView = urd::view<T, Context>;
+using IndexView = urd::index_view<T, Context>;
 
 template<typename T>
 using HashableTypeList = std::conditional_t<urd::Hashable<T>, boost::mp11::mp_list<T>, boost::mp11::mp_list<>>;

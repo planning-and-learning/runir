@@ -1,5 +1,5 @@
 #include "bindings.hpp"
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 #include <nanobind/stl/string.h>
 #include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
@@ -14,7 +14,7 @@ namespace runir::kr::dl
 void bind_cnf_grammar_grammar(nb::module_& m)
 {
     using Type = runir::kr::dl::cnf_grammar::Grammar;
-    using View = urd::view<Type, runir::kr::dl::cnf_grammar::ConstructorRepository>;
+    using View = urd::index_view<Type, runir::kr::dl::cnf_grammar::ConstructorRepository>;
 
     urd::python::bind_index<urd::index<Type>>(m, "GrammarIndex");
     auto cls = nb::class_<View>(m, "Grammar").def("get_index", &View::index);

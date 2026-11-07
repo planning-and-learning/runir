@@ -22,7 +22,7 @@ template<tyr::TaskKind Kind,
          runir::kr::ps::dl::ConditionObservationTag<FeatureTag> ObservationTag,
          typename C,
          runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context>
-bool is_compatible_with(urd::view<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, C> condition,
+bool is_compatible_with(urd::index_view<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, C> condition,
                         Context& context)
 {
     const auto value = runir::kr::ps::evaluate<Kind>(condition.get_feature(), context).value();
@@ -42,7 +42,7 @@ template<tyr::TaskKind Kind,
          runir::kr::ps::dl::ConditionObservationTag<FeatureTag> ObservationTag,
          typename C,
          runir::kr::ps::dl::TransitionEvaluationContextConcept<Family, Kind> Context>
-bool is_compatible_with(urd::view<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, C> condition,
+bool is_compatible_with(urd::index_view<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, C> condition,
                         Context& context)
 { return is_compatible_with<Kind>(condition, context.get_source_context()); }
 
@@ -52,7 +52,7 @@ template<tyr::TaskKind Kind,
          runir::kr::ps::dl::EffectObservationTag<FeatureTag> ObservationTag,
          typename C,
          runir::kr::ps::dl::TransitionEvaluationContextConcept<Family, Kind> Context>
-bool is_compatible_with(urd::view<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, C> effect, Context& context)
+bool is_compatible_with(urd::index_view<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, C> effect, Context& context)
 {
     const auto target = runir::kr::ps::evaluate<Kind>(effect.get_feature(), context.get_target_context()).value();
 

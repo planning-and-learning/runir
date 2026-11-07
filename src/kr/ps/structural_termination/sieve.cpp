@@ -1,7 +1,7 @@
 #include "detail.hpp"
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
-#include "runir/graphs/algorithms.hpp"
+#include "runir/graphs/bgl/algorithms.hpp"
 #include "runir/graphs/static_graph.hpp"
 #include "runir/graphs/static_graph_builder.hpp"
 
@@ -95,7 +95,7 @@ StrongComponents find_strong_components(const urd::Store<urd::sequence<PolicyEdg
             builder.add_directed_edge(static_cast<graphs::VertexIndex>(edge.source), static_cast<graphs::VertexIndex>(edge.target));
 
     const auto graph = graphs::StaticGraph<> { builder };
-    auto [num_components, component_of] = graphs::algorithms::strong_components(graph);
+    auto [num_components, component_of] = graphs::bgl::strong_components(graph);
     return { num_components, std::move(component_of) };
 }
 

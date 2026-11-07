@@ -171,7 +171,7 @@ inline urd::Store<urd::sequence<QueryView<>>> lower(const ygg::database::QueryPl
 }  // namespace detail
 
 template<typename T>
-using RecordView = urd::view<T, ConstructorRepository>;
+using RecordView = urd::index_view<T, ConstructorRepository>;
 
 /// Optimizes the queries of DL expressions with yggdrasil's optimizer. It rebuilds records bottom-up, replacing every
 /// maximal query (one reached from a non-query record) by its optimized form; records whose children are unchanged keep
@@ -425,8 +425,8 @@ private:
 /// rewritten expression in the same repository. Without statistics, join blocks are planned structurally (Yannakakis or
 /// generic join); with statistics for all leaves of a block, they are planned by cost.
 template<typename T>
-urd::view<T, ConstructorRepository>
-optimize(urd::view<T, ConstructorRepository> expression, ConstructorRepository& repository, const QueryStatistics& statistics = {})
+urd::index_view<T, ConstructorRepository>
+optimize(urd::index_view<T, ConstructorRepository> expression, ConstructorRepository& repository, const QueryStatistics& statistics = {})
 {
     if (&expression.context() != &repository)
         throw std::invalid_argument("optimize: the expression belongs to another repository.");
@@ -437,7 +437,7 @@ optimize(urd::view<T, ConstructorRepository> expression, ConstructorRepository& 
 /// contexts holds one state evaluation context per sample state. The plan is fixed across states, so the statistics
 /// describe a typical state.
 template<tyr::TaskKind Kind, typename T, semantics::StateEvaluationContextConcept<Kind> Context>
-QueryStatistics collect_query_statistics(urd::view<T, ConstructorRepository> expression,
+QueryStatistics collect_query_statistics(urd::index_view<T, ConstructorRepository> expression,
                                          const urd::Store<urd::sequence<Context*>>& contexts,
                                          ygg::diagnostics::Warnings& warnings)
 {

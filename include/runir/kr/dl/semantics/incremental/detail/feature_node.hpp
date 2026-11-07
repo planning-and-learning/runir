@@ -125,7 +125,7 @@ private:
     Evaluators m_evaluator;
 
     template<ConceptOrRoleTag Projected, typename C>
-    Evaluators prepare(urd::view<QueryProjection<Projected>, C> expression, GraphBuilder<Kind>& graph)
+    Evaluators prepare(urd::index_view<QueryProjection<Projected>, C> expression, GraphBuilder<Kind>& graph)
     { return ProjectionEvaluator<Kind, Category>(graph.prepare(expression.get_arg(), m_dependencies), expression.data().plan); }
 
     Evaluators prepare_distance(NumericalView<DistanceTag> expression, ConstructorView<RoleTag>, GraphBuilder<Kind>& graph)
@@ -135,7 +135,7 @@ private:
     { return QueryEdgeDistanceEvaluator<Kind>(expression, edges, graph, m_dependencies); }
 
     template<template<typename> typename Expression, typename Tag, typename C>
-    Evaluators prepare(urd::view<Expression<Tag>, C> expression, GraphBuilder<Kind>& graph)
+    Evaluators prepare(urd::index_view<Expression<Tag>, C> expression, GraphBuilder<Kind>& graph)
     {
         if constexpr (std::same_as<Tag, AtomicStateTag<tyr::formalism::FluentTag>>)
             return AtomicEvaluator<Kind, Category, tyr::formalism::FluentTag>(expression.get_predicate(), expression.get_polarity());

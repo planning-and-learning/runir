@@ -8,7 +8,7 @@ namespace runir::kr::ps
 {
 
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, typename C>
-std::size_t syntactic_complexity(urd::view<Feature<Family, FeatureTag>, C> view)
+std::size_t syntactic_complexity(urd::index_view<Feature<Family, FeatureTag>, C> view)
 {
     return std::visit([](auto feature) { return runir::kr::ps::dl::syntactic_complexity(feature); }, view.get_variant());
 }

@@ -49,7 +49,7 @@ namespace runir::kr::dl::semantics
 {
 
 template<typename C>
-void assign_register(urd::data<RegisterValues>& data, RegisterIdentifier<ConceptTag> identifier, urd::view<tyr::formalism::Object, C> value)
+void assign_register(urd::data<RegisterValues>& data, RegisterIdentifier<ConceptTag> identifier, urd::index_view<tyr::formalism::Object, C> value)
 {
     data.concept_values.at(static_cast<size_t>(static_cast<ygg::uint_t>(identifier.value))) = value.index();
     data.index = {};
@@ -58,7 +58,7 @@ void assign_register(urd::data<RegisterValues>& data, RegisterIdentifier<Concept
 template<typename C>
 void assign_register(urd::data<RegisterValues>& data,
                      RegisterIdentifier<RoleTag> identifier,
-                     const std::pair<urd::view<tyr::formalism::Object, C>, urd::view<tyr::formalism::Object, C>>& value)
+                     const std::pair<urd::index_view<tyr::formalism::Object, C>, urd::index_view<tyr::formalism::Object, C>>& value)
 {
     data.role_values.at(static_cast<size_t>(static_cast<ygg::uint_t>(identifier.value))) = ::cista::pair(value.first.index(), value.second.index());
     data.index = {};

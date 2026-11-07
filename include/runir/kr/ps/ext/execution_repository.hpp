@@ -60,7 +60,7 @@ public:
     ~ExecutionRepository() = default;
 
     [[nodiscard]] const auto& get_index() const noexcept { return m_index; }
-    /// The repository's number, as urd::view asks of a context.
+    /// The repository's number, as urd's views ask of a context.
     [[nodiscard]] std::size_t layer() const noexcept { return m_index; }
     [[nodiscard]] auto& get_state_repository() const noexcept { return *m_state_repository; }
     [[nodiscard]] const auto& get_denotation_repository() const noexcept { return *m_denotation_repository; }
@@ -69,7 +69,7 @@ public:
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<ExecutionRepository, T>
-    [[nodiscard]] std::optional<urd::view<T, ExecutionRepository>> find(const urd::data<T>& data) const noexcept
+    [[nodiscard]] std::optional<urd::index_view<T, ExecutionRepository>> find(const urd::data<T>& data) const noexcept
     {
         assert(is_canonical(data));
         return Base::find(data);
@@ -77,7 +77,7 @@ public:
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<ExecutionRepository, T>
-    std::pair<urd::view<T, ExecutionRepository>, bool> insert(urd::data<T>& data)
+    std::pair<urd::index_view<T, ExecutionRepository>, bool> insert(urd::data<T>& data)
     {
         assert(is_canonical(data));
         return Base::insert(data);
@@ -94,8 +94,8 @@ public:
     /// An index as its view here (urd's resolves contract).
     template<typename T>
         requires ygg::formalism::SupportsSymbol<ExecutionRepository, T>
-    [[nodiscard]] urd::view<T, ExecutionRepository> view(urd::index<T> index) const noexcept
-    { return { index, *this }; }
+    [[nodiscard]] urd::index_view<T, ExecutionRepository> view(urd::index<T> index) const noexcept
+    { return { index, this }; }
 };
 
 template<tyr::TaskKind Kind>

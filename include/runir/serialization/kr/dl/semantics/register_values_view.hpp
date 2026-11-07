@@ -9,7 +9,7 @@ namespace ygg::serialization
 {
 
 template<typename Archive, typename C>
-void describe_fields(Archive& ar, std::type_identity<urd::view<::runir::kr::dl::semantics::RegisterValues, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<::runir::kr::dl::semantics::RegisterValues, C>>)
 {
     ar.field("concept_values", [](const auto& value) -> decltype(auto) { return (value.template values<runir::kr::dl::ConceptTag>()); });
     ar.field("role_values", [](const auto& value) -> decltype(auto) { return (value.template values<runir::kr::dl::RoleTag>()); });

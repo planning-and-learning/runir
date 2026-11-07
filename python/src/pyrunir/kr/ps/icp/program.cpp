@@ -11,7 +11,7 @@
 #include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/ps/icp/syntactic_complexity.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 namespace runir::kr::ps::icp
 {
@@ -20,12 +20,12 @@ void bind_program(nb::module_& m, RepositoryBinding& repository)
 {
     using T = Program;
     using Data = urd::data<T>;
-    using View = urd::view<T, Repository>;
+    using View = urd::index_view<T, Repository>;
     urd::python::bind_index<urd::index<T>>(m, "ProgramIndex");
     auto data = nb::class_<Data>(m, "ProgramData")
                     .def(nb::init<>())
                     .def(nb::init<urd::index<Module>>(), nb::arg("module"))
-                    .def(urd::python::init_from_views<urd::view<Module, Repository>>(), nb::arg("module"))
+                    .def(urd::python::init_from_views<urd::index_view<Module, Repository>>(), nb::arg("module"))
                     .def_rw("index", &Data::index)
                     .def_rw("module", &Data::module);
     urd::python::add_comparison(data);

@@ -244,8 +244,8 @@ StructuralTerminationResult structural_termination(const QualitativePolicy& poli
 template<runir::kr::FamilyTag Family, typename C>
 struct SccStructuralTerminationResult
 {
-    urd::Store<urd::sequence<urd::view<runir::kr::ps::Feature<Family, runir::kr::dl::BooleanTag>, C>>> booleans;
-    urd::Store<urd::sequence<urd::view<runir::kr::ps::Feature<Family, runir::kr::dl::NumericalTag>, C>>> numericals;
+    urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<Family, runir::kr::dl::BooleanTag>, C>>> booleans;
+    urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<Family, runir::kr::dl::NumericalTag>, C>>> numericals;
 };
 
 }  // namespace runir::kr::ps::dl

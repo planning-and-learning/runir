@@ -14,8 +14,8 @@ namespace
 template<typename T, typename Repository>
 concept IndexedDataView =
     std::constructible_from<urd::index<T>, ygg::uint_t> && urd::Identifiable<urd::index<T>> && urd::Identifiable<urd::data<T>>
-    && urd::Identifiable<urd::view<T, Repository>> && std::totally_ordered<urd::index<T>> && std::totally_ordered<urd::data<T>>
-    && std::totally_ordered<urd::view<T, Repository>> && requires(urd::data<T>& data, const urd::view<T, Repository>& view) {
+    && urd::Identifiable<urd::index_view<T, Repository>> && std::totally_ordered<urd::index<T>> && std::totally_ordered<urd::data<T>>
+    && std::totally_ordered<urd::index_view<T, Repository>> && requires(urd::data<T>& data, const urd::index_view<T, Repository>& view) {
            data.index;
            data.variant;
            view.index();
@@ -30,7 +30,7 @@ template<typename Category>
 consteval bool view_alias()
 {
     using Entity = kr::dl::Constructor<Category>;
-    using View = urd::view<Entity, kr::dl::ConstructorRepository>;
+    using View = urd::index_view<Entity, kr::dl::ConstructorRepository>;
     static_assert(std::same_as<View, kr::dl::ConstructorView<Category>>);
     if constexpr (false)
         return std::same_as<View, kr::dl::ConstructorView<Category>>;
@@ -49,7 +49,7 @@ consteval bool query_projection_contract()
 {
     using Entity = kr::dl::QueryProjection<Category>;
     using Repository = kr::dl::ConstructorRepository;
-    using View = urd::view<Entity, Repository>;
+    using View = urd::index_view<Entity, Repository>;
     return urd::resolves<Repository, Entity>&&
         requires(urd::data<Entity> & data, const View& view)
     {
@@ -86,8 +86,8 @@ TEST(RunirKrDlConstructor, PreservesConcreteVariant)
     auto data = urd::data<Constructor>(urd::index<Concrete>(6));
     const auto constructor = repository->insert(data).first;
 
-    ASSERT_TRUE((std::holds_alternative<urd::view<Concrete, runir::kr::dl::ConstructorRepository>>(constructor.get_variant())));
-    EXPECT_EQ((std::get<urd::view<Concrete, runir::kr::dl::ConstructorRepository>>(constructor.get_variant()).index()), urd::index<Concrete>(6));
+    ASSERT_TRUE((std::holds_alternative<urd::index_view<Concrete, runir::kr::dl::ConstructorRepository>>(constructor.get_variant())));
+    EXPECT_EQ((std::get<urd::index_view<Concrete, runir::kr::dl::ConstructorRepository>>(constructor.get_variant()).index()), urd::index<Concrete>(6));
 }
 
 TEST(RunirKrDlConstructor, SharedInterningCanonicalizesAndPrepares)

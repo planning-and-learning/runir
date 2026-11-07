@@ -1,6 +1,7 @@
 #ifndef RUNIR_GRAPHS_DECLARATIONS_HPP_
 #define RUNIR_GRAPHS_DECLARATIONS_HPP_
 
+#include <algorithm>
 #include <concepts>
 #include <cstddef>
 #include <ranges>
@@ -10,6 +11,7 @@
 #include <urd/elements/hash.hpp>
 #include <urd/repr/maps/unordered_flat_map.hpp>
 #include <urd/repr/values/std_set.hpp>
+#include <urd/repr/values/indexed.hpp>
 #include <urd/repr/values/unordered_flat_set.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
@@ -30,6 +32,21 @@ using EdgeIndexSet = urd::Store<urd::set<EdgeIndex>>;
 
 using Degree = ygg::uint_t;
 using DegreeList = urd::Store<urd::sequence<Degree>>;
+
+namespace detail
+{
+/// A graph's member function F applied to what a range of the graph gives (an edge index: its edge, its target): the
+/// small function object its ranges are read through (urd::transform), holding the graph.
+template<typename G, auto F>
+struct ReadThrough
+{
+    const G* graph = nullptr;
+
+    template<typename X>
+    [[nodiscard]] decltype(auto) operator()(X x) const
+    { return (graph->*F)(x); }
+};
+}  // namespace detail
 
 struct DenseIndexRangeTag;
 struct SparseIndexRangeTag;
@@ -76,10 +93,10 @@ struct GraphTraits<StaticGraph<VertexProperty, EdgeProperty>>
     using OutEdgeIndexRange = DenseIndexRangeTag;
 };
 
-template<typename G, Property P = std::tuple<>>
+template<Property P = std::tuple<>>
 class Vertex;
 
-template<typename G, Property P = std::tuple<>>
+template<Property P = std::tuple<>>
 class Edge;
 
 template<Property P>
@@ -96,9 +113,9 @@ template<Property P>
 using EdgePropertyIndex = urd::index<urd::data<EdgeProperty<P>>>;
 
 template<typename G, typename VP, typename EP>
-concept IsGraphWithProperties = requires(const G& graph, VertexPropertyIndex<VP> vertex_property, EdgePropertyIndex<EP> edge_property) {
-    { graph.get_vertex_property(vertex_property) } -> std::same_as<const VP&>;
-    { graph.get_edge_property(edge_property) } -> std::same_as<const EP&>;
+concept IsGraphWithProperties = requires(const G& graph, VertexIndex vertex, EdgeIndex edge) {
+    { graph.get_vertex_property(vertex) } -> std::same_as<const VP&>;
+    { graph.get_edge_property(edge) } -> std::same_as<const EP&>;
 };
 
 template<typename G>
@@ -147,21 +164,24 @@ struct GraphTraits<BackwardStaticGraphView<G>>
     using OutEdgeIndexRange = DenseIndexRangeTag;
 };
 
-template<typename T>
-concept IsVertex = requires(T vertex) {
-    { vertex.get_index() } -> std::convertible_to<VertexIndex>;
-    { vertex.get_property_index() } -> std::same_as<typename T::PropertyIndexType>;
-    { vertex.get_property() } -> std::same_as<const typename T::PropertyType&>;
-};
+/// A graph's vertices in increasing order, each numbered by its position: vertices.position(vertices.find(vertex)) is
+/// its dense index, vertices[i] the vertex numbered i. Algorithms that number vertices 0..n-1 take them from here.
+using DenseVertexIndices = urd::Store<urd::set<VertexIndex>, urd::positional>;
 
-template<typename T>
-concept IsEdge = requires(T edge) {
-    { edge.get_index() } -> std::convertible_to<EdgeIndex>;
-    { edge.get_source() } -> std::convertible_to<VertexIndex>;
-    { edge.get_target() } -> std::convertible_to<VertexIndex>;
-    { edge.get_property_index() } -> std::same_as<typename T::PropertyIndexType>;
-    { edge.get_property() } -> std::same_as<const typename T::PropertyType&>;
-};
+template<IsGraph G>
+auto dense_vertex_indices(const G& graph) -> DenseVertexIndices
+{
+    auto sorted = VertexIndexList();
+    sorted.reserve(graph.get_num_vertices());
+    for (auto vertex : graph.get_vertex_indices())
+        sorted.push_back(vertex);
+    std::sort(sorted.begin(), sorted.end());
+
+    auto result = DenseVertexIndices(urd::layer { 0 });
+    for (auto vertex : sorted)
+        result.insert(vertex);
+    return result;
+}
 
 }  // namespace runir::graphs
 

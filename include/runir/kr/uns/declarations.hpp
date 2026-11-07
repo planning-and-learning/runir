@@ -36,18 +36,18 @@ using Repository = runir::kr::ps::BasicRepository<runir::kr::UnsFamilyTag, Repos
 using RepositoryPtr = std::shared_ptr<Repository>;
 using RepositoryFactory = runir::kr::ps::BasicRepositoryFactory<runir::kr::UnsFamilyTag, RepositoryTypes>;
 
-using ClassifierLiteralView = urd::view<runir::kr::uns::ClassifierLiteral, Repository>;
-using ClassifierClauseView = urd::view<runir::kr::uns::ClassifierClause, Repository>;
-using ClassifierView = urd::view<runir::kr::uns::Classifier, Repository>;
+using ClassifierLiteralView = urd::index_view<runir::kr::uns::ClassifierLiteral, Repository>;
+using ClassifierClauseView = urd::index_view<runir::kr::uns::ClassifierClause, Repository>;
+using ClassifierView = urd::index_view<runir::kr::uns::Classifier, Repository>;
 
 }  // namespace runir::kr::uns
 
 namespace runir::kr::uns::dl
 {
 
-using BooleanFeatureView = urd::view<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>, Repository>;
+using BooleanFeatureView = urd::index_view<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>, Repository>;
 using ConcreteBooleanFeatureView =
-    urd::view<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>, Repository>;
+    urd::index_view<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>, Repository>;
 
 }  // namespace runir::kr::uns::dl
 

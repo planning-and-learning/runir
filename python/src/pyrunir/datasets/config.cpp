@@ -1,5 +1,5 @@
 #include "module.hpp"
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 #include <runir/datasets/config.hpp>
 

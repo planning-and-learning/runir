@@ -20,7 +20,7 @@ namespace runir::kr::dl::semantics::detail
 /// Materialize rows into an empty, matching builder without publishing the root.
 template<tyr::TaskKind Kind, typename Tag, typename C, StateEvaluationContextConcept<Kind> Context>
     requires(!std::same_as<Tag, void>)
-void evaluate_query(urd::view<Query<Tag>, C> constructor, Context& context, urd::builder<ygg::database::Relation>& result)
+void evaluate_query(urd::index_view<Query<Tag>, C> constructor, Context& context, urd::builder<ygg::database::Relation>& result)
 {
     const auto& data = constructor.data();
     auto children = context.child_context();

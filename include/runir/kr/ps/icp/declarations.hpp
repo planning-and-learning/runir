@@ -91,16 +91,16 @@ using RepositoryTypes = boost::mp11::mp_append<ps::PsCoreTypes<runir::kr::IcpFam
 using Repository = ps::BasicRepository<IcpFamilyTag, RepositoryTypes>;
 using RepositoryPtr = std::shared_ptr<Repository>;
 using RepositoryFactory = ps::BasicRepositoryFactory<IcpFamilyTag, RepositoryTypes>;
-using MemoryStateView = urd::view<MemoryState, Repository>;
-using ModuleSymbolView = urd::view<ModuleSymbol, Repository>;
-using ModuleView = urd::view<Module, Repository>;
-using ProgramView = urd::view<Program, Repository>;
-using XConditionView = urd::view<XCondition, Repository>;
-using XEffectView = urd::view<XEffect, Repository>;
-using RuleVariantView = urd::view<ps::Rule<IcpFamilyTag>, Repository>;
+using MemoryStateView = urd::index_view<MemoryState, Repository>;
+using ModuleSymbolView = urd::index_view<ModuleSymbol, Repository>;
+using ModuleView = urd::index_view<Module, Repository>;
+using ProgramView = urd::index_view<Program, Repository>;
+using XConditionView = urd::index_view<XCondition, Repository>;
+using XEffectView = urd::index_view<XEffect, Repository>;
+using RuleVariantView = urd::index_view<ps::Rule<IcpFamilyTag>, Repository>;
 
 template<RuleKind Kind>
-using RuleView = urd::view<Rule<Kind>, Repository>;
+using RuleView = urd::index_view<Rule<Kind>, Repository>;
 
 namespace detail
 {
@@ -113,9 +113,9 @@ class RuleEvaluator;
 namespace runir::kr::ps::icp::dl
 {
 
-using BooleanFeatureView = urd::view<ps::Feature<IcpFamilyTag, runir::kr::dl::BooleanTag>, Repository>;
-using NumericalFeatureView = urd::view<ps::Feature<IcpFamilyTag, runir::kr::dl::NumericalTag>, Repository>;
-using QueryFeatureView = urd::view<ps::Feature<IcpFamilyTag, ps::dl::QueryFeature>, Repository>;
+using BooleanFeatureView = urd::index_view<ps::Feature<IcpFamilyTag, runir::kr::dl::BooleanTag>, Repository>;
+using NumericalFeatureView = urd::index_view<ps::Feature<IcpFamilyTag, runir::kr::dl::NumericalTag>, Repository>;
+using QueryFeatureView = urd::index_view<ps::Feature<IcpFamilyTag, ps::dl::QueryFeature>, Repository>;
 
 }
 

@@ -28,7 +28,7 @@
 #include <tyr/planning/declarations.hpp>
 #include <utility>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 namespace runir::kr::ps::icp
 {
@@ -43,7 +43,7 @@ template<tyr::TaskKind Kind, runir::kr::ps::dl::FeatureTag FeatureTag>
 void bind_feature_evaluation(nb::module_& m)
 {
     using namespace nb::literals;
-    using FeatureView = urd::view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, FeatureTag>, Repository>;
+    using FeatureView = urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, FeatureTag>, Repository>;
     using Context = runir::kr::dl::semantics::StateEvaluationContext<Kind>;
 
     m.def(

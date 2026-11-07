@@ -55,7 +55,7 @@ auto object_index(tyr::formalism::planning::AtomView<::tyr::GroundTag, T> atom, 
 { return atom.get_row().get_objects()[position].index(); }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-void evaluate_atomic_state_concept(urd::view<Concept<AtomicStateTag<T>>, C> constructor,
+void evaluate_atomic_state_concept(urd::index_view<Concept<AtomicStateTag<T>>, C> constructor,
                                    Context& context,
                                    urd::builder<Denotation<ConceptTag>>& result)
 {
@@ -75,7 +75,7 @@ void evaluate_atomic_state_concept(urd::view<Concept<AtomicStateTag<T>>, C> cons
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-void evaluate_atomic_goal_concept(urd::view<Concept<AtomicGoalTag<T>>, C> constructor,
+void evaluate_atomic_goal_concept(urd::index_view<Concept<AtomicGoalTag<T>>, C> constructor,
                                   Context& context,
                                   urd::builder<Denotation<ConceptTag>>& result)
 {
@@ -92,7 +92,7 @@ void evaluate_atomic_goal_concept(urd::view<Concept<AtomicGoalTag<T>>, C> constr
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-void evaluate_atomic_state_role(urd::view<Role<AtomicStateTag<T>>, C> constructor, Context& context, urd::builder<Denotation<RoleTag>>& result)
+void evaluate_atomic_state_role(urd::index_view<Role<AtomicStateTag<T>>, C> constructor, Context& context, urd::builder<Denotation<RoleTag>>& result)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
 
@@ -112,7 +112,7 @@ void evaluate_atomic_state_role(urd::view<Role<AtomicStateTag<T>>, C> constructo
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-void evaluate_atomic_goal_role(urd::view<Role<AtomicGoalTag<T>>, C> constructor, Context& context, urd::builder<Denotation<RoleTag>>& result)
+void evaluate_atomic_goal_role(urd::index_view<Role<AtomicGoalTag<T>>, C> constructor, Context& context, urd::builder<Denotation<RoleTag>>& result)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
 
@@ -128,7 +128,7 @@ void evaluate_atomic_goal_role(urd::view<Role<AtomicGoalTag<T>>, C> constructor,
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-bool evaluate_atomic_state_boolean(urd::view<Boolean<AtomicStateTag<T>>, C> constructor, Context& context)
+bool evaluate_atomic_state_boolean(urd::index_view<Boolean<AtomicStateTag<T>>, C> constructor, Context& context)
 {
     auto atoms = context.get_state().get_atoms_view(constructor.get_predicate());
     const auto value = atoms.begin() != atoms.end();
@@ -136,7 +136,7 @@ bool evaluate_atomic_state_boolean(urd::view<Boolean<AtomicStateTag<T>>, C> cons
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-bool evaluate_atomic_goal_boolean(urd::view<Boolean<AtomicGoalTag<T>>, C> constructor, Context& context)
+bool evaluate_atomic_goal_boolean(urd::index_view<Boolean<AtomicGoalTag<T>>, C> constructor, Context& context)
 {
     auto atoms = context.get_state().get_task().get_task().get_goal().template get_atoms_view<T>(constructor.get_polarity(), constructor.get_predicate());
     return atoms.begin() != atoms.end();
@@ -240,12 +240,12 @@ void insert_denotation_rows(const Denotation& denotation, urd::builder<ygg::data
 
 /// A distance argument as a relation over the plan's columns for it.
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
-auto evaluate_relation(urd::view<Query<>, C> argument, std::span<const ygg::database::ColumnLayout>, Context& context) -> QueryDenotationView
+auto evaluate_relation(urd::index_view<Query<>, C> argument, std::span<const ygg::database::ColumnLayout>, Context& context) -> QueryDenotationView
 { return evaluate<Kind>(argument, context); }
 
 /// Concepts and roles are lifted, so all argument forms share one distance evaluation.
 template<tyr::TaskKind Kind, ConceptOrRoleTag Category, StateEvaluationContextConcept<Kind> Context, typename C>
-auto evaluate_relation(urd::view<Constructor<Category>, C> argument, std::span<const ygg::database::ColumnLayout> columns, Context& context)
+auto evaluate_relation(urd::index_view<Constructor<Category>, C> argument, std::span<const ygg::database::ColumnLayout> columns, Context& context)
     -> QueryDenotationView
 {
     const auto denotation = evaluate<Kind>(argument, context);

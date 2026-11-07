@@ -29,7 +29,7 @@ constexpr std::string_view feature_type()
 }
 
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, typename C>
-void append_feature(std::ostream& os, urd::view<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>, C> view)
+void append_feature(std::ostream& os, urd::index_view<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>, C> view)
 {
     os << ygg::print_indent << "(:" << feature_type<FeatureTag>() << "\n";
     {
@@ -43,7 +43,7 @@ void append_feature(std::ostream& os, urd::view<runir::kr::ps::ConcreteFeature<F
 }
 
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, typename C>
-void append_feature(std::ostream& os, urd::view<runir::kr::ps::Feature<Family, FeatureTag>, C> view)
+void append_feature(std::ostream& os, urd::index_view<runir::kr::ps::Feature<Family, FeatureTag>, C> view)
 {
     std::visit([&](auto concrete) { append_feature(os, concrete); }, view.get_variant());
 }
@@ -61,7 +61,7 @@ template<runir::kr::FamilyTag Family,
          runir::kr::ps::dl::FeatureTag FeatureTag,
          runir::kr::ps::dl::ConditionObservationTag<FeatureTag> ObservationTag,
          typename C>
-Out condition(urd::view<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, C> view, const Out& out)
+Out condition(urd::index_view<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, C> view, const Out& out)
 { return fmt::format_to(out, "({} {})", ObservationTag::keyword, view.get_feature().get_symbol()); }
 
 template<typename Out, typename... Views>
@@ -73,7 +73,7 @@ template<runir::kr::FamilyTag Family,
          runir::kr::ps::dl::FeatureTag FeatureTag,
          runir::kr::ps::dl::EffectObservationTag<FeatureTag> ObservationTag,
          typename C>
-Out effect(urd::view<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, C> view, const Out& out)
+Out effect(urd::index_view<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, C> view, const Out& out)
 { return fmt::format_to(out, "({} {})", ObservationTag::keyword, view.get_feature().get_symbol()); }
 
 template<typename Out, typename... Views>
@@ -99,13 +99,13 @@ std::string effect(View view)
 }  // namespace runir::kr::ps
 
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, typename C>
-struct fmt::formatter<urd::view<runir::kr::ps::Feature<Family, FeatureTag>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::ps::Feature<Family, FeatureTag>, C>> : fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::feature(view), context); }
 };
 
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, typename C>
-struct fmt::formatter<urd::view<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>, C>> : fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::feature(view), context); }
 };
@@ -114,14 +114,14 @@ template<runir::kr::FamilyTag Family,
          runir::kr::ps::dl::FeatureTag FeatureTag,
          runir::kr::ps::dl::ConditionObservationTag<FeatureTag> ObservationTag,
          typename C>
-struct fmt::formatter<urd::view<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, C>> :
+struct fmt::formatter<urd::index_view<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, C>> :
     fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::condition(view), context); }
 };
 
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, runir::kr::ps::dl::EffectObservationTag<FeatureTag> ObservationTag, typename C>
-struct fmt::formatter<urd::view<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, C>> :
+struct fmt::formatter<urd::index_view<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, C>> :
     fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::effect(view), context); }

@@ -12,7 +12,7 @@
 #include <runir/kr/ps/icp/rule_view.hpp>
 #include <vector>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 namespace runir::kr::ps::icp
 {
@@ -39,7 +39,7 @@ auto bind_rule_data(nb::module_& m, const char* name)
 template<typename T>
 auto bind_rule_view(nb::module_& m, const char* name)
 {
-    using View = urd::view<T, Repository>;
+    using View = urd::index_view<T, Repository>;
     auto cls = nb::class_<View>(m, name)
                    .def("get_index", &View::index)
                    .def("get_source", &View::get_source, nb::keep_alive<0, 1>())
@@ -87,8 +87,8 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
         .def(urd::python::init_from_views<MemoryStateView,
                       MemoryStateView,
                       const ConditionViewList&,
-                      urd::view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>, Repository>,
-                      urd::view<runir::kr::dl::Register<runir::kr::dl::ConceptTag>, DlRepository>,
+                      urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>, Repository>,
+                      urd::index_view<runir::kr::dl::Register<runir::kr::dl::ConceptTag>, DlRepository>,
                       const EffectViewList&>(),
              "source"_a,
              "target"_a,
@@ -109,8 +109,8 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
         .def(urd::python::init_from_views<MemoryStateView,
                       MemoryStateView,
                       const ConditionViewList&,
-                      urd::view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::RoleTag>, Repository>,
-                      urd::view<runir::kr::dl::Register<runir::kr::dl::RoleTag>, DlRepository>,
+                      urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::RoleTag>, Repository>,
+                      urd::index_view<runir::kr::dl::Register<runir::kr::dl::RoleTag>, DlRepository>,
                       const EffectViewList&>(),
              "source"_a,
              "target"_a,
@@ -143,8 +143,8 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
                       const EffectViewList&,
                       ::cista::offset::string,
                       ::cista::offset::vector<::cista::offset::string>,
-                      const urd::Store<urd::sequence<urd::view<XCondition, Repository>>>&,
-                      const urd::Store<urd::sequence<urd::view<XEffect, Repository>>>&>(),
+                      const urd::Store<urd::sequence<urd::index_view<XCondition, Repository>>>&,
+                      const urd::Store<urd::sequence<urd::index_view<XEffect, Repository>>>&>(),
              "source"_a,
              "target"_a,
              "conditions"_a,

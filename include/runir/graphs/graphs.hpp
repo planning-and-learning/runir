@@ -1,12 +1,12 @@
 #ifndef RUNIR_GRAPHS_GRAPHS_HPP_
 #define RUNIR_GRAPHS_GRAPHS_HPP_
 
-#include "runir/graphs/algorithms.hpp"
 #include "runir/graphs/backward_static_graph_view.hpp"
 #include "runir/graphs/bgl/algorithms.hpp"
 #include "runir/graphs/bgl/graph_adapters.hpp"
 #include "runir/graphs/bgl/graph_traits.hpp"
-#include "runir/graphs/bgl/property_maps.hpp"
+#include "runir/graphs/algorithms/color_refinement.hpp"
+#include "runir/graphs/algorithms/weisfeiler_leman.hpp"
 #include "runir/graphs/bidirectional_static_graph.hpp"
 #include "runir/graphs/cycle.hpp"
 #include "runir/graphs/declarations.hpp"

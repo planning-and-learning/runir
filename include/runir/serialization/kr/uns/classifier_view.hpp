@@ -10,20 +10,20 @@ namespace ygg::serialization
 {
 
 template<typename Archive, typename C>
-void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::uns::ClassifierLiteral, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::uns::ClassifierLiteral, C>>)
 {
     ar.field("feature", [](const auto& value) { return std::get<0>(value.get_feature()); });
     ar.field("polarity", [](const auto& value) -> decltype(auto) { return (value.get_polarity()); });
 }
 
 template<typename Archive, typename C>
-void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::uns::ClassifierClause, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::uns::ClassifierClause, C>>)
 {
     ar.field("literals", [](const auto& value) -> decltype(auto) { return (value.get_literals()); });
 }
 
 template<typename Archive, typename C>
-void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::uns::Classifier, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::uns::Classifier, C>>)
 {
     ar.field("symbol", [](const auto& value) -> decltype(auto) { return (value.get_symbol()); });
     ar.field("features", [](const auto& value) -> decltype(auto) { return (value.get_features()); });

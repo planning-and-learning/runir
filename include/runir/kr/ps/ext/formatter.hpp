@@ -50,7 +50,7 @@ void append_effects(std::ostream& os, Effects effects)
 }
 
 template<runir::kr::ps::ext::RuleKind Kind, typename C>
-void append_rule_body(std::ostream& os, urd::view<runir::kr::ps::ext::Rule<Kind>, C> view)
+void append_rule_body(std::ostream& os, urd::index_view<runir::kr::ps::ext::Rule<Kind>, C> view)
 {
     append_conditions(os, view.get_conditions());
     if constexpr (runir::kr::ps::ext::BindingRuleKind<Kind>)
@@ -103,7 +103,7 @@ void append_rule_body(std::ostream& os, urd::view<runir::kr::ps::ext::Rule<Kind>
 }
 
 template<runir::kr::ps::ext::RuleKind Kind, typename C>
-void append_rule(std::ostream& os, urd::view<runir::kr::ps::ext::Rule<Kind>, C> view)
+void append_rule(std::ostream& os, urd::index_view<runir::kr::ps::ext::Rule<Kind>, C> view)
 {
     os << ygg::print_indent << "(:" << Kind::keyword << "\n";
     {
@@ -114,7 +114,7 @@ void append_rule(std::ostream& os, urd::view<runir::kr::ps::ext::Rule<Kind>, C> 
 }
 
 template<typename C>
-void append_rule(std::ostream& os, urd::view<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>, C> view)
+void append_rule(std::ostream& os, urd::index_view<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>, C> view)
 {
     std::visit([&](auto rule) { append_rule(os, rule); }, view.get_variant());
 }
@@ -135,7 +135,7 @@ void append_declarations(std::ostream& os, Arguments arguments)
 }
 
 template<typename C>
-void append_module(std::ostream& os, urd::view<runir::kr::ps::ext::Module, C> view)
+void append_module(std::ostream& os, urd::index_view<runir::kr::ps::ext::Module, C> view)
 {
     os << ygg::print_indent << "(:module\n";
     {
@@ -219,7 +219,7 @@ void append_module(std::ostream& os, urd::view<runir::kr::ps::ext::Module, C> vi
 }
 
 template<typename C>
-std::string module(urd::view<runir::kr::ps::ext::Module, C> view)
+std::string module(urd::index_view<runir::kr::ps::ext::Module, C> view)
 {
     auto os = std::ostringstream {};
     append_module(os, view);
@@ -227,7 +227,7 @@ std::string module(urd::view<runir::kr::ps::ext::Module, C> view)
 }
 
 template<typename C>
-void append_program(std::ostream& os, urd::view<runir::kr::ps::ext::Program, C> view)
+void append_program(std::ostream& os, urd::index_view<runir::kr::ps::ext::Program, C> view)
 {
     os << ygg::print_indent << "(:program\n";
     {
@@ -243,7 +243,7 @@ void append_program(std::ostream& os, urd::view<runir::kr::ps::ext::Program, C> 
 }
 
 template<typename C>
-std::string program(urd::view<runir::kr::ps::ext::Program, C> view)
+std::string program(urd::index_view<runir::kr::ps::ext::Program, C> view)
 {
     auto os = std::ostringstream {};
     append_program(os, view);
@@ -253,45 +253,45 @@ std::string program(urd::view<runir::kr::ps::ext::Program, C> view)
 }  // namespace runir::kr::ps::ext
 
 template<typename C>
-struct fmt::formatter<urd::view<runir::kr::ps::ext::MemoryState, C>>
+struct fmt::formatter<urd::index_view<runir::kr::ps::ext::MemoryState, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(auto view, format_context& context) const { return fmt::format_to(context.out(), "{}", view.get_name()); }
 };
 
 template<typename C>
-struct fmt::formatter<urd::view<runir::kr::ps::ext::ModuleSymbol, C>>
+struct fmt::formatter<urd::index_view<runir::kr::ps::ext::ModuleSymbol, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(auto view, format_context& context) const { return fmt::format_to(context.out(), "{}", view.get_name()); }
 };
 
 template<runir::kr::ps::ext::RuleKind Kind, typename C>
-struct fmt::formatter<urd::view<runir::kr::ps::ext::Rule<Kind>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::ps::ext::Rule<Kind>, C>> : fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::rule(view), context); }
 };
 
 template<typename C>
-struct fmt::formatter<urd::view<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>, C>> : fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::rule(view), context); }
 };
 
 template<typename C>
-struct fmt::formatter<urd::view<runir::kr::ps::ext::Module, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::ps::ext::Module, C>> : fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::module(view), context); }
 };
 
 template<typename C>
-struct fmt::formatter<urd::view<runir::kr::ps::ext::Program, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::ps::ext::Program, C>> : fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::program(view), context); }
 };
 
 template<tyr::TaskKind Kind, typename C>
-struct fmt::formatter<urd::view<runir::kr::ps::ext::ModuleState<Kind>, C>>
+struct fmt::formatter<urd::index_view<runir::kr::ps::ext::ModuleState<Kind>, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(const auto& value, format_context& context) const
@@ -307,7 +307,7 @@ struct fmt::formatter<urd::view<runir::kr::ps::ext::ModuleState<Kind>, C>>
 };
 
 template<typename C>
-struct fmt::formatter<urd::view<runir::kr::ps::ext::CallStack, C>>
+struct fmt::formatter<urd::index_view<runir::kr::ps::ext::CallStack, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(const auto& value, format_context& context) const -> format_context::iterator
@@ -323,7 +323,7 @@ struct fmt::formatter<urd::view<runir::kr::ps::ext::CallStack, C>>
 };
 
 template<tyr::TaskKind Kind, typename C>
-struct fmt::formatter<urd::view<runir::kr::ps::ext::ProgramState<Kind>, C>>
+struct fmt::formatter<urd::index_view<runir::kr::ps::ext::ProgramState<Kind>, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(const auto& value, format_context& context) const

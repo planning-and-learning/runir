@@ -19,7 +19,7 @@ namespace runir::kr::ps
 {
 
 template<FamilyTag Family, typename RepositoryTypes, typename T>
-using RecordView = urd::view<T, BasicRepository<Family, RepositoryTypes>>;
+using RecordView = urd::index_view<T, BasicRepository<Family, RepositoryTypes>>;
 
 /// Rebuilds ps records bottom-up. Records the leaf policy can rewrite (leaves.rewrite(view, repository)) are delegated
 /// to it; every other record is reinserted with rewritten children, so records whose children are unchanged keep their

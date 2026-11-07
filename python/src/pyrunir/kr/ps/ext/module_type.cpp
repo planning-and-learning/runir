@@ -16,7 +16,7 @@
 #include <runir/kr/ps/ext/syntactic_complexity.hpp>
 #include <vector>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 namespace runir::kr::ps::ext
 {
@@ -25,7 +25,7 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
 {
     using T = Module;
     using Data = urd::data<T>;
-    using View = urd::view<T, Repository>;
+    using View = urd::index_view<T, Repository>;
     urd::python::bind_index<urd::index<T>>(m, "ModuleIndex");
     using DlRepository = runir::kr::dl::ConstructorRepository;
     auto data =
@@ -62,21 +62,21 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
                  nb::arg("memory_states"),
                  nb::arg("memory_transitions"))
             .def(urd::python::init_from_views<
-                     urd::view<ModuleSymbol, Repository>,
-                     const urd::Store<urd::sequence<urd::view<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>, DlRepository>>>&,
-                     const urd::Store<urd::sequence<urd::view<runir::kr::dl::Argument<runir::kr::dl::RoleTag>, DlRepository>>>&,
-                     const urd::Store<urd::sequence<urd::view<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>, DlRepository>>>&,
-                     const urd::Store<urd::sequence<urd::view<runir::kr::dl::Argument<runir::kr::dl::NumericalTag>, DlRepository>>>&,
-                     const urd::Store<urd::sequence<urd::view<runir::kr::dl::Register<runir::kr::dl::ConceptTag>, DlRepository>>>&,
-                     const urd::Store<urd::sequence<urd::view<runir::kr::dl::Register<runir::kr::dl::RoleTag>, DlRepository>>>&,
-                     const urd::Store<urd::sequence<urd::view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>, Repository>>>&,
-                     const urd::Store<urd::sequence<urd::view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>, Repository>>>&,
-                     const urd::Store<urd::sequence<urd::view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>, Repository>>>&,
-                     const urd::Store<urd::sequence<urd::view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>, Repository>>>&,
-                     const urd::Store<urd::sequence<urd::view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>, Repository>>>&,
-                     urd::view<MemoryState, Repository>,
-                     const urd::Store<urd::sequence<urd::view<MemoryState, Repository>>>&,
-                     const urd::Store<urd::sequence<urd::Store<urd::sequence<urd::view<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>, Repository>>>>>&>(),
+                     urd::index_view<ModuleSymbol, Repository>,
+                     const urd::Store<urd::sequence<urd::index_view<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>, DlRepository>>>&,
+                     const urd::Store<urd::sequence<urd::index_view<runir::kr::dl::Argument<runir::kr::dl::RoleTag>, DlRepository>>>&,
+                     const urd::Store<urd::sequence<urd::index_view<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>, DlRepository>>>&,
+                     const urd::Store<urd::sequence<urd::index_view<runir::kr::dl::Argument<runir::kr::dl::NumericalTag>, DlRepository>>>&,
+                     const urd::Store<urd::sequence<urd::index_view<runir::kr::dl::Register<runir::kr::dl::ConceptTag>, DlRepository>>>&,
+                     const urd::Store<urd::sequence<urd::index_view<runir::kr::dl::Register<runir::kr::dl::RoleTag>, DlRepository>>>&,
+                     const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>, Repository>>>&,
+                     const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>, Repository>>>&,
+                     const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>, Repository>>>&,
+                     const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>, Repository>>>&,
+                     const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>, Repository>>>&,
+                     urd::index_view<MemoryState, Repository>,
+                     const urd::Store<urd::sequence<urd::index_view<MemoryState, Repository>>>&,
+                     const urd::Store<urd::sequence<urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>, Repository>>>>>&>(),
                  nb::arg("symbol"),
                  nb::arg("concept_arguments"),
                  nb::arg("role_arguments"),

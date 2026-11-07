@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 namespace runir::kr::dl::python
 {
@@ -44,7 +44,7 @@ void bind_view_list(nb::class_<View>& cls, const char* name, Getter getter)
 template<typename View>
 void bind_query_columns(nb::class_<View>& cls)
 {
-    bind_view_list<urd::view<QueryColumn, ConstructorRepository>>(cls, "get_columns", [](const View& value) { return value.get_columns(); });
+    bind_view_list<urd::index_view<QueryColumn, ConstructorRepository>>(cls, "get_columns", [](const View& value) { return value.get_columns(); });
 }
 
 template<typename Tag, typename Class>
@@ -53,9 +53,9 @@ void def_query_data_constructors(Class& cls)
     using namespace nb::literals;
     using Repository = ConstructorRepository;
     using ColumnIndexList = urd::flat_vector<urd::index<QueryColumn>>;
-    using ColumnViewList = urd::Store<urd::sequence<urd::view<QueryColumn, Repository>>>;
+    using ColumnViewList = urd::Store<urd::sequence<urd::index_view<QueryColumn, Repository>>>;
     using QueryIndex = urd::index<Query<>>;
-    using QueryView = urd::view<Query<>, Repository>;
+    using QueryView = urd::index_view<Query<>, Repository>;
 
     if constexpr (std::same_as<Tag, void>)
         cls.def(nb::init<DataVariant<urd::data<Query<>>>>(), "variant"_a).def(urd::python::init_from_views<urd::resolved_t<DataVariant<urd::data<Query<>>>, Repository>>(), "variant"_a);
@@ -69,7 +69,7 @@ void def_query_data_constructors(Class& cls)
     {
         using ArgIndex = urd::index<Constructor<std::conditional_t<std::same_as<Tag, QueryConceptTag>, ConceptTag, RoleTag>>>;
         cls.def(nb::init<ArgIndex, ColumnIndexList>(), "arg"_a, "columns"_a)
-            .def(urd::python::init_from_views<urd::view<Constructor<std::conditional_t<std::same_as<Tag, QueryConceptTag>, ConceptTag, RoleTag>>, Repository>, const ColumnViewList&>(), "arg"_a, "columns"_a);
+            .def(urd::python::init_from_views<urd::index_view<Constructor<std::conditional_t<std::same_as<Tag, QueryConceptTag>, ConceptTag, RoleTag>>, Repository>, const ColumnViewList&>(), "arg"_a, "columns"_a);
     }
     else if constexpr (std::same_as<Tag, QueryJoinTag> || std::same_as<Tag, QueryUnionTag> || std::same_as<Tag, QueryDifferenceTag>)
         cls.def(nb::init<QueryIndex, QueryIndex>(), "lhs"_a, "rhs"_a).def(urd::python::init_from_views<QueryView, QueryView>(), "lhs"_a, "rhs"_a);
@@ -77,13 +77,13 @@ void def_query_data_constructors(Class& cls)
         cls.def(nb::init<QueryIndex, ColumnIndexList>(), "arg"_a, "columns"_a).def(urd::python::init_from_views<QueryView, const ColumnViewList&>(), "arg"_a, "columns"_a);
     else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
         cls.def(nb::init<QueryIndex, urd::index<QueryColumn>, urd::index<QueryColumn>>(), "arg"_a, "lhs_column"_a, "rhs_column"_a)
-            .def(urd::python::init_from_views<QueryView, urd::view<QueryColumn, Repository>, urd::view<QueryColumn, Repository>>(),
+            .def(urd::python::init_from_views<QueryView, urd::index_view<QueryColumn, Repository>, urd::index_view<QueryColumn, Repository>>(),
                  "arg"_a,
                  "lhs_column"_a,
                  "rhs_column"_a);
     else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
         cls.def(nb::init<QueryIndex, urd::index<QueryColumn>, urd::index<tyr::formalism::Object>>(), "arg"_a, "column"_a, "object"_a)
-            .def(urd::python::init_from_views<QueryView, urd::view<QueryColumn, Repository>, tyr::formalism::planning::ObjectView>(), "arg"_a, "column"_a, "object"_a);
+            .def(urd::python::init_from_views<QueryView, urd::index_view<QueryColumn, Repository>, tyr::formalism::planning::ObjectView>(), "arg"_a, "column"_a, "object"_a);
     else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
         cls.def(nb::init<urd::flat_vector<urd::index<Query<>>>, ColumnIndexList, ColumnIndexList>(), "args"_a, "variable_order"_a, "output_order"_a)
             .def(urd::python::init_from_views<const urd::Store<urd::sequence<QueryView>>&, const ColumnViewList&, const ColumnViewList&>(), "args"_a, "variable_order"_a, "output_order"_a);
@@ -101,7 +101,7 @@ void bind_query(nb::module_& m, const char* name)
 {
     using Type = Query<Tag>;
     using Data = urd::data<Type>;
-    using View = urd::view<Type, ConstructorRepository>;
+    using View = urd::index_view<Type, ConstructorRepository>;
 
     urd::python::bind_index<urd::index<Type>>(m, std::string(name) + "Index");
     auto data = nb::class_<Data>(m, (std::string(name) + "Data").c_str()).def(nb::init<>()).def_rw("index", &Data::index);
@@ -153,8 +153,8 @@ void bind_query(nb::module_& m, const char* name)
         view.def("get_arg", &View::get_arg, nb::keep_alive<0, 1>());
     if constexpr (requires(View value) { value.get_args(); })
     {
-        using ColumnView = urd::view<QueryColumn, ConstructorRepository>;
-        bind_view_list<urd::view<Query<>, ConstructorRepository>>(view, "get_args", [](const View& value) { return value.get_args(); });
+        using ColumnView = urd::index_view<QueryColumn, ConstructorRepository>;
+        bind_view_list<urd::index_view<Query<>, ConstructorRepository>>(view, "get_args", [](const View& value) { return value.get_args(); });
         bind_view_list<ColumnView>(view, "get_variable_order", [](const View& value) { return value.get_variable_order(); });
         bind_view_list<ColumnView>(view, "get_output_order", [](const View& value) { return value.get_output_order(); });
     }
@@ -166,7 +166,7 @@ void bind_query(nb::module_& m, const char* name)
         view.def("get_column", &View::get_column, nb::keep_alive<0, 1>()).def("get_object", &View::get_object, nb::keep_alive<0, 1>());
     if constexpr (requires(View value) { value.get_keys(); })
     {
-        bind_view_list<urd::view<QueryColumn, ConstructorRepository>>(view, "get_keys", [](const View& value) { return value.get_keys(); });
+        bind_view_list<urd::index_view<QueryColumn, ConstructorRepository>>(view, "get_keys", [](const View& value) { return value.get_keys(); });
         view.def("get_sources", &View::get_sources, nb::keep_alive<0, 1>())
             .def("get_edges", &View::get_edges, nb::keep_alive<0, 1>())
             .def("get_targets", &View::get_targets, nb::keep_alive<0, 1>())
@@ -179,13 +179,13 @@ void bind_query_projection(nb::module_& m, const char* name)
 {
     using Type = QueryProjection<Category>;
     using Data = urd::data<Type>;
-    using View = urd::view<Type, ConstructorRepository>;
+    using View = urd::index_view<Type, ConstructorRepository>;
     urd::python::bind_index<urd::index<Type>>(m, std::string(name) + "Index");
     auto data = nb::class_<Data>(m, (std::string(name) + "Data").c_str())
                     .def(nb::init<>())
                     .def(nb::init<urd::index<Query<>>, urd::flat_vector<urd::index<QueryColumn>>>(), nb::arg("arg"), nb::arg("columns"))
-                    .def(urd::python::init_from_views<urd::view<Query<>, ConstructorRepository>,
-                                  const urd::Store<urd::sequence<urd::view<QueryColumn, ConstructorRepository>>>&>(),
+                    .def(urd::python::init_from_views<urd::index_view<Query<>, ConstructorRepository>,
+                                  const urd::Store<urd::sequence<urd::index_view<QueryColumn, ConstructorRepository>>>&>(),
                          nb::arg("arg"),
                          nb::arg("columns"))
                     .def_rw("index", &Data::index)
@@ -204,7 +204,7 @@ void bind_query_projection(nb::module_& m, const char* name)
 
 inline void bind_queries(nb::module_& m)
 {
-    using ColumnView = urd::view<QueryColumn, ConstructorRepository>;
+    using ColumnView = urd::index_view<QueryColumn, ConstructorRepository>;
     auto column = nb::class_<ColumnView>(m, "QueryColumn").def("get_index", &ColumnView::index).def("get_name", &ColumnView::get_name);
     ygg::add_print(column);
     urd::python::add_comparison(column);

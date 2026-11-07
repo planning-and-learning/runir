@@ -48,10 +48,8 @@ public:
 
     [[nodiscard]] auto get_vertices() const noexcept -> const auto& { return get_graph().get_vertices(); }
     [[nodiscard]] auto get_edges() const noexcept -> const auto& { return get_graph().get_edges(); }
-    [[nodiscard]] auto get_vertex_property(VertexPropertyIndex<VertexPropertyType> property) const noexcept -> const VertexPropertyType&
-    { return get_graph().get_vertex_property(property); }
-    [[nodiscard]] auto get_edge_property(EdgePropertyIndex<EdgePropertyType> property) const noexcept -> const EdgePropertyType&
-    { return get_graph().get_edge_property(property); }
+    [[nodiscard]] auto get_vertex_property(VertexIndex vertex) const noexcept -> const VertexPropertyType& { return get_graph().get_vertex_property(vertex); }
+    [[nodiscard]] auto get_edge_property(EdgeIndex edge) const noexcept -> const EdgePropertyType& { return get_graph().get_edge_property(edge); }
 
     [[nodiscard]] auto get_vertex(VertexIndex vertex) const noexcept -> const VertexType& { return get_graph().get_vertex(vertex); }
     [[nodiscard]] auto get_edge(EdgeIndex edge) const noexcept -> const EdgeType& { return get_graph().get_edge(edge); }
@@ -79,23 +77,19 @@ public:
 
     [[nodiscard]] auto get_out_edges(VertexIndex vertex) const noexcept
     {
-        return get_out_edge_indices(vertex) | std::views::transform([this](EdgeIndex edge) -> const EdgeType& { return get_edge(edge); });
+        return urd::transform(get_out_edge_indices(vertex), detail::ReadThrough<BackwardStaticGraphView, &BackwardStaticGraphView::get_edge> { this });
     }
 
     [[nodiscard]] auto get_successor_indices(VertexIndex vertex) const noexcept
     {
-        return get_out_edge_indices(vertex) | std::views::transform([this](EdgeIndex edge) { return get_target(edge); });
+        return urd::transform(get_out_edge_indices(vertex), detail::ReadThrough<BackwardStaticGraphView, &BackwardStaticGraphView::get_target> { this });
     }
 
     [[nodiscard]] auto get_successors(VertexIndex vertex) const noexcept
     {
-        return get_successor_indices(vertex) | std::views::transform([this](VertexIndex successor) -> const VertexType& { return get_vertex(successor); });
+        return urd::transform(get_successor_indices(vertex), detail::ReadThrough<BackwardStaticGraphView, &BackwardStaticGraphView::get_vertex> { this });
     }
 };
-
-template<IsDenseGraph G>
-auto backward(const G& graph)
-{ return BackwardStaticGraphView<G>(graph); }
 
 }  // namespace runir::graphs
 

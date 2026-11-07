@@ -1028,7 +1028,7 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
 
     const auto edge = greedy.graph->get_out_edge_indices(0).front();
-    const auto selected = greedy.graph->get_vertex(greedy.graph->get_target(edge)).get_property().program_state;
+    const auto selected = greedy.graph->get_vertex_property(greedy.graph->get_target(edge)).program_state;
     const auto actual_loaded = selected.get_module_state().get_registers().template values<kr::dl::ConceptTag>()[0];
     const auto expected_loaded = steps.front().get_target().get_module_state().get_registers().template values<kr::dl::ConceptTag>()[0];
     ASSERT_TRUE(actual_loaded);
@@ -1409,7 +1409,7 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
 
     const auto edge = greedy.graph->get_out_edge_indices(0).front();
-    const auto selected = greedy.graph->get_vertex(greedy.graph->get_target(edge)).get_property().program_state;
+    const auto selected = greedy.graph->get_vertex_property(greedy.graph->get_target(edge)).program_state;
     EXPECT_EQ(selected.get_state().index(), steps.front().get_target().get_state().index());
     EXPECT_EQ(selected.get_module_state().get_memory_state().index(), steps.front().get_target().get_module_state().get_memory_state().index());
 }

@@ -1,5 +1,5 @@
 #include "bindings.hpp"
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 #include <runir/kr/dl/grammar/constructor_repository.hpp>
 #include <runir/kr/dl/grammar/formatter.hpp>
@@ -27,7 +27,7 @@ template<CategoryTag Category>
 void bind_non_terminal_view(nb::module_& m, const char* name)
 {
     using Type = runir::kr::dl::grammar::NonTerminal<Category>;
-    using View = urd::view<Type, runir::kr::dl::grammar::ConstructorRepository>;
+    using View = urd::index_view<Type, runir::kr::dl::grammar::ConstructorRepository>;
     auto cls = nb::class_<View>(m, name).def("get_index", &View::index).def("get_name", &View::get_name);
     ygg::add_print(cls);
     urd::python::add_comparison(cls);

@@ -6,7 +6,7 @@
 #include <runir/kr/ps/ext/module_symbol_view.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 namespace runir::kr::ps::ext
 {
@@ -15,7 +15,7 @@ void bind_module_symbol(nb::module_& m, RepositoryBinding& repository)
 {
     using T = ModuleSymbol;
     using Data = urd::data<T>;
-    using View = urd::view<T, Repository>;
+    using View = urd::index_view<T, Repository>;
     urd::python::bind_index<urd::index<T>>(m, "ModuleSymbolIndex");
     auto data = nb::class_<Data>(m, "ModuleSymbolData")
                     .def(nb::init<>())

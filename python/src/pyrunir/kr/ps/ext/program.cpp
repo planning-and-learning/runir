@@ -16,7 +16,7 @@
 #include <runir/kr/ps/ext/syntactic_complexity.hpp>
 #include <vector>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 namespace runir::kr::ps::ext
 {
@@ -25,12 +25,12 @@ void bind_program(nb::module_& m, RepositoryBinding& repository)
 {
     using T = Program;
     using Data = urd::data<T>;
-    using View = urd::view<T, Repository>;
+    using View = urd::index_view<T, Repository>;
     urd::python::bind_index<urd::index<T>>(m, "ProgramIndex");
     auto data = nb::class_<Data>(m, "ProgramData")
                     .def(nb::init<>())
                     .def(nb::init<urd::index<Module>, urd::flat_vector<urd::index<Module>>>(), nb::arg("entry_module"), nb::arg("modules"))
-                    .def(urd::python::init_from_views<urd::view<Module, Repository>, const urd::Store<urd::sequence<urd::view<Module, Repository>>>&>(),
+                    .def(urd::python::init_from_views<urd::index_view<Module, Repository>, const urd::Store<urd::sequence<urd::index_view<Module, Repository>>>&>(),
                          nb::arg("entry_module"),
                          nb::arg("modules"))
                     .def_rw("index", &Data::index)

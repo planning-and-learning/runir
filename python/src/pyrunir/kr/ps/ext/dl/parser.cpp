@@ -1,5 +1,5 @@
 #include "pyrunir/kr/ps/ext/dl/bindings.hpp"
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <urd/python/sequences/sequence.hpp>

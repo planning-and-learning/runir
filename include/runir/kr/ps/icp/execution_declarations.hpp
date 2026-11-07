@@ -29,10 +29,10 @@ template<tyr::TaskKind Kind>
 using ExecutionRepositoryPtr = std::shared_ptr<ExecutionRepository<Kind>>;
 
 template<tyr::TaskKind Kind>
-using ProgramStateView = urd::view<ProgramState<Kind>, ExecutionRepository<Kind>>;
+using ProgramStateView = urd::index_view<ProgramState<Kind>, ExecutionRepository<Kind>>;
 
 template<tyr::TaskKind Kind>
-using HistoriesView = urd::view<Histories, ExecutionRepository<Kind>>;
+using HistoriesView = urd::index_view<Histories, ExecutionRepository<Kind>>;
 
 }
 

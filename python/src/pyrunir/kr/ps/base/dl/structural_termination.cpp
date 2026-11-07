@@ -10,7 +10,7 @@
 #include <runir/kr/ps/base/repository.hpp>
 #include <vector>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 namespace runir::kr::ps::base::dl
 {

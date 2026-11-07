@@ -14,7 +14,7 @@ namespace ygg::serialization
 {
 
 template<typename Archive, typename C>
-void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::ps::icp::Histories, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::ps::icp::Histories, C>>)
 {
     ar.field("concepts", [](const auto& value) { return value.get_concepts(); });
 }

@@ -5,7 +5,7 @@
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 namespace runir::kr::dl
 {
@@ -32,7 +32,7 @@ template<CategoryTag Category>
 void bind_register_view(nb::module_& m, const char* name)
 {
     using Type = Register<Category>;
-    using View = urd::view<Type, ConstructorRepository>;
+    using View = urd::index_view<Type, ConstructorRepository>;
     auto view = nb::class_<View>(m, name).def("get_index", &View::index).def("get_name", &View::get_name).def("get_identifier", &View::get_identifier);
     ygg::add_print(view);
     urd::python::add_comparison(view);

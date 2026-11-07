@@ -57,9 +57,9 @@ int run(std::span<char*> args)
     const auto domain = search->task->get_domain().get_domain();
     auto repository = runir::kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
     const auto count = runir::kr::ps::ext::dl::parse_numerical("(n_count " + text + ")", domain, *repository);
-    const auto query = std::get<urd::view<runir::kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(
-        std::get<urd::view<runir::kr::dl::Numerical<runir::kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant()).get_arg());
-    const auto must_pass = std::get<urd::view<runir::kr::dl::Query<runir::kr::dl::QueryMustPassTag>, runir::kr::dl::ConstructorRepository>>(query.get_variant());
+    const auto query = std::get<urd::index_view<runir::kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(
+        std::get<urd::index_view<runir::kr::dl::Numerical<runir::kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant()).get_arg());
+    const auto must_pass = std::get<urd::index_view<runir::kr::dl::Query<runir::kr::dl::QueryMustPassTag>, runir::kr::dl::ConstructorRepository>>(query.get_variant());
 
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     auto builder = runir::kr::dl::semantics::Builder();

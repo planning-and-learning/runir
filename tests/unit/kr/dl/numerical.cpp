@@ -12,8 +12,8 @@ namespace
 template<typename T, typename Repository>
 concept IndexedDataView =
     std::constructible_from<urd::index<T>, ygg::uint_t> && urd::Identifiable<urd::index<T>> && urd::Identifiable<urd::data<T>>
-    && urd::Identifiable<urd::view<T, Repository>> && std::totally_ordered<urd::index<T>> && std::totally_ordered<urd::data<T>>
-    && std::totally_ordered<urd::view<T, Repository>> && requires(urd::data<T>& data, const urd::view<T, Repository>& view) {
+    && urd::Identifiable<urd::index_view<T, Repository>> && std::totally_ordered<urd::index<T>> && std::totally_ordered<urd::data<T>>
+    && std::totally_ordered<urd::index_view<T, Repository>> && requires(urd::data<T>& data, const urd::index_view<T, Repository>& view) {
            data.index;
            view.index();
        };
@@ -29,7 +29,7 @@ consteval bool numerical_data_view()
 {
     using Entity = kr::dl::Numerical<Tag>;
     using Data = urd::data<Entity>;
-    using View = urd::view<Entity, kr::dl::ConstructorRepository>;
+    using View = urd::index_view<Entity, kr::dl::ConstructorRepository>;
 
     static_assert(std::same_as<View, kr::dl::NumericalView<Tag>>);
     if constexpr (false)
@@ -105,9 +105,9 @@ TEST(RunirKrDlNumerical, RoutesValueBinaryAndDistanceData)
     static_assert(std::same_as<DistanceData::Edge, urd::index_variant<boost::mp11::mp_list<Role, Query>>>);
     auto distance_data = DistanceData(urd::index<Concept>(3), urd::index<Query>(4), urd::index<Query>(5));
     const auto distance = repository->insert(distance_data).first;
-    EXPECT_EQ((std::get<urd::view<Concept, runir::kr::dl::ConstructorRepository>>(distance.get_lhs()).index()), urd::index<Concept>(3));
-    EXPECT_EQ((std::get<urd::view<Query, runir::kr::dl::ConstructorRepository>>(distance.get_mid()).index()), urd::index<Query>(4));
-    EXPECT_EQ((std::get<urd::view<Query, runir::kr::dl::ConstructorRepository>>(distance.get_rhs()).index()), urd::index<Query>(5));
-    EXPECT_TRUE((std::holds_alternative<urd::view<Query, runir::kr::dl::ConstructorRepository>>(distance.get_mid())));
+    EXPECT_EQ((std::get<urd::index_view<Concept, runir::kr::dl::ConstructorRepository>>(distance.get_lhs()).index()), urd::index<Concept>(3));
+    EXPECT_EQ((std::get<urd::index_view<Query, runir::kr::dl::ConstructorRepository>>(distance.get_mid()).index()), urd::index<Query>(4));
+    EXPECT_EQ((std::get<urd::index_view<Query, runir::kr::dl::ConstructorRepository>>(distance.get_rhs()).index()), urd::index<Query>(5));
+    EXPECT_TRUE((std::holds_alternative<urd::index_view<Query, runir::kr::dl::ConstructorRepository>>(distance.get_mid())));
 }
 }

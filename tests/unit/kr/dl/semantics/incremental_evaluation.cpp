@@ -88,14 +88,14 @@ auto negative_atomic(kr::dl::ConstructorView<Category> positive, kr::dl::Constru
 {
     if constexpr (std::same_as<Category, kr::dl::ConceptTag>)
     {
-        auto data = std::get<urd::view<kr::dl::Concept<kr::dl::AtomicStateTag<Fact>>, runir::kr::dl::ConstructorRepository>>(positive.get_variant()).data();
+        auto data = std::get<urd::index_view<kr::dl::Concept<kr::dl::AtomicStateTag<Fact>>, runir::kr::dl::ConstructorRepository>>(positive.get_variant()).data();
         data.polarity = false;
         auto wrapper = urd::data<kr::dl::Constructor<Category>>(kr::dl::insert(repository, data).first.index());
         return kr::dl::insert(repository, wrapper).first;
     }
     else
     {
-        auto data = std::get<urd::view<kr::dl::Role<kr::dl::AtomicStateTag<Fact>>, runir::kr::dl::ConstructorRepository>>(positive.get_variant()).data();
+        auto data = std::get<urd::index_view<kr::dl::Role<kr::dl::AtomicStateTag<Fact>>, runir::kr::dl::ConstructorRepository>>(positive.get_variant()).data();
         data.polarity = false;
         auto wrapper = urd::data<kr::dl::Constructor<Category>>(kr::dl::insert(repository, data).first.index());
         return kr::dl::insert(repository, wrapper).first;
@@ -560,7 +560,7 @@ void check_incremental_evaluation()
     const auto self_distance = kr::ps::ext::dl::parse_numerical("(n_distance (c_register 0) " + edge_text + " (c_register 0))", domain, *constructors);
     const auto query_count = kr::ps::ext::dl::parse_numerical("(n_count (q_role (x y) " + edge_text + "))", domain, *constructors);
     const auto query =
-        std::get<urd::view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::view<kr::dl::Numerical<kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(query_count.get_variant()).get_arg());
+        std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::index_view<kr::dl::Numerical<kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(query_count.get_variant()).get_arg());
     // Duplicate roots and explicitly requested shared children do not duplicate nodes.
     auto evaluation = kr::dl::semantics::incremental::IncrementalEvaluation<Kind>(
         *search->task,

@@ -1,5 +1,5 @@
 #include "bindings.hpp"
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 #include <nanobind/stl/string.h>
 #include <runir/kr/uns/dl/classifier_factory.hpp>

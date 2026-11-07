@@ -34,15 +34,13 @@ static_assert(graphs::IsGraph<StaticGraph> && !graphs::IsGraph<int>);
 static_assert(graphs::IsGraph<Builder> && graphs::IsGraph<DynamicGraph>);
 static_assert(graphs::IsGraph<graphs::BackwardStaticGraphView<StaticGraph>>);
 static_assert(graphs::IsDenseGraph<StaticGraph> && !graphs::IsDenseGraph<Builder> && !graphs::IsDenseGraph<int>);
-static_assert(graphs::IsVertex<StaticGraph::VertexType> && !graphs::IsVertex<int>);
-static_assert(graphs::IsEdge<StaticGraph::EdgeType> && !graphs::IsEdge<int>);
 
 struct PropertyOnlyGraph
 {
     using VertexPropertyType = std::string;
     using EdgePropertyType = std::string;
-    [[nodiscard]] const std::string& get_vertex_property(graphs::VertexPropertyIndex<std::string>) const;
-    [[nodiscard]] const std::string& get_edge_property(graphs::EdgePropertyIndex<std::string>) const;
+    [[nodiscard]] const std::string& get_vertex_property(graphs::VertexIndex) const;
+    [[nodiscard]] const std::string& get_edge_property(graphs::EdgeIndex) const;
 };
 static_assert(graphs::IsGraphWithProperties<PropertyOnlyGraph, std::string, std::string>);
 static_assert(!graphs::IsGraph<PropertyOnlyGraph>);
@@ -66,10 +64,10 @@ static_assert(!graphs::IsGraph<WrongEdgeRange>);
 static_assert(!graphs::IsGraph<NonCommonOutgoingRange>);
 
 template<typename Graph>
-void expect_vertex_and_edge_parents_rebound(const Graph& graph, graphs::VertexIndex vertex, graphs::EdgeIndex edge)
+void expect_vertex_and_edge_properties(const Graph& graph, graphs::VertexIndex vertex, graphs::EdgeIndex edge)
 {
-    EXPECT_EQ(&graph.get_vertex(vertex).get_parent(), &graph);
-    EXPECT_EQ(&graph.get_edge(edge).get_parent(), &graph);
+    EXPECT_EQ(graph.get_vertex_property(vertex), "source");
+    EXPECT_EQ(graph.get_edge_property(edge), "edge");
 }
 
 auto make_static_builder()
@@ -135,14 +133,6 @@ void expect_forward_adjacency(const Graph& graph)
 }
 
 }  // namespace
-
-TEST(GraphContainersTest, VertexAndEdgeFormattersUseTheirOwnStructure)
-{
-    const auto graph = StaticGraph(make_static_builder());
-
-    EXPECT_EQ(fmt::format("{}", graph.get_vertex(0)), "Vertex(index=0, property=source)");
-    EXPECT_EQ(fmt::format("{}", graph.get_edge(0)), "Edge(index=0, source=0, target=1, property=edge)");
-}
 
 TEST(GraphContainersTest, DotFormatterEscapesVertexAndEdgeLabels)
 {
@@ -232,32 +222,32 @@ TEST(GraphContainersTest, StaticGraphBuilderBglAdaptersExposeStableIterators)
     EXPECT_FALSE(graphs::is_symmetric(builder));
 }
 
-TEST(GraphContainersTest, StaticGraphBuilderMoveRebindsVertexAndEdgeParents)
+TEST(GraphContainersTest, StaticGraphBuilderMoveKeepsVertexAndEdgeProperties)
 {
     const auto source = graphs::VertexIndex { 0 };
     const auto edge = graphs::EdgeIndex { 0 };
 
     auto moved = make_static_builder();
     auto move_constructed = std::move(moved);
-    expect_vertex_and_edge_parents_rebound(move_constructed, source, edge);
+    expect_vertex_and_edge_properties(move_constructed, source, edge);
 
     auto move_assigned = Builder();
     move_assigned = make_static_builder();
-    expect_vertex_and_edge_parents_rebound(move_assigned, source, edge);
+    expect_vertex_and_edge_properties(move_assigned, source, edge);
 }
 
-TEST(GraphContainersTest, StaticGraphMoveRebindsVertexAndEdgeParents)
+TEST(GraphContainersTest, StaticGraphMoveKeepsVertexAndEdgeProperties)
 {
     const auto source = graphs::VertexIndex { 0 };
     const auto edge = graphs::EdgeIndex { 0 };
 
     auto moved = StaticGraph(make_static_builder());
     auto move_constructed = std::move(moved);
-    expect_vertex_and_edge_parents_rebound(move_constructed, source, edge);
+    expect_vertex_and_edge_properties(move_constructed, source, edge);
 
     auto move_assigned = StaticGraph();
     move_assigned = StaticGraph(make_static_builder());
-    expect_vertex_and_edge_parents_rebound(move_assigned, source, edge);
+    expect_vertex_and_edge_properties(move_assigned, source, edge);
 }
 
 TEST(GraphContainersTest, BulkStaticGraphMatchesBuilderOrderAndProperties)
@@ -283,15 +273,13 @@ TEST(GraphContainersTest, BulkStaticGraphMatchesBuilderOrderAndProperties)
     for (auto vertex : expected.get_vertex_indices())
     {
         EXPECT_EQ(graph.get_vertex(vertex), expected.get_vertex(vertex));
-        EXPECT_EQ(graph.get_vertex(vertex).get_property(), expected.get_vertex(vertex).get_property());
-        EXPECT_EQ(&graph.get_vertex(vertex).get_parent(), &graph);
+        EXPECT_EQ(graph.get_vertex_property(vertex), expected.get_vertex_property(vertex));
         EXPECT_EQ(materialize(graph.get_out_edge_indices(vertex)), materialize(expected.get_out_edge_indices(vertex)));
     }
     for (auto edge : expected.get_edge_indices())
     {
         EXPECT_EQ(graph.get_edge(edge), expected.get_edge(edge));
-        EXPECT_EQ(graph.get_edge(edge).get_property(), expected.get_edge(edge).get_property());
-        EXPECT_EQ(&graph.get_edge(edge).get_parent(), &graph);
+        EXPECT_EQ(graph.get_edge_property(edge), expected.get_edge_property(edge));
     }
 }
 
@@ -332,18 +320,18 @@ TEST(GraphContainersTest, CycleParentsSupportDenseAndSparseVertexIndices)
     EXPECT_NE(cycle[0], cycle[1]);
 }
 
-TEST(GraphContainersTest, DynamicGraphMoveRebindsVertexAndEdgeParents)
+TEST(GraphContainersTest, DynamicGraphMoveKeepsVertexAndEdgeProperties)
 {
     const auto source = graphs::VertexIndex { 0 };
     const auto edge = graphs::EdgeIndex { 0 };
 
     auto moved = make_dynamic_graph();
     auto move_constructed = std::move(moved);
-    expect_vertex_and_edge_parents_rebound(move_constructed, source, edge);
+    expect_vertex_and_edge_properties(move_constructed, source, edge);
 
     auto move_assigned = DynamicGraph();
     move_assigned = make_dynamic_graph();
-    expect_vertex_and_edge_parents_rebound(move_assigned, source, edge);
+    expect_vertex_and_edge_properties(move_assigned, source, edge);
 }
 
 TEST(GraphContainersTest, BidirectionalStaticGraphMoveRebindsBackwardView)

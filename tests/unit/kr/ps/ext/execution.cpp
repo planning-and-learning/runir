@@ -40,7 +40,7 @@ static_assert(flat_view_is_nothrow<kr::ps::icp::ExecutionRepository<tyr::GroundT
 static_assert(!indexed_access_is_nothrow<kr::ps::icp::ExecutionRepository<tyr::GroundTag>, kr::ps::icp::Histories>);
 
 template<typename Entity, tyr::TaskKind Kind>
-using View = urd::view<Entity, kr::ps::ext::ExecutionRepository<Kind>>;
+using View = urd::index_view<Entity, kr::ps::ext::ExecutionRepository<Kind>>;
 
 template<typename Entity, typename Kind>
 concept IndexedDataView = tyr::TaskKind<Kind> && std::constructible_from<urd::index<Entity>, ygg::uint_t> && std::totally_ordered<urd::index<Entity>>

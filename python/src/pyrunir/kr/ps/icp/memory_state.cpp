@@ -6,7 +6,7 @@
 #include <runir/kr/ps/icp/memory_state_view.hpp>
 #include <runir/kr/ps/icp/repository.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 namespace runir::kr::ps::icp
 {
@@ -15,7 +15,7 @@ void bind_memory_state(nb::module_& m, RepositoryBinding& repository)
 {
     using T = MemoryState;
     using Data = urd::data<T>;
-    using View = urd::view<T, Repository>;
+    using View = urd::index_view<T, Repository>;
     urd::python::bind_index<urd::index<T>>(m, "MemoryStateIndex");
     auto data = nb::class_<Data>(m, "MemoryStateData")
                     .def(nb::init<>())

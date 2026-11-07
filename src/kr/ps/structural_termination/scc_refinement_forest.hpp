@@ -14,7 +14,7 @@
 #include <algorithm>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
-#include <boost/dynamic_bitset.hpp>
+#include <urd/repr/values/dense_set.hpp>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
@@ -212,21 +212,16 @@ private:
 
     static void validate_partition(std::span<const std::size_t> parent, std::span<const urd::Store<urd::sequence<std::size_t>>> children)
     {
-        auto expected = boost::dynamic_bitset<>(parent.empty() ? 0 : (*std::max_element(parent.begin(), parent.end()) + 1));
-        for (const auto memory_position : parent)
-            expected.set(memory_position);
-
-        auto actual = boost::dynamic_bitset<>(expected.size());
+        using Positions = urd::Store<urd::set<std::size_t>, urd::dense>;
+        const auto expected = Positions(parent.begin(), parent.end());
+        auto actual = Positions();
         for (const auto& child : children)
         {
             if (child.empty())
                 throw std::invalid_argument("an SCC refinement child cannot be empty");
             for (const auto memory_position : child)
-            {
-                if (memory_position >= actual.size() || actual.test(memory_position))
+                if (!expected.contains(memory_position) || !actual.insert(memory_position).second)
                     throw std::invalid_argument("SCC refinement children are not a disjoint subset of their parent");
-                actual.set(memory_position);
-            }
         }
         if (actual != expected)
             throw std::invalid_argument("SCC refinement children do not partition their parent");

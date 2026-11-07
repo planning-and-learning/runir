@@ -601,7 +601,7 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
         [](auto rule)
         {
             using View = std::decay_t<decltype(rule)>;
-            using Expected = urd::view<kr::ps::ext::Rule<kr::ps::ext::LoadTag<kr::dl::ConceptTag>>, kr::ps::ext::Repository>;
+            using Expected = urd::index_view<kr::ps::ext::Rule<kr::ps::ext::LoadTag<kr::dl::ConceptTag>>, kr::ps::ext::Repository>;
             if constexpr (std::same_as<View, Expected>)
                 return ygg::uint_t(rule.get_register().get_identifier().value) == 0 && rule.get_conditions().size() == 1;
             else
@@ -618,7 +618,7 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
         [](auto rule)
         {
             using View = std::decay_t<decltype(rule)>;
-            using Expected = urd::view<kr::ps::ext::Rule<kr::ps::ext::DoTag>, kr::ps::ext::Repository>;
+            using Expected = urd::index_view<kr::ps::ext::Rule<kr::ps::ext::DoTag>, kr::ps::ext::Repository>;
             if constexpr (std::same_as<View, Expected>)
                 return rule.get_action_name() == "pick" && rule.get_action_arguments().size() == 3 && rule.get_effects().size() == 1;
             else
@@ -711,7 +711,7 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
         [](auto child)
         {
             using View = std::decay_t<decltype(child)>;
-            using Expected = urd::view<kr::dl::Concept<kr::dl::ArgumentTag<kr::dl::ConceptTag>>, kr::dl::ConstructorRepository>;
+            using Expected = urd::index_view<kr::dl::Concept<kr::dl::ArgumentTag<kr::dl::ConceptTag>>, kr::dl::ConstructorRepository>;
             if constexpr (std::same_as<View, Expected>)
                 return ygg::uint_t(child.get_argument().get_identifier().value) == 0;
             else
@@ -727,7 +727,7 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
         [](auto child)
         {
             using View = std::decay_t<decltype(child)>;
-            using Expected = urd::view<kr::dl::Concept<kr::dl::RegisterTag>, kr::dl::ConstructorRepository>;
+            using Expected = urd::index_view<kr::dl::Concept<kr::dl::RegisterTag>, kr::dl::ConstructorRepository>;
             if constexpr (std::same_as<View, Expected>)
                 return ygg::uint_t(child.get_register().get_identifier().value) == 1;
             else
@@ -743,7 +743,7 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
         [](auto child)
         {
             using View = std::decay_t<decltype(child)>;
-            using Expected = urd::view<kr::dl::Role<kr::dl::ArgumentTag<kr::dl::RoleTag>>, kr::dl::ConstructorRepository>;
+            using Expected = urd::index_view<kr::dl::Role<kr::dl::ArgumentTag<kr::dl::RoleTag>>, kr::dl::ConstructorRepository>;
             if constexpr (std::same_as<View, Expected>)
                 return ygg::uint_t(child.get_argument().get_identifier().value) == 0;
             else

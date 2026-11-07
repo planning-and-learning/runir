@@ -7,7 +7,7 @@
 #include <runir/datasets/formatter.hpp>
 #include <runir/datasets/state_graph.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 namespace runir::datasets
 {

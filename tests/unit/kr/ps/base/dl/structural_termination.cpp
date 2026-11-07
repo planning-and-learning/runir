@@ -23,8 +23,8 @@ namespace
 auto counterexample_rules(const kr::ps::base::dl::SieveStructuralTerminationResult& sieve) -> std::set<urd::index<kr::ps::Rule<kr::BaseFamilyTag>>>
 {
     auto rules = std::set<urd::index<kr::ps::Rule<kr::BaseFamilyTag>>> {};
-    for (const auto& edge : sieve.counterexample->get_edges())
-        rules.insert(edge.get_property().index());
+    for (const auto edge : sieve.counterexample->get_edge_indices())
+        rules.insert(sieve.counterexample->get_edge_property(edge).index());
     auto surviving = std::set<urd::index<kr::ps::Rule<kr::BaseFamilyTag>>> {};
     for (const auto rule : sieve.surviving_rules)
         surviving.insert(rule.index());

@@ -42,7 +42,7 @@ concept StoredType = requires {
 };
 
 template<typename T, typename Repository>
-concept ViewableType = StoredType<T> && requires { sizeof(urd::view<T, Repository>); };
+concept ViewableType = StoredType<T> && requires { sizeof(urd::index_view<T, Repository>); };
 
 template<typename Repository, typename... Types>
 consteval bool usable_inventory(boost::mp11::mp_list<Types...>)
@@ -71,7 +71,7 @@ static_assert(usable_inventory<BaseCustomRepository>(BaseCustomTypes {}));
 static_assert(usable_inventory<UnsCustomRepository>(UnsCustomTypes {}));
 static_assert(usable_inventory<kr::ps::ext::Repository>(kr::ps::PsCoreTypes<kr::BaseFamilyTag> {}));
 
-using BaseFeatureInExt = urd::view<kr::ps::Feature<kr::BaseFamilyTag, kr::dl::BooleanTag>, kr::ps::ext::Repository>;
+using BaseFeatureInExt = urd::index_view<kr::ps::Feature<kr::BaseFamilyTag, kr::dl::BooleanTag>, kr::ps::ext::Repository>;
 static_assert(requires(BaseFeatureInExt feature) {
     feature.get_symbol();
     feature.get_variant();
@@ -88,13 +88,13 @@ struct BaseFeatureStorage
     [[nodiscard]] decltype(auto) operator[](urd::index<T> index) const
     { return (*repository)[index]; }
     template<typename T>
-    [[nodiscard]] urd::view<T, BaseFeatureStorage> view(urd::index<T> index) const
-    { return { index, *this }; }
+    [[nodiscard]] urd::index_view<T, BaseFeatureStorage> view(urd::index<T> index) const
+    { return { index, this }; }
 };
 
 template<typename Type, typename Repository, typename Context>
 concept CanEvaluate =
-    StoredType<Type> && requires(urd::view<Type, Repository>& view, Context& context) { kr::ps::evaluate<tyr::GroundTag>(view, context); };
+    StoredType<Type> && requires(urd::index_view<Type, Repository>& view, Context& context) { kr::ps::evaluate<tyr::GroundTag>(view, context); };
 
 using BaseStateContext = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
 using UnsStateContext = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
@@ -122,7 +122,7 @@ static_assert(!StoredType<BooleanDecreases>);
 static_assert(!CanEvaluate<InvalidFeature, BaseCustomRepository, BaseStateContext>);
 
 template<typename Kind, typename Type, typename Repository, typename Context>
-concept CanCheckCompatibility = requires(urd::view<Type, Repository> view, Context& context) {
+concept CanCheckCompatibility = requires(urd::index_view<Type, Repository> view, Context& context) {
     { kr::ps::is_compatible_with<Kind>(view, context) } -> std::same_as<bool>;
 };
 
@@ -157,7 +157,7 @@ static_assert(observation_contracts<kr::IcpFamilyTag, kr::ps::icp::Repository>()
 static_assert(observation_contracts<kr::UnsFamilyTag, UnsCustomRepository>());
 
 // Compile the implementation body as well as checking its callable signature.
-[[maybe_unused]] bool check_custom_uns_condition(urd::view<UnsPositive, UnsCustomRepository> condition, UnsStateContext& context)
+[[maybe_unused]] bool check_custom_uns_condition(urd::index_view<UnsPositive, UnsCustomRepository> condition, UnsStateContext& context)
 { return kr::ps::is_compatible_with<tyr::GroundTag>(condition, context); }
 
 }  // namespace

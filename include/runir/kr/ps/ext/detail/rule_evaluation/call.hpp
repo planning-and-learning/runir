@@ -54,7 +54,7 @@ private:
         auto state_context =
             context.environment->make_call_context(planning_state, state.get_module_state().get_arguments(), state.get_module_state().get_registers());
         rule.for_each_call_argument(
-            [&]<typename FeatureTag, typename FC>(urd::view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>, FC> argument)
+            [&]<typename FeatureTag, typename FC>(urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>, FC> argument)
             {
                 const auto denotation = evaluate<Kind>(argument.get_expression(), state_context);
                 if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)

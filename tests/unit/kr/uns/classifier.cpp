@@ -23,7 +23,7 @@ namespace
 {
 
 template<typename Entity>
-using View = urd::view<Entity, kr::uns::Repository>;
+using View = urd::index_view<Entity, kr::uns::Repository>;
 
 template<typename Entity>
 concept IndexedDataView = std::constructible_from<urd::index<Entity>, ygg::uint_t> && std::totally_ordered<urd::index<Entity>>

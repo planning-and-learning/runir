@@ -15,7 +15,7 @@ namespace runir::kr::uns
 // The DNF is an OR over clauses of an AND over literals: an empty OR evaluates to false and an
 // empty AND evaluates to true.
 template<tyr::TaskKind Kind, typename C, runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context>
-bool classify(urd::view<runir::kr::uns::Classifier, C> classifier, Context& context)
+bool classify(urd::index_view<runir::kr::uns::Classifier, C> classifier, Context& context)
 {
     for (auto clause : classifier.get_clauses())
     {

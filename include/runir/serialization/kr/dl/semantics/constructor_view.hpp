@@ -22,15 +22,15 @@ namespace ygg::serialization
 {
 
 template<typename Archive, typename C>
-void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::dl::QueryColumn, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::dl::QueryColumn, C>>)
 {
     ar.field("name", [](const auto& value) -> decltype(auto) { return (value.get_name()); });
 }
 
 template<typename Archive, typename Tag, typename C>
-void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::dl::Query<Tag>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::dl::Query<Tag>, C>>)
 {
-    using Value = urd::view<runir::kr::dl::Query<Tag>, C>;
+    using Value = urd::index_view<runir::kr::dl::Query<Tag>, C>;
 
     if constexpr (std::same_as<Tag, void>)
         ar.variant([](const auto& value) -> decltype(auto) { return (value.get_variant()); });
@@ -65,7 +65,7 @@ void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::dl::Qu
 }
 
 template<typename Archive, runir::kr::dl::ConceptOrRoleTag Category, typename C>
-void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::dl::QueryProjection<Category>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::dl::QueryProjection<Category>, C>>)
 {
     ar.field("columns", [](const auto& value) -> decltype(auto) { return (value.get_columns()); });
     ar.field("arg", [](const auto& value) -> decltype(auto) { return (value.get_arg()); });
@@ -73,9 +73,9 @@ void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::dl::Qu
 
 template<typename Archive, typename Tag, typename C>
     requires runir::kr::dl::BooleanConstructorTag<Tag>
-void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::dl::Boolean<Tag>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::dl::Boolean<Tag>, C>>)
 {
-    using Value = urd::view<runir::kr::dl::Boolean<Tag>, C>;
+    using Value = urd::index_view<runir::kr::dl::Boolean<Tag>, C>;
 
     if constexpr (requires(const Value& value) { value.get_predicate(); })
         ar.field("predicate", [](const auto& value) -> decltype(auto) { return (value.get_predicate()); });
@@ -95,9 +95,9 @@ void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::dl::Bo
 
 template<typename Archive, typename Tag, typename C>
     requires runir::kr::dl::ConceptConstructorTag<Tag>
-void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::dl::Concept<Tag>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::dl::Concept<Tag>, C>>)
 {
-    using Value = urd::view<runir::kr::dl::Concept<Tag>, C>;
+    using Value = urd::index_view<runir::kr::dl::Concept<Tag>, C>;
 
     if constexpr (requires(const Value& value) { value.get_predicate(); })
         ar.field("predicate", [](const auto& value) -> decltype(auto) { return (value.get_predicate()); });
@@ -127,9 +127,9 @@ void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::dl::Co
 
 template<typename Archive, typename Tag, typename C>
     requires runir::kr::dl::NumericalConstructorTag<Tag>
-void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::dl::Numerical<Tag>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::dl::Numerical<Tag>, C>>)
 {
-    using Value = urd::view<runir::kr::dl::Numerical<Tag>, C>;
+    using Value = urd::index_view<runir::kr::dl::Numerical<Tag>, C>;
 
     if constexpr (requires(const Value& value) { value.get_argument(); })
         ar.field("argument", [](const auto& value) -> decltype(auto) { return (value.get_argument()); });
@@ -147,9 +147,9 @@ void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::dl::Nu
 
 template<typename Archive, typename Tag, typename C>
     requires runir::kr::dl::RoleConstructorTag<Tag>
-void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::dl::Role<Tag>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::dl::Role<Tag>, C>>)
 {
-    using Value = urd::view<runir::kr::dl::Role<Tag>, C>;
+    using Value = urd::index_view<runir::kr::dl::Role<Tag>, C>;
 
     if constexpr (requires(const Value& value) { value.get_predicate(); })
         ar.field("predicate", [](const auto& value) -> decltype(auto) { return (value.get_predicate()); });
@@ -168,7 +168,7 @@ void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::dl::Ro
 }
 
 template<typename Archive, runir::kr::dl::CategoryTag Category, typename C>
-void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::dl::Constructor<Category>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::dl::Constructor<Category>, C>>)
 {
     ar.variant([](const auto& value) -> decltype(auto) { return (value.get_variant()); });
 }

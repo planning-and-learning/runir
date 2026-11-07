@@ -19,8 +19,8 @@ namespace
 template<typename T, typename Repository>
 concept IndexedDataView =
     std::constructible_from<urd::index<T>, ygg::uint_t> && urd::Identifiable<urd::index<T>> && urd::Identifiable<urd::data<T>>
-    && urd::Identifiable<urd::view<T, Repository>> && std::totally_ordered<urd::index<T>> && std::totally_ordered<urd::data<T>>
-    && std::totally_ordered<urd::view<T, Repository>> && requires(urd::data<T>& data, const urd::view<T, Repository>& view) {
+    && urd::Identifiable<urd::index_view<T, Repository>> && std::totally_ordered<urd::index<T>> && std::totally_ordered<urd::data<T>>
+    && std::totally_ordered<urd::index_view<T, Repository>> && requires(urd::data<T>& data, const urd::index_view<T, Repository>& view) {
            data.index;
            view.index();
        };
@@ -39,7 +39,7 @@ using ScalarDenotations = boost::mp11::mp_list<Denotation<kr::dl::BooleanTag>, D
 template<typename T>
 consteval bool scalar_denotation()
 {
-    return requires(urd::data<T>& data, const urd::builder<T>& builder, const urd::view<T, kr::dl::semantics::DenotationRepository>& view) {
+    return requires(urd::data<T>& data, const urd::builder<T>& builder, const urd::index_view<T, kr::dl::semantics::DenotationRepository>& view) {
         data.value;
         builder.get();
         view.value();
@@ -54,7 +54,7 @@ consteval bool scalar_denotations(boost::mp11::mp_list<Ts...>)
 template<typename... Categories>
 consteval bool view_aliases(boost::mp11::mp_list<Categories...>)
 {
-    return (std::same_as<kr::dl::semantics::DenotationView<Categories>, urd::view<Denotation<Categories>, kr::dl::semantics::DenotationRepository>>
+    return (std::same_as<kr::dl::semantics::DenotationView<Categories>, urd::index_view<Denotation<Categories>, kr::dl::semantics::DenotationRepository>>
             && ...);
 }
 
@@ -91,7 +91,7 @@ static_assert(requires(urd::data<Role>& data, const urd::builder<Role>& builder,
 });
 static_assert(view_aliases(kr::dl::CategoryTags {}));
 static_assert(
-    std::same_as<kr::dl::semantics::ConceptDenotationView, urd::view<Denotation<kr::dl::ConceptTag>, kr::dl::semantics::DenotationRepository>>);
+    std::same_as<kr::dl::semantics::ConceptDenotationView, urd::index_view<Denotation<kr::dl::ConceptTag>, kr::dl::semantics::DenotationRepository>>);
 
 }  // namespace
 

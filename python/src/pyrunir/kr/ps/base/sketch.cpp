@@ -19,7 +19,7 @@
 #include <runir/kr/ps/dl/transition_evaluation_context.hpp>
 #include <vector>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 namespace runir::kr::ps::base
 {
@@ -29,7 +29,7 @@ void bind_sketch(nb::module_& m, RepositoryBinding& repository)
     using namespace nb::literals;
     using T = Sketch;
     using Data = urd::data<T>;
-    using View = urd::view<T, Repository>;
+    using View = urd::index_view<T, Repository>;
     using GroundContext = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>;
     using LiftedContext = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
 
@@ -46,9 +46,9 @@ void bind_sketch(nb::module_& m, RepositoryBinding& repository)
                          "boolean_features"_a,
                          "numerical_features"_a,
                          "rules"_a)
-                    .def(urd::python::init_from_views<const urd::Store<urd::sequence<urd::view<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>, Repository>>>&,
-                                  const urd::Store<urd::sequence<urd::view<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>, Repository>>>&,
-                                  const urd::Store<urd::sequence<urd::view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, Repository>>>&>(),
+                    .def(urd::python::init_from_views<const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>, Repository>>>&,
+                                  const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>, Repository>>>&,
+                                  const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, Repository>>>&>(),
                          "boolean_features"_a,
                          "numerical_features"_a,
                          "rules"_a)

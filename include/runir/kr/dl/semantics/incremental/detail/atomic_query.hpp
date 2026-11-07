@@ -40,7 +40,7 @@ class AtomicQueryEvaluator
 
 public:
     template<typename C>
-    explicit AtomicQueryEvaluator(urd::view<Query<AtomicStateTag<Fact>>, C> query);
+    explicit AtomicQueryEvaluator(urd::index_view<Query<AtomicStateTag<Fact>>, C> query);
 
     /// Replace the baseline from a completed state, retaining buffers and clearing the last delta.
     template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> State>
@@ -60,7 +60,7 @@ public:
 template<tyr::formalism::FactKind Fact>
     requires(std::same_as<Fact, tyr::formalism::FluentTag> || std::same_as<Fact, tyr::formalism::DerivedTag>)
 template<typename C>
-AtomicQueryEvaluator<Fact>::AtomicQueryEvaluator(urd::view<Query<AtomicStateTag<Fact>>, C> query) :
+AtomicQueryEvaluator<Fact>::AtomicQueryEvaluator(urd::index_view<Query<AtomicStateTag<Fact>>, C> query) :
     m_predicate(query.get_predicate()),
     m_result(query.get_schema().span()),
     m_delta(query.get_schema().span())

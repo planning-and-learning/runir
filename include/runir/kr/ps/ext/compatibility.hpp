@@ -15,11 +15,11 @@ namespace runir::kr::ps::ext
 using runir::kr::ps::is_compatible_with;
 
 template<tyr::TaskKind Kind, RuleKind Tag, typename C, CompatibilityContext<ExtFamilyTag, Kind> Context>
-bool conditions_are_compatible(urd::view<Rule<Tag>, C> rule, Context& context)
+bool conditions_are_compatible(urd::index_view<Rule<Tag>, C> rule, Context& context)
 { return all_compatible<Kind, ExtFamilyTag>(rule.get_conditions(), context); }
 
 template<tyr::TaskKind Kind, RuleKind RuleKindT, typename C, ProgramStateViewConcept<Kind> S>
-bool has_current_source(urd::view<Rule<RuleKindT>, C> rule, S state)
+bool has_current_source(urd::index_view<Rule<RuleKindT>, C> rule, S state)
 { return rule.get_source() == state.get_module_state().get_memory_state(); }
 
 // Reject the source memory before evaluating conditions in the reusable environment.
@@ -29,7 +29,7 @@ template<tyr::TaskKind Kind,
          ProgramStateViewConcept<Kind> S,
          tyr::planning::StateViewConcept<Kind> PS,
          runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
-bool rule_is_applicable(urd::view<Rule<RuleKindT>, C> rule,
+bool rule_is_applicable(urd::index_view<Rule<RuleKindT>, C> rule,
                         S state,
                         const PS& planning_state,
                         EvaluationEnvironment<Kind, EvaluationPolicy>& environment)
@@ -42,7 +42,7 @@ bool rule_is_applicable(urd::view<Rule<RuleKindT>, C> rule,
 }
 
 template<tyr::TaskKind Kind, RuleKind Tag, typename C, runir::kr::ps::dl::TransitionEvaluationContextConcept<ExtFamilyTag, Kind> Context>
-bool is_compatible_with(urd::view<Rule<Tag>, C> rule, Context& context)
+bool is_compatible_with(urd::index_view<Rule<Tag>, C> rule, Context& context)
 {
     if (!conditions_are_compatible<Kind>(rule, context))
         return false;
@@ -54,7 +54,7 @@ bool is_compatible_with(urd::view<Rule<Tag>, C> rule, Context& context)
 }
 
 template<tyr::TaskKind Kind, typename C, runir::kr::ps::dl::TransitionEvaluationContextConcept<ExtFamilyTag, Kind> Context>
-bool is_compatible_with(urd::view<ps::Rule<ExtFamilyTag>, C> rule, Context& context)
+bool is_compatible_with(urd::index_view<ps::Rule<ExtFamilyTag>, C> rule, Context& context)
 {
     return std::visit([&](auto child) { return runir::kr::ps::ext::is_compatible_with<Kind>(child, context); }, rule.get_variant());
 }

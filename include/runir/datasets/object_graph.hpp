@@ -37,7 +37,7 @@ using ObjectGraphBuilder = graphs::StaticGraphBuilder<ColorView, std::tuple<>>;
 
 using ObjectGraph = graphs::StaticGraph<ColorView, std::tuple<>>;
 
-inline auto get_vertex_color(graphs::Vertex<ObjectGraph, ColorView> vertex) -> urd::index<Color> { return vertex.get_property().index(); }
+inline auto get_vertex_color(const ObjectGraph& graph, graphs::VertexIndex vertex) -> urd::index<Color> { return graph.get_vertex_property(vertex).index(); }
 
 template<tyr::TaskKind Kind>
 auto create_object_graph(tyr::planning::StateView<Kind> state, ColorRepository& repository) -> std::unique_ptr<ObjectGraph>;

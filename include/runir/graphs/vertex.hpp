@@ -3,17 +3,14 @@
 
 #include "runir/graphs/declarations.hpp"
 
-#include <cassert>
-#include <tuple>
-
 namespace runir::graphs
 {
 
-template<typename G, Property P>
-class Vertex : public urd::compared_by_identity<Vertex<G, P>>
+/// A vertex: its index and its property's index in its graph's property pool (the graph's get_vertex_property).
+template<Property P>
+class Vertex : public urd::compared_by_identity<Vertex<P>>
 {
 private:
-    const G* m_graph;
     VertexIndex m_index;
     VertexPropertyIndex<P> m_property;
 
@@ -21,17 +18,10 @@ public:
     using PropertyType = P;
     using PropertyIndexType = VertexPropertyIndex<P>;
 
-    Vertex(VertexIndex index, PropertyIndexType property, const G& graph) noexcept : m_graph(&graph), m_index(index), m_property(property) {}
-
-    [[nodiscard]] auto get_parent() const noexcept -> const G&
-    {
-        assert(m_graph);
-        return *m_graph;
-    }
+    Vertex(VertexIndex index, PropertyIndexType property) noexcept : m_index(index), m_property(property) {}
 
     [[nodiscard]] auto get_index() const noexcept -> VertexIndex { return m_index; }
     [[nodiscard]] auto get_property_index() const noexcept -> PropertyIndexType { return m_property; }
-    [[nodiscard]] auto get_property() const noexcept -> const P& { return get_parent().get_vertex_property(m_property); }
 
     static constexpr auto identifying_members() noexcept { return urd::Members<&Vertex::m_index, &Vertex::m_property> {}; }
 };

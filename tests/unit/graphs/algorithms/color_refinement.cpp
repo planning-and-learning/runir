@@ -5,7 +5,8 @@
 #include <atomic>
 #include <boost/json.hpp>
 #include <gtest/gtest.h>
-#include <runir/graphs/algorithms.hpp>
+#include <runir/graphs/algorithms/color_refinement.hpp>
+#include <runir/graphs/algorithms/weisfeiler_leman.hpp>
 #include <runir/graphs/algorithms/nauty.hpp>
 #include <runir/graphs/properties.hpp>
 #include <runir/graphs/static_graph.hpp>
@@ -37,7 +38,7 @@ struct VertexColor : urd::compared_by_identity<VertexColor>
 using GraphBuilder = graphs::StaticGraphBuilder<VertexColor>;
 using Graph = graphs::StaticGraph<VertexColor>;
 
-auto get_vertex_color(graphs::Vertex<Graph, VertexColor> vertex) -> ygg::uint_t { return vertex.get_property().value; }
+auto get_vertex_color(const Graph& graph, graphs::VertexIndex vertex) -> ygg::uint_t { return graph.get_vertex_property(vertex).value; }
 
 auto graph_cases() -> const boost::json::array&
 {
@@ -106,10 +107,10 @@ TEST(RunirTests, GraphFixtureCertificatesMatch)
         const auto& pair = ygg::common::as_object(value, "certificate_pair");
         const auto left = make_graph(find_graph_case(ygg::common::as_string(pair, "left", "certificate_pair")));
         const auto right = make_graph(find_graph_case(ygg::common::as_string(pair, "right", "certificate_pair")));
-        const auto left_cr = graphs::algorithms::color_refinement_certificate(left);
-        const auto right_cr = graphs::algorithms::color_refinement_certificate(right);
-        const auto left_wl2 = graphs::algorithms::weisfeiler_leman_2_certificate(left);
-        const auto right_wl2 = graphs::algorithms::weisfeiler_leman_2_certificate(right);
+        const auto left_cr = graphs::color_refinement::compute_certificate(left);
+        const auto right_cr = graphs::color_refinement::compute_certificate(right);
+        const auto left_wl2 = graphs::weisfeiler_leman::compute_certificate<2>(left);
+        const auto right_wl2 = graphs::weisfeiler_leman::compute_certificate<2>(right);
 
         EXPECT_EQ(left_cr.get_round_summaries() == right_cr.get_round_summaries(), ygg::common::as_bool(pair, "color_refinement_equal", "certificate_pair"));
         EXPECT_EQ(left_cr.get_colors() == right_cr.get_colors(), ygg::common::as_bool(pair, "color_refinement_colors_equal", "certificate_pair"));

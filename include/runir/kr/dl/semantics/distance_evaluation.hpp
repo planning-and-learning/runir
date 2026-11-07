@@ -148,7 +148,7 @@ heuristics::KeyedProjectionHeuristic& must_pass_heuristic(MustPassFeature& featu
 /// The must-pass probe objects of every key, from the state alone (full evaluation): sources, targets, probes and the
 /// edge query's slots are evaluated in the state, and the edges are explored on demand.
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
-void on_demand_must_pass(urd::view<Query<QueryMustPassTag>, C> constructor, Context& context, urd::builder<ygg::database::Relation>& result)
+void on_demand_must_pass(urd::index_view<Query<QueryMustPassTag>, C> constructor, Context& context, urd::builder<ygg::database::Relation>& result)
 {
     auto children = context.child_context();
     const auto sources = evaluate<Kind>(constructor.get_sources(), children);

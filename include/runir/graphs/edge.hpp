@@ -3,17 +3,14 @@
 
 #include "runir/graphs/declarations.hpp"
 
-#include <cassert>
-#include <tuple>
-
 namespace runir::graphs
 {
 
-template<typename G, Property P>
-class Edge : public urd::compared_by_identity<Edge<G, P>>
+/// An edge: its index, endpoints, and its property's index in its graph's property pool (the graph's get_edge_property).
+template<Property P>
+class Edge : public urd::compared_by_identity<Edge<P>>
 {
 private:
-    const G* m_graph;
     EdgeIndex m_index;
     VertexIndex m_source;
     VertexIndex m_target;
@@ -23,8 +20,7 @@ public:
     using PropertyType = P;
     using PropertyIndexType = EdgePropertyIndex<P>;
 
-    Edge(EdgeIndex index, VertexIndex source, VertexIndex target, PropertyIndexType property, const G& graph) noexcept :
-        m_graph(&graph),
+    Edge(EdgeIndex index, VertexIndex source, VertexIndex target, PropertyIndexType property) noexcept :
         m_index(index),
         m_source(source),
         m_target(target),
@@ -32,17 +28,10 @@ public:
     {
     }
 
-    [[nodiscard]] auto get_parent() const noexcept -> const G&
-    {
-        assert(m_graph);
-        return *m_graph;
-    }
-
     [[nodiscard]] auto get_index() const noexcept -> EdgeIndex { return m_index; }
     [[nodiscard]] auto get_source() const noexcept -> VertexIndex { return m_source; }
     [[nodiscard]] auto get_target() const noexcept -> VertexIndex { return m_target; }
     [[nodiscard]] auto get_property_index() const noexcept -> PropertyIndexType { return m_property; }
-    [[nodiscard]] auto get_property() const noexcept -> const P& { return get_parent().get_edge_property(m_property); }
 
     static constexpr auto identifying_members() noexcept { return urd::Members<&Edge::m_index, &Edge::m_source, &Edge::m_target, &Edge::m_property> {}; }
 };

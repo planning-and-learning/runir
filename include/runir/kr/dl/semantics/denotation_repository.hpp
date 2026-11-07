@@ -16,6 +16,7 @@
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <yggdrasil/core/config.hpp>
+#include <yggdrasil/core/index_sequence.hpp>
 #include <urd/config.hpp>
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/database/semantics/relation_repository.hpp>
@@ -31,12 +32,10 @@ class DenotationRepositoryFactory
 
 private:
     // Copies share identity sequences, including factories retained by repositories.
-    std::shared_ptr<size_t> m_next_index;
+    ygg::IndexSequence m_indices;
     ygg::database::RelationRepositoryFactory m_relation_factory;
 
 public:
-    DenotationRepositoryFactory() : m_next_index(std::make_shared<size_t>(0)) {}
-
     DenotationRepository create(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository);
     DenotationRepositoryPtr create_shared(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository);
 };
@@ -68,7 +67,7 @@ public:
     DenotationRepository& operator=(DenotationRepository&&) = delete;
 
     [[nodiscard]] const auto& get_index() const noexcept { return m_index; }
-    /// The repository's number, as urd::view asks of a context.
+    /// The repository's number, as urd's views ask of a context.
     [[nodiscard]] std::size_t layer() const noexcept { return m_index; }
     [[nodiscard]] auto get_factory() const noexcept { return m_factory; }
     [[nodiscard]] const tyr::formalism::planning::Repository& get_formalism_repository() const noexcept
@@ -98,8 +97,8 @@ public:
     /// An index as its view here (urd's resolves contract).
     template<typename T>
         requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
-    [[nodiscard]] urd::view<T, DenotationRepository> view(urd::index<T> index) const noexcept
-    { return { index, *this }; }
+    [[nodiscard]] urd::index_view<T, DenotationRepository> view(urd::index<T> index) const noexcept
+    { return { index, this }; }
 
     [[nodiscard]] const auto& get_vector_repository() const noexcept { return m_vector_repository; }
     auto& get_vector_repository() noexcept { return m_vector_repository; }

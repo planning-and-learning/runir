@@ -1,5 +1,4 @@
 #include "module.hpp"
-#include <yggdrasil/python/type_casters.hpp>
 
 #include "pyrunir/datasets/module.hpp"
 #include "pyrunir/graphs/module.hpp"

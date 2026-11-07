@@ -62,9 +62,9 @@ auto compute_goal_distances(const G& graph, const graphs::VertexIndexList& goal_
         {
             auto weights = urd::Store<urd::sequence<ygg::float_t>>(graph.get_num_edges(), 0);
             for (auto edge : graph.get_edge_indices())
-                weights[edge] = graph.get_edge(edge).get_property().cost;
+                weights[edge] = graph.get_edge_property(edge).cost;
 
-            const auto [predecessors, distances] = graphs::bgl::dijkstra_shortest_paths(graph, weights, goal_vertices);
+            const auto [predecessors, distances] = graphs::bgl::dijkstra_shortest_paths<G, ygg::float_t>(graph, weights, goal_vertices);
             static_cast<void>(predecessors);
             return distances;
         }
@@ -123,7 +123,7 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kin
 
     for (auto vertex_index : forward_graph.get_vertex_indices())
     {
-        const auto state = forward_graph.get_vertex(vertex_index).get_property().state.unpack();
+        const auto state = forward_graph.get_vertex_property(vertex_index).state.unpack();
         is_goal[vertex_index] = static_goal_satisfied && goal_strategy.is_dynamic_goal_satisfied(initial_state, state);
         if (is_goal[vertex_index])
             goal_vertices.push_back(vertex_index);
@@ -134,7 +134,7 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kin
     auto builder = AnnotatedStateGraphBuilder<Kind> {};
     for (auto vertex_index : forward_graph.get_vertex_indices())
     {
-        const auto& state = forward_graph.get_vertex(vertex_index).get_property().state;
+        const auto& state = forward_graph.get_vertex_property(vertex_index).state;
         const auto is_alive = goal_distance[vertex_index] != std::numeric_limits<ygg::float_t>::infinity();
         [[maybe_unused]] const auto added = builder.add_vertex(AnnotatedStateGraphVertexLabel<Kind> { state,
                                                                                                       goal_distance[vertex_index],
@@ -148,7 +148,7 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kin
     for (auto edge_index : forward_graph.get_edge_indices())
     {
         const auto& edge = forward_graph.get_edge(edge_index);
-        builder.add_directed_edge(edge.get_source(), edge.get_target(), edge.get_property());
+        builder.add_directed_edge(edge.get_source(), edge.get_target(), forward_graph.get_edge_property(edge_index));
     }
 
     return std::make_unique<AnnotatedStateGraph<Kind>>(std::move(builder));

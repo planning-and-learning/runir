@@ -12,7 +12,7 @@ namespace runir::kr::ps::base
 {
 
 template<typename C>
-std::size_t syntactic_complexity(urd::view<runir::kr::ps::base::Sketch, C> view)
+std::size_t syntactic_complexity(urd::index_view<runir::kr::ps::base::Sketch, C> view)
 {
     auto result = std::size_t { 0 };
     for (auto feature : view.template get_features<runir::kr::dl::BooleanTag>())

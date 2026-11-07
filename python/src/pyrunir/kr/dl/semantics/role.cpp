@@ -7,7 +7,7 @@
 #include <runir/kr/dl/semantics/role_view.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 namespace runir::kr::dl
 {
@@ -40,7 +40,7 @@ template<typename Tag>
 void bind_role_view(nb::module_& m, const char* name)
 {
     using Type = Role<Tag>;
-    using View = urd::view<Type, ConstructorRepository>;
+    using View = urd::index_view<Type, ConstructorRepository>;
     auto cls = nb::class_<View>(m, name).def("get_index", &View::index);
     ygg::add_print(cls);
     urd::python::add_comparison(cls);

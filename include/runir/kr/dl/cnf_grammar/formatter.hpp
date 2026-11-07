@@ -34,7 +34,7 @@ urd::Store<urd::sequence<std::string>> quoted_object_names(Objects objects)
 
 template<typename Tag, typename C>
     requires runir::kr::dl::ConceptConstructorTag<Tag>
-std::string concept_constructor(urd::view<Concept<Tag>, C> view)
+std::string concept_constructor(urd::index_view<Concept<Tag>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::BotTag>)
         return fmt::format("{}", runir::kr::dl::BotTag::keyword);
@@ -91,7 +91,7 @@ std::string concept_constructor(urd::view<Concept<Tag>, C> view)
 
 template<typename Tag, typename C>
     requires runir::kr::dl::RoleConstructorTag<Tag>
-std::string role(urd::view<Role<Tag>, C> view)
+std::string role(urd::index_view<Role<Tag>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::UniversalTag>)
         return fmt::format("{}", runir::kr::dl::UniversalTag::keyword);
@@ -132,7 +132,7 @@ std::string role(urd::view<Role<Tag>, C> view)
 
 template<typename Tag, typename C>
     requires runir::kr::dl::BooleanConstructorTag<Tag>
-std::string boolean_constructor(urd::view<Boolean<Tag>, C> view)
+std::string boolean_constructor(urd::index_view<Boolean<Tag>, C> view)
 {
     if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
         return fmt::format("{} {} {}",
@@ -156,7 +156,7 @@ std::string boolean_constructor(urd::view<Boolean<Tag>, C> view)
 
 template<typename Tag, typename C>
     requires runir::kr::dl::NumericalConstructorTag<Tag>
-std::string numerical(urd::view<Numerical<Tag>, C> view)
+std::string numerical(urd::index_view<Numerical<Tag>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::CountTag>)
         return fmt::format("{} {}", runir::kr::dl::CountTag::keyword, view.get_arg());
@@ -172,22 +172,22 @@ std::string numerical(urd::view<Numerical<Tag>, C> view)
 
 template<typename Tag, typename C>
     requires runir::kr::dl::ConceptConstructorTag<Tag>
-std::string constructor_body(urd::view<Concept<Tag>, C> view)
+std::string constructor_body(urd::index_view<Concept<Tag>, C> view)
 { return concept_constructor(view); }
 
 template<typename Tag, typename C>
     requires runir::kr::dl::RoleConstructorTag<Tag>
-std::string constructor_body(urd::view<Role<Tag>, C> view)
+std::string constructor_body(urd::index_view<Role<Tag>, C> view)
 { return role(view); }
 
 template<typename Tag, typename C>
     requires runir::kr::dl::BooleanConstructorTag<Tag>
-std::string constructor_body(urd::view<Boolean<Tag>, C> view)
+std::string constructor_body(urd::index_view<Boolean<Tag>, C> view)
 { return boolean_constructor(view); }
 
 template<typename Tag, typename C>
     requires runir::kr::dl::NumericalConstructorTag<Tag>
-std::string constructor_body(urd::view<Numerical<Tag>, C> view)
+std::string constructor_body(urd::index_view<Numerical<Tag>, C> view)
 { return numerical(view); }
 
 template<typename... Views>
@@ -195,11 +195,11 @@ std::string constructor_body(const std::variant<Views...>& view)
 { return std::visit([](auto arg) { return constructor_body(arg); }, view); }
 
 template<runir::kr::dl::CategoryTag Category, typename C>
-std::string rule(urd::view<DerivationRule<Category>, C> view)
+std::string rule(urd::index_view<DerivationRule<Category>, C> view)
 { return fmt::format("({} ({}))", view.get_lhs(), constructor_body(view.get_rhs())); }
 
 template<runir::kr::dl::CategoryTag Category, typename C>
-std::string rule(urd::view<SubstitutionRule<Category>, C> view)
+std::string rule(urd::index_view<SubstitutionRule<Category>, C> view)
 { return fmt::format("({} ({}))", view.get_lhs(), view.get_rhs()); }
 
 template<typename Rules>
@@ -229,9 +229,9 @@ std::string grammar(View view)
 
 template<typename Tag, typename C>
     requires runir::kr::dl::ConceptConstructorTag<Tag>
-struct fmt::formatter<urd::view<runir::kr::dl::cnf_grammar::Concept<Tag>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::dl::cnf_grammar::Concept<Tag>, C>> : fmt::formatter<std::string_view>
 {
-    using View = urd::view<runir::kr::dl::cnf_grammar::Concept<Tag>, C>;
+    using View = urd::index_view<runir::kr::dl::cnf_grammar::Concept<Tag>, C>;
     auto format(View view, format_context& ctx) const
     {
         const auto text = fmt::format("({})", runir::kr::dl::cnf_grammar::concept_constructor(view));
@@ -241,9 +241,9 @@ struct fmt::formatter<urd::view<runir::kr::dl::cnf_grammar::Concept<Tag>, C>> : 
 
 template<typename Tag, typename C>
     requires runir::kr::dl::RoleConstructorTag<Tag>
-struct fmt::formatter<urd::view<runir::kr::dl::cnf_grammar::Role<Tag>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::dl::cnf_grammar::Role<Tag>, C>> : fmt::formatter<std::string_view>
 {
-    using View = urd::view<runir::kr::dl::cnf_grammar::Role<Tag>, C>;
+    using View = urd::index_view<runir::kr::dl::cnf_grammar::Role<Tag>, C>;
     auto format(View view, format_context& ctx) const
     {
         const auto text = fmt::format("({})", runir::kr::dl::cnf_grammar::role(view));
@@ -253,9 +253,9 @@ struct fmt::formatter<urd::view<runir::kr::dl::cnf_grammar::Role<Tag>, C>> : fmt
 
 template<typename Tag, typename C>
     requires runir::kr::dl::BooleanConstructorTag<Tag>
-struct fmt::formatter<urd::view<runir::kr::dl::cnf_grammar::Boolean<Tag>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::dl::cnf_grammar::Boolean<Tag>, C>> : fmt::formatter<std::string_view>
 {
-    using View = urd::view<runir::kr::dl::cnf_grammar::Boolean<Tag>, C>;
+    using View = urd::index_view<runir::kr::dl::cnf_grammar::Boolean<Tag>, C>;
     auto format(View view, format_context& ctx) const
     {
         const auto text = fmt::format("({})", runir::kr::dl::cnf_grammar::boolean_constructor(view));
@@ -265,9 +265,9 @@ struct fmt::formatter<urd::view<runir::kr::dl::cnf_grammar::Boolean<Tag>, C>> : 
 
 template<typename Tag, typename C>
     requires runir::kr::dl::NumericalConstructorTag<Tag>
-struct fmt::formatter<urd::view<runir::kr::dl::cnf_grammar::Numerical<Tag>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::dl::cnf_grammar::Numerical<Tag>, C>> : fmt::formatter<std::string_view>
 {
-    using View = urd::view<runir::kr::dl::cnf_grammar::Numerical<Tag>, C>;
+    using View = urd::index_view<runir::kr::dl::cnf_grammar::Numerical<Tag>, C>;
     auto format(View view, format_context& ctx) const
     {
         const auto text = fmt::format("({})", runir::kr::dl::cnf_grammar::numerical(view));
@@ -276,30 +276,30 @@ struct fmt::formatter<urd::view<runir::kr::dl::cnf_grammar::Numerical<Tag>, C>> 
 };
 
 template<runir::kr::dl::CategoryTag Category, typename C>
-struct fmt::formatter<urd::view<runir::kr::dl::cnf_grammar::NonTerminal<Category>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::dl::cnf_grammar::NonTerminal<Category>, C>> : fmt::formatter<std::string_view>
 {
-    using View = urd::view<runir::kr::dl::cnf_grammar::NonTerminal<Category>, C>;
+    using View = urd::index_view<runir::kr::dl::cnf_grammar::NonTerminal<Category>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(view.get_name().str(), ctx); }
 };
 
 template<runir::kr::dl::CategoryTag Category, typename C>
-struct fmt::formatter<urd::view<runir::kr::dl::cnf_grammar::DerivationRule<Category>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::dl::cnf_grammar::DerivationRule<Category>, C>> : fmt::formatter<std::string_view>
 {
-    using View = urd::view<runir::kr::dl::cnf_grammar::DerivationRule<Category>, C>;
+    using View = urd::index_view<runir::kr::dl::cnf_grammar::DerivationRule<Category>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::cnf_grammar::rule(view), ctx); }
 };
 
 template<runir::kr::dl::CategoryTag Category, typename C>
-struct fmt::formatter<urd::view<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>, C>> : fmt::formatter<std::string_view>
 {
-    using View = urd::view<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>, C>;
+    using View = urd::index_view<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::cnf_grammar::rule(view), ctx); }
 };
 
 template<typename C>
-struct fmt::formatter<urd::view<runir::kr::dl::cnf_grammar::Grammar, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::dl::cnf_grammar::Grammar, C>> : fmt::formatter<std::string_view>
 {
-    using View = urd::view<runir::kr::dl::cnf_grammar::Grammar, C>;
+    using View = urd::index_view<runir::kr::dl::cnf_grammar::Grammar, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::cnf_grammar::grammar(view), ctx); }
 };
 

@@ -27,16 +27,16 @@ using Repository = runir::kr::ps::BasicRepository<runir::kr::BaseFamilyTag, Repo
 using RepositoryPtr = std::shared_ptr<Repository>;
 using RepositoryFactory = runir::kr::ps::BasicRepositoryFactory<runir::kr::BaseFamilyTag, RepositoryTypes>;
 
-using SketchView = urd::view<runir::kr::ps::base::Sketch, Repository>;
-using RuleView = urd::view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, Repository>;
+using SketchView = urd::index_view<runir::kr::ps::base::Sketch, Repository>;
+using RuleView = urd::index_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, Repository>;
 
 }  // namespace runir::kr::ps::base
 
 namespace runir::kr::ps::base::dl
 {
 
-using BooleanFeatureView = urd::view<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>, Repository>;
-using NumericalFeatureView = urd::view<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>, Repository>;
+using BooleanFeatureView = urd::index_view<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>, Repository>;
+using NumericalFeatureView = urd::index_view<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>, Repository>;
 
 }  // namespace runir::kr::ps::base::dl
 

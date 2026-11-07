@@ -11,7 +11,9 @@
 #include <nanobind/stl/vector.h>
 #include <nanobind/trampoline.h>
 #include <ranges>
-#include <runir/graphs/algorithms.hpp>
+#include <runir/graphs/algorithms/color_refinement.hpp>
+#include <runir/graphs/algorithms/weisfeiler_leman.hpp>
+#include <runir/graphs/bgl/algorithms.hpp>
 #include <runir/graphs/bidirectional_static_graph.hpp>
 #include <runir/graphs/cycle.hpp>
 #include <runir/graphs/dynamic_graph.hpp>
@@ -101,14 +103,6 @@ auto make_graph_iterator(const char* name, Range&& range)
     return nb::make_iterator(nb::type<Graph>(), name, elements.begin(), elements.end());
 }
 
-template<typename Graph>
-auto get_vertex_property(const Graph& graph, graphs::VertexIndex vertex)
-{ return graph.get_vertex(vertex).get_property(); }
-
-template<typename Graph>
-auto get_edge_property(const Graph& graph, graphs::EdgeIndex edge)
-{ return graph.get_edge(edge).get_property(); }
-
 template<bool KeepPropertyOwnerAlive = false, typename Graph, typename VertexPropertyGetter, typename EdgePropertyGetter>
 void bind_readable_graph_methods(nb::class_<Graph>& cls, VertexPropertyGetter vertex_property_getter, EdgePropertyGetter edge_property_getter)
 {
@@ -136,7 +130,7 @@ void bind_readable_graph_methods(nb::class_<Graph>& cls, VertexPropertyGetter ve
 
 template<bool KeepPropertyOwnerAlive = false, typename Graph>
 void bind_readable_graph_methods(nb::class_<Graph>& cls)
-{ bind_readable_graph_methods<KeepPropertyOwnerAlive>(cls, &get_vertex_property<Graph>, &get_edge_property<Graph>); }
+{ bind_readable_graph_methods<KeepPropertyOwnerAlive>(cls, &Graph::get_vertex_property, &Graph::get_edge_property); }
 
 template<bool KeepPropertyOwnerAlive = false, typename Graph, typename VertexPropertyGetter, typename EdgePropertyGetter>
 void bind_readable_graph(nb::class_<Graph>& cls, VertexPropertyGetter vertex_property_getter, EdgePropertyGetter edge_property_getter)
@@ -147,23 +141,15 @@ void bind_readable_graph(nb::class_<Graph>& cls, VertexPropertyGetter vertex_pro
 
 template<bool KeepPropertyOwnerAlive = false, typename Graph>
 void bind_readable_graph(nb::class_<Graph>& cls)
-{ bind_readable_graph<KeepPropertyOwnerAlive>(cls, &get_vertex_property<Graph>, &get_edge_property<Graph>); }
+{ bind_readable_graph<KeepPropertyOwnerAlive>(cls, &Graph::get_vertex_property, &Graph::get_edge_property); }
 
+/// The indices of `range`, as a list (VertexIndexList and EdgeIndexList are one type).
 template<typename Range>
-auto materialize_vertex_indices(Range&& range) -> graphs::VertexIndexList
+auto materialize_indices(Range&& range) -> graphs::VertexIndexList
 {
     auto result = graphs::VertexIndexList {};
-    for (auto vertex : std::forward<Range>(range))
-        result.push_back(vertex);
-    return result;
-}
-
-template<typename Range>
-auto materialize_edge_indices(Range&& range) -> graphs::EdgeIndexList
-{
-    auto result = graphs::EdgeIndexList {};
-    for (auto edge : std::forward<Range>(range))
-        result.push_back(edge);
+    for (auto index : std::forward<Range>(range))
+        result.push_back(index);
     return result;
 }
 
@@ -180,7 +166,7 @@ void bind_forward_graph(nb::class_<Graph>& cls)
         .def("get_out_degree", &Graph::get_out_degree, "vertex"_a)
         .def(
             "get_successor_indices",
-            [](const Graph& graph, graphs::VertexIndex vertex) { return materialize_vertex_indices(graph.get_successor_indices(vertex)); },
+            [](const Graph& graph, graphs::VertexIndex vertex) { return materialize_indices(graph.get_successor_indices(vertex)); },
             "vertex"_a);
 }
 
@@ -197,7 +183,7 @@ void bind_bidirectional_graph(nb::class_<Graph>& cls)
         .def("get_in_degree", &Graph::get_in_degree, "vertex"_a)
         .def(
             "get_predecessor_indices",
-            [](const Graph& graph, graphs::VertexIndex vertex) { return materialize_vertex_indices(graph.get_predecessor_indices(vertex)); },
+            [](const Graph& graph, graphs::VertexIndex vertex) { return materialize_indices(graph.get_predecessor_indices(vertex)); },
             "vertex"_a);
 }
 
@@ -207,21 +193,21 @@ void bind_materialized_bidirectional_graph(nb::class_<Graph>& cls)
     using namespace nb::literals;
     cls.def(
            "get_out_edge_indices",
-           [](const Graph& graph, graphs::VertexIndex vertex) { return materialize_edge_indices(graph.get_out_edge_indices(vertex)); },
+           [](const Graph& graph, graphs::VertexIndex vertex) { return materialize_indices(graph.get_out_edge_indices(vertex)); },
            "vertex"_a)
         .def("get_out_degree", &Graph::get_out_degree, "vertex"_a)
         .def(
             "get_successor_indices",
-            [](const Graph& graph, graphs::VertexIndex vertex) { return materialize_vertex_indices(graph.get_successor_indices(vertex)); },
+            [](const Graph& graph, graphs::VertexIndex vertex) { return materialize_indices(graph.get_successor_indices(vertex)); },
             "vertex"_a)
         .def(
             "get_in_edge_indices",
-            [](const Graph& graph, graphs::VertexIndex vertex) { return materialize_edge_indices(graph.get_in_edge_indices(vertex)); },
+            [](const Graph& graph, graphs::VertexIndex vertex) { return materialize_indices(graph.get_in_edge_indices(vertex)); },
             "vertex"_a)
         .def("get_in_degree", &Graph::get_in_degree, "vertex"_a)
         .def(
             "get_predecessor_indices",
-            [](const Graph& graph, graphs::VertexIndex vertex) { return materialize_vertex_indices(graph.get_predecessor_indices(vertex)); },
+            [](const Graph& graph, graphs::VertexIndex vertex) { return materialize_indices(graph.get_predecessor_indices(vertex)); },
             "vertex"_a);
 }
 
@@ -329,11 +315,11 @@ inline void bind_graph_certificates(nb::module_& m)
 
 template<typename Graph>
 auto get_python_vertex_property(const Graph& graph, graphs::VertexIndex vertex)
-{ return graph.get_vertex(vertex).get_property().value; }
+{ return graph.get_vertex_property(vertex).value; }
 
 template<typename Graph>
 auto get_python_edge_property(const Graph& graph, graphs::EdgeIndex edge)
-{ return graph.get_edge(edge).get_property().value; }
+{ return graph.get_edge_property(edge).value; }
 
 template<typename Graph>
 void bind_python_object_graph(nb::class_<Graph>& cls)
@@ -420,29 +406,29 @@ template<typename Graph>
 void bind_graph_algorithms(nb::module_& m)
 {
     using namespace nb::literals;
-    m.def("strong_components", &graphs::algorithms::strong_components<Graph>, "graph"_a);
-    m.def("breadth_first_search", &graphs::algorithms::breadth_first_search<Graph>, "graph"_a, "sources"_a);
+    m.def("strong_components", &graphs::bgl::strong_components<Graph>, "graph"_a);
+    m.def("breadth_first_search", &graphs::bgl::breadth_first_search<Graph>, "graph"_a, "sources"_a);
     m.def(
         "breadth_first_visit",
         [](const Graph& graph, const graphs::VertexIndexList& sources, graphs::bgl::TraversalVisitor<Graph>& visitor)
-        { static_cast<void>(graphs::algorithms::breadth_first_visit(graph, sources, visitor)); },
+        { static_cast<void>(graphs::bgl::breadth_first_visit(graph, sources, visitor)); },
         "graph"_a,
         "sources"_a,
         "visitor"_a);
-    m.def("depth_first_search", &graphs::algorithms::depth_first_search<Graph>, "graph"_a, "sources"_a);
+    m.def("depth_first_search", &graphs::bgl::depth_first_search<Graph>, "graph"_a, "sources"_a);
     m.def(
         "depth_first_visit",
         [](const Graph& graph, const graphs::VertexIndexList& sources, graphs::bgl::TraversalVisitor<Graph>& visitor)
-        { static_cast<void>(graphs::algorithms::depth_first_visit(graph, sources, visitor)); },
+        { static_cast<void>(graphs::bgl::depth_first_visit(graph, sources, visitor)); },
         "graph"_a,
         "sources"_a,
         "visitor"_a);
-    m.def("topological_sort", &graphs::algorithms::topological_sort<Graph>, "graph"_a);
-    m.def("color_refinement_certificate", &graphs::algorithms::color_refinement_certificate<Graph>, "graph"_a);
-    m.def("weisfeiler_leman_2_certificate", &graphs::algorithms::weisfeiler_leman_2_certificate<Graph>, "graph"_a);
-    m.def("weisfeiler_leman_3_certificate", &graphs::algorithms::weisfeiler_leman_3_certificate<Graph>, "graph"_a);
-    m.def("dijkstra_shortest_paths", &graphs::algorithms::dijkstra_shortest_paths<Graph>, "graph"_a, "weights"_a, "sources"_a);
-    m.def("floyd_warshall_all_pairs_shortest_paths", &graphs::algorithms::floyd_warshall_all_pairs_shortest_paths<Graph>, "graph"_a, "weights"_a);
+    m.def("topological_sort", &graphs::bgl::topological_sort<Graph>, "graph"_a);
+    m.def("color_refinement_certificate", &graphs::color_refinement::compute_certificate<Graph>, "graph"_a);
+    m.def("weisfeiler_leman_2_certificate", &graphs::weisfeiler_leman::compute_certificate<2, Graph>, "graph"_a);
+    m.def("weisfeiler_leman_3_certificate", &graphs::weisfeiler_leman::compute_certificate<3, Graph>, "graph"_a);
+    m.def("dijkstra_shortest_paths", &graphs::bgl::dijkstra_shortest_paths<Graph, double>, "graph"_a, "weights"_a, "sources"_a);
+    m.def("floyd_warshall_all_pairs_shortest_paths", &graphs::bgl::floyd_warshall_all_pairs_shortest_paths<Graph, double>, "graph"_a, "weights"_a);
 }
 
 }  // namespace runir::graphs

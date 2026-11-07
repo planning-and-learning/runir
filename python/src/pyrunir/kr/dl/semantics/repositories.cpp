@@ -26,7 +26,7 @@
 #include <utility>
 #include <vector>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 namespace runir::kr::dl
 {
@@ -64,10 +64,10 @@ void bind_semantics_repositories(nb::module_& m)
              nb::arg("role_arguments"),
              nb::arg("boolean_arguments"),
              nb::arg("numerical_arguments"))
-        .def(urd::python::init_from_views<const urd::Store<urd::sequence<urd::view<ConceptDenotation, DenotationRepository>>>&,
-                      const urd::Store<urd::sequence<urd::view<RoleDenotation, DenotationRepository>>>&,
-                      const urd::Store<urd::sequence<urd::view<BooleanDenotation, DenotationRepository>>>&,
-                      const urd::Store<urd::sequence<urd::view<NumericalDenotation, DenotationRepository>>>&>(),
+        .def(urd::python::init_from_views<const urd::Store<urd::sequence<urd::index_view<ConceptDenotation, DenotationRepository>>>&,
+                      const urd::Store<urd::sequence<urd::index_view<RoleDenotation, DenotationRepository>>>&,
+                      const urd::Store<urd::sequence<urd::index_view<BooleanDenotation, DenotationRepository>>>&,
+                      const urd::Store<urd::sequence<urd::index_view<NumericalDenotation, DenotationRepository>>>&>(),
              nb::arg("concept_arguments"),
              nb::arg("role_arguments"),
              nb::arg("boolean_arguments"),

@@ -65,7 +65,7 @@ concept StateEvaluationContextConcept =
 /// Registers in the borrowed form, which interned registers provide without copying.
 template<RegisterValuesViewConcept R>
 BorrowedRegisterValuesView borrow_registers(R registers) noexcept
-{ return BorrowedRegisterValuesView(registers.data(), registers.get_formalism_repository()); }
+{ return BorrowedRegisterValuesView(&registers.data(), &registers.get_formalism_repository()); }
 
 /// Every context carries registers and call arguments. Registers are empty and arguments absent unless a program binds
 /// them; evaluating a register or an argument that the context does not bind throws.
@@ -118,7 +118,7 @@ private:
         m_caches(&storage.get_caches()),
         m_denotations { &storage.get_denotation_repository(false), &storage.get_denotation_repository(true) },
         m_intermediates(&storage),
-        m_registers(registers.value_or(BorrowedRegisterValuesView(detail::empty_register_values(), *m_state.get_formalism_repository()))),
+        m_registers(registers.value_or(BorrowedRegisterValuesView(&detail::empty_register_values(), m_state.get_formalism_repository().get()))),
         m_arguments(arguments)
     {
         if (storage.get_denotation_repository(false).get_formalism_repository_ptr() != m_state.get_formalism_repository())

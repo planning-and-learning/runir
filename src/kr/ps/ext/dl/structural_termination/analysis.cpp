@@ -17,7 +17,7 @@ using RegisterConstructor = std::conditional_t<std::same_as<Category, runir::kr:
                                                runir::kr::dl::Role<runir::kr::dl::RegisterTag>>;
 
 template<runir::kr::dl::CategoryTag Category>
-using RegisterConstructorView = urd::view<RegisterConstructor<Category>, runir::kr::dl::ConstructorRepository>;
+using RegisterConstructorView = urd::index_view<RegisterConstructor<Category>, runir::kr::dl::ConstructorRepository>;
 
 template<runir::kr::dl::CategoryTag Category, typename VariantView>
 bool variant_references_register(VariantView view, runir::kr::dl::RegisterIdentifier<Category> reg);
@@ -69,7 +69,7 @@ bool variant_references_register(VariantView view, runir::kr::dl::RegisterIdenti
 }
 
 template<typename FeatureTag, typename C, runir::kr::dl::CategoryTag Category>
-bool feature_references_register(urd::view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>, C> feature,
+bool feature_references_register(urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>, C> feature,
                                  runir::kr::dl::RegisterIdentifier<Category> reg)
 {
     return std::visit([&](auto concrete) { return references_register(concrete.get_expression(), reg); }, feature.get_variant());

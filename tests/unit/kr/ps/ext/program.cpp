@@ -13,7 +13,7 @@ namespace runir::tests
 using Entity = kr::ps::ext::Program;
 using Index = urd::index<Entity>;
 using Data = urd::data<Entity>;
-using View = urd::view<Entity, kr::ps::ext::Repository>;
+using View = urd::index_view<Entity, kr::ps::ext::Repository>;
 
 static_assert(std::constructible_from<Index, ygg::uint_t>);
 static_assert(std::totally_ordered<Index>);

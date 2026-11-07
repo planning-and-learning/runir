@@ -199,7 +199,7 @@ void check_executor()
     auto non_goals = 0U;
     for (const auto vertex : complete.graph->get_vertex_indices())
     {
-        const auto goal = complete.graph->get_vertex(vertex).get_property().is_goal;
+        const auto goal = complete.graph->get_vertex_property(vertex).is_goal;
         goals += goal;
         non_goals += !goal;
     }
@@ -225,7 +225,7 @@ void check_executor()
     EXPECT_FALSE(cycle.cycle.empty());
     goals = 0;
     for (const auto vertex : cycle.graph->get_vertex_indices())
-        goals += cycle.graph->get_vertex(vertex).get_property().is_goal;
+        goals += cycle.graph->get_vertex_property(vertex).is_goal;
     EXPECT_EQ(goals, 1);
 
     // Parallel rules share their target configuration and its expansion, while preserving both labeled edges.

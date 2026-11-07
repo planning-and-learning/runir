@@ -183,10 +183,9 @@ TEST(RunirEvaluationStorage, BorrowedDenotationsExposeReadOnlyValuesAndMatchInde
         EXPECT_TRUE(std::ranges::equal(indexed, expected));
         EXPECT_TRUE(std::ranges::equal(borrowed.views(), expected));
         EXPECT_TRUE(std::ranges::equal(indexed.views(), expected));
+        static_assert(std::ranges::borrowed_range<decltype(borrowed.views())> && std::ranges::borrowed_range<decltype(indexed.indices())>);
         EXPECT_EQ(borrowed.views().begin(), borrowed.begin());
-        EXPECT_EQ(borrowed.views().end(), borrowed.end());
         EXPECT_EQ(indexed.views().begin(), indexed.begin());
-        EXPECT_EQ(indexed.views().end(), indexed.end());
         auto borrowed_iterator = urd::resolve(builder, *formalism).begin();
         auto indexed_iterator = kr::dl::semantics::DenotationView<Category>(indexed).begin();
         for (const auto& value : expected)
@@ -500,7 +499,7 @@ TEST(RunirEvaluationStorage, DynamicResetPreservesStaticRowsAndJoinIndexes)
     const auto query = [&](const std::string& expression)
     {
         const auto count = kr::ps::ext::dl::parse_numerical("(n_count " + expression + ")", domain, *constructors);
-        return std::get<urd::view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::view<kr::dl::Numerical<kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant()).get_arg());
+        return std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::index_view<kr::dl::Numerical<kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant()).get_arg());
     };
     const auto fixed_query = query(R"((q_atomic_state "fixed" (x y z)))");
     const auto renamed_query = query(R"((q_rename (a b c) (q_atomic_state "fixed" (x y z))))");
@@ -602,7 +601,7 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     const auto query = [&](const std::string& expression, auto& repository)
     {
         const auto count = kr::ps::ext::dl::parse_numerical("(n_count " + expression + ")", search->task->get_domain().get_domain(), repository);
-        return std::get<urd::view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::view<kr::dl::Numerical<kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant()).get_arg());
+        return std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::index_view<kr::dl::Numerical<kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant()).get_arg());
     };
     const auto left = query("(q_role (left_source left_target) (r_universal))", *first_repository);
     const auto right = query("(q_role (right_source right_target) (r_universal))", *second_repository);

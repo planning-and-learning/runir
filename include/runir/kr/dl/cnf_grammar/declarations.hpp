@@ -84,37 +84,37 @@ using ConstructorRepositoryFactory = runir::kr::dl::detail::BasicConstructorRepo
 
 template<typename Tag>
     requires runir::kr::dl::ConceptConstructorTag<Tag>
-using ConceptView = urd::view<Concept<Tag>, ConstructorRepository>;
+using ConceptView = urd::index_view<Concept<Tag>, ConstructorRepository>;
 
 template<typename Tag>
     requires runir::kr::dl::RoleConstructorTag<Tag>
-using RoleView = urd::view<Role<Tag>, ConstructorRepository>;
+using RoleView = urd::index_view<Role<Tag>, ConstructorRepository>;
 
 template<typename Tag>
     requires runir::kr::dl::BooleanConstructorTag<Tag>
-using BooleanView = urd::view<Boolean<Tag>, ConstructorRepository>;
+using BooleanView = urd::index_view<Boolean<Tag>, ConstructorRepository>;
 
 template<typename Tag>
     requires runir::kr::dl::NumericalConstructorTag<Tag>
-using NumericalView = urd::view<Numerical<Tag>, ConstructorRepository>;
+using NumericalView = urd::index_view<Numerical<Tag>, ConstructorRepository>;
 
 template<typename T>
-using EntityView = urd::view<T, ConstructorRepository>;
+using EntityView = urd::index_view<T, ConstructorRepository>;
 
 /// A constructor read through the repository: the view of the record it holds.
 template<runir::kr::dl::CategoryTag Category>
 using ConstructorView = boost::mp11::mp_apply<std::variant, boost::mp11::mp_transform<EntityView, CategoryTypes<Category>>>;
 
 template<runir::kr::dl::CategoryTag Category>
-using NonTerminalView = urd::view<NonTerminal<Category>, ConstructorRepository>;
+using NonTerminalView = urd::index_view<NonTerminal<Category>, ConstructorRepository>;
 
 template<runir::kr::dl::CategoryTag Category>
-using DerivationRuleView = urd::view<DerivationRule<Category>, ConstructorRepository>;
+using DerivationRuleView = urd::index_view<DerivationRule<Category>, ConstructorRepository>;
 
 template<runir::kr::dl::CategoryTag Category>
-using SubstitutionRuleView = urd::view<SubstitutionRule<Category>, ConstructorRepository>;
+using SubstitutionRuleView = urd::index_view<SubstitutionRule<Category>, ConstructorRepository>;
 
-using GrammarView = urd::view<Grammar, ConstructorRepository>;
+using GrammarView = urd::index_view<Grammar, ConstructorRepository>;
 }
 
 #endif

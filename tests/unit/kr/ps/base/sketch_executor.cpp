@@ -107,7 +107,7 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         }
         EXPECT_EQ(plan.get_cost(), replay.get_metric());
         EXPECT_EQ(plan.get_cost(), plan.get_length());
-        const auto& terminal = fragment.graph->get_vertex(fragment.graph->get_num_vertices() - 1).get_property();
+        const auto& terminal = fragment.graph->get_vertex_property(fragment.graph->get_num_vertices() - 1);
         EXPECT_TRUE(terminal.is_goal);
         EXPECT_EQ(replay.get_state().index(), terminal.state.index());
 
@@ -193,7 +193,7 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
 
     for (const auto edge : universal.graph->get_out_edge_indices(0))
     {
-        const auto target_state = universal.graph->get_vertex(universal.graph->get_target(edge)).get_property().state.index();
+        const auto target_state = universal.graph->get_vertex_property(universal.graph->get_target(edge)).state.index();
         EXPECT_NE(std::ranges::find_if(immediate, [&](const auto& successor) { return successor.node.get_state().index() == target_state; }),
                   immediate.end());
     }
@@ -212,7 +212,7 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     EXPECT_EQ(bounded.statistics.num_expanded, 1);
     // The first move stays in the current room: it is generated but rejected by sketch matching.
     EXPECT_EQ(bounded.statistics.num_generated, 2);
-    const auto& packed_state = bounded.graph->get_vertex(0).get_property().state;
+    const auto& packed_state = bounded.graph->get_vertex_property(0).state;
     EXPECT_EQ(packed_state.index(), state.index());
     EXPECT_EQ(packed_state.unpack().pack(), packed_state);
 

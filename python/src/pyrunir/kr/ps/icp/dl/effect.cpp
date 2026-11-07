@@ -1,5 +1,5 @@
 #include "bindings.hpp"
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 #include "pyrunir/kr/ps/dl/binding_utils.hpp"
 
 #include <runir/kr/ps/icp/repository.hpp>

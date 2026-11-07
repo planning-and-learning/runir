@@ -12,7 +12,7 @@ namespace runir::kr::uns
 {
 
 template<typename C>
-std::size_t syntactic_complexity(urd::view<Classifier, C> view)
+std::size_t syntactic_complexity(urd::index_view<Classifier, C> view)
 {
     auto result = std::size_t { 0 };
     for (auto feature : view.get_features())

@@ -22,8 +22,8 @@ class StaticGraph
 public:
     using VertexPropertyType = VP;
     using EdgePropertyType = EP;
-    using VertexType = Vertex<StaticGraph, VP>;
-    using EdgeType = Edge<StaticGraph, EP>;
+    using VertexType = Vertex<VP>;
+    using EdgeType = Edge<EP>;
     using EdgePropertyMapType = EdgePropertyMap<EP>;
 
 private:
@@ -41,15 +41,6 @@ private:
     void assert_valid_vertex([[maybe_unused]] VertexIndex vertex) const noexcept { assert(vertex < m_vertices.size()); }
     void assert_valid_edge([[maybe_unused]] EdgeIndex edge) const noexcept { assert(edge < m_edges.size()); }
 
-    void rebind_parents() noexcept
-    {
-        for (auto& vertex : m_vertices)
-            vertex = VertexType(vertex.get_index(), vertex.get_property_index(), *this);
-
-        for (auto& edge : m_edges)
-            edge = EdgeType(edge.get_index(), edge.get_source(), edge.get_target(), edge.get_property_index(), *this);
-    }
-
     void initialize(const StaticGraphBuilder<VP, EP>& builder)
     {
         m_vertices.clear();
@@ -61,8 +52,8 @@ private:
 
         for (const auto& vertex : builder.get_vertices())
         {
-            auto [property_index, _] = m_vertex_properties.insert(urd::data<VertexProperty<VP>>(vertex.get_property()));
-            m_vertices.emplace_back(vertex.get_index(), property_index, *this);
+            auto [property_index, _] = m_vertex_properties.insert(urd::data<VertexProperty<VP>>(builder.get_vertex_property(vertex.get_index())));
+            m_vertices.emplace_back(vertex.get_index(), property_index);
         }
 
         m_out_edge_offsets.resize(m_vertices.size() + 1);
@@ -72,8 +63,8 @@ private:
             m_out_edge_offsets[source] = index;
             for (const auto& edge : builder.get_out_edges(source))
             {
-                auto [property_index, _] = m_edge_properties.insert(urd::data<EdgeProperty<EP>>(edge.get_property()));
-                m_edges.emplace_back(index++, source, edge.get_target(), property_index, *this);
+                auto [property_index, _] = m_edge_properties.insert(urd::data<EdgeProperty<EP>>(builder.get_edge_property(edge.get_index())));
+                m_edges.emplace_back(index++, source, edge.get_target(), property_index);
             }
         }
         m_out_edge_offsets.back() = index;
@@ -83,34 +74,6 @@ private:
 
 public:
     StaticGraph() : m_vertices(), m_edges(), m_out_edge_offsets(1, 0) {}
-
-    StaticGraph(const StaticGraph&) = delete;
-
-    StaticGraph(StaticGraph&& other) noexcept :
-        m_vertices(std::move(other.m_vertices)),
-        m_edges(std::move(other.m_edges)),
-        m_vertex_properties(std::move(other.m_vertex_properties)),
-        m_edge_properties(std::move(other.m_edge_properties)),
-        m_out_edge_offsets(std::move(other.m_out_edge_offsets))
-    { rebind_parents(); }
-
-    auto operator=(const StaticGraph&) -> StaticGraph& = delete;
-
-    auto operator=(StaticGraph&& other) noexcept -> StaticGraph&
-    {
-        if (this == &other)
-            return *this;
-
-        m_vertices = std::move(other.m_vertices);
-        m_edges = std::move(other.m_edges);
-        m_vertex_properties = std::move(other.m_vertex_properties);
-        m_edge_properties = std::move(other.m_edge_properties);
-        m_out_edge_offsets = std::move(other.m_out_edge_offsets);
-        rebind_parents();
-        return *this;
-    }
-
-    ~StaticGraph() = default;
 
     explicit StaticGraph(const StaticGraphBuilder<VP, EP>& builder) { initialize(builder); }
 
@@ -124,7 +87,7 @@ public:
         for (const auto& property : vertices)
         {
             auto [property_index, _] = m_vertex_properties.insert(urd::data<VertexProperty<VP>>(property));
-            m_vertices.emplace_back(static_cast<VertexIndex>(m_vertices.size()), property_index, *this);
+            m_vertices.emplace_back(static_cast<VertexIndex>(m_vertices.size()), property_index);
         }
 
         for (const auto& [source, target, property] : edges)
@@ -145,7 +108,7 @@ public:
         {
             const auto& [source, target, property] = edges[input_index];
             auto [property_index, _] = m_edge_properties.insert(urd::data<EdgeProperty<EP>>(property));
-            m_edges.emplace_back(static_cast<EdgeIndex>(m_edges.size()), source, target, property_index, *this);
+            m_edges.emplace_back(static_cast<EdgeIndex>(m_edges.size()), source, target, property_index);
         }
     }
 
@@ -153,8 +116,8 @@ public:
     [[nodiscard]] auto get_edges() const noexcept -> const EdgeList& { return m_edges; }
     [[nodiscard]] auto get_vertex_property_map() const noexcept -> const VertexPropertyMapType& { return m_vertex_properties; }
     [[nodiscard]] auto get_edge_property_map() const noexcept -> const EdgePropertyMapType& { return m_edge_properties; }
-    [[nodiscard]] auto get_vertex_property(VertexPropertyIndex<VP> property) const noexcept -> const VP& { return m_vertex_properties[property].value; }
-    [[nodiscard]] auto get_edge_property(EdgePropertyIndex<EP> property) const noexcept -> const EP& { return m_edge_properties[property].value; }
+    [[nodiscard]] auto get_vertex_property(VertexIndex vertex) const noexcept -> const VP& { return m_vertex_properties[get_vertex(vertex).get_property_index()].value; }
+    [[nodiscard]] auto get_edge_property(EdgeIndex edge) const noexcept -> const EP& { return m_edge_properties[get_edge(edge).get_property_index()].value; }
 
     [[nodiscard]] auto get_vertex(VertexIndex vertex) const noexcept -> const VertexType&
     {
@@ -193,17 +156,17 @@ public:
 
     [[nodiscard]] auto get_out_edges(VertexIndex vertex) const noexcept
     {
-        return get_out_edge_indices(vertex) | std::views::transform([this](EdgeIndex edge) -> const EdgeType& { return get_edge(edge); });
+        return urd::transform(get_out_edge_indices(vertex), detail::ReadThrough<StaticGraph, &StaticGraph::get_edge> { this });
     }
 
     [[nodiscard]] auto get_successor_indices(VertexIndex vertex) const noexcept
     {
-        return get_out_edge_indices(vertex) | std::views::transform([this](EdgeIndex edge) { return get_target(edge); });
+        return urd::transform(get_out_edge_indices(vertex), detail::ReadThrough<StaticGraph, &StaticGraph::get_target> { this });
     }
 
     [[nodiscard]] auto get_successors(VertexIndex vertex) const noexcept
     {
-        return get_successor_indices(vertex) | std::views::transform([this](VertexIndex successor) -> const VertexType& { return get_vertex(successor); });
+        return urd::transform(get_successor_indices(vertex), detail::ReadThrough<StaticGraph, &StaticGraph::get_vertex> { this });
     }
 };
 

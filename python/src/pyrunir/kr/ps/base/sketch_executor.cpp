@@ -13,7 +13,7 @@
 #include <runir/kr/ps/base/successor_expander.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 namespace runir::kr::ps::base
 {

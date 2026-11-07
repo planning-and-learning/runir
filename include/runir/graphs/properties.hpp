@@ -10,9 +10,10 @@
 namespace runir::graphs
 {
 
-template<IsVertex Vertex>
-auto get_vertex_color(Vertex vertex)
-{ return vertex.get_property_index(); }
+/// A vertex's color (nauty): its property's index in the graph's property pool. A graph type may give its own.
+template<IsGraph G>
+auto get_vertex_color(const G& graph, VertexIndex vertex)
+{ return graph.get_vertex(vertex).get_property_index(); }
 
 template<IsGraph G>
 auto is_loopless(const G& graph) -> bool

@@ -56,7 +56,7 @@ void append_list_section(std::ostream& os, std::string_view name, Values values,
 }
 
 template<typename C>
-void append_rule(std::ostream& os, urd::view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C> view)
+void append_rule(std::ostream& os, urd::index_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C> view)
 {
     os << ygg::print_indent << "(:rule\n";
     {
@@ -74,7 +74,7 @@ void append_rule(std::ostream& os, urd::view<runir::kr::ps::Rule<runir::kr::Base
 }
 
 template<typename C>
-std::string rule(urd::view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C> view)
+std::string rule(urd::index_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C> view)
 {
     auto os = std::ostringstream {};
     append_rule(os, view);
@@ -82,7 +82,7 @@ std::string rule(urd::view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C> vie
 }
 
 template<typename C>
-std::string sketch(urd::view<runir::kr::ps::base::Sketch, C> view)
+std::string sketch(urd::index_view<runir::kr::ps::base::Sketch, C> view)
 {
     auto os = std::ostringstream {};
 
@@ -132,16 +132,16 @@ std::string sketch_proof_results(const runir::kr::ps::base::SketchProofResults<K
 }  // namespace runir::kr::ps::base
 
 template<typename C>
-struct fmt::formatter<urd::view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C>> : fmt::formatter<std::string_view>
 {
-    using View = urd::view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C>;
+    using View = urd::index_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::rule(view), ctx); }
 };
 
 template<typename C>
-struct fmt::formatter<urd::view<runir::kr::ps::base::Sketch, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::ps::base::Sketch, C>> : fmt::formatter<std::string_view>
 {
-    using View = urd::view<runir::kr::ps::base::Sketch, C>;
+    using View = urd::index_view<runir::kr::ps::base::Sketch, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::sketch(view), ctx); }
 };
 

@@ -13,15 +13,15 @@ namespace runir::tests
 using Entity = kr::ps::ext::Module;
 using Index = urd::index<Entity>;
 using Data = urd::data<Entity>;
-using View = urd::view<Entity, kr::ps::ext::Repository>;
+using View = urd::index_view<Entity, kr::ps::ext::Repository>;
 
 static_assert(std::constructible_from<Index, ygg::uint_t>);
 static_assert(std::totally_ordered<Index>);
 static_assert(std::totally_ordered<Data>);
 static_assert(std::totally_ordered<View>);
 static_assert(std::same_as<View, kr::ps::ext::ModuleView>);
-static_assert(std::same_as<kr::ps::ext::ConceptRegisterView, urd::view<kr::dl::Register<kr::dl::ConceptTag>, kr::dl::ConstructorRepository>>);
-static_assert(std::same_as<kr::ps::ext::RoleRegisterView, urd::view<kr::dl::Register<kr::dl::RoleTag>, kr::dl::ConstructorRepository>>);
+static_assert(std::same_as<kr::ps::ext::ConceptRegisterView, urd::index_view<kr::dl::Register<kr::dl::ConceptTag>, kr::dl::ConstructorRepository>>);
+static_assert(std::same_as<kr::ps::ext::RoleRegisterView, urd::index_view<kr::dl::Register<kr::dl::RoleTag>, kr::dl::ConstructorRepository>>);
 static_assert(requires(Data& data) {
     data.index;
     data.symbol;

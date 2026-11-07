@@ -44,7 +44,7 @@ TEST(StateGraphTest, AnnotatesGeneratedGraphWithReachabilityAndGoalMetadata)
     auto num_alive = std::size_t { 0 };
     for (auto vertex : forward_graph.get_vertex_indices())
     {
-        const auto& label = forward_graph.get_vertex(vertex).get_property();
+        const auto& label = forward_graph.get_vertex_property(vertex);
         if (label.is_initial)
         {
             ++num_initial;
@@ -88,9 +88,9 @@ TEST(StateGraphTest, KeepsInitialVertexWhenStateLimitIsZero)
     ASSERT_NE(result.graph, nullptr);
     const auto& graph = result.graph->get_forward_graph();
     ASSERT_EQ(graph.get_num_vertices(), 1);
-    EXPECT_EQ(graph.get_vertex(0).get_property().state,
+    EXPECT_EQ(graph.get_vertex_property(0).state,
               context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator).get_state().pack());
-    EXPECT_EQ(&graph.get_vertex(0).get_property().state.get_state_repository(), context->state_repository.get());
+    EXPECT_EQ(&graph.get_vertex_property(0).state.get_state_repository(), context->state_repository.get());
 }
 
 TEST(StateGraphTest, LabelsDoNotRetainUnpackedBuilders)
@@ -112,7 +112,7 @@ TEST(StateGraphTest, LabelsDoNotRetainUnpackedBuilders)
             EXPECT_EQ(recycled_builder.get(), released_builder);
         }
         const auto annotated = datasets::annotate_state_graph(*context, graph, datasets::StateGraphCostMode::UNIT_COST);
-        return annotated->get_forward_graph().get_vertex(0).get_property().state;
+        return annotated->get_forward_graph().get_vertex_property(0).state;
     }();
 
     EXPECT_EQ(retained.unpack().pack(), retained);

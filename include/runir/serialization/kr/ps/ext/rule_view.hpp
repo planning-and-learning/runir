@@ -15,16 +15,16 @@ namespace ygg::serialization
 {
 
 template<typename Archive, typename C>
-void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::ps::ext::OrderTerm, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::ps::ext::OrderTerm, C>>)
 {
     ar.field("direction", [](const auto& value) { return std::string(value.get_direction() == runir::kr::ps::ext::OrderDirection::MIN ? "min" : "max"); });
     ar.variant([](const auto& value) { return value.get_feature(); });
 }
 
 template<typename Archive, runir::kr::ps::ext::RuleKind Kind, typename C>
-void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::ps::ext::Rule<Kind>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::ps::ext::Rule<Kind>, C>>)
 {
-    using Value = urd::view<runir::kr::ps::ext::Rule<Kind>, C>;
+    using Value = urd::index_view<runir::kr::ps::ext::Rule<Kind>, C>;
 
     ar.field("source", [](const auto& value) -> decltype(auto) { return (value.get_source()); });
     if constexpr (requires(const Value& value) { value.get_target(); })

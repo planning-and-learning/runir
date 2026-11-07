@@ -7,7 +7,7 @@
 #include <runir/kr/dl/cnf_grammar/role_view.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
+#include "pyrunir/module.hpp"
 
 namespace runir::kr::dl
 {
@@ -38,7 +38,7 @@ template<typename Tag>
 void bind_role_view(nb::module_& m, const char* name)
 {
     using Type = runir::kr::dl::cnf_grammar::Role<Tag>;
-    using View = urd::view<Type, runir::kr::dl::cnf_grammar::ConstructorRepository>;
+    using View = urd::index_view<Type, runir::kr::dl::cnf_grammar::ConstructorRepository>;
     auto cls = nb::class_<View>(m, name).def("get_index", &View::index);
     ygg::add_print(cls);
     urd::python::add_comparison(cls);

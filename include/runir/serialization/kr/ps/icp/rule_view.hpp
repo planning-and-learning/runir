@@ -15,9 +15,9 @@ namespace ygg::serialization
 {
 
 template<typename Archive, runir::kr::ps::icp::RuleKind Kind, typename C>
-void describe_fields(Archive& ar, std::type_identity<urd::view<runir::kr::ps::icp::Rule<Kind>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::ps::icp::Rule<Kind>, C>>)
 {
-    using Value = urd::view<runir::kr::ps::icp::Rule<Kind>, C>;
+    using Value = urd::index_view<runir::kr::ps::icp::Rule<Kind>, C>;
 
     ar.field("source", [](const auto& value) -> decltype(auto) { return (value.get_source()); });
     ar.field("target", [](const auto& value) -> decltype(auto) { return (value.get_target()); });

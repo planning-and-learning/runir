@@ -17,8 +17,8 @@ namespace
 template<typename T, typename Repository>
 concept IndexedDataView =
     std::constructible_from<urd::index<T>, ygg::uint_t> && urd::Identifiable<urd::index<T>> && urd::Identifiable<urd::data<T>>
-    && urd::Identifiable<urd::view<T, Repository>> && std::totally_ordered<urd::index<T>> && std::totally_ordered<urd::data<T>>
-    && std::totally_ordered<urd::view<T, Repository>> && requires(urd::data<T>& data, const urd::view<T, Repository>& view) {
+    && urd::Identifiable<urd::index_view<T, Repository>> && std::totally_ordered<urd::index<T>> && std::totally_ordered<urd::data<T>>
+    && std::totally_ordered<urd::index_view<T, Repository>> && requires(urd::data<T>& data, const urd::index_view<T, Repository>& view) {
            data.index;
            data.lhs;
            data.rhs;
@@ -35,7 +35,7 @@ template<typename Category>
 consteval bool view_alias()
 {
     using Entity = kr::dl::cnf_grammar::DerivationRule<Category>;
-    using View = urd::view<Entity, kr::dl::cnf_grammar::ConstructorRepository>;
+    using View = urd::index_view<Entity, kr::dl::cnf_grammar::ConstructorRepository>;
     static_assert(std::same_as<View, kr::dl::cnf_grammar::DerivationRuleView<Category>>);
     if constexpr (false)
         return std::same_as<View, kr::dl::cnf_grammar::DerivationRuleView<Category>>;
