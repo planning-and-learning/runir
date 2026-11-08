@@ -17,7 +17,7 @@ template<tyr::TaskKind Kind, typename Node, typename Parent>
 tyr::planning::PackedPlan<Kind>
 extract_total_ordered_plan(const Node& goal, Parent parent, const tyr::planning::PackedNode<Kind>& initial_node, runir::kr::TaskContext<Kind>& context)
 {
-    auto actions = urd::Store<urd::sequence<tyr::formalism::planning::ActionBindingView>> {};
+    auto actions = urd::Store<urd::sequence<tyr::formalism::planning::ActionRowView>> {};
     for (const Node* node = &goal; const Node* next = parent(*node); node = next)
         if (node->action)
             actions.push_back(*node->action);

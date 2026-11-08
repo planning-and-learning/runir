@@ -6,7 +6,7 @@
 
 #include <optional>
 #include <tyr/formalism/declarations.hpp>
-#include <yggdrasil/formalism/binding_view.hpp>
+#include <yggdrasil/formalism/row_view.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <tyr/planning/state_repository.hpp>
 #include <urd/repr/sequences/segmented.hpp>
@@ -19,7 +19,7 @@ template<tyr::TaskKind Kind>
 struct SearchNode
 {
     std::optional<tyr::planning::PackedStateView<Kind>> parent_state = std::nullopt;
-    std::optional<tyr::formalism::planning::ActionBindingView> action = std::nullopt;
+    std::optional<tyr::formalism::planning::ActionRowView> action = std::nullopt;
     bool is_goal = false;
     bool is_unsolvable = false;
     bool is_deadend = false;
@@ -41,7 +41,7 @@ struct Predecessor
 {
     tyr::planning::PackedStateView<Kind> source;
     tyr::planning::PackedStateView<Kind> target;
-    tyr::formalism::planning::ActionBindingView action;
+    tyr::formalism::planning::ActionRowView action;
     RuleView rule;
 };
 

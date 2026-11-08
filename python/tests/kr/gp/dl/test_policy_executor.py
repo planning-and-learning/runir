@@ -6,7 +6,7 @@ import sys
 from collections import Counter
 
 from fixture_utils import read_fixture
-from pytyr.formalism.planning import ActionBinding, PlanningDomain
+from pytyr.formalism.planning import ActionRow, PlanningDomain
 from pytyr.planning.ground import LabeledNode, Node, PackedState
 
 from pyrunir.datasets import GroundTaskSearchContext
@@ -263,7 +263,7 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
         assert edge in proof_result.graph.get_out_edge_indices(proof_result.graph.get_source(edge))
         edge_label = proof_result.graph.get_edge_property(edge)
         assert isinstance(edge_label, SketchProofEdgeLabel)
-        assert isinstance(edge_label.action, ActionBinding)
+        assert isinstance(edge_label.action, ActionRow)
 
     search_options = GroundSketchSearchOptions()
     search_result = find_ground_solution(task_context, sketch, search_options)

@@ -39,14 +39,14 @@
 namespace runir::datasets::detail
 {
 
-using StateGraphEdgeKey = std::tuple<graphs::VertexIndex, graphs::VertexIndex, tyr::formalism::planning::ActionBindingView, ygg::float_t>;
+using StateGraphEdgeKey = std::tuple<graphs::VertexIndex, graphs::VertexIndex, tyr::formalism::planning::ActionRowView, ygg::float_t>;
 
 template<tyr::TaskKind Kind>
 struct StateGraphTransition
 {
     tyr::planning::PackedStateView<Kind> source;
     tyr::planning::PackedStateView<Kind> target;
-    tyr::formalism::planning::ActionBindingView action;
+    tyr::formalism::planning::ActionRowView action;
     ygg::float_t cost = 0;
 };
 

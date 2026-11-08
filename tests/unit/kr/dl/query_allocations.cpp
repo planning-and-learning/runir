@@ -456,17 +456,17 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
     auto& repository = denotations.get_relation_repository();
     const auto columns = std::array { ygg::ColumnLayout { ColumnIndex(0), ygg::type_id<ygg::ObjectIndex> }, ygg::ColumnLayout { ColumnIndex(1), ygg::type_id<ygg::ObjectIndex> } };
     const auto renamed = std::array { ygg::ColumnLayout { ColumnIndex(2), ygg::type_id<ygg::ObjectIndex> }, ygg::ColumnLayout { ColumnIndex(3), ygg::type_id<ygg::ObjectIndex> } };
-    auto result = repository.get_relation_builder(urd::index<ygg::Schema>(), columns);
+    auto result = repository.get_relation_builder<ygg::Schema>(columns);
     for (ygg::uint_t i = 0; i < 32; ++i)
         result->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(i), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(i + 1)) });
     const auto* slot = result.get();
     const auto* schema_buffer = result->columns().data();
     const auto schema_capacity = result->memory_usage() - urd::memory_usage(result->storage());
-    const auto* row_buffer = repository.view(*result).row(0).data();
+    const auto* row_buffer = repository.view(*result).row(0).get_values().data();
     const auto row_capacity = urd::memory_usage(result->storage());
     const auto stored = repository.insert(*result).first;
     const auto* stored_schema_buffer = stored.columns().data();
-    const auto* stored_row_buffer = stored.row(0).data();
+    const auto* stored_row_buffer = stored.row(0).get_values().data();
     const auto* stored_row_indices = repository[stored.data().row_set].rows.data();
     result = {};
 
@@ -476,7 +476,7 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
     {
         denotations.reset();
         reused &= repository.symbols().template size<ygg::Relation<ygg::Schema>>() == 0;
-        auto next = repository.get_relation_builder(urd::index<ygg::Schema>(), repeat % 2 ? renamed : columns);
+        auto next = repository.get_relation_builder<ygg::Schema>(repeat % 2 ? renamed : columns);
         // Cista schema storage uses malloc, which the global new/delete counter does not cover.
         reused &= next.get() == slot;
         reused &= next->columns().data() == schema_buffer;
@@ -484,10 +484,10 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
         reused &= urd::memory_usage(next->storage()) == row_capacity;
         for (ygg::uint_t i = 0; i < 32; ++i)
             next->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(i), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(i + 1)) });
-        reused &= repository.view(*next).row(0).data() == row_buffer;
+        reused &= repository.view(*next).row(0).get_values().data() == row_buffer;
         const auto value = repository.insert(*next).first;
         reused &= value.columns().data() == stored_schema_buffer;
-        reused &= value.row(0).data() == stored_row_buffer;
+        reused &= value.row(0).get_values().data() == stored_row_buffer;
         reused &= repository[value.data().row_set].rows.data() == stored_row_indices;
     }
     const auto counts = urd::testing::counts();
@@ -513,14 +513,14 @@ TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
         for (ygg::uint_t i = 0; i < 512; ++i)
         {
             const auto object = ObjectIndex(static_cast<ygg::uint_t>(i + generation * 512));
-            auto owner = repository.get_relation_builder(urd::index<ygg::Schema>(), columns);
+            auto owner = repository.get_relation_builder<ygg::Schema>(columns);
             owner->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(object.value), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(1)) });
             owner->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(object.value), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(2)) });
             const auto value = repository.insert(*owner).first;
             const auto alias = repository.rename(value, aliases);
-            valid &= value.size() == 2 && alias.size() == 2 && ObjectIndex(ygg::decode_value<ygg::uint_t>(value.row(0).get(size_t { 0 }))) == object;
+            valid &= value.size() == 2 && alias.size() == 2 && ObjectIndex(ygg::decode_value<ygg::uint_t>(value.row(0).value(0))) == object;
             valid &= value.data().row_set == alias.data().row_set;
-            auto duplicate = repository.get_relation_builder(urd::index<ygg::Schema>(), columns);
+            auto duplicate = repository.get_relation_builder<ygg::Schema>(columns);
             duplicate->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(object.value), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(2)) });
             duplicate->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(object.value), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(1)) });
             valid &= repository.insert(*duplicate).first == value;

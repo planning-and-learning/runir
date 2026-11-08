@@ -150,7 +150,7 @@ private:
     {
         m_abstract_targets.clear();
         for (size_t r = 0; r < targets.size(); ++r)
-            m_abstract_targets.insert(ygg::decode_value<ygg::uint_t>(targets.row(r).get(database.pattern)));
+            m_abstract_targets.insert(ygg::decode_value<ygg::uint_t>(targets.row(r).value(database.pattern)));
     }
     Tables::value_type breadth_first(PatternDatabase& database)
     {

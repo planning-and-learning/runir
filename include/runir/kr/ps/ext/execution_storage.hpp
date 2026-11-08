@@ -11,7 +11,7 @@
 #include "runir/kr/ps/ext/program_view.hpp"
 #include "runir/kr/task_context.hpp"
 #include <tyr/formalism/declarations.hpp>
-#include <yggdrasil/formalism/binding_view.hpp>
+#include <yggdrasil/formalism/row_view.hpp>
 #include "tyr/planning/successor_generator_concepts.hpp"
 
 #include <concepts>
@@ -45,8 +45,8 @@ concept ExecutionStorageConcept = requires(Storage& storage,
                                            runir::kr::dl::semantics::RegisterValuesView saved_registers,
                                            runir::kr::dl::semantics::CallArgumentsView arguments,
                                            std::optional<CallStackView<Kind>> caller,
-                                           tyr::formalism::planning::ActionBindingView binding,
-                                           tyr::planning::BorrowedActionBindingView<Kind> borrowed_binding) {
+                                           tyr::formalism::planning::ActionRowView binding,
+                                           tyr::planning::BorrowedActionRowView<Kind> borrowed_binding) {
     requires tyr::TaskKind<Kind>;
     requires std::copyable<StorageStoredState<Storage>>;
     requires ProgramStateViewConcept<StorageStateView<Storage>, Kind>;
@@ -125,7 +125,7 @@ public:
         return insert(*m_context->execution_repository, saved).first;
     }
 
-    template<ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
+    template<ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
     tyr::planning::Node<Kind> successor(const tyr::planning::StateView<Kind>& state, Binding binding)
     {
         auto& search = *m_context->search_context;
@@ -235,7 +235,7 @@ public:
 
     /// The returned state borrows scratch storage until the next successor() call.
     /// Consume or copy it before then; the source must not borrow this same scratch storage.
-    template<ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
+    template<ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
     tyr::planning::Node<Kind, tyr::planning::BuilderStateView<Kind>> successor(const tyr::planning::BuilderStateView<Kind>& state, Binding binding)
     {
         auto& search = *m_context->search_context;

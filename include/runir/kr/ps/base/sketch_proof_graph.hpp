@@ -9,7 +9,7 @@
 
 #include <tuple>
 #include <tyr/formalism/declarations.hpp>
-#include <yggdrasil/formalism/binding_view.hpp>
+#include <yggdrasil/formalism/row_view.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/state_repository.hpp>
 #include <utility>
@@ -55,10 +55,10 @@ struct SketchProofVertexLabel : urd::compared_by_identity<SketchProofVertexLabel
 
 struct SketchProofEdgeLabel : urd::compared_by_identity<SketchProofEdgeLabel>
 {
-    tyr::formalism::planning::ActionBindingView action;
+    tyr::formalism::planning::ActionRowView action;
     RuleView rule;
 
-    SketchProofEdgeLabel(tyr::formalism::planning::ActionBindingView action_, RuleView rule_) noexcept : action(action_), rule(rule_) {}
+    SketchProofEdgeLabel(tyr::formalism::planning::ActionRowView action_, RuleView rule_) noexcept : action(action_), rule(rule_) {}
 
     static constexpr auto cista_members() noexcept { return urd::Members<&SketchProofEdgeLabel::action, &SketchProofEdgeLabel::rule> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&SketchProofEdgeLabel::action, &SketchProofEdgeLabel::rule> {}; }

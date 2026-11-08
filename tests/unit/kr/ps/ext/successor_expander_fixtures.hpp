@@ -221,8 +221,8 @@ void expect_borrowed_query_evaluation()
         {
             const auto target_rows = kr::ps::evaluate<Kind>(feature, transition.get_target_context());
             ASSERT_EQ(target_rows.size(), 1);
-            EXPECT_NE(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(target_rows.row(0).get(size_t { 0 }))),
-                      urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(rows.row(0).get(size_t { 0 }))));
+            EXPECT_NE(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(target_rows.row(0).value(0))),
+                      urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(rows.row(0).value(0))));
             EXPECT_NE(target_rows.relation_identity(), rows.relation_identity());  // independent caches: other layers
 
             // The indexed program state supplies bindings; its prepared planning view may use builder storage.
@@ -237,8 +237,8 @@ void expect_borrowed_query_evaluation()
             static_assert(std::same_as<std::remove_cvref_t<decltype(prepared_context.get_state())>, tyr::planning::BuilderStateView<Kind>>);
             const auto prepared_rows = kr::ps::evaluate<Kind>(feature, prepared_context);
             ASSERT_EQ(prepared_rows.size(), rows.size());
-            EXPECT_EQ(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(prepared_rows.row(0).get(size_t { 0 }))),
-                      urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(rows.row(0).get(size_t { 0 }))));
+            EXPECT_EQ(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(prepared_rows.row(0).value(0))),
+                      urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(rows.row(0).value(0))));
             const auto candidate = tyr::planning::LabeledNode<Kind, tyr::planning::BuilderStateView<Kind>> {
                 successors.front().label,
                 tyr::planning::Node<Kind, tyr::planning::BuilderStateView<Kind>>(prepared_target, successors.front().node.get_metric())
@@ -246,11 +246,11 @@ void expect_borrowed_query_evaluation()
             auto prepared_transition = context.make_dl_transition_context(state, candidate);
             const auto prepared_target_rows = kr::ps::evaluate<Kind>(feature, prepared_transition.get_target_context());
             ASSERT_EQ(prepared_target_rows.size(), target_rows.size());
-            EXPECT_EQ(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(prepared_target_rows.row(0).get(size_t { 0 }))),
-                      urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(target_rows.row(0).get(size_t { 0 }))));
+            EXPECT_EQ(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(prepared_target_rows.row(0).value(0))),
+                      urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(target_rows.row(0).value(0))));
             EXPECT_EQ(urd::index<tyr::formalism::Object>(
-                          ygg::decode_value<ygg::uint_t>(kr::ps::evaluate<Kind>(feature, prepared_transition.get_source_context()).row(0).get(size_t { 0 }))),
-                      urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(rows.row(0).get(size_t { 0 }))));
+                          ygg::decode_value<ygg::uint_t>(kr::ps::evaluate<Kind>(feature, prepared_transition.get_source_context()).row(0).value(0))),
+                      urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(rows.row(0).value(0))));
         }
         EXPECT_TRUE(environment.get_dl_target_caches().get_queries(false).contains(query));
         environment.reset_target();
@@ -799,13 +799,13 @@ void expect_query_action_contracts()
                                 EXPECT_TRUE(generator.for_each_borrowed_applicable_action_binding(
                                     planning_node,
                                     action,
-                                    [&](tyr::planning::BorrowedActionBindingView<Kind> binding)
+                                    [&](tyr::planning::BorrowedActionRowView<Kind> binding)
                                     {
                                         const auto target = storage.successor(planning_node.get_state(), binding);
                                         EXPECT_TRUE(evaluator.matches(
                                             context,
                                             initial,
-                                            tyr::planning::LabeledNode<Kind, tyr::planning::StateView<Kind>, tyr::planning::BorrowedActionBindingView<Kind>> {
+                                            tyr::planning::LabeledNode<Kind, tyr::planning::StateView<Kind>, tyr::planning::BorrowedActionRowView<Kind>> {
                                                 binding,
                                                 target }));
                                         ++matched;

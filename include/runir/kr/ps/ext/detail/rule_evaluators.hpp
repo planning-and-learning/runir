@@ -134,7 +134,7 @@ class RuleEvaluators
              ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
-             ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
+             ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
     bool matches(const Evaluator& evaluator,
                  RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                  State state,
@@ -238,15 +238,15 @@ public:
             return true;
         // Each successor is generated once for the complete effectful Sketch batch.
         auto& generator = *m_task_context->search_context->successor_generator;
-        const auto visit = [&](tyr::planning::BorrowedActionBindingView<Kind> binding)
+        const auto visit = [&](tyr::planning::BorrowedActionRowView<Kind> binding)
         {
             if (stop())
                 return false;
             const auto candidate = context.storage->successor(planning_state, binding);
             const auto borrowed_candidate =
-                tyr::planning::LabeledNode<Kind, PlanningState, tyr::planning::BorrowedActionBindingView<Kind>> { binding, candidate };
+                tyr::planning::LabeledNode<Kind, PlanningState, tyr::planning::BorrowedActionRowView<Kind>> { binding, candidate };
             context.environment->reset_target();
-            auto label = std::optional<tyr::formalism::planning::ActionBindingView> {};
+            auto label = std::optional<tyr::formalism::planning::ActionRowView> {};
             for (const auto& evaluator : m_sketch_rules)
             {
                 if (stop())

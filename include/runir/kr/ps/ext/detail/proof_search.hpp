@@ -344,7 +344,7 @@ ProgramProofResults<Kind> find_solution(SuccessorExpander<Kind, ExecutionStorage
             result.statistics.choice_width = first_goal->choice_width;
             if (!options.universal && !start)
             {
-                auto actions = urd::Store<urd::sequence<tyr::formalism::planning::ActionBindingView>> {};
+                auto actions = urd::Store<urd::sequence<tyr::formalism::planning::ActionRowView>> {};
                 for (auto path = first_goal; path; path = path->parent)
                     if (path->transition)
                         actions.push_back(path->transition->action);

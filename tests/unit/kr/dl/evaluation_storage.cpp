@@ -636,7 +636,7 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     EXPECT_EQ(results.symbols().template size<ygg::Relation<ygg::Schema>>(), 2);
 
     {
-        auto direct = persistent.get_relation_repository().get_relation_builder(urd::index<ygg::Schema>(), std::array { ygg::ColumnLayout { columns[0], ygg::type_id<ygg::ObjectIndex> }, ygg::ColumnLayout { columns[1], ygg::type_id<ygg::ObjectIndex> } });
+        auto direct = persistent.get_relation_repository().get_relation_builder<ygg::Schema>(std::array { ygg::ColumnLayout { columns[0], ygg::type_id<ygg::ObjectIndex> }, ygg::ColumnLayout { columns[1], ygg::type_id<ygg::ObjectIndex> } });
         for (size_t i = 0; i < left_result.size(); ++i)
             direct->insert(left_result.row(i));
         const auto [interned, inserted] = kr::dl::semantics::insert(persistent, *direct);

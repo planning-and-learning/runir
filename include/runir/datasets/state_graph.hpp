@@ -31,7 +31,7 @@
 #include <optional>
 #include <tuple>
 #include <tyr/formalism/declarations.hpp>
-#include <yggdrasil/formalism/binding_view.hpp>
+#include <yggdrasil/formalism/row_view.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <tyr/planning/algorithms/declarations.hpp>
@@ -99,11 +99,11 @@ struct AnnotatedStateGraphVertexLabel : urd::compared_by_identity<AnnotatedState
 
 struct StateGraphEdgeLabel : urd::compared_by_identity<StateGraphEdgeLabel>
 {
-    tyr::formalism::planning::ActionBindingView action;
+    tyr::formalism::planning::ActionRowView action;
     ygg::float_t cost = 0;
 
     StateGraphEdgeLabel() = delete;
-    StateGraphEdgeLabel(tyr::formalism::planning::ActionBindingView action_, ygg::float_t cost_) noexcept : action(action_), cost(cost_) {}
+    StateGraphEdgeLabel(tyr::formalism::planning::ActionRowView action_, ygg::float_t cost_) noexcept : action(action_), cost(cost_) {}
 
     static constexpr auto cista_members() noexcept { return urd::Members<&StateGraphEdgeLabel::action, &StateGraphEdgeLabel::cost> {}; }
     [[nodiscard]] auto action_index() const noexcept { return action.data(); }

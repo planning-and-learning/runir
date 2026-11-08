@@ -39,7 +39,7 @@ class ActionRuleEvaluator
     tyr::formalism::planning::ActionView<tyr::LiftedTag> m_action;
     // Retained scratch for decoding query rows; each use completes before any callback.
     /// The offered binding (the action and the row's objects), read through the planning repository when checked.
-    mutable urd::data<tyr::formalism::RelationBinding<tyr::formalism::planning::Action<tyr::LiftedTag>>> m_offer;
+    mutable urd::data<ygg::Row<tyr::formalism::planning::Action<tyr::LiftedTag>>> m_offer;
     mutable urd::Store<urd::sequence<ygg::Value>> m_row;
 
     static void require_applicable(tyr::planning::ActionBindingStatus status)
@@ -101,9 +101,9 @@ public:
         {
             if (stop())
                 return false;
-            m_offer.objects.clear();
+            m_offer.values.clear();
             for (size_t i = 0; i < row.size(); ++i)
-                m_offer.objects.emplace_back(ygg::decode_value<ygg::uint_t>(row.get(i)));
+                m_offer.values.emplace_back(ygg::decode_value<ygg::uint_t>(row.value(i)));
             // Policy applicability has no carried path metric.
             const auto offered = (*context.task_context)
                                      ->search_context->successor_generator->try_get_applicable_action_binding(
@@ -126,7 +126,7 @@ public:
              ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
-             ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
+             ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
     bool matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                  State state,
                  const tyr::planning::LabeledNode<Kind, PlanningState, Binding>& candidate) const

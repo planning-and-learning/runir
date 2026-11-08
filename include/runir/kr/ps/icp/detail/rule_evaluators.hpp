@@ -49,7 +49,7 @@ class RuleEvaluators
         auto& search = *get_task_context()->search_context;
         auto& environment = m_workspace.get_environment();
         auto source_context = context.make_dl_context(source);
-        const auto visit = [&](tyr::planning::BorrowedActionBindingView<Kind> binding)
+        const auto visit = [&](tyr::planning::BorrowedActionRowView<Kind> binding)
         {
             if (stop())
                 return false;
@@ -64,11 +64,11 @@ class RuleEvaluators
                                                                              *search.state_repository,
                                                                              *search.axiom_evaluator);
             const auto candidate =
-                tyr::planning::LabeledNode<Kind, tyr::planning::StateView<Kind>, tyr::planning::BorrowedActionBindingView<Kind>> { binding, node };
+                tyr::planning::LabeledNode<Kind, tyr::planning::StateView<Kind>, tyr::planning::BorrowedActionRowView<Kind>> { binding, node };
             environment.reset_target();
             auto transition = context.make_dl_transition_context(source, candidate);
             auto histories = std::optional<HistoriesView<Kind>> {};
-            auto label = std::optional<tyr::formalism::planning::ActionBindingView> {};
+            auto label = std::optional<tyr::formalism::planning::ActionRowView> {};
             for (const auto& evaluator : m_matching)
             {
                 if (stop())

@@ -188,7 +188,7 @@ struct QuerySetCombinationEvaluator : QueryValue
         rhs(rhs_)
     {
     }
-    template<ygg::database::RelationViewConcept Rows, std::invocable<ygg::database::RowPool::row_type, bool> Emit>
+    template<ygg::database::RelationViewConcept Rows, std::invocable<decltype(std::declval<const Rows&>().row(0)), bool> Emit>
     void evaluate_rows(EvaluationGraph<Kind>& graph, const Rows& rows, Emit emit)
     {
         const auto left = graph.result(lhs);
@@ -220,7 +220,7 @@ struct QuerySetCombinationEvaluator : QueryValue
         this->delta.clear();
         const auto [left_added, left_removed] = graph.change(lhs).change();
         const auto [right_added, right_removed] = graph.change(rhs).change();
-        const auto emit = [this](auto row, bool present) { this->set(row, present); };
+        const auto emit = [this](auto row, bool present) { this->set(row.get_values(), present); };
         evaluate_rows(graph, left_added, emit);
         evaluate_rows(graph, left_removed, emit);
         evaluate_rows(graph, right_added, emit);
@@ -240,7 +240,7 @@ struct QuerySelectionEvaluator : QueryValue
         expression(expression_)
     {
     }
-    template<ygg::database::RelationViewConcept Rows, std::invocable<ygg::database::RowPool::row_type> Emit>
+    template<ygg::database::RelationViewConcept Rows, std::invocable<decltype(std::declval<const Rows&>().row(0))> Emit>
     void evaluate_rows(const Rows& rows, Emit emit)
     {
         for (size_t i = 0; i < rows.size(); ++i)
@@ -249,13 +249,13 @@ struct QuerySelectionEvaluator : QueryValue
             if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
             {
                 const auto& plan = expression.data().plan;
-                if (row.get(plan.lhs_position()) != row.get(plan.rhs_position()))
+                if (row.value(plan.lhs_position()) != row.value(plan.rhs_position()))
                     continue;
             }
             else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
             {
                 const auto& plan = expression.data().plan;
-                if (row.get(plan.position()) != plan.value())
+                if (row.value(plan.position()) != plan.value())
                     continue;
             }
             emit(row);
@@ -271,8 +271,8 @@ struct QuerySelectionEvaluator : QueryValue
     {
         this->delta.clear();
         const auto [added, removed] = graph.change(argument).change();
-        evaluate_rows(removed, [this](auto row) { this->set(row, false); });
-        evaluate_rows(added, [this](auto row) { this->set(row, true); });
+        evaluate_rows(removed, [this](auto row) { this->set(row.get_values(), false); });
+        evaluate_rows(added, [this](auto row) { this->set(row.get_values(), true); });
     }
 };
 

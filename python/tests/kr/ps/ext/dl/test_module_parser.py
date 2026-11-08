@@ -11,7 +11,7 @@ from ext_execution_utils import ExecutionStep, Outcome, collect_steps
 from fixture_utils import FIXTURE_ROOT, load_fixture, read_fixture
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
-from pytyr.formalism.planning import ActionBinding, LiftedPlanningTask, Parser, PlanningDomain
+from pytyr.formalism.planning import ActionRow, LiftedPlanningTask, Parser, PlanningDomain
 from pytyr.planning.ground import PackedPlan as GroundPackedPlan, Task as GroundTask
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 from pyyggdrasil.execution import ExecutionContext
@@ -433,7 +433,7 @@ def test_terminating_program_executes_and_proves_from_python() -> None:
     assert ext.ProgramProofEdgeLabel is ext.GroundProgramProofEdgeLabel
     assert isinstance(edge_label, ext.ProgramProofEdgeLabel)
     if edge_label.action is not None:
-        assert isinstance(edge_label.action, ActionBinding)
+        assert isinstance(edge_label.action, ActionRow)
     vertex_label = proof.graph.get_vertex_property(vertex)
     assert vertex_label.program_state.module_state.memory_state is not None
     frame = vertex_label.program_state.module_state

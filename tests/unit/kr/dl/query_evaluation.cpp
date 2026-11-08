@@ -50,7 +50,7 @@ urd::Store<urd::sequence<ObjectIndex>> object_values(const auto& row)
 {
     auto result = urd::Store<urd::sequence<ObjectIndex>> {};
     for (size_t i = 0; i < row.size(); ++i)
-        result.push_back(ObjectIndex(ygg::decode_value<ygg::uint_t>(row.get(i))));
+        result.push_back(ObjectIndex(ygg::decode_value<ygg::uint_t>(row.value(i))));
     return result;
 }
 
@@ -686,7 +686,7 @@ void check_cached_queries()
                                  ygg::database::project(layer.view(input), decoded.plan, result, scratch);
                                  ASSERT_EQ(result.size(), 1);
                                  for (size_t i = 0; i < positions.size(); ++i)
-                                     EXPECT_EQ(ObjectIndex(ygg::decode_value<ygg::uint_t>(layer.view(result).row(0).get(i))), ObjectIndex(10 + positions[i]));
+                                     EXPECT_EQ(ObjectIndex(ygg::decode_value<ygg::uint_t>(layer.view(result).row(0).value(i))), ObjectIndex(10 + positions[i]));
                              });
         auto stale = data;
         stale.plan = {};
@@ -1182,7 +1182,7 @@ void check_query_object_views()
     EXPECT_EQ(&result.context(), &storage.get_denotation_repository(true).get_relation_repository());
     // Rows hold raw object indices; the relation repository cannot resolve them.
     const auto row = result.row(0);
-    static_assert(std::same_as<decltype(ygg::decode_value<ygg::uint_t>(row.get(size_t { 0 }))), ygg::uint_t>);
+    static_assert(std::same_as<decltype(ygg::decode_value<ygg::uint_t>(row.value(0))), ygg::uint_t>);
     EXPECT_TRUE(std::ranges::equal(object_values(row), raw));
     EXPECT_TRUE(result.contains(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(constant.index().value), ygg::encode_value<ygg::uint_t>(local.index().value) }));
 
@@ -1561,7 +1561,7 @@ TEST(RunirQueries, QueryResultIdentityIncludesOrderedSchemaAndUnorderedRows)
     using Row = std::array<ObjectIndex, 2>;
     const auto intern = [&](std::array<ColumnIndex, 2> columns, std::array<Row, 2> rows)
     {
-        auto result = repository.get_relation_builder(urd::index<ygg::Schema>(), std::array { ygg::ColumnLayout { columns[0], ygg::type_id<ygg::ObjectIndex> }, ygg::ColumnLayout { columns[1], ygg::type_id<ygg::ObjectIndex> } });
+        auto result = repository.get_relation_builder<ygg::Schema>(std::array { ygg::ColumnLayout { columns[0], ygg::type_id<ygg::ObjectIndex> }, ygg::ColumnLayout { columns[1], ygg::type_id<ygg::ObjectIndex> } });
         for (const auto& row : rows)
             result->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(row[0].value), ygg::encode_value<ygg::uint_t>(row[1].value) });
         return repository.insert(*result).first;

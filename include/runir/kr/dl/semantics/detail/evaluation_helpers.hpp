@@ -254,7 +254,7 @@ auto evaluate_relation(urd::index_view<Constructor<Category>, C> argument, std::
 {
     const auto denotation = evaluate<Kind>(argument, context);
     auto& relations = context.get_denotation_repository().get_relation_repository();
-    auto result = relations.get_relation_builder(relations.schema(columns), columns);
+    auto result = relations.template get_relation_builder<ygg::Schema>(columns);
     insert_denotation_rows<Category>(denotation, *result);
     return insert(context.get_denotation_repository(), *result).first;
 }

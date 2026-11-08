@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <optional>
 #include <tyr/formalism/declarations.hpp>
-#include <yggdrasil/formalism/binding_view.hpp>
+#include <yggdrasil/formalism/row_view.hpp>
 #include <urd/repr/sequences/segmented.hpp>
 #include <urd/store.hpp>
 
@@ -31,7 +31,7 @@ struct SearchNode
 {
     // First arrival is permanent; the initial state has no parent.
     std::optional<ProgramStateView<Kind>> parent_state = std::nullopt;
-    std::optional<tyr::formalism::planning::ActionBindingView> action = std::nullopt;
+    std::optional<tyr::formalism::planning::ActionRowView> action = std::nullopt;
     // Number of non-singleton Choose bindings on the first-parent path.
     ygg::uint_t choice_depth = 0;
     // Maximum post-filter Choose binding count on the first-parent path.
@@ -58,7 +58,7 @@ struct Predecessor
 {
     ProgramStateView<Kind> source;
     ProgramStateView<Kind> target;
-    std::optional<tyr::formalism::planning::ActionBindingView> action;
+    std::optional<tyr::formalism::planning::ActionRowView> action;
     std::optional<RuleVariantView> rule;
 };
 

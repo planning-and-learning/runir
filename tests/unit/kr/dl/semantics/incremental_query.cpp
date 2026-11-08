@@ -55,7 +55,7 @@ auto rows(const auto& relation)
         const auto row = relation.row(i);
         auto& values = result.emplace_back();
         for (size_t j = 0; j < row.size(); ++j)
-            values.emplace_back(ygg::decode_value<ygg::uint_t>(row.get(j)));
+            values.emplace_back(ygg::decode_value<ygg::uint_t>(row.value(j)));
     }
     std::ranges::sort(result);
     return result;

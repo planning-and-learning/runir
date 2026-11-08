@@ -47,7 +47,7 @@ auto search(const TaskContextPtr<Kind>& task, ProgramView program, const Program
     std::optional<std::size_t> goal;
     const auto admit = [&](ProgramStateView<Kind> state,
                            std::optional<std::size_t> parent,
-                           std::optional<tyr::formalism::planning::ActionBindingView> action) -> std::optional<std::size_t>
+                           std::optional<tyr::formalism::planning::ActionRowView> action) -> std::optional<std::size_t>
     {
         const auto found = positions.find(ygg::uint_t(state.index().value));
         if (found != positions.end())

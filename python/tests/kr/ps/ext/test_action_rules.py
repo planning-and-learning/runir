@@ -23,7 +23,7 @@ from ext_execution_utils import (
 )
 from fixture_utils import FIXTURE_ROOT
 from pypddl.formalism import ParserOptions
-from pytyr.formalism.planning import ActionBinding, Object, ObjectIndex, Parser, PlanningDomain
+from pytyr.formalism.planning import ActionRow, Object, ObjectIndex, Parser, PlanningDomain
 from pytyr.planning import ground, lifted
 from pyyggdrasil import database
 from pyyggdrasil.execution import ExecutionContext
@@ -143,7 +143,7 @@ def _rule(step: ExecutionStep) -> ext.RuleVariant:
     return rule
 
 
-def _action(step: ExecutionStep) -> ActionBinding:
+def _action(step: ExecutionStep) -> ActionRow:
     transition = step.state_transition
     assert transition is not None
     return transition.action
@@ -571,7 +571,7 @@ def test_action_query_preserves_correlated_parameter_tuples(kind: str, tmp_path:
     expander = make_expander(task_context, program)
     state = initial_program_state(expander, initial_node(task_context).get_state())
 
-    def arguments(action: ActionBinding) -> tuple[str, ...]:
+    def arguments(action: ActionRow) -> tuple[str, ...]:
         return tuple(object_.get_name() for object_ in action.get_objects())
 
     broad = _labeled_successors(task_context)

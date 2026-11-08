@@ -29,21 +29,21 @@ struct ProjectionEvaluator
         operation(layer, plan)
     {
     }
-    static void set_row(urd::builder<Denotation<Category>>& builder, const ygg::database::RowPool::row_type& row, bool present)
+    static void set_row(urd::builder<Denotation<Category>>& builder, const auto& row, bool present)
     {
         using ObjectIndex = urd::index<tyr::formalism::Object>;
         if constexpr (std::same_as<Category, ConceptTag>)
-            builder.set(ObjectIndex(ygg::decode_value<ygg::uint_t>(row.get(size_t { 0 }))), present);
+            builder.set(ObjectIndex(ygg::decode_value<ygg::uint_t>(row.value(0))), present);
         else
-            builder.set(ObjectIndex(ygg::decode_value<ygg::uint_t>(row.get(size_t { 0 }))), ObjectIndex(ygg::decode_value<ygg::uint_t>(row.get(size_t { 1 }))), present);
+            builder.set(ObjectIndex(ygg::decode_value<ygg::uint_t>(row.value(0))), ObjectIndex(ygg::decode_value<ygg::uint_t>(row.value(1))), present);
     }
-    static void set_row(DenotationState<Category>& state, const ygg::database::RowPool::row_type& row, bool present, const tyr::formalism::planning::Repository& repository)
+    static void set_row(DenotationState<Category>& state, const auto& row, bool present, const tyr::formalism::planning::Repository& repository)
     {
         using ObjectIndex = urd::index<tyr::formalism::Object>;
         if constexpr (std::same_as<Category, ConceptTag>)
-            state.set(ObjectIndex(ygg::decode_value<ygg::uint_t>(row.get(size_t { 0 }))), present, repository);
+            state.set(ObjectIndex(ygg::decode_value<ygg::uint_t>(row.value(0))), present, repository);
         else
-            state.set(ObjectIndex(ygg::decode_value<ygg::uint_t>(row.get(size_t { 0 }))), ObjectIndex(ygg::decode_value<ygg::uint_t>(row.get(size_t { 1 }))), present, repository);
+            state.set(ObjectIndex(ygg::decode_value<ygg::uint_t>(row.value(0))), ObjectIndex(ygg::decode_value<ygg::uint_t>(row.value(1))), present, repository);
     }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context)

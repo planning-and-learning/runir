@@ -65,7 +65,7 @@ private:
         return denotations;
     }
 
-    template<ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding,
+    template<ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding,
              typename ConceptDenotations>
     static bool action_matches_do_arguments(RuleView<DoTag> rule, Binding action, const ConceptDenotations& denotations)
     {
@@ -102,7 +102,7 @@ private:
              ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
-             ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
+             ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
     bool do_rule_matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                          DoRuleWorkspace& workspace,
                          RuleView<DoTag> rule,
@@ -137,8 +137,8 @@ public:
         if (std::ranges::any_of(denotations, [](const auto& denotation) { return denotation.count() == 0; }))
             return true;
         auto& search = *(*context.task_context)->search_context;
-        const auto accept = [&](tyr::planning::BorrowedActionBindingView<Kind> binding) { return action_matches_do_arguments(rule, binding, denotations); };
-        const auto visit = [&](tyr::planning::BorrowedActionBindingView<Kind> binding)
+        const auto accept = [&](tyr::planning::BorrowedActionRowView<Kind> binding) { return action_matches_do_arguments(rule, binding, denotations); };
+        const auto visit = [&](tyr::planning::BorrowedActionRowView<Kind> binding)
         {
             if (stop())
                 return false;
@@ -161,7 +161,7 @@ public:
              ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
-             ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
+             ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
     bool matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                  State state,
                  const tyr::planning::LabeledNode<Kind, PlanningState, Binding>& candidate) const

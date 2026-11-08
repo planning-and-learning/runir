@@ -443,7 +443,7 @@ template<tyr::TaskKind Kind, typename Tag, typename C, StateEvaluationContextCon
 auto evaluate_impl(urd::index_view<Query<Tag>, C> constructor, Context& context) -> QueryDenotationView
 {
     auto& relations = context.get_denotation_repository().get_relation_repository();
-    auto result = relations.get_relation_builder(relations.schema(constructor.get_schema()), constructor.get_schema());
+    auto result = relations.template get_relation_builder<ygg::Schema>(constructor.get_schema());
     detail::evaluate_query<Kind>(constructor, context, *result);
     return insert(context.get_denotation_repository(), *result).first;
 }
@@ -475,7 +475,7 @@ auto evaluate_impl(urd::index_view<QueryProjection<Category>, C> constructor, Co
         auto bits = result->get();
         const auto object = position(0);
         for (const auto row : relation.rows())
-            bits.set(ygg::decode_value<ygg::uint_t>(row.get(object)));
+            bits.set(ygg::decode_value<ygg::uint_t>(row.value(object)));
     }
     else
     {
@@ -483,7 +483,7 @@ auto evaluate_impl(urd::index_view<QueryProjection<Category>, C> constructor, Co
         const auto source = position(0);
         const auto target = position(1);
         for (const auto row : relation.rows())
-            result->get(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(row.get(source)))).set(ygg::decode_value<ygg::uint_t>(row.get(target)));
+            result->get(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(row.value(source)))).set(ygg::decode_value<ygg::uint_t>(row.value(target)));
     }
     return insert(context.get_denotation_repository(), *result, context.get_builder()).first;
 }

@@ -71,7 +71,7 @@ struct QueryMustPassEvaluator : QueryValue
             this->set(std::span<const ygg::Value>(removed).subspan(offset, row_size), false);
         const auto recomputed = this->layer->view(computed);
         for (size_t r = 0; r < recomputed.size(); ++r)
-            this->set(recomputed.row(r), true);
+            this->set(recomputed.row(r).get_values(), true);
     }
 
 private:

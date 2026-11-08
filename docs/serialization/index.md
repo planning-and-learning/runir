@@ -144,7 +144,7 @@ dictionaries = Dictionaries()
 register_table(dictionaries, fp.Object, "objects", "o")
 register_table(
     dictionaries,
-    fp.ActionBinding,
+    fp.ActionRow,
     "actions",
     "a",
     project=lambda binding: {

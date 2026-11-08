@@ -56,7 +56,7 @@ struct SearchStorage<Kind, StateMemorization::ALL>
 
     bool record_transition(ProgramStateView<Kind> source,
                            ProgramStateView<Kind> target,
-                           std::optional<tyr::formalism::planning::ActionBindingView> action,
+                           std::optional<tyr::formalism::planning::ActionRowView> action,
                            std::optional<RuleVariantView> rule,
                            std::size_t choice_width,
                            auto&& classify)
@@ -126,7 +126,7 @@ struct SearchStorage<Kind, StateMemorization::NONE>
 
     bool record_transition(BuilderProgramStateView<Kind>,
                            BuilderProgramStateView<Kind> target,
-                           std::optional<tyr::formalism::planning::ActionBindingView>,
+                           std::optional<tyr::formalism::planning::ActionRowView>,
                            std::optional<RuleVariantView>,
                            std::size_t,
                            auto&& classify)

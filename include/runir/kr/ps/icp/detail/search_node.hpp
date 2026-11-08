@@ -7,7 +7,7 @@
 #include <cstddef>
 #include <optional>
 #include <tyr/formalism/declarations.hpp>
-#include <yggdrasil/formalism/binding_view.hpp>
+#include <yggdrasil/formalism/row_view.hpp>
 
 namespace runir::kr::ps::icp::detail
 {
@@ -17,7 +17,7 @@ struct SearchNode
 {
     ProgramStateView<Kind> state;
     std::optional<std::size_t> parent;
-    std::optional<tyr::formalism::planning::ActionBindingView> action;
+    std::optional<tyr::formalism::planning::ActionRowView> action;
     bool is_goal = false;
     bool is_unsolvable = false;
     bool is_deadend = false;
@@ -28,7 +28,7 @@ struct Predecessor
 {
     std::size_t source = 0;
     std::size_t target = 0;
-    std::optional<tyr::formalism::planning::ActionBindingView> action;
+    std::optional<tyr::formalism::planning::ActionRowView> action;
     std::optional<RuleVariantView> rule;
 };
 
