@@ -19,6 +19,11 @@ auto make_ground_contexts(const std::filesystem::path& domain_file, const urd::S
 
 auto make_gripper_ground_context() -> datasets::TaskSearchContextPtr<tyr::GroundTag>;
 
+/// A row's objects (an action label's), read as object columns and resolved through the row's context.
+template<typename R>
+auto objects_of(const R& row)
+{ return urd::resolve(row.template get<urd::index<tyr::formalism::Object>>(), row.context()); }
+
 }  // namespace runir::tests
 
 #endif

@@ -45,35 +45,35 @@ public:
 
     auto get_role() const noexcept
         requires requires(const urd::record_of<V>& record) { record.role; }
-    { return self().template get<&urd::record_of<V>::role>(); }
+    { return self().template member<&urd::record_of<V>::role>(); }
 
     auto get_concept() const noexcept
         requires requires(const urd::record_of<V>& record) { record.concept_; }
-    { return self().template get<&urd::record_of<V>::concept_>(); }
+    { return self().template member<&urd::record_of<V>::concept_>(); }
 
     auto get_arg() const noexcept
         requires requires(const urd::record_of<V>& record) { record.arg; }
-    { return self().template get<&urd::record_of<V>::arg>(); }
+    { return self().template member<&urd::record_of<V>::arg>(); }
 
     auto get_lhs() const noexcept
         requires requires(const urd::record_of<V>& record) { record.lhs; }
-    { return self().template get<&urd::record_of<V>::lhs>(); }
+    { return self().template member<&urd::record_of<V>::lhs>(); }
 
     auto get_mid() const noexcept
         requires requires(const urd::record_of<V>& record) { record.mid; }
-    { return self().template get<&urd::record_of<V>::mid>(); }
+    { return self().template member<&urd::record_of<V>::mid>(); }
 
     auto get_rhs() const noexcept
         requires requires(const urd::record_of<V>& record) { record.rhs; }
-    { return self().template get<&urd::record_of<V>::rhs>(); }
+    { return self().template member<&urd::record_of<V>::rhs>(); }
 
     auto get_register() const noexcept
         requires boost::mp11::mp_similar<typename urd::record_of<V>::Referenced, Register<ConceptTag>>::value
-    { return self().template get<&urd::record_of<V>::reference>(); }
+    { return self().template member<&urd::record_of<V>::reference>(); }
 
     auto get_argument() const noexcept
         requires boost::mp11::mp_similar<typename urd::record_of<V>::Referenced, Argument<ConceptTag>>::value
-    { return self().template get<&urd::record_of<V>::reference>(); }
+    { return self().template member<&urd::record_of<V>::reference>(); }
 
     auto get_value() const noexcept
         requires requires(const urd::record_of<V>& record) { record.identifier; }

@@ -77,7 +77,7 @@ public:
     template<PredicateContext Context, tyr::formalism::FactKind T>
     void add_atom(tyr::formalism::planning::AtomView<::tyr::GroundTag, T> atom)
     {
-        const auto objects = atom.get_row().get_objects();
+        const auto objects = atom.get_objects();
         auto vertices = graphs::VertexIndexList {};
         vertices.reserve(objects.size());
 

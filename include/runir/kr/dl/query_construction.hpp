@@ -37,7 +37,7 @@ inline urd::flat_vector<ygg::ColumnLayout> query_columns(const urd::flat_vector<
 {
     urd::flat_vector<ygg::ColumnLayout> result;
     for (const auto column : columns)
-        result.push_back(ygg::ColumnLayout { urd::index<ygg::Column>(column.value), ygg::type_id<ygg::ObjectIndex> });
+        result.push_back(ygg::ColumnLayout { urd::index<ygg::Column>(column.value), ygg::type_id<urd::index<tyr::formalism::Object>> });
     ygg::validate_columns({ result.data(), result.size() });
     return result;
 }
@@ -145,8 +145,8 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
         data.columns = get_query_columns(data.arg, repository);
         data.plan = ygg::database::SelectValuePlan(urd::resolve(data.arg, repository).get_schema(),
                                                    urd::index<ygg::Column>(data.column.value),
-                                                   ygg::type_id<ygg::ObjectIndex>,
-                                                   ygg::encode_value(ygg::ObjectIndex { data.object.value }));
+                                                   ygg::type_id<urd::index<tyr::formalism::Object>>,
+                                                   ygg::encode_value(data.object));
     }
     else
     {
@@ -178,7 +178,7 @@ inline urd::flat_vector<ygg::ColumnLayout> lifted_columns(size_t arity)
 {
     urd::flat_vector<ygg::ColumnLayout> columns;
     for (size_t i = 0; i < arity; ++i)
-        columns.push_back(ygg::ColumnLayout { urd::index<ygg::Column>(static_cast<std::uint32_t>(i)), ygg::type_id<ygg::ObjectIndex> });
+        columns.push_back(ygg::ColumnLayout { urd::index<ygg::Column>(static_cast<std::uint32_t>(i)), ygg::type_id<urd::index<tyr::formalism::Object>> });
     return columns;
 }
 

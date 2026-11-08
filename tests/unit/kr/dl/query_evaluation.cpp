@@ -1561,7 +1561,7 @@ TEST(RunirQueries, QueryResultIdentityIncludesOrderedSchemaAndUnorderedRows)
     using Row = std::array<ObjectIndex, 2>;
     const auto intern = [&](std::array<ColumnIndex, 2> columns, std::array<Row, 2> rows)
     {
-        auto result = repository.get_relation_builder<ygg::Schema>(std::array { ygg::ColumnLayout { columns[0], ygg::type_id<ygg::ObjectIndex> }, ygg::ColumnLayout { columns[1], ygg::type_id<ygg::ObjectIndex> } });
+        auto result = repository.get_relation_builder<ygg::Schema>(std::array { ygg::ColumnLayout { columns[0], ygg::type_id<urd::index<tyr::formalism::Object>> }, ygg::ColumnLayout { columns[1], ygg::type_id<urd::index<tyr::formalism::Object>> } });
         for (const auto& row : rows)
             result->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(row[0].value), ygg::encode_value<ygg::uint_t>(row[1].value) });
         return repository.insert(*result).first;
@@ -1574,13 +1574,13 @@ TEST(RunirQueries, QueryResultIdentityIncludesOrderedSchemaAndUnorderedRows)
     EXPECT_EQ(intern(columns, { rows[1], rows[0] }), first);
     EXPECT_EQ(repository.symbols().template size<ygg::Relation<ygg::Schema>>(), 2);
 
-    auto renamed_columns = std::array { ygg::ColumnLayout { ColumnIndex(6), ygg::type_id<ygg::ObjectIndex> }, ygg::ColumnLayout { ColumnIndex(7), ygg::type_id<ygg::ObjectIndex> } };
+    auto renamed_columns = std::array { ygg::ColumnLayout { ColumnIndex(6), ygg::type_id<urd::index<tyr::formalism::Object>> }, ygg::ColumnLayout { ColumnIndex(7), ygg::type_id<urd::index<tyr::formalism::Object>> } };
     const auto renamed = repository.rename(first, renamed_columns);
     renamed_columns[0].label = ColumnIndex(99);
     EXPECT_EQ(renamed.columns()[0].label, ColumnIndex(6));
     EXPECT_EQ(renamed.data().row_set, first.data().row_set);
     EXPECT_NE(renamed, first);
-    EXPECT_EQ(repository.rename(renamed, std::array { ygg::ColumnLayout { columns[0], ygg::type_id<ygg::ObjectIndex> }, ygg::ColumnLayout { columns[1], ygg::type_id<ygg::ObjectIndex> } }), first);
+    EXPECT_EQ(repository.rename(renamed, std::array { ygg::ColumnLayout { columns[0], ygg::type_id<urd::index<tyr::formalism::Object>> }, ygg::ColumnLayout { columns[1], ygg::type_id<urd::index<tyr::formalism::Object>> } }), first);
 }
 
 TEST(RunirQueries, PersistentRenameSurvivesIntermediateResetAndConstructorRelease)

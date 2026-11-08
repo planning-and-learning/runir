@@ -18,8 +18,8 @@ private:
 
 public:
     const auto& get_symbol() const noexcept { return self().data().symbol; }
-    auto get_conditions() const noexcept { return self().template get<&urd::record_of<V>::conditions>(); }
-    auto get_effects() const noexcept { return self().template get<&urd::record_of<V>::effects>(); }
+    auto get_conditions() const noexcept { return self().template member<&urd::record_of<V>::conditions>(); }
+    auto get_effects() const noexcept { return self().template member<&urd::record_of<V>::effects>(); }
 };
 }  // namespace urd
 

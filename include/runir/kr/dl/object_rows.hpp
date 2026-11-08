@@ -18,7 +18,7 @@ std::span<const ygg::Value> encode_object_row(const R& objects, urd::Store<urd::
 {
     buffer.clear();
     for (const auto object : objects)
-        buffer.push_back(ygg::encode_value(ygg::ObjectIndex { object.value }));
+        buffer.push_back(ygg::encode_value(object));
     return buffer;
 }
 }  // namespace runir::kr::dl

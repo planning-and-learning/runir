@@ -71,11 +71,12 @@ private:
     {
         if (action.get_relation().get_name() != rule.get_action_name())
             return false;
-        const auto objects = action.get_objects();
-        if (objects.size() != denotations.size())
+        if (action.size() != denotations.size())
             return false;
+        // The canonical values of its object columns are the objects' indices (a lifted binding may be borrowed, its pool not
+        // yet made, so it is not read typed).
         for (size_t i = 0; i < denotations.size(); ++i)
-            if (!denotations[i].test(ygg::uint_t(objects[i].index().value)))
+            if (!denotations[i].test(static_cast<ygg::uint_t>(action.value(i))))
                 return false;
         return true;
     }

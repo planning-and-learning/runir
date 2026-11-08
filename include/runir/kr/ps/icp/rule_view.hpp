@@ -19,14 +19,14 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_source() const noexcept { return self().template get<&urd::record_of<V>::source>(); }
-    auto get_target() const noexcept { return self().template get<&urd::record_of<V>::target>(); }
-    auto get_conditions() const noexcept { return self().template get<&urd::record_of<V>::conditions>(); }
-    auto get_effects() const noexcept { return self().template get<&urd::record_of<V>::effects>(); }
+    auto get_source() const noexcept { return self().template member<&urd::record_of<V>::source>(); }
+    auto get_target() const noexcept { return self().template member<&urd::record_of<V>::target>(); }
+    auto get_conditions() const noexcept { return self().template member<&urd::record_of<V>::conditions>(); }
+    auto get_effects() const noexcept { return self().template member<&urd::record_of<V>::effects>(); }
 
     auto get_feature() const noexcept
         requires runir::kr::ps::icp::BindingRuleKind<Kind>
-    { return self().template get<&urd::record_of<V>::feature>(); }
+    { return self().template member<&urd::record_of<V>::feature>(); }
 
     auto get_register() const noexcept
         requires runir::kr::ps::icp::BindingRuleKind<Kind>
@@ -42,11 +42,11 @@ public:
 
     auto get_xconditions() const noexcept
         requires std::same_as<Kind, runir::kr::ps::icp::CruleTag>
-    { return self().template get<&urd::record_of<V>::xconditions>(); }
+    { return self().template member<&urd::record_of<V>::xconditions>(); }
 
     auto get_xeffects() const noexcept
         requires std::same_as<Kind, runir::kr::ps::icp::CruleTag>
-    { return self().template get<&urd::record_of<V>::xeffects>(); }
+    { return self().template member<&urd::record_of<V>::xeffects>(); }
 };
 }  // namespace urd
 

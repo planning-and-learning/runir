@@ -18,7 +18,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_variant() const noexcept { return self().template get<&urd::record_of<V>::variant>(); }
+    auto get_variant() const noexcept { return self().template member<&urd::record_of<V>::variant>(); }
     [[nodiscard]] bool is_static() const noexcept { return self().data().is_static; }
 };
 }  // namespace urd

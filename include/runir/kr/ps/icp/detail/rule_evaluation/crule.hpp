@@ -35,7 +35,7 @@ class RuleEvaluator<Kind, CruleTag>
             [&]<typename Ref>(Ref ref) -> std::optional<ygg::uint_t>
             {
                 if constexpr (std::same_as<Ref, ArgumentPosition>)
-                    return ygg::uint_t(binding.get_objects().at(ref.value).index().value);
+                    return static_cast<ygg::uint_t>(binding.value(ref.value));  // an object column: the object's index
                 else
                 {
                     const auto reg = urd::resolve(ref, m_rule.context().get_dl_repository());

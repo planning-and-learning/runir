@@ -103,7 +103,7 @@ public:
                 return false;
             m_offer.values.clear();
             for (size_t i = 0; i < row.size(); ++i)
-                m_offer.values.emplace_back(ygg::decode_value<ygg::uint_t>(row.value(i)));
+                m_offer.values.emplace_back(row.value(i));
             // Policy applicability has no carried path metric.
             const auto offered = (*context.task_context)
                                      ->search_context->successor_generator->try_get_applicable_action_binding(
@@ -138,8 +138,9 @@ public:
             return false;
         auto state_context = context.make_dl_context(state);
         const auto query = evaluate<Kind>(rule.get_query_feature(), state_context);
-        const auto objects = candidate.label.get_objects();
-        if (objects.size() != query.columns().size() || !query.contains(runir::kr::dl::encode_object_row(objects.base(), m_row)))
+        const auto& label = candidate.label;
+        if (label.size() != query.columns().size()
+            || !query.contains(runir::kr::dl::encode_object_row(label.get_values(), m_row)))  // object columns: canonical values
             return false;
         auto& generator = *(*context.task_context)->search_context->successor_generator;
         const auto node = tyr::planning::Node<Kind, PlanningState>(planning_state, 0);

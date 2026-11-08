@@ -32,7 +32,7 @@ public:
     auto get_module() const { return get_program().get_module(); }
     auto get_memory_state() const { return urd::resolve(self().data().memory_state, self().context().get_program_repository()); }
     auto get_registers() const { return urd::resolve(self().data().registers, self().context().get_denotation_repository()); }
-    auto get_histories() const { return self().template get<&urd::record_of<V>::histories>(); }
+    auto get_histories() const { return self().template member<&urd::record_of<V>::histories>(); }
     auto get_state() const { return self().context().get_state_repository().get_registered_state(self().data().state); }
 };
 }  // namespace urd

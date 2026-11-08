@@ -110,7 +110,7 @@ public:
             {
                 if (binding && !progress)
                     for (std::size_t j = 0; j < binding->get_relation().get_original_arity(); ++j)
-                        if (entered->get().test(static_cast<ygg::uint_t>(binding->get_objects()[j].index().value)))
+                        if (entered->get().test(static_cast<ygg::uint_t>(binding->value(j))))  // object columns: the objects' indices
                         {
                             progress = true;
                             break;

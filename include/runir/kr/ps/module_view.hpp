@@ -22,7 +22,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_symbol() const noexcept { return self().template get<&urd::record_of<V>::symbol>(); }
+    auto get_symbol() const noexcept { return self().template member<&urd::record_of<V>::symbol>(); }
     const auto& get_name() const noexcept { return get_symbol().get_name(); }
 
     template<runir::kr::dl::CategoryTag Category>
@@ -39,15 +39,15 @@ public:
     auto get_features() const noexcept
     {
         if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)
-            return self().template get<&urd::record_of<V>::concept_features>();
+            return self().template member<&urd::record_of<V>::concept_features>();
         else if constexpr (std::same_as<FeatureTag, runir::kr::dl::RoleTag>)
-            return self().template get<&urd::record_of<V>::role_features>();
+            return self().template member<&urd::record_of<V>::role_features>();
         else if constexpr (std::same_as<FeatureTag, runir::kr::dl::BooleanTag>)
-            return self().template get<&urd::record_of<V>::boolean_features>();
+            return self().template member<&urd::record_of<V>::boolean_features>();
         else if constexpr (std::same_as<FeatureTag, runir::kr::dl::NumericalTag>)
-            return self().template get<&urd::record_of<V>::numerical_features>();
+            return self().template member<&urd::record_of<V>::numerical_features>();
         else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::QueryFeature>)
-            return self().template get<&urd::record_of<V>::query_features>();
+            return self().template member<&urd::record_of<V>::query_features>();
         else
         {
             static_assert(urd::repr::dependent_false<FeatureTag>::value, "unhandled feature tag in Module::get_features");
@@ -56,9 +56,9 @@ public:
 
     auto get_query_features() const noexcept { return get_features<runir::kr::ps::dl::QueryFeature>(); }
 
-    auto get_entry_memory_state() const noexcept { return self().template get<&urd::record_of<V>::entry_memory_state>(); }
-    auto get_memory_states() const noexcept { return self().template get<&urd::record_of<V>::memory_states>(); }
-    auto get_memory_transitions() const noexcept { return self().template get<&urd::record_of<V>::memory_transitions>(); }
+    auto get_entry_memory_state() const noexcept { return self().template member<&urd::record_of<V>::entry_memory_state>(); }
+    auto get_memory_states() const noexcept { return self().template member<&urd::record_of<V>::memory_states>(); }
+    auto get_memory_transitions() const noexcept { return self().template member<&urd::record_of<V>::memory_transitions>(); }
 };
 
 }  // namespace runir::kr::ps

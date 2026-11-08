@@ -182,7 +182,7 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
         contexts.emplace_back(next.get_state(), builder, storage, arguments, register_values);
         auto objects = std::set<ObjectIndex> {};
         for (const auto atom : next.get_state().get_atoms_view(atomic.get_predicate()))
-            objects.insert(atom.get_row().get_key().second[0]);
+            objects.insert(atom.get_row().template get<ObjectIndex>(0));
         projected_sizes[i + 1] = objects.size();
         current = next;
     }
@@ -454,8 +454,8 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto& repository = denotations.get_relation_repository();
-    const auto columns = std::array { ygg::ColumnLayout { ColumnIndex(0), ygg::type_id<ygg::ObjectIndex> }, ygg::ColumnLayout { ColumnIndex(1), ygg::type_id<ygg::ObjectIndex> } };
-    const auto renamed = std::array { ygg::ColumnLayout { ColumnIndex(2), ygg::type_id<ygg::ObjectIndex> }, ygg::ColumnLayout { ColumnIndex(3), ygg::type_id<ygg::ObjectIndex> } };
+    const auto columns = std::array { ygg::ColumnLayout { ColumnIndex(0), ygg::type_id<urd::index<tyr::formalism::Object>> }, ygg::ColumnLayout { ColumnIndex(1), ygg::type_id<urd::index<tyr::formalism::Object>> } };
+    const auto renamed = std::array { ygg::ColumnLayout { ColumnIndex(2), ygg::type_id<urd::index<tyr::formalism::Object>> }, ygg::ColumnLayout { ColumnIndex(3), ygg::type_id<urd::index<tyr::formalism::Object>> } };
     auto result = repository.get_relation_builder<ygg::Schema>(columns);
     for (ygg::uint_t i = 0; i < 32; ++i)
         result->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(i), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(i + 1)) });
@@ -503,8 +503,8 @@ TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto& repository = denotations.get_relation_repository();
-    const auto columns = std::array { ygg::ColumnLayout { ColumnIndex(0), ygg::type_id<ygg::ObjectIndex> }, ygg::ColumnLayout { ColumnIndex(1), ygg::type_id<ygg::ObjectIndex> } };
-    const auto aliases = std::array { ygg::ColumnLayout { ColumnIndex(100), ygg::type_id<ygg::ObjectIndex> }, ygg::ColumnLayout { ColumnIndex(101), ygg::type_id<ygg::ObjectIndex> } };
+    const auto columns = std::array { ygg::ColumnLayout { ColumnIndex(0), ygg::type_id<urd::index<tyr::formalism::Object>> }, ygg::ColumnLayout { ColumnIndex(1), ygg::type_id<urd::index<tyr::formalism::Object>> } };
+    const auto aliases = std::array { ygg::ColumnLayout { ColumnIndex(100), ygg::type_id<urd::index<tyr::formalism::Object>> }, ygg::ColumnLayout { ColumnIndex(101), ygg::type_id<urd::index<tyr::formalism::Object>> } };
     bool valid = true;
     const auto cycle = [&](size_t generation)
     {

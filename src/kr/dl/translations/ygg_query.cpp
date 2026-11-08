@@ -156,7 +156,7 @@ QueryTranslator::YggQuery QueryTranslator::translate_concrete(DlQuery query, Que
     {
         auto out = urd::data<ygg::database::Query<ygg::database::QuerySelectValueTag>>(translate(concrete.get_arg()).index(),
                                                                                        Label(data.column.value),
-                                                                                       ygg::ObjectIndex { data.object.value });
+                                                                                       urd::index<ygg::formalism::Object<void>>(data.object.value));
         return insert(out);
     }
     else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)

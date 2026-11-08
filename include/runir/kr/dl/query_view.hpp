@@ -28,7 +28,7 @@ private:
 public:
     auto get_variant() const noexcept
         requires std::same_as<Tag, void>
-    { return self().template get<&urd::record_of<V>::variant>(); }
+    { return self().template member<&urd::record_of<V>::variant>(); }
 
     [[nodiscard]] bool is_static() const noexcept
         requires std::same_as<Tag, void>
@@ -38,56 +38,56 @@ public:
         requires(std::same_as<Tag, runir::kr::dl::QueryConceptTag> || std::same_as<Tag, runir::kr::dl::QueryRoleTag>
                  || std::same_as<Tag, runir::kr::dl::QueryProjectTag> || std::same_as<Tag, runir::kr::dl::QueryRenameTag>
                  || std::same_as<Tag, runir::kr::dl::QuerySelectEqualTag> || std::same_as<Tag, runir::kr::dl::QuerySelectValueTag>)
-    { return self().template get<&urd::record_of<V>::arg>(); }
+    { return self().template member<&urd::record_of<V>::arg>(); }
 
     auto get_lhs() const noexcept
         requires(std::same_as<Tag, runir::kr::dl::QueryJoinTag> || std::same_as<Tag, runir::kr::dl::QueryUnionTag>
                  || std::same_as<Tag, runir::kr::dl::QueryDifferenceTag>)
-    { return self().template get<&urd::record_of<V>::lhs>(); }
+    { return self().template member<&urd::record_of<V>::lhs>(); }
 
     auto get_rhs() const noexcept
         requires(std::same_as<Tag, runir::kr::dl::QueryJoinTag> || std::same_as<Tag, runir::kr::dl::QueryUnionTag>
                  || std::same_as<Tag, runir::kr::dl::QueryDifferenceTag>)
-    { return self().template get<&urd::record_of<V>::rhs>(); }
+    { return self().template member<&urd::record_of<V>::rhs>(); }
 
     auto get_args() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag>
-    { return self().template get<&urd::record_of<V>::args>(); }
+    { return self().template member<&urd::record_of<V>::args>(); }
 
     auto get_variable_order() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag>
-    { return self().template get<&urd::record_of<V>::variable_order>(); }
+    { return self().template member<&urd::record_of<V>::variable_order>(); }
 
     auto get_output_order() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag>
-    { return self().template get<&urd::record_of<V>::output_order>(); }
+    { return self().template member<&urd::record_of<V>::output_order>(); }
 
     auto get_keys() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
-    { return self().template get<&urd::record_of<V>::keys>(); }
+    { return self().template member<&urd::record_of<V>::keys>(); }
 
     auto get_sources() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
-    { return self().template get<&urd::record_of<V>::sources>(); }
+    { return self().template member<&urd::record_of<V>::sources>(); }
 
     auto get_edges() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
-    { return self().template get<&urd::record_of<V>::edges>(); }
+    { return self().template member<&urd::record_of<V>::edges>(); }
 
     auto get_targets() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
-    { return self().template get<&urd::record_of<V>::targets>(); }
+    { return self().template member<&urd::record_of<V>::targets>(); }
 
     auto get_probes() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
-    { return self().template get<&urd::record_of<V>::probes>(); }
+    { return self().template member<&urd::record_of<V>::probes>(); }
 
     auto get_columns() const noexcept
     {
         if constexpr (std::same_as<Tag, void>)
             return std::visit([](auto concrete) { return concrete.get_columns(); }, get_variant());
         else
-            return self().template get<&urd::record_of<V>::columns>();
+            return self().template member<&urd::record_of<V>::columns>();
     }
 
     std::span<const ygg::ColumnLayout> get_schema() const noexcept
@@ -102,15 +102,15 @@ public:
 
     auto get_lhs_column() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QuerySelectEqualTag>
-    { return self().template get<&urd::record_of<V>::lhs_column>(); }
+    { return self().template member<&urd::record_of<V>::lhs_column>(); }
 
     auto get_rhs_column() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QuerySelectEqualTag>
-    { return self().template get<&urd::record_of<V>::rhs_column>(); }
+    { return self().template member<&urd::record_of<V>::rhs_column>(); }
 
     auto get_column() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QuerySelectValueTag>
-    { return self().template get<&urd::record_of<V>::column>(); }
+    { return self().template member<&urd::record_of<V>::column>(); }
 
     auto get_predicate() const noexcept
         requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)
@@ -132,8 +132,8 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_arg() const noexcept { return self().template get<&urd::record_of<V>::arg>(); }
-    auto get_columns() const noexcept { return self().template get<&urd::record_of<V>::columns>(); }
+    auto get_arg() const noexcept { return self().template member<&urd::record_of<V>::arg>(); }
+    auto get_columns() const noexcept { return self().template member<&urd::record_of<V>::columns>(); }
 };
 }  // namespace urd
 

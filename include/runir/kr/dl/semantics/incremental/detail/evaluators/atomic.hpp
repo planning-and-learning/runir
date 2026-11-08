@@ -43,11 +43,11 @@ struct AtomicEvaluator
             auto& builder = value.initialize(semantics::detail::num_objects<Kind>(context));
             for (const auto atom : context.get_state().get_atoms_view(predicate))
             {
-                const auto objects = atom.get_row().get_objects();
+                const auto objects = atom.get_row().template get<urd::index<tyr::formalism::Object>>();
                 if constexpr (std::same_as<Category, ConceptTag>)
-                    builder.set(objects[0].index(), true);
+                    builder.set(objects[0], true);
                 else
-                    builder.set(objects[0].index(), objects[1].index(), true);
+                    builder.set(objects[0], objects[1], true);
             }
             if (!polarity)
                 builder.flip();
@@ -65,7 +65,7 @@ private:
     static DenotationElementView<Category> atom_element(tyr::formalism::planning::AtomView<tyr::GroundTag, Fact> atom)
         requires ConceptOrRoleTag<Category>
     {
-        const auto objects = atom.get_row().get_objects();
+        const auto objects = atom.get_objects();
         if constexpr (std::same_as<Category, ConceptTag>)
             return objects[0];
         else

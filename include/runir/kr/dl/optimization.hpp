@@ -146,7 +146,7 @@ inline urd::Store<urd::sequence<QueryView<>>> lower(const ygg::database::QueryPl
                     urd::flat_vector<urd::index<QueryColumn>> columns;
                     for (const auto column : node.columns())
                     {
-                        if (column.type != ygg::type_id<ygg::ObjectIndex>)
+                        if (column.type != ygg::type_id<urd::index<tyr::formalism::Object>>)
                             throw std::logic_error("Query optimization: an empty relation has a non-object column.");
                         columns.push_back(urd::index<QueryColumn>(column.label.value));
                     }

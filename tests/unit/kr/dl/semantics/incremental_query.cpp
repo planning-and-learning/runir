@@ -97,10 +97,10 @@ void check_atomic_projection()
     const auto domain = search->task->get_domain().get_domain();
     const auto a = domain.get_constants()[0].index();
     const auto first_candidates = search->successor_generator->get_labeled_successor_nodes(initial, *search->state_repository, *search->axiom_evaluator);
-    const auto first = std::ranges::find_if(first_candidates, [&](const auto& candidate) { return candidate.label.get_objects()[0].index() == a; });
+    const auto first = std::ranges::find_if(first_candidates, [&](const auto& candidate) { return objects_of(candidate.label)[0].index() == a; });
     ASSERT_NE(first, first_candidates.end());
     const auto second_candidates = search->successor_generator->get_labeled_successor_nodes(first->node, *search->state_repository, *search->axiom_evaluator);
-    const auto second = std::ranges::find_if(second_candidates, [&](const auto& candidate) { return candidate.label.get_objects()[0].index() == a; });
+    const auto second = std::ranges::find_if(second_candidates, [&](const auto& candidate) { return objects_of(candidate.label)[0].index() == a; });
     ASSERT_NE(second, second_candidates.end());
 
     auto constructors = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());

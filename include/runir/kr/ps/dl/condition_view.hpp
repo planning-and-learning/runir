@@ -18,7 +18,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_feature() const noexcept { return self().template get<&urd::record_of<V>::feature>(); }
+    auto get_feature() const noexcept { return self().template member<&urd::record_of<V>::feature>(); }
 };
 }  // namespace urd
 

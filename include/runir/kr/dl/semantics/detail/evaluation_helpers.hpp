@@ -56,7 +56,7 @@ auto make_role_builder(Context& context)
 
 template<tyr::formalism::FactKind T>
 auto object_index(tyr::formalism::planning::AtomView<::tyr::GroundTag, T> atom, size_t position) -> urd::index<tyr::formalism::Object>
-{ return atom.get_row().get_objects()[position].index(); }
+{ return atom.get_row().template get<urd::index<tyr::formalism::Object>>(position); }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
 void evaluate_atomic_state_concept(urd::index_view<Concept<SemanticFamily, AtomicStateTag<T>>, C> constructor,

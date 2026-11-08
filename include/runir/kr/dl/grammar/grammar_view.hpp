@@ -25,13 +25,13 @@ public:
     auto get_start() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return self().template get<&urd::record_of<V>::concept_start>();
+            return self().template member<&urd::record_of<V>::concept_start>();
         else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return self().template get<&urd::record_of<V>::role_start>();
+            return self().template member<&urd::record_of<V>::role_start>();
         else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-            return self().template get<&urd::record_of<V>::boolean_start>();
+            return self().template member<&urd::record_of<V>::boolean_start>();
         else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-            return self().template get<&urd::record_of<V>::numerical_start>();
+            return self().template member<&urd::record_of<V>::numerical_start>();
         else
         {
             static_assert(urd::repr::dependent_false<Category>::value, "unhandled DL category in get_start");
@@ -42,13 +42,13 @@ public:
     auto get_derivation_rules() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return self().template get<&urd::record_of<V>::concept_derivation_rules>();
+            return self().template member<&urd::record_of<V>::concept_derivation_rules>();
         else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return self().template get<&urd::record_of<V>::role_derivation_rules>();
+            return self().template member<&urd::record_of<V>::role_derivation_rules>();
         else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-            return self().template get<&urd::record_of<V>::boolean_derivation_rules>();
+            return self().template member<&urd::record_of<V>::boolean_derivation_rules>();
         else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-            return self().template get<&urd::record_of<V>::numerical_derivation_rules>();
+            return self().template member<&urd::record_of<V>::numerical_derivation_rules>();
         else
         {
             static_assert(urd::repr::dependent_false<Category>::value, "unhandled DL category in get_derivation_rules");
