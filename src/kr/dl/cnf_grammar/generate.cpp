@@ -1,4 +1,5 @@
 #include "runir/kr/dl/cnf_grammar/generate.hpp"
+#include "runir/kr/dl/cnf_grammar/detail/repository_instantiations.hpp"
 #include <urd/repr/sequences/segmented.hpp>
 
 #include "runir/kr/dl/canonicalization.hpp"

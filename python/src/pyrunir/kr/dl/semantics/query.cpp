@@ -1,4 +1,5 @@
 #include "../query_bindings.hpp"
+#include "runir/kr/dl/detail/repository_instantiations.hpp"
 #include "pyrunir/module.hpp"
 #include "bindings.hpp"
 

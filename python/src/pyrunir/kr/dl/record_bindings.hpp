@@ -177,8 +177,9 @@ void bind_record(nb::module_& m, const std::string& name)
     }
 }
 
+/// The records of one constructor category: a family with heavy records binds the categories in several sources.
 template<typename F, typename Repository>
-void bind_records(nb::module_& m)
+void bind_records(nb::module_& m, ConceptTag)
 {
     using tyr::formalism::DerivedTag;
     using tyr::formalism::FluentTag;
@@ -210,6 +211,14 @@ void bind_records(nb::module_& m)
     bind_record<Concept, NominalTag, F, Repository>(m, "ConceptNominal");
     bind_record<Concept, RegisterTag, F, Repository>(m, "ConceptRegister");
     bind_record<Concept, ArgumentTag<ConceptTag>, F, Repository>(m, "ConceptArgument");
+}
+
+template<typename F, typename Repository>
+void bind_records(nb::module_& m, RoleTag)
+{
+    using tyr::formalism::DerivedTag;
+    using tyr::formalism::FluentTag;
+    using tyr::formalism::StaticTag;
 
     bind_record<Role, UniversalTag, F, Repository>(m, "RoleUniversal");
     bind_record<Role, AtomicStateTag<StaticTag>, F, Repository>(m, "RoleAtomicStateStatic");
@@ -229,6 +238,14 @@ void bind_records(nb::module_& m)
     bind_record<Role, IdentityTag, F, Repository>(m, "RoleIdentity");
     bind_record<Role, RegisterTag, F, Repository>(m, "RoleRegister");
     bind_record<Role, ArgumentTag<RoleTag>, F, Repository>(m, "RoleArgument");
+}
+
+template<typename F, typename Repository>
+void bind_records(nb::module_& m, BooleanTag)
+{
+    using tyr::formalism::DerivedTag;
+    using tyr::formalism::FluentTag;
+    using tyr::formalism::StaticTag;
 
     bind_record<Boolean, AtomicStateTag<StaticTag>, F, Repository>(m, "BooleanAtomicStateStatic");
     bind_record<Boolean, AtomicStateTag<FluentTag>, F, Repository>(m, "BooleanAtomicStateFluent");
@@ -254,7 +271,11 @@ void bind_records(nb::module_& m)
     bind_record<Boolean, AndTag, F, Repository>(m, "BooleanAnd");
     bind_record<Boolean, OrTag, F, Repository>(m, "BooleanOr");
     bind_record<Boolean, NotTag, F, Repository>(m, "BooleanNot");
+}
 
+template<typename F, typename Repository>
+void bind_records(nb::module_& m, NumericalTag)
+{
     bind_record<Numerical, CountTag, F, Repository>(m, "NumericalCount");
     bind_record<Numerical, DistanceTag, F, Repository>(m, "NumericalDistance");
     bind_record<Numerical, ArgumentTag<NumericalTag>, F, Repository>(m, "NumericalArgument");
@@ -265,6 +286,16 @@ void bind_records(nb::module_& m)
     bind_record<Numerical, DivTag, F, Repository>(m, "NumericalDiv");
     bind_record<Numerical, MinTag, F, Repository>(m, "NumericalMin");
     bind_record<Numerical, MaxTag, F, Repository>(m, "NumericalMax");
+}
+
+/// The records of every constructor category.
+template<typename F, typename Repository>
+void bind_records(nb::module_& m)
+{
+    bind_records<F, Repository>(m, ConceptTag {});
+    bind_records<F, Repository>(m, RoleTag {});
+    bind_records<F, Repository>(m, BooleanTag {});
+    bind_records<F, Repository>(m, NumericalTag {});
 }
 
 }  // namespace runir::kr::dl::python

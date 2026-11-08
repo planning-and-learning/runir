@@ -1,6 +1,7 @@
 #include "incremental_root_evaluators.hpp"
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
+#include <urd/testing/allocations.hpp>
 #include "planning_fixtures.hpp"
 
 #include <array>
@@ -36,167 +37,10 @@
 #include <vector>
 #include <yggdrasil/database/semantics/incremental/projection.hpp>
 
-#if defined(_MSC_VER)
-#include <malloc.h>
-#endif
-
-// This executable replaces C++ allocation functions only. That covers the
-// default std/GTL allocators and urd's row pools, including
-// aligned allocations. It does not intercept direct malloc/free calls, including
-// Cista column/plan storage. Tracking is restricted to the evaluating thread and excludes GTest,
-// setup, warmup, and destruction of the retained evaluation objects.
-namespace allocation_tracking
-{
-namespace
-{
-struct Counts
-{
-    size_t allocated = 0;
-    size_t deallocated = 0;
-};
-
-struct State
-{
-    bool enabled = false;
-    Counts counts;
-};
-
-/// The evaluating thread's tracking state.
-State& state() noexcept
-{
-    thread_local State result;
-    return result;
-}
-
-void* allocate(size_t bytes)
-{
-    auto* result = std::malloc(bytes == 0 ? 1 : bytes);
-    if (!result)
-        throw std::bad_alloc();
-    if (state().enabled)
-        ++state().counts.allocated;
-    return result;
-}
-
-void deallocate(void* pointer) noexcept
-{
-    if (pointer && state().enabled)
-        ++state().counts.deallocated;
-    std::free(pointer);
-}
-
-void* allocate_aligned(size_t bytes, size_t alignment)
-{
-    void* result = nullptr;
-#if defined(_MSC_VER)
-    result = _aligned_malloc(bytes == 0 ? 1 : bytes, alignment);
-#else
-    if (alignment < sizeof(void*))
-        alignment = sizeof(void*);
-    if (posix_memalign(&result, alignment, bytes == 0 ? 1 : bytes) != 0)
-        result = nullptr;
-#endif
-    if (!result)
-        throw std::bad_alloc();
-    if (state().enabled)
-        ++state().counts.allocated;
-    return result;
-}
-
-void deallocate_aligned(void* pointer) noexcept
-{
-    if (pointer && state().enabled)
-        ++state().counts.deallocated;
-#if defined(_MSC_VER)
-    _aligned_free(pointer);
-#else
-    std::free(pointer);
-#endif
-}
-
-class Scope
-{
-public:
-    Scope() noexcept
-    {
-        state().counts = {};
-        state().enabled = true;
-    }
-    Scope(const Scope&) = delete;
-    Scope& operator=(const Scope&) = delete;
-    Scope(Scope&&) = delete;
-    Scope& operator=(Scope&&) = delete;
-    ~Scope() { state().enabled = false; }
-
-    Counts finish() noexcept
-    {
-        state().enabled = false;
-        return state().counts;
-    }
-};
-}  // namespace
-}  // namespace allocation_tracking
-
-void* operator new(size_t bytes) { return allocation_tracking::allocate(bytes); }
-void* operator new[](size_t bytes) { return allocation_tracking::allocate(bytes); }
-void operator delete(void* pointer) noexcept { allocation_tracking::deallocate(pointer); }
-void operator delete[](void* pointer) noexcept { allocation_tracking::deallocate(pointer); }
-void operator delete(void* pointer, size_t) noexcept { allocation_tracking::deallocate(pointer); }
-void operator delete[](void* pointer, size_t) noexcept { allocation_tracking::deallocate(pointer); }
-void* operator new(size_t bytes, std::align_val_t alignment) { return allocation_tracking::allocate_aligned(bytes, static_cast<size_t>(alignment)); }
-void* operator new[](size_t bytes, std::align_val_t alignment) { return allocation_tracking::allocate_aligned(bytes, static_cast<size_t>(alignment)); }
-void operator delete(void* pointer, std::align_val_t) noexcept { allocation_tracking::deallocate_aligned(pointer); }
-void operator delete[](void* pointer, std::align_val_t) noexcept { allocation_tracking::deallocate_aligned(pointer); }
-void operator delete(void* pointer, size_t, std::align_val_t) noexcept { allocation_tracking::deallocate_aligned(pointer); }
-void operator delete[](void* pointer, size_t, std::align_val_t) noexcept { allocation_tracking::deallocate_aligned(pointer); }
-void* operator new(size_t bytes, const std::nothrow_t&) noexcept
-{
-    try
-    {
-        return ::operator new(bytes);
-    }
-    catch (...)
-    {
-        return nullptr;
-    }
-}
-void* operator new[](size_t bytes, const std::nothrow_t&) noexcept
-{
-    try
-    {
-        return ::operator new[](bytes);
-    }
-    catch (...)
-    {
-        return nullptr;
-    }
-}
-void* operator new(size_t bytes, std::align_val_t alignment, const std::nothrow_t&) noexcept
-{
-    try
-    {
-        return ::operator new(bytes, alignment);
-    }
-    catch (...)
-    {
-        return nullptr;
-    }
-}
-void* operator new[](size_t bytes, std::align_val_t alignment, const std::nothrow_t&) noexcept
-{
-    try
-    {
-        return ::operator new[](bytes, alignment);
-    }
-    catch (...)
-    {
-        return nullptr;
-    }
-}
-void operator delete(void* pointer, const std::nothrow_t&) noexcept { allocation_tracking::deallocate(pointer); }
-void operator delete[](void* pointer, const std::nothrow_t&) noexcept { allocation_tracking::deallocate(pointer); }
-void operator delete(void* pointer, std::align_val_t, const std::nothrow_t&) noexcept { allocation_tracking::deallocate_aligned(pointer); }
-void operator delete[](void* pointer, std::align_val_t, const std::nothrow_t&) noexcept { allocation_tracking::deallocate_aligned(pointer); }
+// This executable links urd::count_allocations, which replaces the C++ allocation functions only. That covers the
+// default std/GTL allocators and urd's containers, including aligned allocations. It does not intercept direct
+// malloc/free calls, including Cista column/plan storage. Counting is restricted to the evaluating thread and excludes
+// GTest, setup, warmup, and destruction of the retained evaluation objects.
 
 namespace runir::tests
 {
@@ -205,7 +49,7 @@ using ObjectIndex = urd::index<tyr::formalism::Object>;
 TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
 {
     // Explicit calls check the counter without allocation elision by the compiler.
-    allocation_tracking::Scope counter_check;
+    const urd::testing::Counted counter_check;
     auto* ordinary = ::operator new(32);
     auto* array = ::operator new[](32);
     auto* aligned = ::operator new(64, std::align_val_t(64));
@@ -214,9 +58,9 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
     ::operator delete[](array);
     ::operator delete(aligned, std::align_val_t(64));
     ::operator delete[](aligned_array, std::align_val_t(64));
-    const auto checked = counter_check.finish();
-    ASSERT_EQ(checked.allocated, 4);
-    ASSERT_EQ(checked.deallocated, 4);
+    const auto checked = urd::testing::counts();
+    ASSERT_EQ(checked.allocations, 4);
+    ASSERT_EQ(checked.deallocations, 4);
 
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/dl/query";
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
@@ -261,7 +105,7 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
     }
 
     bool valid = true;
-    allocation_tracking::Scope measured;
+    const urd::testing::Counted measured;
     for (size_t i = 0; i < 1000; ++i)
     {
         auto borrowed = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>(initial.get_state(), builder, storage, argument_values, register_values);
@@ -275,11 +119,11 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
         storage.reset_dynamic();
         valid &= kr::dl::semantics::evaluate<tyr::GroundTag>(expression, copied).value() == 3;
     }
-    const auto counts = measured.finish();
+    const auto counts = urd::testing::counts();
 
     EXPECT_TRUE(valid);
-    EXPECT_EQ(counts.allocated, 0);
-    EXPECT_EQ(counts.deallocated, 0);
+    EXPECT_EQ(counts.allocations, 0);
+    EXPECT_EQ(counts.deallocations, 0);
 }
 
 TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
@@ -384,13 +228,13 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
     for (size_t repeat = 0; repeat < 8; ++repeat)
         ASSERT_TRUE(cycle());
     bool valid = true;
-    allocation_tracking::Scope measured;
+    const urd::testing::Counted measured;
     for (size_t repeat = 0; repeat < 1000; ++repeat)
         valid &= cycle();
-    const auto counts = measured.finish();
+    const auto counts = urd::testing::counts();
     EXPECT_TRUE(valid);
-    EXPECT_EQ(counts.allocated, 0);
-    EXPECT_EQ(counts.deallocated, 0);
+    EXPECT_EQ(counts.allocations, 0);
+    EXPECT_EQ(counts.deallocations, 0);
 }
 
 TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
@@ -591,13 +435,13 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
     for (size_t repeat = 0; repeat < 8; ++repeat)
         ASSERT_TRUE(cycle());
     bool valid = true;
-    allocation_tracking::Scope measured;
+    const urd::testing::Counted measured;
     for (size_t repeat = 0; repeat < 1000; ++repeat)
         valid &= cycle();
-    const auto counts = measured.finish();
+    const auto counts = urd::testing::counts();
     EXPECT_TRUE(valid);
-    EXPECT_EQ(counts.allocated, 0);
-    EXPECT_EQ(counts.deallocated, 0);
+    EXPECT_EQ(counts.allocations, 0);
+    EXPECT_EQ(counts.deallocations, 0);
 }
 
 TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
@@ -625,7 +469,7 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
     result = {};
 
     bool reused = true;
-    allocation_tracking::Scope measured;
+    const urd::testing::Counted measured;
     for (size_t repeat = 0; repeat < 1000; ++repeat)
     {
         denotations.reset();
@@ -644,10 +488,10 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
         reused &= value.row(0).data() == stored_row_buffer;
         reused &= value.row_indices().data() == stored_row_indices;
     }
-    const auto counts = measured.finish();
+    const auto counts = urd::testing::counts();
     EXPECT_TRUE(reused);
-    EXPECT_EQ(counts.allocated, 0);
-    EXPECT_EQ(counts.deallocated, 0);
+    EXPECT_EQ(counts.allocations, 0);
+    EXPECT_EQ(counts.deallocations, 0);
 }
 
 TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
@@ -686,13 +530,13 @@ TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
     for (size_t repeat = 0; repeat < 8; ++repeat)
         cycle(repeat);
 
-    allocation_tracking::Scope measured;
+    const urd::testing::Counted measured;
     for (size_t repeat = 0; repeat < 100; ++repeat)
         cycle(repeat);
-    const auto counts = measured.finish();
+    const auto counts = urd::testing::counts();
     EXPECT_TRUE(valid);
-    EXPECT_EQ(counts.allocated, 0);
-    EXPECT_EQ(counts.deallocated, 0);
+    EXPECT_EQ(counts.allocations, 0);
+    EXPECT_EQ(counts.deallocations, 0);
 }
 
 TEST(RunirSearch, WarmedProgramSearchAllocationsGrowWithContainerCapacity)
@@ -752,12 +596,12 @@ TEST(RunirSearch, WarmedProgramSearchAllocationsGrowWithContainerCapacity)
                     auto statistics = kr::ps::ext::ProgramSearchStatistics {};
                     auto first_goal = std::shared_ptr<Path> {};
                     auto witness = std::shared_ptr<Path> {};
-                    allocation_tracking::Scope measured;
+                    const urd::testing::Counted measured;
                     const auto status = kr::ps::ext::detail::depth_first_search<
                         tyr::GroundTag>(expander, initial_node.get_state(), initial, options, classifier, storage, statistics, path_pool, first_goal, witness);
-                    const auto counts = measured.finish();
+                    const auto counts = urd::testing::counts();
                     if (!warmup)
-                        allocations[scale] = counts.allocated;
+                        allocations[scale] = static_cast<size_t>(counts.allocations);
                     ASSERT_EQ(status, kr::ps::ProofStatus::SUCCESS);
                     EXPECT_EQ(statistics.num_expanded, length + 2);
                     EXPECT_EQ(statistics.num_generated, length + 2);
@@ -774,7 +618,7 @@ TEST(RunirSearch, WarmedProgramSearchAllocationsGrowWithContainerCapacity)
 namespace
 {
 template<tyr::TaskKind Kind>
-allocation_tracking::Counts measure_warmed_binding_enumeration(const kr::TaskContextPtr<Kind>& context, bool borrowed)
+urd::testing::Counts measure_warmed_binding_enumeration(const kr::TaskContextPtr<Kind>& context, bool borrowed)
 {
     auto& search = *context->search_context;
     auto& generator = *search.successor_generator;
@@ -796,16 +640,16 @@ allocation_tracking::Counts measure_warmed_binding_enumeration(const kr::TaskCon
         enumerate();
     EXPECT_TRUE(valid);
 
-    allocation_tracking::Scope measured;
+    const urd::testing::Counted measured;
     for (size_t i = 0; i < 512; ++i)
         enumerate();
-    const auto counts = measured.finish();
+    const auto counts = urd::testing::counts();
     EXPECT_TRUE(valid);
     return counts;
 }
 
 template<tyr::TaskKind Kind, kr::ps::ext::ExecutionStorageConcept<Kind> Storage>
-void expect_warmed_action_expansions(const kr::TaskContextPtr<Kind>& context, kr::ps::ext::ProgramView program, allocation_tracking::Counts expected)
+void expect_warmed_action_expansions(const kr::TaskContextPtr<Kind>& context, kr::ps::ext::ProgramView program, urd::testing::Counts expected)
 {
     auto expander = kr::ps::ext::SuccessorExpander<Kind, Storage>(context, program);
     auto& search = *context->search_context;
@@ -837,13 +681,13 @@ void expect_warmed_action_expansions(const kr::TaskContextPtr<Kind>& context, kr
         expand();
     ASSERT_TRUE(valid);
 
-    allocation_tracking::Scope measured;
+    const urd::testing::Counted measured;
     for (size_t i = 0; i < 512; ++i)
         expand();
-    const auto counts = measured.finish();
+    const auto counts = urd::testing::counts();
     EXPECT_TRUE(valid);
-    EXPECT_EQ(counts.allocated, expected.allocated);
-    EXPECT_EQ(counts.deallocated, expected.deallocated);
+    EXPECT_EQ(counts.allocations, expected.allocations);
+    EXPECT_EQ(counts.deallocations, expected.deallocations);
 }
 
 template<tyr::TaskKind Kind>
@@ -862,8 +706,8 @@ void expect_warmed_action_storage()
     // traversal and policy expansion must add nothing to that measured baseline.
     const auto baseline = measure_warmed_binding_enumeration(context, false);
     const auto borrowed = measure_warmed_binding_enumeration(context, true);
-    EXPECT_EQ(borrowed.allocated, baseline.allocated);
-    EXPECT_EQ(borrowed.deallocated, baseline.deallocated);
+    EXPECT_EQ(borrowed.allocations, baseline.allocations);
+    EXPECT_EQ(borrowed.deallocations, baseline.deallocations);
     // This fixture has one action, so the all-schema baseline also covers scoped Do.
     for (const auto& [rule, enumerates] : { std::pair { R"((:action (:conditions) (:action "move") (:query Moves) (:effects (unchanged N))))", false },
                                             std::pair { R"((:do (:conditions) (:action "move") (:arguments From To) (:effects (unchanged N))))", true },
@@ -884,7 +728,7 @@ void expect_warmed_action_storage()
       (:source-memory source) (:target-memory target)
 )") + rule + ")))))";
         const auto program = kr::ps::ext::dl::parse_program(source, search->task->get_domain().get_domain(), *context->domain_context->ext_repository);
-        const auto expected = enumerates ? baseline : allocation_tracking::Counts {};
+        const auto expected = enumerates ? baseline : urd::testing::Counts {};
         expect_warmed_action_expansions<Kind, kr::ps::ext::InternedExecutionStorage<Kind>>(context, program, expected);
         expect_warmed_action_expansions<Kind, kr::ps::ext::TransientExecutionStorage<Kind>>(context, program, expected);
     }

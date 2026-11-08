@@ -39,7 +39,8 @@ add_library(kr SHARED
     ps/ext/dl/structural_termination/analysis.cpp
     ps/ext/dl/structural_termination/incomplete_result.cpp
     ps/ext/dl/structural_termination/result.cpp
-    ps/ext/program_executor.cpp
+    ps/ext/program_executor_ground.cpp
+    ps/ext/program_executor_lifted.cpp
     ps/icp/dl/parser.cpp
     ps/icp/dl/parser/parser.cpp
     ps/icp/program_executor.cpp

@@ -1,4 +1,5 @@
 #include "runir/kr/dl/grammar/parser.hpp"
+#include "runir/kr/dl/grammar/detail/repository_instantiations.hpp"
 
 #include "kr/parser/constructors.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"

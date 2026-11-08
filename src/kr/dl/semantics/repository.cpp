@@ -1,5 +1,7 @@
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 
+#include "runir/kr/dl/semantics/detail/repository_instantiations.hpp"
+
 #include <cassert>
 #include <memory>
 #include <utility>
@@ -30,3 +32,5 @@ DenotationRepositoryPtr DenotationRepositoryFactory::create_shared(std::shared_p
 { return DenotationRepositoryPtr(new DenotationRepository(m_indices.next(), *this, std::move(formalism_repository))); }
 
 }  // namespace runir::kr::dl::semantics
+
+RUNIR_KR_DL_SEMANTICS_INTERNS()

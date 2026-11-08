@@ -1,4 +1,6 @@
 #include "bindings.hpp"
+#include "runir/kr/dl/detail/repository_instantiations.hpp"
+#include "runir/kr/ps/detail/repository_instantiations.hpp"
 #include "pyrunir/module.hpp"
 #include "pyrunir/kr/ps/dl/binding_utils.hpp"
 

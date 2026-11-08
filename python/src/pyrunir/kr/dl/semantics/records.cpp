@@ -7,6 +7,10 @@
 namespace runir::kr::dl
 {
 
-void bind_semantics_records(nb::module_& m) { python::bind_records<SemanticFamily, ConstructorRepository>(m); }
+void bind_semantics_records(nb::module_& m)
+{
+    python::bind_records<SemanticFamily, ConstructorRepository>(m, ConceptTag {});
+    python::bind_records<SemanticFamily, ConstructorRepository>(m, RoleTag {});
+}
 
 }  // namespace runir::kr::dl

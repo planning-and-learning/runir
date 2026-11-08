@@ -1,4 +1,6 @@
 #include "runir/kr/uns/dl/parser.hpp"
+#include "runir/kr/dl/detail/repository_instantiations.hpp"
+#include "runir/kr/ps/detail/repository_instantiations.hpp"
 #include <urd/repr/maps/std_map.hpp>
 #include <urd/store.hpp>
 

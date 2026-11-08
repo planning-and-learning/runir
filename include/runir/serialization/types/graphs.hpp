@@ -20,10 +20,8 @@ using StateProperties = boost::mp11::mp_list<datasets::StateGraphVertexLabel<Kin
                                       kr::ps::ProgramProofVertexLabel<kr::ExtFamilyTag, Kind>,
                                       kr::ps::ProgramProofVertexLabel<kr::IcpFamilyTag, Kind>>;
 
-using GraphProperties = boost::mp11::mp_append<
-    StateProperties<tyr::GroundTag>,
-    StateProperties<tyr::LiftedTag>,
-    boost::mp11::mp_list<datasets::StateGraphEdgeLabel, kr::ps::base::SketchProofEdgeLabel, kr::ps::ProgramProofEdgeLabel<kr::ExtFamilyTag>, kr::ps::ProgramProofEdgeLabel<kr::IcpFamilyTag>>>;
+using EdgeProperties =
+    boost::mp11::mp_list<datasets::StateGraphEdgeLabel, kr::ps::base::SketchProofEdgeLabel, kr::ps::ProgramProofEdgeLabel<kr::ExtFamilyTag>, kr::ps::ProgramProofEdgeLabel<kr::IcpFamilyTag>>;
 
 template<tyr::TaskKind Kind>
 using StateGraphs = boost::mp11::mp_list<datasets::StaticStateGraph<Kind>,
@@ -33,8 +31,6 @@ using StateGraphs = boost::mp11::mp_list<datasets::StaticStateGraph<Kind>,
                                   kr::ps::base::SketchProofGraph<Kind>,
                                   kr::ps::ProgramProofGraph<kr::ExtFamilyTag, Kind>,
                                   kr::ps::ProgramProofGraph<kr::IcpFamilyTag, Kind>>;
-
-using Graphs = boost::mp11::mp_append<StateGraphs<tyr::GroundTag>, StateGraphs<tyr::LiftedTag>>;
 
 }  // namespace runir::serialization
 

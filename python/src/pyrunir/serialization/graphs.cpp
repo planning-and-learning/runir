@@ -29,8 +29,9 @@ namespace runir::serialization
 
 void bind_graphs(nb::module_& m)
 {
-    bind_entity_types(m, GraphProperties {});
-    bind_serialized_types(m, Graphs {});
+    bind_entity_types(m, boost::mp11::mp_append<StateProperties<tyr::GroundTag>, EdgeProperties> {});
+    bind_serialized_types(m, StateGraphs<tyr::GroundTag> {});
+    bind_lifted_graphs(m);
 }
 
 }  // namespace runir::serialization

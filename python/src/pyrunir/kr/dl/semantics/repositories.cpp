@@ -1,4 +1,6 @@
 #include "bindings.hpp"
+#include "runir/kr/dl/detail/repository_instantiations.hpp"
+#include "runir/kr/dl/semantics/detail/repository_instantiations.hpp"
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <urd/python/sequences/sequence.hpp>

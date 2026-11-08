@@ -1,4 +1,6 @@
 #include "runir/kr/dl/semantics/detail/evaluation_impl.hpp"
+#include "runir/kr/dl/semantics/detail/repository_instantiations.hpp"
+#include <yggdrasil/database/detail/repository_instantiations.hpp>
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include <yggdrasil/database/syntax/query_repository.hpp>
 #include "runir/kr/dl/semantics/incremental/detail/evaluation_impl.hpp"
@@ -7,114 +9,71 @@
 #include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
+#include <boost/mp11/algorithm.hpp>
+#include <boost/preprocessor/repetition/repeat.hpp>
+#include <boost/preprocessor/tuple/elem.hpp>
+#include <cstddef>
+
 namespace runir::kr::dl::semantics
 {
+namespace
+{
+/// The I-th type of a list of category tags, and an evaluation context over builder states of a task kind.
+template<typename Categories, std::size_t I>
+using At = boost::mp11::mp_at_c<Categories, I>;
+template<tyr::TaskKind Kind>
+using BuilderContext = StateEvaluationContext<Kind, tyr::planning::BuilderStateView<Kind>>;
+}
 
-template auto evaluate<tyr::GroundTag>(ConstructorView<ConceptTag>, StateEvaluationContext<tyr::GroundTag>&) -> DenotationView<ConceptTag>;
-template auto evaluate<tyr::GroundTag>(ConstructorView<RoleTag>, StateEvaluationContext<tyr::GroundTag>&) -> DenotationView<RoleTag>;
-template auto evaluate<tyr::GroundTag>(ConstructorView<BooleanTag>, StateEvaluationContext<tyr::GroundTag>&) -> DenotationView<BooleanTag>;
-template auto evaluate<tyr::GroundTag>(ConstructorView<NumericalTag>, StateEvaluationContext<tyr::GroundTag>&) -> DenotationView<NumericalTag>;
-template auto evaluate<tyr::GroundTag>(QueryView<>, StateEvaluationContext<tyr::GroundTag>&) -> QueryDenotationView;
+static_assert(boost::mp11::mp_size<CategoryTags>::value == 4, "the instantiations below cover the 4 CategoryTags");
+static_assert(boost::mp11::mp_size<ConceptOrRoleTags>::value == 2, "the instantiations below cover the 2 ConceptOrRoleTags");
+static_assert(boost::mp11::mp_size<BooleanOrNumericalTags>::value == 2, "the instantiations below cover the 2 BooleanOrNumericalTags");
 
-template auto evaluate<tyr::LiftedTag>(ConstructorView<ConceptTag>, StateEvaluationContext<tyr::LiftedTag>&) -> DenotationView<ConceptTag>;
-template auto evaluate<tyr::LiftedTag>(ConstructorView<RoleTag>, StateEvaluationContext<tyr::LiftedTag>&) -> DenotationView<RoleTag>;
-template auto evaluate<tyr::LiftedTag>(ConstructorView<BooleanTag>, StateEvaluationContext<tyr::LiftedTag>&) -> DenotationView<BooleanTag>;
-template auto evaluate<tyr::LiftedTag>(ConstructorView<NumericalTag>, StateEvaluationContext<tyr::LiftedTag>&) -> DenotationView<NumericalTag>;
-template auto evaluate<tyr::LiftedTag>(QueryView<>, StateEvaluationContext<tyr::LiftedTag>&) -> QueryDenotationView;
+/// evaluate for the I-th category of CategoryTags; ARGS = (task kind, evaluation context).
+#define RUNIR_EVALUATE_AT(z, I, ARGS)                                                                                                     \
+    template auto evaluate<BOOST_PP_TUPLE_ELEM(2, 0, ARGS)>(ConstructorView<At<CategoryTags, I>>, BOOST_PP_TUPLE_ELEM(2, 1, ARGS)&) \
+        -> DenotationView<At<CategoryTags, I>>;
+/// evaluate for every category and for queries.
+#define RUNIR_EVALUATE(Kind, Context)                         \
+    BOOST_PP_REPEAT(4, RUNIR_EVALUATE_AT, (Kind, Context)) \
+    template auto evaluate<Kind>(QueryView<>, Context&) -> QueryDenotationView;
 
-template auto evaluate<tyr::GroundTag>(ConstructorView<ConceptTag>, StateEvaluationContext<tyr::GroundTag, tyr::planning::BuilderStateView<tyr::GroundTag>>&)
-    -> DenotationView<ConceptTag>;
-template auto evaluate<tyr::GroundTag>(ConstructorView<RoleTag>, StateEvaluationContext<tyr::GroundTag, tyr::planning::BuilderStateView<tyr::GroundTag>>&)
-    -> DenotationView<RoleTag>;
-template auto evaluate<tyr::GroundTag>(ConstructorView<BooleanTag>, StateEvaluationContext<tyr::GroundTag, tyr::planning::BuilderStateView<tyr::GroundTag>>&)
-    -> DenotationView<BooleanTag>;
-template auto evaluate<tyr::GroundTag>(ConstructorView<NumericalTag>, StateEvaluationContext<tyr::GroundTag, tyr::planning::BuilderStateView<tyr::GroundTag>>&)
-    -> DenotationView<NumericalTag>;
-template auto evaluate<tyr::GroundTag>(QueryView<>, StateEvaluationContext<tyr::GroundTag, tyr::planning::BuilderStateView<tyr::GroundTag>>&)
-    -> QueryDenotationView;
-
-template auto evaluate<tyr::LiftedTag>(ConstructorView<ConceptTag>, StateEvaluationContext<tyr::LiftedTag, tyr::planning::BuilderStateView<tyr::LiftedTag>>&)
-    -> DenotationView<ConceptTag>;
-template auto evaluate<tyr::LiftedTag>(ConstructorView<RoleTag>, StateEvaluationContext<tyr::LiftedTag, tyr::planning::BuilderStateView<tyr::LiftedTag>>&)
-    -> DenotationView<RoleTag>;
-template auto evaluate<tyr::LiftedTag>(ConstructorView<BooleanTag>, StateEvaluationContext<tyr::LiftedTag, tyr::planning::BuilderStateView<tyr::LiftedTag>>&)
-    -> DenotationView<BooleanTag>;
-template auto evaluate<tyr::LiftedTag>(ConstructorView<NumericalTag>, StateEvaluationContext<tyr::LiftedTag, tyr::planning::BuilderStateView<tyr::LiftedTag>>&)
-    -> DenotationView<NumericalTag>;
-template auto evaluate<tyr::LiftedTag>(QueryView<>, StateEvaluationContext<tyr::LiftedTag, tyr::planning::BuilderStateView<tyr::LiftedTag>>&)
-    -> QueryDenotationView;
-
+RUNIR_EVALUATE(tyr::GroundTag, StateEvaluationContext<tyr::GroundTag>)
+RUNIR_EVALUATE(tyr::LiftedTag, StateEvaluationContext<tyr::LiftedTag>)
 /// Queries over builder states with interned register values, which the successor expander tests evaluate.
+RUNIR_EVALUATE(tyr::GroundTag, BuilderContext<tyr::GroundTag>)
+RUNIR_EVALUATE(tyr::LiftedTag, BuilderContext<tyr::LiftedTag>)
 
 }  // namespace runir::kr::dl::semantics
 
 namespace runir::kr::dl::semantics::incremental
 {
 
-template class EvaluationGraph<tyr::GroundTag>;
-template class IncrementalEvaluation<tyr::GroundTag>;
+/// EvaluationGraph's members for the I-th category of CategoryTags (prepare, get_index, result), of ConceptOrRoleTags
+/// (change, cardinality) and IncrementalEvaluation's for the I-th of BooleanOrNumericalTags (changed); Kind: the task kind.
+#define RUNIR_EVALUATION_GRAPH_AT(z, I, Kind)                                                                                         \
+    template EvaluationIndex<At<CategoryTags, I>> EvaluationGraph<Kind>::prepare<At<CategoryTags, I>>(ConstructorView<At<CategoryTags, I>>); \
+    template EvaluationIndex<At<CategoryTags, I>> EvaluationGraph<Kind>::get_index<At<CategoryTags, I>>(ConstructorView<At<CategoryTags, I>>) const; \
+    template BorrowedDenotationView<At<CategoryTags, I>> EvaluationGraph<Kind>::result<At<CategoryTags, I>>(EvaluationIndex<At<CategoryTags, I>>) const;
+#define RUNIR_CONCEPT_OR_ROLE_AT(z, I, Kind)                                                                                                   \
+    template const DenotationDelta<At<ConceptOrRoleTags, I>>& EvaluationGraph<Kind>::change<At<ConceptOrRoleTags, I>>(EvaluationIndex<At<ConceptOrRoleTags, I>>) const; \
+    template size_t EvaluationGraph<Kind>::cardinality<At<ConceptOrRoleTags, I>>(EvaluationIndex<At<ConceptOrRoleTags, I>>) const;
+#define RUNIR_BOOLEAN_OR_NUMERICAL_AT(z, I, Kind) \
+    template bool IncrementalEvaluation<Kind>::changed<At<BooleanOrNumericalTags, I>>(EvaluationIndex<At<BooleanOrNumericalTags, I>>) const;
+/// The evaluation classes of a task kind, their members per category, and demand over registered and builder states.
+#define RUNIR_INCREMENTAL_EVALUATION(Kind)                                                                                     \
+    template class EvaluationGraph<Kind>;                                                                                      \
+    template class IncrementalEvaluation<Kind>;                                                                                \
+    BOOST_PP_REPEAT(4, RUNIR_EVALUATION_GRAPH_AT, Kind)                                                                        \
+    BOOST_PP_REPEAT(2, RUNIR_CONCEPT_OR_ROLE_AT, Kind)                                                                         \
+    BOOST_PP_REPEAT(2, RUNIR_BOOLEAN_OR_NUMERICAL_AT, Kind)                                                                    \
+    template void IncrementalEvaluation<Kind>::demand<StateEvaluationContext<Kind>>(ygg::uint_t,                               \
+                                                                                    StateEvaluationContext<Kind>&,             \
+                                                                                    const Delta*,                              \
+                                                                                    ygg::database::Workspace*);                \
+    template void IncrementalEvaluation<Kind>::demand<BuilderContext<Kind>>(ygg::uint_t, BuilderContext<Kind>&, const Delta*, ygg::database::Workspace*);
 
-template EvaluationIndex<ConceptTag> EvaluationGraph<tyr::GroundTag>::prepare<ConceptTag>(ConstructorView<ConceptTag>);
-template EvaluationIndex<RoleTag> EvaluationGraph<tyr::GroundTag>::prepare<RoleTag>(ConstructorView<RoleTag>);
-template EvaluationIndex<BooleanTag> EvaluationGraph<tyr::GroundTag>::prepare<BooleanTag>(ConstructorView<BooleanTag>);
-template EvaluationIndex<NumericalTag> EvaluationGraph<tyr::GroundTag>::prepare<NumericalTag>(ConstructorView<NumericalTag>);
-
-template EvaluationIndex<ConceptTag> EvaluationGraph<tyr::GroundTag>::get_index<ConceptTag>(ConstructorView<ConceptTag>) const;
-template EvaluationIndex<RoleTag> EvaluationGraph<tyr::GroundTag>::get_index<RoleTag>(ConstructorView<RoleTag>) const;
-template EvaluationIndex<BooleanTag> EvaluationGraph<tyr::GroundTag>::get_index<BooleanTag>(ConstructorView<BooleanTag>) const;
-template EvaluationIndex<NumericalTag> EvaluationGraph<tyr::GroundTag>::get_index<NumericalTag>(ConstructorView<NumericalTag>) const;
-template BorrowedDenotationView<ConceptTag> EvaluationGraph<tyr::GroundTag>::result<ConceptTag>(EvaluationIndex<ConceptTag>) const;
-template BorrowedDenotationView<RoleTag> EvaluationGraph<tyr::GroundTag>::result<RoleTag>(EvaluationIndex<RoleTag>) const;
-template BorrowedDenotationView<BooleanTag> EvaluationGraph<tyr::GroundTag>::result<BooleanTag>(EvaluationIndex<BooleanTag>) const;
-template BorrowedDenotationView<NumericalTag> EvaluationGraph<tyr::GroundTag>::result<NumericalTag>(EvaluationIndex<NumericalTag>) const;
-template const DenotationDelta<ConceptTag>& EvaluationGraph<tyr::GroundTag>::change<ConceptTag>(EvaluationIndex<ConceptTag>) const;
-template const DenotationDelta<RoleTag>& EvaluationGraph<tyr::GroundTag>::change<RoleTag>(EvaluationIndex<RoleTag>) const;
-template size_t EvaluationGraph<tyr::GroundTag>::cardinality<ConceptTag>(EvaluationIndex<ConceptTag>) const;
-template size_t EvaluationGraph<tyr::GroundTag>::cardinality<RoleTag>(EvaluationIndex<RoleTag>) const;
-template bool IncrementalEvaluation<tyr::GroundTag>::changed<BooleanTag>(EvaluationIndex<BooleanTag>) const;
-template bool IncrementalEvaluation<tyr::GroundTag>::changed<NumericalTag>(EvaluationIndex<NumericalTag>) const;
-
-template void IncrementalEvaluation<tyr::GroundTag>::demand<StateEvaluationContext<tyr::GroundTag>>(ygg::uint_t,
-                                                                                                    StateEvaluationContext<tyr::GroundTag>&,
-                                                                                                    const Delta*,
-                                                                                                    ygg::database::Workspace*);
-template void IncrementalEvaluation<tyr::GroundTag>::demand<StateEvaluationContext<tyr::GroundTag, tyr::planning::BuilderStateView<tyr::GroundTag>>>(
-    ygg::uint_t,
-    StateEvaluationContext<tyr::GroundTag, tyr::planning::BuilderStateView<tyr::GroundTag>>&,
-    const Delta*,
-    ygg::database::Workspace*);
-
-template class EvaluationGraph<tyr::LiftedTag>;
-template class IncrementalEvaluation<tyr::LiftedTag>;
-
-template EvaluationIndex<ConceptTag> EvaluationGraph<tyr::LiftedTag>::prepare<ConceptTag>(ConstructorView<ConceptTag>);
-template EvaluationIndex<RoleTag> EvaluationGraph<tyr::LiftedTag>::prepare<RoleTag>(ConstructorView<RoleTag>);
-template EvaluationIndex<BooleanTag> EvaluationGraph<tyr::LiftedTag>::prepare<BooleanTag>(ConstructorView<BooleanTag>);
-template EvaluationIndex<NumericalTag> EvaluationGraph<tyr::LiftedTag>::prepare<NumericalTag>(ConstructorView<NumericalTag>);
-
-template EvaluationIndex<ConceptTag> EvaluationGraph<tyr::LiftedTag>::get_index<ConceptTag>(ConstructorView<ConceptTag>) const;
-template EvaluationIndex<RoleTag> EvaluationGraph<tyr::LiftedTag>::get_index<RoleTag>(ConstructorView<RoleTag>) const;
-template EvaluationIndex<BooleanTag> EvaluationGraph<tyr::LiftedTag>::get_index<BooleanTag>(ConstructorView<BooleanTag>) const;
-template EvaluationIndex<NumericalTag> EvaluationGraph<tyr::LiftedTag>::get_index<NumericalTag>(ConstructorView<NumericalTag>) const;
-template BorrowedDenotationView<ConceptTag> EvaluationGraph<tyr::LiftedTag>::result<ConceptTag>(EvaluationIndex<ConceptTag>) const;
-template BorrowedDenotationView<RoleTag> EvaluationGraph<tyr::LiftedTag>::result<RoleTag>(EvaluationIndex<RoleTag>) const;
-template BorrowedDenotationView<BooleanTag> EvaluationGraph<tyr::LiftedTag>::result<BooleanTag>(EvaluationIndex<BooleanTag>) const;
-template BorrowedDenotationView<NumericalTag> EvaluationGraph<tyr::LiftedTag>::result<NumericalTag>(EvaluationIndex<NumericalTag>) const;
-template const DenotationDelta<ConceptTag>& EvaluationGraph<tyr::LiftedTag>::change<ConceptTag>(EvaluationIndex<ConceptTag>) const;
-template const DenotationDelta<RoleTag>& EvaluationGraph<tyr::LiftedTag>::change<RoleTag>(EvaluationIndex<RoleTag>) const;
-template size_t EvaluationGraph<tyr::LiftedTag>::cardinality<ConceptTag>(EvaluationIndex<ConceptTag>) const;
-template size_t EvaluationGraph<tyr::LiftedTag>::cardinality<RoleTag>(EvaluationIndex<RoleTag>) const;
-template bool IncrementalEvaluation<tyr::LiftedTag>::changed<BooleanTag>(EvaluationIndex<BooleanTag>) const;
-template bool IncrementalEvaluation<tyr::LiftedTag>::changed<NumericalTag>(EvaluationIndex<NumericalTag>) const;
-
-template void IncrementalEvaluation<tyr::LiftedTag>::demand<StateEvaluationContext<tyr::LiftedTag>>(ygg::uint_t,
-                                                                                                    StateEvaluationContext<tyr::LiftedTag>&,
-                                                                                                    const Delta*,
-                                                                                                    ygg::database::Workspace*);
-template void IncrementalEvaluation<tyr::LiftedTag>::demand<StateEvaluationContext<tyr::LiftedTag, tyr::planning::BuilderStateView<tyr::LiftedTag>>>(
-    ygg::uint_t,
-    StateEvaluationContext<tyr::LiftedTag, tyr::planning::BuilderStateView<tyr::LiftedTag>>&,
-    const Delta*,
-    ygg::database::Workspace*);
+RUNIR_INCREMENTAL_EVALUATION(tyr::GroundTag)
+RUNIR_INCREMENTAL_EVALUATION(tyr::LiftedTag)
 
 }  // namespace runir::kr::dl::semantics::incremental
