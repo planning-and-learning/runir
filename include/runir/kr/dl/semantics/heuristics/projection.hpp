@@ -22,14 +22,11 @@
 #include <yggdrasil/database/semantics/operations.hpp>
 #include <yggdrasil/database/semantics/relation_view.hpp>
 #include <yggdrasil/database/semantics/search/concepts.hpp>
-#include <yggdrasil/database/syntax/columns.hpp>
+#include <yggdrasil/formalism/relation_builder.hpp>
 #include <yggdrasil/database/syntax/query.hpp>
-#include <yggdrasil/database/syntax/row.hpp>
 
 namespace runir::kr::dl::semantics::heuristics
 {
-
-using Row = ygg::database::Row;
 
 /// The pattern database of one vertex column i, the pattern: the abstraction α_i(v) = v[i] maps the edges to a graph
 /// over objects, and h is its breadth-first distance table to the abstract targets α_i(T). The abstract edges are not
@@ -63,8 +60,8 @@ class ProjectionHeuristic
 public:
     ProjectionHeuristic() = default;
     ProjectionHeuristic(urd::Store<urd::sequence<PatternDatabase>> databases,
-                        std::span<const ygg::database::ColumnLayout> vertex_columns,
-                        std::span<const ygg::database::ColumnLayout> target_columns,
+                        std::span<const ygg::ColumnLayout> vertex_columns,
+                        std::span<const ygg::ColumnLayout> target_columns,
                         ygg::uint_t num_objects) :
         m_databases(std::move(databases)),
         m_vertex_columns(vertex_columns.begin(), vertex_columns.end()),
@@ -83,13 +80,13 @@ public:
     }
 
     /// h(vertex); requires update() to have computed every table.
-    [[nodiscard]] ygg::uint_t estimate(std::span<const std::byte> vertex) const
+    [[nodiscard]] ygg::uint_t estimate(std::span<const ygg::Value> vertex) const
     {
         ygg::uint_t value = 0;
         for (const auto& database : m_databases)
         {
             assert(database.computed());
-            const auto entry = database.h[Row(vertex, m_vertex_columns).get<ygg::uint_t>(database.pattern)];
+            const auto entry = database.h[ygg::decode_value<ygg::uint_t>(vertex[database.pattern])];
             if (entry == ygg::database::infinity)
                 return entry;
             value = std::max(value, entry);
@@ -111,12 +108,12 @@ public:
         return result;
     }
     /// h(vertex) with tables().
-    [[nodiscard]] ygg::uint_t estimate(std::span<const std::byte> vertex, const Tables& tables) const
+    [[nodiscard]] ygg::uint_t estimate(std::span<const ygg::Value> vertex, const Tables& tables) const
     {
         ygg::uint_t value = 0;
         for (size_t d = 0; d < m_databases.size(); ++d)
         {
-            const auto entry = tables[d][Row(vertex, m_vertex_columns).get<ygg::uint_t>(m_databases[d].pattern)];
+            const auto entry = tables[d][ygg::decode_value<ygg::uint_t>(vertex[m_databases[d].pattern])];
             if (entry == ygg::database::infinity)
                 return entry;
             value = std::max(value, entry);
@@ -127,12 +124,11 @@ public:
 
 private:
     urd::Store<urd::sequence<PatternDatabase>> m_databases;
-    urd::Store<urd::sequence<ygg::database::ColumnLayout>> m_vertex_columns;
-    urd::Store<urd::sequence<ygg::database::ColumnLayout>> m_target_columns;
+    urd::Store<urd::sequence<ygg::ColumnLayout>> m_vertex_columns;
+    urd::Store<urd::sequence<ygg::ColumnLayout>> m_target_columns;
     ygg::uint_t m_num_objects = 0;
     urd::Store<urd::set<ygg::uint_t>, urd::dense> m_abstract_targets;  ///< Scratch of update_table(), kept with m_queue to avoid allocations.
     urd::Store<urd::sequence<ygg::uint_t>> m_queue;
-    urd::Store<urd::sequence<std::byte>> m_vertex;  ///< The bound abstract vertex, kept to avoid allocations.
 
     /// A backward breadth-first search from α_i(T) in the abstract graph. The table is built aside and committed with
     /// its targets only when the search succeeds: a throw leaves computed() false, so the next update() rebuilds it.
@@ -154,7 +150,7 @@ private:
     {
         m_abstract_targets.clear();
         for (size_t r = 0; r < targets.size(); ++r)
-            m_abstract_targets.insert(Row(targets.row(r), m_target_columns).get<ygg::uint_t>(database.pattern));
+            m_abstract_targets.insert(ygg::decode_value<ygg::uint_t>(targets.row(r).get(database.pattern)));
     }
     Tables::value_type breadth_first(PatternDatabase& database)
     {
@@ -175,12 +171,12 @@ private:
         for (size_t head = 0; head < m_queue.size(); ++head)
         {
             const auto o = m_queue[head];
-            const auto vertex = ygg::database::encode_row<ygg::uint_t>(std::array { o }, m_vertex);
+            const auto vertex = std::array<ygg::Value, 1> { ygg::encode_value(o) };
             database.edges.evaluate(database.predecessors,
                                     vertex,
-                                    [&](std::span<const std::byte> edge)
+                                    [&](std::span<const ygg::Value> edge)
                                     {
-                                        const auto p = Row(edge, database.edges.columns()).get<ygg::uint_t>(database.u_position);
+                                        const auto p = ygg::decode_value<ygg::uint_t>(edge[database.u_position]);
                                         if (h[p] == ygg::database::infinity)
                                         {
                                             h[p] = h[o] + 1;
@@ -199,7 +195,12 @@ class KeyedProjectionHeuristic
 {
 public:
     KeyedProjectionHeuristic() = default;
-    KeyedProjectionHeuristic(ProjectionHeuristic heuristic, size_t key_size, std::span<const ygg::database::ColumnLayout> target_columns) :
+    /// Its per-key target relations are read through `layer`, which must outlive it.
+    KeyedProjectionHeuristic(const ygg::database::Repository& layer,
+                             ProjectionHeuristic heuristic,
+                             size_t key_size,
+                             std::span<const ygg::ColumnLayout> target_columns) :
+        m_layer(&layer),
         m_heuristic(std::move(heuristic)),
         m_key_size(key_size),
         m_target_columns(target_columns.begin(), target_columns.end())
@@ -215,15 +216,18 @@ public:
         // The targets rarely change between calls (e.g. goals); identical rows keep every table.
         m_rows.clear();
         for (size_t r = 0; r < targets.size(); ++r)
-            m_rows.insert(m_rows.end(), targets.row(r).begin(), targets.row(r).end());
+        {
+            const auto row = ygg::database::vertex_values(targets.row(r), m_values);
+            m_rows.insert(m_rows.end(), row.begin(), row.end());
+        }
         if (m_rows == m_previous)
             return;
         std::swap(m_rows, m_previous);
-        auto grouped = urd::Store<urd::map<urd::Store<urd::sequence<std::byte>>, urd::Store<urd::sequence<urd::Store<urd::sequence<std::byte>>>>>, urd::sorted> {};
+        auto grouped = urd::Store<urd::map<urd::Store<urd::sequence<ygg::Value>>, urd::Store<urd::sequence<urd::Store<urd::sequence<ygg::Value>>>>>, urd::sorted> {};
         for (size_t r = 0; r < targets.size(); ++r)
         {
-            const auto row = targets.row(r);
-            grouped[urd::Store<urd::sequence<std::byte>>(row.begin(), row.begin() + static_cast<std::ptrdiff_t>(m_key_size))].emplace_back(
+            const auto row = ygg::database::vertex_values(targets.row(r), m_values);
+            grouped[urd::Store<urd::sequence<ygg::Value>>(row.begin(), row.begin() + static_cast<std::ptrdiff_t>(m_key_size))].emplace_back(
                 row.begin() + static_cast<std::ptrdiff_t>(m_key_size),
                 row.end());
         }
@@ -233,16 +237,16 @@ public:
             auto& entry = m_keys[key];
             if (entry.tables.empty() || entry.targets != rows)
             {
-                auto relation = urd::builder<ygg::database::Relation>(std::span<const ygg::database::ColumnLayout>(m_target_columns));
+                auto relation = urd::builder<ygg::Relation<ygg::Schema>>(std::span<const ygg::ColumnLayout>(m_target_columns));
                 for (const auto& vertex : rows)
-                    relation.insert(std::span<const std::byte>(vertex));
-                entry.tables = m_heuristic.tables(relation);
+                    relation.insert(std::span<const ygg::Value>(vertex));
+                entry.tables = m_heuristic.tables(m_layer->view(relation));
                 entry.targets = std::move(rows);
             }
         }
     }
     /// h(key and vertex); a key without targets is unreachable.
-    ygg::uint_t estimate(std::span<const std::byte> key_and_vertex) const
+    ygg::uint_t estimate(std::span<const ygg::Value> key_and_vertex) const
     {
         if (m_heuristic.blind())
             return 0;
@@ -254,16 +258,18 @@ public:
 private:
     struct Key
     {
-        urd::Store<urd::sequence<urd::Store<urd::sequence<std::byte>>>> targets;  ///< The vertices the tables were computed for, sorted.
+        urd::Store<urd::sequence<urd::Store<urd::sequence<ygg::Value>>>> targets;  ///< The vertices the tables were computed for, sorted.
         ProjectionHeuristic::Tables tables;
     };
+    const ygg::database::Repository* m_layer = nullptr;
     ProjectionHeuristic m_heuristic;
     size_t m_key_size = 0;
-    urd::Store<urd::sequence<ygg::database::ColumnLayout>> m_target_columns;  ///< The vertex columns of a target, without the key.
-    urd::Store<urd::map<urd::Store<urd::sequence<std::byte>>, Key>, urd::sorted> m_keys;
-    mutable urd::Store<urd::sequence<std::byte>> m_key;  ///< Scratch of estimate().
-    urd::Store<urd::sequence<std::byte>> m_previous;     ///< The rows of the targets of the last update().
-    urd::Store<urd::sequence<std::byte>> m_rows;         ///< Scratch of update().
+    urd::Store<urd::sequence<ygg::ColumnLayout>> m_target_columns;  ///< The vertex columns of a target, without the key.
+    urd::Store<urd::map<urd::Store<urd::sequence<ygg::Value>>, Key>, urd::sorted> m_keys;
+    mutable urd::Store<urd::sequence<ygg::Value>> m_key;  ///< Scratch of estimate().
+    urd::Store<urd::sequence<ygg::Value>> m_previous;     ///< The rows of the targets of the last update().
+    urd::Store<urd::sequence<ygg::Value>> m_rows;         ///< Scratch of update().
+    urd::Store<urd::sequence<ygg::Value>> m_values;       ///< A target row's values, as read.
 };
 
 /// The abstract edges of the pattern databases as queries, built once per feature from the translated edge query Q.
@@ -289,8 +295,8 @@ ygg::database::QueryPlan compile_edge_plan(const urd::Store<urd::sequence<ygg::d
 /// `from` and `to` are the edge columns of the two vertices of an edge, in vertex order.
 inline std::optional<EdgeAbstraction> abstract_edges(dl::detail::QueryTranslator& translator,
                                                      ygg::database::QueryView<> edges,
-                                                     std::span<const ygg::database::ColumnLayout> from,
-                                                     std::span<const ygg::database::ColumnLayout> to)
+                                                     std::span<const ygg::ColumnLayout> from,
+                                                     std::span<const ygg::ColumnLayout> to)
 {
     const auto k = from.size();
     auto projections = urd::Store<urd::sequence<ygg::database::QueryView<>>>();
@@ -315,7 +321,7 @@ inline std::optional<EdgeAbstraction> abstract_edges(dl::detail::QueryTranslator
 inline std::optional<EdgeAbstraction>
 abstract_edges(dl::detail::QueryTranslator& translator, ygg::database::QueryView<> edges, const ygg::database::DistancePlan& plan)
 {
-    const auto columns = plan.edge_columns().span();
+    const auto columns = plan.edge_columns();
     return abstract_edges(translator, edges, columns.first(plan.arity()), columns.subspan(plan.arity()));
 }
 
@@ -324,11 +330,12 @@ abstract_edges(dl::detail::QueryTranslator& translator, ygg::database::QueryView
 /// `from` and `to` are the edge columns of an edge's two vertices; `vertices` and `targets` the columns of the vertices
 /// estimated and of the targets.
 template<ygg::database::SlotRelations SlotRows>
-ProjectionHeuristic make_projection_heuristic(const EdgeAbstraction& abstraction,
-                                              std::span<const ygg::database::ColumnLayout> from,
-                                              std::span<const ygg::database::ColumnLayout> to,
-                                              std::span<const ygg::database::ColumnLayout> vertices,
-                                              std::span<const ygg::database::ColumnLayout> targets,
+ProjectionHeuristic make_projection_heuristic(const ygg::database::Repository& layer,
+                                              const EdgeAbstraction& abstraction,
+                                              std::span<const ygg::ColumnLayout> from,
+                                              std::span<const ygg::ColumnLayout> to,
+                                              std::span<const ygg::ColumnLayout> vertices,
+                                              std::span<const ygg::ColumnLayout> targets,
                                               ygg::uint_t num_objects,
                                               const SlotRows& slot_rows)
 {
@@ -337,9 +344,10 @@ ProjectionHeuristic make_projection_heuristic(const EdgeAbstraction& abstraction
     {
         const auto i = abstraction.patterns[r];
         const auto query = abstraction.plan[abstraction.plan.roots()[r]];
-        auto& database = databases.emplace_back(PatternDatabase { i, ygg::database::bound::QueryEvaluator(query) });
-        database.u_position = ygg::database::column_index(query.columns(), from[i].label);
-        database.v_position = ygg::database::column_index(query.columns(), to[i].label);
+        auto& database = databases.emplace_back(PatternDatabase { i, ygg::database::bound::QueryEvaluator(layer, query) });
+        const auto columns = query.columns();
+        database.u_position = static_cast<size_t>(std::ranges::find(columns, from[i].label, &ygg::ColumnLayout::label) - columns.begin());
+        database.v_position = static_cast<size_t>(std::ranges::find(columns, to[i].label, &ygg::ColumnLayout::label) - columns.begin());
         for (const auto slot : ygg::database::input_slots(std::span(&query, 1)))
             database.edges.bind_slot(slot, slot_rows(abstraction.slots[slot]));
         database.predecessors = database.edges.prepare({ database.v_position });
@@ -349,14 +357,19 @@ ProjectionHeuristic make_projection_heuristic(const EdgeAbstraction& abstraction
 
 template<ygg::database::SlotRelations SlotRows>
 ProjectionHeuristic
-make_projection_heuristic(const EdgeAbstraction& abstraction, const ygg::database::DistancePlan& plan, ygg::uint_t num_objects, const SlotRows& slot_rows)
+make_projection_heuristic(const ygg::database::Repository& layer,
+                          const EdgeAbstraction& abstraction,
+                          const ygg::database::DistancePlan& plan,
+                          ygg::uint_t num_objects,
+                          const SlotRows& slot_rows)
 {
-    const auto columns = plan.edge_columns().span();
-    return make_projection_heuristic(abstraction,
+    const auto columns = plan.edge_columns();
+    return make_projection_heuristic(layer,
+                                     abstraction,
                                      columns.first(plan.arity()),
                                      columns.subspan(plan.arity()),
-                                     plan.source_columns().span(),
-                                     plan.target_columns().span(),
+                                     plan.source_columns(),
+                                     plan.target_columns(),
                                      num_objects,
                                      slot_rows);
 }

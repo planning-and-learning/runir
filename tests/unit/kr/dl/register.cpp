@@ -45,7 +45,7 @@ static_assert(view_aliases(boost::mp11::mp_list<kr::dl::ConceptTag, kr::dl::Role
 
 TEST(RunirKrDlRegister, ExposesNameAndUnboundedIdentifier)
 {
-    auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
+    auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
     auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_repository);
     auto data = urd::data<kr::dl::Register<kr::dl::RoleTag>>(std::string("target"), kr::dl::RegisterIdentifier<kr::dl::RoleTag>(1024));
     const auto reg = repository->insert(data).first;

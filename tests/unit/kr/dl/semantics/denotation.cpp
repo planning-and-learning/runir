@@ -126,7 +126,7 @@ TEST(RunirKrDlSemanticsDenotation, BuilderIdentityUsesValuesRatherThanRegistrati
 
 TEST(RunirKrDlSemanticsDenotation, ExposesScalarValues)
 {
-    auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
+    auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
     auto repository = kr::dl::semantics::DenotationRepositoryFactory().create(planning_repository);
 
     auto boolean_data = urd::data<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>(true);
@@ -146,7 +146,7 @@ TEST(RunirKrDlSemanticsDenotation, CountsRolePairs)
     EXPECT_TRUE(builder.any());
     EXPECT_EQ(builder.count(), 2);
 
-    auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
+    auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
     auto repository = kr::dl::semantics::DenotationRepositoryFactory().create(planning_repository);
     const auto vec_index = repository.get_vector_repository().insert(builder.blocks).first;
     auto data = urd::data<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(builder.get_num_objects(), vec_index);
@@ -245,7 +245,7 @@ TEST(RunirKrDlSemanticsDenotation, RoleMutationsClearIdentityAndPreserveRowPaddi
 
 TEST(RunirKrDlSemanticsDenotation, BorrowedAssignmentClearsIdentityAndRetainsBuffersIncludingSelfAssignment)
 {
-    auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
+    auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
     const auto check = [&]<kr::dl::CategoryTag Category>()
     {
         using D = kr::dl::semantics::Denotation<Category>;
@@ -292,7 +292,7 @@ TEST(RunirKrDlSemanticsDenotation, BorrowedAssignmentClearsIdentityAndRetainsBuf
 
 TEST(RunirKrDlSemanticsDenotation, IteratorsOutliveViewWrappers)
 {
-    auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
+    auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
     for (const auto* name : { "a", "b", "c" })
     {
         auto data = urd::data<tyr::formalism::Object>(std::string(name));
@@ -354,7 +354,7 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsSurviveRepositoryGrowthAndSkipRolePa
         EXPECT_EQ(iterator, indices.end());
     };
     constexpr ygg::uint_t num_objects = 130;
-    auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
+    auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
     for (ygg::uint_t i = 0; i < num_objects; ++i)
     {
         auto data = urd::data<tyr::formalism::Object>("object" + std::to_string(i));
@@ -439,7 +439,7 @@ TEST(RunirKrDlSemanticsDenotation, RoleStorageBitsetsPreserveRowPadding)
 {
     using RoleBuilder = urd::builder<Role>;
     constexpr auto digits = static_cast<ygg::uint_t>(RoleBuilder::Bitset::Digits);
-    auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
+    auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
     for (ygg::uint_t i = 0; i < 130; ++i)
     {
         auto data = urd::data<tyr::formalism::Object>("object" + std::to_string(i));

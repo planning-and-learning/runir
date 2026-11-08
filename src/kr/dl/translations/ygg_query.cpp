@@ -44,9 +44,9 @@ QueryTranslator::YggQuery QueryTranslator::input(QuerySlot slot)
     return insert(*out);
 }
 
-std::span<const ygg::database::ColumnLayout> QueryTranslator::schema(DlQuery query)
+std::span<const ygg::ColumnLayout> QueryTranslator::schema(DlQuery query)
 {
-    return std::visit([](auto concrete) { return concrete.get_schema().span(); }, query.get_variant());
+    return std::visit([](auto concrete) { return concrete.get_schema(); }, query.get_variant());
 }
 
 void QueryTranslator::flatten(DlQuery query, urd::Store<urd::sequence<DlQuery>>& conjuncts)
@@ -82,7 +82,7 @@ std::optional<QueryTranslator::YggQuery> QueryTranslator::rewrite_complements(Dl
                                                                   [&](DlQuery positive)
                                                                   {
                                                                       const auto columns = schema(positive);
-                                                                      return std::ranges::find(columns, column.label, &ygg::database::ColumnLayout::label)
+                                                                      return std::ranges::find(columns, column.label, &ygg::ColumnLayout::label)
                                                                              != columns.end();
                                                                   });
                                    });
@@ -126,7 +126,7 @@ QueryTranslator::YggQuery QueryTranslator::translate_concrete(DlQuery query, Que
     const auto& data = concrete.data();
     if constexpr (is_query_leaf_tag_v<Tag>)
     {
-        const auto columns = concrete.get_schema().span();
+        const auto columns = concrete.get_schema();
         return input(QuerySlot { QuerySlot::Kind::QUERY, static_cast<ygg::uint_t>(query.index().value), { columns.begin(), columns.end() }, query.is_static() });
     }
     else if constexpr (std::same_as<Tag, QueryJoinTag>)
@@ -156,7 +156,7 @@ QueryTranslator::YggQuery QueryTranslator::translate_concrete(DlQuery query, Que
     {
         auto out = urd::data<ygg::database::Query<ygg::database::QuerySelectValueTag>>(translate(concrete.get_arg()).index(),
                                                                                        Label(data.column.value),
-                                                                                       data.object.value);
+                                                                                       ygg::ObjectIndex { data.object.value });
         return insert(out);
     }
     else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
@@ -173,7 +173,7 @@ QueryTranslator::YggQuery QueryTranslator::translate_concrete(DlQuery query, Que
     else if constexpr (std::same_as<Tag, QueryEmptyTag>)
     {
         auto out = ygg::database::checkout<ygg::database::Query<ygg::database::QueryEmptyTag>>(m_builder);
-        const auto columns = concrete.get_schema().span();
+        const auto columns = concrete.get_schema();
         out->columns.set(columns.begin(), columns.end());
         return insert(*out);
     }

@@ -86,7 +86,7 @@ int run(std::span<char*> args)
         const auto arguments_time = seconds_since(start);
         start = std::chrono::steady_clock::now();
         if (!feature)
-            feature.emplace(runir::kr::dl::semantics::detail::make_must_pass_feature(must_pass.data().plan, must_pass.get_edges()));
+            feature.emplace(runir::kr::dl::semantics::detail::make_must_pass_feature(builder.get_workspace().get_layer(), must_pass.data().plan, must_pass.get_edges()));
         const auto translate_time = seconds_since(start);
         const auto edges = must_pass.get_edges();
         auto slot_time = 0.0;
@@ -99,9 +99,13 @@ int run(std::span<char*> args)
         };
         start = std::chrono::steady_clock::now();
         auto& heuristic =
-            runir::kr::dl::semantics::detail::must_pass_heuristic(*feature, runir::kr::dl::semantics::detail::num_objects<Kind>(context), input, targets);
+            runir::kr::dl::semantics::detail::must_pass_heuristic(builder.get_workspace().get_layer(),
+                                                                  *feature,
+                                                                  runir::kr::dl::semantics::detail::num_objects<Kind>(context),
+                                                                  input,
+                                                                  targets);
         const auto heuristic_time = seconds_since(start);
-        auto out = urd::builder<ygg::database::Relation>(must_pass.get_schema().span());
+        auto out = urd::builder<ygg::Relation<ygg::Schema>>(must_pass.get_schema());
         const auto before = feature->must_pass.statistics();
         start = std::chrono::steady_clock::now();
         feature->must_pass.must_pass(input, sources, targets, probes, out, heuristic);

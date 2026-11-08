@@ -12,7 +12,7 @@
 #include <urd/repr/values/unordered_flat_set.hpp>
 #include <urd/store.hpp>
 #include <yggdrasil/database/semantics/join_index.hpp>
-#include <yggdrasil/database/semantics/relation_repository.hpp>
+#include <yggdrasil/database/semantics/relation_view.hpp>
 
 namespace runir::kr::dl::semantics
 {

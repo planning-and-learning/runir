@@ -14,7 +14,6 @@ DenotationRepository::DenotationRepository(size_t index,
                                            DenotationRepositoryFactory factory,
                                            std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository) :
     m_vector_repository(),
-    m_relation_repository(factory.m_relation_factory.create()),
     m_formalism_repository(std::move(formalism_repository)),
     m_factory(std::move(factory)),
     m_index(index)

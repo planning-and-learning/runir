@@ -39,7 +39,7 @@ struct QuerySlot
     };
     Kind kind = Kind::QUERY;
     ygg::uint_t index = 0;
-    urd::Store<urd::sequence<ygg::database::ColumnLayout>> columns;
+    urd::Store<urd::sequence<ygg::ColumnLayout>> columns;
     bool is_static = false;
 };
 
@@ -118,10 +118,10 @@ class QueryTranslator
 {
     using DlQuery = QueryView<>;
     using YggQuery = ygg::database::QueryView<>;
-    using Label = urd::index<ygg::database::Column>;
+    using Label = urd::index<ygg::Column>;
 
 public:
-    explicit QueryTranslator(bool rewrite_complements = false) : m_repository(m_factory.create()), m_rewrite_complements(rewrite_complements) {}
+    explicit QueryTranslator(bool rewrite_complements = false) : m_rewrite_complements(rewrite_complements) {}
     QueryTranslator(const QueryTranslator&) = delete;
     QueryTranslator& operator=(const QueryTranslator&) = delete;
     QueryTranslator(QueryTranslator&&) = delete;  // Translated views borrow the owned repository.
@@ -165,7 +165,7 @@ private:
         return insert(*out);
     }
     YggQuery input(QuerySlot slot);
-    static std::span<const ygg::database::ColumnLayout> schema(DlQuery query);
+    static std::span<const ygg::ColumnLayout> schema(DlQuery query);
 
     /// The conjuncts of a tree of binary joins.
     static void flatten(DlQuery query, urd::Store<urd::sequence<DlQuery>>& conjuncts);
@@ -179,7 +179,6 @@ private:
     template<typename Tag>
     YggQuery translate_concrete(DlQuery query, QueryView<Tag> concrete);
 
-    ygg::database::QueryRepositoryFactory m_factory;
     ygg::database::QueryRepository m_repository;
     ygg::database::QueryBuilder m_builder;
     bool m_rewrite_complements;

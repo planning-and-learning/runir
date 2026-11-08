@@ -106,7 +106,7 @@ struct StateGraphEdgeLabel : urd::compared_by_identity<StateGraphEdgeLabel>
     StateGraphEdgeLabel(tyr::formalism::planning::ActionBindingView action_, ygg::float_t cost_) noexcept : action(action_), cost(cost_) {}
 
     static constexpr auto cista_members() noexcept { return urd::Members<&StateGraphEdgeLabel::action, &StateGraphEdgeLabel::cost> {}; }
-    [[nodiscard]] auto action_index() const noexcept { return action.index(); }
+    [[nodiscard]] auto action_index() const noexcept { return action.data(); }
     static constexpr auto identifying_members() noexcept { return urd::Members<&StateGraphEdgeLabel::action_index, &StateGraphEdgeLabel::cost> {}; }
 };
 

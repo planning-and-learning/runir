@@ -126,7 +126,7 @@ private:
 
     template<ConceptOrRoleTag Projected, typename C>
     Evaluators prepare(urd::index_view<QueryProjection<Projected>, C> expression, GraphBuilder<Kind>& graph)
-    { return ProjectionEvaluator<Kind, Category>(graph.prepare(expression.get_arg(), m_dependencies), expression.data().plan); }
+    { return ProjectionEvaluator<Kind, Category>(graph.layer(), graph.prepare(expression.get_arg(), m_dependencies), expression.data().plan); }
 
     Evaluators prepare_distance(NumericalView<DistanceTag> expression, ConstructorView<RoleTag>, GraphBuilder<Kind>& graph)
     { return RoleEdgeDistanceEvaluator<Kind>(expression, graph, m_dependencies); }

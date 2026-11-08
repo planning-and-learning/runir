@@ -38,10 +38,9 @@ class ActionRuleEvaluator
     RuleVariantView m_variant;
     tyr::formalism::planning::ActionView<tyr::LiftedTag> m_action;
     // Retained scratch for decoding query rows; each use completes before any callback.
-    mutable urd::Store<urd::sequence<ygg::uint_t>> m_values;
     /// The offered binding (the action and the row's objects), read through the planning repository when checked.
     mutable urd::data<tyr::formalism::RelationBinding<tyr::formalism::planning::Action<tyr::LiftedTag>>> m_offer;
-    mutable urd::Store<urd::sequence<std::byte>> m_row;
+    mutable urd::Store<urd::sequence<ygg::Value>> m_row;
 
     static void require_applicable(tyr::planning::ActionBindingStatus status)
     {
@@ -98,13 +97,13 @@ public:
             return true;
         auto state_context = context.make_dl_context(state);
         const auto query = evaluate<Kind>(rule.get_query_feature(), state_context);
-        for (const auto row : query)
+        for (const auto row : query.rows())
         {
             if (stop())
                 return false;
             m_offer.objects.clear();
-            for (const auto value : row.get_all(m_values))
-                m_offer.objects.emplace_back(value);
+            for (size_t i = 0; i < row.size(); ++i)
+                m_offer.objects.emplace_back(ygg::decode_value<ygg::uint_t>(row.get(i)));
             // Policy applicability has no carried path metric.
             const auto offered = (*context.task_context)
                                      ->search_context->successor_generator->try_get_applicable_action_binding(
@@ -140,7 +139,7 @@ public:
         auto state_context = context.make_dl_context(state);
         const auto query = evaluate<Kind>(rule.get_query_feature(), state_context);
         const auto objects = candidate.label.get_objects();
-        if (objects.size() != query.arity() || !query.contains(runir::kr::dl::encode_object_row(objects.base(), m_row)))
+        if (objects.size() != query.columns().size() || !query.contains(runir::kr::dl::encode_object_row(objects.base(), m_row)))
             return false;
         auto& generator = *(*context.task_context)->search_context->successor_generator;
         const auto node = tyr::planning::Node<Kind, PlanningState>(planning_state, 0);

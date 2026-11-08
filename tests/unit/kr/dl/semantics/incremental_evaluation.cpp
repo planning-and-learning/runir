@@ -260,7 +260,7 @@ void check_incremental_evaluation()
         EXPECT_EQ(repository.template size<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(), 0);
         EXPECT_EQ(repository.template size<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>(), 0);
         EXPECT_EQ(repository.template size<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>(), 0);
-        EXPECT_TRUE(repository.get_relation_repository().empty());
+        EXPECT_TRUE(repository.get_relation_repository().symbols().template size<ygg::Relation<ygg::Schema>>() == 0);
         EXPECT_TRUE(storage.get_caches().template get<kr::dl::ConceptTag>(false).empty());
         EXPECT_TRUE(storage.get_caches().template get<kr::dl::RoleTag>(false).empty());
         EXPECT_TRUE(storage.get_caches().template get<kr::dl::BooleanTag>(false).empty());
@@ -603,10 +603,10 @@ void check_incremental_evaluation()
         auto result = urd::Store<urd::sequence<urd::Store<urd::sequence<Object>>>> {};
         for (size_t i = 0; i < relation.size(); ++i)
         {
-            const auto row = ygg::database::Row(relation.row(i), relation.columns().span());
+            const auto row = relation.row(i);
             auto& values = result.emplace_back();
             for (size_t j = 0; j < row.size(); ++j)
-                values.emplace_back(row.get<ygg::uint_t>(j));
+                values.emplace_back(ygg::decode_value<ygg::uint_t>(row.get(j)));
         }
         std::ranges::sort(result);
         return result;
@@ -674,8 +674,9 @@ void check_incremental_evaluation()
         EXPECT_TRUE(std::ranges::is_permutation(state.delta(source_id).removed, difference(before_source, after_source)));
         EXPECT_TRUE(std::ranges::is_permutation(state.delta(edge_id).added, difference(after_edge, before_edge)));
         EXPECT_TRUE(std::ranges::is_permutation(state.delta(edge_id).removed, difference(before_edge, after_edge)));
-        EXPECT_EQ(query_rows(state.delta(query_id).added), difference(query_rows(state.evaluate(query_id)), before_query));
-        EXPECT_EQ(query_rows(state.delta(query_id).removed), difference(before_query, query_rows(state.evaluate(query_id))));
+        const auto [query_added, query_removed] = state.delta(query_id).change();
+        EXPECT_EQ(query_rows(query_added), difference(query_rows(state.evaluate(query_id)), before_query));
+        EXPECT_EQ(query_rows(query_removed), difference(before_query, query_rows(state.evaluate(query_id))));
         for (size_t j = 0; j < scalar_ids.size(); ++j)
             EXPECT_EQ(state.changed(scalar_ids[j]), before_scalars[j] != scalar_values(state)[j]);
         compare_graph(state, context);

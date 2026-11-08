@@ -65,7 +65,7 @@ struct QueryRootState
     kr::dl::semantics::incremental::StateEvaluation<Kind, Context> state;
     kr::dl::semantics::incremental::QueryEvaluationIndex root;
 
-    const auto& get_result() { return state.evaluate(root); }
+    auto get_result() { return state.evaluate(root); }
     const auto& get_delta() { return state.delta(root); }
     size_t size() { return state.size(root); }
 };

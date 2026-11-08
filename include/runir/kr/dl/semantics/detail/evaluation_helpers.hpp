@@ -228,32 +228,33 @@ constexpr ygg::uint_t apply_numerical_binary(ygg::uint_t lhs, ygg::uint_t rhs) n
 
 /// Inserts a concept's objects or a role's pairs as rows of a 1- or 2-column relation.
 template<ConceptOrRoleTag Category, DenotationViewConcept<Category> Denotation>
-void insert_denotation_rows(const Denotation& denotation, urd::builder<ygg::database::Relation>& result)
+void insert_denotation_rows(const Denotation& denotation, urd::builder<ygg::Relation<ygg::Schema>>& result)
 {
     for (const auto element : denotation.indices())
     {
         if constexpr (std::same_as<Category, ConceptTag>)
-            result.insert(std::tuple { element.value });
+            result.insert(std::array<ygg::Value, 1> { ygg::encode_value<ygg::uint_t>(element.value) });
         else
         {
             const auto [source, target] = element;
-            result.insert(std::tuple { source.value, target.value });
+            result.insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(source.value), ygg::encode_value<ygg::uint_t>(target.value) });
         }
     }
 }
 
 /// A distance argument as a relation over the plan's columns for it.
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
-auto evaluate_relation(urd::index_view<Query<>, C> argument, std::span<const ygg::database::ColumnLayout>, Context& context) -> QueryDenotationView
+auto evaluate_relation(urd::index_view<Query<>, C> argument, std::span<const ygg::ColumnLayout>, Context& context) -> QueryDenotationView
 { return evaluate<Kind>(argument, context); }
 
 /// Concepts and roles are lifted, so all argument forms share one distance evaluation.
 template<tyr::TaskKind Kind, ConceptOrRoleTag Category, StateEvaluationContextConcept<Kind> Context, typename C>
-auto evaluate_relation(urd::index_view<Constructor<Category>, C> argument, std::span<const ygg::database::ColumnLayout> columns, Context& context)
+auto evaluate_relation(urd::index_view<Constructor<Category>, C> argument, std::span<const ygg::ColumnLayout> columns, Context& context)
     -> QueryDenotationView
 {
     const auto denotation = evaluate<Kind>(argument, context);
-    auto result = context.get_builder().template get_builder<ygg::database::Relation>(columns);
+    auto& relations = context.get_denotation_repository().get_relation_repository();
+    auto result = relations.get_relation_builder(relations.schema(columns), columns);
     insert_denotation_rows<Category>(denotation, *result);
     return insert(context.get_denotation_repository(), *result).first;
 }

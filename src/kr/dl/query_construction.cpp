@@ -45,10 +45,15 @@ void prepare(urd::data<Numerical<SemanticFamily, DistanceTag>>& data, const Cons
     const auto columns = [&](const auto& argument)
     {
         return std::visit(
-            [&]<typename T>(urd::index<T> index) -> urd::builder<ygg::database::Columns>
+            [&]<typename T>(urd::index<T> index) -> urd::flat_vector<ygg::ColumnLayout>
             {
                 if constexpr (std::same_as<T, Query<>>)
-                    return urd::builder<ygg::database::Columns>(repository.view(index).get_schema().span());
+                {
+                    const auto schema = repository.view(index).get_schema();
+                    auto result = urd::flat_vector<ygg::ColumnLayout>();
+                    result.set(schema.begin(), schema.end());
+                    return result;
+                }
                 else
                     return lifted_columns(std::same_as<T, Constructor<ConceptTag>> ? 1 : 2);
             },
@@ -57,7 +62,7 @@ void prepare(urd::data<Numerical<SemanticFamily, DistanceTag>>& data, const Cons
     const auto sources = columns(data.lhs);
     const auto edges = columns(data.mid);
     const auto targets = columns(data.rhs);
-    data.plan = ygg::database::DistancePlan(sources.span(), edges.span(), targets.span(), distance_column);
+    data.plan = ygg::database::DistancePlan({ sources.data(), sources.size() }, { edges.data(), edges.size() }, { targets.data(), targets.size() }, distance_column);
 }
 
 }  // namespace runir::kr::dl::detail

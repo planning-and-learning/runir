@@ -66,7 +66,7 @@ struct data<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>>
     urd::index<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>> index;
     urd::index<tyr::formalism::Predicate<T>> predicate {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    urd::builder<ygg::database::Columns> schema {};
+    urd::flat_vector<ygg::ColumnLayout> schema {};
 
     data() = default;
     // schema is derived during insertion and therefore not a constructor parameter.
@@ -88,7 +88,7 @@ struct data<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>>
     urd::index<tyr::formalism::Predicate<T>> predicate {};
     bool polarity {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    urd::builder<ygg::database::Columns> schema {};
+    urd::flat_vector<ygg::ColumnLayout> schema {};
 
     data() = default;
     // schema is derived during insertion and therefore not a constructor parameter.
@@ -110,7 +110,7 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>>
     urd::index<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>> index;
     urd::index<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>> arg {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    urd::builder<ygg::database::Columns> schema {};
+    urd::flat_vector<ygg::ColumnLayout> schema {};
 
     data() = default;
     // schema is derived during insertion and therefore not a constructor parameter.
@@ -131,7 +131,7 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>>
     urd::index<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>> index;
     urd::index<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>> arg {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    urd::builder<ygg::database::Columns> schema {};
+    urd::flat_vector<ygg::ColumnLayout> schema {};
 
     data() = default;
     // schema is derived during insertion and therefore not a constructor parameter.
@@ -171,13 +171,13 @@ struct data<runir::kr::dl::Query<Tag>>
     urd::index<runir::kr::dl::Query<>> lhs {};
     urd::index<runir::kr::dl::Query<>> rhs {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    urd::builder<ygg::database::Columns> schema {};
+    ygg::database::SetPlan plan {};
 
     data() = default;
-    // columns and schema are derived during insertion and therefore not constructor parameters.
+    // columns and plan are derived during insertion and therefore not constructor parameters.
     data(urd::index<runir::kr::dl::Query<>> lhs_, urd::index<runir::kr::dl::Query<>> rhs_) : index(), lhs(lhs_), rhs(rhs_) {}
 
-    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::lhs, &data::rhs, &data::columns, &data::schema> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::lhs, &data::rhs, &data::columns, &data::plan> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::lhs, &data::rhs> {}; }
 };
 
@@ -203,7 +203,7 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryRenameTag>>
     urd::index<runir::kr::dl::Query<runir::kr::dl::QueryRenameTag>> index;
     urd::index<runir::kr::dl::Query<>> arg {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    urd::builder<ygg::database::Columns> schema {};
+    urd::flat_vector<ygg::ColumnLayout> schema {};
 
     data() = default;
     // schema is derived during insertion and therefore not a constructor parameter.
@@ -221,12 +221,10 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>>
     urd::index<runir::kr::dl::QueryColumn> lhs_column {};
     urd::index<runir::kr::dl::QueryColumn> rhs_column {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    urd::builder<ygg::database::Columns> schema {};
-    size_t lhs_position {};
-    size_t rhs_position {};
+    ygg::database::SelectEqualPlan plan {};
 
     data() = default;
-    // columns, schema and positions are derived during insertion and therefore not constructor parameters.
+    // columns and plan are derived during insertion and therefore not constructor parameters.
     data(urd::index<runir::kr::dl::Query<>> arg_, urd::index<runir::kr::dl::QueryColumn> lhs_column_, urd::index<runir::kr::dl::QueryColumn> rhs_column_) :
         index(),
         arg(arg_),
@@ -237,8 +235,7 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>>
 
     static constexpr auto cista_members() noexcept
     {
-        return urd::
-            Members<&data::index, &data::arg, &data::lhs_column, &data::rhs_column, &data::columns, &data::schema, &data::lhs_position, &data::rhs_position> {};
+        return urd::Members<&data::index, &data::arg, &data::lhs_column, &data::rhs_column, &data::columns, &data::plan> {};
     }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::arg, &data::lhs_column, &data::rhs_column> {}; }
 };
@@ -251,11 +248,10 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>>
     urd::index<runir::kr::dl::QueryColumn> column {};
     urd::index<tyr::formalism::Object> object {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    urd::builder<ygg::database::Columns> schema {};
-    size_t position {};
+    ygg::database::SelectValuePlan plan {};
 
     data() = default;
-    // columns, schema and position are derived during insertion and therefore not constructor parameters.
+    // columns and plan are derived during insertion and therefore not constructor parameters.
     data(urd::index<runir::kr::dl::Query<>> arg_, urd::index<runir::kr::dl::QueryColumn> column_, urd::index<tyr::formalism::Object> object_) :
         index(),
         arg(arg_),
@@ -265,7 +261,7 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>>
     }
 
     static constexpr auto cista_members() noexcept
-    { return urd::Members<&data::index, &data::arg, &data::column, &data::object, &data::columns, &data::schema, &data::position> {}; }
+    { return urd::Members<&data::index, &data::arg, &data::column, &data::object, &data::columns, &data::plan> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::arg, &data::column, &data::object> {}; }
 };
 
@@ -306,11 +302,10 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryMustPassTag>>
     urd::index<runir::kr::dl::Query<>> targets {};
     urd::index<runir::kr::dl::Query<>> probes {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    urd::builder<ygg::database::Columns> schema {};
     ygg::database::MustPassPlan plan {};
 
     data() = default;
-    // columns, schema and plan are derived during insertion and therefore not constructor parameters.
+    // columns and plan are derived during insertion and therefore not constructor parameters.
     data(urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> keys_,
          urd::index<runir::kr::dl::Query<>> sources_,
          urd::index<runir::kr::dl::Query<>> edges_,
@@ -328,7 +323,7 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryMustPassTag>>
     static constexpr auto cista_members() noexcept
     {
         return urd::
-            Members<&data::index, &data::keys, &data::sources, &data::edges, &data::targets, &data::probes, &data::columns, &data::schema, &data::plan> {};
+            Members<&data::index, &data::keys, &data::sources, &data::edges, &data::targets, &data::probes, &data::columns, &data::plan> {};
     }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::keys, &data::sources, &data::edges, &data::targets, &data::probes> {}; }
 };
@@ -338,7 +333,7 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryEmptyTag>>
 {
     urd::index<runir::kr::dl::Query<runir::kr::dl::QueryEmptyTag>> index;
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    urd::builder<ygg::database::Columns> schema {};
+    urd::flat_vector<ygg::ColumnLayout> schema {};
 
     data() = default;
     // schema is derived during insertion and therefore not a constructor parameter.

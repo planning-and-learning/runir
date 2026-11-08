@@ -19,7 +19,7 @@
 #include <yggdrasil/core/index_sequence.hpp>
 #include <urd/config.hpp>
 #include <urd/elements/flat.hpp>
-#include <yggdrasil/database/semantics/relation_repository.hpp>
+#include <yggdrasil/database/semantics/relation_view.hpp>
 #include <yggdrasil/formalism/interning.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>
 
@@ -31,9 +31,8 @@ class DenotationRepositoryFactory
     friend class DenotationRepository;
 
 private:
-    // Copies share identity sequences, including factories retained by repositories.
+    // Copies share identity sequences.
     ygg::IndexSequence m_indices;
-    ygg::database::RelationRepositoryFactory m_relation_factory;
 
 public:
     DenotationRepository create(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository);
@@ -50,7 +49,7 @@ class DenotationRepository : public ygg::formalism::SymbolRepositoryBase<Denotat
     using VectorRepository = urd::Store<urd::pool<DenotationBlocks>>;
 
     VectorRepository m_vector_repository;
-    ygg::database::RelationRepository m_relation_repository;
+    ygg::database::Repository m_relation_repository;
     std::shared_ptr<const tyr::formalism::planning::Repository> m_formalism_repository;
     DenotationRepositoryFactory m_factory;
     size_t m_index;

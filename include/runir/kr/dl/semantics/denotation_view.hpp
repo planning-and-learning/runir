@@ -72,23 +72,15 @@ inline auto object_indices(DenotationBits bits) noexcept
                           [](std::size_t bit) { return urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(bit)); });
 }
 
-/// The (source, target) pair of a set bit, in rows of row_bits bits per source.
-struct ObjectPairOfBit
-{
-    std::size_t row_bits = 0;
-
-    [[nodiscard]] auto operator()(std::size_t bit) const noexcept
-    {
-        return std::pair(urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(bit / row_bits)),
-                         urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(bit % row_bits)));
-    }
-};
-
 /// The (source, target) pairs whose bits are set in a role's bits, a row of whole blocks per source.
 inline auto object_pair_indices(DenotationBits bits, ygg::uint_t num_objects) noexcept
 {
     return urd::transform(urd::repr::set_bit_indices(bits),
-                          ObjectPairOfBit { static_cast<std::size_t>(DenotationBits::num_blocks(num_objects) * DenotationBits::Digits) });
+                          [row_bits = static_cast<std::size_t>(DenotationBits::num_blocks(num_objects) * DenotationBits::Digits)](std::size_t bit)
+                          {
+                              return std::pair(urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(bit / row_bits)),
+                                               urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(bit % row_bits)));
+                          });
 }
 }  // namespace detail
 

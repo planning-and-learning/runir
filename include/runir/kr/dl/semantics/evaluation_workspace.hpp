@@ -48,10 +48,15 @@ private:
         ygg::uint_t constructor = 0;
         Feature feature;
     };
+    /// The layer the features' input snapshots come from (ygg::database::Repository::get_relation_builder); declared
+    /// first, so it outlives them, and behind a pointer, so it stays where it is when the workspace moves.
+    std::unique_ptr<ygg::database::Repository> m_layer = std::make_unique<ygg::database::Repository>();
     urd::Store<urd::sequence<KeyedFeature<FullDistanceFeature>>, urd::stable_refs> m_distance_features;  ///< Stable references: callers keep the features they get.
     urd::Store<urd::sequence<KeyedFeature<MustPassFeature>>, urd::stable_refs> m_must_pass_features;
     urd::Store<urd::sequence<ygg::database::GenericJoinWorkspace>> m_generic_join_workspaces;  ///< One per generic join plan.
     ygg::database::Workspace m_database_workspace;
+    /// A row's values, as evaluation encodes them (encode_object_row).
+    urd::Store<urd::sequence<ygg::Value>> m_values;
 
     // ponytail: linear scan, and entries of dead repositories are kept; a constructor repository freed and replaced at
     // the same address with the same factory index over the same formalism would alias. Key by a repository-owned
@@ -85,6 +90,8 @@ public:
         return m_generic_join_workspaces.emplace_back(plan);
     }
     auto& get_database_workspace() noexcept { return m_database_workspace; }
+    auto& get_values() noexcept { return m_values; }
+    [[nodiscard]] const ygg::database::Repository& get_layer() const noexcept { return *m_layer; }
     /// The feature of a distance constructor of a constructor repository over a formalism repository, made by
     /// make() at first use. References stay valid while this workspace lives.
     template<std::invocable Make>

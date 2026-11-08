@@ -170,8 +170,8 @@ Result views remain valid until their owning repository is reset or destroyed.
 Python keeps owners alive but does not prevent explicit resets. Memo-only
 resets do not invalidate repository results. Storage resets clear affected
 memoized views before resetting their results. A full reset also clears static
-join indexes. Copies of `DenotationRepositoryFactory` share the relation
-repository factory, keeping canonical row identities distinct for cached joins.
+join indexes. Canonical row identities (storage indices) come from one process-wide
+counter, so cached joins never confuse rows of different repositories or resets.
 Mutable relation builders live in the semantic builder's arity-aware pool and
 return there immediately after interning. In C++, builders, caches, and storage
 must outlive contexts borrowing them; interned results depend only on their

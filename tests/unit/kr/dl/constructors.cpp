@@ -113,7 +113,7 @@ TEST(RunirKrDlConcept, RoutesUnaryBinaryAndNumberRestrictionData)
 {
     using Concept = kr::dl::Constructor<kr::dl::ConceptTag>;
     using Role = kr::dl::Constructor<kr::dl::RoleTag>;
-    auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
+    auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
     auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_repository);
 
     auto unary_data = urd::data<kr::dl::Concept<SemanticFamily, kr::dl::NegationTag>>(urd::index<Concept>(3));
@@ -135,7 +135,7 @@ TEST(RunirKrDlRole, RoutesUnaryAndMixedBinaryData)
 {
     using Concept = kr::dl::Constructor<kr::dl::ConceptTag>;
     using Role = kr::dl::Constructor<kr::dl::RoleTag>;
-    auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
+    auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
     auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_repository);
 
     auto unary_data = urd::data<kr::dl::Role<SemanticFamily, kr::dl::InverseTag>>(urd::index<Role>(3));
@@ -151,7 +151,7 @@ TEST(RunirKrDlRole, RoutesUnaryAndMixedBinaryData)
 TEST(RunirKrDlBoolean, RoutesConstantUnaryAndBinaryData)
 {
     using Constructor = kr::dl::Constructor<kr::dl::BooleanTag>;
-    auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
+    auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
     auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_repository);
 
     auto constant_data = urd::data<kr::dl::Boolean<SemanticFamily, kr::dl::BooleanConstantTag>>(true);
@@ -173,7 +173,7 @@ TEST(RunirKrDlNumerical, RoutesValueBinaryAndDistanceData)
     using Concept = kr::dl::Constructor<kr::dl::ConceptTag>;
     using Role = kr::dl::Constructor<kr::dl::RoleTag>;
     using Numerical = kr::dl::Constructor<kr::dl::NumericalTag>;
-    auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
+    auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
     auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_repository);
 
     auto constant_data = urd::data<kr::dl::Numerical<SemanticFamily, kr::dl::NumericalConstantTag>>(7);
@@ -221,7 +221,7 @@ TYPED_TEST(RunirKrDlGrammarNumerical, ExposesDistanceOperands)
     using F = typename TypeParam::Family;
     using ConceptOperand = kr::dl::operand_t<F, kr::dl::ConceptTag>;
     using RoleOperand = kr::dl::operand_t<F, kr::dl::RoleTag>;
-    auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
+    auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
     auto repository = typename TypeParam::RepositoryFactory().create(planning_repository);
 
     auto source_data = urd::data<typename TypeParam::template NonTerminal<kr::dl::ConceptTag>>(std::string("source"));

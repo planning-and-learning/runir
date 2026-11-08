@@ -32,17 +32,17 @@ QueryDenotationView evaluate_slot(const QuerySlot& slot, const ConstructorReposi
 
 /// Builds the min-distance evaluator of a feature with role edges, a relation of one slot.
 template<typename Distance>
-DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePlan& plan, ConstructorView<RoleTag> edges)
+DistanceFeature<Distance> make_distance_feature(const ygg::database::Repository& layer, const ygg::database::DistancePlan& plan, ConstructorView<RoleTag> edges)
 {
-    const auto columns = plan.edge_columns().span();
+    const auto columns = plan.edge_columns();
     return { { QuerySlot { QuerySlot::Kind::ROLE, static_cast<ygg::uint_t>(edges.index().value), { columns.begin(), columns.end() }, edges.is_static() } },
-             Distance(plan, edges.is_static()),
+             Distance(layer, plan, edges.is_static()),
              std::nullopt };
 }
 
 /// Translates a feature's query edges and builds its min-distance evaluator.
 template<typename Distance>
-DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePlan& plan, QueryView<> edges)
+DistanceFeature<Distance> make_distance_feature(const ygg::database::Repository& layer, const ygg::database::DistancePlan& plan, QueryView<> edges)
 {
     auto translator = dl::detail::QueryTranslator(true);
     const auto query = translator.translate(edges);
@@ -50,18 +50,21 @@ DistanceFeature<Distance> make_distance_feature(const ygg::database::DistancePla
     for (const auto& slot : translator.get_slots())
         static_slots.push_back(slot.is_static);
     auto abstraction = plan.arity() > 1 ? heuristics::abstract_edges(translator, query, plan) : std::nullopt;
-    return { translator.get_slots(), Distance(query, plan, static_slots), std::move(abstraction) };
+    return { translator.get_slots(), Distance(layer, query, plan, static_slots), std::move(abstraction) };
 }
 
 /// The heuristic of a feature: a pattern database heuristic if it has an abstraction, otherwise blind;
 /// `slot_rows(slot)` returns a static slot's rows.
 template<typename Distance, ygg::database::SlotRelations SlotRows>
-heuristics::ProjectionHeuristic
-make_heuristic(const DistanceFeature<Distance>& feature, const ygg::database::DistancePlan& plan, ygg::uint_t num_objects, const SlotRows& slot_rows)
+heuristics::ProjectionHeuristic make_heuristic(const ygg::database::Repository& layer,
+                                               const DistanceFeature<Distance>& feature,
+                                               const ygg::database::DistancePlan& plan,
+                                               ygg::uint_t num_objects,
+                                               const SlotRows& slot_rows)
 {
     if (!feature.abstraction)
         return {};
-    return heuristics::make_projection_heuristic(*feature.abstraction, plan, num_objects, slot_rows);
+    return heuristics::make_projection_heuristic(layer, *feature.abstraction, plan, num_objects, slot_rows);
 }
 
 /// Minimum distance from any source to any target, or uint_t's maximum if none is reachable, from the state alone
@@ -72,7 +75,7 @@ ygg::uint_t on_demand_distance(NumericalView<DistanceTag> constructor, Context& 
     const auto& plan = constructor.data().plan;
     auto children = context.child_context();
     const auto relation = [&](auto argument, auto columns)
-    { return std::visit([&](auto child) { return evaluate_relation<Kind>(child, columns.span(), children); }, argument); };
+    { return std::visit([&](auto child) { return evaluate_relation<Kind>(child, columns, children); }, argument); };
     const auto sources = relation(constructor.get_lhs(), plan.source_columns());
     const auto targets = relation(constructor.get_rhs(), plan.target_columns());
     return std::visit(
@@ -84,8 +87,10 @@ ygg::uint_t on_demand_distance(NumericalView<DistanceTag> constructor, Context& 
                 static_cast<ygg::uint_t>(constructor.index().value),
                 [&]
                 {
-                    auto edge_feature = make_distance_feature<ygg::database::MinDistance<heuristics::ProjectionHeuristic>>(plan, edges);
-                    auto heuristic = make_heuristic(edge_feature,
+                    const auto& layer = context.get_workspace().get_layer();
+                    auto edge_feature = make_distance_feature<ygg::database::MinDistance<heuristics::ProjectionHeuristic>>(layer, plan, edges);
+                    auto heuristic = make_heuristic(layer,
+                                                    edge_feature,
                                                     plan,
                                                     detail::num_objects<Kind>(context),
                                                     [&](size_t slot) { return evaluate_slot<Kind>(edge_feature.slots[slot], edges.context(), children); });
@@ -98,48 +103,45 @@ ygg::uint_t on_demand_distance(NumericalView<DistanceTag> constructor, Context& 
         constructor.get_mid());
 }
 
-/// The vertex part of keyed columns, laid out on its own.
-inline urd::builder<ygg::database::Columns> vertex_columns(std::span<const ygg::database::ColumnLayout> columns, size_t keys)
-{
-    auto result = urd::builder<ygg::database::Columns>();
-    for (const auto& column : columns.subspan(keys))
-        result.push_back(column.label, column.type);
-    return result;
-}
-
 /// Translates a must-pass query's edges and builds its must-pass evaluator and the abstraction of its heuristic.
-inline MustPassFeature make_must_pass_feature(const ygg::database::MustPassPlan& plan, QueryView<> edges)
+inline MustPassFeature make_must_pass_feature(const ygg::database::Repository& layer, const ygg::database::MustPassPlan& plan, QueryView<> edges)
 {
     auto translator = dl::detail::QueryTranslator(true);
     const auto query = translator.translate(edges);
     auto static_slots = std::vector<bool>();
     for (const auto& slot : translator.get_slots())
         static_slots.push_back(slot.is_static);
-    const auto columns = plan.edge_columns().span().subspan(plan.keys());
+    const auto columns = plan.edge_columns().subspan(plan.keys());
     auto abstraction = heuristics::abstract_edges(translator, query, columns.first(plan.arity()), columns.subspan(plan.arity()));
-    return { translator.get_slots(), MustPassFeature::MustPass(query, plan, static_slots), std::move(abstraction), std::nullopt };
+    return { translator.get_slots(), MustPassFeature::MustPass(layer, query, plan, static_slots), std::move(abstraction), std::nullopt };
 }
 
 /// Builds a must-pass feature's heuristic at first use, from the static slots' rows (`slot_rows(slot)`), and sets its
 /// targets. Without an abstraction, the search is blind.
 template<ygg::database::SlotRelations SlotRows, ygg::database::RelationViewConcept Targets>
-heuristics::KeyedProjectionHeuristic& must_pass_heuristic(MustPassFeature& feature, ygg::uint_t num_objects, const SlotRows& slot_rows, const Targets& targets)
+heuristics::KeyedProjectionHeuristic& must_pass_heuristic(const ygg::database::Repository& layer,
+                                                          MustPassFeature& feature,
+                                                          ygg::uint_t num_objects,
+                                                          const SlotRows& slot_rows,
+                                                          const Targets& targets)
 {
     if (!feature.heuristic)
     {
         const auto& plan = feature.must_pass.plan();
-        const auto vertices = vertex_columns(plan.source_columns().span(), plan.keys());
-        const auto ends = vertex_columns(plan.target_columns().span(), plan.keys());
-        const auto columns = plan.edge_columns().span().subspan(plan.keys());
-        auto heuristic = feature.abstraction ? heuristics::make_projection_heuristic(*feature.abstraction,
+        // The vertex part of the keyed columns.
+        const auto vertices = plan.source_columns().subspan(plan.keys());
+        const auto ends = plan.target_columns().subspan(plan.keys());
+        const auto columns = plan.edge_columns().subspan(plan.keys());
+        auto heuristic = feature.abstraction ? heuristics::make_projection_heuristic(layer,
+                                                                                     *feature.abstraction,
                                                                                      columns.first(plan.arity()),
                                                                                      columns.subspan(plan.arity()),
-                                                                                     vertices.span(),
-                                                                                     ends.span(),
+                                                                                     vertices,
+                                                                                     ends,
                                                                                      num_objects,
                                                                                      slot_rows) :
                                                heuristics::ProjectionHeuristic();
-        feature.heuristic.emplace(std::move(heuristic), plan.key_size(), ends.span());
+        feature.heuristic.emplace(layer, std::move(heuristic), plan.key_size(), ends);
     }
     feature.heuristic->update(targets);
     return *feature.heuristic;
@@ -148,7 +150,7 @@ heuristics::KeyedProjectionHeuristic& must_pass_heuristic(MustPassFeature& featu
 /// The must-pass probe objects of every key, from the state alone (full evaluation): sources, targets, probes and the
 /// edge query's slots are evaluated in the state, and the edges are explored on demand.
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
-void on_demand_must_pass(urd::index_view<Query<QueryMustPassTag>, C> constructor, Context& context, urd::builder<ygg::database::Relation>& result)
+void on_demand_must_pass(urd::index_view<Query<QueryMustPassTag>, C> constructor, Context& context, urd::builder<ygg::Relation<ygg::Schema>>& result)
 {
     auto children = context.child_context();
     const auto sources = evaluate<Kind>(constructor.get_sources(), children);
@@ -158,9 +160,9 @@ void on_demand_must_pass(urd::index_view<Query<QueryMustPassTag>, C> constructor
     auto& feature = context.get_workspace().get_must_pass_feature(context.get_state().get_formalism_repository(),
                                                                   constructor.context(),
                                                                   static_cast<ygg::uint_t>(constructor.index().value),
-                                                                  [&] { return make_must_pass_feature(constructor.data().plan, edges); });
+                                                                  [&] { return make_must_pass_feature(context.get_workspace().get_layer(), constructor.data().plan, edges); });
     const auto input = [&](size_t slot) { return evaluate_slot<Kind>(feature.slots[slot], edges.context(), children); };
-    auto& heuristic = must_pass_heuristic(feature, detail::num_objects<Kind>(context), input, targets);
+    auto& heuristic = must_pass_heuristic(context.get_workspace().get_layer(), feature, detail::num_objects<Kind>(context), input, targets);
     feature.must_pass.must_pass(input, sources, targets, probes, result, heuristic);
 }
 

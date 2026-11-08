@@ -51,7 +51,7 @@ static_assert(!kr::dl::semantics::StateEvaluationContextConcept<WrongKindContext
 constexpr auto acquires_builder = []<typename T, typename... Args>()
 { return requires(kr::dl::semantics::Builder& builder, Args&&... args) { builder.template get_builder<T>(std::forward<Args>(args)...); }; };
 static_assert(acquires_builder.template operator()<kr::dl::semantics::Denotation<kr::dl::ConceptTag>, ygg::uint_t>());
-static_assert(acquires_builder.template operator()<ygg::database::Relation, std::span<const urd::index<ygg::database::Column>>>());
+static_assert(!acquires_builder.template operator()<ygg::Relation<ygg::Schema>, std::span<const urd::index<ygg::Column>>>());
 static_assert(!acquires_builder.template operator()<int>());
 static_assert(!acquires_builder.template operator()<kr::dl::semantics::Denotation<kr::dl::ConceptTag>, std::string>());
 
@@ -121,7 +121,7 @@ TEST(RunirEvaluationStorage, BorrowedDenotationsExposeReadOnlyValuesAndMatchInde
 {
     constexpr auto digits = static_cast<ygg::uint_t>(urd::repr::BitsetSpan<const ygg::uint_t>::Digits);
     constexpr auto num_objects = digits + 3;
-    auto formalism = tyr::formalism::planning::RepositoryFactory().create_shared();
+    auto formalism = std::make_shared<tyr::formalism::planning::Repository>();
     for (ygg::uint_t i = 0; i < num_objects; ++i)
     {
         auto object = urd::data<tyr::formalism::Object>("object" + std::to_string(i));
@@ -511,14 +511,13 @@ TEST(RunirEvaluationStorage, DynamicResetPreservesStaticRowsAndJoinIndexes)
     const auto fixed = kr::dl::semantics::evaluate<tyr::GroundTag>(fixed_query, context);
     const auto alias = kr::dl::semantics::evaluate<tyr::GroundTag>(renamed_query, context);
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(dynamic_query, context).size(), 4);
-    const auto& key = fixed.columns()[0];
-    const auto keys = std::array { ygg::database::ColumnSlice { key.type, key.offset, key.size } };
+    const auto keys = std::array { ygg::database::ColumnSlice { 0 } };
     storage.get_caches().get_static_join_indexes().get_or_create(fixed, keys);
-    EXPECT_EQ(alias.get_storage_address(), fixed.get_storage_address());
+    EXPECT_EQ(alias.data().row_set, fixed.data().row_set);
     EXPECT_NE(alias, fixed);
 
     storage.reset_dynamic();
-    EXPECT_TRUE(storage.get_denotation_repository(false).get_relation_repository().empty());
+    EXPECT_TRUE(storage.get_denotation_repository(false).get_relation_repository().symbols().template size<ygg::Relation<ygg::Schema>>() == 0);
     EXPECT_EQ(fixed.size(), 2);
     EXPECT_EQ(storage.get_caches().get_static_join_indexes().size(), 1);
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(fixed_query, context), fixed);
@@ -526,12 +525,12 @@ TEST(RunirEvaluationStorage, DynamicResetPreservesStaticRowsAndJoinIndexes)
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(dynamic_query, context).size(), 4);
 
     storage.reset_all();
-    EXPECT_TRUE(storage.get_denotation_repository(false).get_relation_repository().empty());
-    EXPECT_TRUE(storage.get_denotation_repository(true).get_relation_repository().empty());
+    EXPECT_TRUE(storage.get_denotation_repository(false).get_relation_repository().symbols().template size<ygg::Relation<ygg::Schema>>() == 0);
+    EXPECT_TRUE(storage.get_denotation_repository(true).get_relation_repository().symbols().template size<ygg::Relation<ygg::Schema>>() == 0);
     EXPECT_EQ(storage.get_caches().get_static_join_indexes().size(), 0);
     const auto rebuilt = kr::dl::semantics::evaluate<tyr::GroundTag>(fixed_query, context);
     EXPECT_EQ(rebuilt.size(), 2);
-    EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(renamed_query, context).get_storage_address(), rebuilt.get_storage_address());
+    EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(renamed_query, context).data().row_set, rebuilt.data().row_set);
 }
 
 TEST(RunirEvaluationStorage, PreparedContextsRejectForeignTaskRepositories)
@@ -611,33 +610,33 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     const auto right = query("(q_role (right_source right_target) (r_universal))", *second_repository);
     ASSERT_EQ(left.get_columns()[0].index(), right.get_columns()[0].index());
     ASSERT_NE(left.get_columns()[0].get_name(), right.get_columns()[0].get_name());
-    using ColumnIndex = urd::index<ygg::database::Column>;
+    using ColumnIndex = urd::index<ygg::Column>;
     const auto columns = std::array { ColumnIndex(0), ColumnIndex(1) };
     const auto reversed_columns = std::array { ColumnIndex(1), ColumnIndex(0) };
     auto& results = persistent.get_relation_repository();
     const auto left_result = kr::dl::semantics::evaluate<tyr::GroundTag>(left, context);
     const auto right_result = kr::dl::semantics::evaluate<tyr::GroundTag>(right, context);
     ASSERT_EQ(left_result.size(), 9);
-    EXPECT_EQ(ygg::database::column_labels(left_result.columns().span()), urd::Store<urd::sequence<ColumnIndex>>(columns.begin(), columns.end()));
+    EXPECT_TRUE(std::ranges::equal(left_result.columns(), columns, {}, &ygg::ColumnLayout::label));
     EXPECT_EQ(&left_result.context(), &persistent.get_relation_repository());
     EXPECT_EQ(left_result, right_result);
-    EXPECT_EQ(left_result.get_storage_address(), right_result.get_storage_address());
-    EXPECT_EQ(results.size(), 1);
+    EXPECT_EQ(left_result.data().row_set, right_result.data().row_set);
+    EXPECT_EQ(results.symbols().template size<ygg::Relation<ygg::Schema>>(), 1);
 
     const auto left_alias = query("(q_rename (left_target left_source) (q_role (left_source left_target) (r_universal)))", *first_repository);
     const auto right_alias = query("(q_rename (right_target right_source) (q_role (right_source right_target) (r_universal)))", *second_repository);
     ASSERT_EQ(left_alias.get_columns()[0].index(), right_alias.get_columns()[0].index());
     const auto renamed_left = kr::dl::semantics::evaluate<tyr::GroundTag>(left_alias, context);
     const auto renamed_right = kr::dl::semantics::evaluate<tyr::GroundTag>(right_alias, context);
-    EXPECT_EQ(ygg::database::column_labels(renamed_left.columns().span()), urd::Store<urd::sequence<ColumnIndex>>(reversed_columns.begin(), reversed_columns.end()));
+    EXPECT_TRUE(std::ranges::equal(renamed_left.columns(), reversed_columns, {}, &ygg::ColumnLayout::label));
     EXPECT_EQ(renamed_left, renamed_right);
     EXPECT_NE(renamed_left, left_result);
-    EXPECT_EQ(renamed_left.get_storage_address(), left_result.get_storage_address());
-    EXPECT_EQ(renamed_right.get_storage_address(), right_result.get_storage_address());
-    EXPECT_EQ(results.size(), 2);
+    EXPECT_EQ(renamed_left.data().row_set, left_result.data().row_set);
+    EXPECT_EQ(renamed_right.data().row_set, right_result.data().row_set);
+    EXPECT_EQ(results.symbols().template size<ygg::Relation<ygg::Schema>>(), 2);
 
     {
-        auto direct = builder.get_builder<ygg::database::Relation>(columns);
+        auto direct = persistent.get_relation_repository().get_relation_builder(urd::index<ygg::Schema>(), std::array { ygg::ColumnLayout { columns[0], ygg::type_id<ygg::ObjectIndex> }, ygg::ColumnLayout { columns[1], ygg::type_id<ygg::ObjectIndex> } });
         for (size_t i = 0; i < left_result.size(); ++i)
             direct->insert(left_result.row(i));
         const auto [interned, inserted] = kr::dl::semantics::insert(persistent, *direct);
@@ -651,14 +650,14 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     first_repository.reset();
     second_repository.reset();
     EXPECT_EQ(left_result.size(), 9);
-    EXPECT_TRUE(left_result.contains(std::tuple { ygg::uint_t(0), ygg::uint_t(2) }));
-    EXPECT_EQ(ygg::database::column_labels(renamed_left.columns().span()), urd::Store<urd::sequence<ColumnIndex>>(reversed_columns.begin(), reversed_columns.end()));
+    EXPECT_TRUE(left_result.contains(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(ygg::uint_t(0)), ygg::encode_value<ygg::uint_t>(ygg::uint_t(2)) }));
+    EXPECT_TRUE(std::ranges::equal(renamed_left.columns(), reversed_columns, {}, &ygg::ColumnLayout::label));
     auto fresh_repository = factory.create(search->task->get_repository());
     const auto fresh = query("(q_role (fresh_source fresh_target) (r_universal))", *fresh_repository);
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(fresh, context), left_result);
     const auto fresh_alias = query("(q_rename (fresh_target fresh_source) (q_role (fresh_source fresh_target) (r_universal)))", *fresh_repository);
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(fresh_alias, context), renamed_left);
-    EXPECT_EQ(results.size(), 2);
+    EXPECT_EQ(results.symbols().template size<ygg::Relation<ygg::Schema>>(), 2);
 }
 
 }  // namespace

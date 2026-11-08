@@ -854,7 +854,13 @@ GenerateResultsFor generate(GrammarView grammar,
                             const GenerateOptions& options)
 {
     const auto& planning_repository = output_repository.get_planning_repository_ptr();
-    if (&grammar.context().get_planning_repository().get_root() != &planning_repository->get_root())
+    const auto root = [](const tyr::formalism::planning::Repository* layer)
+    {
+        while (layer->parent() != nullptr)
+            layer = layer->parent();
+        return layer;
+    };
+    if (root(&grammar.context().get_planning_repository()) != root(planning_repository.get()))
         throw std::invalid_argument("generate requires grammar and output repository for the same planning domain");
 
     for (const auto& state : states)

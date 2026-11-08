@@ -14,7 +14,7 @@
 #include <boost/mp11.hpp>
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/database/declarations.hpp>
-#include <yggdrasil/database/syntax/row.hpp>
+#include <yggdrasil/formalism/relation_view.hpp>
 
 namespace runir::kr::dl::semantics
 {

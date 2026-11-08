@@ -279,7 +279,7 @@ void check_base_successor_early_stop(const datasets::TaskSearchContextPtr<Kind>&
     {
         size_t count = 0;
         for (const auto action : task->get_task().get_domain().get_actions())
-            count += task->get_repository()->size(action.index());
+            count += task->get_repository()->relations().size(action.index());
         return count;
     };
     const auto initial_binding_count = count_bindings();
@@ -427,7 +427,7 @@ TEST(RunirTests, BaseSketchTransitionsRefreshDynamicQueriesAndReuseStaticQueries
 
         auto& static_queries = expander.get_environment().get_dl_caches().get_queries(true);
         ASSERT_EQ(static_queries.size(), 1);
-        const auto* static_storage = static_queries.begin()->second.get_storage_address();
+        const auto static_storage = static_queries.begin()->second.data().row_set;
         EXPECT_EQ(static_queries.begin()->second.size(), 2);
 
         EXPECT_TRUE(matches(source, successors.back().node.get_state()));
@@ -439,7 +439,7 @@ TEST(RunirTests, BaseSketchTransitionsRefreshDynamicQueriesAndReuseStaticQueries
         EXPECT_TRUE(matches(source, target));
 
         ASSERT_EQ(static_queries.size(), 1);
-        EXPECT_EQ(static_queries.begin()->second.get_storage_address(), static_storage);
+        EXPECT_EQ(static_queries.begin()->second.data().row_set, static_storage);
     };
     check.template operator()<tyr::GroundTag>();
     check.template operator()<tyr::LiftedTag>();

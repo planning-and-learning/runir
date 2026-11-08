@@ -435,14 +435,15 @@ auto evaluate_impl(urd::index_view<Query<QueryRenameTag>, C> constructor, Contex
     auto dynamic_output = context.for_result(false);
     auto& static_results = static_output.get_denotation_repository().get_relation_repository();
     auto& results = &child.context() == &static_results ? static_results : dynamic_output.get_denotation_repository().get_relation_repository();
-    return results.rename(child, constructor.get_schema().span());
+    return results.rename(child, constructor.get_schema());
 }
 
 template<tyr::TaskKind Kind, typename Tag, typename C, StateEvaluationContextConcept<Kind> Context>
     requires(!std::same_as<Tag, void> && !std::same_as<Tag, QueryRenameTag>)
 auto evaluate_impl(urd::index_view<Query<Tag>, C> constructor, Context& context) -> QueryDenotationView
 {
-    auto result = context.get_builder().template get_builder<ygg::database::Relation>(constructor.get_schema().span());
+    auto& relations = context.get_denotation_repository().get_relation_repository();
+    auto result = relations.get_relation_builder(relations.schema(constructor.get_schema()), constructor.get_schema());
     detail::evaluate_query<Kind>(constructor, context, *result);
     return insert(context.get_denotation_repository(), *result).first;
 }
@@ -465,22 +466,24 @@ auto evaluate_impl(urd::index_view<QueryProjection<Category>, C> constructor, Co
     const auto& columns = constructor.data().columns;
     auto children = context.child_context();
     const auto relation = evaluate<Kind>(constructor.get_arg(), children);
-    const auto position = [&](size_t i) { return relation.column_index(urd::index<ygg::database::Column>(columns[i].value)); };
+    const auto schema = relation.columns();
+    const auto position = [&](size_t i)
+    { return static_cast<size_t>(std::ranges::find(schema, urd::index<ygg::Column>(columns[i].value), &ygg::ColumnLayout::label) - schema.begin()); };
     auto result = context.get_builder().template get_builder<Denotation<Category>>(detail::num_objects<Kind>(context));
     if constexpr (std::same_as<Category, ConceptTag>)
     {
         auto bits = result->get();
         const auto object = position(0);
-        for (const auto row : relation)
-            bits.set(row.template get<ygg::uint_t>(object));
+        for (const auto row : relation.rows())
+            bits.set(ygg::decode_value<ygg::uint_t>(row.get(object)));
     }
     else
     {
         static_assert(std::same_as<Category, RoleTag>);
         const auto source = position(0);
         const auto target = position(1);
-        for (const auto row : relation)
-            result->get(urd::index<tyr::formalism::Object>(row.template get<ygg::uint_t>(source))).set(row.template get<ygg::uint_t>(target));
+        for (const auto row : relation.rows())
+            result->get(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(row.get(source)))).set(ygg::decode_value<ygg::uint_t>(row.get(target)));
     }
     return insert(context.get_denotation_repository(), *result, context.get_builder()).first;
 }

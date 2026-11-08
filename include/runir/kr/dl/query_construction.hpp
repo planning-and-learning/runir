@@ -18,22 +18,29 @@
 #include <yggdrasil/database/semantics/generic_join.hpp>
 #include <yggdrasil/database/semantics/must_pass_plan.hpp>
 #include <yggdrasil/database/semantics/plans.hpp>
-#include <yggdrasil/database/syntax/columns.hpp>
+#include <yggdrasil/formalism/relation_view.hpp>
 
 namespace runir::kr::dl::detail
 {
 
-inline urd::Store<urd::sequence<urd::index<ygg::database::Column>>> query_labels(const urd::flat_vector<urd::index<QueryColumn>>& columns)
+inline urd::Store<urd::sequence<urd::index<ygg::Column>>> query_labels(const urd::flat_vector<urd::index<QueryColumn>>& columns)
 {
-    urd::Store<urd::sequence<urd::index<ygg::database::Column>>> labels;
+    urd::Store<urd::sequence<urd::index<ygg::Column>>> labels;
     labels.reserve(columns.size());
     for (const auto column : columns)
         labels.emplace_back(column.value);
     return labels;
 }
 
-inline urd::builder<ygg::database::Columns> query_columns(const urd::flat_vector<urd::index<QueryColumn>>& columns)
-{ return urd::builder<ygg::database::Columns>(std::span<const urd::index<ygg::database::Column>>(query_labels(columns))); }
+/// Object columns labeled by the query columns, validated.
+inline urd::flat_vector<ygg::ColumnLayout> query_columns(const urd::flat_vector<urd::index<QueryColumn>>& columns)
+{
+    urd::flat_vector<ygg::ColumnLayout> result;
+    for (const auto column : columns)
+        result.push_back(ygg::ColumnLayout { urd::index<ygg::Column>(column.value), ygg::type_id<ygg::ObjectIndex> });
+    ygg::validate_columns({ result.data(), result.size() });
+    return result;
+}
 
 inline void require_query_arity(size_t actual, size_t expected)
 {
@@ -63,7 +70,7 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
     {
         const auto lhs = urd::resolve(data.lhs, repository).get_schema();
         const auto rhs = urd::resolve(data.rhs, repository).get_schema();
-        data.plan = ygg::database::JoinPlan(lhs.span(), rhs.span());
+        data.plan = ygg::database::JoinPlan(lhs, rhs);
         data.columns.clear();
         data.columns.reserve(data.plan.output_columns().size());
         for (const auto column : data.plan.output_columns())
@@ -72,17 +79,17 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
     else if constexpr (std::same_as<Tag, QueryProjectTag>)
     {
         const auto arg = urd::resolve(data.arg, repository).get_schema();
-        data.plan = ygg::database::ProjectionPlan(arg.span(), query_labels(data.columns));
+        data.plan = ygg::database::ProjectionPlan(arg, query_labels(data.columns));
     }
     else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
     {
         if (data.args.size() < 2)
             throw std::invalid_argument("q_generic_join: requires at least two input queries.");
-        urd::Store<urd::sequence<urd::Store<urd::sequence<ygg::database::ColumnLayout>>>> inputs;
+        urd::Store<urd::sequence<urd::Store<urd::sequence<ygg::ColumnLayout>>>> inputs;
         urd::Store<urd::sequence<urd::index<QueryColumn>>> input_columns;
         for (const auto arg : data.args)
         {
-            const auto schema = urd::resolve(arg, repository).get_schema().span();
+            const auto schema = urd::resolve(arg, repository).get_schema();
             inputs.emplace_back(schema.begin(), schema.end());
             for (const auto column : get_query_columns(arg, repository))
                 if (std::ranges::find(input_columns, column) == input_columns.end())
@@ -113,44 +120,44 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
         const auto probes = urd::resolve(data.probes, repository).get_schema();
         if (probes.size() != 1)
             throw std::invalid_argument("q_must_pass: the probes must have one column.");
-        data.plan = ygg::database::MustPassPlan(sources.span(), edges.span(), targets.span(), probes.span(), data.keys.size());
+        data.plan = ygg::database::MustPassPlan(sources, edges, targets, probes, data.keys.size());
         data.columns = data.keys;
         data.columns.push_back(get_query_columns(data.probes, repository).front());
-        data.schema.assign(data.plan.output_columns().span());
+    }
+    else if constexpr (std::same_as<Tag, QueryUnionTag> || std::same_as<Tag, QueryDifferenceTag>)
+    {
+        const auto lhs = urd::resolve(data.lhs, repository).get_schema();
+        const auto rhs = urd::resolve(data.rhs, repository).get_schema();
+        if (!std::ranges::equal(lhs, rhs))
+            throw std::invalid_argument("Query: union and difference require identical ordered columns.");
+        data.columns = get_query_columns(data.lhs, repository);
+        data.plan = ygg::database::SetPlan(lhs, rhs);
+    }
+    else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
+    {
+        data.columns = get_query_columns(data.arg, repository);
+        data.plan = ygg::database::SelectEqualPlan(urd::resolve(data.arg, repository).get_schema(),
+                                                   urd::index<ygg::Column>(data.lhs_column.value),
+                                                   urd::index<ygg::Column>(data.rhs_column.value));
+    }
+    else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
+    {
+        data.columns = get_query_columns(data.arg, repository);
+        data.plan = ygg::database::SelectValuePlan(urd::resolve(data.arg, repository).get_schema(),
+                                                   urd::index<ygg::Column>(data.column.value),
+                                                   ygg::type_id<ygg::ObjectIndex>,
+                                                   ygg::encode_value(ygg::ObjectIndex { data.object.value }));
     }
     else
     {
-        if constexpr (std::same_as<Tag, QueryUnionTag> || std::same_as<Tag, QueryDifferenceTag>)
-        {
-            const auto lhs = urd::resolve(data.lhs, repository).get_schema();
-            const auto rhs = urd::resolve(data.rhs, repository).get_schema();
-            if (!std::ranges::equal(lhs, rhs))
-                throw std::invalid_argument("Query: union and difference require identical ordered columns.");
-            data.columns = get_query_columns(data.lhs, repository);
-            data.schema.assign(lhs.span());
-        }
-        else if constexpr (std::same_as<Tag, QuerySelectEqualTag> || std::same_as<Tag, QuerySelectValueTag>)
-        {
-            data.columns = get_query_columns(data.arg, repository);
-            data.schema.assign(urd::resolve(data.arg, repository).get_schema().span());
-        }
-        else
-            data.schema = query_columns(data.columns);
-
-        const auto& columns = data.schema;
+        data.schema = query_columns(data.columns);
+        const auto arity = data.schema.size();
         if constexpr (is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag>)
-            require_query_arity(columns.size(), urd::resolve(data.predicate, repository.get_planning_repository()).get_arity());
+            require_query_arity(arity, urd::resolve(data.predicate, repository.get_planning_repository()).get_arity());
         else if constexpr (std::same_as<Tag, QueryConceptTag> || std::same_as<Tag, QueryRoleTag>)
-            require_query_arity(columns.size(), std::same_as<Tag, QueryConceptTag> ? 1 : 2);
+            require_query_arity(arity, std::same_as<Tag, QueryConceptTag> ? 1 : 2);
         else if constexpr (std::same_as<Tag, QueryRenameTag>)
-            require_query_arity(columns.size(), urd::resolve(data.arg, repository).get_schema().size());
-        else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
-        {
-            data.lhs_position = columns.column_index(urd::index<ygg::database::Column>(data.lhs_column.value));
-            data.rhs_position = columns.column_index(urd::index<ygg::database::Column>(data.rhs_column.value));
-        }
-        else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
-            data.position = columns.column_index(urd::index<ygg::database::Column>(data.column.value));
+            require_query_arity(arity, urd::resolve(data.arg, repository).get_schema().size());
     }
 }
 
@@ -160,18 +167,18 @@ void prepare(urd::data<QueryProjection<Category>>& data, const Repository& repos
     const auto columns = query_columns(data.columns);
     require_query_arity(columns.size(), std::same_as<Category, ConceptTag> ? 1 : 2);
     const auto arg = urd::resolve(data.arg, repository).get_schema();
-    data.plan = ygg::database::ProjectionPlan(arg.span(), query_labels(data.columns));
+    data.plan = ygg::database::ProjectionPlan(arg, query_labels(data.columns));
 }
 
 /// The distance plan's output column; interned query column labels never reach the maximum.
-inline constexpr auto distance_column = urd::index<ygg::database::Column>();
+inline constexpr auto distance_column = urd::index<ygg::Column>();
 
 /// A concept (k = 1) or role (k = 2) lifted into a relation: object columns labeled 0..k-1.
-inline urd::builder<ygg::database::Columns> lifted_columns(size_t arity)
+inline urd::flat_vector<ygg::ColumnLayout> lifted_columns(size_t arity)
 {
-    urd::builder<ygg::database::Columns> columns;
+    urd::flat_vector<ygg::ColumnLayout> columns;
     for (size_t i = 0; i < arity; ++i)
-        columns.template push_back<ygg::uint_t>(urd::index<ygg::database::Column>(i));
+        columns.push_back(ygg::ColumnLayout { urd::index<ygg::Column>(static_cast<std::uint32_t>(i)), ygg::type_id<ygg::ObjectIndex> });
     return columns;
 }
 

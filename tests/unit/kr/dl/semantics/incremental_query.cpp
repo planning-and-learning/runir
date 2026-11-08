@@ -52,10 +52,10 @@ auto rows(const auto& relation)
     auto result = urd::Store<urd::sequence<urd::Store<urd::sequence<Object>>>> {};
     for (size_t i = 0; i < relation.size(); ++i)
     {
-        const auto row = ygg::database::Row(relation.row(i), relation.columns().span());
+        const auto row = relation.row(i);
         auto& values = result.emplace_back();
         for (size_t j = 0; j < row.size(); ++j)
-            values.emplace_back(row.get<ygg::uint_t>(j));
+            values.emplace_back(ygg::decode_value<ygg::uint_t>(row.get(j)));
     }
     std::ranges::sort(result);
     return result;
@@ -71,8 +71,9 @@ auto difference(const auto& lhs, const auto& rhs)
 void expect_net_delta(auto& evaluator, const auto& before)
 {
     const auto after = rows(evaluator.get_result());
-    EXPECT_EQ(rows(evaluator.get_delta().added), difference(after, before));
-    EXPECT_EQ(rows(evaluator.get_delta().removed), difference(before, after));
+    const auto [added, removed] = evaluator.get_delta().change();
+    EXPECT_EQ(rows(added), difference(after, before));
+    EXPECT_EQ(rows(removed), difference(before, after));
 }
 
 void expect_empty_delta(auto& evaluator)
@@ -108,15 +109,21 @@ void check_atomic_projection()
     const auto ready = parse_query(R"((q_atomic_state "ready" ()))", domain, *constructors);
     const auto projected_triple = parse_query(R"((q_project (x) (q_atomic_state "triple" (x y z))))", domain, *constructors);
     const auto projected_copied = parse_query(R"((q_project (x) (q_atomic_state "copied" (x y z))))", domain, *constructors);
+    const auto layer = ygg::database::Repository();
     auto triple_leaf = kr::dl::semantics::incremental::detail::AtomicQueryEvaluator<Fluent>(
+        layer,
         std::get<urd::index_view<kr::dl::Query<kr::dl::AtomicStateTag<Fluent>>, runir::kr::dl::ConstructorRepository>>(triple.get_variant()));
     auto copied_leaf = kr::dl::semantics::incremental::detail::AtomicQueryEvaluator<Derived>(
+        layer,
         std::get<urd::index_view<kr::dl::Query<kr::dl::AtomicStateTag<Derived>>, runir::kr::dl::ConstructorRepository>>(copied.get_variant()));
     auto ready_leaf = kr::dl::semantics::incremental::detail::AtomicQueryEvaluator<Fluent>(
+        layer,
         std::get<urd::index_view<kr::dl::Query<kr::dl::AtomicStateTag<Fluent>>, runir::kr::dl::ConstructorRepository>>(ready.get_variant()));
     auto triple_projection = ygg::database::incremental::ProjectionEvaluator(
+        layer,
         std::get<urd::index_view<kr::dl::Query<kr::dl::QueryProjectTag>, runir::kr::dl::ConstructorRepository>>(projected_triple.get_variant()).data().plan);
     auto copied_projection = ygg::database::incremental::ProjectionEvaluator(
+        layer,
         std::get<urd::index_view<kr::dl::Query<kr::dl::QueryProjectTag>, runir::kr::dl::ConstructorRepository>>(projected_copied.get_variant()).data().plan);
     auto workspace = ygg::database::Workspace {};
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
@@ -126,7 +133,7 @@ void check_atomic_projection()
     const auto registers = urd::resolve(register_data, *search->task->get_repository());
     auto argument_data = urd::data<kr::dl::semantics::CallArguments> {};
     const auto arguments = denotations.insert(argument_data).first;
-    const auto publications = [&] { return storage.get_denotation_repository(false).get_relation_repository().size(); };
+    const auto publications = [&] { return storage.get_denotation_repository(false).get_relation_repository().symbols().template size<ygg::Relation<ygg::Schema>>(); };
     const auto compare_full = [&](auto state)
     {
         storage.reset_dynamic();
@@ -179,7 +186,7 @@ void check_atomic_projection()
     initialize(initial.get_state());
     ASSERT_EQ(triple_leaf.get_result().size(), 4);
     ASSERT_EQ(triple_projection.get_result().size(), 2);
-    ASSERT_TRUE(ready_leaf.get_result().contains(std::tuple<> {}));
+    ASSERT_TRUE(ready_leaf.get_result().contains(std::array<ygg::Value, 0> {}));
     auto first_delta = kr::dl::semantics::incremental::Delta {};
     first_delta.template assign<Kind>(initial.get_state(), registers, first->node.get_state(), registers);
     EXPECT_THROW(triple_leaf.update(first_delta.removed.fluent_atoms, {}), std::invalid_argument);
@@ -189,35 +196,35 @@ void check_atomic_projection()
     // The first action removes both ready and a triple; each leaf filters the other predicate.
     EXPECT_EQ(triple_leaf.get_delta().removed.size(), 1);
     EXPECT_EQ(ready_leaf.get_delta().removed.size(), 1);
-    EXPECT_TRUE(ready_leaf.get_delta().removed.contains(std::tuple<> {}));
-    EXPECT_TRUE(triple_projection.get_result().contains(std::tuple { a.value }));
+    EXPECT_TRUE(ready_leaf.get_delta().removed.contains(std::array<ygg::Value, 0> {}));
+    EXPECT_TRUE(triple_projection.get_result().contains(std::array<ygg::Value, 1> { ygg::encode_value<ygg::uint_t>(a.value) }));
     expect_empty_delta(triple_projection);
     expect_empty_delta(copied_projection);
 
     auto second_delta = kr::dl::semantics::incremental::Delta {};
     second_delta.template assign<Kind>(first->node.get_state(), registers, second->node.get_state(), registers);
     update(second_delta, second->node.get_state());
-    EXPECT_FALSE(triple_projection.get_result().contains(std::tuple { a.value }));
-    EXPECT_TRUE(triple_projection.get_delta().removed.contains(std::tuple { a.value }));
-    EXPECT_TRUE(copied_projection.get_delta().removed.contains(std::tuple { a.value }));
+    EXPECT_FALSE(triple_projection.get_result().contains(std::array<ygg::Value, 1> { ygg::encode_value<ygg::uint_t>(a.value) }));
+    EXPECT_TRUE(triple_projection.get_delta().removed.contains(std::array<ygg::Value, 1> { ygg::encode_value<ygg::uint_t>(a.value) }));
+    EXPECT_TRUE(copied_projection.get_delta().removed.contains(std::array<ygg::Value, 1> { ygg::encode_value<ygg::uint_t>(a.value) }));
     expect_empty_delta(ready_leaf);
 
     second_delta.reverse();
     update(second_delta, first->node.get_state());
-    EXPECT_TRUE(triple_projection.get_delta().added.contains(std::tuple { a.value }));
+    EXPECT_TRUE(triple_projection.get_delta().added.contains(std::array<ygg::Value, 1> { ygg::encode_value<ygg::uint_t>(a.value) }));
     first_delta.reverse();
     update(first_delta, initial.get_state());
     expect_empty_delta(triple_projection);
     expect_empty_delta(copied_projection);
-    EXPECT_TRUE(ready_leaf.get_delta().added.contains(std::tuple<> {}));
+    EXPECT_TRUE(ready_leaf.get_delta().added.contains(std::array<ygg::Value, 0> {}));
 
     // Reinitialization replaces the baseline and clears every previously emitted delta.
     const auto borrowed_builder = urd::builder<tyr::planning::State<Kind>> { second->node.get_state().data() };
     initialize(urd::resolve(borrowed_builder, *search->state_repository));
     EXPECT_EQ(triple_leaf.get_result().size(), 2);
-    EXPECT_FALSE(triple_projection.get_result().contains(std::tuple { a.value }));
+    EXPECT_FALSE(triple_projection.get_result().contains(std::array<ygg::Value, 1> { ygg::encode_value<ygg::uint_t>(a.value) }));
     EXPECT_TRUE(ready_leaf.get_result().empty());
-    EXPECT_TRUE(denotations.get_relation_repository().empty());
+    EXPECT_TRUE(denotations.get_relation_repository().symbols().template size<ygg::Relation<ygg::Schema>>() == 0);
 }
 
 template<tyr::TaskKind Kind>
@@ -304,7 +311,7 @@ void check_query_graph()
         const auto expect_unpublished = [&]
         {
             EXPECT_TRUE(storage.get_caches().get_queries(false).empty());
-            EXPECT_TRUE(storage.get_denotation_repository(false).get_relation_repository().empty());
+            EXPECT_TRUE(storage.get_denotation_repository(false).get_relation_repository().symbols().template size<ygg::Relation<ygg::Schema>>() == 0);
         };
         const auto compare_full = [&](auto& evaluated, auto state)
         {
@@ -335,12 +342,12 @@ void check_query_graph()
         EXPECT_THROW(fresh.get_delta(), std::logic_error);
         auto initial = evaluator.initialize(initial_context);
         expect_unpublished();
-        EXPECT_TRUE(std::ranges::equal(initial.get_result().columns().span(), query.get_schema().span()));
+        EXPECT_TRUE(std::ranges::equal(initial.get_result().columns(), query.get_schema()));
         if (expression == static_role)
         {
             // Its feature child may be interned; the static query root is owned here.
             EXPECT_TRUE(storage.get_caches().get_queries(true).empty());
-            EXPECT_TRUE(storage.get_denotation_repository(true).get_relation_repository().empty());
+            EXPECT_TRUE(storage.get_denotation_repository(true).get_relation_repository().symbols().template size<ygg::Relation<ygg::Schema>>() == 0);
         }
         EXPECT_THROW(initial.get_delta(), std::logic_error);  // Initialized, not updated from a delta.
         compare_full(initial, nodes.front().get_state());
@@ -356,7 +363,7 @@ void check_query_graph()
 
         // Static rows are owned by the evaluator, not the caches used to initialize them.
         auto last = evaluator.update(initial_context, empty_delta, workspace);
-        const auto& retained = last.get_result();
+        const auto retained = last.get_result();
         const auto before_reset = rows(retained);
         EXPECT_EQ(before_reset, current);
         storage.reset_all();
@@ -366,7 +373,7 @@ void check_query_graph()
         auto final_state = evaluator.initialize(final_context);
         expect_unpublished();
         EXPECT_TRUE(storage.get_caches().get_queries(true).empty());
-        EXPECT_TRUE(storage.get_denotation_repository(true).get_relation_repository().empty());
+        EXPECT_TRUE(storage.get_denotation_repository(true).get_relation_repository().symbols().template size<ygg::Relation<ygg::Schema>>() == 0);
         EXPECT_THROW(final_state.get_delta(), std::logic_error);  // Initialized, not updated from a delta.
         compare_full(final_state, final_context.get_state());
     }

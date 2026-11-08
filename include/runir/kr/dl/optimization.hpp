@@ -49,7 +49,7 @@ struct QueryStatistics
 namespace detail
 {
 
-inline urd::flat_vector<urd::index<QueryColumn>> query_columns_from_labels(std::span<const urd::index<ygg::database::Column>> labels)
+inline urd::flat_vector<urd::index<QueryColumn>> query_columns_from_labels(std::span<const urd::index<ygg::Column>> labels)
 {
     urd::flat_vector<urd::index<QueryColumn>> columns;
     for (const auto label : labels)
@@ -117,7 +117,7 @@ inline urd::Store<urd::sequence<QueryView<>>> lower(const ygg::database::QueryPl
                     auto data =
                         urd::data<Query<QuerySelectValueTag>>(child(node.get_arg()).index(),
                                                               urd::index<QueryColumn>(node.get_column().value),
-                                                              urd::index<tyr::formalism::Object>(ygg::ByteCodec<ygg::uint_t>::decode(node.get_constant())));
+                                                              urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(node.get_constant())));
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, ygg::database::QueryGenericJoinTag>)
@@ -146,7 +146,7 @@ inline urd::Store<urd::sequence<QueryView<>>> lower(const ygg::database::QueryPl
                     urd::flat_vector<urd::index<QueryColumn>> columns;
                     for (const auto column : node.columns())
                     {
-                        if (column.type != ygg::type_id<ygg::uint_t>)
+                        if (column.type != ygg::type_id<ygg::ObjectIndex>)
                             throw std::logic_error("Query optimization: an empty relation has a non-object column.");
                         columns.push_back(urd::index<QueryColumn>(column.label.value));
                     }
@@ -193,7 +193,7 @@ public:
     }
 
 private:
-    using Labels = urd::Store<urd::sequence<urd::index<ygg::database::Column>>>;
+    using Labels = urd::Store<urd::sequence<urd::index<ygg::Column>>>;
 
     template<typename T>
     RecordView<T> memoized(RecordView<T> view)

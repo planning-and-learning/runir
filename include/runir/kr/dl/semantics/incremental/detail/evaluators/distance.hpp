@@ -31,7 +31,7 @@ namespace runir::kr::dl::semantics::incremental::detail
 /// The graph node of a distance argument (sources, edges or targets), lifted into `columns`.
 template<tyr::TaskKind Kind, typename Argument>
 QueryEvaluationIndex
-prepare_argument(Argument argument, std::span<const ygg::database::ColumnLayout> columns, GraphBuilder<Kind>& graph, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
+prepare_argument(Argument argument, std::span<const ygg::ColumnLayout> columns, GraphBuilder<Kind>& graph, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
 {
     return std::visit([&](auto child) { return graph.prepare_relation(child, columns, dependencies); }, argument);
 }
@@ -49,10 +49,10 @@ struct RoleEdgeDistanceEvaluator
     DenotationState<NumericalTag> value;
 
     RoleEdgeDistanceEvaluator(NumericalView<DistanceTag> expression, GraphBuilder<Kind>& graph, urd::Store<urd::sequence<ygg::uint_t>>& dependencies) :
-        sources(prepare_argument(expression.get_lhs(), expression.data().plan.source_columns().span(), graph, dependencies)),
-        edges(prepare_argument(expression.get_mid(), expression.data().plan.edge_columns().span(), graph, dependencies)),
-        targets(prepare_argument(expression.get_rhs(), expression.data().plan.target_columns().span(), graph, dependencies)),
-        operation(expression.data().plan)
+        sources(prepare_argument(expression.get_lhs(), expression.data().plan.source_columns(), graph, dependencies)),
+        edges(prepare_argument(expression.get_mid(), expression.data().plan.edge_columns(), graph, dependencies)),
+        targets(prepare_argument(expression.get_rhs(), expression.data().plan.target_columns(), graph, dependencies)),
+        operation(graph.layer(), expression.data().plan)
     {
     }
     template<StateEvaluationContextConcept<Kind> Context>
@@ -90,9 +90,9 @@ struct QueryEdgeDistanceEvaluator
     QueryEdgeDistanceEvaluator(NumericalView<DistanceTag> expression_, QueryView<> edges_, GraphBuilder<Kind>& graph, urd::Store<urd::sequence<ygg::uint_t>>& dependencies) :
         expression(expression_),
         edges(edges_),
-        sources(prepare_argument(expression_.get_lhs(), expression_.data().plan.source_columns().span(), graph, dependencies)),
-        targets(prepare_argument(expression_.get_rhs(), expression_.data().plan.target_columns().span(), graph, dependencies)),
-        feature(semantics::detail::make_distance_feature<Distance>(expression_.data().plan, edges_))
+        sources(prepare_argument(expression_.get_lhs(), expression_.data().plan.source_columns(), graph, dependencies)),
+        targets(prepare_argument(expression_.get_rhs(), expression_.data().plan.target_columns(), graph, dependencies)),
+        feature(semantics::detail::make_distance_feature<Distance>(graph.layer(), expression_.data().plan, edges_))
     {
         for (const auto& slot : feature.slots)
             slots.push_back(
@@ -104,10 +104,11 @@ struct QueryEdgeDistanceEvaluator
         feature.distance.bind(input(graph));
         if (!heuristic)
             heuristic =
-                semantics::detail::make_heuristic(feature,
+                semantics::detail::make_heuristic(graph.layer(),
+                                                  feature,
                                                   expression.data().plan,
                                                   semantics::detail::num_objects<Kind>(context),
-                                                  [&](size_t slot) -> const urd::builder<ygg::database::Relation>& { return feature.distance.input(slot); });
+                                                  [&](size_t slot) { return feature.distance.input(slot); });
         set_targets(graph);
         evaluate(graph);
     }
@@ -124,7 +125,19 @@ struct QueryEdgeDistanceEvaluator
             value.clear_delta();
             return;
         }
-        feature.distance.update([&](size_t slot) -> const auto& { return graph.change(slots[slot]); }, slot_changed);
+        feature.distance.update(
+            [&](size_t slot)
+            {
+                // The slot's change as SlotChanges reads it: views `added` and `removed`.
+                struct Change
+                {
+                    ygg::database::BuilderRelationView added;
+                    ygg::database::BuilderRelationView removed;
+                };
+                const auto [added, removed] = graph.change(slots[slot]).change();
+                return Change { added, removed };
+            },
+            slot_changed);
         if (targets_changed)
             set_targets(graph);
         evaluate(graph);
@@ -133,7 +146,7 @@ struct QueryEdgeDistanceEvaluator
 private:
     [[nodiscard]] auto input(const EvaluationGraph<Kind>& graph) const
     {
-        return [this, &graph](size_t slot) -> const urd::builder<ygg::database::Relation>& { return graph.result(slots[slot]); };
+        return [this, &graph](size_t slot) { return graph.result(slots[slot]); };
     }
     static bool modified(const EvaluationGraph<Kind>& graph, QueryEvaluationIndex index)
     { return !graph.change(index).added.empty() || !graph.change(index).removed.empty(); }

@@ -20,7 +20,7 @@ namespace runir::kr::dl::semantics::detail
 /// Materialize rows into an empty, matching builder without publishing the root.
 template<tyr::TaskKind Kind, typename Tag, typename C, StateEvaluationContextConcept<Kind> Context>
     requires(!std::same_as<Tag, void>)
-void evaluate_query(urd::index_view<Query<Tag>, C> constructor, Context& context, urd::builder<ygg::database::Relation>& result)
+void evaluate_query(urd::index_view<Query<Tag>, C> constructor, Context& context, urd::builder<ygg::Relation<ygg::Schema>>& result)
 {
     const auto& data = constructor.data();
     auto children = context.child_context();
@@ -32,18 +32,18 @@ void evaluate_query(urd::index_view<Query<Tag>, C> constructor, Context& context
     }
     else if constexpr (is_atomic_state_tag_v<Tag>)
     {
-        auto& row = context.get_workspace().get_database_workspace().row;
+        auto& row = context.get_workspace().get_values();
         const auto predicate = constructor.get_predicate();
         for (const auto atom : context.get_state().get_atoms_view(predicate))
-            result.insert(encode_object_row(atom.get_row().data().objects, row));
+            result.insert(encode_object_row(atom.get_row().get_key().second, row));
     }
     else if constexpr (is_atomic_goal_tag_v<Tag>)
     {
-        auto& row = context.get_workspace().get_database_workspace().row;
+        auto& row = context.get_workspace().get_values();
         const auto predicate = constructor.get_predicate();
         for (const auto atom :
              context.get_state().get_task().get_task().get_goal().template get_atoms_view<TagFactKind<Tag>>(constructor.get_polarity(), predicate))
-            result.insert(encode_object_row(atom.get_row().data().objects, row));
+            result.insert(encode_object_row(atom.get_row().get_key().second, row));
     }
     else if constexpr (std::same_as<Tag, QueryConceptTag>)
         insert_denotation_rows<ConceptTag>(evaluate<Kind>(constructor.get_arg(), children), result);
@@ -67,9 +67,9 @@ void evaluate_query(urd::index_view<Query<Tag>, C> constructor, Context& context
                                 context.get_workspace().get_database_workspace());
         }
         else if constexpr (std::same_as<Tag, QueryUnionTag>)
-            ygg::database::union_(lhs, rhs, result);
+            ygg::database::union_(lhs, rhs, data.plan, result);
         else
-            ygg::database::difference(lhs, rhs, result);
+            ygg::database::difference(lhs, rhs, data.plan, result);
     }
     else if constexpr (std::same_as<Tag, QueryProjectTag>)
     {
@@ -79,15 +79,12 @@ void evaluate_query(urd::index_view<Query<Tag>, C> constructor, Context& context
     else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
     {
         const auto child = evaluate<Kind>(constructor.get_arg(), children);
-        ygg::database::select_equal_columns(child,
-                                            urd::index<ygg::database::Column>(data.lhs_column.value),
-                                            urd::index<ygg::database::Column>(data.rhs_column.value),
-                                            result);
+        ygg::database::select_equal_columns(child, data.plan, result);
     }
     else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
     {
         const auto child = evaluate<Kind>(constructor.get_arg(), children);
-        ygg::database::select_equal_value(child, urd::index<ygg::database::Column>(data.column.value), data.object.value, result);
+        ygg::database::select_equal_value(child, data.plan, result);
     }
     else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
     {

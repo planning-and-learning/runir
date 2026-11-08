@@ -12,7 +12,6 @@
 #include <utility>
 #include <urd/repr/slots/slots.hpp>
 #include <urd/store.hpp>
-#include <yggdrasil/database/semantics/relation_pool.hpp>
 #include <yggdrasil/formalism/builder.hpp>
 
 namespace runir::kr::dl::semantics
@@ -28,7 +27,6 @@ private:
 
     DenotationBuilderStorage m_builders;
     DenotationDataStorage m_data;
-    ygg::database::RelationPool m_relation_builders;
     EvaluationWorkspace m_workspace;
 
 public:
@@ -36,30 +34,18 @@ public:
     auto& get_workspace() noexcept { return m_workspace; }
 
     template<typename T>
-        requires(boost::mp11::mp_contains<DenotationTypes, T>::value || std::same_as<T, ygg::database::Relation>)
+        requires boost::mp11::mp_contains<DenotationTypes, T>::value
     [[nodiscard]] auto get_builder()
-    {
-        if constexpr (std::same_as<T, ygg::database::Relation>)
-            return m_relation_builders.get_or_allocate({});
-        else
-            return std::get<urd::Store<urd::slots<urd::builder<T>>>>(m_builders).acquire_unique();
-    }
+    { return std::get<urd::Store<urd::slots<urd::builder<T>>>>(m_builders).acquire_unique(); }
 
     template<typename T, typename... Args>
-        requires(sizeof...(Args) > 0
-                 && ((boost::mp11::mp_contains<DenotationTypes, T>::value && requires(urd::builder<T>& builder, Args&&... args) { builder.initialize(std::forward<Args>(args)...); })
-                     || (std::same_as<T, ygg::database::Relation>
-                         && requires(ygg::database::RelationPool& pool, Args&&... args) { pool.get_or_allocate(std::forward<Args>(args)...); })))
+        requires(sizeof...(Args) > 0 && boost::mp11::mp_contains<DenotationTypes, T>::value
+                 && requires(urd::builder<T>& builder, Args&&... args) { builder.initialize(std::forward<Args>(args)...); })
     [[nodiscard]] auto get_builder(Args&&... args)
     {
-        if constexpr (std::same_as<T, ygg::database::Relation>)
-            return m_relation_builders.get_or_allocate(std::forward<Args>(args)...);
-        else
-        {
-            auto builder = std::get<urd::Store<urd::slots<urd::builder<T>>>>(m_builders).acquire_unique();
-            builder->initialize(std::forward<Args>(args)...);
-            return builder;
-        }
+        auto builder = std::get<urd::Store<urd::slots<urd::builder<T>>>>(m_builders).acquire_unique();
+        builder->initialize(std::forward<Args>(args)...);
+        return builder;
     }
 
     template<typename T>

@@ -405,7 +405,7 @@ void check_rejected_bindings_stay_unpublished()
         {
             size_t count = 0;
             for (const auto action : context->search_context->task->get_task().get_domain().get_actions())
-                count += context->search_context->task->get_repository()->size(action.index());
+                count += context->search_context->task->get_repository()->relations().size(action.index());
             return count;
         };
         const auto before = count_bindings();

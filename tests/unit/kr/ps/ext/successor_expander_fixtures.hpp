@@ -204,10 +204,10 @@ void expect_borrowed_query_evaluation()
     {
         const auto rows = kr::ps::evaluate<Kind>(feature, state_context);
         ASSERT_EQ(rows.size(), 1);
-        EXPECT_EQ(kr::ps::evaluate<Kind>(feature, state_context).get_storage_address(), rows.get_storage_address());
+        EXPECT_EQ(kr::ps::evaluate<Kind>(feature, state_context).data().row_set, rows.data().row_set);
         const auto& cached = environment.get_dl_caches().get_queries(false).at(query);
-        EXPECT_EQ(rows.get_storage_address(), cached.get_storage_address());
-        EXPECT_EQ(rows.columns().span().data(), cached.columns().span().data());
+        EXPECT_EQ(rows.data().row_set, cached.data().row_set);
+        EXPECT_EQ(rows.columns().data(), cached.columns().data());
         EXPECT_TRUE(std::ranges::equal(rows.columns(), query.get_schema()));
 
         const auto successors = search.successor_generator->get_labeled_successor_nodes(initial, *search.state_repository, *search.axiom_evaluator);
@@ -221,9 +221,9 @@ void expect_borrowed_query_evaluation()
         {
             const auto target_rows = kr::ps::evaluate<Kind>(feature, transition.get_target_context());
             ASSERT_EQ(target_rows.size(), 1);
-            EXPECT_NE(urd::index<tyr::formalism::Object>(target_rows[0].template get<ygg::uint_t>(size_t { 0 })),
-                      urd::index<tyr::formalism::Object>(rows[0].template get<ygg::uint_t>(size_t { 0 })));
-            EXPECT_NE(target_rows.get_storage_address(), rows.get_storage_address());
+            EXPECT_NE(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(target_rows.row(0).get(size_t { 0 }))),
+                      urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(rows.row(0).get(size_t { 0 }))));
+            EXPECT_NE(target_rows.relation_identity(), rows.relation_identity());  // independent caches: other layers
 
             // The indexed program state supplies bindings; its prepared planning view may use builder storage.
             const auto source_builder = urd::builder<tyr::planning::State<Kind>> { planning_node.get_state().data() };
@@ -237,8 +237,8 @@ void expect_borrowed_query_evaluation()
             static_assert(std::same_as<std::remove_cvref_t<decltype(prepared_context.get_state())>, tyr::planning::BuilderStateView<Kind>>);
             const auto prepared_rows = kr::ps::evaluate<Kind>(feature, prepared_context);
             ASSERT_EQ(prepared_rows.size(), rows.size());
-            EXPECT_EQ(urd::index<tyr::formalism::Object>(prepared_rows[0].template get<ygg::uint_t>(size_t { 0 })),
-                      urd::index<tyr::formalism::Object>(rows[0].template get<ygg::uint_t>(size_t { 0 })));
+            EXPECT_EQ(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(prepared_rows.row(0).get(size_t { 0 }))),
+                      urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(rows.row(0).get(size_t { 0 }))));
             const auto candidate = tyr::planning::LabeledNode<Kind, tyr::planning::BuilderStateView<Kind>> {
                 successors.front().label,
                 tyr::planning::Node<Kind, tyr::planning::BuilderStateView<Kind>>(prepared_target, successors.front().node.get_metric())
@@ -246,17 +246,17 @@ void expect_borrowed_query_evaluation()
             auto prepared_transition = context.make_dl_transition_context(state, candidate);
             const auto prepared_target_rows = kr::ps::evaluate<Kind>(feature, prepared_transition.get_target_context());
             ASSERT_EQ(prepared_target_rows.size(), target_rows.size());
-            EXPECT_EQ(urd::index<tyr::formalism::Object>(prepared_target_rows[0].template get<ygg::uint_t>(size_t { 0 })),
-                      urd::index<tyr::formalism::Object>(target_rows[0].template get<ygg::uint_t>(size_t { 0 })));
+            EXPECT_EQ(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(prepared_target_rows.row(0).get(size_t { 0 }))),
+                      urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(target_rows.row(0).get(size_t { 0 }))));
             EXPECT_EQ(urd::index<tyr::formalism::Object>(
-                          kr::ps::evaluate<Kind>(feature, prepared_transition.get_source_context())[0].template get<ygg::uint_t>(size_t { 0 })),
-                      urd::index<tyr::formalism::Object>(rows[0].template get<ygg::uint_t>(size_t { 0 })));
+                          ygg::decode_value<ygg::uint_t>(kr::ps::evaluate<Kind>(feature, prepared_transition.get_source_context()).row(0).get(size_t { 0 }))),
+                      urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(rows.row(0).get(size_t { 0 }))));
         }
         EXPECT_TRUE(environment.get_dl_target_caches().get_queries(false).contains(query));
         environment.reset_target();
         EXPECT_TRUE(environment.get_dl_caches().get_queries(false).contains(query));
         EXPECT_EQ(rows.size(), 1);
-        EXPECT_EQ(kr::ps::evaluate<Kind>(feature, state_context).get_storage_address(), rows.get_storage_address());
+        EXPECT_EQ(kr::ps::evaluate<Kind>(feature, state_context).data().row_set, rows.data().row_set);
     }
     environment.reset_source();
     EXPECT_TRUE(environment.get_dl_caches().get_queries(false).empty());
@@ -413,7 +413,7 @@ void expect_lazy_do_successors()
         {
             size_t count = 0;
             for (const auto action : task_context->search_context->task->get_task().get_domain().get_actions())
-                count += task_context->search_context->task->get_repository()->size(action.index());
+                count += task_context->search_context->task->get_repository()->relations().size(action.index());
             return count;
         };
         const auto initial_binding_count = count_bindings();
@@ -794,7 +794,7 @@ void expect_query_action_contracts()
                             if (action.get_name().str() == concrete.get_action_name())
                             {
                                 const auto evaluator = kr::ps::ext::detail::ActionRuleEvaluator<Kind>(concrete, rule, action);
-                                const auto count = task_context->search_context->task->get_repository()->size(action.index());
+                                const auto count = task_context->search_context->task->get_repository()->relations().size(action.index());
                                 auto matched = static_cast<size_t>(0);
                                 EXPECT_TRUE(generator.for_each_borrowed_applicable_action_binding(
                                     planning_node,
@@ -812,7 +812,7 @@ void expect_query_action_contracts()
                                         return true;
                                     }));
                                 EXPECT_EQ(matched, 2);
-                                EXPECT_EQ(task_context->search_context->task->get_repository()->size(action.index()), count);
+                                EXPECT_EQ(task_context->search_context->task->get_repository()->relations().size(action.index()), count);
                             }
                 },
                 rule.get_variant());
@@ -961,7 +961,7 @@ void expect_callback_sketch_order_and_cancellation()
         {
             size_t count = 0;
             for (const auto action : task_context->search_context->task->get_task().get_domain().get_actions())
-                count += task_context->search_context->task->get_repository()->size(action.index());
+                count += task_context->search_context->task->get_repository()->relations().size(action.index());
             return count;
         };
         const auto initial_binding_count = count_bindings();
@@ -1134,7 +1134,7 @@ void expect_callback_expansion_counts()
                 const auto& task = task_context->search_context->task;
                 size_t count = 0;
                 for (const auto action : task->get_domain().get_domain().get_actions())
-                    count += task->get_repository()->size(action.index());
+                    count += task->get_repository()->relations().size(action.index());
                 binding_counts.push_back(count);
             }
             ASSERT_FALSE(steps.empty());

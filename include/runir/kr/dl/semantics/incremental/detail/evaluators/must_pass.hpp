@@ -29,12 +29,12 @@ template<tyr::TaskKind Kind>
 struct QueryMustPassEvaluator : QueryValue
 {
     QueryMustPassEvaluator(QueryView<QueryMustPassTag> expression, GraphBuilder<Kind>& graph, urd::Store<urd::sequence<ygg::uint_t>>& dependencies) :
-        QueryValue(expression.get_schema().span()),
+        QueryValue(graph.layer(), expression.get_schema()),
         sources(graph.prepare(expression.get_sources(), dependencies)),
         targets(graph.prepare(expression.get_targets(), dependencies)),
         probes(graph.prepare(expression.get_probes(), dependencies)),
-        feature(semantics::detail::make_must_pass_feature(expression.data().plan, expression.get_edges())),
-        computed(expression.get_schema().span())
+        feature(semantics::detail::make_must_pass_feature(graph.layer(), expression.data().plan, expression.get_edges())),
+        computed(expression.get_schema())
     {
         const auto edges = expression.get_edges();
         for (const auto& slot : feature.slots)
@@ -58,15 +58,20 @@ struct QueryMustPassEvaluator : QueryValue
             return;
         computed.clear();
         compute(graph, computed);
-        const auto row_size = this->result.columns().row_size();
+        const auto row_size = this->result.columns().size();
+        const auto previous = this->get_result();
         removed.clear();
-        for (size_t r = 0; r < this->result.size(); ++r)
-            if (!computed.contains(this->result.row(r)))
-                removed.insert(removed.end(), this->result.row(r).begin(), this->result.row(r).end());
+        for (size_t r = 0; r < previous.size(); ++r)
+            if (const auto row = previous.row(r); !computed.contains(row))
+            {
+                const auto values = ygg::database::vertex_values(row, scratch);
+                removed.insert(removed.end(), values.begin(), values.end());
+            }
         for (size_t offset = 0; offset < removed.size(); offset += row_size)
-            this->set(std::span<const std::byte>(removed).subspan(offset, row_size), false);
-        for (size_t r = 0; r < computed.size(); ++r)
-            this->set(computed.row(r), true);
+            this->set(std::span<const ygg::Value>(removed).subspan(offset, row_size), false);
+        const auto recomputed = this->layer->view(computed);
+        for (size_t r = 0; r < recomputed.size(); ++r)
+            this->set(recomputed.row(r), true);
     }
 
 private:
@@ -75,19 +80,20 @@ private:
     QueryEvaluationIndex probes;
     MustPassFeature feature;
     urd::Store<urd::sequence<QueryEvaluationIndex>> slots;         ///< The graph node of each input slot.
-    urd::builder<ygg::database::Relation> computed;  ///< The recomputed result; kept to avoid allocations.
-    urd::Store<urd::sequence<std::byte>> removed;                  ///< Rows of the previous result that are gone.
+    urd::builder<ygg::Relation<ygg::Schema>> computed;  ///< The recomputed result; kept to avoid allocations.
+    urd::Store<urd::sequence<ygg::Value>> removed;                 ///< Rows of the previous result that are gone, their values.
+    urd::Store<urd::sequence<ygg::Value>> scratch;                 ///< A row's values, as read.
 
     ygg::uint_t num_objects = 0;
 
-    void compute(EvaluationGraph<Kind>& graph, urd::builder<ygg::database::Relation>& out)
+    void compute(EvaluationGraph<Kind>& graph, urd::builder<ygg::Relation<ygg::Schema>>& out)
     {
-        auto& heuristic = semantics::detail::must_pass_heuristic(feature, num_objects, input(graph), graph.result(targets));
+        auto& heuristic = semantics::detail::must_pass_heuristic(graph.layer(), feature, num_objects, input(graph), graph.result(targets));
         feature.must_pass.must_pass(input(graph), graph.result(sources), graph.result(targets), graph.result(probes), out, heuristic);
     }
     auto input(const EvaluationGraph<Kind>& graph) const
     {
-        return [this, &graph](size_t slot) -> const urd::builder<ygg::database::Relation>& { return graph.result(slots[slot]); };
+        return [this, &graph](size_t slot) { return graph.result(slots[slot]); };
     }
     static bool modified(const EvaluationGraph<Kind>& graph, QueryEvaluationIndex index)
     { return !graph.change(index).added.empty() || !graph.change(index).removed.empty(); }

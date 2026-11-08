@@ -31,7 +31,7 @@ template<CategoryTag Category>
 { return node(index).get_result(repository()); }
 
 template<tyr::TaskKind Kind>
-const urd::builder<ygg::database::Relation>& EvaluationGraph<Kind>::result(QueryEvaluationIndex index) const
+ygg::database::BuilderRelationView EvaluationGraph<Kind>::result(QueryEvaluationIndex index) const
 { return node(index).get_result(); }
 
 template<tyr::TaskKind Kind>

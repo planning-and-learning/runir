@@ -90,16 +90,14 @@ public:
             return self().template get<&urd::record_of<V>::columns>();
     }
 
-    auto get_schema() const noexcept
+    std::span<const ygg::ColumnLayout> get_schema() const noexcept
     {
         if constexpr (std::same_as<Tag, void>)
             return std::visit([](auto concrete) { return concrete.get_schema(); }, get_variant());
-        else if constexpr (std::same_as<Tag, runir::kr::dl::QueryJoinTag> || std::same_as<Tag, runir::kr::dl::QueryProjectTag>)
-            return urd::resolve(self().data().plan.output_columns().data().get_data(), self().context());
-        else if constexpr (std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag>)
-            return urd::resolve(self().data().plan.output_columns().get_data(), self().context());
+        else if constexpr (requires { self().data().plan.output_columns(); })
+            return self().data().plan.output_columns();
         else
-            return urd::resolve(self().data().schema.get_data(), self().context());
+            return { self().data().schema.data(), self().data().schema.size() };
     }
 
     auto get_lhs_column() const noexcept
