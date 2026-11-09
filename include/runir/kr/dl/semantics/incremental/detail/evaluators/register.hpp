@@ -40,7 +40,7 @@ struct RegisterEvaluator
                 builder.set(slot.value().first.index(), slot.value().second.index(), true);
         }
     }
-    void update(EvaluationGraph<Kind>&, const Delta& delta, ygg::database::Workspace&)
+    void update(EvaluationGraph<Kind>&, const Delta& delta, tyr::datalog::database::Workspace&)
     {
         if constexpr (std::same_as<Category, ConceptTag>)
             update_values(delta.added.concept_registers, delta.removed.concept_registers);

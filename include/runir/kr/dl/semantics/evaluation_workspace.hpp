@@ -20,10 +20,10 @@
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/database/semantics/distance.hpp>
-#include <yggdrasil/database/semantics/generic_join.hpp>
-#include <yggdrasil/database/semantics/min_distance.hpp>
-#include <yggdrasil/database/semantics/operations.hpp>
+#include <tyr/datalog/lifted/database/semantics/distance.hpp>
+#include <tyr/datalog/lifted/database/semantics/generic_join.hpp>
+#include <tyr/datalog/lifted/database/semantics/min_distance.hpp>
+#include <tyr/datalog/lifted/database/semantics/operations.hpp>
 
 namespace runir::kr::dl::semantics
 {
@@ -31,7 +31,7 @@ namespace runir::kr::dl::semantics
 /// One n_distance in full evaluation: its edges and its heuristic, built at first use.
 struct FullDistanceFeature
 {
-    DistanceFeature<ygg::database::MinDistance<heuristics::ProjectionHeuristic>> edges;
+    DistanceFeature<tyr::datalog::database::MinDistance<heuristics::ProjectionHeuristic>> edges;
     heuristics::ProjectionHeuristic heuristic;
 };
 
@@ -48,13 +48,13 @@ private:
         ygg::uint_t constructor = 0;
         Feature feature;
     };
-    /// The layer the features' input snapshots come from (ygg::database::Repository::get_relation_builder); declared
+    /// The layer the features' input snapshots come from (ygg::FreeRelationRepository::get_relation_builder); declared
     /// first, so it outlives them, and behind a pointer, so it stays where it is when the workspace moves.
-    std::unique_ptr<ygg::database::Repository> m_layer = std::make_unique<ygg::database::Repository>();
+    std::unique_ptr<ygg::FreeRelationRepository> m_layer = std::make_unique<ygg::FreeRelationRepository>();
     urd::Store<urd::sequence<KeyedFeature<FullDistanceFeature>>, urd::stable_refs> m_distance_features;  ///< Stable references: callers keep the features they get.
     urd::Store<urd::sequence<KeyedFeature<MustPassFeature>>, urd::stable_refs> m_must_pass_features;
-    urd::Store<urd::sequence<ygg::database::GenericJoinWorkspace>> m_generic_join_workspaces;  ///< One per generic join plan.
-    ygg::database::Workspace m_database_workspace;
+    urd::Store<urd::sequence<tyr::datalog::database::GenericJoinWorkspace>> m_generic_join_workspaces;  ///< One per generic join plan.
+    tyr::datalog::database::Workspace m_database_workspace;
     /// A row's values, as evaluation encodes them (encode_object_row).
     urd::Store<urd::sequence<ygg::Value>> m_values;
 
@@ -82,7 +82,7 @@ public:
     EvaluationWorkspace() = default;
 
     // ponytail: linear scan over distinct plans; key by query index if features carry many generic joins.
-    auto& get_generic_join_workspace(const ygg::database::GenericJoinPlan& plan)
+    auto& get_generic_join_workspace(const tyr::datalog::database::GenericJoinPlan& plan)
     {
         for (auto& workspace : m_generic_join_workspaces)
             if (workspace.matches(plan))
@@ -91,7 +91,7 @@ public:
     }
     auto& get_database_workspace() noexcept { return m_database_workspace; }
     auto& get_values() noexcept { return m_values; }
-    [[nodiscard]] const ygg::database::Repository& get_layer() const noexcept { return *m_layer; }
+    [[nodiscard]] const ygg::FreeRelationRepository& get_layer() const noexcept { return *m_layer; }
     /// The feature of a distance constructor of a constructor repository over a formalism repository, made by
     /// make() at first use. References stay valid while this workspace lives.
     template<std::invocable Make>

@@ -5,7 +5,7 @@
 #include <cassert>
 #include <memory>
 #include <utility>
-#include <yggdrasil/database/syntax/query_repository.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 
 namespace runir::kr::dl::semantics
 {

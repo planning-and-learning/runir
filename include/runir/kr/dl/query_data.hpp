@@ -16,9 +16,9 @@
 #include <vector>
 #include <urd/elements/flat.hpp>
 #include <boost/mp11.hpp>
-#include <yggdrasil/database/semantics/generic_join_plan.hpp>
-#include <yggdrasil/database/semantics/must_pass_plan.hpp>
-#include <yggdrasil/database/semantics/plans.hpp>
+#include <tyr/datalog/lifted/database/semantics/generic_join_plan.hpp>
+#include <tyr/datalog/lifted/database/semantics/must_pass_plan.hpp>
+#include <tyr/datalog/lifted/database/semantics/plans.hpp>
 
 namespace urd
 {
@@ -153,7 +153,7 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryJoinTag>>
     urd::index<runir::kr::dl::Query<>> lhs {};
     urd::index<runir::kr::dl::Query<>> rhs {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    ygg::database::JoinPlan plan {};
+    tyr::datalog::database::JoinPlan plan {};
 
     data() = default;
     // columns and plan are derived during insertion and therefore not constructor parameters.
@@ -171,7 +171,7 @@ struct data<runir::kr::dl::Query<Tag>>
     urd::index<runir::kr::dl::Query<>> lhs {};
     urd::index<runir::kr::dl::Query<>> rhs {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    ygg::database::SetPlan plan {};
+    tyr::datalog::database::SetPlan plan {};
 
     data() = default;
     // columns and plan are derived during insertion and therefore not constructor parameters.
@@ -187,7 +187,7 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>>
     urd::index<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>> index;
     urd::index<runir::kr::dl::Query<>> arg {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    ygg::database::ProjectionPlan plan {};
+    tyr::datalog::database::ProjectionPlan plan {};
 
     data() = default;
     // plan is derived during insertion and therefore not a constructor parameter.
@@ -221,7 +221,7 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>>
     urd::index<runir::kr::dl::QueryColumn> lhs_column {};
     urd::index<runir::kr::dl::QueryColumn> rhs_column {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    ygg::database::SelectEqualPlan plan {};
+    tyr::datalog::database::SelectEqualPlan plan {};
 
     data() = default;
     // columns and plan are derived during insertion and therefore not constructor parameters.
@@ -248,7 +248,7 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>>
     urd::index<runir::kr::dl::QueryColumn> column {};
     urd::index<tyr::formalism::Object> object {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    ygg::database::SelectValuePlan plan {};
+    tyr::datalog::database::SelectValuePlan plan {};
 
     data() = default;
     // columns and plan are derived during insertion and therefore not constructor parameters.
@@ -273,7 +273,7 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryGenericJoinTag>>
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> variable_order {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> output_order {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    ygg::database::GenericJoinPlan plan {};
+    tyr::datalog::database::GenericJoinPlan plan {};
 
     data() = default;
     // columns and plan are derived during insertion and therefore not constructor parameters.
@@ -302,7 +302,7 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryMustPassTag>>
     urd::index<runir::kr::dl::Query<>> targets {};
     urd::index<runir::kr::dl::Query<>> probes {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    ygg::database::MustPassPlan plan {};
+    tyr::datalog::database::MustPassPlan plan {};
 
     data() = default;
     // columns and plan are derived during insertion and therefore not constructor parameters.
@@ -349,7 +349,7 @@ struct data<runir::kr::dl::QueryProjection<Category>>
     urd::index<runir::kr::dl::QueryProjection<Category>> index;
     urd::index<runir::kr::dl::Query<>> arg {};
     urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns {};
-    ygg::database::ProjectionPlan plan {};
+    tyr::datalog::database::ProjectionPlan plan {};
 
     data() = default;
     // plan is derived during insertion and therefore not a constructor parameter.

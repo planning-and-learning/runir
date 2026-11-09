@@ -10,7 +10,7 @@
 #include <runir/kr/dl/grammar/parser.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <yggdrasil/database/syntax/query_repository.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <runir/kr/errors.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>

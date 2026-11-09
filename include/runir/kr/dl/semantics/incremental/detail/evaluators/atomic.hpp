@@ -53,7 +53,7 @@ struct AtomicEvaluator
                 builder.flip();
         }
     }
-    void update(EvaluationGraph<Kind>&, const Delta& delta, ygg::database::Workspace&)
+    void update(EvaluationGraph<Kind>&, const Delta& delta, tyr::datalog::database::Workspace&)
     {
         if constexpr (std::same_as<Fact, tyr::formalism::FluentTag>)
             update_atoms(delta.added.fluent_atoms, delta.removed.fluent_atoms);

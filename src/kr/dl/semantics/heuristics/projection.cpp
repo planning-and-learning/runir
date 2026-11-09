@@ -5,6 +5,6 @@
 namespace runir::kr::dl::semantics::heuristics::detail
 {
 
-ygg::database::QueryPlan compile_edge_plan(const urd::Store<urd::sequence<ygg::database::QueryView<>>>& roots) { return ygg::database::compile(roots); }
+tyr::datalog::database::QueryPlan compile_edge_plan(const urd::Store<urd::sequence<tyr::datalog::database::QueryView<>>>& roots) { return tyr::datalog::database::compile(roots); }
 
 }  // namespace runir::kr::dl::semantics::heuristics::detail

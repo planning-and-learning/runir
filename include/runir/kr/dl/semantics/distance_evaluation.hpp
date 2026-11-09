@@ -10,11 +10,11 @@
 
 #include <span>
 #include <vector>
-#include <yggdrasil/database/semantics/min_distance.hpp>
-#include <yggdrasil/database/semantics/relation_view.hpp>
+#include <tyr/datalog/lifted/database/semantics/min_distance.hpp>
+#include <tyr/datalog/lifted/database/semantics/relation_view.hpp>
 
-/// n_distance over a DL edge query, evaluated by yggdrasil (ygg::database::MinDistance in full evaluation,
-/// ygg::database::incremental::MinDistance in incremental evaluation; see their method overviews). runir translates the
+/// n_distance over a DL edge query, evaluated by yggdrasil (tyr::datalog::database::MinDistance in full evaluation,
+/// tyr::datalog::database::incremental::MinDistance in incremental evaluation; see their method overviews). runir translates the
 /// edge query into a yggdrasil query whose input slots are its leaves, complements becoming antijoins
 /// (translations/ygg_query.hpp), supplies the slots' relations in the current state, and for k > 1 query edges a
 /// pattern database heuristic over a static relaxation of the edge query (heuristics/projection.hpp). k = 1 and role
@@ -32,7 +32,7 @@ QueryDenotationView evaluate_slot(const QuerySlot& slot, const ConstructorReposi
 
 /// Builds the min-distance evaluator of a feature with role edges, a relation of one slot.
 template<typename Distance>
-DistanceFeature<Distance> make_distance_feature(const ygg::database::Repository& layer, const ygg::database::DistancePlan& plan, ConstructorView<RoleTag> edges)
+DistanceFeature<Distance> make_distance_feature(const ygg::FreeRelationRepository& layer, const tyr::datalog::database::DistancePlan& plan, ConstructorView<RoleTag> edges)
 {
     const auto columns = plan.edge_columns();
     return { { QuerySlot { QuerySlot::Kind::ROLE, static_cast<ygg::uint_t>(edges.index().value), { columns.begin(), columns.end() }, edges.is_static() } },
@@ -42,7 +42,7 @@ DistanceFeature<Distance> make_distance_feature(const ygg::database::Repository&
 
 /// Translates a feature's query edges and builds its min-distance evaluator.
 template<typename Distance>
-DistanceFeature<Distance> make_distance_feature(const ygg::database::Repository& layer, const ygg::database::DistancePlan& plan, QueryView<> edges)
+DistanceFeature<Distance> make_distance_feature(const ygg::FreeRelationRepository& layer, const tyr::datalog::database::DistancePlan& plan, QueryView<> edges)
 {
     auto translator = dl::detail::QueryTranslator(true);
     const auto query = translator.translate(edges);
@@ -55,10 +55,10 @@ DistanceFeature<Distance> make_distance_feature(const ygg::database::Repository&
 
 /// The heuristic of a feature: a pattern database heuristic if it has an abstraction, otherwise blind;
 /// `slot_rows(slot)` returns a static slot's rows.
-template<typename Distance, ygg::database::SlotRelations SlotRows>
-heuristics::ProjectionHeuristic make_heuristic(const ygg::database::Repository& layer,
+template<typename Distance, tyr::datalog::database::SlotRelations SlotRows>
+heuristics::ProjectionHeuristic make_heuristic(const ygg::FreeRelationRepository& layer,
                                                const DistanceFeature<Distance>& feature,
-                                               const ygg::database::DistancePlan& plan,
+                                               const tyr::datalog::database::DistancePlan& plan,
                                                ygg::uint_t num_objects,
                                                const SlotRows& slot_rows)
 {
@@ -88,7 +88,7 @@ ygg::uint_t on_demand_distance(NumericalView<DistanceTag> constructor, Context& 
                 [&]
                 {
                     const auto& layer = context.get_workspace().get_layer();
-                    auto edge_feature = make_distance_feature<ygg::database::MinDistance<heuristics::ProjectionHeuristic>>(layer, plan, edges);
+                    auto edge_feature = make_distance_feature<tyr::datalog::database::MinDistance<heuristics::ProjectionHeuristic>>(layer, plan, edges);
                     auto heuristic = make_heuristic(layer,
                                                     edge_feature,
                                                     plan,
@@ -104,7 +104,7 @@ ygg::uint_t on_demand_distance(NumericalView<DistanceTag> constructor, Context& 
 }
 
 /// Translates a must-pass query's edges and builds its must-pass evaluator and the abstraction of its heuristic.
-inline MustPassFeature make_must_pass_feature(const ygg::database::Repository& layer, const ygg::database::MustPassPlan& plan, QueryView<> edges)
+inline MustPassFeature make_must_pass_feature(const ygg::FreeRelationRepository& layer, const tyr::datalog::database::MustPassPlan& plan, QueryView<> edges)
 {
     auto translator = dl::detail::QueryTranslator(true);
     const auto query = translator.translate(edges);
@@ -118,8 +118,8 @@ inline MustPassFeature make_must_pass_feature(const ygg::database::Repository& l
 
 /// Builds a must-pass feature's heuristic at first use, from the static slots' rows (`slot_rows(slot)`), and sets its
 /// targets. Without an abstraction, the search is blind.
-template<ygg::database::SlotRelations SlotRows, ygg::database::RelationViewConcept Targets>
-heuristics::KeyedProjectionHeuristic& must_pass_heuristic(const ygg::database::Repository& layer,
+template<tyr::datalog::database::SlotRelations SlotRows, tyr::datalog::database::RelationViewConcept Targets>
+heuristics::KeyedProjectionHeuristic& must_pass_heuristic(const ygg::FreeRelationRepository& layer,
                                                           MustPassFeature& feature,
                                                           ygg::uint_t num_objects,
                                                           const SlotRows& slot_rows,

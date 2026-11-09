@@ -8,7 +8,7 @@
 #include <tyr/planning/declarations.hpp>
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/database/declarations.hpp>
+#include <tyr/datalog/lifted/database/declarations.hpp>
 
 namespace runir::kr::dl::semantics
 {

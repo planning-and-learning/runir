@@ -1,6 +1,6 @@
 #include <concepts>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <yggdrasil/database/syntax/query_repository.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_policy.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include <runir/kr/ps/base/compatibility.hpp>

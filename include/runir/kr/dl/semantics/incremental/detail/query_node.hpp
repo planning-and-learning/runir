@@ -24,7 +24,7 @@ public:
     QueryNode(QueryView<> expression, GraphBuilder<Kind>& graph);
     /// A concept or role lifted into a relation with the given columns; it has no query expression.
     template<ConceptOrRoleTag Category>
-    QueryNode(const ygg::database::Repository& layer, EvaluationIndex<Category> argument, std::span<const ygg::ColumnLayout> columns) :
+    QueryNode(const ygg::FreeRelationRepository& layer, EvaluationIndex<Category> argument, std::span<const ygg::ColumnLayout> columns) :
         m_dependencies { ygg::uint_t(argument.value) },
         m_operation(QueryFromDenotationEvaluator<Kind, Category>(layer, argument, columns))
     {
@@ -39,10 +39,10 @@ public:
     }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context);
-    void update(EvaluationGraph<Kind>& graph, const Delta& delta, ygg::database::Workspace& workspace);
+    void update(EvaluationGraph<Kind>& graph, const Delta& delta, tyr::datalog::database::Workspace& workspace);
     [[nodiscard]] std::span<const ygg::uint_t> get_dependencies() const noexcept { return m_dependencies; }
-    [[nodiscard]] ygg::database::BuilderRelationView get_result() const;
-    [[nodiscard]] const ygg::database::incremental::Delta& get_delta() const;
+    [[nodiscard]] ygg::FreeBuilderRelationView get_result() const;
+    [[nodiscard]] const tyr::datalog::database::incremental::Delta& get_delta() const;
 
 private:
     using Operation = std::variant<QueryStaticEvaluator<Kind>,
@@ -79,19 +79,19 @@ void QueryNode<Kind>::initialize(EvaluationGraph<Kind>& graph, Context& context)
 }
 
 template<tyr::TaskKind Kind>
-void QueryNode<Kind>::update(EvaluationGraph<Kind>& graph, const Delta& delta, ygg::database::Workspace& workspace)
+void QueryNode<Kind>::update(EvaluationGraph<Kind>& graph, const Delta& delta, tyr::datalog::database::Workspace& workspace)
 {
     std::visit([&](auto& operation) { operation.update(graph, delta, workspace); }, m_operation);
 }
 
 template<tyr::TaskKind Kind>
-ygg::database::BuilderRelationView QueryNode<Kind>::get_result() const
+ygg::FreeBuilderRelationView QueryNode<Kind>::get_result() const
 {
-    return std::visit([](const auto& operation) -> ygg::database::BuilderRelationView { return operation.get_result(); }, m_operation);
+    return std::visit([](const auto& operation) -> ygg::FreeBuilderRelationView { return operation.get_result(); }, m_operation);
 }
 
 template<tyr::TaskKind Kind>
-const ygg::database::incremental::Delta& QueryNode<Kind>::get_delta() const
+const tyr::datalog::database::incremental::Delta& QueryNode<Kind>::get_delta() const
 {
     return std::visit([](const auto& operation) -> const auto& { return operation.get_delta(); }, m_operation);
 }

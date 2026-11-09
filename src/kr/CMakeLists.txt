@@ -81,7 +81,6 @@ target_include_directories(kr
 target_link_libraries(kr
     PUBLIC
         yggdrasil::yggdrasil
-        yggdrasil::database
         fmt::fmt-header-only
         runir::datasets
         tyr::core

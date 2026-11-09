@@ -6,7 +6,7 @@
 
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <yggdrasil/database/syntax/query_repository.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/repository.hpp>

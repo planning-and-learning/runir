@@ -9,7 +9,7 @@
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <yggdrasil/database/syntax/query_repository.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/ps/icp/detail/rule_evaluation/context.hpp>
 #include <runir/kr/ps/icp/dl/parser.hpp>
 #include <runir/kr/ps/icp/program_executor.hpp>

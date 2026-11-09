@@ -13,7 +13,7 @@
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <yggdrasil/database/syntax/query_repository.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include <runir/kr/dl/semantics/incremental/delta.hpp>
 #include <runir/kr/dl/semantics/incremental/detail/atomic_query.hpp>
@@ -31,7 +31,7 @@
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <tyr/planning/lifted/task.hpp>
 #include <vector>
-#include <yggdrasil/database/semantics/incremental/projection.hpp>
+#include <tyr/datalog/lifted/database/semantics/incremental/projection.hpp>
 
 namespace runir::tests
 {
@@ -109,7 +109,7 @@ void check_atomic_projection()
     const auto ready = parse_query(R"((q_atomic_state "ready" ()))", domain, *constructors);
     const auto projected_triple = parse_query(R"((q_project (x) (q_atomic_state "triple" (x y z))))", domain, *constructors);
     const auto projected_copied = parse_query(R"((q_project (x) (q_atomic_state "copied" (x y z))))", domain, *constructors);
-    const auto layer = ygg::database::Repository();
+    const auto layer = ygg::FreeRelationRepository();
     auto triple_leaf = kr::dl::semantics::incremental::detail::AtomicQueryEvaluator<Fluent>(
         layer,
         std::get<urd::index_view<kr::dl::Query<kr::dl::AtomicStateTag<Fluent>>, runir::kr::dl::ConstructorRepository>>(triple.get_variant()));
@@ -119,13 +119,13 @@ void check_atomic_projection()
     auto ready_leaf = kr::dl::semantics::incremental::detail::AtomicQueryEvaluator<Fluent>(
         layer,
         std::get<urd::index_view<kr::dl::Query<kr::dl::AtomicStateTag<Fluent>>, runir::kr::dl::ConstructorRepository>>(ready.get_variant()));
-    auto triple_projection = ygg::database::incremental::ProjectionEvaluator(
+    auto triple_projection = tyr::datalog::database::incremental::ProjectionEvaluator(
         layer,
         std::get<urd::index_view<kr::dl::Query<kr::dl::QueryProjectTag>, runir::kr::dl::ConstructorRepository>>(projected_triple.get_variant()).data().plan);
-    auto copied_projection = ygg::database::incremental::ProjectionEvaluator(
+    auto copied_projection = tyr::datalog::database::incremental::ProjectionEvaluator(
         layer,
         std::get<urd::index_view<kr::dl::Query<kr::dl::QueryProjectTag>, runir::kr::dl::ConstructorRepository>>(projected_copied.get_variant()).data().plan);
-    auto workspace = ygg::database::Workspace {};
+    auto workspace = tyr::datalog::database::Workspace {};
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto builder = kr::dl::semantics::Builder {};
@@ -261,7 +261,7 @@ void check_query_graph()
     auto deltas = urd::Store<urd::sequence<kr::dl::semantics::incremental::Delta>>(4);
     for (size_t i = 0; i < deltas.size(); ++i)
         deltas[i].template assign<Kind>(nodes[i].get_state(), registers, nodes[i + 1].get_state(), registers);
-    auto workspace = ygg::database::Workspace {};
+    auto workspace = tyr::datalog::database::Workspace {};
     const auto empty_delta = kr::dl::semantics::incremental::Delta {};
     const auto triple = std::string(R"((q_atomic_state "triple" (x y z)))");
     const auto copied = std::string(R"((q_atomic_state "copied" (x y z)))");

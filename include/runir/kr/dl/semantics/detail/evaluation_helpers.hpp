@@ -34,7 +34,7 @@
 #include <urd/store.hpp>
 #include <yggdrasil/core/config.hpp>
 #include <urd/elements/flat.hpp>
-#include <yggdrasil/database/semantics/distance.hpp>
+#include <tyr/datalog/lifted/database/semantics/distance.hpp>
 
 namespace runir::kr::dl::semantics::detail
 {

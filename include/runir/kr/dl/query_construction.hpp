@@ -14,10 +14,10 @@
 #include <tyr/formalism/predicate_view.hpp>
 #include <variant>
 #include <vector>
-#include <yggdrasil/database/semantics/distance.hpp>
-#include <yggdrasil/database/semantics/generic_join.hpp>
-#include <yggdrasil/database/semantics/must_pass_plan.hpp>
-#include <yggdrasil/database/semantics/plans.hpp>
+#include <tyr/datalog/lifted/database/semantics/distance.hpp>
+#include <tyr/datalog/lifted/database/semantics/generic_join.hpp>
+#include <tyr/datalog/lifted/database/semantics/must_pass_plan.hpp>
+#include <tyr/datalog/lifted/database/semantics/plans.hpp>
 #include <yggdrasil/formalism/relation_view.hpp>
 
 namespace runir::kr::dl::detail
@@ -70,7 +70,7 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
     {
         const auto lhs = urd::resolve(data.lhs, repository).get_schema();
         const auto rhs = urd::resolve(data.rhs, repository).get_schema();
-        data.plan = ygg::database::JoinPlan(lhs, rhs);
+        data.plan = tyr::datalog::database::JoinPlan(lhs, rhs);
         data.columns.clear();
         data.columns.reserve(data.plan.output_columns().size());
         for (const auto column : data.plan.output_columns())
@@ -79,7 +79,7 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
     else if constexpr (std::same_as<Tag, QueryProjectTag>)
     {
         const auto arg = urd::resolve(data.arg, repository).get_schema();
-        data.plan = ygg::database::ProjectionPlan(arg, query_labels(data.columns));
+        data.plan = tyr::datalog::database::ProjectionPlan(arg, query_labels(data.columns));
     }
     else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
     {
@@ -97,7 +97,7 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
         }
         require_generic_join_order("variable order", data.variable_order, input_columns, repository);
         require_generic_join_order("output order", data.output_order, input_columns, repository);
-        data.plan = ygg::database::GenericJoinPlan(inputs, query_labels(data.variable_order), query_labels(data.output_order));
+        data.plan = tyr::datalog::database::GenericJoinPlan(inputs, query_labels(data.variable_order), query_labels(data.output_order));
         data.columns = data.output_order;
     }
     else if constexpr (std::same_as<Tag, QueryMustPassTag>)
@@ -120,7 +120,7 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
         const auto probes = urd::resolve(data.probes, repository).get_schema();
         if (probes.size() != 1)
             throw std::invalid_argument("q_must_pass: the probes must have one column.");
-        data.plan = ygg::database::MustPassPlan(sources, edges, targets, probes, data.keys.size());
+        data.plan = tyr::datalog::database::MustPassPlan(sources, edges, targets, probes, data.keys.size());
         data.columns = data.keys;
         data.columns.push_back(get_query_columns(data.probes, repository).front());
     }
@@ -131,19 +131,19 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
         if (!std::ranges::equal(lhs, rhs))
             throw std::invalid_argument("Query: union and difference require identical ordered columns.");
         data.columns = get_query_columns(data.lhs, repository);
-        data.plan = ygg::database::SetPlan(lhs, rhs);
+        data.plan = tyr::datalog::database::SetPlan(lhs, rhs);
     }
     else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
     {
         data.columns = get_query_columns(data.arg, repository);
-        data.plan = ygg::database::SelectEqualPlan(urd::resolve(data.arg, repository).get_schema(),
+        data.plan = tyr::datalog::database::SelectEqualPlan(urd::resolve(data.arg, repository).get_schema(),
                                                    urd::index<ygg::Column>(data.lhs_column.value),
                                                    urd::index<ygg::Column>(data.rhs_column.value));
     }
     else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
     {
         data.columns = get_query_columns(data.arg, repository);
-        data.plan = ygg::database::SelectValuePlan(urd::resolve(data.arg, repository).get_schema(),
+        data.plan = tyr::datalog::database::SelectValuePlan(urd::resolve(data.arg, repository).get_schema(),
                                                    urd::index<ygg::Column>(data.column.value),
                                                    ygg::type_id<urd::index<tyr::formalism::Object>>,
                                                    ygg::encode_value(data.object));
@@ -167,7 +167,7 @@ void prepare(urd::data<QueryProjection<Category>>& data, const Repository& repos
     const auto columns = query_columns(data.columns);
     require_query_arity(columns.size(), std::same_as<Category, ConceptTag> ? 1 : 2);
     const auto arg = urd::resolve(data.arg, repository).get_schema();
-    data.plan = ygg::database::ProjectionPlan(arg, query_labels(data.columns));
+    data.plan = tyr::datalog::database::ProjectionPlan(arg, query_labels(data.columns));
 }
 
 /// The distance plan's output column; interned query column labels never reach the maximum.

@@ -25,7 +25,7 @@ from fixture_utils import FIXTURE_ROOT
 from pypddl.formalism import ParserOptions
 from pytyr.formalism.planning import ActionRow, Object, ObjectIndex, Parser, PlanningDomain
 from pytyr.planning import ground, lifted
-from pyyggdrasil import database
+from pyyggdrasil import formalism
 from pyyggdrasil.execution import ExecutionContext
 from pyyggdrasil.serialization import Dictionaries
 
@@ -272,14 +272,14 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
 
     dl_context = make_dl_context(environment, state)
     relation = ext.evaluate(features["selected"], dl_context)
-    assert isinstance(relation, database.RelationView)
+    assert isinstance(relation, formalism.RelationView)
     assert relation == features["selected"].get_expression().evaluate(dl_context)
     assert len(relation) == 2
     assert relation.arity() == 2
     assert len(relation.columns()) == 2
     assert relation == ext.evaluate(features["selected"], dl_context)
     assert len({relation, ext.evaluate(features["selected"], dl_context)}) == 1
-    assert all(isinstance(row, database.RelationRow) and len(row) == 2 for row in relation)
+    assert all(isinstance(row, formalism.RelationRow) and len(row) == 2 for row in relation)
     rows = {_ints(row) for row in relation}
     objects = task_context.dl_denotation_repository
     assert all(isinstance(objects.get_object(ObjectIndex(value)), Object) for row in rows for value in row)
@@ -346,7 +346,7 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
 
 
 def _retained(
-    kind: str, project: Callable[[database.RelationView, database.RelationRepository], T]
+    kind: str, project: Callable[[formalism.RelationView, formalism.RelationRepository], T]
 ) -> tuple[T, tuple[object, ...]]:
     """Project the first query relation of a fresh runtime and drop every other owner."""
     task_context, program, _expander, state, _environment = _runtime(kind)
@@ -370,10 +370,10 @@ def _retained(
     return project(relation, repository.get_relation_repository()), expected
 
 
-def _renamed(relation: database.RelationView, relations: database.RelationRepository) -> database.RelationView:
+def _renamed(relation: formalism.RelationView, relations: formalism.RelationRepository) -> formalism.RelationView:
     columns = list(relation.columns())[::-1]
     renamed = relations.rename(relation, columns)
-    assert isinstance(renamed, database.RelationView)
+    assert isinstance(renamed, formalism.RelationView)
     assert list(renamed.columns()) == columns
     return renamed
 

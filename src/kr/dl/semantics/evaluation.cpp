@@ -1,8 +1,8 @@
 #include "runir/kr/dl/semantics/detail/evaluation_impl.hpp"
 #include "runir/kr/dl/semantics/detail/repository_instantiations.hpp"
-#include <yggdrasil/database/detail/repository_instantiations.hpp>
+#include <tyr/datalog/lifted/database/detail/repository_instantiations.hpp>
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
-#include <yggdrasil/database/syntax/query_repository.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include "runir/kr/dl/semantics/incremental/detail/evaluation_impl.hpp"
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/declarations.hpp"
@@ -70,8 +70,8 @@ namespace runir::kr::dl::semantics::incremental
     template void IncrementalEvaluation<Kind>::demand<StateEvaluationContext<Kind>>(ygg::uint_t,                               \
                                                                                     StateEvaluationContext<Kind>&,             \
                                                                                     const Delta*,                              \
-                                                                                    ygg::database::Workspace*);                \
-    template void IncrementalEvaluation<Kind>::demand<BuilderContext<Kind>>(ygg::uint_t, BuilderContext<Kind>&, const Delta*, ygg::database::Workspace*);
+                                                                                    tyr::datalog::database::Workspace*);                \
+    template void IncrementalEvaluation<Kind>::demand<BuilderContext<Kind>>(ygg::uint_t, BuilderContext<Kind>&, const Delta*, tyr::datalog::database::Workspace*);
 
 RUNIR_INCREMENTAL_EVALUATION(tyr::GroundTag)
 RUNIR_INCREMENTAL_EVALUATION(tyr::LiftedTag)

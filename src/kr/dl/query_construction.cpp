@@ -62,7 +62,7 @@ void prepare(urd::data<Numerical<SemanticFamily, DistanceTag>>& data, const Cons
     const auto sources = columns(data.lhs);
     const auto edges = columns(data.mid);
     const auto targets = columns(data.rhs);
-    data.plan = ygg::database::DistancePlan({ sources.data(), sources.size() }, { edges.data(), edges.size() }, { targets.data(), targets.size() }, distance_column);
+    data.plan = tyr::datalog::database::DistancePlan({ sources.data(), sources.size() }, { edges.data(), edges.size() }, { targets.data(), targets.size() }, distance_column);
 }
 
 }  // namespace runir::kr::dl::detail

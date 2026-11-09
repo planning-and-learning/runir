@@ -29,7 +29,7 @@ struct StaticEvaluator
             initialized = true;
         }
     }
-    void update(EvaluationGraph<Kind>&, const Delta&, ygg::database::Workspace&) {}
+    void update(EvaluationGraph<Kind>&, const Delta&, tyr::datalog::database::Workspace&) {}
 };
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

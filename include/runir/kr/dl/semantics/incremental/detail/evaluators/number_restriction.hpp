@@ -24,7 +24,7 @@ struct NumberRestrictionEvaluator
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     { initialize_set(Tag {}, value, graph.result(role), graph.change(role), threshold, graph.set_workspace()); }
-    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     { update_set(Tag {}, value, graph.result(role), graph.change(role), threshold, graph.set_workspace()); }
 };
 
@@ -54,7 +54,7 @@ struct QualifiedNumberRestrictionEvaluator
                        threshold,
                        graph.set_workspace());
     }
-    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     {
         update_set(Tag {},
                    value,

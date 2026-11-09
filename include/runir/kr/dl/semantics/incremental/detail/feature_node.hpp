@@ -36,7 +36,7 @@ public:
     [[nodiscard]] ConstructorView<Category> get_expression() const noexcept { return m_expression; }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context);
-    void update(EvaluationGraph<Kind>& graph, const Delta& delta, ygg::database::Workspace& workspace);
+    void update(EvaluationGraph<Kind>& graph, const Delta& delta, tyr::datalog::database::Workspace& workspace);
     [[nodiscard]] std::span<const ygg::uint_t> get_dependencies() const noexcept { return m_dependencies; }
     [[nodiscard]] BorrowedDenotationView<Category> get_result(const tyr::formalism::planning::Repository& repository) const
     { return state().get_result(repository); }
@@ -218,7 +218,7 @@ void FeatureNode<Kind, Category>::initialize(EvaluationGraph<Kind>& graph, Conte
 }
 
 template<tyr::TaskKind Kind, CategoryTag Category>
-void FeatureNode<Kind, Category>::update(EvaluationGraph<Kind>& graph, const Delta& delta, ygg::database::Workspace& workspace)
+void FeatureNode<Kind, Category>::update(EvaluationGraph<Kind>& graph, const Delta& delta, tyr::datalog::database::Workspace& workspace)
 {
     std::visit(
         [&](auto& evaluator)

@@ -172,10 +172,10 @@ relation = ext.evaluate(feature, state_context)
 snapshot = tuple(tuple(row) for row in relation)
 ```
 
-`relation` is an interned `pyyggdrasil.database.RelationView`.
+`relation` is an interned `pyyggdrasil.formalism.RelationView`.
 Import `QueryColumnData`/`QueryColumnIndex` from `pyrunir.kr.dl.semantics`.
 The relation exposes `get_index()`, `columns()`, `arity()`, `at()`, and
-iteration. Each `pyyggdrasil.database.RelationRow` yields object indices as
+iteration. Each `pyyggdrasil.formalism.RelationRow` yields object indices as
 integers, ordered by `columns`; wrap a value in `pytyr.formalism.planning.ObjectIndex`
 to look the object up, as in `denotation_repository.get_object(ObjectIndex(value))`.
 Interning preserves column order; rows form a canonical set whose iteration

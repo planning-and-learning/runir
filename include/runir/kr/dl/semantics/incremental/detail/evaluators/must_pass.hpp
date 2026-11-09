@@ -22,7 +22,7 @@ namespace runir::kr::dl::semantics::incremental::detail
 {
 
 /// q_must_pass: the graph maintains the sources, the targets, the probes and the edge query's input slots, and
-/// ygg::database::MustPass explores the edges on demand from them. The result is recomputed when one of them changed
+/// tyr::datalog::database::MustPass explores the edges on demand from them. The result is recomputed when one of them changed
 /// and reported as its exact difference to the previous result; otherwise it is unchanged at no cost, which is the
 /// common case for the bindings of a Choose rule when the query does not read the bound register.
 template<tyr::TaskKind Kind>
@@ -50,7 +50,7 @@ struct QueryMustPassEvaluator : QueryValue
     }
     /// The children's deltas are exact (IncrementalEvaluation), so unchanged sources, targets and slots leave the
     /// result unchanged.
-    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     {
         this->delta.clear();
         if (!modified(graph, sources) && !modified(graph, targets) && !modified(graph, probes)
@@ -64,7 +64,7 @@ struct QueryMustPassEvaluator : QueryValue
         for (size_t r = 0; r < previous.size(); ++r)
             if (const auto row = previous.row(r); !computed.contains(row))
             {
-                const auto values = ygg::database::vertex_values(row, scratch);
+                const auto values = tyr::datalog::database::vertex_values(row, scratch);
                 removed.insert(removed.end(), values.begin(), values.end());
             }
         for (size_t offset = 0; offset < removed.size(); offset += row_size)

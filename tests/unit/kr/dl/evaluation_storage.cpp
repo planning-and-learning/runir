@@ -12,7 +12,7 @@
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_view.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <yggdrasil/database/syntax/query_repository.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include <runir/kr/dl/semantics/interning.hpp>
 #include "runir/kr/dl/datas.hpp"
@@ -511,7 +511,7 @@ TEST(RunirEvaluationStorage, DynamicResetPreservesStaticRowsAndJoinIndexes)
     const auto fixed = kr::dl::semantics::evaluate<tyr::GroundTag>(fixed_query, context);
     const auto alias = kr::dl::semantics::evaluate<tyr::GroundTag>(renamed_query, context);
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(dynamic_query, context).size(), 4);
-    const auto keys = std::array { ygg::database::ColumnSlice { 0 } };
+    const auto keys = std::array { tyr::datalog::database::ColumnSlice { 0 } };
     storage.get_caches().get_static_join_indexes().get_or_create(fixed, keys);
     EXPECT_EQ(alias.data().row_set, fixed.data().row_set);
     EXPECT_NE(alias, fixed);

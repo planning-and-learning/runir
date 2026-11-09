@@ -5,7 +5,7 @@ import gc
 
 import pytest
 from pytyr.formalism.planning import Object, ObjectIndex, PlanningDomain
-from pyyggdrasil import database
+from pyyggdrasil import formalism
 from pyyggdrasil.serialization import Dictionaries
 
 from pyrunir.datasets import GroundTaskSearchContext
@@ -18,7 +18,7 @@ from pyrunir.kr.uns.dl import parse_classifier
 from pyrunir.serialization import register_table, serialize, table
 
 
-def _row_values(rows: database.RelationView) -> list[int]:
+def _row_values(rows: formalism.RelationView) -> list[int]:
     values: list[int] = []
     for row in rows:
         for value in row:
@@ -118,10 +118,10 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
     assert isinstance(query, semantics.Query)
     retained_query = query.evaluate(retained_context)
     relations = task.dl_denotation_repository.get_relation_repository()
-    assert isinstance(relations, database.RelationRepository)
-    assert isinstance(retained_query, database.RelationView)
-    assert isinstance(retained_query.index(), database.RelationIndex)
-    assert all(isinstance(row, database.RelationRow) for row in retained_query)
+    assert isinstance(relations, formalism.RelationRepository)
+    assert isinstance(retained_query, formalism.RelationView)
+    assert isinstance(retained_query.index(), formalism.RelationIndex)
+    assert all(isinstance(row, formalism.RelationRow) for row in retained_query)
     assert all(
         isinstance(repository.get_object(ObjectIndex(object_)), Object) for object_ in _row_values(retained_query)
     )

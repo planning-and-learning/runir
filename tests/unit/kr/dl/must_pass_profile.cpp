@@ -14,7 +14,7 @@
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/detail/evaluation_helpers.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <yggdrasil/database/syntax/query_repository.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/distance_evaluation.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include "runir/kr/dl/datas.hpp"

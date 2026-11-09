@@ -13,7 +13,7 @@
 #include <vector>
 #include <boost/mp11.hpp>
 #include <urd/elements/flat.hpp>
-#include <yggdrasil/database/declarations.hpp>
+#include <tyr/datalog/lifted/database/declarations.hpp>
 #include <yggdrasil/formalism/relation_view.hpp>
 
 namespace runir::kr::dl::semantics
@@ -55,7 +55,7 @@ template<CategoryTag Category>
 using BorrowedDenotationView = urd::borrowed_view<Denotation<Category>, tyr::formalism::planning::Repository, urd::builder<Denotation<Category>>>;
 
 using ConceptDenotationView = DenotationView<ConceptTag>;
-using QueryDenotationView = ygg::database::RelationView;
+using QueryDenotationView = ygg::FreeRelationView;
 using DenotationRepositoryPtr = std::shared_ptr<DenotationRepository>;
 
 }

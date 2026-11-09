@@ -4,7 +4,7 @@
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <yggdrasil/database/syntax/query_repository.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <tyr/formalism/planning/parser.hpp>
 

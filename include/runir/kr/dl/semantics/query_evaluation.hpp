@@ -11,8 +11,8 @@
 #include <span>
 #include <tuple>
 #include <vector>
-#include <yggdrasil/database/semantics/generic_join.hpp>
-#include <yggdrasil/database/semantics/operations.hpp>
+#include <tyr/datalog/lifted/database/semantics/generic_join.hpp>
+#include <tyr/datalog/lifted/database/semantics/operations.hpp>
 
 namespace runir::kr::dl::semantics::detail
 {
@@ -58,7 +58,7 @@ void evaluate_query(urd::index_view<Query<Tag>, C> constructor, Context& context
             const auto lhs_static = constructor.get_lhs().is_static();
             const auto rhs_static = constructor.get_rhs().is_static();
             // Fully static joins already retain their complete result.
-            ygg::database::join(lhs,
+            tyr::datalog::database::join(lhs,
                                 rhs,
                                 data.plan,
                                 children.get_caches().get_static_join_indexes(),
@@ -67,31 +67,31 @@ void evaluate_query(urd::index_view<Query<Tag>, C> constructor, Context& context
                                 context.get_workspace().get_database_workspace());
         }
         else if constexpr (std::same_as<Tag, QueryUnionTag>)
-            ygg::database::union_(lhs, rhs, data.plan, result);
+            tyr::datalog::database::union_(lhs, rhs, data.plan, result);
         else
-            ygg::database::difference(lhs, rhs, data.plan, result);
+            tyr::datalog::database::difference(lhs, rhs, data.plan, result);
     }
     else if constexpr (std::same_as<Tag, QueryProjectTag>)
     {
         const auto child = evaluate<Kind>(constructor.get_arg(), children);
-        ygg::database::project(child, data.plan, result, context.get_workspace().get_database_workspace());
+        tyr::datalog::database::project(child, data.plan, result, context.get_workspace().get_database_workspace());
     }
     else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
     {
         const auto child = evaluate<Kind>(constructor.get_arg(), children);
-        ygg::database::select_equal_columns(child, data.plan, result);
+        tyr::datalog::database::select_equal_columns(child, data.plan, result);
     }
     else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
     {
         const auto child = evaluate<Kind>(constructor.get_arg(), children);
-        ygg::database::select_equal_value(child, data.plan, result);
+        tyr::datalog::database::select_equal_value(child, data.plan, result);
     }
     else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
     {
         urd::Store<urd::sequence<QueryDenotationView>> inputs;
         for (const auto arg : constructor.get_args())
             inputs.push_back(evaluate<Kind>(arg, children));
-        ygg::database::generic_join(inputs, data.plan, result, context.get_workspace().get_generic_join_workspace(data.plan));
+        tyr::datalog::database::generic_join(inputs, data.plan, result, context.get_workspace().get_generic_join_workspace(data.plan));
     }
     else if constexpr (std::same_as<Tag, QueryEmptyTag>)
     {

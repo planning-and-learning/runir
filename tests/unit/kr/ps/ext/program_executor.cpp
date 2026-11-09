@@ -13,7 +13,7 @@
 #include <limits>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <yggdrasil/database/syntax/query_repository.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation.hpp>
 #include <runir/kr/ps/ext/detail/search_path.hpp>
 #include <runir/kr/ps/ext/detail/successor_expander_impl.hpp>

@@ -53,11 +53,11 @@ alone does not transfer the referenced storage.
 
 `n_distance` is the minimum distance from any source to any target over the edges, or
 `uint_t`'s maximum if no target is reachable. Its value equals
-`ygg::database::min_distance` over the fully evaluated arguments.
+`tyr::datalog::database::min_distance` over the fully evaluated arguments.
 
 **Role edges** are a relation. Full evaluation searches it with
-`ygg::database::MinDistance`. Incremental evaluation maintains per-source distances over
-the materialized edges (`ygg::database::incremental::SourceMinDistance`, Ramalingam & Reps).
+`tyr::datalog::database::MinDistance`. Incremental evaluation maintains per-source distances over
+the materialized edges (`tyr::datalog::database::incremental::SourceMinDistance`, Ramalingam & Reps).
 
 **Query edges** are never materialized:
 - `translations/ygg_query.hpp` translates the edge query into a yggdrasil query whose
@@ -66,9 +66,9 @@ the materialized edges (`ygg::database::incremental::SourceMinDistance`, Ramalin
   identities and complements never become rows. The same translator serves the query
   optimizer, without this rewrite.
 - yggdrasil evaluates the edges on demand with some columns bound: a vertex's successors,
-  its predecessors, or one edge. Full evaluation uses `ygg::database::MinDistance`, which
+  its predecessors, or one edge. Full evaluation uses `tyr::datalog::database::MinDistance`, which
   computes from the current state alone. Incremental evaluation uses
-  `ygg::database::incremental::MinDistance`, which keeps its search tree across states.
+  `tyr::datalog::database::incremental::MinDistance`, which keeps its search tree across states.
   Their headers describe the method: A* with a backward frontier grown under Pohl's
   cardinality rule, and GAA*/MPGAA* learning, path reuse and repair while the targets
   stay the same.
@@ -79,7 +79,7 @@ the materialized edges (`ygg::database::incremental::SourceMinDistance`, Ramalin
 (`semantics/heuristics/projection.hpp`): h(v) = maxᵢ hᵢ(v[i]) over one database per
 vertex column i.
 - Each database is built from the relaxation of the translated edge query projected onto (i, k + i),
-  with only the static slots known (`ygg::database::relax`, with its translation table in
+  with only the static slots known (`tyr::datalog::database::relax`, with its translation table in
   `syntax/translations/relaxation.hpp`). Relaxing each projection eliminates the other variables
   early, as projections of pattern databases do.
 - The relaxation is evaluated once by yggdrasil (`optimize` + `QueryEvaluator`) over the static
@@ -212,8 +212,8 @@ Other child results can remain in scratch storage.
 
 `DenotationRepository::get_relation_repository()` exposes its Yggdrasil relation
 storage of typed object indices. Python exposes it as
-`pyyggdrasil.database.RelationRepository`, and query results as
-`pyyggdrasil.database.RelationView`. Query result identity consists of
+`pyyggdrasil.formalism.RelationRepository`, and query results as
+`pyyggdrasil.formalism.RelationView`. Query result identity consists of
 the ordered numeric column schema and row set. Equal schemas and rows share a result even when different constructor
 repositories produced them; variable names remain on the query expressions.
 Inserting the same rows in another order produces the same identity. Canonical

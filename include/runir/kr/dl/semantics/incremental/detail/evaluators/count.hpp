@@ -27,7 +27,7 @@ struct CountEvaluator
     {
         value.set(ygg::to_uint_t(std::visit([&](auto index) { return graph.cardinality(index); }, child)));
     }
-    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     {
         value.set(std::visit(
             [&](auto index)

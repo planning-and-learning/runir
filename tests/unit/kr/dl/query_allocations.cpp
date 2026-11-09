@@ -14,7 +14,7 @@
 #include <new>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <yggdrasil/database/syntax/query_repository.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/incremental/delta.hpp>
 #include <runir/kr/dl/semantics/incremental/detail/atomic_query.hpp>
 #include <runir/kr/dl/semantics/incremental/evaluation.hpp>
@@ -35,7 +35,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
-#include <yggdrasil/database/semantics/incremental/projection.hpp>
+#include <tyr/datalog/lifted/database/semantics/incremental/projection.hpp>
 
 // This executable links urd::count_allocations, which replaces the C++ allocation functions only. That covers the
 // default std/GTL allocators and urd's containers, including aligned allocations. It does not intercept direct
@@ -139,10 +139,10 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
     const auto query = std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::index_view<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant()).get_arg());
     const auto projected = std::get<urd::index_view<kr::dl::Query<kr::dl::QueryProjectTag>, runir::kr::dl::ConstructorRepository>>(query.get_variant());
     const auto atomic = std::get<urd::index_view<kr::dl::Query<kr::dl::AtomicStateTag<Fluent>>, runir::kr::dl::ConstructorRepository>>(projected.get_arg().get_variant());
-    const auto layer = ygg::database::Repository();
+    const auto layer = ygg::FreeRelationRepository();
     auto leaf = kr::dl::semantics::incremental::detail::AtomicQueryEvaluator<Fluent>(layer, atomic);
-    auto projection = ygg::database::incremental::ProjectionEvaluator(layer, projected.data().plan);
-    auto workspace = ygg::database::Workspace {};
+    auto projection = tyr::datalog::database::incremental::ProjectionEvaluator(layer, projected.data().plan);
+    auto workspace = tyr::datalog::database::Workspace {};
     leaf.initialize<tyr::GroundTag>(initial.get_state());
     projection.initialize(leaf.get_result(), workspace);
     ASSERT_EQ(leaf.get_result().size(), 4);
@@ -367,7 +367,7 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
             std::visit([&](auto expression) { (void) state.evaluate(graph.get_index(expression)); }, root);
     };
     initialize();
-    auto workspace = ygg::database::Workspace {};
+    auto workspace = tyr::datalog::database::Workspace {};
     // Enters state `target_index` by `delta`. Every read root is updated from the delta: get_delta(), delta() and changed()
     // throw otherwise.
     const auto apply = [&](const auto& delta, size_t target_index, size_t members, size_t register_members)

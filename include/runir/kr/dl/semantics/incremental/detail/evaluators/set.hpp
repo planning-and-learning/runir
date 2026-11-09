@@ -23,7 +23,7 @@ struct UnarySetEvaluator
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     { initialize_set(Tag {}, value, graph.result(child), graph.change(child), graph.set_workspace()); }
-    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     { update_set(Tag {}, value, graph.result(child), graph.change(child), graph.set_workspace()); }
 };
 
@@ -38,7 +38,7 @@ struct BinarySetEvaluator
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     { initialize_set(Tag {}, value, graph.result(lhs), graph.change(lhs), graph.result(rhs), graph.change(rhs), graph.set_workspace()); }
-    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     { update_set(Tag {}, value, graph.result(lhs), graph.change(lhs), graph.result(rhs), graph.change(rhs), graph.set_workspace()); }
 };
 

@@ -22,8 +22,8 @@
 #include <vector>
 #include <yggdrasil/core/config.hpp>
 #include <urd/config.hpp>
-#include <yggdrasil/database/semantics/incremental/distance.hpp>
-#include <yggdrasil/database/semantics/incremental/min_distance.hpp>
+#include <tyr/datalog/lifted/database/semantics/incremental/distance.hpp>
+#include <tyr/datalog/lifted/database/semantics/incremental/min_distance.hpp>
 
 namespace runir::kr::dl::semantics::incremental::detail
 {
@@ -45,7 +45,7 @@ struct RoleEdgeDistanceEvaluator
     QueryEvaluationIndex sources;
     QueryEvaluationIndex edges;
     QueryEvaluationIndex targets;
-    ygg::database::incremental::SourceMinDistance operation;
+    tyr::datalog::database::incremental::SourceMinDistance operation;
     DenotationState<NumericalTag> value;
 
     RoleEdgeDistanceEvaluator(NumericalView<DistanceTag> expression, GraphBuilder<Kind>& graph, urd::Store<urd::sequence<ygg::uint_t>>& dependencies) :
@@ -61,7 +61,7 @@ struct RoleEdgeDistanceEvaluator
         operation.initialize(graph.result(sources), graph.result(edges), graph.result(targets));
         value.set(operation.get_result());
     }
-    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     {
         operation.update(graph.change(sources).change(), graph.change(edges).change(), graph.change(targets).change());
         value.set(operation.get_result());
@@ -69,12 +69,12 @@ struct RoleEdgeDistanceEvaluator
 };
 
 /// Distances over query edges: the graph maintains the arguments and the edge query's input slots, and
-/// ygg::database::incremental::MinDistance evaluates the edges on demand from them, so the edge relation, which for
+/// tyr::datalog::database::incremental::MinDistance evaluates the edges on demand from them, so the edge relation, which for
 /// pair vertices grows with |vertices| x degree, is never materialized.
 template<tyr::TaskKind Kind>
 struct QueryEdgeDistanceEvaluator
 {
-    using Distance = ygg::database::incremental::MinDistance<heuristics::ProjectionHeuristic>;
+    using Distance = tyr::datalog::database::incremental::MinDistance<heuristics::ProjectionHeuristic>;
 
     NumericalView<DistanceTag> expression;
     QueryView<> edges;  ///< The edge argument of expression.
@@ -114,7 +114,7 @@ struct QueryEdgeDistanceEvaluator
     }
     /// The children's deltas are exact (IncrementalEvaluation): they are the slots' changes, unchanged arguments and
     /// slots leave the distance unchanged, and unchanged targets leave the search and the heuristic's tables valid.
-    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     {
         slot_changed.clear();
         for (const auto slot : slots)
@@ -131,8 +131,8 @@ struct QueryEdgeDistanceEvaluator
                 // The slot's change as SlotChanges reads it: views `added` and `removed`.
                 struct Change
                 {
-                    ygg::database::BuilderRelationView added;
-                    ygg::database::BuilderRelationView removed;
+                    ygg::FreeBuilderRelationView added;
+                    ygg::FreeBuilderRelationView removed;
                 };
                 const auto [added, removed] = graph.change(slots[slot]).change();
                 return Change { added, removed };

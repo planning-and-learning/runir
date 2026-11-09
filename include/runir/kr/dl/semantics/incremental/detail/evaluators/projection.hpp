@@ -12,7 +12,7 @@
 
 #include <concepts>
 #include <span>
-#include <yggdrasil/database/semantics/incremental/projection.hpp>
+#include <tyr/datalog/lifted/database/semantics/incremental/projection.hpp>
 
 namespace runir::kr::dl::semantics::incremental::detail
 {
@@ -21,10 +21,10 @@ template<tyr::TaskKind Kind, CategoryTag Category>
 struct ProjectionEvaluator
 {
     QueryEvaluationIndex child;
-    ygg::database::incremental::ProjectionEvaluator operation;
+    tyr::datalog::database::incremental::ProjectionEvaluator operation;
     DenotationState<Category> value;
 
-    ProjectionEvaluator(const ygg::database::Repository& layer, QueryEvaluationIndex child_, const ygg::database::ProjectionPlan& plan) :
+    ProjectionEvaluator(const ygg::FreeRelationRepository& layer, QueryEvaluationIndex child_, const tyr::datalog::database::ProjectionPlan& plan) :
         child(child_),
         operation(layer, plan)
     {
@@ -54,7 +54,7 @@ struct ProjectionEvaluator
         for (size_t i = 0; i < rows.size(); ++i)
             set_row(builder, rows.row(i), true);
     }
-    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace& workspace)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace& workspace)
     {
         operation.update(graph.change(child).change(), workspace);
         const auto [added, removed] = operation.get_delta().change();

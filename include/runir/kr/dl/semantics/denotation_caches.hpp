@@ -11,8 +11,8 @@
 #include <urd/repr/maps/unordered_flat_map.hpp>
 #include <urd/repr/values/unordered_flat_set.hpp>
 #include <urd/store.hpp>
-#include <yggdrasil/database/semantics/join_index.hpp>
-#include <yggdrasil/database/semantics/relation_view.hpp>
+#include <tyr/datalog/lifted/database/semantics/join_index.hpp>
+#include <tyr/datalog/lifted/database/semantics/relation_view.hpp>
 
 namespace runir::kr::dl::semantics
 {
@@ -41,7 +41,7 @@ class DenotationCaches
     };
 
     std::array<Partition, 2> m_partitions;
-    ygg::database::JoinIndexCache m_static_join_indexes;
+    tyr::datalog::database::JoinIndexCache m_static_join_indexes;
 
 public:
     DenotationCaches() = default;

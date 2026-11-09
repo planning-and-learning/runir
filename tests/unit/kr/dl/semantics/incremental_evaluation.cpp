@@ -14,7 +14,7 @@
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <yggdrasil/database/syntax/query_repository.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_policy.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include <runir/kr/dl/semantics/incremental/evaluation.hpp>
@@ -199,7 +199,7 @@ void check_incremental_evaluation()
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto builder = kr::dl::semantics::Builder {};
-    auto workspace = ygg::database::Workspace {};
+    auto workspace = tyr::datalog::database::Workspace {};
     auto register_data = std::array<urd::data<kr::dl::semantics::RegisterValues>, 3> {};
     for (auto& data : register_data)
     {

@@ -21,8 +21,8 @@
 #include <utility>
 #include <vector>
 #include <boost/mp11.hpp>
-#include <yggdrasil/database/syntax/query.hpp>
-#include <yggdrasil/database/syntax/translations/relaxation.hpp>
+#include <tyr/datalog/lifted/database/syntax/query.hpp>
+#include <tyr/datalog/lifted/database/syntax/translations/relaxation.hpp>
 
 namespace runir::kr::dl
 {
@@ -117,7 +117,7 @@ inline bool is_complement_leaf(QueryView<> query)
 class QueryTranslator
 {
     using DlQuery = QueryView<>;
-    using YggQuery = ygg::database::QueryView<>;
+    using YggQuery = tyr::datalog::database::QueryView<>;
     using Label = urd::index<ygg::Column>;
 
 public:
@@ -134,10 +134,10 @@ public:
     YggQuery project(YggQuery query, std::span<const Label> labels);
 
     /// The relaxations of translated queries whose input slots are known only where `known(slot)` holds
-    /// (ygg::database::relax); built in this translator's repository.
+    /// (tyr::datalog::database::relax); built in this translator's repository.
     template<std::predicate<size_t> Known>
-    ygg::database::Relaxation relax(std::span<const YggQuery> roots, Known&& known)
-    { return ygg::database::relax(roots, std::forward<Known>(known), m_repository, m_builder); }
+    tyr::datalog::database::Relaxation relax(std::span<const YggQuery> roots, Known&& known)
+    { return tyr::datalog::database::relax(roots, std::forward<Known>(known), m_repository, m_builder); }
 
     /// The expression of each input slot, by slot.
     const urd::Store<urd::sequence<QuerySlot>>& get_slots() const noexcept { return m_slots; }
@@ -146,12 +146,12 @@ public:
 
 private:
     template<typename Tag>
-    YggQuery insert(urd::data<ygg::database::Query<Tag>>& data)
-    { return ygg::database::insert_query(m_repository, m_builder, data); }
+    YggQuery insert(urd::data<tyr::datalog::database::Query<Tag>>& data)
+    { return tyr::datalog::database::insert_query(m_repository, m_builder, data); }
     template<typename Tag>
     YggQuery binary(YggQuery lhs, YggQuery rhs)
     {
-        auto out = ygg::database::checkout<ygg::database::Query<Tag>>(m_builder);
+        auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<Tag>>(m_builder);
         out->lhs = lhs.index();
         out->rhs = rhs.index();
         return insert(*out);
@@ -159,7 +159,7 @@ private:
     template<typename Tag>
     YggQuery unary(YggQuery arg, std::span<const Label> labels)
     {
-        auto out = ygg::database::checkout<ygg::database::Query<Tag>>(m_builder);
+        auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<Tag>>(m_builder);
         out->arg = arg.index();
         out->labels.set(labels.begin(), labels.end());
         return insert(*out);
@@ -179,8 +179,8 @@ private:
     template<typename Tag>
     YggQuery translate_concrete(DlQuery query, QueryView<Tag> concrete);
 
-    ygg::database::QueryRepository m_repository;
-    ygg::database::QueryBuilder m_builder;
+    tyr::datalog::database::QueryRepository m_repository;
+    tyr::datalog::database::QueryBuilder m_builder;
     bool m_rewrite_complements;
     urd::Store<urd::map<DlQuery, YggQuery>> m_translated;
     urd::Store<urd::map<DlQuery, YggQuery>> m_arguments;  ///< The slot of each complemented leaf's argument.

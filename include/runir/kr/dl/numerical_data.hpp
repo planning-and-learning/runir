@@ -5,7 +5,7 @@
 
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/database/semantics/distance_plan.hpp>
+#include <tyr/datalog/lifted/database/semantics/distance_plan.hpp>
 
 namespace urd
 {
@@ -40,7 +40,7 @@ struct data<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::d
     using Base::Base;
 
     /// Derived on insertion from the argument schemas; not identifying.
-    ygg::database::DistancePlan plan {};
+    tyr::datalog::database::DistancePlan plan {};
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::lhs, &data::mid, &data::rhs, &data::plan> {}; }
 };

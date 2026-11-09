@@ -31,7 +31,7 @@ template<CategoryTag Category>
 { return node(index).get_result(repository()); }
 
 template<tyr::TaskKind Kind>
-ygg::database::BuilderRelationView EvaluationGraph<Kind>::result(QueryEvaluationIndex index) const
+ygg::FreeBuilderRelationView EvaluationGraph<Kind>::result(QueryEvaluationIndex index) const
 { return node(index).get_result(); }
 
 template<tyr::TaskKind Kind>
@@ -40,7 +40,7 @@ template<ConceptOrRoleTag Category>
 { return node(index).get_delta(); }
 
 template<tyr::TaskKind Kind>
-const ygg::database::incremental::Delta& EvaluationGraph<Kind>::change(QueryEvaluationIndex index) const
+const tyr::datalog::database::incremental::Delta& EvaluationGraph<Kind>::change(QueryEvaluationIndex index) const
 { return node(index).get_delta(); }
 
 template<tyr::TaskKind Kind>
@@ -135,7 +135,7 @@ QueryEvaluationIndex EvaluationGraph<Kind>::prepare(QueryView<> expression)
 
 template<tyr::TaskKind Kind>
 template<StateEvaluationContextConcept<Kind> Context>
-void IncrementalEvaluation<Kind>::demand(ygg::uint_t index, Context& context, const Delta* delta, ygg::database::Workspace* workspace)
+void IncrementalEvaluation<Kind>::demand(ygg::uint_t index, Context& context, const Delta* delta, tyr::datalog::database::Workspace* workspace)
 {
     if (m_nodes.at(index).epoch == m_epoch)
         return;
