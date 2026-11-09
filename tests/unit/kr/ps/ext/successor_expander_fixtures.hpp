@@ -204,9 +204,9 @@ void expect_borrowed_query_evaluation()
     {
         const auto rows = kr::ps::evaluate<Kind>(feature, state_context);
         ASSERT_EQ(rows.size(), 1);
-        EXPECT_EQ(kr::ps::evaluate<Kind>(feature, state_context).data().row_set, rows.data().row_set);
+        EXPECT_TRUE(std::ranges::equal(kr::ps::evaluate<Kind>(feature, state_context).data().rows, rows.data().rows));
         const auto& cached = environment.get_dl_caches().get_queries(false).at(query);
-        EXPECT_EQ(rows.data().row_set, cached.data().row_set);
+        EXPECT_TRUE(std::ranges::equal(rows.data().rows, cached.data().rows));
         EXPECT_EQ(rows.columns().data(), cached.columns().data());
         EXPECT_TRUE(std::ranges::equal(rows.columns(), query.get_schema()));
 
@@ -256,7 +256,7 @@ void expect_borrowed_query_evaluation()
         environment.reset_target();
         EXPECT_TRUE(environment.get_dl_caches().get_queries(false).contains(query));
         EXPECT_EQ(rows.size(), 1);
-        EXPECT_EQ(kr::ps::evaluate<Kind>(feature, state_context).data().row_set, rows.data().row_set);
+        EXPECT_TRUE(std::ranges::equal(kr::ps::evaluate<Kind>(feature, state_context).data().rows, rows.data().rows));
     }
     environment.reset_source();
     EXPECT_TRUE(environment.get_dl_caches().get_queries(false).empty());

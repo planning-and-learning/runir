@@ -256,7 +256,7 @@ auto evaluate_relation(urd::index_view<Constructor<Category>, C> argument, std::
     auto& relations = context.get_denotation_repository().get_relation_repository();
     auto result = relations.template get_relation_builder<ygg::Schema>(columns);
     insert_denotation_rows<Category>(denotation, *result);
-    return insert(context.get_denotation_repository(), *result).first;
+    return insert(context.get_denotation_repository(), *result, context.get_builder()).first;
 }
 
 }  // namespace runir::kr::dl::semantics::detail

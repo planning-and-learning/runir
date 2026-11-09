@@ -433,9 +433,9 @@ auto evaluate_impl(urd::index_view<Query<QueryRenameTag>, C> constructor, Contex
     const auto child = evaluate<Kind>(constructor.get_arg(), context);
     auto static_output = context.for_result(true);
     auto dynamic_output = context.for_result(false);
-    auto& static_results = static_output.get_denotation_repository().get_relation_repository();
-    auto& results = &child.context() == &static_results ? static_results : dynamic_output.get_denotation_repository().get_relation_repository();
-    return results.rename(child, constructor.get_schema());
+    auto& static_denotations = static_output.get_denotation_repository();
+    auto& denotations = &child.context() == &static_denotations.get_relation_repository() ? static_denotations : dynamic_output.get_denotation_repository();
+    return rename(denotations, child, constructor.get_schema(), context.get_builder());
 }
 
 template<tyr::TaskKind Kind, typename Tag, typename C, StateEvaluationContextConcept<Kind> Context>
@@ -445,7 +445,7 @@ auto evaluate_impl(urd::index_view<Query<Tag>, C> constructor, Context& context)
     auto& relations = context.get_denotation_repository().get_relation_repository();
     auto result = relations.template get_relation_builder<ygg::Schema>(constructor.get_schema());
     detail::evaluate_query<Kind>(constructor, context, *result);
-    return insert(context.get_denotation_repository(), *result).first;
+    return insert(context.get_denotation_repository(), *result, context.get_builder()).first;
 }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>

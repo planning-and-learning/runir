@@ -4,6 +4,9 @@
 #include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 
+#include <cstddef>
+#include <ranges>
+#include <span>
 #include <stdexcept>
 #include <utility>
 
@@ -72,9 +75,40 @@ template<CategoryTag Category>
     return interned;
 }
 
-/// Publish typed query rows in the denotation repository's relation repository, which owns them.
-[[nodiscard]] inline std::pair<QueryDenotationView, bool> insert(DenotationRepository& repository, urd::builder<ygg::Relation<ygg::Schema>>& source)
-{ return repository.get_relation_repository().insert(source); }
+/// Publish typed query rows in the denotation repository's relation repository, which owns them: each row, then the
+/// columns, then the relation, in scratch records from `builder`.
+[[nodiscard]] inline std::pair<QueryDenotationView, bool> insert(DenotationRepository& repository, const urd::builder<ygg::Relation<ygg::Schema>>& source, Builder& builder)
+{
+    auto& relations = repository.get_relation_repository();
+    auto relation = checkout<ygg::Relation<ygg::Schema>>(builder);
+    relation->pool = relations.schema(source.columns() | std::views::transform(&ygg::ColumnLayout::type));
+    auto row = checkout<ygg::Row<ygg::Schema>>(builder);
+    row->relation = relation->pool;
+    const auto rows = relations.view(source);
+    for (std::size_t i = 0; i < rows.size(); ++i)
+    {
+        const auto values = rows.row(i).get_values();
+        row->values.set(values.begin(), values.end());
+        relation->rows.push_back(relations.insert(*row).first.data().row);
+    }
+    auto columns = checkout<ygg::Columns>(builder);
+    columns->values.set(source.columns().begin(), source.columns().end());
+    relation->columns = relations.insert(*columns).first.index();
+    return relations.insert(*relation);
+}
+/// `source` under new columns (the same pool and rows) in the denotation repository's relation repository, in scratch
+/// records from `builder`.
+[[nodiscard]] inline QueryDenotationView rename(DenotationRepository& repository, QueryDenotationView source, std::span<const ygg::ColumnLayout> labels, Builder& builder)
+{
+    auto& relations = repository.get_relation_repository();
+    auto columns = checkout<ygg::Columns>(builder);
+    columns->values.set(labels.begin(), labels.end());
+    auto relation = checkout<ygg::Relation<ygg::Schema>>(builder);
+    relation->pool = source.data().pool;
+    relation->rows.set(source.data().rows.begin(), source.data().rows.end());
+    relation->columns = relations.insert(*columns).first.index();
+    return relations.insert(*relation).first;
+}
 
 /// Register object identities remain tied to the same planning formalism.
 [[nodiscard]] inline auto copy(BorrowedRegisterValuesView source, const CopyContext& context)

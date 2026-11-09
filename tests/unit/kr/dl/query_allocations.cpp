@@ -454,6 +454,7 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto& repository = denotations.get_relation_repository();
+    auto dl_builder = kr::dl::semantics::Builder();
     const auto columns = std::array { ygg::ColumnLayout { ColumnIndex(0), ygg::type_id<urd::index<tyr::formalism::Object>> }, ygg::ColumnLayout { ColumnIndex(1), ygg::type_id<urd::index<tyr::formalism::Object>> } };
     const auto renamed = std::array { ygg::ColumnLayout { ColumnIndex(2), ygg::type_id<urd::index<tyr::formalism::Object>> }, ygg::ColumnLayout { ColumnIndex(3), ygg::type_id<urd::index<tyr::formalism::Object>> } };
     auto result = repository.get_relation_builder<ygg::Schema>(columns);
@@ -464,10 +465,10 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
     const auto schema_capacity = result->memory_usage() - urd::memory_usage(result->storage());
     const auto* row_buffer = repository.view(*result).row(0).get_values().data();
     const auto row_capacity = urd::memory_usage(result->storage());
-    const auto stored = repository.insert(*result).first;
+    const auto stored = kr::dl::semantics::insert(denotations, *result, dl_builder).first;
     const auto* stored_schema_buffer = stored.columns().data();
     const auto* stored_row_buffer = stored.row(0).get_values().data();
-    const auto* stored_row_indices = repository[stored.data().row_set].rows.data();
+    const auto* stored_row_indices = stored.data().rows.data();
     result = {};
 
     bool reused = true;
@@ -485,10 +486,10 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
         for (ygg::uint_t i = 0; i < 32; ++i)
             next->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(i), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(i + 1)) });
         reused &= repository.view(*next).row(0).get_values().data() == row_buffer;
-        const auto value = repository.insert(*next).first;
+        const auto value = kr::dl::semantics::insert(denotations, *next, dl_builder).first;
         reused &= value.columns().data() == stored_schema_buffer;
         reused &= value.row(0).get_values().data() == stored_row_buffer;
-        reused &= repository[value.data().row_set].rows.data() == stored_row_indices;
+        reused &= value.data().rows.data() == stored_row_indices;
     }
     const auto counts = urd::testing::counts();
     EXPECT_TRUE(reused);
@@ -503,6 +504,7 @@ TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto& repository = denotations.get_relation_repository();
+    auto dl_builder = kr::dl::semantics::Builder();
     const auto columns = std::array { ygg::ColumnLayout { ColumnIndex(0), ygg::type_id<urd::index<tyr::formalism::Object>> }, ygg::ColumnLayout { ColumnIndex(1), ygg::type_id<urd::index<tyr::formalism::Object>> } };
     const auto aliases = std::array { ygg::ColumnLayout { ColumnIndex(100), ygg::type_id<urd::index<tyr::formalism::Object>> }, ygg::ColumnLayout { ColumnIndex(101), ygg::type_id<urd::index<tyr::formalism::Object>> } };
     bool valid = true;
@@ -516,15 +518,15 @@ TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
             auto owner = repository.get_relation_builder<ygg::Schema>(columns);
             owner->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(object.value), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(1)) });
             owner->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(object.value), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(2)) });
-            const auto value = repository.insert(*owner).first;
-            const auto alias = repository.rename(value, aliases);
+            const auto value = kr::dl::semantics::insert(denotations, *owner, dl_builder).first;
+            const auto alias = kr::dl::semantics::rename(denotations, value, aliases, dl_builder);
             valid &= value.size() == 2 && alias.size() == 2 && ObjectIndex(ygg::decode_value<ygg::uint_t>(value.row(0).value(0))) == object;
-            valid &= value.data().row_set == alias.data().row_set;
+            valid &= std::ranges::equal(value.data().rows, alias.data().rows);
             auto duplicate = repository.get_relation_builder<ygg::Schema>(columns);
             duplicate->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(object.value), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(2)) });
             duplicate->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(object.value), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(1)) });
-            valid &= repository.insert(*duplicate).first == value;
-            valid &= repository.rename(value, aliases) == alias;
+            valid &= kr::dl::semantics::insert(denotations, *duplicate, dl_builder).first == value;
+            valid &= kr::dl::semantics::rename(denotations, value, aliases, dl_builder) == alias;
         }
         valid &= repository.symbols().template size<ygg::Relation<ygg::Schema>>() == 1024;
     };

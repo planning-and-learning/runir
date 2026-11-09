@@ -16,6 +16,7 @@ from pyrunir.kr.ps.base.dl import parse_sketch
 from pyrunir.kr.ps.ext.dl import parse_program
 from pyrunir.kr.uns.dl import parse_classifier
 from pyrunir.serialization import register_table, serialize, table
+from relation_utils import rename
 
 
 def _row_values(rows: formalism.RelationView) -> list[int]:
@@ -125,7 +126,7 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
     assert all(
         isinstance(repository.get_object(ObjectIndex(object_)), Object) for object_ in _row_values(retained_query)
     )
-    assert relations.rename(retained_query, list(retained_query.columns())) == retained_query
+    assert rename(relations, retained_query, list(retained_query.columns())) == retained_query
     retained_rows = {tuple(row) for row in retained_query}
     storage.reset_dynamic()
     assert expression.evaluate(evaluation_context).get() is True
@@ -134,8 +135,6 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
     assert {tuple(row) for row in retained_query} == retained_rows
     assert expression.evaluate(evaluation_context).get() is True
     ordinary_query = query.evaluate(evaluation_context)
-    with pytest.raises(ValueError, match="source in this repository"):
-        relations.rename(ordinary_query, list(ordinary_query.columns()))
     del evaluation_context, retained_context, persistent_caches, storage, repository, relations, task, state, bindings
     gc.collect()
     assert retained.get() is True

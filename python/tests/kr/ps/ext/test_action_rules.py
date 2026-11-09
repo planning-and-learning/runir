@@ -35,6 +35,7 @@ from pyrunir.kr.dl import semantics
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext import dl
 from pyrunir.serialization import register_table, serialize, table
+from relation_utils import rename
 
 Successor: TypeAlias = ground.LabeledNode | lifted.LabeledNode
 T = TypeVar("T")
@@ -372,7 +373,7 @@ def _retained(
 
 def _renamed(relation: formalism.RelationView, relations: formalism.RelationRepository) -> formalism.RelationView:
     columns = list(relation.columns())[::-1]
-    renamed = relations.rename(relation, columns)
+    renamed = rename(relations, relation, columns)
     assert isinstance(renamed, formalism.RelationView)
     assert list(renamed.columns()) == columns
     return renamed

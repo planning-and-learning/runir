@@ -745,19 +745,19 @@ void check_cached_queries()
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(projection, context).value().count(), 3);
 
     const auto held = kr::dl::semantics::evaluate<tyr::GroundTag>(renamed, context);
-    const auto held_storage = held.data().row_set;
+    const auto held_storage = std::vector(held.data().rows.begin(), held.data().rows.end());
     const auto* held_columns = held.columns().data();
     EXPECT_EQ(held.columns()[0].label, ColumnIndex(ygg::uint_t(renamed_column.value)));
     EXPECT_NE(held_columns, renamed.get_schema().data());
     EXPECT_TRUE(std::ranges::equal(held.columns(), renamed.get_schema()));
-    EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).data().row_set, held_storage);
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).data().rows, held_storage));
     auto nested_rename_data = rename_data;
     nested_rename_data.arg = renamed.index();
     nested_rename_data.columns[0] = x;
     query_data.variant = kr::dl::insert(repo, nested_rename_data).first.index();
     const auto nested = kr::dl::semantics::evaluate<tyr::GroundTag>(kr::dl::insert(repo, query_data).first, context);
     EXPECT_EQ(nested.columns()[0].label, ColumnIndex(ygg::uint_t(x.value)));
-    EXPECT_EQ(nested.data().row_set, held_storage);
+    EXPECT_TRUE(std::ranges::equal(nested.data().rows, held_storage));
     EXPECT_EQ(nested.size(), held.size());
     EXPECT_EQ(held.columns()[0].label, ColumnIndex(ygg::uint_t(renamed_column.value)));
     // Owned labels and shared rows remain valid during repository/cache growth.
@@ -769,7 +769,7 @@ void check_cached_queries()
         query_data.variant = kr::dl::insert(repo, rename_data).first.index();
         const auto extra_query = kr::dl::insert(repo, query_data).first;
         const auto other = kr::dl::semantics::evaluate<tyr::GroundTag>(extra_query, context);
-        EXPECT_EQ(other.data().row_set, held_storage);
+        EXPECT_TRUE(std::ranges::equal(other.data().rows, held_storage));
         EXPECT_EQ(held.size(), 3);
         EXPECT_EQ(held.columns().data(), held_columns);
         EXPECT_EQ(held.columns()[0].label, ColumnIndex(ygg::uint_t(renamed_column.value)));
@@ -797,9 +797,9 @@ void check_cached_queries()
     EXPECT_EQ(cached.size(), 3);
     EXPECT_EQ(other_cached.size(), 3);
     EXPECT_NE(cached, other_cached);
-    EXPECT_EQ(cached.data().row_set, other_cached.data().row_set);
-    EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).data().row_set, cached.data().row_set);
-    EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(other_query, context).data().row_set, other_cached.data().row_set);
+    EXPECT_TRUE(std::ranges::equal(cached.data().rows, other_cached.data().rows));
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).data().rows, cached.data().rows));
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(other_query, context).data().rows, other_cached.data().rows));
 
     // Clear invalidates the borrowed views; reevaluation reconstructs rows and schemas.
     storage.reset_all();
@@ -808,7 +808,7 @@ void check_cached_queries()
     const auto rebuilt = kr::dl::semantics::evaluate<tyr::GroundTag>(renamed, context);
     EXPECT_EQ(rebuilt.size(), 3);
     EXPECT_EQ(rebuilt.columns()[0].label, ColumnIndex(ygg::uint_t(renamed_column.value)));
-    EXPECT_EQ(rebuilt.data().row_set, kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).data().row_set);
+    EXPECT_TRUE(std::ranges::equal(rebuilt.data().rows, kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).data().rows));
     storage.reset_all();
     repo.clear();
 }
@@ -862,7 +862,7 @@ void check_query_cache_across_states()
     const auto goal_rows = kr::dl::semantics::evaluate<Kind>(goal, context);
     EXPECT_EQ(fixed_rows.size(), 2);
     EXPECT_EQ(goal_rows.size(), 1);
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(fixed, context).data().row_set, fixed_rows.data().row_set);
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(fixed, context).data().rows, fixed_rows.data().rows));
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(derived, context).size(), 4);
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(ready, context).size(), 1);
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(count, context).value(), 4);
@@ -897,8 +897,8 @@ void check_query_cache_across_states()
     EXPECT_TRUE(caches.template get<kr::dl::NumericalTag>(false).empty());
     EXPECT_TRUE(caches.get_queries(true).contains(fixed));
     EXPECT_TRUE(caches.template get<kr::dl::NumericalTag>(true).contains(fixed_count));
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(fixed, next).data().row_set, fixed_rows.data().row_set);
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(goal, next).data().row_set, goal_rows.data().row_set);
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(fixed, next).data().rows, fixed_rows.data().rows));
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(goal, next).data().rows, goal_rows.data().rows));
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(derived, next).size(), 3);
     EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(ready, next).empty());
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(count, next).value(), 3);
@@ -1016,7 +1016,7 @@ void check_query_cache_across_bindings()
     argument_values.concept_arguments[0] = b_set.index();
     auto rebound = make_bound();
     storage.reset_dynamic();
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(fixed, rebound).data().row_set, fixed_rows.data().row_set);
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(fixed, rebound).data().rows, fixed_rows.data().rows));
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(register_count, rebound).value(), 0);
     EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(argument, rebound).empty());
     EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(role_register, rebound).empty());
@@ -1493,9 +1493,9 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     const auto original_rows = kr::dl::semantics::evaluate<tyr::GroundTag>(query, context);
     const auto renamed_rows = kr::dl::semantics::evaluate<tyr::GroundTag>(renamed, context);
     const auto nested_rows = kr::dl::semantics::evaluate<tyr::GroundTag>(nested, context);
-    EXPECT_EQ(renamed_rows.data().row_set, original_rows.data().row_set);
-    EXPECT_EQ(nested_rows.data().row_set, original_rows.data().row_set);
-    EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(renamed, context).data().row_set, original_rows.data().row_set);
+    EXPECT_TRUE(std::ranges::equal(renamed_rows.data().rows, original_rows.data().rows));
+    EXPECT_TRUE(std::ranges::equal(nested_rows.data().rows, original_rows.data().rows));
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(renamed, context).data().rows, original_rows.data().rows));
     EXPECT_TRUE(std::ranges::equal(original_rows.columns(), query.get_schema()));
     EXPECT_TRUE(std::ranges::equal(renamed_rows.columns(), renamed.get_schema()));
     EXPECT_TRUE(std::ranges::equal(nested_rows.columns(), nested.get_schema()));
@@ -1520,7 +1520,7 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     const auto raw = repository->insert(raw_wrapper).first;
     EXPECT_FALSE(raw.is_static());
     const auto raw_rows = kr::dl::semantics::evaluate<tyr::GroundTag>(raw, context);
-    EXPECT_EQ(raw_rows.data().row_set, original_rows.data().row_set);
+    EXPECT_TRUE(std::ranges::equal(raw_rows.data().rows, original_rows.data().rows));
     EXPECT_TRUE(caches.get_queries(false).contains(raw));
 
     auto raw_nested_data = urd::data<kr::dl::Query<kr::dl::QueryRenameTag>>();
@@ -1531,7 +1531,7 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     const auto raw_nested = repository->insert(raw_nested_wrapper).first;
     EXPECT_FALSE(raw_nested.is_static());
     const auto raw_nested_rows = kr::dl::semantics::evaluate<tyr::GroundTag>(raw_nested, context);
-    EXPECT_EQ(raw_nested_rows.data().row_set, original_rows.data().row_set);
+    EXPECT_TRUE(std::ranges::equal(raw_nested_rows.data().rows, original_rows.data().rows));
     EXPECT_TRUE(std::ranges::equal(raw_nested_rows.columns(), raw_nested.get_schema()));
     EXPECT_TRUE(std::ranges::equal(raw_rows.columns(), raw.get_schema()));
     EXPECT_TRUE(std::ranges::equal(original_rows.columns(), query.get_schema()));
@@ -1544,12 +1544,12 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     const auto rebuilt_nested = kr::dl::semantics::evaluate<tyr::GroundTag>(raw_nested, context);
     EXPECT_EQ(rebuilt_nested.size(), 2);
     EXPECT_TRUE(std::ranges::equal(rebuilt_nested.columns(), raw_nested.get_schema()));
-    EXPECT_EQ(rebuilt_nested.data().row_set, kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).data().row_set);
+    EXPECT_TRUE(std::ranges::equal(rebuilt_nested.data().rows, kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).data().rows));
     EXPECT_TRUE(caches.get_queries(false).contains(raw_nested));
     const auto rebuilt = kr::dl::semantics::evaluate<tyr::GroundTag>(raw, context);
     EXPECT_EQ(rebuilt.size(), 2);
     EXPECT_TRUE(std::ranges::equal(rebuilt.columns(), raw.get_schema()));
-    EXPECT_EQ(rebuilt.data().row_set, kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).data().row_set);
+    EXPECT_TRUE(std::ranges::equal(rebuilt.data().rows, kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).data().rows));
     EXPECT_TRUE(caches.get_queries(false).contains(raw));
 }
 
@@ -1558,13 +1558,14 @@ TEST(RunirQueries, QueryResultIdentityIncludesOrderedSchemaAndUnorderedRows)
     const auto search = query_search_context<tyr::GroundTag>();
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto& repository = denotations.get_relation_repository();
+    auto dl_builder = kr::dl::semantics::Builder();
     using Row = std::array<ObjectIndex, 2>;
     const auto intern = [&](std::array<ColumnIndex, 2> columns, std::array<Row, 2> rows)
     {
         auto result = repository.get_relation_builder<ygg::Schema>(std::array { ygg::ColumnLayout { columns[0], ygg::type_id<urd::index<tyr::formalism::Object>> }, ygg::ColumnLayout { columns[1], ygg::type_id<urd::index<tyr::formalism::Object>> } });
         for (const auto& row : rows)
             result->insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(row[0].value), ygg::encode_value<ygg::uint_t>(row[1].value) });
-        return repository.insert(*result).first;
+        return kr::dl::semantics::insert(denotations, *result, dl_builder).first;
     };
     const auto columns = std::array<ColumnIndex, 2> { ColumnIndex(0), ColumnIndex(1) };
     const auto rows = std::array<Row, 2> { Row { ObjectIndex(2), ObjectIndex(3) }, Row { ObjectIndex(4), ObjectIndex(5) } };
@@ -1575,12 +1576,12 @@ TEST(RunirQueries, QueryResultIdentityIncludesOrderedSchemaAndUnorderedRows)
     EXPECT_EQ(repository.symbols().template size<ygg::Relation<ygg::Schema>>(), 2);
 
     auto renamed_columns = std::array { ygg::ColumnLayout { ColumnIndex(6), ygg::type_id<urd::index<tyr::formalism::Object>> }, ygg::ColumnLayout { ColumnIndex(7), ygg::type_id<urd::index<tyr::formalism::Object>> } };
-    const auto renamed = repository.rename(first, renamed_columns);
+    const auto renamed = kr::dl::semantics::rename(denotations, first, renamed_columns, dl_builder);
     renamed_columns[0].label = ColumnIndex(99);
     EXPECT_EQ(renamed.columns()[0].label, ColumnIndex(6));
-    EXPECT_EQ(renamed.data().row_set, first.data().row_set);
+    EXPECT_TRUE(std::ranges::equal(renamed.data().rows, first.data().rows));
     EXPECT_NE(renamed, first);
-    EXPECT_EQ(repository.rename(renamed, std::array { ygg::ColumnLayout { columns[0], ygg::type_id<urd::index<tyr::formalism::Object>> }, ygg::ColumnLayout { columns[1], ygg::type_id<urd::index<tyr::formalism::Object>> } }), first);
+    EXPECT_EQ(kr::dl::semantics::rename(denotations, renamed, std::array { ygg::ColumnLayout { columns[0], ygg::type_id<urd::index<tyr::formalism::Object>> }, ygg::ColumnLayout { columns[1], ygg::type_id<urd::index<tyr::formalism::Object>> } }, dl_builder), first);
 }
 
 TEST(RunirQueries, PersistentRenameSurvivesIntermediateResetAndConstructorRelease)

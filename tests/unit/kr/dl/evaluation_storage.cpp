@@ -513,7 +513,7 @@ TEST(RunirEvaluationStorage, DynamicResetPreservesStaticRowsAndJoinIndexes)
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(dynamic_query, context).size(), 4);
     const auto keys = std::array { tyr::datalog::database::ColumnSlice { 0 } };
     storage.get_caches().get_static_join_indexes().get_or_create(fixed, keys);
-    EXPECT_EQ(alias.data().row_set, fixed.data().row_set);
+    EXPECT_TRUE(std::ranges::equal(alias.data().rows, fixed.data().rows));
     EXPECT_NE(alias, fixed);
 
     storage.reset_dynamic();
@@ -530,7 +530,7 @@ TEST(RunirEvaluationStorage, DynamicResetPreservesStaticRowsAndJoinIndexes)
     EXPECT_EQ(storage.get_caches().get_static_join_indexes().size(), 0);
     const auto rebuilt = kr::dl::semantics::evaluate<tyr::GroundTag>(fixed_query, context);
     EXPECT_EQ(rebuilt.size(), 2);
-    EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(renamed_query, context).data().row_set, rebuilt.data().row_set);
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(renamed_query, context).data().rows, rebuilt.data().rows));
 }
 
 TEST(RunirEvaluationStorage, PreparedContextsRejectForeignTaskRepositories)
@@ -620,7 +620,7 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     EXPECT_TRUE(std::ranges::equal(left_result.columns(), columns, {}, &ygg::ColumnLayout::label));
     EXPECT_EQ(&left_result.context(), &persistent.get_relation_repository());
     EXPECT_EQ(left_result, right_result);
-    EXPECT_EQ(left_result.data().row_set, right_result.data().row_set);
+    EXPECT_TRUE(std::ranges::equal(left_result.data().rows, right_result.data().rows));
     EXPECT_EQ(results.symbols().template size<ygg::Relation<ygg::Schema>>(), 1);
 
     const auto left_alias = query("(q_rename (left_target left_source) (q_role (left_source left_target) (r_universal)))", *first_repository);
@@ -631,15 +631,16 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     EXPECT_TRUE(std::ranges::equal(renamed_left.columns(), reversed_columns, {}, &ygg::ColumnLayout::label));
     EXPECT_EQ(renamed_left, renamed_right);
     EXPECT_NE(renamed_left, left_result);
-    EXPECT_EQ(renamed_left.data().row_set, left_result.data().row_set);
-    EXPECT_EQ(renamed_right.data().row_set, right_result.data().row_set);
+    EXPECT_TRUE(std::ranges::equal(renamed_left.data().rows, left_result.data().rows));
+    EXPECT_TRUE(std::ranges::equal(renamed_right.data().rows, right_result.data().rows));
     EXPECT_EQ(results.symbols().template size<ygg::Relation<ygg::Schema>>(), 2);
 
     {
         auto direct = persistent.get_relation_repository().get_relation_builder<ygg::Schema>(std::array { ygg::ColumnLayout { columns[0], ygg::type_id<urd::index<tyr::formalism::Object>> }, ygg::ColumnLayout { columns[1], ygg::type_id<urd::index<tyr::formalism::Object>> } });
         for (size_t i = 0; i < left_result.size(); ++i)
             direct->insert(left_result.row(i));
-        const auto [interned, inserted] = kr::dl::semantics::insert(persistent, *direct);
+        auto dl_builder = kr::dl::semantics::Builder();
+        const auto [interned, inserted] = kr::dl::semantics::insert(persistent, *direct, dl_builder);
         EXPECT_FALSE(inserted);
         EXPECT_EQ(interned, left_result);
     }

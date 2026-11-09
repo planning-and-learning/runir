@@ -16,6 +16,9 @@
 
 namespace runir::kr::dl::semantics
 {
+/// The scratch records a Builder hands out: denotations', and those of the query relations interned with them (rows,
+/// columns, relation).
+using BuilderDataTypes = boost::mp11::mp_append<DenotationRecordTypes, boost::mp11::mp_list<ygg::Row<ygg::Schema>, ygg::Columns, ygg::Relation<ygg::Schema>>>;
 
 class Builder
 {
@@ -23,7 +26,7 @@ private:
     template<typename T>
     using DenotationPool = urd::Store<urd::slots<urd::builder<T>>>;
     using DenotationBuilderStorage = boost::mp11::mp_rename<boost::mp11::mp_transform<DenotationPool, DenotationTypes>, std::tuple>;
-    using DenotationDataStorage = boost::mp11::mp_apply<ygg::formalism::BuilderStorage, DenotationRecordTypes>;
+    using DenotationDataStorage = boost::mp11::mp_apply<ygg::formalism::BuilderStorage, BuilderDataTypes>;
 
     DenotationBuilderStorage m_builders;
     DenotationDataStorage m_data;
@@ -49,18 +52,18 @@ public:
     }
 
     template<typename T>
-        requires boost::mp11::mp_contains<DenotationRecordTypes, T>::value
+        requires boost::mp11::mp_contains<BuilderDataTypes, T>::value
     [[nodiscard]] auto get_data()
     { return m_data.template get_builder<T>(); }
 
     template<typename T>
-        requires boost::mp11::mp_contains<DenotationRecordTypes, T>::value
+        requires boost::mp11::mp_contains<BuilderDataTypes, T>::value
     [[nodiscard]] auto checkout()
     { return m_data.template checkout<T>(); }
 };
 
 template<typename T>
-    requires boost::mp11::mp_contains<DenotationRecordTypes, T>::value
+    requires boost::mp11::mp_contains<BuilderDataTypes, T>::value
 [[nodiscard]] auto checkout(Builder& builder)
 { return builder.template checkout<T>(); }
 
