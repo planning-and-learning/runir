@@ -1492,7 +1492,7 @@ void check_transient_builder_values_and_reuse()
                                       repository);
     const auto program = create_program(repository, module_, { module_ });
     auto pool = urd::Store<urd::slots<urd::builder<kr::ps::ext::ProgramState<Kind>>>> {};
-    auto first = pool.acquire_shared();
+    auto first = pool.make_shared();
     first->program = program.index();
     auto& first_module = first->module_state;
     first_module.module_ = module_.index();
@@ -1562,7 +1562,7 @@ void check_transient_builder_values_and_reuse()
     EXPECT_FALSE(caller.value().get_caller());
 
     // Program copies own their mutable module values and share immutable callers.
-    auto separate = pool.acquire_shared();
+    auto separate = pool.make_shared();
     *separate = *first;
     auto& separate_module = separate->module_state;
     EXPECT_NE(std::ranges::data(separate_module.state.numeric_storage.values), std::ranges::data(first_module.state.numeric_storage.values));
@@ -1598,7 +1598,7 @@ void check_transient_builder_values_and_reuse()
     const auto concept_buffer = separate_module.registers.concept_values.data();
     const auto role_buffer = separate_module.registers.role_values.data();
     separate = {};
-    auto reused = pool.acquire_shared();
+    auto reused = pool.make_shared();
     EXPECT_EQ(reused.get(), slot);
     EXPECT_EQ(std::ranges::data(reused->module_state.state.numeric_storage.values), buffer);
     EXPECT_EQ(reused->module_state.state.numeric_storage.values.capacity(), capacity);
@@ -1632,7 +1632,7 @@ TEST(RunirTests, ExtPooledSearchPathReleasesLongChainsIteratively)
     constexpr int length = 100'000;
     for (int index = 0; index < length; ++index)
     {
-        auto path = pool.acquire_shared();
+        auto path = pool.make_shared();
         path->initialize(state, std::move(tip), {}, {}, 0, 0);
         tip = std::move(path);
     }

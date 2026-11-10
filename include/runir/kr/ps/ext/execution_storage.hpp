@@ -155,7 +155,7 @@ public:
     StateView view(const StoredState& state) const noexcept { return urd::resolve(*state, *m_context->execution_repository); }
     StoredState retain(StateView state)
     {
-        auto result = m_program_states.acquire_shared();
+        auto result = m_program_states.make_shared();
         *result = state.data();
         return result;
     }
@@ -169,7 +169,7 @@ public:
                       runir::kr::dl::semantics::CallArgumentsView arguments,
                       std::optional<CallStackView<Kind>> caller)
     {
-        auto result = m_program_states.acquire_shared();
+        auto result = m_program_states.make_shared();
         result->program = m_program.index();
         // Assign into the destination's existing buffers so released pool slots retain their capacity.
         auto& target = result->module_state;

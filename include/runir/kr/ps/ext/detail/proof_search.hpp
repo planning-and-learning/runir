@@ -98,7 +98,7 @@ ProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, Evaluat
     {
         const auto depth = parent ? parent->choice_depth + static_cast<ygg::uint_t>(choice_width > 1) : 0;
         const auto width = parent ? std::max(parent->choice_width, choice_width) : 0;
-        auto path = path_pool.acquire_shared();
+        auto path = path_pool.make_shared();
         path->initialize(std::move(state), std::move(parent), transition, rule, depth, width);
         return path;
     };

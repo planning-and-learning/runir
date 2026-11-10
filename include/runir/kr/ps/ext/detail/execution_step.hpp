@@ -67,7 +67,7 @@ public:
     template<typename Denotation>
         requires std::ranges::input_range<Denotation> && std::same_as<std::ranges::range_value_t<Denotation>, runir::kr::dl::semantics::DenotationElementView<Category>>
     Choice(RuleVariantView rule_, Denotation denotation, urd::Store<urd::slots<runir::kr::dl::semantics::DenotationElementViewList<Category>>>& pool) :
-        m_bindings(pool.acquire_unique()),
+        m_bindings(pool.make_unique()),
         m_rule(rule_)
     {
         m_bindings->clear();

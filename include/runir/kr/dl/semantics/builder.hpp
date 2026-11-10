@@ -39,14 +39,14 @@ public:
     template<typename T>
         requires boost::mp11::mp_contains<DenotationTypes, T>::value
     [[nodiscard]] auto get_builder()
-    { return std::get<urd::Store<urd::slots<urd::builder<T>>>>(m_builders).acquire_unique(); }
+    { return std::get<urd::Store<urd::slots<urd::builder<T>>>>(m_builders).make_unique(); }
 
     template<typename T, typename... Args>
         requires(sizeof...(Args) > 0 && boost::mp11::mp_contains<DenotationTypes, T>::value
                  && requires(urd::builder<T>& builder, Args&&... args) { builder.initialize(std::forward<Args>(args)...); })
     [[nodiscard]] auto get_builder(Args&&... args)
     {
-        auto builder = std::get<urd::Store<urd::slots<urd::builder<T>>>>(m_builders).acquire_unique();
+        auto builder = std::get<urd::Store<urd::slots<urd::builder<T>>>>(m_builders).make_unique();
         builder->initialize(std::forward<Args>(args)...);
         return builder;
     }

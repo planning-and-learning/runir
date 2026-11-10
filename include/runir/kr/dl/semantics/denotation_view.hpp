@@ -177,7 +177,7 @@ private:
 public:
     auto get_vector() const noexcept
         requires(std::same_as<Category, runir::kr::dl::ConceptTag> || std::same_as<Category, runir::kr::dl::RoleTag>)
-    { return self().context().get_vector_repository().view(self().data().vec_index); }
+    { return self().context().get_vector_repository().at(self().data().vec_index); }
 
     const auto& get_formalism_repository() const noexcept { return self().context().get_formalism_repository(); }
 
