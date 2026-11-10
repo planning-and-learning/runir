@@ -24,7 +24,6 @@
 #include <tyr/planning/declarations.hpp>
 #include <utility>
 #include <variant>
-#include <vector>
 #include <tyr/datalog/lifted/database/semantics/incremental/delta.hpp>
 #include <tyr/datalog/lifted/database/semantics/relation_view.hpp>
 
@@ -46,12 +45,11 @@ class EvaluationGraph
     /// The layer the query nodes' builders are read through; declared first, so it outlives them, and behind a pointer,
     /// so it stays where it is when the graph moves.
     std::unique_ptr<ygg::FreeRelationRepository> m_layer = std::make_unique<ygg::FreeRelationRepository>();
-    // std::vector: of an incomplete type (a Store resolves its element type at once)
-    std::vector<std::variant<detail::FeatureNode<Kind, ConceptTag>,
-                             detail::FeatureNode<Kind, RoleTag>,
-                             detail::FeatureNode<Kind, BooleanTag>,
-                             detail::FeatureNode<Kind, NumericalTag>,
-                             detail::QueryNode<Kind>>>
+    urd::Store<urd::sequence<std::variant<detail::FeatureNode<Kind, ConceptTag>,
+                                          detail::FeatureNode<Kind, RoleTag>,
+                                          detail::FeatureNode<Kind, BooleanTag>,
+                                          detail::FeatureNode<Kind, NumericalTag>,
+                                          detail::QueryNode<Kind>>>>
         m_nodes;
     /// The node of each prepared expression.
     template<CategoryTag Category>
