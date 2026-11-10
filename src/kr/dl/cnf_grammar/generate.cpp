@@ -67,8 +67,12 @@ public:
     template<runir::kr::dl::CategoryTag Category>
     [[nodiscard]] auto get(NonTerminalView<Category> nonterminal, size_t complexity) const
     {
+        // A copy: sentences are added while these are read, and iterators into the map do not survive that.
         const auto [first, last] = std::get<Sentences<Category>>(m_sentences).equal_range({ nonterminal.index(), complexity });
-        return std::ranges::subrange(first, last) | std::views::values;
+        auto result = std::vector<urd::index<runir::kr::dl::Constructor<Category>>>();
+        for (const auto constructor : std::ranges::subrange(first, last) | std::views::values)
+            result.push_back(constructor);
+        return result;
     }
 };
 
