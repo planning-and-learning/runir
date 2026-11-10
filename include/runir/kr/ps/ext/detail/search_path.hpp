@@ -64,4 +64,11 @@ struct SearchPath
 
 }  // namespace runir::kr::ps::ext::detail
 
+/// A path given back to its pool lets go of its state and its parents.
+template<tyr::TaskKind Kind, runir::kr::ps::ext::ExecutionStorageConcept<Kind> Storage>
+struct urd::slot_release<runir::kr::ps::ext::detail::SearchPath<Kind, Storage>>
+{
+    static void release(runir::kr::ps::ext::detail::SearchPath<Kind, Storage>& path) noexcept { path.on_pool_release(); }
+};
+
 #endif

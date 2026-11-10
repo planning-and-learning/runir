@@ -140,13 +140,15 @@ public:
     [[nodiscard]] auto get_out_edge_indices(VertexIndex vertex) const noexcept
     {
         assert_valid_vertex(vertex);
-        return m_out_edges.values(vertex);
+        const auto [first, last] = m_out_edges.equal_range(vertex);
+        return std::ranges::subrange(first, last) | std::views::values;
     }
 
     [[nodiscard]] auto get_in_edge_indices(VertexIndex vertex) const noexcept
     {
         assert_valid_vertex(vertex);
-        return m_in_edges.values(vertex);
+        const auto [first, last] = m_in_edges.equal_range(vertex);
+        return std::ranges::subrange(first, last) | std::views::values;
     }
 
     [[nodiscard]] auto get_out_degree(VertexIndex vertex) const noexcept -> Degree

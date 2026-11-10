@@ -20,6 +20,7 @@
 #include <concepts>
 #include <cstdint>
 #include <optional>
+#include <ranges>
 #include <stdexcept>
 #include <tuple>
 #include <type_traits>
@@ -65,7 +66,10 @@ public:
 
     template<runir::kr::dl::CategoryTag Category>
     [[nodiscard]] auto get(NonTerminalView<Category> nonterminal, size_t complexity) const
-    { return std::get<Sentences<Category>>(m_sentences).values({ nonterminal.index(), complexity }); }
+    {
+        const auto [first, last] = std::get<Sentences<Category>>(m_sentences).equal_range({ nonterminal.index(), complexity });
+        return std::ranges::subrange(first, last) | std::views::values;
+    }
 };
 
 class Timeout
