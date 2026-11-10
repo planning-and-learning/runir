@@ -12,8 +12,7 @@
 #include <limits>
 #include <optional>
 #include <stdexcept>
-#include <urd/repr/containers/bitset_span.hpp>
-#include <urd/repr/core/dependent_false.hpp>
+#include <urd/bits.hpp>
 #include <vector>
 #include <urd/elements/flat.hpp>
 
@@ -55,8 +54,8 @@ struct RuleProfile
         target_memory_position(target_memory_position_)
     {
         validate_feature_capacity(num_booleans, num_numericals);
-        urd::repr::BitsetSpan<std::uint64_t>(&boolean_unconstrained_effects, num_booleans).set();
-        urd::repr::BitsetSpan<std::uint64_t>(&numerical_unconstrained_effects, num_numericals).set();
+        urd::bitset_span<std::uint64_t>(&boolean_unconstrained_effects, num_booleans).set();
+        urd::bitset_span<std::uint64_t>(&numerical_unconstrained_effects, num_numericals).set();
     }
 
     template<typename ObservationTag>
@@ -71,7 +70,7 @@ struct RuleProfile
         else if constexpr (std::same_as<ObservationTag, EqualZero>)
             return numerical_zero_conditions;
         else
-            static_assert(urd::repr::dependent_false<ObservationTag>::value, "unhandled condition observation tag");
+            static_assert(false, "unhandled condition observation tag");
     }
 
     template<typename FeatureTag, typename ObservationTag>
@@ -94,7 +93,7 @@ struct RuleProfile
         else if constexpr (std::same_as<FeatureTag, runir::kr::dl::NumericalTag> && std::same_as<ObservationTag, Unconstrained>)
             return numerical_unconstrained_effects;
         else
-            static_assert(urd::repr::dependent_false<ObservationTag>::value, "unhandled effect feature or observation tag");
+            static_assert(false, "unhandled effect feature or observation tag");
     }
 };
 

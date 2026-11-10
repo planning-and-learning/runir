@@ -29,6 +29,7 @@
 #include <tyr/planning/state_repository.hpp>
 #include <urd/repr/maps/std_map.hpp>
 #include <urd/repr/maps/unordered_flat_map.hpp>
+#include <urd/repr/values/indexed.hpp>
 #include <urd/repr/values/std_set.hpp>
 #include <urd/repr/values/unordered_flat_set.hpp>
 #include <urd/repr/sequences/sequence.hpp>
@@ -119,7 +120,8 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(const StateGraphEventHandler
 
     auto builder = StateGraphBuilder<Kind> {};
     auto packed_to_vertex = urd::Store<urd::map<tyr::planning::PackedStateView<Kind>, graphs::VertexIndex>> {};
-    auto state_to_vertex = urd::Store<urd::map<tyr::planning::PackedStateView<Kind>, graphs::VertexIndex>> {};
+    /// The materialized states by vertex: a state's vertex is its position.
+    auto states = urd::Store<urd::set<tyr::planning::PackedStateView<Kind>>, urd::positional>(urd::layer { 0 });
     auto edges = urd::Store<urd::set<StateGraphEdgeKey>> {};
     auto get_or_create_vertex = [&](const tyr::planning::PackedStateView<Kind>& packed)
     {
@@ -127,13 +129,10 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(const StateGraphEventHandler
             return it->second;
 
         auto state = tyr::planning::materialize_state(packed.unpack(), target_repository, axiom_evaluator).pack();
-        auto vertex = graphs::VertexIndex {};
-        if (const auto it = state_to_vertex.find(state); it != state_to_vertex.end())
-            vertex = it->second;
-        else
+        const auto [it, inserted] = states.insert(state);
+        const auto vertex = static_cast<graphs::VertexIndex>(states.position(it));
+        if (inserted)
         {
-            vertex = static_cast<graphs::VertexIndex>(state_to_vertex.size());
-            state_to_vertex.emplace(state, vertex);
             [[maybe_unused]] const auto added = builder.add_vertex(StateGraphVertexLabel<Kind> { std::move(state) });
             assert(added == vertex);
         }

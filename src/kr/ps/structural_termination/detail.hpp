@@ -2,6 +2,7 @@
 #define RUNIR_KR_PS_STRUCTURAL_TERMINATION_DETAIL_HPP_
 
 #include "runir/graphs/static_graph_builder.hpp"
+#include <urd/repr/maps/index_map.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include "runir/kr/ps/dl/declarations.hpp"
@@ -200,16 +201,15 @@ Result materialize_result(Definition definition,
     for (const auto& component : sieve_result.components)
     {
         const auto& projected = component.projected;
-        auto vertex_remap = urd::Store<urd::sequence<std::size_t>>(projected.policy.num_vertices(), std::numeric_limits<std::size_t>::max());
+        auto vertex_remap = urd::Store<urd::map<std::size_t, graphs::VertexIndex>, urd::dense> {};
+        vertex_remap.reserve(projected.policy.num_vertices());
         const auto map_vertex = [&](std::size_t vertex)
         {
-            if (vertex_remap[vertex] == std::numeric_limits<std::size_t>::max())
-            {
-                auto [booleans, numericals] = unproject_vertex(vertex, projected);
-                const auto memory_position = projected.memory_positions[vertex % projected.policy.num_memory_states];
-                vertex_remap[vertex] = builder.add_vertex(make_vertex_label(booleans, numericals, memory_position));
-            }
-            return static_cast<graphs::VertexIndex>(vertex_remap[vertex]);
+            if (const auto found = vertex_remap.find(vertex); found != vertex_remap.end())
+                return found->second;
+            auto [booleans, numericals] = unproject_vertex(vertex, projected);
+            const auto memory_position = projected.memory_positions[vertex % projected.policy.num_memory_states];
+            return vertex_remap.emplace(vertex, builder.add_vertex(make_vertex_label(booleans, numericals, memory_position))).first->second;
         };
         for (const auto& edge : component.edges)
             builder.add_directed_edge(map_vertex(edge.source), map_vertex(edge.target), analysis.rules[projected.rule_positions[edge.rule_position]]);

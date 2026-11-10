@@ -2,8 +2,9 @@
 #define RUNIR_KR_PS_ICP_DETAIL_PROOF_SEARCH_HPP_
 
 #include "runir/kr/ps/icp/detail/proof_graph.hpp"
-#include <urd/repr/maps/std_map.hpp>
+#include <urd/repr/queues/queue.hpp>
 #include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/indexed.hpp>
 #include <urd/store.hpp>
 #include "runir/kr/ps/icp/detail/search_node.hpp"
 #include "runir/kr/ps/detail/search_space.hpp"
@@ -42,8 +43,9 @@ auto search(const TaskContextPtr<Kind>& task, ProgramView program, const Program
     const auto stop = [&]() { return watch && watch->has_finished(); };
     urd::Store<urd::sequence<SearchNode<Kind>>> nodes;
     urd::Store<urd::sequence<Predecessor>> predecessors;
-    urd::Store<urd::map<ygg::uint_t, std::size_t>, urd::stable_refs> positions;
-    urd::Store<urd::sequence<std::size_t>> pending;
+    /// The admitted states by index: a state's position is its node's in `nodes`.
+    auto positions = urd::Store<urd::set<ygg::uint_t>, urd::positional>(urd::layer { 0 });
+    urd::Store<urd::queue<std::size_t>, urd::lifo> pending;
     std::optional<std::size_t> goal;
     const auto admit = [&](ProgramStateView<Kind> state,
                            std::optional<std::size_t> parent,
@@ -51,15 +53,15 @@ auto search(const TaskContextPtr<Kind>& task, ProgramView program, const Program
     {
         const auto found = positions.find(ygg::uint_t(state.index().value));
         if (found != positions.end())
-            return found->second;
+            return positions.position(found);
         if (nodes.size() >= options.max_num_states)
             return std::nullopt;
         const auto index = nodes.size();
         const auto is_goal = static_goal && goal_strategy.is_dynamic_goal_satisfied(initial.get_state(), state.get_state());
         const auto unsolvable = !is_goal && classifier.is_unsolvable(state.get_state());
         nodes.push_back({ state, parent, action, is_goal, unsolvable });
-        positions.emplace(ygg::uint_t(state.index().value), index);
-        pending.push_back(index);
+        positions.insert(ygg::uint_t(state.index().value));
+        pending.push(index);
         return index;
     };
     if (!admit(initial, std::nullopt, std::nullopt))
@@ -71,8 +73,8 @@ auto search(const TaskContextPtr<Kind>& task, ProgramView program, const Program
             result.status = ProofStatus::OUT_OF_TIME;
             break;
         }
-        const auto index = pending.back();
-        pending.pop_back();
+        const auto index = pending.top();
+        pending.pop();
         if (nodes[index].is_goal)
         {
             if (!options.universal)

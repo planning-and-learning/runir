@@ -514,8 +514,8 @@ TEST(RunirTests, GlobalMemoryScopeRefinementPreservesMarks)
         const auto marks = scopes.marks_for(0);
         EXPECT_EQ(marks.booleans, 1);
         EXPECT_EQ(marks.numericals, 1);
-        EXPECT_EQ(marks.boolean_witnessing_rule_positions[0], urd::Store<urd::sequence<std::size_t>>({ 0 }));
-        EXPECT_EQ(marks.numerical_witnessing_rule_positions[0], urd::Store<urd::sequence<std::size_t>>({ 0 }));
+        EXPECT_EQ(marks.boolean_witnessing_rule_positions[0], (urd::Store<urd::set<std::size_t>, urd::dense>({ 0 })));
+        EXPECT_EQ(marks.numerical_witnessing_rule_positions[0], (urd::Store<urd::set<std::size_t>, urd::dense>({ 0 })));
     }
 }
 
@@ -535,13 +535,13 @@ TEST(RunirTests, SccRefinementForestInheritsMarksAcrossSplits)
     const auto first_marks = forest.effective_marks(children[0]);
     EXPECT_TRUE((first_marks.numericals & 1) != 0);
     EXPECT_FALSE((first_marks.booleans & 1) != 0);
-    EXPECT_EQ(first_marks.numerical_witnessing_rule_positions[0], urd::Store<urd::sequence<std::size_t>>({ 0, 2 }));
+    EXPECT_EQ(first_marks.numerical_witnessing_rule_positions[0], (urd::Store<urd::set<std::size_t>, urd::dense>({ 0, 2 })));
 
     const auto second_marks = forest.effective_marks(children[1]);
     EXPECT_TRUE((second_marks.numericals & 1) != 0);
     EXPECT_TRUE((second_marks.booleans & 1) != 0);
-    EXPECT_EQ(second_marks.numerical_witnessing_rule_positions[0], urd::Store<urd::sequence<std::size_t>>({ 0, 2 }));
-    EXPECT_EQ(second_marks.boolean_witnessing_rule_positions[0], urd::Store<urd::sequence<std::size_t>>({ 1 }));
+    EXPECT_EQ(second_marks.numerical_witnessing_rule_positions[0], (urd::Store<urd::set<std::size_t>, urd::dense>({ 0, 2 })));
+    EXPECT_EQ(second_marks.boolean_witnessing_rule_positions[0], (urd::Store<urd::set<std::size_t>, urd::dense>({ 1 })));
 }
 
 TEST(RunirTests, CommonIncompleteSieveOnlyEliminatesAcyclicMemoryRuleWithSccScope)

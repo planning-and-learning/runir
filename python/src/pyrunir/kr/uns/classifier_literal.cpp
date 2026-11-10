@@ -16,10 +16,8 @@ void bind_classifier_literal(nb::module_& m)
 {
     using View = urd::index_view<ClassifierLiteral, Repository>;
     urd::python::bind_index<urd::index<ClassifierLiteral>>(m, "ClassifierLiteralIndex");
-    auto cls = nb::class_<View>(m, "ClassifierLiteral")
-                   .def("index", &View::index)
-                   .def("get_feature", &View::get_feature, nb::keep_alive<0, 1>())
-                   .def("get_polarity", &View::get_polarity);
+    auto cls =
+        nb::class_<View>(m, "ClassifierLiteral").def("index", &View::index).def("get_feature", &View::get_feature).def("get_polarity", &View::get_polarity);
     ygg::add_print(cls);
     urd::python::add_comparison(cls);
     urd::python::add_hash(cls);

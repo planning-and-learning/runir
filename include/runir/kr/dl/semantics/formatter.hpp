@@ -20,12 +20,11 @@
 #include <string>
 #include <string_view>
 #include <tyr/formalism/planning/formatter.hpp>
-#include <urd/repr/core/dependent_false.hpp>
 #include <utility>
 #include <vector>
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/formatting/cista_formatters.hpp>
-#include <yggdrasil/formatting/dynamic_bitset_formatters.hpp>
+#include <urd/format.hpp>
 #include <yggdrasil/formatting/formatter.hpp>
 
 namespace runir::kr::dl::semantics
@@ -93,7 +92,7 @@ std::string query(urd::index_view<runir::kr::dl::Query<Tag>, C> view)
                            view.get_targets(),
                            view.get_probes());
     else
-        static_assert(urd::repr::dependent_false<Tag>::value, "unhandled DL query constructor tag");
+        static_assert(false, "unhandled DL query constructor tag");
 }
 
 template<runir::kr::dl::ConceptOrRoleTag Category, typename C>
@@ -132,7 +131,7 @@ std::string denotation(urd::index_view<runir::kr::dl::semantics::Denotation<Cate
     }
     else
     {
-        static_assert(urd::repr::dependent_false<Category>::value, "unhandled DL denotation category in denotation");
+        static_assert(false, "unhandled DL denotation category in denotation");
     }
 }
 

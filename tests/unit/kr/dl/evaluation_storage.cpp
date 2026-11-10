@@ -26,7 +26,7 @@
 #include <tuple>
 #include <tyr/formalism/object_data.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
-#include <urd/repr/containers/bitset_span.hpp>
+#include <urd/bits.hpp>
 #include <utility>
 
 namespace runir::tests
@@ -119,7 +119,7 @@ TEST(RunirEvaluationStorage, DenotationBuildersInternValuesAndUpdateTheirIndices
 
 TEST(RunirEvaluationStorage, BorrowedDenotationsExposeReadOnlyValuesAndMatchIndexedIteration)
 {
-    constexpr auto digits = static_cast<ygg::uint_t>(urd::repr::BitsetSpan<const ygg::uint_t>::Digits);
+    constexpr auto digits = static_cast<ygg::uint_t>(urd::bitset_span<const ygg::uint_t>::Digits);
     constexpr auto num_objects = digits + 3;
     auto formalism = std::make_shared<tyr::formalism::planning::Repository>();
     for (ygg::uint_t i = 0; i < num_objects; ++i)
@@ -159,7 +159,7 @@ TEST(RunirEvaluationStorage, BorrowedDenotationsExposeReadOnlyValuesAndMatchInde
         {
             if constexpr (std::same_as<Category, kr::dl::ConceptTag>)
             {
-                static_assert(std::same_as<decltype(borrowed.value()), urd::repr::BitsetSpan<const ygg::uint_t>>);
+                static_assert(std::same_as<decltype(borrowed.value()), urd::bitset_span<const ygg::uint_t>>);
                 builder.get().set(0);
                 builder.get().set(digits);
                 builder.get().set(num_objects - 1);
@@ -167,8 +167,8 @@ TEST(RunirEvaluationStorage, BorrowedDenotationsExposeReadOnlyValuesAndMatchInde
             }
             else
             {
-                static_assert(std::same_as<decltype(borrowed.value(ObjectIndex(0))), urd::repr::BitsetSpan<const ygg::uint_t>>);
-                static_assert(std::same_as<decltype(borrowed.storage_bits()), urd::repr::BitsetSpan<const ygg::uint_t>>);
+                static_assert(std::same_as<decltype(borrowed.value(ObjectIndex(0))), urd::bitset_span<const ygg::uint_t>>);
+                static_assert(std::same_as<decltype(borrowed.storage_bits()), urd::bitset_span<const ygg::uint_t>>);
                 builder.get(urd::index<tyr::formalism::Object>(0)).set(num_objects - 1);
                 builder.get(urd::index<tyr::formalism::Object>(digits)).set(1);
                 builder.get(urd::index<tyr::formalism::Object>(num_objects - 1)).set(digits);

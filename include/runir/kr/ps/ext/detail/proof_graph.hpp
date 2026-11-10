@@ -8,12 +8,11 @@
 #include "runir/kr/ps/ext/successor_expander.hpp"
 
 #include <algorithm>
-#include <limits>
 #include <memory>
 #include <optional>
 #include <span>
 #include <tuple>
-#include <urd/repr/sequences/segmented.hpp>
+#include <urd/repr/maps/index_map.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <utility>
@@ -28,26 +27,25 @@ namespace runir::kr::ps::ext::detail
 /// Open/deadend/cycle diagnostics describe the explored graph; they do not override the search's AND/OR result.
 template<tyr::TaskKind Kind>
 void build_proof_graph(ProgramProofResults<Kind>& result,
-                       const urd::Store<urd::sequence<SearchNode<Kind>>, urd::stable_refs>& nodes,
+                       const SearchNodes<Kind>& nodes,
                        const urd::Store<urd::sequence<Predecessor<Kind>>>& predecessors,
                        std::optional<ProgramStateView<Kind>> initial)
 {
     using VertexLabel = ProgramProofVertexLabel<ExtFamilyTag, Kind>;
     using Edge = std::tuple<graphs::VertexIndex, graphs::VertexIndex, ProgramProofEdgeLabel<ExtFamilyTag>>;
-    constexpr auto no_vertex = std::numeric_limits<graphs::VertexIndex>::max();
 
-    auto graph_indices = graphs::VertexIndexList(nodes.size(), no_vertex);
+    auto graph_indices = urd::Store<urd::map<urd::index<ProgramState<Kind>>, graphs::VertexIndex>, urd::dense> {};
+    graph_indices.reserve(nodes.size());
     auto vertices = urd::Store<urd::sequence<VertexLabel>> {};
     result.deadend_states.clear();
     result.open_states.clear();
     const auto add_vertex = [&](ProgramStateView<Kind> state)
     {
-        const auto index = ygg::uint_t(state.index().value);
-        auto& vertex = graph_indices[index];
-        if (vertex != no_vertex)
+        const auto [entry, inserted] = graph_indices.try_emplace(state.index(), static_cast<graphs::VertexIndex>(vertices.size()));
+        const auto vertex = entry->second;
+        if (!inserted)
             return vertex;
-        vertex = static_cast<graphs::VertexIndex>(vertices.size());
-        const auto& node = nodes[index];
+        const auto& node = nodes.at(state.index());
         if (node.is_deadend)
             result.deadend_states.push_back(vertex);
         if (node.is_open)

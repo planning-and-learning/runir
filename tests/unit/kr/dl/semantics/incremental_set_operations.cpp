@@ -5,7 +5,7 @@
 #include <string>
 #include <tyr/formalism/object_data.hpp>
 #include <tyr/formalism/planning/repository.hpp>
-#include <urd/repr/containers/bitset_span.hpp>
+#include <urd/bits.hpp>
 
 namespace runir::tests
 {
@@ -214,12 +214,12 @@ TEST(RunirIncrementalSetOperations, CompositionAndClosuresMatchFreshResultsAndEx
 {
     check_composition_and_closures<1>();
     check_composition_and_closures<10>();
-    check_composition_and_closures<static_cast<ygg::uint_t>(urd::repr::BitsetSpan<const ygg::uint_t>::Digits + 3)>();
+    check_composition_and_closures<static_cast<ygg::uint_t>(urd::bitset_span<const ygg::uint_t>::Digits + 3)>();
 }
 
 TEST(RunirIncrementalSetOperations, ConceptIntersectionAndUnionAcrossWordBoundaries)
 {
-    constexpr auto digits = static_cast<ygg::uint_t>(urd::repr::BitsetSpan<const ygg::uint_t>::Digits), size = digits + 2;
+    constexpr auto digits = static_cast<ygg::uint_t>(urd::bitset_span<const ygg::uint_t>::Digits), size = digits + 2;
     auto repository = std::make_shared<tyr::formalism::planning::Repository>();
     for (ygg::uint_t i = 0; i < size; ++i)
     {
@@ -267,7 +267,7 @@ TEST(RunirIncrementalSetOperations, ConceptIntersectionAndUnionAcrossWordBoundar
 
 TEST(RunirIncrementalSetOperations, RestrictionBatchesConceptChangesWithChangedRoleRows)
 {
-    constexpr auto size = static_cast<ygg::uint_t>(urd::repr::BitsetSpan<const ygg::uint_t>::Digits + 3);
+    constexpr auto size = static_cast<ygg::uint_t>(urd::bitset_span<const ygg::uint_t>::Digits + 3);
     auto repository = std::make_shared<tyr::formalism::planning::Repository>();
     for (ygg::uint_t i = 0; i < size; ++i)
     {
@@ -336,7 +336,7 @@ TEST(RunirIncrementalSetOperations, RestrictionBatchesConceptChangesWithChangedR
 
 TEST(RunirIncrementalSetOperations, InverseAndComplementPreservePaddingAcrossWordBoundaries)
 {
-    constexpr auto size = static_cast<ygg::uint_t>(urd::repr::BitsetSpan<const ygg::uint_t>::Digits + 3);
+    constexpr auto size = static_cast<ygg::uint_t>(urd::bitset_span<const ygg::uint_t>::Digits + 3);
     auto repository = std::make_shared<tyr::formalism::planning::Repository>();
     for (ygg::uint_t i = 0; i < size; ++i)
     {

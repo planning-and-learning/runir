@@ -3,6 +3,7 @@
 
 #include "runir/kr/dl/semantics/distance_evaluation.hpp"
 #include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/dense_set.hpp>
 #include <urd/store.hpp>
 #include "runir/kr/dl/semantics/incremental/declarations.hpp"
 #include "runir/kr/dl/semantics/incremental/delta.hpp"
@@ -12,14 +13,11 @@
 #include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
-#include <algorithm>
 #include <concepts>
-#include <functional>
 #include <memory>
 #include <optional>
 #include <span>
 #include <stdexcept>
-#include <vector>
 #include <yggdrasil/core/config.hpp>
 #include <urd/config.hpp>
 #include <tyr/datalog/lifted/database/semantics/incremental/distance.hpp>
@@ -84,7 +82,7 @@ struct QueryEdgeDistanceEvaluator
     urd::Store<urd::sequence<QueryEvaluationIndex>> slots;                   ///< The graph node of each input slot.
     std::optional<heuristics::ProjectionHeuristic> heuristic;  ///< Built at the first initialize(), from the bound leaves.
     DenotationState<NumericalTag> value;
-    std::vector<bool> slot_changed;  ///< Per slot, whether update()'s delta changed it; kept to avoid allocations.
+    urd::Store<urd::set<size_t>, urd::dense> slot_changed;  ///< The slots update()'s delta changed; kept to avoid allocations.
 
     /// `edges_` is the edge argument of `expression_`.
     QueryEdgeDistanceEvaluator(NumericalView<DistanceTag> expression_, QueryView<> edges_, GraphBuilder<Kind>& graph, urd::Store<urd::sequence<ygg::uint_t>>& dependencies) :
@@ -117,10 +115,11 @@ struct QueryEdgeDistanceEvaluator
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     {
         slot_changed.clear();
-        for (const auto slot : slots)
-            slot_changed.push_back(modified(graph, slot));
+        for (size_t slot = 0; slot < slots.size(); ++slot)
+            if (modified(graph, slots[slot]))
+                slot_changed.insert(slot);
         const auto targets_changed = modified(graph, targets);
-        if (!targets_changed && !modified(graph, sources) && std::ranges::none_of(slot_changed, std::identity {}))
+        if (!targets_changed && !modified(graph, sources) && slot_changed.empty())
         {
             value.clear_delta();
             return;

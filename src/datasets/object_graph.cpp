@@ -17,6 +17,7 @@
 
 #include "runir/datasets/object_graph.hpp"
 #include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/indexed.hpp>
 #include <urd/store.hpp>
 
 #include <cstddef>
@@ -43,19 +44,17 @@ private:
     using Edge = std::pair<graphs::VertexIndex, graphs::VertexIndex>;
 
     ColorRepository* m_repository;
-    urd::Store<urd::map<ObjectView, graphs::VertexIndex>> m_object_to_vertex;
+    /// The objects by vertex: an object's vertex is its position.
+    urd::Store<urd::set<ObjectView>, urd::positional> m_objects;
     urd::Store<urd::sequence<urd::data<Color>::VariantList>> m_vertex_colors;
     urd::Store<urd::set<Edge>> m_edges;
 
     auto get_or_create_vertex(ObjectView object) -> graphs::VertexIndex
     {
-        if (const auto it = m_object_to_vertex.find(object); it != m_object_to_vertex.end())
-            return it->second;
-
-        const auto vertex = static_cast<graphs::VertexIndex>(m_vertex_colors.size());
-        m_object_to_vertex.emplace(object, vertex);
-        m_vertex_colors.emplace_back();
-        return vertex;
+        const auto [it, inserted] = m_objects.insert(object);
+        if (inserted)
+            m_vertex_colors.emplace_back();
+        return static_cast<graphs::VertexIndex>(m_objects.position(it));
     }
 
     void add_undirected_edge(graphs::VertexIndex lhs, graphs::VertexIndex rhs)
@@ -70,7 +69,7 @@ private:
     }
 
 public:
-    explicit ObjectGraphConstructionContext(ColorRepository& repository) : m_repository(&repository) {}
+    explicit ObjectGraphConstructionContext(ColorRepository& repository) : m_repository(&repository), m_objects(urd::layer { 0 }) {}
 
     void add_object(ObjectView object) { static_cast<void>(get_or_create_vertex(object)); }
 

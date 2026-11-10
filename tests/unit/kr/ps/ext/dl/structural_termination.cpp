@@ -1,5 +1,6 @@
 #include "fixtures.hpp"
 #include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/unordered_flat_set.hpp>
 #include <urd/store.hpp>
 
 #include <cstdint>
@@ -359,13 +360,13 @@ TEST(RunirTests, ExtStructuralTerminationUnconstrainedReturnIsNotTerminating)
     ASSERT_NE(result.sieve_result.value().counterexample, nullptr);
 
     // The counterexample cycle uses both rules and spans both memory states.
-    auto rule_indices = std::set<urd::index<kr::ps::Rule<kr::ExtFamilyTag>>> {};
+    auto rule_indices = urd::Store<urd::set<urd::index<kr::ps::Rule<kr::ExtFamilyTag>>>> {};
     const auto& counterexample = *result.sieve_result.value().counterexample;
     for (const auto edge : counterexample.get_edge_indices())
         rule_indices.insert(counterexample.get_edge_property(edge).index());
     EXPECT_EQ(rule_indices.size(), 2);
 
-    auto memory_state_indices = std::set<urd::index<kr::ps::MemoryState<kr::ExtFamilyTag>>> {};
+    auto memory_state_indices = urd::Store<urd::set<urd::index<kr::ps::MemoryState<kr::ExtFamilyTag>>>> {};
     for (const auto vertex : counterexample.get_vertex_indices())
         memory_state_indices.insert(counterexample.get_vertex_property(vertex).memory_state.index());
     EXPECT_EQ(memory_state_indices.size(), 2);
@@ -433,7 +434,7 @@ TEST(RunirTests, ExtStructuralTerminationIgnoresOneWayBridgeBetweenMemoryCycles)
     ASSERT_TRUE(result.sieve_result.has_value());
     ASSERT_NE(result.sieve_result.value().counterexample, nullptr);
 
-    auto rules = std::set<urd::index<kr::ps::Rule<kr::ExtFamilyTag>>> {};
+    auto rules = urd::Store<urd::set<urd::index<kr::ps::Rule<kr::ExtFamilyTag>>>> {};
     const auto& counterexample = *result.sieve_result.value().counterexample;
     for (const auto edge : counterexample.get_edge_indices())
         rules.insert(counterexample.get_edge_property(edge).index());

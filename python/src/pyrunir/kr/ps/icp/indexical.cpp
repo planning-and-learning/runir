@@ -36,7 +36,7 @@ void bind_indexical_type(nb::module_& m, RepositoryBinding& repository, const ch
                     .def("index", &View::index)
                     .def("get_operation", &View::get_operation)
                     .def("get_object_reference", &View::get_object_reference)
-                    .def("get_concept_feature", &View::get_concept_feature, nb::keep_alive<0, 1>());
+                    .def("get_concept_feature", &View::get_concept_feature);
     ygg::add_print(view);
     urd::python::add_comparison(view);
     urd::python::add_hash(view);

@@ -369,8 +369,8 @@ ProgramProofResults<Kind> find_solution(SuccessorExpander<Kind, ExecutionStorage
             result.statistics.choice_width = storage.node(goal).choice_width;
             if (!options.universal && !start)
                 result.plan = runir::kr::ps::detail::extract_total_ordered_plan<Kind>(
-                    storage.nodes[ygg::uint_t(goal.index().value)],
-                    [&](const auto& node) { return node.parent_state ? &storage.nodes[ygg::uint_t(node.parent_state->index().value)] : nullptr; },
+                    storage.nodes.at(goal.index()),
+                    [&](const auto& node) { return node.parent_state ? &storage.nodes.at(node.parent_state->index()) : nullptr; },
                     initial_node,
                     *task_context);
         }

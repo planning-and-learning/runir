@@ -3,6 +3,7 @@
 #include "runir/kr/ps/detail/repository_instantiations.hpp"
 #include <urd/repr/maps/std_map.hpp>
 #include <urd/repr/values/dense_set.hpp>
+#include <urd/repr/values/indexed.hpp>
 #include <urd/repr/values/std_set.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
@@ -227,10 +228,11 @@ ModuleView lower_module(const ast::Module& module,
                             diagnostics.throw_at(concrete.action,
                                                  ArityMismatchError("action " + concrete.action.text, action->get_original_arity(), concrete.arguments.size()));
                         rule->action_name = concrete.action.text;
-                        auto arguments = urd::Store<urd::map<std::string, ygg::uint_t>, urd::stable_refs> {};
+                        /// The action's argument names: a name's position is its argument's.
+                        auto arguments = urd::Store<urd::set<std::string>, urd::positional>(urd::layer { 0 });
                         for (const auto& argument : concrete.arguments)
                         {
-                            if (!arguments.emplace(argument.text, arguments.size()).second)
+                            if (!arguments.insert(argument.text).second)
                                 diagnostics.throw_at(argument, DuplicateDefinitionError("action argument", argument.text));
                             rule->argument_names.emplace_back(argument.text);
                         }
@@ -241,7 +243,12 @@ ModuleView lower_module(const ast::Module& module,
                                     -> urd::flat_variant<ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>
                                 {
                                     if constexpr (std::same_as<Value, ast::ArgumentObject>)
-                                        return ArgumentPosition { require(arguments, value.name, "action argument", diagnostics) };
+                                    {
+                                        const auto found = arguments.find(value.name.text);
+                                        if (found == arguments.end())
+                                            diagnostics.throw_at(value.name, UndefinedSymbolError("action argument", value.name.text));
+                                        return ArgumentPosition { static_cast<ygg::uint_t>(arguments.position(found)) };
+                                    }
                                     else
                                         return require(references.concept_registers.by_name, value.name, "concept register", diagnostics);
                                 },

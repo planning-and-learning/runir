@@ -103,11 +103,11 @@ void bind_execution_types(nb::module_& m, const char* prefix)
 
     auto program_state = nb::class_<StateView>(m, (std::string(prefix) + "ProgramState").c_str())
                              .def_prop_ro("state", &StateView::get_state, nb::keep_alive<0, 1>())
-                             .def_prop_ro("program", &StateView::get_program, nb::keep_alive<0, 1>())
-                             .def_prop_ro("module", &StateView::get_module, nb::keep_alive<0, 1>())
-                             .def_prop_ro("memory_state", &StateView::get_memory_state, nb::keep_alive<0, 1>())
-                             .def_prop_ro("registers", &StateView::get_registers, nb::keep_alive<0, 1>())
-                             .def_prop_ro("histories", &StateView::get_histories, nb::keep_alive<0, 1>());
+                             .def_prop_ro("program", &StateView::get_program)
+                             .def_prop_ro("module", &StateView::get_module)
+                             .def_prop_ro("memory_state", &StateView::get_memory_state)
+                             .def_prop_ro("registers", &StateView::get_registers)
+                             .def_prop_ro("histories", &StateView::get_histories);
     urd::python::add_comparison(program_state);
     urd::python::add_hash(program_state);
 
@@ -155,7 +155,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
 
     nb::class_<Expander>(m, (std::string(prefix) + "SuccessorExpander").c_str())
         .def(nb::init<runir::kr::TaskContextPtr<Kind>, ProgramView>(), "task_context"_a, "program"_a, nb::keep_alive<1, 3>())
-        .def("initial_state", &Expander::initial_state, "state"_a, nb::keep_alive<0, 1>())
+        .def("initial_state", &Expander::initial_state, "state"_a)
         .def(
             "for_each_successor",
             [](Expander& self, StateView state, ProgramSearchStatistics& statistics, const nb::typed<nb::callable, bool(Step)>& emit, const std::function<bool()>& stop)

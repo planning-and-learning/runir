@@ -6,7 +6,7 @@
 
 #include <bit>
 #include <limits>
-#include <urd/repr/containers/bitset_span.hpp>
+#include <urd/bits.hpp>
 #include <utility>
 
 namespace runir::kr::ps::detail
@@ -22,7 +22,7 @@ std::uint64_t vertex_booleans(std::size_t vertex, const QualitativePolicy& polic
 {
     if (policy.num_booleans == 0)
         return 0;
-    return (vertex / policy.num_memory_states) & urd::repr::BitsetSpan<const std::uint64_t>::last_mask(policy.num_booleans);
+    return (vertex / policy.num_memory_states) & urd::bitset_span<const std::uint64_t>::last_mask(policy.num_booleans);
 }
 
 std::uint64_t vertex_numericals(std::size_t vertex, const QualitativePolicy& policy)

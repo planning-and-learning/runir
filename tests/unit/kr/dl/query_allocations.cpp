@@ -1,5 +1,6 @@
 #include "incremental_root_evaluators.hpp"
 #include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/unordered_flat_set.hpp>
 #include <urd/store.hpp>
 #include <urd/testing/allocations.hpp>
 #include "planning_fixtures.hpp"
@@ -27,7 +28,6 @@
 #include <runir/kr/ps/ext/program_executor.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/task_context.hpp>
-#include <set>
 #include <string>
 #include <tuple>
 #include <tyr/planning/ground/successor_generator.hpp>
@@ -171,7 +171,8 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
     // Build completed planning transitions before tracking evaluation allocations.
     auto changes = std::array<kr::dl::semantics::incremental::Delta, 4> {};
     auto projected_sizes = std::array<size_t, 5> { 2 };
-    auto contexts = std::vector { context };  // The context of each state the changes pass through, built before tracking.
+    // The context of each state the changes pass through, built before tracking.
+    auto contexts = urd::Store<urd::sequence<kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>>> { context };
     auto current = initial;
     for (size_t i = 0; i < changes.size(); ++i)
     {
@@ -180,7 +181,7 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
         const auto& next = successors.front();
         changes[i].assign<tyr::GroundTag>(current.get_state(), register_view, next.get_state(), register_view);
         contexts.emplace_back(next.get_state(), builder, storage, arguments, register_values);
-        auto objects = std::set<ObjectIndex> {};
+        auto objects = urd::Store<urd::set<ObjectIndex>> {};
         for (const auto atom : next.get_state().get_atoms_view(atomic.get_predicate()))
             objects.insert(atom.get_row().template get<ObjectIndex>(0));
         projected_sizes[i + 1] = objects.size();

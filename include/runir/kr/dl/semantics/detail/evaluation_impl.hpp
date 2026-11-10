@@ -10,7 +10,7 @@
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
-#include <urd/repr/containers/bitset_span.hpp>
+#include <urd/bits.hpp>
 
 namespace runir::kr::dl::semantics
 {
@@ -190,7 +190,7 @@ auto evaluate_impl(urd::index_view<Concept<SemanticFamily, Tag>, C> constructor,
     }
     else
     {
-        static_assert(urd::repr::dependent_false<Tag>::value, "unhandled DL concept constructor tag in evaluate_impl");
+        static_assert(false, "unhandled DL concept constructor tag in evaluate_impl");
     }
 
     return insert(repository, *result, context.get_builder()).first;
@@ -254,7 +254,7 @@ auto evaluate_impl(urd::index_view<Role<SemanticFamily, Tag>, C> constructor, Co
         for (ygg::uint_t lhs = 0; lhs < num_objects; ++lhs)
         {
             const auto row = arg.value(urd::index<tyr::formalism::Object>(lhs));
-            for (const auto rhs : urd::repr::set_bit_indices(row))
+            for (const auto rhs : urd::set_bit_indices(row))
                 result->get(urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(rhs))).set(lhs);
         }
     }
@@ -268,7 +268,7 @@ auto evaluate_impl(urd::index_view<Role<SemanticFamily, Tag>, C> constructor, Co
             auto result_row = result->get(urd::index<tyr::formalism::Object>(source));
             const auto lhs_row = lhs.value(urd::index<tyr::formalism::Object>(source));
 
-            for (const auto mid : urd::repr::set_bit_indices(lhs_row))
+            for (const auto mid : urd::set_bit_indices(lhs_row))
                 result_row |= rhs.value(urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(mid)));
         }
     }
@@ -310,12 +310,12 @@ auto evaluate_impl(urd::index_view<Role<SemanticFamily, Tag>, C> constructor, Co
         const auto concept_denotation = evaluate<Kind>(constructor.get_arg(), children);
         const auto bitset = concept_denotation.value();
 
-        for (const auto object : urd::repr::set_bit_indices(bitset))
+        for (const auto object : urd::set_bit_indices(bitset))
             result->get(urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(object))).set(object);
     }
     else
     {
-        static_assert(urd::repr::dependent_false<Tag>::value, "unhandled DL role constructor tag in evaluate_impl");
+        static_assert(false, "unhandled DL role constructor tag in evaluate_impl");
     }
 
     return insert(repository, *result, context.get_builder()).first;
@@ -365,7 +365,7 @@ auto evaluate_impl(urd::index_view<Boolean<SemanticFamily, Tag>, C> constructor,
     }
     else
     {
-        static_assert(urd::repr::dependent_false<Tag>::value, "unhandled DL boolean constructor tag in evaluate_impl");
+        static_assert(false, "unhandled DL boolean constructor tag in evaluate_impl");
     }
 
     auto result = context.get_builder().template get_builder<Denotation<BooleanTag>>(result_value);
@@ -400,7 +400,7 @@ auto evaluate_impl(urd::index_view<Numerical<SemanticFamily, Tag>, C> constructo
     }
     else
     {
-        static_assert(urd::repr::dependent_false<Tag>::value, "unhandled DL numerical constructor tag in evaluate_impl");
+        static_assert(false, "unhandled DL numerical constructor tag in evaluate_impl");
     }
 
     auto result = context.get_builder().template get_builder<Denotation<NumericalTag>>(result_value);

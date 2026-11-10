@@ -42,7 +42,7 @@ void bind_program(nb::module_& m, RepositoryBinding& repository)
     urd::python::add_comparison(data);
     auto view = nb::class_<View>(m, "Program")
                     .def("index", &View::index)
-                    .def("get_entry_module", &View::get_entry_module, nb::keep_alive<0, 1>())
+                    .def("get_entry_module", &View::get_entry_module)
                     .def("get_modules", &View::get_modules)
                     .def("syntactic_complexity", [](View value) { return runir::kr::ps::ext::syntactic_complexity(value); });
     ygg::add_print(view);

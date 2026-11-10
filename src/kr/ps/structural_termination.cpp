@@ -2,6 +2,7 @@
 #include <urd/repr/values/std_set.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/repr/values/dense_set.hpp>
+#include <urd/repr/maps/index_map.hpp>
 #include <urd/store.hpp>
 
 #include "runir/graphs/cycle.hpp"
@@ -15,8 +16,9 @@
 #include <set>
 #include <string>
 #include <tuple>
-#include <urd/repr/containers/bitset_span.hpp>
+#include <urd/bits.hpp>
 #include <utility>
+#include <yggdrasil/semantics/canonicalization.hpp>
 
 namespace runir::kr::ps::detail
 {
@@ -42,7 +44,7 @@ void validate_effects(std::size_t rule_position,
         throw std::invalid_argument("structural_termination: rule " + std::to_string(rule_position) + " has contradictory " + std::string(feature_kind)
                                     + " effects");
     auto expected = std::uint64_t { 0 };
-    urd::repr::BitsetSpan<std::uint64_t>(&expected, num_features).set();
+    urd::bitset_span<std::uint64_t>(&expected, num_features).set();
     if ((first | second | unchanged | unconstrained) != expected)
         throw std::invalid_argument("structural_termination: rule " + std::to_string(rule_position) + " has missing " + std::string(feature_kind) + " effects");
 }
@@ -125,10 +127,10 @@ urd::Store<urd::sequence<CounterexampleComponent>> materialize_counterexamples(c
     {
         const auto& projected = component.projected;
         const auto first_result = result.size();
-        const auto missing = std::numeric_limits<std::size_t>::max();
         auto cyclic_scc = urd::Store<urd::set<std::size_t>, urd::dense> {};
-        auto result_of_scc = urd::Store<urd::sequence<std::size_t>>(component.sieve.component_of.size(), missing);
-        auto vertex_remap = urd::Store<urd::sequence<std::size_t>>(component.sieve.component_of.size(), missing);
+        auto result_of_scc = urd::Store<urd::map<std::size_t, std::size_t>, urd::dense> {};
+        auto vertex_remap = urd::Store<urd::map<std::size_t, std::size_t>, urd::dense> {};
+        vertex_remap.reserve(component.sieve.component_of.size());
 
         for (const auto& edge : component.edges)
             cyclic_scc.insert(component.sieve.component_of[edge.source]);
@@ -138,9 +140,8 @@ urd::Store<urd::sequence<CounterexampleComponent>> materialize_counterexamples(c
             const auto scc = component.sieve.component_of[vertex];
             if (!cyclic_scc.contains(scc))
                 continue;
-            if (result_of_scc[scc] == missing)
-            {
-                result_of_scc[scc] = result.size();
+            const auto [entry, inserted] = result_of_scc.try_emplace(scc, result.size());
+            if (inserted)
                 result.push_back(CounterexampleComponent {
                     .memory_positions = {},
                     .boolean_positions = projected.boolean_positions,
@@ -148,28 +149,25 @@ urd::Store<urd::sequence<CounterexampleComponent>> materialize_counterexamples(c
                     .vertices = {},
                     .edges = {},
                 });
-            }
-            auto& counterexample = result[result_of_scc[scc]];
-            vertex_remap[vertex] = counterexample.vertices.size();
+            auto& counterexample = result[entry->second];
+            vertex_remap.emplace(vertex, counterexample.vertices.size());
             counterexample.vertices.push_back(materialize_vertex(vertex, projected));
             counterexample.memory_positions.push_back(counterexample.vertices.back().memory_position);
         }
 
         for (const auto& edge : component.edges)
         {
-            auto& counterexample = result[result_of_scc[component.sieve.component_of[edge.source]]];
+            auto& counterexample = result[result_of_scc.at(component.sieve.component_of[edge.source])];
             counterexample.edges.push_back(CounterexampleEdge {
-                vertex_remap[edge.source],
-                vertex_remap[edge.target],
+                vertex_remap.at(edge.source),
+                vertex_remap.at(edge.target),
                 projected.rule_positions[edge.rule_position],
             });
         }
 
         for (auto result_position = first_result; result_position < result.size(); ++result_position)
         {
-            auto& memory_positions = result[result_position].memory_positions;
-            std::ranges::sort(memory_positions);
-            memory_positions.erase(std::unique(memory_positions.begin(), memory_positions.end()), memory_positions.end());
+            ygg::canonicalize(result[result_position].memory_positions);
             std::ranges::sort(result[result_position].edges,
                               {},
                               [](const auto& edge) { return std::tuple(edge.source_vertex_position, edge.target_vertex_position, edge.rule_position); });

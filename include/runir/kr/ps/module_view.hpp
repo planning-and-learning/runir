@@ -8,7 +8,6 @@
 #include "runir/kr/ps/rule_variant_view.hpp"
 
 #include <concepts>
-#include <urd/repr/core/dependent_false.hpp>
 #include <urd/elements/flat.hpp>
 
 namespace runir::kr::ps
@@ -50,7 +49,7 @@ public:
             return self().template member<&urd::record_of<V>::query_features>();
         else
         {
-            static_assert(urd::repr::dependent_false<FeatureTag>::value, "unhandled feature tag in Module::get_features");
+            static_assert(false, "unhandled feature tag in Module::get_features");
         }
     }
 

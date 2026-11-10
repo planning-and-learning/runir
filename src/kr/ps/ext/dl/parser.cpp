@@ -3,6 +3,7 @@
 #include "runir/kr/ps/detail/repository_instantiations.hpp"
 #include <urd/repr/maps/std_map.hpp>
 #include <urd/repr/values/std_set.hpp>
+#include <urd/repr/sequences/segmented.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 
@@ -988,14 +989,14 @@ void with_diagnostic_scope(runir::kr::parser::DiagnosticContext& diagnostics, co
 
 void validate_module_set(const urd::Store<urd::sequence<ast::Module>>& modules,
                          runir::kr::parser::DiagnosticContext& diagnostics,
-                         const urd::Store<urd::sequence<std::unique_ptr<runir::kr::parser::ErrorHandlerType>>>* error_handlers = nullptr)
+                         const urd::Store<urd::sequence<runir::kr::parser::ErrorHandlerType>, urd::stable_refs>* error_handlers = nullptr)
 {
     auto signatures_by_name = urd::Store<urd::map<std::string, SignatureCounts>, urd::stable_refs> {};
     auto feature_symbols_by_module = urd::Store<urd::map<std::string, FeatureSymbolSets>, urd::stable_refs> {};
     for (std::size_t i = 0; i < modules.size(); ++i)
     {
         const auto& module_ = modules[i];
-        const auto* error_handler = error_handlers ? (*error_handlers)[i].get() : nullptr;
+        const auto* error_handler = error_handlers ? &(*error_handlers)[i] : nullptr;
         with_diagnostic_scope(diagnostics,
                               error_handler,
                               [&]
@@ -1009,7 +1010,7 @@ void validate_module_set(const urd::Store<urd::sequence<ast::Module>>& modules,
     for (std::size_t i = 0; i < modules.size(); ++i)
     {
         const auto& module_ = modules[i];
-        const auto* error_handler = error_handlers ? (*error_handlers)[i].get() : nullptr;
+        const auto* error_handler = error_handlers ? &(*error_handlers)[i] : nullptr;
         with_diagnostic_scope(
             diagnostics,
             error_handler,
@@ -1123,15 +1124,13 @@ urd::Store<urd::sequence<ModuleView>> parse_modules(const urd::Store<urd::sequen
     auto asts = urd::Store<urd::sequence<ast::Module>>(descriptions.size());
     auto diagnostic_outputs = urd::Store<urd::sequence<std::ostringstream>>(descriptions.size());
     auto diagnostics = runir::kr::parser::DiagnosticContext {};
-    auto error_handlers = urd::Store<urd::sequence<std::unique_ptr<runir::kr::parser::ErrorHandlerType>>> {};
-    error_handlers.reserve(descriptions.size());
+    auto error_handlers = urd::Store<urd::sequence<runir::kr::parser::ErrorHandlerType>, urd::stable_refs> {};
 
     for (std::size_t i = 0; i < descriptions.size(); ++i)
     {
-        error_handlers.push_back(
-            std::make_unique<runir::kr::parser::ErrorHandlerType>(descriptions[i].cbegin(), descriptions[i].cend(), diagnostic_outputs[i]));
-        auto scope = runir::kr::parser::DiagnosticContext::Scope(diagnostics, *error_handlers.back());
-        parser::parse_module_ast(descriptions[i], asts[i], *error_handlers.back());
+        auto& error_handler = error_handlers.emplace_back(descriptions[i].cbegin(), descriptions[i].cend(), diagnostic_outputs[i]);
+        auto scope = runir::kr::parser::DiagnosticContext::Scope(diagnostics, error_handler);
+        parser::parse_module_ast(descriptions[i], asts[i], error_handler);
     }
 
     validate_module_set(asts, diagnostics, &error_handlers);
@@ -1150,7 +1149,7 @@ urd::Store<urd::sequence<ModuleView>> parse_modules(const urd::Store<urd::sequen
     }
     for (std::size_t i = 0; i < asts.size(); ++i)
     {
-        auto scope = runir::kr::parser::DiagnosticContext::Scope(diagnostics, *error_handlers[i]);
+        auto scope = runir::kr::parser::DiagnosticContext::Scope(diagnostics, error_handlers[i]);
         auto view = lower_module(asts[i], domain, repository, builders, diagnostics, module_symbols);
         result.push_back(view);
     }

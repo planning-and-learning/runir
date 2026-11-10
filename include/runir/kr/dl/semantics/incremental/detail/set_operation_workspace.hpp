@@ -17,41 +17,30 @@ namespace runir::kr::dl::semantics::incremental::detail
 /// Scratch shared by sequential constructor updates; no denotation owns it.
 struct SetOperationWorkspace
 {
-    urd::Store<urd::sequence<urd::index<tyr::formalism::Object>>> rows;
-    urd::Store<urd::sequence<std::uint8_t>> marked;
+    MarkedRows rows { urd::layer { 0 } };
+    ygg::uint_t num_objects = 0;
     urd::builder<Denotation<ConceptTag>> row;
     ClosureWorkspace closure;
 
-    void initialize(ygg::uint_t num_objects)
+    void initialize(ygg::uint_t num_objects_)
     {
+        num_objects = num_objects_;
         rows.clear();
         rows.reserve(num_objects);
-        marked.assign(num_objects, 0);
         row.initialize(num_objects);
         closure.initialize(num_objects);
     }
 
-    void mark(urd::index<tyr::formalism::Object> source)
-    {
-        const auto index = static_cast<ygg::uint_t>(source.value);
-        if (!marked[index])
-        {
-            rows.push_back(source);
-            marked[index] = 1;
-        }
-    }
+    void mark(urd::index<tyr::formalism::Object> source) { rows.insert(source); }
 
-    void clear_rows() noexcept
-    {
-        for (const auto source : rows)
-            marked[static_cast<ygg::uint_t>(source.value)] = 0;
-        rows.clear();
-    }
+    [[nodiscard]] bool is_marked(urd::index<tyr::formalism::Object> source) const { return rows.contains(source); }
+
+    void clear_rows() noexcept { rows.clear(); }
 
     void mark_all()
     {
         clear_rows();
-        for (ygg::uint_t source = 0; source < marked.size(); ++source)
+        for (ygg::uint_t source = 0; source < num_objects; ++source)
             mark(urd::index<tyr::formalism::Object>(source));
     }
 };

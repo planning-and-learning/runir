@@ -178,7 +178,7 @@ QueryTranslator::YggQuery QueryTranslator::translate_concrete(DlQuery query, Que
         return insert(*out);
     }
     else
-        static_assert(urd::repr::dependent_false<Tag>::value, "unhandled DL query constructor");
+        static_assert(false, "unhandled DL query constructor");
 }
 
 }  // namespace runir::kr::dl::detail

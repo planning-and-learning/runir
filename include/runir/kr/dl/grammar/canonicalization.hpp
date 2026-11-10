@@ -25,7 +25,7 @@ void canonicalize(urd::data<NonTerminal<Category>>&) noexcept
 
 template<runir::kr::dl::CategoryTag Category>
 inline bool is_canonical(const urd::data<DerivationRule<Category>>& data)
-{ return std::ranges::is_sorted(data.rhs) && std::ranges::adjacent_find(data.rhs) == data.rhs.end(); }
+{ return ygg::is_canonical(data.rhs); }
 
 template<runir::kr::dl::CategoryTag Category>
 inline void canonicalize(urd::data<DerivationRule<Category>>& data)

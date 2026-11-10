@@ -6,7 +6,6 @@
 
 #include <concepts>
 #include <tuple>
-#include <urd/repr/core/dependent_false.hpp>
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/core/config.hpp>
 
@@ -31,7 +30,7 @@ public:
         else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
             return urd::resolve(self().data().numerical_arguments, self().context());
         else
-            static_assert(urd::repr::dependent_false<Category>::value, "unhandled argument category");
+            static_assert(false, "unhandled argument category");
     }
 
     template<runir::kr::dl::CategoryTag Category>

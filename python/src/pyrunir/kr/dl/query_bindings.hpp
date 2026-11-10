@@ -18,7 +18,6 @@
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <string>
 #include <type_traits>
-#include <urd/repr/core/dependent_false.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/python/bindings.hpp>
@@ -73,7 +72,7 @@ void def_query_data_constructors(Class& cls)
         cls.def(nb::init<ColumnIndexList, QueryIndex, QueryIndex, QueryIndex, QueryIndex>(), "keys"_a, "sources"_a, "edges"_a, "targets"_a, "probes"_a)
             .def(urd::python::init_from_views<const ColumnViewList&, QueryView, QueryView, QueryView, QueryView>(), "keys"_a, "sources"_a, "edges"_a, "targets"_a, "probes"_a);
     else
-        static_assert(urd::repr::dependent_false<Tag>::value);
+        static_assert(false);
 }
 
 template<typename Tag>

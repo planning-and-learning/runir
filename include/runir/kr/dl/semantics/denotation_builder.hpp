@@ -10,7 +10,7 @@
 #include <span>
 #include <tuple>
 #include <tyr/formalism/declarations.hpp>
-#include <urd/repr/containers/bitset_span.hpp>
+#include <urd/bits.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
@@ -65,10 +65,10 @@ struct builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>
 private:
     using Block = ygg::uint_t;
     using Blocks = urd::Store<urd::sequence<Block>, urd::contiguous>;
-    using ConstBitset = urd::repr::BitsetSpan<const Block>;
+    using ConstBitset = urd::bitset_span<const Block>;
 
 public:
-    using Bitset = urd::repr::BitsetSpan<Block>;
+    using Bitset = urd::bitset_span<Block>;
 
     urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>> index;
     ygg::uint_t num_objects = 0;
@@ -131,10 +131,10 @@ struct builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>
 private:
     using Block = ygg::uint_t;
     using Blocks = urd::Store<urd::sequence<Block>, urd::contiguous>;
-    using ConstBitset = urd::repr::BitsetSpan<const Block>;
+    using ConstBitset = urd::bitset_span<const Block>;
 
 public:
-    using Bitset = urd::repr::BitsetSpan<Block>;
+    using Bitset = urd::bitset_span<Block>;
 
     urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>> index;
     ygg::uint_t num_objects = 0;

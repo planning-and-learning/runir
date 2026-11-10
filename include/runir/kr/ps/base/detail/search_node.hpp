@@ -9,7 +9,7 @@
 #include <yggdrasil/formalism/row_view.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <tyr/planning/state_repository.hpp>
-#include <urd/repr/sequences/segmented.hpp>
+#include <urd/repr/maps/index_map.hpp>
 #include <urd/store.hpp>
 
 namespace runir::kr::ps::base::detail
@@ -26,15 +26,13 @@ struct SearchNode
     bool is_open = false;
 };
 
+/// A search's nodes by state; a node stays where it is while others are added.
 template<tyr::TaskKind Kind>
-SearchNode<Kind>& get_or_create_search_node(const tyr::planning::PackedStateView<Kind>& state, urd::Store<urd::sequence<SearchNode<Kind>>, urd::stable_refs>& search_nodes)
-{
-    const auto index = ygg::uint_t(state.index().value);
-    while (index >= search_nodes.size())
-        search_nodes.push_back(SearchNode<Kind> {});
+using SearchNodes = urd::Store<urd::map<urd::index<tyr::planning::State<Kind>>, SearchNode<Kind>>, urd::dense, urd::stable_refs>;
 
-    return search_nodes[index];
-}
+template<tyr::TaskKind Kind>
+SearchNode<Kind>& get_or_create_search_node(const tyr::planning::PackedStateView<Kind>& state, SearchNodes<Kind>& search_nodes)
+{ return search_nodes[state.index()]; }
 
 template<tyr::TaskKind Kind>
 struct Predecessor

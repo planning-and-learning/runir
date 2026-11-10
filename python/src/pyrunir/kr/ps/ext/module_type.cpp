@@ -127,7 +127,7 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
                     .def("get_boolean_features", &View::template get_features<runir::kr::dl::BooleanTag>)
                     .def("get_numerical_features", &View::template get_features<runir::kr::dl::NumericalTag>)
                     .def("get_query_features", &View::get_query_features)
-                    .def("get_entry_memory_state", &View::get_entry_memory_state, nb::keep_alive<0, 1>())
+                    .def("get_entry_memory_state", &View::get_entry_memory_state)
                     .def("get_memory_states", &View::get_memory_states)
                     .def("get_memory_transitions", &View::get_memory_transitions)
                     .def("syntactic_complexity", [](View value) { return runir::kr::ps::ext::syntactic_complexity(value); });

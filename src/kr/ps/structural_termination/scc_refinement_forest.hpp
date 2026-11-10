@@ -40,8 +40,9 @@ public:
     {
         std::uint64_t booleans = 0;
         std::uint64_t numericals = 0;
-        urd::Store<urd::sequence<urd::Store<urd::sequence<std::size_t>>>> boolean_witnessing_rule_positions;
-        urd::Store<urd::sequence<urd::Store<urd::sequence<std::size_t>>>> numerical_witnessing_rule_positions;
+        /// Per feature, the positions of the rules that established its mark, in ascending order.
+        urd::Store<urd::sequence<urd::Store<urd::set<std::size_t>, urd::dense>>> boolean_witnessing_rule_positions;
+        urd::Store<urd::sequence<urd::Store<urd::set<std::size_t>, urd::dense>>> numerical_witnessing_rule_positions;
 
         Marks(std::size_t num_booleans, std::size_t num_numericals) :
             boolean_witnessing_rule_positions(num_booleans),
@@ -54,11 +55,9 @@ public:
             booleans |= other.booleans;
             numericals |= other.numericals;
             for (std::size_t position = 0; position < boolean_witnessing_rule_positions.size(); ++position)
-                for (const auto rule_position : other.boolean_witnessing_rule_positions[position])
-                    insert_witness(boolean_witnessing_rule_positions[position], rule_position);
+                boolean_witnessing_rule_positions[position] |= other.boolean_witnessing_rule_positions[position];
             for (std::size_t position = 0; position < numerical_witnessing_rule_positions.size(); ++position)
-                for (const auto rule_position : other.numerical_witnessing_rule_positions[position])
-                    insert_witness(numerical_witnessing_rule_positions[position], rule_position);
+                numerical_witnessing_rule_positions[position] |= other.numerical_witnessing_rule_positions[position];
             return *this;
         }
 
@@ -66,22 +65,14 @@ public:
         {
             auto& witnesses = boolean_witnessing_rule_positions.at(feature_position);
             booleans |= std::uint64_t { 1 } << feature_position;
-            insert_witness(witnesses, witnessing_rule_position);
+            witnesses.insert(witnessing_rule_position);
         }
 
         void mark_numerical(std::size_t feature_position, std::size_t witnessing_rule_position)
         {
             auto& witnesses = numerical_witnessing_rule_positions.at(feature_position);
             numericals |= std::uint64_t { 1 } << feature_position;
-            insert_witness(witnesses, witnessing_rule_position);
-        }
-
-    private:
-        static void insert_witness(urd::Store<urd::sequence<std::size_t>>& positions, std::size_t rule_position)
-        {
-            const auto insertion = std::lower_bound(positions.begin(), positions.end(), rule_position);
-            if (insertion == positions.end() || *insertion != rule_position)
-                positions.insert(insertion, rule_position);
+            witnesses.insert(witnessing_rule_position);
         }
     };
 

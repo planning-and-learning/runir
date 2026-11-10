@@ -12,7 +12,6 @@
 #include <optional>
 #include <span>
 #include <stdexcept>
-#include <urd/repr/core/dependent_false.hpp>
 #include <urd/repr/maps/std_map.hpp>
 #include <urd/repr/maps/unordered_flat_map.hpp>
 #include <urd/repr/values/unordered_flat_set.hpp>

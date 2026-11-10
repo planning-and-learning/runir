@@ -2,6 +2,8 @@
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_EVALUATION_HPP_
 
 #include "runir/kr/dl/repository.hpp"
+#include <urd/repr/maps/postings.hpp>
+#include <urd/repr/maps/unordered_flat_map.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include "runir/kr/dl/semantics/incremental/declarations.hpp"
@@ -15,8 +17,10 @@
 #include <initializer_list>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <span>
 #include <stdexcept>
+#include <tuple>
 #include <tyr/planning/declarations.hpp>
 #include <utility>
 #include <variant>
@@ -49,6 +53,14 @@ class EvaluationGraph
                              detail::FeatureNode<Kind, NumericalTag>,
                              detail::QueryNode<Kind>>>
         m_nodes;
+    /// The node of each prepared expression.
+    template<CategoryTag Category>
+    using FeatureNodeIndices = urd::Store<urd::map<ConstructorView<Category>, EvaluationIndex<Category>>>;
+    std::tuple<FeatureNodeIndices<ConceptTag>, FeatureNodeIndices<RoleTag>, FeatureNodeIndices<BooleanTag>, FeatureNodeIndices<NumericalTag>>
+        m_feature_nodes;
+    urd::Store<urd::map<QueryView<>, QueryEvaluationIndex>> m_query_nodes;
+    /// The nodes that lift a concept or role node into a relation, by the lifted node.
+    urd::Store<urd::map<ygg::uint_t, QueryEvaluationIndex>, urd::multi> m_lifts;
     detail::SetOperationWorkspace m_set_workspace;
     const tyr::planning::Task<Kind>* m_task;
 
@@ -86,14 +98,16 @@ class EvaluationGraph
     prepare_relation(ConstructorView<Category> expression, std::span<const ygg::ColumnLayout> columns, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
     {
         const auto argument = prepare(expression);
+        const auto lifted = static_cast<ygg::uint_t>(argument.value);
         auto index = std::optional<QueryEvaluationIndex> {};
-        for (size_t i = 0; i < m_nodes.size() && !index; ++i)
-            if (const auto* candidate = std::get_if<detail::QueryNode<Kind>>(&m_nodes[i]); candidate && candidate->lifts(argument, columns))
-                index = QueryEvaluationIndex(ygg::to_uint_t(i));
+        for (const auto [first, last] = m_lifts.equal_range(lifted); const auto candidate : std::ranges::subrange(first, last) | std::views::values)
+            if (!index && node(candidate).lifts(argument, columns))
+                index = candidate;
         if (!index)
         {
             index = QueryEvaluationIndex(ygg::to_uint_t(m_nodes.size()));
             m_nodes.emplace_back(detail::QueryNode<Kind>(*m_layer, argument, columns));
+            m_lifts.insert({ lifted, *index });
         }
         dependencies.push_back(static_cast<ygg::uint_t>((*index).value));
         return *index;

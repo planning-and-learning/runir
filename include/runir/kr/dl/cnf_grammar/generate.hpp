@@ -15,7 +15,6 @@
 #include <cstdint>
 #include <optional>
 #include <tyr/planning/declarations.hpp>
-#include <urd/repr/core/dependent_false.hpp>
 #include <vector>
 
 namespace runir::kr::dl::cnf_grammar
@@ -72,7 +71,7 @@ struct GenerateResultsFor
             return numericals;
         else
         {
-            static_assert(urd::repr::dependent_false<Category>::value, "unhandled DL category in get_constructors");
+            static_assert(false, "unhandled DL category in get_constructors");
         }
     }
 };

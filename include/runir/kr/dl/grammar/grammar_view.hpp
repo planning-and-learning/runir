@@ -6,7 +6,6 @@
 #include <concepts>
 #include <tuple>
 #include <tyr/formalism/planning/domain_view.hpp>
-#include <urd/repr/core/dependent_false.hpp>
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
 
@@ -34,7 +33,7 @@ public:
             return self().template member<&urd::record_of<V>::numerical_start>();
         else
         {
-            static_assert(urd::repr::dependent_false<Category>::value, "unhandled DL category in get_start");
+            static_assert(false, "unhandled DL category in get_start");
         }
     }
 
@@ -51,7 +50,7 @@ public:
             return self().template member<&urd::record_of<V>::numerical_derivation_rules>();
         else
         {
-            static_assert(urd::repr::dependent_false<Category>::value, "unhandled DL category in get_derivation_rules");
+            static_assert(false, "unhandled DL category in get_derivation_rules");
         }
     }
 };

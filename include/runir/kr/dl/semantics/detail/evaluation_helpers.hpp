@@ -28,7 +28,6 @@
 #include <tyr/planning/state_repository.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/task.hpp>
-#include <urd/repr/core/dependent_false.hpp>
 #include <utility>
 #include <urd/repr/slots/slots.hpp>
 #include <urd/store.hpp>

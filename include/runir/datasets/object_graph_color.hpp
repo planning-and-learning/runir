@@ -40,6 +40,7 @@
 #include <boost/mp11.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>
+#include <yggdrasil/semantics/canonicalization.hpp>
 
 namespace runir::datasets
 {
@@ -155,13 +156,10 @@ void canonicalize(urd::data<PredicateColor<T>>&) noexcept
 }
 
 inline bool is_canonical(const urd::data<Color>& data) noexcept
-{ return std::is_sorted(data.values.begin(), data.values.end()) && std::adjacent_find(data.values.begin(), data.values.end()) == data.values.end(); }
+{ return ygg::is_canonical(data.values); }
 
 inline void canonicalize(urd::data<Color>& data)
-{
-    std::sort(data.values.begin(), data.values.end());
-    data.values.erase(std::unique(data.values.begin(), data.values.end()), data.values.end());
-}
+{ ygg::canonicalize(data.values); }
 
 class ColorRepository
 {

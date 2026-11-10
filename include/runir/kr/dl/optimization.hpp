@@ -18,9 +18,10 @@
 #include <stdexcept>
 #include <tuple>
 #include <type_traits>
-#include <urd/repr/core/dependent_false.hpp>
+#include <urd/repr/maps/index_map.hpp>
 #include <urd/repr/maps/std_map.hpp>
 #include <urd/repr/maps/unordered_flat_map.hpp>
+#include <urd/repr/values/indexed.hpp>
 #include <urd/repr/values/std_set.hpp>
 #include <urd/repr/values/unordered_flat_set.hpp>
 #include <urd/repr/sequences/sequence.hpp>
@@ -70,12 +71,14 @@ QueryView<> insert_query(ConstructorRepository& repository, urd::data<Query<Tag>
 inline urd::Store<urd::sequence<QueryView<>>> lower(const tyr::datalog::database::QueryPlan& plan, std::span<const QueryView<>> leaves, ConstructorRepository& repository)
 {
     using YggIndex = urd::index<tyr::datalog::database::Query<>>;
-    urd::Store<urd::sequence<std::optional<QueryView<>>>> lowered(plan.node_count());
-    const auto lowered_at = [&](YggIndex index) { return lowered.at(index.value).value(); };
+    urd::Store<urd::map<YggIndex, QueryView<>>, urd::dense> lowered;
+    lowered.reserve(plan.node_count());
+    const auto lowered_at = [&](YggIndex index) { return lowered.at(index); };
     const auto child = [&](tyr::datalog::database::QueryView<> node) { return lowered_at(node.index()); };
     for (size_t i = 0; i < plan.node_count(); ++i)
     {
-        lowered[i] = std::visit(
+        const auto index = YggIndex(static_cast<ygg::uint_t>(i));
+        auto node = std::visit(
             [&]<typename Tag>(tyr::datalog::database::QueryView<Tag> node) -> QueryView<>
             {
                 if constexpr (std::same_as<Tag, tyr::datalog::database::QueryInputTag>)
@@ -156,15 +159,12 @@ inline urd::Store<urd::sequence<QueryView<>>> lower(const tyr::datalog::database
                 else
                     throw std::logic_error("Query optimization: runir queries have no distance relations.");
             },
-            plan[YggIndex(static_cast<ygg::uint_t>(i))].get_variant());
+            plan[index].get_variant());
+        lowered.insert_or_assign(index, node);
     }
     urd::Store<urd::sequence<QueryView<>>> roots;
     for (const auto root : plan.roots())
-    {
-        const auto& lowered_root = lowered.at(root.value);
-        URD_ASSUME(lowered_root.has_value());  // Every plan node was lowered above.
-        roots.push_back(*lowered_root);
-    }
+        roots.push_back(lowered.at(root));
     return roots;
 }
 
@@ -372,7 +372,8 @@ public:
     { collect<T>(expression); }
 
     /// A sampler for the collected leaves, to measure sample states one at a time.
-    [[nodiscard]] QueryStatisticsSampler sampler() const { return QueryStatisticsSampler(m_leaves); }
+    [[nodiscard]] QueryStatisticsSampler sampler() const
+    { return QueryStatisticsSampler(urd::Store<urd::sequence<QueryView<>>>(m_leaves.begin(), m_leaves.end())); }
 
     /// The statistics of the collected leaves over contexts, one state evaluation context per sample state, measured
     /// state by state (see QueryStatisticsSampler).
@@ -396,12 +397,9 @@ private:
             auto translator = detail::QueryTranslator();
             translator.translate(view);
             for (const auto leaf : translator.get_leaves(view.context()))
-                if (std::ranges::find(m_leaves, leaf) == m_leaves.end())
-                {
-                    m_leaves.push_back(leaf);
+                if (m_leaves.insert(leaf).second)
                     // A leaf wrapper's concrete leaf: walk its concept/role argument.
                     for_each_child(leaf, [&]<typename U>(RecordView<U> concrete) { collect_children(concrete); });
-                }
         }
         else
             collect_children(view);
@@ -418,7 +416,7 @@ private:
     }
 
     urd::Store<urd::set<runir::kr::detail::RecordKey>> m_visited;
-    urd::Store<urd::sequence<QueryView<>>> m_leaves;
+    urd::Store<urd::set<QueryView<>>, urd::insertion_ordered> m_leaves { urd::layer { 0 } };
 };
 
 /// Optimizes every query inside a DL expression (any constructor or query) with yggdrasil's optimizer and returns the

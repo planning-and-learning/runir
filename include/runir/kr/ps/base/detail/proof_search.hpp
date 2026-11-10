@@ -14,7 +14,7 @@
 #include <tyr/planning/algorithms/strategies/goal.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
-#include <urd/repr/sequences/segmented.hpp>
+#include <urd/repr/queues/queue.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <utility>
@@ -35,7 +35,7 @@ ProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
                                      const tyr::planning::PackedStateView<Kind>& initial,
                                      const SketchSearchOptions<Kind>& options,
                                      Unsolvability& classifier,
-                                     urd::Store<urd::sequence<SearchNode<Kind>>, urd::stable_refs>& nodes,
+                                     SearchNodes<Kind>& nodes,
                                      urd::Store<urd::sequence<Predecessor<Kind>>>& predecessors,
                                      SketchSearchStatistics& statistics,
                                      std::optional<tyr::planning::PackedStateView<Kind>>& goal)
@@ -54,8 +54,8 @@ ProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
 
     const auto get_or_create_state = [&](const tyr::planning::StateView<Kind>& state) -> std::optional<bool>
     {
-        const auto position = static_cast<std::size_t>(ygg::uint_t(state.index().value));
-        if ((num_reached > 0 && state == initial_state) || (position < nodes.size() && nodes[position].parent_state))
+        const auto found = nodes.find(state.index());
+        if ((num_reached > 0 && state == initial_state) || (found != nodes.end() && found->second.parent_state))
             return false;
         if (num_reached >= options.max_num_states)
             return std::nullopt;
@@ -69,15 +69,16 @@ ProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
     const auto admitted = get_or_create_state(initial_state);
     if (!admitted)
         return ProofStatus::OUT_OF_STATES;
-    auto open = urd::Store<urd::sequence<tyr::planning::PackedStateView<Kind>>> { initial };
+    auto open = urd::Store<urd::queue<tyr::planning::PackedStateView<Kind>>, urd::lifo> {};
+    open.push(initial);
 
     while (!open.empty())
     {
         if (out_of_time())
             return ProofStatus::OUT_OF_TIME;
 
-        const auto source = std::move(open.back());
-        open.pop_back();
+        const auto source = std::move(open.top());
+        open.pop();
         auto& source_node = detail::get_or_create_search_node(source, nodes);
         if (source_node.is_goal)
         {
@@ -118,7 +119,7 @@ ProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
                 auto& target_node = detail::get_or_create_search_node(target, nodes);
                 target_node.parent_state = source;
                 target_node.action = successor.label;
-                open.push_back(target);
+                open.push(target);
             }
             is_open = false;
             return options.universal;
@@ -146,7 +147,7 @@ auto find_solution(const runir::kr::TaskContextPtr<Kind>& task_context_owner,
     const auto& search_context = *task_context.search_context;
     auto expander = SuccessorExpander<Kind>(task_context, sketch);
     const auto initial_node = search_context.successor_generator->get_packed_initial_node(*search_context.state_repository, *search_context.axiom_evaluator);
-    auto nodes = urd::Store<urd::sequence<SearchNode<Kind>>, urd::stable_refs> {};
+    auto nodes = SearchNodes<Kind> {};
     auto predecessors = urd::Store<urd::sequence<Predecessor<Kind>>> {};
     auto statistics = SketchSearchStatistics {};
     auto goal = std::optional<tyr::planning::PackedStateView<Kind>> {};
@@ -163,8 +164,8 @@ auto find_solution(const runir::kr::TaskContextPtr<Kind>& task_context_owner,
         result.status = ProofStatus::FAILURE;
     if (goal && result.is_successful())
         result.plan = runir::kr::ps::detail::extract_total_ordered_plan<Kind>(
-            nodes[ygg::uint_t(goal->index().value)],
-            [&](const auto& node) { return node.parent_state ? &nodes[ygg::uint_t(node.parent_state->index().value)] : nullptr; },
+            nodes.at(goal->index()),
+            [&](const auto& node) { return node.parent_state ? &nodes.at(node.parent_state->index()) : nullptr; },
             initial_node,
             task_context);
     return result;

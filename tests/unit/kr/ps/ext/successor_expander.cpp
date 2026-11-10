@@ -1,6 +1,8 @@
 #include "successor_expander_fixtures.hpp"
 
 #include <gtest/gtest.h>
+#include <urd/repr/values/unordered_flat_set.hpp>
+#include <urd/store.hpp>
 
 namespace runir::tests
 {
@@ -326,7 +328,7 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     const auto steps = collect_steps(expander, initial_state);
     ASSERT_GT(steps.size(), 1);
 
-    auto loaded_objects = std::set<ygg::uint_t> {};
+    auto loaded_objects = urd::Store<urd::set<ygg::uint_t>> {};
     for (const auto& step : steps)
     {
         EXPECT_EQ(step.status, kr::ps::ProgramOutcome::APPLIED);
@@ -396,7 +398,7 @@ TEST(RunirTests, ExtRoleLoadRuleEnumeratesAllPairsAndAdvancesMemory)
     const auto steps = collect_steps(expander, initial_state);
     ASSERT_GT(steps.size(), 1);
 
-    auto loaded_pairs = std::set<std::pair<ygg::uint_t, ygg::uint_t>> {};
+    auto loaded_pairs = urd::Store<urd::set<std::pair<ygg::uint_t, ygg::uint_t>>> {};
     for (const auto& step : steps)
     {
         EXPECT_EQ(step.status, kr::ps::ProgramOutcome::APPLIED);

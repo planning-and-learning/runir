@@ -157,20 +157,20 @@ void bind_execution_types(nb::module_& m, const char* prefix)
 
     auto module_state = nb::class_<LocalStateView>(m, (std::string(prefix) + "ModuleState").c_str())
                             .def_prop_ro("state", &LocalStateView::get_state, nb::keep_alive<0, 1>())
-                            .def_prop_ro("module", &LocalStateView::get_module, nb::keep_alive<0, 1>())
-                            .def_prop_ro("memory_state", &LocalStateView::get_memory_state, nb::keep_alive<0, 1>())
-                            .def_prop_ro("registers", &LocalStateView::get_registers, nb::keep_alive<0, 1>())
-                            .def_prop_ro("arguments", &LocalStateView::get_arguments, nb::keep_alive<0, 1>());
+                            .def_prop_ro("module", &LocalStateView::get_module)
+                            .def_prop_ro("memory_state", &LocalStateView::get_memory_state)
+                            .def_prop_ro("registers", &LocalStateView::get_registers)
+                            .def_prop_ro("arguments", &LocalStateView::get_arguments);
     ygg::add_print(module_state);
     urd::python::add_comparison(module_state);
     urd::python::add_hash(module_state);
 
     auto call_stack = nb::class_<StackView>(m, (std::string(prefix) + "CallStack").c_str())
-                          .def_prop_ro("module", &StackView::get_module, nb::keep_alive<0, 1>())
-                          .def_prop_ro("return_memory_state", &StackView::get_return_memory_state, nb::keep_alive<0, 1>())
-                          .def_prop_ro("registers", &StackView::get_registers, nb::keep_alive<0, 1>())
-                          .def_prop_ro("arguments", &StackView::get_arguments, nb::keep_alive<0, 1>())
-                          .def_prop_ro("caller", &StackView::get_caller, nb::keep_alive<0, 1>())
+                          .def_prop_ro("module", &StackView::get_module)
+                          .def_prop_ro("return_memory_state", &StackView::get_return_memory_state)
+                          .def_prop_ro("registers", &StackView::get_registers)
+                          .def_prop_ro("arguments", &StackView::get_arguments)
+                          .def_prop_ro("caller", &StackView::get_caller)
                           .def_prop_ro("has_caller", [](const StackView& self) { return self.data().caller.has_value(); });
     ygg::add_print(call_stack);
     urd::python::add_comparison(call_stack);
@@ -178,9 +178,9 @@ void bind_execution_types(nb::module_& m, const char* prefix)
 
     auto program_state = nb::class_<StateView>(m, (std::string(prefix) + "ProgramState").c_str())
                              .def_prop_ro("state", &StateView::get_state, nb::keep_alive<0, 1>())
-                             .def_prop_ro("program", &StateView::get_program, nb::keep_alive<0, 1>())
-                             .def_prop_ro("module_state", &StateView::get_module_state, nb::keep_alive<0, 1>())
-                             .def_prop_ro("call_stack", &StateView::get_call_stack, nb::keep_alive<0, 1>());
+                             .def_prop_ro("program", &StateView::get_program)
+                             .def_prop_ro("module_state", &StateView::get_module_state)
+                             .def_prop_ro("call_stack", &StateView::get_call_stack);
     ygg::add_print(program_state);
     urd::python::add_comparison(program_state);
     urd::python::add_hash(program_state);
@@ -233,7 +233,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
 
     nb::class_<Expander>(m, (std::string(prefix) + "SuccessorExpander").c_str())
         .def(nb::init<runir::kr::TaskContextPtr<Kind>, ProgramView>(), "task_context"_a, "program"_a)
-        .def("initial_state", &Expander::initial_state, "state"_a, nb::keep_alive<0, 1>())
+        .def("initial_state", &Expander::initial_state, "state"_a)
         .def(
             "for_each_successor",
             [](
@@ -275,7 +275,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
             "state"_a,
             "choice"_a,
             "statistics"_a)
-        .def("matching_rule", &Expander::matching_rule, "state"_a, "successor"_a, nb::keep_alive<0, 1>())
+        .def("matching_rule", &Expander::matching_rule, "state"_a, "successor"_a)
         .def("apply", &Expander::apply, "state"_a, "rule"_a, "successor"_a = std::nullopt);
 }
 

@@ -208,14 +208,20 @@ urd::Store<urd::sequence<IncompletePolicyResult::ResidualMemoryScope>> make_resi
         const auto marks = forest.effective_marks(node_position);
         for (std::size_t feature_position = 0; feature_position < marks.boolean_witnessing_rule_positions.size(); ++feature_position)
             if (marks.booleans & (std::uint64_t { 1 } << feature_position))
+            {
+                const auto& witnesses = marks.boolean_witnessing_rule_positions[feature_position];
                 scope.marked_features.push_back(IncompletePolicyResult::MarkedFeature { IncompletePolicyResult::FeatureKind::BOOLEAN,
                                                                                         feature_position,
-                                                                                        marks.boolean_witnessing_rule_positions[feature_position] });
+                                                                                        { witnesses.begin(), witnesses.end() } });
+            }
         for (std::size_t feature_position = 0; feature_position < marks.numerical_witnessing_rule_positions.size(); ++feature_position)
             if (marks.numericals & (std::uint64_t { 1 } << feature_position))
+            {
+                const auto& witnesses = marks.numerical_witnessing_rule_positions[feature_position];
                 scope.marked_features.push_back(IncompletePolicyResult::MarkedFeature { IncompletePolicyResult::FeatureKind::NUMERICAL,
                                                                                         feature_position,
-                                                                                        marks.numerical_witnessing_rule_positions[feature_position] });
+                                                                                        { witnesses.begin(), witnesses.end() } });
+            }
         result.push_back(std::move(scope));
     }
     std::ranges::sort(result, {}, [](const auto& scope) -> const auto& { return scope.memory_positions; });

@@ -33,6 +33,7 @@
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <utility>
 #include <urd/repr/slots/slots.hpp>
+#include <urd/repr/values/unordered_flat_set.hpp>
 #include <urd/store.hpp>
 #include <yggdrasil/serialization/json.hpp>
 
@@ -147,7 +148,7 @@ TEST(RunirTests, ExtSketchUsesOnlyImmediateOutcomesAndUniversalPreservesParallel
     EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
     EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
 
-    auto targets = std::set<runir::graphs::VertexIndex> {};
+    auto targets = urd::Store<urd::set<runir::graphs::VertexIndex>> {};
     for (const auto edge : universal.graph->get_out_edge_indices(0))
         targets.insert(universal.graph->get_target(edge));
     EXPECT_LT(targets.size(), universal.graph->get_out_degree(0));
@@ -867,7 +868,7 @@ void check_choice_execution()
     ASSERT_TRUE(shared_choice_result.graph);
     EXPECT_EQ(shared_choice_result.graph->get_num_vertices(), 5);
     EXPECT_EQ(shared_choice_result.graph->get_out_degree(0), 2);
-    auto shared_targets = std::set<graphs::VertexIndex> {};
+    auto shared_targets = urd::Store<urd::set<graphs::VertexIndex>> {};
     auto shared_rules = std::set<std::string> {};
     for (const auto edge : shared_choice_result.graph->get_out_edge_indices(0))
     {

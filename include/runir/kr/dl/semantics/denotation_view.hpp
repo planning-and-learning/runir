@@ -18,7 +18,7 @@
 #include <tyr/formalism/object_view.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <urd/elements/view.hpp>
-#include <urd/repr/containers/bitset_span.hpp>
+#include <urd/bits.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
@@ -63,19 +63,19 @@ using DenotationElementViewList = urd::Store<urd::sequence<DenotationElementView
 
 namespace detail
 {
-using DenotationBits = urd::repr::BitsetSpan<const ygg::uint_t>;
+using DenotationBits = urd::bitset_span<const ygg::uint_t>;
 
 /// The objects whose bits are set (a concept's bits, or a role's row): a borrowed range, holding only the bits.
 inline auto object_indices(DenotationBits bits) noexcept
 {
-    return urd::transform(urd::repr::set_bit_indices(bits),
+    return urd::transform(urd::set_bit_indices(bits),
                           [](std::size_t bit) { return urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(bit)); });
 }
 
 /// The (source, target) pairs whose bits are set in a role's bits, a row of whole blocks per source.
 inline auto object_pair_indices(DenotationBits bits, ygg::uint_t num_objects) noexcept
 {
-    return urd::transform(urd::repr::set_bit_indices(bits),
+    return urd::transform(urd::set_bit_indices(bits),
                           [row_bits = static_cast<std::size_t>(DenotationBits::num_blocks(num_objects) * DenotationBits::Digits)](std::size_t bit)
                           {
                               return std::pair(urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(bit / row_bits)),
@@ -203,7 +203,7 @@ public:
         requires(std::same_as<Category, runir::kr::dl::ConceptTag>)
     {
         using Layout = urd::builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>;
-        using Bitset = urd::repr::BitsetSpan<const ygg::uint_t>;
+        using Bitset = urd::bitset_span<const ygg::uint_t>;
 
         const auto vector = get_vector();
         const auto& data = self().data();
@@ -217,7 +217,7 @@ public:
         requires(std::same_as<Category, runir::kr::dl::RoleTag>)
     {
         using Layout = urd::builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>;
-        using Bitset = urd::repr::BitsetSpan<const ygg::uint_t>;
+        using Bitset = urd::bitset_span<const ygg::uint_t>;
 
         const auto vector = get_vector();
         const auto& data = self().data();
@@ -232,7 +232,7 @@ public:
     auto storage_bits() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
     {
-        using Bitset = urd::repr::BitsetSpan<const ygg::uint_t>;
+        using Bitset = urd::bitset_span<const ygg::uint_t>;
         const auto vector = get_vector();
         return Bitset(vector.data(), vector.size() * Bitset::Digits);
     }

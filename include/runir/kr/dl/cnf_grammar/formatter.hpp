@@ -14,7 +14,6 @@
 #include <fmt/ranges.h>
 #include <string>
 #include <string_view>
-#include <urd/repr/core/dependent_false.hpp>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/formatting/cista_formatters.hpp>

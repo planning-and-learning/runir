@@ -4,11 +4,14 @@
 #include "runir/graphs/algorithms/color_refinement.hpp"
 
 #include <array>
+#include <urd/repr/sequences/jagged.hpp>
 #include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/dense_set.hpp>
 #include <urd/store.hpp>
 #include <cmath>
 #include <cstdint>
 #include <utility>
+#include <vector>
 
 namespace runir::graphs::weisfeiler_leman
 {
@@ -104,10 +107,12 @@ auto initial_tuple_colors(const G& graph, const DenseVertexIndices& vertices)
     using InitialSignature = std::tuple<ColorList, BoolList, BoolList>;
 
     const auto n = vertices.size();
-    auto adjacency = urd::Store<urd::sequence<BoolList>>(n, BoolList(n, false));
+    /// Per dense vertex index, the dense vertex indices it has an edge to.
+    auto adjacency =
+        urd::Store<urd::sequence<urd::Store<urd::set<std::size_t>, urd::dense>>, urd::fixed_shape>(urd::row_lengths(std::vector<std::size_t>(n, n)));
     for (std::size_t position = 0; position < n; ++position)
         for (auto edge : graph.get_out_edge_indices(vertices[position]))
-            adjacency.at(position).at(vertices.position(vertices.find(graph.get_target(edge)))) = true;
+            adjacency[position].set(vertices.position(vertices.find(graph.get_target(edge))));
 
     auto interner = color_refinement::SignatureInterner<InitialSignature>(urd::layer { 0 });
     auto colors = ColorList(num_tuples<K>(n));
@@ -130,7 +135,7 @@ auto initial_tuple_colors(const G& graph, const DenseVertexIndices& vertices)
             for (std::size_t j = 0; j < K; ++j)
             {
                 equalities.push_back(static_cast<std::uint8_t>(tuple[i] == tuple[j]));
-                adjacencies.push_back(adjacency.at(tuple[i]).at(tuple[j]));
+                adjacencies.push_back(static_cast<std::uint8_t>(adjacency[tuple[i]].test(tuple[j])));
             }
         }
 

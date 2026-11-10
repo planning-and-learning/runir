@@ -16,7 +16,7 @@
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <tyr/planning/node.hpp>
-#include <urd/repr/containers/bitset_span.hpp>
+#include <urd/bits.hpp>
 #include <utility>
 #include <vector>
 
@@ -25,7 +25,7 @@ namespace runir::kr::ps::ext::detail
 
 struct DoRuleWorkspace
 {
-    urd::Store<urd::sequence<urd::repr::BitsetSpan<const ygg::uint_t>>> denotations;
+    urd::Store<urd::sequence<urd::bitset_span<const ygg::uint_t>>> denotations;
 };
 
 template<tyr::TaskKind Kind>

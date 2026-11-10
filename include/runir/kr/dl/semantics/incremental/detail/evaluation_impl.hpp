@@ -69,26 +69,16 @@ template<tyr::TaskKind Kind>
 template<CategoryTag Category>
 [[nodiscard]] std::optional<EvaluationIndex<Category>> EvaluationGraph<Kind>::find_node(ConstructorView<Category> expression) const
 {
-    // ponytail: linear preparation/root lookup; add a lookup table only if large graphs make it costly.
-    for (size_t i = 0; i < m_nodes.size(); ++i)
-    {
-        const auto* candidate = std::get_if<detail::FeatureNode<Kind, Category>>(&m_nodes[i]);
-        if (candidate && candidate->get_expression() == expression)
-            return EvaluationIndex<Category>(ygg::to_uint_t(i));
-    }
-    return std::nullopt;
+    const auto& nodes = std::get<FeatureNodeIndices<Category>>(m_feature_nodes);
+    const auto it = nodes.find(expression);
+    return it != nodes.end() ? std::optional(it->second) : std::nullopt;
 }
 
 template<tyr::TaskKind Kind>
 std::optional<QueryEvaluationIndex> EvaluationGraph<Kind>::find_node(QueryView<> expression) const
 {
-    for (size_t i = 0; i < m_nodes.size(); ++i)
-    {
-        const auto* candidate = std::get_if<detail::QueryNode<Kind>>(&m_nodes[i]);
-        if (candidate && candidate->get_expression() == expression)
-            return QueryEvaluationIndex(ygg::to_uint_t(i));
-    }
-    return std::nullopt;
+    const auto it = m_query_nodes.find(expression);
+    return it != m_query_nodes.end() ? std::optional(it->second) : std::nullopt;
 }
 
 template<tyr::TaskKind Kind>
@@ -118,6 +108,7 @@ EvaluationIndex<Category> EvaluationGraph<Kind>::prepare(ConstructorView<Categor
     auto prepared = detail::FeatureNode<Kind, Category>(expression, builder);
     const auto index = EvaluationIndex<Category>(ygg::to_uint_t(m_nodes.size()));
     m_nodes.emplace_back(std::move(prepared));
+    std::get<FeatureNodeIndices<Category>>(m_feature_nodes).emplace(expression, index);
     return index;
 }
 
@@ -130,6 +121,7 @@ QueryEvaluationIndex EvaluationGraph<Kind>::prepare(QueryView<> expression)
     auto prepared = detail::QueryNode<Kind>(expression, builder);
     const auto index = QueryEvaluationIndex(ygg::to_uint_t(m_nodes.size()));
     m_nodes.emplace_back(std::move(prepared));
+    m_query_nodes.emplace(expression, index);
     return index;
 }
 

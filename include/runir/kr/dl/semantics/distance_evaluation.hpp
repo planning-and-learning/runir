@@ -8,10 +8,12 @@
 #include "runir/kr/dl/semantics/heuristics/projection.hpp"
 #include "runir/kr/dl/translations/ygg_query.hpp"
 
+#include <cstddef>
 #include <span>
-#include <vector>
 #include <tyr/datalog/lifted/database/semantics/min_distance.hpp>
 #include <tyr/datalog/lifted/database/semantics/relation_view.hpp>
+#include <urd/repr/values/dense_set.hpp>
+#include <urd/store.hpp>
 
 /// n_distance over a DL edge query, evaluated by yggdrasil (tyr::datalog::database::MinDistance in full evaluation,
 /// tyr::datalog::database::incremental::MinDistance in incremental evaluation; see their method overviews). runir translates the
@@ -46,9 +48,10 @@ DistanceFeature<Distance> make_distance_feature(const ygg::FreeRelationRepositor
 {
     auto translator = dl::detail::QueryTranslator(true);
     const auto query = translator.translate(edges);
-    auto static_slots = std::vector<bool>();
-    for (const auto& slot : translator.get_slots())
-        static_slots.push_back(slot.is_static);
+    auto static_slots = urd::Store<urd::set<size_t>, urd::dense>();
+    for (size_t slot = 0; slot < translator.get_slots().size(); ++slot)
+        if (translator.get_slots()[slot].is_static)
+            static_slots.insert(slot);
     auto abstraction = plan.arity() > 1 ? heuristics::abstract_edges(translator, query, plan) : std::nullopt;
     return { translator.get_slots(), Distance(layer, query, plan, static_slots), std::move(abstraction) };
 }
@@ -108,9 +111,10 @@ inline MustPassFeature make_must_pass_feature(const ygg::FreeRelationRepository&
 {
     auto translator = dl::detail::QueryTranslator(true);
     const auto query = translator.translate(edges);
-    auto static_slots = std::vector<bool>();
-    for (const auto& slot : translator.get_slots())
-        static_slots.push_back(slot.is_static);
+    auto static_slots = urd::Store<urd::set<size_t>, urd::dense>();
+    for (size_t slot = 0; slot < translator.get_slots().size(); ++slot)
+        if (translator.get_slots()[slot].is_static)
+            static_slots.insert(slot);
     const auto columns = plan.edge_columns().subspan(plan.keys());
     auto abstraction = heuristics::abstract_edges(translator, query, columns.first(plan.arity()), columns.subspan(plan.arity()));
     return { translator.get_slots(), MustPassFeature::MustPass(layer, query, plan, static_slots), std::move(abstraction), std::nullopt };

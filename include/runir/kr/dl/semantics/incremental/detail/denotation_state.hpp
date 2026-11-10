@@ -3,7 +3,7 @@
 
 #include "runir/kr/dl/semantics/incremental/denotation_delta.hpp"
 #include "runir/kr/dl/semantics/interning.hpp"
-#include <urd/repr/containers/bitset_span.hpp>
+#include <urd/bits.hpp>
 
 namespace runir::kr::dl::semantics::incremental::detail
 {
@@ -88,11 +88,11 @@ public:
 
     /// Row computations produce a complete row; dependent evaluators need only changed pairs.
     /// Compare old and new membership before overwriting it, recording the exact delta.
-    void update_row(urd::index<tyr::formalism::Object> source, urd::repr::BitsetSpan<const ygg::uint_t> row, const tyr::formalism::planning::Repository& repository)
+    void update_row(urd::index<tyr::formalism::Object> source, urd::bitset_span<const ygg::uint_t> row, const tyr::formalism::planning::Repository& repository)
         requires std::same_as<Category, RoleTag>
     {
         // Each XOR word is captured before its changed memberships are updated.
-        urd::repr::for_each_bit(
+        urd::for_each_bit(
             [&](size_t target)
             {
                 const auto object = urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(target));

@@ -5,7 +5,7 @@
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/ps/declarations.hpp"
 
-#include <tuple>
+#include <compare>
 #include <urd/elements/flat.hpp>
 #include <urd/elements/index.hpp>
 
@@ -26,7 +26,7 @@ struct ResetPair
     static constexpr auto cista_members() noexcept { return urd::Members<&ResetPair::before, &ResetPair::after> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&ResetPair::before, &ResetPair::after> {}; }
     bool operator==(const ResetPair&) const = default;
-    bool operator<(const ResetPair& other) const noexcept { return std::tie(before, after) < std::tie(other.before, other.after); }
+    auto operator<=>(const ResetPair&) const = default;
 };
 
 }

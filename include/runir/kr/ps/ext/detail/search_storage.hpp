@@ -27,7 +27,7 @@ template<tyr::TaskKind Kind>
 struct SearchStorage<Kind, StateMemorization::ALL>
 {
     const ProgramSearchOptions<Kind>* options;
-    urd::Store<urd::sequence<SearchNode<Kind>>, urd::stable_refs> nodes;
+    SearchNodes<Kind> nodes;
     // Retains each admitted transition in discovery order, including parallel edges.
     urd::Store<urd::sequence<Predecessor<Kind>>> predecessors;
     ygg::uint_t num_reached = 0;

@@ -7,7 +7,6 @@
 
 #include <concepts>
 #include <tuple>
-#include <urd/repr/core/dependent_false.hpp>
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
 
@@ -29,7 +28,7 @@ public:
             return self().template member<&urd::record_of<V>::numerical_features>();
         else
         {
-            static_assert(urd::repr::dependent_false<FeatureTag>::value, "unhandled feature tag in Sketch::get_features");
+            static_assert(false, "unhandled feature tag in Sketch::get_features");
         }
     }
 

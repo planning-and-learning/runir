@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <boost/mp11.hpp>
 #include <concepts>
-#include <urd/repr/core/dependent_false.hpp>
 #include <variant>
 
 namespace runir::kr::dl::detail
@@ -63,7 +62,7 @@ bool infer_is_static(urd::index_view<Expression<Args...>, C> constructor)
     else if constexpr (requires { constructor.get_role(); })
         return constructor.get_role().is_static();
     else
-        static_assert(urd::repr::dependent_false<Tag>::value, "unhandled DL constructor staticness");
+        static_assert(false, "unhandled DL constructor staticness");
 }
 
 template<CategoryTag Category, typename Repository>

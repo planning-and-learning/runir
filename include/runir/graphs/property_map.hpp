@@ -5,34 +5,53 @@
 
 #include <concepts>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 #include <urd/repr/records/records.hpp>
 #include <urd/store.hpp>
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/semantics/canonicalization.hpp>
 
+namespace runir::graphs::detail
+{
+
+/// The property type P of VertexProperty<P> and EdgeProperty<P>.
+template<typename T>
+struct PropertyOf;
+template<Property P>
+struct PropertyOf<VertexProperty<P>> : std::type_identity<P>
+{
+};
+template<Property P>
+struct PropertyOf<EdgeProperty<P>> : std::type_identity<P>
+{
+};
+
+/// What names a graph's properties: VertexProperty<P> or EdgeProperty<P>.
+template<typename T>
+concept PropertyTag = requires { typename PropertyOf<T>::type; };
+
+template<typename T>
+concept HasIsCanonical = requires(const T& value) {
+    { ygg::is_canonical(value) } -> std::same_as<bool>;
+};
+
+template<typename T>
+concept HasCanonicalize = requires(T& value) { ygg::canonicalize(value); };
+
+}  // namespace runir::graphs::detail
+
 namespace urd
 {
 
-template<runir::graphs::Property P>
-struct data<runir::graphs::VertexProperty<P>>
+/// A vertex's or an edge's property, as its graph's property pool holds it.
+template<runir::graphs::detail::PropertyTag T>
+struct data<T>
 {
-    P value {};
+    typename runir::graphs::detail::PropertyOf<T>::type value {};
 
     data() = default;
-    explicit data(P value_) noexcept : value(std::move(value_)) {}
-
-    static constexpr auto cista_members() noexcept { return urd::Members<&data::value> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::Members<&data::value> {}; }
-};
-
-template<runir::graphs::Property P>
-struct data<runir::graphs::EdgeProperty<P>>
-{
-    P value {};
-
-    data() = default;
-    explicit data(P value_) noexcept : value(std::move(value_)) {}
+    explicit data(decltype(value) value_) noexcept : value(std::move(value_)) {}
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::value> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::value> {}; }
@@ -43,46 +62,19 @@ struct data<runir::graphs::EdgeProperty<P>>
 namespace runir::graphs
 {
 
-namespace detail
+template<detail::PropertyTag T>
+bool is_canonical(const urd::data<T>& data) noexcept
 {
-template<typename T>
-concept HasIsCanonical = requires(const T& value) {
-    { ygg::is_canonical(value) } -> std::same_as<bool>;
-};
-
-template<typename T>
-concept HasCanonicalize = requires(T& value) { ygg::canonicalize(value); };
-}
-
-template<runir::graphs::Property P>
-bool is_canonical(const urd::data<runir::graphs::VertexProperty<P>>& data) noexcept
-{
-    if constexpr (detail::HasIsCanonical<P>)
+    if constexpr (detail::HasIsCanonical<decltype(data.value)>)
         return ygg::is_canonical(data.value);
     else
         return true;
 }
 
-template<runir::graphs::Property P>
-bool is_canonical(const urd::data<runir::graphs::EdgeProperty<P>>& data) noexcept
+template<detail::PropertyTag T>
+void canonicalize(urd::data<T>& data) noexcept
 {
-    if constexpr (detail::HasIsCanonical<P>)
-        return ygg::is_canonical(data.value);
-    else
-        return true;
-}
-
-template<runir::graphs::Property P>
-void canonicalize(urd::data<runir::graphs::VertexProperty<P>>& data) noexcept
-{
-    if constexpr (detail::HasCanonicalize<P>)
-        ygg::canonicalize(data.value);
-}
-
-template<runir::graphs::Property P>
-void canonicalize(urd::data<runir::graphs::EdgeProperty<P>>& data) noexcept
-{
-    if constexpr (detail::HasCanonicalize<P>)
+    if constexpr (detail::HasCanonicalize<decltype(data.value)>)
         ygg::canonicalize(data.value);
 }
 

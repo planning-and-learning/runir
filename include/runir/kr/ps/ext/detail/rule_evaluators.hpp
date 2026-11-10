@@ -2,6 +2,7 @@
 #define RUNIR_KR_PS_EXT_DETAIL_RULE_EVALUATORS_HPP_
 
 #include "runir/kr/ps/ext/compatibility.hpp"
+#include <urd/repr/maps/index_map.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
@@ -56,6 +57,8 @@ class RuleEvaluators
     ProgramView m_program;
     EvaluationEnvironment<Kind, EvaluationPolicy> m_environment;
     urd::Store<urd::sequence<Evaluator>> m_rules;
+    /// Where in m_rules the evaluator of a rule of the program is.
+    urd::Store<urd::map<urd::index<ps::Rule<ExtFamilyTag>>, std::size_t>, urd::dense> m_rule_positions;
     ChooseRuleWorkspace m_choose;
     DoRuleWorkspace m_do;
     urd::Store<urd::sequence<SketchRuleEvaluator<Kind>>> m_sketch_rules;
@@ -108,10 +111,8 @@ class RuleEvaluators
         // Repository indices alone do not identify a rule supplied to apply().
         if (&rule.context() != &m_program.context())
             return m_rules.end();
-        // ponytail: Linear lookup keeps dispatch simple; index it only if profiling shows a bottleneck.
-        return std::ranges::find_if(m_rules,
-                                    [rule](const auto& evaluator)
-                                    { return std::visit([rule](const auto& concrete) { return concrete.get_variant() == rule; }, evaluator); });
+        const auto found = m_rule_positions.find(rule.index());
+        return found == m_rule_positions.end() ? m_rules.end() : m_rules.begin() + found->second;
     }
 
     template<typename Function>
@@ -164,7 +165,7 @@ public:
         for (const auto module_ : program.get_modules())
             for (const auto transition : module_.get_memory_transitions())
                 for (const auto rule : transition)
-                    if (find_rule(rule) == m_rules.end())
+                    if (m_rule_positions.try_emplace(rule.index(), m_rules.size()).second)
                         m_rules.push_back(std::visit([&](auto concrete) -> Evaluator { return prepare(concrete, rule); }, rule.get_variant()));
     }
 

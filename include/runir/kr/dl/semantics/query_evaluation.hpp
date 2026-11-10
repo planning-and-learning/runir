@@ -101,7 +101,7 @@ void evaluate_query(urd::index_view<Query<Tag>, C> constructor, Context& context
         on_demand_must_pass<Kind>(constructor, context, result);
     else
     {
-        static_assert(urd::repr::dependent_false<Tag>::value, "unhandled relational query constructor");
+        static_assert(false, "unhandled relational query constructor");
     }
 }
 

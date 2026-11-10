@@ -36,7 +36,6 @@
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <utility>
-#include <vector>
 #include <urd/repr/pools/pools.hpp>
 #include <yggdrasil/core/chrono.hpp>
 
@@ -69,7 +68,7 @@ public:
     {
         // A copy: sentences are added while these are read, and iterators into the map do not survive that.
         const auto [first, last] = std::get<Sentences<Category>>(m_sentences).equal_range({ nonterminal.index(), complexity });
-        auto result = std::vector<urd::index<runir::kr::dl::Constructor<Category>>>();
+        auto result = urd::Store<urd::sequence<urd::index<runir::kr::dl::Constructor<Category>>>>();
         for (const auto constructor : std::ranges::subrange(first, last) | std::views::values)
             result.push_back(constructor);
         return result;

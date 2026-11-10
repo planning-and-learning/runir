@@ -15,7 +15,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <yggdrasil/formatting/dynamic_bitset_formatters.hpp>
+#include <urd/format.hpp>
 #include <yggdrasil/io/iostream.hpp>
 
 namespace runir::kr::ps::base::dl

@@ -8,7 +8,7 @@
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
-#include <urd/repr/containers/bitset_span.hpp>
+#include <urd/bits.hpp>
 #include <vector>
 
 namespace runir::kr::dl::semantics::incremental::detail
@@ -41,7 +41,7 @@ inline void mark_predecessors(SetOperationWorkspace& workspace, const urd::build
 {
     const auto index = static_cast<ygg::uint_t>(target.value);
     for (ygg::uint_t source = 0; source < role.get_num_objects(); ++source)
-        if (!workspace.marked[source] && role.get(urd::index<tyr::formalism::Object>(source)).test(index))
+        if (!workspace.is_marked(urd::index<tyr::formalism::Object>(source)) && role.get(urd::index<tyr::formalism::Object>(source)).test(index))
             workspace.mark(urd::index<tyr::formalism::Object>(source));
 }
 
@@ -62,7 +62,7 @@ void mark_predecessors(SetOperationWorkspace& workspace, const urd::builder<Deno
                     else
                         targets.set(static_cast<ygg::uint_t>(value.first.index().value));
                 });
-    const auto indices = urd::repr::set_bit_indices(targets);
+    const auto indices = urd::set_bit_indices(targets);
     auto it = indices.begin();
     const auto first = *it;
     if (++it == indices.end())
@@ -71,7 +71,7 @@ void mark_predecessors(SetOperationWorkspace& workspace, const urd::builder<Deno
         return;
     }
     for (ygg::uint_t source = 0; source < role.get_num_objects(); ++source)
-        if (!workspace.marked[source] && role.get(urd::index<tyr::formalism::Object>(source)).intersects(targets))
+        if (!workspace.is_marked(urd::index<tyr::formalism::Object>(source)) && role.get(urd::index<tyr::formalism::Object>(source)).intersects(targets))
             workspace.mark(urd::index<tyr::formalism::Object>(source));
 }
 
@@ -89,7 +89,7 @@ bool number_restriction(size_t count, ygg::uint_t threshold)
     }
 }
 
-template<std::invocable<urd::index<tyr::formalism::Object>, urd::repr::BitsetSpan<const ygg::uint_t>> Emit>
+template<std::invocable<urd::index<tyr::formalism::Object>, urd::bitset_span<const ygg::uint_t>> Emit>
 void evaluate_rows(RestrictionTag,
                    BorrowedDenotationView<RoleTag> role,
                    BorrowedDenotationView<ConceptTag> concept_,
@@ -101,7 +101,7 @@ void evaluate_rows(RestrictionTag,
         auto row = workspace.row.get();
         row.copy_from(role.value(source));
         row &= concept_.value();
-        emit(source, urd::repr::BitsetSpan<const ygg::uint_t>(row));
+        emit(source, urd::bitset_span<const ygg::uint_t>(row));
     }
 }
 
@@ -169,22 +169,22 @@ void evaluate_rows(RoleFillersTag, BorrowedDenotationView<RoleTag> role, const O
     }
 }
 
-template<std::invocable<urd::index<tyr::formalism::Object>, urd::repr::BitsetSpan<const ygg::uint_t>> Emit>
+template<std::invocable<urd::index<tyr::formalism::Object>, urd::bitset_span<const ygg::uint_t>> Emit>
 void evaluate_rows(CompositionTag, BorrowedDenotationView<RoleTag> lhs, BorrowedDenotationView<RoleTag> rhs, SetOperationWorkspace& workspace, Emit emit)
 {
     for (const auto source : workspace.rows)
     {
         auto row = workspace.row.get();
         row.reset();
-        for (const auto middle : urd::repr::set_bit_indices(lhs.value(source)))
+        for (const auto middle : urd::set_bit_indices(lhs.value(source)))
             row |= rhs.value(urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(middle)));
-        emit(source, urd::repr::BitsetSpan<const ygg::uint_t>(row));
+        emit(source, urd::bitset_span<const ygg::uint_t>(row));
     }
 }
 
-template<BaseRoleConstructorTag Tag, std::invocable<urd::index<tyr::formalism::Object>, urd::repr::BitsetSpan<const ygg::uint_t>> Emit>
+template<BaseRoleConstructorTag Tag, std::invocable<urd::index<tyr::formalism::Object>, urd::bitset_span<const ygg::uint_t>> Emit>
 void evaluate_rows(Tag, const urd::builder<Denotation<RoleTag>>& result, BorrowedDenotationView<RoleTag> role, SetOperationWorkspace& workspace, Emit emit)
-{ evaluate_closure(Tag {}, result, role.data(), workspace.rows, workspace.marked, workspace.row, workspace.closure, emit); }
+{ evaluate_closure(Tag {}, result, role.data(), workspace.rows, workspace.row, workspace.closure, emit); }
 
 template<ConceptOrRoleTag Category>
 void initialize_set(IntersectionTag,

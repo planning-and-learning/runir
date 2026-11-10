@@ -9,7 +9,7 @@
 #include <fmt/ranges.h>
 #include <urd/config.hpp>
 #include <yggdrasil/formatting/cista_formatters.hpp>
-#include <yggdrasil/formatting/dynamic_bitset_formatters.hpp>
+#include <urd/format.hpp>
 
 template<>
 struct fmt::formatter<runir::kr::ps::ext::dl::ModulePolicyGraphVertexLabel>
