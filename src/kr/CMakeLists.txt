@@ -59,6 +59,11 @@ add_library(runir::kr ALIAS kr)
 
 set_target_properties(kr PROPERTIES OUTPUT_NAME runir_kr)
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # GCC 15 reports the value-initialized element Boost.Spirit X3 parses a list's items into as maybe uninitialized.
+    set_source_files_properties(uns/dl/parser/parser_instantiations.cpp PROPERTIES COMPILE_OPTIONS -Wno-maybe-uninitialized)
+endif()
+
 target_compile_features(kr PUBLIC cxx_std_20)
 
 target_compile_definitions(kr

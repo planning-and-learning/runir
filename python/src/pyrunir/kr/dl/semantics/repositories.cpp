@@ -93,7 +93,6 @@ void bind_semantics_repositories(nb::module_& m)
         .def_rw("concept_values", &RegisterValuesData::concept_values)
         .def_rw("role_values", &RegisterValuesData::role_values);
 
-    using ObjectView = tyr::formalism::planning::ObjectView;
     auto register_values = nb::class_<RegisterValuesView>(m, "RegisterValues")
                                .def("index", &RegisterValuesView::index)
                                .def_prop_ro("concept_values", [](const RegisterValuesView& self) { return self.values<ConceptTag>(); })

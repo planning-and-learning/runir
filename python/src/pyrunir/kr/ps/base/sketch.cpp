@@ -36,9 +36,6 @@ void bind_sketch(nb::module_& m, RepositoryBinding& repository)
 
     urd::python::bind_index<urd::index<T>>(m, "SketchIndex");
 
-    using BooleanFeatureIndex = urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>;
-    using NumericalFeatureIndex = urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>;
-    using RuleIndex = urd::index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>;
     auto data =
         nb::class_<Data>(m, "SketchData")
             .def(nb::init<>())
