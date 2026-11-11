@@ -3,11 +3,11 @@
 
 #include "runir/kr/dl/semantics/call_arguments_view.hpp"
 #include "runir/kr/dl/semantics/register_values_view.hpp"
-#include "runir/kr/ps/ext/execution_builder.hpp"
 #include "runir/kr/ps/execution_repository.hpp"
+#include "runir/kr/ps/ext/execution_builder.hpp"
 #include "runir/kr/ps/ext/execution_data.hpp"
-#include "runir/kr/ps/ext/repository.hpp"
 #include "runir/kr/ps/ext/program_view.hpp"
+#include "runir/kr/ps/ext/repository.hpp"
 
 #include <optional>
 #include <tuple>
@@ -42,7 +42,8 @@ private:
 
 public:
     auto get_module() const noexcept { return urd::resolve(self().data().module_, get_repository(self().context()).get_program_repository()); }
-    auto get_return_memory_state() const noexcept { return urd::resolve(self().data().return_memory_state, get_repository(self().context()).get_program_repository()); }
+    auto get_return_memory_state() const noexcept
+    { return urd::resolve(self().data().return_memory_state, get_repository(self().context()).get_program_repository()); }
     auto get_registers() const noexcept { return urd::resolve(self().data().registers, get_repository(self().context()).get_denotation_repository()); }
     auto get_arguments() const noexcept { return urd::resolve(self().data().arguments, get_repository(self().context()).get_denotation_repository()); }
 

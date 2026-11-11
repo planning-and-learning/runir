@@ -11,9 +11,9 @@
 #include <runir/kr/dl/semantics/denotation_view.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <tyr/formalism/object_view.hpp>
+#include <urd/python/owner.hpp>
 #include <vector>
 #include <yggdrasil/python/bindings.hpp>
-#include <urd/python/owner.hpp>
 
 namespace runir::kr::dl
 {
@@ -35,14 +35,16 @@ void bind_denotation_view(nb::module_& m, const char* name)
         cls.def("get", [](View view) { return view.value(); });
 
     if constexpr (std::same_as<Category, ConceptTag>)
-        cls.def("__iter__",
-                [](const View& view) { return nb::make_iterator(nb::type<View>(), "ConceptDenotationIterator", view.begin(), view.end()); },
-                nb::keep_alive<0, 1>());
+        cls.def(
+            "__iter__",
+            [](const View& view) { return nb::make_iterator(nb::type<View>(), "ConceptDenotationIterator", view.begin(), view.end()); },
+            nb::keep_alive<0, 1>());
 
     if constexpr (std::same_as<Category, RoleTag>)
-        cls.def("__iter__",
-                [](const View& view) { return nb::make_iterator(nb::type<View>(), "RoleDenotationIterator", view.begin(), view.end()); },
-                nb::keep_alive<0, 1>());
+        cls.def(
+            "__iter__",
+            [](const View& view) { return nb::make_iterator(nb::type<View>(), "RoleDenotationIterator", view.begin(), view.end()); },
+            nb::keep_alive<0, 1>());
 }
 
 }  // namespace

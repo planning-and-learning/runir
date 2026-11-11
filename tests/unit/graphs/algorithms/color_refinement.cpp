@@ -1,13 +1,11 @@
 #include "fixtures.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 
 #include <atomic>
 #include <boost/json.hpp>
 #include <gtest/gtest.h>
 #include <runir/graphs/algorithms/color_refinement.hpp>
-#include <runir/graphs/algorithms/weisfeiler_leman.hpp>
 #include <runir/graphs/algorithms/nauty.hpp>
+#include <runir/graphs/algorithms/weisfeiler_leman.hpp>
 #include <runir/graphs/properties.hpp>
 #include <runir/graphs/static_graph.hpp>
 #include <stdexcept>
@@ -15,6 +13,8 @@
 #include <string_view>
 #include <thread>
 #include <tuple>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/serialization/json.hpp>

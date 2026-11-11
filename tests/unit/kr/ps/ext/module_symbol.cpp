@@ -1,9 +1,9 @@
 #include "runir/kr/ps/ext/declarations.hpp"
 
 #include <concepts>
+#include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/module_symbol_data.hpp>
 #include <runir/kr/ps/module_symbol_view.hpp>
-#include <runir/kr/ps/ext/repository.hpp>
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/core/config.hpp>
 

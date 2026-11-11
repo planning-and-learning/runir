@@ -1,4 +1,5 @@
 #include "pyrunir/kr/ps/base/dl/bindings.hpp"
+#include "pyrunir/module.hpp"
 
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/shared_ptr.h>
@@ -10,7 +11,6 @@
 #include <runir/kr/ps/base/repository.hpp>
 #include <vector>
 #include <yggdrasil/python/bindings.hpp>
-#include "pyrunir/module.hpp"
 
 namespace runir::kr::ps::base::dl
 {
@@ -60,7 +60,9 @@ void bind_structural_termination(nb::module_& m)
           "Decide structural termination with configurable feature limit and optional memory-SCC-scoped incomplete preprocessing.");
 
     nb::class_<runir::kr::ps::dl::IncompleteBlockingReason<runir::kr::BaseFamilyTag>>(m, "IncompleteBlockingReason")
-        .def_ro("feature", &runir::kr::ps::dl::IncompleteBlockingReason<runir::kr::BaseFamilyTag>::feature, "The feature whose decrease or flip the rule performs.")
+        .def_ro("feature",
+                &runir::kr::ps::dl::IncompleteBlockingReason<runir::kr::BaseFamilyTag>::feature,
+                "The feature whose decrease or flip the rule performs.")
         .def_ro("opposing_rules",
                 &runir::kr::ps::dl::IncompleteBlockingReason<runir::kr::BaseFamilyTag>::opposing_rules,
                 "Remaining rules that oppose the change and survive R3's marked-complementary-condition check.");

@@ -3,15 +3,12 @@
 
 #include <gtest/gtest.h>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/ps/unsolvability.hpp>
 #include <runir/kr/uns/classify.hpp>
-#include <runir/kr/uns/repository.hpp>
 #include <runir/kr/uns/dl/parser.hpp>
 #include <runir/kr/uns/repository.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
 

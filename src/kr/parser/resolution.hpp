@@ -2,14 +2,14 @@
 #define RUNIR_SRC_KR_PARSER_RESOLUTION_HPP_
 
 #include "runir/kr/errors.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/parser/ast.hpp"
 #include "runir/kr/parser/diagnostics.hpp"
 
 #include <cstddef>
 #include <optional>
 #include <tyr/formalism/planning/repository.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 
 namespace runir::kr::parser

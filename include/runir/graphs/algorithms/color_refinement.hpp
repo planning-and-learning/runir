@@ -5,8 +5,8 @@
 
 #include <algorithm>
 #include <tuple>
-#include <urd/repr/values/indexed.hpp>
 #include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/indexed.hpp>
 #include <urd/store.hpp>
 #include <vector>
 

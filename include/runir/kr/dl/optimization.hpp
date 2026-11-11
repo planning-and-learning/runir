@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <array>
+#include <boost/mp11.hpp>
 #include <concepts>
 #include <cstddef>
 #include <optional>
@@ -18,23 +19,22 @@
 #include <stdexcept>
 #include <tuple>
 #include <type_traits>
+#include <tyr/datalog/lifted/database/optimization/optimization.hpp>
+#include <tyr/datalog/lifted/database/syntax/query.hpp>
+#include <urd/config.hpp>
+#include <urd/elements/children.hpp>
 #include <urd/repr/maps/index_map.hpp>
 #include <urd/repr/maps/std_map.hpp>
 #include <urd/repr/maps/unordered_flat_map.hpp>
+#include <urd/repr/sequences/sequence.hpp>
 #include <urd/repr/values/indexed.hpp>
 #include <urd/repr/values/std_set.hpp>
 #include <urd/repr/values/unordered_flat_set.hpp>
-#include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <utility>
 #include <variant>
 #include <vector>
-#include <urd/elements/children.hpp>
 #include <yggdrasil/core/config.hpp>
-#include <urd/config.hpp>
-#include <boost/mp11.hpp>
-#include <tyr/datalog/lifted/database/optimization/optimization.hpp>
-#include <tyr/datalog/lifted/database/syntax/query.hpp>
 #include <yggdrasil/diagnostics/warnings.hpp>
 
 namespace runir::kr::dl
@@ -68,7 +68,8 @@ QueryView<> insert_query(ConstructorRepository& repository, urd::data<Query<Tag>
 }
 
 /// Inserts the runir counterparts of a plan's nodes; input slots map back to leaves. Returns the roots in plan order.
-inline urd::Store<urd::sequence<QueryView<>>> lower(const tyr::datalog::database::QueryPlan& plan, std::span<const QueryView<>> leaves, ConstructorRepository& repository)
+inline urd::Store<urd::sequence<QueryView<>>>
+lower(const tyr::datalog::database::QueryPlan& plan, std::span<const QueryView<>> leaves, ConstructorRepository& repository)
 {
     using YggIndex = urd::index<tyr::datalog::database::Query<>>;
     urd::Store<urd::map<YggIndex, QueryView<>>, urd::dense> lowered;
@@ -117,10 +118,9 @@ inline urd::Store<urd::sequence<QueryView<>>> lower(const tyr::datalog::database
                 }
                 else if constexpr (std::same_as<Tag, tyr::datalog::database::QuerySelectValueTag>)
                 {
-                    auto data =
-                        urd::data<Query<QuerySelectValueTag>>(child(node.get_arg()).index(),
-                                                              urd::index<QueryColumn>(node.get_column().value),
-                                                              urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(node.get_constant())));
+                    auto data = urd::data<Query<QuerySelectValueTag>>(child(node.get_arg()).index(),
+                                                                      urd::index<QueryColumn>(node.get_column().value),
+                                                                      urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(node.get_constant())));
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, tyr::datalog::database::QueryGenericJoinTag>)
@@ -209,7 +209,8 @@ private:
     template<typename T>
     RecordView<T> rewrite(RecordView<T> view)
     {
-        auto data = urd::map_children<ConstructorRepositoryTypes, T>(view.data(), view.context(),
+        auto data = urd::map_children<ConstructorRepositoryTypes, T>(view.data(),
+                                                                     view.context(),
                                                                      [&]<typename U>(RecordView<U> child) { return optimize<U>(child).index(); });
         return runir::kr::dl::insert(*m_repository, data).first;
     }
@@ -288,7 +289,9 @@ private:
     }
 
     /// Optimizes a maximal query for its evaluation; with required labels, only those columns of its result are used.
-    QueryView<> optimize_root(QueryView<> root, const std::optional<Labels>& required, tyr::datalog::database::Evaluation evaluation = tyr::datalog::database::Evaluation::full)
+    QueryView<> optimize_root(QueryView<> root,
+                              const std::optional<Labels>& required,
+                              tyr::datalog::database::Evaluation evaluation = tyr::datalog::database::Evaluation::full)
     {
         const auto key = std::pair { root, required.value_or(Labels {}) };
         auto& optimized = evaluation == tyr::datalog::database::Evaluation::bound ? m_bound : required ? m_projected : m_optimized;
@@ -311,8 +314,8 @@ private:
             leaves.push_back(memoized(leaf));
         }
         const auto plan = tyr::datalog::database::optimize(std::span<const tyr::datalog::database::QueryView<>>(&translated, 1),
-                                                  std::span<const tyr::datalog::database::Evaluation>(&evaluation, 1),
-                                                  statistics);
+                                                           std::span<const tyr::datalog::database::Evaluation>(&evaluation, 1),
+                                                           statistics);
         const auto result = detail::lower(plan, leaves, *m_repository).front();
         optimized.emplace(key, result);
         return result;

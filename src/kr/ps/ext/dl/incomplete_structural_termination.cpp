@@ -8,7 +8,8 @@
 namespace runir::kr::ps::ext::dl
 {
 
-runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::ExtFamilyTag> incomplete_structural_termination(ModuleView module_, bool use_memory_scc_scope)
+runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::ExtFamilyTag> incomplete_structural_termination(ModuleView module_,
+                                                                                                                    bool use_memory_scc_scope)
 {
     const auto analysis = detail::analyze_module(module_);
     return detail::make_incomplete_result(module_, analysis, runir::kr::ps::detail::incomplete_structural_termination(analysis.policy, use_memory_scc_scope));

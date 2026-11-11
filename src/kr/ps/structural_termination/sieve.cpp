@@ -1,12 +1,12 @@
 #include "detail.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/graphs/bgl/algorithms.hpp"
 #include "runir/graphs/static_graph.hpp"
 #include "runir/graphs/static_graph_builder.hpp"
 
 #include <algorithm>
 #include <limits>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 namespace runir::kr::ps::detail
 {
@@ -114,7 +114,8 @@ SieveResult sieve_policy_graph(urd::Store<urd::sequence<PolicyEdge>>& edges, con
 
 namespace
 {
-PolicySieveResult sieve_policy_for_rules(const QualitativePolicy& policy, std::size_t max_features, const urd::Store<urd::sequence<std::size_t>>& rule_positions)
+PolicySieveResult
+sieve_policy_for_rules(const QualitativePolicy& policy, std::size_t max_features, const urd::Store<urd::sequence<std::size_t>>& rule_positions)
 {
     auto projected_components = project_policy_components(policy, rule_positions);
     auto result = PolicySieveResult { .components = {}, .scc_feature_positions = urd::Store<urd::sequence<SccFeaturePositions>> {} };

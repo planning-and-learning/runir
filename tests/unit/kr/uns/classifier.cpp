@@ -104,7 +104,8 @@ TEST(RunirTests, UnsClassifierParsesAndFormats)
     EXPECT_EQ(fmt::format("{}", classifier.get_clauses().front().get_literals()[1]), "(not no_object)");
 
     const auto feature = classifier.get_features().front();
-    const auto concrete_complexity = std::visit([](auto concrete) { return kr::dl::semantics::syntactic_complexity(concrete.get_feature()); }, feature.get_variant());
+    const auto concrete_complexity =
+        std::visit([](auto concrete) { return kr::dl::semantics::syntactic_complexity(concrete.get_feature()); }, feature.get_variant());
     EXPECT_EQ(kr::ps::syntactic_complexity(feature), concrete_complexity);
     EXPECT_EQ(concrete_complexity, kr::dl::semantics::syntactic_complexity(feature.get_expression()));
     EXPECT_EQ(kr::uns::syntactic_complexity(classifier), 7);

@@ -1,11 +1,11 @@
 #include "module.hpp"
 
 #include "graph.hpp"
+#include "pyrunir/module.hpp"
 
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
-#include "pyrunir/module.hpp"
 
 namespace runir::graphs
 {

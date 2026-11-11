@@ -5,8 +5,8 @@
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/role_data.hpp"
 
-#include <utility>
 #include <urd/elements/flat.hpp>
+#include <utility>
 
 namespace runir::kr::dl
 {

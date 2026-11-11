@@ -2,8 +2,8 @@
 #define RUNIR_KR_DETAIL_INTERNING_CONTRACTS_HPP_
 
 #include <concepts>
-#include <utility>
 #include <urd/elements/flat.hpp>
+#include <utility>
 #include <yggdrasil/formalism/declarations.hpp>
 #include <yggdrasil/formalism/interning.hpp>
 

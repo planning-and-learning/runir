@@ -1,4 +1,9 @@
 #include "pyrunir/kr/ps/icp/bindings.hpp"
+#include "pyrunir/module.hpp"
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
 #include <functional>
 #include <nanobind/stl/chrono.h>
@@ -14,25 +19,20 @@
 #include <pyrunir/graphs/graph.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_policy.hpp>
-#include "runir/kr/dl/datas.hpp"
-#include "runir/kr/dl/declarations.hpp"
-#include "runir/kr/dl/semantics/evaluation.hpp"
-#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include <runir/kr/ps/dl/declarations.hpp>
 #include <runir/kr/ps/dl/evaluation.hpp>
-#include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/ps/icp/evaluation_environment.hpp>
 #include <runir/kr/ps/icp/formatter.hpp>
 #include <runir/kr/ps/icp/program_executor.hpp>
+#include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/ps/icp/successor_expander.hpp>
 #include <runir/kr/task_context.hpp>
 #include <string>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <utility>
 #include <yggdrasil/python/bindings.hpp>
-#include "pyrunir/module.hpp"
 
 namespace runir::kr::ps::icp
 {
@@ -158,7 +158,11 @@ void bind_execution_types(nb::module_& m, const char* prefix)
         .def("initial_state", &Expander::initial_state, "state"_a)
         .def(
             "for_each_successor",
-            [](Expander& self, StateView state, ProgramSearchStatistics& statistics, const nb::typed<nb::callable, bool(Step)>& emit, const std::function<bool()>& stop)
+            [](Expander& self,
+               StateView state,
+               ProgramSearchStatistics& statistics,
+               const nb::typed<nb::callable, bool(Step)>& emit,
+               const std::function<bool()>& stop)
             {
                 const auto owner = nb::cast(&self, nb::rv_policy::reference);
                 // Steps borrow the expander's own repositories and pools: each keeps the expander alive.

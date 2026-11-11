@@ -1,11 +1,11 @@
 #include "detail.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/repr/values/dense_set.hpp>
-#include <urd/store.hpp>
 #include "scc_refinement_forest.hpp"
 
 #include <algorithm>
 #include <cstdint>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/dense_set.hpp>
+#include <urd/store.hpp>
 
 namespace runir::kr::ps::detail
 {
@@ -27,8 +27,7 @@ struct SieveState
     urd::Store<urd::set<std::size_t>, urd::dense> remaining;
     ResidualMemorySccs memory_sccs;
 
-    SieveState(const QualitativePolicy& policy, bool use_memory_scc_scope) :
-        memory_sccs(policy, use_memory_scc_scope)
+    SieveState(const QualitativePolicy& policy, bool use_memory_scc_scope) : memory_sccs(policy, use_memory_scc_scope)
     {
         for (std::size_t rule_position = 0; rule_position < policy.rule_profiles.size(); ++rule_position)
             remaining.insert(rule_position);

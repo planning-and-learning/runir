@@ -19,8 +19,8 @@ using boost::spirit::x3::eoi;
 using boost::spirit::x3::lexeme;
 using boost::spirit::x3::lit;
 using boost::spirit::x3::raw;
-using ygg::diagnostics::keyword;
 using ygg::diagnostics::context;
+using ygg::diagnostics::keyword;
 
 using boost::spirit::x3::ascii::alnum;
 using boost::spirit::x3::ascii::alpha;

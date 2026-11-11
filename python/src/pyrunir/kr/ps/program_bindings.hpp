@@ -68,16 +68,16 @@ void bind_rule_variant(nb::module_& m, nb::class_<runir::kr::ps::Repository<Fami
     using Data = urd::data<T>;
     using View = urd::index_view<T, Repository>;
     urd::python::bind_index<urd::index<T>>(m, "RuleVariantIndex");
-    auto data = nb::class_<Data>(m, "RuleVariantData")
-                    .def(nb::init<>())
-                    .def(nb::init<urd::flat_string, typename Data::Variant>(), nb::arg("symbol"), nb::arg("variant"))
-                    .def(urd::python::init_from_views<urd::flat_string, urd::resolved_t<typename Data::Variant, Repository>>(), nb::arg("symbol"), nb::arg("variant"))
-                    .def_rw("index", &Data::index)
-                    .def_rw("symbol", &Data::symbol)
-                    .def_rw("variant", &Data::variant);
+    auto data =
+        nb::class_<Data>(m, "RuleVariantData")
+            .def(nb::init<>())
+            .def(nb::init<urd::flat_string, typename Data::Variant>(), nb::arg("symbol"), nb::arg("variant"))
+            .def(urd::python::init_from_views<urd::flat_string, urd::resolved_t<typename Data::Variant, Repository>>(), nb::arg("symbol"), nb::arg("variant"))
+            .def_rw("index", &Data::index)
+            .def_rw("symbol", &Data::symbol)
+            .def_rw("variant", &Data::variant);
     urd::python::add_comparison(data);
-    auto view =
-        nb::class_<View>(m, "RuleVariant").def("index", &View::index).def("get_symbol", &View::get_symbol).def("get_variant", &View::get_variant);
+    auto view = nb::class_<View>(m, "RuleVariant").def("index", &View::index).def("get_symbol", &View::get_symbol).def("get_variant", &View::get_variant);
     ygg::add_print(view);
     urd::python::add_comparison(view);
     urd::python::add_hash(view);

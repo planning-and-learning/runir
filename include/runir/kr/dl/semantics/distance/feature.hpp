@@ -2,13 +2,13 @@
 #define RUNIR_KR_DL_SEMANTICS_DISTANCE_FEATURE_HPP_
 
 #include "runir/kr/dl/semantics/heuristics/projection.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/dl/translations/ygg_query.hpp"
 
 #include <optional>
-#include <vector>
 #include <tyr/datalog/lifted/database/semantics/must_pass.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
+#include <vector>
 
 namespace runir::kr::dl::semantics
 {

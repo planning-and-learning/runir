@@ -2,22 +2,22 @@
 #define RUNIR_KR_PS_ICP_DETAIL_RULE_EVALUATION_WORKSPACE_HPP_
 
 #include "runir/kr/dl/semantics/interning.hpp"
+#include "runir/kr/ps/compatibility.hpp"
+#include "runir/kr/ps/dl/evaluation.hpp"
+#include "runir/kr/ps/icp/evaluation_environment.hpp"
+#include "runir/kr/ps/icp/execution_view.hpp"
+#include "runir/kr/ps/icp/program_executor_data.hpp"
+#include "runir/kr/ps/icp/rule_view.hpp"
+#include "runir/kr/ps/program_step.hpp"
+#include "runir/kr/ps/rule_evaluator_concepts.hpp"
+#include "runir/kr/ps/rule_variant_view.hpp"
+#include "tyr/planning/successor_generator_concepts.hpp"
+
+#include <unordered_map>
 #include <urd/repr/maps/std_map.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/repr/values/dense_set.hpp>
 #include <urd/store.hpp>
-#include "runir/kr/ps/dl/evaluation.hpp"
-#include "runir/kr/ps/compatibility.hpp"
-#include "runir/kr/ps/rule_variant_view.hpp"
-#include "runir/kr/ps/icp/rule_view.hpp"
-#include "runir/kr/ps/icp/execution_view.hpp"
-#include "runir/kr/ps/icp/program_executor_data.hpp"
-#include "runir/kr/ps/program_step.hpp"
-#include "runir/kr/ps/icp/evaluation_environment.hpp"
-#include "runir/kr/ps/rule_evaluator_concepts.hpp"
-#include "tyr/planning/successor_generator_concepts.hpp"
-
-#include <unordered_map>
 #include <vector>
 
 namespace runir::kr::ps::icp::detail
@@ -82,10 +82,8 @@ public:
     }
 
     template<runir::kr::ps::dl::TransitionEvaluationContextConcept<IcpFamilyTag, Kind> Transition, StopConcept Stop>
-    std::optional<HistoriesView<Kind>> update_histories(ProgramStateView<Kind> state,
-                                                        Transition& transition,
-                                                        std::optional<tyr::planning::BorrowedActionRowView<Kind>> binding,
-                                                        const Stop& stop)
+    std::optional<HistoriesView<Kind>>
+    update_histories(ProgramStateView<Kind> state, Transition& transition, std::optional<tyr::planning::BorrowedActionRowView<Kind>> binding, const Stop& stop)
     {
         auto histories = checkout<Histories>(m_task->icp_execution_builder);
         *histories = state.get_histories().data();

@@ -1,6 +1,4 @@
 #include <fmt/format.h>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include <gtest/gtest.h>
 #include <iterator>
 #include <ranges>
@@ -16,6 +14,8 @@
 #include <string>
 #include <tuple>
 #include <type_traits>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 
@@ -255,9 +255,9 @@ TEST(GraphContainersTest, StaticGraphMoveKeepsVertexAndEdgeProperties)
 TEST(GraphContainersTest, BulkStaticGraphMatchesBuilderOrderAndProperties)
 {
     const auto vertices = urd::Store<urd::sequence<std::string>> { "source", "target", "target", "isolated" };
-    const auto edges =
-        urd::Store<urd::sequence<std::tuple<graphs::VertexIndex, graphs::VertexIndex, std::string>>> { { 2, 1, "late" },     { 0, 1, "shared" }, { 2, 0, "shared" },
-                                                                                         { 0, 1, "parallel" }, { 0, 1, "shared" }, { 1, 1, "loop" } };
+    const auto edges = urd::Store<urd::sequence<std::tuple<graphs::VertexIndex, graphs::VertexIndex, std::string>>> { { 2, 1, "late" },   { 0, 1, "shared" },
+                                                                                                                      { 2, 0, "shared" }, { 0, 1, "parallel" },
+                                                                                                                      { 0, 1, "shared" }, { 1, 1, "loop" } };
     auto builder = Builder();
     for (const auto& property : vertices)
         builder.add_vertex(property);
@@ -304,8 +304,9 @@ TEST(GraphContainersTest, BulkStaticGraphAcceptsEmptyEdgesAndVertices)
 TEST(GraphContainersTest, CycleParentsSupportDenseAndSparseVertexIndices)
 {
     const auto vertices = urd::Store<urd::sequence<std::string>> { "prefix", "a", "b" };
-    const auto edges =
-        urd::Store<urd::sequence<std::tuple<graphs::VertexIndex, graphs::VertexIndex, std::string>>> { { 0, 1, "prefix" }, { 1, 2, "forward" }, { 2, 1, "back" } };
+    const auto edges = urd::Store<urd::sequence<std::tuple<graphs::VertexIndex, graphs::VertexIndex, std::string>>> { { 0, 1, "prefix" },
+                                                                                                                      { 1, 2, "forward" },
+                                                                                                                      { 2, 1, "back" } };
     const auto graph = StaticGraph(vertices, edges);
     EXPECT_EQ(graphs::find_cycle(graph), (graphs::VertexIndexList { 1, 2, 1 }));
     EXPECT_EQ(graphs::find_edge_cycle(graph), (graphs::EdgeIndexList { 1, 2 }));

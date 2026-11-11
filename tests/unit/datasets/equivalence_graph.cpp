@@ -1,6 +1,4 @@
 #include "fixtures.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "planning_fixtures.hpp"
 
 #include <boost/json.hpp>
@@ -14,6 +12,8 @@
 #include <string>
 #include <string_view>
 #include <tyr/planning/ground/task.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/serialization/json_suite.hpp>

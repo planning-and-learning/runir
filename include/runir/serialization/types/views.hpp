@@ -1,8 +1,8 @@
 #ifndef RUNIR_SERIALIZATION_TYPES_VIEWS_HPP_
 #define RUNIR_SERIALIZATION_TYPES_VIEWS_HPP_
 
-#include <type_traits>
 #include <boost/mp11.hpp>
+#include <type_traits>
 #include <urd/elements/flat.hpp>
 
 namespace runir::serialization

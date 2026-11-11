@@ -11,8 +11,8 @@
 #include <runir/kr/ps/feature_view.hpp>
 #include <runir/kr/uns/repository.hpp>
 #include <tyr/planning/state_repository.hpp>
-#include <utility>
 #include <urd/elements/flat.hpp>
+#include <utility>
 #include <yggdrasil/core/config.hpp>
 
 namespace runir::tests

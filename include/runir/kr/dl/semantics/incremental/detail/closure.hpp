@@ -2,10 +2,6 @@
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_CLOSURE_HPP_
 
 #include "runir/kr/dl/semantics/denotation_builder.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/repr/values/dense_set.hpp>
-#include <urd/repr/values/sparse_set.hpp>
-#include <urd/store.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -15,6 +11,10 @@
 #include <iterator>
 #include <span>
 #include <urd/bits.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/dense_set.hpp>
+#include <urd/repr/values/sparse_set.hpp>
+#include <urd/store.hpp>
 #include <vector>
 
 namespace runir::kr::dl::semantics::incremental::detail

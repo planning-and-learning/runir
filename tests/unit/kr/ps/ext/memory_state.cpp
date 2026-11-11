@@ -1,9 +1,9 @@
 #include "runir/kr/ps/ext/declarations.hpp"
 
 #include <concepts>
+#include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/memory_state_data.hpp>
 #include <runir/kr/ps/memory_state_view.hpp>
-#include <runir/kr/ps/ext/repository.hpp>
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/core/config.hpp>
 

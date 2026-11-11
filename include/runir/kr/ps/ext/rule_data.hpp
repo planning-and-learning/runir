@@ -2,8 +2,6 @@
 #define RUNIR_KR_PS_EXT_RULE_DATA_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/ps/declarations.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/ext/declarations.hpp"
@@ -14,10 +12,12 @@
 #include <cista/containers/vector.h>
 #include <string>
 #include <tuple>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <variant>
 #include <vector>
-#include <urd/elements/flat.hpp>
 
 namespace urd
 {

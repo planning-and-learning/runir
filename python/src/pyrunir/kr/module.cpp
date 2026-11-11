@@ -1,9 +1,9 @@
 #include "module.hpp"
-#include "pyrunir/module.hpp"
 
 #include "pyrunir/kr/dl/module.hpp"
 #include "pyrunir/kr/ps/module.hpp"
 #include "pyrunir/kr/uns/module.hpp"
+#include "pyrunir/module.hpp"
 #include "runir/kr/errors.hpp"
 
 #include <yggdrasil/python/diagnostics.hpp>

@@ -2,8 +2,6 @@
 #define RUNIR_KR_DL_CNF_GRAMMAR_GENERATE_HPP_
 
 #include "runir/kr/dl/cnf_grammar/declarations.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
@@ -15,6 +13,8 @@
 #include <cstdint>
 #include <optional>
 #include <tyr/planning/declarations.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 
 namespace runir::kr::dl::cnf_grammar

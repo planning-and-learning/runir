@@ -1,11 +1,11 @@
 #include "runir/kr/dl/grammar/declarations.hpp"
 
+#include <boost/mp11.hpp>
 #include <concepts>
 #include <runir/kr/dl/grammar/constructor_repository.hpp>
 #include <runir/kr/dl/grammar/derivation_rule_data.hpp>
 #include <runir/kr/dl/grammar/derivation_rule_view.hpp>
 #include <urd/elements/flat.hpp>
-#include <boost/mp11.hpp>
 #include <yggdrasil/core/config.hpp>
 
 namespace runir::tests
@@ -15,17 +15,16 @@ namespace
 {
 
 template<typename T, typename Repository>
-concept IndexedDataView =
-    std::constructible_from<urd::index<T>, ygg::uint_t> && urd::Identifiable<urd::index<T>> && urd::Identifiable<urd::data<T>>
-    && urd::Identifiable<urd::index_view<T, Repository>> && std::totally_ordered<urd::index<T>> && std::totally_ordered<urd::data<T>>
-    && std::totally_ordered<urd::index_view<T, Repository>> && requires(urd::data<T>& data, const urd::index_view<T, Repository>& view) {
-           data.index;
-           data.lhs;
-           data.rhs;
-           view.index();
-           view.get_lhs();
-           view.get_rhs();
-       };
+concept IndexedDataView = std::constructible_from<urd::index<T>, ygg::uint_t> && urd::Identifiable<urd::index<T>> && urd::Identifiable<urd::data<T>>
+                          && urd::Identifiable<urd::index_view<T, Repository>> && std::totally_ordered<urd::index<T>> && std::totally_ordered<urd::data<T>>
+                          && std::totally_ordered<urd::index_view<T, Repository>> && requires(urd::data<T>& data, const urd::index_view<T, Repository>& view) {
+                                 data.index;
+                                 data.lhs;
+                                 data.rhs;
+                                 view.index();
+                                 view.get_lhs();
+                                 view.get_rhs();
+                             };
 
 template<typename... Ts>
 consteval bool indexed_data_views(boost::mp11::mp_list<Ts...>)

@@ -1,6 +1,4 @@
 #include "fixtures.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 
 #include <concepts>
 #include <fmt/format.h>
@@ -10,7 +8,6 @@
 #include <runir/kr/dl/grammar/parser.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <runir/kr/errors.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
@@ -20,7 +17,10 @@
 #include <stdexcept>
 #include <string>
 #include <type_traits>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/formalism/planning/parser.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/serialization/json.hpp>

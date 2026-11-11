@@ -2,8 +2,6 @@
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DELTA_HPP_
 
 #include "runir/kr/dl/semantics/incremental/declarations.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/dl/semantics/register_values_view.hpp"
 
 #include <algorithm>
@@ -11,6 +9,8 @@
 #include <optional>
 #include <stdexcept>
 #include <tyr/planning/state_view_concepts.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 

@@ -1,6 +1,8 @@
 #include "planning_fixtures.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
 #include <algorithm>
 #include <array>
@@ -10,23 +12,21 @@
 #include <ranges>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
-#include <runir/kr/dl/semantics/denotation_view.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
+#include <runir/kr/dl/semantics/denotation_view.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include <runir/kr/dl/semantics/interning.hpp>
-#include "runir/kr/dl/datas.hpp"
-#include "runir/kr/dl/declarations.hpp"
-#include "runir/kr/dl/semantics/evaluation.hpp"
-#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <span>
 #include <stdexcept>
 #include <string>
 #include <tuple>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/formalism/object_data.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <urd/bits.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 
 namespace runir::tests
@@ -503,7 +503,9 @@ TEST(RunirEvaluationStorage, DynamicResetPreservesStaticRowsAndJoinIndexes)
     const auto query = [&](const std::string& expression)
     {
         const auto count = kr::ps::ext::dl::parse_numerical("(n_count " + expression + ")", domain, *constructors);
-        return std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::index_view<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant()).get_arg());
+        return std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(
+            std::get<urd::index_view<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant())
+                .get_arg());
     };
     const auto fixed_query = query(R"((q_atomic_state "fixed" (x y z)))");
     const auto renamed_query = query(R"((q_rename (a b c) (q_atomic_state "fixed" (x y z))))");
@@ -604,7 +606,9 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     const auto query = [&](const std::string& expression, auto& repository)
     {
         const auto count = kr::ps::ext::dl::parse_numerical("(n_count " + expression + ")", search->task->get_domain().get_domain(), repository);
-        return std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::index_view<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant()).get_arg());
+        return std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(
+            std::get<urd::index_view<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant())
+                .get_arg());
     };
     const auto left = query("(q_role (left_source left_target) (r_universal))", *first_repository);
     const auto right = query("(q_role (right_source right_target) (r_universal))", *second_repository);
@@ -636,7 +640,9 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     EXPECT_EQ(results.symbols().template size<ygg::Relation<ygg::Schema>>(), 2);
 
     {
-        auto direct = persistent.get_relation_repository().get_relation_builder<ygg::Schema>(std::array { ygg::ColumnLayout { columns[0], ygg::type_id<urd::index<tyr::formalism::Object>> }, ygg::ColumnLayout { columns[1], ygg::type_id<urd::index<tyr::formalism::Object>> } });
+        auto direct = persistent.get_relation_repository().get_relation_builder<ygg::Schema>(
+            std::array { ygg::ColumnLayout { columns[0], ygg::type_id<urd::index<tyr::formalism::Object>> },
+                         ygg::ColumnLayout { columns[1], ygg::type_id<urd::index<tyr::formalism::Object>> } });
         for (size_t i = 0; i < left_result.size(); ++i)
             direct->insert(left_result.row(i));
         auto dl_builder = kr::dl::semantics::Builder();
@@ -651,7 +657,8 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     first_repository.reset();
     second_repository.reset();
     EXPECT_EQ(left_result.size(), 9);
-    EXPECT_TRUE(left_result.contains(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(ygg::uint_t(0)), ygg::encode_value<ygg::uint_t>(ygg::uint_t(2)) }));
+    EXPECT_TRUE(
+        left_result.contains(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(ygg::uint_t(0)), ygg::encode_value<ygg::uint_t>(ygg::uint_t(2)) }));
     EXPECT_TRUE(std::ranges::equal(renamed_left.columns(), reversed_columns, {}, &ygg::ColumnLayout::label));
     auto fresh_repository = factory.create(search->task->get_repository());
     const auto fresh = query("(q_role (fresh_source fresh_target) (r_universal))", *fresh_repository);

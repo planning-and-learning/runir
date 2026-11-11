@@ -2,13 +2,13 @@
 #define RUNIR_SERIALIZATION_KR_PS_ICP_MODULE_VIEW_HPP_
 
 #include "runir/kr/ps/icp/module_view.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/serialization/kr/dl/argument_view.hpp"
 #include "runir/serialization/kr/dl/register_view.hpp"
-#include "runir/serialization/kr/ps/rule_variant_view.hpp"
 #include "runir/serialization/kr/ps/icp/rule_view.hpp"
+#include "runir/serialization/kr/ps/rule_variant_view.hpp"
 
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/serialization/dictionaries.hpp>

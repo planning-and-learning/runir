@@ -1,6 +1,4 @@
 #include "fixtures.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "module_fixtures.hpp"
 #include "planning_fixtures.hpp"
 #include "successor_fixtures.hpp"
@@ -12,8 +10,6 @@
 #include <gtest/gtest.h>
 #include <limits>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation.hpp>
 #include <runir/kr/ps/ext/detail/search_path.hpp>
 #include <runir/kr/ps/ext/detail/successor_expander_impl.hpp>
@@ -29,12 +25,14 @@
 #include <runir/kr/uns/repository.hpp>
 #include <set>
 #include <stdexcept>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
-#include <utility>
+#include <urd/repr/sequences/sequence.hpp>
 #include <urd/repr/slots/slots.hpp>
 #include <urd/repr/values/unordered_flat_set.hpp>
 #include <urd/store.hpp>
+#include <utility>
 #include <yggdrasil/serialization/json.hpp>
 
 namespace runir::tests
@@ -1517,7 +1515,7 @@ void check_transient_builder_values_and_reuse()
     first_module.registers.concept_values.emplace_back(urd::index<tyr::formalism::Object>(0));
     first_module.registers.role_values.emplace_back(
         urd::flat_pair<urd::index<tyr::formalism::Object>, urd::index<tyr::formalism::Object>>(urd::index<tyr::formalism::Object>(0),
-                                                                                              urd::index<tyr::formalism::Object>(1)));
+                                                                                               urd::index<tyr::formalism::Object>(1)));
     const auto registered_registers = kr::dl::semantics::insert(*context->dl_denotation_repository, first_module.registers).first;
     const auto borrowed_registers = module_state.get_registers();
     const auto concept_id = kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(0);

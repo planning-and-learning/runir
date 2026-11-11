@@ -2,11 +2,11 @@
 #define RUNIR_GRAMMAR_CANONICALIZATION_HPP_
 
 #include "runir/kr/dl/canonicalization.hpp"
-#include "runir/kr/dl/numerical_data.hpp"
+#include "runir/kr/dl/grammar/declarations.hpp"
 #include "runir/kr/dl/grammar/derivation_rule_data.hpp"
 #include "runir/kr/dl/grammar/grammar_data.hpp"
 #include "runir/kr/dl/grammar/non_terminal_data.hpp"
-#include "runir/kr/dl/grammar/declarations.hpp"
+#include "runir/kr/dl/numerical_data.hpp"
 
 #include <algorithm>
 #include <yggdrasil/semantics/canonicalization.hpp>

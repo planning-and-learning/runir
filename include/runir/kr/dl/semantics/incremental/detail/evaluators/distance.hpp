@@ -1,16 +1,13 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_EVALUATORS_DISTANCE_HPP_
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_EVALUATORS_DISTANCE_HPP_
 
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/distance_evaluation.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/repr/values/dense_set.hpp>
-#include <urd/store.hpp>
+#include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/incremental/declarations.hpp"
 #include "runir/kr/dl/semantics/incremental/delta.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/denotation_state.hpp"
-#include "runir/kr/dl/datas.hpp"
-#include "runir/kr/dl/declarations.hpp"
-#include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
 #include <concepts>
@@ -18,10 +15,13 @@
 #include <optional>
 #include <span>
 #include <stdexcept>
-#include <yggdrasil/core/config.hpp>
-#include <urd/config.hpp>
 #include <tyr/datalog/lifted/database/semantics/incremental/distance.hpp>
 #include <tyr/datalog/lifted/database/semantics/incremental/min_distance.hpp>
+#include <urd/config.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/dense_set.hpp>
+#include <urd/store.hpp>
+#include <yggdrasil/core/config.hpp>
 
 namespace runir::kr::dl::semantics::incremental::detail
 {
@@ -79,13 +79,16 @@ struct QueryEdgeDistanceEvaluator
     QueryEvaluationIndex sources;
     QueryEvaluationIndex targets;
     DistanceFeature<Distance> feature;
-    urd::Store<urd::sequence<QueryEvaluationIndex>> slots;                   ///< The graph node of each input slot.
+    urd::Store<urd::sequence<QueryEvaluationIndex>> slots;     ///< The graph node of each input slot.
     std::optional<heuristics::ProjectionHeuristic> heuristic;  ///< Built at the first initialize(), from the bound leaves.
     DenotationState<NumericalTag> value;
     urd::Store<urd::set<size_t>, urd::dense> slot_changed;  ///< The slots update()'s delta changed; kept to avoid allocations.
 
     /// `edges_` is the edge argument of `expression_`.
-    QueryEdgeDistanceEvaluator(NumericalView<DistanceTag> expression_, QueryView<> edges_, GraphBuilder<Kind>& graph, urd::Store<urd::sequence<ygg::uint_t>>& dependencies) :
+    QueryEdgeDistanceEvaluator(NumericalView<DistanceTag> expression_,
+                               QueryView<> edges_,
+                               GraphBuilder<Kind>& graph,
+                               urd::Store<urd::sequence<ygg::uint_t>>& dependencies) :
         expression(expression_),
         edges(edges_),
         sources(prepare_argument(expression_.get_lhs(), expression_.data().plan.source_columns(), graph, dependencies)),
@@ -93,20 +96,18 @@ struct QueryEdgeDistanceEvaluator
         feature(semantics::detail::make_distance_feature<Distance>(graph.layer(), expression_.data().plan, edges_))
     {
         for (const auto& slot : feature.slots)
-            slots.push_back(
-                visit_slot<>(slot, edges.context(), [&](auto argument) { return graph.prepare_relation(argument, slot.columns, dependencies); }));
+            slots.push_back(visit_slot<>(slot, edges.context(), [&](auto argument) { return graph.prepare_relation(argument, slot.columns, dependencies); }));
     }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context)
     {
         feature.distance.bind(input(graph));
         if (!heuristic)
-            heuristic =
-                semantics::detail::make_heuristic(graph.layer(),
-                                                  feature,
-                                                  expression.data().plan,
-                                                  semantics::detail::num_objects<Kind>(context),
-                                                  [&](size_t slot) { return feature.distance.input(slot); });
+            heuristic = semantics::detail::make_heuristic(graph.layer(),
+                                                          feature,
+                                                          expression.data().plan,
+                                                          semantics::detail::num_objects<Kind>(context),
+                                                          [&](size_t slot) { return feature.distance.input(slot); });
         set_targets(graph);
         evaluate(graph);
     }

@@ -1,17 +1,13 @@
 #include "runir/kr/uns/dl/parser.hpp"
-#include "runir/kr/dl/detail/repository_instantiations.hpp"
-#include "runir/kr/ps/detail/repository_instantiations.hpp"
-#include <urd/repr/maps/std_map.hpp>
-#include <urd/store.hpp>
 
 #include "kr/parser/ext_constructors.hpp"
 #include "kr/parser/resolution.hpp"
-#include "runir/kr/dl/repository.hpp"
+#include "runir/kr/dl/detail/repository_instantiations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/repository.hpp"
-#include "runir/kr/parser/diagnostics.hpp"
 #include "runir/kr/parser/config.hpp"
-#include "runir/kr/uns/repository.hpp"
+#include "runir/kr/parser/diagnostics.hpp"
+#include "runir/kr/ps/detail/repository_instantiations.hpp"
 #include "runir/kr/uns/dl/parser/parser.hpp"
 #include "runir/kr/uns/dl/parser/parsers.hpp"
 #include "runir/kr/uns/repository.hpp"
@@ -23,6 +19,8 @@
 #include <type_traits>
 #include <tyr/formalism/planning/repository.hpp>
 #include <unordered_map>
+#include <urd/repr/maps/std_map.hpp>
+#include <urd/store.hpp>
 #include <utility>
 
 namespace runir::kr::uns::dl
@@ -79,7 +77,8 @@ ClassifierView parse_classifier(const std::string& description, tyr::formalism::
     data->symbol = ast.symbol.text;
     data->features.reserve(ast.features.size());
     data->clauses.reserve(ast.expression.clauses.size());
-    auto symbol_to_feature = urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs> {};
+    auto symbol_to_feature =
+        urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs> {};
     symbol_to_feature.reserve(ast.features.size());
 
     for (const auto& feature : ast.features)

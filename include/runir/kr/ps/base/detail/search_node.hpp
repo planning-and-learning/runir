@@ -6,11 +6,11 @@
 
 #include <optional>
 #include <tyr/formalism/declarations.hpp>
-#include <yggdrasil/formalism/row_view.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <tyr/planning/state_repository.hpp>
 #include <urd/repr/maps/index_map.hpp>
 #include <urd/store.hpp>
+#include <yggdrasil/formalism/row_view.hpp>
 
 namespace runir::kr::ps::base::detail
 {

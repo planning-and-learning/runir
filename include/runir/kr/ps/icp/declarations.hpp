@@ -7,11 +7,11 @@
 #include "runir/kr/ps/family_traits.hpp"
 #include "runir/kr/ps/icp/execution_declarations.hpp"
 
+#include <boost/mp11.hpp>
 #include <concepts>
 #include <cstdint>
 #include <memory>
 #include <tyr/planning/declarations.hpp>
-#include <boost/mp11.hpp>
 #include <urd/elements/flat.hpp>
 
 namespace runir::kr::ps::icp

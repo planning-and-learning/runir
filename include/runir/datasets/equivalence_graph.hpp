@@ -19,8 +19,6 @@
 #define RUNIR_DATASETS_EQUIVALENCE_GRAPH_HPP_
 
 #include "runir/datasets/config.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/datasets/equivalence_policy.hpp"
 #include "runir/datasets/object_graph.hpp"
 #include "runir/datasets/state_graph.hpp"
@@ -33,6 +31,8 @@
 #include <limits>
 #include <memory>
 #include <tuple>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/config.hpp>

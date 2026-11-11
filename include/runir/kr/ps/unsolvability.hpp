@@ -2,8 +2,6 @@
 #define RUNIR_KR_PS_UNSOLVABILITY_HPP_
 
 #include "runir/kr/dl/semantics/evaluation_policy.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/dl/semantics/evaluation_storage.hpp"
 #include "runir/kr/task_context.hpp"
 #include "runir/kr/uns/classify.hpp"
@@ -11,6 +9,8 @@
 
 #include <concepts>
 #include <tyr/planning/state_view_concepts.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 
 namespace runir::kr::ps

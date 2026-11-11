@@ -1,11 +1,11 @@
 #include "runir/kr/ps/declarations.hpp"
 
+#include <boost/mp11.hpp>
 #include <concepts>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/dl/condition_data.hpp>
 #include <runir/kr/ps/dl/condition_view.hpp>
 #include <urd/elements/flat.hpp>
-#include <boost/mp11.hpp>
 #include <yggdrasil/core/config.hpp>
 
 namespace runir::tests
@@ -33,9 +33,9 @@ template<typename Feature, typename Observation>
 using Condition = kr::ps::ConcreteCondition<kr::BaseFamilyTag, kr::DlTag, Feature, Observation>;
 
 using ConcreteTypes = boost::mp11::mp_list<Condition<kr::dl::BooleanTag, kr::ps::dl::Positive>,
-                                    Condition<kr::dl::BooleanTag, kr::ps::dl::Negative>,
-                                    Condition<kr::dl::NumericalTag, kr::ps::dl::EqualZero>,
-                                    Condition<kr::dl::NumericalTag, kr::ps::dl::GreaterZero>>;
+                                           Condition<kr::dl::BooleanTag, kr::ps::dl::Negative>,
+                                           Condition<kr::dl::NumericalTag, kr::ps::dl::EqualZero>,
+                                           Condition<kr::dl::NumericalTag, kr::ps::dl::GreaterZero>>;
 static_assert(std::same_as<kr::ps::ConditionVariant<kr::BaseFamilyTag>, urd::index_variant<ConcreteTypes>>);
 static_assert(std::same_as<kr::ps::PsConditionTypes<kr::BaseFamilyTag>, ConcreteTypes>);
 

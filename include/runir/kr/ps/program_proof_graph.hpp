@@ -8,11 +8,11 @@
 #include <cista/containers/optional.h>
 #include <tuple>
 #include <tyr/formalism/declarations.hpp>
-#include <yggdrasil/formalism/row_view.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <tyr/planning/declarations.hpp>
-#include <utility>
 #include <urd/elements/flat.hpp>
+#include <utility>
+#include <yggdrasil/formalism/row_view.hpp>
 
 namespace runir::kr::ps
 {

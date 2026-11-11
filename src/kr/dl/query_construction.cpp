@@ -1,12 +1,12 @@
 #include "runir/kr/dl/query_construction.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 
 #include "runir/kr/dl/construction_metadata.hpp"
 #include "runir/kr/dl/repository.hpp"
 
 #include <cstddef>
 #include <ranges>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 namespace runir::kr::dl::detail
 {
@@ -32,7 +32,8 @@ void require_generic_join_order(std::string_view name,
 
 const urd::flat_vector<urd::index<QueryColumn>>& get_query_columns(urd::index<Query<>> index, const ConstructorRepository& repository)
 {
-    return std::visit([&](auto concrete) -> const urd::flat_vector<urd::index<QueryColumn>>& { return repository[concrete].columns; }, repository[index].variant);
+    return std::visit([&](auto concrete) -> const urd::flat_vector<urd::index<QueryColumn>>& { return repository[concrete].columns; },
+                      repository[index].variant);
 }
 
 void prepare(urd::data<Query<>>& data, const ConstructorRepository& repository)
@@ -62,7 +63,10 @@ void prepare(urd::data<Numerical<SemanticFamily, DistanceTag>>& data, const Cons
     const auto sources = columns(data.lhs);
     const auto edges = columns(data.mid);
     const auto targets = columns(data.rhs);
-    data.plan = tyr::datalog::database::DistancePlan({ sources.data(), sources.size() }, { edges.data(), edges.size() }, { targets.data(), targets.size() }, distance_column);
+    data.plan = tyr::datalog::database::DistancePlan({ sources.data(), sources.size() },
+                                                     { edges.data(), edges.size() },
+                                                     { targets.data(), targets.size() },
+                                                     distance_column);
 }
 
 }  // namespace runir::kr::dl::detail

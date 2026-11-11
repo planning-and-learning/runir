@@ -7,8 +7,12 @@ from pybrokkr.build_backend import ProviderBackend
 
 ProviderBackend(
     package="pyrunir",
-    providers=("pypddl", "pytyr", "pyyggdrasil", "pyurd"),
-    prefix_defines={"pyyggdrasil": "YGGDRASIL_NATIVE_PREFIX", "pyurd": "URD_NATIVE_PREFIX"},
+    providers=("pypddl", "pytyr", "pyyggdrasil", "pyurd", "pyurd_native"),
+    prefix_defines={
+        "pyyggdrasil": "YGGDRASIL_NATIVE_PREFIX",
+        "pyurd": "URD_PREFIX",
+        "pyurd_native": "URD_NATIVE_PREFIX",
+    },
     jobs_env="RUNIR_JOBS",
     strip_env="RUNIR_STRIP_WHEEL",
 ).install_hooks(globals())

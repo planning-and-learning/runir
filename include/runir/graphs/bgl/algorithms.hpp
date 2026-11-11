@@ -2,6 +2,7 @@
 #define RUNIR_GRAPHS_BGL_ALGORITHMS_HPP_
 
 #include "runir/graphs/bgl/graph_adapters.hpp"
+
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 
@@ -84,8 +85,9 @@ template<typename G, typename Value>
 using EdgeMapStorage = std::conditional_t<IsDenseGraph<G>, urd::Store<urd::sequence<Value>>, urd::Store<urd::map<EdgeIndex, Value>>>;
 
 template<typename G, typename Value>
-using DistanceMatrixStorage =
-    std::conditional_t<IsDenseGraph<G>, urd::Store<urd::sequence<urd::Store<urd::sequence<Value>>>>, urd::Store<urd::map<VertexIndex, urd::Store<urd::map<VertexIndex, Value>>>>>;
+using DistanceMatrixStorage = std::conditional_t<IsDenseGraph<G>,
+                                                 urd::Store<urd::sequence<urd::Store<urd::sequence<Value>>>>,
+                                                 urd::Store<urd::map<VertexIndex, urd::Store<urd::map<VertexIndex, Value>>>>>;
 
 /// A Boost property map over a VertexMapStorage or EdgeMapStorage.
 template<typename Value>
@@ -142,9 +144,9 @@ auto strong_components(const G& graph)
     using Component = typename boost::graph_traits<G>::vertices_size_type;
 
     auto components = make_vertex_map_storage(graph, Component {});
-    const auto count = with_vertex_index_map(graph,
-                                             [&](auto vertex_index_map)
-                                             { return boost::strong_components(graph, make_property_map(components), boost::vertex_index_map(vertex_index_map)); });
+    const auto count = with_vertex_index_map(
+        graph,
+        [&](auto vertex_index_map) { return boost::strong_components(graph, make_property_map(components), boost::vertex_index_map(vertex_index_map)); });
     return std::make_pair(count, components);
 }
 

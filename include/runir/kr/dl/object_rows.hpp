@@ -2,10 +2,10 @@
 #define RUNIR_KR_DL_OBJECT_ROWS_HPP_
 
 #include <cstddef>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include <ranges>
 #include <span>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/formalism/values.hpp>

@@ -1,4 +1,5 @@
 #include "pyrunir/kr/ps/base/bindings.hpp"
+#include "pyrunir/module.hpp"
 
 #include <functional>
 #include <nanobind/stl/chrono.h>
@@ -13,7 +14,6 @@
 #include <runir/kr/ps/base/successor_expander.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include "pyrunir/module.hpp"
 
 namespace runir::kr::ps::base
 {

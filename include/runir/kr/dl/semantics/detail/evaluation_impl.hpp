@@ -1,15 +1,16 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_DETAIL_EVALUATION_IMPL_HPP_
 #define RUNIR_KR_DL_SEMANTICS_DETAIL_EVALUATION_IMPL_HPP_
 
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/detail/evaluation_helpers.hpp"
 #include "runir/kr/dl/semantics/distance_evaluation.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/evaluation_decl.hpp"
 #include "runir/kr/dl/semantics/evaluation_storage.hpp"
 #include "runir/kr/dl/semantics/query_evaluation.hpp"
-#include "runir/kr/dl/datas.hpp"
-#include "runir/kr/dl/declarations.hpp"
-#include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
+
 #include <urd/bits.hpp>
 
 namespace runir::kr::dl::semantics
@@ -483,7 +484,8 @@ auto evaluate_impl(urd::index_view<QueryProjection<Category>, C> constructor, Co
         const auto source = position(0);
         const auto target = position(1);
         for (const auto row : relation.rows())
-            result->get(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(row.value(source)))).set(ygg::decode_value<ygg::uint_t>(row.value(target)));
+            result->get(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(row.value(source))))
+                .set(ygg::decode_value<ygg::uint_t>(row.value(target)));
     }
     return insert(context.get_denotation_repository(), *result, context.get_builder()).first;
 }

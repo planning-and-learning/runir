@@ -1,8 +1,6 @@
 #include "bindings.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
-#include <urd/python/sequences/sequence.hpp>
 #include "pyrunir/kr/binding_utils.hpp"
+#include "pyrunir/module.hpp"
 
 #include <nanobind/stl/list.h>
 #include <nanobind/stl/vector.h>
@@ -10,9 +8,11 @@
 #include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/ps/icp/rule_data.hpp>
 #include <runir/kr/ps/icp/rule_view.hpp>
+#include <urd/python/sequences/sequence.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 #include <yggdrasil/python/bindings.hpp>
-#include "pyrunir/module.hpp"
 
 namespace runir::kr::ps::icp
 {
@@ -85,11 +85,11 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
              "reg"_a,
              "effects"_a)
         .def(urd::python::init_from_views<MemoryStateView,
-                      MemoryStateView,
-                      const ConditionViewList&,
-                      urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>, Repository>,
-                      urd::index_view<runir::kr::dl::Register<runir::kr::dl::ConceptTag>, DlRepository>,
-                      const EffectViewList&>(),
+                                          MemoryStateView,
+                                          const ConditionViewList&,
+                                          urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>, Repository>,
+                                          urd::index_view<runir::kr::dl::Register<runir::kr::dl::ConceptTag>, DlRepository>,
+                                          const EffectViewList&>(),
              "source"_a,
              "target"_a,
              "conditions"_a,
@@ -107,11 +107,11 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
              "reg"_a,
              "effects"_a)
         .def(urd::python::init_from_views<MemoryStateView,
-                      MemoryStateView,
-                      const ConditionViewList&,
-                      urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::RoleTag>, Repository>,
-                      urd::index_view<runir::kr::dl::Register<runir::kr::dl::RoleTag>, DlRepository>,
-                      const EffectViewList&>(),
+                                          MemoryStateView,
+                                          const ConditionViewList&,
+                                          urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::RoleTag>, Repository>,
+                                          urd::index_view<runir::kr::dl::Register<runir::kr::dl::RoleTag>, DlRepository>,
+                                          const EffectViewList&>(),
              "source"_a,
              "target"_a,
              "conditions"_a,
@@ -138,13 +138,13 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
              "xconditions"_a,
              "xeffects"_a)
         .def(urd::python::init_from_views<MemoryStateView,
-                      MemoryStateView,
-                      const ConditionViewList&,
-                      const EffectViewList&,
-                      urd::flat_string,
-                      urd::flat_vector<urd::flat_string>,
-                      const urd::Store<urd::sequence<urd::index_view<XCondition, Repository>>>&,
-                      const urd::Store<urd::sequence<urd::index_view<XEffect, Repository>>>&>(),
+                                          MemoryStateView,
+                                          const ConditionViewList&,
+                                          const EffectViewList&,
+                                          urd::flat_string,
+                                          urd::flat_vector<urd::flat_string>,
+                                          const urd::Store<urd::sequence<urd::index_view<XCondition, Repository>>>&,
+                                          const urd::Store<urd::sequence<urd::index_view<XEffect, Repository>>>&>(),
              "source"_a,
              "target"_a,
              "conditions"_a,

@@ -2,16 +2,16 @@
 #define RUNIR_KR_PS_EXT_MODULE_DATA_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/ext/declarations.hpp"
 #include "runir/kr/ps/ext/rule_data.hpp"
 
 #include <tuple>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
-#include <urd/elements/flat.hpp>
 
 namespace urd
 {

@@ -12,13 +12,13 @@
 #include <optional>
 #include <span>
 #include <tuple>
+#include <urd/config.hpp>
 #include <urd/repr/maps/index_map.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
-#include <urd/config.hpp>
 
 namespace runir::kr::ps::ext::detail
 {

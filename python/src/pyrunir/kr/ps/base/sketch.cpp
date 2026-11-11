@@ -1,28 +1,26 @@
 #include "bindings.hpp"
-#include "runir/kr/dl/detail/repository_instantiations.hpp"
-#include "runir/kr/ps/detail/repository_instantiations.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
-#include <urd/python/sequences/sequence.hpp>
 #include "pyrunir/kr/binding_utils.hpp"
 #include "pyrunir/kr/ps/dl/optimization_bindings.hpp"
+#include "pyrunir/module.hpp"
+#include "runir/kr/dl/detail/repository_instantiations.hpp"
+#include "runir/kr/ps/detail/repository_instantiations.hpp"
 
 #include <nanobind/stl/vector.h>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/ps/base/compatibility.hpp>
-#include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/sketch_data.hpp>
 #include <runir/kr/ps/base/sketch_view.hpp>
 #include <runir/kr/ps/base/syntactic_complexity.hpp>
 #include <runir/kr/ps/dl/transition_evaluation_context.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
+#include <urd/python/sequences/sequence.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 #include <yggdrasil/python/bindings.hpp>
-#include "pyrunir/module.hpp"
 
 namespace runir::kr::ps::base
 {
@@ -41,24 +39,27 @@ void bind_sketch(nb::module_& m, RepositoryBinding& repository)
     using BooleanFeatureIndex = urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>;
     using NumericalFeatureIndex = urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>;
     using RuleIndex = urd::index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>;
-    auto data = nb::class_<Data>(m, "SketchData")
-                    .def(nb::init<>())
-                    .def(nb::init<urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>>,
-                                  urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>>,
-                                  urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>>>(),
-                         "boolean_features"_a,
-                         "numerical_features"_a,
-                         "rules"_a)
-                    .def(urd::python::init_from_views<const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>, Repository>>>&,
-                                  const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>, Repository>>>&,
-                                  const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, Repository>>>&>(),
-                         "boolean_features"_a,
-                         "numerical_features"_a,
-                         "rules"_a)
-                    .def_rw("index", &Data::index)
-                    .def_rw("boolean_features", &Data::boolean_features)
-                    .def_rw("numerical_features", &Data::numerical_features)
-                    .def_rw("rules", &Data::rules);
+    auto data =
+        nb::class_<Data>(m, "SketchData")
+            .def(nb::init<>())
+            .def(nb::init<urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>>,
+                          urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>>,
+                          urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>>>(),
+                 "boolean_features"_a,
+                 "numerical_features"_a,
+                 "rules"_a)
+            .def(urd::python::init_from_views<
+                     const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>, Repository>>>&,
+                     const urd::Store<
+                         urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>, Repository>>>&,
+                     const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, Repository>>>&>(),
+                 "boolean_features"_a,
+                 "numerical_features"_a,
+                 "rules"_a)
+            .def_rw("index", &Data::index)
+            .def_rw("boolean_features", &Data::boolean_features)
+            .def_rw("numerical_features", &Data::numerical_features)
+            .def_rw("rules", &Data::rules);
     urd::python::add_comparison(data);
 
     auto view = nb::class_<View>(m, "Sketch")

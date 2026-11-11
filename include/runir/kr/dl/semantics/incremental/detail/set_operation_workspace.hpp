@@ -2,13 +2,13 @@
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_SET_OPERATION_WORKSPACE_HPP_
 
 #include "runir/kr/dl/semantics/denotation_builder.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/dl/semantics/incremental/detail/closure.hpp"
 
 #include <cstdint>
-#include <vector>
 #include <urd/elements/flat.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
+#include <vector>
 #include <yggdrasil/core/config.hpp>
 
 namespace runir::kr::dl::semantics::incremental::detail

@@ -1,9 +1,8 @@
 #include "bindings.hpp"
+#include "pyrunir/kr/ps/dl/binding_utils.hpp"
+#include "pyrunir/module.hpp"
 #include "runir/kr/dl/detail/repository_instantiations.hpp"
 #include "runir/kr/ps/detail/repository_instantiations.hpp"
-#include "pyrunir/module.hpp"
-
-#include "pyrunir/kr/ps/dl/binding_utils.hpp"
 
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>

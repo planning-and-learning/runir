@@ -16,10 +16,6 @@
  */
 
 #include "runir/datasets/equivalence_graph.hpp"
-#include <urd/repr/maps/index_map.hpp>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/repr/values/indexed.hpp>
-#include <urd/store.hpp>
 
 #include "runir/datasets/equivalence_policies/gi.hpp"
 #include "runir/datasets/equivalence_policies/identity.hpp"
@@ -37,10 +33,14 @@
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/heuristics/blind.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
+#include <urd/config.hpp>
+#include <urd/repr/maps/index_map.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/indexed.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
-#include <urd/config.hpp>
 
 namespace runir::datasets
 {
@@ -319,13 +319,8 @@ auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts, Policy& p
                                                                       *context.successor_generator,
                                                                       heuristic,
                                                                       options);
-        auto state_graph = build_state_graph(context,
-                                             state_graph_index,
-                                             *coordinator,
-                                             event_handler->get_events(),
-                                             equivalence_builder,
-                                             representatives,
-                                             equivalence_edges);
+        auto state_graph =
+            build_state_graph(context, state_graph_index, *coordinator, event_handler->get_events(), equivalence_builder, representatives, equivalence_edges);
         state_graph_results.push_back(StateGraphGenerationResult<Kind> { std::move(state_graph), result.status });
     }
 

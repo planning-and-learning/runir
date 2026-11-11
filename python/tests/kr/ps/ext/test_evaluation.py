@@ -708,9 +708,7 @@ def test_initial_goal_classifier_and_zero_time_results(
         domain.uns_repository,
     )
     result = _find_solution(context, program, options)
-    assert result.status == (
-        ProofStatus.SUCCESS if initial_goal_satisfied else ProofStatus.FAILURE
-    )
+    assert result.status == (ProofStatus.SUCCESS if initial_goal_satisfied else ProofStatus.FAILURE)
     assert result.deadend_states == ([] if initial_goal_satisfied else [0])
     if initial_goal_satisfied and not universal:
         assert result.plan is not None

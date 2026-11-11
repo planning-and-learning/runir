@@ -9,10 +9,10 @@
 
 #include <tuple>
 #include <tyr/formalism/declarations.hpp>
-#include <yggdrasil/formalism/row_view.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/state_repository.hpp>
 #include <utility>
+#include <yggdrasil/formalism/row_view.hpp>
 
 namespace runir::kr::ps::base
 {

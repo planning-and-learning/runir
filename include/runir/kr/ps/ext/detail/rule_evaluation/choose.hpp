@@ -2,8 +2,6 @@
 #define RUNIR_KR_PS_EXT_DETAIL_RULE_EVALUATION_CHOOSE_HPP_
 
 #include "runir/kr/ps/dl/evaluation.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
 #include "runir/kr/ps/ext/detail/rule_evaluation/binding.hpp"
 #include "runir/kr/ps/ext/detail/rule_evaluation/context.hpp"
@@ -12,6 +10,8 @@
 #include <algorithm>
 #include <concepts>
 #include <ranges>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 
@@ -67,7 +67,8 @@ public:
 
 private:
     template<typename Denotation>
-        requires std::ranges::input_range<Denotation> && std::same_as<std::ranges::range_value_t<Denotation>, runir::kr::dl::semantics::DenotationElementView<Category>>
+        requires std::ranges::input_range<Denotation>
+                 && std::same_as<std::ranges::range_value_t<Denotation>, runir::kr::dl::semantics::DenotationElementView<Category>>
     auto make_choice(ChooseRuleWorkspace& workspace, RuleVariantView rule, Denotation denotation) const
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
@@ -83,7 +84,8 @@ private:
              ProgramStateViewConcept<Kind> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
              typename Denotation>
-        requires std::ranges::input_range<Denotation> && std::same_as<std::ranges::range_value_t<Denotation>, runir::kr::dl::semantics::DenotationElementView<Category>>
+        requires std::ranges::input_range<Denotation>
+                 && std::same_as<std::ranges::range_value_t<Denotation>, runir::kr::dl::semantics::DenotationElementView<Category>>
     bool emit_choice(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                      ChooseRuleWorkspace& workspace,
                      RuleView<ChooseTag<Category>> rule,
@@ -137,8 +139,9 @@ private:
             {
                 if (stop())
                     return false;
-                workspace.order_scores.push_back(
-                    std::visit([&](auto feature) { return ygg::uint_t(evaluate<Kind>(feature, transition.get_target_context()).value()); }, term.get_feature()));
+                workspace.order_scores.push_back(std::visit([&](auto feature)
+                                                            { return ygg::uint_t(evaluate<Kind>(feature, transition.get_target_context()).value()); },
+                                                            term.get_feature()));
             }
             workspace.order_indices.push_back(workspace.order_indices.size());
         }

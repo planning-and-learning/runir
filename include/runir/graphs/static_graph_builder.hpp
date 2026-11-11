@@ -113,7 +113,8 @@ public:
     [[nodiscard]] auto get_edges() const noexcept -> const EdgeList& { return m_edges; }
     [[nodiscard]] auto get_vertex_property_map() const noexcept -> const VertexPropertyMapType& { return m_vertex_properties; }
     [[nodiscard]] auto get_edge_property_map() const noexcept -> const EdgePropertyMapType& { return m_edge_properties; }
-    [[nodiscard]] auto get_vertex_property(VertexIndex vertex) const noexcept -> const VP& { return m_vertex_properties[get_vertex(vertex).get_property_index()].value; }
+    [[nodiscard]] auto get_vertex_property(VertexIndex vertex) const noexcept -> const VP&
+    { return m_vertex_properties[get_vertex(vertex).get_property_index()].value; }
     [[nodiscard]] auto get_edge_property(EdgeIndex edge) const noexcept -> const EP& { return m_edge_properties[get_edge(edge).get_property_index()].value; }
 
     [[nodiscard]] auto get_vertex(VertexIndex vertex) const noexcept -> const VertexType&
@@ -164,34 +165,22 @@ public:
     }
 
     [[nodiscard]] auto get_out_edges(VertexIndex vertex) const noexcept
-    {
-        return urd::transform(get_out_edge_indices(vertex), detail::ReadThrough<StaticGraphBuilder, &StaticGraphBuilder::get_edge> { this });
-    }
+    { return urd::transform(get_out_edge_indices(vertex), detail::ReadThrough<StaticGraphBuilder, &StaticGraphBuilder::get_edge> { this }); }
 
     [[nodiscard]] auto get_in_edges(VertexIndex vertex) const noexcept
-    {
-        return urd::transform(get_in_edge_indices(vertex), detail::ReadThrough<StaticGraphBuilder, &StaticGraphBuilder::get_edge> { this });
-    }
+    { return urd::transform(get_in_edge_indices(vertex), detail::ReadThrough<StaticGraphBuilder, &StaticGraphBuilder::get_edge> { this }); }
 
     [[nodiscard]] auto get_successor_indices(VertexIndex vertex) const noexcept
-    {
-        return urd::transform(get_out_edge_indices(vertex), detail::ReadThrough<StaticGraphBuilder, &StaticGraphBuilder::get_target> { this });
-    }
+    { return urd::transform(get_out_edge_indices(vertex), detail::ReadThrough<StaticGraphBuilder, &StaticGraphBuilder::get_target> { this }); }
 
     [[nodiscard]] auto get_predecessor_indices(VertexIndex vertex) const noexcept
-    {
-        return urd::transform(get_in_edge_indices(vertex), detail::ReadThrough<StaticGraphBuilder, &StaticGraphBuilder::get_source> { this });
-    }
+    { return urd::transform(get_in_edge_indices(vertex), detail::ReadThrough<StaticGraphBuilder, &StaticGraphBuilder::get_source> { this }); }
 
     [[nodiscard]] auto get_successors(VertexIndex vertex) const noexcept
-    {
-        return urd::transform(get_successor_indices(vertex), detail::ReadThrough<StaticGraphBuilder, &StaticGraphBuilder::get_vertex> { this });
-    }
+    { return urd::transform(get_successor_indices(vertex), detail::ReadThrough<StaticGraphBuilder, &StaticGraphBuilder::get_vertex> { this }); }
 
     [[nodiscard]] auto get_predecessors(VertexIndex vertex) const noexcept
-    {
-        return urd::transform(get_predecessor_indices(vertex), detail::ReadThrough<StaticGraphBuilder, &StaticGraphBuilder::get_vertex> { this });
-    }
+    { return urd::transform(get_predecessor_indices(vertex), detail::ReadThrough<StaticGraphBuilder, &StaticGraphBuilder::get_vertex> { this }); }
 };
 
 }  // namespace runir::graphs

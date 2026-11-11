@@ -77,7 +77,8 @@ template<CategoryTag Category>
 
 /// Publish typed query rows in the denotation repository's relation repository, which owns them: each row, then the
 /// columns, then the relation, in scratch records from `builder`.
-[[nodiscard]] inline std::pair<QueryDenotationView, bool> insert(DenotationRepository& repository, const urd::builder<ygg::Relation<ygg::Schema>>& source, Builder& builder)
+[[nodiscard]] inline std::pair<QueryDenotationView, bool>
+insert(DenotationRepository& repository, const urd::builder<ygg::Relation<ygg::Schema>>& source, Builder& builder)
 {
     auto& relations = repository.get_relation_repository();
     auto relation = checkout<ygg::Relation<ygg::Schema>>(builder);
@@ -98,7 +99,8 @@ template<CategoryTag Category>
 }
 /// `source` under new columns (the same pool and rows) in the denotation repository's relation repository, in scratch
 /// records from `builder`.
-[[nodiscard]] inline QueryDenotationView rename(DenotationRepository& repository, QueryDenotationView source, std::span<const ygg::ColumnLayout> labels, Builder& builder)
+[[nodiscard]] inline QueryDenotationView
+rename(DenotationRepository& repository, QueryDenotationView source, std::span<const ygg::ColumnLayout> labels, Builder& builder)
 {
     auto& relations = repository.get_relation_repository();
     auto columns = checkout<ygg::Columns>(builder);

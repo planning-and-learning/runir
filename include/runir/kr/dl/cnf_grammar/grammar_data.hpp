@@ -2,16 +2,16 @@
 #define RUNIR_CNF_GRAMMAR_GRAMMAR_DATA_HPP_
 
 #include "runir/kr/dl/cnf_grammar/declarations.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 
 #include <cista/containers/optional.h>
 #include <optional>
 #include <tuple>
 #include <tyr/formalism/planning/declarations.hpp>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
-#include <urd/elements/flat.hpp>
 
 namespace urd
 {

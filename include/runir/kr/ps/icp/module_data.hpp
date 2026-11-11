@@ -2,8 +2,6 @@
 #define RUNIR_KR_PS_ICP_MODULE_DATA_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/icp/declarations.hpp"
 #include "runir/kr/ps/icp/object_reference.hpp"
@@ -11,9 +9,11 @@
 
 #include <cista/containers/vector.h>
 #include <tuple>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
-#include <urd/elements/flat.hpp>
 
 namespace urd
 {

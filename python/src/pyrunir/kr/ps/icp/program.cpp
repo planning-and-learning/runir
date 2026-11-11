@@ -1,20 +1,19 @@
 #include "bindings.hpp"
-#include "runir/kr/dl/detail/repository_instantiations.hpp"
-#include "runir/kr/ps/detail/repository_instantiations.hpp"
 #include "pyrunir/kr/binding_utils.hpp"
 #include "pyrunir/kr/ps/dl/optimization_bindings.hpp"
+#include "pyrunir/module.hpp"
+#include "runir/kr/dl/detail/repository_instantiations.hpp"
+#include "runir/kr/ps/detail/repository_instantiations.hpp"
 
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
-#include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/ps/icp/formatter.hpp>
 #include <runir/kr/ps/icp/program_data.hpp>
 #include <runir/kr/ps/icp/program_view.hpp>
 #include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/ps/icp/syntactic_complexity.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include "pyrunir/module.hpp"
 
 namespace runir::kr::ps::icp
 {

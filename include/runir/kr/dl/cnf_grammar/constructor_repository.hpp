@@ -2,19 +2,19 @@
 #define RUNIR_CNF_GRAMMAR_CONSTRUCTOR_REPOSITORY_HPP_
 
 #include "runir/kr/dl/cnf_grammar/canonicalization.hpp"
-#include "runir/kr/dl/numerical_data.hpp"
-#include "runir/kr/dl/cnf_grammar/derivation_rule_data.hpp"
-#include "runir/kr/dl/cnf_grammar/grammar_data.hpp"
-#include "runir/kr/dl/cnf_grammar/non_terminal_data.hpp"
-#include "runir/kr/dl/cnf_grammar/substitution_rule_data.hpp"
 #include "runir/kr/dl/cnf_grammar/declarations.hpp"
-#include "runir/kr/dl/record_view.hpp"
+#include "runir/kr/dl/cnf_grammar/derivation_rule_data.hpp"
 #include "runir/kr/dl/cnf_grammar/derivation_rule_view.hpp"
+#include "runir/kr/dl/cnf_grammar/grammar_data.hpp"
 #include "runir/kr/dl/cnf_grammar/grammar_view.hpp"
+#include "runir/kr/dl/cnf_grammar/non_terminal_data.hpp"
 #include "runir/kr/dl/cnf_grammar/non_terminal_view.hpp"
+#include "runir/kr/dl/cnf_grammar/substitution_rule_data.hpp"
 #include "runir/kr/dl/cnf_grammar/substitution_rule_view.hpp"
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/detail/constructor_repository.hpp"
+#include "runir/kr/dl/numerical_data.hpp"
+#include "runir/kr/dl/record_view.hpp"
 
 #include <boost/mp11.hpp>
 #include <urd/elements/flat.hpp>

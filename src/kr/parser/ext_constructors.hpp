@@ -2,13 +2,13 @@
 #define RUNIR_SRC_KR_PARSER_EXT_CONSTRUCTORS_HPP_
 
 #include "kr/parser/constructors.hpp"
-#include <urd/repr/maps/std_map.hpp>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/parser/diagnostics.hpp"
 
 #include <string>
 #include <unordered_map>
+#include <urd/repr/maps/std_map.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 namespace runir::kr::parser::ext_constructors
 {
@@ -173,7 +173,8 @@ inline auto parse(const runir::kr::dl::grammar::ast::ConceptRegister& node, tyr:
 inline auto parse(const runir::kr::dl::grammar::ast::ConceptArgument& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     require_arguments(node, context);
-    auto data = runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>>(context.builder());
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>>(
+        context.builder());
     data->reference = resolve_reference<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>, runir::kr::dl::ArgumentIdentifier<runir::kr::dl::ConceptTag>>(
         node.reference,
         context.references() ? &context.references()->concept_arguments : nullptr,
@@ -197,7 +198,8 @@ inline auto parse(const runir::kr::dl::grammar::ast::RoleRegister& node, tyr::fo
 inline auto parse(const runir::kr::dl::grammar::ast::RoleArgument& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     require_arguments(node, context);
-    auto data = runir::kr::dl::checkout<runir::kr::dl::Role<runir::kr::dl::SemanticFamily, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>>(context.builder());
+    auto data =
+        runir::kr::dl::checkout<runir::kr::dl::Role<runir::kr::dl::SemanticFamily, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>>(context.builder());
     data->reference = resolve_reference<runir::kr::dl::Argument<runir::kr::dl::RoleTag>, runir::kr::dl::ArgumentIdentifier<runir::kr::dl::RoleTag>>(
         node.reference,
         context.references() ? &context.references()->role_arguments : nullptr,
@@ -209,7 +211,8 @@ inline auto parse(const runir::kr::dl::grammar::ast::RoleArgument& node, tyr::fo
 inline auto parse(const runir::kr::dl::grammar::ast::BooleanArgument& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     require_arguments(node, context);
-    auto data = runir::kr::dl::checkout<runir::kr::dl::Boolean<runir::kr::dl::SemanticFamily, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>>(context.builder());
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Boolean<runir::kr::dl::SemanticFamily, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>>(
+        context.builder());
     data->reference = resolve_reference<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>, runir::kr::dl::ArgumentIdentifier<runir::kr::dl::BooleanTag>>(
         node.reference,
         context.references() ? &context.references()->boolean_arguments : nullptr,
@@ -221,7 +224,8 @@ inline auto parse(const runir::kr::dl::grammar::ast::BooleanArgument& node, tyr:
 inline auto parse(const runir::kr::dl::grammar::ast::NumericalArgument& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     require_arguments(node, context);
-    auto data = runir::kr::dl::checkout<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>>(context.builder());
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>>(
+        context.builder());
     data->reference = resolve_reference<runir::kr::dl::Argument<runir::kr::dl::NumericalTag>, runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>(
         node.reference,
         context.references() ? &context.references()->numerical_arguments : nullptr,

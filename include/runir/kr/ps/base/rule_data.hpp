@@ -2,17 +2,17 @@
 #define RUNIR_KR_PS_BASE_RULE_DATA_HPP_
 
 #include "runir/kr/ps/base/declarations.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/ps/declarations.hpp"
 
 #include <cista/containers/string.h>
 #include <string>
 #include <tuple>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <variant>
 #include <vector>
-#include <urd/elements/flat.hpp>
 
 namespace urd
 {

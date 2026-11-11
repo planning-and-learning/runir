@@ -1,8 +1,8 @@
+#include "runir/kr/dl/semantics/denotation_repository.hpp"
+#include "runir/kr/ps/ext/detail/proof_search.hpp"
 #include "runir/kr/ps/ext/program_executor.hpp"
 
-#include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
-#include "runir/kr/ps/ext/detail/proof_search.hpp"
 
 namespace runir::kr::ps::ext
 {

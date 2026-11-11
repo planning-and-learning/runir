@@ -1,8 +1,7 @@
 #include "runir/kr/dl/repository.hpp"
 
-#include "runir/kr/dl/detail/repository_instantiations.hpp"
-
 #include "runir/kr/dl/detail/constructor_repository_impl.hpp"
+#include "runir/kr/dl/detail/repository_instantiations.hpp"
 
 namespace runir::kr::dl::detail
 {

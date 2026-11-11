@@ -60,11 +60,12 @@ using UnsNumerical = kr::ps::ConcreteFeature<kr::UnsFamilyTag, kr::DlTag, kr::dl
 using UnsPositive = kr::ps::ConcreteCondition<kr::UnsFamilyTag, kr::DlTag, kr::dl::BooleanTag, kr::ps::dl::Positive>;
 using BaseCustomTypes = boost::mp11::mp_append<
     kr::ps::PsCoreTypes<kr::BaseFamilyTag>,
-    boost::mp11::mp_list<BaseRole, BaseQuery, kr::ps::Feature<kr::BaseFamilyTag, kr::dl::RoleTag>, kr::ps::Feature<kr::BaseFamilyTag, kr::ps::dl::QueryFeature>>>;
+    boost::mp11::
+        mp_list<BaseRole, BaseQuery, kr::ps::Feature<kr::BaseFamilyTag, kr::dl::RoleTag>, kr::ps::Feature<kr::BaseFamilyTag, kr::ps::dl::QueryFeature>>>;
 using UnsCustomTypes = boost::mp11::mp_append<kr::ps::PsCoreTypes<kr::UnsFamilyTag>,
-                                             boost::mp11::mp_list<UnsNumerical, kr::ps::Feature<kr::UnsFamilyTag, kr::dl::NumericalTag>>,
-                                             kr::ps::detail::PsConcreteConditionTypes<kr::UnsFamilyTag>,
-                                             kr::ps::detail::PsConcreteEffectTypes<kr::UnsFamilyTag>>;
+                                              boost::mp11::mp_list<UnsNumerical, kr::ps::Feature<kr::UnsFamilyTag, kr::dl::NumericalTag>>,
+                                              kr::ps::detail::PsConcreteConditionTypes<kr::UnsFamilyTag>,
+                                              kr::ps::detail::PsConcreteEffectTypes<kr::UnsFamilyTag>>;
 using BaseCustomRepository = kr::ps::BasicRepository<kr::BaseFamilyTag, BaseCustomTypes>;
 using UnsCustomRepository = kr::ps::BasicRepository<kr::UnsFamilyTag, UnsCustomTypes>;
 static_assert(usable_inventory<BaseCustomRepository>(BaseCustomTypes {}));

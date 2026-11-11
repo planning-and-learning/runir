@@ -3,13 +3,13 @@
 
 #include "runir/kr/dl/declarations.hpp"
 
+#include <boost/mp11.hpp>
 #include <cassert>
 #include <memory>
 #include <tyr/formalism/planning/declarations.hpp>
-#include <utility>
 #include <urd/config.hpp>
-#include <boost/mp11.hpp>
 #include <urd/elements/flat.hpp>
+#include <utility>
 #include <yggdrasil/formalism/symbol_repository.hpp>
 
 namespace runir::kr::dl::detail

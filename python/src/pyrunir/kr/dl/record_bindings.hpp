@@ -2,6 +2,7 @@
 #define PYRUNIR_KR_DL_RECORD_BINDINGS_HPP_
 
 #include "module.hpp"
+#include "pyrunir/module.hpp"
 
 #include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
@@ -12,7 +13,6 @@
 #include <tyr/formalism/planning/repository.hpp>
 #include <urd/python/bindings.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include "pyrunir/module.hpp"
 
 namespace runir::kr::dl::python
 {

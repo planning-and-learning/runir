@@ -151,7 +151,8 @@ void evaluate_rows(Tag, BorrowedDenotationView<RoleTag> lhs, BorrowedDenotationV
 }
 
 template<typename Objects, typename Emit>
-    requires std::ranges::forward_range<const Objects> && std::ranges::sized_range<const Objects> && std::same_as<std::ranges::range_value_t<const Objects>, tyr::formalism::planning::ObjectView>
+    requires std::ranges::forward_range<const Objects> && std::ranges::sized_range<const Objects>
+             && std::same_as<std::ranges::range_value_t<const Objects>, tyr::formalism::planning::ObjectView>
              && std::convertible_to<std::ranges::range_reference_t<const Objects>, const tyr::formalism::planning::ObjectView&>
              && std::invocable<Emit, urd::index<tyr::formalism::Object>, bool>
 void evaluate_rows(RoleFillersTag, BorrowedDenotationView<RoleTag> role, const Objects& fillers, SetOperationWorkspace& workspace, Emit emit)
@@ -470,7 +471,8 @@ void update_set(Tag,
 }
 
 template<typename Objects>
-    requires std::ranges::forward_range<const Objects> && std::ranges::sized_range<const Objects> && std::same_as<std::ranges::range_value_t<const Objects>, tyr::formalism::planning::ObjectView>
+    requires std::ranges::forward_range<const Objects> && std::ranges::sized_range<const Objects>
+             && std::same_as<std::ranges::range_value_t<const Objects>, tyr::formalism::planning::ObjectView>
              && std::convertible_to<std::ranges::range_reference_t<const Objects>, const tyr::formalism::planning::ObjectView&>
 void initialize_set(RoleFillersTag,
                     DenotationState<ConceptTag>& output,
@@ -485,7 +487,8 @@ void initialize_set(RoleFillersTag,
 }
 
 template<typename Objects>
-    requires std::ranges::forward_range<const Objects> && std::ranges::sized_range<const Objects> && std::same_as<std::ranges::range_value_t<const Objects>, tyr::formalism::planning::ObjectView>
+    requires std::ranges::forward_range<const Objects> && std::ranges::sized_range<const Objects>
+             && std::same_as<std::ranges::range_value_t<const Objects>, tyr::formalism::planning::ObjectView>
              && std::convertible_to<std::ranges::range_reference_t<const Objects>, const tyr::formalism::planning::ObjectView&>
 void update_set(RoleFillersTag,
                 DenotationState<ConceptTag>& output,

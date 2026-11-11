@@ -2,8 +2,6 @@
 #define RUNIR_KR_DL_QUERY_CONSTRUCTION_HPP_
 
 #include "runir/kr/dl/query_view.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 
 #include <algorithm>
 #include <concepts>
@@ -11,13 +9,15 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <tyr/formalism/predicate_view.hpp>
-#include <variant>
-#include <vector>
 #include <tyr/datalog/lifted/database/semantics/distance.hpp>
 #include <tyr/datalog/lifted/database/semantics/generic_join.hpp>
 #include <tyr/datalog/lifted/database/semantics/must_pass_plan.hpp>
 #include <tyr/datalog/lifted/database/semantics/plans.hpp>
+#include <tyr/formalism/predicate_view.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
+#include <variant>
+#include <vector>
 #include <yggdrasil/formalism/relation_view.hpp>
 
 namespace runir::kr::dl::detail
@@ -137,16 +137,16 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
     {
         data.columns = get_query_columns(data.arg, repository);
         data.plan = tyr::datalog::database::SelectEqualPlan(urd::resolve(data.arg, repository).get_schema(),
-                                                   urd::index<ygg::Column>(data.lhs_column.value),
-                                                   urd::index<ygg::Column>(data.rhs_column.value));
+                                                            urd::index<ygg::Column>(data.lhs_column.value),
+                                                            urd::index<ygg::Column>(data.rhs_column.value));
     }
     else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
     {
         data.columns = get_query_columns(data.arg, repository);
         data.plan = tyr::datalog::database::SelectValuePlan(urd::resolve(data.arg, repository).get_schema(),
-                                                   urd::index<ygg::Column>(data.column.value),
-                                                   ygg::type_id<urd::index<tyr::formalism::Object>>,
-                                                   ygg::encode_value(data.object));
+                                                            urd::index<ygg::Column>(data.column.value),
+                                                            ygg::type_id<urd::index<tyr::formalism::Object>>,
+                                                            ygg::encode_value(data.object));
     }
     else
     {

@@ -5,8 +5,8 @@
 #include <runir/kr/ps/dl/feature_data.hpp>
 #include <runir/kr/ps/dl/feature_view.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
-#include <utility>
 #include <urd/elements/flat.hpp>
+#include <utility>
 #include <yggdrasil/core/config.hpp>
 
 namespace runir::tests

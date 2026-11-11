@@ -3,17 +3,17 @@
 
 #include "runir/kr/dl/declarations.hpp"
 
+#include <boost/mp11.hpp>
 #include <concepts>
 #include <cstddef>
 #include <memory>
 #include <ranges>
 #include <span>
+#include <tyr/datalog/lifted/database/declarations.hpp>
 #include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
-#include <vector>
-#include <boost/mp11.hpp>
 #include <urd/elements/flat.hpp>
-#include <tyr/datalog/lifted/database/declarations.hpp>
+#include <vector>
 #include <yggdrasil/formalism/relation_view.hpp>
 
 namespace runir::kr::dl::semantics

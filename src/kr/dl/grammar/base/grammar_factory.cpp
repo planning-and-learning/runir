@@ -1,6 +1,4 @@
 #include "runir/kr/dl/grammar/grammar_factory.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/grammar/constructor_repository.hpp"
@@ -11,6 +9,8 @@
 #include <stdexcept>
 #include <string>
 #include <tyr/formalism/planning/repository.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 
 namespace runir::kr::dl::grammar
@@ -123,7 +123,11 @@ void add_role_inverse(std::stringstream& out, urd::Store<urd::sequence<std::stri
 }
 
 template<runir::kr::dl::CategoryTag Category>
-void add_atomic_state(std::stringstream& out, urd::Store<urd::sequence<std::string>>& heads, size_t& next_index, std::string_view keyword, std::string_view predicate_name)
+void add_atomic_state(std::stringstream& out,
+                      urd::Store<urd::sequence<std::string>>& heads,
+                      size_t& next_index,
+                      std::string_view keyword,
+                      std::string_view predicate_name)
 {
     const auto head = next_non_terminal<Category>(next_index);
     heads.push_back(head);
@@ -143,7 +147,11 @@ void add_boolean_atomic_state(std::stringstream& out, urd::Store<urd::sequence<s
 }
 
 template<runir::kr::dl::CategoryTag Category>
-void add_atomic_goal(std::stringstream& out, urd::Store<urd::sequence<std::string>>& heads, size_t& next_index, std::string_view keyword, std::string_view predicate_name)
+void add_atomic_goal(std::stringstream& out,
+                     urd::Store<urd::sequence<std::string>>& heads,
+                     size_t& next_index,
+                     std::string_view keyword,
+                     std::string_view predicate_name)
 {
     for (const auto polarity : { true, false })
     {

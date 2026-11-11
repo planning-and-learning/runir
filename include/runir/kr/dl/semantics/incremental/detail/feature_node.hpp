@@ -2,8 +2,6 @@
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_FEATURE_NODE_HPP_
 
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/argument.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/atomic.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/count.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/distance.hpp"
@@ -20,6 +18,8 @@
 #include <span>
 #include <stdexcept>
 #include <type_traits>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <variant>
 #include <vector>
 
@@ -52,71 +52,72 @@ public:
 
 private:
     using ConceptOperations = boost::mp11::mp_list<AtomicEvaluator<Kind, Category, tyr::formalism::FluentTag>,
-                                            AtomicEvaluator<Kind, Category, tyr::formalism::DerivedTag>,
-                                            UnarySetEvaluator<Kind, Category, NegationTag, ConceptTag>,
-                                            BinarySetEvaluator<Kind, Category, IntersectionTag, ConceptTag, ConceptTag>,
-                                            BinarySetEvaluator<Kind, Category, UnionTag, ConceptTag, ConceptTag>,
-                                            BinarySetEvaluator<Kind, Category, ValueRestrictionTag, RoleTag, ConceptTag>,
-                                            BinarySetEvaluator<Kind, Category, ExistentialQuantificationTag, RoleTag, ConceptTag>,
-                                            BinarySetEvaluator<Kind, Category, RoleValueMapTag, RoleTag, RoleTag>,
-                                            BinarySetEvaluator<Kind, Category, AgreementTag, RoleTag, RoleTag>,
-                                            NumberRestrictionEvaluator<Kind, AtLeastNumberRestrictionTag>,
-                                            NumberRestrictionEvaluator<Kind, AtMostNumberRestrictionTag>,
-                                            NumberRestrictionEvaluator<Kind, ExactNumberRestrictionTag>,
-                                            QualifiedNumberRestrictionEvaluator<Kind, QualifiedAtLeastNumberRestrictionTag>,
-                                            QualifiedNumberRestrictionEvaluator<Kind, QualifiedAtMostNumberRestrictionTag>,
-                                            QualifiedNumberRestrictionEvaluator<Kind, QualifiedExactNumberRestrictionTag>,
-                                            FillersEvaluator<Kind>,
-                                            ProjectionEvaluator<Kind, Category>>;
+                                                   AtomicEvaluator<Kind, Category, tyr::formalism::DerivedTag>,
+                                                   UnarySetEvaluator<Kind, Category, NegationTag, ConceptTag>,
+                                                   BinarySetEvaluator<Kind, Category, IntersectionTag, ConceptTag, ConceptTag>,
+                                                   BinarySetEvaluator<Kind, Category, UnionTag, ConceptTag, ConceptTag>,
+                                                   BinarySetEvaluator<Kind, Category, ValueRestrictionTag, RoleTag, ConceptTag>,
+                                                   BinarySetEvaluator<Kind, Category, ExistentialQuantificationTag, RoleTag, ConceptTag>,
+                                                   BinarySetEvaluator<Kind, Category, RoleValueMapTag, RoleTag, RoleTag>,
+                                                   BinarySetEvaluator<Kind, Category, AgreementTag, RoleTag, RoleTag>,
+                                                   NumberRestrictionEvaluator<Kind, AtLeastNumberRestrictionTag>,
+                                                   NumberRestrictionEvaluator<Kind, AtMostNumberRestrictionTag>,
+                                                   NumberRestrictionEvaluator<Kind, ExactNumberRestrictionTag>,
+                                                   QualifiedNumberRestrictionEvaluator<Kind, QualifiedAtLeastNumberRestrictionTag>,
+                                                   QualifiedNumberRestrictionEvaluator<Kind, QualifiedAtMostNumberRestrictionTag>,
+                                                   QualifiedNumberRestrictionEvaluator<Kind, QualifiedExactNumberRestrictionTag>,
+                                                   FillersEvaluator<Kind>,
+                                                   ProjectionEvaluator<Kind, Category>>;
     using RoleOperations = boost::mp11::mp_list<AtomicEvaluator<Kind, Category, tyr::formalism::FluentTag>,
-                                         AtomicEvaluator<Kind, Category, tyr::formalism::DerivedTag>,
-                                         UnarySetEvaluator<Kind, Category, ComplementTag, RoleTag>,
-                                         UnarySetEvaluator<Kind, Category, InverseTag, RoleTag>,
-                                         UnarySetEvaluator<Kind, Category, IdentityTag, ConceptTag>,
-                                         UnarySetEvaluator<Kind, Category, TransitiveClosureTag, RoleTag>,
-                                         UnarySetEvaluator<Kind, Category, ReflexiveTransitiveClosureTag, RoleTag>,
-                                         BinarySetEvaluator<Kind, Category, IntersectionTag, RoleTag, RoleTag>,
-                                         BinarySetEvaluator<Kind, Category, UnionTag, RoleTag, RoleTag>,
-                                         BinarySetEvaluator<Kind, Category, RestrictionTag, RoleTag, ConceptTag>,
-                                         BinarySetEvaluator<Kind, Category, CompositionTag, RoleTag, RoleTag>,
-                                         ProjectionEvaluator<Kind, Category>>;
+                                                AtomicEvaluator<Kind, Category, tyr::formalism::DerivedTag>,
+                                                UnarySetEvaluator<Kind, Category, ComplementTag, RoleTag>,
+                                                UnarySetEvaluator<Kind, Category, InverseTag, RoleTag>,
+                                                UnarySetEvaluator<Kind, Category, IdentityTag, ConceptTag>,
+                                                UnarySetEvaluator<Kind, Category, TransitiveClosureTag, RoleTag>,
+                                                UnarySetEvaluator<Kind, Category, ReflexiveTransitiveClosureTag, RoleTag>,
+                                                BinarySetEvaluator<Kind, Category, IntersectionTag, RoleTag, RoleTag>,
+                                                BinarySetEvaluator<Kind, Category, UnionTag, RoleTag, RoleTag>,
+                                                BinarySetEvaluator<Kind, Category, RestrictionTag, RoleTag, ConceptTag>,
+                                                BinarySetEvaluator<Kind, Category, CompositionTag, RoleTag, RoleTag>,
+                                                ProjectionEvaluator<Kind, Category>>;
     using BooleanOperations = boost::mp11::mp_list<AtomicEvaluator<Kind, Category, tyr::formalism::FluentTag>,
-                                            AtomicEvaluator<Kind, Category, tyr::formalism::DerivedTag>,
-                                            NonemptyEvaluator<Kind>,
-                                            LogicalNotEvaluator<Kind>,
-                                            ScalarBinaryEvaluator<Kind, Category, AndTag, BooleanTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, OrTag, BooleanTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, BooleanEqTag, BooleanTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, BooleanNeTag, BooleanTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, BooleanLtTag, BooleanTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, BooleanLeTag, BooleanTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, BooleanGtTag, BooleanTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, BooleanGeTag, BooleanTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, NumericalEqTag, NumericalTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, NumericalNeTag, NumericalTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, NumericalLtTag, NumericalTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, NumericalLeTag, NumericalTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, NumericalGtTag, NumericalTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, NumericalGeTag, NumericalTag>>;
+                                                   AtomicEvaluator<Kind, Category, tyr::formalism::DerivedTag>,
+                                                   NonemptyEvaluator<Kind>,
+                                                   LogicalNotEvaluator<Kind>,
+                                                   ScalarBinaryEvaluator<Kind, Category, AndTag, BooleanTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, OrTag, BooleanTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, BooleanEqTag, BooleanTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, BooleanNeTag, BooleanTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, BooleanLtTag, BooleanTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, BooleanLeTag, BooleanTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, BooleanGtTag, BooleanTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, BooleanGeTag, BooleanTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, NumericalEqTag, NumericalTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, NumericalNeTag, NumericalTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, NumericalLtTag, NumericalTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, NumericalLeTag, NumericalTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, NumericalGtTag, NumericalTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, NumericalGeTag, NumericalTag>>;
     using NumericalOperations = boost::mp11::mp_list<CountEvaluator<Kind>,
-                                              RoleEdgeDistanceEvaluator<Kind>,
-                                              QueryEdgeDistanceEvaluator<Kind>,
-                                              ScalarBinaryEvaluator<Kind, Category, AddTag, NumericalTag>,
-                                              ScalarBinaryEvaluator<Kind, Category, SubTag, NumericalTag>,
-                                              ScalarBinaryEvaluator<Kind, Category, MulTag, NumericalTag>,
-                                              ScalarBinaryEvaluator<Kind, Category, DivTag, NumericalTag>,
-                                              ScalarBinaryEvaluator<Kind, Category, MinTag, NumericalTag>,
-                                              ScalarBinaryEvaluator<Kind, Category, MaxTag, NumericalTag>>;
+                                                     RoleEdgeDistanceEvaluator<Kind>,
+                                                     QueryEdgeDistanceEvaluator<Kind>,
+                                                     ScalarBinaryEvaluator<Kind, Category, AddTag, NumericalTag>,
+                                                     ScalarBinaryEvaluator<Kind, Category, SubTag, NumericalTag>,
+                                                     ScalarBinaryEvaluator<Kind, Category, MulTag, NumericalTag>,
+                                                     ScalarBinaryEvaluator<Kind, Category, DivTag, NumericalTag>,
+                                                     ScalarBinaryEvaluator<Kind, Category, MinTag, NumericalTag>,
+                                                     ScalarBinaryEvaluator<Kind, Category, MaxTag, NumericalTag>>;
     using Operations = std::conditional_t<std::same_as<Category, ConceptTag>,
                                           ConceptOperations,
                                           std::conditional_t<std::same_as<Category, RoleTag>,
                                                              RoleOperations,
                                                              std::conditional_t<std::same_as<Category, BooleanTag>, BooleanOperations, NumericalOperations>>>;
-    using InvocationOperations = std::conditional_t<true,
-                                                    std::conditional_t<ConceptOrRoleTag<Category>,
-                                                                       boost::mp11::mp_list<RegisterEvaluator<Kind, Category>, ArgumentEvaluator<Kind, Category>>,
-                                                                       boost::mp11::mp_list<ArgumentEvaluator<Kind, Category>>>,
-                                                    boost::mp11::mp_list<>>;
+    using InvocationOperations =
+        std::conditional_t<true,
+                           std::conditional_t<ConceptOrRoleTag<Category>,
+                                              boost::mp11::mp_list<RegisterEvaluator<Kind, Category>, ArgumentEvaluator<Kind, Category>>,
+                                              boost::mp11::mp_list<ArgumentEvaluator<Kind, Category>>>,
+                           boost::mp11::mp_list<>>;
     using Evaluators =
         boost::mp11::mp_apply<std::variant, boost::mp11::mp_append<boost::mp11::mp_list<StaticEvaluator<Kind, Category>>, Operations, InvocationOperations>>;
 

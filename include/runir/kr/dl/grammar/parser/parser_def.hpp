@@ -2,13 +2,13 @@
 #define RUNIR_KR_DL_GRAMMAR_PARSER_PARSER_DEF_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/dl/grammar/ast/ast_adapted.hpp"
 #include "runir/kr/dl/grammar/parser/parsers.hpp"
 
 #include <boost/spirit/home/x3/support/traits/is_parser.hpp>
 #include <string>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 namespace runir::kr::dl::grammar::parser
 {
@@ -21,8 +21,8 @@ using boost::spirit::x3::ascii::alnum;
 using boost::spirit::x3::ascii::alpha;
 using boost::spirit::x3::ascii::char_;
 using boost::spirit::x3::ascii::digit;
-using ygg::diagnostics::keyword;
 using ygg::diagnostics::context;
+using ygg::diagnostics::keyword;
 
 template<runir::kr::dl::CategoryTag Category, typename Tag>
 inline constexpr bool has_ast_constructor_tag_v = boost::mp11::mp_contains<runir::kr::dl::grammar::ast::AstConstructorTagsT<Category>, Tag>::value;
@@ -119,8 +119,9 @@ template<typename Choice>
     requires boost::spirit::x3::traits::is_parser<Choice>::value && requires { typename Choice::attribute_type; }
 constexpr auto derivation_choices_parser(const Choice& choice)
 {
-    const auto choices = boost::spirit::x3::rule<class DerivationChoiceList, urd::Store<urd::sequence<typename Choice::attribute_type>>> { "constructor alternatives" } =
-        choice % keyword("or");
+    const auto choices =
+        boost::spirit::x3::rule<class DerivationChoiceList, urd::Store<urd::sequence<typename Choice::attribute_type>>> { "constructor alternatives" } =
+            choice % keyword("or");
     return boost::spirit::x3::rule<class DerivationChoices, urd::Store<urd::sequence<typename Choice::attribute_type>>> { "constructor or alternatives" } =
                boost::spirit::x3::repeat(1)[choice] | (lit("(") > choices > lit(")"));
 }

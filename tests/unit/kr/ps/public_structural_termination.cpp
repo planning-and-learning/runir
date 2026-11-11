@@ -1,11 +1,11 @@
 #include <algorithm>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include <array>
 #include <cstdint>
 #include <gtest/gtest.h>
 #include <limits>
 #include <runir/kr/ps/dl/structural_termination.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 
@@ -94,10 +94,12 @@ TEST(RunirTests, PublicStructuralTerminationReportsFailureFrontier)
     EXPECT_EQ(frontier.surviving_rules[1].blocking_reasons[0].opposing_rule_positions, urd::Store<urd::sequence<std::size_t>>({ 1 }));
 
     ASSERT_EQ(frontier.residual_scopes.size(), 2);
-    const auto scope_zero =
-        std::ranges::find(frontier.residual_scopes, urd::Store<urd::sequence<std::size_t>> { 0 }, &kr::ps::dl::IncompletePolicyResult::ResidualMemoryScope::memory_positions);
-    const auto scope_one =
-        std::ranges::find(frontier.residual_scopes, urd::Store<urd::sequence<std::size_t>> { 1 }, &kr::ps::dl::IncompletePolicyResult::ResidualMemoryScope::memory_positions);
+    const auto scope_zero = std::ranges::find(frontier.residual_scopes,
+                                              urd::Store<urd::sequence<std::size_t>> { 0 },
+                                              &kr::ps::dl::IncompletePolicyResult::ResidualMemoryScope::memory_positions);
+    const auto scope_one = std::ranges::find(frontier.residual_scopes,
+                                             urd::Store<urd::sequence<std::size_t>> { 1 },
+                                             &kr::ps::dl::IncompletePolicyResult::ResidualMemoryScope::memory_positions);
     ASSERT_NE(scope_zero, frontier.residual_scopes.end());
     ASSERT_NE(scope_one, frontier.residual_scopes.end());
     ASSERT_EQ(scope_zero->marked_features.size(), 1);

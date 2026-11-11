@@ -50,13 +50,11 @@ struct data<runir::kr::dl::Concept<F, runir::kr::dl::NegationTag>> :
 template<typename F, typename Tag>
     requires(std::same_as<Tag, runir::kr::dl::ValueRestrictionTag> || std::same_as<Tag, runir::kr::dl::ExistentialQuantificationTag>)
 struct data<runir::kr::dl::Concept<F, Tag>> :
-    runir::kr::dl::BinaryData<runir::kr::dl::Concept<F, Tag>,
-                              runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>,
-                              runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag>>
+    runir::kr::dl::
+        BinaryData<runir::kr::dl::Concept<F, Tag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>, runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag>>
 {
-    using Base = runir::kr::dl::BinaryData<runir::kr::dl::Concept<F, Tag>,
-                                           runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>,
-                                           runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag>>;
+    using Base = runir::kr::dl::
+        BinaryData<runir::kr::dl::Concept<F, Tag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>, runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag>>;
     using Base::Base;
 };
 
@@ -87,13 +85,11 @@ struct data<runir::kr::dl::Concept<F, Tag>> :
 template<typename F, typename Tag>
     requires(std::same_as<Tag, runir::kr::dl::RoleValueMapTag> || std::same_as<Tag, runir::kr::dl::AgreementTag>)
 struct data<runir::kr::dl::Concept<F, Tag>> :
-    runir::kr::dl::BinaryData<runir::kr::dl::Concept<F, Tag>,
-                              runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>,
-                              runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>>
+    runir::kr::dl::
+        BinaryData<runir::kr::dl::Concept<F, Tag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>>
 {
-    using Base = runir::kr::dl::BinaryData<runir::kr::dl::Concept<F, Tag>,
-                                           runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>,
-                                           runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>>;
+    using Base = runir::kr::dl::
+        BinaryData<runir::kr::dl::Concept<F, Tag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>>;
     using Base::Base;
 };
 

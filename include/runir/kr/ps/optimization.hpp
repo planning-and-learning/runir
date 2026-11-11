@@ -4,13 +4,13 @@
 #include "runir/kr/detail/record_key.hpp"
 #include "runir/kr/ps/repository.hpp"
 
+#include <boost/mp11.hpp>
+#include <urd/elements/children.hpp>
 #include <urd/repr/maps/std_map.hpp>
 #include <urd/repr/maps/unordered_flat_map.hpp>
 #include <urd/repr/values/std_set.hpp>
 #include <urd/repr/values/unordered_flat_set.hpp>
 #include <urd/store.hpp>
-#include <urd/elements/children.hpp>
-#include <boost/mp11.hpp>
 #include <yggdrasil/formalism/interning.hpp>
 
 /// Language-neutral rewriting and inspection of ps records (sketches, programs, modules, rules, classifiers, features).
@@ -52,8 +52,8 @@ private:
             return m_leaves.rewrite(view, *m_repository);
         else
         {
-            auto data = urd::map_children<RepositoryTypes, T>(view.data(), view.context(),
-                                                             [&]<typename U>(View<U> child) { return optimize<U>(child).index(); });
+            auto data =
+                urd::map_children<RepositoryTypes, T>(view.data(), view.context(), [&]<typename U>(View<U> child) { return optimize<U>(child).index(); });
             return ygg::formalism::insert(*m_repository, data).first;
         }
     }

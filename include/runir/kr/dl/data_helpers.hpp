@@ -2,17 +2,17 @@
 #define RUNIR_KR_DL_DATA_HELPERS_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 
 #include <cista/containers/variant.h>
 #include <cista/containers/vector.h>
 #include <tuple>
 #include <type_traits>
 #include <tyr/formalism/declarations.hpp>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
-#include <urd/elements/flat.hpp>
 #include <yggdrasil/core/config.hpp>
 
 namespace runir::kr::dl
@@ -157,11 +157,7 @@ struct QualifiedNumberRestrictionData
     Concept concept_;
 
     QualifiedNumberRestrictionData() = default;
-    QualifiedNumberRestrictionData(ygg::uint_t n_, Role role_, Concept concept_arg) :
-        index(),
-        n(n_),
-        role(std::move(role_)),
-        concept_(std::move(concept_arg))
+    QualifiedNumberRestrictionData(ygg::uint_t n_, Role role_, Concept concept_arg) : index(), n(n_), role(std::move(role_)), concept_(std::move(concept_arg))
     {
     }
 
@@ -184,7 +180,9 @@ struct RoleFillersData
     urd::flat_vector<urd::index<tyr::formalism::Object>> objects;
 
     RoleFillersData() = default;
-    RoleFillersData(Role role_, urd::flat_vector<urd::index<tyr::formalism::Object>> objects_) : index(), role(std::move(role_)), objects(std::move(objects_)) {}
+    RoleFillersData(Role role_, urd::flat_vector<urd::index<tyr::formalism::Object>> objects_) : index(), role(std::move(role_)), objects(std::move(objects_))
+    {
+    }
     // Roles and objects live in different repositories, hence the separate context parameters.
 
     static constexpr auto cista_members() noexcept { return urd::Members<&RoleFillersData::index, &RoleFillersData::role, &RoleFillersData::objects> {}; }

@@ -12,8 +12,8 @@
 #include <tuple>
 #include <tyr/formalism/declarations.hpp>
 #include <tyr/planning/declarations.hpp>
-#include <utility>
 #include <urd/elements/flat.hpp>
+#include <utility>
 
 namespace urd
 {

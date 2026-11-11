@@ -1,7 +1,7 @@
 #include "module.hpp"
-#include "pyrunir/module.hpp"
 
 #include "bindings.hpp"
+#include "pyrunir/module.hpp"
 
 namespace runir::kr::dl
 {

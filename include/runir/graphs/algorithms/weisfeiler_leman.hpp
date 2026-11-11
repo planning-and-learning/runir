@@ -4,12 +4,12 @@
 #include "runir/graphs/algorithms/color_refinement.hpp"
 
 #include <array>
+#include <cmath>
+#include <cstdint>
 #include <urd/repr/sequences/jagged.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/repr/values/dense_set.hpp>
 #include <urd/store.hpp>
-#include <cmath>
-#include <cstdint>
 #include <utility>
 #include <vector>
 

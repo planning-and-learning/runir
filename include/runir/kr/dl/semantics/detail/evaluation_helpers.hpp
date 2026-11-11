@@ -5,9 +5,9 @@
 
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
-#include "runir/kr/dl/semantics/denotation_caches.hpp"
 #include "runir/kr/dl/semantics/declarations.hpp"
 #include "runir/kr/dl/semantics/denotation_builder.hpp"
+#include "runir/kr/dl/semantics/denotation_caches.hpp"
 #include "runir/kr/dl/semantics/denotation_data.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/dl/semantics/denotation_view.hpp"
@@ -21,19 +21,19 @@
 #include <limits>
 #include <stdexcept>
 #include <type_traits>
+#include <tyr/datalog/lifted/database/semantics/distance.hpp>
 #include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/planning/conjunctive_condition_view.hpp>
 #include <tyr/formalism/planning/repository.hpp>
-#include <tyr/planning/state_builder.hpp>
-#include <tyr/planning/state_repository.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/task.hpp>
-#include <utility>
+#include <tyr/planning/state_builder.hpp>
+#include <tyr/planning/state_repository.hpp>
+#include <urd/elements/flat.hpp>
 #include <urd/repr/slots/slots.hpp>
 #include <urd/store.hpp>
+#include <utility>
 #include <yggdrasil/core/config.hpp>
-#include <urd/elements/flat.hpp>
-#include <tyr/datalog/lifted/database/semantics/distance.hpp>
 
 namespace runir::kr::dl::semantics::detail
 {
@@ -95,7 +95,9 @@ void evaluate_atomic_goal_concept(urd::index_view<Concept<SemanticFamily, Atomic
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-void evaluate_atomic_state_role(urd::index_view<Role<SemanticFamily, AtomicStateTag<T>>, C> constructor, Context& context, urd::builder<Denotation<RoleTag>>& result)
+void evaluate_atomic_state_role(urd::index_view<Role<SemanticFamily, AtomicStateTag<T>>, C> constructor,
+                                Context& context,
+                                urd::builder<Denotation<RoleTag>>& result)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
 
@@ -115,7 +117,9 @@ void evaluate_atomic_state_role(urd::index_view<Role<SemanticFamily, AtomicState
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-void evaluate_atomic_goal_role(urd::index_view<Role<SemanticFamily, AtomicGoalTag<T>>, C> constructor, Context& context, urd::builder<Denotation<RoleTag>>& result)
+void evaluate_atomic_goal_role(urd::index_view<Role<SemanticFamily, AtomicGoalTag<T>>, C> constructor,
+                               Context& context,
+                               urd::builder<Denotation<RoleTag>>& result)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
 
@@ -248,8 +252,7 @@ auto evaluate_relation(urd::index_view<Query<>, C> argument, std::span<const ygg
 
 /// Concepts and roles are lifted, so all argument forms share one distance evaluation.
 template<tyr::TaskKind Kind, ConceptOrRoleTag Category, StateEvaluationContextConcept<Kind> Context, typename C>
-auto evaluate_relation(urd::index_view<Constructor<Category>, C> argument, std::span<const ygg::ColumnLayout> columns, Context& context)
-    -> QueryDenotationView
+auto evaluate_relation(urd::index_view<Constructor<Category>, C> argument, std::span<const ygg::ColumnLayout> columns, Context& context) -> QueryDenotationView
 {
     const auto denotation = evaluate<Kind>(argument, context);
     auto& relations = context.get_denotation_repository().get_relation_repository();

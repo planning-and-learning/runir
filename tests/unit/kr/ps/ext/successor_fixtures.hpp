@@ -2,11 +2,11 @@
 #define RUNIR_TESTS_EXT_SUCCESSOR_FIXTURES_HPP_
 
 #include <concepts>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include <functional>
 #include <runir/kr/ps/ext/detail/successor_expander_impl.hpp>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <variant>
 #include <vector>

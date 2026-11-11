@@ -2,13 +2,13 @@
 #define RUNIR_KR_PS_DL_OPTIMIZATION_HPP_
 
 #include "runir/kr/dl/optimization.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/ps/dl/feature_view.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 #include "runir/kr/ps/optimization.hpp"
 
 #include <stdexcept>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 #include <yggdrasil/formalism/interning.hpp>
 
@@ -73,8 +73,9 @@ RecordView<Family, RepositoryTypes, T> optimize(RecordView<Family, RepositoryTyp
 /// Leaf statistics of every query in a ps record; contexts holds one state evaluation context per sample state. Leaves
 /// empty in every sample are reported in warnings.
 template<tyr::TaskKind Kind, FamilyTag Family, typename T, typename RepositoryTypes, runir::kr::dl::semantics::StateEvaluationContextConcept<Kind> Context>
-runir::kr::dl::QueryStatistics
-collect_query_statistics(RecordView<Family, RepositoryTypes, T> object, const urd::Store<urd::sequence<Context*>>& contexts, ygg::diagnostics::Warnings& warnings)
+runir::kr::dl::QueryStatistics collect_query_statistics(RecordView<Family, RepositoryTypes, T> object,
+                                                        const urd::Store<urd::sequence<Context*>>& contexts,
+                                                        ygg::diagnostics::Warnings& warnings)
 {
     auto collector = RecordCollector<Family, RepositoryTypes, FeatureStatisticsCollector<Family>>();
     collector.template add<T>(object);

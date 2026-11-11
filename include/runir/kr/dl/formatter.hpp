@@ -51,7 +51,7 @@ std::string record_text(View view)
 
     if constexpr (requires { view.get_predicate(); })
         add_name(view.get_predicate());
-    if constexpr (requires { view.get_polarity(); } && !(is_atomic_state_tag_v<Tag> && !std::same_as<Category, BooleanTag>))
+    if constexpr (requires { view.get_polarity(); } && !(is_atomic_state_tag_v<Tag> && !std::same_as<Category, BooleanTag>) )
         add(boolean(view.get_polarity()));
     if constexpr (requires { view.get_n(); })
         add(view.get_n());

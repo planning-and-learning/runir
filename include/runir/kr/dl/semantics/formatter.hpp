@@ -2,8 +2,6 @@
 #define RUNIR_SEMANTICS_FORMATTER_HPP_
 
 #include "runir/kr/dl/argument_view.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/formatter.hpp"
 #include "runir/kr/dl/query_view.hpp"
@@ -20,11 +18,13 @@
 #include <string>
 #include <string_view>
 #include <tyr/formalism/planning/formatter.hpp>
+#include <urd/elements/flat.hpp>
+#include <urd/format.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
-#include <urd/elements/flat.hpp>
 #include <yggdrasil/formatting/cista_formatters.hpp>
-#include <urd/format.hpp>
 #include <yggdrasil/formatting/formatter.hpp>
 
 namespace runir::kr::dl::semantics

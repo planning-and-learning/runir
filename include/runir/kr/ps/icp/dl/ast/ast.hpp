@@ -2,6 +2,7 @@
 #define RUNIR_KR_PS_ICP_DL_AST_AST_HPP_
 
 #include "runir/kr/ps/ext/dl/ast/ast.hpp"
+
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 

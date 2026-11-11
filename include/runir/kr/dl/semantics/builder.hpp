@@ -9,9 +9,9 @@
 
 #include <concepts>
 #include <tuple>
-#include <utility>
 #include <urd/repr/slots/slots.hpp>
 #include <urd/store.hpp>
+#include <utility>
 #include <yggdrasil/formalism/builder.hpp>
 
 namespace runir::kr::dl::semantics

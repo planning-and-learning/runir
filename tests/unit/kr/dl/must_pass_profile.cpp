@@ -4,6 +4,9 @@
 //   runir_must_pass_profile <domain.pddl> <task.pddl> <program file> [repeats]
 
 #include "planning_fixtures.hpp"
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
 
 #include <chrono>
 #include <exception>
@@ -12,18 +15,15 @@
 #include <iostream>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
-#include <runir/kr/dl/semantics/detail/evaluation_helpers.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
+#include <runir/kr/dl/semantics/detail/evaluation_helpers.hpp>
 #include <runir/kr/dl/semantics/distance_evaluation.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
-#include "runir/kr/dl/datas.hpp"
-#include "runir/kr/dl/declarations.hpp"
-#include "runir/kr/dl/semantics/evaluation.hpp"
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <span>
 #include <string>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
 
 namespace
@@ -61,8 +61,11 @@ int run(std::span<char*> args)
     auto repository = runir::kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
     const auto count = runir::kr::ps::ext::dl::parse_numerical("(n_count " + text + ")", domain, *repository);
     const auto query = std::get<urd::index_view<runir::kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(
-        std::get<urd::index_view<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant()).get_arg());
-    const auto must_pass = std::get<urd::index_view<runir::kr::dl::Query<runir::kr::dl::QueryMustPassTag>, runir::kr::dl::ConstructorRepository>>(query.get_variant());
+        std::get<urd::index_view<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(
+            count.get_variant())
+            .get_arg());
+    const auto must_pass =
+        std::get<urd::index_view<runir::kr::dl::Query<runir::kr::dl::QueryMustPassTag>, runir::kr::dl::ConstructorRepository>>(query.get_variant());
 
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     auto builder = runir::kr::dl::semantics::Builder();
@@ -86,7 +89,8 @@ int run(std::span<char*> args)
         const auto arguments_time = seconds_since(start);
         start = std::chrono::steady_clock::now();
         if (!feature)
-            feature.emplace(runir::kr::dl::semantics::detail::make_must_pass_feature(builder.get_workspace().get_layer(), must_pass.data().plan, must_pass.get_edges()));
+            feature.emplace(
+                runir::kr::dl::semantics::detail::make_must_pass_feature(builder.get_workspace().get_layer(), must_pass.data().plan, must_pass.get_edges()));
         const auto translate_time = seconds_since(start);
         const auto edges = must_pass.get_edges();
         auto slot_time = 0.0;
@@ -98,12 +102,11 @@ int run(std::span<char*> args)
             return rows;
         };
         start = std::chrono::steady_clock::now();
-        auto& heuristic =
-            runir::kr::dl::semantics::detail::must_pass_heuristic(builder.get_workspace().get_layer(),
-                                                                  *feature,
-                                                                  runir::kr::dl::semantics::detail::num_objects<Kind>(context),
-                                                                  input,
-                                                                  targets);
+        auto& heuristic = runir::kr::dl::semantics::detail::must_pass_heuristic(builder.get_workspace().get_layer(),
+                                                                                *feature,
+                                                                                runir::kr::dl::semantics::detail::num_objects<Kind>(context),
+                                                                                input,
+                                                                                targets);
         const auto heuristic_time = seconds_since(start);
         auto out = urd::builder<ygg::Relation<ygg::Schema>>(must_pass.get_schema());
         const auto before = feature->must_pass.statistics();

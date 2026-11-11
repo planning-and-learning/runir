@@ -7,12 +7,9 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <runir/kr/errors.hpp>
-#include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/dl/module_factory.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <runir/kr/ps/ext/dl/parser/parser.hpp>
@@ -22,6 +19,7 @@
 #include <stdexcept>
 #include <string>
 #include <type_traits>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/formalism/planning/parser.hpp>
 #include <yggdrasil/serialization/json.hpp>
 

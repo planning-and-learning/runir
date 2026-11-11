@@ -5,17 +5,17 @@
 // target's compile definitions, so all units agree on them regardless of include order.
 
 #include "runir/kr/dl/declarations.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/parser/ast.hpp"
 
+#include <boost/mp11.hpp>
 #include <boost/optional.hpp>
 #include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
 #include <string>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
-#include <boost/mp11.hpp>
 #include <yggdrasil/core/config.hpp>
 
 namespace runir::kr::dl::grammar::ast
@@ -68,40 +68,40 @@ template<runir::kr::dl::CategoryTag Category, typename Tag = void>
 struct Constructor;
 
 using BaseAstConceptConstructorTags = boost::mp11::mp_list<runir::kr::dl::BotTag,
-                                                    runir::kr::dl::TopTag,
-                                                    runir::kr::dl::ConceptAtomicStateSyntaxTag,
-                                                    runir::kr::dl::ConceptAtomicGoalSyntaxTag,
-                                                    runir::kr::dl::ConceptIntersectionSyntaxTag,
-                                                    runir::kr::dl::ConceptUnionSyntaxTag,
-                                                    runir::kr::dl::NegationTag,
-                                                    runir::kr::dl::ValueRestrictionTag,
-                                                    runir::kr::dl::ExistentialQuantificationTag,
-                                                    runir::kr::dl::AtLeastNumberRestrictionTag,
-                                                    runir::kr::dl::AtMostNumberRestrictionTag,
-                                                    runir::kr::dl::ExactNumberRestrictionTag,
-                                                    runir::kr::dl::QualifiedAtLeastNumberRestrictionTag,
-                                                    runir::kr::dl::QualifiedAtMostNumberRestrictionTag,
-                                                    runir::kr::dl::QualifiedExactNumberRestrictionTag,
-                                                    runir::kr::dl::RoleValueMapTag,
-                                                    runir::kr::dl::AgreementTag,
-                                                    runir::kr::dl::RoleFillersTag,
-                                                    runir::kr::dl::OneOfTag,
-                                                    runir::kr::dl::NominalTag,
-                                                    runir::kr::dl::ProjectTag>;
+                                                           runir::kr::dl::TopTag,
+                                                           runir::kr::dl::ConceptAtomicStateSyntaxTag,
+                                                           runir::kr::dl::ConceptAtomicGoalSyntaxTag,
+                                                           runir::kr::dl::ConceptIntersectionSyntaxTag,
+                                                           runir::kr::dl::ConceptUnionSyntaxTag,
+                                                           runir::kr::dl::NegationTag,
+                                                           runir::kr::dl::ValueRestrictionTag,
+                                                           runir::kr::dl::ExistentialQuantificationTag,
+                                                           runir::kr::dl::AtLeastNumberRestrictionTag,
+                                                           runir::kr::dl::AtMostNumberRestrictionTag,
+                                                           runir::kr::dl::ExactNumberRestrictionTag,
+                                                           runir::kr::dl::QualifiedAtLeastNumberRestrictionTag,
+                                                           runir::kr::dl::QualifiedAtMostNumberRestrictionTag,
+                                                           runir::kr::dl::QualifiedExactNumberRestrictionTag,
+                                                           runir::kr::dl::RoleValueMapTag,
+                                                           runir::kr::dl::AgreementTag,
+                                                           runir::kr::dl::RoleFillersTag,
+                                                           runir::kr::dl::OneOfTag,
+                                                           runir::kr::dl::NominalTag,
+                                                           runir::kr::dl::ProjectTag>;
 
 using BaseAstRoleConstructorTags = boost::mp11::mp_list<runir::kr::dl::UniversalTag,
-                                                 runir::kr::dl::RoleAtomicStateSyntaxTag,
-                                                 runir::kr::dl::RoleAtomicGoalSyntaxTag,
-                                                 runir::kr::dl::RoleIntersectionSyntaxTag,
-                                                 runir::kr::dl::RoleUnionSyntaxTag,
-                                                 runir::kr::dl::ComplementTag,
-                                                 runir::kr::dl::InverseTag,
-                                                 runir::kr::dl::CompositionTag,
-                                                 runir::kr::dl::TransitiveClosureTag,
-                                                 runir::kr::dl::ReflexiveTransitiveClosureTag,
-                                                 runir::kr::dl::RestrictionTag,
-                                                 runir::kr::dl::IdentityTag,
-                                                 runir::kr::dl::ProjectTag>;
+                                                        runir::kr::dl::RoleAtomicStateSyntaxTag,
+                                                        runir::kr::dl::RoleAtomicGoalSyntaxTag,
+                                                        runir::kr::dl::RoleIntersectionSyntaxTag,
+                                                        runir::kr::dl::RoleUnionSyntaxTag,
+                                                        runir::kr::dl::ComplementTag,
+                                                        runir::kr::dl::InverseTag,
+                                                        runir::kr::dl::CompositionTag,
+                                                        runir::kr::dl::TransitiveClosureTag,
+                                                        runir::kr::dl::ReflexiveTransitiveClosureTag,
+                                                        runir::kr::dl::RestrictionTag,
+                                                        runir::kr::dl::IdentityTag,
+                                                        runir::kr::dl::ProjectTag>;
 
 using BaseAstBooleanConstructorTags =
     boost::mp11::mp_list<runir::kr::dl::BooleanAtomicStateSyntaxTag, runir::kr::dl::BooleanAtomicGoalSyntaxTag, runir::kr::dl::NonemptyTag>;
@@ -109,17 +109,18 @@ using BaseAstBooleanConstructorTags =
 using BaseAstNumericalConstructorTags = boost::mp11::mp_list<runir::kr::dl::CountTag, runir::kr::dl::DistanceTag>;
 
 using AstConceptConstructorTags =
-    boost::mp11::mp_append<BaseAstConceptConstructorTags, boost::mp11::mp_list<runir::kr::dl::RegisterTag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>>;
+    boost::mp11::mp_append<BaseAstConceptConstructorTags,
+                           boost::mp11::mp_list<runir::kr::dl::RegisterTag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>>;
 using AstRoleConstructorTags =
     boost::mp11::mp_append<BaseAstRoleConstructorTags, boost::mp11::mp_list<runir::kr::dl::RegisterTag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>>;
 using AstBooleanConstructorTags = boost::mp11::mp_append<BaseAstBooleanConstructorTags,
-                                                        runir::kr::dl::ComparisonConstructorTags,
-                                                        boost::mp11::mp_list<runir::kr::dl::BooleanConstantTag>,
-                                                        runir::kr::dl::LogicalConstructorTags,
-                                                        boost::mp11::mp_list<runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>>;
+                                                         runir::kr::dl::ComparisonConstructorTags,
+                                                         boost::mp11::mp_list<runir::kr::dl::BooleanConstantTag>,
+                                                         runir::kr::dl::LogicalConstructorTags,
+                                                         boost::mp11::mp_list<runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>>;
 using AstNumericalConstructorTags = boost::mp11::mp_append<BaseAstNumericalConstructorTags,
-                                                          runir::kr::dl::ArithmeticConstructorTags,
-                                                          boost::mp11::mp_list<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>>;
+                                                           runir::kr::dl::ArithmeticConstructorTags,
+                                                           boost::mp11::mp_list<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>>;
 
 template<runir::kr::dl::CategoryTag Category>
 struct AstConstructorTags;

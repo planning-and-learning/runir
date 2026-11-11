@@ -3,15 +3,13 @@
 #include <gtest/gtest.h>
 #include <runir/graphs/cycle.hpp>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
-#include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/dl/parser.hpp>
 #include <runir/kr/ps/base/dl/sketch_factory.hpp>
 #include <runir/kr/ps/base/dl/structural_termination.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <set>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/formalism/planning/parser.hpp>
 #include <yggdrasil/serialization/json.hpp>
 

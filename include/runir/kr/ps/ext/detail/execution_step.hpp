@@ -15,20 +15,22 @@
 #include <optional>
 #include <ranges>
 #include <tyr/planning/node.hpp>
-#include <utility>
-#include <variant>
 #include <urd/repr/slots/slots.hpp>
 #include <urd/store.hpp>
+#include <utility>
+#include <variant>
 
 namespace runir::kr::ps::ext::detail
 {
 
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage>
-ProgramStep<ExtFamilyTag, Kind, StorageStoredState<Storage>> make_step(ProgramOutcome status, StorageStoredState<Storage> state, const runir::kr::TaskContextPtr<Kind>& task_context)
+ProgramStep<ExtFamilyTag, Kind, StorageStoredState<Storage>>
+make_step(ProgramOutcome status, StorageStoredState<Storage> state, const runir::kr::TaskContextPtr<Kind>& task_context)
 { return ProgramStep<ExtFamilyTag, Kind, StorageStoredState<Storage>>(status, std::move(state), task_context); }
 
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage>
-ProgramStep<ExtFamilyTag, Kind, StorageStoredState<Storage>> applied(StorageStoredState<Storage> state, RuleVariantView rule, const runir::kr::TaskContextPtr<Kind>& task_context)
+ProgramStep<ExtFamilyTag, Kind, StorageStoredState<Storage>>
+applied(StorageStoredState<Storage> state, RuleVariantView rule, const runir::kr::TaskContextPtr<Kind>& task_context)
 {
     auto step = make_step<Kind, Storage>(ProgramOutcome::APPLIED, std::move(state), task_context);
     step.rule = rule;
@@ -65,7 +67,8 @@ private:
 
 public:
     template<typename Denotation>
-        requires std::ranges::input_range<Denotation> && std::same_as<std::ranges::range_value_t<Denotation>, runir::kr::dl::semantics::DenotationElementView<Category>>
+        requires std::ranges::input_range<Denotation>
+                     && std::same_as<std::ranges::range_value_t<Denotation>, runir::kr::dl::semantics::DenotationElementView<Category>>
     Choice(RuleVariantView rule_, Denotation denotation, urd::Store<urd::slots<runir::kr::dl::semantics::DenotationElementViewList<Category>>>& pool) :
         m_bindings(pool.make_unique()),
         m_rule(rule_)

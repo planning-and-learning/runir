@@ -58,10 +58,13 @@ struct data<runir::kr::dl::Boolean<F, runir::kr::dl::BooleanConstantTag>> :
 // Binary logical operators (and/or): a Boolean over two Boolean operands.
 template<typename F, runir::kr::dl::LogicalBinaryTag Tag>
 struct data<runir::kr::dl::Boolean<F, Tag>> :
-    runir::kr::dl::BinaryData<runir::kr::dl::Boolean<F, Tag>, runir::kr::dl::operand_t<F, runir::kr::dl::BooleanTag>, runir::kr::dl::operand_t<F, runir::kr::dl::BooleanTag>>
+    runir::kr::dl::BinaryData<runir::kr::dl::Boolean<F, Tag>,
+                              runir::kr::dl::operand_t<F, runir::kr::dl::BooleanTag>,
+                              runir::kr::dl::operand_t<F, runir::kr::dl::BooleanTag>>
 {
-    using Base = runir::kr::dl::
-        BinaryData<runir::kr::dl::Boolean<F, Tag>, runir::kr::dl::operand_t<F, runir::kr::dl::BooleanTag>, runir::kr::dl::operand_t<F, runir::kr::dl::BooleanTag>>;
+    using Base = runir::kr::dl::BinaryData<runir::kr::dl::Boolean<F, Tag>,
+                                           runir::kr::dl::operand_t<F, runir::kr::dl::BooleanTag>,
+                                           runir::kr::dl::operand_t<F, runir::kr::dl::BooleanTag>>;
     using Base::Base;
 };
 

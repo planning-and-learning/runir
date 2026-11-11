@@ -1,9 +1,4 @@
 #include "runir/kr/ps/dl/structural_termination.hpp"
-#include <urd/repr/values/std_set.hpp>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/repr/values/dense_set.hpp>
-#include <urd/repr/maps/index_map.hpp>
-#include <urd/store.hpp>
 
 #include "runir/graphs/cycle.hpp"
 #include "runir/graphs/declarations.hpp"
@@ -17,6 +12,11 @@
 #include <string>
 #include <tuple>
 #include <urd/bits.hpp>
+#include <urd/repr/maps/index_map.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/dense_set.hpp>
+#include <urd/repr/values/std_set.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <yggdrasil/semantics/canonicalization.hpp>
 

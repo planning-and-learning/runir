@@ -1,6 +1,4 @@
 #include "runir/graphs/bgl/algorithms.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/ps/ext/dl/structural_termination.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
 #include "structural_termination/detail.hpp"
@@ -8,6 +6,8 @@
 #include <optional>
 #include <tuple>
 #include <type_traits>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 
 namespace runir::kr::ps::ext::dl

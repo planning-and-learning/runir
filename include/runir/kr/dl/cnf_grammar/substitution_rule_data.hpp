@@ -4,8 +4,8 @@
 #include "runir/kr/dl/cnf_grammar/declarations.hpp"
 
 #include <tuple>
-#include <utility>
 #include <urd/elements/flat.hpp>
+#include <utility>
 
 namespace urd
 {

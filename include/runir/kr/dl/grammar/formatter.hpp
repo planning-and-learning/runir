@@ -1,18 +1,18 @@
 #ifndef RUNIR_GRAMMAR_FORMATTER_HPP_
 #define RUNIR_GRAMMAR_FORMATTER_HPP_
 
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/dl/declarations.hpp"
-#include "runir/kr/dl/grammar/grammar_view.hpp"
 #include "runir/kr/dl/formatter.hpp"
 #include "runir/kr/dl/grammar/derivation_rule_view.hpp"
+#include "runir/kr/dl/grammar/grammar_view.hpp"
 #include "runir/kr/dl/grammar/non_terminal_view.hpp"
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <string>
 #include <string_view>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/formatting/cista_formatters.hpp>
@@ -23,7 +23,9 @@ namespace runir::kr::dl::grammar
 
 template<typename... Views>
 std::string constructor_body(const std::variant<Views...>& view)
-{ return std::visit([](auto arg) { return runir::kr::dl::record_body(arg); }, view); }
+{
+    return std::visit([](auto arg) { return runir::kr::dl::record_body(arg); }, view);
+}
 
 template<runir::kr::dl::CategoryTag Category, typename C>
 std::string rule(urd::index_view<DerivationRule<Category>, C> view)

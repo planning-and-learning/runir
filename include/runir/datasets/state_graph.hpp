@@ -31,12 +31,12 @@
 #include <optional>
 #include <tuple>
 #include <tyr/formalism/declarations.hpp>
-#include <yggdrasil/formalism/row_view.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <tyr/planning/algorithms/declarations.hpp>
 #include <utility>
 #include <yggdrasil/core/config.hpp>
+#include <yggdrasil/formalism/row_view.hpp>
 
 namespace runir::datasets
 {

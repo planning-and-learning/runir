@@ -1,26 +1,25 @@
 #include "runir/kr/ps/icp/dl/parser.hpp"
-#include "runir/kr/dl/detail/repository_instantiations.hpp"
-#include "runir/kr/ps/detail/repository_instantiations.hpp"
-#include <urd/repr/maps/std_map.hpp>
-#include <urd/repr/values/dense_set.hpp>
-#include <urd/repr/values/indexed.hpp>
-#include <urd/repr/values/std_set.hpp>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 
 #include "kr/parser/ext_constructors.hpp"
 #include "kr/parser/observations.hpp"
+#include "runir/kr/dl/detail/repository_instantiations.hpp"
 #include "runir/kr/dl/repository.hpp"
+#include "runir/kr/ps/detail/repository_instantiations.hpp"
 #include "runir/kr/ps/icp/canonicalization.hpp"
-#include "runir/kr/ps/icp/repository.hpp"
 #include "runir/kr/ps/icp/dl/parser/parser.hpp"
 #include "runir/kr/ps/icp/repository.hpp"
 
 #include <algorithm>
-#include <urd/elements/flat.hpp>
 #include <sstream>
 #include <tyr/formalism/planning/repository.hpp>
 #include <unordered_set>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/maps/std_map.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/dense_set.hpp>
+#include <urd/repr/values/indexed.hpp>
+#include <urd/repr/values/std_set.hpp>
+#include <urd/store.hpp>
 
 namespace runir::kr::ps::icp::dl
 {
@@ -239,8 +238,8 @@ ModuleView lower_module(const ast::Module& module,
                         const auto object = [&](const ast::Object& source)
                         {
                             return boost::apply_visitor(
-                                [&]<typename Value>(const Value& value)
-                                    -> urd::flat_variant<ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>
+                                [&]<typename Value>(
+                                    const Value& value) -> urd::flat_variant<ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>
                                 {
                                     if constexpr (std::same_as<Value, ast::ArgumentObject>)
                                     {

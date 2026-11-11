@@ -3,8 +3,8 @@
 
 #include "runir/kr/ps/icp/detail/rule_evaluation/context.hpp"
 
-#include <urd/elements/flat.hpp>
 #include <tyr/formalism/planning/action_view.hpp>
+#include <urd/elements/flat.hpp>
 
 namespace runir::kr::ps::icp::detail
 {
@@ -62,8 +62,7 @@ public:
     { return all_compatible<Kind, IcpFamilyTag>(m_rule.get_conditions(), context); }
 
     /// Reject a binding before generating its target; matches() also checks this for direct callers.
-    template<runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context,
-             ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
+    template<runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context, ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
     bool xconditions_match(Context& context, ProgramStateView<Kind> state, Binding binding) const
     {
         for (const auto condition : m_rule.get_xconditions())
@@ -111,9 +110,9 @@ public:
     /// Apply a match after the aggregate admits shared histories and publishes the binding.
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
     ProgramStep<IcpFamilyTag, Kind> apply(RuleEvaluationWorkspace<Kind, EvaluationPolicy>& workspace,
-                            ProgramStateView<Kind> source,
-                            const tyr::planning::LabeledNode<Kind>& candidate,
-                            HistoriesView<Kind> histories) const
+                                          ProgramStateView<Kind> source,
+                                          const tyr::planning::LabeledNode<Kind>& candidate,
+                                          HistoriesView<Kind> histories) const
     {
         auto target = source.data();
         target.state = candidate.node.get_state().index();

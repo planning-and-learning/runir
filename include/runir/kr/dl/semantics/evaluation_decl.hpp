@@ -5,10 +5,10 @@
 #include "runir/kr/dl/semantics/declarations.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
+#include <tyr/datalog/lifted/database/declarations.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/core/config.hpp>
-#include <tyr/datalog/lifted/database/declarations.hpp>
 
 namespace runir::kr::dl::semantics
 {

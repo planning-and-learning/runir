@@ -3,13 +3,13 @@
 
 #include "runir/kr/declarations.hpp"
 
+#include <boost/mp11.hpp>
 #include <concepts>
 #include <cstddef>
 #include <memory>
 #include <stdexcept>
 #include <type_traits>
 #include <tyr/formalism/declarations.hpp>
-#include <boost/mp11.hpp>
 #include <urd/elements/flat.hpp>
 
 namespace runir::kr::dl
@@ -715,73 +715,73 @@ struct QueryMustPassTag
 };
 
 using QueryConstructorTags = boost::mp11::mp_list<AtomicStateTag<tyr::formalism::StaticTag>,
-                                           AtomicStateTag<tyr::formalism::FluentTag>,
-                                           AtomicStateTag<tyr::formalism::DerivedTag>,
-                                           AtomicGoalTag<tyr::formalism::StaticTag>,
-                                           AtomicGoalTag<tyr::formalism::FluentTag>,
-                                           AtomicGoalTag<tyr::formalism::DerivedTag>,
-                                           QueryConceptTag,
-                                           QueryRoleTag,
-                                           QueryJoinTag,
-                                           QueryProjectTag,
-                                           QueryRenameTag,
-                                           QuerySelectEqualTag,
-                                           QuerySelectValueTag,
-                                           QueryUnionTag,
-                                           QueryDifferenceTag,
-                                           QueryGenericJoinTag,
-                                           QueryEmptyTag,
-                                           QueryMustPassTag>;
+                                                  AtomicStateTag<tyr::formalism::FluentTag>,
+                                                  AtomicStateTag<tyr::formalism::DerivedTag>,
+                                                  AtomicGoalTag<tyr::formalism::StaticTag>,
+                                                  AtomicGoalTag<tyr::formalism::FluentTag>,
+                                                  AtomicGoalTag<tyr::formalism::DerivedTag>,
+                                                  QueryConceptTag,
+                                                  QueryRoleTag,
+                                                  QueryJoinTag,
+                                                  QueryProjectTag,
+                                                  QueryRenameTag,
+                                                  QuerySelectEqualTag,
+                                                  QuerySelectValueTag,
+                                                  QueryUnionTag,
+                                                  QueryDifferenceTag,
+                                                  QueryGenericJoinTag,
+                                                  QueryEmptyTag,
+                                                  QueryMustPassTag>;
 
 using BaseConceptConstructorTags = boost::mp11::mp_list<BotTag,
-                                                 TopTag,
-                                                 AtomicStateTag<tyr::formalism::StaticTag>,
-                                                 AtomicStateTag<tyr::formalism::FluentTag>,
-                                                 AtomicStateTag<tyr::formalism::DerivedTag>,
-                                                 AtomicGoalTag<tyr::formalism::StaticTag>,
-                                                 AtomicGoalTag<tyr::formalism::FluentTag>,
-                                                 AtomicGoalTag<tyr::formalism::DerivedTag>,
-                                                 IntersectionTag,
-                                                 UnionTag,
-                                                 NegationTag,
-                                                 ValueRestrictionTag,
-                                                 ExistentialQuantificationTag,
-                                                 AtLeastNumberRestrictionTag,
-                                                 AtMostNumberRestrictionTag,
-                                                 ExactNumberRestrictionTag,
-                                                 QualifiedAtLeastNumberRestrictionTag,
-                                                 QualifiedAtMostNumberRestrictionTag,
-                                                 QualifiedExactNumberRestrictionTag,
-                                                 RoleValueMapTag,
-                                                 AgreementTag,
-                                                 RoleFillersTag,
-                                                 OneOfTag,
-                                                 NominalTag>;
+                                                        TopTag,
+                                                        AtomicStateTag<tyr::formalism::StaticTag>,
+                                                        AtomicStateTag<tyr::formalism::FluentTag>,
+                                                        AtomicStateTag<tyr::formalism::DerivedTag>,
+                                                        AtomicGoalTag<tyr::formalism::StaticTag>,
+                                                        AtomicGoalTag<tyr::formalism::FluentTag>,
+                                                        AtomicGoalTag<tyr::formalism::DerivedTag>,
+                                                        IntersectionTag,
+                                                        UnionTag,
+                                                        NegationTag,
+                                                        ValueRestrictionTag,
+                                                        ExistentialQuantificationTag,
+                                                        AtLeastNumberRestrictionTag,
+                                                        AtMostNumberRestrictionTag,
+                                                        ExactNumberRestrictionTag,
+                                                        QualifiedAtLeastNumberRestrictionTag,
+                                                        QualifiedAtMostNumberRestrictionTag,
+                                                        QualifiedExactNumberRestrictionTag,
+                                                        RoleValueMapTag,
+                                                        AgreementTag,
+                                                        RoleFillersTag,
+                                                        OneOfTag,
+                                                        NominalTag>;
 
 using BaseRoleConstructorTags = boost::mp11::mp_list<UniversalTag,
-                                              AtomicStateTag<tyr::formalism::StaticTag>,
-                                              AtomicStateTag<tyr::formalism::FluentTag>,
-                                              AtomicStateTag<tyr::formalism::DerivedTag>,
-                                              AtomicGoalTag<tyr::formalism::StaticTag>,
-                                              AtomicGoalTag<tyr::formalism::FluentTag>,
-                                              AtomicGoalTag<tyr::formalism::DerivedTag>,
-                                              IntersectionTag,
-                                              UnionTag,
-                                              ComplementTag,
-                                              InverseTag,
-                                              CompositionTag,
-                                              TransitiveClosureTag,
-                                              ReflexiveTransitiveClosureTag,
-                                              RestrictionTag,
-                                              IdentityTag>;
+                                                     AtomicStateTag<tyr::formalism::StaticTag>,
+                                                     AtomicStateTag<tyr::formalism::FluentTag>,
+                                                     AtomicStateTag<tyr::formalism::DerivedTag>,
+                                                     AtomicGoalTag<tyr::formalism::StaticTag>,
+                                                     AtomicGoalTag<tyr::formalism::FluentTag>,
+                                                     AtomicGoalTag<tyr::formalism::DerivedTag>,
+                                                     IntersectionTag,
+                                                     UnionTag,
+                                                     ComplementTag,
+                                                     InverseTag,
+                                                     CompositionTag,
+                                                     TransitiveClosureTag,
+                                                     ReflexiveTransitiveClosureTag,
+                                                     RestrictionTag,
+                                                     IdentityTag>;
 
 using BaseBooleanConstructorTags = boost::mp11::mp_list<AtomicStateTag<tyr::formalism::StaticTag>,
-                                                 AtomicStateTag<tyr::formalism::FluentTag>,
-                                                 AtomicStateTag<tyr::formalism::DerivedTag>,
-                                                 AtomicGoalTag<tyr::formalism::StaticTag>,
-                                                 AtomicGoalTag<tyr::formalism::FluentTag>,
-                                                 AtomicGoalTag<tyr::formalism::DerivedTag>,
-                                                 NonemptyTag>;
+                                                        AtomicStateTag<tyr::formalism::FluentTag>,
+                                                        AtomicStateTag<tyr::formalism::DerivedTag>,
+                                                        AtomicGoalTag<tyr::formalism::StaticTag>,
+                                                        AtomicGoalTag<tyr::formalism::FluentTag>,
+                                                        AtomicGoalTag<tyr::formalism::DerivedTag>,
+                                                        NonemptyTag>;
 
 using BaseNumericalConstructorTags = boost::mp11::mp_list<CountTag, DistanceTag>;
 
@@ -789,17 +789,17 @@ using NumericalBinaryConstructorTags = boost::mp11::mp_list<AddTag, SubTag, MulT
 using ArithmeticConstructorTags = boost::mp11::mp_append<boost::mp11::mp_list<NumericalConstantTag>, NumericalBinaryConstructorTags>;
 
 using ComparisonConstructorTags = boost::mp11::mp_list<EqTag<BooleanTag>,
-                                                NeqTag<BooleanTag>,
-                                                LtTag<BooleanTag>,
-                                                LeTag<BooleanTag>,
-                                                GtTag<BooleanTag>,
-                                                GeTag<BooleanTag>,
-                                                EqTag<NumericalTag>,
-                                                NeqTag<NumericalTag>,
-                                                LtTag<NumericalTag>,
-                                                LeTag<NumericalTag>,
-                                                GtTag<NumericalTag>,
-                                                GeTag<NumericalTag>>;
+                                                       NeqTag<BooleanTag>,
+                                                       LtTag<BooleanTag>,
+                                                       LeTag<BooleanTag>,
+                                                       GtTag<BooleanTag>,
+                                                       GeTag<BooleanTag>,
+                                                       EqTag<NumericalTag>,
+                                                       NeqTag<NumericalTag>,
+                                                       LtTag<NumericalTag>,
+                                                       LeTag<NumericalTag>,
+                                                       GtTag<NumericalTag>,
+                                                       GeTag<NumericalTag>>;
 
 using LogicalConstructorTags = boost::mp11::mp_list<AndTag, OrTag, NotTag>;
 
@@ -807,11 +807,12 @@ using LogicalConstructorTags = boost::mp11::mp_list<AndTag, OrTag, NotTag>;
 using ConceptConstructorTags = boost::mp11::mp_append<BaseConceptConstructorTags, boost::mp11::mp_list<RegisterTag, ArgumentTag<ConceptTag>>>;
 using RoleConstructorTags = boost::mp11::mp_append<BaseRoleConstructorTags, boost::mp11::mp_list<RegisterTag, ArgumentTag<RoleTag>>>;
 using BooleanConstructorTags = boost::mp11::mp_append<BaseBooleanConstructorTags,
-                                                     ComparisonConstructorTags,
-                                                     boost::mp11::mp_list<BooleanConstantTag>,
-                                                     LogicalConstructorTags,
-                                                     boost::mp11::mp_list<ArgumentTag<BooleanTag>>>;
-using NumericalConstructorTags = boost::mp11::mp_append<BaseNumericalConstructorTags, ArithmeticConstructorTags, boost::mp11::mp_list<ArgumentTag<NumericalTag>>>;
+                                                      ComparisonConstructorTags,
+                                                      boost::mp11::mp_list<BooleanConstantTag>,
+                                                      LogicalConstructorTags,
+                                                      boost::mp11::mp_list<ArgumentTag<BooleanTag>>>;
+using NumericalConstructorTags =
+    boost::mp11::mp_append<BaseNumericalConstructorTags, ArithmeticConstructorTags, boost::mp11::mp_list<ArgumentTag<NumericalTag>>>;
 
 template<typename T>
 concept ConceptConstructorTag = boost::mp11::mp_contains<ConceptConstructorTags, T>::value;
@@ -842,7 +843,8 @@ template<CategoryTag Category, typename... PerCategory>
 using by_category = boost::mp11::mp_at<boost::mp11::mp_list<PerCategory...>, boost::mp11::mp_find<CategoryTags, Category>>;
 
 template<CategoryTag Category>
-using BaseConstructorTags = by_category<Category, BaseConceptConstructorTags, BaseRoleConstructorTags, BaseBooleanConstructorTags, BaseNumericalConstructorTags>;
+using BaseConstructorTags =
+    by_category<Category, BaseConceptConstructorTags, BaseRoleConstructorTags, BaseBooleanConstructorTags, BaseNumericalConstructorTags>;
 
 /**
  * Constructor records
@@ -952,13 +954,13 @@ using ReferenceTypes =
     boost::mp11::mp_list<Argument<ConceptTag>, Argument<RoleTag>, Argument<BooleanTag>, Argument<NumericalTag>, Register<ConceptTag>, Register<RoleTag>>;
 
 using ConstructorRepositoryTypes = boost::mp11::mp_append<ConceptTypes,
-                                                         RoleTypes,
-                                                         BooleanTypes,
-                                                         NumericalTypes,
-                                                         ConstructorTypes,
-                                                         ReferenceTypes,
-                                                         QueryTypes,
-                                                         boost::mp11::mp_list<Query<>, QueryColumn, QueryProjection<ConceptTag>, QueryProjection<RoleTag>>>;
+                                                          RoleTypes,
+                                                          BooleanTypes,
+                                                          NumericalTypes,
+                                                          ConstructorTypes,
+                                                          ReferenceTypes,
+                                                          QueryTypes,
+                                                          boost::mp11::mp_list<Query<>, QueryColumn, QueryProjection<ConceptTag>, QueryProjection<RoleTag>>>;
 
 using ConstructorRepository = runir::kr::dl::detail::BasicConstructorRepository<ConstructorRepositoryTypes>;
 

@@ -1,11 +1,11 @@
 #include "bindings.hpp"
+#include "pyrunir/module.hpp"
 
 #include <runir/kr/dl/register_data.hpp>
 #include <runir/kr/dl/register_view.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include "pyrunir/module.hpp"
 
 namespace runir::kr::dl
 {

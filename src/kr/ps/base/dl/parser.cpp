@@ -1,23 +1,18 @@
 #include "runir/kr/ps/base/dl/parser.hpp"
-#include "runir/kr/dl/detail/repository_instantiations.hpp"
-#include "runir/kr/ps/detail/repository_instantiations.hpp"
-#include <urd/repr/maps/std_map.hpp>
-#include <urd/repr/values/std_set.hpp>
-#include <urd/store.hpp>
 
 #include "kr/parser/ext_constructors.hpp"
 #include "kr/parser/observations.hpp"
 #include "kr/parser/resolution.hpp"
-#include "runir/kr/dl/repository.hpp"
+#include "runir/kr/dl/detail/repository_instantiations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/repository.hpp"
-#include "runir/kr/parser/diagnostics.hpp"
 #include "runir/kr/parser/config.hpp"
+#include "runir/kr/parser/diagnostics.hpp"
 #include "runir/kr/ps/base/canonicalization.hpp"
-#include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/base/dl/parser/parser.hpp"
 #include "runir/kr/ps/base/dl/parser/parsers.hpp"
 #include "runir/kr/ps/base/repository.hpp"
+#include "runir/kr/ps/detail/repository_instantiations.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
 
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
@@ -28,6 +23,9 @@
 #include <tyr/formalism/planning/repository.hpp>
 #include <unordered_map>
 #include <unordered_set>
+#include <urd/repr/maps/std_map.hpp>
+#include <urd/repr/values/std_set.hpp>
+#include <urd/store.hpp>
 
 namespace runir::kr::ps::base::dl
 {
@@ -50,14 +48,16 @@ template<typename T>
 auto intern(runir::kr::ps::base::Repository& repository, urd::data<T>& data)
 { return runir::kr::ps::base::insert(repository, data).first; }
 
-auto parse_feature(const runir::kr::ps::base::dl::ast::BooleanFeature<runir::kr::BaseFamilyTag>& node,
-                   tyr::formalism::planning::DomainView domain,
-                   Repository& repository,
-                   Builders& builders,
-                   urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs>& boolean_features,
-                   urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>>, urd::stable_refs>&,
-                   urd::data<runir::kr::ps::base::Sketch>& sketch_data,
-                   const runir::kr::parser::DiagnosticContext& diagnostics)
+auto parse_feature(
+    const runir::kr::ps::base::dl::ast::BooleanFeature<runir::kr::BaseFamilyTag>& node,
+    tyr::formalism::planning::DomainView domain,
+    Repository& repository,
+    Builders& builders,
+    urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs>&
+        boolean_features,
+    urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>>, urd::stable_refs>&,
+    urd::data<runir::kr::ps::base::Sketch>& sketch_data,
+    const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     const auto constructor =
         parse_constructor(node.feature, domain, ConstructorContext { repository.get_dl_repository(), *builders.dl, diagnostics, nullptr, sketch_capabilities });
@@ -79,7 +79,8 @@ auto parse_feature(
     Repository& repository,
     Builders& builders,
     urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs>&,
-    urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>>, urd::stable_refs>& numerical_features,
+    urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>>, urd::stable_refs>&
+        numerical_features,
     urd::data<runir::kr::ps::base::Sketch>& sketch_data,
     const runir::kr::parser::DiagnosticContext& diagnostics)
 {
@@ -100,13 +101,14 @@ auto parse_feature(
 using runir::kr::parser::observations::parse_condition;
 using runir::kr::parser::observations::parse_effect;
 
-auto parse_rule(
-    const runir::kr::ps::base::dl::ast::Rule<runir::kr::BaseFamilyTag>& node,
-    Repository& repository,
-    runir::kr::ps::base::Builder& builder,
-    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs>& boolean_features,
-    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>>, urd::stable_refs>& numerical_features,
-    const runir::kr::parser::DiagnosticContext& diagnostics)
+auto parse_rule(const runir::kr::ps::base::dl::ast::Rule<runir::kr::BaseFamilyTag>& node,
+                Repository& repository,
+                runir::kr::ps::base::Builder& builder,
+                const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>>,
+                                 urd::stable_refs>& boolean_features,
+                const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>>,
+                                 urd::stable_refs>& numerical_features,
+                const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     auto data = runir::kr::ps::base::checkout<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>(builder);
     data->symbol = node.symbol.text;
@@ -137,8 +139,10 @@ SketchView parse_sketch(const std::string& description, tyr::formalism::planning
     auto ps_builder = runir::kr::ps::base::Builder {};
     auto builders = Builders { &dl_builder, &ps_builder };
 
-    auto boolean_features = urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs> {};
-    auto numerical_features = urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>>, urd::stable_refs> {};
+    auto boolean_features =
+        urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs> {};
+    auto numerical_features =
+        urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>>, urd::stable_refs> {};
     auto feature_symbols = urd::Store<urd::set<std::string>, urd::stable_refs> {};
     auto data = runir::kr::ps::base::checkout<runir::kr::ps::base::Sketch>(ps_builder);
     data->boolean_features.reserve(ast.features.size());

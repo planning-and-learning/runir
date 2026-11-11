@@ -8,8 +8,8 @@
 #include "runir/kr/ps/ext/evaluation_environment.hpp"
 #include "runir/kr/ps/ext/execution_storage.hpp"
 #include "runir/kr/ps/ext/program_view.hpp"
-#include "runir/kr/ps/rule_variant_view.hpp"
 #include "runir/kr/ps/rule_evaluator_concepts.hpp"
+#include "runir/kr/ps/rule_variant_view.hpp"
 
 #include <optional>
 #include <tyr/planning/declarations.hpp>
@@ -53,8 +53,8 @@ public:
     /// Count applied successors and caller returns, not Choice descriptors or failure markers.
     /// Callbacks may materialize the source, but must not generate successors or apply choices. Apply choices after enumeration.
     template<ProgramStateViewConcept<Kind> S, typename Emit, StopConcept Stop>
-        requires EmitConcept<Emit, ProgramStep<ExtFamilyTag, Kind, StorageStoredState<ExecutionStorage>>> && EmitConcept<Emit, detail::Choice<runir::kr::dl::ConceptTag>>
-                 && EmitConcept<Emit, detail::Choice<runir::kr::dl::RoleTag>>
+        requires EmitConcept<Emit, ProgramStep<ExtFamilyTag, Kind, StorageStoredState<ExecutionStorage>>>
+                 && EmitConcept<Emit, detail::Choice<runir::kr::dl::ConceptTag>> && EmitConcept<Emit, detail::Choice<runir::kr::dl::RoleTag>>
     bool for_each_successor(S state, ProgramSearchStatistics& statistics, const Emit& emit, const Stop& stop);
 
     /// Apply the current admitted binding without advancing its cursor; an exhausted choice reports FAILURE.

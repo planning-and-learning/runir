@@ -2,18 +2,18 @@
 #define RUNIR_KR_UNS_CLASSIFIER_DATA_HPP_
 
 #include "runir/kr/ps/declarations.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/uns/declarations.hpp"
 
 #include <cista/containers/string.h>
 #include <cista/containers/variant.h>
 #include <string>
 #include <tuple>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <variant>
 #include <vector>
-#include <urd/elements/flat.hpp>
 
 namespace urd
 {

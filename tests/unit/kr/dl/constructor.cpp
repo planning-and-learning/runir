@@ -1,7 +1,6 @@
 #include <concepts>
 #include <gtest/gtest.h>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/repository.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <utility>
 
@@ -12,15 +11,14 @@ namespace
 {
 
 template<typename T, typename Repository>
-concept IndexedDataView =
-    std::constructible_from<urd::index<T>, ygg::uint_t> && urd::Identifiable<urd::index<T>> && urd::Identifiable<urd::data<T>>
-    && urd::Identifiable<urd::index_view<T, Repository>> && std::totally_ordered<urd::index<T>> && std::totally_ordered<urd::data<T>>
-    && std::totally_ordered<urd::index_view<T, Repository>> && requires(urd::data<T>& data, const urd::index_view<T, Repository>& view) {
-           data.index;
-           data.variant;
-           view.index();
-           view.get_variant();
-       };
+concept IndexedDataView = std::constructible_from<urd::index<T>, ygg::uint_t> && urd::Identifiable<urd::index<T>> && urd::Identifiable<urd::data<T>>
+                          && urd::Identifiable<urd::index_view<T, Repository>> && std::totally_ordered<urd::index<T>> && std::totally_ordered<urd::data<T>>
+                          && std::totally_ordered<urd::index_view<T, Repository>> && requires(urd::data<T>& data, const urd::index_view<T, Repository>& view) {
+                                 data.index;
+                                 data.variant;
+                                 view.index();
+                                 view.get_variant();
+                             };
 
 template<typename... Ts>
 consteval bool indexed_data_views(boost::mp11::mp_list<Ts...>)
@@ -65,9 +63,8 @@ template<typename... Tags>
 consteval bool query_view_contracts(boost::mp11::mp_list<Tags...>)
 {
     using Repository = kr::dl::ConstructorRepository;
-    return urd::resolves<Repository, kr::dl::QueryColumn> && urd::resolves<Repository, kr::dl::Query<>>
-           && query_projection_contract<kr::dl::ConceptTag>() && query_projection_contract<kr::dl::RoleTag>()
-           && (urd::resolves<Repository, kr::dl::Query<Tags>> && ...);
+    return urd::resolves<Repository, kr::dl::QueryColumn> && urd::resolves<Repository, kr::dl::Query<>> && query_projection_contract<kr::dl::ConceptTag>()
+           && query_projection_contract<kr::dl::RoleTag>() && (urd::resolves<Repository, kr::dl::Query<Tags>> && ...);
 }
 
 static_assert(query_view_contracts<>(kr::dl::QueryConstructorTags {}));

@@ -25,7 +25,9 @@ public:
 class RUNIR_KR_ERROR_API DuplicateDefinitionError : public ygg::diagnostics::SemanticError
 {
 public:
-    DuplicateDefinitionError(const std::string& kind, const std::string& name) : ygg::diagnostics::SemanticError("Duplicate " + kind + " definition: " + name) {}
+    DuplicateDefinitionError(const std::string& kind, const std::string& name) : ygg::diagnostics::SemanticError("Duplicate " + kind + " definition: " + name)
+    {
+    }
 };
 
 class RUNIR_KR_ERROR_API ArityMismatchError : public ygg::diagnostics::SemanticError

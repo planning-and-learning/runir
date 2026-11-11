@@ -7,7 +7,8 @@ namespace runir::tests
 
 TEST(RunirTests, ExtInitialStatesUseExpanderRepositoryLifted) { expect_initial_program_state_uses_expander_repository<tyr::LiftedTag>(); }
 
-TEST(RunirTests, ExtTransientProgramStatesRetainValuesAndInternCallersLifted) { expect_transient_program_states_retain_values_and_intern_callers<tyr::LiftedTag>(); }
+TEST(RunirTests, ExtTransientProgramStatesRetainValuesAndInternCallersLifted)
+{ expect_transient_program_states_retain_values_and_intern_callers<tyr::LiftedTag>(); }
 
 TEST(RunirTests, ExtModuleReturnsPreserveCalleePlanningStateLifted) { expect_module_return_preserves_callee_planning_state<tyr::LiftedTag>(); }
 

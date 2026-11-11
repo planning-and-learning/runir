@@ -6,22 +6,22 @@
 #include "runir/kr/ps/dl/evaluation.hpp"
 #include "runir/kr/ps/execution_repository.hpp"
 #include "runir/kr/ps/ext/execution_data.hpp"
-#include "runir/kr/ps/ext/repository.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
 #include "runir/kr/ps/ext/program_view.hpp"
+#include "runir/kr/ps/ext/repository.hpp"
 #include "runir/kr/task_context.hpp"
-#include <tyr/formalism/declarations.hpp>
-#include <yggdrasil/formalism/row_view.hpp>
 #include "tyr/planning/successor_generator_concepts.hpp"
 
 #include <concepts>
 #include <optional>
+#include <tyr/formalism/declarations.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <tyr/planning/node.hpp>
-#include <utility>
 #include <urd/repr/slots/slots.hpp>
 #include <urd/store.hpp>
+#include <utility>
+#include <yggdrasil/formalism/row_view.hpp>
 
 namespace runir::kr::ps::ext
 {
@@ -93,11 +93,7 @@ public:
                       runir::kr::dl::semantics::CallArgumentsView arguments,
                       std::optional<CallStackView<Kind>> caller)
     {
-        auto module_data = urd::data<ModuleState<Kind>>(planning_state.index(),
-                                                        module_.index(),
-                                                        memory_state.index(),
-                                                        registers.index(),
-                                                        arguments.index());
+        auto module_data = urd::data<ModuleState<Kind>>(planning_state.index(), module_.index(), memory_state.index(), registers.index(), arguments.index());
         auto data = urd::data<ProgramState<Kind>>(m_program.index(), insert(*m_context->execution_repository, module_data).first.index(), {});
         data.call_stack = urd::to_stored(caller);
         return insert(*m_context->execution_repository, data).first;
@@ -216,8 +212,7 @@ public:
                                                  module_.get_memory_state().index(),
                                                  copy(module_.get_registers(), { denotations, dl_builder }).first.index(),
                                                  module_.get_arguments().index());
-        auto program =
-            urd::data<ProgramState<Kind>>(m_program.index(), insert(*m_context->execution_repository, data).first.index(), state.data().call_stack);
+        auto program = urd::data<ProgramState<Kind>>(m_program.index(), insert(*m_context->execution_repository, data).first.index(), state.data().call_stack);
         return insert(*m_context->execution_repository, program).first;
     }
 

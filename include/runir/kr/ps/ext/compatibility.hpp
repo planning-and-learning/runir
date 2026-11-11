@@ -3,8 +3,8 @@
 
 #include "runir/kr/ps/compatibility.hpp"
 #include "runir/kr/ps/ext/evaluation_environment.hpp"
-#include "runir/kr/ps/rule_variant_view.hpp"
 #include "runir/kr/ps/ext/rule_view.hpp"
+#include "runir/kr/ps/rule_variant_view.hpp"
 
 #include <concepts>
 #include <urd/elements/flat.hpp>
@@ -29,10 +29,7 @@ template<tyr::TaskKind Kind,
          ProgramStateViewConcept<Kind> S,
          tyr::planning::StateViewConcept<Kind> PS,
          runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
-bool rule_is_applicable(urd::index_view<Rule<RuleKindT>, C> rule,
-                        S state,
-                        const PS& planning_state,
-                        EvaluationEnvironment<Kind, EvaluationPolicy>& environment)
+bool rule_is_applicable(urd::index_view<Rule<RuleKindT>, C> rule, S state, const PS& planning_state, EvaluationEnvironment<Kind, EvaluationPolicy>& environment)
 {
     if (!has_current_source<Kind>(rule, state))
         return false;

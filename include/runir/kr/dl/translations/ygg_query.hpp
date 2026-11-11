@@ -7,21 +7,21 @@
 #include "runir/kr/dl/repository.hpp"
 
 #include <algorithm>
+#include <boost/mp11.hpp>
 #include <concepts>
 #include <cstdint>
 #include <optional>
 #include <span>
 #include <stdexcept>
+#include <tyr/datalog/lifted/database/syntax/query.hpp>
+#include <tyr/datalog/lifted/database/syntax/translations/relaxation.hpp>
 #include <urd/repr/maps/std_map.hpp>
 #include <urd/repr/maps/unordered_flat_map.hpp>
-#include <urd/repr/values/unordered_flat_set.hpp>
 #include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/unordered_flat_set.hpp>
 #include <urd/store.hpp>
 #include <utility>
 #include <vector>
-#include <boost/mp11.hpp>
-#include <tyr/datalog/lifted/database/syntax/query.hpp>
-#include <tyr/datalog/lifted/database/syntax/translations/relaxation.hpp>
 
 namespace runir::kr::dl
 {
@@ -76,7 +76,8 @@ inline constexpr bool is_complement_view_v<urd::index_view<Concept<SemanticFamil
 
 /// Calls f(argument) if the query is a role or concept leaf over a complement (r_complement, c_not); returns whether.
 template<typename F>
-    requires boost::mp11::mp_all_of_q<boost::mp11::mp_list<ConstructorView<RoleTag>, ConstructorView<ConceptTag>>, boost::mp11::mp_bind_front<std::is_invocable, F>>::value
+    requires boost::mp11::mp_all_of_q<boost::mp11::mp_list<ConstructorView<RoleTag>, ConstructorView<ConceptTag>>,
+                                      boost::mp11::mp_bind_front<std::is_invocable, F>>::value
 bool visit_complement_argument(QueryView<> query, F f)
 {
     return std::visit(

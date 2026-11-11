@@ -2,18 +2,18 @@
 #define RUNIR_KR_PS_BASE_DL_STRUCTURAL_TERMINATION_DATA_HPP_
 
 #include "runir/graphs/static_graph.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/graphs/static_graph_builder.hpp"
-#include "runir/kr/ps/dl/incomplete_structural_termination_data.hpp"
 #include "runir/kr/ps/base/repository.hpp"
+#include "runir/kr/ps/dl/incomplete_structural_termination_data.hpp"
 #include "runir/kr/ps/dl/structural_termination.hpp"
 
 #include <cstdint>
 #include <memory>
 #include <optional>
-#include <vector>
 #include <urd/elements/flat.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
+#include <vector>
 
 namespace runir::kr::ps::base::dl
 {
@@ -61,8 +61,9 @@ struct SieveStructuralTerminationResult
 struct StructuralTerminationResult
 {
     StructuralTerminationStatus status = StructuralTerminationStatus::TERMINATING;
-    std::optional<runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::BaseFamilyTag>> incomplete_result;  ///< Populated iff incomplete preprocessing was enabled.
-    std::optional<SieveStructuralTerminationResult> sieve_result;            ///< Populated iff complete SIEVE was run.
+    std::optional<runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::BaseFamilyTag>>
+        incomplete_result;                                         ///< Populated iff incomplete preprocessing was enabled.
+    std::optional<SieveStructuralTerminationResult> sieve_result;  ///< Populated iff complete SIEVE was run.
 
     [[nodiscard]] bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }
 };

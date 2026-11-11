@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 import pyurd
+import pyurd_native
 import pyyggdrasil
 
 import pyrunir
@@ -25,6 +26,7 @@ def test_downstream_python_binding_links_installed_runir(tmp_path: Path) -> None
     runir_prefix = Path(pyrunir.native_prefix())
     yggdrasil_prefix = Path(pyyggdrasil.native_prefix())
     pyurd_prefix = Path(pyurd.native_prefix())
+    pyurd_native_prefix = Path(pyurd_native.native_prefix())
     runir_cmake_dir = runir_prefix / "lib" / "cmake" / "runir"
     runir_library_dir = runir_prefix / "lib"
 
@@ -42,7 +44,7 @@ def test_downstream_python_binding_links_installed_runir(tmp_path: Path) -> None
             str(project_dir),
             "-B",
             str(build_dir),
-            f"-DCMAKE_PREFIX_PATH={runir_prefix};{yggdrasil_prefix};{pyurd_prefix}",
+            f"-DCMAKE_PREFIX_PATH={runir_prefix};{yggdrasil_prefix};{pyurd_prefix};{pyurd_native_prefix}",
             f"-Drunir_DIR={runir_cmake_dir}",
             f"-DPython_EXECUTABLE={sys.executable}",
             f"-DDOWNSTREAM_RUNIR_RUNTIME_LIBRARY_DIR={runir_library_dir}",

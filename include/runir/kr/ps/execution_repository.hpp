@@ -10,10 +10,10 @@
 #include <cstddef>
 #include <memory>
 #include <tyr/planning/declarations.hpp>
-#include <utility>
-#include <yggdrasil/core/config.hpp>
 #include <urd/config.hpp>
 #include <urd/elements/flat.hpp>
+#include <utility>
+#include <yggdrasil/core/config.hpp>
 #include <yggdrasil/formalism/builder.hpp>
 #include <yggdrasil/formalism/interning.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>

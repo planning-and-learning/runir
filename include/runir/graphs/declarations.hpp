@@ -8,16 +8,16 @@
 #include <tuple>
 #include <type_traits>
 #include <urd/elements/equal_to.hpp>
+#include <urd/elements/flat.hpp>
 #include <urd/elements/hash.hpp>
 #include <urd/repr/maps/unordered_flat_map.hpp>
-#include <urd/repr/values/std_set.hpp>
-#include <urd/repr/values/indexed.hpp>
-#include <urd/repr/values/unordered_flat_set.hpp>
 #include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/indexed.hpp>
+#include <urd/repr/values/std_set.hpp>
+#include <urd/repr/values/unordered_flat_set.hpp>
 #include <urd/store.hpp>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
-#include <urd/elements/flat.hpp>
 
 namespace runir::graphs
 {

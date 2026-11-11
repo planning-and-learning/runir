@@ -4,17 +4,17 @@
 #include "runir/kr/dl/semantics/declarations.hpp"
 
 #include <cassert>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include <cstddef>
 #include <span>
 #include <tuple>
 #include <tyr/formalism/declarations.hpp>
 #include <urd/bits.hpp>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
-#include <urd/elements/flat.hpp>
 
 namespace urd
 {

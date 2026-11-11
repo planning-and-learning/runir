@@ -2,9 +2,6 @@
 #define RUNIR_KR_PARSER_OBSERVATIONS_HPP_
 
 #include "runir/kr/parser/diagnostics.hpp"
-#include <urd/repr/maps/std_map.hpp>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/ps/base/dl/ast/ast.hpp"
 #include "runir/kr/ps/dl/condition_data.hpp"
 #include "runir/kr/ps/dl/condition_view.hpp"
@@ -16,6 +13,9 @@
 #include <string>
 #include <type_traits>
 #include <unordered_map>
+#include <urd/repr/maps/std_map.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <yggdrasil/formalism/builder.hpp>
 
 namespace runir::kr::parser::observations
@@ -49,12 +49,13 @@ auto make_effect(Repository& repository, Builder& builder, urd::index<runir::kr:
 }
 
 template<runir::kr::FamilyTag Family, typename Repository, typename Builder>
-auto parse_condition(Repository& repository,
-                     Builder& builder,
-                     const runir::kr::ps::base::dl::ast::Condition& condition,
-                     const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<Family, runir::kr::dl::BooleanTag>>>, urd::stable_refs>& boolean_features,
-                     const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<Family, runir::kr::dl::NumericalTag>>>, urd::stable_refs>& numerical_features,
-                     const runir::kr::parser::DiagnosticContext& diagnostics)
+auto parse_condition(
+    Repository& repository,
+    Builder& builder,
+    const runir::kr::ps::base::dl::ast::Condition& condition,
+    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<Family, runir::kr::dl::BooleanTag>>>, urd::stable_refs>& boolean_features,
+    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<Family, runir::kr::dl::NumericalTag>>>, urd::stable_refs>& numerical_features,
+    const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     return boost::apply_visitor(
         [&]<typename Observation>([[maybe_unused]] const Observation& observation)
@@ -92,12 +93,13 @@ auto parse_condition(Repository& repository,
 }
 
 template<runir::kr::FamilyTag Family, typename Repository, typename Builder>
-auto parse_effect(Repository& repository,
-                  Builder& builder,
-                  const runir::kr::ps::base::dl::ast::Effect& effect,
-                  const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<Family, runir::kr::dl::BooleanTag>>>, urd::stable_refs>& boolean_features,
-                  const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<Family, runir::kr::dl::NumericalTag>>>, urd::stable_refs>& numerical_features,
-                  const runir::kr::parser::DiagnosticContext& diagnostics)
+auto parse_effect(
+    Repository& repository,
+    Builder& builder,
+    const runir::kr::ps::base::dl::ast::Effect& effect,
+    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<Family, runir::kr::dl::BooleanTag>>>, urd::stable_refs>& boolean_features,
+    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<Family, runir::kr::dl::NumericalTag>>>, urd::stable_refs>& numerical_features,
+    const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     return boost::apply_visitor(
         [&]<typename Observation>([[maybe_unused]] const Observation& observation)
@@ -143,13 +145,14 @@ auto parse_effect(Repository& repository,
 }
 
 template<runir::kr::FamilyTag Family, typename Repository, typename Builder>
-void append_conditions(Repository& repository,
-                       Builder& builder,
-                       const urd::Store<urd::sequence<runir::kr::ps::base::dl::ast::Condition>>& observations,
-                       const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<Family, runir::kr::dl::BooleanTag>>>, urd::stable_refs>& boolean_features,
-                       const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<Family, runir::kr::dl::NumericalTag>>>, urd::stable_refs>& numerical_features,
-                       const runir::kr::parser::DiagnosticContext& diagnostics,
-                       runir::kr::ps::ConditionList<Family>& result)
+void append_conditions(
+    Repository& repository,
+    Builder& builder,
+    const urd::Store<urd::sequence<runir::kr::ps::base::dl::ast::Condition>>& observations,
+    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<Family, runir::kr::dl::BooleanTag>>>, urd::stable_refs>& boolean_features,
+    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<Family, runir::kr::dl::NumericalTag>>>, urd::stable_refs>& numerical_features,
+    const runir::kr::parser::DiagnosticContext& diagnostics,
+    runir::kr::ps::ConditionList<Family>& result)
 {
     result.reserve(result.size() + observations.size());
     for (const auto& observation : observations)
@@ -157,13 +160,14 @@ void append_conditions(Repository& repository,
 }
 
 template<runir::kr::FamilyTag Family, typename Repository, typename Builder>
-void append_effects(Repository& repository,
-                    Builder& builder,
-                    const urd::Store<urd::sequence<runir::kr::ps::base::dl::ast::Effect>>& observations,
-                    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<Family, runir::kr::dl::BooleanTag>>>, urd::stable_refs>& boolean_features,
-                    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<Family, runir::kr::dl::NumericalTag>>>, urd::stable_refs>& numerical_features,
-                    const runir::kr::parser::DiagnosticContext& diagnostics,
-                    runir::kr::ps::EffectList<Family>& result)
+void append_effects(
+    Repository& repository,
+    Builder& builder,
+    const urd::Store<urd::sequence<runir::kr::ps::base::dl::ast::Effect>>& observations,
+    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<Family, runir::kr::dl::BooleanTag>>>, urd::stable_refs>& boolean_features,
+    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<Family, runir::kr::dl::NumericalTag>>>, urd::stable_refs>& numerical_features,
+    const runir::kr::parser::DiagnosticContext& diagnostics,
+    runir::kr::ps::EffectList<Family>& result)
 {
     result.reserve(result.size() + observations.size());
     for (const auto& observation : observations)

@@ -129,10 +129,11 @@ endif()
 
 # Dependencies
 
-set(RUNIR_YGGDRASIL_REQUIRED_VERSION 0.6.1)
-set(RUNIR_TYR_REQUIRED_VERSION 0.7.4)
+set(RUNIR_YGGDRASIL_REQUIRED_VERSION 0.7.0)
+set(RUNIR_TYR_REQUIRED_VERSION 0.8.0)
 
-brokkr_find_python_native_prefix(pyurd URD_NATIVE_PREFIX)
+brokkr_find_python_native_prefix(pyurd URD_PREFIX)
+brokkr_find_python_native_prefix(pyurd_native URD_NATIVE_PREFIX)
 brokkr_find_python_native_prefix(pyyggdrasil YGGDRASIL_NATIVE_PREFIX)
 
 find_package(
@@ -150,7 +151,7 @@ brokkr_find_python_native_prefix(pytyr TYR_NATIVE_PREFIX)
 brokkr_register_python_native_runtime_prefix("pypddl/native" "${LOKI_NATIVE_PREFIX}")
 brokkr_register_python_native_runtime_prefix("pytyr/native" "${TYR_NATIVE_PREFIX}")
 brokkr_register_python_native_runtime_prefix("pyyggdrasil" "${YGGDRASIL_NATIVE_PREFIX}")
-brokkr_register_python_native_runtime_prefix("pyurd" "${URD_NATIVE_PREFIX}")
+brokkr_register_python_native_runtime_prefix("pyurd_native" "${URD_NATIVE_PREFIX}")
 
 find_package(fmt CONFIG REQUIRED PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
 if(fmt_FOUND)

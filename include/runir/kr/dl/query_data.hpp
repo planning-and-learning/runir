@@ -2,23 +2,23 @@
 #define RUNIR_KR_DL_QUERY_DATA_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 
+#include <boost/mp11.hpp>
 #include <cista/containers/string.h>
 #include <cista/containers/variant.h>
 #include <cstddef>
 #include <optional>
 #include <tuple>
-#include <tyr/formalism/declarations.hpp>
-#include <utility>
-#include <variant>
-#include <vector>
-#include <urd/elements/flat.hpp>
-#include <boost/mp11.hpp>
 #include <tyr/datalog/lifted/database/semantics/generic_join_plan.hpp>
 #include <tyr/datalog/lifted/database/semantics/must_pass_plan.hpp>
 #include <tyr/datalog/lifted/database/semantics/plans.hpp>
+#include <tyr/formalism/declarations.hpp>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
+#include <utility>
+#include <variant>
+#include <vector>
 
 namespace urd
 {
@@ -191,7 +191,12 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>>
 
     data() = default;
     // plan is derived during insertion and therefore not a constructor parameter.
-    data(urd::index<runir::kr::dl::Query<>> arg_, urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_) : index(), arg(arg_), columns(std::move(columns_)) {}
+    data(urd::index<runir::kr::dl::Query<>> arg_, urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_) :
+        index(),
+        arg(arg_),
+        columns(std::move(columns_))
+    {
+    }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::arg, &data::columns, &data::plan> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::arg, &data::columns> {}; }
@@ -207,7 +212,12 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryRenameTag>>
 
     data() = default;
     // schema is derived during insertion and therefore not a constructor parameter.
-    data(urd::index<runir::kr::dl::Query<>> arg_, urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_) : index(), arg(arg_), columns(std::move(columns_)) {}
+    data(urd::index<runir::kr::dl::Query<>> arg_, urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_) :
+        index(),
+        arg(arg_),
+        columns(std::move(columns_))
+    {
+    }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::arg, &data::columns, &data::schema> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::arg, &data::columns> {}; }
@@ -234,9 +244,7 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>>
     }
 
     static constexpr auto cista_members() noexcept
-    {
-        return urd::Members<&data::index, &data::arg, &data::lhs_column, &data::rhs_column, &data::columns, &data::plan> {};
-    }
+    { return urd::Members<&data::index, &data::arg, &data::lhs_column, &data::rhs_column, &data::columns, &data::plan> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::arg, &data::lhs_column, &data::rhs_column> {}; }
 };
 
@@ -277,7 +285,9 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryGenericJoinTag>>
 
     data() = default;
     // columns and plan are derived during insertion and therefore not constructor parameters.
-    data(urd::flat_vector<urd::index<runir::kr::dl::Query<>>> args_, urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> variable_order_, urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> output_order_) :
+    data(urd::flat_vector<urd::index<runir::kr::dl::Query<>>> args_,
+         urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> variable_order_,
+         urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> output_order_) :
         index(),
         args(std::move(args_)),
         variable_order(std::move(variable_order_)),
@@ -321,10 +331,7 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryMustPassTag>>
     }
 
     static constexpr auto cista_members() noexcept
-    {
-        return urd::
-            Members<&data::index, &data::keys, &data::sources, &data::edges, &data::targets, &data::probes, &data::columns, &data::plan> {};
-    }
+    { return urd::Members<&data::index, &data::keys, &data::sources, &data::edges, &data::targets, &data::probes, &data::columns, &data::plan> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::keys, &data::sources, &data::edges, &data::targets, &data::probes> {}; }
 };
 
@@ -353,7 +360,12 @@ struct data<runir::kr::dl::QueryProjection<Category>>
 
     data() = default;
     // plan is derived during insertion and therefore not a constructor parameter.
-    data(urd::index<runir::kr::dl::Query<>> arg_, urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_) : index(), arg(arg_), columns(std::move(columns_)) {}
+    data(urd::index<runir::kr::dl::Query<>> arg_, urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_) :
+        index(),
+        arg(arg_),
+        columns(std::move(columns_))
+    {
+    }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::arg, &data::columns, &data::plan> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::arg, &data::columns> {}; }

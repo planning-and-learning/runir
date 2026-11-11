@@ -29,10 +29,11 @@ template<typename F, typename Tag>
     requires(std::same_as<Tag, runir::kr::dl::IntersectionTag> || std::same_as<Tag, runir::kr::dl::UnionTag>
              || std::same_as<Tag, runir::kr::dl::CompositionTag>)
 struct data<runir::kr::dl::Role<F, Tag>> :
-    runir::kr::dl::BinaryData<runir::kr::dl::Role<F, Tag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>>
+    runir::kr::dl::
+        BinaryData<runir::kr::dl::Role<F, Tag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>>
 {
-    using Base =
-        runir::kr::dl::BinaryData<runir::kr::dl::Role<F, Tag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>>;
+    using Base = runir::kr::dl::
+        BinaryData<runir::kr::dl::Role<F, Tag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>>;
     using Base::Base;
 };
 
@@ -77,8 +78,8 @@ template<typename F>
 struct data<runir::kr::dl::Role<F, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>> :
     runir::kr::dl::ReferenceData<runir::kr::dl::Role<F, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>, runir::kr::dl::Argument<runir::kr::dl::RoleTag>>
 {
-    using Base =
-        runir::kr::dl::ReferenceData<runir::kr::dl::Role<F, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>, runir::kr::dl::Argument<runir::kr::dl::RoleTag>>;
+    using Base = runir::kr::dl::ReferenceData<runir::kr::dl::Role<F, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>,
+                                              runir::kr::dl::Argument<runir::kr::dl::RoleTag>>;
     using Base::Base;
 };
 

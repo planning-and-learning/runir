@@ -87,9 +87,11 @@ void check_composition_and_closures()
             for (ygg::uint_t target = 0; target < size; ++target)
             {
                 if (lhs.get(urd::index<tyr::formalism::Object>(source))[target] != previous_lhs.get(urd::index<tyr::formalism::Object>(source))[target])
-                    (lhs.get(urd::index<tyr::formalism::Object>(source))[target] ? lhs_delta.added : lhs_delta.removed).emplace_back(object(source), object(target));
+                    (lhs.get(urd::index<tyr::formalism::Object>(source))[target] ? lhs_delta.added : lhs_delta.removed)
+                        .emplace_back(object(source), object(target));
                 if (rhs.get(urd::index<tyr::formalism::Object>(source))[target] != previous_rhs.get(urd::index<tyr::formalism::Object>(source))[target])
-                    (rhs.get(urd::index<tyr::formalism::Object>(source))[target] ? rhs_delta.added : rhs_delta.removed).emplace_back(object(source), object(target));
+                    (rhs.get(urd::index<tyr::formalism::Object>(source))[target] ? rhs_delta.added : rhs_delta.removed)
+                        .emplace_back(object(source), object(target));
             }
         const auto old_composition = initialize ? urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) : composition.get_builder();
         const auto old_transitive = initialize ? urd::builder<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(size) : transitive.get_builder();
@@ -385,8 +387,10 @@ TEST(RunirIncrementalSetOperations, InverseAndComplementPreservePaddingAcrossWor
             EXPECT_TRUE(complement.get_builder().get(urd::index<tyr::formalism::Object>(source)).trailing_bits_zero());
             for (ygg::uint_t target = 0; target < size; ++target)
             {
-                EXPECT_EQ(inverse.get_builder().get(urd::index<tyr::formalism::Object>(source))[target], role.get(urd::index<tyr::formalism::Object>(target))[source]);
-                EXPECT_EQ(complement.get_builder().get(urd::index<tyr::formalism::Object>(source))[target], !role.get(urd::index<tyr::formalism::Object>(source))[target]);
+                EXPECT_EQ(inverse.get_builder().get(urd::index<tyr::formalism::Object>(source))[target],
+                          role.get(urd::index<tyr::formalism::Object>(target))[source]);
+                EXPECT_EQ(complement.get_builder().get(urd::index<tyr::formalism::Object>(source))[target],
+                          !role.get(urd::index<tyr::formalism::Object>(source))[target]);
             }
         }
     };

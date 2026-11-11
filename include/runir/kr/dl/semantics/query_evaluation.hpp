@@ -2,17 +2,17 @@
 #define RUNIR_KR_DL_SEMANTICS_QUERY_EVALUATION_HPP_
 
 #include "runir/kr/dl/object_rows.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/dl/query_view.hpp"
 #include "runir/kr/dl/semantics/detail/evaluation_helpers.hpp"
 #include "runir/kr/dl/semantics/evaluation_decl.hpp"
 
 #include <span>
 #include <tuple>
-#include <vector>
 #include <tyr/datalog/lifted/database/semantics/generic_join.hpp>
 #include <tyr/datalog/lifted/database/semantics/operations.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
+#include <vector>
 
 namespace runir::kr::dl::semantics::detail
 {
@@ -59,12 +59,12 @@ void evaluate_query(urd::index_view<Query<Tag>, C> constructor, Context& context
             const auto rhs_static = constructor.get_rhs().is_static();
             // Fully static joins already retain their complete result.
             tyr::datalog::database::join(lhs,
-                                rhs,
-                                data.plan,
-                                children.get_caches().get_static_join_indexes(),
-                                { .lhs = lhs_static && !rhs_static, .rhs = rhs_static && !lhs_static },
-                                result,
-                                context.get_workspace().get_database_workspace());
+                                         rhs,
+                                         data.plan,
+                                         children.get_caches().get_static_join_indexes(),
+                                         { .lhs = lhs_static && !rhs_static, .rhs = rhs_static && !lhs_static },
+                                         result,
+                                         context.get_workspace().get_database_workspace());
         }
         else if constexpr (std::same_as<Tag, QueryUnionTag>)
             tyr::datalog::database::union_(lhs, rhs, data.plan, result);

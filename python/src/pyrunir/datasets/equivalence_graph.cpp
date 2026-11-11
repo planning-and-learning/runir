@@ -1,4 +1,5 @@
 #include "module.hpp"
+#include "pyrunir/module.hpp"
 
 #include <memory>
 #include <nanobind/stl/shared_ptr.h>
@@ -13,7 +14,6 @@
 #include <tyr/planning/lifted/task.hpp>
 #include <utility>
 #include <yggdrasil/python/bindings.hpp>
-#include "pyrunir/module.hpp"
 
 namespace runir::datasets
 {

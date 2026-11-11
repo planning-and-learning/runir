@@ -1,12 +1,12 @@
 #include "bindings.hpp"
 #include "pyrunir/kr/binding_utils.hpp"
+#include "pyrunir/module.hpp"
 
 #include <runir/kr/ps/icp/formatter.hpp>
 #include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/ps/icp/xcondition_view.hpp>
 #include <runir/kr/ps/icp/xeffect_view.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include "pyrunir/module.hpp"
 
 namespace runir::kr::ps::icp
 {
@@ -23,14 +23,20 @@ void bind_indexical_type(nb::module_& m, RepositoryBinding& repository, const ch
     using ObjectReference = urd::flat_variant<ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>;
     using FeatureIndex = urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>>;
     urd::python::bind_index<urd::index<T>>(m, std::string(name) + "Index");
-    auto data = nb::class_<Data>(m, (std::string(name) + "Data").c_str())
-                    .def(nb::init<>())
-                    .def(nb::init<Operation, ObjectReference, FeatureIndex>(), "operation"_a, "object"_a, "feature"_a)
-                    .def(urd::python::init_from_views<Operation, ObjectReference, urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>, Repository>>(), "operation"_a, "object"_a, "feature"_a)
-                    .def_rw("index", &Data::index)
-                    .def_rw("operation", &Data::operation)
-                    .def_rw("object", &Data::object)
-                    .def_rw("feature", &Data::feature);
+    auto data =
+        nb::class_<Data>(m, (std::string(name) + "Data").c_str())
+            .def(nb::init<>())
+            .def(nb::init<Operation, ObjectReference, FeatureIndex>(), "operation"_a, "object"_a, "feature"_a)
+            .def(urd::python::init_from_views<Operation,
+                                              ObjectReference,
+                                              urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>, Repository>>(),
+                 "operation"_a,
+                 "object"_a,
+                 "feature"_a)
+            .def_rw("index", &Data::index)
+            .def_rw("operation", &Data::operation)
+            .def_rw("object", &Data::object)
+            .def_rw("feature", &Data::feature);
     urd::python::add_comparison(data);
     auto view = nb::class_<View>(m, name)
                     .def("index", &View::index)

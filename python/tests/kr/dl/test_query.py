@@ -7,6 +7,7 @@ import pytest
 from pytyr.formalism.planning import Object, ObjectIndex, PlanningDomain
 from pyyggdrasil import formalism
 from pyyggdrasil.serialization import Dictionaries
+from relation_utils import rename
 
 from pyrunir.datasets import GroundTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext, UndefinedSymbolError
@@ -16,7 +17,6 @@ from pyrunir.kr.ps.base.dl import parse_sketch
 from pyrunir.kr.ps.ext.dl import parse_program
 from pyrunir.kr.uns.dl import parse_classifier
 from pyrunir.serialization import register_table, serialize, table
-from relation_utils import rename
 
 
 def _row_values(rows: formalism.RelationView) -> list[int]:

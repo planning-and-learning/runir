@@ -1,4 +1,5 @@
 #include "module.hpp"
+#include "pyrunir/module.hpp"
 
 #include <nanobind/stl/chrono.h>
 #include <nanobind/stl/optional.h>
@@ -7,7 +8,6 @@
 #include <runir/datasets/formatter.hpp>
 #include <runir/datasets/state_graph.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include "pyrunir/module.hpp"
 
 namespace runir::datasets
 {

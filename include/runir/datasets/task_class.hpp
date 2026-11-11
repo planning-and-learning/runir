@@ -19,8 +19,6 @@
 #define RUNIR_DATASETS_TASK_CLASS_HPP_
 
 #include <concepts>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include <memory>
 #include <tuple>
 #include <type_traits>
@@ -28,6 +26,8 @@
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <tyr/planning/state_repository.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/execution/declarations.hpp>

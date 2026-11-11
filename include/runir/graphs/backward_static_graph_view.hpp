@@ -77,19 +77,13 @@ public:
     }
 
     [[nodiscard]] auto get_out_edges(VertexIndex vertex) const noexcept
-    {
-        return urd::transform(get_out_edge_indices(vertex), detail::ReadThrough<BackwardStaticGraphView, &BackwardStaticGraphView::get_edge> { this });
-    }
+    { return urd::transform(get_out_edge_indices(vertex), detail::ReadThrough<BackwardStaticGraphView, &BackwardStaticGraphView::get_edge> { this }); }
 
     [[nodiscard]] auto get_successor_indices(VertexIndex vertex) const noexcept
-    {
-        return urd::transform(get_out_edge_indices(vertex), detail::ReadThrough<BackwardStaticGraphView, &BackwardStaticGraphView::get_target> { this });
-    }
+    { return urd::transform(get_out_edge_indices(vertex), detail::ReadThrough<BackwardStaticGraphView, &BackwardStaticGraphView::get_target> { this }); }
 
     [[nodiscard]] auto get_successors(VertexIndex vertex) const noexcept
-    {
-        return urd::transform(get_successor_indices(vertex), detail::ReadThrough<BackwardStaticGraphView, &BackwardStaticGraphView::get_vertex> { this });
-    }
+    { return urd::transform(get_successor_indices(vertex), detail::ReadThrough<BackwardStaticGraphView, &BackwardStaticGraphView::get_vertex> { this }); }
 };
 
 }  // namespace runir::graphs

@@ -2,10 +2,6 @@
 #define RUNIR_GRAPHS_ALGORITHMS_NAUTY_HPP_
 
 #include "runir/graphs/declarations.hpp"
-#include <urd/repr/maps/std_map.hpp>
-#include <urd/repr/values/std_set.hpp>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/graphs/properties.hpp"
 
 #include <algorithm>
@@ -15,6 +11,10 @@
 #include <tuple>
 #include <type_traits>
 #include <urd/elements/requirements.hpp>
+#include <urd/repr/maps/std_map.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/std_set.hpp>
+#include <urd/store.hpp>
 #include <vector>
 
 namespace runir::graphs::nauty

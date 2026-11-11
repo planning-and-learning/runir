@@ -3,10 +3,10 @@
 
 #include "runir/kr/ps/base/detail/proof_graph.hpp"
 #include "runir/kr/ps/base/detail/search_node.hpp"
-#include "runir/kr/ps/detail/search_space.hpp"
 #include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/base/sketch_executor.hpp"
 #include "runir/kr/ps/base/successor_expander.hpp"
+#include "runir/kr/ps/detail/search_space.hpp"
 #include "runir/kr/ps/unsolvability.hpp"
 #include "runir/kr/task_context.hpp"
 
@@ -31,14 +31,14 @@ namespace detail
 /// Report the first visited goal in ordinary execution; universal execution visits every permitted continuation.
 template<tyr::TaskKind Kind, UnsolvabilityConcept<Kind> Unsolvability>
 ProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
-                                     SuccessorExpander<Kind>& expander,
-                                     const tyr::planning::PackedStateView<Kind>& initial,
-                                     const SketchSearchOptions<Kind>& options,
-                                     Unsolvability& classifier,
-                                     SearchNodes<Kind>& nodes,
-                                     urd::Store<urd::sequence<Predecessor<Kind>>>& predecessors,
-                                     SketchSearchStatistics& statistics,
-                                     std::optional<tyr::planning::PackedStateView<Kind>>& goal)
+                               SuccessorExpander<Kind>& expander,
+                               const tyr::planning::PackedStateView<Kind>& initial,
+                               const SketchSearchOptions<Kind>& options,
+                               Unsolvability& classifier,
+                               SearchNodes<Kind>& nodes,
+                               urd::Store<urd::sequence<Predecessor<Kind>>>& predecessors,
+                               SketchSearchStatistics& statistics,
+                               std::optional<tyr::planning::PackedStateView<Kind>>& goal)
 {
     const auto& search_context = *task_context.search_context;
     auto num_reached = static_cast<std::size_t>(0);

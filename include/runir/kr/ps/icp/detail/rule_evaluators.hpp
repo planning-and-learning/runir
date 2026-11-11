@@ -2,8 +2,6 @@
 #define RUNIR_KR_PS_ICP_DETAIL_RULE_EVALUATORS_HPP_
 
 #include "runir/kr/ps/icp/detail/rule_evaluation/crule.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/ps/icp/detail/rule_evaluation/load.hpp"
 #include "runir/kr/ps/rule_evaluator_concepts.hpp"
 
@@ -12,6 +10,8 @@
 #include <span>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <variant>
 #include <vector>
 

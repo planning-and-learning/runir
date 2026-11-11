@@ -149,7 +149,8 @@ void check_dl_expression_diagnostics()
     EXPECT_NO_THROW((kr::dl::grammar::parser::parse_role_ast<SearchFree>("(r_inverse (r_atomic_state \"at\"))")));
     EXPECT_NO_THROW((kr::dl::grammar::parser::parse_role_ast<>("(r_transitive_closure (r_atomic_state \"at\"))")));
     EXPECT_THROW((kr::dl::grammar::parser::parse_role_ast<SearchFree>("(r_transitive_closure (r_atomic_state \"at\"))")), ygg::diagnostics::ParseError);
-    EXPECT_THROW((kr::dl::grammar::parser::parse_concept_ast<SearchFree>("(c_some (r_reflexive_transitive_closure (r_universal)) (c_top))")), ygg::diagnostics::ParseError);
+    EXPECT_THROW((kr::dl::grammar::parser::parse_concept_ast<SearchFree>("(c_some (r_reflexive_transitive_closure (r_universal)) (c_top))")),
+                 ygg::diagnostics::ParseError);
     EXPECT_THROW((kr::dl::grammar::parser::parse_numerical_ast<SearchFree>("(n_distance (c_top) (r_universal) (c_top))")), ygg::diagnostics::ParseError);
 
     const auto parse_grammar = [](const std::string& source) { return kr::dl::grammar::parser::parse_grammar_ast<>(source); };

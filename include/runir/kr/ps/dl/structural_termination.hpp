@@ -2,8 +2,6 @@
 #define RUNIR_KR_PS_DL_STRUCTURAL_TERMINATION_HPP_
 
 #include "runir/kr/ps/dl/declarations.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/ps/feature_view.hpp"
 
 #include <concepts>
@@ -13,8 +11,10 @@
 #include <optional>
 #include <stdexcept>
 #include <urd/bits.hpp>
-#include <vector>
 #include <urd/elements/flat.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
+#include <vector>
 
 namespace runir::kr::ps::dl
 {

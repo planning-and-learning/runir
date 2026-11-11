@@ -1,19 +1,19 @@
 #ifndef RUNIR_KR_PS_EXT_FORMATTER_HPP_
 #define RUNIR_KR_PS_EXT_FORMATTER_HPP_
 
+#include "runir/kr/ps/dl/condition_view.hpp"
+#include "runir/kr/ps/dl/effect_view.hpp"
 #include "runir/kr/ps/ext/dl/formatter.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
 #include "runir/kr/ps/ext/module_view.hpp"
 #include "runir/kr/ps/ext/program_executor_data.hpp"
-#include "runir/kr/ps/ext/rule_view.hpp"
-#include "runir/kr/ps/dl/condition_view.hpp"
-#include "runir/kr/ps/dl/effect_view.hpp"
-#include "runir/kr/ps/memory_state_view.hpp"
-#include "runir/kr/ps/module_symbol_view.hpp"
 #include "runir/kr/ps/ext/program_view.hpp"
-#include "runir/kr/ps/rule_variant_view.hpp"
+#include "runir/kr/ps/ext/rule_view.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 #include "runir/kr/ps/formatter.hpp"
+#include "runir/kr/ps/memory_state_view.hpp"
+#include "runir/kr/ps/module_symbol_view.hpp"
+#include "runir/kr/ps/rule_variant_view.hpp"
 
 #include <concepts>
 #include <fmt/format.h>
@@ -24,8 +24,8 @@
 #include <string>
 #include <string_view>
 #include <tyr/formalism/planning/formatter.hpp>
-#include <yggdrasil/core/config.hpp>
 #include <urd/elements/flat.hpp>
+#include <yggdrasil/core/config.hpp>
 #include <yggdrasil/io/iostream.hpp>
 
 namespace runir::kr::ps::ext

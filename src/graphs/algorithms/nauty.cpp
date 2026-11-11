@@ -1,10 +1,10 @@
 #include "runir/graphs/algorithms/nauty.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 
 #include "nauty_impl.hpp"
 
 #include <numeric>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 
 namespace runir::graphs::nauty

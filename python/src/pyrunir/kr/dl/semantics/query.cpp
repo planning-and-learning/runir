@@ -1,12 +1,12 @@
 #include "../query_bindings.hpp"
-#include "runir/kr/dl/detail/repository_instantiations.hpp"
-#include "pyrunir/module.hpp"
 #include "bindings.hpp"
+#include "pyrunir/module.hpp"
+#include "runir/kr/dl/detail/repository_instantiations.hpp"
 
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 
 namespace runir::kr::dl
 {

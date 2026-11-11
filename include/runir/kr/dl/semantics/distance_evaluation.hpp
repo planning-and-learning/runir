@@ -34,7 +34,8 @@ QueryDenotationView evaluate_slot(const QuerySlot& slot, const ConstructorReposi
 
 /// Builds the min-distance evaluator of a feature with role edges, a relation of one slot.
 template<typename Distance>
-DistanceFeature<Distance> make_distance_feature(const ygg::FreeRelationRepository& layer, const tyr::datalog::database::DistancePlan& plan, ConstructorView<RoleTag> edges)
+DistanceFeature<Distance>
+make_distance_feature(const ygg::FreeRelationRepository& layer, const tyr::datalog::database::DistancePlan& plan, ConstructorView<RoleTag> edges)
 {
     const auto columns = plan.edge_columns();
     return { { QuerySlot { QuerySlot::Kind::ROLE, static_cast<ygg::uint_t>(edges.index().value), { columns.begin(), columns.end() }, edges.is_static() } },
@@ -161,10 +162,11 @@ void on_demand_must_pass(urd::index_view<Query<QueryMustPassTag>, C> constructor
     const auto targets = evaluate<Kind>(constructor.get_targets(), children);
     const auto probes = evaluate<Kind>(constructor.get_probes(), children);
     const auto edges = constructor.get_edges();
-    auto& feature = context.get_workspace().get_must_pass_feature(context.get_state().get_formalism_repository(),
-                                                                  constructor.context(),
-                                                                  static_cast<ygg::uint_t>(constructor.index().value),
-                                                                  [&] { return make_must_pass_feature(context.get_workspace().get_layer(), constructor.data().plan, edges); });
+    auto& feature = context.get_workspace().get_must_pass_feature(
+        context.get_state().get_formalism_repository(),
+        constructor.context(),
+        static_cast<ygg::uint_t>(constructor.index().value),
+        [&] { return make_must_pass_feature(context.get_workspace().get_layer(), constructor.data().plan, edges); });
     const auto input = [&](size_t slot) { return evaluate_slot<Kind>(feature.slots[slot], edges.context(), children); };
     auto& heuristic = must_pass_heuristic(context.get_workspace().get_layer(), feature, detail::num_objects<Kind>(context), input, targets);
     feature.must_pass.must_pass(input, sources, targets, probes, result, heuristic);

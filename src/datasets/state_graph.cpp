@@ -16,9 +16,6 @@
  */
 
 #include "runir/datasets/state_graph.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/repr/values/dense_set.hpp>
-#include <urd/store.hpp>
 
 #include "runir/graphs/bgl/algorithms.hpp"
 #include "state_graph_fragment.hpp"
@@ -34,6 +31,9 @@
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/heuristics/blind.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/dense_set.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 

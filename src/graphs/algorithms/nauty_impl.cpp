@@ -1,12 +1,12 @@
 #include "nauty_impl.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 
 #include <algorithm>
 #include <cstddef>
 #include <numeric>
 #include <span>
 #include <stdexcept>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 
 namespace runir::graphs::nauty::details
@@ -141,7 +141,13 @@ void SparseGraphImpl::canonize()
     auto canonical_graph = sparsegraph {};
     SG_INIT(canonical_graph);
 
-    sparsenauty(&m_graph, std::ranges::data(canonical.m_labels), std::ranges::data(canonical.m_partitions), std::ranges::data(canonical.m_orbits), &options, &stats, &canonical_graph);
+    sparsenauty(&m_graph,
+                std::ranges::data(canonical.m_labels),
+                std::ranges::data(canonical.m_partitions),
+                std::ranges::data(canonical.m_orbits),
+                &options,
+                &stats,
+                &canonical_graph);
     sortlists_sg(&canonical_graph);
 
     canonical.m_nde = canonical_graph.nde;

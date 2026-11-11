@@ -2,8 +2,6 @@
 
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
-#include "runir/kr/dl/semantics/denotation_repository.hpp"
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/execution_repository.hpp"
 #include "runir/kr/ps/ext/execution_data.hpp"
@@ -12,6 +10,7 @@
 #include "runir/kr/ps/icp/repository.hpp"
 
 #include <stdexcept>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/task.hpp>
 #include <utility>
@@ -40,12 +39,12 @@ TaskContext<Kind>::TaskContext(DomainContextPtr domain_context_, runir::datasets
     dl_denotation_repository(runir::kr::dl::semantics::DenotationRepositoryFactory().create_shared(search_context->task->get_repository())),
     execution_builder(),
     execution_repository(runir::kr::ps::ExecutionRepositoryFactory<runir::kr::ExtFamilyTag, Kind>().create_shared(search_context->state_repository,
-                                                                                              dl_denotation_repository,
-                                                                                              domain_context->ext_repository)),
+                                                                                                                  dl_denotation_repository,
+                                                                                                                  domain_context->ext_repository)),
     icp_execution_builder(),
     icp_execution_repository(runir::kr::ps::ExecutionRepositoryFactory<runir::kr::IcpFamilyTag, Kind>().create_shared(search_context->state_repository,
-                                                                                                  dl_denotation_repository,
-                                                                                                  domain_context->icp_repository))
+                                                                                                                      dl_denotation_repository,
+                                                                                                                      domain_context->icp_repository))
 {
 }
 

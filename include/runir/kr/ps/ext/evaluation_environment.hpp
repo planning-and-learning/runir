@@ -2,8 +2,6 @@
 #define RUNIR_KR_PS_EXT_EVALUATION_ENVIRONMENT_HPP_
 
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/dl/semantics/evaluation_policy.hpp"
 #include "runir/kr/dl/semantics/evaluation_storage.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
@@ -15,6 +13,8 @@
 #include <algorithm>
 #include <optional>
 #include <stdexcept>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 

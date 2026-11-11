@@ -1,7 +1,9 @@
 #include "incremental_root_evaluators.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "planning_fixtures.hpp"
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
 #include <algorithm>
 #include <array>
@@ -11,26 +13,23 @@
 #include <iterator>
 #include <ranges>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_policy.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include <runir/kr/dl/semantics/incremental/evaluation.hpp>
 #include <runir/kr/dl/semantics/interning.hpp>
-#include "runir/kr/dl/datas.hpp"
-#include "runir/kr/dl/declarations.hpp"
-#include "runir/kr/dl/semantics/evaluation.hpp"
-#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <string>
 #include <type_traits>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <tyr/planning/lifted/task.hpp>
+#include <tyr/planning/state_repository.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 
 namespace runir::tests
@@ -92,14 +91,18 @@ auto negative_atomic(kr::dl::ConstructorView<Category> positive, kr::dl::Constru
 {
     if constexpr (std::same_as<Category, kr::dl::ConceptTag>)
     {
-        auto data = std::get<urd::index_view<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::AtomicStateTag<Fact>>, runir::kr::dl::ConstructorRepository>>(positive.get_variant()).data();
+        auto data = std::get<urd::index_view<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::AtomicStateTag<Fact>>, runir::kr::dl::ConstructorRepository>>(
+                        positive.get_variant())
+                        .data();
         data.polarity = false;
         auto wrapper = urd::data<kr::dl::Constructor<Category>>(kr::dl::insert(repository, data).first.index());
         return kr::dl::insert(repository, wrapper).first;
     }
     else
     {
-        auto data = std::get<urd::index_view<kr::dl::Role<kr::dl::SemanticFamily, kr::dl::AtomicStateTag<Fact>>, runir::kr::dl::ConstructorRepository>>(positive.get_variant()).data();
+        auto data = std::get<urd::index_view<kr::dl::Role<kr::dl::SemanticFamily, kr::dl::AtomicStateTag<Fact>>, runir::kr::dl::ConstructorRepository>>(
+                        positive.get_variant())
+                        .data();
         data.polarity = false;
         auto wrapper = urd::data<kr::dl::Constructor<Category>>(kr::dl::insert(repository, data).first.index());
         return kr::dl::insert(repository, wrapper).first;
@@ -183,7 +186,8 @@ void check_incremental_evaluation()
         else
             return make_lifted_context(directory / "domain.pddl", directory / "task.pddl");
     }();
-    auto nodes = urd::Store<urd::sequence<tyr::planning::Node<Kind>>> { search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator) };
+    auto nodes = urd::Store<urd::sequence<tyr::planning::Node<Kind>>> { search->successor_generator->get_initial_node(*search->state_repository,
+                                                                                                                      *search->axiom_evaluator) };
     for (size_t i = 0; i < 2; ++i)
     {
         const auto successors = search->successor_generator->get_labeled_successor_nodes(nodes.back(), *search->state_repository, *search->axiom_evaluator);
@@ -563,8 +567,9 @@ void check_incremental_evaluation()
     const auto distance_expression = kr::ps::ext::dl::parse_numerical(distance, domain, *constructors);
     const auto self_distance = kr::ps::ext::dl::parse_numerical("(n_distance (c_register 0) " + edge_text + " (c_register 0))", domain, *constructors);
     const auto query_count = kr::ps::ext::dl::parse_numerical("(n_count (q_role (x y) " + edge_text + "))", domain, *constructors);
-    const auto query =
-        std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::index_view<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(query_count.get_variant()).get_arg());
+    const auto query = std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(
+        std::get<urd::index_view<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(query_count.get_variant())
+            .get_arg());
     // Duplicate roots and explicitly requested shared children do not duplicate nodes.
     auto evaluation = kr::dl::semantics::incremental::IncrementalEvaluation<Kind>(
         *search->task,

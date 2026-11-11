@@ -1,13 +1,13 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_EVALUATORS_PROJECTION_HPP_
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_EVALUATORS_PROJECTION_HPP_
 
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/detail/evaluation_helpers.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/incremental/declarations.hpp"
 #include "runir/kr/dl/semantics/incremental/delta.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/denotation_state.hpp"
-#include "runir/kr/dl/datas.hpp"
-#include "runir/kr/dl/declarations.hpp"
-#include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
 #include <concepts>
@@ -43,7 +43,10 @@ struct ProjectionEvaluator
         if constexpr (std::same_as<Category, ConceptTag>)
             state.set(ObjectIndex(ygg::decode_value<ygg::uint_t>(row.value(0))), present, repository);
         else
-            state.set(ObjectIndex(ygg::decode_value<ygg::uint_t>(row.value(0))), ObjectIndex(ygg::decode_value<ygg::uint_t>(row.value(1))), present, repository);
+            state.set(ObjectIndex(ygg::decode_value<ygg::uint_t>(row.value(0))),
+                      ObjectIndex(ygg::decode_value<ygg::uint_t>(row.value(1))),
+                      present,
+                      repository);
     }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context)

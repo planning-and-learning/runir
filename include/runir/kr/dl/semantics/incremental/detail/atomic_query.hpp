@@ -1,12 +1,10 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_ATOMIC_QUERY_HPP_
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_ATOMIC_QUERY_HPP_
 
-#include "runir/kr/dl/object_rows.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
-#include "runir/kr/dl/query_view.hpp"
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/object_rows.hpp"
+#include "runir/kr/dl/query_view.hpp"
 #include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
@@ -15,13 +13,15 @@
 #include <cstddef>
 #include <span>
 #include <stdexcept>
-#include <tyr/planning/state_view_concepts.hpp>
-#include <utility>
-#include <variant>
-#include <vector>
 #include <tyr/datalog/lifted/database/semantics/incremental/delta.hpp>
 #include <tyr/datalog/lifted/database/semantics/incremental/join.hpp>
 #include <tyr/datalog/lifted/database/semantics/incremental/projection.hpp>
+#include <tyr/planning/state_view_concepts.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
+#include <utility>
+#include <variant>
+#include <vector>
 
 namespace runir::kr::dl::semantics::incremental::detail
 {

@@ -1,4 +1,5 @@
 #include "pyrunir/kr/ps/ext/dl/bindings.hpp"
+#include "pyrunir/module.hpp"
 
 #include <cstddef>
 #include <nanobind/stl/optional.h>
@@ -11,7 +12,6 @@
 #include <runir/kr/ps/ext/repository.hpp>
 #include <vector>
 #include <yggdrasil/python/bindings.hpp>
-#include "pyrunir/module.hpp"
 
 namespace runir::kr::ps::ext::dl
 {

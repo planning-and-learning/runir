@@ -1,11 +1,11 @@
 #ifndef RUNIR_KR_DETAIL_RECORD_KEY_HPP_
 #define RUNIR_KR_DETAIL_RECORD_KEY_HPP_
 
+#include <boost/mp11.hpp>
 #include <concepts>
 #include <cstddef>
-#include <utility>
-#include <boost/mp11.hpp>
 #include <urd/elements/flat.hpp>
+#include <utility>
 #include <yggdrasil/core/config.hpp>
 
 namespace runir::kr::detail

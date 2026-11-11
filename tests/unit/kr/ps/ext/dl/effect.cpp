@@ -1,11 +1,11 @@
 #include "runir/kr/ps/declarations.hpp"
 
+#include <boost/mp11.hpp>
 #include <concepts>
 #include <runir/kr/ps/dl/effect_data.hpp>
 #include <runir/kr/ps/dl/effect_view.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <urd/elements/flat.hpp>
-#include <boost/mp11.hpp>
 #include <yggdrasil/core/config.hpp>
 
 namespace runir::tests
@@ -33,11 +33,11 @@ template<typename Feature, typename Observation>
 using Effect = kr::ps::ConcreteEffect<kr::ExtFamilyTag, kr::DlTag, Feature, Observation>;
 
 using ConcreteTypes = boost::mp11::mp_list<Effect<kr::dl::BooleanTag, kr::ps::dl::Positive>,
-                                    Effect<kr::dl::BooleanTag, kr::ps::dl::Negative>,
-                                    Effect<kr::dl::BooleanTag, kr::ps::dl::Unchanged>,
-                                    Effect<kr::dl::NumericalTag, kr::ps::dl::Increases>,
-                                    Effect<kr::dl::NumericalTag, kr::ps::dl::Decreases>,
-                                    Effect<kr::dl::NumericalTag, kr::ps::dl::Unchanged>>;
+                                           Effect<kr::dl::BooleanTag, kr::ps::dl::Negative>,
+                                           Effect<kr::dl::BooleanTag, kr::ps::dl::Unchanged>,
+                                           Effect<kr::dl::NumericalTag, kr::ps::dl::Increases>,
+                                           Effect<kr::dl::NumericalTag, kr::ps::dl::Decreases>,
+                                           Effect<kr::dl::NumericalTag, kr::ps::dl::Unchanged>>;
 static_assert(std::same_as<kr::ps::EffectVariant<kr::ExtFamilyTag>, urd::index_variant<ConcreteTypes>>);
 static_assert(std::same_as<kr::ps::PsEffectTypes<kr::ExtFamilyTag>, ConcreteTypes>);
 

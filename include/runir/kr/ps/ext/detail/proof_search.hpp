@@ -1,12 +1,10 @@
 #ifndef RUNIR_KR_PS_EXT_DETAIL_PROOF_SEARCH_HPP_
 #define RUNIR_KR_PS_EXT_DETAIL_PROOF_SEARCH_HPP_
 
-#include "runir/kr/ps/ext/detail/proof_graph.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
-#include "runir/kr/ps/ext/detail/search_path.hpp"
-#include "runir/kr/ps/ext/detail/search_node.hpp"
 #include "runir/kr/ps/detail/search_space.hpp"
+#include "runir/kr/ps/ext/detail/proof_graph.hpp"
+#include "runir/kr/ps/ext/detail/search_node.hpp"
+#include "runir/kr/ps/ext/detail/search_path.hpp"
 #include "runir/kr/ps/ext/detail/search_storage.hpp"
 #include "runir/kr/ps/ext/detail/successor_expander_impl.hpp"
 #include "runir/kr/ps/ext/dl/structural_termination.hpp"
@@ -21,12 +19,14 @@
 #include <tyr/planning/algorithms/strategies/goal.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
+#include <urd/config.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <variant>
 #include <vector>
 #include <yggdrasil/core/chrono.hpp>
 #include <yggdrasil/core/config.hpp>
-#include <urd/config.hpp>
 
 namespace runir::kr::ps::ext
 {
@@ -41,15 +41,15 @@ template<tyr::TaskKind Kind,
          StateMemorization Memorization,
          UnsolvabilityConcept<Kind> Unsolvability>
 ProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>& expander,
-                                      const tyr::planning::PackedStateView<Kind>& initial_state,
-                                      const StorageStoredState<ExecutionStorage>& initial,
-                                      const ProgramSearchOptions<Kind>& options,
-                                      Unsolvability& classifier,
-                                      SearchStorage<Kind, Memorization>& storage,
-                                      ProgramSearchStatistics& statistics,
-                                      urd::Store<urd::slots<SearchPath<Kind, ExecutionStorage>>>& path_pool,
-                                      std::shared_ptr<SearchPath<Kind, ExecutionStorage>>& first_goal,
-                                      std::shared_ptr<SearchPath<Kind, ExecutionStorage>>& witness)
+                               const tyr::planning::PackedStateView<Kind>& initial_state,
+                               const StorageStoredState<ExecutionStorage>& initial,
+                               const ProgramSearchOptions<Kind>& options,
+                               Unsolvability& classifier,
+                               SearchStorage<Kind, Memorization>& storage,
+                               ProgramSearchStatistics& statistics,
+                               urd::Store<urd::slots<SearchPath<Kind, ExecutionStorage>>>& path_pool,
+                               std::shared_ptr<SearchPath<Kind, ExecutionStorage>>& first_goal,
+                               std::shared_ptr<SearchPath<Kind, ExecutionStorage>>& witness)
 {
     using Step = ProgramStep<ExtFamilyTag, Kind, StorageStoredState<ExecutionStorage>>;
     using PathPtr = std::shared_ptr<SearchPath<Kind, ExecutionStorage>>;

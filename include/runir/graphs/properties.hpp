@@ -2,10 +2,10 @@
 #define RUNIR_GRAPHS_PROPERTIES_HPP_
 
 #include "runir/graphs/declarations.hpp"
-#include <urd/repr/values/std_set.hpp>
-#include <urd/store.hpp>
 
 #include <set>
+#include <urd/repr/values/std_set.hpp>
+#include <urd/store.hpp>
 
 namespace runir::graphs
 {

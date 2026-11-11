@@ -2,9 +2,6 @@
 #define RUNIR_KR_PS_STRUCTURAL_TERMINATION_DETAIL_HPP_
 
 #include "runir/graphs/static_graph_builder.hpp"
-#include <urd/repr/maps/index_map.hpp>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/dl/structural_termination.hpp"
 
@@ -18,9 +15,12 @@
 #include <optional>
 #include <span>
 #include <stdexcept>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/maps/index_map.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
-#include <urd/elements/flat.hpp>
 #include <yggdrasil/core/config.hpp>
 
 namespace runir::kr::ps::detail

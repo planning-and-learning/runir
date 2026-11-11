@@ -3,9 +3,9 @@
 
 #include "runir/kr/dl/boolean_data.hpp"
 
+#include <tyr/datalog/lifted/database/semantics/distance_plan.hpp>
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/core/config.hpp>
-#include <tyr/datalog/lifted/database/semantics/distance_plan.hpp>
 
 namespace urd
 {

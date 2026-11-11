@@ -1,22 +1,21 @@
 #ifndef RUNIR_KR_PS_ICP_CANONICALIZATION_HPP_
 #define RUNIR_KR_PS_ICP_CANONICALIZATION_HPP_
 
+#include "runir/kr/ps/canonicalization.hpp"
 #include "runir/kr/ps/dl/condition_data.hpp"
 #include "runir/kr/ps/dl/effect_data.hpp"
 #include "runir/kr/ps/dl/feature_data.hpp"
 #include "runir/kr/ps/feature_data.hpp"
-#include "runir/kr/ps/memory_state_data.hpp"
 #include "runir/kr/ps/icp/module_data.hpp"
-#include "runir/kr/ps/module_symbol_data.hpp"
 #include "runir/kr/ps/icp/program_data.hpp"
 #include "runir/kr/ps/icp/rule_data.hpp"
-#include "runir/kr/ps/rule_variant_data.hpp"
 #include "runir/kr/ps/icp/xcondition_data.hpp"
 #include "runir/kr/ps/icp/xeffect_data.hpp"
+#include "runir/kr/ps/memory_state_data.hpp"
+#include "runir/kr/ps/module_symbol_data.hpp"
+#include "runir/kr/ps/rule_variant_data.hpp"
 
 #include <algorithm>
-#include "runir/kr/ps/canonicalization.hpp"
-
 #include <yggdrasil/semantics/canonicalization.hpp>
 
 namespace runir::kr::ps::icp

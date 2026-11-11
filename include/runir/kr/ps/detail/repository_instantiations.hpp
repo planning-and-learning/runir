@@ -16,17 +16,17 @@
 #include <yggdrasil/formalism/intern_instantiations.hpp>
 
 /// The instantiations (PREFIX extern: declarations).
-#define RUNIR_KR_PS_INTERNS(PREFIX)                                                                                                      \
-    YGG_FORMALISM_INTERNS(PREFIX,                                                                                               \
-                          86,                                                                                                   \
-                          false,                                                                                                \
-                          boost::mp11::mp_unique<boost::mp11::mp_append<runir::kr::ps::base::RepositoryTypes,                   \
-                                                                        runir::kr::ps::ext::RepositoryTypes,                    \
-                                                                        runir::kr::ps::icp::RepositoryTypes,                    \
-                                                                        runir::kr::uns::RepositoryTypes>>)                      \
-    YGG_FORMALISM_INTERNS(PREFIX,                                                                                               \
-                          8,                                                                                                    \
-                          false,                                                                                                \
+#define RUNIR_KR_PS_INTERNS(PREFIX)                                                                                                   \
+    YGG_FORMALISM_INTERNS(PREFIX,                                                                                                     \
+                          86,                                                                                                         \
+                          false,                                                                                                      \
+                          boost::mp11::mp_unique<boost::mp11::mp_append<runir::kr::ps::base::RepositoryTypes,                         \
+                                                                        runir::kr::ps::ext::RepositoryTypes,                          \
+                                                                        runir::kr::ps::icp::RepositoryTypes,                          \
+                                                                        runir::kr::uns::RepositoryTypes>>)                            \
+    YGG_FORMALISM_INTERNS(PREFIX,                                                                                                     \
+                          8,                                                                                                          \
+                          false,                                                                                                      \
                           boost::mp11::mp_unique<boost::mp11::mp_append<runir::kr::ps::ext::ExecutionRepositoryTypes<tyr::GroundTag>, \
                                                                         runir::kr::ps::ext::ExecutionRepositoryTypes<tyr::LiftedTag>, \
                                                                         runir::kr::ps::icp::ExecutionRepositoryTypes<tyr::GroundTag>, \

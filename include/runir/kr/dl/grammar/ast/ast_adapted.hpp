@@ -2,11 +2,11 @@
 #define RUNIR_GRAMMAR_AST_AST_ADAPTED_HPP_
 
 #include "runir/kr/dl/grammar/ast/ast.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/parser/ast_adapted.hpp"
 
 #include <boost/fusion/include/adapt_struct.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::QueryAtomicState, predicate_name, columns)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::QueryAtomicGoal, predicate_name, polarity, columns)

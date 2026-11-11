@@ -1,22 +1,20 @@
 #ifndef RUNIR_KR_PS_ICP_FORMATTER_HPP_
 #define RUNIR_KR_PS_ICP_FORMATTER_HPP_
 
-#include "runir/kr/ps/formatter.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
-#include "runir/kr/ps/icp/module_view.hpp"
-#include "runir/kr/ps/icp/repository.hpp"
-#include "runir/kr/ps/icp/rule_view.hpp"
 #include "runir/kr/ps/dl/condition_view.hpp"
 #include "runir/kr/ps/dl/effect_view.hpp"
 #include "runir/kr/ps/dl/feature_view.hpp"
 #include "runir/kr/ps/feature_view.hpp"
-#include "runir/kr/ps/memory_state_view.hpp"
-#include "runir/kr/ps/module_symbol_view.hpp"
+#include "runir/kr/ps/formatter.hpp"
+#include "runir/kr/ps/icp/module_view.hpp"
 #include "runir/kr/ps/icp/program_view.hpp"
-#include "runir/kr/ps/rule_variant_view.hpp"
+#include "runir/kr/ps/icp/repository.hpp"
+#include "runir/kr/ps/icp/rule_view.hpp"
 #include "runir/kr/ps/icp/xcondition_view.hpp"
 #include "runir/kr/ps/icp/xeffect_view.hpp"
+#include "runir/kr/ps/memory_state_view.hpp"
+#include "runir/kr/ps/module_symbol_view.hpp"
+#include "runir/kr/ps/rule_variant_view.hpp"
 
 #include <concepts>
 #include <fmt/format.h>
@@ -27,9 +25,11 @@
 #include <string>
 #include <string_view>
 #include <tyr/formalism/planning/formatter.hpp>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
-#include <urd/elements/flat.hpp>
 #include <yggdrasil/io/iostream.hpp>
 
 namespace runir::kr::ps::icp
@@ -114,8 +114,7 @@ void append_module(std::ostream& os, urd::index_view<runir::kr::ps::icp::Module,
         append_module_body(os, view);
         os << ygg::print_indent << "(:reset-spo";
         for (const auto& pair : view.get_reset_pairs())
-            os << " (:prec " << urd::resolve(pair.before, view.context()).get_symbol() << ' '
-               << urd::resolve(pair.after, view.context()).get_symbol() << ')';
+            os << " (:prec " << urd::resolve(pair.before, view.context()).get_symbol() << ' ' << urd::resolve(pair.after, view.context()).get_symbol() << ')';
         os << ")\n";
     }
     os << ygg::print_indent << ')';

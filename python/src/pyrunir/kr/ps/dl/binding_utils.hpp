@@ -3,6 +3,7 @@
 
 #include "pyrunir/kr/binding_utils.hpp"
 #include "pyrunir/kr/ps/dl/optimization_bindings.hpp"
+#include "pyrunir/module.hpp"
 
 #include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
@@ -21,7 +22,6 @@
 #include <utility>
 #include <vector>
 #include <yggdrasil/python/bindings.hpp>
-#include "pyrunir/module.hpp"
 
 namespace runir::kr::python
 {
@@ -72,7 +72,9 @@ auto bind_feature(nb::module_& m, nb::class_<Repository>& repository, const std:
     auto data = nb::class_<Data>(m, (concrete_name + "Data").c_str())
                     .def(nb::init<>())
                     .def(nb::init<ExpressionIndex, urd::flat_string>(), nb::arg("feature"), nb::arg("symbol"))
-                    .def(urd::python::init_from_views<urd::index_view<typename Data::Expression, DlRepository>, urd::flat_string>(), nb::arg("feature"), nb::arg("symbol"))
+                    .def(urd::python::init_from_views<urd::index_view<typename Data::Expression, DlRepository>, urd::flat_string>(),
+                         nb::arg("feature"),
+                         nb::arg("symbol"))
                     .def_rw("index", &Data::index)
                     .def_rw("feature", &Data::feature)
                     .def_rw("symbol", &Data::symbol);

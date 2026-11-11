@@ -2,8 +2,6 @@
 #define RUNIR_TESTS_EXT_SUCCESSOR_EXPANDER_FIXTURES_HPP_
 
 #include "fixtures.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "module_fixtures.hpp"
 #include "planning_fixtures.hpp"
 #include "successor_fixtures.hpp"
@@ -15,14 +13,11 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
-#include <runir/kr/ps/ext/repository.hpp>
+#include <runir/kr/ps/execution_repository.hpp>
 #include <runir/kr/ps/ext/detail/rule_evaluation/context.hpp>
 #include <runir/kr/ps/ext/detail/successor_expander_impl.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
-#include <runir/kr/ps/execution_repository.hpp>
 #include <runir/kr/ps/ext/execution_data.hpp>
 #include <runir/kr/ps/ext/execution_storage.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
@@ -34,8 +29,11 @@
 #include <stdexcept>
 #include <string>
 #include <type_traits>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 
 namespace runir::tests
@@ -467,9 +465,8 @@ void expect_lazy_do_successors()
 
         const auto same_step = [](const auto& left, const auto& right)
         {
-            return left.status == right.status && left.get_target().index() == right.get_target().index()
-                   && left.rule.has_value() == right.rule.has_value() && (!left.rule || left.rule->index() == right.rule->index())
-                   && left.planning_successor.has_value() == right.planning_successor.has_value()
+            return left.status == right.status && left.get_target().index() == right.get_target().index() && left.rule.has_value() == right.rule.has_value()
+                   && (!left.rule || left.rule->index() == right.rule->index()) && left.planning_successor.has_value() == right.planning_successor.has_value()
                    && (!left.planning_successor.has_value() || left.planning_successor->label == right.planning_successor->label);
         };
         const auto repeated = collect_steps(expander, initial);
@@ -548,7 +545,6 @@ void expect_control_only_steps_do_not_generate_planning_successors()
     EXPECT_FALSE(expander.matching_rule(initial, successors.front()));
 }
 
-
 template<tyr::TaskKind Kind>
 void expect_transient_program_states_retain_values_and_intern_callers()
 {
@@ -595,7 +591,8 @@ void expect_transient_program_states_retain_values_and_intern_callers()
     EXPECT_EQ(&second.get_state().data(), scratch);
     EXPECT_TRUE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(retained->module_state.state, expected));
     EXPECT_FALSE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(retained->module_state.state, second.get_state().data()));
-    EXPECT_TRUE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(initial->module_state.state, urd::builder<tyr::planning::State<Kind>> { initial_node.get_state().data() }));
+    EXPECT_TRUE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(initial->module_state.state,
+                                                                          urd::builder<tyr::planning::State<Kind>> { initial_node.get_state().data() }));
 
     const auto copy = storage.retain(storage.view(retained));
     ASSERT_TRUE(copy->call_stack);
@@ -662,7 +659,6 @@ void expect_transient_program_states_retain_values_and_intern_callers()
     EXPECT_TRUE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(reused->module_state.state, planning_values));
     EXPECT_TRUE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(retained->module_state.state, expected));
 }
-
 
 template<tyr::TaskKind Kind, kr::ps::ext::RuleKind Tag>
 void expect_unknown_action_rejected_during_preparation()
@@ -1141,8 +1137,8 @@ void expect_callback_expansion_counts()
             EXPECT_EQ(steps.front().status, kr::ps::ProgramOutcome::APPLIED);
             auto first = urd::Store<urd::sequence<std::string>> {};
             if (binding)
-                first.push_back(
-                    std::string(steps.front().get_target().get_module_state().get_registers().template values<kr::dl::ConceptTag>()[0].value().get_name().str()));
+                first.push_back(std::string(
+                    steps.front().get_target().get_module_state().get_registers().template values<kr::dl::ConceptTag>()[0].value().get_name().str()));
             else
                 for (const auto object : objects_of(steps.front().planning_successor->label))
                     first.push_back(std::string(object.get_name().str()));

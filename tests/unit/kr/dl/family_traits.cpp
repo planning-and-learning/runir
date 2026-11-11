@@ -1,6 +1,4 @@
 #include <concepts>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include <runir/kr/detail/interning_contracts.hpp>
 #include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
 #include <runir/kr/dl/cnf_grammar/generate.hpp>
@@ -9,12 +7,14 @@
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/execution_repository.hpp>
 #include <runir/kr/ps/ext/execution_data.hpp>
-#include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/execution_view.hpp>
+#include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/icp/execution_data.hpp>
-#include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/ps/icp/execution_view.hpp>
+#include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/uns/repository.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 namespace runir::tests
 {

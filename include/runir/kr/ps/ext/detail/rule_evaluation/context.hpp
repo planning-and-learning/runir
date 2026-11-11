@@ -43,8 +43,7 @@ struct RuleEvaluationContext<runir::kr::ExtFamilyTag, Kind, Storage, PlanningSta
         return environment->make_dl_context(planning_state, module_.get_arguments(), module_.get_registers());
     }
 
-    template<ext::ProgramStateViewConcept<Kind> State,
-             ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
+    template<ext::ProgramStateViewConcept<Kind> State, ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
     auto make_dl_transition_context(State state, const tyr::planning::LabeledNode<Kind, PlanningState, Binding>& candidate)
     {
         environment->select_source(state);

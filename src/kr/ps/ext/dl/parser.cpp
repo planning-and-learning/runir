@@ -1,24 +1,17 @@
 #include "runir/kr/ps/ext/dl/parser.hpp"
-#include "runir/kr/dl/detail/repository_instantiations.hpp"
-#include "runir/kr/ps/detail/repository_instantiations.hpp"
-#include <urd/repr/maps/std_map.hpp>
-#include <urd/repr/values/std_set.hpp>
-#include <urd/repr/sequences/segmented.hpp>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 
 #include "kr/parser/ext_constructors.hpp"
 #include "kr/parser/observations.hpp"
 #include "kr/parser/resolution.hpp"
 #include "runir/kr/dl/canonicalization.hpp"
-#include "runir/kr/dl/repository.hpp"
+#include "runir/kr/dl/detail/repository_instantiations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/grammar/parser/parser.hpp"
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/errors.hpp"
 #include "runir/kr/parser/diagnostics.hpp"
+#include "runir/kr/ps/detail/repository_instantiations.hpp"
 #include "runir/kr/ps/ext/canonicalization.hpp"
-#include "runir/kr/ps/ext/repository.hpp"
 #include "runir/kr/ps/ext/dl/parser/parser.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
 
@@ -33,9 +26,14 @@
 #include <tyr/formalism/planning/repository.hpp>
 #include <unordered_map>
 #include <unordered_set>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/maps/std_map.hpp>
+#include <urd/repr/sequences/segmented.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/std_set.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
-#include <urd/elements/flat.hpp>
 #include <yggdrasil/core/config.hpp>
 
 namespace runir::kr::ps::ext::dl
@@ -153,7 +151,9 @@ SignatureCounts signature_counts(const ast::Module& module_)
 }
 
 template<runir::kr::dl::CategoryTag Category>
-void validate_unique_names(const urd::Store<urd::sequence<ast::Register<Category>>>& declarations, const char* kind, const runir::kr::parser::DiagnosticContext& diagnostics)
+void validate_unique_names(const urd::Store<urd::sequence<ast::Register<Category>>>& declarations,
+                           const char* kind,
+                           const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     auto names = urd::Store<urd::set<std::string>, urd::stable_refs> {};
     for (const auto& declaration : declarations)
@@ -309,10 +309,13 @@ void append_feature(
     urd::data<Module>& module_data,
     const ast::Feature<Category>& feature,
     tyr::formalism::planning::DomainView domain,
-    urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>, urd::stable_refs>& concept_features,
+    urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>, urd::stable_refs>&
+        concept_features,
     urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>, urd::stable_refs>& role_features,
-    urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs>& boolean_features,
-    urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>>, urd::stable_refs>& numerical_features,
+    urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs>&
+        boolean_features,
+    urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>>, urd::stable_refs>&
+        numerical_features,
     const ModuleReferences& references,
     runir::kr::parser::DiagnosticContext& diagnostics)
 {
@@ -348,18 +351,22 @@ using runir::kr::parser::observations::append_conditions;
 using runir::kr::parser::observations::append_effects;
 using runir::kr::parser::observations::require_feature;
 
-auto parse_do_argument(
-    const ast::SymbolExpression& expression,
-    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>, urd::stable_refs>& concept_features,
-    const runir::kr::parser::DiagnosticContext& diagnostics)
+auto parse_do_argument(const ast::SymbolExpression& expression,
+                       const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>,
+                                        urd::stable_refs>& concept_features,
+                       const runir::kr::parser::DiagnosticContext& diagnostics)
 { return require_feature(concept_features, expression.symbol, diagnostics); }
 
 auto parse_call_argument(
     const ast::SymbolExpression& expression,
-    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>, urd::stable_refs>& concept_features,
-    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>, urd::stable_refs>& role_features,
-    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs>& boolean_features,
-    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>>, urd::stable_refs>& numerical_features,
+    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>, urd::stable_refs>&
+        concept_features,
+    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>, urd::stable_refs>&
+        role_features,
+    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs>&
+        boolean_features,
+    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>>, urd::stable_refs>&
+        numerical_features,
     const runir::kr::parser::DiagnosticContext& diagnostics) -> CallArgument
 {
     const auto& name = expression.symbol.text;
@@ -525,10 +532,14 @@ auto parse_binding_rule(
     const RuleAst& rule,
     urd::index<MemoryState<ExtFamilyTag>> source,
     urd::index<MemoryState<ExtFamilyTag>> target,
-    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>, urd::stable_refs>& concept_features,
-    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>, urd::stable_refs>& role_features,
-    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs>& boolean_features,
-    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>>, urd::stable_refs>& numerical_features,
+    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>, urd::stable_refs>&
+        concept_features,
+    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>, urd::stable_refs>&
+        role_features,
+    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs>&
+        boolean_features,
+    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>>, urd::stable_refs>&
+        numerical_features,
     const ModuleReferences& references,
     const std::string& symbol,
     runir::kr::parser::DiagnosticContext& diagnostics)
@@ -573,11 +584,16 @@ auto parse_rule(
     std::optional<urd::index<MemoryState<ExtFamilyTag>>> target,
     tyr::formalism::planning::DomainView domain,
     const urd::Store<urd::map<std::string, urd::index<ModuleSymbol<ExtFamilyTag>>>, urd::stable_refs>& modules,
-    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>, urd::stable_refs>& concept_features,
-    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>, urd::stable_refs>& role_features,
-    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs>& boolean_features,
-    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>>, urd::stable_refs>& numerical_features,
-    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>>, urd::stable_refs>& query_features,
+    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>, urd::stable_refs>&
+        concept_features,
+    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>, urd::stable_refs>&
+        role_features,
+    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs>&
+        boolean_features,
+    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>>, urd::stable_refs>&
+        numerical_features,
+    const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>>, urd::stable_refs>&
+        query_features,
     const ModuleReferences& references,
     const std::string& symbol,
     runir::kr::parser::DiagnosticContext& diagnostics)
@@ -908,11 +924,16 @@ ModuleView lower_module(const ast::Module& ast,
     for (const auto& state : ast.memory_states)
         data->memory_states.push_back(memory_states.at(state.value.text));
 
-    auto concept_features = urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>, urd::stable_refs> {};
-    auto role_features = urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>, urd::stable_refs> {};
-    auto boolean_features = urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs> {};
-    auto numerical_features = urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>>, urd::stable_refs> {};
-    auto query_features = urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>>, urd::stable_refs> {};
+    auto concept_features =
+        urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>, urd::stable_refs> {};
+    auto role_features =
+        urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>, urd::stable_refs> {};
+    auto boolean_features =
+        urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs> {};
+    auto numerical_features =
+        urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>>, urd::stable_refs> {};
+    auto query_features =
+        urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>>, urd::stable_refs> {};
     for (const auto& feature : ast.features)
     {
         boost::apply_visitor(
@@ -1080,7 +1101,9 @@ ModuleView parse_module(const std::string& description, tyr::formalism::planning
     auto builders = Builders { &dl_builder, &ps_builder };
     auto symbol_data = runir::kr::ps::ext::checkout<ModuleSymbol<ExtFamilyTag>>(ps_builder);
     symbol_data->name = ast.name.text;
-    auto module_symbols = urd::Store<urd::map<std::string, urd::index<ModuleSymbol<ExtFamilyTag>>>, urd::stable_refs> { { ast.name.text, intern(repository, *symbol_data).index() } };
+    auto module_symbols =
+        urd::Store<urd::map<std::string, urd::index<ModuleSymbol<ExtFamilyTag>>>, urd::stable_refs> { { ast.name.text,
+                                                                                                        intern(repository, *symbol_data).index() } };
     return lower_module(ast, domain, repository, builders, diagnostics, module_symbols);
 }
 
@@ -1119,7 +1142,8 @@ ProgramView parse_program(const std::string& description, tyr::formalism::planni
     return intern(repository, *data);
 }
 
-urd::Store<urd::sequence<ModuleView>> parse_modules(const urd::Store<urd::sequence<std::string>>& descriptions, tyr::formalism::planning::DomainView domain, Repository& repository)
+urd::Store<urd::sequence<ModuleView>>
+parse_modules(const urd::Store<urd::sequence<std::string>>& descriptions, tyr::formalism::planning::DomainView domain, Repository& repository)
 {
     auto asts = urd::Store<urd::sequence<ast::Module>>(descriptions.size());
     auto diagnostic_outputs = urd::Store<urd::sequence<std::ostringstream>>(descriptions.size());

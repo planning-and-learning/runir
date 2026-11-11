@@ -1,19 +1,18 @@
 #ifndef RUNIR_KR_PS_EXT_CANONICALIZATION_HPP_
 #define RUNIR_KR_PS_EXT_CANONICALIZATION_HPP_
 
+#include "runir/kr/ps/canonicalization.hpp"
 #include "runir/kr/ps/dl/condition_data.hpp"
 #include "runir/kr/ps/dl/effect_data.hpp"
-#include "runir/kr/ps/memory_state_data.hpp"
 #include "runir/kr/ps/ext/module_data.hpp"
-#include "runir/kr/ps/module_symbol_data.hpp"
 #include "runir/kr/ps/ext/program_data.hpp"
 #include "runir/kr/ps/ext/rule_data.hpp"
-#include "runir/kr/ps/rule_variant_data.hpp"
 #include "runir/kr/ps/feature_data.hpp"
+#include "runir/kr/ps/memory_state_data.hpp"
+#include "runir/kr/ps/module_symbol_data.hpp"
+#include "runir/kr/ps/rule_variant_data.hpp"
 
 #include <algorithm>
-#include "runir/kr/ps/canonicalization.hpp"
-
 #include <yggdrasil/semantics/canonicalization.hpp>
 
 namespace runir::kr::ps::ext

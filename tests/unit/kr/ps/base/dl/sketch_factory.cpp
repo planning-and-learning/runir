@@ -3,11 +3,8 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
-#include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/dl/parser.hpp>
 #include <runir/kr/ps/base/dl/sketch_factory.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
@@ -15,6 +12,7 @@
 #include <runir/kr/ps/base/syntactic_complexity.hpp>
 #include <stdexcept>
 #include <string_view>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/formalism/planning/parser.hpp>
 
 namespace runir::tests
@@ -96,7 +94,8 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
     const auto formatted = fmt::format("{}", sketch);
     EXPECT_EQ(fmt::format("{}", kr::ps::base::dl::parse_sketch(formatted, planning_domain.get_domain(), *repository)), formatted);
     const auto feature = sketch.template get_features<kr::dl::BooleanTag>().front();
-    const auto concrete_complexity = std::visit([](auto concrete) { return kr::dl::semantics::syntactic_complexity(concrete.get_feature()); }, feature.get_variant());
+    const auto concrete_complexity =
+        std::visit([](auto concrete) { return kr::dl::semantics::syntactic_complexity(concrete.get_feature()); }, feature.get_variant());
     EXPECT_EQ(kr::ps::syntactic_complexity(feature), concrete_complexity);
     EXPECT_EQ(concrete_complexity, kr::dl::semantics::syntactic_complexity(feature.get_expression()));
     EXPECT_EQ(kr::ps::base::syntactic_complexity(sketch), 6);

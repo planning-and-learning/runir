@@ -8,9 +8,9 @@
 #include <cstdint>
 #include <optional>
 #include <tyr/formalism/declarations.hpp>
-#include <yggdrasil/formalism/row_view.hpp>
 #include <urd/repr/maps/index_map.hpp>
 #include <urd/store.hpp>
+#include <yggdrasil/formalism/row_view.hpp>
 
 namespace runir::kr::ps::ext::detail
 {

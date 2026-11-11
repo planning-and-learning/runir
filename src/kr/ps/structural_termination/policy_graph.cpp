@@ -1,12 +1,12 @@
 #include "detail.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/repr/values/dense_set.hpp>
-#include <urd/store.hpp>
 #include "runir/graphs/declarations.hpp"
 
 #include <bit>
 #include <limits>
 #include <urd/bits.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/dense_set.hpp>
+#include <urd/store.hpp>
 #include <utility>
 
 namespace runir::kr::ps::detail

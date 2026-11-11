@@ -2,9 +2,9 @@
 #define RUNIR_TESTS_UNIT_PLANNING_FIXTURES_HPP_
 
 #include <filesystem>
+#include <runir/datasets/task_class.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
-#include <runir/datasets/task_class.hpp>
 #include <vector>
 
 namespace runir::tests

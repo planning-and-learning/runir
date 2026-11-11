@@ -636,11 +636,7 @@ class Session:
         for task, execute, prove in self._parallel(trial, tasks):
             stages = (("execute", execute), ("prove", prove))
             bad = [(stage, r) for stage, r in stages if r.status == ProofStatus.FAILURE]
-            open_ = [
-                (stage, r)
-                for stage, r in stages
-                if r.status not in (ProofStatus.SUCCESS, ProofStatus.FAILURE)
-            ]
+            open_ = [(stage, r) for stage, r in stages if r.status not in (ProofStatus.SUCCESS, ProofStatus.FAILURE)]
             if bad:
                 failed.append((task, bad[0][0], failure_category(bad[0][1]) or "failure"))
             elif open_:

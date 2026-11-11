@@ -1,9 +1,9 @@
 #include "module.hpp"
-#include "pyrunir/module.hpp"
 
 #include "pyrunir/kr/ps/base/module.hpp"
 #include "pyrunir/kr/ps/ext/module.hpp"
 #include "pyrunir/kr/ps/icp/module.hpp"
+#include "pyrunir/module.hpp"
 
 #include <runir/kr/ps/dl/incomplete_structural_termination_data.hpp>
 #include <runir/kr/ps/proof_status.hpp>

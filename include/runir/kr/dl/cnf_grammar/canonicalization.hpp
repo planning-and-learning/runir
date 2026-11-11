@@ -2,10 +2,10 @@
 #define RUNIR_CNF_GRAMMAR_CANONICALIZATION_HPP_
 
 #include "runir/kr/dl/canonicalization.hpp"
-#include "runir/kr/dl/numerical_data.hpp"
 #include "runir/kr/dl/cnf_grammar/derivation_rule_data.hpp"
 #include "runir/kr/dl/cnf_grammar/grammar_data.hpp"
 #include "runir/kr/dl/cnf_grammar/substitution_rule_data.hpp"
+#include "runir/kr/dl/numerical_data.hpp"
 
 #include <yggdrasil/semantics/canonicalization.hpp>
 

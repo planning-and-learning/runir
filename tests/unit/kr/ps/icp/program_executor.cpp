@@ -1,6 +1,4 @@
 #include "fixtures.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "planning_fixtures.hpp"
 
 #include <algorithm>
@@ -9,14 +7,16 @@
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/ps/icp/detail/rule_evaluation/context.hpp>
 #include <runir/kr/ps/icp/dl/parser.hpp>
 #include <runir/kr/ps/icp/program_executor.hpp>
 #include <runir/kr/ps/icp/successor_expander.hpp>
 #include <runir/kr/task_context.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 namespace runir::tests
 {

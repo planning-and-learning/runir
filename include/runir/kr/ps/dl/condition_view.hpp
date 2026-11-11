@@ -11,7 +11,10 @@
 
 namespace urd
 {
-template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, runir::kr::ps::dl::ConditionObservationTag<FeatureTag> ObservationTag, typename V>
+template<runir::kr::FamilyTag Family,
+         runir::kr::ps::dl::FeatureTag FeatureTag,
+         runir::kr::ps::dl::ConditionObservationTag<FeatureTag> ObservationTag,
+         typename V>
 struct view_mixin<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, V>
 {
 private:

@@ -2,8 +2,6 @@
 #define RUNIR_KR_DL_SEMANTICS_REGISTER_VALUES_DATA_HPP_
 
 #include "runir/kr/dl/semantics/declarations.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/dl/semantics/register_values_view_concepts.hpp"
 
 #include <cista/containers/optional.h>
@@ -15,10 +13,12 @@
 #include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/object_view.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
-#include <urd/elements/flat.hpp>
 
 namespace urd
 {

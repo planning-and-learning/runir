@@ -2,8 +2,6 @@
 #define RUNIR_KR_PS_EXT_DETAIL_RULE_EVALUATION_ACTION_HPP_
 
 #include "runir/kr/dl/object_rows.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/ps/dl/evaluation.hpp"
 #include "runir/kr/ps/ext/compatibility.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
@@ -23,10 +21,12 @@
 #include <tyr/planning/node.hpp>
 #include <tyr/planning/state_repository.hpp>
 #include <tyr/planning/successor_generator.hpp>
+#include <urd/config.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
-#include <urd/config.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
@@ -56,9 +56,7 @@ public:
         m_rule(rule),
         m_variant(variant),
         m_action(action)
-    {
-        m_offer.relation = action.index();
-    }
+    { m_offer.relation = action.index(); }
     auto get_rule() const noexcept { return m_rule; }
     auto get_variant() const noexcept { return m_variant; }
 
@@ -105,10 +103,10 @@ public:
             for (size_t i = 0; i < row.size(); ++i)
                 m_offer.values.emplace_back(row.value(i));
             // Policy applicability has no carried path metric.
-            const auto offered = (*context.task_context)
-                                     ->search_context->successor_generator->try_get_applicable_action_binding(
-                                         tyr::planning::Node<Kind, PlanningState>(planning_state, 0),
-                                         urd::resolve(m_offer, *planning_state.get_formalism_repository()));
+            const auto offered =
+                (*context.task_context)
+                    ->search_context->successor_generator->try_get_applicable_action_binding(tyr::planning::Node<Kind, PlanningState>(planning_state, 0),
+                                                                                             urd::resolve(m_offer, *planning_state.get_formalism_repository()));
             require_applicable(offered.status);
             // An applicable offer carries its binding.
             URD_ASSUME(offered.binding.has_value());

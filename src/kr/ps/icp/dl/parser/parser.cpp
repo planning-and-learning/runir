@@ -1,7 +1,7 @@
 #include "runir/kr/ps/icp/dl/parser/parser.hpp"
 
-#include "runir/kr/parser/diagnostics.hpp"
 #include "runir/kr/parser/config.hpp"
+#include "runir/kr/parser/diagnostics.hpp"
 #include "runir/kr/ps/ext/dl/parser/parser_def.hpp"
 #include "runir/kr/ps/icp/dl/ast/ast_adapted.hpp"
 
@@ -15,7 +15,6 @@ namespace
 
 using boost::spirit::x3::attr;
 using boost::spirit::x3::lit;
-using ygg::diagnostics::keyword;
 using runir::kr::ps::ext::dl::parser::action_section;
 using runir::kr::ps::ext::dl::parser::concept_feature_section_def;
 using runir::kr::ps::ext::dl::parser::concept_load_rule;
@@ -32,6 +31,7 @@ using runir::kr::ps::ext::dl::parser::source_memory_section;
 using runir::kr::ps::ext::dl::parser::symbol_section;
 using runir::kr::ps::ext::dl::parser::target_memory_section;
 using ygg::diagnostics::context;
+using ygg::diagnostics::keyword;
 
 struct ArgumentObjectClass : boost::spirit::x3::annotate_on_success
 {

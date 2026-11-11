@@ -1,7 +1,7 @@
 #include "runir/kr/ps/ext/dl/parser/parser.hpp"
 
-#include "runir/kr/parser/diagnostics.hpp"
 #include "runir/kr/parser/config.hpp"
+#include "runir/kr/parser/diagnostics.hpp"
 #include "runir/kr/ps/ext/dl/parser/parsers.hpp"
 
 #include <sstream>

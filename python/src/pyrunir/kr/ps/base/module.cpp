@@ -1,10 +1,9 @@
 #include "module.hpp"
-#include "pyrunir/module.hpp"
 
 #include "bindings.hpp"
 #include "pyrunir/kr/ps/base/dl/module.hpp"
-
 #include "pyrunir/kr/ps/program_bindings.hpp"
+#include "pyrunir/module.hpp"
 
 #include <runir/kr/ps/base/repository.hpp>
 

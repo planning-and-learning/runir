@@ -1,8 +1,8 @@
 #ifndef RUNIR_KR_DL_GRAMMAR_PARSER_PARSE_HPP_
 #define RUNIR_KR_DL_GRAMMAR_PARSER_PARSE_HPP_
 
-#include "runir/kr/parser/diagnostics.hpp"
 #include "runir/kr/parser/config.hpp"
+#include "runir/kr/parser/diagnostics.hpp"
 
 #include <boost/spirit/home/x3/support/traits/is_parser.hpp>
 #include <concepts>

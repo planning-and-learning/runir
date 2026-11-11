@@ -6,10 +6,10 @@
 #include <concepts>
 #include <tuple>
 #include <type_traits>
-#include <utility>
+#include <urd/elements/flat.hpp>
 #include <urd/repr/records/records.hpp>
 #include <urd/store.hpp>
-#include <urd/elements/flat.hpp>
+#include <utility>
 #include <yggdrasil/semantics/canonicalization.hpp>
 
 namespace runir::graphs::detail

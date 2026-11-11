@@ -1,8 +1,6 @@
 #include "bindings.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
-#include <urd/python/sequences/sequence.hpp>
 #include "pyrunir/kr/binding_utils.hpp"
+#include "pyrunir/module.hpp"
 
 #include <nanobind/stl/vector.h>
 #include <runir/kr/ps/icp/formatter.hpp>
@@ -10,9 +8,11 @@
 #include <runir/kr/ps/icp/module_view.hpp>
 #include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/ps/icp/syntactic_complexity.hpp>
+#include <urd/python/sequences/sequence.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 #include <yggdrasil/python/bindings.hpp>
-#include "pyrunir/module.hpp"
 
 namespace runir::kr::ps::icp
 {
@@ -51,31 +51,33 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
                  nb::arg("memory_states"),
                  nb::arg("memory_transitions"),
                  nb::arg("reset_pairs"))
-            .def(urd::python::init_from_views<
-                     urd::index_view<ModuleSymbol<IcpFamilyTag>, Repository>,
-                     const urd::Store<urd::sequence<urd::index_view<runir::kr::dl::Register<runir::kr::dl::ConceptTag>, DlRepository>>>&,
-                     const urd::Store<urd::sequence<urd::index_view<runir::kr::dl::Register<runir::kr::dl::RoleTag>, DlRepository>>>&,
-                     const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>, Repository>>>&,
-                     const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::RoleTag>, Repository>>>&,
-                     const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::BooleanTag>, Repository>>>&,
-                     const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::NumericalTag>, Repository>>>&,
-                     const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::ps::dl::QueryFeature>, Repository>>>&,
-                     urd::index_view<MemoryState<IcpFamilyTag>, Repository>,
-                     const urd::Store<urd::sequence<urd::index_view<MemoryState<IcpFamilyTag>, Repository>>>&,
-                     const urd::Store<urd::sequence<urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>, Repository>>>>>&,
-                     urd::flat_vector<ResetPair>>(),
-                 nb::arg("symbol"),
-                 nb::arg("concept_registers"),
-                 nb::arg("role_registers"),
-                 nb::arg("concept_features"),
-                 nb::arg("role_features"),
-                 nb::arg("boolean_features"),
-                 nb::arg("numerical_features"),
-                 nb::arg("query_features"),
-                 nb::arg("entry_memory_state"),
-                 nb::arg("memory_states"),
-                 nb::arg("memory_transitions"),
-                 nb::arg("reset_pairs"))
+            .def(
+                urd::python::init_from_views<
+                    urd::index_view<ModuleSymbol<IcpFamilyTag>, Repository>,
+                    const urd::Store<urd::sequence<urd::index_view<runir::kr::dl::Register<runir::kr::dl::ConceptTag>, DlRepository>>>&,
+                    const urd::Store<urd::sequence<urd::index_view<runir::kr::dl::Register<runir::kr::dl::RoleTag>, DlRepository>>>&,
+                    const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>, Repository>>>&,
+                    const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::RoleTag>, Repository>>>&,
+                    const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::BooleanTag>, Repository>>>&,
+                    const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::NumericalTag>, Repository>>>&,
+                    const urd::Store<
+                        urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::ps::dl::QueryFeature>, Repository>>>&,
+                    urd::index_view<MemoryState<IcpFamilyTag>, Repository>,
+                    const urd::Store<urd::sequence<urd::index_view<MemoryState<IcpFamilyTag>, Repository>>>&,
+                    const urd::Store<urd::sequence<urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Rule<runir::kr::IcpFamilyTag>, Repository>>>>>&,
+                    urd::flat_vector<ResetPair>>(),
+                nb::arg("symbol"),
+                nb::arg("concept_registers"),
+                nb::arg("role_registers"),
+                nb::arg("concept_features"),
+                nb::arg("role_features"),
+                nb::arg("boolean_features"),
+                nb::arg("numerical_features"),
+                nb::arg("query_features"),
+                nb::arg("entry_memory_state"),
+                nb::arg("memory_states"),
+                nb::arg("memory_transitions"),
+                nb::arg("reset_pairs"))
             .def_rw("index", &Data::index)
             .def_rw("symbol", &Data::symbol)
             .def_rw("concept_registers", &Data::concept_registers)

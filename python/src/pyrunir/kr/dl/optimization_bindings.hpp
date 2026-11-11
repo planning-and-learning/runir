@@ -1,17 +1,18 @@
 #ifndef PYRUNIR_KR_DL_OPTIMIZATION_BINDINGS_HPP_
 #define PYRUNIR_KR_DL_OPTIMIZATION_BINDINGS_HPP_
 
-#include <nanobind/nanobind.h>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
-#include <urd/python/sequences/sequence.hpp>
-#include <nanobind/stl/optional.h>
-#include <nanobind/stl/vector.h>
-#include <runir/kr/dl/optimization.hpp>
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
+
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/optional.h>
+#include <nanobind/stl/vector.h>
+#include <runir/kr/dl/optimization.hpp>
+#include <urd/python/sequences/sequence.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 #include <yggdrasil/python/diagnostics.hpp>
 

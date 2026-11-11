@@ -64,8 +64,8 @@ ProgramStateView<Kind> SuccessorExpander<Kind, ExecutionStorage, EvaluationPolic
 
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
 template<ProgramStateViewConcept<Kind> S, typename Emit, StopConcept Stop>
-    requires EmitConcept<Emit, ProgramStep<ExtFamilyTag, Kind, StorageStoredState<ExecutionStorage>>> && EmitConcept<Emit, detail::Choice<runir::kr::dl::ConceptTag>>
-             && EmitConcept<Emit, detail::Choice<runir::kr::dl::RoleTag>>
+    requires EmitConcept<Emit, ProgramStep<ExtFamilyTag, Kind, StorageStoredState<ExecutionStorage>>>
+             && EmitConcept<Emit, detail::Choice<runir::kr::dl::ConceptTag>> && EmitConcept<Emit, detail::Choice<runir::kr::dl::RoleTag>>
 bool SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::for_each_successor(S state,
                                                                                      ProgramSearchStatistics& statistics,
                                                                                      const Emit& emit,

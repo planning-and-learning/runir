@@ -1,4 +1,5 @@
 #include "runir/kr/dl/translations/ygg_query.hpp"
+
 #include <tyr/datalog/lifted/database/detail/repository_instantiations.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
@@ -127,7 +128,8 @@ QueryTranslator::YggQuery QueryTranslator::translate_concrete(DlQuery query, Que
     if constexpr (is_query_leaf_tag_v<Tag>)
     {
         const auto columns = concrete.get_schema();
-        return input(QuerySlot { QuerySlot::Kind::QUERY, static_cast<ygg::uint_t>(query.index().value), { columns.begin(), columns.end() }, query.is_static() });
+        return input(
+            QuerySlot { QuerySlot::Kind::QUERY, static_cast<ygg::uint_t>(query.index().value), { columns.begin(), columns.end() }, query.is_static() });
     }
     else if constexpr (std::same_as<Tag, QueryJoinTag>)
     {
@@ -154,9 +156,10 @@ QueryTranslator::YggQuery QueryTranslator::translate_concrete(DlQuery query, Que
     }
     else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
     {
-        auto out = urd::data<tyr::datalog::database::Query<tyr::datalog::database::QuerySelectValueTag>>(translate(concrete.get_arg()).index(),
-                                                                                       Label(data.column.value),
-                                                                                       urd::index<ygg::formalism::Object<void>>(data.object.value));
+        auto out =
+            urd::data<tyr::datalog::database::Query<tyr::datalog::database::QuerySelectValueTag>>(translate(concrete.get_arg()).index(),
+                                                                                                  Label(data.column.value),
+                                                                                                  urd::index<ygg::formalism::Object<void>>(data.object.value));
         return insert(out);
     }
     else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)

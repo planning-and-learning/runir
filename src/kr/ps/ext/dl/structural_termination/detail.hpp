@@ -2,11 +2,11 @@
 #define RUNIR_KR_PS_EXT_DL_STRUCTURAL_TERMINATION_DETAIL_HPP_
 
 #include "kr/ps/structural_termination/detail.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/ps/ext/dl/incomplete_structural_termination.hpp"
 #include "runir/kr/ps/ext/dl/structural_termination.hpp"
 
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 
 namespace runir::kr::ps::ext::dl::detail

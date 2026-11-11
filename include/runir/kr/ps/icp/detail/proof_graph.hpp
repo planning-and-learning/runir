@@ -2,8 +2,6 @@
 #define RUNIR_KR_PS_ICP_DETAIL_PROOF_GRAPH_HPP_
 
 #include "runir/graphs/cycle.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/ps/icp/detail/search_node.hpp"
 #include "runir/kr/ps/icp/program_executor_data.hpp"
 
@@ -11,6 +9,8 @@
 #include <memory>
 #include <span>
 #include <tuple>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 

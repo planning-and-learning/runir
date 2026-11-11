@@ -19,8 +19,7 @@
 #define RUNIR_DATASETS_OBJECT_GRAPH_COLOR_HPP_
 
 #include <algorithm>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
+#include <boost/mp11.hpp>
 #include <cassert>
 #include <cista/containers/variant.h>
 #include <cista/containers/vector.h>
@@ -32,12 +31,13 @@
 #include <tyr/formalism/planning/repository.hpp>
 #include <tyr/formalism/predicate_data.hpp>
 #include <tyr/formalism/predicate_view.hpp>
+#include <urd/config.hpp>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <variant>
 #include <yggdrasil/core/config.hpp>
-#include <urd/config.hpp>
-#include <urd/elements/flat.hpp>
-#include <boost/mp11.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>
 #include <yggdrasil/semantics/canonicalization.hpp>
@@ -97,8 +97,8 @@ struct data<runir::datasets::PredicateColor<T>>
 template<>
 struct data<runir::datasets::Color>
 {
-    using Variant =
-        urd::index_variant<boost::mp11::mp_transform<runir::datasets::PredicateColor, boost::mp11::mp_list<::tyr::formalism::StaticTag, ::tyr::formalism::FluentTag>>>;
+    using Variant = urd::index_variant<
+        boost::mp11::mp_transform<runir::datasets::PredicateColor, boost::mp11::mp_list<::tyr::formalism::StaticTag, ::tyr::formalism::FluentTag>>>;
     using VariantList = urd::flat_vector<Variant>;
 
     urd::index<runir::datasets::Color> index;
@@ -155,11 +155,9 @@ void canonicalize(urd::data<PredicateColor<T>>&) noexcept
 {
 }
 
-inline bool is_canonical(const urd::data<Color>& data) noexcept
-{ return ygg::is_canonical(data.values); }
+inline bool is_canonical(const urd::data<Color>& data) noexcept { return ygg::is_canonical(data.values); }
 
-inline void canonicalize(urd::data<Color>& data)
-{ ygg::canonicalize(data.values); }
+inline void canonicalize(urd::data<Color>& data) { ygg::canonicalize(data.values); }
 
 class ColorRepository
 {

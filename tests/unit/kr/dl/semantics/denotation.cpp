@@ -17,13 +17,12 @@ namespace
 {
 
 template<typename T, typename Repository>
-concept IndexedDataView =
-    std::constructible_from<urd::index<T>, ygg::uint_t> && urd::Identifiable<urd::index<T>> && urd::Identifiable<urd::data<T>>
-    && urd::Identifiable<urd::index_view<T, Repository>> && std::totally_ordered<urd::index<T>> && std::totally_ordered<urd::data<T>>
-    && std::totally_ordered<urd::index_view<T, Repository>> && requires(urd::data<T>& data, const urd::index_view<T, Repository>& view) {
-           data.index;
-           view.index();
-       };
+concept IndexedDataView = std::constructible_from<urd::index<T>, ygg::uint_t> && urd::Identifiable<urd::index<T>> && urd::Identifiable<urd::data<T>>
+                          && urd::Identifiable<urd::index_view<T, Repository>> && std::totally_ordered<urd::index<T>> && std::totally_ordered<urd::data<T>>
+                          && std::totally_ordered<urd::index_view<T, Repository>> && requires(urd::data<T>& data, const urd::index_view<T, Repository>& view) {
+                                 data.index;
+                                 view.index();
+                             };
 
 template<typename Repository, typename... Ts>
 consteval bool indexed_data_views(boost::mp11::mp_list<Ts...>)
@@ -88,8 +87,7 @@ static_assert(requires(urd::data<Role>& data, const urd::builder<Role>& builder,
     view.end();
 });
 static_assert(view_aliases(kr::dl::CategoryTags {}));
-static_assert(
-    std::same_as<kr::dl::semantics::ConceptDenotationView, urd::index_view<Denotation<kr::dl::ConceptTag>, kr::dl::semantics::DenotationRepository>>);
+static_assert(std::same_as<kr::dl::semantics::ConceptDenotationView, urd::index_view<Denotation<kr::dl::ConceptTag>, kr::dl::semantics::DenotationRepository>>);
 
 }  // namespace
 
@@ -303,7 +301,8 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsOutliveViewWrappers)
     auto concept_builder = urd::builder<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(3);
     concept_builder.get().set(0);
     concept_builder.get().set(2);
-    auto concept_data = urd::data<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(3, repository.get_vector_repository().insert(concept_builder.blocks).first);
+    auto concept_data =
+        urd::data<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(3, repository.get_vector_repository().insert(concept_builder.blocks).first);
     const auto concept_view = repository.insert(concept_data).first;
     const auto concept_copy = concept_view;
     EXPECT_TRUE(concept_view.begin() == concept_copy.begin());

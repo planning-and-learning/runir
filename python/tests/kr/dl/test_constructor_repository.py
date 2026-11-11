@@ -83,9 +83,7 @@ def _check_queries(
         assert concept_projection_variant == concept_projected
         projection_index: dl.semantics.ConceptIndex | dl.semantics.RoleIndex = concept_projection.index()
     else:
-        role_projected = _created(
-            lambda: repository.insert(semantics.RoleProjectData(query.index(), columns[::-1]))
-        )
+        role_projected = _created(lambda: repository.insert(semantics.RoleProjectData(query.index(), columns[::-1])))
         assert [column.get_name() for column in role_projected.get_columns()] == names[::-1]
         role_projection = _created(lambda: repository.insert(semantics.RoleData(role_projected.index())))
         role_projection_variant = role_projection.get_variant()

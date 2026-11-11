@@ -1,19 +1,18 @@
 #include "bindings.hpp"
+#include "pyrunir/module.hpp"
 #include "runir/kr/dl/detail/repository_instantiations.hpp"
 
 #include <nanobind/stl/variant.h>
 #include <pyrunir/kr/dl/evaluation_bindings.hpp>
 #include <pyrunir/kr/dl/optimization_bindings.hpp>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/constructor_view.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include "pyrunir/module.hpp"
 
 namespace runir::kr::dl
 {

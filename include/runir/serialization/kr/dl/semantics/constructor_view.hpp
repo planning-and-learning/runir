@@ -2,8 +2,8 @@
 #define RUNIR_SERIALIZATION_KR_DL_SEMANTICS_CONSTRUCTOR_VIEW_HPP_
 
 #include "runir/kr/dl/query_view.hpp"
-#include "runir/kr/dl/repository.hpp"
 #include "runir/kr/dl/record_view.hpp"
+#include "runir/kr/dl/repository.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/serialization/kr/dl/argument_view.hpp"
 #include "runir/serialization/kr/dl/register_view.hpp"

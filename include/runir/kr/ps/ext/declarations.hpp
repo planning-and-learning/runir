@@ -8,10 +8,10 @@
 #include "runir/kr/ps/ext/execution_declarations.hpp"
 #include "runir/kr/ps/family_traits.hpp"
 
+#include <boost/mp11.hpp>
 #include <concepts>
 #include <cstdint>
 #include <memory>
-#include <boost/mp11.hpp>
 #include <urd/elements/flat.hpp>
 
 namespace runir::kr::ps::ext
@@ -96,15 +96,16 @@ struct Program
 using LoadRuleTypes = boost::mp11::mp_list<Rule<LoadTag<runir::kr::dl::ConceptTag>>, Rule<LoadTag<runir::kr::dl::RoleTag>>>;
 using ChooseRuleTypes = boost::mp11::mp_list<Rule<ChooseTag<runir::kr::dl::ConceptTag>>, Rule<ChooseTag<runir::kr::dl::RoleTag>>>;
 using ConcreteRuleTypes = boost::mp11::mp_append<LoadRuleTypes,
-                                                boost::mp11::mp_transform<Rule, boost::mp11::mp_list<SketchTag, DoTag, CallTag>>,
-                                                ChooseRuleTypes,
-                                                boost::mp11::mp_transform<Rule, boost::mp11::mp_list<ActionTag, BacktrackTag>>>;
+                                                 boost::mp11::mp_transform<Rule, boost::mp11::mp_list<SketchTag, DoTag, CallTag>>,
+                                                 ChooseRuleTypes,
+                                                 boost::mp11::mp_transform<Rule, boost::mp11::mp_list<ActionTag, BacktrackTag>>>;
 using RuleTypes = boost::mp11::mp_append<boost::mp11::mp_list<ps::Rule<ExtFamilyTag>>, ConcreteRuleTypes>;
 using FeatureTypes = runir::kr::ps::PsFeatureTypes<runir::kr::ExtFamilyTag>;
 using ConditionTypes = runir::kr::ps::PsConditionTypes<runir::kr::ExtFamilyTag>;
 using EffectTypes = runir::kr::ps::PsEffectTypes<runir::kr::ExtFamilyTag>;
 /// A call rule's argument: a feature of any category.
-using CallArgument = urd::index_variant<boost::mp11::mp_transform_q<boost::mp11::mp_bind_front<runir::kr::ps::Feature, runir::kr::ExtFamilyTag>, runir::kr::dl::CategoryTags>>;
+using CallArgument =
+    urd::index_variant<boost::mp11::mp_transform_q<boost::mp11::mp_bind_front<runir::kr::ps::Feature, runir::kr::ExtFamilyTag>, runir::kr::dl::CategoryTags>>;
 using ProgramTypes = boost::mp11::mp_list<MemoryState<ExtFamilyTag>, ModuleSymbol<ExtFamilyTag>, Module, Program, OrderTerm>;
 using RepositoryTypes =
     boost::mp11::mp_append<runir::kr::ps::base::RepositoryTypes, runir::kr::ps::PsCoreTypes<runir::kr::ExtFamilyTag>, RuleTypes, ProgramTypes>;

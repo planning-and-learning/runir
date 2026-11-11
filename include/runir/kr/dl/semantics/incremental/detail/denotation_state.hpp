@@ -3,6 +3,7 @@
 
 #include "runir/kr/dl/semantics/incremental/denotation_delta.hpp"
 #include "runir/kr/dl/semantics/interning.hpp"
+
 #include <urd/bits.hpp>
 
 namespace runir::kr::dl::semantics::incremental::detail

@@ -6,7 +6,8 @@
 namespace runir::kr::ps::base::dl
 {
 
-runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::BaseFamilyTag> incomplete_structural_termination(SketchView sketch, bool use_memory_scc_scope)
+runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::BaseFamilyTag> incomplete_structural_termination(SketchView sketch,
+                                                                                                                     bool use_memory_scc_scope)
 {
     const auto analysis = detail::analyze_sketch(sketch);
     const auto policy_result = runir::kr::ps::detail::incomplete_structural_termination(analysis.policy, use_memory_scc_scope);

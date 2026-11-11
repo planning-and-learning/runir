@@ -3,8 +3,8 @@
 
 #include "runir/kr/dl/semantics/declarations.hpp"
 
-#include <variant>
 #include <urd/elements/flat.hpp>
+#include <variant>
 
 namespace runir::kr::dl::semantics::incremental
 {

@@ -1,4 +1,5 @@
 #include "bindings.hpp"
+#include "pyrunir/module.hpp"
 #include "runir/kr/uns/declarations.hpp"
 
 #include <runir/kr/dl/repository.hpp>
@@ -7,7 +8,6 @@
 #include <runir/kr/uns/repository.hpp>
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include "pyrunir/module.hpp"
 
 namespace runir::kr::uns
 {

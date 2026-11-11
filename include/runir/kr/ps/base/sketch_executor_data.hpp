@@ -3,8 +3,8 @@
 
 #include "runir/graphs/declarations.hpp"
 #include "runir/kr/declarations.hpp"
-#include "runir/kr/ps/proof_status.hpp"
 #include "runir/kr/ps/base/sketch_proof_graph.hpp"
+#include "runir/kr/ps/proof_status.hpp"
 #include "runir/kr/uns/classifier_view.hpp"
 #include "runir/kr/uns/declarations.hpp"
 

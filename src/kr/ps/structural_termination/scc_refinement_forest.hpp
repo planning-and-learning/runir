@@ -12,14 +12,14 @@
 // marks of all its ancestors.
 
 #include <algorithm>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
-#include <urd/repr/values/dense_set.hpp>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <span>
 #include <stdexcept>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/dense_set.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 

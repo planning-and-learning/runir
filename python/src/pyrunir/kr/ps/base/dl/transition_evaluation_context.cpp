@@ -1,6 +1,6 @@
 #include "bindings.hpp"
-#include "pyrunir/module.hpp"
 #include "pyrunir/kr/binding_utils.hpp"
+#include "pyrunir/module.hpp"
 
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_caches.hpp>

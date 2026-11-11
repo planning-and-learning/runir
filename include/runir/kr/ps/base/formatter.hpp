@@ -145,7 +145,6 @@ struct fmt::formatter<urd::index_view<runir::kr::ps::base::Sketch, C>> : fmt::fo
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::sketch(view), ctx); }
 };
 
-
 template<tyr::TaskKind Kind>
 struct fmt::formatter<runir::kr::ps::base::SketchProofResults<Kind>> : fmt::formatter<std::string_view>
 {

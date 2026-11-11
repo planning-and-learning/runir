@@ -16,19 +16,19 @@
  */
 
 #include "runir/datasets/object_graph.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/repr/values/indexed.hpp>
-#include <urd/store.hpp>
 
 #include <cstddef>
 #include <stdexcept>
-#include <tyr/planning/state_builder.hpp>
-#include <tyr/planning/state_repository.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/task.hpp>
+#include <tyr/planning/state_builder.hpp>
+#include <tyr/planning/state_repository.hpp>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/indexed.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
-#include <urd/elements/flat.hpp>
 #include <yggdrasil/core/config.hpp>
 
 namespace runir::datasets
@@ -178,4 +178,3 @@ template auto create_object_graph<tyr::GroundTag>(tyr::planning::StateView<tyr::
 template auto create_object_graph<tyr::LiftedTag>(tyr::planning::StateView<tyr::LiftedTag>, ColorRepository&) -> std::unique_ptr<ObjectGraph>;
 
 }  // namespace runir::datasets
-

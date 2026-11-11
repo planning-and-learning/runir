@@ -1,13 +1,9 @@
 #ifndef RUNIR_KR_PS_ICP_DETAIL_PROOF_SEARCH_HPP_
 #define RUNIR_KR_PS_ICP_DETAIL_PROOF_SEARCH_HPP_
 
-#include "runir/kr/ps/icp/detail/proof_graph.hpp"
-#include <urd/repr/queues/queue.hpp>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/repr/values/indexed.hpp>
-#include <urd/store.hpp>
-#include "runir/kr/ps/icp/detail/search_node.hpp"
 #include "runir/kr/ps/detail/search_space.hpp"
+#include "runir/kr/ps/icp/detail/proof_graph.hpp"
+#include "runir/kr/ps/icp/detail/search_node.hpp"
 #include "runir/kr/ps/icp/program_executor.hpp"
 #include "runir/kr/ps/icp/successor_expander.hpp"
 #include "runir/kr/ps/unsolvability.hpp"
@@ -18,6 +14,10 @@
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <unordered_map>
+#include <urd/repr/queues/queue.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/indexed.hpp>
+#include <urd/store.hpp>
 #include <vector>
 #include <yggdrasil/core/chrono.hpp>
 

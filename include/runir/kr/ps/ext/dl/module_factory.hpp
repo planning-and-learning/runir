@@ -2,12 +2,12 @@
 #define RUNIR_KR_PS_EXT_DL_MODULE_FACTORY_HPP_
 
 #include "runir/kr/ps/ext/declarations.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 
 #include <cstdint>
 #include <string>
 #include <tyr/formalism/planning/declarations.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 
 namespace runir::kr::ps::ext::dl

@@ -2,8 +2,6 @@
 #define RUNIR_SRC_KR_PARSER_CONSTRUCTORS_HPP_
 
 #include "kr/parser/resolution.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/grammar/constructor_repository.hpp"
 #include "runir/kr/dl/repository.hpp"
@@ -12,8 +10,10 @@
 #include <boost/variant/apply_visitor.hpp>
 #include <stdexcept>
 #include <type_traits>
-#include <vector>
 #include <urd/config.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
+#include <vector>
 #include <yggdrasil/formalism/builder.hpp>
 
 namespace runir::kr::parser::constructors

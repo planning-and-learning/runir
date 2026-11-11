@@ -70,7 +70,9 @@ Out condition(urd::index_view<runir::kr::ps::ConcreteCondition<Family, runir::kr
 
 template<typename Out, typename... Views>
 Out condition(const std::variant<Views...>& view, Out out)
-{ return std::visit([&](auto concrete) { return condition(concrete, out); }, view); }
+{
+    return std::visit([&](auto concrete) { return condition(concrete, out); }, view);
+}
 
 template<runir::kr::FamilyTag Family,
          typename Out,
@@ -82,7 +84,9 @@ Out effect(urd::index_view<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTa
 
 template<typename Out, typename... Views>
 Out effect(const std::variant<Views...>& view, Out out)
-{ return std::visit([&](auto concrete) { return effect(concrete, out); }, view); }
+{
+    return std::visit([&](auto concrete) { return effect(concrete, out); }, view);
+}
 
 template<typename View>
 std::string condition(View view)

@@ -1,7 +1,9 @@
 #include "incremental_root_evaluators.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "planning_fixtures.hpp"
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
 #include <algorithm>
 #include <concepts>
@@ -13,25 +15,23 @@
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include <runir/kr/dl/semantics/incremental/delta.hpp>
 #include <runir/kr/dl/semantics/incremental/detail/atomic_query.hpp>
 #include <runir/kr/dl/semantics/incremental/evaluation.hpp>
-#include "runir/kr/dl/datas.hpp"
-#include "runir/kr/dl/declarations.hpp"
-#include "runir/kr/dl/semantics/evaluation.hpp"
-#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <string>
 #include <tuple>
 #include <type_traits>
+#include <tyr/datalog/lifted/database/semantics/incremental/projection.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <tyr/planning/lifted/task.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
-#include <tyr/datalog/lifted/database/semantics/incremental/projection.hpp>
 
 namespace runir::tests
 {
@@ -44,7 +44,9 @@ using Object = urd::index<tyr::formalism::Object>;
 auto parse_query(const std::string& expression, tyr::formalism::planning::DomainView domain, kr::dl::ConstructorRepository& repository)
 {
     const auto count = kr::ps::ext::dl::parse_numerical("(n_count " + expression + ")", domain, repository);
-    return std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(std::get<urd::index_view<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant()).get_arg());
+    return std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(
+        std::get<urd::index_view<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant())
+            .get_arg());
 }
 
 auto rows(const auto& relation)
@@ -133,7 +135,8 @@ void check_atomic_projection()
     const auto registers = urd::resolve(register_data, *search->task->get_repository());
     auto argument_data = urd::data<kr::dl::semantics::CallArguments> {};
     const auto arguments = denotations.insert(argument_data).first;
-    const auto publications = [&] { return storage.get_denotation_repository(false).get_relation_repository().symbols().template size<ygg::Relation<ygg::Schema>>(); };
+    const auto publications = [&]
+    { return storage.get_denotation_repository(false).get_relation_repository().symbols().template size<ygg::Relation<ygg::Schema>>(); };
     const auto compare_full = [&](auto state)
     {
         storage.reset_dynamic();
@@ -239,7 +242,8 @@ void check_query_graph()
             return make_lifted_context(directory / "domain.pddl", directory / "task.pddl");
     };
     const auto search = make_search();
-    auto nodes = urd::Store<urd::sequence<tyr::planning::Node<Kind>>> { search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator) };
+    auto nodes = urd::Store<urd::sequence<tyr::planning::Node<Kind>>> { search->successor_generator->get_initial_node(*search->state_repository,
+                                                                                                                      *search->axiom_evaluator) };
     for (size_t i = 0; i < 4; ++i)
     {
         const auto successors = search->successor_generator->get_labeled_successor_nodes(nodes.back(), *search->state_repository, *search->axiom_evaluator);

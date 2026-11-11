@@ -2,8 +2,6 @@
 #define RUNIR_KR_PS_EXT_DL_AST_AST_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/parser/ast.hpp"
 #include "runir/kr/ps/base/dl/ast/ast.hpp"
@@ -13,6 +11,8 @@
 #include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
 #include <string>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 
 namespace runir::kr::ps::ext::dl::ast

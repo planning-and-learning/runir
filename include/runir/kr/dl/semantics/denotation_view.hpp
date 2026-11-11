@@ -6,8 +6,6 @@
 #include "runir/kr/dl/semantics/denotation_data.hpp"
 
 #include <cassert>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include <concepts>
 #include <cstddef>
 #include <iterator>
@@ -17,12 +15,14 @@
 #include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/object_view.hpp>
 #include <tyr/formalism/planning/repository.hpp>
-#include <urd/elements/view.hpp>
 #include <urd/bits.hpp>
+#include <urd/elements/flat.hpp>
+#include <urd/elements/view.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
-#include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
 
 namespace runir::kr::dl::semantics
@@ -68,8 +68,7 @@ using DenotationBits = urd::bitset_span<const ygg::uint_t>;
 /// The objects whose bits are set (a concept's bits, or a role's row): a borrowed range, holding only the bits.
 inline auto object_indices(DenotationBits bits) noexcept
 {
-    return urd::transform(urd::set_bit_indices(bits),
-                          [](std::size_t bit) { return urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(bit)); });
+    return urd::transform(urd::set_bit_indices(bits), [](std::size_t bit) { return urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(bit)); });
 }
 
 /// The (source, target) pairs whose bits are set in a role's bits, a row of whole blocks per source.
@@ -164,7 +163,6 @@ public:
         requires std::same_as<Category, runir::kr::dl::RoleTag>
     { return views(source).end(); }
 };
-
 
 namespace urd
 {

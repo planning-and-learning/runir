@@ -4,8 +4,8 @@
 #include "runir/kr/ps/ext/module_view.hpp"
 #include "runir/serialization/kr/dl/argument_view.hpp"
 #include "runir/serialization/kr/dl/register_view.hpp"
-#include "runir/serialization/kr/ps/rule_variant_view.hpp"
 #include "runir/serialization/kr/ps/ext/rule_view.hpp"
+#include "runir/serialization/kr/ps/rule_variant_view.hpp"
 
 #include <yggdrasil/serialization/dictionaries.hpp>
 

@@ -2,8 +2,6 @@
 #define RUNIR_KR_PS_EXT_DL_PARSER_PARSER_DEF_HPP_
 
 #include "runir/kr/dl/grammar/parser/parsers.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/parser/config.hpp"
 #include "runir/kr/ps/base/dl/ast/ast_adapted.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
@@ -12,6 +10,8 @@
 
 #include <boost/spirit/home/x3/support/utility/annotate_on_success.hpp>
 #include <string>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 namespace runir::kr::ps::ext::dl::parser
 {
@@ -21,8 +21,8 @@ using boost::spirit::x3::eoi;
 using boost::spirit::x3::lexeme;
 using boost::spirit::x3::lit;
 using boost::spirit::x3::raw;
-using ygg::diagnostics::keyword;
 using ygg::diagnostics::context;
+using ygg::diagnostics::keyword;
 
 using boost::spirit::x3::ascii::alnum;
 using boost::spirit::x3::ascii::alpha;
@@ -200,8 +200,8 @@ constexpr auto rule_entry_def = context(
 constexpr auto rules_section_def = context(":rules")[(lit("(") >> keyword(":rules")) > *rule_entry > lit(")")];
 
 constexpr auto named_value_def = identifier;
-constexpr auto required_memory_states = boost::spirit::x3::rule<class RequiredMemoryStates, urd::Store<urd::sequence<ast::NamedValue>>> { "one or more memory states" } =
-    +named_value;
+constexpr auto required_memory_states =
+    boost::spirit::x3::rule<class RequiredMemoryStates, urd::Store<urd::sequence<ast::NamedValue>>> { "one or more memory states" } = +named_value;
 constexpr auto memory_section_def = context(":memory")[(lit("(") >> keyword(":memory")) > required_memory_states > lit(")")];
 
 constexpr auto module_def = context("module")[(lit("(") >> keyword(":module")) > symbol_section > arguments_section > registers_section > entry_section

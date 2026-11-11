@@ -2,8 +2,6 @@
 #define RUNIR_KR_DL_CNF_GRAMMAR_TRANSLATE_IMPL_HPP_
 
 #include "runir/kr/dl/cnf_grammar/canonicalization.hpp"
-#include <urd/repr/values/std_set.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/dl/cnf_grammar/constructor_repository.hpp"
 #include "runir/kr/dl/cnf_grammar/translate.hpp"
 #include "runir/kr/dl/grammar/constructor_repository.hpp"
@@ -12,6 +10,8 @@
 #include <concepts>
 #include <string>
 #include <unordered_set>
+#include <urd/repr/values/std_set.hpp>
+#include <urd/store.hpp>
 #include <utility>
 
 namespace runir::kr::dl::cnf_grammar::detail

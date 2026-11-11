@@ -10,16 +10,16 @@
 
 #include <cassert>
 #include <memory>
+#include <tyr/datalog/lifted/database/semantics/relation_view.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
-#include <utility>
+#include <urd/config.hpp>
+#include <urd/elements/flat.hpp>
 #include <urd/repr/pools/pools.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
+#include <utility>
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/core/index_sequence.hpp>
-#include <urd/config.hpp>
-#include <urd/elements/flat.hpp>
-#include <tyr/datalog/lifted/database/semantics/relation_view.hpp>
 #include <yggdrasil/formalism/interning.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>
 

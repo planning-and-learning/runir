@@ -3,10 +3,10 @@
 
 #include "runir/kr/dl/register_view.hpp"
 #include "runir/kr/ps/dl/feature_view.hpp"
-#include "runir/kr/ps/memory_state_view.hpp"
 #include "runir/kr/ps/icp/rule_data.hpp"
 #include "runir/kr/ps/icp/xcondition_view.hpp"
 #include "runir/kr/ps/icp/xeffect_view.hpp"
+#include "runir/kr/ps/memory_state_view.hpp"
 
 #include <urd/elements/flat.hpp>
 

@@ -2,9 +2,6 @@
 #define RUNIR_KR_PS_EXT_DETAIL_RULE_EVALUATORS_HPP_
 
 #include "runir/kr/ps/ext/compatibility.hpp"
-#include <urd/repr/maps/index_map.hpp>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
 #include "runir/kr/ps/ext/detail/rule_evaluation/action.hpp"
 #include "runir/kr/ps/ext/detail/rule_evaluation/backtrack.hpp"
@@ -21,6 +18,7 @@
 #include "runir/kr/task_context.hpp"
 
 #include <algorithm>
+#include <boost/mp11.hpp>
 #include <concepts>
 #include <functional>
 #include <optional>
@@ -28,10 +26,12 @@
 #include <stdexcept>
 #include <type_traits>
 #include <tyr/planning/node.hpp>
+#include <urd/repr/maps/index_map.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <variant>
 #include <vector>
-#include <boost/mp11.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
@@ -44,14 +44,14 @@ class RuleEvaluators
     using Concept = runir::kr::dl::ConceptTag;
     using Role = runir::kr::dl::RoleTag;
     using EvaluatorTypes = boost::mp11::mp_list<LoadRuleEvaluator<Kind, Concept>,
-                                         LoadRuleEvaluator<Kind, Role>,
-                                         SketchRuleEvaluator<Kind>,
-                                         DoRuleEvaluator<Kind>,
-                                         CallRuleEvaluator<Kind>,
-                                         ChooseRuleEvaluator<Kind, Concept>,
-                                         ChooseRuleEvaluator<Kind, Role>,
-                                         ActionRuleEvaluator<Kind>,
-                                         BacktrackRuleEvaluator<Kind>>;
+                                                LoadRuleEvaluator<Kind, Role>,
+                                                SketchRuleEvaluator<Kind>,
+                                                DoRuleEvaluator<Kind>,
+                                                CallRuleEvaluator<Kind>,
+                                                ChooseRuleEvaluator<Kind, Concept>,
+                                                ChooseRuleEvaluator<Kind, Role>,
+                                                ActionRuleEvaluator<Kind>,
+                                                BacktrackRuleEvaluator<Kind>>;
     using Evaluator = boost::mp11::mp_apply<std::variant, EvaluatorTypes>;
     runir::kr::TaskContextPtr<Kind> m_task_context;
     ProgramView m_program;
@@ -244,8 +244,7 @@ public:
             if (stop())
                 return false;
             const auto candidate = context.storage->successor(planning_state, binding);
-            const auto borrowed_candidate =
-                tyr::planning::LabeledNode<Kind, PlanningState, tyr::planning::BorrowedActionRowView<Kind>> { binding, candidate };
+            const auto borrowed_candidate = tyr::planning::LabeledNode<Kind, PlanningState, tyr::planning::BorrowedActionRowView<Kind>> { binding, candidate };
             context.environment->reset_target();
             auto label = std::optional<tyr::formalism::planning::ActionRowView> {};
             for (const auto& evaluator : m_sketch_rules)

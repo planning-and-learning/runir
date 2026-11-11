@@ -1,8 +1,9 @@
 #include "scc_refinement_forest.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 
 #include "detail.hpp"
+
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 namespace runir::kr::ps::detail
 {

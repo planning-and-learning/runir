@@ -1,23 +1,22 @@
 #include "bindings.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
-#include <urd/python/sequences/sequence.hpp>
 #include "pyrunir/kr/binding_utils.hpp"
+#include "pyrunir/module.hpp"
 
 #include <nanobind/stl/list.h>
 #include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
-#include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/rule_data.hpp>
 #include <runir/kr/ps/ext/rule_view.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
+#include <urd/python/sequences/sequence.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 #include <yggdrasil/python/bindings.hpp>
-#include "pyrunir/module.hpp"
 
 namespace runir::kr::ps::ext
 {
@@ -45,10 +44,7 @@ template<typename T>
 auto bind_rule_view(nb::module_& m, const char* name)
 {
     using View = urd::index_view<T, Repository>;
-    auto cls = nb::class_<View>(m, name)
-                   .def("index", &View::index)
-                   .def("get_source", &View::get_source)
-                   .def("get_conditions", &View::get_conditions);
+    auto cls = nb::class_<View>(m, name).def("index", &View::index).def("get_source", &View::get_source).def("get_conditions", &View::get_conditions);
     if constexpr (requires(View view) { view.get_target(); })
         cls.def("get_target", &View::get_target);
     if constexpr (requires { &View::get_effects; })
@@ -128,11 +124,11 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
              "reg"_a,
              "effects"_a)
         .def(urd::python::init_from_views<MemoryStateView,
-                      MemoryStateView,
-                      const ConditionViewList&,
-                      urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>, Repository>,
-                      runir::kr::dl::RegisterView<runir::kr::dl::ConceptTag>,
-                      const EffectViewList&>(),
+                                          MemoryStateView,
+                                          const ConditionViewList&,
+                                          urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>, Repository>,
+                                          runir::kr::dl::RegisterView<runir::kr::dl::ConceptTag>,
+                                          const EffectViewList&>(),
              "source"_a,
              "target"_a,
              "conditions"_a,
@@ -150,11 +146,11 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
              "reg"_a,
              "effects"_a)
         .def(urd::python::init_from_views<MemoryStateView,
-                      MemoryStateView,
-                      const ConditionViewList&,
-                      urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>, Repository>,
-                      runir::kr::dl::RegisterView<runir::kr::dl::RoleTag>,
-                      const EffectViewList&>(),
+                                          MemoryStateView,
+                                          const ConditionViewList&,
+                                          urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>, Repository>,
+                                          runir::kr::dl::RegisterView<runir::kr::dl::RoleTag>,
+                                          const EffectViewList&>(),
              "source"_a,
              "target"_a,
              "conditions"_a,
@@ -173,12 +169,12 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
              "effects"_a,
              "order"_a)
         .def(urd::python::init_from_views<MemoryStateView,
-                      MemoryStateView,
-                      const ConditionViewList&,
-                      urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>, Repository>,
-                      runir::kr::dl::RegisterView<runir::kr::dl::ConceptTag>,
-                      const EffectViewList&,
-                      const OrderTermViewList&>(),
+                                          MemoryStateView,
+                                          const ConditionViewList&,
+                                          urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>, Repository>,
+                                          runir::kr::dl::RegisterView<runir::kr::dl::ConceptTag>,
+                                          const EffectViewList&,
+                                          const OrderTermViewList&>(),
              "source"_a,
              "target"_a,
              "conditions"_a,
@@ -198,12 +194,12 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
              "effects"_a,
              "order"_a)
         .def(urd::python::init_from_views<MemoryStateView,
-                      MemoryStateView,
-                      const ConditionViewList&,
-                      urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>, Repository>,
-                      runir::kr::dl::RegisterView<runir::kr::dl::RoleTag>,
-                      const EffectViewList&,
-                      const OrderTermViewList&>(),
+                                          MemoryStateView,
+                                          const ConditionViewList&,
+                                          urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>, Repository>,
+                                          runir::kr::dl::RegisterView<runir::kr::dl::RoleTag>,
+                                          const EffectViewList&,
+                                          const OrderTermViewList&>(),
              "source"_a,
              "target"_a,
              "conditions"_a,
@@ -229,11 +225,11 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
              "action_name"_a,
              "query_feature"_a)
         .def(urd::python::init_from_views<MemoryStateView,
-                      MemoryStateView,
-                      const ConditionViewList&,
-                      const EffectViewList&,
-                      urd::flat_string,
-                      urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>, Repository>>(),
+                                          MemoryStateView,
+                                          const ConditionViewList&,
+                                          const EffectViewList&,
+                                          urd::flat_string,
+                                          urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>, Repository>>(),
              "source"_a,
              "target"_a,
              "conditions"_a,
@@ -255,12 +251,13 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
              "effects"_a,
              "action_name"_a,
              "arguments"_a)
-        .def(urd::python::init_from_views<MemoryStateView,
-                      MemoryStateView,
-                      const ConditionViewList&,
-                      const EffectViewList&,
-                      urd::flat_string,
-                      const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>, Repository>>>&>(),
+        .def(urd::python::init_from_views<
+                 MemoryStateView,
+                 MemoryStateView,
+                 const ConditionViewList&,
+                 const EffectViewList&,
+                 urd::flat_string,
+                 const urd::Store<urd::sequence<urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>, Repository>>>&>(),
              "source"_a,
              "target"_a,
              "conditions"_a,
@@ -277,10 +274,10 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
              "callee"_a,
              "arguments"_a)
         .def(urd::python::init_from_views<MemoryStateView,
-                      MemoryStateView,
-                      const ConditionViewList&,
-                      urd::index_view<ModuleSymbol<ExtFamilyTag>, Repository>,
-                      urd::flat_vector<CallArgument>>(),
+                                          MemoryStateView,
+                                          const ConditionViewList&,
+                                          urd::index_view<ModuleSymbol<ExtFamilyTag>, Repository>,
+                                          urd::flat_vector<CallArgument>>(),
              "source"_a,
              "target"_a,
              "conditions"_a,
@@ -312,9 +309,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
         .def("get_action_name", &urd::index_view<Do, Repository>::get_action_name)
         .def("get_action_arguments", &urd::index_view<Do, Repository>::get_action_arguments);
     using CallView = urd::index_view<Call, Repository>;
-    bind_rule_view<Call>(m, "CallRule")
-        .def("get_callee", &CallView::get_callee)
-        .def("get_call_arguments", &CallView::get_call_arguments);
+    bind_rule_view<Call>(m, "CallRule").def("get_callee", &CallView::get_callee).def("get_call_arguments", &CallView::get_call_arguments);
     bind_rule_view<Backtrack>(m, "BacktrackRule");
 
     ygg::bind_insert<ConceptLoad>(repository);

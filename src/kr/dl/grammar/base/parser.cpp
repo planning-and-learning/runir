@@ -1,11 +1,10 @@
 #include "runir/kr/dl/grammar/parser.hpp"
-#include "runir/kr/dl/grammar/detail/repository_instantiations.hpp"
 
 #include "kr/parser/constructors.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/grammar/canonicalization.hpp"
 #include "runir/kr/dl/grammar/constructor_repository.hpp"
-#include "runir/kr/dl/grammar/constructor_repository.hpp"
+#include "runir/kr/dl/grammar/detail/repository_instantiations.hpp"
 #include "runir/kr/dl/grammar/parser/parser.hpp"
 #include "runir/kr/parser/diagnostics.hpp"
 

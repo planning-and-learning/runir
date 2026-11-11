@@ -2,10 +2,10 @@
 #define RUNIR_SRC_GRAPHS_ALGORITHMS_NAUTY_IMPL_HPP_
 
 #include <cstddef>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include <nausparse.h>
 #include <nauty.h>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
 

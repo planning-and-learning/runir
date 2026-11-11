@@ -2,23 +2,23 @@
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_EVALUATORS_QUERY_HPP_
 
 #include "runir/kr/dl/semantics/detail/evaluation_helpers.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/dl/semantics/incremental/declarations.hpp"
 #include "runir/kr/dl/semantics/incremental/delta.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/atomic_query.hpp"
 #include "runir/kr/dl/semantics/query_evaluation.hpp"
 
+#include <array>
 #include <concepts>
 #include <cstddef>
 #include <ranges>
-#include <array>
 #include <span>
 #include <tuple>
-#include <utility>
-#include <vector>
 #include <tyr/datalog/lifted/database/semantics/incremental/generic_join.hpp>
 #include <tyr/datalog/lifted/database/semantics/incremental/query.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
+#include <utility>
+#include <vector>
 
 namespace runir::kr::dl::semantics::incremental::detail
 {
@@ -66,7 +66,9 @@ struct QueryStaticEvaluator : QueryValue
 template<tyr::TaskKind Kind, tyr::formalism::FactKind Fact>
 struct QueryAtomicEvaluator : AtomicQueryEvaluator<Fact>
 {
-    QueryAtomicEvaluator(const ygg::FreeRelationRepository& layer, QueryView<AtomicStateTag<Fact>> expression) : AtomicQueryEvaluator<Fact>(layer, expression) {}
+    QueryAtomicEvaluator(const ygg::FreeRelationRepository& layer, QueryView<AtomicStateTag<Fact>> expression) : AtomicQueryEvaluator<Fact>(layer, expression)
+    {
+    }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>&, Context& context)
     { AtomicQueryEvaluator<Fact>::template initialize<Kind>(context.get_state()); }
@@ -102,7 +104,10 @@ struct QueryJoinEvaluator : tyr::datalog::database::incremental::JoinEvaluator
     QueryEvaluationIndex lhs;
     QueryEvaluationIndex rhs;
 
-    QueryJoinEvaluator(const ygg::FreeRelationRepository& layer, QueryEvaluationIndex lhs_, QueryEvaluationIndex rhs_, const tyr::datalog::database::JoinPlan& plan) :
+    QueryJoinEvaluator(const ygg::FreeRelationRepository& layer,
+                       QueryEvaluationIndex lhs_,
+                       QueryEvaluationIndex rhs_,
+                       const tyr::datalog::database::JoinPlan& plan) :
         tyr::datalog::database::incremental::JoinEvaluator(layer, plan),
         lhs(lhs_),
         rhs(rhs_)
@@ -135,8 +140,8 @@ struct QueryGenericJoinEvaluator : tyr::datalog::database::incremental::GenericJ
     }
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     {
-        tyr::datalog::database::incremental::GenericJoinEvaluator::update(args
-                                                                 | std::views::transform([&](QueryEvaluationIndex arg) { return graph.change(arg).change(); }));
+        tyr::datalog::database::incremental::GenericJoinEvaluator::update(
+            args | std::views::transform([&](QueryEvaluationIndex arg) { return graph.change(arg).change(); }));
     }
 };
 

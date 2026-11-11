@@ -8,9 +8,9 @@
 
 #include <cstddef>
 #include <optional>
-#include <utility>
 #include <urd/repr/slots/slots.hpp>
 #include <urd/store.hpp>
+#include <utility>
 
 namespace runir::kr::ps::ext::detail
 {

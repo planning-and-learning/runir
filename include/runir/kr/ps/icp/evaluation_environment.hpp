@@ -2,14 +2,14 @@
 #define RUNIR_KR_PS_ICP_EVALUATION_ENVIRONMENT_HPP_
 
 #include "runir/kr/dl/semantics/evaluation_policy.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/dl/semantics/evaluation_storage.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include "runir/kr/ps/dl/transition_evaluation_context.hpp"
 #include "runir/kr/ps/icp/execution_view.hpp"
 #include "runir/kr/task_context.hpp"
 
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 
 namespace runir::kr::ps::icp

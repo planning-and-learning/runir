@@ -119,7 +119,8 @@ TEST(RunirTests, ExtDistanceFeatureEvaluationDoesNotRetainTaskDenotations)
 
 TEST(RunirTests, ExtInitialStatesUseExpanderRepositoryGround) { expect_initial_program_state_uses_expander_repository<tyr::GroundTag>(); }
 
-TEST(RunirTests, ExtTransientProgramStatesRetainValuesAndInternCallersGround) { expect_transient_program_states_retain_values_and_intern_callers<tyr::GroundTag>(); }
+TEST(RunirTests, ExtTransientProgramStatesRetainValuesAndInternCallersGround)
+{ expect_transient_program_states_retain_values_and_intern_callers<tyr::GroundTag>(); }
 
 TEST(RunirTests, ExtChooseUsesNaturalBindingOrder)
 {

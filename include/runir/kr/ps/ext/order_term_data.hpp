@@ -5,12 +5,12 @@
 #include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/ext/declarations.hpp"
 
+#include <boost/mp11.hpp>
 #include <cista/containers/variant.h>
 #include <tuple>
+#include <urd/elements/flat.hpp>
 #include <utility>
 #include <variant>
-#include <urd/elements/flat.hpp>
-#include <boost/mp11.hpp>
 
 namespace urd
 {
@@ -18,7 +18,8 @@ namespace urd
 template<>
 struct data<runir::kr::ps::ext::OrderTerm>
 {
-    using Feature = urd::index_variant<boost::mp11::mp_transform_q<boost::mp11::mp_bind_front<runir::kr::ps::Feature, runir::kr::ExtFamilyTag>, runir::kr::dl::BooleanOrNumericalTags>>;
+    using Feature = urd::index_variant<
+        boost::mp11::mp_transform_q<boost::mp11::mp_bind_front<runir::kr::ps::Feature, runir::kr::ExtFamilyTag>, runir::kr::dl::BooleanOrNumericalTags>>;
 
     urd::index<runir::kr::ps::ext::OrderTerm> index;
     runir::kr::ps::ext::OrderDirection direction = runir::kr::ps::ext::OrderDirection::MIN;

@@ -2,10 +2,6 @@
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_EVALUATION_HPP_
 
 #include "runir/kr/dl/repository.hpp"
-#include <urd/repr/maps/postings.hpp>
-#include <urd/repr/maps/unordered_flat_map.hpp>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/dl/semantics/incremental/declarations.hpp"
 #include "runir/kr/dl/semantics/incremental/denotation_delta.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/set_operation_workspace.hpp"
@@ -21,11 +17,15 @@
 #include <span>
 #include <stdexcept>
 #include <tuple>
-#include <tyr/planning/declarations.hpp>
-#include <utility>
-#include <variant>
 #include <tyr/datalog/lifted/database/semantics/incremental/delta.hpp>
 #include <tyr/datalog/lifted/database/semantics/relation_view.hpp>
+#include <tyr/planning/declarations.hpp>
+#include <urd/repr/maps/postings.hpp>
+#include <urd/repr/maps/unordered_flat_map.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
+#include <utility>
+#include <variant>
 
 namespace runir::kr::dl::semantics::incremental
 {
@@ -54,8 +54,7 @@ class EvaluationGraph
     /// The node of each prepared expression.
     template<CategoryTag Category>
     using FeatureNodeIndices = urd::Store<urd::map<ConstructorView<Category>, EvaluationIndex<Category>>>;
-    std::tuple<FeatureNodeIndices<ConceptTag>, FeatureNodeIndices<RoleTag>, FeatureNodeIndices<BooleanTag>, FeatureNodeIndices<NumericalTag>>
-        m_feature_nodes;
+    std::tuple<FeatureNodeIndices<ConceptTag>, FeatureNodeIndices<RoleTag>, FeatureNodeIndices<BooleanTag>, FeatureNodeIndices<NumericalTag>> m_feature_nodes;
     urd::Store<urd::map<QueryView<>, QueryEvaluationIndex>> m_query_nodes;
     /// The nodes that lift a concept or role node into a relation, by the lifted node.
     urd::Store<urd::map<ygg::uint_t, QueryEvaluationIndex>, urd::multi> m_lifts;
@@ -65,7 +64,8 @@ class EvaluationGraph
     template<CategoryTag Category>
     [[nodiscard]] const auto& node(EvaluationIndex<Category> index) const
     { return std::get<detail::FeatureNode<Kind, Category>>(m_nodes.at(static_cast<ygg::uint_t>(index.value))); }
-    [[nodiscard]] const auto& node(QueryEvaluationIndex index) const { return std::get<detail::QueryNode<Kind>>(m_nodes.at(static_cast<ygg::uint_t>(index.value))); }
+    [[nodiscard]] const auto& node(QueryEvaluationIndex index) const
+    { return std::get<detail::QueryNode<Kind>>(m_nodes.at(static_cast<ygg::uint_t>(index.value))); }
 
     template<CategoryTag Category>
     std::optional<EvaluationIndex<Category>> find_node(ConstructorView<Category> expression) const;
@@ -172,8 +172,10 @@ public:
     template<CategoryTag Category>
     EvaluationIndex<Category> prepare(ConstructorView<Category> expression, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
     { return m_graph->prepare(expression, dependencies); }
-    QueryEvaluationIndex prepare(QueryView<> expression, urd::Store<urd::sequence<ygg::uint_t>>& dependencies) { return m_graph->prepare(expression, dependencies); }
-    QueryEvaluationIndex prepare_relation(QueryView<> expression, std::span<const ygg::ColumnLayout> columns, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
+    QueryEvaluationIndex prepare(QueryView<> expression, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
+    { return m_graph->prepare(expression, dependencies); }
+    QueryEvaluationIndex
+    prepare_relation(QueryView<> expression, std::span<const ygg::ColumnLayout> columns, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
     { return m_graph->prepare_relation(expression, columns, dependencies); }
     template<ConceptOrRoleTag Category>
     QueryEvaluationIndex
@@ -341,7 +343,8 @@ public:
     template<ConceptOrRoleTag Category>
     const DenotationDelta<Category>& delta(EvaluationIndex<Category> index)
     { return current(static_cast<ygg::uint_t>(index.value)).get_delta(index); }
-    const tyr::datalog::database::incremental::Delta& delta(QueryEvaluationIndex index) { return current(static_cast<ygg::uint_t>(index.value)).get_delta(index); }
+    const tyr::datalog::database::incremental::Delta& delta(QueryEvaluationIndex index)
+    { return current(static_cast<ygg::uint_t>(index.value)).get_delta(index); }
     template<BooleanOrNumericalTag Category>
     bool changed(EvaluationIndex<Category> index)
     { return current(static_cast<ygg::uint_t>(index.value)).changed(index); }

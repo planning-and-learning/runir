@@ -3,13 +3,13 @@
 
 #include "runir/kr/dl/declarations.hpp"
 
+#include <boost/mp11.hpp>
 #include <cista/containers/variant.h>
 #include <concepts>
 #include <memory>
 #include <type_traits>
-#include <variant>
 #include <urd/elements/flat.hpp>
-#include <boost/mp11.hpp>
+#include <variant>
 
 namespace runir::kr::dl::grammar
 {
@@ -61,13 +61,8 @@ using DerivationRuleTypes = boost::mp11::mp_transform<DerivationRule, runir::kr:
 
 using GrammarTypes = boost::mp11::mp_list<GrammarTag>;
 
-using ConstructorRepositoryTypes = boost::mp11::mp_append<ConceptTypes,
-                                                         RoleTypes,
-                                                         BooleanTypes,
-                                                         NumericalTypes,
-                                                         NonTerminalTypes,
-                                                         DerivationRuleTypes,
-                                                         GrammarTypes>;
+using ConstructorRepositoryTypes =
+    boost::mp11::mp_append<ConceptTypes, RoleTypes, BooleanTypes, NumericalTypes, NonTerminalTypes, DerivationRuleTypes, GrammarTypes>;
 
 using ConstructorRepository = runir::kr::dl::detail::BasicConstructorRepository<ConstructorRepositoryTypes>;
 

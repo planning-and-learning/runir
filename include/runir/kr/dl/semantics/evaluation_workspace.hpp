@@ -2,10 +2,6 @@
 #define RUNIR_SEMANTICS_EVALUATION_WORKSPACE_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
-#include <urd/repr/maps/postings.hpp>
-#include <urd/repr/sequences/segmented.hpp>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/dl/semantics/distance/feature.hpp"
 #include "runir/kr/dl/semantics/heuristics/projection.hpp"
 
@@ -19,15 +15,19 @@
 #include <span>
 #include <tuple>
 #include <type_traits>
-#include <tyr/formalism/declarations.hpp>
-#include <tyr/formalism/planning/declarations.hpp>
-#include <utility>
-#include <vector>
-#include <yggdrasil/core/config.hpp>
 #include <tyr/datalog/lifted/database/semantics/distance.hpp>
 #include <tyr/datalog/lifted/database/semantics/generic_join.hpp>
 #include <tyr/datalog/lifted/database/semantics/min_distance.hpp>
 #include <tyr/datalog/lifted/database/semantics/operations.hpp>
+#include <tyr/formalism/declarations.hpp>
+#include <tyr/formalism/planning/declarations.hpp>
+#include <urd/repr/maps/postings.hpp>
+#include <urd/repr/sequences/segmented.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
+#include <utility>
+#include <vector>
+#include <yggdrasil/core/config.hpp>
 
 namespace runir::kr::dl::semantics
 {
@@ -54,7 +54,8 @@ private:
     /// The layer the features' input snapshots come from (ygg::FreeRelationRepository::get_relation_builder); declared
     /// first, so it outlives them, and behind a pointer, so it stays where it is when the workspace moves.
     std::unique_ptr<ygg::FreeRelationRepository> m_layer = std::make_unique<ygg::FreeRelationRepository>();
-    urd::Store<urd::sequence<KeyedFeature<FullDistanceFeature>>, urd::stable_refs> m_distance_features;  ///< Stable references: callers keep the features they get.
+    urd::Store<urd::sequence<KeyedFeature<FullDistanceFeature>>, urd::stable_refs>
+        m_distance_features;  ///< Stable references: callers keep the features they get.
     FeaturePositions m_distance_feature_positions;
     urd::Store<urd::sequence<KeyedFeature<MustPassFeature>>, urd::stable_refs> m_must_pass_features;
     FeaturePositions m_must_pass_feature_positions;
@@ -122,9 +123,7 @@ public:
                                            const ConstructorRepository& constructors,
                                            ygg::uint_t query,
                                            Make&& make)
-    {
-        return find_or_make<MustPassFeature>(m_must_pass_features, m_must_pass_feature_positions, formalism, constructors, query, std::forward<Make>(make));
-    }
+    { return find_or_make<MustPassFeature>(m_must_pass_features, m_must_pass_feature_positions, formalism, constructors, query, std::forward<Make>(make)); }
 };
 
 }

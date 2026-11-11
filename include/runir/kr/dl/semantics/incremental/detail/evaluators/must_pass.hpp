@@ -1,21 +1,21 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_EVALUATORS_MUST_PASS_HPP_
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_EVALUATORS_MUST_PASS_HPP_
 
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/distance_evaluation.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
+#include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/incremental/declarations.hpp"
 #include "runir/kr/dl/semantics/incremental/delta.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/query.hpp"
-#include "runir/kr/dl/datas.hpp"
-#include "runir/kr/dl/declarations.hpp"
-#include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
 #include <algorithm>
 #include <cstddef>
 #include <functional>
 #include <span>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 
 namespace runir::kr::dl::semantics::incremental::detail
@@ -38,8 +38,7 @@ struct QueryMustPassEvaluator : QueryValue
     {
         const auto edges = expression.get_edges();
         for (const auto& slot : feature.slots)
-            slots.push_back(
-                visit_slot<>(slot, edges.context(), [&](auto argument) { return graph.prepare_relation(argument, slot.columns, dependencies); }));
+            slots.push_back(visit_slot<>(slot, edges.context(), [&](auto argument) { return graph.prepare_relation(argument, slot.columns, dependencies); }));
     }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context)
@@ -79,10 +78,10 @@ private:
     QueryEvaluationIndex targets;
     QueryEvaluationIndex probes;
     MustPassFeature feature;
-    urd::Store<urd::sequence<QueryEvaluationIndex>> slots;         ///< The graph node of each input slot.
-    urd::builder<ygg::Relation<ygg::Schema>> computed;  ///< The recomputed result; kept to avoid allocations.
-    urd::Store<urd::sequence<ygg::Value>> removed;                 ///< Rows of the previous result that are gone, their values.
-    urd::Store<urd::sequence<ygg::Value>> scratch;                 ///< A row's values, as read.
+    urd::Store<urd::sequence<QueryEvaluationIndex>> slots;  ///< The graph node of each input slot.
+    urd::builder<ygg::Relation<ygg::Schema>> computed;      ///< The recomputed result; kept to avoid allocations.
+    urd::Store<urd::sequence<ygg::Value>> removed;          ///< Rows of the previous result that are gone, their values.
+    urd::Store<urd::sequence<ygg::Value>> scratch;          ///< A row's values, as read.
 
     ygg::uint_t num_objects = 0;
 

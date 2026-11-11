@@ -2,8 +2,6 @@
 #define RUNIR_KR_PS_EXT_DETAIL_RULE_EVALUATION_DO_HPP_
 
 #include "runir/kr/ps/dl/evaluation.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/ps/ext/compatibility.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
 #include "runir/kr/ps/ext/detail/rule_evaluation/context.hpp"
@@ -17,6 +15,8 @@
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <tyr/planning/node.hpp>
 #include <urd/bits.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 
@@ -65,8 +65,7 @@ private:
         return denotations;
     }
 
-    template<ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding,
-             typename ConceptDenotations>
+    template<ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding, typename ConceptDenotations>
     static bool action_matches_do_arguments(RuleView<DoTag> rule, Binding action, const ConceptDenotations& denotations)
     {
         if (action.get_relation().get_name() != rule.get_action_name())

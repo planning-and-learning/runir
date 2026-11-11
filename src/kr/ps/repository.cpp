@@ -1,8 +1,7 @@
 #include "runir/kr/ps/base/repository.hpp"
 
-#include "runir/kr/ps/detail/repository_instantiations.hpp"
-
 #include "runir/kr/ps/detail/repository_impl.hpp"
+#include "runir/kr/ps/detail/repository_instantiations.hpp"
 #include "runir/kr/ps/ext/execution_data.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
 #include "runir/kr/ps/icp/execution_data.hpp"

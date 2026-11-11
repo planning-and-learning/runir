@@ -1,11 +1,10 @@
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
-
 #include "runir/kr/dl/semantics/detail/repository_instantiations.hpp"
 
 #include <cassert>
 #include <memory>
-#include <utility>
 #include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
+#include <utility>
 
 namespace runir::kr::dl::semantics
 {

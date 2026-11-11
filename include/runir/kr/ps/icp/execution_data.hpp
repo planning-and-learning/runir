@@ -2,18 +2,18 @@
 #define RUNIR_KR_PS_ICP_EXECUTION_DATA_HPP_
 
 #include "runir/kr/dl/semantics/declarations.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/ps/declarations.hpp"
 #include "runir/kr/ps/icp/declarations.hpp"
 #include "runir/kr/ps/icp/execution_declarations.hpp"
 
 #include <tuple>
 #include <tyr/planning/declarations.hpp>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
-#include <urd/elements/flat.hpp>
 
 namespace urd
 {

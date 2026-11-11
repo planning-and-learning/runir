@@ -5,25 +5,25 @@
 #include "runir/kr/dl/translations/ygg_query.hpp"
 
 #include <algorithm>
-#include <urd/repr/maps/std_map.hpp>
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/repr/values/dense_set.hpp>
-#include <urd/store.hpp>
 #include <array>
 #include <cassert>
 #include <cstddef>
 #include <optional>
 #include <span>
-#include <tyr/formalism/declarations.hpp>
-#include <utility>
-#include <vector>
 #include <tyr/datalog/lifted/database/semantics/bound/query_evaluation.hpp>
 #include <tyr/datalog/lifted/database/semantics/distance.hpp>
 #include <tyr/datalog/lifted/database/semantics/operations.hpp>
 #include <tyr/datalog/lifted/database/semantics/relation_view.hpp>
 #include <tyr/datalog/lifted/database/semantics/search/concepts.hpp>
-#include <yggdrasil/formalism/relation_builder.hpp>
 #include <tyr/datalog/lifted/database/syntax/query.hpp>
+#include <tyr/formalism/declarations.hpp>
+#include <urd/repr/maps/std_map.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/dense_set.hpp>
+#include <urd/store.hpp>
+#include <utility>
+#include <vector>
+#include <yggdrasil/formalism/relation_builder.hpp>
 
 namespace runir::kr::dl::semantics::heuristics
 {
@@ -34,18 +34,19 @@ namespace runir::kr::dl::semantics::heuristics
 /// its edges.
 struct PatternDatabase
 {
-    size_t pattern = 0;                          ///< The vertex column i.
-    tyr::datalog::database::bound::QueryEvaluator edges;  ///< The abstract edges (u[i], v[i]), over static inputs only.
-    size_t u_position = 0;                       ///< The position of u[i] in the columns of edges.
-    size_t v_position = 0;                       ///< The position of v[i] in the columns of edges.
-    size_t predecessors = 0;                     ///< The binding of edges with v[i] bound.
+    size_t pattern = 0;                                        ///< The vertex column i.
+    tyr::datalog::database::bound::QueryEvaluator edges;       ///< The abstract edges (u[i], v[i]), over static inputs only.
+    size_t u_position = 0;                                     ///< The position of u[i] in the columns of edges.
+    size_t v_position = 0;                                     ///< The position of v[i] in the columns of edges.
+    size_t predecessors = 0;                                   ///< The binding of edges with v[i] bound.
     urd::Store<urd::set<ygg::uint_t>, urd::dense> targets {};  ///< α_i(T), for which h was computed.
-    urd::Store<urd::sequence<ygg::uint_t>> h {};             ///< Abstract distance to α_i(T); tyr::datalog::database::infinity if unreachable.
+    urd::Store<urd::sequence<ygg::uint_t>> h {};               ///< Abstract distance to α_i(T); tyr::datalog::database::infinity if unreachable.
 
     /// Whether h has been computed, for some abstract targets.
     [[nodiscard]] bool computed() const noexcept { return !h.empty(); }
     /// Whether h must be computed for `abstract_targets`: it never was, or it was for other abstract targets.
-    [[nodiscard]] bool needs_update(const urd::Store<urd::set<ygg::uint_t>, urd::dense>& abstract_targets) const { return !computed() || targets != abstract_targets; }
+    [[nodiscard]] bool needs_update(const urd::Store<urd::set<ygg::uint_t>, urd::dense>& abstract_targets) const
+    { return !computed() || targets != abstract_targets; }
 };
 
 /// h(v) = max_i h_i(α_i(v)) over single-column pattern databases (Culberson & Schaeffer, "Pattern Databases",
@@ -223,7 +224,8 @@ public:
         if (m_rows == m_previous)
             return;
         std::swap(m_rows, m_previous);
-        auto grouped = urd::Store<urd::map<urd::Store<urd::sequence<ygg::Value>>, urd::Store<urd::sequence<urd::Store<urd::sequence<ygg::Value>>>>>, urd::sorted> {};
+        auto grouped =
+            urd::Store<urd::map<urd::Store<urd::sequence<ygg::Value>>, urd::Store<urd::sequence<urd::Store<urd::sequence<ygg::Value>>>>>, urd::sorted> {};
         for (size_t r = 0; r < targets.size(); ++r)
         {
             const auto row = tyr::datalog::database::vertex_values(targets.row(r), m_values);
@@ -356,12 +358,11 @@ ProjectionHeuristic make_projection_heuristic(const ygg::FreeRelationRepository&
 }
 
 template<tyr::datalog::database::SlotRelations SlotRows>
-ProjectionHeuristic
-make_projection_heuristic(const ygg::FreeRelationRepository& layer,
-                          const EdgeAbstraction& abstraction,
-                          const tyr::datalog::database::DistancePlan& plan,
-                          ygg::uint_t num_objects,
-                          const SlotRows& slot_rows)
+ProjectionHeuristic make_projection_heuristic(const ygg::FreeRelationRepository& layer,
+                                              const EdgeAbstraction& abstraction,
+                                              const tyr::datalog::database::DistancePlan& plan,
+                                              ygg::uint_t num_objects,
+                                              const SlotRows& slot_rows)
 {
     const auto columns = plan.edge_columns();
     return make_projection_heuristic(layer,

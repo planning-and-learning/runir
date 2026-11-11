@@ -1,6 +1,4 @@
 #include "fixtures.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "planning_fixtures.hpp"
 
 #include <algorithm>
@@ -12,16 +10,18 @@
 #include <runir/datasets/state_graph.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/ps/base/dl/parser.hpp>
 #include <runir/kr/ps/base/dl/sketch_factory.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/sketch_executor.hpp>
 #include <runir/kr/ps/base/successor_expander.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/axiom_evaluator.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <tyr/planning/state_repository.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 #include <yggdrasil/execution/onetbb.hpp>
 
@@ -195,8 +195,7 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     for (const auto edge : universal.graph->get_out_edge_indices(0))
     {
         const auto target_state = universal.graph->get_vertex_property(universal.graph->get_target(edge)).state.index();
-        EXPECT_NE(std::ranges::find_if(immediate, [&](const auto& successor) { return successor.node.get_state().index() == target_state; }),
-                  immediate.end());
+        EXPECT_NE(std::ranges::find_if(immediate, [&](const auto& successor) { return successor.node.get_state().index() == target_state; }), immediate.end());
     }
 
     auto options = kr::ps::base::SketchSearchOptions<tyr::GroundTag> {};

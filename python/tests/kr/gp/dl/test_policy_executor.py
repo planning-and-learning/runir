@@ -112,9 +112,7 @@ def _check_successor_callbacks(
         (step.label, step.node.get_state()) for step in accepted
     )
     assert all(expander.matching_rule(state, step.node.get_state()) == rule for step, rule in actual)
-    first_accepted = next(
-        i for i, step in enumerate(expected) if step.node.get_state().index() != state.index()
-    )
+    first_accepted = next(i for i, step in enumerate(expected) if step.node.get_state().index() != state.index())
     assert expander.for_each_successor(state, statistics, lambda _step, _rule: False, lambda: False) is False
     generated += first_accepted + 1
     assert statistics.num_generated == generated

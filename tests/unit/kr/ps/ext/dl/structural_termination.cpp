@@ -1,27 +1,25 @@
 #include "fixtures.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/repr/values/unordered_flat_set.hpp>
-#include <urd/store.hpp>
 
 #include <cstdint>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <runir/graphs/cycle.hpp>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
-#include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/dl/incomplete_structural_termination.hpp>
 #include <runir/kr/ps/ext/dl/module_factory.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <runir/kr/ps/ext/dl/structural_termination.hpp>
-#include <runir/kr/ps/memory_state_data.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/rule_view.hpp>
+#include <runir/kr/ps/memory_state_data.hpp>
 #include <set>
 #include <string>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/formalism/planning/parser.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/unordered_flat_set.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 
@@ -156,8 +154,10 @@ TEST(RunirTests, ExtStructuralTerminationActionRulesUseEffectOverapproximation)
     auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(domain.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
 
-    for (const auto& [effect, terminating] :
-         urd::Store<urd::sequence<std::pair<std::string, bool>>> { { "(unchanged n)", true }, { "(decreases n)", true }, { "(increases n)", false }, { "", false } })
+    for (const auto& [effect, terminating] : urd::Store<urd::sequence<std::pair<std::string, bool>>> { { "(unchanged n)", true },
+                                                                                                       { "(decreases n)", true },
+                                                                                                       { "(increases n)", false },
+                                                                                                       { "", false } })
     {
         SCOPED_TRACE(effect);
         const auto module_source = [&](bool action_rule)

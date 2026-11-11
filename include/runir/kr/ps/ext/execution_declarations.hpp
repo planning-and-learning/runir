@@ -7,9 +7,9 @@
 
 #include <boost/mp11.hpp>
 #include <tyr/planning/declarations.hpp>
+#include <urd/elements/flat.hpp>
 #include <urd/repr/slots/slots.hpp>
 #include <urd/store.hpp>
-#include <urd/elements/flat.hpp>
 
 namespace runir::kr::ps::ext
 {

@@ -214,34 +214,22 @@ public:
     }
 
     [[nodiscard]] auto get_out_edges(VertexIndex vertex) const
-    {
-        return urd::transform(get_out_edge_indices(vertex), detail::ReadThrough<DynamicGraph, &DynamicGraph::get_edge> { this });
-    }
+    { return urd::transform(get_out_edge_indices(vertex), detail::ReadThrough<DynamicGraph, &DynamicGraph::get_edge> { this }); }
 
     [[nodiscard]] auto get_in_edges(VertexIndex vertex) const
-    {
-        return urd::transform(get_in_edge_indices(vertex), detail::ReadThrough<DynamicGraph, &DynamicGraph::get_edge> { this });
-    }
+    { return urd::transform(get_in_edge_indices(vertex), detail::ReadThrough<DynamicGraph, &DynamicGraph::get_edge> { this }); }
 
     [[nodiscard]] auto get_successor_indices(VertexIndex vertex) const
-    {
-        return urd::transform(get_out_edge_indices(vertex), detail::ReadThrough<DynamicGraph, &DynamicGraph::get_target> { this });
-    }
+    { return urd::transform(get_out_edge_indices(vertex), detail::ReadThrough<DynamicGraph, &DynamicGraph::get_target> { this }); }
 
     [[nodiscard]] auto get_predecessor_indices(VertexIndex vertex) const
-    {
-        return urd::transform(get_in_edge_indices(vertex), detail::ReadThrough<DynamicGraph, &DynamicGraph::get_source> { this });
-    }
+    { return urd::transform(get_in_edge_indices(vertex), detail::ReadThrough<DynamicGraph, &DynamicGraph::get_source> { this }); }
 
     [[nodiscard]] auto get_successors(VertexIndex vertex) const
-    {
-        return urd::transform(get_successor_indices(vertex), detail::ReadThrough<DynamicGraph, &DynamicGraph::get_vertex> { this });
-    }
+    { return urd::transform(get_successor_indices(vertex), detail::ReadThrough<DynamicGraph, &DynamicGraph::get_vertex> { this }); }
 
     [[nodiscard]] auto get_predecessors(VertexIndex vertex) const
-    {
-        return urd::transform(get_predecessor_indices(vertex), detail::ReadThrough<DynamicGraph, &DynamicGraph::get_vertex> { this });
-    }
+    { return urd::transform(get_predecessor_indices(vertex), detail::ReadThrough<DynamicGraph, &DynamicGraph::get_vertex> { this }); }
 };
 
 }  // namespace runir::graphs

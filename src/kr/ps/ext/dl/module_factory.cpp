@@ -1,6 +1,4 @@
 #include "runir/kr/ps/ext/dl/module_factory.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 
 #include "runir/kr/ps/ext/canonicalization.hpp"
 #include "runir/kr/ps/ext/dl/parser.hpp"
@@ -10,6 +8,8 @@
 #include <stdexcept>
 #include <string>
 #include <tyr/formalism/planning/repository.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 
 namespace runir::kr::ps::ext::dl

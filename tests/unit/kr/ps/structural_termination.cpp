@@ -1,12 +1,12 @@
 #include "kr/ps/structural_termination/detail.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "kr/ps/structural_termination/scc_refinement_forest.hpp"
 
 #include <array>
 #include <cstdint>
 #include <gtest/gtest.h>
 #include <tuple>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 namespace runir::tests
 {
@@ -130,7 +130,9 @@ urd::Store<urd::sequence<kr::ps::detail::RuleProfile>> boolean_rule_universe()
     return result;
 }
 
-void expect_universe_matches_monolithic(const urd::Store<urd::sequence<kr::ps::detail::RuleProfile>>& profiles, std::size_t num_booleans, std::size_t num_numericals)
+void expect_universe_matches_monolithic(const urd::Store<urd::sequence<kr::ps::detail::RuleProfile>>& profiles,
+                                        std::size_t num_booleans,
+                                        std::size_t num_numericals)
 {
     expect_hybrid_matches_monolithic(kr::ps::detail::QualitativePolicy(2, num_booleans, num_numericals));
     for (std::size_t first = 0; first < profiles.size(); ++first)

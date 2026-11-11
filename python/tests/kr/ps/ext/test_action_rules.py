@@ -28,6 +28,7 @@ from pytyr.planning import ground, lifted
 from pyyggdrasil import formalism
 from pyyggdrasil.execution import ExecutionContext
 from pyyggdrasil.serialization import Dictionaries
+from relation_utils import rename
 
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
 from pyrunir.kr import ArityMismatchError, DomainContext, GroundTaskContext, LiftedTaskContext, UndefinedSymbolError
@@ -35,7 +36,6 @@ from pyrunir.kr.dl import semantics
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext import dl
 from pyrunir.serialization import register_table, serialize, table
-from relation_utils import rename
 
 Successor: TypeAlias = ground.LabeledNode | lifted.LabeledNode
 T = TypeVar("T")

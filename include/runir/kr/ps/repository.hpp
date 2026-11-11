@@ -6,12 +6,12 @@
 #include "runir/kr/ps/declarations.hpp"
 #include "runir/kr/ps/family_traits.hpp"
 
+#include <boost/mp11.hpp>
 #include <cassert>
 #include <memory>
-#include <utility>
 #include <urd/config.hpp>
-#include <boost/mp11.hpp>
 #include <urd/elements/flat.hpp>
+#include <utility>
 #include <yggdrasil/formalism/symbol_repository.hpp>
 
 namespace runir::kr::ps

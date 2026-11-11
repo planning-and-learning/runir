@@ -1,4 +1,5 @@
 #include <array>
+#include <boost/mp11.hpp>
 #include <concepts>
 #include <gtest/gtest.h>
 #include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
@@ -6,7 +7,6 @@
 #include <runir/kr/dl/repository.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <urd/elements/flat.hpp>
-#include <boost/mp11.hpp>
 #include <yggdrasil/core/config.hpp>
 
 namespace runir::tests
@@ -22,21 +22,20 @@ using GrammarFamily = kr::dl::grammar::GrammarFamily;
 using CnfGrammarFamily = kr::dl::cnf_grammar::CnfGrammarFamily;
 
 template<typename T, typename Repository>
-concept IndexedDataView =
-    std::constructible_from<urd::index<T>, ygg::uint_t> && urd::Identifiable<urd::index<T>> && urd::Identifiable<urd::data<T>>
-    && urd::Identifiable<urd::index_view<T, Repository>> && std::totally_ordered<urd::index<T>> && std::totally_ordered<urd::data<T>>
-    && std::totally_ordered<urd::index_view<T, Repository>> && requires(urd::data<T>& data, const urd::index_view<T, Repository>& view) {
-           data.index;
-           view.index();
-       };
+concept IndexedDataView = std::constructible_from<urd::index<T>, ygg::uint_t> && urd::Identifiable<urd::index<T>> && urd::Identifiable<urd::data<T>>
+                          && urd::Identifiable<urd::index_view<T, Repository>> && std::totally_ordered<urd::index<T>> && std::totally_ordered<urd::data<T>>
+                          && std::totally_ordered<urd::index_view<T, Repository>> && requires(urd::data<T>& data, const urd::index_view<T, Repository>& view) {
+                                 data.index;
+                                 view.index();
+                             };
 
 /// Which members a record holds, in the order of record_view.hpp.
 template<typename Data>
 constexpr auto members = std::array {
-    requires(Data& data) { data.predicate; }, requires(Data& data) { data.polarity; }, requires(Data& data) { data.object; },
-    requires(Data& data) { data.objects; },   requires(Data& data) { data.n; },        requires(Data& data) { data.role; },
-    requires(Data& data) { data.concept_; },  requires(Data& data) { data.arg; },      requires(Data& data) { data.lhs; },
-    requires(Data& data) { data.mid; },       requires(Data& data) { data.rhs; },      requires(Data& data) { data.reference; },
+    requires(Data& data) { data.predicate; },  requires(Data& data) { data.polarity; }, requires(Data& data) { data.object; },
+    requires(Data& data) { data.objects; },    requires(Data& data) { data.n; },        requires(Data& data) { data.role; },
+    requires(Data& data) { data.concept_; },   requires(Data& data) { data.arg; },      requires(Data& data) { data.lhs; },
+    requires(Data& data) { data.mid; },        requires(Data& data) { data.rhs; },      requires(Data& data) { data.reference; },
     requires(Data& data) { data.identifier; },
 };
 
@@ -62,16 +61,18 @@ constexpr auto accessors = std::array {
 template<typename Repository, typename... Ts>
 consteval bool records_and_views(boost::mp11::mp_list<Ts...>)
 {
-    return ((IndexedDataView<Ts, Repository> && members<urd::data<Ts>> == accessors<urd::index_view<Ts, Repository>>
-             && !requires(const urd::index_view<Ts, Repository>& view) { view.get_columns(); }
-             && !requires(const urd::index_view<Ts, Repository>& view) { view.get_plan(); })
+    return ((
+                IndexedDataView<Ts, Repository> && members<urd::data<Ts>> == accessors<urd::index_view<Ts, Repository>>
+                && !requires(const urd::index_view<Ts, Repository>& view) { view.get_columns(); }
+                && !requires(const urd::index_view<Ts, Repository>& view) { view.get_plan(); })
             && ...);
 }
 
 template<typename F, typename Repository>
 consteval bool family_records_and_views()
 {
-    return records_and_views<Repository>(kr::dl::RecordTypes<F, kr::dl::ConceptTag> {}) && records_and_views<Repository>(kr::dl::RecordTypes<F, kr::dl::RoleTag> {})
+    return records_and_views<Repository>(kr::dl::RecordTypes<F, kr::dl::ConceptTag> {})
+           && records_and_views<Repository>(kr::dl::RecordTypes<F, kr::dl::RoleTag> {})
            && records_and_views<Repository>(kr::dl::RecordTypes<F, kr::dl::BooleanTag> {})
            && records_and_views<Repository>(kr::dl::RecordTypes<F, kr::dl::NumericalTag> {});
 }
@@ -101,7 +102,8 @@ static_assert(!kr::dl::ConstructorOf<kr::dl::ArgumentTag<kr::dl::RoleTag>, CnfGr
 static_assert(!kr::dl::ConstructorOf<kr::dl::AddTag, GrammarFamily, kr::dl::NumericalTag>);
 
 // Each tree names its views of the records.
-static_assert(std::same_as<kr::dl::ConceptView<kr::dl::TopTag>, urd::index_view<kr::dl::Concept<SemanticFamily, kr::dl::TopTag>, kr::dl::ConstructorRepository>>);
+static_assert(
+    std::same_as<kr::dl::ConceptView<kr::dl::TopTag>, urd::index_view<kr::dl::Concept<SemanticFamily, kr::dl::TopTag>, kr::dl::ConstructorRepository>>);
 static_assert(std::same_as<kr::dl::grammar::RoleView<kr::dl::InverseTag>,
                            urd::index_view<kr::dl::Role<GrammarFamily, kr::dl::InverseTag>, kr::dl::grammar::ConstructorRepository>>);
 static_assert(std::same_as<kr::dl::cnf_grammar::NumericalView<kr::dl::CountTag>,

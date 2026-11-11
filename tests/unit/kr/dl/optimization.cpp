@@ -1,27 +1,26 @@
 #include "planning_fixtures.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
 
 #include <filesystem>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <memory>
 #include <ranges>
-#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/optimization.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
-#include "runir/kr/dl/datas.hpp"
-#include "runir/kr/dl/declarations.hpp"
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <string>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 
 namespace runir::tests

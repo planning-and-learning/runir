@@ -7,9 +7,10 @@
 #include "runir/serialization/kr/dl/semantics/register_values_view.hpp"
 #include "runir/serialization/kr/ps/ext/program_view.hpp"
 #include "tyr/planning/state_repository.hpp"
-#include <tyr/serialization/formalism/planning/planning.hpp>
 #include "tyr/serialization/planning/state_view.hpp"
 #include "yggdrasil/serialization/dictionaries.hpp"
+
+#include <tyr/serialization/formalism/planning/planning.hpp>
 
 namespace ygg::serialization
 {

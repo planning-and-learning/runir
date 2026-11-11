@@ -1,12 +1,12 @@
 #include "planning_fixtures.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 
 #include "fixtures.hpp"
 
 #include <tyr/formalism/planning/parser.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/task.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <yggdrasil/execution/onetbb.hpp>
 

@@ -1,24 +1,22 @@
 #include "bindings.hpp"
+#include "pyrunir/kr/ps/dl/optimization_bindings.hpp"
+#include "pyrunir/module.hpp"
 #include "runir/kr/dl/detail/repository_instantiations.hpp"
 #include "runir/kr/ps/detail/repository_instantiations.hpp"
-#include "pyrunir/kr/ps/dl/optimization_bindings.hpp"
 #include "runir/kr/uns/declarations.hpp"
 
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/uns/classifier_view.hpp>
 #include <runir/kr/uns/classify.hpp>
-#include <runir/kr/uns/repository.hpp>
 #include <runir/kr/uns/formatter.hpp>
 #include <runir/kr/uns/repository.hpp>
 #include <runir/kr/uns/syntactic_complexity.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/state_repository.hpp>
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include "pyrunir/module.hpp"
 
 namespace runir::kr::uns
 {

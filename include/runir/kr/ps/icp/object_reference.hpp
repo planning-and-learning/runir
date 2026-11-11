@@ -1,13 +1,13 @@
 #ifndef RUNIR_KR_PS_ICP_OBJECT_REFERENCE_HPP_
 #define RUNIR_KR_PS_ICP_OBJECT_REFERENCE_HPP_
 
-#include <yggdrasil/core/unsigned_integer.hpp>
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/ps/declarations.hpp"
 
 #include <compare>
 #include <urd/elements/flat.hpp>
 #include <urd/elements/index.hpp>
+#include <yggdrasil/core/unsigned_integer.hpp>
 
 namespace runir::kr::ps::icp
 {

@@ -2,13 +2,13 @@
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_QUERY_NODE_HPP_
 
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/must_pass.hpp"
-#include <urd/repr/sequences/sequence.hpp>
-#include <urd/store.hpp>
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/query.hpp"
 
 #include <algorithm>
 #include <optional>
 #include <span>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <variant>
 #include <vector>
 
