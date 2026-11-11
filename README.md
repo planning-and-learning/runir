@@ -103,7 +103,7 @@ pytest python/tests
 ## Python Serialization
 
 `pyrunir.serialization` exposes the native serializers with caller-selected
-dictionary tables shared with Tyr. See the [serialization output reference](docs/serialization/index.md).
+dictionary tables shared with Tyr. See the [serialization output reference](https://planning-and-learning.github.io/runir/serialization/index.html).
 
 ## Template and include rules
 
@@ -140,12 +140,12 @@ Runir is designed for experiments where a learning system needs structured acces
 4. Build or parse a generalized policy over those features.
 5. Execute the policy on examples and inspect failures or counterexamples.
 
-Extended policies support [query features and Action rules](docs/action-rules.md)
+Extended policies support [query features and Action rules](https://planning-and-learning.github.io/runir/action-rules.html)
 for selecting complete action tuples and checking declared effect contracts.
-Their [proof search](docs/proof-search.md) combines lazy Choose exploration with incremental AND/OR success propagation.
-See [KR evaluation storage](docs/kr-evaluation.md) for result bindings, view lifetimes, and internal rule evaluators.
+Their [proof search](https://planning-and-learning.github.io/runir/proof-search.html) combines lazy Choose exploration with incremental AND/OR success propagation.
+See [KR evaluation storage](https://planning-and-learning.github.io/runir/kr-evaluation.html) for result bindings, view lifetimes, and internal rule evaluators.
 
-[Indexical concept policies](docs/concept-policies.md) are available as the separate
+[Indexical concept policies](https://planning-and-learning.github.io/runir/concept-policies.html) are available as the separate
 `icp` family, with Ext features, Load and Crule effects, concept histories, and
 greedy or universal execution.
 

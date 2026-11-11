@@ -43,6 +43,10 @@ test = [
 [project.urls]
 Homepage = "https://github.com/planning-and-learning/runir"
 
+# The documentation (docs/*.rst) wraps at 120 columns.
+[tool.doc8]
+max-line-length = 120
+
 [tool.pytest.ini_options]
 testpaths = ["python/tests"]
 
@@ -60,8 +64,8 @@ include = [
     "README.md",
     "pyproject.toml",
     "docs/serialization/**",
-    "docs/action-rules.md",
-    "docs/kr-evaluation.md",
+    "docs/action-rules.rst",
+    "docs/kr-evaluation.rst",
     "include/**",
     "python/**",
     "src/**",
