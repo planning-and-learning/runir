@@ -2,8 +2,8 @@
 #define RUNIR_KR_DL_SEMANTICS_DETAIL_REPOSITORY_INSTANTIATIONS_HPP_
 
 /// Extern declarations of intern for every denotation record type, instantiated in the library
-/// (src/kr/dl/semantics/repository.cpp). Include only from sources that intern many of these types; see yggdrasil's
-/// docs/TEMPLATE_RULES.md, rule 9.
+/// (src/kr/dl/semantics/repository.cpp). Include only from sources that intern many of these types; see rule 9 of the
+/// template rules (https://planning-and-learning.github.io/brokkr/template_rules.html).
 
 #include "runir/kr/dl/semantics/declarations.hpp"
 

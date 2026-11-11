@@ -3,8 +3,8 @@
 
 /// Extern declarations of intern for every symbol type of the program repositories (base, ext, icp, uns: ext holds base's 16)
 /// and of the execution repositories (ext, icp; ground and lifted), instantiated in the library (src/kr/ps/repository.cpp).
-/// Include only from sources that intern many of these types; see yggdrasil's
-/// docs/TEMPLATE_RULES.md, rule 9.
+/// Include only from sources that intern many of these types; see rule 9 of the
+/// template rules (https://planning-and-learning.github.io/brokkr/template_rules.html).
 
 #include "runir/kr/ps/base/declarations.hpp"
 #include "runir/kr/ps/ext/declarations.hpp"

@@ -2,8 +2,8 @@
 #define RUNIR_KR_DL_CNF_GRAMMAR_DETAIL_REPOSITORY_INSTANTIATIONS_HPP_
 
 /// Extern declarations of intern for every cnf grammar constructor type, instantiated in the library
-/// (src/kr/dl/cnf_grammar/constructor_repository.cpp). Include only from sources that intern many of these types; see yggdrasil's
-/// docs/TEMPLATE_RULES.md, rule 9.
+/// (src/kr/dl/cnf_grammar/constructor_repository.cpp). Include only from sources that intern many of these types; see rule 9 of the
+/// template rules (https://planning-and-learning.github.io/brokkr/template_rules.html).
 
 #include "runir/kr/dl/cnf_grammar/declarations.hpp"
 

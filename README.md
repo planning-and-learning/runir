@@ -107,7 +107,7 @@ dictionary tables shared with Tyr. See the [serialization output reference](docs
 
 ## Template and include rules
 
-Headers and templates follow the [template and include rules](https://github.com/planning-and-learning/yggdrasil/blob/main/docs/TEMPLATE_RULES.md) maintained in yggdrasil.
+Headers and templates follow the [template and include rules](https://planning-and-learning.github.io/brokkr/template_rules.html).
 
 ## CMake Integration
 
