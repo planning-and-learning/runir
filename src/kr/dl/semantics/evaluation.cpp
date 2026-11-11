@@ -31,13 +31,17 @@ static_assert(boost::mp11::mp_size<ConceptOrRoleTags>::value == 2, "the instanti
 static_assert(boost::mp11::mp_size<BooleanOrNumericalTags>::value == 2, "the instantiations below cover the 2 BooleanOrNumericalTags");
 
 /// evaluate for the I-th category of CategoryTags; ARGS = (task kind, evaluation context).
-#define RUNIR_EVALUATE_AT(z, I, ARGS)                                                                                                \
-    template auto evaluate<BOOST_PP_TUPLE_ELEM(2, 0, ARGS)>(ConstructorView<At<CategoryTags, I>>, BOOST_PP_TUPLE_ELEM(2, 1, ARGS) &) \
-        -> DenotationView<At<CategoryTags, I>>;
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage): it expands to explicit instantiations, declarations, which no function gives
+#define RUNIR_EVALUATE_AT(z, I, ARGS)                                                                                                  \
+    template auto evaluate<BOOST_PP_TUPLE_ELEM(2, 0, ARGS)>(ConstructorView<At<CategoryTags, (I)>>, BOOST_PP_TUPLE_ELEM(2, 1, ARGS) &) \
+        -> DenotationView<At<CategoryTags, (I)>>;
 /// evaluate for every category and for queries.
+// NOLINTBEGIN(cppcoreguidelines-macro-usage,bugprone-macro-parentheses): it expands to explicit instantiations, declarations, which no
+// function gives; Context is a type, which takes no parentheses
 #define RUNIR_EVALUATE(Kind, Context)                      \
     BOOST_PP_REPEAT(4, RUNIR_EVALUATE_AT, (Kind, Context)) \
     template auto evaluate<Kind>(QueryView<>, Context&) -> QueryDenotationView;
+// NOLINTEND(cppcoreguidelines-macro-usage,bugprone-macro-parentheses)
 
 RUNIR_EVALUATE(tyr::GroundTag, StateEvaluationContext<tyr::GroundTag>)
 RUNIR_EVALUATE(tyr::LiftedTag, StateEvaluationContext<tyr::LiftedTag>)
@@ -52,17 +56,22 @@ namespace runir::kr::dl::semantics::incremental
 
 /// EvaluationGraph's members for the I-th category of CategoryTags (prepare, get_index, result), of ConceptOrRoleTags
 /// (change, cardinality) and IncrementalEvaluation's for the I-th of BooleanOrNumericalTags (changed); Kind: the task kind.
-#define RUNIR_EVALUATION_GRAPH_AT(z, I, Kind)                                                                                                        \
-    template EvaluationIndex<At<CategoryTags, I>> EvaluationGraph<Kind>::prepare<At<CategoryTags, I>>(ConstructorView<At<CategoryTags, I>>);         \
-    template EvaluationIndex<At<CategoryTags, I>> EvaluationGraph<Kind>::get_index<At<CategoryTags, I>>(ConstructorView<At<CategoryTags, I>>) const; \
-    template BorrowedDenotationView<At<CategoryTags, I>> EvaluationGraph<Kind>::result<At<CategoryTags, I>>(EvaluationIndex<At<CategoryTags, I>>) const;
-#define RUNIR_CONCEPT_OR_ROLE_AT(z, I, Kind)                                                                           \
-    template const DenotationDelta<At<ConceptOrRoleTags, I>>& EvaluationGraph<Kind>::change<At<ConceptOrRoleTags, I>>( \
-        EvaluationIndex<At<ConceptOrRoleTags, I>>) const;                                                              \
-    template size_t EvaluationGraph<Kind>::cardinality<At<ConceptOrRoleTags, I>>(EvaluationIndex<At<ConceptOrRoleTags, I>>) const;
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage): it expands to explicit instantiations, declarations, which no function gives
+#define RUNIR_EVALUATION_GRAPH_AT(z, I, Kind)                                                                                                              \
+    template EvaluationIndex<At<CategoryTags, (I)>> EvaluationGraph<Kind>::prepare<At<CategoryTags, (I)>>(ConstructorView<At<CategoryTags, (I)>>);         \
+    template EvaluationIndex<At<CategoryTags, (I)>> EvaluationGraph<Kind>::get_index<At<CategoryTags, (I)>>(ConstructorView<At<CategoryTags, (I)>>) const; \
+    template BorrowedDenotationView<At<CategoryTags, (I)>> EvaluationGraph<Kind>::result<At<CategoryTags, (I)>>(EvaluationIndex<At<CategoryTags, (I)>>) const;
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage): it expands to explicit instantiations, declarations, which no function gives
+#define RUNIR_CONCEPT_OR_ROLE_AT(z, I, Kind)                                                                               \
+    template const DenotationDelta<At<ConceptOrRoleTags, (I)>>& EvaluationGraph<Kind>::change<At<ConceptOrRoleTags, (I)>>( \
+        EvaluationIndex<At<ConceptOrRoleTags, (I)>>) const;                                                                \
+    template size_t EvaluationGraph<Kind>::cardinality<At<ConceptOrRoleTags, (I)>>(EvaluationIndex<At<ConceptOrRoleTags, (I)>>) const;
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage): it expands to explicit instantiations, declarations, which no function gives
 #define RUNIR_BOOLEAN_OR_NUMERICAL_AT(z, I, Kind) \
-    template bool IncrementalEvaluation<Kind>::changed<At<BooleanOrNumericalTags, I>>(EvaluationIndex<At<BooleanOrNumericalTags, I>>) const;
+    template bool IncrementalEvaluation<Kind>::changed<At<BooleanOrNumericalTags, (I)>>(EvaluationIndex<At<BooleanOrNumericalTags, (I)>>) const;
 /// The evaluation classes of a task kind, their members per category, and demand over registered and builder states.
+// NOLINTBEGIN(cppcoreguidelines-macro-usage,bugprone-macro-parentheses): it expands to explicit instantiations, declarations, which no
+// function gives; Kind is a type, which takes no parentheses
 #define RUNIR_INCREMENTAL_EVALUATION(Kind)                                                                               \
     template class EvaluationGraph<Kind>;                                                                                \
     template class IncrementalEvaluation<Kind>;                                                                          \
@@ -77,6 +86,7 @@ namespace runir::kr::dl::semantics::incremental
                                                                             BuilderContext<Kind>&,                       \
                                                                             const Delta*,                                \
                                                                             tyr::datalog::database::Workspace*);
+// NOLINTEND(cppcoreguidelines-macro-usage,bugprone-macro-parentheses)
 
 RUNIR_INCREMENTAL_EVALUATION(tyr::GroundTag)
 RUNIR_INCREMENTAL_EVALUATION(tyr::LiftedTag)

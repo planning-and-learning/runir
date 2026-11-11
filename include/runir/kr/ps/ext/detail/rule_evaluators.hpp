@@ -93,7 +93,7 @@ class RuleEvaluators
             return LoadRuleEvaluator<Kind, RuleCategoryFor<Tag>>(rule, variant);
     }
 
-    auto source_rules(ModuleView module_, MemoryStateView memory_state) const
+    [[nodiscard]] auto source_rules(ModuleView module_, MemoryStateView memory_state) const
     {
         const auto modules = m_program.get_modules();
         const auto belongs_to_program = &module_.context() == &m_program.context() && std::ranges::find(modules, module_) != modules.end();

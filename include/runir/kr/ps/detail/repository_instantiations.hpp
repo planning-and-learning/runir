@@ -16,6 +16,7 @@
 #include <yggdrasil/formalism/intern_instantiations.hpp>
 
 /// The instantiations (PREFIX extern: declarations).
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage): it expands to explicit instantiations, declarations, which no function gives
 #define RUNIR_KR_PS_INTERNS(PREFIX)                                                                                                   \
     YGG_FORMALISM_INTERNS(PREFIX,                                                                                                     \
                           86,                                                                                                         \

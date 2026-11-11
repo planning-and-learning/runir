@@ -137,17 +137,17 @@ void check_atomic_projection()
     const auto arguments = denotations.insert(argument_data).first;
     const auto publications = [&]
     { return storage.get_denotation_repository(false).get_relation_repository().symbols().template size<ygg::Relation<ygg::Schema>>(); };
-    const auto compare_full = [&](auto state)
+    const auto compare_full = [&](const auto& state)
     {
         storage.reset_dynamic();
-        auto context = kr::dl::semantics::StateEvaluationContext<Kind, decltype(state)>(state, builder, storage, arguments, registers);
+        auto context = kr::dl::semantics::StateEvaluationContext<Kind, std::remove_cvref_t<decltype(state)>>(state, builder, storage, arguments, registers);
         EXPECT_EQ(rows(triple_leaf.get_result()), rows(kr::dl::semantics::evaluate<Kind>(triple, context)));
         EXPECT_EQ(rows(copied_leaf.get_result()), rows(kr::dl::semantics::evaluate<Kind>(copied, context)));
         EXPECT_EQ(rows(ready_leaf.get_result()), rows(kr::dl::semantics::evaluate<Kind>(ready, context)));
         EXPECT_EQ(rows(triple_projection.get_result()), rows(kr::dl::semantics::evaluate<Kind>(projected_triple, context)));
         EXPECT_EQ(rows(copied_projection.get_result()), rows(kr::dl::semantics::evaluate<Kind>(projected_copied, context)));
     };
-    const auto initialize = [&](auto state)
+    const auto initialize = [&](const auto& state)
     {
         const auto published = publications();
         triple_leaf.template initialize<Kind>(state);
@@ -163,7 +163,7 @@ void check_atomic_projection()
         expect_empty_delta(copied_projection);
         compare_full(state);
     };
-    const auto update = [&](const auto& delta, auto state)
+    const auto update = [&](const auto& delta, const auto& state)
     {
         const auto before_triple = rows(triple_leaf.get_result());
         const auto before_copied = rows(copied_leaf.get_result());
@@ -260,8 +260,8 @@ void check_query_graph()
     const auto registers = urd::resolve(register_data, *search->task->get_repository());
     auto argument_data = urd::data<kr::dl::semantics::CallArguments> {};
     const auto arguments = denotations.insert(argument_data).first;
-    const auto context_for = [&](auto state)
-    { return kr::dl::semantics::StateEvaluationContext<Kind, decltype(state)>(state, builder, storage, arguments, registers); };
+    const auto context_for = [&](const auto& state)
+    { return kr::dl::semantics::StateEvaluationContext<Kind, std::remove_cvref_t<decltype(state)>>(state, builder, storage, arguments, registers); };
     auto deltas = urd::Store<urd::sequence<kr::dl::semantics::incremental::Delta>>(4);
     for (size_t i = 0; i < deltas.size(); ++i)
         deltas[i].template assign<Kind>(nodes[i].get_state(), registers, nodes[i + 1].get_state(), registers);
@@ -317,7 +317,7 @@ void check_query_graph()
             EXPECT_TRUE(storage.get_caches().get_queries(false).empty());
             EXPECT_TRUE(storage.get_denotation_repository(false).get_relation_repository().symbols().template size<ygg::Relation<ygg::Schema>>() == 0);
         };
-        const auto compare_full = [&](auto& evaluated, auto state)
+        const auto compare_full = [&](auto& evaluated, const auto& state)
         {
             auto context = context_for(state);
             EXPECT_EQ(rows(evaluated.get_result()), rows(kr::dl::semantics::evaluate<Kind>(query, context)));

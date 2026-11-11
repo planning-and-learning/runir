@@ -78,13 +78,13 @@ struct PolicyEdge
 
 struct SieveResult
 {
-    bool has_cycle;
+    bool has_cycle = false;
     urd::Store<urd::sequence<std::size_t>> component_of;
 };
 
 struct StrongComponents
 {
-    std::size_t count;
+    std::size_t count = 0;
     urd::Store<urd::sequence<std::size_t>> component_of;
 };
 

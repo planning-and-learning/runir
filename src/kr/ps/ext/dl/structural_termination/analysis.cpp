@@ -2,6 +2,7 @@
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
 
+#include <cstddef>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
@@ -81,14 +82,16 @@ void record_binding_effects(ModuleView module_, runir::kr::ps::detail::RuleProfi
     const auto booleans = module_.get_features<runir::kr::dl::BooleanTag>();
     const auto numericals = module_.get_features<runir::kr::dl::NumericalTag>();
     for (std::size_t position = 0; position < booleans.size(); ++position)
-        if ((profile.boolean_unconstrained_effects & (std::uint64_t { 1 } << position)) && !feature_references_register(booleans[position], reg))
+        if ((profile.boolean_unconstrained_effects & (std::uint64_t { 1 } << position))
+            && !feature_references_register(booleans[static_cast<std::ptrdiff_t>(position)], reg))
         {
             profile.boolean_unconstrained_effects &= ~(std::uint64_t { 1 } << position);
             profile.boolean_unchanged_effects |= std::uint64_t { 1 } << position;
         }
 
     for (std::size_t position = 0; position < numericals.size(); ++position)
-        if ((profile.numerical_unconstrained_effects & (std::uint64_t { 1 } << position)) && !feature_references_register(numericals[position], reg))
+        if ((profile.numerical_unconstrained_effects & (std::uint64_t { 1 } << position))
+            && !feature_references_register(numericals[static_cast<std::ptrdiff_t>(position)], reg))
         {
             profile.numerical_unconstrained_effects &= ~(std::uint64_t { 1 } << position);
             profile.numerical_unchanged_effects |= std::uint64_t { 1 } << position;
@@ -108,7 +111,7 @@ Analysis analyze_module(ModuleView module_)
     const auto memory_position = [&](MemoryStateView memory_state)
     {
         for (std::size_t position = 0; position < memory_states.size(); ++position)
-            if (memory_states[position] == memory_state)
+            if (memory_states[static_cast<std::ptrdiff_t>(position)] == memory_state)
                 return position;
         throw std::logic_error("structural_termination: rule references a memory state not listed in the module.");
     };

@@ -11,7 +11,7 @@ ModuleStructuralTerminationResult make_result(ModuleView module_, const Analysis
         analysis,
         sieve_result,
         [module_](std::uint64_t booleans, std::uint64_t numericals, std::size_t memory_position)
-        { return ModulePolicyGraphVertexLabel(booleans, numericals, module_.get_memory_states()[memory_position]); });
+        { return ModulePolicyGraphVertexLabel(booleans, numericals, module_.get_memory_states()[static_cast<std::ptrdiff_t>(memory_position)]); });
 }
 
 }  // namespace runir::kr::ps::ext::dl::detail

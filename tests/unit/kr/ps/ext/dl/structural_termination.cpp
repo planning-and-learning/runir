@@ -500,13 +500,13 @@ TEST(RunirTests, ExtStructuralTerminationLiftsProjectedComponentsToGlobalAxes)
 
     ASSERT_FALSE(result.is_terminating());
     ASSERT_TRUE(result.sieve_result.has_value());
-    ASSERT_NE(result.sieve_result->counterexample, nullptr);
+    ASSERT_NE(result.sieve_result.value().counterexample, nullptr);
     ASSERT_EQ(booleans.size(), 1);
     ASSERT_EQ(numericals.size(), 2);
-    ASSERT_EQ(result.sieve_result->scc_results.size(), 3);
+    ASSERT_EQ(result.sieve_result.value().scc_results.size(), 3);
     auto saw_boolean_component = false;
     auto numerical_components = std::set<std::size_t> {};
-    for (const auto& scc_result : result.sieve_result->scc_results)
+    for (const auto& scc_result : result.sieve_result.value().scc_results)
     {
         ASSERT_EQ(scc_result.booleans.size() + scc_result.numericals.size(), 1);
         if (!scc_result.booleans.empty())
@@ -528,9 +528,9 @@ TEST(RunirTests, ExtStructuralTerminationLiftsProjectedComponentsToGlobalAxes)
     auto memory_states = std::set<std::string> {};
     auto saw_positive_n0 = false;
     auto saw_positive_n1 = false;
-    for (const auto vertex : result.sieve_result->counterexample->get_vertex_indices())
+    for (const auto vertex : result.sieve_result.value().counterexample->get_vertex_indices())
     {
-        const auto& label = result.sieve_result->counterexample->get_vertex_property(vertex);
+        const auto& label = result.sieve_result.value().counterexample->get_vertex_property(vertex);
         EXPECT_LE(label.boolean_values, 1);
         EXPECT_LE(label.numerical_values, 3);
         memory_states.emplace(label.memory_state.get_name());
@@ -554,11 +554,11 @@ TEST(RunirTests, ExtStructuralTerminationLiftsProjectedComponentsToGlobalAxes)
     EXPECT_TRUE(saw_positive_n1);
 
     auto rule_symbols = std::set<std::string> {};
-    for (const auto edge : result.sieve_result->counterexample->get_edge_indices())
-        rule_symbols.emplace(result.sieve_result->counterexample->get_edge_property(edge).get_symbol());
+    for (const auto edge : result.sieve_result.value().counterexample->get_edge_indices())
+        rule_symbols.emplace(result.sieve_result.value().counterexample->get_edge_property(edge).get_symbol());
     EXPECT_EQ(rule_symbols, (std::set<std::string> { "keep_n0", "keep_n1", "to_false", "to_true" }));
-    EXPECT_EQ(result.sieve_result->surviving_rules.size(), 4);
-    EXPECT_LT(graphs::find_edge_cycle(*result.sieve_result->counterexample).size(), result.sieve_result->surviving_rules.size());
+    EXPECT_EQ(result.sieve_result.value().surviving_rules.size(), 4);
+    EXPECT_LT(graphs::find_edge_cycle(*result.sieve_result.value().counterexample).size(), result.sieve_result.value().surviving_rules.size());
 }
 
 TEST(RunirTests, ExtStructuralTerminationAppliesFeatureLimitPerResidualComponent)

@@ -118,4 +118,17 @@ brokkr_install_python_stubs(
     RENAME_PACKAGES pyrunir pytyr pypddl pyyggdrasil
 )
 
+# pyrunir/kr/__init__.py re-exports pyyggdrasil's ParseError and SemanticError. nanobind's stub
+# generator leaves out names that another package defines, so the installed stub, which type checkers
+# read instead of __init__.py, gets the same re-export (once: an existing stub is kept on reinstall).
+install(CODE [[
+    set(pyrunir_kr_stub "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/pyrunir/kr/__init__.pyi")
+    set(pyrunir_reexport "from pyyggdrasil.diagnostics import ParseError as ParseError, SemanticError as SemanticError")
+    file(READ "${pyrunir_kr_stub}" pyrunir_kr_stub_content)
+    string(FIND "${pyrunir_kr_stub_content}" "${pyrunir_reexport}" pyrunir_reexport_position)
+    if(pyrunir_reexport_position EQUAL -1)
+        file(APPEND "${pyrunir_kr_stub}" "\n${pyrunir_reexport}\n")
+    endif()
+]] COMPONENT pyrunir)
+
 add_custom_target(pyrunir_wheel DEPENDS _pyrunir)

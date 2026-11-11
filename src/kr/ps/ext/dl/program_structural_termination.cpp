@@ -3,6 +3,7 @@
 #include "runir/kr/ps/ext/repository.hpp"
 #include "structural_termination/detail.hpp"
 
+#include <cstddef>
 #include <optional>
 #include <tuple>
 #include <type_traits>
@@ -43,7 +44,7 @@ std::optional<std::size_t> find_module(ProgramView program, ModuleSymbolView sym
 {
     const auto modules = program.get_modules();
     for (std::size_t position = 0; position < modules.size(); ++position)
-        if (modules[position].get_symbol() == symbol)
+        if (modules[static_cast<std::ptrdiff_t>(position)].get_symbol() == symbol)
             return position;
     return std::nullopt;
 }
@@ -58,7 +59,7 @@ ModuleCallGraph build_module_call_graph(ProgramView program)
     auto unresolved_rules = urd::Store<urd::sequence<RuleVariantView>> {};
     for (std::size_t source_module = 0; source_module < modules.size(); ++source_module)
     {
-        for (auto transition : modules[source_module].get_memory_transitions())
+        for (auto transition : modules[static_cast<std::ptrdiff_t>(source_module)].get_memory_transitions())
         {
             for (auto rule_variant : transition)
             {

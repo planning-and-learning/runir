@@ -18,6 +18,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <yggdrasil/io/iostream.hpp>
 
 namespace runir::kr::ps
@@ -110,7 +111,7 @@ template<typename Values, typename Append>
 void append_inline_section(std::ostream& os, std::string_view name, Values&& values, Append append)
 {
     os << ygg::print_indent << "(:" << name;
-    for (auto&& value : values)
+    for (auto&& value : std::forward<Values>(values))
     {
         os << ' ';
         append(os, value);

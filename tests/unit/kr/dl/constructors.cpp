@@ -199,6 +199,9 @@ TEST(RunirKrDlNumerical, RoutesValueBinaryAndDistanceData)
     EXPECT_TRUE((std::holds_alternative<urd::index_view<Query, runir::kr::dl::ConstructorRepository>>(distance.get_mid())));
 }
 
+namespace
+{
+
 /// A grammar tree: its family, non-terminals and repository.
 template<typename F, template<typename> typename NonTerminalTemplate, typename Factory>
 struct GrammarTree
@@ -213,6 +216,8 @@ template<typename Tree>
 class RunirKrDlGrammarNumerical : public testing::Test
 {
 };
+
+}  // namespace
 
 using GrammarTrees = testing::Types<GrammarTree<GrammarFamily, kr::dl::grammar::NonTerminal, kr::dl::grammar::ConstructorRepositoryFactory>,
                                     GrammarTree<CnfGrammarFamily, kr::dl::cnf_grammar::NonTerminal, kr::dl::cnf_grammar::ConstructorRepositoryFactory>>;

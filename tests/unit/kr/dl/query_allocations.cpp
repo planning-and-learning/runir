@@ -321,9 +321,9 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
         registers[i].role_values.resize(1);
         if (i < 2)
         {
-            registers[i].concept_values[0] = objects[i].index();
-            registers[i].concept_values[1] = objects[2 - i].index();
-            registers[i].role_values[0] = ::cista::pair(objects[i].index(), objects[i + 1].index());
+            registers[i].concept_values[0] = objects[static_cast<std::ptrdiff_t>(i)].index();
+            registers[i].concept_values[1] = objects[static_cast<std::ptrdiff_t>(2 - i)].index();
+            registers[i].role_values[0] = ::cista::pair(objects[static_cast<std::ptrdiff_t>(i)].index(), objects[static_cast<std::ptrdiff_t>(i + 1)].index());
         }
     }
     auto changes = std::array<kr::dl::semantics::incremental::Delta, 2> {};

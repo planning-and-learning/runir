@@ -32,10 +32,10 @@ public:
 
     SuccessorExpander(runir::kr::TaskContextPtr<Kind> task_context, ProgramView program);
 
-    const runir::kr::TaskContextPtr<Kind>& get_task_context() const noexcept { return m_task_context; }
+    [[nodiscard]] const runir::kr::TaskContextPtr<Kind>& get_task_context() const noexcept { return m_task_context; }
     EvaluationEnvironment<Kind, EvaluationPolicy>& get_environment() noexcept { return m_rule_evaluators.get_environment(); }
 
-    StorageStateView<ExecutionStorage> view(const StoredState& state) const { return m_storage.view(state); }
+    [[nodiscard]] StorageStateView<ExecutionStorage> view(const StoredState& state) const { return m_storage.view(state); }
 
     /// Create the entry module with empty registers and arguments, and no caller.
     StoredState initial_state(const tyr::planning::StateView<Kind>& state);

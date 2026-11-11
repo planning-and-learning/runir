@@ -25,6 +25,7 @@
 #include <limits>
 #include <queue>
 #include <type_traits>
+#include <utility>
 
 namespace runir::graphs::bgl
 {
@@ -111,12 +112,12 @@ template<IsGraph G, typename F>
 decltype(auto) with_vertex_index_map(const G& graph, F&& f)
 {
     if constexpr (IsDenseGraph<G>)
-        return f(boost::typed_identity_property_map<VertexIndex>());
+        return std::forward<F>(f)(boost::typed_identity_property_map<VertexIndex>());
     else
     {
         const auto vertices = dense_vertex_indices(graph);
-        return f(boost::make_function_property_map<VertexIndex>([&vertices](VertexIndex vertex)
-                                                                { return static_cast<VertexIndex>(vertices.position(vertices.find(vertex))); }));
+        return std::forward<F>(f)(boost::make_function_property_map<VertexIndex>(
+            [&vertices](VertexIndex vertex) { return static_cast<VertexIndex>(vertices.position(vertices.find(vertex))); }));
     }
 }
 

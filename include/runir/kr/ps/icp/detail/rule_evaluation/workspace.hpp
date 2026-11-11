@@ -13,6 +13,7 @@
 #include "runir/kr/ps/rule_variant_view.hpp"
 #include "tyr/planning/successor_generator_concepts.hpp"
 
+#include <cstddef>
 #include <unordered_map>
 #include <urd/repr/maps/std_map.hpp>
 #include <urd/repr/sequences/sequence.hpp>
@@ -53,7 +54,7 @@ public:
         m_changed.reserve(features.size());
         auto slots = urd::Store<urd::map<ygg::uint_t, std::size_t>, urd::stable_refs> {};
         for (std::size_t i = 0; i < features.size(); ++i)
-            slots.emplace(static_cast<ygg::uint_t>(features[i].index().value), i);
+            slots.emplace(static_cast<ygg::uint_t>(features[static_cast<std::ptrdiff_t>(i)].index().value), i);
         for (const auto& pair : module.get_reset_pairs())
             m_reset_predecessors.at(slots.at(static_cast<ygg::uint_t>(pair.after.value))).push_back(slots.at(static_cast<ygg::uint_t>(pair.before.value)));
     }
@@ -95,8 +96,8 @@ public:
         {
             if (stop())
                 return std::nullopt;
-            const auto before = evaluate<Kind>(features[i], transition.get_source_context());
-            const auto after = evaluate<Kind>(features[i], transition.get_target_context());
+            const auto before = evaluate<Kind>(features[static_cast<std::ptrdiff_t>(i)], transition.get_source_context());
+            const auto after = evaluate<Kind>(features[static_cast<std::ptrdiff_t>(i)], transition.get_target_context());
             auto entered = m_task->dl_builder.template get_builder<Denotation>(before.get_num_objects());
             entered->get().copy_from(after.value());
             entered->get() -= before.value();

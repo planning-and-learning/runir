@@ -77,6 +77,7 @@ private:
     {
         const auto same_formalism = [&](const KeyedFeature<Feature>& entry)
         { return !entry.formalism.owner_before(formalism) && !formalism.owner_before(entry.formalism); };
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): the address is an identity in the key, never turned back into a pointer
         const auto key = std::tuple { reinterpret_cast<std::uintptr_t>(&constructors), constructors.layer(), constructor };
         for (const auto [first, last] = positions.equal_range(key); const auto position : std::ranges::subrange(first, last) | std::views::values)
             if (same_formalism(features[position]))

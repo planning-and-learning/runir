@@ -184,7 +184,7 @@ public:
         return runir::kr::dl::cnf_grammar::insert(repository(), *data).first;
     }
 
-    auto translate_to_non_terminal(runir::kr::dl::grammar::ConstructorOrNonTerminalView<Category> source)
+    NonTerminalView<Category> translate_to_non_terminal(runir::kr::dl::grammar::ConstructorOrNonTerminalView<Category> source)
     {
         return std::visit(
             [&]<typename View>(View value)
@@ -204,7 +204,7 @@ public:
             source);
     }
 
-    auto translate_constructor(runir::kr::dl::grammar::ConstructorView<Category> source)
+    Constructor<Category> translate_constructor(runir::kr::dl::grammar::ConstructorView<Category> source)
     {
         return std::visit([&](auto value) { return translate_concrete_constructor(value); }, source);
     }

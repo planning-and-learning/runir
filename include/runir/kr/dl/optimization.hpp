@@ -79,7 +79,7 @@ lower(const tyr::datalog::database::QueryPlan& plan, std::span<const QueryView<>
     for (size_t i = 0; i < plan.node_count(); ++i)
     {
         const auto index = YggIndex(static_cast<ygg::uint_t>(i));
-        auto node = std::visit(
+        const auto query = std::visit(
             [&]<typename Tag>(tyr::datalog::database::QueryView<Tag> node) -> QueryView<>
             {
                 if constexpr (std::same_as<Tag, tyr::datalog::database::QueryInputTag>)
@@ -160,7 +160,7 @@ lower(const tyr::datalog::database::QueryPlan& plan, std::span<const QueryView<>
                     throw std::logic_error("Query optimization: runir queries have no distance relations.");
             },
             plan[index].get_variant());
-        lowered.insert_or_assign(index, node);
+        lowered.insert_or_assign(index, query);
     }
     urd::Store<urd::sequence<QueryView<>>> roots;
     for (const auto root : plan.roots())

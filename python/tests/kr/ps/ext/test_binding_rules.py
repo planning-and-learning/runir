@@ -17,6 +17,14 @@ BindingRule: TypeAlias = ext.ConceptLoadRule | ext.RoleLoadRule | ext.ConceptCho
 BindingRuleData: TypeAlias = (
     ext.ConceptLoadRuleData | ext.RoleLoadRuleData | ext.ConceptChooseRuleData | ext.RoleChooseRuleData
 )
+EffectIndex: TypeAlias = (
+    ext.dl.PositiveBooleanEffectIndex
+    | ext.dl.NegativeBooleanEffectIndex
+    | ext.dl.UnchangedBooleanEffectIndex
+    | ext.dl.IncreasesNumericalEffectIndex
+    | ext.dl.DecreasesNumericalEffectIndex
+    | ext.dl.UnchangedNumericalEffectIndex
+)
 RULE_TYPES = {
     ("concept", "load"): ext.ConceptLoadRule,
     ("role", "load"): ext.RoleLoadRule,
@@ -25,9 +33,7 @@ RULE_TYPES = {
 }
 
 
-def _set_common_fields(
-    data: BindingRuleData, rule: BindingRule, effects: Sequence[ext.dl.IncreasesNumericalEffectIndex] | None
-) -> None:
+def _set_common_fields(data: BindingRuleData, rule: BindingRule, effects: Sequence[EffectIndex] | None) -> None:
     """Copy the fields every binding rule shares; ``effects=None`` leaves the data's effects untouched."""
     data.source = rule.get_source().index()
     data.target = rule.get_target().index()
@@ -39,7 +45,7 @@ def _set_common_fields(
 def _interns_to(
     repository: ext.Repository,
     rule: BindingRule,
-    effects: Sequence[ext.dl.IncreasesNumericalEffectIndex] | None,
+    effects: Sequence[EffectIndex] | None,
     order: Sequence[ext.OrderTermIndex] | None = None,
 ) -> bool:
     """Rebuild ``rule``'s data with ``effects`` and ``order`` and report whether it interns to ``rule``."""

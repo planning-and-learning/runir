@@ -10,6 +10,7 @@
 #include <yggdrasil/formalism/intern_instantiations.hpp>
 
 /// The instantiations (PREFIX extern: declarations).
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage): it expands to explicit instantiations, declarations, which no function gives
 #define RUNIR_KR_DL_GRAMMAR_INTERNS(PREFIX) YGG_FORMALISM_INTERNS(PREFIX, 58, false, runir::kr::dl::grammar::ConstructorRepositoryTypes)
 
 RUNIR_KR_DL_GRAMMAR_INTERNS(extern)

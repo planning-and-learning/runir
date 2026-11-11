@@ -148,7 +148,7 @@ public:
 
     TransientExecutionStorage(runir::kr::TaskContextPtr<Kind> context, ProgramView program) : m_context(std::move(context)), m_program(program) {}
 
-    StateView view(const StoredState& state) const noexcept { return urd::resolve(*state, *m_context->execution_repository); }
+    [[nodiscard]] StateView view(const StoredState& state) const noexcept { return urd::resolve(*state, *m_context->execution_repository); }
     StoredState retain(StateView state)
     {
         auto result = m_program_states.make_shared();

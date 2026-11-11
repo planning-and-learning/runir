@@ -142,7 +142,7 @@ void check_planning_graph(tyr::planning::StateView<Kind> source, tyr::planning::
             auto evaluation = kr::dl::semantics::incremental::IncrementalEvaluation<Kind>(task, { count });
             const auto concept_id = evaluation.graph().get_index(concept_);
             const auto count_id = evaluation.graph().get_index(count);
-            const auto compare = [&](auto& evaluated, auto state)
+            const auto compare = [&](auto& evaluated, const auto& state)
             {
                 storage.reset_dynamic();
                 auto context = kr::dl::semantics::StateEvaluationContext<Kind>(state, builder, storage);
@@ -242,8 +242,8 @@ void check_incremental_evaluation()
     argument_data.boolean_arguments[0] = kr::dl::semantics::insert(denotations, argument_boolean, builder).first.index();
     argument_data.numerical_arguments[0] = kr::dl::semantics::insert(denotations, argument_numerical, builder).first.index();
     const auto other_arguments = kr::dl::semantics::insert(denotations, argument_data).first;
-    const auto context_for = [&](auto state, size_t i, kr::dl::semantics::CallArgumentsView invocation)
-    { return kr::dl::semantics::StateEvaluationContext<Kind, decltype(state)>(state, builder, storage, invocation, registers(i)); };
+    const auto context_for = [&](const auto& state, size_t i, kr::dl::semantics::CallArgumentsView invocation)
+    { return kr::dl::semantics::StateEvaluationContext<Kind, std::remove_cvref_t<decltype(state)>>(state, builder, storage, invocation, registers(i)); };
     auto deltas = std::array<kr::dl::semantics::incremental::Delta, 2> {};
     for (size_t i = 0; i < deltas.size(); ++i)
         deltas[i].template assign<Kind>(nodes[i].get_state(), registers(i), nodes[i + 1].get_state(), registers(i + 1));

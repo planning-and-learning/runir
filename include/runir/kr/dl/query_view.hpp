@@ -90,7 +90,7 @@ public:
             return self().template member<&urd::record_of<V>::columns>();
     }
 
-    std::span<const ygg::ColumnLayout> get_schema() const noexcept
+    [[nodiscard]] std::span<const ygg::ColumnLayout> get_schema() const noexcept
     {
         if constexpr (std::same_as<Tag, void>)
             return std::visit([](auto concrete) { return concrete.get_schema(); }, get_variant());

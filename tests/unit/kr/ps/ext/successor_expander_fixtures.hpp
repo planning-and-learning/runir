@@ -576,7 +576,7 @@ void expect_transient_program_states_retain_values_and_intern_callers()
     EXPECT_EQ(storage.save_caller(storage.view(callee), inner_return).index(), inner_caller.index());
     EXPECT_EQ(executions.template size<kr::ps::ext::CallStack>(), 2);
     ASSERT_TRUE(inner_caller.get_caller());
-    EXPECT_EQ(inner_caller.get_caller()->index(), outer_caller.index());
+    EXPECT_EQ(inner_caller.get_caller().value().index(), outer_caller.index());
     EXPECT_FALSE(outer_caller.get_caller());
 
     const auto first = storage.successor(source, bindings.front());
@@ -599,13 +599,13 @@ void expect_transient_program_states_retain_values_and_intern_callers()
     EXPECT_EQ(*copy->call_stack, inner_caller.index());
     const auto caller = storage.view(copy).get_call_stack();
     ASSERT_TRUE(caller);
-    EXPECT_EQ(caller->index(), inner_caller.index());
+    EXPECT_EQ(caller.value().index(), inner_caller.index());
     const auto returned = storage.store(storage.view(copy).get_state(),
-                                        caller->get_module(),
-                                        caller->get_return_memory_state(),
-                                        caller->get_registers(),
-                                        caller->get_arguments(),
-                                        caller->get_caller());
+                                        caller.value().get_module(),
+                                        caller.value().get_return_memory_state(),
+                                        caller.value().get_registers(),
+                                        caller.value().get_arguments(),
+                                        caller.value().get_caller());
     ASSERT_TRUE(returned->call_stack);
     EXPECT_EQ(*returned->call_stack, outer_caller.index());
     EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(storage.view(returned).get_module_state().get_memory_state(), inner_return));
@@ -613,13 +613,13 @@ void expect_transient_program_states_retain_values_and_intern_callers()
     const auto materialized = storage.materialize(storage.view(retained));
     const auto materialized_inner = materialized.get_call_stack();
     ASSERT_TRUE(materialized_inner);
-    EXPECT_EQ(materialized_inner->index(), inner_caller.index());
-    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(materialized_inner->get_return_memory_state(), inner_return));
-    const auto materialized_outer = materialized_inner->get_caller();
+    EXPECT_EQ(materialized_inner.value().index(), inner_caller.index());
+    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(materialized_inner.value().get_return_memory_state(), inner_return));
+    const auto materialized_outer = materialized_inner.value().get_caller();
     ASSERT_TRUE(materialized_outer);
-    EXPECT_EQ(materialized_outer->index(), outer_caller.index());
-    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(materialized_outer->get_return_memory_state(), outer_return));
-    EXPECT_FALSE(materialized_outer->get_caller());
+    EXPECT_EQ(materialized_outer.value().index(), outer_caller.index());
+    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(materialized_outer.value().get_return_memory_state(), outer_return));
+    EXPECT_FALSE(materialized_outer.value().get_caller());
     EXPECT_EQ(executions.template size<kr::ps::ext::CallStack>(), 2);
 
     // Reusing a released slot must replace its values without replacing its buffers.

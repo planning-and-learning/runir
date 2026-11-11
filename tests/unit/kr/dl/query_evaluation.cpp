@@ -571,7 +571,9 @@ void check_cached_queries()
                                      EXPECT_TRUE(std::ranges::equal(decoded.schema, concrete.get_schema()));
                                  }
                                  if constexpr (requires { data.plan; })
+                                 {
                                      EXPECT_TRUE(std::ranges::equal(decoded.plan.output_columns(), concrete.get_schema()));
+                                 }
                                  if constexpr (requires { data.plan.lhs_keys(); })
                                  {
                                      EXPECT_TRUE(std::ranges::equal(decoded.plan.lhs_keys(), data.plan.lhs_keys()));

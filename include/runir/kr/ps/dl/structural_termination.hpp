@@ -143,8 +143,8 @@ struct IncompletePolicyResult
 
     struct MarkedFeature
     {
-        FeatureKind feature_kind;
-        std::size_t feature_position;
+        FeatureKind feature_kind = FeatureKind::BOOLEAN;
+        std::size_t feature_position = 0;
         /// Original policy-rule positions that established this mark.
         urd::Store<urd::sequence<std::size_t>> witnessing_rule_positions;
     };
@@ -159,14 +159,14 @@ struct IncompletePolicyResult
 
     struct BlockingReason
     {
-        FeatureKind feature_kind;
-        std::size_t feature_position;
+        FeatureKind feature_kind = FeatureKind::BOOLEAN;
+        std::size_t feature_position = 0;
         urd::Store<urd::sequence<std::size_t>> opposing_rule_positions;
     };
 
     struct SurvivingRule
     {
-        std::size_t rule_position;
+        std::size_t rule_position = 0;
         urd::Store<urd::sequence<BlockingReason>> blocking_reasons;
     };
 

@@ -140,9 +140,9 @@ public:
     { return tyr::datalog::database::relax(roots, std::forward<Known>(known), m_repository, m_builder); }
 
     /// The expression of each input slot, by slot.
-    const urd::Store<urd::sequence<QuerySlot>>& get_slots() const noexcept { return m_slots; }
+    [[nodiscard]] const urd::Store<urd::sequence<QuerySlot>>& get_slots() const noexcept { return m_slots; }
     /// The DL leaf of each input slot; without complement rewriting, every slot is a leaf query.
-    urd::Store<urd::sequence<DlQuery>> get_leaves(const ConstructorRepository& constructors) const;
+    [[nodiscard]] urd::Store<urd::sequence<DlQuery>> get_leaves(const ConstructorRepository& constructors) const;
 
 private:
     template<typename Tag>
