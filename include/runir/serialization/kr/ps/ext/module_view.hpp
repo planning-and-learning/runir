@@ -4,7 +4,8 @@
 #include "runir/kr/ps/ext/module_view.hpp"
 #include "runir/serialization/kr/dl/argument_view.hpp"
 #include "runir/serialization/kr/dl/register_view.hpp"
-#include "runir/serialization/kr/ps/ext/rule_variant_view.hpp"
+#include "runir/serialization/kr/ps/ext/rule_view.hpp"
+#include "runir/serialization/kr/ps/rule_variant_view.hpp"
 
 #include <yggdrasil/serialization/dictionaries.hpp>
 
@@ -12,7 +13,7 @@ namespace ygg::serialization
 {
 
 template<typename Archive, typename C>
-void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::ext::Module>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::ps::ext::Module, C>>)
 {
     ar.field("symbol", [](const auto& value) -> decltype(auto) { return (value.get_symbol()); });
     ar.field("concept_arguments", [](const auto& value) -> decltype(auto) { return (value.template get_arguments<runir::kr::dl::ConceptTag>()); });

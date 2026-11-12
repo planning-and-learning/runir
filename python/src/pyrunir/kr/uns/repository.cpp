@@ -1,4 +1,5 @@
 #include "bindings.hpp"
+#include "pyrunir/module.hpp"
 
 #include <memory>
 #include <nanobind/stl/shared_ptr.h>
@@ -12,7 +13,7 @@ void bind_repository(nb::module_& m, RepositoryBinding& repository)
 {
     using namespace nb::literals;
     repository.def("clear", &Repository::clear)
-        .def("get_index", &Repository::get_index)
+        .def("layer", &Repository::layer)
         .def("get_dl_repository", [](Repository& self) -> auto& { return self.get_dl_repository(); }, nb::rv_policy::reference_internal);
 
     auto factory = nb::class_<RepositoryFactory>(m, "RepositoryFactory");

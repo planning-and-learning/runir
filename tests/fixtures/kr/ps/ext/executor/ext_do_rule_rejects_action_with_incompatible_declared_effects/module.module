@@ -14,10 +14,8 @@
         (:numerical
             (:symbol C)
             (:expression
-                (n_distance
+                (n_count
                     (c_atomic_state "ball")
-                    (r_atomic_state "at")
-                    (c_atomic_state "room")
                 )
             )
         )

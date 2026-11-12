@@ -1,6 +1,7 @@
 #include "module.hpp"
 
 #include "bindings.hpp"
+#include "pyrunir/module.hpp"
 
 #include <runir/kr/uns/repository.hpp>
 

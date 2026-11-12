@@ -1,5 +1,7 @@
 #include "module.hpp"
 
+#include "pyrunir/module.hpp"
+
 namespace runir::datasets
 {
 

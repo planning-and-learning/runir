@@ -12,6 +12,8 @@
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
 #include <cstdint>
 #include <string>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 
 namespace runir::kr::ps::ext::dl::ast
@@ -94,10 +96,10 @@ struct NamedValue : boost::spirit::x3::position_tagged
 template<runir::kr::dl::CategoryTag Category>
 struct LoadRule : boost::spirit::x3::position_tagged
 {
-    std::vector<Condition> conditions;
+    urd::Store<urd::sequence<Condition>> conditions;
     Identifier feature;
     Identifier reg;
-    std::vector<Effect> effects;
+    urd::Store<urd::sequence<Effect>> effects;
 };
 
 struct OrderTerm : boost::spirit::x3::position_tagged
@@ -109,45 +111,45 @@ struct OrderTerm : boost::spirit::x3::position_tagged
 template<runir::kr::dl::CategoryTag Category>
 struct ChooseRule : boost::spirit::x3::position_tagged
 {
-    std::vector<Condition> conditions;
+    urd::Store<urd::sequence<Condition>> conditions;
     Identifier feature;
     Identifier reg;
-    std::vector<Effect> effects;
-    std::vector<OrderTerm> order;
+    urd::Store<urd::sequence<Effect>> effects;
+    urd::Store<urd::sequence<OrderTerm>> order;
 };
 
 struct SketchRule : boost::spirit::x3::position_tagged
 {
-    std::vector<Condition> conditions;
-    std::vector<Effect> effects;
+    urd::Store<urd::sequence<Condition>> conditions;
+    urd::Store<urd::sequence<Effect>> effects;
 };
 
 struct DoRule : boost::spirit::x3::position_tagged
 {
-    std::vector<Condition> conditions;
+    urd::Store<urd::sequence<Condition>> conditions;
     Identifier action;
-    std::vector<SymbolExpression> arguments;
-    std::vector<Effect> effects;
+    urd::Store<urd::sequence<SymbolExpression>> arguments;
+    urd::Store<urd::sequence<Effect>> effects;
 };
 
 struct ActionRule : boost::spirit::x3::position_tagged
 {
-    std::vector<Condition> conditions;
+    urd::Store<urd::sequence<Condition>> conditions;
     Identifier action;
     Identifier query_feature;
-    std::vector<Effect> effects;
+    urd::Store<urd::sequence<Effect>> effects;
 };
 
 struct CallRule : boost::spirit::x3::position_tagged
 {
-    std::vector<Condition> conditions;
+    urd::Store<urd::sequence<Condition>> conditions;
     Identifier callee;
-    std::vector<SymbolExpression> arguments;
+    urd::Store<urd::sequence<SymbolExpression>> arguments;
 };
 
 struct BacktrackRule : boost::spirit::x3::position_tagged
 {
-    std::vector<Condition> conditions;
+    urd::Store<urd::sequence<Condition>> conditions;
 };
 
 using Rule = PositionedVariant<LoadRule<runir::kr::dl::ConceptTag>,
@@ -165,21 +167,21 @@ struct RuleEntry : boost::spirit::x3::position_tagged
     Identifier symbol;
     Identifier source;
     boost::optional<Identifier> target;
-    std::vector<Rule> rules;
+    urd::Store<urd::sequence<Rule>> rules;
 };
 
 /// (relation term...): a rule head or a body atom. Terms are ?variables or object names.
 struct DatalogAtom : boost::spirit::x3::position_tagged
 {
     Identifier relation;
-    std::vector<Identifier> terms;
+    urd::Store<urd::sequence<Identifier>> terms;
 };
 
 /// (goal p t...) or, for the goal's negative literals, (goal (not (p t...))).
 struct DatalogGoalAtom : boost::spirit::x3::position_tagged
 {
     Identifier predicate;
-    std::vector<Identifier> terms;
+    urd::Store<urd::sequence<Identifier>> terms;
     bool negative = false;
 };
 
@@ -249,7 +251,7 @@ struct DatalogAggregate : boost::spirit::x3::position_tagged
     DatalogAggregateFunction function = DatalogAggregateFunction::COUNT;
     Identifier result;
     boost::optional<Identifier> value;
-    std::vector<DatalogCondition> body;
+    urd::Store<urd::sequence<DatalogCondition>> body;
 };
 
 using DatalogLiteral = PositionedVariant<DatalogAggregate, DatalogCondition>;
@@ -260,32 +262,32 @@ using DatalogLiteral = PositionedVariant<DatalogAggregate, DatalogCondition>;
 struct DatalogHead : boost::spirit::x3::position_tagged
 {
     Identifier relation;
-    std::vector<Identifier> terms;
+    urd::Store<urd::sequence<Identifier>> terms;
     boost::optional<Identifier> min;
 };
 
 struct DatalogRule : boost::spirit::x3::position_tagged
 {
     DatalogHead head;
-    std::vector<DatalogLiteral> body;
+    urd::Store<urd::sequence<DatalogLiteral>> body;
 };
 
 struct Module : boost::spirit::x3::position_tagged
 {
     Identifier name;
-    std::vector<ArgumentVariant> arguments;
-    std::vector<RegisterVariant> registers;
+    urd::Store<urd::sequence<ArgumentVariant>> arguments;
+    urd::Store<urd::sequence<RegisterVariant>> registers;
     Identifier entry;
-    std::vector<NamedValue> memory_states;
-    boost::optional<std::vector<DatalogRule>> datalog;
-    std::vector<FeatureVariant> features;
-    std::vector<RuleEntry> rule_entries;
+    urd::Store<urd::sequence<NamedValue>> memory_states;
+    boost::optional<urd::Store<urd::sequence<DatalogRule>>> datalog;
+    urd::Store<urd::sequence<FeatureVariant>> features;
+    urd::Store<urd::sequence<RuleEntry>> rule_entries;
 };
 
 struct Program : boost::spirit::x3::position_tagged
 {
     Identifier entry;
-    std::vector<Module> modules;
+    urd::Store<urd::sequence<Module>> modules;
 };
 
 }  // namespace runir::kr::ps::ext::dl::ast

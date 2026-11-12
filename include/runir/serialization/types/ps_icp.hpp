@@ -7,7 +7,7 @@
 namespace runir::serialization
 {
 
-using IcpViews = ygg::MapTypeListSecondT<IndexView, kr::ps::icp::Repository, kr::ps::icp::RepositoryTypes>;
+using IcpViews = boost::mp11::mp_transform_q<boost::mp11::mp_bind_front<IndexView, kr::ps::icp::Repository>, kr::ps::icp::RepositoryTypes>;
 
 }  // namespace runir::serialization
 

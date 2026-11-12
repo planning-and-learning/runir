@@ -1,3 +1,4 @@
+#include "pyrunir/module.hpp"
 #include "pyrunir/serialization/binding_utils.hpp"
 #include "pyrunir/serialization/bindings.hpp"
 
@@ -9,7 +10,7 @@ namespace runir::serialization
 
 void bind_kr_dl_constructor(nb::module_& m)
 {
-    using Types = ygg::ConcatTypeListsT<kr::dl::ConstructorTypes, kr::dl::ReferenceTypes>;
+    using Types = boost::mp11::mp_append<kr::dl::ConstructorTypes, kr::dl::ReferenceTypes>;
     bind_entity_types(m, DlComponentViews<Types> {});
 }
 

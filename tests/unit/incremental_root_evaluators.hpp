@@ -53,7 +53,8 @@ public:
     /// Enters the state of `context`, reached from the previous one by `delta`. The root is updated from the delta if
     /// it can be, otherwise initialized; its get_delta() / changed() throw std::logic_error in the latter case.
     template<kr::dl::semantics::StateEvaluationContextConcept<Kind> Context>
-    RootState<Kind, Category, Context> update(const Context& context, const kr::dl::semantics::incremental::Delta& delta, ygg::database::Workspace& workspace)
+    RootState<Kind, Category, Context>
+    update(const Context& context, const kr::dl::semantics::incremental::Delta& delta, tyr::datalog::database::Workspace& workspace)
     { return evaluated(m_evaluation.enter(context, delta, workspace)); }
 };
 
@@ -65,7 +66,7 @@ struct QueryRootState
     kr::dl::semantics::incremental::StateEvaluation<Kind, Context> state;
     kr::dl::semantics::incremental::QueryEvaluationIndex root;
 
-    const auto& get_result() { return state.evaluate(root); }
+    auto get_result() { return state.evaluate(root); }
     const auto& get_delta() { return state.delta(root); }
     size_t size() { return state.size(root); }
 };
@@ -95,7 +96,8 @@ public:
     QueryRootState<Kind, Context> initialize(const Context& context)
     { return evaluated(m_evaluation.enter(context)); }
     template<kr::dl::semantics::StateEvaluationContextConcept<Kind> Context>
-    QueryRootState<Kind, Context> update(const Context& context, const kr::dl::semantics::incremental::Delta& delta, ygg::database::Workspace& workspace)
+    QueryRootState<Kind, Context>
+    update(const Context& context, const kr::dl::semantics::incremental::Delta& delta, tyr::datalog::database::Workspace& workspace)
     { return evaluated(m_evaluation.enter(context, delta, workspace)); }
 };
 

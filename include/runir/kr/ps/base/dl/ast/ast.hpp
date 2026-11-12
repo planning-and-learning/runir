@@ -7,6 +7,8 @@
 
 #include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 
 namespace runir::kr::ps::base::dl::ast
@@ -107,15 +109,15 @@ template<runir::kr::FamilyTag Family>
 struct Rule : boost::spirit::x3::position_tagged
 {
     runir::kr::parser::ast::Identifier symbol;
-    std::vector<Condition> conditions;
-    std::vector<Effect> effects;
+    urd::Store<urd::sequence<Condition>> conditions;
+    urd::Store<urd::sequence<Effect>> effects;
 };
 
 template<runir::kr::FamilyTag Family>
 struct Sketch : boost::spirit::x3::position_tagged
 {
-    std::vector<Feature<Family>> features;
-    std::vector<Rule<Family>> rules;
+    urd::Store<urd::sequence<Feature<Family>>> features;
+    urd::Store<urd::sequence<Rule<Family>>> rules;
 };
 
 }  // namespace runir::kr::ps::base::dl::ast

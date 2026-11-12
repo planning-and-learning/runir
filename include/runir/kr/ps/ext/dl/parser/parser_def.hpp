@@ -2,7 +2,7 @@
 #define RUNIR_KR_PS_EXT_DL_PARSER_PARSER_DEF_HPP_
 
 #include "runir/kr/dl/grammar/parser/parsers.hpp"
-#include "runir/kr/parser/error_handler.hpp"
+#include "runir/kr/parser/config.hpp"
 #include "runir/kr/ps/base/dl/ast/ast_adapted.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/ext/dl/ast/ast_adapted.hpp"
@@ -10,6 +10,8 @@
 
 #include <boost/spirit/home/x3/support/utility/annotate_on_success.hpp>
 #include <string>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 namespace runir::kr::ps::ext::dl::parser
 {
@@ -19,8 +21,8 @@ using boost::spirit::x3::eoi;
 using boost::spirit::x3::lexeme;
 using boost::spirit::x3::lit;
 using boost::spirit::x3::raw;
-using runir::kr::parser::keyword;
 using ygg::diagnostics::context;
+using ygg::diagnostics::keyword;
 
 using boost::spirit::x3::ascii::alnum;
 using boost::spirit::x3::ascii::alpha;
@@ -198,12 +200,12 @@ constexpr auto decreases_effect_def = keyword(runir::kr::ps::dl::Decreases::keyw
 constexpr auto effect_observation_def = positive_effect | negative_effect | unchanged_effect | increases_effect | decreases_effect;
 constexpr auto effect_def = context("effect")[(lit("(") >> effect_observation) > identifier > lit(")")];
 constexpr auto effects_section_def = context(":effects")[(lit("(") >> keyword(":effects")) > *effect > lit(")")];
-constexpr auto optional_effects_section = effects_section | attr(std::vector<ast::Effect> {});
+constexpr auto optional_effects_section = effects_section | attr(urd::Store<urd::sequence<ast::Effect>> {});
 
 constexpr auto order_term_def =
     context("order term")[lit("(") > ((keyword("min") >> attr(OrderDirection::MIN)) | (keyword("max") >> attr(OrderDirection::MAX))) > identifier > lit(")")];
 constexpr auto order_section_def = context(":order")[(lit("(") >> keyword(":order")) > *order_term > lit(")")];
-constexpr auto optional_order_section = order_section | attr(std::vector<ast::OrderTerm> {});
+constexpr auto optional_order_section = order_section | attr(urd::Store<urd::sequence<ast::OrderTerm>> {});
 
 constexpr auto concept_load_rule_def = context("concept load rule")[(keyword("(:load") >> conditions_section >> concept_feature_section_def)
                                                                     > concept_register_section_def > optional_effects_section > lit(")")];
@@ -223,7 +225,7 @@ constexpr auto call_rule_def = context("call rule")[keyword("(:call") > conditio
 constexpr auto backtrack_rule_def = context("backtrack rule")[keyword("(:backtrack") > conditions_section > lit(")")];
 constexpr auto rule_def =
     concept_load_rule | role_load_rule | sketch_rule | do_rule | call_rule | concept_choose_rule | role_choose_rule | action_rule | backtrack_rule;
-constexpr auto required_rules = boost::spirit::x3::rule<class RequiredRules, std::vector<ast::Rule>> { "one or more rules" } = +rule;
+constexpr auto required_rules = boost::spirit::x3::rule<class RequiredRules, urd::Store<urd::sequence<ast::Rule>>> { "one or more rules" } = +rule;
 
 constexpr auto rule_entry_def = context(
     "rule")[(lit("(") >> keyword(":rule")) > symbol_section
@@ -232,11 +234,11 @@ constexpr auto rule_entry_def = context(
 constexpr auto rules_section_def = context(":rules")[(lit("(") >> keyword(":rules")) > *rule_entry > lit(")")];
 
 constexpr auto named_value_def = identifier;
-constexpr auto required_memory_states = boost::spirit::x3::rule<class RequiredMemoryStates, std::vector<ast::NamedValue>> { "one or more memory states" } =
-    +named_value;
+constexpr auto required_memory_states =
+    boost::spirit::x3::rule<class RequiredMemoryStates, urd::Store<urd::sequence<ast::NamedValue>>> { "one or more memory states" } = +named_value;
 constexpr auto memory_section_def = context(":memory")[(lit("(") >> keyword(":memory")) > required_memory_states > lit(")")];
 
-// The :datalog section: (:rule head literal...), literals as in docs/datalog.md. Aggregate bodies hold no aggregates.
+// The :datalog section: (:rule head literal...), literals as in docs/datalog.rst. Aggregate bodies hold no aggregates.
 constexpr auto datalog_variable_def = boost::spirit::x3::rule<DatalogVariableText, std::string> { "variable_text" } =
     raw[lexeme[char_('?') >> (alpha | char_('_')) >> *(alnum | char_('_') | char_('-'))]];
 constexpr auto datalog_term_def = boost::spirit::x3::rule<DatalogTermText, std::string> { "term_text" } =
@@ -273,7 +275,7 @@ constexpr auto datalog_section_def = context(":datalog")[((lit("(") >> keyword("
 
 constexpr auto module_def = context("module")[(lit("(") >> keyword(":module")) > symbol_section > arguments_section > registers_section > entry_section
                                               > memory_section > -datalog_section > features_section > rules_section > lit(")")];
-constexpr auto required_modules = boost::spirit::x3::rule<class RequiredModules, std::vector<ast::Module>> { "one or more modules" } = +module;
+constexpr auto required_modules = boost::spirit::x3::rule<class RequiredModules, urd::Store<urd::sequence<ast::Module>>> { "one or more modules" } = +module;
 constexpr auto program_def = context("program")[(lit("(") >> keyword(":program")) > entry_section > required_modules > lit(")")];
 constexpr auto module_root_def = context("module")[module > eoi];
 constexpr auto program_root_def = context("program")[program > eoi];
@@ -585,10 +587,10 @@ struct ModuleClass : boost::spirit::x3::annotate_on_success
 struct ProgramClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct ModuleRootClass : runir::kr::parser::ErrorHandlerBase
+struct ModuleRootClass : ygg::diagnostics::ErrorHandlerBase
 {
 };
-struct ProgramRootClass : runir::kr::parser::ErrorHandlerBase
+struct ProgramRootClass : ygg::diagnostics::ErrorHandlerBase
 {
 };
 

@@ -10,12 +10,16 @@
 
 #include <cassert>
 #include <memory>
+#include <tyr/datalog/lifted/database/semantics/relation_view.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
+#include <urd/config.hpp>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/pools/pools.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
-#include <yggdrasil/containers/raw_vector_set.hpp>
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/database/relation/relation_repository.hpp>
+#include <yggdrasil/core/index_sequence.hpp>
 #include <yggdrasil/formalism/interning.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>
 
@@ -27,13 +31,10 @@ class DenotationRepositoryFactory
     friend class DenotationRepository;
 
 private:
-    // Copies share identity sequences, including factories retained by repositories.
-    std::shared_ptr<size_t> m_next_index;
-    ygg::database::RelationRepositoryFactory m_relation_factory;
+    // Copies share identity sequences.
+    ygg::IndexSequence m_indices;
 
 public:
-    DenotationRepositoryFactory() : m_next_index(std::make_shared<size_t>(0)) {}
-
     DenotationRepository create(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository);
     DenotationRepositoryPtr create_shared(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository);
 };
@@ -44,10 +45,11 @@ class DenotationRepository : public ygg::formalism::SymbolRepositoryBase<Denotat
 
     friend class DenotationRepositoryFactory;
 
-    using VectorRepository = ygg::RawVectorSet<ygg::uint_t, ygg::uint_t>;
+    /// The denotations' blocks, interned in a urd pool (stored flat): a handle is a vec_index.
+    using VectorRepository = urd::Store<urd::pool<DenotationBlocks>>;
 
     VectorRepository m_vector_repository;
-    ygg::database::RelationRepository m_relation_repository;
+    ygg::FreeRelationRepository m_relation_repository;
     std::shared_ptr<const tyr::formalism::planning::Repository> m_formalism_repository;
     DenotationRepositoryFactory m_factory;
     size_t m_index;
@@ -63,7 +65,8 @@ public:
     DenotationRepository(DenotationRepository&&) = delete;
     DenotationRepository& operator=(DenotationRepository&&) = delete;
 
-    [[nodiscard]] const auto& get_index() const noexcept { return m_index; }
+    /// The repository's number, as urd's views ask of a context.
+    [[nodiscard]] std::size_t layer() const noexcept { return m_index; }
     [[nodiscard]] auto get_factory() const noexcept { return m_factory; }
     [[nodiscard]] const tyr::formalism::planning::Repository& get_formalism_repository() const noexcept
     {
@@ -81,19 +84,6 @@ public:
         m_relation_repository.clear();
     }
 
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
-    const ygg::Data<T>& operator[](ygg::Index<T> index) const noexcept
-    {
-        assert(this->template is_local<T>(index));
-        return this->template local<T>(index);
-    }
-
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
-    [[nodiscard]] const DenotationRepository& get_canonical_context(ygg::Index<T>) const noexcept
-    { return *this; }
-
     [[nodiscard]] const auto& get_vector_repository() const noexcept { return m_vector_repository; }
     auto& get_vector_repository() noexcept { return m_vector_repository; }
     [[nodiscard]] const auto& get_relation_repository() const noexcept { return m_relation_repository; }
@@ -101,11 +91,11 @@ public:
 };
 
 /// A repository owns the records viewed through it.
-inline const DenotationRepository& get_repository(const DenotationRepository& repository YGG_LIFETIMEBOUND) noexcept { return repository; }
+inline const DenotationRepository& get_repository(const DenotationRepository& repository URD_LIFETIMEBOUND) noexcept { return repository; }
 
 template<typename T>
     requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
-void prepare_for_insert(DenotationRepository&, ygg::Data<T>& data)
+void prepare_for_insert(DenotationRepository&, urd::data<T>& data)
 { canonicalize(data); }
 
 using ygg::formalism::insert;

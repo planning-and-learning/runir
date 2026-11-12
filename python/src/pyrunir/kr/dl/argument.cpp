@@ -1,11 +1,11 @@
 #include "bindings.hpp"
+#include "pyrunir/module.hpp"
 
 #include <runir/kr/dl/argument_data.hpp>
 #include <runir/kr/dl/argument_view.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
 
 namespace runir::kr::dl
 {
@@ -17,26 +17,26 @@ template<CategoryTag Category>
 void bind_argument_data(nb::module_& m, const char* name)
 {
     using Type = Argument<Category>;
-    using Data = ygg::Data<Type>;
+    using Data = urd::data<Type>;
 
     auto data = nb::class_<Data>(m, name)
                     .def(nb::init<>())
-                    .def(nb::init<::cista::offset::string, ArgumentIdentifier<Category>>(), nb::arg("name"), nb::arg("identifier"))
+                    .def(nb::init<urd::flat_string, ArgumentIdentifier<Category>>(), nb::arg("name"), nb::arg("identifier"))
                     .def_rw("index", &Data::index)
                     .def_rw("name", &Data::name)
                     .def_rw("identifier", &Data::identifier);
-    ygg::add_comparison(data);
+    urd::python::add_comparison(data);
 }
 
 template<CategoryTag Category>
 void bind_argument_view(nb::module_& m, const char* name)
 {
     using Type = Argument<Category>;
-    using View = ygg::View<ygg::Index<Type>, ConstructorRepository>;
-    auto view = nb::class_<View>(m, name).def("get_index", &View::get_index).def("get_name", &View::get_name).def("get_identifier", &View::get_identifier);
+    using View = urd::index_view<Type, ConstructorRepository>;
+    auto view = nb::class_<View>(m, name).def("index", &View::index).def("get_name", &View::get_name).def("get_identifier", &View::get_identifier);
     ygg::add_print(view);
-    ygg::add_comparison(view);
-    ygg::add_hash(view);
+    urd::python::add_comparison(view);
+    urd::python::add_hash(view);
 }
 
 }  // namespace
@@ -48,14 +48,14 @@ void bind_argument(nb::module_& m)
     using Boolean = Argument<BooleanTag>;
     using Numerical = Argument<NumericalTag>;
 
-    ygg::bind_index<ygg::Index<Concept>>(m, "ConceptArgumentIndex");
-    ygg::bind_index<ygg::Index<Role>>(m, "RoleArgumentIndex");
-    ygg::bind_index<ygg::Index<Boolean>>(m, "BooleanArgumentIndex");
-    ygg::bind_index<ygg::Index<Numerical>>(m, "NumericalArgumentIndex");
-    ygg::bind_index<ArgumentIdentifier<ConceptTag>>(m, "ConceptArgumentIdentifier");
-    ygg::bind_index<ArgumentIdentifier<RoleTag>>(m, "RoleArgumentIdentifier");
-    ygg::bind_index<ArgumentIdentifier<BooleanTag>>(m, "BooleanArgumentIdentifier");
-    ygg::bind_index<ArgumentIdentifier<NumericalTag>>(m, "NumericalArgumentIdentifier");
+    urd::python::bind_index<urd::index<Concept>>(m, "ConceptArgumentIndex");
+    urd::python::bind_index<urd::index<Role>>(m, "RoleArgumentIndex");
+    urd::python::bind_index<urd::index<Boolean>>(m, "BooleanArgumentIndex");
+    urd::python::bind_index<urd::index<Numerical>>(m, "NumericalArgumentIndex");
+    urd::python::bind_index<ArgumentIdentifier<ConceptTag>>(m, "ConceptArgumentIdentifier");
+    urd::python::bind_index<ArgumentIdentifier<RoleTag>>(m, "RoleArgumentIdentifier");
+    urd::python::bind_index<ArgumentIdentifier<BooleanTag>>(m, "BooleanArgumentIdentifier");
+    urd::python::bind_index<ArgumentIdentifier<NumericalTag>>(m, "NumericalArgumentIdentifier");
 
     bind_argument_data<ConceptTag>(m, "ConceptArgumentData");
     bind_argument_data<RoleTag>(m, "RoleArgumentData");

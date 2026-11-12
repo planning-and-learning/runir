@@ -4,82 +4,88 @@
 #include "runir/kr/dl/semantics/declarations.hpp"
 
 #include <tuple>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
 
-namespace ygg
+namespace runir::kr::dl::semantics
+{
+/// The blocks of a concept's or role's denotation, interned in its DenotationRepository: vec_index is their handle.
+using DenotationBlocks = urd::Store<urd::sequence<ygg::uint_t>, urd::frozen>;
+}
+
+namespace urd
 {
 
 template<>
-struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>>
+struct data<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>>
 {
-    Index<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>> index;
+    urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>> index;
     bool value = false;
 
-    Data() = default;
-    explicit Data(bool value_) noexcept : value(value_) {}
+    data() = default;
+    explicit data(bool value_) noexcept : value(value_) {}
 
     auto get_data() noexcept -> bool& { return value; }
     [[nodiscard]] auto get_data() const noexcept -> const bool& { return value; }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::value> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::value> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::value> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::value> {}; }
 };
 
 template<>
-struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>>
+struct data<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>>
 {
-    Index<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>> index;
+    urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>> index;
     ygg::uint_t value = 0;
 
-    Data() = default;
-    explicit Data(ygg::uint_t value_) noexcept : value(value_) {}
+    data() = default;
+    explicit data(ygg::uint_t value_) noexcept : value(value_) {}
 
     auto get_data() noexcept -> ygg::uint_t& { return value; }
     [[nodiscard]] auto get_data() const noexcept -> const ygg::uint_t& { return value; }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::value> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::value> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::value> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::value> {}; }
 };
 
 template<>
-struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>
+struct data<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>
 {
-    Index<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>> index;
+    urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>> index;
     ygg::uint_t num_objects = 0;
-    ygg::uint_t vec_index = 0;
+    urd::index<runir::kr::dl::semantics::DenotationBlocks> vec_index;
 
-    Data() = default;
-    Data(ygg::uint_t num_objects_, ygg::uint_t vec_index_) noexcept : num_objects(num_objects_), vec_index(vec_index_) {}
+    data() = default;
+    data(ygg::uint_t num_objects_, urd::index<runir::kr::dl::semantics::DenotationBlocks> vec_index_) noexcept :
+        num_objects(num_objects_),
+        vec_index(vec_index_)
+    {
+    }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::num_objects, &Data::vec_index> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::num_objects, &Data::vec_index> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::num_objects, &data::vec_index> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::num_objects, &data::vec_index> {}; }
 };
 
 template<>
-struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>
+struct data<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>
 {
-    Index<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>> index;
+    urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>> index;
     ygg::uint_t num_objects = 0;
-    ygg::uint_t vec_index = 0;
+    urd::index<runir::kr::dl::semantics::DenotationBlocks> vec_index;
 
-    Data() = default;
-    Data(ygg::uint_t num_objects_, ygg::uint_t vec_index_) noexcept : num_objects(num_objects_), vec_index(vec_index_) {}
+    data() = default;
+    data(ygg::uint_t num_objects_, urd::index<runir::kr::dl::semantics::DenotationBlocks> vec_index_) noexcept :
+        num_objects(num_objects_),
+        vec_index(vec_index_)
+    {
+    }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::num_objects, &Data::vec_index> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::num_objects, &Data::vec_index> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::num_objects, &data::vec_index> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::num_objects, &data::vec_index> {}; }
 };
-
-static_assert(uses_trivial_storage_v<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>>);
-static_assert(uses_trivial_storage_v<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>>);
-static_assert(uses_trivial_storage_v<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>);
-static_assert(uses_trivial_storage_v<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>);
 
 }
 

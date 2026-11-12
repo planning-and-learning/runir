@@ -4,28 +4,29 @@
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/ps/declarations.hpp"
 
-#include <tuple>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/ids/uint_mixins.hpp>
+#include <compare>
+#include <urd/elements/flat.hpp>
+#include <urd/elements/index.hpp>
+#include <yggdrasil/core/unsigned_integer.hpp>
 
 namespace runir::kr::ps::icp
 {
 
-struct ArgumentPosition : ygg::FixedUintMixin<ArgumentPosition>
+/// An argument's position: a nonnegative integer of its own type (no index: nothing resolves it).
+struct ArgumentPosition : ygg::UnsignedInteger<ArgumentPosition>
 {
-    using Base = ygg::FixedUintMixin<ArgumentPosition>;
-    using Base::Base;
+    using UnsignedInteger::UnsignedInteger;
 };
 
 struct ResetPair
 {
-    ygg::Index<ps::Feature<IcpFamilyTag, runir::kr::dl::ConceptTag>> before;
-    ygg::Index<ps::Feature<IcpFamilyTag, runir::kr::dl::ConceptTag>> after;
+    urd::index<ps::Feature<IcpFamilyTag, runir::kr::dl::ConceptTag>> before;
+    urd::index<ps::Feature<IcpFamilyTag, runir::kr::dl::ConceptTag>> after;
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&ResetPair::before, &ResetPair::after> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&ResetPair::before, &ResetPair::after> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&ResetPair::before, &ResetPair::after> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&ResetPair::before, &ResetPair::after> {}; }
     bool operator==(const ResetPair&) const = default;
-    bool operator<(const ResetPair& other) const noexcept { return std::tie(before, after) < std::tie(other.before, other.after); }
+    auto operator<=>(const ResetPair&) const = default;
 };
 
 }

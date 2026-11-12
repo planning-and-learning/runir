@@ -6,51 +6,38 @@
 #include "runir/kr/ps/dl/declarations.hpp"
 
 #include <tuple>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
 
-namespace ygg
+namespace urd
 {
 
 template<>
-struct Data<runir::kr::ps::base::Sketch>
+struct data<runir::kr::ps::base::Sketch>
 {
-    Index<runir::kr::ps::base::Sketch> index;
-    IndexList<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>> boolean_features;
-    IndexList<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>> numerical_features;
-    IndexList<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>> rules;
+    urd::index<runir::kr::ps::base::Sketch> index;
+    urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>> boolean_features;
+    urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>> numerical_features;
+    urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>> rules;
 
-    Data() = default;
-    Data(IndexList<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>> boolean_features_,
-         IndexList<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>> numerical_features_,
-         IndexList<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>> rules_) :
+    data() = default;
+    data(urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>> boolean_features_,
+         urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>> numerical_features_,
+         urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>> rules_) :
         index(),
         boolean_features(std::move(boolean_features_)),
         numerical_features(std::move(numerical_features_)),
         rules(std::move(rules_))
     {
     }
-    template<typename C>
-    Data(const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>, C>>& boolean_features_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>, C>>& numerical_features_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C>>& rules_) :
-        index(),
-        boolean_features(),
-        numerical_features(),
-        rules()
-    {
-        set(boolean_features_, boolean_features);
-        set(numerical_features_, numerical_features);
-        set(rules_, rules);
-    }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::boolean_features, &Data::numerical_features, &Data::rules> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::boolean_features, &Data::numerical_features, &Data::rules> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::boolean_features, &data::numerical_features, &data::rules> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::boolean_features, &data::numerical_features, &data::rules> {}; }
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 #endif

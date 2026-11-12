@@ -5,8 +5,7 @@
 #include "runir/kr/ps/family_traits.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 
-#include <yggdrasil/containers/variant.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 
 namespace runir::kr::ps
 {
@@ -16,9 +15,9 @@ template<tyr::TaskKind Kind,
          runir::kr::ps::dl::FeatureTag FeatureTag,
          typename C,
          runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context>
-auto evaluate(ygg::View<ygg::Index<Feature<Family, FeatureTag>>, C> feature, Context& context)
+auto evaluate(urd::index_view<Feature<Family, FeatureTag>, C> feature, Context& context)
 {
-    return ygg::visit([&](auto child) { return evaluate<Kind>(child, context); }, feature.get_variant());
+    return std::visit([&](auto child) { return evaluate<Kind>(child, context); }, feature.get_variant());
 }
 
 }  // namespace runir::kr::ps

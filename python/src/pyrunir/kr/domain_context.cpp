@@ -1,4 +1,5 @@
 #include "module.hpp"
+#include "pyrunir/module.hpp"
 
 #include <nanobind/stl/shared_ptr.h>
 #include <runir/kr/domain_context.hpp>

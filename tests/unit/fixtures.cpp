@@ -1,7 +1,7 @@
 #include "fixtures.hpp"
 
 #include <boost/json/value.hpp>
-#include <yggdrasil/core/path.hpp>
+#include <yggdrasil/io/project_path.hpp>
 #include <yggdrasil/serialization/json.hpp>
 
 namespace runir::tests

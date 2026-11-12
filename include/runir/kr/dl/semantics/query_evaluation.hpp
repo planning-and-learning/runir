@@ -6,14 +6,14 @@
 #include "runir/kr/dl/semantics/detail/evaluation_helpers.hpp"
 #include "runir/kr/dl/semantics/evaluation_decl.hpp"
 
+#include <array>
 #include <span>
 #include <tuple>
+#include <tyr/datalog/lifted/database/semantics/generic_join.hpp>
+#include <tyr/datalog/lifted/database/semantics/operations.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
-#include <yggdrasil/database/operators/generic_join/generic_join.hpp>
-#include <yggdrasil/database/operators/relational/join.hpp>
-#include <yggdrasil/database/operators/relational/project.hpp>
-#include <yggdrasil/database/operators/relational/select.hpp>
-#include <yggdrasil/database/operators/relational/set.hpp>
 
 namespace runir::kr::dl::semantics::detail
 {
@@ -21,9 +21,9 @@ namespace runir::kr::dl::semantics::detail
 /// Materialize rows into an empty, matching builder without publishing the root.
 template<tyr::TaskKind Kind, typename Tag, typename C, StateEvaluationContextConcept<Kind> Context>
     requires(!std::same_as<Tag, void>)
-void evaluate_query(ygg::View<ygg::Index<Query<Tag>>, C> constructor, Context& context, ygg::Builder<ygg::database::Relation>& result)
+void evaluate_query(urd::index_view<Query<Tag>, C> constructor, Context& context, urd::builder<ygg::Relation<ygg::Schema>>& result)
 {
-    const auto& data = constructor.get_data();
+    const auto& data = constructor.data();
     auto children = context.child_context();
     if constexpr (std::same_as<Tag, QueryRenameTag>)
     {
@@ -33,30 +33,23 @@ void evaluate_query(ygg::View<ygg::Index<Query<Tag>>, C> constructor, Context& c
     }
     else if constexpr (is_atomic_state_tag_v<Tag>)
     {
-        auto& row = context.get_workspace().get_database_workspace().row;
+        auto& row = context.get_workspace().get_values();
         const auto predicate = constructor.get_predicate();
         for (const auto atom : context.get_state().get_atoms_view(predicate))
-            result.insert(encode_object_row(atom.get_row().get_data(), row));
+            result.insert(encode_object_row(atom.get_row().get_key().second, row));
     }
     else if constexpr (is_atomic_goal_tag_v<Tag>)
     {
-        auto& row = context.get_workspace().get_database_workspace().row;
+        auto& row = context.get_workspace().get_values();
         const auto predicate = constructor.get_predicate();
         for (const auto atom :
              context.get_state().get_task().get_task().get_goal().template get_atoms_view<TagFactKind<Tag>>(constructor.get_polarity(), predicate))
-            result.insert(encode_object_row(atom.get_row().get_data(), row));
+            result.insert(encode_object_row(atom.get_row().get_key().second, row));
     }
     else if constexpr (std::same_as<Tag, QueryConceptTag>)
         insert_denotation_rows<ConceptTag>(evaluate<Kind>(constructor.get_arg(), children), result);
     else if constexpr (std::same_as<Tag, QueryRoleTag>)
         insert_denotation_rows<RoleTag>(evaluate<Kind>(constructor.get_arg(), children), result);
-    else if constexpr (std::same_as<Tag, QueryBooleanTag>)
-    {
-        if (evaluate<Kind>(constructor.get_arg(), children).get())
-            result.insert(std::tuple<> {});
-    }
-    else if constexpr (std::same_as<Tag, QueryNumericalTag>)
-        result.insert(std::tuple { evaluate<Kind>(constructor.get_arg(), children).get() });
     else if constexpr (std::same_as<Tag, QueryJoinTag> || std::same_as<Tag, QueryUnionTag> || std::same_as<Tag, QueryDifferenceTag>)
     {
         const auto lhs = evaluate<Kind>(constructor.get_lhs(), children);
@@ -66,55 +59,60 @@ void evaluate_query(ygg::View<ygg::Index<Query<Tag>>, C> constructor, Context& c
             const auto lhs_static = constructor.get_lhs().is_static();
             const auto rhs_static = constructor.get_rhs().is_static();
             // Fully static joins already retain their complete result.
-            ygg::database::join(lhs,
-                                rhs,
-                                data.plan,
-                                children.get_caches().get_static_join_indexes(),
-                                { .lhs = lhs_static && !rhs_static, .rhs = rhs_static && !lhs_static },
-                                result,
-                                context.get_workspace().get_database_workspace());
+            tyr::datalog::database::join(lhs,
+                                         rhs,
+                                         data.plan,
+                                         children.get_caches().get_static_join_indexes(),
+                                         { .lhs = lhs_static && !rhs_static, .rhs = rhs_static && !lhs_static },
+                                         result,
+                                         context.get_workspace().get_database_workspace());
         }
         else if constexpr (std::same_as<Tag, QueryUnionTag>)
-            ygg::database::union_(lhs, rhs, result);
+            tyr::datalog::database::union_(lhs, rhs, data.plan, result);
         else
-            ygg::database::difference(lhs, rhs, result);
+            tyr::datalog::database::difference(lhs, rhs, data.plan, result);
     }
     else if constexpr (std::same_as<Tag, QueryProjectTag>)
     {
         const auto child = evaluate<Kind>(constructor.get_arg(), children);
-        ygg::database::project(child, data.plan, result, context.get_workspace().get_database_workspace());
+        tyr::datalog::database::project(child, data.plan, result, context.get_workspace().get_database_workspace());
     }
     else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
     {
         const auto child = evaluate<Kind>(constructor.get_arg(), children);
-        ygg::database::select_equal_columns(child,
-                                            ygg::Index<ygg::database::Column>(data.lhs_column.get_value()),
-                                            ygg::Index<ygg::database::Column>(data.rhs_column.get_value()),
-                                            result);
+        tyr::datalog::database::select_equal_columns(child, data.plan, result);
     }
     else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
     {
         const auto child = evaluate<Kind>(constructor.get_arg(), children);
-        ygg::database::select_equal_value(child, ygg::Index<ygg::database::Column>(data.column.get_value()), data.object.get_value(), result);
+        tyr::datalog::database::select_equal_value(child, data.plan, result);
     }
     else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
     {
-        std::vector<QueryDenotationView> inputs;
+        urd::Store<urd::sequence<QueryDenotationView>> inputs;
         for (const auto arg : constructor.get_args())
             inputs.push_back(evaluate<Kind>(arg, children));
-        ygg::database::generic_join(inputs, data.plan, result, context.get_workspace().get_generic_join_workspace(data.plan));
+        tyr::datalog::database::generic_join(inputs, data.plan, result, context.get_workspace().get_generic_join_workspace(data.plan));
     }
     else if constexpr (std::same_as<Tag, QueryEmptyTag>)
     {
         // The result builder starts empty.
     }
-    else if constexpr (std::same_as<Tag, QueryMustPassTag>)
-        on_demand_must_pass<Kind>(constructor, context, result);
+    else if constexpr (std::same_as<Tag, QueryBooleanTag>)
+    {
+        if (evaluate<Kind>(constructor.get_arg(), children).value())
+            result.insert(std::span<const ygg::Value> {});
+    }
+    else if constexpr (std::same_as<Tag, QueryNumericalTag>)
+    {
+        const auto value = std::array { ygg::encode_value(evaluate<Kind>(constructor.get_arg(), children).value()) };
+        result.insert(std::span<const ygg::Value>(value));
+    }
     else if constexpr (std::same_as<Tag, QueryHeadTag>)
         on_demand_head<Kind>(constructor, context, result);
     else
     {
-        static_assert(ygg::dependent_false<Tag>::value, "unhandled relational query constructor");
+        static_assert(false, "unhandled relational query constructor");
     }
 }
 

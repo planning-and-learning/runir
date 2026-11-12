@@ -2,7 +2,7 @@
 #define RUNIR_KR_UNS_DL_PARSER_PARSER_DEF_HPP_
 
 #include "runir/kr/dl/grammar/parser/parsers.hpp"
-#include "runir/kr/parser/error_handler.hpp"
+#include "runir/kr/parser/config.hpp"
 #include "runir/kr/uns/dl/ast/ast.hpp"
 #include "runir/kr/uns/dl/ast/ast_adapted.hpp"
 #include "runir/kr/uns/dl/parser/parsers.hpp"
@@ -18,8 +18,8 @@ using boost::spirit::x3::eoi;
 using boost::spirit::x3::lexeme;
 using boost::spirit::x3::lit;
 using boost::spirit::x3::raw;
-using runir::kr::parser::keyword;
 using ygg::diagnostics::context;
+using ygg::diagnostics::keyword;
 
 using boost::spirit::x3::ascii::alnum;
 using boost::spirit::x3::ascii::alpha;
@@ -68,7 +68,7 @@ constexpr auto classifier_root_def = context("classifier")[classifier > eoi];
 
 BOOST_SPIRIT_DEFINE(identifier, boolean_feature, positive_literal, negative_literal, literal, conjunction, disjunction, classifier, classifier_root)
 
-struct IdentifierClass : runir::kr::parser::ErrorHandlerBase
+struct IdentifierClass : ygg::diagnostics::ErrorHandlerBase
 {
 };
 
@@ -93,7 +93,7 @@ struct DisjunctionClass : boost::spirit::x3::annotate_on_success
 struct ClassifierClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct ClassifierRootClass : runir::kr::parser::ErrorHandlerBase
+struct ClassifierRootClass : ygg::diagnostics::ErrorHandlerBase
 {
 };
 

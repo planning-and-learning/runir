@@ -1,4 +1,9 @@
 #include "pyrunir/kr/ps/ext/bindings.hpp"
+#include "pyrunir/module.hpp"
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
 #include <functional>
 #include <nanobind/stl/chrono.h>
@@ -13,23 +18,22 @@
 #include <optional>
 #include <pyrunir/graphs/graph.hpp>
 #include <pyrunir/kr/binding_utils.hpp>
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_policy.hpp>
-#include <runir/kr/dl/semantics/state_evaluation.hpp>
 #include <runir/kr/ps/dl/declarations.hpp>
 #include <runir/kr/ps/dl/evaluation.hpp>
-#include <runir/kr/ps/ext/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/ext/detail/successor_expander_impl.hpp>
 #include <runir/kr/ps/ext/evaluation_environment.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/program_executor.hpp>
+#include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/task_context.hpp>
 #include <string>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <utility>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
 
 namespace runir::kr::ps::ext
 {
@@ -44,7 +48,7 @@ template<tyr::TaskKind Kind, runir::kr::ps::dl::FeatureTag FeatureTag>
 void bind_feature_evaluation(nb::module_& m)
 {
     using namespace nb::literals;
-    using FeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, Repository>;
+    using FeatureView = urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>, Repository>;
     using Context = runir::kr::dl::semantics::StateEvaluationContext<Kind>;
 
     m.def(
@@ -119,19 +123,17 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     using LocalStateView = ModuleStateView<Kind>;
     using StackView = CallStackView<Kind>;
     using StateView = ProgramStateView<Kind>;
-    using VertexLabel = ProgramProofVertexLabel<Kind>;
-    using Graph = ProgramProofGraph<Kind>;
+    using VertexLabel = ProgramProofVertexLabel<ExtFamilyTag, Kind>;
+    using Graph = ProgramProofGraph<ExtFamilyTag, Kind>;
     using Results = ProgramProofResults<Kind>;
     using Options = ProgramSearchOptions<Kind>;
-    using Step = detail::ProgramStep<Kind>;
+    using Step = ProgramStep<ExtFamilyTag, Kind>;
     using Expander = SuccessorExpander<Kind>;
     // Standalone Python evaluation returns the registered contexts with interned results.
     using Environment = EvaluationEnvironment<Kind, runir::kr::dl::semantics::FullEvaluationPolicy<Kind>>;
-    // Callback results may outlive the expander that owns their binding pool.
-    const auto retain_expander = ygg::python::make_owner_retainer();
 
     // Registered without methods so Python can hold and pass these handles.
-    const auto execution_repository = nb::class_<ExecutionRepository<Kind>>(m, (std::string(prefix) + "ExecutionRepository").c_str());
+    const auto execution_repository = nb::class_<ExecutionRepository<ExtFamilyTag, Kind>>(m, (std::string(prefix) + "ExecutionRepository").c_str());
     const auto execution_builder = nb::class_<ExecutionBuilder<Kind>>(m, (std::string(prefix) + "ExecutionBuilder").c_str());
 
     nb::class_<Environment>(m, (std::string(prefix) + "EvaluationEnvironment").c_str())
@@ -155,33 +157,33 @@ void bind_execution_types(nb::module_& m, const char* prefix)
 
     auto module_state = nb::class_<LocalStateView>(m, (std::string(prefix) + "ModuleState").c_str())
                             .def_prop_ro("state", &LocalStateView::get_state, nb::keep_alive<0, 1>())
-                            .def_prop_ro("module", &LocalStateView::get_module, nb::keep_alive<0, 1>())
-                            .def_prop_ro("memory_state", &LocalStateView::get_memory_state, nb::keep_alive<0, 1>())
-                            .def_prop_ro("registers", &LocalStateView::get_registers, nb::keep_alive<0, 1>())
-                            .def_prop_ro("arguments", &LocalStateView::get_arguments, nb::keep_alive<0, 1>());
+                            .def_prop_ro("module", &LocalStateView::get_module)
+                            .def_prop_ro("memory_state", &LocalStateView::get_memory_state)
+                            .def_prop_ro("registers", &LocalStateView::get_registers)
+                            .def_prop_ro("arguments", &LocalStateView::get_arguments);
     ygg::add_print(module_state);
-    ygg::add_comparison(module_state);
-    ygg::add_hash(module_state);
+    urd::python::add_comparison(module_state);
+    urd::python::add_hash(module_state);
 
     auto call_stack = nb::class_<StackView>(m, (std::string(prefix) + "CallStack").c_str())
-                          .def_prop_ro("module", &StackView::get_module, nb::keep_alive<0, 1>())
-                          .def_prop_ro("return_memory_state", &StackView::get_return_memory_state, nb::keep_alive<0, 1>())
-                          .def_prop_ro("registers", &StackView::get_registers, nb::keep_alive<0, 1>())
-                          .def_prop_ro("arguments", &StackView::get_arguments, nb::keep_alive<0, 1>())
-                          .def_prop_ro("caller", &StackView::get_caller, nb::keep_alive<0, 1>())
-                          .def_prop_ro("has_caller", [](const StackView& self) { return self.get_data().caller.has_value(); });
+                          .def_prop_ro("module", &StackView::get_module)
+                          .def_prop_ro("return_memory_state", &StackView::get_return_memory_state)
+                          .def_prop_ro("registers", &StackView::get_registers)
+                          .def_prop_ro("arguments", &StackView::get_arguments)
+                          .def_prop_ro("caller", &StackView::get_caller)
+                          .def_prop_ro("has_caller", [](const StackView& self) { return self.data().caller.has_value(); });
     ygg::add_print(call_stack);
-    ygg::add_comparison(call_stack);
-    ygg::add_hash(call_stack);
+    urd::python::add_comparison(call_stack);
+    urd::python::add_hash(call_stack);
 
     auto program_state = nb::class_<StateView>(m, (std::string(prefix) + "ProgramState").c_str())
                              .def_prop_ro("state", &StateView::get_state, nb::keep_alive<0, 1>())
-                             .def_prop_ro("program", &StateView::get_program, nb::keep_alive<0, 1>())
-                             .def_prop_ro("module_state", &StateView::get_module_state, nb::keep_alive<0, 1>())
-                             .def_prop_ro("call_stack", &StateView::get_call_stack, nb::keep_alive<0, 1>());
+                             .def_prop_ro("program", &StateView::get_program)
+                             .def_prop_ro("module_state", &StateView::get_module_state)
+                             .def_prop_ro("call_stack", &StateView::get_call_stack);
     ygg::add_print(program_state);
-    ygg::add_comparison(program_state);
-    ygg::add_hash(program_state);
+    urd::python::add_comparison(program_state);
+    urd::python::add_hash(program_state);
 
     auto vertex_label = nb::class_<VertexLabel>(m, (std::string(prefix) + "ProgramProofVertexLabel").c_str())
                             .def_ro("program_state", &VertexLabel::program_state)
@@ -194,8 +196,8 @@ void bind_execution_types(nb::module_& m, const char* prefix)
                             .def_ro("is_alive", &VertexLabel::is_alive)
                             .def_ro("is_unsolvable", &VertexLabel::is_unsolvable);
     ygg::add_print(vertex_label);
-    ygg::add_comparison(vertex_label);
-    ygg::add_hash(vertex_label);
+    urd::python::add_comparison(vertex_label);
+    urd::python::add_hash(vertex_label);
 
     auto graph = nb::class_<Graph>(m, (std::string(prefix) + "ProgramProofGraph").c_str());
     graph.def(nb::init<>());
@@ -205,7 +207,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     nb::class_<Results>(m, (std::string(prefix) + "ProgramProofResults").c_str())
         .def_ro("status", &Results::status)
         .def_ro("graph", &Results::graph, nb::keep_alive<0, 1>())
-        .def_ro("plan", &Results::plan, nb::rv_policy::copy)
+        .def_ro("plan", &Results::plan, nb::rv_policy::copy, nb::keep_alive<0, 1>())
         .def_ro("deadend_states", &Results::deadend_states)
         .def_ro("open_states", &Results::open_states)
         .def_ro("cycle", &Results::cycle)
@@ -227,31 +229,29 @@ void bind_execution_types(nb::module_& m, const char* prefix)
         .def_prop_ro("target", &Step::get_target, nb::keep_alive<0, 1>())
         .def_prop_ro("state_transition", &Step::get_state_transition, nb::keep_alive<0, 1>())
         .def_prop_ro("rule", &Step::get_rule, nb::keep_alive<0, 1>())
-        .def_ro("planning_successor", &Step::planning_successor, nb::rv_policy::copy);
+        .def_ro("planning_successor", &Step::planning_successor, nb::rv_policy::copy, nb::keep_alive<0, 1>());
 
     nb::class_<Expander>(m, (std::string(prefix) + "SuccessorExpander").c_str())
         .def(nb::init<runir::kr::TaskContextPtr<Kind>, ProgramView>(), "task_context"_a, "program"_a)
-        .def("initial_state", &Expander::initial_state, "state"_a, nb::keep_alive<0, 1>())
+        .def("initial_state", &Expander::initial_state, "state"_a)
         .def(
             "for_each_successor",
-            [retain_expander](
-                Expander& self,
-                StateView state,
-                ProgramSearchStatistics& statistics,
-                const nb::typed<nb::callable, bool(std::variant<Step, detail::Choice<runir::kr::dl::ConceptTag>, detail::Choice<runir::kr::dl::RoleTag>>)>&
-                    emit,
-                const std::function<bool()>& stop)
+            [](Expander& self,
+               StateView state,
+               ProgramSearchStatistics& statistics,
+               const nb::typed<nb::callable, bool(std::variant<Step, detail::Choice<runir::kr::dl::ConceptTag>, detail::Choice<runir::kr::dl::RoleTag>>)>& emit,
+               const std::function<bool()>& stop)
             {
                 const auto owner = nb::cast(&self, nb::rv_policy::reference);
+                // Steps borrow the expander's own repositories and pools: each keeps the expander alive.
+                const auto keep_expander = nb::cpp_function([](nb::object value, nb::handle) { return value; }, nb::keep_alive<0, 2>());
                 return self.for_each_successor(
                     state,
                     statistics,
                     [&]<typename Expansion>(Expansion expansion)
                     {
-                        auto value = nb::cast(std::move(expansion));
-                        if constexpr (!std::same_as<Expansion, Step>)
-                            value = retain_expander(value, owner);
-                        return nb::cast<bool>(emit(value));
+                        // Steps also borrow: their planning successors are states of the expander's repository.
+                        return nb::cast<bool>(emit(keep_expander(nb::cast(std::move(expansion)), owner)));
                     },
                     stop);
             },
@@ -273,7 +273,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
             "state"_a,
             "choice"_a,
             "statistics"_a)
-        .def("matching_rule", &Expander::matching_rule, "state"_a, "successor"_a, nb::keep_alive<0, 1>())
+        .def("matching_rule", &Expander::matching_rule, "state"_a, "successor"_a)
         .def("apply", &Expander::apply, "state"_a, "rule"_a, "successor"_a = std::nullopt);
 }
 
@@ -298,18 +298,12 @@ void bind_program_executor(nb::module_& m)
         .def_ro("choice_depth", &ProgramSearchStatistics::choice_depth)
         .def_ro("choice_width", &ProgramSearchStatistics::choice_width);
 
-    nb::enum_<ProgramProofStatus>(m, "ProgramProofStatus")
-        .value("SUCCESS", ProgramProofStatus::SUCCESS)
-        .value("FAILURE", ProgramProofStatus::FAILURE)
-        .value("OUT_OF_TIME", ProgramProofStatus::OUT_OF_TIME)
-        .value("OUT_OF_STATES", ProgramProofStatus::OUT_OF_STATES);
-
-    auto edge_label = nb::class_<ProgramProofEdgeLabel>(m, "ProgramProofEdgeLabel")
-                          .def_ro("action", &ProgramProofEdgeLabel::action)
-                          .def_ro("rule", &ProgramProofEdgeLabel::rule);
+    auto edge_label = nb::class_<ProgramProofEdgeLabel<ExtFamilyTag>>(m, "ProgramProofEdgeLabel")
+                          .def_ro("action", &ProgramProofEdgeLabel<ExtFamilyTag>::action)
+                          .def_ro("rule", &ProgramProofEdgeLabel<ExtFamilyTag>::rule);
     ygg::add_print(edge_label);
-    ygg::add_comparison(edge_label);
-    ygg::add_hash(edge_label);
+    urd::python::add_comparison(edge_label);
+    urd::python::add_hash(edge_label);
     m.attr("GroundProgramProofEdgeLabel") = edge_label;
     m.attr("LiftedProgramProofEdgeLabel") = edge_label;
 

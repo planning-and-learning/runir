@@ -1,9 +1,10 @@
 #ifndef RUNIR_KR_PS_EXT_DETAIL_PROOF_SEARCH_HPP_
 #define RUNIR_KR_PS_EXT_DETAIL_PROOF_SEARCH_HPP_
 
+#include "runir/kr/ps/detail/search_space.hpp"
 #include "runir/kr/ps/ext/detail/proof_graph.hpp"
+#include "runir/kr/ps/ext/detail/search_node.hpp"
 #include "runir/kr/ps/ext/detail/search_path.hpp"
-#include "runir/kr/ps/ext/detail/search_space.hpp"
 #include "runir/kr/ps/ext/detail/search_storage.hpp"
 #include "runir/kr/ps/ext/detail/successor_expander_impl.hpp"
 #include "runir/kr/ps/ext/dl/structural_termination.hpp"
@@ -18,6 +19,9 @@
 #include <tyr/planning/algorithms/strategies/goal.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
+#include <urd/config.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -36,19 +40,19 @@ template<tyr::TaskKind Kind,
          runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
          StateMemorization Memorization,
          UnsolvabilityConcept<Kind> Unsolvability>
-ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>& expander,
-                                      const tyr::planning::PackedStateView<Kind>& initial_state,
-                                      const StorageStoredState<ExecutionStorage>& initial,
-                                      const ProgramSearchOptions<Kind>& options,
-                                      Unsolvability& classifier,
-                                      SearchStorage<Kind, Memorization>& storage,
-                                      ProgramSearchStatistics& statistics,
-                                      ygg::SharedObjectPool<SearchPath<Kind, ExecutionStorage>>& path_pool,
-                                      ygg::SharedObjectPoolPtr<SearchPath<Kind, ExecutionStorage>>& first_goal,
-                                      ygg::SharedObjectPoolPtr<SearchPath<Kind, ExecutionStorage>>& witness)
+ProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>& expander,
+                               const tyr::planning::PackedStateView<Kind>& initial_state,
+                               const StorageStoredState<ExecutionStorage>& initial,
+                               const ProgramSearchOptions<Kind>& options,
+                               Unsolvability& classifier,
+                               SearchStorage<Kind, Memorization>& storage,
+                               ProgramSearchStatistics& statistics,
+                               urd::Store<urd::slots<SearchPath<Kind, ExecutionStorage>>>& path_pool,
+                               std::shared_ptr<SearchPath<Kind, ExecutionStorage>>& first_goal,
+                               std::shared_ptr<SearchPath<Kind, ExecutionStorage>>& witness)
 {
-    using Step = ProgramStep<Kind, ExecutionStorage>;
-    using PathPtr = ygg::SharedObjectPoolPtr<SearchPath<Kind, ExecutionStorage>>;
+    using Step = ProgramStep<ExtFamilyTag, Kind, StorageStoredState<ExecutionStorage>>;
+    using PathPtr = std::shared_ptr<SearchPath<Kind, ExecutionStorage>>;
     struct Frame
     {
         PathPtr path;
@@ -66,10 +70,10 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
     const auto initial_planning_state = initial_state.unpack();
     auto goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*search.task);
     const bool static_goal = goal_strategy.is_static_goal_satisfied(*search.task);
-    auto stack = std::vector<Frame> {};
-    auto successors = std::vector<Step> {};
-    auto choices = std::vector<std::variant<Choice<runir::kr::dl::ConceptTag>, Choice<runir::kr::dl::RoleTag>>> {};
-    auto status = ProgramProofStatus::SUCCESS;
+    auto stack = urd::Store<urd::sequence<Frame>> {};
+    auto successors = urd::Store<urd::sequence<Step>> {};
+    auto choices = urd::Store<urd::sequence<std::variant<Choice<runir::kr::dl::ConceptTag>, Choice<runir::kr::dl::RoleTag>>>> {};
+    auto status = ProofStatus::SUCCESS;
     auto first_failure = PathPtr {};
     auto next = PathPtr {};
     auto completed = std::optional<bool> {};
@@ -77,7 +81,7 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
     const auto classify = [&](ProgramStateViewConcept<Kind> auto state)
     {
         const auto planning_state = state.get_state();
-        const bool goal = static_goal && goal_strategy.is_dynamic_goal_satisfied(initial_planning_state, planning_state.get_state_builder());
+        const bool goal = static_goal && goal_strategy.is_dynamic_goal_satisfied(initial_planning_state, planning_state.data());
         return std::pair(goal, !goal && classifier.is_unsolvable(planning_state));
     };
     const auto record_transition = [&](ProgramStateViewConcept<Kind> auto source, const Step& step, std::size_t choice_width)
@@ -94,25 +98,27 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
     {
         const auto depth = parent ? parent->choice_depth + static_cast<ygg::uint_t>(choice_width > 1) : 0;
         const auto width = parent ? std::max(parent->choice_width, choice_width) : 0;
-        return path_pool.get_or_allocate(std::move(state), std::move(parent), transition, rule, depth, width);
+        auto path = path_pool.make_shared();
+        path->initialize(std::move(state), std::move(parent), transition, rule, depth, width);
+        return path;
     };
     if (storage.admit(expander.view(initial), classify))
         next = make_path(initial, {}, {}, {}, 0);
     else
-        status = ProgramProofStatus::OUT_OF_STATES;
+        status = ProofStatus::OUT_OF_STATES;
 
     while (next || !stack.empty())
     {
         witness = next ? next : stack.back().path;
         if (out_of_time())
         {
-            status = ProgramProofStatus::OUT_OF_TIME;
+            status = ProofStatus::OUT_OF_TIME;
             break;
         }
         if (next)
         {
             auto path = std::exchange(next, PathPtr {});
-            YGG_ASSUME(path->state.has_value());
+            URD_ASSUME(path->state.has_value());
             const auto state = expander.view(*path->state);
             const auto memo_state = storage.initial_memo_state(state);
             if (memo_state)
@@ -141,7 +147,7 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
             ++statistics.num_expanded;
             auto frame = Frame { std::move(path), successors.size(), choices.size(), memo_state };
             frame.succeeded = !and_backtracking;
-            auto limit = std::optional<ProgramProofStatus> {};
+            auto limit = std::optional<ProofStatus> {};
             expander.for_each_successor(
                 state,
                 statistics,
@@ -149,7 +155,7 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
                 {
                     if (out_of_time())
                     {
-                        limit = ProgramProofStatus::OUT_OF_TIME;
+                        limit = ProofStatus::OUT_OF_TIME;
                         return false;
                     }
                     if constexpr (std::same_as<Expansion, Step>)
@@ -157,7 +163,7 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
                         if (expansion.status == ProgramOutcome::APPLIED || expansion.status == ProgramOutcome::RESTORED_CALLER)
                         {
                             if (!record_transition(state, expansion, 0))
-                                limit = ProgramProofStatus::OUT_OF_STATES;
+                                limit = ProofStatus::OUT_OF_STATES;
                             else
                                 successors.push_back(std::move(expansion));
                         }
@@ -200,7 +206,7 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
                 out_of_time);
             storage.record_flags(state, *frame.path);
             if (out_of_time() && !limit)
-                limit = ProgramProofStatus::OUT_OF_TIME;
+                limit = ProofStatus::OUT_OF_TIME;
             if (limit)
             {
                 status = *limit;
@@ -219,7 +225,7 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
         }
 
         auto& frame = stack.back();
-        YGG_ASSUME(frame.path->state.has_value());
+        URD_ASSUME(frame.path->state.has_value());
         const auto state = expander.view(*frame.path->state);
         if (completed)
         {
@@ -277,7 +283,7 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
             }
             if (!record_transition(state, *step, choice_width))
             {
-                status = ProgramProofStatus::OUT_OF_STATES;
+                status = ProofStatus::OUT_OF_STATES;
                 break;
             }
             frame.choice_child = true;
@@ -291,7 +297,7 @@ ProgramProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, 
     }
     if (completed && stack.empty())
     {
-        status = *completed ? ProgramProofStatus::SUCCESS : ProgramProofStatus::FAILURE;
+        status = *completed ? ProofStatus::SUCCESS : ProofStatus::FAILURE;
         witness = *completed ? first_goal : first_failure;
     }
     return status;
@@ -315,9 +321,9 @@ ProgramProofResults<Kind> find_solution(SuccessorExpander<Kind, ExecutionStorage
     const auto initial_node = search.successor_generator->get_packed_initial_node(*search.state_repository, *search.axiom_evaluator);
     const auto start = options.start_state;
     const auto initial = start ? expander.start_state(*start) : expander.initial_state(initial_node.get_state().unpack());
-    using PathPtr = ygg::SharedObjectPoolPtr<SearchPath<Kind, ExecutionStorage>>;
+    using PathPtr = std::shared_ptr<SearchPath<Kind, ExecutionStorage>>;
     auto statistics = ProgramSearchStatistics {};
-    auto path_pool = ygg::SharedObjectPool<SearchPath<Kind, ExecutionStorage>> {};
+    auto path_pool = urd::Store<urd::slots<SearchPath<Kind, ExecutionStorage>>> {};
     auto first_goal = PathPtr {};
     auto witness = PathPtr {};
     const auto status =
@@ -332,32 +338,41 @@ ProgramProofResults<Kind> find_solution(SuccessorExpander<Kind, ExecutionStorage
         if constexpr (Memorization == StateMemorization::CHOICE)
             storage.memo.clear();
         build_witness_graph(result, expander, witness);
-        if (status == ProgramProofStatus::SUCCESS && first_goal)
+        if (status == ProofStatus::SUCCESS && first_goal)
         {
             result.statistics.choice_depth = first_goal->choice_depth;
             result.statistics.choice_width = first_goal->choice_width;
             if (!options.universal && !start)
             {
-                auto actions = std::vector<tyr::formalism::planning::ActionBindingView> {};
+                auto actions = urd::Store<urd::sequence<tyr::formalism::planning::ActionRowView>> {};
                 for (auto path = first_goal; path; path = path->parent)
                     if (path->transition)
                         actions.push_back(path->transition->action);
                 std::ranges::reverse(actions);
-                result.plan = extract_total_ordered_plan<Kind>(actions, initial_node, *task_context);
+                auto& search_context = *task_context->search_context;
+                result.plan = tyr::planning::replay_plan<Kind>(initial_node,
+                                                               actions,
+                                                               *search_context.successor_generator,
+                                                               *search_context.state_repository,
+                                                               *search_context.axiom_evaluator);
             }
         }
     }
     else
     {
         build_proof_graph(result, storage.nodes, storage.predecessors, storage.num_reached ? std::optional(initial) : std::nullopt);
-        if (status == ProgramProofStatus::SUCCESS && first_goal)
+        if (status == ProofStatus::SUCCESS && first_goal)
         {
-            YGG_ASSUME(first_goal->state.has_value());
+            URD_ASSUME(first_goal->state.has_value());
             const auto goal = *first_goal->state;
             result.statistics.choice_depth = storage.node(goal).choice_depth;
             result.statistics.choice_width = storage.node(goal).choice_width;
             if (!options.universal && !start)
-                result.plan = extract_total_ordered_plan(goal, storage.nodes, initial_node, *task_context);
+                result.plan = runir::kr::ps::detail::extract_total_ordered_plan<Kind>(
+                    storage.nodes.at(goal.index()),
+                    [&](const auto& node) { return node.parent_state ? &storage.nodes.at(node.parent_state->index()) : nullptr; },
+                    initial_node,
+                    *task_context);
         }
     }
     return result;

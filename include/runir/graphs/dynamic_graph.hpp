@@ -10,6 +10,7 @@
 #include <ranges>
 #include <tuple>
 #include <type_traits>
+#include <urd/elements/view.hpp>
 #include <utility>
 
 namespace runir::graphs
@@ -21,15 +22,15 @@ class DynamicGraph
 public:
     using VertexPropertyType = VP;
     using EdgePropertyType = EP;
-    using VertexType = Vertex<DynamicGraph, VP>;
-    using EdgeType = Edge<DynamicGraph, EP>;
+    using VertexType = Vertex<VP>;
+    using EdgeType = Edge<EP>;
     using EdgePropertyMapType = EdgePropertyMap<EP>;
 
 private:
-    using VertexMap = ygg::UnorderedMap<VertexIndex, VertexType>;
-    using EdgeMap = ygg::UnorderedMap<EdgeIndex, EdgeType>;
+    using VertexMap = urd::Store<urd::map<VertexIndex, VertexType>>;
+    using EdgeMap = urd::Store<urd::map<EdgeIndex, EdgeType>>;
     using VertexPropertyMapType = VertexPropertyMap<VP>;
-    using AdjacentEdgeMap = ygg::UnorderedMap<VertexIndex, EdgeIndexSet>;
+    using AdjacentEdgeMap = urd::Store<urd::map<VertexIndex, EdgeIndexSet>>;
 
     VertexMap m_vertices;
     VertexIndexList m_free_vertices;
@@ -37,8 +38,8 @@ private:
     EdgeMap m_edges;
     EdgeIndexList m_free_edges;
     ygg::uint_t m_next_edge_index = 0;
-    VertexPropertyMapType m_vertex_properties;
-    EdgePropertyMapType m_edge_properties;
+    VertexPropertyMapType m_vertex_properties { urd::layer { 0 } };
+    EdgePropertyMapType m_edge_properties { urd::layer { 0 } };
     AdjacentEdgeMap m_out_edges;
     AdjacentEdgeMap m_in_edges;
 
@@ -58,56 +59,7 @@ private:
     void assert_valid_vertex([[maybe_unused]] VertexIndex vertex) const noexcept { assert(m_vertices.contains(vertex)); }
     void assert_valid_edge([[maybe_unused]] EdgeIndex edge) const noexcept { assert(m_edges.contains(edge)); }
 
-    void rebind_parents() noexcept
-    {
-        for (auto& [_, vertex] : m_vertices)
-            vertex = VertexType(vertex.get_index(), vertex.get_property_index(), *this);
-
-        for (auto& [_, edge] : m_edges)
-            edge = EdgeType(edge.get_index(), edge.get_source(), edge.get_target(), edge.get_property_index(), *this);
-    }
-
 public:
-    DynamicGraph() = default;
-
-    DynamicGraph(const DynamicGraph&) = delete;
-
-    DynamicGraph(DynamicGraph&& other) noexcept :
-        m_vertices(std::move(other.m_vertices)),
-        m_free_vertices(std::move(other.m_free_vertices)),
-        m_next_vertex_index(other.m_next_vertex_index),
-        m_edges(std::move(other.m_edges)),
-        m_free_edges(std::move(other.m_free_edges)),
-        m_next_edge_index(other.m_next_edge_index),
-        m_vertex_properties(std::move(other.m_vertex_properties)),
-        m_edge_properties(std::move(other.m_edge_properties)),
-        m_out_edges(std::move(other.m_out_edges)),
-        m_in_edges(std::move(other.m_in_edges))
-    { rebind_parents(); }
-
-    auto operator=(const DynamicGraph&) -> DynamicGraph& = delete;
-
-    auto operator=(DynamicGraph&& other) noexcept -> DynamicGraph&
-    {
-        if (this == &other)
-            return *this;
-
-        m_vertices = std::move(other.m_vertices);
-        m_free_vertices = std::move(other.m_free_vertices);
-        m_next_vertex_index = other.m_next_vertex_index;
-        m_edges = std::move(other.m_edges);
-        m_free_edges = std::move(other.m_free_edges);
-        m_next_edge_index = other.m_next_edge_index;
-        m_vertex_properties = std::move(other.m_vertex_properties);
-        m_edge_properties = std::move(other.m_edge_properties);
-        m_out_edges = std::move(other.m_out_edges);
-        m_in_edges = std::move(other.m_in_edges);
-        rebind_parents();
-        return *this;
-    }
-
-    ~DynamicGraph() = default;
-
     void clear() noexcept
     {
         m_vertices.clear();
@@ -127,9 +79,9 @@ public:
     auto add_vertex(P&& property) -> VertexIndex
     {
         const auto index = next_index(m_next_vertex_index, m_free_vertices);
-        auto [property_index, _] = m_vertex_properties.insert(ygg::Data<VertexProperty<VP>>(std::forward<P>(property)));
+        auto [property_index, _] = m_vertex_properties.insert(urd::data<VertexProperty<VP>>(std::forward<P>(property)));
 
-        m_vertices.emplace(index, VertexType(index, property_index, *this));
+        m_vertices.emplace(index, VertexType(index, property_index));
         m_out_edges[index].clear();
         m_in_edges[index].clear();
 
@@ -141,8 +93,6 @@ public:
     auto add_vertex() -> VertexIndex
     { return add_vertex(std::tuple<> {}); }
 
-    auto add_vertex(const VertexType& vertex) -> VertexIndex { return add_vertex(vertex.get_property()); }
-
     template<typename P>
         requires std::same_as<std::remove_cvref_t<P>, EP>
     auto add_directed_edge(VertexIndex source, VertexIndex target, P&& property) -> EdgeIndex
@@ -151,9 +101,9 @@ public:
         assert_valid_vertex(target);
 
         const auto index = next_index(m_next_edge_index, m_free_edges);
-        auto [property_index, _] = m_edge_properties.insert(ygg::Data<EdgeProperty<EP>>(std::forward<P>(property)));
+        auto [property_index, _] = m_edge_properties.insert(urd::data<EdgeProperty<EP>>(std::forward<P>(property)));
 
-        m_edges.emplace(index, EdgeType(index, source, target, property_index, *this));
+        m_edges.emplace(index, EdgeType(index, source, target, property_index));
         m_out_edges.at(source).insert(index);
         m_in_edges.at(target).insert(index);
 
@@ -164,9 +114,6 @@ public:
         requires std::same_as<P, std::tuple<>>
     auto add_directed_edge(VertexIndex source, VertexIndex target) -> EdgeIndex
     { return add_directed_edge(source, target, std::tuple<> {}); }
-
-    auto add_directed_edge(VertexIndex source, VertexIndex target, const EdgeType& edge) -> EdgeIndex
-    { return add_directed_edge(source, target, edge.get_property()); }
 
     auto add_undirected_edge(VertexIndex lhs, VertexIndex rhs) -> std::pair<EdgeIndex, EdgeIndex>
         requires std::same_as<EP, std::tuple<>>
@@ -217,8 +164,8 @@ public:
     [[nodiscard]] auto get_edges() const noexcept -> const EdgeMap& { return m_edges; }
     [[nodiscard]] auto get_vertex_property_map() const noexcept -> const VertexPropertyMapType& { return m_vertex_properties; }
     [[nodiscard]] auto get_edge_property_map() const noexcept -> const EdgePropertyMapType& { return m_edge_properties; }
-    [[nodiscard]] auto get_vertex_property(VertexPropertyIndex<VP> property) const noexcept -> const VP& { return m_vertex_properties.get_value(property); }
-    [[nodiscard]] auto get_edge_property(EdgePropertyIndex<EP> property) const noexcept -> const EP& { return m_edge_properties.get_value(property); }
+    [[nodiscard]] auto get_vertex_property(VertexIndex vertex) const -> const VP& { return m_vertex_properties[get_vertex(vertex).get_property_index()].value; }
+    [[nodiscard]] auto get_edge_property(EdgeIndex edge) const -> const EP& { return m_edge_properties[get_edge(edge).get_property_index()].value; }
 
     [[nodiscard]] auto get_vertex(VertexIndex vertex) const -> const VertexType&
     {
@@ -267,35 +214,22 @@ public:
     }
 
     [[nodiscard]] auto get_out_edges(VertexIndex vertex) const
-    {
-        return get_out_edge_indices(vertex) | std::views::transform([this](EdgeIndex edge) -> const EdgeType& { return get_edge(edge); });
-    }
+    { return urd::transform(get_out_edge_indices(vertex), detail::ReadThrough<DynamicGraph, &DynamicGraph::get_edge> { this }); }
 
     [[nodiscard]] auto get_in_edges(VertexIndex vertex) const
-    {
-        return get_in_edge_indices(vertex) | std::views::transform([this](EdgeIndex edge) -> const EdgeType& { return get_edge(edge); });
-    }
+    { return urd::transform(get_in_edge_indices(vertex), detail::ReadThrough<DynamicGraph, &DynamicGraph::get_edge> { this }); }
 
     [[nodiscard]] auto get_successor_indices(VertexIndex vertex) const
-    {
-        return get_out_edge_indices(vertex) | std::views::transform([this](EdgeIndex edge) { return get_target(edge); });
-    }
+    { return urd::transform(get_out_edge_indices(vertex), detail::ReadThrough<DynamicGraph, &DynamicGraph::get_target> { this }); }
 
     [[nodiscard]] auto get_predecessor_indices(VertexIndex vertex) const
-    {
-        return get_in_edge_indices(vertex) | std::views::transform([this](EdgeIndex edge) { return get_source(edge); });
-    }
+    { return urd::transform(get_in_edge_indices(vertex), detail::ReadThrough<DynamicGraph, &DynamicGraph::get_source> { this }); }
 
     [[nodiscard]] auto get_successors(VertexIndex vertex) const
-    {
-        return get_successor_indices(vertex) | std::views::transform([this](VertexIndex successor) -> const VertexType& { return get_vertex(successor); });
-    }
+    { return urd::transform(get_successor_indices(vertex), detail::ReadThrough<DynamicGraph, &DynamicGraph::get_vertex> { this }); }
 
     [[nodiscard]] auto get_predecessors(VertexIndex vertex) const
-    {
-        return get_predecessor_indices(vertex)
-               | std::views::transform([this](VertexIndex predecessor) -> const VertexType& { return get_vertex(predecessor); });
-    }
+    { return urd::transform(get_predecessor_indices(vertex), detail::ReadThrough<DynamicGraph, &DynamicGraph::get_vertex> { this }); }
 };
 
 }  // namespace runir::graphs

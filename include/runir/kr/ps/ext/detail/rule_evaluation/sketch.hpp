@@ -29,7 +29,7 @@ public:
     /// Emit a control-only rule; effectful rules must use matches() on the shared successor batch.
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
-             EmitConcept<ProgramStep<Kind, Storage>> Emit,
+             EmitConcept<ProgramStep<ExtFamilyTag, Kind, StorageStoredState<Storage>>> Emit,
              StopConcept Stop,
              ExecutionStateViewConcept<Storage> State,
              tyr::planning::StateViewConcept<Kind> PlanningState>
@@ -55,7 +55,7 @@ public:
              ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
-             ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
+             ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
     bool matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                  State state,
                  const tyr::planning::LabeledNode<Kind, PlanningState, Binding>& candidate) const

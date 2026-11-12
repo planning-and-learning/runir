@@ -1,4 +1,9 @@
 #include "pyrunir/kr/ps/icp/bindings.hpp"
+#include "pyrunir/module.hpp"
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
 #include <functional>
 #include <nanobind/stl/chrono.h>
@@ -12,23 +17,22 @@
 #include <nanobind/stl/vector.h>
 #include <optional>
 #include <pyrunir/graphs/graph.hpp>
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_policy.hpp>
-#include <runir/kr/dl/semantics/state_evaluation.hpp>
 #include <runir/kr/ps/dl/declarations.hpp>
 #include <runir/kr/ps/dl/evaluation.hpp>
-#include <runir/kr/ps/icp/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/icp/evaluation_environment.hpp>
 #include <runir/kr/ps/icp/formatter.hpp>
 #include <runir/kr/ps/icp/program_executor.hpp>
+#include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/ps/icp/successor_expander.hpp>
 #include <runir/kr/task_context.hpp>
 #include <string>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <utility>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
 
 namespace runir::kr::ps::icp
 {
@@ -43,7 +47,7 @@ template<tyr::TaskKind Kind, runir::kr::ps::dl::FeatureTag FeatureTag>
 void bind_feature_evaluation(nb::module_& m)
 {
     using namespace nb::literals;
-    using FeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, FeatureTag>>, Repository>;
+    using FeatureView = urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, FeatureTag>, Repository>;
     using Context = runir::kr::dl::semantics::StateEvaluationContext<Kind>;
 
     m.def(
@@ -60,17 +64,17 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     using namespace nb::literals;
     using HistoryView = HistoriesView<Kind>;
     using StateView = ProgramStateView<Kind>;
-    using VertexLabel = ProgramProofVertexLabel<Kind>;
-    using Graph = ProgramProofGraph<Kind>;
+    using VertexLabel = ProgramProofVertexLabel<IcpFamilyTag, Kind>;
+    using Graph = ProgramProofGraph<IcpFamilyTag, Kind>;
     using Results = ProgramProofResults<Kind>;
     using Options = ProgramSearchOptions<Kind>;
-    using Step = detail::ProgramStep<Kind>;
+    using Step = ProgramStep<IcpFamilyTag, Kind>;
     using Expander = SuccessorExpander<Kind>;
     // Standalone Python evaluation returns the registered contexts with interned results.
     using Environment = EvaluationEnvironment<Kind, runir::kr::dl::semantics::FullEvaluationPolicy<Kind>>;
 
     // Registered without methods so Python can hold and pass these handles.
-    const auto execution_repository = nb::class_<ExecutionRepository<Kind>>(m, (std::string(prefix) + "ExecutionRepository").c_str());
+    const auto execution_repository = nb::class_<ExecutionRepository<IcpFamilyTag, Kind>>(m, (std::string(prefix) + "ExecutionRepository").c_str());
     const auto execution_builder = nb::class_<ExecutionBuilder<Kind>>(m, (std::string(prefix) + "ExecutionBuilder").c_str());
 
     nb::class_<Environment>(m, (std::string(prefix) + "EvaluationEnvironment").c_str())
@@ -94,18 +98,18 @@ void bind_execution_types(nb::module_& m, const char* prefix)
 
     auto histories = nb::class_<HistoryView>(m, (std::string(prefix) + "Histories").c_str())
                          .def_prop_ro("concepts", &HistoryView::get_concepts, nb::rv_policy::reference_internal);
-    ygg::add_comparison(histories);
-    ygg::add_hash(histories);
+    urd::python::add_comparison(histories);
+    urd::python::add_hash(histories);
 
     auto program_state = nb::class_<StateView>(m, (std::string(prefix) + "ProgramState").c_str())
                              .def_prop_ro("state", &StateView::get_state, nb::keep_alive<0, 1>())
-                             .def_prop_ro("program", &StateView::get_program, nb::keep_alive<0, 1>())
-                             .def_prop_ro("module", &StateView::get_module, nb::keep_alive<0, 1>())
-                             .def_prop_ro("memory_state", &StateView::get_memory_state, nb::keep_alive<0, 1>())
-                             .def_prop_ro("registers", &StateView::get_registers, nb::keep_alive<0, 1>())
-                             .def_prop_ro("histories", &StateView::get_histories, nb::keep_alive<0, 1>());
-    ygg::add_comparison(program_state);
-    ygg::add_hash(program_state);
+                             .def_prop_ro("program", &StateView::get_program)
+                             .def_prop_ro("module", &StateView::get_module)
+                             .def_prop_ro("memory_state", &StateView::get_memory_state)
+                             .def_prop_ro("registers", &StateView::get_registers)
+                             .def_prop_ro("histories", &StateView::get_histories);
+    urd::python::add_comparison(program_state);
+    urd::python::add_hash(program_state);
 
     auto vertex_label = nb::class_<VertexLabel>(m, (std::string(prefix) + "ProgramProofVertexLabel").c_str())
                             .def_ro("program_state", &VertexLabel::program_state)
@@ -117,8 +121,8 @@ void bind_execution_types(nb::module_& m, const char* prefix)
                             .def_ro("is_goal", &VertexLabel::is_goal)
                             .def_ro("is_alive", &VertexLabel::is_alive)
                             .def_ro("is_unsolvable", &VertexLabel::is_unsolvable);
-    ygg::add_comparison(vertex_label);
-    ygg::add_hash(vertex_label);
+    urd::python::add_comparison(vertex_label);
+    urd::python::add_hash(vertex_label);
 
     auto graph = nb::class_<Graph>(m, (std::string(prefix) + "ProgramProofGraph").c_str());
     graph.def(nb::init<>());
@@ -128,7 +132,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     nb::class_<Results>(m, (std::string(prefix) + "ProgramProofResults").c_str())
         .def_ro("status", &Results::status)
         .def_ro("graph", &Results::graph, nb::keep_alive<0, 1>())
-        .def_ro("plan", &Results::plan, nb::rv_policy::copy)
+        .def_ro("plan", &Results::plan, nb::rv_policy::copy, nb::keep_alive<0, 1>())
         .def_ro("deadend_states", &Results::deadend_states)
         .def_ro("open_states", &Results::open_states)
         .def_ro("cycle", &Results::cycle)
@@ -147,15 +151,28 @@ void bind_execution_types(nb::module_& m, const char* prefix)
         .def_prop_ro("target", &Step::get_target, nb::keep_alive<0, 1>())
         .def_prop_ro("state_transition", &Step::get_state_transition, nb::keep_alive<0, 1>())
         .def_prop_ro("rule", &Step::get_rule, nb::keep_alive<0, 1>())
-        .def_ro("planning_successor", &Step::planning_successor, nb::rv_policy::copy);
+        .def_ro("planning_successor", &Step::planning_successor, nb::rv_policy::copy, nb::keep_alive<0, 1>());
 
     nb::class_<Expander>(m, (std::string(prefix) + "SuccessorExpander").c_str())
         .def(nb::init<runir::kr::TaskContextPtr<Kind>, ProgramView>(), "task_context"_a, "program"_a, nb::keep_alive<1, 3>())
-        .def("initial_state", &Expander::initial_state, "state"_a, nb::keep_alive<0, 1>())
+        .def("initial_state", &Expander::initial_state, "state"_a)
         .def(
             "for_each_successor",
-            [](Expander& self, StateView state, ProgramSearchStatistics& statistics, const std::function<bool(Step)>& emit, const std::function<bool()>& stop)
-            { return self.for_each_successor(state, statistics, emit, stop); },
+            [](Expander& self,
+               StateView state,
+               ProgramSearchStatistics& statistics,
+               const nb::typed<nb::callable, bool(Step)>& emit,
+               const std::function<bool()>& stop)
+            {
+                const auto owner = nb::cast(&self, nb::rv_policy::reference);
+                // Steps borrow the expander's own repositories and pools: each keeps the expander alive.
+                const auto keep_expander = nb::cpp_function([](nb::object value, nb::handle) { return value; }, nb::keep_alive<0, 2>());
+                return self.for_each_successor(
+                    state,
+                    statistics,
+                    [&](Step step) { return nb::cast<bool>(emit(keep_expander(nb::cast(std::move(step)), owner))); },
+                    stop);
+            },
             "state"_a,
             "statistics"_a,
             "emit"_a,
@@ -172,17 +189,11 @@ void bind_program_executor(nb::module_& m)
         .def_ro("num_expanded", &ProgramSearchStatistics::num_expanded)
         .def_ro("num_generated", &ProgramSearchStatistics::num_generated);
 
-    nb::enum_<ProgramProofStatus>(m, "ProgramProofStatus")
-        .value("SUCCESS", ProgramProofStatus::SUCCESS)
-        .value("FAILURE", ProgramProofStatus::FAILURE)
-        .value("OUT_OF_TIME", ProgramProofStatus::OUT_OF_TIME)
-        .value("OUT_OF_STATES", ProgramProofStatus::OUT_OF_STATES);
-
-    auto edge_label = nb::class_<ProgramProofEdgeLabel>(m, "ProgramProofEdgeLabel")
-                          .def_ro("action", &ProgramProofEdgeLabel::action)
-                          .def_ro("rule", &ProgramProofEdgeLabel::rule);
-    ygg::add_comparison(edge_label);
-    ygg::add_hash(edge_label);
+    auto edge_label = nb::class_<ProgramProofEdgeLabel<IcpFamilyTag>>(m, "ProgramProofEdgeLabel")
+                          .def_ro("action", &ProgramProofEdgeLabel<IcpFamilyTag>::action)
+                          .def_ro("rule", &ProgramProofEdgeLabel<IcpFamilyTag>::rule);
+    urd::python::add_comparison(edge_label);
+    urd::python::add_hash(edge_label);
     m.attr("GroundProgramProofEdgeLabel") = edge_label;
     m.attr("LiftedProgramProofEdgeLabel") = edge_label;
 

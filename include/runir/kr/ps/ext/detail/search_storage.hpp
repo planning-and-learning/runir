@@ -8,9 +8,13 @@
 #include <cassert>
 #include <cstddef>
 #include <optional>
+#include <urd/repr/maps/std_map.hpp>
+#include <urd/repr/maps/unordered_flat_map.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/unordered_flat_set.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
-#include <yggdrasil/containers/associative_containers.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
@@ -23,9 +27,9 @@ template<tyr::TaskKind Kind>
 struct SearchStorage<Kind, StateMemorization::ALL>
 {
     const ProgramSearchOptions<Kind>* options;
-    ygg::SegmentedVector<SearchNode<Kind>> nodes;
+    SearchNodes<Kind> nodes;
     // Retains each admitted transition in discovery order, including parallel edges.
-    std::vector<Predecessor<Kind>> predecessors;
+    urd::Store<urd::sequence<Predecessor<Kind>>> predecessors;
     ygg::uint_t num_reached = 0;
 
     explicit SearchStorage(const ProgramSearchOptions<Kind>& options_) : options(&options_) {}
@@ -52,7 +56,7 @@ struct SearchStorage<Kind, StateMemorization::ALL>
 
     bool record_transition(ProgramStateView<Kind> source,
                            ProgramStateView<Kind> target,
-                           std::optional<tyr::formalism::planning::ActionBindingView> action,
+                           std::optional<tyr::formalism::planning::ActionRowView> action,
                            std::optional<RuleVariantView> rule,
                            std::size_t choice_width,
                            auto&& classify)
@@ -122,7 +126,7 @@ struct SearchStorage<Kind, StateMemorization::NONE>
 
     bool record_transition(BuilderProgramStateView<Kind>,
                            BuilderProgramStateView<Kind> target,
-                           std::optional<tyr::formalism::planning::ActionBindingView>,
+                           std::optional<tyr::formalism::planning::ActionRowView>,
                            std::optional<RuleVariantView>,
                            std::size_t,
                            auto&& classify)
@@ -141,7 +145,7 @@ struct SearchStorage<Kind, StateMemorization::NONE>
 template<tyr::TaskKind Kind>
 struct SearchStorage<Kind, StateMemorization::CHOICE> : SearchStorage<Kind, StateMemorization::NONE>
 {
-    ygg::UnorderedMap<ProgramStateView<Kind>, SearchStatus> memo;
+    urd::Store<urd::map<ProgramStateView<Kind>, SearchStatus>> memo;
 
     explicit SearchStorage(const ProgramSearchOptions<Kind>& options_) : SearchStorage<Kind, StateMemorization::NONE>(options_) {}
 

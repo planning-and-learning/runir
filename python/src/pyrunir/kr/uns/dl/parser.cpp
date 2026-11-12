@@ -1,4 +1,5 @@
 #include "bindings.hpp"
+#include "pyrunir/module.hpp"
 
 #include <nanobind/stl/string.h>
 #include <runir/kr/uns/dl/parser.hpp>

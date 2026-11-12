@@ -2,14 +2,13 @@
 
 #include <fmt/format.h>
 #include <gtest/gtest.h>
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/errors.hpp>
-#include <runir/kr/ps/icp/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/icp/dl/parser.hpp>
 #include <runir/kr/ps/icp/formatter.hpp>
 #include <runir/kr/ps/icp/repository.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/formalism/planning/parser.hpp>
 
 namespace runir::tests
@@ -97,13 +96,14 @@ TEST(RunirTests, IcpParserRoundTripAndValidation)
             parse(invalid);
             FAIL() << "Expected invalid ICP input to fail:\n" << invalid;
         }
-        catch (const kr::SemanticError& error)
+        catch (const ygg::diagnostics::SemanticError& error)
         {
             EXPECT_TRUE(error.diagnostic().location.has_value()) << error.what();
         }
     }
 
-    EXPECT_THROW(kr::ps::icp::dl::parse_program("(:program (:entry visit) " + rendered + rendered + ")", planning.get_domain(), *repository), kr::ParseError);
+    EXPECT_THROW(kr::ps::icp::dl::parse_program("(:program (:entry visit) " + rendered + rendered + ")", planning.get_domain(), *repository),
+                 ygg::diagnostics::ParseError);
     EXPECT_THROW(kr::ps::icp::dl::parse_program("(:program (:entry absent) " + rendered + ")", planning.get_domain(), *repository), kr::UndefinedSymbolError);
 }
 

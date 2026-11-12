@@ -3,32 +3,17 @@
 
 #include "runir/kr/dl/declarations.hpp"
 
+#include <boost/mp11.hpp>
+#include <concepts>
 #include <memory>
-#include <yggdrasil/core/types.hpp>
+#include <type_traits>
+#include <urd/elements/flat.hpp>
+#include <variant>
 
 namespace runir::kr::dl::cnf_grammar
 {
 
 struct Grammar;
-
-template<typename Tag>
-    requires runir::kr::dl::ConceptConstructorTag<Tag>
-struct Concept;
-
-template<typename Tag>
-    requires runir::kr::dl::RoleConstructorTag<Tag>
-struct Role;
-
-template<typename Tag>
-    requires runir::kr::dl::BooleanConstructorTag<Tag>
-struct Boolean;
-
-template<typename Tag>
-    requires runir::kr::dl::NumericalConstructorTag<Tag>
-struct Numerical;
-
-template<runir::kr::dl::CategoryTag Category>
-struct Constructor;
 
 template<runir::kr::dl::CategoryTag Category>
 struct NonTerminal;
@@ -39,33 +24,42 @@ struct DerivationRule;
 template<runir::kr::dl::CategoryTag Category>
 struct SubstitutionRule;
 
-using ConceptTypes = ygg::MapTypeListT<Concept, runir::kr::dl::GenerationConceptConstructorTags>;
+struct CnfGrammarFamily;
 
-using RoleTypes = ygg::MapTypeListT<Role, runir::kr::dl::GenerationRoleConstructorTags>;
+/// CNF grammar constructors: the base constructor tags, operands non-terminals.
+struct CnfGrammarFamily
+{
+    template<runir::kr::dl::CategoryTag Category>
+    using Tags = runir::kr::dl::BaseConstructorTags<Category>;
 
-using BooleanTypes = ygg::MapTypeListT<Boolean, runir::kr::dl::GenerationBooleanConstructorTags>;
+    template<runir::kr::dl::CategoryTag Category>
+    using Operand = urd::index<NonTerminal<Category>>;
 
-using NumericalTypes = ygg::MapTypeListT<Numerical, runir::kr::dl::GenerationNumericalConstructorTags>;
+    using Argument = urd::flat_variant<Operand<runir::kr::dl::ConceptTag>, Operand<runir::kr::dl::RoleTag>>;
+};
 
-using ConstructorTypes = ygg::MapTypeListT<Constructor, runir::kr::dl::CategoryTags>;
+/// A constructor: one of Category's records. Stored as it is, not interned.
+template<runir::kr::dl::CategoryTag Category>
+using Constructor = urd::index_variant<runir::kr::dl::RecordTypes<CnfGrammarFamily, Category>>;
 
-using NonTerminalTypes = ygg::MapTypeListT<NonTerminal, runir::kr::dl::CategoryTags>;
+using ConceptTypes = runir::kr::dl::RecordTypes<CnfGrammarFamily, runir::kr::dl::ConceptTag>;
 
-using DerivationRuleTypes = ygg::MapTypeListT<DerivationRule, runir::kr::dl::CategoryTags>;
+using RoleTypes = runir::kr::dl::RecordTypes<CnfGrammarFamily, runir::kr::dl::RoleTag>;
 
-using SubstitutionRuleTypes = ygg::MapTypeListT<SubstitutionRule, runir::kr::dl::CategoryTags>;
+using BooleanTypes = runir::kr::dl::RecordTypes<CnfGrammarFamily, runir::kr::dl::BooleanTag>;
 
-using GrammarTypes = ygg::TypeList<Grammar>;
+using NumericalTypes = runir::kr::dl::RecordTypes<CnfGrammarFamily, runir::kr::dl::NumericalTag>;
 
-using ConstructorRepositoryTypes = ygg::ConcatTypeListsT<ConceptTypes,
-                                                         RoleTypes,
-                                                         BooleanTypes,
-                                                         NumericalTypes,
-                                                         ConstructorTypes,
-                                                         NonTerminalTypes,
-                                                         DerivationRuleTypes,
-                                                         SubstitutionRuleTypes,
-                                                         GrammarTypes>;
+using NonTerminalTypes = boost::mp11::mp_transform<NonTerminal, runir::kr::dl::CategoryTags>;
+
+using DerivationRuleTypes = boost::mp11::mp_transform<DerivationRule, runir::kr::dl::CategoryTags>;
+
+using SubstitutionRuleTypes = boost::mp11::mp_transform<SubstitutionRule, runir::kr::dl::CategoryTags>;
+
+using GrammarTypes = boost::mp11::mp_list<Grammar>;
+
+using ConstructorRepositoryTypes =
+    boost::mp11::mp_append<ConceptTypes, RoleTypes, BooleanTypes, NumericalTypes, NonTerminalTypes, DerivationRuleTypes, SubstitutionRuleTypes, GrammarTypes>;
 
 using ConstructorRepository = runir::kr::dl::detail::BasicConstructorRepository<ConstructorRepositoryTypes>;
 
@@ -73,35 +67,35 @@ using ConstructorRepositoryPtr = std::shared_ptr<ConstructorRepository>;
 
 using ConstructorRepositoryFactory = runir::kr::dl::detail::BasicConstructorRepositoryFactory<ConstructorRepositoryTypes>;
 
-template<typename Tag>
-    requires runir::kr::dl::ConceptConstructorTag<Tag>
-using ConceptView = ygg::View<ygg::Index<Concept<Tag>>, ConstructorRepository>;
+template<runir::kr::dl::ConstructorOf<CnfGrammarFamily, runir::kr::dl::ConceptTag> Tag>
+using ConceptView = urd::index_view<runir::kr::dl::Concept<CnfGrammarFamily, Tag>, ConstructorRepository>;
 
-template<typename Tag>
-    requires runir::kr::dl::RoleConstructorTag<Tag>
-using RoleView = ygg::View<ygg::Index<Role<Tag>>, ConstructorRepository>;
+template<runir::kr::dl::ConstructorOf<CnfGrammarFamily, runir::kr::dl::RoleTag> Tag>
+using RoleView = urd::index_view<runir::kr::dl::Role<CnfGrammarFamily, Tag>, ConstructorRepository>;
 
-template<typename Tag>
-    requires runir::kr::dl::BooleanConstructorTag<Tag>
-using BooleanView = ygg::View<ygg::Index<Boolean<Tag>>, ConstructorRepository>;
+template<runir::kr::dl::ConstructorOf<CnfGrammarFamily, runir::kr::dl::BooleanTag> Tag>
+using BooleanView = urd::index_view<runir::kr::dl::Boolean<CnfGrammarFamily, Tag>, ConstructorRepository>;
 
-template<typename Tag>
-    requires runir::kr::dl::NumericalConstructorTag<Tag>
-using NumericalView = ygg::View<ygg::Index<Numerical<Tag>>, ConstructorRepository>;
+template<runir::kr::dl::ConstructorOf<CnfGrammarFamily, runir::kr::dl::NumericalTag> Tag>
+using NumericalView = urd::index_view<runir::kr::dl::Numerical<CnfGrammarFamily, Tag>, ConstructorRepository>;
+
+template<typename T>
+using EntityView = urd::index_view<T, ConstructorRepository>;
+
+/// A constructor read through the repository: the view of the record it holds.
+template<runir::kr::dl::CategoryTag Category>
+using ConstructorView = boost::mp11::mp_apply<std::variant, boost::mp11::mp_transform<EntityView, runir::kr::dl::RecordTypes<CnfGrammarFamily, Category>>>;
 
 template<runir::kr::dl::CategoryTag Category>
-using ConstructorView = ygg::View<ygg::Index<Constructor<Category>>, ConstructorRepository>;
+using NonTerminalView = urd::index_view<NonTerminal<Category>, ConstructorRepository>;
 
 template<runir::kr::dl::CategoryTag Category>
-using NonTerminalView = ygg::View<ygg::Index<NonTerminal<Category>>, ConstructorRepository>;
+using DerivationRuleView = urd::index_view<DerivationRule<Category>, ConstructorRepository>;
 
 template<runir::kr::dl::CategoryTag Category>
-using DerivationRuleView = ygg::View<ygg::Index<DerivationRule<Category>>, ConstructorRepository>;
+using SubstitutionRuleView = urd::index_view<SubstitutionRule<Category>, ConstructorRepository>;
 
-template<runir::kr::dl::CategoryTag Category>
-using SubstitutionRuleView = ygg::View<ygg::Index<SubstitutionRule<Category>>, ConstructorRepository>;
-
-using GrammarView = ygg::View<ygg::Index<Grammar>, ConstructorRepository>;
+using GrammarView = urd::index_view<Grammar, ConstructorRepository>;
 }
 
 #endif

@@ -1,40 +1,60 @@
 #ifndef RUNIR_GRAPHS_DECLARATIONS_HPP_
 #define RUNIR_GRAPHS_DECLARATIONS_HPP_
 
+#include <algorithm>
 #include <concepts>
 #include <cstddef>
 #include <ranges>
 #include <tuple>
 #include <type_traits>
+#include <urd/elements/equal_to.hpp>
+#include <urd/elements/flat.hpp>
+#include <urd/elements/hash.hpp>
+#include <urd/repr/maps/unordered_flat_map.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/indexed.hpp>
+#include <urd/repr/values/std_set.hpp>
+#include <urd/repr/values/unordered_flat_set.hpp>
+#include <urd/store.hpp>
 #include <vector>
-#include <yggdrasil/containers/associative_containers.hpp>
-#include <yggdrasil/core/concepts.hpp>
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/semantics/equal_to.hpp>
-#include <yggdrasil/semantics/hash.hpp>
 
 namespace runir::graphs
 {
 
 using VertexIndex = ygg::uint_t;
-using VertexIndexList = std::vector<VertexIndex>;
-using VertexIndexSet = ygg::UnorderedSet<VertexIndex>;
+using VertexIndexList = urd::Store<urd::sequence<VertexIndex>>;
+using VertexIndexSet = urd::Store<urd::set<VertexIndex>>;
 
 using EdgeIndex = ygg::uint_t;
-using EdgeIndexList = std::vector<EdgeIndex>;
-using EdgeIndexSet = ygg::UnorderedSet<EdgeIndex>;
+using EdgeIndexList = urd::Store<urd::sequence<EdgeIndex>>;
+using EdgeIndexSet = urd::Store<urd::set<EdgeIndex>>;
 
 using Degree = ygg::uint_t;
-using DegreeList = std::vector<Degree>;
+using DegreeList = urd::Store<urd::sequence<Degree>>;
+
+namespace detail
+{
+/// A graph's member function F applied to what a range of the graph gives (an edge index: its edge, its target): the
+/// small function object its ranges are read through (urd::transform), holding the graph.
+template<typename G, auto F>
+struct ReadThrough
+{
+    const G* graph = nullptr;
+
+    template<typename X>
+    [[nodiscard]] decltype(auto) operator()(X x) const
+    { return (graph->*F)(x); }
+};
+}  // namespace detail
 
 struct DenseIndexRangeTag;
 struct SparseIndexRangeTag;
 
 template<typename T>
 concept Property = requires(const T& lhs, const T& rhs) {
-    { ygg::Hash<T> {}(lhs) } -> std::convertible_to<std::size_t>;
-    { ygg::EqualTo<T> {}(lhs, rhs) } -> std::same_as<bool>;
+    { urd::Hash<T> {}(lhs) } -> std::convertible_to<std::size_t>;
+    { urd::EqualTo<T> {}(lhs, rhs) } -> std::same_as<bool>;
 };
 
 template<Property VertexProperty, Property EdgeProperty>
@@ -73,10 +93,10 @@ struct GraphTraits<StaticGraph<VertexProperty, EdgeProperty>>
     using OutEdgeIndexRange = DenseIndexRangeTag;
 };
 
-template<typename G, Property P = std::tuple<>>
+template<Property P = std::tuple<>>
 class Vertex;
 
-template<typename G, Property P = std::tuple<>>
+template<Property P = std::tuple<>>
 class Edge;
 
 template<Property P>
@@ -85,19 +105,17 @@ struct VertexProperty;
 template<Property P>
 struct EdgeProperty;
 
+/// A property's handle in its graph's property pool (VertexPropertyMap, EdgePropertyMap).
 template<Property P>
-using VertexPropertyIndex = ygg::Index<VertexProperty<P>>;
+using VertexPropertyIndex = urd::index<urd::data<VertexProperty<P>>>;
 
 template<Property P>
-using EdgePropertyIndex = ygg::Index<EdgeProperty<P>>;
-
-template<typename Tag>
-class PropertyMap;
+using EdgePropertyIndex = urd::index<urd::data<EdgeProperty<P>>>;
 
 template<typename G, typename VP, typename EP>
-concept IsGraphWithProperties = requires(const G& graph, VertexPropertyIndex<VP> vertex_property, EdgePropertyIndex<EP> edge_property) {
-    { graph.get_vertex_property(vertex_property) } -> std::same_as<const VP&>;
-    { graph.get_edge_property(edge_property) } -> std::same_as<const EP&>;
+concept IsGraphWithProperties = requires(const G& graph, VertexIndex vertex, EdgeIndex edge) {
+    { graph.get_vertex_property(vertex) } -> std::same_as<const VP&>;
+    { graph.get_edge_property(edge) } -> std::same_as<const EP&>;
 };
 
 template<typename G>
@@ -116,15 +134,15 @@ concept IsGraph =
         { graph.get_out_degree(vertex) } -> std::convertible_to<Degree>;
 
         // The Boost adapter returns these iterators after the range wrapper is destroyed.
-        { graph.get_vertex_indices() } -> ygg::InputRangeOf<VertexIndex>;
+        requires std::same_as<std::ranges::range_value_t<decltype(graph.get_vertex_indices())>, VertexIndex>;
         { graph.get_vertex_indices() } -> std::ranges::forward_range;
         { graph.get_vertex_indices() } -> std::ranges::common_range;
         { graph.get_vertex_indices() } -> std::ranges::borrowed_range;
-        { graph.get_edge_indices() } -> ygg::InputRangeOf<EdgeIndex>;
+        requires std::same_as<std::ranges::range_value_t<decltype(graph.get_edge_indices())>, EdgeIndex>;
         { graph.get_edge_indices() } -> std::ranges::forward_range;
         { graph.get_edge_indices() } -> std::ranges::common_range;
         { graph.get_edge_indices() } -> std::ranges::borrowed_range;
-        { graph.get_out_edge_indices(vertex) } -> ygg::InputRangeOf<EdgeIndex>;
+        requires std::same_as<std::ranges::range_value_t<decltype(graph.get_out_edge_indices(vertex))>, EdgeIndex>;
         { graph.get_out_edge_indices(vertex) } -> std::ranges::forward_range;
         { graph.get_out_edge_indices(vertex) } -> std::ranges::common_range;
         { graph.get_out_edge_indices(vertex) } -> std::ranges::borrowed_range;
@@ -146,21 +164,24 @@ struct GraphTraits<BackwardStaticGraphView<G>>
     using OutEdgeIndexRange = DenseIndexRangeTag;
 };
 
-template<typename T>
-concept IsVertex = requires(T vertex) {
-    { vertex.get_index() } -> std::convertible_to<VertexIndex>;
-    { vertex.get_property_index() } -> std::same_as<typename T::PropertyIndexType>;
-    { vertex.get_property() } -> std::same_as<const typename T::PropertyType&>;
-};
+/// A graph's vertices in increasing order, each numbered by its position: vertices.position(vertices.find(vertex)) is
+/// its dense index, vertices[i] the vertex numbered i. Algorithms that number vertices 0..n-1 take them from here.
+using DenseVertexIndices = urd::Store<urd::set<VertexIndex>, urd::positional>;
 
-template<typename T>
-concept IsEdge = requires(T edge) {
-    { edge.get_index() } -> std::convertible_to<EdgeIndex>;
-    { edge.get_source() } -> std::convertible_to<VertexIndex>;
-    { edge.get_target() } -> std::convertible_to<VertexIndex>;
-    { edge.get_property_index() } -> std::same_as<typename T::PropertyIndexType>;
-    { edge.get_property() } -> std::same_as<const typename T::PropertyType&>;
-};
+template<IsGraph G>
+auto dense_vertex_indices(const G& graph) -> DenseVertexIndices
+{
+    auto sorted = VertexIndexList();
+    sorted.reserve(graph.get_num_vertices());
+    for (auto vertex : graph.get_vertex_indices())
+        sorted.push_back(vertex);
+    std::sort(sorted.begin(), sorted.end());
+
+    auto result = DenseVertexIndices(urd::layer { 0 });
+    for (auto vertex : sorted)
+        result.insert(vertex);
+    return result;
+}
 
 }  // namespace runir::graphs
 

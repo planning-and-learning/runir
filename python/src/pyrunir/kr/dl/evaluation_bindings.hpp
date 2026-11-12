@@ -2,12 +2,15 @@
 #define PYRUNIR_KR_DL_EVALUATION_BINDINGS_HPP_
 
 #include "pyrunir/kr/binding_utils.hpp"
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
 #include <nanobind/nanobind.h>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include <runir/kr/dl/semantics/register_values_view.hpp>
-#include <runir/kr/dl/semantics/state_evaluation.hpp>
 #include <tyr/planning/state_repository.hpp>
 
 namespace runir::kr::python

@@ -1,54 +1,24 @@
 #ifndef RUNIR_KR_PS_EXT_DL_INCOMPLETE_STRUCTURAL_TERMINATION_DATA_HPP_
 #define RUNIR_KR_PS_EXT_DL_INCOMPLETE_STRUCTURAL_TERMINATION_DATA_HPP_
 
+#include "runir/kr/ps/dl/incomplete_structural_termination_data.hpp"
 #include "runir/kr/ps/ext/declarations.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
-#include "runir/kr/ps/ext/rule_variant_view.hpp"
-#include "runir/kr/ps/feature_view.hpp"
+#include "runir/kr/ps/rule_variant_view.hpp"
 
-#include <cstdint>
-#include <variant>
-#include <vector>
-#include <yggdrasil/core/types.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 namespace runir::kr::ps::ext::dl
 {
 
-enum class IncompleteStructuralTerminationStatus : std::uint8_t
-{
-    TERMINATING,
-    UNKNOWN,
-};
-
-struct IncompleteBlockingReason
-{
-    std::variant<BooleanFeatureView, NumericalFeatureView> feature;
-    /// Remaining opponents in this rule's final residual memory component.
-    std::vector<RuleVariantView> opposing_rules;
-};
-
-struct IncompleteSurvivingRule
-{
-    RuleVariantView rule;
-    std::vector<IncompleteBlockingReason> blocking_reasons;
-};
-
-struct ModuleIncompleteStructuralTerminationResult
-{
-    IncompleteStructuralTerminationStatus status = IncompleteStructuralTerminationStatus::TERMINATING;
-    /// Rules internal to final cyclic residual memory components.
-    std::vector<IncompleteSurvivingRule> surviving_rules;
-
-    [[nodiscard]] bool is_terminating() const noexcept { return status == IncompleteStructuralTerminationStatus::TERMINATING; }
-};
-
 struct ProgramIncompleteStructuralTerminationResult
 {
-    IncompleteStructuralTerminationStatus status = IncompleteStructuralTerminationStatus::TERMINATING;
-    std::vector<ModuleIncompleteStructuralTerminationResult> module_results;
-    std::vector<RuleVariantView> recursive_call_rules;
+    runir::kr::ps::dl::IncompleteStructuralTerminationStatus status = runir::kr::ps::dl::IncompleteStructuralTerminationStatus::TERMINATING;
+    urd::Store<urd::sequence<runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::ExtFamilyTag>>> module_results;
+    urd::Store<urd::sequence<RuleVariantView>> recursive_call_rules;
 
-    [[nodiscard]] bool is_terminating() const noexcept { return status == IncompleteStructuralTerminationStatus::TERMINATING; }
+    [[nodiscard]] bool is_terminating() const noexcept { return status == runir::kr::ps::dl::IncompleteStructuralTerminationStatus::TERMINATING; }
 };
 
 }  // namespace runir::kr::ps::ext::dl

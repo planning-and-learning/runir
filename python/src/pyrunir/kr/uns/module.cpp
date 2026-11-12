@@ -2,6 +2,7 @@
 
 #include "bindings.hpp"
 #include "pyrunir/kr/uns/dl/module.hpp"
+#include "pyrunir/module.hpp"
 
 #include <runir/kr/uns/repository.hpp>
 

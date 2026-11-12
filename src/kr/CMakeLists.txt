@@ -6,7 +6,6 @@ add_library(kr SHARED
     dl/translations/ygg_query.cpp
     dl/semantics/evaluation.cpp
     parser/datalog.cpp
-    dl/semantics/heuristics/projection.cpp
     dl/semantics/repository.cpp
     dl/semantics/state_evaluation_context.cpp
     dl/cnf_grammar/constructor_repository.cpp
@@ -40,7 +39,8 @@ add_library(kr SHARED
     ps/ext/dl/structural_termination/analysis.cpp
     ps/ext/dl/structural_termination/incomplete_result.cpp
     ps/ext/dl/structural_termination/result.cpp
-    ps/ext/program_executor.cpp
+    ps/ext/program_executor_ground.cpp
+    ps/ext/program_executor_lifted.cpp
     ps/icp/dl/parser.cpp
     ps/icp/dl/parser/parser.cpp
     ps/icp/program_executor.cpp
@@ -58,6 +58,11 @@ add_library(kr SHARED
 add_library(runir::kr ALIAS kr)
 
 set_target_properties(kr PROPERTIES OUTPUT_NAME runir_kr)
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # GCC 15 reports the value-initialized element Boost.Spirit X3 parses a list's items into as maybe uninitialized.
+    set_source_files_properties(uns/dl/parser/parser_instantiations.cpp PROPERTIES COMPILE_OPTIONS -Wno-maybe-uninitialized)
+endif()
 
 target_compile_features(kr PUBLIC cxx_std_20)
 
@@ -81,7 +86,6 @@ target_include_directories(kr
 target_link_libraries(kr
     PUBLIC
         yggdrasil::yggdrasil
-        yggdrasil::database
         fmt::fmt-header-only
         runir::datasets
         tyr::core

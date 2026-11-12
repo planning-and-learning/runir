@@ -2,14 +2,17 @@
 #define RUNIR_KR_DL_SEMANTICS_DENOTATION_CACHES_HPP_
 
 #include "runir/kr/dl/repository.hpp"
+#include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/dl/semantics/denotation_view.hpp"
 
 #include <array>
-#include <cstdint>
 #include <tuple>
-#include <yggdrasil/containers/associative_containers.hpp>
-#include <yggdrasil/database/operators/relational/join_index.hpp>
-#include <yggdrasil/database/relation/relation_repository.hpp>
+#include <tyr/datalog/lifted/database/semantics/join_index.hpp>
+#include <tyr/datalog/lifted/database/semantics/relation_view.hpp>
+#include <urd/repr/maps/std_map.hpp>
+#include <urd/repr/maps/unordered_flat_map.hpp>
+#include <urd/repr/values/unordered_flat_set.hpp>
+#include <urd/store.hpp>
 
 namespace runir::kr::dl::semantics
 {
@@ -21,11 +24,11 @@ namespace runir::kr::dl::semantics
 class DenotationCaches
 {
     template<CategoryTag Category>
-    using Cache = ygg::UnorderedMap<ConstructorView<Category>, DenotationView<Category>>;
+    using Cache = urd::Store<urd::map<ConstructorView<Category>, DenotationView<Category>>>;
 
-    using QueryCache = ygg::UnorderedMap<QueryView<>, QueryDenotationView>;
+    using QueryCache = urd::Store<urd::map<QueryView<>, QueryDenotationView>>;
     /// Per program, the generation of its feature's evaluation in this state (DatalogFeature).
-    using ProgramCache = ygg::UnorderedMap<DatalogProgramView, uint64_t>;
+    using ProgramCache = urd::Store<urd::map<DatalogProgramView, uint64_t>>;
 
     struct Partition
     {
@@ -42,7 +45,7 @@ class DenotationCaches
     };
 
     std::array<Partition, 2> m_partitions;
-    ygg::database::JoinIndexCache m_static_join_indexes;
+    tyr::datalog::database::JoinIndexCache m_static_join_indexes;
 
 public:
     DenotationCaches() = default;

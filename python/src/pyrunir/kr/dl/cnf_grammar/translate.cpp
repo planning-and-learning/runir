@@ -1,4 +1,5 @@
 #include "bindings.hpp"
+#include "pyrunir/module.hpp"
 
 #include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
 #include <runir/kr/dl/cnf_grammar/translate.hpp>

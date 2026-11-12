@@ -1,4 +1,5 @@
 #include "pyrunir/kr/ps/ext/dl/bindings.hpp"
+#include "pyrunir/module.hpp"
 
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
@@ -7,6 +8,9 @@
 #include <runir/kr/ps/ext/module_view.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <tyr/formalism/planning/planning_domain.hpp>
+#include <urd/python/sequences/sequence.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 namespace runir::kr::ps::ext::dl
 {
@@ -32,8 +36,9 @@ void bind_parser(nb::module_& m)
 
     m.def(
         "parse_modules",
-        [](const std::vector<std::string>& descriptions, const tyr::formalism::planning::PlanningDomain& domain, runir::kr::ps::ext::Repository& repository)
-        { return runir::kr::ps::ext::dl::parse_modules(descriptions, domain.get_domain(), repository); },
+        [](const urd::Store<urd::sequence<std::string>>& descriptions,
+           const tyr::formalism::planning::PlanningDomain& domain,
+           runir::kr::ps::ext::Repository& repository) { return runir::kr::ps::ext::dl::parse_modules(descriptions, domain.get_domain(), repository); },
         "descriptions"_a,
         "domain"_a,
         "repository"_a);

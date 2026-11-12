@@ -8,6 +8,8 @@
 #include "runir/kr/ps/dl/transition_evaluation_context.hpp"
 #include "runir/kr/task_context.hpp"
 
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 
@@ -27,7 +29,7 @@ private:
 
     static auto roots(SketchView sketch)
     {
-        auto result = std::vector<runir::kr::dl::semantics::incremental::EvaluationRoot> {};
+        auto result = urd::Store<urd::sequence<runir::kr::dl::semantics::incremental::EvaluationRoot>> {};
         for (const auto feature : sketch.get_features<runir::kr::dl::BooleanTag>())
             result.emplace_back(feature.get_expression());
         for (const auto feature : sketch.get_features<runir::kr::dl::NumericalTag>())

@@ -1,21 +1,18 @@
 #include "bindings.hpp"
 #include "pyrunir/kr/ps/dl/binding_utils.hpp"
+#include "pyrunir/module.hpp"
+#include "runir/kr/dl/detail/repository_instantiations.hpp"
+#include "runir/kr/ps/detail/repository_instantiations.hpp"
 
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
-#include <runir/kr/ps/ext/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 
 namespace runir::kr::ps::ext::dl
 {
 
-void bind_feature(nb::module_& m, RepositoryBinding& repository)
-{
-    runir::kr::python::bind_feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>(m, repository, "ConceptFeature");
-    runir::kr::python::bind_feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>(m, repository, "RoleFeature");
-    runir::kr::python::bind_feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>(m, repository, "BooleanFeature");
-    runir::kr::python::bind_feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>(m, repository, "NumericalFeature");
-    runir::kr::python::bind_feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>(m, repository, "QueryFeature");
-}
+// One translation unit per kind: the three instantiations together need about 6 GB to compile.
+void bind_features(nb::module_& m, RepositoryBinding& repository) { runir::kr::python::bind_program_features<ExtFamilyTag>(m, repository); }
 
 }  // namespace runir::kr::ps::ext::dl

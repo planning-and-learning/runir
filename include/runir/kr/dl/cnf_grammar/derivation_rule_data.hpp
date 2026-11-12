@@ -4,41 +4,29 @@
 #include "runir/kr/dl/cnf_grammar/declarations.hpp"
 
 #include <tuple>
+#include <urd/elements/flat.hpp>
 #include <utility>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
 
-namespace ygg
+namespace urd
 {
 
 template<runir::kr::dl::CategoryTag Category>
-struct Data<runir::kr::dl::cnf_grammar::DerivationRule<Category>>
+struct data<runir::kr::dl::cnf_grammar::DerivationRule<Category>>
 {
-    Index<runir::kr::dl::cnf_grammar::DerivationRule<Category>> index;
-    Index<runir::kr::dl::cnf_grammar::NonTerminal<Category>> lhs;
-    Index<runir::kr::dl::cnf_grammar::Constructor<Category>> rhs;
+    urd::index<runir::kr::dl::cnf_grammar::DerivationRule<Category>> index;
+    urd::index<runir::kr::dl::cnf_grammar::NonTerminal<Category>> lhs;
+    runir::kr::dl::cnf_grammar::Constructor<Category> rhs;
 
-    Data() = default;
-    Data(Index<runir::kr::dl::cnf_grammar::NonTerminal<Category>> lhs_, Index<runir::kr::dl::cnf_grammar::Constructor<Category>> rhs_) :
+    data() = default;
+    data(urd::index<runir::kr::dl::cnf_grammar::NonTerminal<Category>> lhs_, runir::kr::dl::cnf_grammar::Constructor<Category> rhs_) :
         index(),
         lhs(std::move(lhs_)),
         rhs(std::move(rhs_))
     {
     }
-    template<typename C>
-    Data(::ygg::View<Index<runir::kr::dl::cnf_grammar::NonTerminal<Category>>, C> lhs_,
-         ::ygg::View<Index<runir::kr::dl::cnf_grammar::Constructor<Category>>, C> rhs_) :
-        index(),
-        lhs(),
-        rhs()
-    {
-        set(lhs_, lhs);
-        set(rhs_, rhs);
-    }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::lhs, &Data::rhs> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::lhs, &Data::rhs> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::lhs, &data::rhs> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::lhs, &data::rhs> {}; }
 };
 
 }

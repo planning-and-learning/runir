@@ -19,6 +19,7 @@
 #define RUNIR_DATASETS_OBJECT_GRAPH_COLOR_HPP_
 
 #include <algorithm>
+#include <boost/mp11.hpp>
 #include <cassert>
 #include <cista/containers/variant.h>
 #include <cista/containers/vector.h>
@@ -30,16 +31,16 @@
 #include <tyr/formalism/planning/repository.hpp>
 #include <tyr/formalism/predicate_data.hpp>
 #include <tyr/formalism/predicate_view.hpp>
+#include <urd/config.hpp>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <variant>
-#include <yggdrasil/containers/variant.hpp>
-#include <yggdrasil/containers/vector.hpp>
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>
-#include <yggdrasil/semantics/comparison.hpp>
+#include <yggdrasil/semantics/canonicalization.hpp>
 
 namespace runir::datasets
 {
@@ -64,121 +65,99 @@ class ColorRepositoryFactory;
 
 }  // namespace runir::datasets
 
-namespace ygg
+namespace urd
 {
 
 template<::tyr::formalism::FactKind T>
-struct Data<runir::datasets::PredicateColor<T>>
+struct data<runir::datasets::PredicateColor<T>>
 {
-    Index<runir::datasets::PredicateColor<T>> index;
-    Index<::tyr::formalism::Predicate<T>> predicate;
-    uint_t argument_position = 0;
+    urd::index<runir::datasets::PredicateColor<T>> index;
+    urd::index<::tyr::formalism::Predicate<T>> predicate;
+    ygg::uint_t argument_position = 0;
     runir::datasets::PredicateContext context {};
 
-    Data() = default;
-    Data(Index<::tyr::formalism::Predicate<T>> predicate_, uint_t argument_position_, runir::datasets::PredicateContext context_) noexcept :
+    data() = default;
+    data(urd::index<::tyr::formalism::Predicate<T>> predicate_, ygg::uint_t argument_position_, runir::datasets::PredicateContext context_) noexcept :
         index(),
         predicate(predicate_),
         argument_position(argument_position_),
         context(context_)
     {
     }
-    template<typename C>
-    Data(::ygg::View<Index<::tyr::formalism::Predicate<T>>, C> predicate_, uint_t argument_position_, runir::datasets::PredicateContext context_) noexcept :
-        index(),
-        predicate(),
-        argument_position(argument_position_),
-        context(context_)
-    { set(predicate_, predicate); }
-    Data(const Data&) = default;
-    Data& operator=(const Data&) = default;
-    Data(Data&&) = default;
-    Data& operator=(Data&&) = default;
-    ~Data() = default;
+    data(const data&) = default;
+    data& operator=(const data&) = default;
+    data(data&&) = default;
+    data& operator=(data&&) = default;
+    ~data() = default;
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::predicate, &Data::argument_position, &Data::context> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::predicate, &Data::argument_position, &Data::context> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::predicate, &data::argument_position, &data::context> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::predicate, &data::argument_position, &data::context> {}; }
 };
 
 template<>
-struct Data<runir::datasets::Color>
+struct data<runir::datasets::Color>
 {
-    using Variant =
-        ::ygg::IndexVariant<ygg::MapTypeListT<runir::datasets::PredicateColor, ygg::TypeList<::tyr::formalism::StaticTag, ::tyr::formalism::FluentTag>>>;
-    using VariantList = cista::offset::vector<Variant>;
+    using Variant = urd::index_variant<
+        boost::mp11::mp_transform<runir::datasets::PredicateColor, boost::mp11::mp_list<::tyr::formalism::StaticTag, ::tyr::formalism::FluentTag>>>;
+    using VariantList = urd::flat_vector<Variant>;
 
-    Index<runir::datasets::Color> index;
+    urd::index<runir::datasets::Color> index;
     VariantList values;
 
-    Data() = default;
-    explicit Data(VariantList values_) : index(), values(std::move(values_)) {}
-    Data(const Data&) = delete;
-    Data& operator=(const Data&) = delete;
-    Data(Data&&) = default;
-    Data& operator=(Data&&) = default;
-    ~Data() = default;
-    template<typename C>
-    using ViewVariant = ::ygg::ViewVariant<Variant, C>;
-    template<typename C>
-    explicit Data(const std::vector<ViewVariant<C>>& values_) : index(), values()
-    {
-        values.reserve(values_.size());
-        for (const auto& value : values_)
-            values.push_back(std::visit([](const auto& view) -> Variant { return Variant(view.get_index()); }, value));
-    }
+    data() = default;
+    explicit data(VariantList values_) : index(), values(std::move(values_)) {}
+    data(const data&) = delete;
+    data& operator=(const data&) = delete;
+    data(data&&) = default;
+    data& operator=(data&&) = default;
+    ~data() = default;
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::values> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::values> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::values> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::values> {}; }
 };
 
-template<::tyr::formalism::FactKind T, typename C>
-class View<Index<runir::datasets::PredicateColor<T>>, C> : public ygg::IndexViewBase<runir::datasets::PredicateColor<T>, C>
+}  // namespace urd
+
+namespace urd
 {
-public:
-    using ygg::IndexViewBase<runir::datasets::PredicateColor<T>, C>::IndexViewBase;
-
-    auto get_predicate() const noexcept { return ygg::make_view(this->get_data().predicate, this->get_context().get_planning_repository()); }
-    auto get_argument_position() const noexcept { return this->get_data().argument_position; }
-    auto get_predicate_context() const noexcept { return this->get_data().context; }
-};
-
-template<typename C>
-class View<Index<runir::datasets::Color>, C> : public ygg::IndexViewBase<runir::datasets::Color, C>
+template<::tyr::formalism::FactKind T, typename V>
+struct view_mixin<runir::datasets::PredicateColor<T>, V>
 {
-public:
-    using ygg::IndexViewBase<runir::datasets::Color, C>::IndexViewBase;
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
-    auto get_colors() const noexcept { return ygg::make_view(this->get_data().values, this->get_context()); }
+public:
+    auto get_predicate() const noexcept { return urd::resolve(self().data().predicate, self().context().get_planning_repository()); }
+    auto get_argument_position() const noexcept { return self().data().argument_position; }
+    auto get_predicate_context() const noexcept { return self().data().context; }
 };
 
-static_assert(ygg::uses_trivial_storage_v<runir::datasets::PredicateColor<::tyr::formalism::StaticTag>>);
-static_assert(ygg::uses_trivial_storage_v<runir::datasets::PredicateColor<::tyr::formalism::FluentTag>>);
-static_assert(!ygg::uses_trivial_storage_v<runir::datasets::Color>);
+template<typename V>
+struct view_mixin<runir::datasets::Color, V>
+{
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
-}  // namespace ygg
+public:
+    auto get_colors() const noexcept { return urd::resolve(self().data().values, self().context()); }
+};
+}  // namespace urd
 
 namespace runir::datasets
 {
 
 template<::tyr::formalism::FactKind T>
-bool is_canonical(const ygg::Data<PredicateColor<T>>&) noexcept
+bool is_canonical(const urd::data<PredicateColor<T>>&) noexcept
 { return true; }
 
 template<::tyr::formalism::FactKind T>
-void canonicalize(ygg::Data<PredicateColor<T>>&) noexcept
+void canonicalize(urd::data<PredicateColor<T>>&) noexcept
 {
 }
 
-inline bool is_canonical(const ygg::Data<Color>& data) noexcept
-{ return std::is_sorted(data.values.begin(), data.values.end()) && std::adjacent_find(data.values.begin(), data.values.end()) == data.values.end(); }
+inline bool is_canonical(const urd::data<Color>& data) noexcept { return ygg::is_canonical(data.values); }
 
-inline void canonicalize(ygg::Data<Color>& data)
-{
-    std::sort(data.values.begin(), data.values.end());
-    data.values.erase(std::unique(data.values.begin(), data.values.end()), data.values.end());
-}
+inline void canonicalize(urd::data<Color>& data) { ygg::canonicalize(data.values); }
 
 class ColorRepository
 {
@@ -203,7 +182,8 @@ public:
     ColorRepository& operator=(ColorRepository&&) = delete;
     ~ColorRepository() = default;
 
-    [[nodiscard]] const auto& get_index() const noexcept { return m_index; }
+    /// The repository's number, as urd's views ask of a context.
+    [[nodiscard]] std::size_t layer() const noexcept { return m_index; }
     [[nodiscard]] const auto& get_planning_repository() const noexcept
     {
         assert(m_planning_repository);
@@ -214,37 +194,35 @@ public:
     void clear() noexcept { m_symbol_repository.clear(); }
 
     template<typename T>
-    std::optional<ygg::View<ygg::Index<T>, ColorRepository>> find(const ygg::Data<T>& data) const noexcept
+    std::optional<urd::index_view<T, ColorRepository>> find(const urd::data<T>& data) const noexcept
     {
         assert(is_canonical(data));
-        if (const auto index = m_symbol_repository.find_local<T>(data))
-            return ygg::View<ygg::Index<T>, ColorRepository>(*index, *this);
+        if (const auto index = m_symbol_repository.get<T>().find(data); !index.is_none())
+            return urd::index_view<T, ColorRepository>(index, this);
         return std::nullopt;
     }
 
     template<typename T>
-    std::pair<ygg::View<ygg::Index<T>, ColorRepository>, bool> insert(ygg::Data<T>& data)
+    std::pair<urd::index_view<T, ColorRepository>, bool> insert(urd::data<T>& data)
     {
         canonicalize(data);
         assert(is_canonical(data));
-        const auto [index, created] = m_symbol_repository.insert_local<T>(data);
-        return { ygg::View<ygg::Index<T>, ColorRepository>(index, *this), created };
+        const auto [index, created] = ygg::formalism::intern(m_symbol_repository.get<T>(), data);
+        return { urd::index_view<T, ColorRepository>(index, this), created };
     }
 
+    /// An index as its view here (urd's resolves contract): what compositions of indices are read through (urd::resolve).
     template<typename T>
-    const ygg::Data<T>& operator[](ygg::Index<T> index) const noexcept
-    {
-        assert(m_symbol_repository.is_local<T>(index));
-        return m_symbol_repository.local<T>(index);
-    }
+    [[nodiscard]] urd::index_view<T, ColorRepository> view(urd::index<T> index) const noexcept
+    { return { index, this }; }
+
+    template<typename T>
+    const urd::data<T>& operator[](urd::index<T> index) const noexcept
+    { return m_symbol_repository[index]; }
 
     template<typename T>
     [[nodiscard]] std::size_t size() const noexcept
-    { return m_symbol_repository.local_size<T>(); }
-
-    template<typename T>
-    [[nodiscard]] const ColorRepository& get_canonical_context(ygg::Index<T>) const noexcept
-    { return *this; }
+    { return m_symbol_repository.size<T>(); }
 };
 
 class ColorRepositoryFactory
@@ -257,10 +235,10 @@ public:
     { return std::shared_ptr<ColorRepository>(new ColorRepository(m_next_index++, std::move(planning_repository))); }
 };
 
-using ColorView = ygg::View<ygg::Index<Color>, ColorRepository>;
+using ColorView = urd::index_view<Color, ColorRepository>;
 
-inline const ColorRepository& get_repository(const ColorRepository& repository YGG_LIFETIMEBOUND) noexcept { return repository; }
-inline ColorRepository& get_repository(ColorRepository& repository YGG_LIFETIMEBOUND) noexcept { return repository; }
+inline const ColorRepository& get_repository(const ColorRepository& repository URD_LIFETIMEBOUND) noexcept { return repository; }
+inline ColorRepository& get_repository(ColorRepository& repository URD_LIFETIMEBOUND) noexcept { return repository; }
 
 }  // namespace runir::datasets
 

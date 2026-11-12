@@ -3,7 +3,9 @@
 
 #include "runir/graphs/declarations.hpp"
 #include "runir/kr/declarations.hpp"
-#include "runir/kr/ps/ext/program_proof_graph.hpp"
+#include "runir/kr/ps/ext/execution_view.hpp"
+#include "runir/kr/ps/program_proof_graph.hpp"
+#include "runir/kr/ps/proof_status.hpp"
 #include "runir/kr/uns/classifier_view.hpp"
 #include "runir/kr/uns/declarations.hpp"
 
@@ -13,37 +15,11 @@
 #include <limits>
 #include <memory>
 #include <optional>
-#include <stdexcept>
-#include <string_view>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/plan.hpp>
 
 namespace runir::kr::ps::ext
 {
-
-enum class ProgramProofStatus : std::uint8_t
-{
-    SUCCESS,
-    FAILURE,
-    OUT_OF_TIME,
-    OUT_OF_STATES,
-};
-
-constexpr std::string_view to_string(ProgramProofStatus status)
-{
-    switch (status)
-    {
-        case ProgramProofStatus::SUCCESS:
-            return "success";
-        case ProgramProofStatus::FAILURE:
-            return "failure";
-        case ProgramProofStatus::OUT_OF_TIME:
-            return "out_of_time";
-        case ProgramProofStatus::OUT_OF_STATES:
-            return "out_of_states";
-    }
-    throw std::invalid_argument("invalid ProgramProofStatus");
-}
 
 /// Search-state memorization, independent of materializing the returned witness path.
 enum class StateMemorization : std::uint8_t
@@ -94,19 +70,19 @@ struct ProgramSearchStatistics
 template<tyr::TaskKind Kind>
 struct ProgramProofResults
 {
-    ProgramProofStatus status = ProgramProofStatus::SUCCESS;
+    ProofStatus status = ProofStatus::SUCCESS;
     runir::kr::TaskContextPtr<Kind> task_context_owner;
     /// ALL retains every explored transition. NONE and CHOICE materialize only the selected
     /// solution or diagnostic path after search, with owned states independent of search memorization.
     /// CHOICE may also retain interned choice sources in the task repository outside this graph.
-    std::shared_ptr<ProgramProofGraph<Kind>> graph;
+    std::shared_ptr<ProgramProofGraph<ExtFamilyTag, Kind>> graph;
     std::optional<tyr::planning::PackedPlan<Kind>> plan = std::nullopt;
     runir::graphs::VertexIndexList deadend_states;
     runir::graphs::VertexIndexList open_states;
     runir::graphs::VertexIndexList cycle;
     ProgramSearchStatistics statistics;
 
-    [[nodiscard]] bool is_successful() const noexcept { return status == ProgramProofStatus::SUCCESS; }
+    [[nodiscard]] bool is_successful() const noexcept { return status == ProofStatus::SUCCESS; }
 };
 
 }  // namespace runir::kr::ps::ext

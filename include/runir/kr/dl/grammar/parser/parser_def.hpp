@@ -7,6 +7,8 @@
 
 #include <boost/spirit/home/x3/support/traits/is_parser.hpp>
 #include <string>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 namespace runir::kr::dl::grammar::parser
 {
@@ -19,11 +21,11 @@ using boost::spirit::x3::ascii::alnum;
 using boost::spirit::x3::ascii::alpha;
 using boost::spirit::x3::ascii::char_;
 using boost::spirit::x3::ascii::digit;
-using runir::kr::parser::keyword;
 using ygg::diagnostics::context;
+using ygg::diagnostics::keyword;
 
 template<runir::kr::dl::CategoryTag Category, typename Tag>
-inline constexpr bool has_ast_constructor_tag_v = ygg::InTypeList<Tag, runir::kr::dl::grammar::ast::AstConstructorTagsT<Category>>;
+inline constexpr bool has_ast_constructor_tag_v = boost::mp11::mp_contains<runir::kr::dl::grammar::ast::AstConstructorTagsT<Category>, Tag>::value;
 
 template<bool Enabled, typename Parser>
     requires boost::spirit::x3::traits::is_parser<Parser>::value
@@ -35,13 +37,11 @@ constexpr auto maybe(const Parser& parser)
         return boost::spirit::x3::eps(false);
 }
 
-/// Whether a dialect admits a constructor: SearchFreeDialectTag, the dialect of the edges of n_distance and q_must_pass,
-/// excludes transitive closures and searches; the searches explore their edges themselves.
+/// Whether a dialect admits a constructor.
 template<typename Dialect, typename Tag>
 inline constexpr bool dialect_allows_v =
     std::same_as<Dialect, FullDialectTag>
-    || !(std::same_as<Tag, runir::kr::dl::TransitiveClosureTag> || std::same_as<Tag, runir::kr::dl::ReflexiveTransitiveClosureTag>
-         || std::same_as<Tag, runir::kr::dl::DistanceTag> || std::same_as<Tag, runir::kr::dl::QueryMustPassTag>);
+    || !(std::same_as<Tag, runir::kr::dl::TransitiveClosureTag> || std::same_as<Tag, runir::kr::dl::ReflexiveTransitiveClosureTag>);
 
 template<typename Tag>
 struct ForbiddenClass
@@ -56,8 +56,7 @@ constexpr auto forbidden()
         return boost::spirit::x3::eps(false);
     else
         return lit("(") >> keyword(Tag::keyword)
-               > (boost::spirit::x3::rule<ForbiddenClass<Tag>> {
-                      "no transitive closure, n_distance or q_must_pass in the edges of n_distance or q_must_pass" } = boost::spirit::x3::eps(false));
+               > (boost::spirit::x3::rule<ForbiddenClass<Tag>> { "a constructor this dialect excludes" } = boost::spirit::x3::eps(false));
 }
 
 constexpr predicate_name_type predicate_name = "predicate name";
@@ -104,13 +103,13 @@ constexpr auto object_name_string_parser()
 
 constexpr auto object_names_parser()
 {
-    return boost::spirit::x3::rule<class ObjectNamesClass, std::vector<runir::kr::dl::grammar::ast::Identifier>> { "object names" } =
+    return boost::spirit::x3::rule<class ObjectNamesClass, urd::Store<urd::sequence<runir::kr::dl::grammar::ast::Identifier>>> { "object names" } =
                +object_name_string_parser();
 }
 
 constexpr auto query_columns_parser()
 {
-    return boost::spirit::x3::rule<class QueryColumnsClass, std::vector<runir::kr::dl::grammar::ast::Identifier>> { "query columns" } =
+    return boost::spirit::x3::rule<class QueryColumnsClass, urd::Store<urd::sequence<runir::kr::dl::grammar::ast::Identifier>>> { "query columns" } =
                lit("(") > *identifier > lit(")");
 }
 
@@ -123,9 +122,10 @@ template<typename Choice>
     requires boost::spirit::x3::traits::is_parser<Choice>::value && requires { typename Choice::attribute_type; }
 constexpr auto derivation_choices_parser(const Choice& choice)
 {
-    const auto choices = boost::spirit::x3::rule<class DerivationChoiceList, std::vector<typename Choice::attribute_type>> { "constructor alternatives" } =
-        choice % keyword("or");
-    return boost::spirit::x3::rule<class DerivationChoices, std::vector<typename Choice::attribute_type>> { "constructor or alternatives" } =
+    const auto choices =
+        boost::spirit::x3::rule<class DerivationChoiceList, urd::Store<urd::sequence<typename Choice::attribute_type>>> { "constructor alternatives" } =
+            choice % keyword("or");
+    return boost::spirit::x3::rule<class DerivationChoices, urd::Store<urd::sequence<typename Choice::attribute_type>>> { "constructor or alternatives" } =
                boost::spirit::x3::repeat(1)[choice] | (lit("(") > choices > lit(")"));
 }
 
@@ -179,7 +179,7 @@ constexpr auto constructor_alternatives(const Parser& parser, const constructor_
 
 // The constructors of a category are tried in the order of their rules below: longer arity overloads first; their final operand
 // remains backtrackable.
-#define RUNIR_DEFINE_PARSER(prefix, Dialect, search_free)                                                                                                      \
+#define RUNIR_DEFINE_PARSER(prefix, Dialect)                                                                                                                   \
     constexpr query_atomic_state_type<Dialect> prefix##_query_atomic_state = "query_atomic_state";                                                             \
     constexpr query_atomic_goal_type<Dialect> prefix##_query_atomic_goal = "query_atomic_goal";                                                                \
     constexpr query_concept_type<Dialect> prefix##_query_concept = "query_concept";                                                                            \
@@ -193,7 +193,6 @@ constexpr auto constructor_alternatives(const Parser& parser, const constructor_
     constexpr query_difference_type<Dialect> prefix##_query_difference = "query_difference";                                                                   \
     constexpr query_generic_join_type<Dialect> prefix##_query_generic_join = "query_generic_join";                                                             \
     constexpr query_empty_type<Dialect> prefix##_query_empty = "query_empty";                                                                                  \
-    constexpr query_must_pass_type<Dialect> prefix##_query_must_pass = "query_must_pass";                                                                      \
     constexpr query_head_type<Dialect> prefix##_query_head = "query_head";                                                                                     \
     constexpr constructor_root_type<runir::kr::dl::ConceptTag, Dialect> prefix##_concept_root = "concept_root";                                                \
     constexpr constructor_root_type<runir::kr::dl::RoleTag, Dialect> prefix##_role_root = "role_root";                                                         \
@@ -295,7 +294,6 @@ constexpr auto constructor_alternatives(const Parser& parser, const constructor_
     constexpr constructor_tag_type<runir::kr::dl::BooleanTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>, Dialect> prefix##_boolean_argument =      \
         "boolean_argument";                                                                                                                                    \
     constexpr constructor_tag_type<runir::kr::dl::NumericalTag, runir::kr::dl::CountTag, Dialect> prefix##_numerical_count = "numerical_count";                \
-    constexpr constructor_tag_type<runir::kr::dl::NumericalTag, runir::kr::dl::DistanceTag, Dialect> prefix##_numerical_distance = "numerical_distance";       \
     constexpr constructor_tag_type<runir::kr::dl::NumericalTag, runir::kr::dl::NumericalConstantTag, Dialect> prefix##_numerical_constant =                    \
         "numerical_constant";                                                                                                                                  \
     constexpr constructor_tag_type<runir::kr::dl::NumericalTag, runir::kr::dl::AddTag, Dialect> prefix##_numerical_add = "numerical_add";                      \
@@ -379,7 +377,6 @@ constexpr auto constructor_alternatives(const Parser& parser, const constructor_
     constexpr auto prefix##_boolean_choice_def = prefix##_boolean_non_terminal | feature_name | prefix##_boolean;                                              \
     constexpr auto prefix##_numerical_def = constructor_alternatives(boost::spirit::x3::eps(false),                                                            \
                                                                      prefix##_numerical_count,                                                                 \
-                                                                     prefix##_numerical_distance,                                                              \
                                                                      prefix##_numerical_constant,                                                              \
                                                                      prefix##_numerical_add,                                                                   \
                                                                      prefix##_numerical_sub,                                                                   \
@@ -415,19 +412,16 @@ constexpr auto constructor_alternatives(const Parser& parser, const constructor_
         with_constructor_parentheses(keyword(runir::kr::dl::QueryGenericJoinTag::keyword) > query_columns_parser() > query_columns_parser()                    \
                                      > boost::spirit::x3::repeat(2, boost::spirit::x3::inf)[prefix##_query]);                                                  \
     constexpr auto prefix##_query_empty_def = with_constructor_parentheses(keyword(runir::kr::dl::QueryEmptyTag::keyword) > query_columns_parser());           \
-    constexpr auto prefix##_query_must_pass_def = with_constructor_parentheses(keyword(runir::kr::dl::QueryMustPassTag::keyword) > query_columns_parser()      \
-                                                                               > prefix##_query > search_free##_query > prefix##_query > prefix##_query);      \
     constexpr auto prefix##_query_head_def =                                                                                                                   \
         with_constructor_parentheses(keyword(runir::kr::dl::QueryHeadTag::keyword) > identifier > query_columns_parser());                                     \
     constexpr auto prefix##_concept_project_def =                                                                                                              \
         with_constructor_parentheses(keyword(runir::kr::dl::ConceptProjectSyntaxTag::keyword) > boost::spirit::x3::repeat(1)[identifier] > prefix##_query);    \
     constexpr auto prefix##_role_project_def =                                                                                                                 \
         with_constructor_parentheses(keyword(runir::kr::dl::RoleProjectSyntaxTag::keyword) > boost::spirit::x3::repeat(2)[identifier] > prefix##_query);       \
-    constexpr auto prefix##_query_def =                                                                                                                        \
-        prefix##_query_atomic_state | prefix##_query_atomic_goal | prefix##_query_concept | prefix##_query_role | prefix##_query_join | prefix##_query_project \
-        | prefix##_query_rename | prefix##_query_select_equal | prefix##_query_select_value | prefix##_query_union | prefix##_query_difference                 \
-        | prefix##_query_generic_join | prefix##_query_empty | prefix##_query_head                                                                             \
-        | maybe<dialect_allows_v<Dialect, runir::kr::dl::QueryMustPassTag>>(prefix##_query_must_pass) | forbidden<Dialect, runir::kr::dl::QueryMustPassTag>(); \
+    constexpr auto prefix##_query_def = prefix##_query_atomic_state | prefix##_query_atomic_goal | prefix##_query_concept | prefix##_query_role                \
+                                        | prefix##_query_join | prefix##_query_project | prefix##_query_rename | prefix##_query_select_equal                   \
+                                        | prefix##_query_select_value | prefix##_query_union | prefix##_query_difference | prefix##_query_generic_join         \
+                                        | prefix##_query_empty | prefix##_query_head;                                                                          \
     BOOST_SPIRIT_DEFINE(prefix##_query_atomic_state,                                                                                                           \
                         prefix##_query_atomic_goal,                                                                                                            \
                         prefix##_query_concept,                                                                                                                \
@@ -441,7 +435,6 @@ constexpr auto constructor_alternatives(const Parser& parser, const constructor_
                         prefix##_query_difference,                                                                                                             \
                         prefix##_query_generic_join,                                                                                                           \
                         prefix##_query_empty,                                                                                                                  \
-                        prefix##_query_must_pass,                                                                                                              \
                         prefix##_query_head,                                                                                                                   \
                         prefix##_query,                                                                                                                        \
                         prefix##_concept_project,                                                                                                              \
@@ -552,9 +545,6 @@ constexpr auto constructor_alternatives(const Parser& parser, const constructor_
                                                                                 > argument_reference_parser<runir::kr::dl::BooleanTag>());                     \
     constexpr auto prefix##_numerical_count_def =                                                                                                              \
         with_constructor_parentheses(keyword(runir::kr::dl::CountTag::keyword) > prefix##_constructor_or_non_terminal_variant);                                \
-    constexpr auto prefix##_numerical_distance_def =                                                                                                           \
-        with_constructor_parentheses(keyword(runir::kr::dl::DistanceTag::keyword) > (prefix##_concept_choice | prefix##_query)                                 \
-                                     > (search_free##_role_choice | search_free##_query) > (prefix##_concept_choice | prefix##_query));                        \
     constexpr auto prefix##_numerical_constant_def = with_constructor_parentheses(keyword(runir::kr::dl::NumericalConstantTag::keyword) > unsigned_integer);   \
     constexpr auto prefix##_numerical_add_def =                                                                                                                \
         with_constructor_parentheses(keyword(runir::kr::dl::AddTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                         \
@@ -665,7 +655,6 @@ constexpr auto constructor_alternatives(const Parser& parser, const constructor_
                         prefix##_boolean_not,                                                                                                                  \
                         prefix##_boolean_argument)                                                                                                             \
     BOOST_SPIRIT_DEFINE(prefix##_numerical_count,                                                                                                              \
-                        prefix##_numerical_distance,                                                                                                           \
                         prefix##_numerical_constant,                                                                                                           \
                         prefix##_numerical_add,                                                                                                                \
                         prefix##_numerical_sub,                                                                                                                \
@@ -675,9 +664,7 @@ constexpr auto constructor_alternatives(const Parser& parser, const constructor_
                         prefix##_numerical_max,                                                                                                                \
                         prefix##_numerical_argument)
 
-// The search-free instances come first: the full ones parse the edges of n_distance and q_must_pass with them.
-RUNIR_DEFINE_PARSER(dl_search_free, SearchFreeDialectTag, dl_search_free)
-RUNIR_DEFINE_PARSER(dl, FullDialectTag, dl_search_free)
+RUNIR_DEFINE_PARSER(dl, FullDialectTag)
 
 #undef RUNIR_DEFINE_PARSER
 

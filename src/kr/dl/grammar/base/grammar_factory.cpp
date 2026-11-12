@@ -9,6 +9,8 @@
 #include <stdexcept>
 #include <string>
 #include <tyr/formalism/planning/repository.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 
 namespace runir::kr::dl::grammar
@@ -42,14 +44,14 @@ template<runir::kr::dl::CategoryTag Category>
 std::string next_non_terminal(size_t& next_index)
 { return category_prefix(Category {}) + "_" + std::to_string(next_index++); }
 
-void add_concept_intersection(std::stringstream& out, std::vector<std::string>& heads, size_t& next_concept, const std::string& concept_)
+void add_concept_intersection(std::stringstream& out, urd::Store<urd::sequence<std::string>>& heads, size_t& next_concept, const std::string& concept_)
 {
     const auto head = next_non_terminal<runir::kr::dl::ConceptTag>(next_concept);
     heads.push_back(head);
     add_rule(out, head, std::string(runir::kr::dl::ConceptIntersectionSyntaxTag::keyword) + " " + concept_ + " " + concept_);
 }
 
-void add_concept_negation(std::stringstream& out, std::vector<std::string>& heads, size_t& next_concept, const std::string& concept_)
+void add_concept_negation(std::stringstream& out, urd::Store<urd::sequence<std::string>>& heads, size_t& next_concept, const std::string& concept_)
 {
     const auto head = next_non_terminal<runir::kr::dl::ConceptTag>(next_concept);
     heads.push_back(head);
@@ -57,7 +59,7 @@ void add_concept_negation(std::stringstream& out, std::vector<std::string>& head
 }
 
 void add_concept_existential_quantification(std::stringstream& out,
-                                            std::vector<std::string>& heads,
+                                            urd::Store<urd::sequence<std::string>>& heads,
                                             size_t& next_concept,
                                             const std::string& role,
                                             const std::string& concept_)
@@ -68,7 +70,7 @@ void add_concept_existential_quantification(std::stringstream& out,
 }
 
 void add_concept_value_restriction(std::stringstream& out,
-                                   std::vector<std::string>& heads,
+                                   urd::Store<urd::sequence<std::string>>& heads,
                                    size_t& next_concept,
                                    const std::string& role,
                                    const std::string& concept_)
@@ -78,42 +80,42 @@ void add_concept_value_restriction(std::stringstream& out,
     add_rule(out, head, std::string(runir::kr::dl::ValueRestrictionTag::keyword) + " " + role + " " + concept_);
 }
 
-void add_concept_agreement(std::stringstream& out, std::vector<std::string>& heads, size_t& next_concept, const std::string& role)
+void add_concept_agreement(std::stringstream& out, urd::Store<urd::sequence<std::string>>& heads, size_t& next_concept, const std::string& role)
 {
     const auto head = next_non_terminal<runir::kr::dl::ConceptTag>(next_concept);
     heads.push_back(head);
     add_rule(out, head, std::string(runir::kr::dl::AgreementTag::keyword) + " " + role + " " + role);
 }
 
-void add_concept_bot(std::stringstream& out, std::vector<std::string>& heads, size_t& next_concept)
+void add_concept_bot(std::stringstream& out, urd::Store<urd::sequence<std::string>>& heads, size_t& next_concept)
 {
     const auto head = next_non_terminal<runir::kr::dl::ConceptTag>(next_concept);
     heads.push_back(head);
     add_rule(out, head, std::string(runir::kr::dl::BotTag::keyword));
 }
 
-void add_concept_top(std::stringstream& out, std::vector<std::string>& heads, size_t& next_concept)
+void add_concept_top(std::stringstream& out, urd::Store<urd::sequence<std::string>>& heads, size_t& next_concept)
 {
     const auto head = next_non_terminal<runir::kr::dl::ConceptTag>(next_concept);
     heads.push_back(head);
     add_rule(out, head, std::string(runir::kr::dl::TopTag::keyword));
 }
 
-void add_concept_nominal(std::stringstream& out, std::vector<std::string>& heads, size_t& next_concept, std::string_view object_name)
+void add_concept_nominal(std::stringstream& out, urd::Store<urd::sequence<std::string>>& heads, size_t& next_concept, std::string_view object_name)
 {
     const auto head = next_non_terminal<runir::kr::dl::ConceptTag>(next_concept);
     heads.push_back(head);
     add_rule(out, head, std::string(runir::kr::dl::NominalTag::keyword) + " " + quote(object_name));
 }
 
-void add_role_transitive_closure(std::stringstream& out, std::vector<std::string>& heads, size_t& next_role, const std::string& role_primitive)
+void add_role_transitive_closure(std::stringstream& out, urd::Store<urd::sequence<std::string>>& heads, size_t& next_role, const std::string& role_primitive)
 {
     const auto head = next_non_terminal<runir::kr::dl::RoleTag>(next_role);
     heads.push_back(head);
     add_rule(out, head, std::string(runir::kr::dl::TransitiveClosureTag::keyword) + " " + role_primitive);
 }
 
-void add_role_inverse(std::stringstream& out, std::vector<std::string>& heads, size_t& next_role, const std::string& role_primitive)
+void add_role_inverse(std::stringstream& out, urd::Store<urd::sequence<std::string>>& heads, size_t& next_role, const std::string& role_primitive)
 {
     const auto head = next_non_terminal<runir::kr::dl::RoleTag>(next_role);
     heads.push_back(head);
@@ -121,14 +123,18 @@ void add_role_inverse(std::stringstream& out, std::vector<std::string>& heads, s
 }
 
 template<runir::kr::dl::CategoryTag Category>
-void add_atomic_state(std::stringstream& out, std::vector<std::string>& heads, size_t& next_index, std::string_view keyword, std::string_view predicate_name)
+void add_atomic_state(std::stringstream& out,
+                      urd::Store<urd::sequence<std::string>>& heads,
+                      size_t& next_index,
+                      std::string_view keyword,
+                      std::string_view predicate_name)
 {
     const auto head = next_non_terminal<Category>(next_index);
     heads.push_back(head);
     add_rule(out, head, std::string(keyword) + " " + quote(predicate_name));
 }
 
-void add_boolean_atomic_state(std::stringstream& out, std::vector<std::string>& heads, size_t& next_boolean, std::string_view predicate_name)
+void add_boolean_atomic_state(std::stringstream& out, urd::Store<urd::sequence<std::string>>& heads, size_t& next_boolean, std::string_view predicate_name)
 {
     for (const auto polarity : { true, false })
     {
@@ -141,7 +147,11 @@ void add_boolean_atomic_state(std::stringstream& out, std::vector<std::string>& 
 }
 
 template<runir::kr::dl::CategoryTag Category>
-void add_atomic_goal(std::stringstream& out, std::vector<std::string>& heads, size_t& next_index, std::string_view keyword, std::string_view predicate_name)
+void add_atomic_goal(std::stringstream& out,
+                     urd::Store<urd::sequence<std::string>>& heads,
+                     size_t& next_index,
+                     std::string_view keyword,
+                     std::string_view predicate_name)
 {
     for (const auto polarity : { true, false })
     {
@@ -151,42 +161,26 @@ void add_atomic_goal(std::stringstream& out, std::vector<std::string>& heads, si
     }
 }
 
-void add_boolean_nonempty(std::stringstream& out, std::vector<std::string>& heads, size_t& next_boolean, const std::string& arg)
+void add_boolean_nonempty(std::stringstream& out, urd::Store<urd::sequence<std::string>>& heads, size_t& next_boolean, const std::string& arg)
 {
     const auto head = next_non_terminal<runir::kr::dl::BooleanTag>(next_boolean);
     heads.push_back(head);
     add_rule(out, head, std::string(runir::kr::dl::NonemptyTag::keyword) + " " + arg);
 }
 
-void add_numerical_count(std::stringstream& out, std::vector<std::string>& heads, size_t& next_numerical, const std::string& arg)
+void add_numerical_count(std::stringstream& out, urd::Store<urd::sequence<std::string>>& heads, size_t& next_numerical, const std::string& arg)
 {
     const auto head = next_non_terminal<runir::kr::dl::NumericalTag>(next_numerical);
     heads.push_back(head);
     add_rule(out, head, std::string(runir::kr::dl::CountTag::keyword) + " " + arg);
 }
 
-void add_numerical_distance(std::stringstream& out,
-                            std::vector<std::string>& heads,
-                            size_t& next_numerical,
-                            const std::string& concept_,
-                            const std::string& role_primitive,
-                            const std::string& concept_primitive)
-{
-    const auto head = next_non_terminal<runir::kr::dl::NumericalTag>(next_numerical);
-    heads.push_back(head);
-    add_rule(out,
-             head,
-             std::string(runir::kr::dl::DistanceTag::keyword) + " " + concept_ + " (" + runir::kr::dl::RestrictionTag::keyword + " " + role_primitive + " "
-                 + concept_primitive + ") " + concept_);
-    add_rule(out, head, std::string(runir::kr::dl::DistanceTag::keyword) + " " + concept_ + " " + role_primitive + " " + concept_);
-}
-
 template<tyr::formalism::FactKind FactKind>
 void add_predicate_primitives(tyr::formalism::planning::DomainView domain,
                               std::stringstream& out,
-                              std::vector<std::string>& concept_heads,
-                              std::vector<std::string>& role_heads,
-                              std::vector<std::string>& boolean_heads,
+                              urd::Store<urd::sequence<std::string>>& concept_heads,
+                              urd::Store<urd::sequence<std::string>>& role_heads,
+                              urd::Store<urd::sequence<std::string>>& boolean_heads,
                               size_t& next_concept,
                               size_t& next_role,
                               size_t& next_boolean)
@@ -223,8 +217,8 @@ void add_category_rules(std::stringstream& rule_out,
                         const std::string& start,
                         const std::string& category_symbol,
                         const std::string& primitive,
-                        std::vector<std::string>& heads,
-                        std::vector<std::string>& primitive_heads)
+                        urd::Store<urd::sequence<std::string>>& heads,
+                        urd::Store<urd::sequence<std::string>>& primitive_heads)
 {
     if (!primitive_heads.empty())
     {
@@ -280,15 +274,15 @@ std::string GrammarFactory::create_france_et_al_aaai2021_description(tyr::formal
     const auto numerical_start = next_non_terminal<runir::kr::dl::NumericalTag>(next_numerical);
     const auto numerical = next_non_terminal<runir::kr::dl::NumericalTag>(next_numerical);
 
-    auto primitive_concept_heads = std::vector<std::string> {};
-    auto primitive_role_heads = std::vector<std::string> {};
-    auto primitive_boolean_heads = std::vector<std::string> {};
-    auto primitive_numerical_heads = std::vector<std::string> {};
+    auto primitive_concept_heads = urd::Store<urd::sequence<std::string>> {};
+    auto primitive_role_heads = urd::Store<urd::sequence<std::string>> {};
+    auto primitive_boolean_heads = urd::Store<urd::sequence<std::string>> {};
+    auto primitive_numerical_heads = urd::Store<urd::sequence<std::string>> {};
 
-    auto concept_heads = std::vector<std::string> {};
-    auto role_heads = std::vector<std::string> {};
-    auto boolean_heads = std::vector<std::string> {};
-    auto numerical_heads = std::vector<std::string> {};
+    auto concept_heads = urd::Store<urd::sequence<std::string>> {};
+    auto role_heads = urd::Store<urd::sequence<std::string>> {};
+    auto boolean_heads = urd::Store<urd::sequence<std::string>> {};
+    auto numerical_heads = urd::Store<urd::sequence<std::string>> {};
 
     auto rule_out = std::stringstream {};
     rule_out << "(\n";
@@ -338,7 +332,6 @@ std::string GrammarFactory::create_france_et_al_aaai2021_description(tyr::formal
 
     add_numerical_count(rule_out, numerical_heads, next_numerical, concept_);
     add_numerical_count(rule_out, numerical_heads, next_numerical, role);
-    add_numerical_distance(rule_out, numerical_heads, next_numerical, concept_, role_primitive, concept_primitive);
 
     add_category_rules<runir::kr::dl::ConceptTag>(rule_out, concept_start, concept_, concept_primitive, concept_heads, primitive_concept_heads);
     add_category_rules<runir::kr::dl::RoleTag>(rule_out, role_start, role, role_primitive, role_heads, primitive_role_heads);

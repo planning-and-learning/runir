@@ -7,35 +7,33 @@
 
 #include <concepts>
 #include <tuple>
-#include <yggdrasil/core/dependent_false.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
 
-namespace ygg
+namespace urd
 {
+template<typename V>
+struct view_mixin<runir::kr::ps::base::Sketch, V>
+{
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
-template<formalism::SymbolContextFor<runir::kr::ps::base::Sketch> C>
-class View<Index<runir::kr::ps::base::Sketch>, C> : public ygg::IndexViewBase<runir::kr::ps::base::Sketch, C>
-{
 public:
-    using ygg::IndexViewBase<runir::kr::ps::base::Sketch, C>::IndexViewBase;
-
     template<typename FeatureTag>
     auto get_features() const noexcept
     {
         if constexpr (std::same_as<FeatureTag, runir::kr::dl::BooleanTag>)
-            return make_view(this->get_data().boolean_features, this->get_context());
+            return self().template member<&urd::record_of<V>::boolean_features>();
         else if constexpr (std::same_as<FeatureTag, runir::kr::dl::NumericalTag>)
-            return make_view(this->get_data().numerical_features, this->get_context());
+            return self().template member<&urd::record_of<V>::numerical_features>();
         else
         {
-            static_assert(ygg::dependent_false<FeatureTag>::value, "unhandled feature tag in Sketch::get_features");
+            static_assert(false, "unhandled feature tag in Sketch::get_features");
         }
     }
 
-    auto get_rules() const noexcept { return make_view(this->get_data().rules, this->get_context()); }
+    auto get_rules() const noexcept { return self().template member<&urd::record_of<V>::rules>(); }
 };
-
-}  // namespace ygg
+}  // namespace urd
 
 #endif

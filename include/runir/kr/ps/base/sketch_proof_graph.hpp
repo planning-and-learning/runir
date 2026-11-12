@@ -8,17 +8,17 @@
 #include "runir/kr/ps/base/rule_view.hpp"
 
 #include <tuple>
-#include <tyr/formalism/binding_view.hpp>
+#include <tyr/formalism/declarations.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/state_repository.hpp>
 #include <utility>
-#include <yggdrasil/semantics/comparison.hpp>
+#include <yggdrasil/formalism/row_view.hpp>
 
 namespace runir::kr::ps::base
 {
 
 template<tyr::TaskKind Kind>
-struct SketchProofVertexLabel : ygg::comparison::Mixin<SketchProofVertexLabel<Kind>>
+struct SketchProofVertexLabel : urd::compared_by_identity<SketchProofVertexLabel<Kind>>
 {
     tyr::planning::PackedStateView<Kind> state;
     bool is_initial = false;
@@ -37,7 +37,7 @@ struct SketchProofVertexLabel : ygg::comparison::Mixin<SketchProofVertexLabel<Ki
 
     static constexpr auto cista_members() noexcept
     {
-        return ygg::Members<&SketchProofVertexLabel::state,
+        return urd::Members<&SketchProofVertexLabel::state,
                             &SketchProofVertexLabel::is_initial,
                             &SketchProofVertexLabel::is_goal,
                             &SketchProofVertexLabel::is_alive,
@@ -45,7 +45,7 @@ struct SketchProofVertexLabel : ygg::comparison::Mixin<SketchProofVertexLabel<Ki
     }
     static constexpr auto identifying_members() noexcept
     {
-        return ygg::Members<&SketchProofVertexLabel::state,
+        return urd::Members<&SketchProofVertexLabel::state,
                             &SketchProofVertexLabel::is_initial,
                             &SketchProofVertexLabel::is_goal,
                             &SketchProofVertexLabel::is_alive,
@@ -53,19 +53,16 @@ struct SketchProofVertexLabel : ygg::comparison::Mixin<SketchProofVertexLabel<Ki
     }
 };
 
-struct SketchProofEdgeLabel : ygg::comparison::Mixin<SketchProofEdgeLabel>
+struct SketchProofEdgeLabel : urd::compared_by_identity<SketchProofEdgeLabel>
 {
-    tyr::formalism::planning::ActionBindingView action;
+    tyr::formalism::planning::ActionRowView action;
     RuleView rule;
 
-    SketchProofEdgeLabel(tyr::formalism::planning::ActionBindingView action_, RuleView rule_) noexcept : action(action_), rule(rule_) {}
+    SketchProofEdgeLabel(tyr::formalism::planning::ActionRowView action_, RuleView rule_) noexcept : action(action_), rule(rule_) {}
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&SketchProofEdgeLabel::action, &SketchProofEdgeLabel::rule> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&SketchProofEdgeLabel::action, &SketchProofEdgeLabel::rule> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&SketchProofEdgeLabel::action, &SketchProofEdgeLabel::rule> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&SketchProofEdgeLabel::action, &SketchProofEdgeLabel::rule> {}; }
 };
-
-template<tyr::TaskKind Kind>
-using SketchProofGraphBuilder = graphs::StaticGraphBuilder<SketchProofVertexLabel<Kind>, SketchProofEdgeLabel>;
 
 template<tyr::TaskKind Kind>
 using SketchProofGraph = graphs::StaticGraph<SketchProofVertexLabel<Kind>, SketchProofEdgeLabel>;

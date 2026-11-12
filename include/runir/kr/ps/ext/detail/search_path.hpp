@@ -4,12 +4,13 @@
 #include "runir/datasets/state_graph.hpp"
 #include "runir/kr/ps/ext/execution_storage.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
-#include "runir/kr/ps/ext/rule_variant_view.hpp"
+#include "runir/kr/ps/rule_variant_view.hpp"
 
 #include <cstddef>
 #include <optional>
+#include <urd/repr/slots/slots.hpp>
+#include <urd/store.hpp>
 #include <utility>
-#include <yggdrasil/containers/shared_object_pool.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
@@ -22,7 +23,7 @@ struct SearchPath
 {
     using StoredState = StorageStoredState<Storage>;
     std::optional<StoredState> state;
-    ygg::SharedObjectPoolPtr<SearchPath<Kind, Storage>> parent;
+    std::shared_ptr<SearchPath<Kind, Storage>> parent;
     std::optional<datasets::StateGraphEdgeLabel> transition;
     std::optional<RuleVariantView> rule;
     ygg::uint_t choice_depth = 0;
@@ -33,7 +34,7 @@ struct SearchPath
     bool is_open = false;
 
     void initialize(StoredState state_,
-                    ygg::SharedObjectPoolPtr<SearchPath<Kind, Storage>> parent_,
+                    std::shared_ptr<SearchPath<Kind, Storage>> parent_,
                     std::optional<datasets::StateGraphEdgeLabel> transition_,
                     std::optional<RuleVariantView> rule_,
                     ygg::uint_t choice_depth_,
@@ -52,7 +53,7 @@ struct SearchPath
     {
         state.reset();
         // Releasing a long witness must not recursively destroy the entire parent chain.
-        while (parent && parent.ref_count() == 1)
+        while (parent && parent.use_count() == 1)
         {
             auto previous = std::move(parent);
             parent = std::move(previous->parent);
@@ -62,5 +63,12 @@ struct SearchPath
 };
 
 }  // namespace runir::kr::ps::ext::detail
+
+/// A path given back to its pool lets go of its state and its parents.
+template<tyr::TaskKind Kind, runir::kr::ps::ext::ExecutionStorageConcept<Kind> Storage>
+struct urd::slot_release<runir::kr::ps::ext::detail::SearchPath<Kind, Storage>>
+{
+    static void release(runir::kr::ps::ext::detail::SearchPath<Kind, Storage>& path) noexcept { path.on_pool_release(); }
+};
 
 #endif

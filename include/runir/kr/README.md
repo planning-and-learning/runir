@@ -59,7 +59,7 @@ generic.
 
 [declarations.hpp](dl/declarations.hpp) lists the constructor tags of each
 category: atomic state/goal expressions, concept and role operations, Boolean
-nonemptiness, numerical count and distance, concept/role registers, typed call
+nonemptiness, numerical count, concept/role registers, typed call
 arguments, numerical constants and arithmetic, and Boolean constants, logic and
 comparisons.
 
@@ -74,8 +74,11 @@ Every language accepts the other constructors. A rejected constructor is a parse
 error at its source position.
 
 The four denotation categories are `ConceptTag`, `RoleTag`, `BooleanTag`, and
-`NumericalTag`. `Concept<Tag>`, `Role<Tag>`, `Boolean<Tag>`, and `Numerical<Tag>`
-identify concrete operators; `Constructor<Category>` wraps the alternatives for a
+`NumericalTag`. `Concept<Family, Tag>`, `Role<Family, Tag>`, `Boolean<Family, Tag>`,
+and `Numerical<Family, Tag>` identify concrete operators of a family: the semantic
+constructors (`SemanticFamily`), grammars (`grammar::GrammarFamily`) and CNF grammars
+(`cnf_grammar::CnfGrammarFamily`). A family names its constructor tags and how its
+records store operands. `Constructor<Category>` wraps the semantic alternatives for a
 category. The `*ConstructorTag` concepts check membership in the corresponding
 list.
 
@@ -84,10 +87,10 @@ alternatives. A query evaluates to a relation, not a fifth DL denotation
 category. Queries can embed DL expressions; query projections produce concepts
 or roles. `ConceptOrRoleTag` restricts projection and register types to these
 two categories. `q_head` reads a head of a policy's Datalog program
-(`DatalogProgram`, see `docs/datalog.md`).
+(`DatalogProgram`, see `docs/datalog.rst`).
 
 The `dl::grammar` and `dl::cnf_grammar` namespaces represent generation grammars,
-separately from evaluable expressions. They contain the `Generation*ConstructorTags`
+separately from evaluable expressions. They contain the `Base*ConstructorTags`
 only: no registers, arguments, arithmetic, Boolean operators, relational queries,
 or projections; the grammar parser rejects these. `cnf_grammar::generate` writes
 the generated constructors into the DL repository.
@@ -121,9 +124,10 @@ family's rules and program types.
 
 The index/data/view pattern is a separate representation choice:
 
-- `ygg::Index<T>` is a typed handle to an interned object.
-- `ygg::Data<T>` is its stored record.
-- `ygg::View<ygg::Index<T>, C>` combines the handle with a repository context.
+- `urd::index<T>` is a typed handle to an interned object (`ygg::handle_t<T>` for records with a handle of
+  their own: a relation binding's is `ygg::formalism::RelationRowIndex`).
+- `urd::data<T>` is its stored record.
+- `urd::index_view<T, C>` combines the handle with a repository context.
 
 The view parameter `C` identifies the storage context; it is not another policy
 or feature-language dimension.

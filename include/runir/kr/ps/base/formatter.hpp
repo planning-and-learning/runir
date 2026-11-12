@@ -7,8 +7,6 @@
 #include "runir/kr/ps/base/sketch_executor_data.hpp"
 #include "runir/kr/ps/base/sketch_proof_graph.hpp"
 #include "runir/kr/ps/base/sketch_view.hpp"
-#include "runir/kr/ps/condition_view.hpp"
-#include "runir/kr/ps/effect_view.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 
 #include <fmt/format.h>
@@ -58,7 +56,7 @@ void append_list_section(std::ostream& os, std::string_view name, Values values,
 }
 
 template<typename C>
-void append_rule(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C> view)
+void append_rule(std::ostream& os, urd::index_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C> view)
 {
     os << ygg::print_indent << "(:rule\n";
     {
@@ -76,7 +74,7 @@ void append_rule(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::Rule<runi
 }
 
 template<typename C>
-std::string rule(ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C> view)
+std::string rule(urd::index_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C> view)
 {
     auto os = std::ostringstream {};
     append_rule(os, view);
@@ -84,7 +82,7 @@ std::string rule(ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyT
 }
 
 template<typename C>
-std::string sketch(ygg::View<ygg::Index<runir::kr::ps::base::Sketch>, C> view)
+std::string sketch(urd::index_view<runir::kr::ps::base::Sketch, C> view)
 {
     auto os = std::ostringstream {};
 
@@ -121,7 +119,7 @@ std::string sketch_proof_results(const runir::kr::ps::base::SketchProofResults<K
 {
     return fmt::format("SketchProofResults(status={}, num_expanded={}, num_generated={}, graph_vertices={}, graph_edges={}, "
                        "deadend_states={}, open_states={}, cycle={})",
-                       runir::kr::ps::base::to_string(result.status),
+                       runir::kr::ps::to_string(result.status),
                        result.statistics.num_expanded,
                        result.statistics.num_generated,
                        result.graph ? result.graph->get_num_vertices() : 0,
@@ -134,24 +132,17 @@ std::string sketch_proof_results(const runir::kr::ps::base::SketchProofResults<K
 }  // namespace runir::kr::ps::base
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C>;
+    using View = urd::index_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::rule(view), ctx); }
 };
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::base::Sketch>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::ps::base::Sketch, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::ps::base::Sketch>, C>;
+    using View = urd::index_view<runir::kr::ps::base::Sketch, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::sketch(view), ctx); }
-};
-
-template<>
-struct fmt::formatter<runir::kr::ps::base::SketchProofStatus> : fmt::formatter<std::string_view>
-{
-    auto format(runir::kr::ps::base::SketchProofStatus status, format_context& ctx) const
-    { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::to_string(status), ctx); }
 };
 
 template<tyr::TaskKind Kind>
@@ -168,7 +159,7 @@ struct fmt::formatter<runir::kr::ps::base::SketchProofVertexLabel<Kind>> : fmt::
     {
         return fmt::format_to(ctx.out(),
                               "state={} initial={} goal={} alive={} unsolvable={}",
-                              label.state.get_index(),
+                              label.state.index(),
                               label.is_initial,
                               label.is_goal,
                               label.is_alive,

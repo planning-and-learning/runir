@@ -10,7 +10,7 @@ import pytest
 from fixture_utils import load_fixture
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
-from pytyr.formalism.planning import ActionBinding, Parser
+from pytyr.formalism.planning import ActionRow, Parser
 from pytyr.planning.ground import PackedState as GroundPackedState
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, PackedState as LiftedPackedState, Task
 from pyyggdrasil.execution import ExecutionContext
@@ -128,11 +128,11 @@ def test_ground_state_graph_builder_can_copy_generated_graph_labels(
     assert forward_graph.get_num_edges() > 0
     edge_label = forward_graph.get_edge_property(next(iter(forward_graph.get_edge_indices())))
     assert isinstance(edge_label, StateGraphEdgeLabel)
-    assert isinstance(edge_label.action, ActionBinding)
+    assert isinstance(edge_label.action, ActionRow)
     for vertex in forward_graph.get_vertex_indices():
         assert (
-            forward_graph.get_vertex_property(vertex).state.get_state_repository().get_index()
-            == ground_gripper_search_context.state_repository.get_index()
+            forward_graph.get_vertex_property(vertex).state.get_state_repository().layer()
+            == ground_gripper_search_context.state_repository.layer()
         )
 
     builder = GroundStateGraphBuilder()
@@ -178,11 +178,11 @@ def test_ground_state_graph_labels_own_packed_states_and_action_bindings(gripper
     edge_label = graph.get_edge_property(next(iter(graph.get_edge_indices())))
 
     assert isinstance(edge_label, StateGraphEdgeLabel)
-    assert isinstance(edge_label.action, ActionBinding)
+    assert isinstance(edge_label.action, ActionRow)
     states = [graph.get_vertex_property(vertex).state for vertex in graph.get_vertex_indices()]
     for state in states:
         assert isinstance(state, GroundPackedState)
-        assert state.get_state_repository().get_index() == context.state_repository.get_index()
+        assert state.get_state_repository().layer() == context.state_repository.layer()
 
     state = states[-1]
     expected = str(state.unpack())
@@ -202,11 +202,11 @@ def test_lifted_state_graph_labels_own_packed_states_and_action_bindings(gripper
     edge_label = graph.get_edge_property(next(iter(graph.get_edge_indices())))
 
     assert isinstance(edge_label, StateGraphEdgeLabel)
-    assert isinstance(edge_label.action, ActionBinding)
+    assert isinstance(edge_label.action, ActionRow)
     states = [graph.get_vertex_property(vertex).state for vertex in graph.get_vertex_indices()]
     for state in states:
         assert isinstance(state, LiftedPackedState)
-        assert state.get_state_repository().get_index() == context.state_repository.get_index()
+        assert state.get_state_repository().layer() == context.state_repository.layer()
 
     state = states[-1]
     expected = str(state.unpack())
@@ -280,8 +280,8 @@ def test_generate_ground_equivalence_graph_exposes_owned_result_graphs(
     assert state_graph.get_num_vertices() > 0
     for vertex in state_graph.get_vertex_indices():
         assert (
-            state_graph.get_vertex_property(vertex).state.get_state_repository().get_index()
-            == ground_gripper_search_context.state_repository.get_index()
+            state_graph.get_vertex_property(vertex).state.get_state_repository().layer()
+            == ground_gripper_search_context.state_repository.layer()
         )
     with pytest.raises(IndexError, match="State graph result index is out of range"):
         result.get_state_graph_result(1)

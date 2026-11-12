@@ -7,85 +7,30 @@
 #include "runir/kr/ps/ext/execution_storage.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
 #include "runir/kr/ps/ext/program_executor_data.hpp"
-#include "runir/kr/ps/ext/rule_variant_view.hpp"
+#include "runir/kr/ps/program_step.hpp"
+#include "runir/kr/ps/rule_variant_view.hpp"
 
 #include <concepts>
 #include <cstddef>
-#include <cstdint>
 #include <optional>
 #include <ranges>
-#include <stdexcept>
-#include <string_view>
 #include <tyr/planning/node.hpp>
+#include <urd/repr/slots/slots.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <variant>
-#include <yggdrasil/containers/unique_object_pool.hpp>
-#include <yggdrasil/core/concepts.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
 
-/// Local rule and caller-return outcomes; whole-search completion and limits use ProgramProofStatus.
-enum class ProgramOutcome : std::uint8_t
-{
-    APPLIED,
-    RESTORED_CALLER,
-    FAILURE,
-    NO_APPLICABLE_ACTION,
-    MALFORMED_CALL,
-};
-
-constexpr std::string_view to_string(ProgramOutcome outcome)
-{
-    switch (outcome)
-    {
-        case ProgramOutcome::APPLIED:
-            return "applied";
-        case ProgramOutcome::RESTORED_CALLER:
-            return "restored_caller";
-        case ProgramOutcome::FAILURE:
-            return "failure";
-        case ProgramOutcome::NO_APPLICABLE_ACTION:
-            return "no_applicable_action";
-        case ProgramOutcome::MALFORMED_CALL:
-            return "malformed_call";
-    }
-    throw std::invalid_argument("invalid ProgramOutcome");
-}
-
-/// One rule application or caller return, including local failures whose target remains the source state.
-/// Search completion and resource limits are reported separately from these steps.
-template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage = InternedExecutionStorage<Kind>>
-struct ProgramStep
-{
-    /// Keeps the task's repositories alive while the step refers to them.
-    runir::kr::TaskContextPtr<Kind> task_context;
-    using StoredState = StorageStoredState<Storage>;
-    ProgramOutcome status;
-    StoredState target;
-    std::optional<datasets::StateGraphEdgeLabel> state_transition = std::nullopt;
-    std::optional<RuleVariantView> rule = std::nullopt;
-    std::optional<tyr::planning::PackedLabeledNode<Kind>> planning_successor = std::nullopt;
-
-    ProgramStep(ProgramOutcome status_, StoredState target_, runir::kr::TaskContextPtr<Kind> task_context_) :
-        task_context(std::move(task_context_)),
-        status(status_),
-        target(std::move(target_))
-    {
-    }
-
-    [[nodiscard]] std::string_view get_status_name() const { return to_string(status); }
-    [[nodiscard]] StoredState get_target() const noexcept { return target; }
-    [[nodiscard]] const auto& get_state_transition() const noexcept { return state_transition; }
-    [[nodiscard]] const auto& get_rule() const noexcept { return rule; }
-};
+template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage>
+ProgramStep<ExtFamilyTag, Kind, StorageStoredState<Storage>>
+make_step(ProgramOutcome status, StorageStoredState<Storage> state, const runir::kr::TaskContextPtr<Kind>& task_context)
+{ return ProgramStep<ExtFamilyTag, Kind, StorageStoredState<Storage>>(status, std::move(state), task_context); }
 
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage>
-ProgramStep<Kind, Storage> make_step(ProgramOutcome status, StorageStoredState<Storage> state, const runir::kr::TaskContextPtr<Kind>& task_context)
-{ return ProgramStep<Kind, Storage>(status, std::move(state), task_context); }
-
-template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage>
-ProgramStep<Kind, Storage> applied(StorageStoredState<Storage> state, RuleVariantView rule, const runir::kr::TaskContextPtr<Kind>& task_context)
+ProgramStep<ExtFamilyTag, Kind, StorageStoredState<Storage>>
+applied(StorageStoredState<Storage> state, RuleVariantView rule, const runir::kr::TaskContextPtr<Kind>& task_context)
 {
     auto step = make_step<Kind, Storage>(ProgramOutcome::APPLIED, std::move(state), task_context);
     step.rule = rule;
@@ -116,14 +61,16 @@ template<runir::kr::dl::CategoryTag Category>
 struct Choice
 {
 private:
-    ygg::UniqueObjectPoolPtr<runir::kr::dl::semantics::DenotationElementViewList<Category>> m_bindings;
+    urd::unique_slot_ptr<runir::kr::dl::semantics::DenotationElementViewList<Category>> m_bindings;
     RuleVariantView m_rule;
     size_t m_position = 0;
 
 public:
-    template<ygg::InputRangeOf<runir::kr::dl::semantics::DenotationElementView<Category>> Denotation>
-    Choice(RuleVariantView rule_, Denotation denotation, ygg::UniqueObjectPool<runir::kr::dl::semantics::DenotationElementViewList<Category>>& pool) :
-        m_bindings(pool.get_or_allocate()),
+    template<typename Denotation>
+        requires std::ranges::input_range<Denotation>
+                     && std::same_as<std::ranges::range_value_t<Denotation>, runir::kr::dl::semantics::DenotationElementView<Category>>
+    Choice(RuleVariantView rule_, Denotation denotation, urd::Store<urd::slots<runir::kr::dl::semantics::DenotationElementViewList<Category>>>& pool) :
+        m_bindings(pool.make_unique()),
         m_rule(rule_)
     {
         m_bindings->clear();

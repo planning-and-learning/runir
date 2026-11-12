@@ -27,21 +27,27 @@
 #include <tuple>
 #include <tyr/planning/algorithms/astar_eager/event_handler.hpp>
 #include <tyr/planning/state_repository.hpp>
+#include <urd/repr/maps/std_map.hpp>
+#include <urd/repr/maps/unordered_flat_map.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/indexed.hpp>
+#include <urd/repr/values/std_set.hpp>
+#include <urd/repr/values/unordered_flat_set.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
-#include <yggdrasil/containers/associative_containers.hpp>
 
 namespace runir::datasets::detail
 {
 
-using StateGraphEdgeKey = std::tuple<graphs::VertexIndex, graphs::VertexIndex, tyr::formalism::planning::ActionBindingView, ygg::float_t>;
+using StateGraphEdgeKey = std::tuple<graphs::VertexIndex, graphs::VertexIndex, tyr::formalism::planning::ActionRowView, ygg::float_t>;
 
 template<tyr::TaskKind Kind>
 struct StateGraphTransition
 {
     tyr::planning::PackedStateView<Kind> source;
     tyr::planning::PackedStateView<Kind> target;
-    tyr::formalism::planning::ActionBindingView action;
+    tyr::formalism::planning::ActionRowView action;
     ygg::float_t cost = 0;
 };
 
@@ -60,7 +66,7 @@ public:
     const auto& get_transitions() const noexcept { return m_transitions; }
 
 private:
-    std::vector<StateGraphTransition<Kind>> m_transitions;
+    urd::Store<urd::sequence<StateGraphTransition<Kind>>> m_transitions;
 };
 
 template<tyr::TaskKind Kind>
@@ -88,9 +94,9 @@ public:
     void on_end_search(tyr::planning::SearchStatus, const tyr::planning::Statistics&) override {}
     void on_solved(const tyr::planning::Plan<Kind>&) override {}
 
-    auto make_worker(ygg::Index<tyr::planning::Worker> index) -> tyr::planning::astar_eager::WorkerEventHandlerPtr<Kind> override
+    auto make_worker(urd::index<tyr::planning::Worker> index) -> tyr::planning::astar_eager::WorkerEventHandlerPtr<Kind> override
     {
-        const auto value = static_cast<size_t>(static_cast<ygg::uint_t>(index));
+        const auto value = static_cast<size_t>(static_cast<ygg::uint_t>(index.value));
         if (value >= m_workers.size())
             throw std::out_of_range("State graph worker index is out of range.");
         return std::make_unique<StateGraphWorkerEventHandler<Kind>>(m_workers[value]);
@@ -100,7 +106,7 @@ public:
     const auto& get_start() const noexcept { return m_start; }
 
 private:
-    std::vector<StateGraphFragment<Kind>> m_workers;
+    urd::Store<urd::sequence<StateGraphFragment<Kind>>> m_workers;
     std::optional<tyr::planning::PackedStateView<Kind>> m_start;
 };
 
@@ -113,22 +119,20 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(const StateGraphEventHandler
         throw std::logic_error("State graph search did not report its initial state.");
 
     auto builder = StateGraphBuilder<Kind> {};
-    auto packed_to_vertex = ygg::UnorderedMap<tyr::planning::PackedStateView<Kind>, graphs::VertexIndex> {};
-    auto state_to_vertex = ygg::UnorderedMap<tyr::planning::PackedStateView<Kind>, graphs::VertexIndex> {};
-    auto edges = ygg::UnorderedSet<StateGraphEdgeKey> {};
+    auto packed_to_vertex = urd::Store<urd::map<tyr::planning::PackedStateView<Kind>, graphs::VertexIndex>> {};
+    /// The materialized states by vertex: a state's vertex is its position.
+    auto states = urd::Store<urd::set<tyr::planning::PackedStateView<Kind>>, urd::positional>(urd::layer { 0 });
+    auto edges = urd::Store<urd::set<StateGraphEdgeKey>> {};
     auto get_or_create_vertex = [&](const tyr::planning::PackedStateView<Kind>& packed)
     {
         if (const auto it = packed_to_vertex.find(packed); it != packed_to_vertex.end())
             return it->second;
 
         auto state = tyr::planning::materialize_state(packed.unpack(), target_repository, axiom_evaluator).pack();
-        auto vertex = graphs::VertexIndex {};
-        if (const auto it = state_to_vertex.find(state); it != state_to_vertex.end())
-            vertex = it->second;
-        else
+        const auto [it, inserted] = states.insert(state);
+        const auto vertex = static_cast<graphs::VertexIndex>(states.position(it));
+        if (inserted)
         {
-            vertex = static_cast<graphs::VertexIndex>(state_to_vertex.size());
-            state_to_vertex.emplace(state, vertex);
             [[maybe_unused]] const auto added = builder.add_vertex(StateGraphVertexLabel<Kind> { std::move(state) });
             assert(added == vertex);
         }

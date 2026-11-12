@@ -1,7 +1,7 @@
 #include "runir/kr/ps/icp/dl/parser/parser.hpp"
 
+#include "runir/kr/parser/config.hpp"
 #include "runir/kr/parser/diagnostics.hpp"
-#include "runir/kr/parser/parser.hpp"
 #include "runir/kr/ps/ext/dl/parser/parser_def.hpp"
 #include "runir/kr/ps/icp/dl/ast/ast_adapted.hpp"
 
@@ -15,7 +15,6 @@ namespace
 
 using boost::spirit::x3::attr;
 using boost::spirit::x3::lit;
-using runir::kr::parser::keyword;
 using runir::kr::ps::ext::dl::parser::action_section;
 using runir::kr::ps::ext::dl::parser::concept_feature_section_def;
 using runir::kr::ps::ext::dl::parser::concept_load_rule;
@@ -32,6 +31,7 @@ using runir::kr::ps::ext::dl::parser::source_memory_section;
 using runir::kr::ps::ext::dl::parser::symbol_section;
 using runir::kr::ps::ext::dl::parser::target_memory_section;
 using ygg::diagnostics::context;
+using ygg::diagnostics::keyword;
 
 struct ArgumentObjectClass : boost::spirit::x3::annotate_on_success
 {
@@ -79,11 +79,11 @@ constexpr boost::spirit::x3::rule<ResetPairClass, ast::ResetPair> reset_pair = "
 constexpr boost::spirit::x3::rule<ModuleClass, ast::Module> module = "module";
 constexpr boost::spirit::x3::rule<ProgramClass, ast::Program> program = "program";
 
-struct ModuleRoot : runir::kr::parser::ErrorHandlerBase
+struct ModuleRoot : ygg::diagnostics::ErrorHandlerBase
 {
 };
 
-struct ProgramRoot : runir::kr::parser::ErrorHandlerBase
+struct ProgramRoot : ygg::diagnostics::ErrorHandlerBase
 {
 };
 
@@ -133,7 +133,7 @@ template<typename Parser, typename Ast>
 void parse_ast(const std::string& description, const Parser& parser, Ast& result, runir::kr::parser::ErrorHandlerType& error_handler)
 {
     auto first = description.cbegin();
-    if (!runir::kr::parser::parse_full(first, description.cend(), parser, result, error_handler))
+    if (!ygg::diagnostics::parse_full(first, description.cend(), parser, result, error_handler))
         throw runir::kr::parser::DiagnosticContext::parse_error(error_handler, "Failed to parse ICP description.", first);
 }
 

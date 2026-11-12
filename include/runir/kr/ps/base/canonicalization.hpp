@@ -11,10 +11,10 @@
 namespace runir::kr::ps
 {
 
-inline bool is_canonical(const ygg::Data<Rule<runir::kr::BaseFamilyTag>>& data) noexcept
+inline bool is_canonical(const urd::data<Rule<runir::kr::BaseFamilyTag>>& data) noexcept
 { return ygg::is_canonical(data.conditions) && ygg::is_canonical(data.effects); }
 
-inline void canonicalize(ygg::Data<Rule<runir::kr::BaseFamilyTag>>& data)
+inline void canonicalize(urd::data<Rule<runir::kr::BaseFamilyTag>>& data)
 {
     ygg::canonicalize(data.conditions);
     ygg::canonicalize(data.effects);
@@ -25,9 +25,9 @@ inline void canonicalize(ygg::Data<Rule<runir::kr::BaseFamilyTag>>& data)
 namespace runir::kr::ps::base
 {
 
-inline bool is_canonical(const ygg::Data<Sketch>& data) noexcept { return ygg::is_canonical(data.rules); }
+inline bool is_canonical(const urd::data<Sketch>& data) noexcept { return ygg::is_canonical(data.rules); }
 
-inline void canonicalize(ygg::Data<Sketch>& data) { ygg::canonicalize(data.rules); }
+inline void canonicalize(urd::data<Sketch>& data) { ygg::canonicalize(data.rules); }
 
 }  // namespace runir::kr::ps::base
 

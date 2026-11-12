@@ -30,8 +30,6 @@ def _feature(expression: str, domain: PlanningDomain, context: DomainContext) ->
         f"(n_count (q_project (ball) (q_join {_AT} {_AT_ROBBY})))",
         f"(n_count (q_generic_join (ball room) (room ball) {_AT} {_BALL}))",
         f"(n_count (q_union {_AT} (q_join {_AT} {_BALL})))",
-        # Distance edges are optimized for evaluation per vertex.
-        f"(n_distance {_BALL} (q_join {_AT} {_BALL}) {_AT_ROBBY})",
     ],
 )
 def test_optimized_features_evaluate_like_originals(

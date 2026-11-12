@@ -10,6 +10,8 @@
 #include <span>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <variant>
 #include <vector>
 
@@ -27,16 +29,16 @@ class RuleEvaluators
     struct ActionRules
     {
         Action action;
-        std::vector<CruleEvaluator> rules;
+        urd::Store<urd::sequence<CruleEvaluator>> rules;
     };
 
     RuleEvaluationWorkspace<Kind, EvaluationPolicy> m_workspace;
-    std::vector<Evaluator> m_evaluators;
+    urd::Store<urd::sequence<Evaluator>> m_evaluators;
     // Groups retain their inner capacities even when fewer actions are enabled.
-    std::vector<ActionRules> m_enabled;
-    std::vector<CruleEvaluator> m_matching;
+    urd::Store<urd::sequence<ActionRules>> m_enabled;
+    urd::Store<urd::sequence<CruleEvaluator>> m_matching;
 
-    template<EmitConcept<ProgramStep<Kind>> Emit, StopConcept Stop>
+    template<EmitConcept<ProgramStep<IcpFamilyTag, Kind>> Emit, StopConcept Stop>
     bool emit_crules(runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy>& context,
                      Action action,
                      std::span<const CruleEvaluator> rules,
@@ -47,7 +49,7 @@ class RuleEvaluators
         auto& search = *get_task_context()->search_context;
         auto& environment = m_workspace.get_environment();
         auto source_context = context.make_dl_context(source);
-        const auto visit = [&](tyr::planning::BorrowedActionBindingView<Kind> binding)
+        const auto visit = [&](tyr::planning::BorrowedActionRowView<Kind> binding)
         {
             if (stop())
                 return false;
@@ -62,11 +64,11 @@ class RuleEvaluators
                                                                              *search.state_repository,
                                                                              *search.axiom_evaluator);
             const auto candidate =
-                tyr::planning::LabeledNode<Kind, tyr::planning::StateView<Kind>, tyr::planning::BorrowedActionBindingView<Kind>> { binding, node };
+                tyr::planning::LabeledNode<Kind, tyr::planning::StateView<Kind>, tyr::planning::BorrowedActionRowView<Kind>> { binding, node };
             environment.reset_target();
             auto transition = context.make_dl_transition_context(source, candidate);
             auto histories = std::optional<HistoriesView<Kind>> {};
-            auto label = std::optional<tyr::formalism::planning::ActionBindingView> {};
+            auto label = std::optional<tyr::formalism::planning::ActionRowView> {};
             for (const auto& evaluator : m_matching)
             {
                 if (stop())
@@ -99,7 +101,7 @@ public:
     {
         for (const auto transition : program.get_module().get_memory_transitions())
             for (const auto variant : transition)
-                m_evaluators.push_back(ygg::visit([&]<RuleKind Tag>(RuleView<Tag> rule) -> Evaluator
+                m_evaluators.push_back(std::visit([&]<RuleKind Tag>(RuleView<Tag> rule) -> Evaluator
                                                   { return RuleEvaluator<Kind, Tag>(*get_task_context(), rule, variant); },
                                                   variant.get_variant()));
         m_matching.reserve(m_evaluators.size());
@@ -111,7 +113,7 @@ public:
     auto initial_state(tyr::planning::StateView<Kind> state) { return m_workspace.initial_state(state); }
 
     /// Callbacks borrow shared scratch and must not reenter the evaluators or planning generator.
-    template<EmitConcept<ProgramStep<Kind>> Emit, StopConcept Stop>
+    template<EmitConcept<ProgramStep<IcpFamilyTag, Kind>> Emit, StopConcept Stop>
     bool for_each_successor(ProgramStateView<Kind> state, const Emit& emit, const Stop& stop, bool grouped)
     {
         if (stop())
@@ -122,7 +124,7 @@ public:
         auto context = runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy> { &m_workspace,
                                                                                                                                           state.get_state() };
         bool emitted = false;
-        const auto output = [&](ProgramStep<Kind>&& step)
+        const auto output = [&](ProgramStep<IcpFamilyTag, Kind>&& step)
         {
             emitted = true;
             return emit(std::move(step));
@@ -170,7 +172,7 @@ public:
                 return false;
         if (stop())
             return false;
-        return emitted || output(ProgramStep<Kind>(ProgramOutcome::NO_APPLICABLE_ACTION, state, get_task_context()));
+        return emitted || output(ProgramStep<IcpFamilyTag, Kind>(ProgramOutcome::NO_APPLICABLE_ACTION, state, get_task_context()));
     }
 };
 

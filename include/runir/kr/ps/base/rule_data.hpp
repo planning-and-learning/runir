@@ -7,50 +7,39 @@
 #include <cista/containers/string.h>
 #include <string>
 #include <tuple>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
+#include <variant>
 #include <vector>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
 
-namespace ygg
+namespace urd
 {
 
 template<>
-struct Data<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>
+struct data<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>
 {
-    Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>> index;
-    ::cista::offset::string symbol;
-    IndexList<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>> conditions;
-    IndexList<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>> effects;
+    urd::index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>> index;
+    urd::flat_string symbol;
+    runir::kr::ps::ConditionList<runir::kr::BaseFamilyTag> conditions;
+    runir::kr::ps::EffectList<runir::kr::BaseFamilyTag> effects;
 
-    Data() = default;
-    Data(::cista::offset::string symbol_,
-         IndexList<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>> conditions_,
-         IndexList<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>> effects_) :
+    data() = default;
+    data(urd::flat_string symbol_,
+         runir::kr::ps::ConditionList<runir::kr::BaseFamilyTag> conditions_,
+         runir::kr::ps::EffectList<runir::kr::BaseFamilyTag> effects_) :
         index(),
         symbol(std::move(symbol_)),
         conditions(std::move(conditions_)),
         effects(std::move(effects_))
     {
     }
-    template<typename C>
-    Data(::cista::offset::string symbol_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>>, C>>& conditions_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>>, C>>& effects_) :
-        index(),
-        symbol(std::move(symbol_)),
-        conditions(),
-        effects()
-    {
-        set(conditions_, conditions);
-        set(effects_, effects);
-    }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::symbol, &Data::conditions, &Data::effects> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::symbol, &Data::conditions, &Data::effects> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::symbol, &data::conditions, &data::effects> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::symbol, &data::conditions, &data::effects> {}; }
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 #endif

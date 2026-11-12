@@ -31,6 +31,9 @@
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/heuristics/blind.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/dense_set.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 
@@ -41,7 +44,7 @@ namespace
 {
 
 template<typename G>
-auto compute_goal_distances(const G& graph, const std::vector<graphs::VertexIndex>& goal_vertices, StateGraphCostMode cost_mode)
+auto compute_goal_distances(const G& graph, const graphs::VertexIndexList& goal_vertices, StateGraphCostMode cost_mode)
 {
     switch (cost_mode)
     {
@@ -50,7 +53,7 @@ auto compute_goal_distances(const G& graph, const std::vector<graphs::VertexInde
             const auto [predecessors, distances] = graphs::bgl::breadth_first_search(graph, goal_vertices);
             static_cast<void>(predecessors);
 
-            auto result = std::vector<ygg::float_t>(distances.size(), std::numeric_limits<ygg::float_t>::infinity());
+            auto result = urd::Store<urd::sequence<ygg::float_t>>(distances.size(), std::numeric_limits<ygg::float_t>::infinity());
             for (graphs::VertexIndex vertex = 0; vertex < distances.size(); ++vertex)
                 if (distances[vertex] != std::numeric_limits<ygg::uint_t>::max())
                     result[vertex] = static_cast<ygg::float_t>(distances[vertex]);
@@ -58,11 +61,11 @@ auto compute_goal_distances(const G& graph, const std::vector<graphs::VertexInde
         }
         case StateGraphCostMode::ACTION_COST:
         {
-            auto weights = std::vector<ygg::float_t>(graph.get_num_edges(), 0);
+            auto weights = urd::Store<urd::sequence<ygg::float_t>>(graph.get_num_edges(), 0);
             for (auto edge : graph.get_edge_indices())
-                weights[edge] = graph.get_edge(edge).get_property().cost;
+                weights[edge] = graph.get_edge_property(edge).cost;
 
-            const auto [predecessors, distances] = graphs::bgl::dijkstra_shortest_paths(graph, weights, goal_vertices);
+            const auto [predecessors, distances] = graphs::bgl::dijkstra_shortest_paths<G, ygg::float_t>(graph, weights, goal_vertices);
             static_cast<void>(predecessors);
             return distances;
         }
@@ -116,15 +119,17 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kin
     const auto initial_state = context.successor_generator->get_initial_node(*context.state_repository, *context.axiom_evaluator).get_state();
     const auto packed_initial_state = initial_state.pack();
 
-    auto is_goal = std::vector<bool>(forward_graph.get_num_vertices(), false);
-    auto goal_vertices = std::vector<graphs::VertexIndex> {};
+    auto is_goal = urd::Store<urd::set<graphs::VertexIndex>, urd::dense> {};
+    auto goal_vertices = graphs::VertexIndexList {};
 
     for (auto vertex_index : forward_graph.get_vertex_indices())
     {
-        const auto state = forward_graph.get_vertex(vertex_index).get_property().state.unpack();
-        is_goal[vertex_index] = static_goal_satisfied && goal_strategy.is_dynamic_goal_satisfied(initial_state, state);
-        if (is_goal[vertex_index])
+        const auto state = forward_graph.get_vertex_property(vertex_index).state.unpack();
+        if (static_goal_satisfied && goal_strategy.is_dynamic_goal_satisfied(initial_state, state))
+        {
+            is_goal.insert(vertex_index);
             goal_vertices.push_back(vertex_index);
+        }
     }
 
     const auto goal_distance = compute_goal_distances(graph.get_backward_graph(), goal_vertices, cost_mode);
@@ -132,12 +137,12 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kin
     auto builder = AnnotatedStateGraphBuilder<Kind> {};
     for (auto vertex_index : forward_graph.get_vertex_indices())
     {
-        const auto& state = forward_graph.get_vertex(vertex_index).get_property().state;
+        const auto& state = forward_graph.get_vertex_property(vertex_index).state;
         const auto is_alive = goal_distance[vertex_index] != std::numeric_limits<ygg::float_t>::infinity();
         [[maybe_unused]] const auto added = builder.add_vertex(AnnotatedStateGraphVertexLabel<Kind> { state,
                                                                                                       goal_distance[vertex_index],
                                                                                                       state == packed_initial_state,
-                                                                                                      is_goal[vertex_index],
+                                                                                                      is_goal.contains(vertex_index),
                                                                                                       is_alive,
                                                                                                       !is_alive });
         assert(added == vertex_index);
@@ -146,7 +151,7 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kin
     for (auto edge_index : forward_graph.get_edge_indices())
     {
         const auto& edge = forward_graph.get_edge(edge_index);
-        builder.add_directed_edge(edge.get_source(), edge.get_target(), edge.get_property());
+        builder.add_directed_edge(edge.get_source(), edge.get_target(), forward_graph.get_edge_property(edge_index));
     }
 
     return std::make_unique<AnnotatedStateGraph<Kind>>(std::move(builder));

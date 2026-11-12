@@ -5,9 +5,9 @@
 #include "runir/kr/dl/detail/repository_instantiations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/repository.hpp"
+#include "runir/kr/parser/config.hpp"
 #include "runir/kr/parser/diagnostics.hpp"
-#include "runir/kr/parser/parser.hpp"
-#include "runir/kr/uns/detail/repository_instantiations.hpp"
+#include "runir/kr/ps/detail/repository_instantiations.hpp"
 #include "runir/kr/uns/dl/parser/parser.hpp"
 #include "runir/kr/uns/dl/parser/parsers.hpp"
 #include "runir/kr/uns/repository.hpp"
@@ -19,6 +19,8 @@
 #include <type_traits>
 #include <tyr/formalism/planning/repository.hpp>
 #include <unordered_map>
+#include <urd/repr/maps/std_map.hpp>
+#include <urd/store.hpp>
 #include <utility>
 
 namespace runir::kr::uns::dl
@@ -31,7 +33,7 @@ using runir::kr::parser::ext_constructors::ConstructorContext;
 using runir::kr::parser::ext_constructors::LanguageCapabilities;
 
 template<typename T>
-auto intern(runir::kr::uns::Repository& repository, ygg::Data<T>& data)
+auto intern(runir::kr::uns::Repository& repository, urd::data<T>& data)
 { return runir::kr::uns::insert(repository, data).first; }
 
 auto parse_feature(const runir::kr::uns::dl::ast::BooleanFeature& node,
@@ -46,12 +48,12 @@ auto parse_feature(const runir::kr::uns::dl::ast::BooleanFeature& node,
     const auto feature = parse_constructor(node.feature, domain, context);
     auto concrete_data =
         runir::kr::uns::checkout<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::dl::BooleanTag>>(builder);
-    concrete_data->feature = feature.get_index();
+    concrete_data->feature = feature.index();
     concrete_data->symbol = node.symbol.text;
     const auto concrete = intern(repository, *concrete_data);
 
     auto data = runir::kr::uns::checkout<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>>(builder);
-    data->variant = concrete.get_index();
+    data->variant = concrete.index();
     return intern(repository, *data);
 }
 
@@ -66,7 +68,7 @@ ClassifierView parse_classifier(const std::string& description, tyr::formalism::
     auto ast = runir::kr::uns::dl::ast::Classifier {};
     auto errors = std::ostringstream {};
     auto error_handler = runir::kr::parser::ErrorHandlerType(first, last, errors);
-    if (!runir::kr::parser::parse_full(first, last, parser::classifier_root_parser(), ast, error_handler))
+    if (!ygg::diagnostics::parse_full(first, last, parser::classifier_root_parser(), ast, error_handler))
         throw runir::kr::parser::DiagnosticContext::parse_error(error_handler, "Failed to parse DL classifier description.", first);
     auto diagnostics = runir::kr::parser::DiagnosticContext {};
     const auto scope = runir::kr::parser::DiagnosticContext::Scope(diagnostics, error_handler);
@@ -75,15 +77,16 @@ ClassifierView parse_classifier(const std::string& description, tyr::formalism::
     data->symbol = ast.symbol.text;
     data->features.reserve(ast.features.size());
     data->clauses.reserve(ast.expression.clauses.size());
-    auto symbol_to_feature = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>>> {};
+    auto symbol_to_feature =
+        urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>>>, urd::stable_refs> {};
     symbol_to_feature.reserve(ast.features.size());
 
     for (const auto& feature : ast.features)
     {
         const auto wrapper = parse_feature(feature, domain, repository, dl_builder, builder, diagnostics);
-        if (!symbol_to_feature.emplace(feature.symbol.text, wrapper.get_index()).second)
+        if (!symbol_to_feature.emplace(feature.symbol.text, wrapper.index()).second)
             diagnostics.throw_at(feature.symbol, runir::kr::DuplicateDefinitionError("feature", feature.symbol.text));
-        data->features.push_back(wrapper.get_index());
+        data->features.push_back(wrapper.index());
     }
 
     const auto parse_literal = [&]<typename Literal>(const Literal& literal)
@@ -96,7 +99,7 @@ ClassifierView parse_classifier(const std::string& description, tyr::formalism::
         auto literal_data = runir::kr::uns::checkout<runir::kr::uns::ClassifierLiteral>(builder);
         literal_data->variant = it->second;
         literal_data->polarity = polarity;
-        return intern(repository, *literal_data).get_index();
+        return intern(repository, *literal_data).index();
     };
 
     for (const auto& ast_clause : ast.expression.clauses)
@@ -105,7 +108,7 @@ ClassifierView parse_classifier(const std::string& description, tyr::formalism::
         clause_data->literals.reserve(ast_clause.literals.size());
         for (const auto& ast_literal : ast_clause.literals)
             clause_data->literals.push_back(boost::apply_visitor(parse_literal, ast_literal.get()));
-        data->clauses.push_back(intern(repository, *clause_data).get_index());
+        data->clauses.push_back(intern(repository, *clause_data).index());
     }
 
     return intern(repository, *data);

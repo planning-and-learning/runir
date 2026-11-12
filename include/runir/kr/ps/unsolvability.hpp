@@ -9,6 +9,8 @@
 
 #include <concepts>
 #include <tyr/planning/state_view_concepts.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 
 namespace runir::kr::ps
@@ -45,7 +47,7 @@ public:
         m_policy(*task_context.search_context->task,
                  [&]
                  {
-                     auto roots = std::vector<runir::kr::dl::semantics::incremental::EvaluationRoot> {};
+                     auto roots = urd::Store<urd::sequence<runir::kr::dl::semantics::incremental::EvaluationRoot>> {};
                      for (const auto feature : classifier.get_features())
                          roots.emplace_back(feature.get_expression());
                      return roots;

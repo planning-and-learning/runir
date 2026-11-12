@@ -11,11 +11,11 @@ namespace runir::serialization
 {
 
 template<tyr::TaskKind Kind>
-using ExecutionViews = ygg::TypeList<kr::ps::ext::ModuleStateView<Kind>,
-                                     kr::ps::ext::CallStackView<Kind>,
-                                     kr::ps::ext::ProgramStateView<Kind>,
-                                     kr::ps::icp::ProgramStateView<Kind>,
-                                     kr::ps::icp::HistoriesView<Kind>>;
+using ExecutionViews = boost::mp11::mp_list<kr::ps::ext::ModuleStateView<Kind>,
+                                            kr::ps::ext::CallStackView<Kind>,
+                                            kr::ps::ext::ProgramStateView<Kind>,
+                                            kr::ps::icp::ProgramStateView<Kind>,
+                                            kr::ps::icp::HistoriesView<Kind>>;
 
 }  // namespace runir::serialization
 

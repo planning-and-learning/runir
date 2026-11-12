@@ -36,10 +36,10 @@ public:
 private:
     static bool arguments_match(ModuleView callee, runir::kr::dl::semantics::CallArgumentsView arguments)
     {
-        return arguments.template get<runir::kr::dl::ConceptTag>().size() == callee.template get_arguments<runir::kr::dl::ConceptTag>().size()
-               && arguments.template get<runir::kr::dl::RoleTag>().size() == callee.template get_arguments<runir::kr::dl::RoleTag>().size()
-               && arguments.template get<runir::kr::dl::BooleanTag>().size() == callee.template get_arguments<runir::kr::dl::BooleanTag>().size()
-               && arguments.template get<runir::kr::dl::NumericalTag>().size() == callee.template get_arguments<runir::kr::dl::NumericalTag>().size();
+        return arguments.template arguments<runir::kr::dl::ConceptTag>().size() == callee.template get_arguments<runir::kr::dl::ConceptTag>().size()
+               && arguments.template arguments<runir::kr::dl::RoleTag>().size() == callee.template get_arguments<runir::kr::dl::RoleTag>().size()
+               && arguments.template arguments<runir::kr::dl::BooleanTag>().size() == callee.template get_arguments<runir::kr::dl::BooleanTag>().size()
+               && arguments.template arguments<runir::kr::dl::NumericalTag>().size() == callee.template get_arguments<runir::kr::dl::NumericalTag>().size();
     }
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
@@ -54,17 +54,17 @@ private:
         auto state_context =
             context.environment->make_call_context(planning_state, state.get_module_state().get_arguments(), state.get_module_state().get_registers());
         rule.for_each_call_argument(
-            [&]<typename FeatureTag, typename FC>(ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, FC> argument)
+            [&]<typename FeatureTag, typename FC>(urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>, FC> argument)
             {
                 const auto denotation = evaluate<Kind>(argument.get_expression(), state_context);
                 if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)
-                    result->concept_arguments.push_back(denotation.get_index());
+                    result->concept_arguments.push_back(denotation.index());
                 else if constexpr (std::same_as<FeatureTag, runir::kr::dl::RoleTag>)
-                    result->role_arguments.push_back(denotation.get_index());
+                    result->role_arguments.push_back(denotation.index());
                 else if constexpr (std::same_as<FeatureTag, runir::kr::dl::BooleanTag>)
-                    result->boolean_arguments.push_back(denotation.get_index());
+                    result->boolean_arguments.push_back(denotation.index());
                 else
-                    result->numerical_arguments.push_back(denotation.get_index());
+                    result->numerical_arguments.push_back(denotation.index());
             });
         return insert(*(*context.task_context)->dl_denotation_repository, *result).first;
     }
@@ -72,7 +72,7 @@ private:
 public:
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
-             EmitConcept<ProgramStep<Kind, Storage>> Emit,
+             EmitConcept<ProgramStep<ExtFamilyTag, Kind, StorageStoredState<Storage>>> Emit,
              StopConcept Stop,
              ExecutionStateViewConcept<Storage> State,
              tyr::planning::StateViewConcept<Kind> PlanningState>

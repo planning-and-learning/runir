@@ -11,7 +11,7 @@ namespace ygg::serialization
 {
 
 template<typename Archive, runir::kr::FamilyTag Family, typename FeatureTag, typename C>
-void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::Feature<Family, FeatureTag>>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::ps::Feature<Family, FeatureTag>, C>>)
 {
     ar.variant([](const auto& value) -> decltype(auto) { return (value.get_variant()); });
 }

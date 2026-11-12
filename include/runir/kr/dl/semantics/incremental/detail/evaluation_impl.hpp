@@ -31,7 +31,7 @@ template<CategoryTag Category>
 { return node(index).get_result(repository()); }
 
 template<tyr::TaskKind Kind>
-const ygg::Builder<ygg::database::Relation>& EvaluationGraph<Kind>::result(QueryEvaluationIndex index) const
+ygg::FreeBuilderRelationView EvaluationGraph<Kind>::result(QueryEvaluationIndex index) const
 { return node(index).get_result(); }
 
 template<tyr::TaskKind Kind>
@@ -40,7 +40,7 @@ template<ConceptOrRoleTag Category>
 { return node(index).get_delta(); }
 
 template<tyr::TaskKind Kind>
-const ygg::database::Delta& EvaluationGraph<Kind>::change(QueryEvaluationIndex index) const
+const tyr::datalog::database::incremental::Delta& EvaluationGraph<Kind>::change(QueryEvaluationIndex index) const
 { return node(index).get_delta(); }
 
 template<tyr::TaskKind Kind>
@@ -69,33 +69,23 @@ template<tyr::TaskKind Kind>
 template<CategoryTag Category>
 [[nodiscard]] std::optional<EvaluationIndex<Category>> EvaluationGraph<Kind>::find_node(ConstructorView<Category> expression) const
 {
-    // ponytail: linear preparation/root lookup; add a lookup table only if large graphs make it costly.
-    for (size_t i = 0; i < m_nodes.size(); ++i)
-    {
-        const auto* candidate = std::get_if<detail::FeatureNode<Kind, Category>>(&m_nodes[i]);
-        if (candidate && candidate->get_expression() == expression)
-            return EvaluationIndex<Category>(ygg::to_uint_t(i));
-    }
-    return std::nullopt;
+    const auto& nodes = std::get<FeatureNodeIndices<Category>>(m_feature_nodes);
+    const auto it = nodes.find(expression);
+    return it != nodes.end() ? std::optional(it->second) : std::nullopt;
 }
 
 template<tyr::TaskKind Kind>
 std::optional<QueryEvaluationIndex> EvaluationGraph<Kind>::find_node(QueryView<> expression) const
 {
-    for (size_t i = 0; i < m_nodes.size(); ++i)
-    {
-        const auto* candidate = std::get_if<detail::QueryNode<Kind>>(&m_nodes[i]);
-        if (candidate && candidate->get_expression() == expression)
-            return QueryEvaluationIndex(ygg::to_uint_t(i));
-    }
-    return std::nullopt;
+    const auto it = m_query_nodes.find(expression);
+    return it != m_query_nodes.end() ? std::optional(it->second) : std::nullopt;
 }
 
 template<tyr::TaskKind Kind>
 template<BooleanOrNumericalTag Category>
 [[nodiscard]] bool IncrementalEvaluation<Kind>::changed(EvaluationIndex<Category> index) const
 {
-    require_exact(ygg::uint_t(index));
+    require_exact(ygg::uint_t(index.value));
     return m_graph.node(index).changed();
 }
 
@@ -118,6 +108,7 @@ EvaluationIndex<Category> EvaluationGraph<Kind>::prepare(ConstructorView<Categor
     auto prepared = detail::FeatureNode<Kind, Category>(expression, builder);
     const auto index = EvaluationIndex<Category>(ygg::to_uint_t(m_nodes.size()));
     m_nodes.emplace_back(std::move(prepared));
+    std::get<FeatureNodeIndices<Category>>(m_feature_nodes).emplace(expression, index);
     return index;
 }
 
@@ -130,12 +121,13 @@ QueryEvaluationIndex EvaluationGraph<Kind>::prepare(QueryView<> expression)
     auto prepared = detail::QueryNode<Kind>(expression, builder);
     const auto index = QueryEvaluationIndex(ygg::to_uint_t(m_nodes.size()));
     m_nodes.emplace_back(std::move(prepared));
+    m_query_nodes.emplace(expression, index);
     return index;
 }
 
 template<tyr::TaskKind Kind>
 template<StateEvaluationContextConcept<Kind> Context>
-void IncrementalEvaluation<Kind>::demand(ygg::uint_t index, Context& context, const Delta* delta, ygg::database::Workspace* workspace)
+void IncrementalEvaluation<Kind>::demand(ygg::uint_t index, Context& context, const Delta* delta, tyr::datalog::database::Workspace* workspace)
 {
     if (m_nodes.at(index).epoch == m_epoch)
         return;

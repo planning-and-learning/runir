@@ -38,6 +38,7 @@ from pyyggdrasil.execution import ExecutionContext
 from pyrunir.datasets import LiftedTaskSearchContext
 from pyrunir.kr import DomainContext, LiftedTaskContext
 from pyrunir.kr.dl.semantics import Boolean, Concept, EvaluationStorage, LiftedStateEvaluationContext, Numerical
+from pyrunir.kr.ps import ProofStatus
 from pyrunir.kr.ps.ext import (
     ConceptChoice,
     ConceptChooseRule,
@@ -49,7 +50,6 @@ from pyrunir.kr.ps.ext import (
     LiftedSuccessorExpander,
     Module,
     Program,
-    ProgramProofStatus,
     ProgramSearchStatistics,
     RoleChoice,
     RoleChooseRule,
@@ -327,12 +327,12 @@ class Session:
         initial = next((v for v in graph.get_vertex_indices() if graph.get_vertex_property(v).is_initial), None)
         failure = (
             None
-            if result.status == ProgramProofStatus.SUCCESS
+            if result.status == ProofStatus.SUCCESS
             else next(iter((*result.open_states, *result.deadend_states)), None)
         )
         goals = {v for v in graph.get_vertex_indices() if graph.get_vertex_property(v).is_goal}
         target: set[int] = (
-            goals if result.status == ProgramProofStatus.SUCCESS else ({failure} if failure is not None else set())
+            goals if result.status == ProofStatus.SUCCESS else ({failure} if failure is not None else set())
         )
         path = shortest_path(graph, initial, target) if initial is not None and target else []
         statistics: ProgramSearchStatistics = result.statistics
@@ -355,9 +355,9 @@ class Session:
         tasks = list(tasks) if tasks is not None else list(self.tasks)
 
         def outcome(result: LiftedProgramProofResults) -> str:
-            if result.status == ProgramProofStatus.SUCCESS:
+            if result.status == ProofStatus.SUCCESS:
                 return "passed"
-            if result.status == ProgramProofStatus.FAILURE:
+            if result.status == ProofStatus.FAILURE:
                 return f"failed ({failure_category(result)})"
             return f"unavailable ({result.status.name.lower()})"
 
@@ -376,7 +376,7 @@ class Session:
                 task,
                 outcome(execute),
                 proofs[task],
-                execute.statistics.choice_depth if execute.status == ProgramProofStatus.SUCCESS else None,
+                execute.statistics.choice_depth if execute.status == ProofStatus.SUCCESS else None,
                 1000 * search.seconds / max(execute.statistics.num_expanded, 1),
             )
 
@@ -392,7 +392,7 @@ class Session:
             if task.name not in self._initial_depths:
                 result, _ = self._find(task, self._budget, program=self._initial)
                 self._initial_depths[task.name] = (
-                    result.statistics.choice_depth if result.status == ProgramProofStatus.SUCCESS else None
+                    result.statistics.choice_depth if result.status == ProofStatus.SUCCESS else None
                 )
             return self._initial_depths[task.name]
 
@@ -514,9 +514,9 @@ class Session:
                 result, _ = self._find(ref.task, budget, start=target)
                 outcome = (
                     "succeeds"
-                    if result.status == ProgramProofStatus.SUCCESS
+                    if result.status == ProofStatus.SUCCESS
                     else "fails"
-                    if result.status == ProgramProofStatus.FAILURE
+                    if result.status == ProofStatus.FAILURE
                     else "unknown"
                 )
                 rows.append(
@@ -635,12 +635,8 @@ class Session:
         depth_before = depth_after = 0
         for task, execute, prove in self._parallel(trial, tasks):
             stages = (("execute", execute), ("prove", prove))
-            bad = [(stage, r) for stage, r in stages if r.status == ProgramProofStatus.FAILURE]
-            open_ = [
-                (stage, r)
-                for stage, r in stages
-                if r.status not in (ProgramProofStatus.SUCCESS, ProgramProofStatus.FAILURE)
-            ]
+            bad = [(stage, r) for stage, r in stages if r.status == ProofStatus.FAILURE]
+            open_ = [(stage, r) for stage, r in stages if r.status not in (ProofStatus.SUCCESS, ProofStatus.FAILURE)]
             if bad:
                 failed.append((task, bad[0][0], failure_category(bad[0][1]) or "failure"))
             elif open_:
@@ -699,7 +695,7 @@ class Session:
         module_state = program_state.module_state
         expander = LiftedSuccessorExpander(task_context, self._program)
         before = self._state_values(task_context, program_state.state, module_state)
-        node = search.successor_generator.get_node(search.state_repository, program_state.state.get_index())
+        node = search.successor_generator.get_node(search.state_repository, program_state.state.index())
         steps: list[Step] = []
         for successor in search.successor_generator.get_labeled_successor_nodes(
             node, search.state_repository, search.axiom_evaluator
@@ -722,7 +718,7 @@ class Session:
         )
         state = self._search(ref.task, prove=ref.proof).graph.get_vertex_property(ref.vertex).state
         options = lifted.gbfs_lazy.Options()
-        options.start_node = search.successor_generator.get_node(search.state_repository, state.get_index())
+        options.start_node = search.successor_generator.get_node(search.state_repository, state.index())
         options.search_budget = SearchBudget(
             max_num_states=budget.max_states, max_time=timedelta(seconds=budget.max_seconds)
         )

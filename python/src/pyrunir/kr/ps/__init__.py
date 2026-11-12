@@ -3,4 +3,8 @@
 
 """Policy sketches: the base, extended and indexical concept policy languages."""
 
+from pyrunir._pyrunir.kr.ps import (
+    IncompleteStructuralTerminationStatus as IncompleteStructuralTerminationStatus,
+    ProofStatus as ProofStatus,
+)
 from pyrunir.kr.ps import base as base, ext as ext, icp as icp

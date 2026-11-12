@@ -25,7 +25,6 @@
 #include <utility>
 #include <variant>
 #include <vector>
-#include <yggdrasil/containers/variant.hpp>
 
 namespace runir::kr::ps::ext
 {
@@ -37,7 +36,7 @@ SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::SuccessorExpander(r
     m_storage(m_task_context, m_program),
     m_rule_evaluators(m_task_context, m_program)
 {
-    if (&m_program.get_context() != m_task_context->domain_context->ext_repository.get())
+    if (&m_program.context() != m_task_context->domain_context->ext_repository.get())
         throw std::invalid_argument("SuccessorExpander requires a program from the domain context repository.");
 }
 
@@ -65,8 +64,8 @@ ProgramStateView<Kind> SuccessorExpander<Kind, ExecutionStorage, EvaluationPolic
 
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
 template<ProgramStateViewConcept<Kind> S, typename Emit, StopConcept Stop>
-    requires EmitConcept<Emit, detail::ProgramStep<Kind, ExecutionStorage>> && EmitConcept<Emit, detail::Choice<runir::kr::dl::ConceptTag>>
-             && EmitConcept<Emit, detail::Choice<runir::kr::dl::RoleTag>>
+    requires EmitConcept<Emit, ProgramStep<ExtFamilyTag, Kind, StorageStoredState<ExecutionStorage>>>
+             && EmitConcept<Emit, detail::Choice<runir::kr::dl::ConceptTag>> && EmitConcept<Emit, detail::Choice<runir::kr::dl::RoleTag>>
 bool SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::for_each_successor(S state,
                                                                                      ProgramSearchStatistics& statistics,
                                                                                      const Emit& emit,
@@ -83,7 +82,7 @@ bool SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::for_each_succe
     {
         emitted = true;
         if constexpr (std::same_as<std::remove_cvref_t<Expansion>, Step>)
-            statistics.num_generated += expansion.status == detail::ProgramOutcome::APPLIED || expansion.status == detail::ProgramOutcome::RESTORED_CALLER;
+            statistics.num_generated += expansion.status == ProgramOutcome::APPLIED || expansion.status == ProgramOutcome::RESTORED_CALLER;
         return emit(std::forward<Expansion>(expansion));
     };
     auto context = m_rule_evaluators.make_context(m_storage, state.get_state());
@@ -103,7 +102,7 @@ auto SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::apply_choice(S
     validate_source(state);
     auto context = m_rule_evaluators.make_context(m_storage, state.get_state());
     auto step = m_rule_evaluators.apply_choice(context, state, choice);
-    statistics.num_generated += step.status == detail::ProgramOutcome::APPLIED;
+    statistics.num_generated += step.status == ProgramOutcome::APPLIED;
     return step;
 }
 
@@ -139,23 +138,18 @@ template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, run
 template<tyr::planning::StateViewConcept<Kind> S>
 void SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::validate_planning_state(const S& state) const
 {
-    if constexpr (requires { state.get_state_repository(); })
-    {
-        if (state.get_state_repository().get() != m_task_context->search_context->state_repository.get())
-            throw std::invalid_argument("SuccessorExpander requires a planning state from the selected task's state repository.");
-    }
-    else if (&state.get_task() != m_task_context->search_context->task.get())
-        throw std::invalid_argument("SuccessorExpander requires a planning state from the selected task.");
+    if (&state.get_state_repository() != m_task_context->search_context->state_repository.get())
+        throw std::invalid_argument("SuccessorExpander requires a planning state from the selected task's state repository.");
 }
 
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
 template<ProgramStateViewConcept<Kind> S>
 void SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::validate_source(S state) const
 {
-    if (&state.get_context() != m_task_context->execution_repository.get())
+    if (&state.context() != m_task_context->execution_repository.get())
         throw std::invalid_argument("SuccessorExpander requires an execution state from the selected task.");
     const auto program = state.get_program();
-    if (&program.get_context() != &m_program.get_context() || program != m_program)
+    if (&program.context() != &m_program.context() || program != m_program)
         throw std::invalid_argument("SuccessorExpander requires an execution state from the selected program.");
 }
 
@@ -171,9 +165,9 @@ auto SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::fallback(S sta
                                       caller->get_registers(),
                                       caller->get_arguments(),
                                       caller->get_caller());
-        return detail::make_step<Kind, ExecutionStorage>(detail::ProgramOutcome::RESTORED_CALLER, std::move(target), m_task_context);
+        return detail::make_step<Kind, ExecutionStorage>(ProgramOutcome::RESTORED_CALLER, std::move(target), m_task_context);
     }
-    return detail::make_step<Kind, ExecutionStorage>(detail::ProgramOutcome::NO_APPLICABLE_ACTION, m_storage.retain(state), m_task_context);
+    return detail::make_step<Kind, ExecutionStorage>(ProgramOutcome::NO_APPLICABLE_ACTION, m_storage.retain(state), m_task_context);
 }
 
 }  // namespace runir::kr::ps::ext

@@ -2,11 +2,12 @@
 #define RUNIR_KR_PS_ICP_DETAIL_SEARCH_NODE_HPP_
 
 #include "runir/kr/ps/icp/execution_view.hpp"
-#include "runir/kr/ps/icp/rule_variant_view.hpp"
+#include "runir/kr/ps/rule_variant_view.hpp"
 
 #include <cstddef>
 #include <optional>
-#include <tyr/formalism/binding_view.hpp>
+#include <tyr/formalism/declarations.hpp>
+#include <yggdrasil/formalism/row_view.hpp>
 
 namespace runir::kr::ps::icp::detail
 {
@@ -16,7 +17,7 @@ struct SearchNode
 {
     ProgramStateView<Kind> state;
     std::optional<std::size_t> parent;
-    std::optional<tyr::formalism::planning::ActionBindingView> action;
+    std::optional<tyr::formalism::planning::ActionRowView> action;
     bool is_goal = false;
     bool is_unsolvable = false;
     bool is_deadend = false;
@@ -27,7 +28,7 @@ struct Predecessor
 {
     std::size_t source = 0;
     std::size_t target = 0;
-    std::optional<tyr::formalism::planning::ActionBindingView> action;
+    std::optional<tyr::formalism::planning::ActionRowView> action;
     std::optional<RuleVariantView> rule;
 };
 

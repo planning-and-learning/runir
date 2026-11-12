@@ -7,56 +7,26 @@
 
 #include <cista/containers/variant.h>
 #include <tuple>
+#include <urd/elements/flat.hpp>
 #include <utility>
 #include <variant>
-#include <yggdrasil/containers/variant.hpp>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
 
-namespace ygg
+namespace urd
 {
-
-template<runir::kr::FamilyTag Family>
-struct Data<runir::kr::ps::ConcreteEffectVariant<Family, runir::kr::DlTag>>
-{
-    using Variant = ygg::IndexVariant<runir::kr::ps::detail::PsConcreteEffectTypes<Family>>;
-
-    Index<runir::kr::ps::ConcreteEffectVariant<Family, runir::kr::DlTag>> index;
-    Variant variant;
-
-    Data() = default;
-    Data(Variant variant_) : index(), variant(std::move(variant_)) {}
-    template<typename C>
-    using ViewVariant = ::ygg::ViewVariant<Variant, C>;
-    template<typename C>
-    explicit Data(const ViewVariant<C>& variant_) :
-        index(),
-        variant(std::visit([](const auto& view) -> Variant { return Variant(view.get_index()); }, variant_))
-    {
-    }
-
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::variant> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::variant> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
-};
 
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, runir::kr::ps::dl::EffectObservationTag<FeatureTag> ObservationTag>
-struct Data<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>
+struct data<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>
 {
-    Index<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>> index;
-    Index<runir::kr::ps::Feature<Family, FeatureTag>> feature;
+    urd::index<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>> index;
+    urd::index<runir::kr::ps::Feature<Family, FeatureTag>> feature;
 
-    Data() = default;
-    Data(Index<runir::kr::ps::Feature<Family, FeatureTag>> feature_) : index(), feature(std::move(feature_)) {}
-    template<typename C>
-    Data(::ygg::View<Index<runir::kr::ps::Feature<Family, FeatureTag>>, C> feature_) : index(), feature()
-    { set(feature_, feature); }
+    data() = default;
+    data(urd::index<runir::kr::ps::Feature<Family, FeatureTag>> feature_) : index(), feature(std::move(feature_)) {}
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::feature> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::feature> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::feature> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::feature> {}; }
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 #endif

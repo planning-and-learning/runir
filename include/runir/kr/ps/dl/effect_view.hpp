@@ -3,26 +3,23 @@
 
 #include "runir/kr/ps/dl/effect_data.hpp"
 #include "runir/kr/ps/dl/feature_view.hpp"
-#include "runir/kr/ps/effect_view.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 
 #include <tuple>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
 
-namespace ygg
+namespace urd
 {
+template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, runir::kr::ps::dl::EffectObservationTag<FeatureTag> ObservationTag, typename V>
+struct view_mixin<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, V>
+{
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
-template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, runir::kr::ps::dl::EffectObservationTag<FeatureTag> ObservationTag, typename C>
-class View<Index<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> :
-    public ygg::IndexViewBase<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, C>
-{
 public:
-    using ygg::IndexViewBase<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, C>::IndexViewBase;
-
-    auto get_feature() const noexcept { return make_view(this->get_data().feature, this->get_context()); }
+    auto get_feature() const noexcept { return self().template member<&urd::record_of<V>::feature>(); }
 };
-
-}  // namespace ygg
+}  // namespace urd
 
 #endif

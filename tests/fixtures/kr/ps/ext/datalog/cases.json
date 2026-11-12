@@ -1,0 +1,58 @@
+{
+  "cases": [
+    {
+      "program_file": "kr/ps/ext/datalog/sokoban.program",
+      "directory": "classical/ipc2023-learning/sokoban_ipc2023_learning",
+      "tasks": [
+        {
+          "name": "easy_p01",
+          "num_expanded": 11
+        },
+        {
+          "name": "easy_p02",
+          "num_expanded": 8
+        },
+        {
+          "name": "easy_p03",
+          "num_expanded": 6
+        }
+      ]
+    },
+    {
+      "program_file": "kr/ps/ext/datalog/visitall.program",
+      "directory": "classical/autoscale-benchmarks-main/21.11-agile-strips/visitall",
+      "tasks": [
+        {
+          "name": "p01",
+          "num_expanded": 48
+        },
+        {
+          "name": "p02",
+          "num_expanded": 98
+        },
+        {
+          "name": "p03",
+          "num_expanded": 173
+        }
+      ]
+    },
+    {
+      "program_file": "kr/ps/ext/datalog/transport.program",
+      "directory": "classical/autoscale-benchmarks-main/21.11-agile-strips/transport",
+      "tasks": [
+        {
+          "name": "p01",
+          "num_expanded": 64
+        },
+        {
+          "name": "p02",
+          "num_expanded": 78
+        },
+        {
+          "name": "p03",
+          "num_expanded": 111
+        }
+      ]
+    }
+  ]
+}

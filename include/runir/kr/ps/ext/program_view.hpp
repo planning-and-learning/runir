@@ -1,36 +1,36 @@
 #ifndef RUNIR_KR_PS_EXT_PROGRAM_VIEW_HPP_
 #define RUNIR_KR_PS_EXT_PROGRAM_VIEW_HPP_
 
-#include "runir/kr/ps/ext/module_symbol_view.hpp"
 #include "runir/kr/ps/ext/module_view.hpp"
 #include "runir/kr/ps/ext/program_data.hpp"
+#include "runir/kr/ps/module_symbol_view.hpp"
 
 #include <optional>
 #include <tuple>
-#include <yggdrasil/containers/vector.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
 
-namespace ygg
+namespace urd
 {
+template<typename V>
+struct view_mixin<runir::kr::ps::ext::Program, V>
+{
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
-template<formalism::SymbolContextFor<runir::kr::ps::ext::Program> C>
-class View<Index<runir::kr::ps::ext::Program>, C> : public ygg::IndexViewBase<runir::kr::ps::ext::Program, C>
-{
 public:
-    using ygg::IndexViewBase<runir::kr::ps::ext::Program, C>::IndexViewBase;
-
-    auto get_entry_module() const noexcept { return View<Index<runir::kr::ps::ext::Module>, C>(this->get_data().entry_module, this->get_context()); }
-    auto get_modules() const noexcept { return make_view(this->get_data().modules, this->get_context()); }
-    std::optional<View<Index<runir::kr::ps::ext::Module>, C>> find_module(View<Index<runir::kr::ps::ext::ModuleSymbol>, C> symbol) const
+    auto get_entry_module() const noexcept { return self().template member<&urd::record_of<V>::entry_module>(); }
+    auto get_modules() const noexcept { return self().template member<&urd::record_of<V>::modules>(); }
+    template<typename Symbol>
+    auto find_module(Symbol symbol) const
     {
+        using Module = decltype(get_entry_module());
         for (auto module_ : get_modules())
             if (module_.get_symbol() == symbol)
-                return module_;
-        return std::nullopt;
+                return std::optional<Module>(module_);
+        return std::optional<Module>();
     }
 };
-
-}  // namespace ygg
+}  // namespace urd
 
 #endif

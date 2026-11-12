@@ -1,12 +1,15 @@
 #include "bindings.hpp"
 #include "pyrunir/kr/ps/dl/binding_utils.hpp"
+#include "pyrunir/module.hpp"
+#include "runir/kr/dl/detail/repository_instantiations.hpp"
+#include "runir/kr/ps/detail/repository_instantiations.hpp"
 
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
-#include <runir/kr/ps/base/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/dl/evaluation.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 
 namespace runir::kr::ps::base::dl
 {

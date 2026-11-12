@@ -1,10 +1,13 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_EVALUATORS_STATIC_HPP_
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_EVALUATORS_STATIC_HPP_
 
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/incremental/declarations.hpp"
 #include "runir/kr/dl/semantics/incremental/delta.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/denotation_state.hpp"
-#include "runir/kr/dl/semantics/state_evaluation.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
 namespace runir::kr::dl::semantics::incremental::detail
 {
@@ -26,7 +29,7 @@ struct StaticEvaluator
             initialized = true;
         }
     }
-    void update(EvaluationGraph<Kind>&, const Delta&, ygg::database::Workspace&) {}
+    void update(EvaluationGraph<Kind>&, const Delta&, tyr::datalog::database::Workspace&) {}
 };
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

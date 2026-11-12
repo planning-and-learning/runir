@@ -3,14 +3,14 @@
 
 #include "runir/kr/dl/declarations.hpp"
 
+#include <boost/mp11.hpp>
 #include <cassert>
 #include <memory>
+#include <tyr/datalog/lifted/database/datalog/repository.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
+#include <urd/config.hpp>
+#include <urd/elements/flat.hpp>
 #include <utility>
-#include <yggdrasil/core/config.hpp>
-#include <yggdrasil/core/type_list.hpp>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/database/datalog/repository.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>
 
 namespace runir::kr::dl::detail
@@ -26,12 +26,12 @@ class BasicConstructorRepository : public ygg::formalism::SymbolRepositoryBase<B
 private:
     std::shared_ptr<const tyr::formalism::planning::Repository> m_planning_repository;
     /// The rules of the repository's DatalogPrograms.
-    std::shared_ptr<ygg::database::datalog::DatalogRepository> m_datalog_repository;
+    std::unique_ptr<tyr::datalog::database::datalog::DatalogRepository> m_datalog_repository;
     size_t m_index;
 
     BasicConstructorRepository(size_t index, std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository) :
         m_planning_repository(std::move(planning_repository)),
-        m_datalog_repository(ygg::database::datalog::DatalogRepositoryFactory {}.create_shared()),
+        m_datalog_repository(std::make_unique<tyr::datalog::database::datalog::DatalogRepository>()),
         m_index(index)
     {
         assert(m_planning_repository);
@@ -45,7 +45,8 @@ public:
     BasicConstructorRepository& operator=(BasicConstructorRepository&&) = delete;
     ~BasicConstructorRepository() = default;
 
-    [[nodiscard]] const auto& get_index() const noexcept { return m_index; }
+    /// The repository's number, as urd's views ask of a context.
+    [[nodiscard]] std::size_t layer() const noexcept { return m_index; }
     [[nodiscard]] const tyr::formalism::planning::Repository& get_planning_repository() const noexcept
     {
         assert(m_planning_repository);
@@ -53,21 +54,8 @@ public:
         return *m_planning_repository.get();
     }
     [[nodiscard]] const auto& get_planning_repository_ptr() const noexcept { return m_planning_repository; }
-    [[nodiscard]] const ygg::database::datalog::DatalogRepository& get_datalog_repository() const noexcept { return *m_datalog_repository; }
-    [[nodiscard]] ygg::database::datalog::DatalogRepository& get_datalog_repository() noexcept { return *m_datalog_repository; }
-
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<BasicConstructorRepository, T>
-    const ygg::Data<T>& operator[](ygg::Index<T> index) const noexcept
-    {
-        assert(this->template is_local<T>(index));
-        return this->template local<T>(index);
-    }
-
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<BasicConstructorRepository, T>
-    [[nodiscard]] const BasicConstructorRepository& get_canonical_context(ygg::Index<T>) const noexcept
-    { return *this; }
+    [[nodiscard]] const tyr::datalog::database::datalog::DatalogRepository& get_datalog_repository() const noexcept { return *m_datalog_repository; }
+    [[nodiscard]] tyr::datalog::database::datalog::DatalogRepository& get_datalog_repository() noexcept { return *m_datalog_repository; }
 };
 
 template<typename RepositoryTypes>
@@ -86,7 +74,7 @@ public:
 
 template<typename RepositoryTypes>
 inline const BasicConstructorRepository<RepositoryTypes>&
-get_repository(const BasicConstructorRepository<RepositoryTypes>& repository YGG_LIFETIMEBOUND) noexcept
+get_repository(const BasicConstructorRepository<RepositoryTypes>& repository URD_LIFETIMEBOUND) noexcept
 { return repository; }
 
 template<typename RepositoryTypes>

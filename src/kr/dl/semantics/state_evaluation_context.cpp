@@ -13,14 +13,14 @@ namespace runir::kr::dl::semantics::detail
 
 EvaluationWorkspace& get_workspace(Builder& builder) noexcept { return builder.get_workspace(); }
 
-ygg::database::Workspace& get_database_workspace(EvaluationWorkspace& workspace) noexcept { return workspace.get_database_workspace(); }
+tyr::datalog::database::Workspace& get_database_workspace(EvaluationWorkspace& workspace) noexcept { return workspace.get_database_workspace(); }
 
 const tyr::formalism::planning::Repository* get_formalism_repository(const DenotationRepository& repository) noexcept
 { return &repository.get_formalism_repository(); }
 
-const ygg::Data<RegisterValues>& empty_register_values() noexcept
+const urd::data<RegisterValues>& empty_register_values() noexcept
 {
-    static const auto values = ygg::Data<RegisterValues>();
+    static const auto values = urd::data<RegisterValues>();
     return values;
 }
 

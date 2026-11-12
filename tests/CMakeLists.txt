@@ -3,7 +3,7 @@ find_package(GTest CONFIG REQUIRED PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
 
 add_library(runir_test_fixtures STATIC unit/fixtures.cpp)
 target_include_directories(runir_test_fixtures PUBLIC ${PROJECT_SOURCE_DIR}/tests/unit)
-target_link_libraries(runir_test_fixtures PRIVATE Boost::json)
+target_link_libraries(runir_test_fixtures PRIVATE yggdrasil::yggdrasil Boost::json)
 target_compile_definitions(runir_test_fixtures PRIVATE ROOT_DIR="${PROJECT_SOURCE_DIR}")
 
 function(add_runir_test test_name source_file)
@@ -27,20 +27,23 @@ target_link_libraries(runir_test_planning_fixtures PRIVATE runir::datasets TBB::
 add_runir_test(runir_datasets_equivalence_graph unit/datasets/equivalence_graph.cpp runir::datasets runir_test_planning_fixtures)
 add_runir_test(runir_datasets_object_graph unit/datasets/object_graph.cpp runir::datasets runir_test_planning_fixtures)
 add_runir_test(runir_datasets_state_graph unit/datasets/state_graph.cpp runir::datasets runir_test_planning_fixtures)
-add_runir_test(runir_formatter unit/formatter.cpp runir::core)
 add_runir_test(runir_graphs_color_refinement unit/graphs/algorithms/color_refinement.cpp runir::graphs)
 add_runir_test(runir_graphs_static_graph unit/graphs/static_graph.cpp runir::graphs)
 
 set(RUNIR_KR_DL_TYPE_TEST_SOURCES
     unit/kr/dl/argument.cpp
-    unit/kr/dl/boolean.cpp
-    unit/kr/dl/concept.cpp
     unit/kr/dl/constructor.cpp
+    unit/kr/dl/constructors.cpp
     unit/kr/dl/family_traits.cpp
-    unit/kr/dl/numerical.cpp
     unit/kr/dl/register.cpp
-    unit/kr/dl/role.cpp
     unit/kr/dl/semantics/denotation.cpp
+    unit/kr/dl/grammar/derivation_rule.cpp
+    unit/kr/dl/grammar/grammar.cpp
+    unit/kr/dl/grammar/non_terminal.cpp
+    unit/kr/dl/cnf_grammar/derivation_rule.cpp
+    unit/kr/dl/cnf_grammar/grammar.cpp
+    unit/kr/dl/cnf_grammar/non_terminal.cpp
+    unit/kr/dl/cnf_grammar/substitution_rule.cpp
 )
 add_runir_test(runir_kr_dl_types "${RUNIR_KR_DL_TYPE_TEST_SOURCES}" runir::kr)
 add_runir_test(runir_kr_dl_delta unit/kr/dl/semantics/delta.cpp runir::kr runir_test_planning_fixtures)
@@ -48,44 +51,14 @@ add_runir_test(runir_kr_dl_incremental_query unit/kr/dl/semantics/incremental_qu
 add_runir_test(runir_kr_dl_incremental_evaluation unit/kr/dl/semantics/incremental_evaluation.cpp runir::kr runir_test_planning_fixtures)
 add_runir_test(runir_kr_dl_incremental_set_operations unit/kr/dl/semantics/incremental_set_operations.cpp runir::kr)
 
-set(RUNIR_KR_DL_GRAMMAR_TYPE_TEST_SOURCES
-    unit/kr/dl/grammar/boolean.cpp
-    unit/kr/dl/grammar/concept.cpp
-    unit/kr/dl/grammar/constructor.cpp
-    unit/kr/dl/grammar/constructor_or_non_terminal.cpp
-    unit/kr/dl/grammar/derivation_rule.cpp
-    unit/kr/dl/grammar/grammar.cpp
-    unit/kr/dl/grammar/non_terminal.cpp
-    unit/kr/dl/grammar/numerical.cpp
-    unit/kr/dl/grammar/role.cpp
-)
-add_runir_test(runir_kr_dl_grammar_types "${RUNIR_KR_DL_GRAMMAR_TYPE_TEST_SOURCES}" runir::kr)
-
-set(RUNIR_KR_DL_CNF_GRAMMAR_TYPE_TEST_SOURCES
-    unit/kr/dl/cnf_grammar/boolean.cpp
-    unit/kr/dl/cnf_grammar/concept.cpp
-    unit/kr/dl/cnf_grammar/constructor.cpp
-    unit/kr/dl/cnf_grammar/derivation_rule.cpp
-    unit/kr/dl/cnf_grammar/grammar.cpp
-    unit/kr/dl/cnf_grammar/non_terminal.cpp
-    unit/kr/dl/cnf_grammar/numerical.cpp
-    unit/kr/dl/cnf_grammar/role.cpp
-    unit/kr/dl/cnf_grammar/substitution_rule.cpp
-)
-add_runir_test(runir_kr_dl_cnf_grammar_types "${RUNIR_KR_DL_CNF_GRAMMAR_TYPE_TEST_SOURCES}" runir::kr)
-
 set(RUNIR_KR_PS_TYPE_TEST_SOURCES
     unit/kr/ps/family_traits.cpp
     unit/kr/ps/evaluation_context.cpp
-    unit/kr/ps/base/condition.cpp
-    unit/kr/ps/base/effect.cpp
     unit/kr/ps/base/rule.cpp
     unit/kr/ps/base/sketch.cpp
     unit/kr/ps/base/dl/condition.cpp
     unit/kr/ps/base/dl/effect.cpp
     unit/kr/ps/base/dl/feature.cpp
-    unit/kr/ps/ext/condition.cpp
-    unit/kr/ps/ext/effect.cpp
     unit/kr/ps/ext/execution.cpp
     unit/kr/ps/ext/feature.cpp
     unit/kr/ps/ext/memory_state.cpp
@@ -133,7 +106,7 @@ add_runir_test(
 )
 add_runir_test(
     runir_kr_ps_ext_program_executor
-    "unit/kr/ps/ext/module_fixtures.cpp;unit/kr/ps/ext/program_executor.cpp;unit/kr/ps/ext/program_parser.cpp;unit/kr/ps/ext/execution_repository.cpp;unit/kr/ps/ext/successor_expander.cpp"
+    "unit/kr/ps/ext/module_fixtures.cpp;unit/kr/ps/ext/datalog_policies.cpp;unit/kr/ps/ext/program_executor.cpp;unit/kr/ps/ext/program_parser.cpp;unit/kr/ps/ext/execution_repository.cpp;unit/kr/ps/ext/successor_expander.cpp;unit/kr/ps/ext/successor_expander_lifted.cpp"
     runir::datasets
     runir::kr
     runir_test_planning_fixtures
@@ -175,9 +148,5 @@ add_runir_test(runir_kr_dl_optimization unit/kr/dl/optimization.cpp runir::kr ru
 add_runir_test(runir_kr_dl_evaluation_storage unit/kr/dl/evaluation_storage.cpp runir::kr runir::datasets runir_test_planning_fixtures)
 
 # Keep allocation replacements isolated from all other test executables.
-add_runir_test(runir_kr_dl_query_allocations unit/kr/dl/query_allocations.cpp runir::kr runir::datasets runir_test_planning_fixtures)
-
-# Profiles q_must_pass phase by phase; not a test. Optimized even in Debug builds so its timings mean something.
-add_executable(runir_must_pass_profile unit/kr/dl/must_pass_profile.cpp)
-target_compile_options(runir_must_pass_profile PRIVATE -O2 -DNDEBUG)
-target_link_libraries(runir_must_pass_profile PRIVATE runir::kr runir::datasets runir_test_planning_fixtures TBB::tbb runir_test_fixtures)
+add_runir_test(runir_kr_dl_query_allocations unit/kr/dl/query_allocations.cpp runir::kr runir::datasets runir_test_planning_fixtures
+               urd::count_allocations)

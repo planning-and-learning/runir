@@ -1,21 +1,20 @@
 #include "module.hpp"
+#include "pyrunir/module.hpp"
 
 #include <memory>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/vector.h>
 #include <runir/datasets/task_class.hpp>
-#include <tyr/planning/ground/axiom_evaluator.hpp>
-#include <tyr/planning/ground/state_repository.hpp>
+#include <tyr/planning/axiom_evaluator.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/ground/task.hpp>
-#include <tyr/planning/lifted/axiom_evaluator.hpp>
-#include <tyr/planning/lifted/state_repository.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <tyr/planning/lifted/task.hpp>
+#include <tyr/planning/state_builder.hpp>
+#include <tyr/planning/state_repository.hpp>
 #include <utility>
 #include <yggdrasil/execution/onetbb.hpp>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
 
 namespace runir::datasets
 {
@@ -34,7 +33,7 @@ void bind_task_class_for_kind(nb::module_& m, const char* prefix)
     auto task_class = nb::class_<TaskClassT>(m, (std::string(prefix) + "TaskClass").c_str())  //
                           .def(nb::init<>())
                           .def_rw("tasks", &TaskClassT::tasks);
-    ygg::add_comparison(task_class);
+    urd::python::add_comparison(task_class);
 
     nb::class_<TaskSearchContextT>(m, (std::string(prefix) + "TaskSearchContext").c_str())  //
         .def(nb::new_([]() { return TaskSearchContextT::create(); }))

@@ -4,6 +4,8 @@
 #include <gtest/gtest.h>
 #include <limits>
 #include <runir/kr/ps/dl/structural_termination.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 
@@ -75,8 +77,8 @@ TEST(RunirTests, PublicStructuralTerminationReportsFailureFrontier)
     const auto result = kr::ps::dl::structural_termination(policy);
 
     EXPECT_EQ(result.status, kr::ps::dl::StructuralTerminationStatus::NON_TERMINATING);
-    EXPECT_EQ(kr::ps::dl::incomplete_structural_termination(policy).get_cyclic_rule_positions(), std::vector<std::size_t>({ 1, 2 }));
-    EXPECT_EQ(result.get_cyclic_rule_positions(), std::vector<std::size_t>({ 1, 2 }));
+    EXPECT_EQ(kr::ps::dl::incomplete_structural_termination(policy).get_cyclic_rule_positions(), urd::Store<urd::sequence<std::size_t>>({ 1, 2 }));
+    EXPECT_EQ(result.get_cyclic_rule_positions(), urd::Store<urd::sequence<std::size_t>>({ 1, 2 }));
     ASSERT_TRUE(result.incomplete_frontier.has_value());
     const auto& frontier = result.incomplete_frontier.value();
     ASSERT_EQ(frontier.surviving_rules.size(), 2);
@@ -84,32 +86,34 @@ TEST(RunirTests, PublicStructuralTerminationReportsFailureFrontier)
     ASSERT_EQ(frontier.surviving_rules[0].blocking_reasons.size(), 1);
     EXPECT_EQ(frontier.surviving_rules[0].blocking_reasons[0].feature_kind, kr::ps::dl::IncompletePolicyResult::FeatureKind::BOOLEAN);
     EXPECT_EQ(frontier.surviving_rules[0].blocking_reasons[0].feature_position, 0);
-    EXPECT_EQ(frontier.surviving_rules[0].blocking_reasons[0].opposing_rule_positions, std::vector<std::size_t>({ 2 }));
+    EXPECT_EQ(frontier.surviving_rules[0].blocking_reasons[0].opposing_rule_positions, urd::Store<urd::sequence<std::size_t>>({ 2 }));
     EXPECT_EQ(frontier.surviving_rules[1].rule_position, 2);
     ASSERT_EQ(frontier.surviving_rules[1].blocking_reasons.size(), 1);
     EXPECT_EQ(frontier.surviving_rules[1].blocking_reasons[0].feature_kind, kr::ps::dl::IncompletePolicyResult::FeatureKind::BOOLEAN);
     EXPECT_EQ(frontier.surviving_rules[1].blocking_reasons[0].feature_position, 0);
-    EXPECT_EQ(frontier.surviving_rules[1].blocking_reasons[0].opposing_rule_positions, std::vector<std::size_t>({ 1 }));
+    EXPECT_EQ(frontier.surviving_rules[1].blocking_reasons[0].opposing_rule_positions, urd::Store<urd::sequence<std::size_t>>({ 1 }));
 
     ASSERT_EQ(frontier.residual_scopes.size(), 2);
-    const auto scope_zero =
-        std::ranges::find(frontier.residual_scopes, std::vector<std::size_t> { 0 }, &kr::ps::dl::IncompletePolicyResult::ResidualMemoryScope::memory_positions);
-    const auto scope_one =
-        std::ranges::find(frontier.residual_scopes, std::vector<std::size_t> { 1 }, &kr::ps::dl::IncompletePolicyResult::ResidualMemoryScope::memory_positions);
+    const auto scope_zero = std::ranges::find(frontier.residual_scopes,
+                                              urd::Store<urd::sequence<std::size_t>> { 0 },
+                                              &kr::ps::dl::IncompletePolicyResult::ResidualMemoryScope::memory_positions);
+    const auto scope_one = std::ranges::find(frontier.residual_scopes,
+                                             urd::Store<urd::sequence<std::size_t>> { 1 },
+                                             &kr::ps::dl::IncompletePolicyResult::ResidualMemoryScope::memory_positions);
     ASSERT_NE(scope_zero, frontier.residual_scopes.end());
     ASSERT_NE(scope_one, frontier.residual_scopes.end());
     ASSERT_EQ(scope_zero->marked_features.size(), 1);
     EXPECT_EQ(scope_zero->marked_features[0].feature_kind, kr::ps::dl::IncompletePolicyResult::FeatureKind::BOOLEAN);
     EXPECT_EQ(scope_zero->marked_features[0].feature_position, 0);
-    EXPECT_EQ(scope_zero->marked_features[0].witnessing_rule_positions, std::vector<std::size_t>({ 0 }));
+    EXPECT_EQ(scope_zero->marked_features[0].witnessing_rule_positions, urd::Store<urd::sequence<std::size_t>>({ 0 }));
     EXPECT_TRUE(scope_one->marked_features.empty());
 
     ASSERT_EQ(result.counterexample_components.size(), 1);
     const auto& counterexample = result.counterexample_components.front();
     expect_closed_cycle(counterexample);
     EXPECT_EQ(counterexample.get_cycle().size(), 2);
-    EXPECT_EQ(counterexample.memory_positions, std::vector<std::size_t>({ 1 }));
-    EXPECT_EQ(counterexample.boolean_positions, std::vector<std::size_t>({ 0 }));
+    EXPECT_EQ(counterexample.memory_positions, urd::Store<urd::sequence<std::size_t>>({ 1 }));
+    EXPECT_EQ(counterexample.boolean_positions, urd::Store<urd::sequence<std::size_t>>({ 0 }));
     EXPECT_TRUE(counterexample.numerical_positions.empty());
     ASSERT_EQ(counterexample.vertices.size(), 2);
     ASSERT_EQ(counterexample.edges.size(), 2);
@@ -148,14 +152,14 @@ TEST(RunirTests, PublicStructuralTerminationReportsFailureFrontier)
     disjoint_cycles.rule_profiles.push_back(explicit_effects(true_loop));
 
     const auto split = kr::ps::dl::structural_termination(disjoint_cycles);
-    EXPECT_EQ(split.get_cyclic_rule_positions(), std::vector<std::size_t>({ 0, 1 }));
+    EXPECT_EQ(split.get_cyclic_rule_positions(), urd::Store<urd::sequence<std::size_t>>({ 0, 1 }));
     ASSERT_EQ(split.counterexample_components.size(), 2);
     for (std::size_t position = 0; position < split.counterexample_components.size(); ++position)
     {
         const auto& component = split.counterexample_components[position];
         ASSERT_EQ(component.vertices.size(), 1);
         ASSERT_EQ(component.edges.size(), 1);
-        EXPECT_EQ(component.get_cycle(), std::vector<std::size_t>({ 0 }));
+        EXPECT_EQ(component.get_cycle(), urd::Store<urd::sequence<std::size_t>>({ 0 }));
         expect_closed_cycle(component);
         EXPECT_EQ(component.edges[0].rule_position, position);
         EXPECT_EQ(component.vertices[0].boolean_values, position);
@@ -179,7 +183,7 @@ TEST(RunirTests, PublicHybridFrontierDoesNotRetainEliminationFalsePositives)
     policy.rule_profiles.push_back(explicit_effects(to_false));
 
     // The unchanged selector separates the two apparent Boolean opponents.
-    EXPECT_EQ(kr::ps::dl::incomplete_structural_termination(policy).get_cyclic_rule_positions(), std::vector<std::size_t>({ 0, 1 }));
+    EXPECT_EQ(kr::ps::dl::incomplete_structural_termination(policy).get_cyclic_rule_positions(), urd::Store<urd::sequence<std::size_t>>({ 0, 1 }));
     for (const bool preprocess : { false, true })
     {
         const auto result = kr::ps::dl::structural_termination(policy, kr::ps::dl::default_max_features, preprocess);
@@ -207,7 +211,7 @@ TEST(RunirTests, PublicCyclicRulesIncludeAllInstancesButExcludeAcyclicEdges)
     for (const bool preprocess : { false, true })
     {
         const auto result = kr::ps::dl::structural_termination(policy, kr::ps::dl::default_max_features, preprocess);
-        EXPECT_EQ(result.get_cyclic_rule_positions(), std::vector<std::size_t>({ 0, 1, 2, 3 }));
+        EXPECT_EQ(result.get_cyclic_rule_positions(), urd::Store<urd::sequence<std::size_t>>({ 0, 1, 2, 3 }));
         ASSERT_EQ(result.counterexample_components.size(), 2);
         std::size_t shared_instances = 0;
         std::size_t retained_assignments = 0;
@@ -230,12 +234,12 @@ TEST(RunirTests, PublicFinalFrontierExcludesSurvivingCrossComponentRules)
     policy.rule_profiles.emplace_back(0, 0, 0, 0);
     policy.rule_profiles.emplace_back(0, 0, 0, 1);
     policy.rule_profiles.emplace_back(0, 0, 1, 1);
-    EXPECT_EQ(kr::ps::dl::incomplete_structural_termination(policy).get_cyclic_rule_positions(), std::vector<std::size_t>({ 0, 2 }));
-    EXPECT_EQ(kr::ps::dl::incomplete_structural_termination(policy, false).get_cyclic_rule_positions(), std::vector<std::size_t>({ 0, 1, 2 }));
+    EXPECT_EQ(kr::ps::dl::incomplete_structural_termination(policy).get_cyclic_rule_positions(), urd::Store<urd::sequence<std::size_t>>({ 0, 2 }));
+    EXPECT_EQ(kr::ps::dl::incomplete_structural_termination(policy, false).get_cyclic_rule_positions(), urd::Store<urd::sequence<std::size_t>>({ 0, 1, 2 }));
     for (const bool preprocess : { false, true })
     {
         const auto result = kr::ps::dl::structural_termination(policy, kr::ps::dl::default_max_features, preprocess, false);
-        EXPECT_EQ(result.get_cyclic_rule_positions(), std::vector<std::size_t>({ 0, 2 }));
+        EXPECT_EQ(result.get_cyclic_rule_positions(), urd::Store<urd::sequence<std::size_t>>({ 0, 2 }));
         ASSERT_EQ(result.counterexample_components.size(), 2);
         for (const auto& component : result.counterexample_components)
             expect_closed_cycle(component);
@@ -251,14 +255,14 @@ TEST(RunirTests, PublicCyclePreservesOrderedEdgePositionsAndParallelRuleLabels)
     for (const bool preprocess : { false, true })
     {
         const auto result = kr::ps::dl::structural_termination(policy, kr::ps::dl::default_max_features, preprocess);
-        EXPECT_EQ(result.get_cyclic_rule_positions(), std::vector<std::size_t>({ 0, 1, 2 }));
+        EXPECT_EQ(result.get_cyclic_rule_positions(), urd::Store<urd::sequence<std::size_t>>({ 0, 1, 2 }));
         ASSERT_EQ(result.counterexample_components.size(), 1);
         const auto& component = result.counterexample_components.front();
         ASSERT_EQ(component.edges.size(), 3);
         expect_closed_cycle(component);
         const auto cycle = component.get_cycle();
         ASSERT_EQ(cycle.size(), 2);
-        auto rules = std::vector<std::size_t> {};
+        auto rules = urd::Store<urd::sequence<std::size_t>> {};
         for (const auto position : cycle)
             rules.push_back(component.edges.at(position).rule_position);
         std::ranges::sort(rules);

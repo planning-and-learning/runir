@@ -3,6 +3,11 @@
 
 """Knowledge representation: description logics, policy sketches and unsolvability classifiers."""
 
+from pyyggdrasil.diagnostics import (
+    ParseError as ParseError,
+    SemanticError as SemanticError,
+)
+
 from pyrunir._pyrunir.kr import (
     ArityMismatchError as ArityMismatchError,
     DomainContext as DomainContext,
@@ -10,8 +15,6 @@ from pyrunir._pyrunir.kr import (
     GroundTaskContext as GroundTaskContext,
     InvalidExpressionError as InvalidExpressionError,
     LiftedTaskContext as LiftedTaskContext,
-    ParseError as ParseError,
-    SemanticError as SemanticError,
     UndefinedSymbolError as UndefinedSymbolError,
 )
 from pyrunir.kr import (

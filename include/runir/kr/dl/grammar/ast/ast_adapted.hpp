@@ -5,6 +5,8 @@
 #include "runir/kr/parser/ast_adapted.hpp"
 
 #include <boost/fusion/include/adapt_struct.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::QueryAtomicState, predicate_name, columns)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::QueryAtomicGoal, predicate_name, polarity, columns)
@@ -19,7 +21,6 @@ BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::QuerySelectEqual, lhs_col
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::QuerySelectValue, column, object_name, arg)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::QueryGenericJoin, variable_order, output_order, args)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::QueryEmpty, columns)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::QueryMustPass, keys, sources, edges, targets, probes)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::QueryHead, name, columns)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptProject, columns, arg)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::RoleProject, columns, arg)
@@ -83,11 +84,8 @@ BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::BooleanAtomicGoal, predic
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::BooleanNonempty, (runir::kr::dl::grammar::ast::ConstructorOrNonTerminalVariant, arg))
 
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::NumericalCount, (runir::kr::dl::grammar::ast::ConstructorOrNonTerminalVariant, arg))
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::NumericalDistance,
-                          (runir::kr::dl::grammar::ast::ConceptOrQueryVariant, lhs)(runir::kr::dl::grammar::ast::RoleOrQueryVariant,
-                                                                                    mid)(runir::kr::dl::grammar::ast::ConceptOrQueryVariant, rhs))
 
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::Grammar, (std::vector<runir::kr::dl::grammar::ast::DerivationRuleVariant>, rules))
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::Grammar, (urd::Store<urd::sequence<runir::kr::dl::grammar::ast::DerivationRuleVariant>>, rules))
 
 // Boolean comparisons (two boolean choices).
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::BooleanEq,

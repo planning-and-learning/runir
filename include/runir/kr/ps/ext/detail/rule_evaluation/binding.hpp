@@ -14,7 +14,7 @@ template<tyr::TaskKind Kind, BindingRuleKind Tag, runir::kr::dl::semantics::Regi
 auto bound_registers(RuleView<Tag> rule,
                      R source,
                      const runir::kr::dl::semantics::DenotationElementView<typename Tag::Category>& value,
-                     ygg::Data<runir::kr::dl::semantics::RegisterValues>& registers,
+                     urd::data<runir::kr::dl::semantics::RegisterValues>& registers,
                      Storage& storage)
 {
     runir::kr::dl::semantics::assign(registers, source);

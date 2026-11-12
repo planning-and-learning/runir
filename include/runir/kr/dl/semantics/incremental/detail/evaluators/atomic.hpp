@@ -1,11 +1,14 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_EVALUATORS_ATOMIC_HPP_
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_EVALUATORS_ATOMIC_HPP_
 
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/detail/evaluation_helpers.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/incremental/declarations.hpp"
 #include "runir/kr/dl/semantics/incremental/delta.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/denotation_state.hpp"
-#include "runir/kr/dl/semantics/state_evaluation.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
 #include <concepts>
 #include <span>
@@ -26,7 +29,7 @@ struct AtomicEvaluator
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context)
     {
-        if (!graph.repository().contains(predicate))
+        if (!ygg::formalism::contains(graph.repository(), predicate))
             throw std::invalid_argument("Incremental DL: predicate does not belong to the task repository.");
         if constexpr (std::same_as<Category, BooleanTag>)
         {
@@ -40,17 +43,17 @@ struct AtomicEvaluator
             auto& builder = value.initialize(semantics::detail::num_objects<Kind>(context));
             for (const auto atom : context.get_state().get_atoms_view(predicate))
             {
-                const auto objects = atom.get_row().get_objects();
+                const auto objects = atom.get_row().template get<urd::index<tyr::formalism::Object>>();
                 if constexpr (std::same_as<Category, ConceptTag>)
-                    builder.set(objects[0].get_index(), true);
+                    builder.set(objects[0], true);
                 else
-                    builder.set(objects[0].get_index(), objects[1].get_index(), true);
+                    builder.set(objects[0], objects[1], true);
             }
             if (!polarity)
                 builder.flip();
         }
     }
-    void update(EvaluationGraph<Kind>&, const Delta& delta, ygg::database::Workspace&)
+    void update(EvaluationGraph<Kind>&, const Delta& delta, tyr::datalog::database::Workspace&)
     {
         if constexpr (std::same_as<Fact, tyr::formalism::FluentTag>)
             update_atoms(delta.added.fluent_atoms, delta.removed.fluent_atoms);
@@ -62,7 +65,7 @@ private:
     static DenotationElementView<Category> atom_element(tyr::formalism::planning::AtomView<tyr::GroundTag, Fact> atom)
         requires ConceptOrRoleTag<Category>
     {
-        const auto objects = atom.get_row().get_objects();
+        const auto objects = atom.get_objects();
         if constexpr (std::same_as<Category, ConceptTag>)
             return objects[0];
         else

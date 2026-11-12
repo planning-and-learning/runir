@@ -23,11 +23,12 @@ from ext_execution_utils import (
 )
 from fixture_utils import FIXTURE_ROOT
 from pypddl.formalism import ParserOptions
-from pytyr.formalism.planning import ActionBinding, Object, ObjectIndex, Parser, PlanningDomain
+from pytyr.formalism.planning import ActionRow, Object, ObjectIndex, Parser, PlanningDomain
 from pytyr.planning import ground, lifted
-from pyyggdrasil import database
+from pyyggdrasil import formalism
 from pyyggdrasil.execution import ExecutionContext
 from pyyggdrasil.serialization import Dictionaries
+from relation_utils import rename
 
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
 from pyrunir.kr import ArityMismatchError, DomainContext, GroundTaskContext, LiftedTaskContext, UndefinedSymbolError
@@ -143,7 +144,7 @@ def _rule(step: ExecutionStep) -> ext.RuleVariant:
     return rule
 
 
-def _action(step: ExecutionStep) -> ActionBinding:
+def _action(step: ExecutionStep) -> ActionRow:
     transition = step.state_transition
     assert transition is not None
     return transition.action
@@ -160,7 +161,7 @@ def _ints(row: Iterable[object]) -> tuple[int, ...]:
 def _register_value(state: ProgramState) -> int:
     value = state.module_state.registers.concept_values[0]
     assert value is not None
-    return int(value.get_index())
+    return int(value.index())
 
 
 def _runtime(
@@ -230,22 +231,22 @@ def test_action_and_query_feature_bindings_round_trip_and_serialize() -> None:
 
     concrete = dl.ConcreteQueryFeatureData()
     concrete.symbol = feature.get_symbol()
-    concrete.feature = feature.get_expression().get_index()
+    concrete.feature = feature.get_expression().index()
     assert repository.insert(concrete)[0] == feature.get_variant()
     wrapped = dl.QueryFeatureData()
-    wrapped.variant = feature.get_variant().get_index()
+    wrapped.variant = feature.get_variant().index()
     assert repository.insert(wrapped)[0] == feature
     data = ext.ActionRuleData()
-    data.source = rule.get_source().get_index()
-    data.target = rule.get_target().get_index()
-    data.conditions = [condition.get_index() for condition in rule.get_conditions()]
-    data.effects = [effect.get_index() for effect in rule.get_effects()]
+    data.source = rule.get_source().index()
+    data.target = rule.get_target().index()
+    data.conditions = [condition.index() for condition in rule.get_conditions()]
+    data.effects = [effect.index() for effect in rule.get_effects()]
     data.action_name = rule.get_action_name()
-    data.query_feature = feature.get_index()
+    data.query_feature = feature.index()
     assert repository.insert(data)[0] == rule
     module_data = ext.ModuleData()
-    module_data.query_features = [feature.get_index()]
-    assert module_data.query_features == [feature.get_index()]
+    module_data.query_features = [feature.index()]
+    assert module_data.query_features == [feature.index()]
 
     dictionaries = Dictionaries()
     register_table(dictionaries, ext.RuleVariant, "rules", "r")
@@ -272,14 +273,14 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
 
     dl_context = make_dl_context(environment, state)
     relation = ext.evaluate(features["selected"], dl_context)
-    assert isinstance(relation, database.RelationView)
+    assert isinstance(relation, formalism.RelationView)
     assert relation == features["selected"].get_expression().evaluate(dl_context)
     assert len(relation) == 2
     assert relation.arity() == 2
     assert len(relation.columns()) == 2
     assert relation == ext.evaluate(features["selected"], dl_context)
     assert len({relation, ext.evaluate(features["selected"], dl_context)}) == 1
-    assert all(isinstance(row, database.RelationRow) and len(row) == 2 for row in relation)
+    assert all(isinstance(row, formalism.RelationRow) and len(row) == 2 for row in relation)
     rows = {_ints(row) for row in relation}
     objects = task_context.dl_denotation_repository
     assert all(isinstance(objects.get_object(ObjectIndex(value)), Object) for row in rows for value in row)
@@ -305,7 +306,7 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
 
     steps = collect_steps(expander, state)
     assert len(steps) == 2
-    assert rows == {tuple(int(object_.get_index()) for object_ in _action(step).get_objects()) for step in steps}
+    assert rows == {tuple(int(object_.index()) for object_ in _action(step).get_objects()) for step in steps}
     for step in steps:
         rule = _rule(step)
         assert isinstance(rule.get_variant(), ext.ActionRule)
@@ -346,7 +347,7 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
 
 
 def _retained(
-    kind: str, project: Callable[[database.RelationView, database.RelationRepository], T]
+    kind: str, project: Callable[[formalism.RelationView, formalism.RelationRepository], T]
 ) -> tuple[T, tuple[object, ...]]:
     """Project the first query relation of a fresh runtime and drop every other owner."""
     task_context, program, _expander, state, _environment = _runtime(kind)
@@ -370,10 +371,10 @@ def _retained(
     return project(relation, repository.get_relation_repository()), expected
 
 
-def _renamed(relation: database.RelationView, relations: database.RelationRepository) -> database.RelationView:
+def _renamed(relation: formalism.RelationView, relations: formalism.RelationRepository) -> formalism.RelationView:
     columns = list(relation.columns())[::-1]
-    renamed = relations.rename(relation, columns)
-    assert isinstance(renamed, database.RelationView)
+    renamed = rename(relations, relation, columns)
+    assert isinstance(renamed, formalism.RelationView)
     assert list(renamed.columns()) == columns
     return renamed
 
@@ -571,7 +572,7 @@ def test_action_query_preserves_correlated_parameter_tuples(kind: str, tmp_path:
     expander = make_expander(task_context, program)
     state = initial_program_state(expander, initial_node(task_context).get_state())
 
-    def arguments(action: ActionBinding) -> tuple[str, ...]:
+    def arguments(action: ActionRow) -> tuple[str, ...]:
         return tuple(object_.get_name() for object_ in action.get_objects())
 
     broad = _labeled_successors(task_context)

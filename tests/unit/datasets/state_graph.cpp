@@ -5,8 +5,9 @@
 #include <memory>
 #include <runir/datasets/state_graph.hpp>
 #include <stdexcept>
-#include <tyr/planning/ground/state_repository.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
+#include <tyr/planning/state_builder.hpp>
+#include <tyr/planning/state_repository.hpp>
 
 namespace runir::tests
 {
@@ -44,7 +45,7 @@ TEST(StateGraphTest, AnnotatesGeneratedGraphWithReachabilityAndGoalMetadata)
     auto num_alive = std::size_t { 0 };
     for (auto vertex : forward_graph.get_vertex_indices())
     {
-        const auto& label = forward_graph.get_vertex(vertex).get_property();
+        const auto& label = forward_graph.get_vertex_property(vertex);
         if (label.is_initial)
         {
             ++num_initial;
@@ -88,23 +89,22 @@ TEST(StateGraphTest, KeepsInitialVertexWhenStateLimitIsZero)
     ASSERT_NE(result.graph, nullptr);
     const auto& graph = result.graph->get_forward_graph();
     ASSERT_EQ(graph.get_num_vertices(), 1);
-    EXPECT_EQ(graph.get_vertex(0).get_property().state,
+    EXPECT_EQ(graph.get_vertex_property(0).state,
               context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator).get_state().pack());
-    EXPECT_EQ(graph.get_vertex(0).get_property().state.get_state_repository(), context->state_repository);
+    EXPECT_EQ(&graph.get_vertex_property(0).state.get_state_repository(), context->state_repository.get());
 }
 
-TEST(StateGraphTest, LabelsKeepTheRepositoryWithoutRetainingUnpackedBuilders)
+TEST(StateGraphTest, LabelsDoNotRetainUnpackedBuilders)
 {
-    auto repository = std::weak_ptr<tyr::planning::StateRepository<tyr::GroundTag>> {};
+    // Labels borrow the context's repository: the caller keeps it alive.
+    const auto context = make_gripper_ground_context();
     const auto retained = [&]
     {
-        auto context = make_gripper_ground_context();
-        repository = context->state_repository;
-        const ygg::Builder<tyr::planning::State<tyr::GroundTag>>* released_builder = nullptr;
+        const urd::data<tyr::planning::State<tyr::GroundTag>>* released_builder = nullptr;
         auto builder = datasets::StateGraphBuilder<tyr::GroundTag> {};
         {
             const auto node = context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator);
-            released_builder = &node.get_state().get_state_builder();
+            released_builder = &node.get_state().data();
             builder.add_vertex(datasets::StateGraphVertexLabel<tyr::GroundTag> { node.get_state().pack() });
         }
         auto graph = datasets::StateGraph<tyr::GroundTag>(builder);
@@ -113,10 +113,9 @@ TEST(StateGraphTest, LabelsKeepTheRepositoryWithoutRetainingUnpackedBuilders)
             EXPECT_EQ(recycled_builder.get(), released_builder);
         }
         const auto annotated = datasets::annotate_state_graph(*context, graph, datasets::StateGraphCostMode::UNIT_COST);
-        return annotated->get_forward_graph().get_vertex(0).get_property().state;
+        return annotated->get_forward_graph().get_vertex_property(0).state;
     }();
 
-    EXPECT_FALSE(repository.expired());
     EXPECT_EQ(retained.unpack().pack(), retained);
 }
 

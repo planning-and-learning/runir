@@ -5,31 +5,29 @@
 #include "runir/kr/ps/dl/declarations.hpp"
 
 #include <tuple>
-#include <yggdrasil/containers/variant.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
 
-namespace ygg
+namespace urd
 {
+template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, typename V>
+struct view_mixin<runir::kr::ps::Feature<Family, FeatureTag>, V>
+{
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
-template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, formalism::SymbolContextFor<runir::kr::ps::Feature<Family, FeatureTag>> C>
-class View<Index<runir::kr::ps::Feature<Family, FeatureTag>>, C> : public ygg::IndexViewBase<runir::kr::ps::Feature<Family, FeatureTag>, C>
-{
 public:
-    using ygg::IndexViewBase<runir::kr::ps::Feature<Family, FeatureTag>, C>::IndexViewBase;
-
-    auto get_variant() const noexcept { return make_view(this->get_data().variant, this->get_context()); }
+    auto get_variant() const noexcept { return self().template member<&urd::record_of<V>::variant>(); }
     auto get_symbol() const noexcept
     {
-        return ygg::visit([](auto feature) { return feature.get_symbol(); }, get_variant());
+        return std::visit([](auto feature) { return feature.get_symbol(); }, get_variant());
     }
     auto get_expression() const noexcept
     {
-        return ygg::visit([](auto feature) { return feature.get_expression(); }, get_variant());
+        return std::visit([](auto feature) { return feature.get_expression(); }, get_variant());
     }
     auto get_feature() const noexcept { return get_expression(); }
 };
-
-}  // namespace ygg
+}  // namespace urd
 
 #endif

@@ -7,9 +7,9 @@
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
-#include <yggdrasil/core/config.hpp>
+#include <urd/config.hpp>
+#include <urd/format.hpp>
 #include <yggdrasil/formatting/cista_formatters.hpp>
-#include <yggdrasil/formatting/dynamic_bitset_formatters.hpp>
 
 template<>
 struct fmt::formatter<runir::kr::ps::ext::dl::ModulePolicyGraphVertexLabel>
@@ -36,7 +36,7 @@ struct fmt::formatter<runir::kr::ps::ext::dl::ModuleStructuralTerminationResult>
         if (result.is_terminating())
             return fmt::format_to(context.out(), "ModuleStructuralTerminationResult(terminating)");
         // A non-terminating module has a SIEVE counterexample.
-        YGG_ASSUME(result.sieve_result.has_value());
+        URD_ASSUME(result.sieve_result.has_value());
         return fmt::format_to(context.out(),
                               "ModuleStructuralTerminationResult(non-terminating, counterexample with {} vertices and {} edges)",
                               result.sieve_result->counterexample->get_num_vertices(),
@@ -60,11 +60,11 @@ struct fmt::formatter<runir::kr::ps::ext::dl::ProgramStructuralTerminationResult
 };
 
 template<>
-struct fmt::formatter<runir::kr::ps::ext::dl::ModuleIncompleteStructuralTerminationResult>
+struct fmt::formatter<runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::ExtFamilyTag>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
 
-    auto format(const runir::kr::ps::ext::dl::ModuleIncompleteStructuralTerminationResult& result, format_context& context) const
+    auto format(const runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::ExtFamilyTag>& result, format_context& context) const
     {
         if (result.is_terminating())
             return fmt::format_to(context.out(), "ModuleIncompleteStructuralTerminationResult(terminating)");

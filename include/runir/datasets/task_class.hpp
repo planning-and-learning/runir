@@ -22,25 +22,29 @@
 #include <memory>
 #include <tuple>
 #include <type_traits>
-#include <tyr/planning/factory.hpp>
+#include <tyr/planning/axiom_evaluator.hpp>
+#include <tyr/planning/ground/successor_generator.hpp>
+#include <tyr/planning/lifted/successor_generator.hpp>
+#include <tyr/planning/state_repository.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/execution/declarations.hpp>
-#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::datasets
 {
 
 template<tyr::TaskKind Kind>
-struct TaskClass : ygg::comparison::Mixin<TaskClass<Kind>>
+struct TaskClass : urd::compared_by_identity<TaskClass<Kind>>
 {
-    std::vector<tyr::planning::TaskPtr<Kind>> tasks;
+    urd::Store<urd::sequence<tyr::planning::TaskPtr<Kind>>> tasks;
 
     TaskClass() = default;
-    explicit TaskClass(std::vector<tyr::planning::TaskPtr<Kind>> tasks_) : tasks(std::move(tasks_)) {}
+    explicit TaskClass(urd::Store<urd::sequence<tyr::planning::TaskPtr<Kind>>> tasks_) : tasks(std::move(tasks_)) {}
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&TaskClass::tasks> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&TaskClass::tasks> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&TaskClass::tasks> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&TaskClass::tasks> {}; }
 };
 
 template<tyr::TaskKind Kind>
@@ -48,9 +52,6 @@ struct TaskSearchContext
 {
     tyr::planning::TaskPtr<Kind> task;
     ygg::ExecutionContextPtr execution_context;
-    tyr::planning::AxiomEvaluatorFactory<Kind> axiom_evaluator_factory;
-    tyr::planning::StateRepositoryFactory<Kind> state_repository_factory;
-    tyr::planning::SuccessorGeneratorFactory<Kind> successor_generator_factory;
     tyr::planning::AxiomEvaluatorPtr<Kind> axiom_evaluator;
     tyr::planning::StateRepositoryPtr<Kind> state_repository;
     tyr::planning::SuccessorGeneratorPtr<Kind> successor_generator;
@@ -72,12 +73,9 @@ private:
     TaskSearchContext(tyr::planning::TaskPtr<Kind> task_, ygg::ExecutionContextPtr execution_context_) :
         task(std::move(task_)),
         execution_context(std::move(execution_context_)),
-        axiom_evaluator_factory(),
-        state_repository_factory(),
-        successor_generator_factory(),
-        axiom_evaluator(axiom_evaluator_factory.create(task, execution_context)),
-        state_repository(state_repository_factory.create(task)),
-        successor_generator(successor_generator_factory.create(task, execution_context))
+        axiom_evaluator(std::make_shared<tyr::planning::AxiomEvaluator<Kind>>(task, execution_context)),
+        state_repository(std::make_shared<tyr::planning::StateRepository<Kind>>(task)),
+        successor_generator(std::make_shared<tyr::planning::SuccessorGenerator<Kind>>(task, execution_context))
     {
     }
 };
@@ -86,7 +84,7 @@ template<tyr::TaskKind Kind>
 using TaskSearchContextPtr = std::shared_ptr<TaskSearchContext<Kind>>;
 
 template<tyr::TaskKind Kind>
-using TaskSearchContextList = std::vector<TaskSearchContextPtr<Kind>>;
+using TaskSearchContextList = urd::Store<urd::sequence<TaskSearchContextPtr<Kind>>>;
 
 template<tyr::TaskKind Kind>
 struct TaskClassSearchContexts

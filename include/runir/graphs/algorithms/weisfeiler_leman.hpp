@@ -6,15 +6,20 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <urd/repr/sequences/jagged.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/dense_set.hpp>
+#include <urd/store.hpp>
 #include <utility>
+#include <vector>
 
 namespace runir::graphs::weisfeiler_leman
 {
 
 using Color = color_refinement::Color;
 using ColorList = color_refinement::ColorList;
-using BoolList = std::vector<std::uint8_t>;
-using TupleColorAssignmentList = std::vector<std::pair<Color, std::size_t>>;
+using BoolList = urd::Store<urd::sequence<std::uint8_t>, urd::monotone>;
+using TupleColorAssignmentList = urd::Store<urd::sequence<std::pair<Color, std::size_t>>>;
 
 template<std::size_t K>
 using VertexTuple = std::array<VertexIndex, K>;
@@ -23,10 +28,10 @@ template<std::size_t K>
 using ColorTuple = std::array<Color, K>;
 
 template<std::size_t K>
-using ColorTupleList = std::vector<ColorTuple<K>>;
+using ColorTupleList = urd::Store<urd::sequence<ColorTuple<K>>>;
 
 template<std::size_t K>
-struct Signature : ygg::comparison::Mixin<Signature<K>>
+struct Signature : urd::compared_by_identity<Signature<K>>
 {
     Color color {};
     ColorTupleList<K> neighbor_colors;
@@ -34,16 +39,16 @@ struct Signature : ygg::comparison::Mixin<Signature<K>>
     Signature() = default;
     Signature(Color color_, ColorTupleList<K> neighbor_colors_) : color(color_), neighbor_colors(std::move(neighbor_colors_)) {}
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Signature::color, &Signature::neighbor_colors> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Signature::color, &Signature::neighbor_colors> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&Signature::color, &Signature::neighbor_colors> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&Signature::color, &Signature::neighbor_colors> {}; }
 };
 
 template<std::size_t K>
-class Certificate : public ygg::comparison::Mixin<Certificate<K>>
+class Certificate : public urd::compared_by_identity<Certificate<K>>
 {
 public:
-    using RoundSummary = std::vector<std::pair<Signature<K>, std::size_t>>;
-    using RoundSummaryList = std::vector<RoundSummary>;
+    using RoundSummary = urd::Store<urd::sequence<std::pair<Signature<K>, std::size_t>>>;
+    using RoundSummaryList = urd::Store<urd::sequence<RoundSummary>>;
 
 private:
     RoundSummaryList m_round_summaries;
@@ -59,7 +64,7 @@ public:
     [[nodiscard]] auto get_round_summaries() const noexcept -> const RoundSummaryList& { return m_round_summaries; }
     [[nodiscard]] auto get_colors() const noexcept -> const TupleColorAssignmentList& { return m_colors; }
 
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Certificate::m_colors, &Certificate::m_round_summaries> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&Certificate::m_colors, &Certificate::m_round_summaries> {}; }
 };
 
 template<std::size_t K>
@@ -97,21 +102,19 @@ auto hash_to_tuple(std::size_t hash, std::size_t num_vertices) -> VertexTuple<K>
 }
 
 template<std::size_t K, IsGraph G>
-auto initial_tuple_colors(const G& graph, const VertexIndexList& vertices)
+auto initial_tuple_colors(const G& graph, const DenseVertexIndices& vertices)
 {
     using InitialSignature = std::tuple<ColorList, BoolList, BoolList>;
 
     const auto n = vertices.size();
-    auto vertex_to_dense = ygg::UnorderedMap<VertexIndex, VertexIndex>();
-    for (VertexIndex i = 0; i < n; ++i)
-        vertex_to_dense.emplace(vertices[i], i);
+    /// Per dense vertex index, the dense vertex indices it has an edge to.
+    auto adjacency =
+        urd::Store<urd::sequence<urd::Store<urd::set<std::size_t>, urd::dense>>, urd::fixed_shape>(urd::row_lengths(std::vector<std::size_t>(n, n)));
+    for (std::size_t position = 0; position < n; ++position)
+        for (auto edge : graph.get_out_edge_indices(vertices[position]))
+            adjacency[position].set(vertices.position(vertices.find(graph.get_target(edge))));
 
-    auto adjacency = std::vector<BoolList>(n, BoolList(n, false));
-    for (auto vertex : vertices)
-        for (auto edge : graph.get_out_edge_indices(vertex))
-            adjacency.at(vertex_to_dense.at(vertex)).at(vertex_to_dense.at(graph.get_target(edge))) = true;
-
-    auto interner = color_refinement::SignatureInterner<InitialSignature>();
+    auto interner = color_refinement::SignatureInterner<InitialSignature>(urd::layer { 0 });
     auto colors = ColorList(num_tuples<K>(n));
 
     for (std::size_t hash = 0; hash < colors.size(); ++hash)
@@ -121,7 +124,7 @@ auto initial_tuple_colors(const G& graph, const VertexIndexList& vertices)
         auto vertex_colors = ColorList();
         vertex_colors.reserve(K);
         for (auto dense_vertex : tuple)
-            vertex_colors.push_back(static_cast<Color>(graph.get_vertex(vertices[dense_vertex]).get_property_index()));
+            vertex_colors.push_back(static_cast<Color>(graph.get_vertex(vertices[dense_vertex]).get_property_index().value));
 
         auto equalities = BoolList();
         auto adjacencies = BoolList();
@@ -132,11 +135,11 @@ auto initial_tuple_colors(const G& graph, const VertexIndexList& vertices)
             for (std::size_t j = 0; j < K; ++j)
             {
                 equalities.push_back(static_cast<std::uint8_t>(tuple[i] == tuple[j]));
-                adjacencies.push_back(adjacency.at(tuple[i]).at(tuple[j]));
+                adjacencies.push_back(static_cast<std::uint8_t>(adjacency[tuple[i]].test(tuple[j])));
             }
         }
 
-        colors[hash] = interner.insert(InitialSignature(std::move(vertex_colors), std::move(equalities), std::move(adjacencies)));
+        colors[hash] = color_refinement::intern(interner, InitialSignature(std::move(vertex_colors), std::move(equalities), std::move(adjacencies)));
     }
 
     return colors;
@@ -145,16 +148,16 @@ auto initial_tuple_colors(const G& graph, const VertexIndexList& vertices)
 template<std::size_t K, IsGraph G>
 auto compute_certificate(const G& graph)
 {
-    const auto vertices = color_refinement::to_dense_vertex_order(graph);
+    const auto vertices = dense_vertex_indices(graph);
     const auto n = vertices.size();
     auto colors = initial_tuple_colors<K>(graph, vertices);
 
     auto round_summaries = typename Certificate<K>::RoundSummaryList();
-    auto tuple_signatures = std::vector<std::pair<std::size_t, Signature<K>>>();
+    auto tuple_signatures = urd::Store<urd::sequence<std::pair<std::size_t, Signature<K>>>>();
     tuple_signatures.reserve(colors.size());
     auto neighbor_colors = ColorTupleList<K>();
     neighbor_colors.reserve(K * n);
-    auto interner = color_refinement::SignatureInterner<Signature<K>>();
+    auto interner = color_refinement::SignatureInterner<Signature<K>>(urd::layer { 0 });
     auto next_colors = ColorList(colors.size());
     auto changed = true;
     while (changed)
@@ -210,7 +213,7 @@ auto compute_certificate(const G& graph)
         // Refine tuple colors.
         for (auto& [hash, signature] : tuple_signatures)
         {
-            const auto next_color = interner.insert(std::move(signature));
+            const auto next_color = color_refinement::intern(interner, std::move(signature));
             next_colors[hash] = next_color;
             changed = changed || next_color != colors.at(hash);
         }

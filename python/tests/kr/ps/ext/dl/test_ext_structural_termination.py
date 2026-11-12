@@ -10,7 +10,7 @@ from fixture_utils import read_fixture
 from pytyr.formalism.planning import PlanningDomain
 
 from pyrunir.kr.dl import ConstructorRepositoryFactory as DlRepositoryFactory
-from pyrunir.kr.ps import ext
+from pyrunir.kr.ps import IncompleteStructuralTerminationStatus, ext
 from pyrunir.kr.ps.ext import dl
 
 TERMINATING_MODULE = read_fixture("kr/ps/ext/dl/terminating.module")
@@ -208,8 +208,8 @@ def test_ext_structural_termination_is_terminating(gripper_planning_domain: Plan
     (scc_result,) = sieve_result.scc_results
     assert isinstance(scc_result, dl.SccStructuralTerminationResult)
     assert scc_result.booleans == []
-    assert [feature.get_index() for feature in scc_result.numericals] == [
-        feature.get_index() for feature in module.get_numerical_features()
+    assert [feature.index() for feature in scc_result.numericals] == [
+        feature.index() for feature in module.get_numerical_features()
     ]
 
 
@@ -237,7 +237,7 @@ def test_ext_structural_termination_counterexample_spans_memory_states(gripper_p
         assert 0 <= vertex.numerical_values < 1 << len(numericals)
 
     edges = [counterexample.get_edge_property(edge) for edge in counterexample.get_edge_indices()]
-    assert len({edge.get_index() for edge in edges}) == 2
+    assert len({edge.index() for edge in edges}) == 2
     cycle = counterexample.find_edge_cycle()
     assert len(cycle) == 2
     assert len(set(cycle)) == 2
@@ -265,15 +265,15 @@ def test_ext_structural_termination_lifts_projected_components(
 
     feature_sets = {
         (
-            tuple(feature.get_index() for feature in scc_result.booleans),
-            tuple(feature.get_index() for feature in scc_result.numericals),
+            tuple(feature.index() for feature in scc_result.booleans),
+            tuple(feature.index() for feature in scc_result.numericals),
         )
         for scc_result in sieve_result.scc_results
     }
     assert feature_sets == {
-        ((booleans[0].get_index(),), ()),
-        ((), (numericals[0].get_index(),)),
-        ((), (numericals[1].get_index(),)),
+        ((booleans[0].index(),), ()),
+        ((), (numericals[0].index(),)),
+        ((), (numericals[1].index(),)),
     }
 
     vertices = [counterexample.get_vertex_property(vertex) for vertex in counterexample.get_vertex_indices()]
@@ -299,9 +299,9 @@ def test_ext_structural_termination_lifts_projected_components(
     edges = [counterexample.get_edge_property(edge) for edge in counterexample.get_edge_indices()]
     assert {edge.get_symbol() for edge in edges} == {"keep_n0", "keep_n1", "to_false", "to_true"}
     surviving_rules = sieve_result.surviving_rules
-    surviving_rule_ids = {rule.get_index() for rule in surviving_rules}
+    surviving_rule_ids = {rule.index() for rule in surviving_rules}
     assert len(surviving_rules) == len(surviving_rule_ids) == 4
-    assert surviving_rule_ids == {edge.get_index() for edge in edges}
+    assert surviving_rule_ids == {edge.index() for edge in edges}
 
     cycle = counterexample.find_edge_cycle()
     assert cycle
@@ -309,7 +309,7 @@ def test_ext_structural_termination_lifts_projected_components(
     assert set(cycle) <= set(counterexample.get_edge_indices())
     for edge, next_edge in zip(cycle, cycle[1:] + cycle[:1], strict=True):
         assert counterexample.get_target(edge) == counterexample.get_source(next_edge)
-    assert {counterexample.get_edge_property(edge).get_index() for edge in cycle} < surviving_rule_ids
+    assert {counterexample.get_edge_property(edge).index() for edge in cycle} < surviving_rule_ids
 
 
 def test_ext_incomplete_structural_termination_uses_memory_components(gripper_planning_domain: PlanningDomain) -> None:
@@ -318,7 +318,7 @@ def test_ext_incomplete_structural_termination_uses_memory_components(gripper_pl
 
     result = dl.incomplete_structural_termination(module)
     assert result.is_terminating()
-    assert result.status == dl.IncompleteStructuralTerminationStatus.TERMINATING
+    assert result.status == IncompleteStructuralTerminationStatus.TERMINATING
     assert len(module.get_boolean_features()) == 1
     assert module.get_numerical_features() == []
     assert result.surviving_rules == []

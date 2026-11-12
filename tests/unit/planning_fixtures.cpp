@@ -5,6 +5,8 @@
 #include <tyr/formalism/planning/parser.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/task.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <yggdrasil/execution/onetbb.hpp>
 
@@ -26,7 +28,7 @@ auto make_lifted_context(const std::filesystem::path& domain_file, const std::fi
     return datasets::TaskSearchContext<tyr::LiftedTag>::create(std::move(task), std::move(execution_context));
 }
 
-auto make_ground_contexts(const std::filesystem::path& domain_file, const std::vector<std::filesystem::path>& task_files)
+auto make_ground_contexts(const std::filesystem::path& domain_file, const urd::Store<urd::sequence<std::filesystem::path>>& task_files)
     -> datasets::TaskSearchContextList<tyr::GroundTag>
 {
     auto parser = tyr::formalism::planning::Parser(domain_file);

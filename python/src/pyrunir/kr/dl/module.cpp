@@ -3,6 +3,7 @@
 #include "bindings.hpp"
 #include "cnf_grammar/module.hpp"
 #include "grammar/module.hpp"
+#include "pyrunir/module.hpp"
 #include "semantics/module.hpp"
 
 namespace runir::kr::dl

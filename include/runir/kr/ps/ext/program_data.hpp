@@ -4,43 +4,34 @@
 #include "runir/kr/ps/ext/declarations.hpp"
 
 #include <tuple>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
 
-namespace ygg
+namespace urd
 {
 
 template<>
-struct Data<runir::kr::ps::ext::Program>
+struct data<runir::kr::ps::ext::Program>
 {
-    Index<runir::kr::ps::ext::Program> index;
-    Index<runir::kr::ps::ext::Module> entry_module;
-    IndexList<runir::kr::ps::ext::Module> modules;
+    urd::index<runir::kr::ps::ext::Program> index;
+    urd::index<runir::kr::ps::ext::Module> entry_module;
+    urd::flat_vector<urd::index<runir::kr::ps::ext::Module>> modules;
 
-    Data() = default;
-    Data(Index<runir::kr::ps::ext::Module> entry_module_, IndexList<runir::kr::ps::ext::Module> modules_) :
+    data() = default;
+    data(urd::index<runir::kr::ps::ext::Module> entry_module_, urd::flat_vector<urd::index<runir::kr::ps::ext::Module>> modules_) :
         index(),
         entry_module(entry_module_),
         modules(std::move(modules_))
     {
     }
-    template<typename C>
-    Data(::ygg::View<Index<runir::kr::ps::ext::Module>, C> entry_module_, const std::vector<::ygg::View<Index<runir::kr::ps::ext::Module>, C>>& modules_) :
-        index(),
-        entry_module(),
-        modules()
-    {
-        set(entry_module_, entry_module);
-        set(modules_, modules);
-    }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::entry_module, &Data::modules> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::entry_module, &Data::modules> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::entry_module, &data::modules> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::entry_module, &data::modules> {}; }
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 #endif

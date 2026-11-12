@@ -1,3 +1,4 @@
+#include "pyrunir/module.hpp"
 #include "pyrunir/serialization/binding_utils.hpp"
 #include "pyrunir/serialization/bindings.hpp"
 

@@ -7,7 +7,7 @@ find_package(
 find_package(nanobind CONFIG REQUIRED PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
 message(STATUS "Found nanobind: ${nanobind_DIR} (found version ${nanobind_VERSION})")
 
-yggdrasil_python_package_init(PYRUNIR pyrunir)
+brokkr_python_package_init(PYRUNIR pyrunir)
 
 file(
     GLOB_RECURSE PYRUNIR_KR_SOURCES
@@ -40,7 +40,7 @@ nanobind_add_module(
 target_link_libraries(_pyrunir PRIVATE runir::core)
 target_include_directories(_pyrunir PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 
-yggdrasil_python_module_rpaths(PYRUNIR _pyrunir)
+brokkr_python_module_rpaths(PYRUNIR _pyrunir)
 
 install(TARGETS _pyrunir DESTINATION "pyrunir" COMPONENT pyrunir)
 
@@ -51,7 +51,7 @@ foreach(runir_target IN ITEMS core datasets graphs kr)
     )
 endforeach()
 
-yggdrasil_install_native_export(
+brokkr_install_native_export(
     PKG_UPPER PYRUNIR
     PACKAGE pyrunir
     CONFIG_NAME runir
@@ -62,10 +62,9 @@ yggdrasil_install_native_export(
     HEADER_DIRS "${CMAKE_SOURCE_DIR}/include/runir"
     CONFIG_TEMPLATE "${CMAKE_SOURCE_DIR}/Config.cmake.in"
     VERSION_FILE "${CMAKE_BINARY_DIR}/runirConfigVersion.cmake"
-    CMAKE_SOURCE_DIRECTORY "${CMAKE_SOURCE_DIR}/cmake"
 )
 
-yggdrasil_install_runtime_path_fixup(PYRUNIR pyrunir)
+brokkr_install_runtime_path_fixup(PYRUNIR pyrunir)
 
 set(PYRUNIR_GENERATED_VERSION_FILE "${CMAKE_CURRENT_BINARY_DIR}/pyrunir/_version.py")
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/pyrunir")
@@ -76,7 +75,7 @@ install(
     COMPONENT pyrunir
 )
 
-yggdrasil_install_python_files(
+brokkr_install_python_files(
     pyrunir "${CMAKE_CURRENT_SOURCE_DIR}"
     FILES
         pyrunir/__init__.py
@@ -107,16 +106,29 @@ yggdrasil_install_python_files(
         pyrunir/serialization/__init__.py
 )
 
-yggdrasil_install_provider_env(
+brokkr_install_provider_env(
     PYRUNIR pyrunir
-    PREFIXES "${LOKI_NATIVE_PREFIX}" "${TYR_NATIVE_PREFIX}" "${YGGDRASIL_NATIVE_PREFIX}"
+    PREFIXES "${LOKI_NATIVE_PREFIX}" "${TYR_NATIVE_PREFIX}" "${YGGDRASIL_NATIVE_PREFIX}" "${URD_NATIVE_PREFIX}"
 )
 
-yggdrasil_install_python_stubs(
+brokkr_install_python_stubs(
     PYRUNIR pyrunir
     MODULE pyrunir._pyrunir
     PRIVATE_MODULE _pyrunir
     RENAME_PACKAGES pyrunir pytyr pypddl pyyggdrasil
 )
+
+# pyrunir/kr/__init__.py re-exports pyyggdrasil's ParseError and SemanticError. nanobind's stub
+# generator leaves out names that another package defines, so the installed stub, which type checkers
+# read instead of __init__.py, gets the same re-export (once: an existing stub is kept on reinstall).
+install(CODE [[
+    set(pyrunir_kr_stub "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/pyrunir/kr/__init__.pyi")
+    set(pyrunir_reexport "from pyyggdrasil.diagnostics import ParseError as ParseError, SemanticError as SemanticError")
+    file(READ "${pyrunir_kr_stub}" pyrunir_kr_stub_content)
+    string(FIND "${pyrunir_kr_stub_content}" "${pyrunir_reexport}" pyrunir_reexport_position)
+    if(pyrunir_reexport_position EQUAL -1)
+        file(APPEND "${pyrunir_kr_stub}" "\n${pyrunir_reexport}\n")
+    endif()
+]] COMPONENT pyrunir)
 
 add_custom_target(pyrunir_wheel DEPENDS _pyrunir)

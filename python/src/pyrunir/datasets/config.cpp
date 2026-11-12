@@ -1,4 +1,5 @@
 #include "module.hpp"
+#include "pyrunir/module.hpp"
 
 #include <runir/datasets/config.hpp>
 

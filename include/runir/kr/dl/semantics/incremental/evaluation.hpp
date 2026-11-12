@@ -11,15 +11,21 @@
 #include <concepts>
 #include <cstdint>
 #include <initializer_list>
+#include <memory>
 #include <optional>
+#include <ranges>
 #include <span>
 #include <stdexcept>
+#include <tuple>
+#include <tyr/datalog/lifted/database/semantics/incremental/delta.hpp>
+#include <tyr/datalog/lifted/database/semantics/relation_view.hpp>
 #include <tyr/planning/declarations.hpp>
+#include <urd/repr/maps/postings.hpp>
+#include <urd/repr/maps/unordered_flat_map.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <variant>
-#include <vector>
-#include <yggdrasil/database/relation/delta.hpp>
-#include <yggdrasil/database/relation/relation_builder.hpp>
 
 namespace runir::kr::dl::semantics::incremental
 {
@@ -36,19 +42,30 @@ class EvaluationGraph
     friend class IncrementalEvaluation;
     friend class detail::GraphBuilder<Kind>;
 
-    std::vector<std::variant<detail::FeatureNode<Kind, ConceptTag>,
-                             detail::FeatureNode<Kind, RoleTag>,
-                             detail::FeatureNode<Kind, BooleanTag>,
-                             detail::FeatureNode<Kind, NumericalTag>,
-                             detail::QueryNode<Kind>>>
+    /// The layer the query nodes' builders are read through; declared first, so it outlives them, and behind a pointer,
+    /// so it stays where it is when the graph moves.
+    std::unique_ptr<ygg::FreeRelationRepository> m_layer = std::make_unique<ygg::FreeRelationRepository>();
+    urd::Store<urd::sequence<std::variant<detail::FeatureNode<Kind, ConceptTag>,
+                                          detail::FeatureNode<Kind, RoleTag>,
+                                          detail::FeatureNode<Kind, BooleanTag>,
+                                          detail::FeatureNode<Kind, NumericalTag>,
+                                          detail::QueryNode<Kind>>>>
         m_nodes;
+    /// The node of each prepared expression.
+    template<CategoryTag Category>
+    using FeatureNodeIndices = urd::Store<urd::map<ConstructorView<Category>, EvaluationIndex<Category>>>;
+    std::tuple<FeatureNodeIndices<ConceptTag>, FeatureNodeIndices<RoleTag>, FeatureNodeIndices<BooleanTag>, FeatureNodeIndices<NumericalTag>> m_feature_nodes;
+    urd::Store<urd::map<QueryView<>, QueryEvaluationIndex>> m_query_nodes;
+    /// The nodes that lift a concept or role node into a relation, by the lifted node.
+    urd::Store<urd::map<ygg::uint_t, QueryEvaluationIndex>, urd::multi> m_lifts;
     detail::SetOperationWorkspace m_set_workspace;
     const tyr::planning::Task<Kind>* m_task;
 
     template<CategoryTag Category>
     [[nodiscard]] const auto& node(EvaluationIndex<Category> index) const
-    { return std::get<detail::FeatureNode<Kind, Category>>(m_nodes.at(static_cast<ygg::uint_t>(index))); }
-    [[nodiscard]] const auto& node(QueryEvaluationIndex index) const { return std::get<detail::QueryNode<Kind>>(m_nodes.at(static_cast<ygg::uint_t>(index))); }
+    { return std::get<detail::FeatureNode<Kind, Category>>(m_nodes.at(static_cast<ygg::uint_t>(index.value))); }
+    [[nodiscard]] const auto& node(QueryEvaluationIndex index) const
+    { return std::get<detail::QueryNode<Kind>>(m_nodes.at(static_cast<ygg::uint_t>(index.value))); }
 
     template<CategoryTag Category>
     std::optional<EvaluationIndex<Category>> find_node(ConstructorView<Category> expression) const;
@@ -58,42 +75,43 @@ class EvaluationGraph
     EvaluationIndex<Category> prepare(ConstructorView<Category> expression);
     QueryEvaluationIndex prepare(QueryView<> expression);
     template<CategoryTag Category>
-    EvaluationIndex<Category> prepare(ConstructorView<Category> expression, std::vector<ygg::uint_t>& dependencies)
+    EvaluationIndex<Category> prepare(ConstructorView<Category> expression, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
     {
         const auto index = prepare(expression);
-        dependencies.push_back(static_cast<ygg::uint_t>(index));
+        dependencies.push_back(static_cast<ygg::uint_t>(index.value));
         return index;
     }
-    QueryEvaluationIndex prepare(QueryView<> expression, std::vector<ygg::uint_t>& dependencies)
+    QueryEvaluationIndex prepare(QueryView<> expression, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
     {
         const auto index = prepare(expression);
-        dependencies.push_back(static_cast<ygg::uint_t>(index));
+        dependencies.push_back(static_cast<ygg::uint_t>(index.value));
         return index;
     }
     /// The relation of a query, or of a concept or role lifted into the given columns. Identical
     /// lifts share one node.
-    QueryEvaluationIndex prepare_relation(QueryView<> expression, std::span<const ygg::database::ColumnLayout>, std::vector<ygg::uint_t>& dependencies)
+    QueryEvaluationIndex prepare_relation(QueryView<> expression, std::span<const ygg::ColumnLayout>, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
     { return prepare(expression, dependencies); }
     template<ConceptOrRoleTag Category>
     QueryEvaluationIndex
-    prepare_relation(ConstructorView<Category> expression, std::span<const ygg::database::ColumnLayout> columns, std::vector<ygg::uint_t>& dependencies)
+    prepare_relation(ConstructorView<Category> expression, std::span<const ygg::ColumnLayout> columns, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
     {
         const auto argument = prepare(expression);
+        const auto lifted = static_cast<ygg::uint_t>(argument.value);
         auto index = std::optional<QueryEvaluationIndex> {};
-        for (size_t i = 0; i < m_nodes.size() && !index; ++i)
-            if (const auto* candidate = std::get_if<detail::QueryNode<Kind>>(&m_nodes[i]); candidate && candidate->lifts(argument, columns))
-                index = QueryEvaluationIndex(ygg::to_uint_t(i));
+        for (const auto [first, last] = m_lifts.equal_range(lifted); const auto candidate : std::ranges::subrange(first, last) | std::views::values)
+            if (!index && node(candidate).lifts(argument, columns))
+                index = candidate;
         if (!index)
         {
             index = QueryEvaluationIndex(ygg::to_uint_t(m_nodes.size()));
-            m_nodes.emplace_back(detail::QueryNode<Kind>(argument, columns));
+            m_nodes.emplace_back(detail::QueryNode<Kind>(*m_layer, argument, columns));
+            m_lifts.insert({ lifted, *index });
         }
-        dependencies.push_back(static_cast<ygg::uint_t>(*index));
+        dependencies.push_back(static_cast<ygg::uint_t>((*index).value));
         return *index;
     }
-
     /// The node of a Datalog program; one per program.
-    QueryEvaluationIndex prepare_program(DatalogProgramView program, std::vector<ygg::uint_t>& dependencies)
+    QueryEvaluationIndex prepare_program(DatalogProgramView program, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
     {
         auto index = std::optional<QueryEvaluationIndex> {};
         for (size_t i = 0; i < m_nodes.size() && !index; ++i)
@@ -108,14 +126,13 @@ class EvaluationGraph
             index = QueryEvaluationIndex(ygg::to_uint_t(m_nodes.size()));
             m_nodes.emplace_back(std::move(prepared));
         }
-        dependencies.push_back(static_cast<ygg::uint_t>(*index));
+        dependencies.push_back(static_cast<ygg::uint_t>((*index).value));
         return *index;
     }
 
 public:
     /// The operation of a program node, read by its heads.
     [[nodiscard]] const detail::QueryProgramEvaluator<Kind>& program(QueryEvaluationIndex index) const { return *node(index).get_program(); }
-
     EvaluationGraph(const tyr::planning::Task<Kind>& task, std::span<const EvaluationRoot> roots);
     EvaluationGraph(const tyr::planning::Task<Kind>& task, std::initializer_list<EvaluationRoot> roots) :
         EvaluationGraph(task, std::span<const EvaluationRoot>(roots.begin(), roots.size()))
@@ -139,10 +156,10 @@ public:
     /// see IncrementalEvaluation).
     template<CategoryTag Category>
     [[nodiscard]] BorrowedDenotationView<Category> result(EvaluationIndex<Category> index) const;
-    [[nodiscard]] const ygg::Builder<ygg::database::Relation>& result(QueryEvaluationIndex index) const;
+    [[nodiscard]] ygg::FreeBuilderRelationView result(QueryEvaluationIndex index) const;
     template<ConceptOrRoleTag Category>
     [[nodiscard]] const DenotationDelta<Category>& change(EvaluationIndex<Category> index) const;
-    [[nodiscard]] const ygg::database::Delta& change(QueryEvaluationIndex index) const;
+    [[nodiscard]] const tyr::datalog::database::incremental::Delta& change(QueryEvaluationIndex index) const;
     template<ConceptOrRoleTag Category>
     [[nodiscard]] size_t cardinality(EvaluationIndex<Category> index) const;
     [[nodiscard]] size_t cardinality(QueryEvaluationIndex index) const { return result(index).size(); }
@@ -151,6 +168,7 @@ public:
     { return result(index).any(); }
     [[nodiscard]] bool nonempty(QueryEvaluationIndex index) const { return !result(index).empty(); }
     [[nodiscard]] const tyr::formalism::planning::Repository& repository() const { return *m_task->get_repository(); }
+    [[nodiscard]] const ygg::FreeRelationRepository& layer() const noexcept { return *m_layer; }
     detail::SetOperationWorkspace& set_workspace() noexcept { return m_set_workspace; }
 };
 
@@ -166,22 +184,26 @@ class GraphBuilder
 public:
     explicit GraphBuilder(EvaluationGraph<Kind>& graph) noexcept : m_graph(&graph) {}
 
+    [[nodiscard]] const ygg::FreeRelationRepository& layer() const noexcept { return m_graph->layer(); }
+
     template<CategoryTag Category>
     EvaluationIndex<Category> prepare(ConstructorView<Category> expression)
     { return m_graph->prepare(expression); }
     QueryEvaluationIndex prepare(QueryView<> expression) { return m_graph->prepare(expression); }
     template<CategoryTag Category>
-    EvaluationIndex<Category> prepare(ConstructorView<Category> expression, std::vector<ygg::uint_t>& dependencies)
+    EvaluationIndex<Category> prepare(ConstructorView<Category> expression, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
     { return m_graph->prepare(expression, dependencies); }
-    QueryEvaluationIndex prepare(QueryView<> expression, std::vector<ygg::uint_t>& dependencies) { return m_graph->prepare(expression, dependencies); }
-    QueryEvaluationIndex prepare_program(DatalogProgramView program, std::vector<ygg::uint_t>& dependencies)
-    { return m_graph->prepare_program(program, dependencies); }
-    QueryEvaluationIndex prepare_relation(QueryView<> expression, std::span<const ygg::database::ColumnLayout> columns, std::vector<ygg::uint_t>& dependencies)
+    QueryEvaluationIndex prepare(QueryView<> expression, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
+    { return m_graph->prepare(expression, dependencies); }
+    QueryEvaluationIndex
+    prepare_relation(QueryView<> expression, std::span<const ygg::ColumnLayout> columns, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
     { return m_graph->prepare_relation(expression, columns, dependencies); }
     template<ConceptOrRoleTag Category>
     QueryEvaluationIndex
-    prepare_relation(ConstructorView<Category> expression, std::span<const ygg::database::ColumnLayout> columns, std::vector<ygg::uint_t>& dependencies)
+    prepare_relation(ConstructorView<Category> expression, std::span<const ygg::ColumnLayout> columns, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
     { return m_graph->prepare_relation(expression, columns, dependencies); }
+    QueryEvaluationIndex prepare_program(DatalogProgramView program, urd::Store<urd::sequence<ygg::uint_t>>& dependencies)
+    { return m_graph->prepare_program(program, dependencies); }
 };
 }  // namespace detail
 
@@ -213,7 +235,7 @@ class IncrementalEvaluation
     };
 
     EvaluationGraph<Kind> m_graph;
-    std::vector<NodeState> m_nodes;
+    urd::Store<urd::sequence<NodeState>> m_nodes;
     uint64_t m_epoch = 0;
     bool m_transition = false;  ///< m_epoch was entered from the previous one by a delta.
 
@@ -229,14 +251,14 @@ class IncrementalEvaluation
             throw std::logic_error("Incremental evaluation: exact deltas exist only for results updated from the state's delta.");
     }
     template<StateEvaluationContextConcept<Kind> Context>
-    StateEvaluation<Kind, Context> next(Context context, const Delta* delta, ygg::database::Workspace* workspace)
+    StateEvaluation<Kind, Context> next(Context context, const Delta* delta, tyr::datalog::database::Workspace* workspace)
     {
         ++m_epoch;
         m_transition = delta != nullptr;
         return StateEvaluation<Kind, Context>(*this, std::move(context), delta, workspace);
     }
     template<StateEvaluationContextConcept<Kind> Context>
-    void demand(ygg::uint_t index, Context& context, const Delta* delta, ygg::database::Workspace* workspace);
+    void demand(ygg::uint_t index, Context& context, const Delta* delta, tyr::datalog::database::Workspace* workspace);
 
 public:
     IncrementalEvaluation(const tyr::planning::Task<Kind>& task, std::span<const EvaluationRoot> roots) : m_graph(task, roots), m_nodes(m_graph.node_count()) {}
@@ -261,7 +283,7 @@ public:
     }
     /// Enters the state reached from the previous one by `delta`.
     template<StateEvaluationContextConcept<Kind> Context>
-    StateEvaluation<Kind, Context> enter(Context context, const Delta& delta, ygg::database::Workspace& workspace)
+    StateEvaluation<Kind, Context> enter(Context context, const Delta& delta, tyr::datalog::database::Workspace& workspace)
     {
         require_task(context);
         return next(std::move(context), &delta, &workspace);
@@ -269,7 +291,7 @@ public:
     /// Continues the current state, keeping what it evaluated. `delta` must be the one the state was entered by; it
     /// is ignored if the state was entered without one.
     template<StateEvaluationContextConcept<Kind> Context>
-    StateEvaluation<Kind, Context> resume(Context context, const Delta& delta, ygg::database::Workspace& workspace)
+    StateEvaluation<Kind, Context> resume(Context context, const Delta& delta, tyr::datalog::database::Workspace& workspace)
     {
         require_task(context);
         if (m_epoch == 0)
@@ -282,7 +304,7 @@ private:
     template<CategoryTag Category>
     [[nodiscard]] BorrowedDenotationView<Category> get_result(EvaluationIndex<Category> index) const
     { return m_graph.result(index); }
-    [[nodiscard]] const ygg::Builder<ygg::database::Relation>& get_result(QueryEvaluationIndex index) const { return m_graph.result(index); }
+    [[nodiscard]] ygg::FreeBuilderRelationView get_result(QueryEvaluationIndex index) const { return m_graph.result(index); }
     template<ConceptOrRoleTag Category>
     [[nodiscard]] size_t size(EvaluationIndex<Category> index) const
     { return m_graph.cardinality(index); }
@@ -291,12 +313,12 @@ private:
     template<ConceptOrRoleTag Category>
     [[nodiscard]] const DenotationDelta<Category>& get_delta(EvaluationIndex<Category> index) const
     {
-        require_exact(static_cast<ygg::uint_t>(index));
+        require_exact(static_cast<ygg::uint_t>(index.value));
         return m_graph.change(index);
     }
-    [[nodiscard]] const ygg::database::Delta& get_delta(QueryEvaluationIndex index) const
+    [[nodiscard]] const tyr::datalog::database::incremental::Delta& get_delta(QueryEvaluationIndex index) const
     {
-        require_exact(static_cast<ygg::uint_t>(index));
+        require_exact(static_cast<ygg::uint_t>(index.value));
         return m_graph.change(index);
     }
     template<BooleanOrNumericalTag Category>
@@ -310,10 +332,10 @@ class StateEvaluation
     uint64_t m_epoch;
     Context m_context;
     const Delta* m_delta;  ///< The transition into the state, if known.
-    ygg::database::Workspace* m_workspace;
+    tyr::datalog::database::Workspace* m_workspace;
 
     friend class IncrementalEvaluation<Kind>;
-    StateEvaluation(IncrementalEvaluation<Kind>& evaluation, Context context, const Delta* delta, ygg::database::Workspace* workspace) :
+    StateEvaluation(IncrementalEvaluation<Kind>& evaluation, Context context, const Delta* delta, tyr::datalog::database::Workspace* workspace) :
         m_evaluation(&evaluation),
         m_epoch(evaluation.m_epoch),
         m_context(std::move(context)),
@@ -335,19 +357,20 @@ public:
 
     template<CategoryTag Category>
     BorrowedDenotationView<Category> evaluate(EvaluationIndex<Category> index)
-    { return current(static_cast<ygg::uint_t>(index)).get_result(index); }
-    const ygg::Builder<ygg::database::Relation>& evaluate(QueryEvaluationIndex index) { return current(static_cast<ygg::uint_t>(index)).get_result(index); }
+    { return current(static_cast<ygg::uint_t>(index.value)).get_result(index); }
+    ygg::FreeBuilderRelationView evaluate(QueryEvaluationIndex index) { return current(static_cast<ygg::uint_t>(index.value)).get_result(index); }
     template<ConceptOrRoleTag Category>
     size_t size(EvaluationIndex<Category> index)
-    { return current(static_cast<ygg::uint_t>(index)).size(index); }
-    size_t size(QueryEvaluationIndex index) { return current(static_cast<ygg::uint_t>(index)).size(index); }
+    { return current(static_cast<ygg::uint_t>(index.value)).size(index); }
+    size_t size(QueryEvaluationIndex index) { return current(static_cast<ygg::uint_t>(index.value)).size(index); }
     template<ConceptOrRoleTag Category>
     const DenotationDelta<Category>& delta(EvaluationIndex<Category> index)
-    { return current(static_cast<ygg::uint_t>(index)).get_delta(index); }
-    const ygg::database::Delta& delta(QueryEvaluationIndex index) { return current(static_cast<ygg::uint_t>(index)).get_delta(index); }
+    { return current(static_cast<ygg::uint_t>(index.value)).get_delta(index); }
+    const tyr::datalog::database::incremental::Delta& delta(QueryEvaluationIndex index)
+    { return current(static_cast<ygg::uint_t>(index.value)).get_delta(index); }
     template<BooleanOrNumericalTag Category>
     bool changed(EvaluationIndex<Category> index)
-    { return current(static_cast<ygg::uint_t>(index)).changed(index); }
+    { return current(static_cast<ygg::uint_t>(index.value)).changed(index); }
 };
 
 }  // namespace runir::kr::dl::semantics::incremental

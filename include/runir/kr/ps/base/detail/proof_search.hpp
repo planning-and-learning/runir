@@ -2,10 +2,11 @@
 #define RUNIR_KR_PS_BASE_DETAIL_PROOF_SEARCH_HPP_
 
 #include "runir/kr/ps/base/detail/proof_graph.hpp"
-#include "runir/kr/ps/base/detail/search_space.hpp"
+#include "runir/kr/ps/base/detail/search_node.hpp"
 #include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/base/sketch_executor.hpp"
 #include "runir/kr/ps/base/successor_expander.hpp"
+#include "runir/kr/ps/detail/search_space.hpp"
 #include "runir/kr/ps/unsolvability.hpp"
 #include "runir/kr/task_context.hpp"
 
@@ -13,11 +14,13 @@
 #include <tyr/planning/algorithms/strategies/goal.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
+#include <urd/repr/queues/queue.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
-#include <yggdrasil/containers/segmented_vector.hpp>
 #include <yggdrasil/core/chrono.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/config.hpp>
 
 namespace runir::kr::ps::base
 {
@@ -27,15 +30,15 @@ namespace detail
 /// Traverse permitted successors in depth-first order, expanding each reached state once.
 /// Report the first visited goal in ordinary execution; universal execution visits every permitted continuation.
 template<tyr::TaskKind Kind, UnsolvabilityConcept<Kind> Unsolvability>
-SketchProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
-                                     SuccessorExpander<Kind>& expander,
-                                     const tyr::planning::PackedStateView<Kind>& initial,
-                                     const SketchSearchOptions<Kind>& options,
-                                     Unsolvability& classifier,
-                                     ygg::SegmentedVector<SearchNode<Kind>>& nodes,
-                                     std::vector<Predecessor<Kind>>& predecessors,
-                                     SketchSearchStatistics& statistics,
-                                     std::optional<tyr::planning::PackedStateView<Kind>>& goal)
+ProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
+                               SuccessorExpander<Kind>& expander,
+                               const tyr::planning::PackedStateView<Kind>& initial,
+                               const SketchSearchOptions<Kind>& options,
+                               Unsolvability& classifier,
+                               SearchNodes<Kind>& nodes,
+                               urd::Store<urd::sequence<Predecessor<Kind>>>& predecessors,
+                               SketchSearchStatistics& statistics,
+                               std::optional<tyr::planning::PackedStateView<Kind>>& goal)
 {
     const auto& search_context = *task_context.search_context;
     auto num_reached = static_cast<std::size_t>(0);
@@ -51,8 +54,8 @@ SketchProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
 
     const auto get_or_create_state = [&](const tyr::planning::StateView<Kind>& state) -> std::optional<bool>
     {
-        const auto position = static_cast<std::size_t>(ygg::uint_t(state.get_index()));
-        if ((num_reached > 0 && state == initial_state) || (position < nodes.size() && nodes[position].parent_state))
+        const auto found = nodes.find(state.index());
+        if ((num_reached > 0 && state == initial_state) || (found != nodes.end() && found->second.parent_state))
             return false;
         if (num_reached >= options.max_num_states)
             return std::nullopt;
@@ -65,23 +68,24 @@ SketchProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
 
     const auto admitted = get_or_create_state(initial_state);
     if (!admitted)
-        return SketchProofStatus::OUT_OF_STATES;
-    auto open = std::vector<tyr::planning::PackedStateView<Kind>> { initial };
+        return ProofStatus::OUT_OF_STATES;
+    auto open = urd::Store<urd::queue<tyr::planning::PackedStateView<Kind>>, urd::lifo> {};
+    open.push(initial);
 
     while (!open.empty())
     {
         if (out_of_time())
-            return SketchProofStatus::OUT_OF_TIME;
+            return ProofStatus::OUT_OF_TIME;
 
-        const auto source = std::move(open.back());
-        open.pop_back();
+        const auto source = std::move(open.top());
+        open.pop();
         auto& source_node = detail::get_or_create_search_node(source, nodes);
         if (source_node.is_goal)
         {
             if (!options.universal)
             {
                 goal = source;
-                return SketchProofStatus::SUCCESS;
+                return ProofStatus::SUCCESS;
             }
             continue;
         }
@@ -93,19 +97,19 @@ SketchProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
 
         ++statistics.num_expanded;
         const auto state = source.unpack();
-        auto expansion_status = SketchProofStatus::SUCCESS;
+        auto expansion_status = ProofStatus::SUCCESS;
         bool is_open = true;
         const auto accept_successor = [&](const tyr::planning::LabeledNode<Kind>& successor, RuleView rule)
         {
             if (out_of_time())
             {
-                expansion_status = SketchProofStatus::OUT_OF_TIME;
+                expansion_status = ProofStatus::OUT_OF_TIME;
                 return false;
             }
             const auto target_result = get_or_create_state(successor.node.get_state());
             if (!target_result)
             {
-                expansion_status = SketchProofStatus::OUT_OF_STATES;
+                expansion_status = ProofStatus::OUT_OF_STATES;
                 return false;
             }
             const auto target = successor.node.get_state().pack();
@@ -115,21 +119,21 @@ SketchProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
                 auto& target_node = detail::get_or_create_search_node(target, nodes);
                 target_node.parent_state = source;
                 target_node.action = successor.label;
-                open.push_back(target);
+                open.push(target);
             }
             is_open = false;
             return options.universal;
         };
 
         expander.for_each_successor(state, statistics, accept_successor, out_of_time);
-        if (expansion_status != SketchProofStatus::SUCCESS)
+        if (expansion_status != ProofStatus::SUCCESS)
             return expansion_status;
         if (out_of_time())
-            return SketchProofStatus::OUT_OF_TIME;
+            return ProofStatus::OUT_OF_TIME;
         source_node.is_open = is_open;
     }
 
-    return SketchProofStatus::SUCCESS;
+    return ProofStatus::SUCCESS;
 }
 
 /// Own the search lifetime, then construct its graph and optional execution plan.
@@ -143,8 +147,8 @@ auto find_solution(const runir::kr::TaskContextPtr<Kind>& task_context_owner,
     const auto& search_context = *task_context.search_context;
     auto expander = SuccessorExpander<Kind>(task_context, sketch);
     const auto initial_node = search_context.successor_generator->get_packed_initial_node(*search_context.state_repository, *search_context.axiom_evaluator);
-    auto nodes = ygg::SegmentedVector<SearchNode<Kind>> {};
-    auto predecessors = std::vector<Predecessor<Kind>> {};
+    auto nodes = SearchNodes<Kind> {};
+    auto predecessors = urd::Store<urd::sequence<Predecessor<Kind>>> {};
     auto statistics = SketchSearchStatistics {};
     auto goal = std::optional<tyr::planning::PackedStateView<Kind>> {};
 
@@ -156,10 +160,14 @@ auto find_solution(const runir::kr::TaskContextPtr<Kind>& task_context_owner,
     result.statistics = statistics;
     // Nodes remain empty only when the state limit prevents admitting the initial state.
     build_proof_graph<Kind>(result, nodes, predecessors, nodes.empty() ? std::nullopt : std::optional(initial_node.get_state()));
-    if (result.status == SketchProofStatus::SUCCESS && (!result.deadend_states.empty() || !result.open_states.empty() || !result.cycle.empty()))
-        result.status = SketchProofStatus::FAILURE;
+    if (result.status == ProofStatus::SUCCESS && (!result.deadend_states.empty() || !result.open_states.empty() || !result.cycle.empty()))
+        result.status = ProofStatus::FAILURE;
     if (goal && result.is_successful())
-        result.plan = extract_total_ordered_plan(*goal, nodes, initial_node, task_context);
+        result.plan = runir::kr::ps::detail::extract_total_ordered_plan<Kind>(
+            nodes.at(goal->index()),
+            [&](const auto& node) { return node.parent_state ? &nodes.at(node.parent_state->index()) : nullptr; },
+            initial_node,
+            task_context);
     return result;
 }
 

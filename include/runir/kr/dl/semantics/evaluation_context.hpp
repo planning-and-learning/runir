@@ -4,7 +4,7 @@
 #include "runir/kr/dl/semantics/denotation_view.hpp"
 #include "runir/kr/dl/semantics/evaluation.hpp"
 
-#include <yggdrasil/database/relation/relation_view.hpp>
+#include <tyr/datalog/lifted/database/semantics/relation_view.hpp>
 
 namespace runir::kr::dl::semantics
 {
@@ -22,7 +22,7 @@ concept EvaluationContextConcept = tyr::TaskKind<Kind>
                                           { evaluate<Kind>(numerical, context) } -> DenotationViewConcept<NumericalTag>;
                                           { evaluate<Kind>(concept_, context) } -> DenotationViewConcept<ConceptTag>;
                                           { evaluate<Kind>(role, context) } -> DenotationViewConcept<RoleTag>;
-                                          { evaluate<Kind>(query, context) } -> ygg::database::RelationViewConcept;
+                                          { evaluate<Kind>(query, context) } -> tyr::datalog::database::RelationViewConcept;
                                       };
 
 }  // namespace runir::kr::dl::semantics

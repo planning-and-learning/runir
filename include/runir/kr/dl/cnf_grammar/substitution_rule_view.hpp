@@ -5,23 +5,21 @@
 #include "runir/kr/dl/cnf_grammar/substitution_rule_data.hpp"
 
 #include <tuple>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
 
-namespace ygg
+namespace urd
 {
+template<runir::kr::dl::CategoryTag Category, typename V>
+struct view_mixin<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>, V>
+{
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
-template<runir::kr::dl::CategoryTag Category, formalism::SymbolContextFor<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>> C>
-class View<Index<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>>, C> :
-    public ygg::IndexViewBase<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>, C>
-{
 public:
-    using ygg::IndexViewBase<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>, C>::IndexViewBase;
-
-    auto get_lhs() const noexcept { return make_view(this->get_data().lhs, this->get_context()); }
-    auto get_rhs() const noexcept { return make_view(this->get_data().rhs, this->get_context()); }
+    auto get_lhs() const noexcept { return self().template member<&urd::record_of<V>::lhs>(); }
+    auto get_rhs() const noexcept { return self().template member<&urd::record_of<V>::rhs>(); }
 };
-
-}  // namespace ygg
+}  // namespace urd
 
 #endif

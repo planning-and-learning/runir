@@ -23,10 +23,10 @@ struct TaskContext
     runir::kr::dl::semantics::Builder dl_builder;
     runir::kr::dl::semantics::DenotationRepositoryPtr dl_denotation_repository;
     runir::kr::ps::ext::ExecutionBuilder<Kind> execution_builder;
-    runir::kr::ps::ext::ExecutionRepositoryPtr<Kind> execution_repository;
+    runir::kr::ps::ExecutionRepositoryPtr<runir::kr::ExtFamilyTag, Kind> execution_repository;
 
     runir::kr::ps::icp::ExecutionBuilder<Kind> icp_execution_builder;
-    runir::kr::ps::icp::ExecutionRepositoryPtr<Kind> icp_execution_repository;
+    runir::kr::ps::ExecutionRepositoryPtr<runir::kr::IcpFamilyTag, Kind> icp_execution_repository;
 
     TaskContext(const TaskContext&) = delete;
     TaskContext& operator=(const TaskContext&) = delete;

@@ -39,8 +39,6 @@ std::string SketchFactory::create_description(SketchSpecification specification)
             return create_blocks3ops_france_et_al_aaai2021_description();
         case SketchSpecification::SPANNER_FRANCE_ET_AL_AAAI2021:
             return create_spanner_france_et_al_aaai2021_description();
-        case SketchSpecification::DELIVERY_FRANCE_ET_AL_AAAI2021:
-            return create_delivery_france_et_al_aaai2021_description();
     }
 
     throw std::runtime_error(fmt::format("Unknown sketch specification: {}.", static_cast<int>(specification)));
@@ -54,9 +52,6 @@ SketchView SketchFactory::create_blocks3ops_france_et_al_aaai2021(tyr::formalism
 
 SketchView SketchFactory::create_spanner_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain, Repository& repository)
 { return parse_sketch(create_spanner_france_et_al_aaai2021_description(), domain, repository); }
-
-SketchView SketchFactory::create_delivery_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain, Repository& repository)
-{ return parse_sketch(create_delivery_france_et_al_aaai2021_description(), domain, repository); }
 
 std::string SketchFactory::create_gripper_france_et_al_aaai2021_description()
 {
@@ -351,142 +346,6 @@ std::string SketchFactory::create_spanner_france_et_al_aaai2021_description()
                     (unchanged h)
                     (decreases n)
                     (unchanged e)
-                )
-            )
-        )
-    )
-))RUNIR";
-}
-
-std::string SketchFactory::create_delivery_france_et_al_aaai2021_description()
-{
-    return R"RUNIR((:sketch
-    (:features
-        (:boolean
-            (:symbol not_H)
-            (:expression
-                (b_nonempty
-                    (c_atomic_state "empty")
-                )
-            )
-        )
-        (:numerical
-            (:symbol u)
-            (:expression
-                (n_count
-                    (c_not
-                        (c_same_as
-                            (r_atomic_goal "at" true)
-                            (r_atomic_state "at")
-                        )
-                    )
-                )
-            )
-        )
-        (:numerical
-            (:symbol p)
-            (:expression
-                (n_distance
-                    (c_some
-                        (r_inverse
-                            (r_atomic_state "at")
-                        )
-                        (c_atomic_state "truck")
-                    )
-                    (r_atomic_state "adjacent")
-                    (c_and
-                        (c_some
-                            (r_inverse
-                                (r_atomic_state "at")
-                            )
-                            (c_atomic_state "package")
-                        )
-                        (c_all
-                            (r_inverse
-                                (r_atomic_goal "at" true)
-                            )
-                            (c_bot)
-                        )
-                    )
-                )
-            )
-        )
-        (:numerical
-            (:symbol t)
-            (:expression
-                (n_distance
-                    (c_some
-                        (r_inverse
-                            (r_atomic_state "at")
-                        )
-                        (c_atomic_state "truck")
-                    )
-                    (r_atomic_state "adjacent")
-                    (c_some
-                        (r_inverse
-                            (r_atomic_goal "at" true)
-                        )
-                        (c_top)
-                    )
-                )
-            )
-        )
-    )
-    (:rules
-        (:rule
-            (:symbol auto12)
-            (:expression
-                (:conditions
-                    (greater_zero u)
-                    (positive not_H)
-                    (greater_zero p)
-                )
-                (:effects
-                    (unchanged not_H)
-                    (decreases p)
-                )
-            )
-        )
-        (:rule
-            (:symbol auto13)
-            (:expression
-                (:conditions
-                    (greater_zero u)
-                    (positive not_H)
-                    (equal_zero p)
-                )
-                (:effects
-                    (negative not_H)
-                )
-            )
-        )
-        (:rule
-            (:symbol auto14)
-            (:expression
-                (:conditions
-                    (greater_zero u)
-                    (negative not_H)
-                    (greater_zero t)
-                )
-                (:effects
-                    (unchanged not_H)
-                    (unchanged u)
-                    (decreases t)
-                )
-            )
-        )
-        (:rule
-            (:symbol auto15)
-            (:expression
-                (:conditions
-                    (greater_zero u)
-                    (negative not_H)
-                    (equal_zero t)
-                )
-                (:effects
-                    (decreases u)
-                    (positive not_H)
-                    (unchanged p)
                 )
             )
         )

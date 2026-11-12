@@ -8,15 +8,16 @@
 #include "runir/kr/ps/ext/dl/ast/ast.hpp"
 
 #include <functional>
-#include <map>
 #include <optional>
-#include <set>
 #include <string>
+#include <tyr/datalog/lifted/database/datalog/declarations.hpp>
 #include <tyr/formalism/planning/repository.hpp>
-#include <unordered_map>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/maps/flat_map.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/flat_set.hpp>
+#include <urd/store.hpp>
 #include <variant>
-#include <vector>
-#include <yggdrasil/database/datalog/declarations.hpp>
 
 /// Names in policies: features that DL expressions and Datalog rules read, and the heads of the :datalog section.
 namespace runir::kr::parser::ext_constructors
@@ -27,16 +28,16 @@ struct ModuleReferences;
 namespace runir::kr::parser::datalog
 {
 
-using FeatureReference = std::variant<ygg::Index<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>,
-                                      ygg::Index<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>,
-                                      ygg::Index<runir::kr::dl::Constructor<runir::kr::dl::BooleanTag>>,
-                                      ygg::Index<runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>>,
-                                      ygg::Index<runir::kr::dl::Query<>>>;
+using FeatureReference = std::variant<urd::index<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>,
+                                      urd::index<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>,
+                                      urd::index<runir::kr::dl::Constructor<runir::kr::dl::BooleanTag>>,
+                                      urd::index<runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>>,
+                                      urd::index<runir::kr::dl::Query<>>>;
 
 struct HeadReference
 {
-    ygg::Index<runir::kr::dl::DatalogProgram> program;
-    ygg::Index<ygg::database::datalog::Relation> relation;
+    urd::index<runir::kr::dl::DatalogProgram> program;
+    urd::index<tyr::datalog::database::datalog::Relation> relation;
 };
 
 /// Features by name, each parsed at its first reference: a feature that reaches itself through references is an error.
@@ -56,11 +57,11 @@ private:
         bool in_progress = false;
     };
     const DiagnosticContext* m_diagnostics;
-    std::unordered_map<std::string, Entry> m_entries;
-    std::vector<std::string> m_stack;
+    urd::Store<urd::map<std::string, Entry>> m_entries;
+    urd::Store<urd::sequence<std::string>> m_stack;
 };
 
-using DatalogRules = std::vector<runir::kr::ps::ext::dl::ast::DatalogRule>;
+using DatalogRules = urd::Store<urd::sequence<runir::kr::ps::ext::dl::ast::DatalogRule>>;
 
 /// The :datalog section of a module: rules that read domain predicates, goal atoms ((goal p t...)), the module's
 /// registers and arguments, and features, built at the first q_head into one program per head that features read. A
@@ -69,7 +70,7 @@ class DatalogSection
 {
 public:
     DatalogSection(const DatalogRules* rules,
-                   std::set<std::string> read_heads,
+                   urd::Store<urd::set<std::string>, urd::sorted> read_heads,
                    tyr::formalism::planning::DomainView domain,
                    runir::kr::dl::ConstructorRepository& repository,
                    runir::kr::dl::Builder& builder,
@@ -84,21 +85,21 @@ public:
 
 private:
     const DatalogRules* m_rules;
-    std::set<std::string> m_weighted;
+    urd::Store<urd::set<std::string>, urd::sorted> m_weighted;
     /// The heads that q_head constructors read anywhere in the module, the program's outputs.
-    std::set<std::string> m_read_heads;
+    urd::Store<urd::set<std::string>, urd::sorted> m_read_heads;
     tyr::formalism::planning::DomainView m_domain;
     runir::kr::dl::ConstructorRepository* m_repository;
     runir::kr::dl::Builder* m_builder;
     FeatureResolver* m_features;
     const ext_constructors::ModuleReferences* m_references;
     const DiagnosticContext* m_diagnostics;
-    std::map<std::string, size_t> m_arities;
+    urd::Store<urd::map<std::string, size_t>, urd::sorted> m_arities;
     bool m_building = false;
     bool m_built = false;
     /// Per head that a feature reads, its program (ProgramBuilder::finish).
-    std::map<std::string, ygg::Index<runir::kr::dl::DatalogProgram>> m_programs;
-    std::unordered_map<std::string, ygg::Index<ygg::database::datalog::Relation>> m_heads;
+    urd::Store<urd::map<std::string, urd::index<runir::kr::dl::DatalogProgram>>, urd::sorted> m_programs;
+    urd::Store<urd::map<std::string, urd::index<tyr::datalog::database::datalog::Relation>>> m_heads;
 
     void build(const ast::Identifier& reference);
 };

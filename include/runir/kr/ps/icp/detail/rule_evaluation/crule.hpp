@@ -3,8 +3,8 @@
 
 #include "runir/kr/ps/icp/detail/rule_evaluation/context.hpp"
 
-#include <cista/containers/variant.h>
 #include <tyr/formalism/planning/action_view.hpp>
+#include <urd/elements/flat.hpp>
 
 namespace runir::kr::ps::icp::detail
 {
@@ -25,9 +25,9 @@ class RuleEvaluator<Kind, CruleTag>
         throw std::invalid_argument("Unknown ICP action schema.");
     }
 
-    template<ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
+    template<ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
     [[nodiscard]] std::optional<ygg::uint_t>
-    resolve(const ::cista::offset::variant<ArgumentPosition, ygg::Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>& reference,
+    resolve(const urd::flat_variant<ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>& reference,
             runir::kr::dl::semantics::RegisterValuesView registers,
             Binding binding) const
     {
@@ -35,12 +35,12 @@ class RuleEvaluator<Kind, CruleTag>
             [&]<typename Ref>(Ref ref) -> std::optional<ygg::uint_t>
             {
                 if constexpr (std::same_as<Ref, ArgumentPosition>)
-                    return ygg::uint_t(binding.get_objects().at(ygg::uint_t(ref)).get_index());
+                    return static_cast<ygg::uint_t>(binding.value(ref.value));  // an object column: the object's index
                 else
                 {
-                    const auto reg = ygg::make_view(ref, m_rule.get_context().get_dl_repository());
+                    const auto reg = urd::resolve(ref, m_rule.context().get_dl_repository());
                     const auto object = registers.at(reg.get_identifier());
-                    return object ? std::optional(ygg::uint_t(object.value().get_index())) : std::nullopt;
+                    return object ? std::optional(ygg::uint_t(object.value().index().value)) : std::nullopt;
                 }
             });
     }
@@ -59,11 +59,10 @@ public:
     /// Skip disabled rules before action enumeration; matches() also checks this for direct callers.
     template<runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context>
     bool is_applicable(Context& context) const
-    { return conditions_are_compatible<Kind>(m_rule, context); }
+    { return all_compatible<Kind, IcpFamilyTag>(m_rule.get_conditions(), context); }
 
     /// Reject a binding before generating its target; matches() also checks this for direct callers.
-    template<runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context,
-             ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
+    template<runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context, ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
     bool xconditions_match(Context& context, ProgramStateView<Kind> state, Binding binding) const
     {
         for (const auto condition : m_rule.get_xconditions())
@@ -71,7 +70,7 @@ public:
             const auto object = resolve(condition.get_object_reference(), state.get_registers(), binding);
             if (!object)
                 return false;
-            const auto contains = evaluate<Kind>(condition.get_concept_feature(), context).get().test(*object);
+            const auto contains = evaluate<Kind>(condition.get_concept_feature(), context).value().test(*object);
             if (contains != (condition.get_operation() == ConditionOperation::BELONGS))
                 return false;
         }
@@ -81,7 +80,7 @@ public:
     /// Match a supplied candidate independently of the aggregate's early binding filter.
     /// History admission remains shared by the aggregate across matching rules.
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
-             ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
+             ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
     bool matches(runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy>& context,
                  ProgramStateView<Kind> state,
                  const tyr::planning::LabeledNode<Kind, tyr::planning::StateView<Kind>, Binding>& candidate) const
@@ -89,7 +88,7 @@ public:
         const auto memory = state.get_memory_state();
         const auto source = m_rule.get_source();
         const auto action = candidate.label.get_relation();
-        if (&memory.get_context() != &source.get_context() || memory != source || &action.get_context() != &m_action.get_context() || action != m_action)
+        if (&memory.context() != &source.context() || memory != source || &action.context() != &m_action.context() || action != m_action)
             return false;
         auto source_context = context.make_dl_context(state);
         if (!is_applicable(source_context) || !xconditions_match(source_context, state, candidate.label))
@@ -100,8 +99,8 @@ public:
             const auto object = resolve(effect.get_object_reference(), state.get_registers(), candidate.label);
             if (!object)
                 return false;
-            const auto before = evaluate<Kind>(effect.get_concept_feature(), transition.get_source_context()).get().test(*object);
-            const auto after = evaluate<Kind>(effect.get_concept_feature(), transition.get_target_context()).get().test(*object);
+            const auto before = evaluate<Kind>(effect.get_concept_feature(), transition.get_source_context()).value().test(*object);
+            const auto after = evaluate<Kind>(effect.get_concept_feature(), transition.get_target_context()).value().test(*object);
             if (effect.get_operation() == EffectOperation::ENTER ? (before || !after) : (!before || after))
                 return false;
         }
@@ -110,16 +109,16 @@ public:
 
     /// Apply a match after the aggregate admits shared histories and publishes the binding.
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
-    ProgramStep<Kind> apply(RuleEvaluationWorkspace<Kind, EvaluationPolicy>& workspace,
-                            ProgramStateView<Kind> source,
-                            const tyr::planning::LabeledNode<Kind>& candidate,
-                            HistoriesView<Kind> histories) const
+    ProgramStep<IcpFamilyTag, Kind> apply(RuleEvaluationWorkspace<Kind, EvaluationPolicy>& workspace,
+                                          ProgramStateView<Kind> source,
+                                          const tyr::planning::LabeledNode<Kind>& candidate,
+                                          HistoriesView<Kind> histories) const
     {
-        auto target = source.get_data();
-        target.state = candidate.node.get_state().get_index();
-        target.memory_state = m_rule.get_target().get_index();
-        target.histories = histories.get_index();
-        auto step = ProgramStep<Kind>(ProgramOutcome::APPLIED, workspace.intern(target), workspace.get_task_context());
+        auto target = source.data();
+        target.state = candidate.node.get_state().index();
+        target.memory_state = m_rule.get_target().index();
+        target.histories = histories.index();
+        auto step = ProgramStep<IcpFamilyTag, Kind>(ProgramOutcome::APPLIED, workspace.intern(target), workspace.get_task_context());
         step.rule = m_variant;
         step.planning_successor = candidate.pack();
         step.state_transition = datasets::StateGraphEdgeLabel { candidate.label, static_cast<ygg::float_t>(1) };

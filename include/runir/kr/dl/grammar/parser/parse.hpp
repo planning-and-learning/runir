@@ -1,8 +1,8 @@
 #ifndef RUNIR_KR_DL_GRAMMAR_PARSER_PARSE_HPP_
 #define RUNIR_KR_DL_GRAMMAR_PARSER_PARSE_HPP_
 
+#include "runir/kr/parser/config.hpp"
 #include "runir/kr/parser/diagnostics.hpp"
-#include "runir/kr/parser/parser.hpp"
 
 #include <boost/spirit/home/x3/support/traits/is_parser.hpp>
 #include <concepts>
@@ -21,7 +21,7 @@ void parse_ast(const std::string& description,
                const char* fallback_message)
 {
     auto first = description.cbegin();
-    if (!runir::kr::parser::parse_full(first, description.cend(), parser, result, error_handler))
+    if (!ygg::diagnostics::parse_full(first, description.cend(), parser, result, error_handler))
         throw runir::kr::parser::DiagnosticContext::parse_error(error_handler, fallback_message, first);
 }
 

@@ -4,22 +4,21 @@
 #include "runir/kr/dl/argument_data.hpp"
 
 #include <tuple>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
 
-namespace ygg
+namespace urd
 {
+template<runir::kr::dl::CategoryTag Category, typename V>
+struct view_mixin<runir::kr::dl::Argument<Category>, V>
+{
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
-template<runir::kr::dl::CategoryTag Category, formalism::SymbolContextFor<runir::kr::dl::Argument<Category>> C>
-class View<Index<runir::kr::dl::Argument<Category>>, C> : public ygg::IndexViewBase<runir::kr::dl::Argument<Category>, C>
-{
 public:
-    using ygg::IndexViewBase<runir::kr::dl::Argument<Category>, C>::IndexViewBase;
-
-    const auto& get_name() const noexcept { return this->get_data().name; }
-    auto get_identifier() const noexcept { return this->get_data().identifier; }
+    const auto& get_name() const noexcept { return self().data().name; }
+    auto get_identifier() const noexcept { return self().data().identifier; }
 };
-
-}  // namespace ygg
+}  // namespace urd
 
 #endif

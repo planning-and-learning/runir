@@ -19,14 +19,17 @@
 
 #include <cstddef>
 #include <stdexcept>
-#include <tyr/planning/ground/state_repository.hpp>
 #include <tyr/planning/ground/task.hpp>
-#include <tyr/planning/lifted/state_repository.hpp>
 #include <tyr/planning/lifted/task.hpp>
+#include <tyr/planning/state_builder.hpp>
+#include <tyr/planning/state_repository.hpp>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/indexed.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/formalism/detail/basic_symbol_repository_impl.hpp>
+#include <yggdrasil/core/config.hpp>
 
 namespace runir::datasets
 {
@@ -41,19 +44,17 @@ private:
     using Edge = std::pair<graphs::VertexIndex, graphs::VertexIndex>;
 
     ColorRepository* m_repository;
-    ygg::UnorderedMap<ObjectView, graphs::VertexIndex> m_object_to_vertex;
-    std::vector<ygg::Data<Color>::VariantList> m_vertex_colors;
-    ygg::UnorderedSet<Edge> m_edges;
+    /// The objects by vertex: an object's vertex is its position.
+    urd::Store<urd::set<ObjectView>, urd::positional> m_objects;
+    urd::Store<urd::sequence<urd::data<Color>::VariantList>> m_vertex_colors;
+    urd::Store<urd::set<Edge>> m_edges;
 
     auto get_or_create_vertex(ObjectView object) -> graphs::VertexIndex
     {
-        if (const auto it = m_object_to_vertex.find(object); it != m_object_to_vertex.end())
-            return it->second;
-
-        const auto vertex = static_cast<graphs::VertexIndex>(m_vertex_colors.size());
-        m_object_to_vertex.emplace(object, vertex);
-        m_vertex_colors.emplace_back();
-        return vertex;
+        const auto [it, inserted] = m_objects.insert(object);
+        if (inserted)
+            m_vertex_colors.emplace_back();
+        return static_cast<graphs::VertexIndex>(m_objects.position(it));
     }
 
     void add_undirected_edge(graphs::VertexIndex lhs, graphs::VertexIndex rhs)
@@ -68,15 +69,15 @@ private:
     }
 
 public:
-    explicit ObjectGraphConstructionContext(ColorRepository& repository) : m_repository(&repository) {}
+    explicit ObjectGraphConstructionContext(ColorRepository& repository) : m_repository(&repository), m_objects(urd::layer { 0 }) {}
 
     void add_object(ObjectView object) { static_cast<void>(get_or_create_vertex(object)); }
 
     template<PredicateContext Context, tyr::formalism::FactKind T>
     void add_atom(tyr::formalism::planning::AtomView<::tyr::GroundTag, T> atom)
     {
-        const auto objects = atom.get_row().get_objects();
-        auto vertices = std::vector<graphs::VertexIndex> {};
+        const auto objects = atom.get_objects();
+        auto vertices = graphs::VertexIndexList {};
         vertices.reserve(objects.size());
 
         for (std::size_t i = 0; i < objects.size(); ++i)
@@ -84,9 +85,9 @@ public:
             const auto vertex = get_or_create_vertex(objects[i]);
             vertices.push_back(vertex);
 
-            auto predicate_color_data = ygg::Data<PredicateColor<T>>(atom.get_predicate().get_index(), static_cast<ygg::uint_t>(i), Context);
+            auto predicate_color_data = urd::data<PredicateColor<T>>(atom.get_predicate().index(), static_cast<ygg::uint_t>(i), Context);
             const auto predicate_color = m_repository->insert(predicate_color_data).first;
-            m_vertex_colors[vertex].emplace_back(predicate_color.get_index());
+            m_vertex_colors[vertex].emplace_back(predicate_color.index());
         }
 
         for (std::size_t i = 0; i < vertices.size(); ++i)
@@ -100,7 +101,7 @@ public:
 
         for (auto& colors : m_vertex_colors)
         {
-            auto color_data = ygg::Data<Color>(std::move(colors));
+            auto color_data = urd::data<Color>(std::move(colors));
             builder.add_vertex(m_repository->insert(color_data).first);
         }
 
@@ -114,7 +115,7 @@ public:
 template<tyr::TaskKind Kind>
 void add_objects(tyr::planning::StateView<Kind> state, ObjectGraphConstructionContext& context)
 {
-    const auto task = state.get_state_repository()->get_task()->get_task();
+    const auto task = state.get_state_repository().get_task()->get_task();
 
     for (auto object : task.get_domain().get_constants())
         context.add_object(object);
@@ -137,7 +138,7 @@ void add_atoms(tyr::planning::StateView<Kind> state, ObjectGraphConstructionCont
 template<tyr::TaskKind Kind>
 void add_goal_atoms(tyr::planning::StateView<Kind> state, ObjectGraphConstructionContext& context)
 {
-    const auto goal = state.get_state_repository()->get_task()->get_task().get_goal();
+    const auto goal = state.get_state_repository().get_task()->get_task().get_goal();
 
     for (auto literal : goal.template get_literals<tyr::formalism::StaticTag>())
         context.template add_atom<PredicateContext::GOAL>(literal.get_atom());
@@ -156,7 +157,13 @@ void add_goal_atoms(tyr::planning::StateView<Kind> state, ObjectGraphConstructio
 template<tyr::TaskKind Kind>
 auto create_object_graph(tyr::planning::StateView<Kind> state, ColorRepository& repository) -> std::unique_ptr<ObjectGraph>
 {
-    if (&state.get_formalism_repository()->get_root() != &repository.get_planning_repository().get_root())
+    const auto root = [](const tyr::formalism::planning::Repository* layer)
+    {
+        while (layer->parent() != nullptr)
+            layer = layer->parent();
+        return layer;
+    };
+    if (root(state.get_formalism_repository().get()) != root(&repository.get_planning_repository()))
         throw std::invalid_argument("State and ColorRepository use different planning repositories.");
 
     auto context = ObjectGraphConstructionContext(repository);
@@ -171,8 +178,3 @@ template auto create_object_graph<tyr::GroundTag>(tyr::planning::StateView<tyr::
 template auto create_object_graph<tyr::LiftedTag>(tyr::planning::StateView<tyr::LiftedTag>, ColorRepository&) -> std::unique_ptr<ObjectGraph>;
 
 }  // namespace runir::datasets
-
-// Tests intern these records too; their insertion path needs basic_symbol_repository_impl.hpp.
-template class ygg::formalism::BasicSymbolRepository<runir::datasets::PredicateColor<tyr::formalism::StaticTag>, true>;
-template class ygg::formalism::BasicSymbolRepository<runir::datasets::PredicateColor<tyr::formalism::FluentTag>, true>;
-template class ygg::formalism::BasicSymbolRepository<runir::datasets::Color, true>;

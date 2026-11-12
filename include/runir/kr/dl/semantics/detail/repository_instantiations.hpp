@@ -1,26 +1,18 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_DETAIL_REPOSITORY_INSTANTIATIONS_HPP_
 #define RUNIR_KR_DL_SEMANTICS_DETAIL_REPOSITORY_INSTANTIATIONS_HPP_
 
-/// Extern declarations of the symbol storage of every denotation type, instantiated in the library; yggdrasil instantiates the relation and query storage.
-/// Include only from sources that intern many of these types; see yggdrasil's docs/TEMPLATE_RULES.md.
+/// Extern declarations of intern for every denotation record type, instantiated in the library
+/// (src/kr/dl/semantics/repository.cpp). Include only from sources that intern many of these types; see rule 9 of the
+/// template rules (https://planning-and-learning.github.io/brokkr/template_rules.html).
 
-#include "runir/kr/dl/semantics/denotation_repository.hpp"
+#include "runir/kr/dl/semantics/declarations.hpp"
 
-#include <yggdrasil/database/query/query_repository.hpp>
+#include <yggdrasil/formalism/intern_instantiations.hpp>
 
-#ifndef RUNIR_HEADER_INSTANTIATION
+/// The instantiations (PREFIX extern: declarations).
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage): it expands to explicit instantiations, declarations, which no function gives
+#define RUNIR_KR_DL_SEMANTICS_INTERNS(PREFIX) YGG_FORMALISM_INTERNS(PREFIX, 6, false, runir::kr::dl::semantics::DenotationRecordTypes)
 
-extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>>;
-extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>>;
-extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>;
-extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>;
-extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::semantics::RegisterValues>;
-extern template class ygg::formalism::BasicSymbolRepository<runir::kr::dl::semantics::CallArguments>;
-
-#else
-
-#include <yggdrasil/formalism/detail/basic_symbol_repository_impl.hpp>
-
-#endif
+RUNIR_KR_DL_SEMANTICS_INTERNS(extern)
 
 #endif

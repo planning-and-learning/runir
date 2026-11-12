@@ -6,14 +6,17 @@
 #include <chrono>
 #include <filesystem>
 #include <gtest/gtest.h>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/ps/icp/detail/rule_evaluation/context.hpp>
 #include <runir/kr/ps/icp/dl/parser.hpp>
 #include <runir/kr/ps/icp/program_executor.hpp>
 #include <runir/kr/ps/icp/successor_expander.hpp>
 #include <runir/kr/task_context.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 namespace runir::tests
 {
@@ -21,8 +24,8 @@ namespace runir::tests
 namespace
 {
 
-using Status = kr::ps::icp::ProgramProofStatus;
-using Outcome = kr::ps::icp::detail::ProgramOutcome;
+using Status = kr::ps::ProofStatus;
+using Outcome = kr::ps::ProgramOutcome;
 
 std::string rule(const std::string& name, const std::string& source, const std::string& target, const std::string& body)
 { return "(:rule (:symbol " + name + ") (:expression (:source-memory " + source + ") (:target-memory " + target + ") " + body + "))"; }
@@ -90,7 +93,7 @@ auto initial(kr::ps::icp::SuccessorExpander<Kind, EvaluationPolicy>& expander)
 template<tyr::TaskKind Kind, kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy>
 auto successors(kr::ps::icp::SuccessorExpander<Kind, EvaluationPolicy>& expander, kr::ps::icp::ProgramStateView<Kind> source, bool grouped = false)
 {
-    auto result = std::vector<typename kr::ps::icp::SuccessorExpander<Kind, EvaluationPolicy>::Step> {};
+    auto result = urd::Store<urd::sequence<typename kr::ps::icp::SuccessorExpander<Kind, EvaluationPolicy>::Step>> {};
     auto stats = kr::ps::icp::ProgramSearchStatistics {};
     expander.for_each_successor(
         source,
@@ -197,7 +200,7 @@ void check_executor()
     auto non_goals = 0U;
     for (const auto vertex : complete.graph->get_vertex_indices())
     {
-        const auto goal = complete.graph->get_vertex(vertex).get_property().is_goal;
+        const auto goal = complete.graph->get_vertex_property(vertex).is_goal;
         goals += goal;
         non_goals += !goal;
     }
@@ -223,7 +226,7 @@ void check_executor()
     EXPECT_FALSE(cycle.cycle.empty());
     goals = 0;
     for (const auto vertex : cycle.graph->get_vertex_indices())
-        goals += cycle.graph->get_vertex(vertex).get_property().is_goal;
+        goals += cycle.graph->get_vertex_property(vertex).is_goal;
     EXPECT_EQ(goals, 1);
 
     // Parallel rules share their target configuration and its expansion, while preserving both labeled edges.
@@ -276,7 +279,7 @@ void check_histories()
     auto expander = kr::ps::icp::SuccessorExpander<Kind>(context, policy);
     const auto source = initial(expander);
     for (const auto history : source.get_histories().get_concepts())
-        EXPECT_EQ(history.get().count(), 0);
+        EXPECT_EQ(history.value().count(), 0);
     const auto step1 = successors(expander, source);
     ASSERT_EQ(step1.size(), 1);
     ASSERT_EQ(step1.front().status, Outcome::APPLIED);
@@ -289,8 +292,8 @@ void check_histories()
     EXPECT_EQ(source.get_state(), step2.front().target.get_state());
 
     // Equal planning state, memory, and registers with different histories must have distinct identities.
-    auto cleared = step2.front().target.get_data();
-    cleared.histories = source.get_histories().get_index();
+    auto cleared = step2.front().target.data();
+    cleared.histories = source.get_histories().index();
     const auto unvisited = kr::ps::icp::insert(*context->icp_execution_repository, cleared).first;
     EXPECT_NE(unvisited, step2.front().target);
     const auto allowed = successors(expander, unvisited);
@@ -402,7 +405,7 @@ void check_rejected_bindings_stay_unpublished()
         {
             size_t count = 0;
             for (const auto action : context->search_context->task->get_task().get_domain().get_actions())
-                count += context->search_context->task->get_repository()->size(action.get_index());
+                count += context->search_context->task->get_repository()->relations().size(action.index());
             return count;
         };
         const auto before = count_bindings();
@@ -426,7 +429,7 @@ void check_rejected_bindings_stay_unpublished()
         const auto published_before_matching = count_bindings();
         for (const auto rules : rejected.get_module().get_memory_transitions())
             for (const auto variant : rules)
-                ygg::visit(
+                std::visit(
                     [&]<kr::ps::icp::RuleKind Tag>(kr::ps::icp::RuleView<Tag> concrete)
                     {
                         if constexpr (std::same_as<Tag, kr::ps::icp::CruleTag>)
@@ -446,7 +449,7 @@ void check_rejected_bindings_stay_unpublished()
         {
             ASSERT_TRUE(accepted_steps[i].planning_successor);
             EXPECT_EQ(accepted_steps[i].planning_successor.value().label, repeated[i].planning_successor.value().label);
-            EXPECT_EQ(accepted_steps[i].planning_successor.value().unpack().label.get_objects().size(), 2);
+            EXPECT_EQ(objects_of(accepted_steps[i].planning_successor.value().unpack().label).size(), 2);
         }
     }
 }
@@ -470,10 +473,10 @@ void check_load_evaluator_entry_checks()
         const auto states_before = task->icp_execution_repository->template size<kr::ps::icp::ProgramState<Kind>>();
         const auto histories_before = task->icp_execution_repository->template size<kr::ps::icp::Histories>();
         const auto registers_before = task->dl_denotation_repository->template size<kr::dl::semantics::RegisterValues>();
-        auto steps = std::vector<kr::ps::icp::detail::ProgramStep<Kind>> {};
+        auto steps = urd::Store<urd::sequence<kr::ps::ProgramStep<kr::IcpFamilyTag, Kind>>> {};
         for (const auto rules : policy.get_module().get_memory_transitions())
             for (const auto variant : rules)
-                ygg::visit(
+                std::visit(
                     [&]<kr::ps::icp::RuleKind Tag>(kr::ps::icp::RuleView<Tag> concrete)
                     {
                         if constexpr (std::same_as<Tag, kr::ps::icp::LoadTag<kr::dl::ConceptTag>>)
@@ -539,15 +542,15 @@ void check_rule_evaluator_scheduling()
     ASSERT_NE(reused_history_buffer, nullptr);
 
     {
-        auto data = ygg::Data<kr::ps::icp::Histories>();
-        data.concepts = source.get_histories().get_data().concepts;
+        auto data = urd::data<kr::ps::icp::Histories>();
+        data.concepts = source.get_histories().data().concepts;
         ASSERT_FALSE(data.concepts.empty());
         data.concepts.push_back(data.concepts.front());
         const auto* buffer = data.concepts.data();
         const auto expected_size = data.concepts.size();
         const auto [stored, created] = ygg::formalism::insert(*context->icp_execution_repository, data);
         EXPECT_TRUE(created);
-        EXPECT_EQ(stored.get_data().concepts, data.concepts);
+        EXPECT_EQ(stored.data().concepts, data.concepts);
         EXPECT_EQ(data.concepts.size(), expected_size);
         EXPECT_EQ(data.concepts.data(), buffer);
         EXPECT_FALSE(kr::ps::icp::insert(*context->icp_execution_repository, data).second);
@@ -557,7 +560,7 @@ void check_rule_evaluator_scheduling()
     // public order remains binding-major and each rule still emits its own edge.
     for (int repetition = 0; repetition < 3; ++repetition)
     {
-        auto grouped = std::vector<typename kr::ps::icp::SuccessorExpander<Kind>::Step> {};
+        auto grouped = urd::Store<urd::sequence<typename kr::ps::icp::SuccessorExpander<Kind>::Step>> {};
         auto statistics = kr::ps::icp::ProgramSearchStatistics {};
         EXPECT_TRUE(expander.for_each_successor(
             source,
@@ -599,19 +602,19 @@ void check_rule_evaluator_scheduling()
 
     // Repeated occurrences keep module order in both natural and grouped expansion.
     auto& repository = *context->domain_context->icp_repository;
-    auto module_data = policy.get_module().get_data();
+    auto module_data = policy.get_module().data();
     module_data.memory_transitions.clear();
     for (const auto row : { 1, 0, 1 })
-        module_data.memory_transitions.push_back(policy.get_module().get_data().memory_transitions[row]);
-    auto program_data = policy.get_data();
-    program_data.module = kr::ps::icp::insert(repository, module_data).first.get_index();
+        module_data.memory_transitions.push_back(policy.get_module().data().memory_transitions[row]);
+    auto program_data = policy.data();
+    program_data.module = kr::ps::icp::insert(repository, module_data).first.index();
     const auto repeated_policy = kr::ps::icp::insert(repository, program_data).first;
     auto repeated_expander = kr::ps::icp::SuccessorExpander<Kind>(context, repeated_policy);
     const auto repeated_source = initial(repeated_expander);
     const auto expected = std::array { natural[2].rule, natural[0].rule, natural[2].rule };
     for (const auto grouped : { false, true })
     {
-        auto steps = std::vector<typename kr::ps::icp::SuccessorExpander<Kind>::Step> {};
+        auto steps = urd::Store<urd::sequence<typename kr::ps::icp::SuccessorExpander<Kind>::Step>> {};
         auto statistics = kr::ps::icp::ProgramSearchStatistics {};
         EXPECT_TRUE(repeated_expander.for_each_successor(
             repeated_source,

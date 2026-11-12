@@ -5,6 +5,8 @@
 #include "runir/kr/ps/ext/dl/incomplete_structural_termination.hpp"
 #include "runir/kr/ps/ext/dl/structural_termination.hpp"
 
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 
 namespace runir::kr::ps::ext::dl::detail
@@ -15,10 +17,10 @@ using Analysis = runir::kr::ps::detail::PolicyAnalysis<runir::kr::ExtFamilyTag, 
 Analysis analyze_module(ModuleView module_);
 
 ModuleStructuralTerminationResult make_result(ModuleView module_, const Analysis& analysis, const runir::kr::ps::detail::PolicySieveResult& sieve_result);
-ModuleIncompleteStructuralTerminationResult
+runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::ExtFamilyTag>
 make_incomplete_result(ModuleView module_, const Analysis& analysis, const runir::kr::ps::detail::IncompletePolicyResult& policy_result);
 
-std::vector<RuleVariantView> find_recursive_call_rules(ProgramView program);
+urd::Store<urd::sequence<RuleVariantView>> find_recursive_call_rules(ProgramView program);
 
 }  // namespace runir::kr::ps::ext::dl::detail
 

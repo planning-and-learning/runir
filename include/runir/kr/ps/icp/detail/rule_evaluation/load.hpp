@@ -20,7 +20,7 @@ public:
 
     [[nodiscard]] auto get_rule() const noexcept { return m_rule; }
 
-    template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy, EmitConcept<ProgramStep<Kind>> Emit, StopConcept Stop>
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy, EmitConcept<ProgramStep<IcpFamilyTag, Kind>> Emit, StopConcept Stop>
     bool emit(runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy>& context,
               ProgramStateView<Kind> source,
               const Emit& output,
@@ -30,19 +30,19 @@ public:
             return false;
         const auto memory = source.get_memory_state();
         const auto required_memory = m_rule.get_source();
-        if (&memory.get_context() != &required_memory.get_context() || memory != required_memory)
+        if (&memory.context() != &required_memory.context() || memory != required_memory)
             return true;
         using Registers = runir::kr::dl::semantics::RegisterValues;
         auto& workspace = *context.workspace;
         const auto& task = workspace.get_task_context();
         auto& environment = workspace.get_environment();
         auto source_context = context.make_dl_context(source);
-        if (!conditions_are_compatible<Kind>(m_rule, source_context))
+        if (!runir::kr::ps::all_compatible<Kind, IcpFamilyTag>(m_rule.get_conditions(), source_context))
             return true;
         const auto denotation = evaluate<Kind>(m_rule.get_feature(), source_context);
         if (denotation.begin() == denotation.end())
         {
-            auto step = ProgramStep<Kind>(ProgramOutcome::FAILURE, source, task);
+            auto step = ProgramStep<IcpFamilyTag, Kind>(ProgramOutcome::FAILURE, source, task);
             step.rule = m_variant;
             return output(std::move(step));
         }
@@ -61,11 +61,11 @@ public:
             const auto histories = workspace.update_histories(source, transition, std::nullopt, stop);
             if (!histories)
                 continue;
-            auto target = source.get_data();
-            target.memory_state = m_rule.get_target().get_index();
-            target.registers = target_registers.get_index();
-            target.histories = histories->get_index();
-            auto step = ProgramStep<Kind>(ProgramOutcome::APPLIED, workspace.intern(target), task);
+            auto target = source.data();
+            target.memory_state = m_rule.get_target().index();
+            target.registers = target_registers.index();
+            target.histories = histories->index();
+            auto step = ProgramStep<IcpFamilyTag, Kind>(ProgramOutcome::APPLIED, workspace.intern(target), task);
             step.rule = m_variant;
             if (!output(std::move(step)))
                 return false;

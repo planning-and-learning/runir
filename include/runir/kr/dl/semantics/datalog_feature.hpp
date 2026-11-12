@@ -6,21 +6,22 @@
 #include <algorithm>
 #include <cstdint>
 #include <stdexcept>
-#include <vector>
-#include <yggdrasil/database/datalog/evaluator.hpp>
+#include <tyr/datalog/lifted/database/datalog/evaluator.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 namespace runir::kr::dl::semantics
 {
 
-/// A program's evaluator in full evaluation, over all heads of its rules; `generation` counts its evaluations.
+/// A program's evaluator in full evaluation, over the heads that features read; `generation` counts its evaluations.
 struct DatalogFeature
 {
-    ygg::database::datalog::Evaluator evaluator;
-    std::vector<ygg::Index<ygg::database::datalog::Relation>> heads;
+    tyr::datalog::database::datalog::Evaluator evaluator;
+    urd::Store<urd::sequence<urd::index<tyr::datalog::database::datalog::Relation>>> heads;
     uint64_t generation = 0;
 
     /// The output of a head relation.
-    [[nodiscard]] size_t output(ygg::Index<ygg::database::datalog::Relation> relation) const
+    [[nodiscard]] size_t output(urd::index<tyr::datalog::database::datalog::Relation> relation) const
     {
         const auto it = std::ranges::find(heads, relation);
         if (it == heads.end())
@@ -32,9 +33,9 @@ struct DatalogFeature
 /// The heads that features read, the evaluator's outputs. The repository is a template parameter so that the body is
 /// checked once it is complete.
 template<typename C>
-std::vector<ygg::database::datalog::RelationView> program_heads(ygg::View<ygg::Index<DatalogProgram>, C> program)
+urd::Store<urd::sequence<tyr::datalog::database::datalog::RelationView>> program_heads(urd::index_view<DatalogProgram, C> program)
 {
-    auto heads = std::vector<ygg::database::datalog::RelationView>();
+    auto heads = urd::Store<urd::sequence<tyr::datalog::database::datalog::RelationView>>();
     for (const auto head : program.get_outputs())
         heads.push_back(head);
     return heads;
@@ -42,9 +43,9 @@ std::vector<ygg::database::datalog::RelationView> program_heads(ygg::View<ygg::I
 
 /// The input slots whose queries are static.
 template<typename C>
-std::vector<size_t> static_slots(ygg::View<ygg::Index<DatalogProgram>, C> program)
+urd::Store<urd::sequence<size_t>> static_slots(urd::index_view<DatalogProgram, C> program)
 {
-    auto result = std::vector<size_t>();
+    auto result = urd::Store<urd::sequence<size_t>>();
     const auto inputs = program.get_inputs();
     for (size_t slot = 0; slot < inputs.size(); ++slot)
         if (inputs[slot].is_static())
@@ -52,14 +53,15 @@ std::vector<size_t> static_slots(ygg::View<ygg::Index<DatalogProgram>, C> progra
     return result;
 }
 
+/// The program's evaluator, whose results are read through `layer`.
 template<typename C>
-DatalogFeature make_datalog_feature(ygg::View<ygg::Index<DatalogProgram>, C> program)
+DatalogFeature make_datalog_feature(const ygg::FreeRelationRepository& layer, urd::index_view<DatalogProgram, C> program)
 {
     const auto heads = program_heads(program);
     const auto slots = static_slots(program);
-    auto feature = DatalogFeature { ygg::database::datalog::Evaluator(program.get_program(), heads, slots), {}, 0 };
+    auto feature = DatalogFeature { tyr::datalog::database::datalog::Evaluator(layer, program.get_program(), heads, slots), {}, 0 };
     for (const auto head : heads)
-        feature.heads.push_back(head.get_index());
+        feature.heads.push_back(head.index());
     return feature;
 }
 

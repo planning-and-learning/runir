@@ -1,11 +1,18 @@
 #ifndef PYRUNIR_KR_DL_OPTIMIZATION_BINDINGS_HPP_
 #define PYRUNIR_KR_DL_OPTIMIZATION_BINDINGS_HPP_
 
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
+
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/vector.h>
 #include <runir/kr/dl/optimization.hpp>
-#include <runir/kr/dl/semantics/state_evaluation.hpp>
+#include <urd/python/sequences/sequence.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 #include <yggdrasil/python/diagnostics.hpp>
 
@@ -66,7 +73,7 @@ void bind_optimize(nanobind::class_<View>& cls)
             nb::keep_alive<0, 2>())
         .def(
             "collect_query_statistics",
-            [](const View& view, const std::vector<GroundContext*>& contexts)
+            [](const View& view, const urd::Store<urd::sequence<GroundContext*>>& contexts)
             {
                 auto warnings = ygg::diagnostics::Warnings();
                 auto statistics = runir::kr::dl::collect_query_statistics<tyr::GroundTag>(view, contexts, warnings);
@@ -76,7 +83,7 @@ void bind_optimize(nanobind::class_<View>& cls)
             nb::arg("contexts"))
         .def(
             "collect_query_statistics",
-            [](const View& view, const std::vector<LiftedContext*>& contexts)
+            [](const View& view, const urd::Store<urd::sequence<LiftedContext*>>& contexts)
             {
                 auto warnings = ygg::diagnostics::Warnings();
                 auto statistics = runir::kr::dl::collect_query_statistics<tyr::LiftedTag>(view, contexts, warnings);

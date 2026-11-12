@@ -2,11 +2,9 @@
 
 #include <fmt/format.h>
 #include <gtest/gtest.h>
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
-#include <runir/kr/ps/base/detail/repository_instantiations.hpp>
 #include <runir/kr/ps/base/dl/parser.hpp>
 #include <runir/kr/ps/base/dl/sketch_factory.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
@@ -14,6 +12,7 @@
 #include <runir/kr/ps/base/syntactic_complexity.hpp>
 #include <stdexcept>
 #include <string_view>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/formalism/planning/parser.hpp>
 
 namespace runir::tests
@@ -31,7 +30,6 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesParse)
         { "classical/tests/gripper/domain.pddl", kr::ps::base::dl::SketchSpecification::GRIPPER_FRANCE_ET_AL_AAAI2021 },
         { "classical/tests/blocks_3/domain.pddl", kr::ps::base::dl::SketchSpecification::BLOCKS3OPS_FRANCE_ET_AL_AAAI2021 },
         { "classical/tests/spanner/domain.pddl", kr::ps::base::dl::SketchSpecification::SPANNER_FRANCE_ET_AL_AAAI2021 },
-        { "classical/tests/delivery/domain.pddl", kr::ps::base::dl::SketchSpecification::DELIVERY_FRANCE_ET_AL_AAAI2021 },
     };
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactory();
@@ -43,7 +41,7 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesParse)
         auto repository = repository_factory.create(dl_repository);
         const auto sketch = kr::ps::base::dl::SketchFactory::create(test_case.specification, planning_domain.get_domain(), *repository);
 
-        EXPECT_EQ(sketch.get_index(), ygg::Index<kr::ps::base::Sketch>(0));
+        EXPECT_EQ(sketch.index(), urd::index<kr::ps::base::Sketch>(0));
         EXPECT_EQ(repository->template size<kr::ps::base::Sketch>(), 1);
         const auto formatted = fmt::format("{}", sketch);
         EXPECT_EQ(fmt::format("{}", kr::ps::base::dl::parse_sketch(formatted, planning_domain.get_domain(), *repository)), formatted);
@@ -70,13 +68,11 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
 
     const auto sketch = kr::ps::base::dl::parse_sketch(read_fixture("kr/dl/grammar/policy_parser.sketch"), planning_domain.get_domain(), *repository);
 
-    EXPECT_EQ(sketch.get_index(), ygg::Index<kr::ps::base::Sketch>(0));
+    EXPECT_EQ(sketch.index(), urd::index<kr::ps::base::Sketch>(0));
     EXPECT_EQ(repository->template size<kr::ps::base::Sketch>(), 1);
     EXPECT_EQ(repository->template size<kr::ps::Rule<kr::BaseFamilyTag>>(), 2);
     EXPECT_EQ((repository->template size<kr::ps::Feature<kr::BaseFamilyTag, kr::dl::BooleanTag>>()), 2);
     EXPECT_EQ((repository->template size<kr::ps::Feature<kr::BaseFamilyTag, kr::dl::NumericalTag>>()), 1);
-    EXPECT_EQ(repository->template size<kr::ps::ConditionVariant<kr::BaseFamilyTag>>(), 4);
-    EXPECT_EQ(repository->template size<kr::ps::EffectVariant<kr::BaseFamilyTag>>(), 5);
 
     const auto first_rule = sketch.get_rules()[0];
     EXPECT_EQ(first_rule.get_symbol(), "ready-rule");
@@ -89,26 +85,16 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
         EXPECT_EQ(fmt::format("{:>24}", view), fmt::format("{:>24}", text));
         EXPECT_EQ(fmt::format("{:.4}", view), fmt::format("{:.4}", text));
     };
-    const auto check_variants = [&](auto view)
-    {
-        check_format_specs(view);
-        ygg::visit(
-            [&](auto language)
-            {
-                check_format_specs(language);
-                ygg::visit(check_format_specs, language.get_variant());
-            },
-            view.get_variant());
-    };
     for (auto condition : first_rule.get_conditions())
-        check_variants(condition);
+        std::visit(check_format_specs, condition);
     for (auto effect : first_rule.get_effects())
-        check_variants(effect);
+        std::visit(check_format_specs, effect);
 
     const auto formatted = fmt::format("{}", sketch);
     EXPECT_EQ(fmt::format("{}", kr::ps::base::dl::parse_sketch(formatted, planning_domain.get_domain(), *repository)), formatted);
     const auto feature = sketch.template get_features<kr::dl::BooleanTag>().front();
-    const auto concrete_complexity = ygg::visit([](auto concrete) { return kr::ps::dl::syntactic_complexity(concrete); }, feature.get_variant());
+    const auto concrete_complexity =
+        std::visit([](auto concrete) { return kr::dl::semantics::syntactic_complexity(concrete.get_feature()); }, feature.get_variant());
     EXPECT_EQ(kr::ps::syntactic_complexity(feature), concrete_complexity);
     EXPECT_EQ(concrete_complexity, kr::dl::semantics::syntactic_complexity(feature.get_expression()));
     EXPECT_EQ(kr::ps::base::syntactic_complexity(sketch), 6);

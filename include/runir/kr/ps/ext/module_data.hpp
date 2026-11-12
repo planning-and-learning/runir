@@ -7,52 +7,53 @@
 #include "runir/kr/ps/ext/rule_data.hpp"
 
 #include <tuple>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
 
-namespace ygg
+namespace urd
 {
 
 template<>
-struct Data<runir::kr::ps::ext::Module>
+struct data<runir::kr::ps::ext::Module>
 {
-    Index<runir::kr::ps::ext::Module> index;
-    Index<runir::kr::ps::ext::ModuleSymbol> symbol;
-    IndexList<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>> concept_arguments;
-    IndexList<runir::kr::dl::Argument<runir::kr::dl::RoleTag>> role_arguments;
-    IndexList<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>> boolean_arguments;
-    IndexList<runir::kr::dl::Argument<runir::kr::dl::NumericalTag>> numerical_arguments;
-    IndexList<runir::kr::dl::Register<runir::kr::dl::ConceptTag>> concept_registers;
-    IndexList<runir::kr::dl::Register<runir::kr::dl::RoleTag>> role_registers;
-    IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>> concept_features;
-    IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>> role_features;
-    IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>> boolean_features;
-    IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>> numerical_features;
-    IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>> query_features;
-    Index<runir::kr::ps::ext::MemoryState> entry_memory_state;
-    IndexList<runir::kr::ps::ext::MemoryState> memory_states;
-    IndexMatrix<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>> memory_transitions;
+    urd::index<runir::kr::ps::ext::Module> index;
+    urd::index<runir::kr::ps::ModuleSymbol<runir::kr::ExtFamilyTag>> symbol;
+    urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>>> concept_arguments;
+    urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::RoleTag>>> role_arguments;
+    urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>>> boolean_arguments;
+    urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::NumericalTag>>> numerical_arguments;
+    urd::flat_vector<urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> concept_registers;
+    urd::flat_vector<urd::index<runir::kr::dl::Register<runir::kr::dl::RoleTag>>> role_registers;
+    urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>> concept_features;
+    urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>> role_features;
+    urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>> boolean_features;
+    urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>> numerical_features;
+    urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>> query_features;
+    urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> entry_memory_state;
+    urd::flat_vector<urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>>> memory_states;
+    urd::flat_vector<urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>>> memory_transitions;
     /// The rules of its :datalog section as written (empty without one): printed back, so that the module parses again.
-    ::cista::offset::string datalog;
-    Data() = default;
+    urd::flat_string datalog;
+    data() = default;
     // Arguments and registers live in the description-logic repository, hence the separate context parameter.
-    Data(Index<runir::kr::ps::ext::ModuleSymbol> symbol_,
-         IndexList<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>> concept_arguments_,
-         IndexList<runir::kr::dl::Argument<runir::kr::dl::RoleTag>> role_arguments_,
-         IndexList<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>> boolean_arguments_,
-         IndexList<runir::kr::dl::Argument<runir::kr::dl::NumericalTag>> numerical_arguments_,
-         IndexList<runir::kr::dl::Register<runir::kr::dl::ConceptTag>> concept_registers_,
-         IndexList<runir::kr::dl::Register<runir::kr::dl::RoleTag>> role_registers_,
-         IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>> concept_features_,
-         IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>> role_features_,
-         IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>> boolean_features_,
-         IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>> numerical_features_,
-         IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>> query_features_,
-         Index<runir::kr::ps::ext::MemoryState> entry_memory_state_,
-         IndexList<runir::kr::ps::ext::MemoryState> memory_states_,
-         IndexMatrix<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>> memory_transitions_) :
+    data(urd::index<runir::kr::ps::ModuleSymbol<runir::kr::ExtFamilyTag>> symbol_,
+         urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>>> concept_arguments_,
+         urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::RoleTag>>> role_arguments_,
+         urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>>> boolean_arguments_,
+         urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::NumericalTag>>> numerical_arguments_,
+         urd::flat_vector<urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> concept_registers_,
+         urd::flat_vector<urd::index<runir::kr::dl::Register<runir::kr::dl::RoleTag>>> role_registers_,
+         urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>> concept_features_,
+         urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>> role_features_,
+         urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>> boolean_features_,
+         urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>> numerical_features_,
+         urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>> query_features_,
+         urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> entry_memory_state_,
+         urd::flat_vector<urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>>> memory_states_,
+         urd::flat_vector<urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>>> memory_transitions_) :
         index(),
         symbol(symbol_),
         concept_arguments(std::move(concept_arguments_)),
@@ -71,103 +72,48 @@ struct Data<runir::kr::ps::ext::Module>
         memory_transitions(std::move(memory_transitions_))
     {
     }
-    template<typename C, typename D>
-    Data(::ygg::View<Index<runir::kr::ps::ext::ModuleSymbol>, C> symbol_,
-         const std::vector<::ygg::View<Index<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>>, D>>& concept_arguments_,
-         const std::vector<::ygg::View<Index<runir::kr::dl::Argument<runir::kr::dl::RoleTag>>, D>>& role_arguments_,
-         const std::vector<::ygg::View<Index<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>>, D>>& boolean_arguments_,
-         const std::vector<::ygg::View<Index<runir::kr::dl::Argument<runir::kr::dl::NumericalTag>>, D>>& numerical_arguments_,
-         const std::vector<::ygg::View<Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>, D>>& concept_registers_,
-         const std::vector<::ygg::View<Index<runir::kr::dl::Register<runir::kr::dl::RoleTag>>, D>>& role_registers_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>, C>>& concept_features_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>, C>>& role_features_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>, C>>& boolean_features_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>, C>>& numerical_features_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>, C>>& query_features_,
-         ::ygg::View<Index<runir::kr::ps::ext::MemoryState>, C> entry_memory_state_,
-         const std::vector<::ygg::View<Index<runir::kr::ps::ext::MemoryState>, C>>& memory_states_,
-         const std::vector<std::vector<::ygg::View<Index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>, C>>>& memory_transitions_) :
-        index(),
-        symbol(),
-        concept_arguments(),
-        role_arguments(),
-        boolean_arguments(),
-        numerical_arguments(),
-        concept_registers(),
-        role_registers(),
-        concept_features(),
-        role_features(),
-        boolean_features(),
-        numerical_features(),
-        query_features(),
-        entry_memory_state(),
-        memory_states(),
-        memory_transitions()
-    {
-        set(symbol_, symbol);
-        set(concept_arguments_, concept_arguments);
-        set(role_arguments_, role_arguments);
-        set(boolean_arguments_, boolean_arguments);
-        set(numerical_arguments_, numerical_arguments);
-        set(concept_registers_, concept_registers);
-        set(role_registers_, role_registers);
-        set(concept_features_, concept_features);
-        set(role_features_, role_features);
-        set(boolean_features_, boolean_features);
-        set(numerical_features_, numerical_features);
-        set(query_features_, query_features);
-        set(entry_memory_state_, entry_memory_state);
-        set(memory_states_, memory_states);
-        memory_transitions.reserve(memory_transitions_.size());
-        for (const auto& row : memory_transitions_)
-        {
-            memory_transitions.emplace_back();
-            set(row, memory_transitions.back());
-        }
-    }
 
     static constexpr auto cista_members() noexcept
     {
-        return ygg::Members<&Data::index,
-                            &Data::symbol,
-                            &Data::concept_arguments,
-                            &Data::role_arguments,
-                            &Data::boolean_arguments,
-                            &Data::numerical_arguments,
-                            &Data::concept_registers,
-                            &Data::role_registers,
-                            &Data::concept_features,
-                            &Data::role_features,
-                            &Data::boolean_features,
-                            &Data::numerical_features,
-                            &Data::query_features,
-                            &Data::entry_memory_state,
-                            &Data::memory_states,
-                            &Data::memory_transitions,
-                            &Data::datalog> {};
+        return urd::Members<&data::index,
+                            &data::symbol,
+                            &data::concept_arguments,
+                            &data::role_arguments,
+                            &data::boolean_arguments,
+                            &data::numerical_arguments,
+                            &data::concept_registers,
+                            &data::role_registers,
+                            &data::concept_features,
+                            &data::role_features,
+                            &data::boolean_features,
+                            &data::numerical_features,
+                            &data::query_features,
+                            &data::entry_memory_state,
+                            &data::memory_states,
+                            &data::memory_transitions,
+                            &data::datalog> {};
     }
     static constexpr auto identifying_members() noexcept
     {
-        return ygg::Members<&Data::symbol,
-                            &Data::concept_arguments,
-                            &Data::role_arguments,
-                            &Data::boolean_arguments,
-                            &Data::numerical_arguments,
-                            &Data::concept_registers,
-                            &Data::role_registers,
-                            &Data::concept_features,
-                            &Data::role_features,
-                            &Data::boolean_features,
-                            &Data::numerical_features,
-                            &Data::query_features,
-                            &Data::entry_memory_state,
-                            &Data::memory_states,
-                            &Data::memory_transitions,
-                            &Data::datalog> {};
+        return urd::Members<&data::symbol,
+                            &data::concept_arguments,
+                            &data::role_arguments,
+                            &data::boolean_arguments,
+                            &data::numerical_arguments,
+                            &data::concept_registers,
+                            &data::role_registers,
+                            &data::concept_features,
+                            &data::role_features,
+                            &data::boolean_features,
+                            &data::numerical_features,
+                            &data::query_features,
+                            &data::entry_memory_state,
+                            &data::memory_states,
+                            &data::memory_transitions,
+                            &data::datalog> {};
     }
-    void clear() noexcept { ygg::clear_members(*this); }
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 #endif

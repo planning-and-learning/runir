@@ -5,6 +5,8 @@
 #include <functional>
 #include <runir/kr/ps/ext/detail/successor_expander_impl.hpp>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -26,10 +28,10 @@ auto collect_steps(
     bool first_only = false,
     const std::function<bool()>& stop = [] { return false; })
 {
-    using Step = kr::ps::ext::detail::ProgramStep<Kind>;
+    using Step = kr::ps::ProgramStep<kr::ExtFamilyTag, Kind>;
     using Expansion = std::variant<Step, kr::ps::ext::detail::Choice<kr::dl::ConceptTag>, kr::ps::ext::detail::Choice<kr::dl::RoleTag>>;
     auto statistics = kr::ps::ext::ProgramSearchStatistics {};
-    auto expansions = std::vector<Expansion> {};
+    auto expansions = urd::Store<urd::sequence<Expansion>> {};
     expander.for_each_successor(
         state,
         statistics,
@@ -39,7 +41,7 @@ auto collect_steps(
             return !first_only;
         },
         stop);
-    auto result = std::vector<Step> {};
+    auto result = urd::Store<urd::sequence<Step>> {};
     for (auto& expansion : expansions)
         std::visit(
             [&](auto candidate)

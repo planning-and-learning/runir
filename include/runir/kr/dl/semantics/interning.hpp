@@ -4,6 +4,9 @@
 #include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 
+#include <cstddef>
+#include <ranges>
+#include <span>
 #include <stdexcept>
 #include <utility>
 
@@ -24,57 +27,90 @@ public:
 };
 
 template<CategoryTag Category>
-ygg::Builder<Denotation<Category>>& assign(ygg::Builder<Denotation<Category>>& destination, DenotationView<Category> source)
+urd::builder<Denotation<Category>>& assign(urd::builder<Denotation<Category>>& destination, DenotationView<Category> source)
 {
     if constexpr (ConceptOrRoleTag<Category>)
     {
-        const auto blocks = source.get_context().get_vector_repository()[source.get_data().vec_index];
+        const auto blocks = source.context().get_vector_repository().at(source.data().vec_index);
         destination.blocks.assign(blocks.begin(), blocks.end());
-        destination.num_objects = source.get_data().num_objects;
+        destination.num_objects = source.data().num_objects;
     }
     else
-        destination.value = source.get();
-    ygg::clear(destination.index);
+        destination.value = source.value();
+    destination.index = {};
     return destination;
 }
 
 template<CategoryTag Category>
-ygg::Builder<Denotation<Category>>& assign(ygg::Builder<Denotation<Category>>& destination, BorrowedDenotationView<Category> source)
+urd::builder<Denotation<Category>>& assign(urd::builder<Denotation<Category>>& destination, BorrowedDenotationView<Category> source)
 {
     if constexpr (ConceptOrRoleTag<Category>)
     {
-        if (&destination != &source.get_handle())
+        if (&destination != &source.data())
         {
-            destination.blocks = source.get_handle().blocks;
+            destination.blocks = source.data().blocks;
             destination.num_objects = source.get_num_objects();
         }
     }
     else
-        destination.value = source.get();
-    ygg::clear(destination.index);
+        destination.value = source.value();
+    destination.index = {};
     return destination;
 }
 
 /// Intern a computed denotation using reusable scratch; record the resulting index on its builder.
 template<CategoryTag Category>
-[[nodiscard]] auto insert(DenotationRepository& repository, ygg::Builder<Denotation<Category>>& source, Builder& builder)
+[[nodiscard]] auto insert(DenotationRepository& repository, urd::builder<Denotation<Category>>& source, Builder& builder)
 {
     auto data = checkout<Denotation<Category>>(builder);
     if constexpr (ConceptOrRoleTag<Category>)
     {
         data->num_objects = source.num_objects;
-        data->vec_index = repository.get_vector_repository().insert(source.blocks);
+        data->vec_index = repository.get_vector_repository().insert(source.blocks).first;
     }
     else
         data->value = source.value;
     auto interned = insert(repository, *data);
-    source.index = interned.first.get_index();
+    source.index = interned.first.index();
     return interned;
 }
 
-/// Publish typed query rows in the denotation repository's relation repository, which owns them.
-[[nodiscard]] inline std::pair<QueryDenotationView, bool> insert(DenotationRepository& repository, ygg::Builder<ygg::database::Relation>& source)
-{ return ygg::database::insert(repository.get_relation_repository(), source); }
+/// Publish typed query rows in the denotation repository's relation repository, which owns them: each row, then the
+/// columns, then the relation, in scratch records from `builder`.
+[[nodiscard]] inline std::pair<QueryDenotationView, bool>
+insert(DenotationRepository& repository, const urd::builder<ygg::Relation<ygg::Schema>>& source, Builder& builder)
+{
+    auto& relations = repository.get_relation_repository();
+    auto relation = checkout<ygg::Relation<ygg::Schema>>(builder);
+    relation->pool = relations.schema(source.columns() | std::views::transform(&ygg::ColumnLayout::type));
+    auto row = checkout<ygg::Row<ygg::Schema>>(builder);
+    row->relation = relation->pool;
+    const auto rows = relations.view(source);
+    for (std::size_t i = 0; i < rows.size(); ++i)
+    {
+        const auto values = rows.row(i).get_values();
+        row->values.set(values.begin(), values.end());
+        relation->rows.push_back(relations.insert(*row).first.data().row);
+    }
+    auto columns = checkout<ygg::Columns>(builder);
+    columns->values.set(source.columns().begin(), source.columns().end());
+    relation->columns = relations.insert(*columns).first.index();
+    return relations.insert(*relation);
+}
+/// `source` under new columns (the same pool and rows) in the denotation repository's relation repository, in scratch
+/// records from `builder`.
+[[nodiscard]] inline QueryDenotationView
+rename(DenotationRepository& repository, QueryDenotationView source, std::span<const ygg::ColumnLayout> labels, Builder& builder)
+{
+    auto& relations = repository.get_relation_repository();
+    auto columns = checkout<ygg::Columns>(builder);
+    columns->values.set(labels.begin(), labels.end());
+    auto relation = checkout<ygg::Relation<ygg::Schema>>(builder);
+    relation->pool = source.data().pool;
+    relation->rows.set(source.data().rows.begin(), source.data().rows.end());
+    relation->columns = relations.insert(*columns).first.index();
+    return relations.insert(*relation).first;
+}
 
 /// Register object identities remain tied to the same planning formalism.
 [[nodiscard]] inline auto copy(BorrowedRegisterValuesView source, const CopyContext& context)
@@ -91,9 +127,9 @@ template<CategoryTag Category>
 /// Reuse a view owned by the target; otherwise intern its values in the target repository.
 [[nodiscard]] inline std::pair<RegisterValuesView, bool> copy(RegisterValuesView source, const CopyContext& context)
 {
-    if (&source.get_context() == &context.repository())
+    if (&source.context() == &context.repository())
         return { source, false };
-    return copy(BorrowedRegisterValuesView(source.get_data(), source.get_formalism_repository()), context);
+    return copy(BorrowedRegisterValuesView(&source.data(), &source.get_formalism_repository()), context);
 }
 
 template<CategoryTag Category>
@@ -101,19 +137,19 @@ template<CategoryTag Category>
 {
     auto& repository = context.repository();
     auto& builder = context.builder();
-    if (&source.get_context() == &repository)
+    if (&source.context() == &repository)
         return { source, false };
     auto data = checkout<Denotation<Category>>(builder);
     if constexpr (ConceptOrRoleTag<Category>)
     {
-        if (source.get_context().get_formalism_repository_ptr() != repository.get_formalism_repository_ptr())
+        if (source.context().get_formalism_repository_ptr() != repository.get_formalism_repository_ptr())
             throw std::invalid_argument("Denotation copying requires the same formalism repository.");
-        data->num_objects = source.get_data().num_objects;
-        const auto blocks = source.get_context().get_vector_repository()[source.get_data().vec_index];
-        data->vec_index = repository.get_vector_repository().insert(blocks);
+        data->num_objects = source.data().num_objects;
+        const auto blocks = source.context().get_vector_repository().at(source.data().vec_index);
+        data->vec_index = repository.get_vector_repository().insert(blocks).first;
     }
     else
-        data->value = source.get();
+        data->value = source.value();
     return insert(repository, *data);
 }
 

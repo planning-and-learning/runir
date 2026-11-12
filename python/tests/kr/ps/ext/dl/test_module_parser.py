@@ -11,7 +11,7 @@ from ext_execution_utils import ExecutionStep, Outcome, collect_steps
 from fixture_utils import FIXTURE_ROOT, load_fixture, read_fixture
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
-from pytyr.formalism.planning import ActionBinding, LiftedPlanningTask, Parser, PlanningDomain
+from pytyr.formalism.planning import ActionRow, LiftedPlanningTask, Parser, PlanningDomain
 from pytyr.planning.ground import PackedPlan as GroundPackedPlan, Task as GroundTask
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 from pyyggdrasil.execution import ExecutionContext
@@ -30,7 +30,7 @@ from pyrunir.kr import (
 )
 from pyrunir.kr.dl import ConstructorRepositoryFactory as DlRepositoryFactory
 from pyrunir.kr.dl.semantics import CallArguments, RegisterValues
-from pyrunir.kr.ps import ext
+from pyrunir.kr.ps import ProofStatus, ext
 from pyrunir.kr.ps.ext import dl
 from pyrunir.kr.uns.dl import parse_classifier
 
@@ -387,7 +387,7 @@ def test_terminating_program_executes_and_proves_from_python() -> None:
     assert search_options.classifier is None
 
     search_result = ext.find_ground_solution(task_context, program, search_options)
-    assert search_result.status == ext.ProgramProofStatus.SUCCESS
+    assert search_result.status == ProofStatus.SUCCESS
     assert search_result.is_successful()
     assert isinstance(search_result.plan, GroundPackedPlan)
     assert search_result.plan.get_length() == 2
@@ -401,12 +401,12 @@ def test_terminating_program_executes_and_proves_from_python() -> None:
     lifted_options = ext.LiftedProgramSearchOptions()
     assert lifted_options.classifier is None
     lifted_options.classifier = classifier
-    assert lifted_options.classifier.get_index() == classifier.get_index()
+    assert lifted_options.classifier.index() == classifier.index()
 
     del classifier, classifier_repository, classifier_dl_repository
     gc.collect()
     classified_result = ext.find_ground_solution(task_context, program, classified_options)
-    assert classified_result.status == ext.ProgramProofStatus.FAILURE
+    assert classified_result.status == ProofStatus.FAILURE
     assert classified_result.graph.get_num_vertices() == 1
     assert classified_result.graph.get_num_edges() == 0
     assert len(classified_result.deadend_states) == 1
@@ -420,7 +420,7 @@ def test_terminating_program_executes_and_proves_from_python() -> None:
     proof_options = ext.GroundProgramSearchOptions()
     proof_options.universal = True
     proof = ext.find_ground_solution(task_context, program, proof_options)
-    assert proof.status == ext.ProgramProofStatus.SUCCESS
+    assert proof.status == ProofStatus.SUCCESS
     assert proof.is_successful()
     assert proof.graph.get_num_vertices() == search_result.graph.get_num_vertices()
     vertex = next(iter(proof.graph.get_vertex_indices()))
@@ -433,7 +433,7 @@ def test_terminating_program_executes_and_proves_from_python() -> None:
     assert ext.ProgramProofEdgeLabel is ext.GroundProgramProofEdgeLabel
     assert isinstance(edge_label, ext.ProgramProofEdgeLabel)
     if edge_label.action is not None:
-        assert isinstance(edge_label.action, ActionBinding)
+        assert isinstance(edge_label.action, ActionRow)
     vertex_label = proof.graph.get_vertex_property(vertex)
     assert vertex_label.program_state.module_state.memory_state is not None
     frame = vertex_label.program_state.module_state
@@ -481,10 +481,10 @@ def test_executor_fixture(case: ExecutionFixture) -> None:
     result = ext.find_ground_solution(task_context, program, options)
 
     expected_status = {
-        "success": ext.ProgramProofStatus.SUCCESS,
-        "failure": ext.ProgramProofStatus.FAILURE,
-        "out_of_time": ext.ProgramProofStatus.OUT_OF_TIME,
-        "out_of_states": ext.ProgramProofStatus.OUT_OF_STATES,
+        "success": ProofStatus.SUCCESS,
+        "failure": ProofStatus.FAILURE,
+        "out_of_time": ProofStatus.OUT_OF_TIME,
+        "out_of_states": ProofStatus.OUT_OF_STATES,
     }[case["status"]]
     assert result.status == expected_status
     assert result.graph.get_num_vertices() == case["num_vertices"]
@@ -524,7 +524,7 @@ def test_lifted_executor_binding_reports_failure_status() -> None:
 
     result = ext.find_lifted_solution(task_context, program, options)
 
-    assert result.status == ext.ProgramProofStatus.FAILURE
+    assert result.status == ProofStatus.FAILURE
     assert not result.is_successful()
     assert result.statistics.choice_depth == 0
 
@@ -587,8 +587,8 @@ def _check_ground_successor_callbacks() -> None:
         search.state_repository,
         search.axiom_evaluator,
     )
-    assert Counter((_transition(step).action, step.target.state.get_index()) for step in actual) == Counter(
-        (step.label, step.node.get_state().get_index())
+    assert Counter((_transition(step).action, step.target.state.index()) for step in actual) == Counter(
+        (step.label, step.node.get_state().index())
         for step in expected
         if expander.matching_rule(initial, step) is not None
     )
@@ -648,8 +648,8 @@ def _check_lifted_successor_callbacks() -> None:
         search.state_repository,
         search.axiom_evaluator,
     )
-    assert Counter((_transition(step).action, step.target.state.get_index()) for step in actual) == Counter(
-        (step.label, step.node.get_state().get_index())
+    assert Counter((_transition(step).action, step.target.state.index()) for step in actual) == Counter(
+        (step.label, step.node.get_state().index())
         for step in expected
         if expander.matching_rule(initial, step) is not None
     )

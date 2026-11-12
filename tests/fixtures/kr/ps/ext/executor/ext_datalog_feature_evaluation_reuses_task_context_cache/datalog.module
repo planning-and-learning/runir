@@ -1,0 +1,30 @@
+(:module
+        (:symbol distance)
+        (:arguments)
+        (:registers)
+        (:entry source)
+        (:memory source target)
+        (:datalog
+            (:rule (dist ?x (min 0)) (ball ?x))
+            (:rule (dist ?y (min ?v)) (dist ?x ?w) (at ?x ?y) (= ?v (+ ?w 1)))
+            (:rule (best (min ?w)) (dist ?x ?w) (room ?x)))
+        (:features
+            (:numerical
+                (:symbol D)
+                (:head best)
+            )
+        )
+        (:rules
+            (:rule
+                (:symbol advance)
+                (:expression
+                    (:source-memory source)
+                    (:target-memory target)
+                    (:sketch
+                        (:conditions (greater_zero D))
+                        (:effects)
+                    )
+                )
+            )
+        )
+    )

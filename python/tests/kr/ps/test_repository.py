@@ -38,12 +38,12 @@ def test_uns_features_construct_programmatically(gripper_planning_domain: Planni
     )
     feature = classifier.get_features()[0]
     concrete_data = uns_dl.ConcreteBooleanFeatureData()
-    concrete_data.feature = feature.get_expression().get_index()
+    concrete_data.feature = feature.get_expression().index()
     concrete_data.symbol = feature.get_symbol()
     concrete = repository.insert(concrete_data)[0]
     assert concrete == feature.get_variant()
     data = uns_dl.BooleanFeatureData()
-    data.variant = concrete.get_index()
+    data.variant = concrete.index()
     assert repository.insert(data)[0] == feature
 
 
@@ -75,19 +75,19 @@ def _check_base(domain: PlanningDomain) -> None:
     assert boolean.get_feature() == boolean.get_expression()
     assert boolean.get_variant().get_feature() == boolean.get_expression()
     concrete_boolean = repository.insert(
-        base.dl.ConcreteBooleanFeatureData(boolean.get_expression().get_index(), boolean.get_symbol())
+        base.dl.ConcreteBooleanFeatureData(boolean.get_expression().index(), boolean.get_symbol())
     )[0]
     assert concrete_boolean == boolean.get_variant()
-    assert repository.insert(base.dl.BooleanFeatureData(concrete_boolean.get_index()))[0] == boolean
+    assert repository.insert(base.dl.BooleanFeatureData(concrete_boolean.index()))[0] == boolean
     assert numerical.get_feature() == numerical.get_expression()
     assert numerical.get_variant().get_feature() == numerical.get_expression()
     concrete_numerical = repository.insert(
-        base.dl.ConcreteNumericalFeatureData(numerical.get_expression().get_index(), numerical.get_symbol())
+        base.dl.ConcreteNumericalFeatureData(numerical.get_expression().index(), numerical.get_symbol())
     )[0]
     assert concrete_numerical == numerical.get_variant()
-    assert repository.insert(base.dl.NumericalFeatureData(concrete_numerical.get_index()))[0] == numerical
+    assert repository.insert(base.dl.NumericalFeatureData(concrete_numerical.index()))[0] == numerical
 
-    b, n = boolean.get_index(), numerical.get_index()
+    b, n = boolean.index(), numerical.index()
     _check_observation(lambda: repository.insert(base.dl.PositiveBooleanConditionData(b)), boolean)
     _check_observation(lambda: repository.insert(base.dl.NegativeBooleanConditionData(b)), boolean)
     _check_observation(lambda: repository.insert(base.dl.EqualZeroNumericalConditionData(n)), numerical)
@@ -108,19 +108,19 @@ def _check_ext(domain: PlanningDomain) -> None:
     assert boolean.get_feature() == boolean.get_expression()
     assert boolean.get_variant().get_feature() == boolean.get_expression()
     concrete_boolean = repository.insert(
-        ext.dl.ConcreteBooleanFeatureData(boolean.get_expression().get_index(), boolean.get_symbol())
+        ext.dl.ConcreteBooleanFeatureData(boolean.get_expression().index(), boolean.get_symbol())
     )[0]
     assert concrete_boolean == boolean.get_variant()
-    assert repository.insert(ext.dl.BooleanFeatureData(concrete_boolean.get_index()))[0] == boolean
+    assert repository.insert(ext.dl.BooleanFeatureData(concrete_boolean.index()))[0] == boolean
     assert numerical.get_feature() == numerical.get_expression()
     assert numerical.get_variant().get_feature() == numerical.get_expression()
     concrete_numerical = repository.insert(
-        ext.dl.ConcreteNumericalFeatureData(numerical.get_expression().get_index(), numerical.get_symbol())
+        ext.dl.ConcreteNumericalFeatureData(numerical.get_expression().index(), numerical.get_symbol())
     )[0]
     assert concrete_numerical == numerical.get_variant()
-    assert repository.insert(ext.dl.NumericalFeatureData(concrete_numerical.get_index()))[0] == numerical
+    assert repository.insert(ext.dl.NumericalFeatureData(concrete_numerical.index()))[0] == numerical
 
-    b, n = boolean.get_index(), numerical.get_index()
+    b, n = boolean.index(), numerical.index()
     _check_observation(lambda: repository.insert(ext.dl.PositiveBooleanConditionData(b)), boolean)
     _check_observation(lambda: repository.insert(ext.dl.NegativeBooleanConditionData(b)), boolean)
     _check_observation(lambda: repository.insert(ext.dl.EqualZeroNumericalConditionData(n)), numerical)
@@ -141,19 +141,19 @@ def _check_icp(domain: PlanningDomain) -> None:
     assert boolean.get_feature() == boolean.get_expression()
     assert boolean.get_variant().get_feature() == boolean.get_expression()
     concrete_boolean = repository.insert(
-        icp.dl.ConcreteBooleanFeatureData(boolean.get_expression().get_index(), boolean.get_symbol())
+        icp.dl.ConcreteBooleanFeatureData(boolean.get_expression().index(), boolean.get_symbol())
     )[0]
     assert concrete_boolean == boolean.get_variant()
-    assert repository.insert(icp.dl.BooleanFeatureData(concrete_boolean.get_index()))[0] == boolean
+    assert repository.insert(icp.dl.BooleanFeatureData(concrete_boolean.index()))[0] == boolean
     assert numerical.get_feature() == numerical.get_expression()
     assert numerical.get_variant().get_feature() == numerical.get_expression()
     concrete_numerical = repository.insert(
-        icp.dl.ConcreteNumericalFeatureData(numerical.get_expression().get_index(), numerical.get_symbol())
+        icp.dl.ConcreteNumericalFeatureData(numerical.get_expression().index(), numerical.get_symbol())
     )[0]
     assert concrete_numerical == numerical.get_variant()
-    assert repository.insert(icp.dl.NumericalFeatureData(concrete_numerical.get_index()))[0] == numerical
+    assert repository.insert(icp.dl.NumericalFeatureData(concrete_numerical.index()))[0] == numerical
 
-    b, n = boolean.get_index(), numerical.get_index()
+    b, n = boolean.index(), numerical.index()
     _check_observation(lambda: repository.insert(icp.dl.PositiveBooleanConditionData(b)), boolean)
     _check_observation(lambda: repository.insert(icp.dl.NegativeBooleanConditionData(b)), boolean)
     _check_observation(lambda: repository.insert(icp.dl.EqualZeroNumericalConditionData(n)), numerical)
@@ -185,17 +185,17 @@ def test_ext_module_role_features_and_program_modules_construct_programmatically
     )
     (role,) = parsed_module.get_role_features()
     module_data = ext.ModuleData()
-    module_data.symbol = parsed_module.get_symbol().get_index()
-    module_data.role_features = [role.get_index()]
-    module_data.entry_memory_state = parsed_module.get_entry_memory_state().get_index()
-    module_data.memory_states = [state.get_index() for state in parsed_module.get_memory_states()]
+    module_data.symbol = parsed_module.get_symbol().index()
+    module_data.role_features = [role.index()]
+    module_data.entry_memory_state = parsed_module.get_entry_memory_state().index()
+    module_data.memory_states = [state.index() for state in parsed_module.get_memory_states()]
     module = repository.insert(module_data)[0]
     assert module == parsed_module
     assert list(module.get_role_features()) == [role]
 
     program_data = ext.ProgramData()
-    program_data.entry_module = module.get_index()
-    program_data.modules = [module.get_index()]
+    program_data.entry_module = module.index()
+    program_data.modules = [module.index()]
     program = repository.insert(program_data)[0]
     assert program.get_entry_module() == module
     assert list(program.get_modules()) == [module]

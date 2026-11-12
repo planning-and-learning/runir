@@ -1,4 +1,5 @@
 #include "bindings.hpp"
+#include "pyrunir/module.hpp"
 
 #include <nanobind/stl/chrono.h>
 #include <nanobind/stl/optional.h>

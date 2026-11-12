@@ -2,7 +2,7 @@
 #define RUNIR_KR_PS_BASE_DL_PARSER_PARSER_DEF_HPP_
 
 #include "runir/kr/dl/grammar/parser/parsers.hpp"
-#include "runir/kr/parser/error_handler.hpp"
+#include "runir/kr/parser/config.hpp"
 #include "runir/kr/ps/base/dl/ast/ast.hpp"
 #include "runir/kr/ps/base/dl/ast/ast_adapted.hpp"
 #include "runir/kr/ps/base/dl/parser/parsers.hpp"
@@ -19,8 +19,8 @@ using boost::spirit::x3::eoi;
 using boost::spirit::x3::lexeme;
 using boost::spirit::x3::lit;
 using boost::spirit::x3::raw;
-using runir::kr::parser::keyword;
 using ygg::diagnostics::context;
+using ygg::diagnostics::keyword;
 
 using boost::spirit::x3::ascii::alnum;
 using boost::spirit::x3::ascii::alpha;
@@ -102,7 +102,7 @@ BOOST_SPIRIT_DEFINE(positive_condition, negative_condition, equal_zero_condition
 BOOST_SPIRIT_DEFINE(positive_effect, negative_effect, unchanged_effect, increases_effect, decreases_effect, effect_observation, effect)
 BOOST_SPIRIT_DEFINE(rule, sketch, sketch_root)
 
-struct IdentifierClass : runir::kr::parser::ErrorHandlerBase
+struct IdentifierClass : ygg::diagnostics::ErrorHandlerBase
 {
 };
 
@@ -163,7 +163,7 @@ struct RuleClass : boost::spirit::x3::annotate_on_success
 struct SketchClass : boost::spirit::x3::annotate_on_success
 {
 };
-struct SketchRootClass : runir::kr::parser::ErrorHandlerBase
+struct SketchRootClass : ygg::diagnostics::ErrorHandlerBase
 {
 };
 

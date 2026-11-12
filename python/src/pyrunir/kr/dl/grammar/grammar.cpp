@@ -1,4 +1,5 @@
 #include "bindings.hpp"
+#include "pyrunir/module.hpp"
 
 #include <nanobind/stl/string.h>
 #include <runir/kr/dl/grammar/constructor_repository.hpp>
@@ -13,13 +14,13 @@ namespace runir::kr::dl
 void bind_grammar_grammar(nb::module_& m)
 {
     using Type = runir::kr::dl::grammar::GrammarTag;
-    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::grammar::ConstructorRepository>;
+    using View = urd::index_view<Type, runir::kr::dl::grammar::ConstructorRepository>;
 
-    ygg::bind_index<ygg::Index<Type>>(m, "GrammarIndex");
-    auto cls = nb::class_<View>(m, "Grammar").def("get_index", &View::get_index);
+    urd::python::bind_index<urd::index<Type>>(m, "GrammarIndex");
+    auto cls = nb::class_<View>(m, "Grammar").def("index", &View::index);
     ygg::add_print(cls);
-    ygg::add_comparison(cls);
-    ygg::add_hash(cls);
+    urd::python::add_comparison(cls);
+    urd::python::add_hash(cls);
 }
 
 }  // namespace runir::kr::dl

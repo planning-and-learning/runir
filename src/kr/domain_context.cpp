@@ -1,13 +1,13 @@
 #include "runir/kr/domain_context.hpp"
 
-#include "runir/kr/dl/detail/repository_instantiations.hpp"
 #include "runir/kr/dl/repository.hpp"
-#include "runir/kr/dl/semantics/detail/repository_instantiations.hpp"
+#include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
 #include "runir/kr/ps/icp/repository.hpp"
 #include "runir/kr/uns/repository.hpp"
 
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/formalism/planning/planning_domain.hpp>
 
 namespace runir::kr

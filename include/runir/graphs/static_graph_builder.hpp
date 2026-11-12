@@ -11,6 +11,9 @@
 #include <ranges>
 #include <span>
 #include <type_traits>
+#include <urd/repr/maps/dense_multimap.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 
@@ -23,20 +26,21 @@ class StaticGraphBuilder
 public:
     using VertexPropertyType = VP;
     using EdgePropertyType = EP;
-    using VertexType = Vertex<StaticGraphBuilder, VP>;
-    using EdgeType = Edge<StaticGraphBuilder, EP>;
+    using VertexType = Vertex<VP>;
+    using EdgeType = Edge<EP>;
     using EdgePropertyMapType = EdgePropertyMap<EP>;
 
 private:
-    using VertexList = std::vector<VertexType>;
-    using EdgeList = std::vector<EdgeType>;
+    using VertexList = urd::Store<urd::sequence<VertexType>>;
+    using EdgeList = urd::Store<urd::sequence<EdgeType>>;
     using VertexPropertyMapType = VertexPropertyMap<VP>;
     VertexList m_vertices;
     EdgeList m_edges;
-    std::vector<EdgeIndexList> m_out_edges;
-    std::vector<EdgeIndexList> m_in_edges;
-    VertexPropertyMapType m_vertex_properties;
-    EdgePropertyMapType m_edge_properties;
+    /// Each vertex's out and in edges, in the order added.
+    urd::Store<urd::map<VertexIndex, EdgeIndex>, urd::multi, urd::dense> m_out_edges;
+    urd::Store<urd::map<VertexIndex, EdgeIndex>, urd::multi, urd::dense> m_in_edges;
+    VertexPropertyMapType m_vertex_properties { urd::layer { 0 } };
+    EdgePropertyMapType m_edge_properties { urd::layer { 0 } };
 
     static auto next_index(std::size_t size) noexcept -> ygg::uint_t
     {
@@ -47,48 +51,7 @@ private:
     void assert_valid_vertex([[maybe_unused]] VertexIndex vertex) const noexcept { assert(vertex < m_vertices.size()); }
     void assert_valid_edge([[maybe_unused]] EdgeIndex edge) const noexcept { assert(edge < m_edges.size()); }
 
-    void rebind_parents() noexcept
-    {
-        for (auto& vertex : m_vertices)
-            vertex = VertexType(vertex.get_index(), vertex.get_property_index(), *this);
-
-        for (auto& edge : m_edges)
-            edge = EdgeType(edge.get_index(), edge.get_source(), edge.get_target(), edge.get_property_index(), *this);
-    }
-
 public:
-    StaticGraphBuilder() = default;
-
-    StaticGraphBuilder(const StaticGraphBuilder&) = delete;
-
-    StaticGraphBuilder(StaticGraphBuilder&& other) noexcept :
-        m_vertices(std::move(other.m_vertices)),
-        m_edges(std::move(other.m_edges)),
-        m_out_edges(std::move(other.m_out_edges)),
-        m_in_edges(std::move(other.m_in_edges)),
-        m_vertex_properties(std::move(other.m_vertex_properties)),
-        m_edge_properties(std::move(other.m_edge_properties))
-    { rebind_parents(); }
-
-    auto operator=(const StaticGraphBuilder&) -> StaticGraphBuilder& = delete;
-
-    auto operator=(StaticGraphBuilder&& other) noexcept -> StaticGraphBuilder&
-    {
-        if (this == &other)
-            return *this;
-
-        m_vertices = std::move(other.m_vertices);
-        m_edges = std::move(other.m_edges);
-        m_out_edges = std::move(other.m_out_edges);
-        m_in_edges = std::move(other.m_in_edges);
-        m_vertex_properties = std::move(other.m_vertex_properties);
-        m_edge_properties = std::move(other.m_edge_properties);
-        rebind_parents();
-        return *this;
-    }
-
-    ~StaticGraphBuilder() = default;
-
     void clear() noexcept
     {
         m_vertices.clear();
@@ -104,10 +67,8 @@ public:
     auto add_vertex(P&& property) -> VertexIndex
     {
         const auto index = next_index(m_vertices.size());
-        auto [property_index, _] = m_vertex_properties.insert(ygg::Data<VertexProperty<VP>>(std::forward<P>(property)));
-        m_vertices.emplace_back(index, property_index, *this);
-        m_out_edges.emplace_back();
-        m_in_edges.emplace_back();
+        auto [property_index, _] = m_vertex_properties.insert(urd::data<VertexProperty<VP>>(std::forward<P>(property)));
+        m_vertices.emplace_back(index, property_index);
         return index;
     }
 
@@ -115,8 +76,6 @@ public:
         requires std::same_as<P, std::tuple<>>
     auto add_vertex() -> VertexIndex
     { return add_vertex(std::tuple<> {}); }
-
-    auto add_vertex(const VertexType& vertex) -> VertexIndex { return add_vertex(vertex.get_property()); }
 
     template<typename P>
         requires std::same_as<std::remove_cvref_t<P>, EP>
@@ -126,10 +85,10 @@ public:
         assert_valid_vertex(target);
 
         const auto index = next_index(m_edges.size());
-        auto [property_index, _] = m_edge_properties.insert(ygg::Data<EdgeProperty<EP>>(std::forward<P>(property)));
-        m_edges.emplace_back(index, source, target, property_index, *this);
-        m_out_edges[source].push_back(index);
-        m_in_edges[target].push_back(index);
+        auto [property_index, _] = m_edge_properties.insert(urd::data<EdgeProperty<EP>>(std::forward<P>(property)));
+        m_edges.emplace_back(index, source, target, property_index);
+        m_out_edges.insert({ source, index });
+        m_in_edges.insert({ target, index });
         return index;
     }
 
@@ -137,9 +96,6 @@ public:
         requires std::same_as<P, std::tuple<>>
     auto add_directed_edge(VertexIndex source, VertexIndex target) -> EdgeIndex
     { return add_directed_edge(source, target, std::tuple<> {}); }
-
-    auto add_directed_edge(VertexIndex source, VertexIndex target, const EdgeType& edge) -> EdgeIndex
-    { return add_directed_edge(source, target, edge.get_property()); }
 
     auto add_undirected_edge(VertexIndex lhs, VertexIndex rhs) -> std::pair<EdgeIndex, EdgeIndex>
         requires std::same_as<EP, std::tuple<>>
@@ -157,8 +113,9 @@ public:
     [[nodiscard]] auto get_edges() const noexcept -> const EdgeList& { return m_edges; }
     [[nodiscard]] auto get_vertex_property_map() const noexcept -> const VertexPropertyMapType& { return m_vertex_properties; }
     [[nodiscard]] auto get_edge_property_map() const noexcept -> const EdgePropertyMapType& { return m_edge_properties; }
-    [[nodiscard]] auto get_vertex_property(VertexPropertyIndex<VP> property) const noexcept -> const VP& { return m_vertex_properties.get_value(property); }
-    [[nodiscard]] auto get_edge_property(EdgePropertyIndex<EP> property) const noexcept -> const EP& { return m_edge_properties.get_value(property); }
+    [[nodiscard]] auto get_vertex_property(VertexIndex vertex) const noexcept -> const VP&
+    { return m_vertex_properties[get_vertex(vertex).get_property_index()].value; }
+    [[nodiscard]] auto get_edge_property(EdgeIndex edge) const noexcept -> const EP& { return m_edge_properties[get_edge(edge).get_property_index()].value; }
 
     [[nodiscard]] auto get_vertex(VertexIndex vertex) const noexcept -> const VertexType&
     {
@@ -184,57 +141,46 @@ public:
     [[nodiscard]] auto get_out_edge_indices(VertexIndex vertex) const noexcept
     {
         assert_valid_vertex(vertex);
-        return std::span<const EdgeIndex>(m_out_edges[vertex]);
+        const auto [first, last] = m_out_edges.equal_range(vertex);
+        return std::ranges::subrange(first, last) | std::views::values;
     }
 
     [[nodiscard]] auto get_in_edge_indices(VertexIndex vertex) const noexcept
     {
         assert_valid_vertex(vertex);
-        return std::span<const EdgeIndex>(m_in_edges[vertex]);
+        const auto [first, last] = m_in_edges.equal_range(vertex);
+        return std::ranges::subrange(first, last) | std::views::values;
     }
 
     [[nodiscard]] auto get_out_degree(VertexIndex vertex) const noexcept -> Degree
     {
         assert_valid_vertex(vertex);
-        return static_cast<Degree>(m_out_edges[vertex].size());
+        return static_cast<Degree>(m_out_edges.count(vertex));
     }
 
     [[nodiscard]] auto get_in_degree(VertexIndex vertex) const noexcept -> Degree
     {
         assert_valid_vertex(vertex);
-        return static_cast<Degree>(m_in_edges[vertex].size());
+        return static_cast<Degree>(m_in_edges.count(vertex));
     }
 
     [[nodiscard]] auto get_out_edges(VertexIndex vertex) const noexcept
-    {
-        return get_out_edge_indices(vertex) | std::views::transform([this](EdgeIndex edge) -> const EdgeType& { return get_edge(edge); });
-    }
+    { return urd::transform(get_out_edge_indices(vertex), detail::ReadThrough<StaticGraphBuilder, &StaticGraphBuilder::get_edge> { this }); }
 
     [[nodiscard]] auto get_in_edges(VertexIndex vertex) const noexcept
-    {
-        return get_in_edge_indices(vertex) | std::views::transform([this](EdgeIndex edge) -> const EdgeType& { return get_edge(edge); });
-    }
+    { return urd::transform(get_in_edge_indices(vertex), detail::ReadThrough<StaticGraphBuilder, &StaticGraphBuilder::get_edge> { this }); }
 
     [[nodiscard]] auto get_successor_indices(VertexIndex vertex) const noexcept
-    {
-        return get_out_edge_indices(vertex) | std::views::transform([this](EdgeIndex edge) { return get_target(edge); });
-    }
+    { return urd::transform(get_out_edge_indices(vertex), detail::ReadThrough<StaticGraphBuilder, &StaticGraphBuilder::get_target> { this }); }
 
     [[nodiscard]] auto get_predecessor_indices(VertexIndex vertex) const noexcept
-    {
-        return get_in_edge_indices(vertex) | std::views::transform([this](EdgeIndex edge) { return get_source(edge); });
-    }
+    { return urd::transform(get_in_edge_indices(vertex), detail::ReadThrough<StaticGraphBuilder, &StaticGraphBuilder::get_source> { this }); }
 
     [[nodiscard]] auto get_successors(VertexIndex vertex) const noexcept
-    {
-        return get_successor_indices(vertex) | std::views::transform([this](VertexIndex successor) -> const VertexType& { return get_vertex(successor); });
-    }
+    { return urd::transform(get_successor_indices(vertex), detail::ReadThrough<StaticGraphBuilder, &StaticGraphBuilder::get_vertex> { this }); }
 
     [[nodiscard]] auto get_predecessors(VertexIndex vertex) const noexcept
-    {
-        return get_predecessor_indices(vertex)
-               | std::views::transform([this](VertexIndex predecessor) -> const VertexType& { return get_vertex(predecessor); });
-    }
+    { return urd::transform(get_predecessor_indices(vertex), detail::ReadThrough<StaticGraphBuilder, &StaticGraphBuilder::get_vertex> { this }); }
 };
 
 }  // namespace runir::graphs

@@ -1,12 +1,16 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_DETAIL_EVALUATION_HELPERS_HPP_
 #define RUNIR_KR_DL_SEMANTICS_DETAIL_EVALUATION_HELPERS_HPP_
 
-/// Building blocks of the evaluator definitions, shared with the distance, query and incremental evaluators.
+/// Building blocks of the evaluator definitions, shared with the query and incremental evaluators.
 
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
+#include "runir/kr/dl/semantics/declarations.hpp"
+#include "runir/kr/dl/semantics/denotation_builder.hpp"
 #include "runir/kr/dl/semantics/denotation_caches.hpp"
-#include "runir/kr/dl/semantics/denotations.hpp"
+#include "runir/kr/dl/semantics/denotation_data.hpp"
+#include "runir/kr/dl/semantics/denotation_repository.hpp"
+#include "runir/kr/dl/semantics/denotation_view.hpp"
 #include "runir/kr/dl/semantics/evaluation_decl.hpp"
 #include "runir/kr/dl/semantics/evaluation_workspace.hpp"
 #include "runir/kr/dl/semantics/interning.hpp"
@@ -20,18 +24,15 @@
 #include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/planning/conjunctive_condition_view.hpp>
 #include <tyr/formalism/planning/repository.hpp>
-#include <tyr/planning/ground/state_repository.hpp>
 #include <tyr/planning/ground/task.hpp>
-#include <tyr/planning/lifted/state_repository.hpp>
 #include <tyr/planning/lifted/task.hpp>
+#include <tyr/planning/state_builder.hpp>
+#include <tyr/planning/state_repository.hpp>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/slots/slots.hpp>
+#include <urd/store.hpp>
 #include <utility>
-#include <yggdrasil/containers/dynamic_bitset.hpp>
-#include <yggdrasil/containers/unique_object_pool.hpp>
-#include <yggdrasil/core/byte_codec.hpp>
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/core/dependent_false.hpp>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/database/operators/distance/distance.hpp>
 
 namespace runir::kr::dl::semantics::detail
 {
@@ -52,13 +53,13 @@ auto make_role_builder(Context& context)
 { return context.get_builder().template get_builder<Denotation<RoleTag>>(num_objects<Kind>(context)); }
 
 template<tyr::formalism::FactKind T>
-auto object_index(tyr::formalism::planning::AtomView<::tyr::GroundTag, T> atom, size_t position) -> ygg::Index<tyr::formalism::Object>
-{ return atom.get_row().get_objects()[position].get_index(); }
+auto object_index(tyr::formalism::planning::AtomView<::tyr::GroundTag, T> atom, size_t position) -> urd::index<tyr::formalism::Object>
+{ return atom.get_row().template get<urd::index<tyr::formalism::Object>>(position); }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-void evaluate_atomic_state_concept(ygg::View<ygg::Index<Concept<AtomicStateTag<T>>>, C> constructor,
+void evaluate_atomic_state_concept(urd::index_view<Concept<SemanticFamily, AtomicStateTag<T>>, C> constructor,
                                    Context& context,
-                                   ygg::Builder<Denotation<ConceptTag>>& result)
+                                   urd::builder<Denotation<ConceptTag>>& result)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
     auto bitset = result.get();
@@ -67,8 +68,8 @@ void evaluate_atomic_state_concept(ygg::View<ygg::Index<Concept<AtomicStateTag<T
     for (const auto atom : context.get_state().get_atoms_view(predicate))
     {
         const auto object = detail::object_index(atom, 0);
-        assert(ygg::uint_t(object) < num_objects);
-        bitset.set(ygg::uint_t(object));
+        assert(ygg::uint_t(object.value) < num_objects);
+        bitset.set(ygg::uint_t(object.value));
     }
 
     if (!constructor.get_polarity())
@@ -76,9 +77,9 @@ void evaluate_atomic_state_concept(ygg::View<ygg::Index<Concept<AtomicStateTag<T
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-void evaluate_atomic_goal_concept(ygg::View<ygg::Index<Concept<AtomicGoalTag<T>>>, C> constructor,
+void evaluate_atomic_goal_concept(urd::index_view<Concept<SemanticFamily, AtomicGoalTag<T>>, C> constructor,
                                   Context& context,
-                                  ygg::Builder<Denotation<ConceptTag>>& result)
+                                  urd::builder<Denotation<ConceptTag>>& result)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
     auto bitset = result.get();
@@ -87,13 +88,15 @@ void evaluate_atomic_goal_concept(ygg::View<ygg::Index<Concept<AtomicGoalTag<T>>
     for (const auto atom : context.get_state().get_task().get_task().get_goal().template get_atoms_view<T>(constructor.get_polarity(), predicate))
     {
         const auto object = detail::object_index(atom, 0);
-        assert(ygg::uint_t(object) < num_objects);
-        bitset.set(ygg::uint_t(object));
+        assert(ygg::uint_t(object.value) < num_objects);
+        bitset.set(ygg::uint_t(object.value));
     }
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-void evaluate_atomic_state_role(ygg::View<ygg::Index<Role<AtomicStateTag<T>>>, C> constructor, Context& context, ygg::Builder<Denotation<RoleTag>>& result)
+void evaluate_atomic_state_role(urd::index_view<Role<SemanticFamily, AtomicStateTag<T>>, C> constructor,
+                                Context& context,
+                                urd::builder<Denotation<RoleTag>>& result)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
 
@@ -102,18 +105,20 @@ void evaluate_atomic_state_role(ygg::View<ygg::Index<Role<AtomicStateTag<T>>>, C
     {
         const auto lhs = detail::object_index(atom, 0);
         const auto rhs = detail::object_index(atom, 1);
-        assert(ygg::uint_t(lhs) < num_objects);
-        assert(ygg::uint_t(rhs) < num_objects);
-        result.get(lhs).set(ygg::uint_t(rhs));
+        assert(ygg::uint_t(lhs.value) < num_objects);
+        assert(ygg::uint_t(rhs.value) < num_objects);
+        result.get(lhs).set(ygg::uint_t(rhs.value));
     }
 
     if (!constructor.get_polarity())
         for (ygg::uint_t object = 0; object < num_objects; ++object)
-            result.get(object).flip();
+            result.get(urd::index<tyr::formalism::Object>(object)).flip();
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-void evaluate_atomic_goal_role(ygg::View<ygg::Index<Role<AtomicGoalTag<T>>>, C> constructor, Context& context, ygg::Builder<Denotation<RoleTag>>& result)
+void evaluate_atomic_goal_role(urd::index_view<Role<SemanticFamily, AtomicGoalTag<T>>, C> constructor,
+                               Context& context,
+                               urd::builder<Denotation<RoleTag>>& result)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
 
@@ -122,14 +127,14 @@ void evaluate_atomic_goal_role(ygg::View<ygg::Index<Role<AtomicGoalTag<T>>>, C> 
     {
         const auto lhs = detail::object_index(atom, 0);
         const auto rhs = detail::object_index(atom, 1);
-        assert(ygg::uint_t(lhs) < num_objects);
-        assert(ygg::uint_t(rhs) < num_objects);
-        result.get(lhs).set(ygg::uint_t(rhs));
+        assert(ygg::uint_t(lhs.value) < num_objects);
+        assert(ygg::uint_t(rhs.value) < num_objects);
+        result.get(lhs).set(ygg::uint_t(rhs.value));
     }
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-bool evaluate_atomic_state_boolean(ygg::View<ygg::Index<Boolean<AtomicStateTag<T>>>, C> constructor, Context& context)
+bool evaluate_atomic_state_boolean(urd::index_view<Boolean<SemanticFamily, AtomicStateTag<T>>, C> constructor, Context& context)
 {
     auto atoms = context.get_state().get_atoms_view(constructor.get_predicate());
     const auto value = atoms.begin() != atoms.end();
@@ -137,17 +142,17 @@ bool evaluate_atomic_state_boolean(ygg::View<ygg::Index<Boolean<AtomicStateTag<T
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
-bool evaluate_atomic_goal_boolean(ygg::View<ygg::Index<Boolean<AtomicGoalTag<T>>>, C> constructor, Context& context)
+bool evaluate_atomic_goal_boolean(urd::index_view<Boolean<SemanticFamily, AtomicGoalTag<T>>, C> constructor, Context& context)
 {
     auto atoms = context.get_state().get_task().get_task().get_goal().template get_atoms_view<T>(constructor.get_polarity(), constructor.get_predicate());
     return atoms.begin() != atoms.end();
 }
 
-inline bool nonempty(DenotationView<ConceptTag> value) { return value.get().any(); }
+inline bool nonempty(DenotationView<ConceptTag> value) { return value.value().any(); }
 inline bool nonempty(DenotationView<RoleTag> value) { return value.any(); }
 inline bool nonempty(QueryDenotationView value) { return !value.empty(); }
 
-inline ygg::uint_t count(DenotationView<ConceptTag> value) { return ygg::to_uint_t(value.get().count()); }
+inline ygg::uint_t count(DenotationView<ConceptTag> value) { return ygg::to_uint_t(value.value().count()); }
 inline ygg::uint_t count(DenotationView<RoleTag> value) { return ygg::to_uint_t(value.count()); }
 inline ygg::uint_t count(QueryDenotationView value) { return ygg::to_uint_t(value.size()); }
 
@@ -157,7 +162,7 @@ ygg::uint_t least_value(const Rows& rows)
 {
     auto result = std::numeric_limits<ygg::uint_t>::max();
     for (size_t i = 0; i < rows.size(); ++i)
-        result = std::min(result, ygg::ByteCodec<ygg::uint_t>::decode(rows.row(i).first(ygg::ByteCodec<ygg::uint_t>::size)));
+        result = std::min(result, ygg::decode_value<ygg::uint_t>(rows.row(i).get_values().get(0)));
     return result;
 }
 
@@ -188,7 +193,7 @@ constexpr bool apply_logical_binary(bool lhs, bool rhs) noexcept
 }
 
 // Numerical operands are nonnegative integers; numeric_limits<ygg::uint_t>::max() denotes infinity
-// (as produced by the distance constructor for unreachable targets).
+// (as n_value produces for a head without rows).
 template<NumericalBinaryTag Tag>
 constexpr ygg::uint_t apply_numerical_binary(ygg::uint_t lhs, ygg::uint_t rhs) noexcept
 {
@@ -235,34 +240,18 @@ constexpr ygg::uint_t apply_numerical_binary(ygg::uint_t lhs, ygg::uint_t rhs) n
 
 /// Inserts a concept's objects or a role's pairs as rows of a 1- or 2-column relation.
 template<ConceptOrRoleTag Category, DenotationViewConcept<Category> Denotation>
-void insert_denotation_rows(const Denotation& denotation, ygg::Builder<ygg::database::Relation>& result)
+void insert_denotation_rows(const Denotation& denotation, urd::builder<ygg::Relation<ygg::Schema>>& result)
 {
     for (const auto element : denotation.indices())
     {
         if constexpr (std::same_as<Category, ConceptTag>)
-            result.insert(std::tuple { element.get_value() });
+            result.insert(std::array<ygg::Value, 1> { ygg::encode_value<ygg::uint_t>(element.value) });
         else
         {
             const auto [source, target] = element;
-            result.insert(std::tuple { source.get_value(), target.get_value() });
+            result.insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(source.value), ygg::encode_value<ygg::uint_t>(target.value) });
         }
     }
-}
-
-/// A distance argument as a relation over the plan's columns for it.
-template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
-auto evaluate_relation(ygg::View<ygg::Index<Query<>>, C> argument, std::span<const ygg::database::ColumnLayout>, Context& context) -> QueryDenotationView
-{ return evaluate<Kind>(argument, context); }
-
-/// Concepts and roles are lifted, so all argument forms share one distance evaluation.
-template<tyr::TaskKind Kind, ConceptOrRoleTag Category, StateEvaluationContextConcept<Kind> Context, typename C>
-auto evaluate_relation(ygg::View<ygg::Index<Constructor<Category>>, C> argument, std::span<const ygg::database::ColumnLayout> columns, Context& context)
-    -> QueryDenotationView
-{
-    const auto denotation = evaluate<Kind>(argument, context);
-    auto result = context.get_builder().template get_builder<ygg::database::Relation>(columns);
-    insert_denotation_rows<Category>(denotation, *result);
-    return insert(context.get_denotation_repository(), *result).first;
 }
 
 }  // namespace runir::kr::dl::semantics::detail

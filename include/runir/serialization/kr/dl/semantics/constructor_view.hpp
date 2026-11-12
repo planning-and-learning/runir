@@ -2,17 +2,13 @@
 #define RUNIR_SERIALIZATION_KR_DL_SEMANTICS_CONSTRUCTOR_VIEW_HPP_
 
 #include "runir/kr/dl/query_view.hpp"
+#include "runir/kr/dl/record_view.hpp"
 #include "runir/kr/dl/repository.hpp"
-#include "runir/kr/dl/semantics/boolean_view.hpp"
-#include "runir/kr/dl/semantics/concept_view.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
-#include "runir/kr/dl/semantics/numerical_view.hpp"
-#include "runir/kr/dl/semantics/role_view.hpp"
 #include "runir/serialization/kr/dl/argument_view.hpp"
 #include "runir/serialization/kr/dl/register_view.hpp"
 
-#include <tyr/serialization/formalism/object_view.hpp>
-#include <tyr/serialization/formalism/predicate_view.hpp>
+#include <tyr/serialization/formalism/planning/planning.hpp>
 #include <yggdrasil/serialization/dictionaries.hpp>
 
 /// Serialization of DL constructors of every category and of queries: their fields refer to each other, so they are
@@ -22,15 +18,15 @@ namespace ygg::serialization
 {
 
 template<typename Archive, typename C>
-void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::QueryColumn>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::dl::QueryColumn, C>>)
 {
     ar.field("name", [](const auto& value) -> decltype(auto) { return (value.get_name()); });
 }
 
 template<typename Archive, typename Tag, typename C>
-void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Query<Tag>>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::dl::Query<Tag>, C>>)
 {
-    using Value = View<Index<runir::kr::dl::Query<Tag>>, C>;
+    using Value = urd::index_view<runir::kr::dl::Query<Tag>, C>;
 
     if constexpr (std::same_as<Tag, void>)
         ar.variant([](const auto& value) -> decltype(auto) { return (value.get_variant()); });
@@ -65,7 +61,7 @@ void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Q
 }
 
 template<typename Archive, runir::kr::dl::ConceptOrRoleTag Category, typename C>
-void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::QueryProjection<Category>>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::dl::QueryProjection<Category>, C>>)
 {
     ar.field("columns", [](const auto& value) -> decltype(auto) { return (value.get_columns()); });
     ar.field("arg", [](const auto& value) -> decltype(auto) { return (value.get_arg()); });
@@ -73,9 +69,9 @@ void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Q
 
 template<typename Archive, typename Tag, typename C>
     requires runir::kr::dl::BooleanConstructorTag<Tag>
-void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Boolean<Tag>>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::dl::Boolean<runir::kr::dl::SemanticFamily, Tag>, C>>)
 {
-    using Value = View<Index<runir::kr::dl::Boolean<Tag>>, C>;
+    using Value = urd::index_view<runir::kr::dl::Boolean<runir::kr::dl::SemanticFamily, Tag>, C>;
 
     if constexpr (requires(const Value& value) { value.get_predicate(); })
         ar.field("predicate", [](const auto& value) -> decltype(auto) { return (value.get_predicate()); });
@@ -95,9 +91,9 @@ void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::B
 
 template<typename Archive, typename Tag, typename C>
     requires runir::kr::dl::ConceptConstructorTag<Tag>
-void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Concept<Tag>>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, Tag>, C>>)
 {
-    using Value = View<Index<runir::kr::dl::Concept<Tag>>, C>;
+    using Value = urd::index_view<runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, Tag>, C>;
 
     if constexpr (requires(const Value& value) { value.get_predicate(); })
         ar.field("predicate", [](const auto& value) -> decltype(auto) { return (value.get_predicate()); });
@@ -127,9 +123,9 @@ void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::C
 
 template<typename Archive, typename Tag, typename C>
     requires runir::kr::dl::NumericalConstructorTag<Tag>
-void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Numerical<Tag>>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, Tag>, C>>)
 {
-    using Value = View<Index<runir::kr::dl::Numerical<Tag>>, C>;
+    using Value = urd::index_view<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, Tag>, C>;
 
     if constexpr (requires(const Value& value) { value.get_argument(); })
         ar.field("argument", [](const auto& value) -> decltype(auto) { return (value.get_argument()); });
@@ -147,9 +143,9 @@ void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::N
 
 template<typename Archive, typename Tag, typename C>
     requires runir::kr::dl::RoleConstructorTag<Tag>
-void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Role<Tag>>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::dl::Role<runir::kr::dl::SemanticFamily, Tag>, C>>)
 {
-    using Value = View<Index<runir::kr::dl::Role<Tag>>, C>;
+    using Value = urd::index_view<runir::kr::dl::Role<runir::kr::dl::SemanticFamily, Tag>, C>;
 
     if constexpr (requires(const Value& value) { value.get_predicate(); })
         ar.field("predicate", [](const auto& value) -> decltype(auto) { return (value.get_predicate()); });
@@ -168,17 +164,9 @@ void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::R
 }
 
 template<typename Archive, runir::kr::dl::CategoryTag Category, typename C>
-void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Constructor<Category>>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::dl::Constructor<Category>, C>>)
 {
     ar.variant([](const auto& value) -> decltype(auto) { return (value.get_variant()); });
-}
-
-/// Variant operands of constructors (concept, role or query), e.g. count's argument or distance's
-/// vertices and edges, serialize as the alternative they hold.
-template<typename Archive, typename... Ts, typename C>
-void describe_fields(Archive& ar, std::type_identity<View<cista::offset::variant<Index<Ts>...>, C>>)
-{
-    ar.variant([](const auto& value) -> decltype(auto) { return (value); });
 }
 
 }

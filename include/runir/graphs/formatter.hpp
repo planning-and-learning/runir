@@ -1,7 +1,6 @@
 #ifndef RUNIR_GRAPHS_FORMATTER_HPP_
 #define RUNIR_GRAPHS_FORMATTER_HPP_
 
-#include "runir/formatter.hpp"
 #include "runir/graphs/algorithms/color_refinement.hpp"
 #include "runir/graphs/algorithms/weisfeiler_leman.hpp"
 #include "runir/graphs/backward_static_graph_view.hpp"
@@ -55,28 +54,14 @@ auto dot(const G& graph, std::string_view name = "G") -> std::string
 
     for (const auto vertex : graph.get_vertex_indices())
     {
-        const auto label = [&]
-        {
-            if constexpr (requires { graph.get_vertex_view(vertex); })
-                return fmt::format("{}", graph.get_vertex_view(vertex));
-            else
-                return fmt::format("{}", graph.get_vertex(vertex).get_property());
-        }();
-        text += fmt::format("  v{} [label=\"{}\"];\n", vertex, dot_escape(label));
+        text += fmt::format("  v{} [label=\"{}\"];\n", vertex, dot_escape(fmt::format("{}", graph.get_vertex_property(vertex))));
     }
 
     for (const auto edge : graph.get_edge_indices())
     {
         const auto source = graph.get_source(edge);
         const auto target = graph.get_target(edge);
-        const auto label = [&]
-        {
-            if constexpr (requires { graph.get_edge_view(edge); })
-                return fmt::format("{}", graph.get_edge_view(edge));
-            else
-                return fmt::format("{}", graph.get_edge(edge).get_property());
-        }();
-        text += fmt::format("  v{} -> v{} [label=\"{}\"];\n", source, target, dot_escape(label));
+        text += fmt::format("  v{} -> v{} [label=\"{}\"];\n", source, target, dot_escape(fmt::format("{}", graph.get_edge_property(edge))));
     }
 
     text += "}\n";
@@ -87,30 +72,6 @@ auto dot(const G& graph, std::string_view name = "G") -> std::string
 
 namespace fmt
 {
-
-template<runir::graphs::IsVertex Vertex>
-    requires(!runir::graphs::IsEdge<Vertex>)
-struct formatter<Vertex, char> : formatter<std::string_view>
-{
-    template<typename FormatContext>
-    auto format(const Vertex& vertex, FormatContext& ctx) const
-    {
-        const auto text = fmt::format("Vertex(index={}, property={})", vertex.get_index(), vertex.get_property());
-        return formatter<std::string_view>::format(text, ctx);
-    }
-};
-
-template<runir::graphs::IsEdge Edge>
-struct formatter<Edge, char> : formatter<std::string_view>
-{
-    template<typename FormatContext>
-    auto format(const Edge& edge, FormatContext& ctx) const
-    {
-        const auto text =
-            fmt::format("Edge(index={}, source={}, target={}, property={})", edge.get_index(), edge.get_source(), edge.get_target(), edge.get_property());
-        return formatter<std::string_view>::format(text, ctx);
-    }
-};
 
 template<runir::graphs::IsGraph Graph>
 struct formatter<Graph, char> : formatter<std::string_view>

@@ -6,9 +6,9 @@
 namespace runir::kr::ps::icp::dl
 {
 
-void bind_feature(nb::module_& m, RepositoryBinding& repository);
-void bind_condition(nb::module_& m, RepositoryBinding& repository);
-void bind_effect(nb::module_& m, RepositoryBinding& repository);
+void bind_features(nb::module_& m, RepositoryBinding& repository);
+void bind_conditions(nb::module_& m, RepositoryBinding& repository);
+void bind_effects(nb::module_& m, RepositoryBinding& repository);
 void bind_parser(nb::module_& m);
 
 }  // namespace runir::kr::ps::icp::dl

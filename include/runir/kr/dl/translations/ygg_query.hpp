@@ -7,19 +7,21 @@
 #include "runir/kr/dl/repository.hpp"
 
 #include <algorithm>
+#include <boost/mp11.hpp>
 #include <concepts>
 #include <cstdint>
 #include <optional>
 #include <span>
 #include <stdexcept>
+#include <tyr/datalog/lifted/database/syntax/query.hpp>
+#include <tyr/datalog/lifted/database/syntax/translations/relaxation.hpp>
+#include <urd/repr/maps/std_map.hpp>
+#include <urd/repr/maps/unordered_flat_map.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/unordered_flat_set.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
-#include <yggdrasil/containers/associative_containers.hpp>
-#include <yggdrasil/core/concepts.hpp>
-#include <yggdrasil/core/dependent_false.hpp>
-#include <yggdrasil/core/type_list.hpp>
-#include <yggdrasil/database/query/query.hpp>
-#include <yggdrasil/database/query/rewrite/relaxation.hpp>
 
 namespace runir::kr::dl
 {
@@ -36,24 +38,26 @@ struct QuerySlot
     };
     Kind kind = Kind::QUERY;
     ygg::uint_t index = 0;
-    std::vector<ygg::database::ColumnLayout> columns;
+    urd::Store<urd::sequence<ygg::ColumnLayout>> columns;
     bool is_static = false;
 };
 
 /// Calls f(expression) with the slot's expression as a view into `constructors`.
-template<ygg::InvocableWithEach<ygg::TypeList<ConstructorView<ConceptTag>, ConstructorView<RoleTag>, QueryView<>>> F>
+template<typename F>
+    requires boost::mp11::mp_all_of_q<boost::mp11::mp_list<ConstructorView<ConceptTag>, ConstructorView<RoleTag>, QueryView<>>,
+                                      boost::mp11::mp_bind_front<std::is_invocable, F>>::value
 auto visit_slot(const QuerySlot& slot, const ConstructorRepository& constructors, F f)
 {
     switch (slot.kind)
     {
         case QuerySlot::Kind::CONCEPT:
-            return f(ygg::make_view(ygg::Index<Constructor<ConceptTag>>(slot.index), constructors));
+            return f(constructors.view(urd::index<Constructor<ConceptTag>>(slot.index)));
         case QuerySlot::Kind::ROLE:
-            return f(ygg::make_view(ygg::Index<Constructor<RoleTag>>(slot.index), constructors));
+            return f(constructors.view(urd::index<Constructor<RoleTag>>(slot.index)));
         case QuerySlot::Kind::QUERY:
             break;
     }
-    return f(ygg::make_view(ygg::Index<Query<>>(slot.index), constructors));
+    return f(constructors.view(urd::index<Query<>>(slot.index)));
 }
 
 namespace detail
@@ -62,24 +66,26 @@ namespace detail
 template<typename Tag>
 inline constexpr bool is_query_leaf_tag_v =
     is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag> || std::same_as<Tag, QueryConceptTag> || std::same_as<Tag, QueryRoleTag>
-    || std::same_as<Tag, QueryBooleanTag> || std::same_as<Tag, QueryNumericalTag> || std::same_as<Tag, QueryMustPassTag> || std::same_as<Tag, QueryHeadTag>;
+    || std::same_as<Tag, QueryBooleanTag> || std::same_as<Tag, QueryNumericalTag> || std::same_as<Tag, QueryHeadTag>;
 
 template<typename V>
 inline constexpr bool is_complement_view_v = false;
 template<typename C>
-inline constexpr bool is_complement_view_v<ygg::View<ygg::Index<Role<ComplementTag>>, C>> = true;
+inline constexpr bool is_complement_view_v<urd::index_view<Role<SemanticFamily, ComplementTag>, C>> = true;
 template<typename C>
-inline constexpr bool is_complement_view_v<ygg::View<ygg::Index<Concept<NegationTag>>, C>> = true;
+inline constexpr bool is_complement_view_v<urd::index_view<Concept<SemanticFamily, NegationTag>, C>> = true;
 
 /// Calls f(argument) if the query is a role or concept leaf over a complement (r_complement, c_not); returns whether.
-template<ygg::InvocableWithEach<ygg::TypeList<ConstructorView<RoleTag>, ConstructorView<ConceptTag>>> F>
+template<typename F>
+    requires boost::mp11::mp_all_of_q<boost::mp11::mp_list<ConstructorView<RoleTag>, ConstructorView<ConceptTag>>,
+                                      boost::mp11::mp_bind_front<std::is_invocable, F>>::value
 bool visit_complement_argument(QueryView<> query, F f)
 {
-    return ygg::visit(
+    return std::visit(
         [&]<typename Tag>(QueryView<Tag> concrete)
         {
             if constexpr (std::same_as<Tag, QueryRoleTag> || std::same_as<Tag, QueryConceptTag>)
-                return ygg::visit(
+                return std::visit(
                     [&]<typename V>(V constructor)
                     {
                         if constexpr (is_complement_view_v<V>)
@@ -112,11 +118,11 @@ inline bool is_complement_leaf(QueryView<> query)
 class QueryTranslator
 {
     using DlQuery = QueryView<>;
-    using YggQuery = ygg::database::QueryView<>;
-    using Label = ygg::Index<ygg::database::Column>;
+    using YggQuery = tyr::datalog::database::QueryView<>;
+    using Label = urd::index<ygg::Column>;
 
 public:
-    explicit QueryTranslator(bool rewrite_complements = false) : m_repository(m_factory.create()), m_rewrite_complements(rewrite_complements) {}
+    explicit QueryTranslator(bool rewrite_complements = false) : m_rewrite_complements(rewrite_complements) {}
     QueryTranslator(const QueryTranslator&) = delete;
     QueryTranslator& operator=(const QueryTranslator&) = delete;
     QueryTranslator(QueryTranslator&&) = delete;  // Translated views borrow the owned repository.
@@ -129,41 +135,41 @@ public:
     YggQuery project(YggQuery query, std::span<const Label> labels);
 
     /// The relaxations of translated queries whose input slots are known only where `known(slot)` holds
-    /// (ygg::database::relax); built in this translator's repository.
+    /// (tyr::datalog::database::relax); built in this translator's repository.
     template<std::predicate<size_t> Known>
-    ygg::database::Relaxation relax(std::span<const YggQuery> roots, Known&& known)
-    { return ygg::database::relax(roots, std::forward<Known>(known), m_repository, m_builder); }
+    tyr::datalog::database::Relaxation relax(std::span<const YggQuery> roots, Known&& known)
+    { return tyr::datalog::database::relax(roots, std::forward<Known>(known), m_repository, m_builder); }
 
     /// The expression of each input slot, by slot.
-    const std::vector<QuerySlot>& get_slots() const noexcept { return m_slots; }
+    [[nodiscard]] const urd::Store<urd::sequence<QuerySlot>>& get_slots() const noexcept { return m_slots; }
     /// The DL leaf of each input slot; without complement rewriting, every slot is a leaf query.
-    std::vector<DlQuery> get_leaves(const ConstructorRepository& constructors) const;
+    [[nodiscard]] urd::Store<urd::sequence<DlQuery>> get_leaves(const ConstructorRepository& constructors) const;
 
 private:
     template<typename Tag>
-    YggQuery insert(ygg::Data<ygg::database::Query<Tag>>& data)
-    { return ygg::database::insert_query(m_repository, m_builder, data); }
+    YggQuery insert(urd::data<tyr::datalog::database::Query<Tag>>& data)
+    { return tyr::datalog::database::insert_query(m_repository, m_builder, data); }
     template<typename Tag>
     YggQuery binary(YggQuery lhs, YggQuery rhs)
     {
-        auto out = ygg::database::checkout<ygg::database::Query<Tag>>(m_builder);
-        out->lhs = lhs.get_index();
-        out->rhs = rhs.get_index();
+        auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<Tag>>(m_builder);
+        out->lhs = lhs.index();
+        out->rhs = rhs.index();
         return insert(*out);
     }
     template<typename Tag>
     YggQuery unary(YggQuery arg, std::span<const Label> labels)
     {
-        auto out = ygg::database::checkout<ygg::database::Query<Tag>>(m_builder);
-        out->arg = arg.get_index();
+        auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<Tag>>(m_builder);
+        out->arg = arg.index();
         out->labels.set(labels.begin(), labels.end());
         return insert(*out);
     }
     YggQuery input(QuerySlot slot);
-    static std::span<const ygg::database::ColumnLayout> schema(DlQuery query);
+    static std::span<const ygg::ColumnLayout> schema(DlQuery query);
 
     /// The conjuncts of a tree of binary joins.
-    static void flatten(DlQuery query, std::vector<DlQuery>& conjuncts);
+    static void flatten(DlQuery query, urd::Store<urd::sequence<DlQuery>>& conjuncts);
 
     /// The complement rewrite of a join (see the class comment), or nothing if no complement is covered.
     std::optional<YggQuery> rewrite_complements(DlQuery join, std::span<const Label> labels);
@@ -174,13 +180,12 @@ private:
     template<typename Tag>
     YggQuery translate_concrete(DlQuery query, QueryView<Tag> concrete);
 
-    ygg::database::QueryRepositoryFactory m_factory;
-    ygg::database::QueryRepository m_repository;
-    ygg::database::QueryBuilder m_builder;
+    tyr::datalog::database::QueryRepository m_repository;
+    tyr::datalog::database::QueryBuilder m_builder;
     bool m_rewrite_complements;
-    ygg::UnorderedMap<DlQuery, YggQuery> m_translated;
-    ygg::UnorderedMap<DlQuery, YggQuery> m_arguments;  ///< The slot of each complemented leaf's argument.
-    std::vector<QuerySlot> m_slots;
+    urd::Store<urd::map<DlQuery, YggQuery>> m_translated;
+    urd::Store<urd::map<DlQuery, YggQuery>> m_arguments;  ///< The slot of each complemented leaf's argument.
+    urd::Store<urd::sequence<QuerySlot>> m_slots;
 };
 
 }  // namespace detail

@@ -1,4 +1,5 @@
 #include "bindings.hpp"
+#include "pyrunir/module.hpp"
 
 #include <nanobind/stl/string.h>
 #include <runir/kr/dl/grammar/constructor_repository.hpp>

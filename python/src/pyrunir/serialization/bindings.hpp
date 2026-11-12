@@ -19,6 +19,7 @@ void bind_kr_ps_icp(nb::module_& m);
 void bind_kr_uns(nb::module_& m);
 void bind_kr_execution(nb::module_& m);
 void bind_graphs(nb::module_& m);
+void bind_lifted_graphs(nb::module_& m);
 
 }  // namespace runir::serialization
 

@@ -7,6 +7,8 @@
 
 #include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 
 namespace runir::kr::uns::dl::ast
@@ -40,18 +42,18 @@ using Literal = PositionedVariant<PositiveLiteral, NegativeLiteral>;
 
 struct Conjunction : boost::spirit::x3::position_tagged
 {
-    std::vector<Literal> literals;
+    urd::Store<urd::sequence<Literal>> literals;
 };
 
 struct Disjunction : boost::spirit::x3::position_tagged
 {
-    std::vector<Conjunction> clauses;
+    urd::Store<urd::sequence<Conjunction>> clauses;
 };
 
 struct Classifier : boost::spirit::x3::position_tagged
 {
     runir::kr::parser::ast::Identifier symbol;
-    std::vector<BooleanFeature> features;
+    urd::Store<urd::sequence<BooleanFeature>> features;
     Disjunction expression;
 };
 

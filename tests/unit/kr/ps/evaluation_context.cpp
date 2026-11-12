@@ -1,5 +1,5 @@
 #include <concepts>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_policy.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include <runir/kr/ps/base/compatibility.hpp>
@@ -8,6 +8,7 @@
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/family_traits.hpp>
 #include <runir/kr/ps/icp/repository.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/state_repository.hpp>
 #include <utility>
 
@@ -138,10 +139,12 @@ static_assert(!kr::dl::semantics::StateEvaluationContextConcept<NameOnlyContext,
 static_assert(kr::ps::dl::TransitionEvaluationContextConcept<IcpContext, kr::IcpFamilyTag, tyr::GroundTag>);
 static_assert(!kr::ps::dl::TransitionEvaluationContextConcept<IcpContext, kr::IcpFamilyTag, tyr::LiftedTag>);
 
-using BaseCondition = ygg::View<ygg::Index<kr::ps::ConditionVariant<kr::BaseFamilyTag>>, kr::ps::base::Repository>;
-using ExtCondition = ygg::View<ygg::Index<kr::ps::ConditionVariant<kr::ExtFamilyTag>>, kr::ps::ext::Repository>;
-using IcpCondition = ygg::View<ygg::Index<kr::ps::ConditionVariant<kr::IcpFamilyTag>>, kr::ps::icp::Repository>;
-using IcpEffect = ygg::View<ygg::Index<kr::ps::EffectVariant<kr::IcpFamilyTag>>, kr::ps::icp::Repository>;
+template<typename Family>
+using Condition = urd::index<kr::ps::ConcreteCondition<Family, kr::DlTag, kr::dl::BooleanTag, kr::ps::dl::Positive>>;
+using BaseCondition = urd::index_view<typename Condition<kr::BaseFamilyTag>::element_type, kr::ps::base::Repository>;
+using ExtCondition = urd::index_view<typename Condition<kr::ExtFamilyTag>::element_type, kr::ps::ext::Repository>;
+using IcpCondition = urd::index_view<typename Condition<kr::IcpFamilyTag>::element_type, kr::ps::icp::Repository>;
+using IcpEffect = urd::index_view<kr::ps::ConcreteEffect<kr::IcpFamilyTag, kr::DlTag, kr::dl::BooleanTag, kr::ps::dl::Positive>, kr::ps::icp::Repository>;
 
 using kr::ps::is_compatible_with;
 using kr::ps::base::is_compatible_with;

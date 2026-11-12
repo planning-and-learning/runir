@@ -1,33 +1,18 @@
 #include "bindings.hpp"
 #include "pyrunir/kr/ps/dl/binding_utils.hpp"
+#include "pyrunir/module.hpp"
+#include "runir/kr/dl/detail/repository_instantiations.hpp"
+#include "runir/kr/ps/detail/repository_instantiations.hpp"
 
+#include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/ps/icp/repository.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 
 namespace runir::kr::ps::icp::dl
 {
 
-void bind_condition(nb::module_& m, RepositoryBinding& repository)
-{
-    using Family = runir::kr::IcpFamilyTag;
-    using Variant = runir::kr::ps::ConcreteConditionVariant<Family, runir::kr::DlTag>;
-    runir::kr::python::bind_variant<Variant>(m, repository, "ConcreteConditionVariant");
-    runir::kr::python::bind_observation<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>>(
-        m,
-        repository,
-        "PositiveBooleanCondition");
-    runir::kr::python::bind_observation<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Negative>>(
-        m,
-        repository,
-        "NegativeBooleanCondition");
-    runir::kr::python::bind_observation<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::EqualZero>>(
-        m,
-        repository,
-        "EqualZeroNumericalCondition");
-    runir::kr::python::bind_observation<
-        runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::GreaterZero>>(
-        m,
-        repository,
-        "GreaterZeroNumericalCondition");
-}
+// One translation unit per kind: the three instantiations together need about 6 GB to compile.
+void bind_conditions(nb::module_& m, RepositoryBinding& repository) { runir::kr::python::bind_program_conditions<IcpFamilyTag>(m, repository); }
 
 }  // namespace runir::kr::ps::icp::dl

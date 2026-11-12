@@ -1,22 +1,27 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_ATOMIC_QUERY_HPP_
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_ATOMIC_QUERY_HPP_
 
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/object_rows.hpp"
 #include "runir/kr/dl/query_view.hpp"
-#include "runir/kr/dl/semantics/state_evaluation.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
 #include <algorithm>
 #include <concepts>
 #include <cstddef>
 #include <span>
 #include <stdexcept>
+#include <tyr/datalog/lifted/database/semantics/incremental/delta.hpp>
+#include <tyr/datalog/lifted/database/semantics/incremental/join.hpp>
+#include <tyr/datalog/lifted/database/semantics/incremental/projection.hpp>
 #include <tyr/planning/state_view_concepts.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <variant>
 #include <vector>
-#include <yggdrasil/database/operators/relational/incremental/join.hpp>
-#include <yggdrasil/database/operators/relational/incremental/projection.hpp>
-#include <yggdrasil/database/relation/delta.hpp>
 
 namespace runir::kr::dl::semantics::incremental::detail
 {
@@ -30,15 +35,17 @@ template<tyr::formalism::FactKind Fact>
     requires(std::same_as<Fact, tyr::formalism::FluentTag> || std::same_as<Fact, tyr::formalism::DerivedTag>)
 class AtomicQueryEvaluator
 {
+    const ygg::FreeRelationRepository* m_layer;
     tyr::formalism::planning::PredicateView<Fact> m_predicate;
     bool m_initialized = false;
-    ygg::Builder<ygg::database::Relation> m_result;
-    ygg::database::Delta m_delta;
-    std::vector<std::byte> m_row;
+    urd::builder<ygg::Relation<ygg::Schema>> m_result;
+    tyr::datalog::database::incremental::Delta m_delta;
+    urd::Store<urd::sequence<ygg::Value>> m_row;
 
 public:
+    /// Its builders are read through `layer`, which must outlive it.
     template<typename C>
-    explicit AtomicQueryEvaluator(ygg::View<ygg::Index<Query<AtomicStateTag<Fact>>>, C> query);
+    AtomicQueryEvaluator(const ygg::FreeRelationRepository& layer, urd::index_view<Query<AtomicStateTag<Fact>>, C> query);
 
     /// Replace the baseline from a completed state, retaining buffers and clearing the last delta.
     template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> State>
@@ -49,19 +56,20 @@ public:
     void update(std::span<const tyr::formalism::planning::AtomView<tyr::GroundTag, Fact>> added,
                 std::span<const tyr::formalism::planning::AtomView<tyr::GroundTag, Fact>> removed);
 
-    [[nodiscard]] const ygg::Builder<ygg::database::Relation>& get_result() const& noexcept { return m_result; }
-    [[nodiscard]] const ygg::Builder<ygg::database::Relation>& get_result() const&& = delete;
-    [[nodiscard]] const ygg::database::Delta& get_delta() const& noexcept { return m_delta; }
-    [[nodiscard]] const ygg::database::Delta& get_delta() const&& = delete;
+    [[nodiscard]] ygg::FreeBuilderRelationView get_result() const& noexcept { return m_layer->view(m_result); }
+    [[nodiscard]] ygg::FreeBuilderRelationView get_result() const&& = delete;
+    [[nodiscard]] const tyr::datalog::database::incremental::Delta& get_delta() const& noexcept { return m_delta; }
+    [[nodiscard]] const tyr::datalog::database::incremental::Delta& get_delta() const&& = delete;
 };
 
 template<tyr::formalism::FactKind Fact>
     requires(std::same_as<Fact, tyr::formalism::FluentTag> || std::same_as<Fact, tyr::formalism::DerivedTag>)
 template<typename C>
-AtomicQueryEvaluator<Fact>::AtomicQueryEvaluator(ygg::View<ygg::Index<Query<AtomicStateTag<Fact>>>, C> query) :
+AtomicQueryEvaluator<Fact>::AtomicQueryEvaluator(const ygg::FreeRelationRepository& layer, urd::index_view<Query<AtomicStateTag<Fact>>, C> query) :
+    m_layer(&layer),
     m_predicate(query.get_predicate()),
-    m_result(query.get_schema().span()),
-    m_delta(query.get_schema().span())
+    m_result(query.get_schema()),
+    m_delta(layer, query.get_schema())
 {
 }
 
@@ -70,13 +78,13 @@ template<tyr::formalism::FactKind Fact>
 template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> State>
 void AtomicQueryEvaluator<Fact>::initialize(const State& state)
 {
-    if (!state.get_formalism_repository()->contains(m_predicate))
+    if (!ygg::formalism::contains(*state.get_formalism_repository(), m_predicate))
         throw std::invalid_argument("Incremental atomic query: predicate does not belong to the task repository.");
     m_initialized = false;
     m_result.clear();
     m_delta.clear();
     for (const auto atom : state.get_atoms_view(m_predicate))
-        m_result.insert(encode_object_row(atom.get_row().get_data(), m_row));
+        m_result.insert(encode_object_row(atom.get_row().get_key().second, m_row));
     m_initialized = true;
 }
 
@@ -94,7 +102,7 @@ void AtomicQueryEvaluator<Fact>::update(std::span<const tyr::formalism::planning
     {
         if (atom.get_predicate() != m_predicate)
             continue;
-        const auto row = encode_object_row(atom.get_row().get_data(), m_row);
+        const auto row = encode_object_row(atom.get_row().get_key().second, m_row);
         if (m_result.contains(row))
             throw std::invalid_argument("Incremental atomic query: added atom is already present.");
         m_delta.added.insert(row);
@@ -103,15 +111,16 @@ void AtomicQueryEvaluator<Fact>::update(std::span<const tyr::formalism::planning
     {
         if (atom.get_predicate() != m_predicate)
             continue;
-        const auto row = encode_object_row(atom.get_row().get_data(), m_row);
+        const auto row = encode_object_row(atom.get_row().get_key().second, m_row);
         const auto position = m_result.find(row);
         if (!position)
             throw std::invalid_argument("Incremental atomic query: removed atom is absent.");
         m_delta.removed.insert(row);
         m_result.erase(*position);
     }
-    for (size_t i = 0; i < m_delta.added.size(); ++i)
-        m_result.insert(m_delta.added.row(i));
+    const auto added_rows = m_layer->view(m_delta.added);
+    for (size_t i = 0; i < added_rows.size(); ++i)
+        m_result.insert(added_rows.row(i));
     m_initialized = true;
 }
 

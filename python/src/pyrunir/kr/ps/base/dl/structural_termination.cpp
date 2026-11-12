@@ -1,4 +1,5 @@
 #include "pyrunir/kr/ps/base/dl/bindings.hpp"
+#include "pyrunir/module.hpp"
 
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/shared_ptr.h>
@@ -10,7 +11,6 @@
 #include <runir/kr/ps/base/repository.hpp>
 #include <vector>
 #include <yggdrasil/python/bindings.hpp>
-#include <yggdrasil/python/type_casters.hpp>
 
 namespace runir::kr::ps::base::dl
 {
@@ -28,7 +28,7 @@ void bind_structural_termination(nb::module_& m)
     auto vertex_label = nb::class_<PolicyGraphVertexLabel>(m, "PolicyGraphVertexLabel")
                             .def_ro("boolean_values", &PolicyGraphVertexLabel::boolean_values)
                             .def_ro("numerical_values", &PolicyGraphVertexLabel::numerical_values);
-    ygg::add_comparison(vertex_label);
+    urd::python::add_comparison(vertex_label);
 
     auto policy_graph = nb::class_<PolicyGraph>(m, "PolicyGraph");
     bind_readable_graph_methods<true>(policy_graph);
@@ -59,24 +59,22 @@ void bind_structural_termination(nb::module_& m)
           nb::keep_alive<0, 1>(),
           "Decide structural termination with configurable feature limit and optional memory-SCC-scoped incomplete preprocessing.");
 
-    nb::enum_<IncompleteStructuralTerminationStatus>(m, "IncompleteStructuralTerminationStatus")
-        .value("TERMINATING", IncompleteStructuralTerminationStatus::TERMINATING)
-        .value("UNKNOWN", IncompleteStructuralTerminationStatus::UNKNOWN);
-
-    nb::class_<IncompleteBlockingReason>(m, "IncompleteBlockingReason")
-        .def_ro("feature", &IncompleteBlockingReason::feature, "The feature whose decrease or flip the rule performs.")
+    nb::class_<runir::kr::ps::dl::IncompleteBlockingReason<runir::kr::BaseFamilyTag>>(m, "IncompleteBlockingReason")
+        .def_ro("feature",
+                &runir::kr::ps::dl::IncompleteBlockingReason<runir::kr::BaseFamilyTag>::feature,
+                "The feature whose decrease or flip the rule performs.")
         .def_ro("opposing_rules",
-                &IncompleteBlockingReason::opposing_rules,
+                &runir::kr::ps::dl::IncompleteBlockingReason<runir::kr::BaseFamilyTag>::opposing_rules,
                 "Remaining rules that oppose the change and survive R3's marked-complementary-condition check.");
 
-    nb::class_<IncompleteSurvivingRule>(m, "IncompleteSurvivingRule")
-        .def_ro("rule", &IncompleteSurvivingRule::rule)
-        .def_ro("blocking_reasons", &IncompleteSurvivingRule::blocking_reasons);
+    nb::class_<runir::kr::ps::dl::IncompleteSurvivingRule<runir::kr::BaseFamilyTag>>(m, "IncompleteSurvivingRule")
+        .def_ro("rule", &runir::kr::ps::dl::IncompleteSurvivingRule<runir::kr::BaseFamilyTag>::rule)
+        .def_ro("blocking_reasons", &runir::kr::ps::dl::IncompleteSurvivingRule<runir::kr::BaseFamilyTag>::blocking_reasons);
 
-    nb::class_<IncompleteStructuralTerminationResult>(m, "IncompleteStructuralTerminationResult")
-        .def_ro("status", &IncompleteStructuralTerminationResult::status)
-        .def_ro("surviving_rules", &IncompleteStructuralTerminationResult::surviving_rules)
-        .def("is_terminating", &IncompleteStructuralTerminationResult::is_terminating);
+    nb::class_<runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::BaseFamilyTag>>(m, "IncompleteStructuralTerminationResult")
+        .def_ro("status", &runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::BaseFamilyTag>::status)
+        .def_ro("surviving_rules", &runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::BaseFamilyTag>::surviving_rules)
+        .def("is_terminating", &runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::BaseFamilyTag>::is_terminating);
 
     m.def("incomplete_structural_termination",
           &incomplete_structural_termination,

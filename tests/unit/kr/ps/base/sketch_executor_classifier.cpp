@@ -39,7 +39,7 @@ void check_classifier_failures(const datasets::TaskSearchContextPtr<Kind>& searc
     options.classifier = classifier;
     const auto result = kr::ps::base::find_solution(task_context, sketch, options);
 
-    EXPECT_EQ(result.status, kr::ps::base::SketchProofStatus::FAILURE);
+    EXPECT_EQ(result.status, kr::ps::ProofStatus::FAILURE);
     EXPECT_EQ(result.statistics.num_expanded, 0);
     EXPECT_EQ(result.statistics.num_generated, 0);
     ASSERT_TRUE(result.graph);
@@ -47,7 +47,7 @@ void check_classifier_failures(const datasets::TaskSearchContextPtr<Kind>& searc
     EXPECT_EQ(result.graph->get_num_edges(), 0);
     ASSERT_EQ(result.deadend_states.size(), 1);
     EXPECT_TRUE(result.open_states.empty());
-    const auto& label = result.graph->get_vertex(result.deadend_states.front()).get_property();
+    const auto& label = result.graph->get_vertex_property(result.deadend_states.front());
     EXPECT_FALSE(label.is_goal);
     EXPECT_FALSE(label.is_alive);
     EXPECT_TRUE(label.is_unsolvable);
@@ -55,12 +55,12 @@ void check_classifier_failures(const datasets::TaskSearchContextPtr<Kind>& searc
 
     options.max_time = std::chrono::steady_clock::duration::zero();
     const auto timed_out = kr::ps::base::find_solution(task_context, sketch, options);
-    EXPECT_EQ(timed_out.status, kr::ps::base::SketchProofStatus::OUT_OF_TIME);
+    EXPECT_EQ(timed_out.status, kr::ps::ProofStatus::OUT_OF_TIME);
     EXPECT_TRUE(timed_out.deadend_states.empty());
     EXPECT_TRUE(timed_out.open_states.empty());
     ASSERT_TRUE(timed_out.graph);
     ASSERT_EQ(timed_out.graph->get_num_vertices(), 1);
-    EXPECT_TRUE(timed_out.graph->get_vertex(0).get_property().is_unsolvable);
+    EXPECT_TRUE(timed_out.graph->get_vertex_property(0).is_unsolvable);
     options.max_time.reset();
 
     const auto goal_classifier = kr::uns::dl::parse_classifier(
@@ -74,7 +74,7 @@ void check_classifier_failures(const datasets::TaskSearchContextPtr<Kind>& searc
     auto storage = kr::dl::semantics::EvaluationStorage(*task_context->dl_denotation_repository);
     for (const auto vertex : goal_result.graph->get_vertex_indices())
     {
-        const auto& goal_label = goal_result.graph->get_vertex(vertex).get_property();
+        const auto& goal_label = goal_result.graph->get_vertex_property(vertex);
         if (!goal_label.is_goal)
             continue;
         auto context = kr::dl::semantics::StateEvaluationContext<Kind>(goal_label.state.unpack(), task_context->dl_builder, storage);

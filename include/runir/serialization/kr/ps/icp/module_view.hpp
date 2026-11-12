@@ -4,8 +4,11 @@
 #include "runir/kr/ps/icp/module_view.hpp"
 #include "runir/serialization/kr/dl/argument_view.hpp"
 #include "runir/serialization/kr/dl/register_view.hpp"
-#include "runir/serialization/kr/ps/icp/rule_variant_view.hpp"
+#include "runir/serialization/kr/ps/icp/rule_view.hpp"
+#include "runir/serialization/kr/ps/rule_variant_view.hpp"
 
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/serialization/dictionaries.hpp>
@@ -14,7 +17,7 @@ namespace ygg::serialization
 {
 
 template<typename Archive, typename C>
-void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::icp::Module>, C>>)
+void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::ps::icp::Module, C>>)
 {
     ar.field("symbol", [](const auto& value) -> decltype(auto) { return (value.get_symbol()); });
     ar.field("concept_registers", [](const auto& value) -> decltype(auto) { return (value.template get_registers<runir::kr::dl::ConceptTag>()); });
@@ -31,10 +34,10 @@ void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::i
              [](const auto& value)
              {
                  using FeatureView =
-                     decltype(make_view(Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>> {}, value.get_context()));
-                 std::vector<std::pair<FeatureView, FeatureView>> pairs;
+                     decltype(urd::resolve(urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>> {}, value.context()));
+                 urd::Store<urd::sequence<std::pair<FeatureView, FeatureView>>> pairs;
                  for (const auto& pair : value.get_reset_pairs())
-                     pairs.emplace_back(make_view(pair.before, value.get_context()), make_view(pair.after, value.get_context()));
+                     pairs.emplace_back(urd::resolve(pair.before, value.context()), urd::resolve(pair.after, value.context()));
                  return pairs;
              });
 }

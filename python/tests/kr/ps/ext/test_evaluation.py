@@ -43,7 +43,7 @@ from pyrunir.kr.dl.semantics import (
     RegisterValues,
     RegisterValuesData,
 )
-from pyrunir.kr.ps import ext
+from pyrunir.kr.ps import ProofStatus, ext
 from pyrunir.kr.ps.ext.dl import parse_program
 from pyrunir.kr.uns.dl import parse_classifier
 
@@ -428,14 +428,14 @@ def test_more_than_four_registers_and_interned_binding_views(kind: Literal["grou
 
     arguments = CallArgumentsData()
     module_arguments = loaded.module_state.arguments
-    arguments.concept_arguments = [value.get_index() for value in module_arguments.concept_arguments]
-    arguments.role_arguments = [value.get_index() for value in module_arguments.role_arguments]
-    arguments.boolean_arguments = [value.get_index() for value in module_arguments.boolean_arguments]
-    arguments.numerical_arguments = [value.get_index() for value in module_arguments.numerical_arguments]
+    arguments.concept_arguments = [value.index() for value in module_arguments.concept_arguments]
+    arguments.role_arguments = [value.index() for value in module_arguments.role_arguments]
+    arguments.boolean_arguments = [value.index() for value in module_arguments.boolean_arguments]
+    arguments.numerical_arguments = [value.index() for value in module_arguments.numerical_arguments]
     registers = RegisterValuesData()
-    registers.concept_values = [None] * 5 + [concept_values[5].get_index()]
+    registers.concept_values = [None] * 5 + [concept_values[5].index()]
     first, second = role_values[5]
-    expected_roles = [None] * 5 + [(first.get_index(), second.get_index())]
+    expected_roles = [None] * 5 + [(first.index(), second.index())]
     registers.role_values = expected_roles
     assert registers.role_values == expected_roles
     repository = task_context.dl_denotation_repository
@@ -708,9 +708,7 @@ def test_initial_goal_classifier_and_zero_time_results(
         domain.uns_repository,
     )
     result = _find_solution(context, program, options)
-    assert result.status == (
-        ext.ProgramProofStatus.SUCCESS if initial_goal_satisfied else ext.ProgramProofStatus.FAILURE
-    )
+    assert result.status == (ProofStatus.SUCCESS if initial_goal_satisfied else ProofStatus.FAILURE)
     assert result.deadend_states == ([] if initial_goal_satisfied else [0])
     if initial_goal_satisfied and not universal:
         assert result.plan is not None
@@ -728,7 +726,7 @@ def test_initial_goal_classifier_and_zero_time_results(
 
     options.max_time = timedelta(0)
     expired = _find_solution(context, program, options)
-    assert expired.status == ext.ProgramProofStatus.OUT_OF_TIME
+    assert expired.status == ProofStatus.OUT_OF_TIME
     assert expired.plan is None
     assert expired.deadend_states == []
     for proof in (result, expired):

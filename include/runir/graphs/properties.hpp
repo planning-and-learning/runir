@@ -4,13 +4,16 @@
 #include "runir/graphs/declarations.hpp"
 
 #include <set>
+#include <urd/repr/values/std_set.hpp>
+#include <urd/store.hpp>
 
 namespace runir::graphs
 {
 
-template<IsVertex Vertex>
-auto get_vertex_color(Vertex vertex)
-{ return vertex.get_property_index(); }
+/// A vertex's color (nauty): its property's index in the graph's property pool. A graph type may give its own.
+template<IsGraph G>
+auto get_vertex_color(const G& graph, VertexIndex vertex)
+{ return graph.get_vertex(vertex).get_property_index(); }
 
 template<IsGraph G>
 auto is_loopless(const G& graph) -> bool
@@ -24,7 +27,7 @@ auto is_loopless(const G& graph) -> bool
 template<IsGraph G>
 auto is_multi_graph(const G& graph) -> bool
 {
-    auto edges = std::set<std::pair<VertexIndex, VertexIndex>>();
+    auto edges = urd::Store<urd::set<std::pair<VertexIndex, VertexIndex>>, urd::sorted, urd::stable_refs>();
     for (auto edge : graph.get_edge_indices())
     {
         const auto [_, inserted] = edges.emplace(graph.get_source(edge), graph.get_target(edge));
@@ -37,7 +40,7 @@ auto is_multi_graph(const G& graph) -> bool
 template<IsGraph G>
 auto is_symmetric(const G& graph) -> bool
 {
-    auto edges = std::set<std::pair<VertexIndex, VertexIndex>>();
+    auto edges = urd::Store<urd::set<std::pair<VertexIndex, VertexIndex>>, urd::sorted, urd::stable_refs>();
     for (auto edge : graph.get_edge_indices())
         edges.emplace(graph.get_source(edge), graph.get_target(edge));
 

@@ -37,13 +37,6 @@ BOOST_SPIRIT_DECLARE(boolean_feature_type,
                      classifier_type,
                      classifier_root_type)
 
-boolean_feature_type const& boolean_feature_parser();
-positive_literal_type const& positive_literal_parser();
-negative_literal_type const& negative_literal_parser();
-literal_type const& literal_parser();
-conjunction_type const& conjunction_parser();
-disjunction_type const& disjunction_parser();
-classifier_type const& classifier_parser();
 classifier_root_type const& classifier_root_parser();
 
 }  // namespace runir::kr::uns::dl::parser

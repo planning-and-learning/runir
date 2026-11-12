@@ -3,6 +3,7 @@
 
 #include "runir/kr/dl/cnf_grammar/declarations.hpp"
 #include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/repository.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/dl/semantics/declarations.hpp"
 
@@ -12,8 +13,9 @@
 #include <cstdint>
 #include <optional>
 #include <tyr/planning/declarations.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
-#include <yggdrasil/core/dependent_false.hpp>
 
 namespace runir::kr::dl::cnf_grammar
 {
@@ -51,10 +53,10 @@ struct GenerateResultsFor
 {
     GenerateStatistics statistics;
     GenerateStatus status = GenerateStatus::COMPLETED;
-    std::vector<runir::kr::dl::ConstructorView<runir::kr::dl::ConceptTag>> concepts;
-    std::vector<runir::kr::dl::ConstructorView<runir::kr::dl::RoleTag>> roles;
-    std::vector<runir::kr::dl::ConstructorView<runir::kr::dl::BooleanTag>> booleans;
-    std::vector<runir::kr::dl::ConstructorView<runir::kr::dl::NumericalTag>> numericals;
+    urd::Store<urd::sequence<runir::kr::dl::ConstructorView<runir::kr::dl::ConceptTag>>> concepts;
+    urd::Store<urd::sequence<runir::kr::dl::ConstructorView<runir::kr::dl::RoleTag>>> roles;
+    urd::Store<urd::sequence<runir::kr::dl::ConstructorView<runir::kr::dl::BooleanTag>>> booleans;
+    urd::Store<urd::sequence<runir::kr::dl::ConstructorView<runir::kr::dl::NumericalTag>>> numericals;
 
     template<runir::kr::dl::CategoryTag Category>
     auto& get_constructors() noexcept
@@ -69,14 +71,14 @@ struct GenerateResultsFor
             return numericals;
         else
         {
-            static_assert(ygg::dependent_false<Category>::value, "unhandled DL category in get_constructors");
+            static_assert(false, "unhandled DL category in get_constructors");
         }
     }
 };
 
 template<tyr::TaskKind Kind>
 GenerateResultsFor generate(GrammarView grammar,
-                            const std::vector<tyr::planning::PackedStateView<Kind>>& states,
+                            const urd::Store<urd::sequence<tyr::planning::PackedStateView<Kind>>>& states,
                             runir::kr::dl::ConstructorRepository& output_repository,
                             runir::kr::dl::semantics::DenotationRepository& denotation_repository,
                             const GenerateOptions& options);

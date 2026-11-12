@@ -10,32 +10,31 @@
 #include "runir/kr/dl/semantics/denotation_data.hpp"
 #include "runir/kr/dl/semantics/register_values_data.hpp"
 
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/semantics/comparison.hpp>
+#include <urd/elements/flat.hpp>
 
 namespace runir::kr::dl::semantics
 {
 
 template<CategoryTag Category>
-bool is_canonical(const ygg::Data<Denotation<Category>>&) noexcept
+bool is_canonical(const urd::data<Denotation<Category>>&) noexcept
 { return true; }
 
 template<CategoryTag Category>
-void canonicalize(ygg::Data<Denotation<Category>>&) noexcept
+void canonicalize(urd::data<Denotation<Category>>&) noexcept
 {
     // Trivially canonical
 }
 
-inline bool is_canonical(const ygg::Data<RegisterValues>&) noexcept { return true; }
+inline bool is_canonical(const urd::data<RegisterValues>&) noexcept { return true; }
 
-inline void canonicalize(ygg::Data<RegisterValues>&) noexcept
+inline void canonicalize(urd::data<RegisterValues>&) noexcept
 {
     // Trivially canonical
 }
 
-inline bool is_canonical(const ygg::Data<CallArguments>&) noexcept { return true; }
+inline bool is_canonical(const urd::data<CallArguments>&) noexcept { return true; }
 
-inline void canonicalize(ygg::Data<CallArguments>&) noexcept
+inline void canonicalize(urd::data<CallArguments>&) noexcept
 {
     // Trivially canonical
 }

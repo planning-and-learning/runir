@@ -30,30 +30,30 @@
 #include <memory>
 #include <optional>
 #include <tuple>
-#include <tyr/formalism/binding_view.hpp>
+#include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <tyr/planning/algorithms/declarations.hpp>
 #include <utility>
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/semantics/comparison.hpp>
+#include <yggdrasil/formalism/row_view.hpp>
 
 namespace runir::datasets
 {
 
 template<tyr::TaskKind Kind>
-struct StateGraphVertexLabel : ygg::comparison::Mixin<StateGraphVertexLabel<Kind>>
+struct StateGraphVertexLabel : urd::compared_by_identity<StateGraphVertexLabel<Kind>>
 {
     tyr::planning::PackedStateView<Kind> state;
 
     explicit StateGraphVertexLabel(tyr::planning::PackedStateView<Kind> state_) noexcept : state(std::move(state_)) {}
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&StateGraphVertexLabel::state> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&StateGraphVertexLabel::state> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&StateGraphVertexLabel::state> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&StateGraphVertexLabel::state> {}; }
 };
 
 template<tyr::TaskKind Kind>
-struct AnnotatedStateGraphVertexLabel : ygg::comparison::Mixin<AnnotatedStateGraphVertexLabel<Kind>>
+struct AnnotatedStateGraphVertexLabel : urd::compared_by_identity<AnnotatedStateGraphVertexLabel<Kind>>
 {
     tyr::planning::PackedStateView<Kind> state;
     ygg::float_t goal_distance = std::numeric_limits<ygg::float_t>::infinity();
@@ -79,7 +79,7 @@ struct AnnotatedStateGraphVertexLabel : ygg::comparison::Mixin<AnnotatedStateGra
 
     static constexpr auto cista_members() noexcept
     {
-        return ygg::Members<&AnnotatedStateGraphVertexLabel::state,
+        return urd::Members<&AnnotatedStateGraphVertexLabel::state,
                             &AnnotatedStateGraphVertexLabel::goal_distance,
                             &AnnotatedStateGraphVertexLabel::is_initial,
                             &AnnotatedStateGraphVertexLabel::is_goal,
@@ -88,7 +88,7 @@ struct AnnotatedStateGraphVertexLabel : ygg::comparison::Mixin<AnnotatedStateGra
     }
     static constexpr auto identifying_members() noexcept
     {
-        return ygg::Members<&AnnotatedStateGraphVertexLabel::state,
+        return urd::Members<&AnnotatedStateGraphVertexLabel::state,
                             &AnnotatedStateGraphVertexLabel::goal_distance,
                             &AnnotatedStateGraphVertexLabel::is_initial,
                             &AnnotatedStateGraphVertexLabel::is_goal,
@@ -97,16 +97,17 @@ struct AnnotatedStateGraphVertexLabel : ygg::comparison::Mixin<AnnotatedStateGra
     }
 };
 
-struct StateGraphEdgeLabel : ygg::comparison::Mixin<StateGraphEdgeLabel>
+struct StateGraphEdgeLabel : urd::compared_by_identity<StateGraphEdgeLabel>
 {
-    tyr::formalism::planning::ActionBindingView action;
+    tyr::formalism::planning::ActionRowView action;
     ygg::float_t cost = 0;
 
     StateGraphEdgeLabel() = delete;
-    StateGraphEdgeLabel(tyr::formalism::planning::ActionBindingView action_, ygg::float_t cost_) noexcept : action(action_), cost(cost_) {}
+    StateGraphEdgeLabel(tyr::formalism::planning::ActionRowView action_, ygg::float_t cost_) noexcept : action(action_), cost(cost_) {}
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&StateGraphEdgeLabel::action, &StateGraphEdgeLabel::cost> {}; }
-    [[nodiscard]] auto identifying_members() const noexcept { return std::make_tuple(action.get_index(), cost); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&StateGraphEdgeLabel::action, &StateGraphEdgeLabel::cost> {}; }
+    [[nodiscard]] auto action_index() const noexcept { return action.data(); }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&StateGraphEdgeLabel::action_index, &StateGraphEdgeLabel::cost> {}; }
 };
 
 template<tyr::TaskKind Kind>

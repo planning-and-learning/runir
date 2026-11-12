@@ -1,3 +1,4 @@
+#include "pyrunir/module.hpp"
 #include "pyrunir/serialization/binding_utils.hpp"
 #include "pyrunir/serialization/bindings.hpp"
 
@@ -9,9 +10,9 @@ namespace runir::serialization
 
 void bind_kr_dl_query(nb::module_& m)
 {
-    using Types = ygg::ConcatTypeListsT<
+    using Types = boost::mp11::mp_append<
         kr::dl::QueryTypes,
-        ygg::TypeList<kr::dl::Query<>, kr::dl::QueryColumn, kr::dl::QueryProjection<kr::dl::ConceptTag>, kr::dl::QueryProjection<kr::dl::RoleTag>>>;
+        boost::mp11::mp_list<kr::dl::Query<>, kr::dl::QueryColumn, kr::dl::QueryProjection<kr::dl::ConceptTag>, kr::dl::QueryProjection<kr::dl::RoleTag>>>;
     bind_entity_types(m, DlComponentViews<Types> {});
 }
 

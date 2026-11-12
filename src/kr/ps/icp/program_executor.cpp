@@ -1,11 +1,11 @@
 #include "runir/kr/ps/icp/program_executor.hpp"
 
-#include "runir/kr/dl/detail/repository_instantiations.hpp"
-#include "runir/kr/dl/semantics/detail/repository_instantiations.hpp"
+#include "runir/kr/dl/repository.hpp"
+#include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/ps/icp/detail/proof_search.hpp"
-#include "runir/kr/ps/icp/detail/repository_instantiations.hpp"
+#include "runir/kr/ps/icp/repository.hpp"
 
-#include <yggdrasil/formalism/detail/basic_symbol_repository_impl.hpp>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 
 namespace runir::kr::ps::icp
 {
@@ -17,8 +17,3 @@ template auto find_solution<tyr::LiftedTag>(const TaskContextPtr<tyr::LiftedTag>
     -> ProgramProofResults<tyr::LiftedTag>;
 
 }
-
-// Tests intern these records too; their insertion path needs basic_symbol_repository_impl.hpp.
-template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::icp::Histories>;
-template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::icp::ProgramState<tyr::GroundTag>>;
-template class ygg::formalism::BasicSymbolRepository<runir::kr::ps::icp::ProgramState<tyr::LiftedTag>>;

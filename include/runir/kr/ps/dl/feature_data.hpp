@@ -11,9 +11,8 @@
 #include <string>
 #include <tuple>
 #include <type_traits>
+#include <urd/elements/flat.hpp>
 #include <utility>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
 
 namespace runir::kr::ps::dl
 {
@@ -32,29 +31,25 @@ struct FeatureExpression<Family, QueryFeature>
 
 }  // namespace runir::kr::ps::dl
 
-namespace ygg
+namespace urd
 {
 
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag>
-struct Data<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>>
+struct data<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>>
 {
     using Expression = typename runir::kr::ps::dl::FeatureExpression<Family, FeatureTag>::Type;
 
-    Index<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>> index;
-    Index<Expression> feature;
-    ::cista::offset::string symbol;
+    urd::index<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>> index;
+    urd::index<Expression> feature;
+    urd::flat_string symbol;
 
-    Data() = default;
-    Data(Index<Expression> feature_, ::cista::offset::string symbol_) : index(), feature(std::move(feature_)), symbol(std::move(symbol_)) {}
-    template<typename C>
-    Data(::ygg::View<Index<Expression>, C> feature_, ::cista::offset::string symbol_) : index(), feature(), symbol(std::move(symbol_))
-    { set(feature_, feature); }
+    data() = default;
+    data(urd::index<Expression> feature_, urd::flat_string symbol_) : index(), feature(std::move(feature_)), symbol(std::move(symbol_)) {}
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::feature, &Data::symbol> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::feature, &Data::symbol> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::feature, &data::symbol> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::feature, &data::symbol> {}; }
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 #endif

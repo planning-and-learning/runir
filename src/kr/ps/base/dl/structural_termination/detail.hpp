@@ -16,7 +16,7 @@ using Analysis = runir::kr::ps::detail::PolicyAnalysis<runir::kr::BaseFamilyTag,
 Analysis analyze_sketch(SketchView sketch);
 StructuralTerminationResult make_result(SketchView sketch, const Analysis& analysis, const runir::kr::ps::detail::PolicySieveResult& sieve_result);
 
-IncompleteStructuralTerminationResult
+runir::kr::ps::dl::IncompleteStructuralTerminationResult<runir::kr::BaseFamilyTag>
 make_incomplete_result(SketchView sketch, const Analysis& analysis, const runir::kr::ps::detail::IncompletePolicyResult& policy_result);
 
 }  // namespace runir::kr::ps::base::dl::detail

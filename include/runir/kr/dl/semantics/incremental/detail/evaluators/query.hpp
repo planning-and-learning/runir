@@ -7,26 +7,29 @@
 #include "runir/kr/dl/semantics/incremental/detail/atomic_query.hpp"
 #include "runir/kr/dl/semantics/query_evaluation.hpp"
 
+#include <array>
 #include <concepts>
 #include <cstddef>
 #include <optional>
 #include <ranges>
 #include <span>
 #include <tuple>
+#include <tyr/datalog/lifted/database/semantics/incremental/generic_join.hpp>
+#include <tyr/datalog/lifted/database/semantics/incremental/query.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
-#include <yggdrasil/database/evaluation/incremental.hpp>
-#include <yggdrasil/database/operators/generic_join/incremental/generic_join.hpp>
 
 namespace runir::kr::dl::semantics::incremental::detail
 {
 
-using ObjectIndex = ygg::Index<tyr::formalism::Object>;
+using ObjectIndex = urd::index<tyr::formalism::Object>;
 
 /// A maintained query result with the last update's exact delta.
-struct QueryValue : ygg::database::incremental::detail::QueryValue
+struct QueryValue : tyr::datalog::database::incremental::detail::QueryValue
 {
-    using ygg::database::incremental::detail::QueryValue::QueryValue;
+    using tyr::datalog::database::incremental::detail::QueryValue::QueryValue;
     auto& clear() noexcept
     {
         result.clear();
@@ -41,7 +44,11 @@ struct QueryStaticEvaluator : QueryValue
     QueryView<> expression;
     bool initialized = false;
 
-    explicit QueryStaticEvaluator(QueryView<> expression_) : QueryValue(expression_.get_schema().span()), expression(expression_) {}
+    QueryStaticEvaluator(const ygg::FreeRelationRepository& layer_, QueryView<> expression_) :
+        QueryValue(layer_, expression_.get_schema()),
+        expression(expression_)
+    {
+    }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>&, Context& context)
     {
@@ -49,22 +56,24 @@ struct QueryStaticEvaluator : QueryValue
         {
             auto& result_rows = this->clear();
             auto output = context.for_result(true);
-            ygg::visit([&](auto concrete) { semantics::detail::evaluate_query<Kind>(concrete, output, result_rows); }, expression.get_variant());
+            std::visit([&](auto concrete) { semantics::detail::evaluate_query<Kind>(concrete, output, result_rows); }, expression.get_variant());
             initialized = true;
         }
         this->delta.clear();
     }
-    void update(EvaluationGraph<Kind>&, const Delta&, ygg::database::Workspace&) {}
+    void update(EvaluationGraph<Kind>&, const Delta&, tyr::datalog::database::Workspace&) {}
 };
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind Fact>
 struct QueryAtomicEvaluator : AtomicQueryEvaluator<Fact>
 {
-    explicit QueryAtomicEvaluator(QueryView<AtomicStateTag<Fact>> expression) : AtomicQueryEvaluator<Fact>(expression) {}
+    QueryAtomicEvaluator(const ygg::FreeRelationRepository& layer, QueryView<AtomicStateTag<Fact>> expression) : AtomicQueryEvaluator<Fact>(layer, expression)
+    {
+    }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>&, Context& context)
     { AtomicQueryEvaluator<Fact>::template initialize<Kind>(context.get_state()); }
-    void update(EvaluationGraph<Kind>&, const Delta& delta, ygg::database::Workspace&)
+    void update(EvaluationGraph<Kind>&, const Delta& delta, tyr::datalog::database::Workspace&)
     {
         if constexpr (std::same_as<Fact, tyr::formalism::FluentTag>)
             AtomicQueryEvaluator<Fact>::update(delta.added.fluent_atoms, delta.removed.fluent_atoms);
@@ -74,61 +83,66 @@ struct QueryAtomicEvaluator : AtomicQueryEvaluator<Fact>
 };
 
 template<tyr::TaskKind Kind>
-struct QueryProjectionEvaluator : ygg::database::incremental::ProjectionEvaluator
+struct QueryProjectionEvaluator : tyr::datalog::database::incremental::ProjectionEvaluator
 {
     QueryEvaluationIndex argument;
 
-    QueryProjectionEvaluator(QueryEvaluationIndex argument_, const ygg::database::ProjectionPlan& plan) :
-        ygg::database::incremental::ProjectionEvaluator(plan),
+    QueryProjectionEvaluator(const ygg::FreeRelationRepository& layer, QueryEvaluationIndex argument_, const tyr::datalog::database::ProjectionPlan& plan) :
+        tyr::datalog::database::incremental::ProjectionEvaluator(layer, plan),
         argument(argument_)
     {
     }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context)
-    { ygg::database::incremental::ProjectionEvaluator::initialize(graph.result(argument), context.get_workspace().get_database_workspace()); }
-    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace& workspace)
-    { ygg::database::incremental::ProjectionEvaluator::update(graph.change(argument).change(), workspace); }
+    { tyr::datalog::database::incremental::ProjectionEvaluator::initialize(graph.result(argument), context.get_workspace().get_database_workspace()); }
+    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace& workspace)
+    { tyr::datalog::database::incremental::ProjectionEvaluator::update(graph.change(argument).change(), workspace); }
 };
 
 template<tyr::TaskKind Kind>
-struct QueryJoinEvaluator : ygg::database::incremental::JoinEvaluator
+struct QueryJoinEvaluator : tyr::datalog::database::incremental::JoinEvaluator
 {
     QueryEvaluationIndex lhs;
     QueryEvaluationIndex rhs;
 
-    QueryJoinEvaluator(QueryEvaluationIndex lhs_, QueryEvaluationIndex rhs_, const ygg::database::JoinPlan& plan) :
-        ygg::database::incremental::JoinEvaluator(plan),
+    QueryJoinEvaluator(const ygg::FreeRelationRepository& layer,
+                       QueryEvaluationIndex lhs_,
+                       QueryEvaluationIndex rhs_,
+                       const tyr::datalog::database::JoinPlan& plan) :
+        tyr::datalog::database::incremental::JoinEvaluator(layer, plan),
         lhs(lhs_),
         rhs(rhs_)
     {
     }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context)
-    { ygg::database::incremental::JoinEvaluator::initialize(graph.result(lhs), graph.result(rhs), context.get_workspace().get_database_workspace()); }
-    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace& workspace)
-    { ygg::database::incremental::JoinEvaluator::update(graph.change(lhs).change(), graph.change(rhs).change(), workspace); }
+    { tyr::datalog::database::incremental::JoinEvaluator::initialize(graph.result(lhs), graph.result(rhs), context.get_workspace().get_database_workspace()); }
+    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace& workspace)
+    { tyr::datalog::database::incremental::JoinEvaluator::update(graph.change(lhs).change(), graph.change(rhs).change(), workspace); }
 };
 
 template<tyr::TaskKind Kind>
-struct QueryGenericJoinEvaluator : ygg::database::incremental::GenericJoinEvaluator
+struct QueryGenericJoinEvaluator : tyr::datalog::database::incremental::GenericJoinEvaluator
 {
-    std::vector<QueryEvaluationIndex> args;
+    urd::Store<urd::sequence<QueryEvaluationIndex>> args;
 
-    QueryGenericJoinEvaluator(std::vector<QueryEvaluationIndex> args_, const ygg::database::GenericJoinPlan& plan) :
-        ygg::database::incremental::GenericJoinEvaluator(plan),
+    QueryGenericJoinEvaluator(const ygg::FreeRelationRepository& layer,
+                              urd::Store<urd::sequence<QueryEvaluationIndex>> args_,
+                              const tyr::datalog::database::GenericJoinPlan& plan) :
+        tyr::datalog::database::incremental::GenericJoinEvaluator(layer, plan),
         args(std::move(args_))
     {
     }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     {
-        ygg::database::incremental::GenericJoinEvaluator::initialize(
-            args | std::views::transform([&](QueryEvaluationIndex arg) -> const auto& { return graph.result(arg); }));
+        tyr::datalog::database::incremental::GenericJoinEvaluator::initialize(
+            args | std::views::transform([&](QueryEvaluationIndex arg) { return graph.result(arg); }));
     }
-    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     {
-        ygg::database::incremental::GenericJoinEvaluator::update(args
-                                                                 | std::views::transform([&](QueryEvaluationIndex arg) { return graph.change(arg).change(); }));
+        tyr::datalog::database::incremental::GenericJoinEvaluator::update(
+            args | std::views::transform([&](QueryEvaluationIndex arg) { return graph.change(arg).change(); }));
     }
 };
 
@@ -137,24 +151,24 @@ struct QueryFromDenotationEvaluator : QueryValue
 {
     EvaluationIndex<Category> argument;
 
-    QueryFromDenotationEvaluator(EvaluationIndex<Category> argument_, std::span<const ygg::database::ColumnLayout> columns) :
-        QueryValue(columns),
+    QueryFromDenotationEvaluator(const ygg::FreeRelationRepository& layer_, EvaluationIndex<Category> argument_, std::span<const ygg::ColumnLayout> columns) :
+        QueryValue(layer_, columns),
         argument(argument_)
     {
     }
     void set_element(DenotationElementView<Category> element, bool present)
     {
-        const auto columns = this->result.columns().span();
         if constexpr (std::same_as<Category, ConceptTag>)
-            this->set(ygg::database::encode_row(std::tuple { element.get_index().get_value() }, columns), present);
+            this->set(std::array<ygg::Value, 1> { ygg::encode_value<ygg::uint_t>(element.index().value) }, present);
         else
-            this->set(ygg::database::encode_row(std::tuple { element.first.get_index().get_value(), element.second.get_index().get_value() }, columns),
+            this->set(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(element.first.index().value),
+                                                  ygg::encode_value<ygg::uint_t>(element.second.index().value) },
                       present);
     }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     { semantics::detail::insert_denotation_rows<Category>(graph.result(argument), this->clear()); }
-    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     {
         this->delta.clear();
         const auto& child_delta = graph.change(argument);
@@ -172,46 +186,46 @@ struct QueryFromScalarEvaluator : QueryValue
     EvaluationIndex<Category> argument;
     std::optional<ygg::uint_t> current;
 
-    QueryFromScalarEvaluator(EvaluationIndex<Category> argument_, std::span<const ygg::database::ColumnLayout> columns) :
-        QueryValue(columns),
+    QueryFromScalarEvaluator(const ygg::FreeRelationRepository& layer_, EvaluationIndex<Category> argument_, std::span<const ygg::ColumnLayout> columns) :
+        QueryValue(layer_, columns),
         argument(argument_)
     {
     }
     /// The value as a row: Booleans are rows only when true.
     std::optional<ygg::uint_t> read(EvaluationGraph<Kind>& graph) const
     {
-        const auto value = graph.result(argument).get();
+        const auto value = graph.result(argument).value();
         if constexpr (std::same_as<Category, BooleanTag>)
             return value ? std::optional<ygg::uint_t>(0) : std::nullopt;
         else
             return value;
     }
-    auto row(ygg::uint_t value) const
+    void set_value(ygg::uint_t value, bool present)
     {
-        const auto columns = this->result.columns().span();
         if constexpr (std::same_as<Category, BooleanTag>)
-            return ygg::database::encode_row(std::tuple<> {}, columns);
+            this->set(std::span<const ygg::Value> {}, present);
         else
-            return ygg::database::encode_row(std::tuple { value }, columns);
+            this->set(std::array<ygg::Value, 1> { ygg::encode_value(value) }, present);
     }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     {
-        auto& rows = this->clear();
+        this->clear();
         current = read(graph);
         if (current)
-            rows.insert(row(*current));
+            set_value(*current, true);
+        this->delta.clear();
     }
-    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     {
         this->delta.clear();
         const auto next = read(graph);
         if (next == current)
             return;
         if (current)
-            this->set(row(*current), false);
+            set_value(*current, false);
         if (next)
-            this->set(row(*next), true);
+            set_value(*next, true);
         current = next;
     }
 };
@@ -222,17 +236,20 @@ struct QuerySetCombinationEvaluator : QueryValue
     QueryEvaluationIndex lhs;
     QueryEvaluationIndex rhs;
 
-    QuerySetCombinationEvaluator(QueryEvaluationIndex lhs_, QueryEvaluationIndex rhs_, std::span<const ygg::database::ColumnLayout> columns) :
-        QueryValue(columns),
+    QuerySetCombinationEvaluator(const ygg::FreeRelationRepository& layer_,
+                                 QueryEvaluationIndex lhs_,
+                                 QueryEvaluationIndex rhs_,
+                                 std::span<const ygg::ColumnLayout> columns) :
+        QueryValue(layer_, columns),
         lhs(lhs_),
         rhs(rhs_)
     {
     }
-    template<ygg::database::RelationViewConcept Rows, std::invocable<std::span<const std::byte>, bool> Emit>
+    template<tyr::datalog::database::RelationViewConcept Rows, std::invocable<decltype(std::declval<const Rows&>().row(0)), bool> Emit>
     void evaluate_rows(EvaluationGraph<Kind>& graph, const Rows& rows, Emit emit)
     {
-        const auto& left = graph.result(lhs);
-        const auto& right = graph.result(rhs);
+        const auto left = graph.result(lhs);
+        const auto right = graph.result(rhs);
         for (size_t i = 0; i < rows.size(); ++i)
         {
             const auto row = rows.row(i);
@@ -255,16 +272,16 @@ struct QuerySetCombinationEvaluator : QueryValue
         if constexpr (std::same_as<Tag, QueryUnionTag>)
             evaluate_rows(graph, graph.result(rhs), emit);
     }
-    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     {
         this->delta.clear();
-        const auto& left = graph.change(lhs);
-        const auto& right = graph.change(rhs);
-        const auto emit = [this](auto row, bool present) { this->set(row, present); };
-        evaluate_rows(graph, left.added, emit);
-        evaluate_rows(graph, left.removed, emit);
-        evaluate_rows(graph, right.added, emit);
-        evaluate_rows(graph, right.removed, emit);
+        const auto [left_added, left_removed] = graph.change(lhs).change();
+        const auto [right_added, right_removed] = graph.change(rhs).change();
+        const auto emit = [this](auto row, bool present) { this->set(row.get_values(), present); };
+        evaluate_rows(graph, left_added, emit);
+        evaluate_rows(graph, left_removed, emit);
+        evaluate_rows(graph, right_added, emit);
+        evaluate_rows(graph, right_removed, emit);
     }
 };
 
@@ -274,28 +291,28 @@ struct QuerySelectionEvaluator : QueryValue
     QueryEvaluationIndex argument;
     QueryView<Tag> expression;
 
-    QuerySelectionEvaluator(QueryEvaluationIndex argument_, QueryView<Tag> expression_) :
-        QueryValue(expression_.get_schema().span()),
+    QuerySelectionEvaluator(const ygg::FreeRelationRepository& layer_, QueryEvaluationIndex argument_, QueryView<Tag> expression_) :
+        QueryValue(layer_, expression_.get_schema()),
         argument(argument_),
         expression(expression_)
     {
     }
-    template<ygg::database::RelationViewConcept Rows, std::invocable<std::span<const std::byte>> Emit>
+    template<tyr::datalog::database::RelationViewConcept Rows, std::invocable<decltype(std::declval<const Rows&>().row(0))> Emit>
     void evaluate_rows(const Rows& rows, Emit emit)
     {
         for (size_t i = 0; i < rows.size(); ++i)
         {
             const auto row = rows.row(i);
-            const auto typed = ygg::database::Row(row, rows.columns().span());
             if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
             {
-                if (ObjectIndex(typed.template get<ygg::uint_t>(expression.get_data().lhs_position))
-                    != ObjectIndex(typed.template get<ygg::uint_t>(expression.get_data().rhs_position)))
+                const auto& plan = expression.data().plan;
+                if (row.value(plan.lhs_position()) != row.value(plan.rhs_position()))
                     continue;
             }
             else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
             {
-                if (ObjectIndex(typed.template get<ygg::uint_t>(expression.get_data().position)) != expression.get_data().object)
+                const auto& plan = expression.data().plan;
+                if (row.value(plan.position()) != plan.value())
                     continue;
             }
             emit(row);
@@ -307,12 +324,12 @@ struct QuerySelectionEvaluator : QueryValue
         auto& output = this->clear();
         evaluate_rows(graph.result(argument), [&output](auto row) { output.insert(row); });
     }
-    void update(EvaluationGraph<Kind>& graph, const Delta&, ygg::database::Workspace&)
+    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     {
         this->delta.clear();
-        const auto& child_delta = graph.change(argument);
-        evaluate_rows(child_delta.removed, [this](auto row) { this->set(row, false); });
-        evaluate_rows(child_delta.added, [this](auto row) { this->set(row, true); });
+        const auto [added, removed] = graph.change(argument).change();
+        evaluate_rows(removed, [this](auto row) { this->set(row.get_values(), false); });
+        evaluate_rows(added, [this](auto row) { this->set(row.get_values(), true); });
     }
 };
 

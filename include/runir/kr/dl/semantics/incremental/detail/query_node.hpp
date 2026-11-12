@@ -2,12 +2,13 @@
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_QUERY_NODE_HPP_
 
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/datalog.hpp"
-#include "runir/kr/dl/semantics/incremental/detail/evaluators/must_pass.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/query.hpp"
 
 #include <algorithm>
 #include <optional>
 #include <span>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <variant>
 #include <vector>
 
@@ -23,29 +24,29 @@ public:
     QueryNode(QueryView<> expression, GraphBuilder<Kind>& graph);
     /// A concept or role lifted into a relation with the given columns; it has no query expression.
     template<ConceptOrRoleTag Category>
-    QueryNode(EvaluationIndex<Category> argument, std::span<const ygg::database::ColumnLayout> columns) :
-        m_dependencies { ygg::uint_t(argument) },
-        m_operation(QueryFromDenotationEvaluator<Kind, Category>(argument, columns))
+    QueryNode(const ygg::FreeRelationRepository& layer, EvaluationIndex<Category> argument, std::span<const ygg::ColumnLayout> columns) :
+        m_dependencies { ygg::uint_t(argument.value) },
+        m_operation(QueryFromDenotationEvaluator<Kind, Category>(layer, argument, columns))
     {
     }
     /// A Datalog program, which its q_head nodes read; it has no query expression.
     QueryNode(DatalogProgramView program, GraphBuilder<Kind>& graph) : m_operation(QueryProgramEvaluator<Kind>(program, graph, m_dependencies)) {}
-    [[nodiscard]] std::optional<QueryView<>> get_expression() const noexcept { return m_expression; }
     /// The operation of a program node, if this is one.
     [[nodiscard]] const QueryProgramEvaluator<Kind>* get_program() const noexcept { return std::get_if<QueryProgramEvaluator<Kind>>(&m_operation); }
+    [[nodiscard]] std::optional<QueryView<>> get_expression() const noexcept { return m_expression; }
     /// Whether this node lifts argument into a relation with exactly these columns.
     template<ConceptOrRoleTag Category>
-    bool lifts(EvaluationIndex<Category> argument, std::span<const ygg::database::ColumnLayout> columns) const
+    bool lifts(EvaluationIndex<Category> argument, std::span<const ygg::ColumnLayout> columns) const
     {
         const auto* lifted = std::get_if<QueryFromDenotationEvaluator<Kind, Category>>(&m_operation);
-        return !m_expression && lifted && lifted->argument == argument && std::ranges::equal(lifted->result.columns().span(), columns);
+        return !m_expression && lifted && lifted->argument == argument && std::ranges::equal(lifted->result.columns(), columns);
     }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context);
-    void update(EvaluationGraph<Kind>& graph, const Delta& delta, ygg::database::Workspace& workspace);
+    void update(EvaluationGraph<Kind>& graph, const Delta& delta, tyr::datalog::database::Workspace& workspace);
     [[nodiscard]] std::span<const ygg::uint_t> get_dependencies() const noexcept { return m_dependencies; }
-    [[nodiscard]] const ygg::Builder<ygg::database::Relation>& get_result() const;
-    [[nodiscard]] const ygg::database::Delta& get_delta() const;
+    [[nodiscard]] ygg::FreeBuilderRelationView get_result() const;
+    [[nodiscard]] const tyr::datalog::database::incremental::Delta& get_delta() const;
 
 private:
     using Operation = std::variant<QueryStaticEvaluator<Kind>,
@@ -56,19 +57,18 @@ private:
                                    QueryGenericJoinEvaluator<Kind>,
                                    QueryFromDenotationEvaluator<Kind, ConceptTag>,
                                    QueryFromDenotationEvaluator<Kind, RoleTag>,
-                                   QueryFromScalarEvaluator<Kind, BooleanTag>,
-                                   QueryFromScalarEvaluator<Kind, NumericalTag>,
                                    QuerySetCombinationEvaluator<Kind, QueryUnionTag>,
                                    QuerySetCombinationEvaluator<Kind, QueryDifferenceTag>,
                                    QuerySelectionEvaluator<Kind, QueryRenameTag>,
                                    QuerySelectionEvaluator<Kind, QuerySelectEqualTag>,
                                    QuerySelectionEvaluator<Kind, QuerySelectValueTag>,
-                                   QueryMustPassEvaluator<Kind>,
+                                   QueryFromScalarEvaluator<Kind, BooleanTag>,
+                                   QueryFromScalarEvaluator<Kind, NumericalTag>,
                                    QueryProgramEvaluator<Kind>,
                                    QueryHeadEvaluator<Kind>>;
 
     std::optional<QueryView<>> m_expression;
-    std::vector<ygg::uint_t> m_dependencies;
+    urd::Store<urd::sequence<ygg::uint_t>> m_dependencies;
     Operation m_operation;
     Operation prepare_operation(QueryView<> expression, GraphBuilder<Kind>& graph);
 };
@@ -86,19 +86,19 @@ void QueryNode<Kind>::initialize(EvaluationGraph<Kind>& graph, Context& context)
 }
 
 template<tyr::TaskKind Kind>
-void QueryNode<Kind>::update(EvaluationGraph<Kind>& graph, const Delta& delta, ygg::database::Workspace& workspace)
+void QueryNode<Kind>::update(EvaluationGraph<Kind>& graph, const Delta& delta, tyr::datalog::database::Workspace& workspace)
 {
     std::visit([&](auto& operation) { operation.update(graph, delta, workspace); }, m_operation);
 }
 
 template<tyr::TaskKind Kind>
-const ygg::Builder<ygg::database::Relation>& QueryNode<Kind>::get_result() const
+ygg::FreeBuilderRelationView QueryNode<Kind>::get_result() const
 {
-    return std::visit([](const auto& operation) -> const auto& { return operation.get_result(); }, m_operation);
+    return std::visit([](const auto& operation) -> ygg::FreeBuilderRelationView { return operation.get_result(); }, m_operation);
 }
 
 template<tyr::TaskKind Kind>
-const ygg::database::Delta& QueryNode<Kind>::get_delta() const
+const tyr::datalog::database::incremental::Delta& QueryNode<Kind>::get_delta() const
 {
     return std::visit([](const auto& operation) -> const auto& { return operation.get_delta(); }, m_operation);
 }
@@ -106,46 +106,47 @@ const ygg::database::Delta& QueryNode<Kind>::get_delta() const
 template<tyr::TaskKind Kind>
 auto QueryNode<Kind>::prepare_operation(QueryView<> expression, GraphBuilder<Kind>& graph) -> Operation
 {
+    const auto& layer = graph.layer();
     if (expression.is_static())
-        return QueryStaticEvaluator<Kind>(expression);
-    return ygg::visit(
+        return QueryStaticEvaluator<Kind>(layer, expression);
+    return std::visit(
         [&]<typename Tag>(QueryView<Tag> concrete) -> Operation
         {
             if constexpr (std::same_as<Tag, AtomicStateTag<tyr::formalism::FluentTag>>)
-                return QueryAtomicEvaluator<Kind, tyr::formalism::FluentTag>(concrete);
+                return QueryAtomicEvaluator<Kind, tyr::formalism::FluentTag>(layer, concrete);
             else if constexpr (std::same_as<Tag, AtomicStateTag<tyr::formalism::DerivedTag>>)
-                return QueryAtomicEvaluator<Kind, tyr::formalism::DerivedTag>(concrete);
+                return QueryAtomicEvaluator<Kind, tyr::formalism::DerivedTag>(layer, concrete);
             else if constexpr (std::same_as<Tag, QueryProjectTag>)
-                return QueryProjectionEvaluator<Kind>(graph.prepare(concrete.get_arg(), m_dependencies), concrete.get_data().plan);
+                return QueryProjectionEvaluator<Kind>(layer, graph.prepare(concrete.get_arg(), m_dependencies), concrete.data().plan);
             else if constexpr (std::same_as<Tag, QueryJoinTag>)
-                return QueryJoinEvaluator<Kind>(graph.prepare(concrete.get_lhs(), m_dependencies),
+                return QueryJoinEvaluator<Kind>(layer,
+                                                graph.prepare(concrete.get_lhs(), m_dependencies),
                                                 graph.prepare(concrete.get_rhs(), m_dependencies),
-                                                concrete.get_data().plan);
+                                                concrete.data().plan);
             else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
             {
-                auto args = std::vector<QueryEvaluationIndex> {};
+                auto args = urd::Store<urd::sequence<QueryEvaluationIndex>> {};
                 for (const auto arg : concrete.get_args())
                     args.push_back(graph.prepare(arg, m_dependencies));
-                return QueryGenericJoinEvaluator<Kind>(std::move(args), concrete.get_data().plan);
+                return QueryGenericJoinEvaluator<Kind>(layer, std::move(args), concrete.data().plan);
             }
             else if constexpr (std::same_as<Tag, QueryConceptTag>)
-                return QueryFromDenotationEvaluator<Kind, ConceptTag>(graph.prepare(concrete.get_arg(), m_dependencies), concrete.get_schema().span());
+                return QueryFromDenotationEvaluator<Kind, ConceptTag>(layer, graph.prepare(concrete.get_arg(), m_dependencies), concrete.get_schema());
             else if constexpr (std::same_as<Tag, QueryRoleTag>)
-                return QueryFromDenotationEvaluator<Kind, RoleTag>(graph.prepare(concrete.get_arg(), m_dependencies), concrete.get_schema().span());
-            else if constexpr (std::same_as<Tag, QueryBooleanTag>)
-                return QueryFromScalarEvaluator<Kind, BooleanTag>(graph.prepare(concrete.get_arg(), m_dependencies), concrete.get_schema().span());
-            else if constexpr (std::same_as<Tag, QueryNumericalTag>)
-                return QueryFromScalarEvaluator<Kind, NumericalTag>(graph.prepare(concrete.get_arg(), m_dependencies), concrete.get_schema().span());
+                return QueryFromDenotationEvaluator<Kind, RoleTag>(layer, graph.prepare(concrete.get_arg(), m_dependencies), concrete.get_schema());
             else if constexpr (std::same_as<Tag, QueryUnionTag> || std::same_as<Tag, QueryDifferenceTag>)
-                return QuerySetCombinationEvaluator<Kind, Tag>(graph.prepare(concrete.get_lhs(), m_dependencies),
+                return QuerySetCombinationEvaluator<Kind, Tag>(layer,
+                                                               graph.prepare(concrete.get_lhs(), m_dependencies),
                                                                graph.prepare(concrete.get_rhs(), m_dependencies),
-                                                               concrete.get_schema().span());
+                                                               concrete.get_schema());
             else if constexpr (std::same_as<Tag, QueryRenameTag> || std::same_as<Tag, QuerySelectEqualTag> || std::same_as<Tag, QuerySelectValueTag>)
-                return QuerySelectionEvaluator<Kind, Tag>(graph.prepare(concrete.get_arg(), m_dependencies), concrete);
-            else if constexpr (std::same_as<Tag, QueryMustPassTag>)
-                return QueryMustPassEvaluator<Kind>(concrete, graph, m_dependencies);
+                return QuerySelectionEvaluator<Kind, Tag>(layer, graph.prepare(concrete.get_arg(), m_dependencies), concrete);
+            else if constexpr (std::same_as<Tag, QueryBooleanTag>)
+                return QueryFromScalarEvaluator<Kind, BooleanTag>(layer, graph.prepare(concrete.get_arg(), m_dependencies), concrete.get_schema());
+            else if constexpr (std::same_as<Tag, QueryNumericalTag>)
+                return QueryFromScalarEvaluator<Kind, NumericalTag>(layer, graph.prepare(concrete.get_arg(), m_dependencies), concrete.get_schema());
             else if constexpr (std::same_as<Tag, QueryHeadTag>)
-                return QueryHeadEvaluator<Kind>(concrete, graph, m_dependencies);
+                return QueryHeadEvaluator<Kind>(layer, concrete, graph, m_dependencies);
             else
                 throw std::logic_error("Incremental query: a static constructor was marked dynamic.");
         },

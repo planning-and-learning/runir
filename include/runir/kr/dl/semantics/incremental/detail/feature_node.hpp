@@ -4,7 +4,6 @@
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/argument.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/atomic.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/count.hpp"
-#include "runir/kr/dl/semantics/incremental/detail/evaluators/distance.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/fillers.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/nonempty.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/number_restriction.hpp"
@@ -18,6 +17,8 @@
 #include <span>
 #include <stdexcept>
 #include <type_traits>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <variant>
 #include <vector>
 
@@ -34,7 +35,7 @@ public:
     [[nodiscard]] ConstructorView<Category> get_expression() const noexcept { return m_expression; }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context);
-    void update(EvaluationGraph<Kind>& graph, const Delta& delta, ygg::database::Workspace& workspace);
+    void update(EvaluationGraph<Kind>& graph, const Delta& delta, tyr::datalog::database::Workspace& workspace);
     [[nodiscard]] std::span<const ygg::uint_t> get_dependencies() const noexcept { return m_dependencies; }
     [[nodiscard]] BorrowedDenotationView<Category> get_result(const tyr::formalism::planning::Repository& repository) const
     { return state().get_result(repository); }
@@ -49,92 +50,85 @@ public:
     { return state().changed(); }
 
 private:
-    using ConceptOperations = ygg::TypeList<AtomicEvaluator<Kind, Category, tyr::formalism::FluentTag>,
-                                            AtomicEvaluator<Kind, Category, tyr::formalism::DerivedTag>,
-                                            UnarySetEvaluator<Kind, Category, NegationTag, ConceptTag>,
-                                            BinarySetEvaluator<Kind, Category, IntersectionTag, ConceptTag, ConceptTag>,
-                                            BinarySetEvaluator<Kind, Category, UnionTag, ConceptTag, ConceptTag>,
-                                            BinarySetEvaluator<Kind, Category, ValueRestrictionTag, RoleTag, ConceptTag>,
-                                            BinarySetEvaluator<Kind, Category, ExistentialQuantificationTag, RoleTag, ConceptTag>,
-                                            BinarySetEvaluator<Kind, Category, RoleValueMapTag, RoleTag, RoleTag>,
-                                            BinarySetEvaluator<Kind, Category, AgreementTag, RoleTag, RoleTag>,
-                                            NumberRestrictionEvaluator<Kind, AtLeastNumberRestrictionTag>,
-                                            NumberRestrictionEvaluator<Kind, AtMostNumberRestrictionTag>,
-                                            NumberRestrictionEvaluator<Kind, ExactNumberRestrictionTag>,
-                                            QualifiedNumberRestrictionEvaluator<Kind, QualifiedAtLeastNumberRestrictionTag>,
-                                            QualifiedNumberRestrictionEvaluator<Kind, QualifiedAtMostNumberRestrictionTag>,
-                                            QualifiedNumberRestrictionEvaluator<Kind, QualifiedExactNumberRestrictionTag>,
-                                            FillersEvaluator<Kind>,
-                                            ProjectionEvaluator<Kind, Category>>;
-    using RoleOperations = ygg::TypeList<AtomicEvaluator<Kind, Category, tyr::formalism::FluentTag>,
-                                         AtomicEvaluator<Kind, Category, tyr::formalism::DerivedTag>,
-                                         UnarySetEvaluator<Kind, Category, ComplementTag, RoleTag>,
-                                         UnarySetEvaluator<Kind, Category, InverseTag, RoleTag>,
-                                         UnarySetEvaluator<Kind, Category, IdentityTag, ConceptTag>,
-                                         UnarySetEvaluator<Kind, Category, TransitiveClosureTag, RoleTag>,
-                                         UnarySetEvaluator<Kind, Category, ReflexiveTransitiveClosureTag, RoleTag>,
-                                         BinarySetEvaluator<Kind, Category, IntersectionTag, RoleTag, RoleTag>,
-                                         BinarySetEvaluator<Kind, Category, UnionTag, RoleTag, RoleTag>,
-                                         BinarySetEvaluator<Kind, Category, RestrictionTag, RoleTag, ConceptTag>,
-                                         BinarySetEvaluator<Kind, Category, CompositionTag, RoleTag, RoleTag>,
-                                         ProjectionEvaluator<Kind, Category>>;
-    using BooleanOperations = ygg::TypeList<AtomicEvaluator<Kind, Category, tyr::formalism::FluentTag>,
-                                            AtomicEvaluator<Kind, Category, tyr::formalism::DerivedTag>,
-                                            NonemptyEvaluator<Kind>,
-                                            LogicalNotEvaluator<Kind>,
-                                            ScalarBinaryEvaluator<Kind, Category, AndTag, BooleanTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, OrTag, BooleanTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, BooleanEqTag, BooleanTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, BooleanNeTag, BooleanTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, BooleanLtTag, BooleanTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, BooleanLeTag, BooleanTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, BooleanGtTag, BooleanTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, BooleanGeTag, BooleanTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, NumericalEqTag, NumericalTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, NumericalNeTag, NumericalTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, NumericalLtTag, NumericalTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, NumericalLeTag, NumericalTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, NumericalGtTag, NumericalTag>,
-                                            ScalarBinaryEvaluator<Kind, Category, NumericalGeTag, NumericalTag>>;
-    using NumericalOperations = ygg::TypeList<CountEvaluator<Kind>,
-                                              ValueEvaluator<Kind>,
-                                              RoleEdgeDistanceEvaluator<Kind>,
-                                              QueryEdgeDistanceEvaluator<Kind>,
-                                              ScalarBinaryEvaluator<Kind, Category, AddTag, NumericalTag>,
-                                              ScalarBinaryEvaluator<Kind, Category, SubTag, NumericalTag>,
-                                              ScalarBinaryEvaluator<Kind, Category, MulTag, NumericalTag>,
-                                              ScalarBinaryEvaluator<Kind, Category, DivTag, NumericalTag>,
-                                              ScalarBinaryEvaluator<Kind, Category, MinTag, NumericalTag>,
-                                              ScalarBinaryEvaluator<Kind, Category, MaxTag, NumericalTag>>;
+    using ConceptOperations = boost::mp11::mp_list<AtomicEvaluator<Kind, Category, tyr::formalism::FluentTag>,
+                                                   AtomicEvaluator<Kind, Category, tyr::formalism::DerivedTag>,
+                                                   UnarySetEvaluator<Kind, Category, NegationTag, ConceptTag>,
+                                                   BinarySetEvaluator<Kind, Category, IntersectionTag, ConceptTag, ConceptTag>,
+                                                   BinarySetEvaluator<Kind, Category, UnionTag, ConceptTag, ConceptTag>,
+                                                   BinarySetEvaluator<Kind, Category, ValueRestrictionTag, RoleTag, ConceptTag>,
+                                                   BinarySetEvaluator<Kind, Category, ExistentialQuantificationTag, RoleTag, ConceptTag>,
+                                                   BinarySetEvaluator<Kind, Category, RoleValueMapTag, RoleTag, RoleTag>,
+                                                   BinarySetEvaluator<Kind, Category, AgreementTag, RoleTag, RoleTag>,
+                                                   NumberRestrictionEvaluator<Kind, AtLeastNumberRestrictionTag>,
+                                                   NumberRestrictionEvaluator<Kind, AtMostNumberRestrictionTag>,
+                                                   NumberRestrictionEvaluator<Kind, ExactNumberRestrictionTag>,
+                                                   QualifiedNumberRestrictionEvaluator<Kind, QualifiedAtLeastNumberRestrictionTag>,
+                                                   QualifiedNumberRestrictionEvaluator<Kind, QualifiedAtMostNumberRestrictionTag>,
+                                                   QualifiedNumberRestrictionEvaluator<Kind, QualifiedExactNumberRestrictionTag>,
+                                                   FillersEvaluator<Kind>,
+                                                   ProjectionEvaluator<Kind, Category>>;
+    using RoleOperations = boost::mp11::mp_list<AtomicEvaluator<Kind, Category, tyr::formalism::FluentTag>,
+                                                AtomicEvaluator<Kind, Category, tyr::formalism::DerivedTag>,
+                                                UnarySetEvaluator<Kind, Category, ComplementTag, RoleTag>,
+                                                UnarySetEvaluator<Kind, Category, InverseTag, RoleTag>,
+                                                UnarySetEvaluator<Kind, Category, IdentityTag, ConceptTag>,
+                                                UnarySetEvaluator<Kind, Category, TransitiveClosureTag, RoleTag>,
+                                                UnarySetEvaluator<Kind, Category, ReflexiveTransitiveClosureTag, RoleTag>,
+                                                BinarySetEvaluator<Kind, Category, IntersectionTag, RoleTag, RoleTag>,
+                                                BinarySetEvaluator<Kind, Category, UnionTag, RoleTag, RoleTag>,
+                                                BinarySetEvaluator<Kind, Category, RestrictionTag, RoleTag, ConceptTag>,
+                                                BinarySetEvaluator<Kind, Category, CompositionTag, RoleTag, RoleTag>,
+                                                ProjectionEvaluator<Kind, Category>>;
+    using BooleanOperations = boost::mp11::mp_list<AtomicEvaluator<Kind, Category, tyr::formalism::FluentTag>,
+                                                   AtomicEvaluator<Kind, Category, tyr::formalism::DerivedTag>,
+                                                   NonemptyEvaluator<Kind>,
+                                                   LogicalNotEvaluator<Kind>,
+                                                   ScalarBinaryEvaluator<Kind, Category, AndTag, BooleanTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, OrTag, BooleanTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, BooleanEqTag, BooleanTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, BooleanNeTag, BooleanTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, BooleanLtTag, BooleanTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, BooleanLeTag, BooleanTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, BooleanGtTag, BooleanTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, BooleanGeTag, BooleanTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, NumericalEqTag, NumericalTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, NumericalNeTag, NumericalTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, NumericalLtTag, NumericalTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, NumericalLeTag, NumericalTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, NumericalGtTag, NumericalTag>,
+                                                   ScalarBinaryEvaluator<Kind, Category, NumericalGeTag, NumericalTag>>;
+    using NumericalOperations = boost::mp11::mp_list<CountEvaluator<Kind>,
+                                                     ValueEvaluator<Kind>,
+                                                     ScalarBinaryEvaluator<Kind, Category, AddTag, NumericalTag>,
+                                                     ScalarBinaryEvaluator<Kind, Category, SubTag, NumericalTag>,
+                                                     ScalarBinaryEvaluator<Kind, Category, MulTag, NumericalTag>,
+                                                     ScalarBinaryEvaluator<Kind, Category, DivTag, NumericalTag>,
+                                                     ScalarBinaryEvaluator<Kind, Category, MinTag, NumericalTag>,
+                                                     ScalarBinaryEvaluator<Kind, Category, MaxTag, NumericalTag>>;
     using Operations = std::conditional_t<std::same_as<Category, ConceptTag>,
                                           ConceptOperations,
                                           std::conditional_t<std::same_as<Category, RoleTag>,
                                                              RoleOperations,
                                                              std::conditional_t<std::same_as<Category, BooleanTag>, BooleanOperations, NumericalOperations>>>;
-    using InvocationOperations = std::conditional_t<true,
-                                                    std::conditional_t<ConceptOrRoleTag<Category>,
-                                                                       ygg::TypeList<RegisterEvaluator<Kind, Category>, ArgumentEvaluator<Kind, Category>>,
-                                                                       ygg::TypeList<ArgumentEvaluator<Kind, Category>>>,
-                                                    ygg::TypeList<>>;
+    using InvocationOperations =
+        std::conditional_t<true,
+                           std::conditional_t<ConceptOrRoleTag<Category>,
+                                              boost::mp11::mp_list<RegisterEvaluator<Kind, Category>, ArgumentEvaluator<Kind, Category>>,
+                                              boost::mp11::mp_list<ArgumentEvaluator<Kind, Category>>>,
+                           boost::mp11::mp_list<>>;
     using Evaluators =
-        ygg::ApplyTypeListT<std::variant, ygg::ConcatTypeListsT<ygg::TypeList<StaticEvaluator<Kind, Category>>, Operations, InvocationOperations>>;
+        boost::mp11::mp_apply<std::variant, boost::mp11::mp_append<boost::mp11::mp_list<StaticEvaluator<Kind, Category>>, Operations, InvocationOperations>>;
 
     ConstructorView<Category> m_expression;
-    std::vector<ygg::uint_t> m_dependencies;
+    urd::Store<urd::sequence<ygg::uint_t>> m_dependencies;
     Evaluators m_evaluator;
 
     template<ConceptOrRoleTag Projected, typename C>
-    Evaluators prepare(ygg::View<ygg::Index<QueryProjection<Projected>>, C> expression, GraphBuilder<Kind>& graph)
-    { return ProjectionEvaluator<Kind, Category>(graph.prepare(expression.get_arg(), m_dependencies), expression.get_data().plan); }
+    Evaluators prepare(urd::index_view<QueryProjection<Projected>, C> expression, GraphBuilder<Kind>& graph)
+    { return ProjectionEvaluator<Kind, Category>(graph.layer(), graph.prepare(expression.get_arg(), m_dependencies), expression.data().plan); }
 
-    Evaluators prepare_distance(NumericalView<DistanceTag> expression, ConstructorView<RoleTag>, GraphBuilder<Kind>& graph)
-    { return RoleEdgeDistanceEvaluator<Kind>(expression, graph, m_dependencies); }
-    /// Query edges can range over pair vertices; maintaining them would materialize every edge.
-    Evaluators prepare_distance(NumericalView<DistanceTag> expression, QueryView<> edges, GraphBuilder<Kind>& graph)
-    { return QueryEdgeDistanceEvaluator<Kind>(expression, edges, graph, m_dependencies); }
-
-    template<template<typename> typename Expression, typename Tag, typename C>
-    Evaluators prepare(ygg::View<ygg::Index<Expression<Tag>>, C> expression, GraphBuilder<Kind>& graph)
+    template<template<typename, typename> typename Expression, typename Tag, typename C>
+    Evaluators prepare(urd::index_view<Expression<SemanticFamily, Tag>, C> expression, GraphBuilder<Kind>& graph)
     {
         if constexpr (std::same_as<Tag, AtomicStateTag<tyr::formalism::FluentTag>>)
             return AtomicEvaluator<Kind, Category, tyr::formalism::FluentTag>(expression.get_predicate(), expression.get_polarity());
@@ -144,14 +138,12 @@ private:
             return RegisterEvaluator<Kind, Category>(expression.get_register().get_identifier());
         else if constexpr (std::same_as<Tag, ArgumentTag<Category>>)
             return ArgumentEvaluator<Kind, Category>(expression.get_argument().get_identifier());
-        else if constexpr (std::same_as<Tag, DistanceTag>)
-            return ygg::visit([&](auto edges) { return prepare_distance(expression, edges, graph); }, expression.get_mid());
         else if constexpr (std::same_as<Tag, ValueTag>)
             return ValueEvaluator<Kind>(graph.prepare(expression.get_arg(), m_dependencies));
         else if constexpr (std::same_as<Tag, CountTag>)
-            return ygg::visit([&](auto child) -> Evaluators { return CountEvaluator<Kind>(graph.prepare(child, m_dependencies)); }, expression.get_arg());
+            return std::visit([&](auto child) -> Evaluators { return CountEvaluator<Kind>(graph.prepare(child, m_dependencies)); }, expression.get_arg());
         else if constexpr (std::same_as<Tag, NonemptyTag>)
-            return ygg::visit([&](auto child) -> Evaluators { return NonemptyEvaluator<Kind>(graph.prepare(child, m_dependencies)); }, expression.get_arg());
+            return std::visit([&](auto child) -> Evaluators { return NonemptyEvaluator<Kind>(graph.prepare(child, m_dependencies)); }, expression.get_arg());
         else if constexpr (std::same_as<Tag, QualifiedAtLeastNumberRestrictionTag> || std::same_as<Tag, QualifiedAtMostNumberRestrictionTag>
                            || std::same_as<Tag, QualifiedExactNumberRestrictionTag>)
             return QualifiedNumberRestrictionEvaluator<Kind, Tag>(graph.prepare(expression.get_role(), m_dependencies),
@@ -201,7 +193,7 @@ template<tyr::TaskKind Kind, CategoryTag Category>
 FeatureNode<Kind, Category>::FeatureNode(ConstructorView<Category> expression, GraphBuilder<Kind>& graph) :
     m_expression(expression),
     m_evaluator(expression.is_static() ? Evaluators(StaticEvaluator<Kind, Category>(expression)) :
-                                         ygg::visit([&](auto concrete) { return prepare(concrete, graph); }, expression.get_variant()))
+                                         std::visit([&](auto concrete) { return prepare(concrete, graph); }, expression.get_variant()))
 {
 }
 
@@ -219,7 +211,7 @@ void FeatureNode<Kind, Category>::initialize(EvaluationGraph<Kind>& graph, Conte
 }
 
 template<tyr::TaskKind Kind, CategoryTag Category>
-void FeatureNode<Kind, Category>::update(EvaluationGraph<Kind>& graph, const Delta& delta, ygg::database::Workspace& workspace)
+void FeatureNode<Kind, Category>::update(EvaluationGraph<Kind>& graph, const Delta& delta, tyr::datalog::database::Workspace& workspace)
 {
     std::visit(
         [&](auto& evaluator)

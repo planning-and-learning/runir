@@ -3,8 +3,9 @@
 #include <atomic>
 #include <boost/json.hpp>
 #include <gtest/gtest.h>
-#include <runir/graphs/algorithms.hpp>
+#include <runir/graphs/algorithms/color_refinement.hpp>
 #include <runir/graphs/algorithms/nauty.hpp>
+#include <runir/graphs/algorithms/weisfeiler_leman.hpp>
 #include <runir/graphs/properties.hpp>
 #include <runir/graphs/static_graph.hpp>
 #include <stdexcept>
@@ -12,6 +13,8 @@
 #include <string_view>
 #include <thread>
 #include <tuple>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/serialization/json.hpp>
@@ -22,20 +25,20 @@ namespace runir::tests
 namespace
 {
 
-struct VertexColor : ygg::comparison::Mixin<VertexColor>
+struct VertexColor : urd::compared_by_identity<VertexColor>
 {
     ygg::uint_t value = 0;
 
     VertexColor() = default;
     explicit VertexColor(ygg::uint_t value_) : value(value_) {}
 
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&VertexColor::value> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&VertexColor::value> {}; }
 };
 
 using GraphBuilder = graphs::StaticGraphBuilder<VertexColor>;
 using Graph = graphs::StaticGraph<VertexColor>;
 
-auto get_vertex_color(graphs::Vertex<Graph, VertexColor> vertex) -> ygg::uint_t { return vertex.get_property().value; }
+auto get_vertex_color(const Graph& graph, graphs::VertexIndex vertex) -> ygg::uint_t { return graph.get_vertex_property(vertex).value; }
 
 auto graph_cases() -> const boost::json::array&
 {
@@ -58,7 +61,7 @@ auto find_graph_case(std::string_view name) -> const boost::json::object&
 auto make_graph(const boost::json::object& object) -> Graph
 {
     auto builder = GraphBuilder();
-    auto vertices = std::vector<graphs::VertexIndex> {};
+    auto vertices = urd::Store<urd::sequence<graphs::VertexIndex>> {};
     const auto num_vertices = ygg::common::as_size(object, "num_vertices", "graph");
     vertices.reserve(num_vertices);
     for (std::size_t i = 0; i < num_vertices; ++i)
@@ -104,10 +107,10 @@ TEST(RunirTests, GraphFixtureCertificatesMatch)
         const auto& pair = ygg::common::as_object(value, "certificate_pair");
         const auto left = make_graph(find_graph_case(ygg::common::as_string(pair, "left", "certificate_pair")));
         const auto right = make_graph(find_graph_case(ygg::common::as_string(pair, "right", "certificate_pair")));
-        const auto left_cr = graphs::algorithms::color_refinement_certificate(left);
-        const auto right_cr = graphs::algorithms::color_refinement_certificate(right);
-        const auto left_wl2 = graphs::algorithms::weisfeiler_leman_2_certificate(left);
-        const auto right_wl2 = graphs::algorithms::weisfeiler_leman_2_certificate(right);
+        const auto left_cr = graphs::color_refinement::compute_certificate(left);
+        const auto right_cr = graphs::color_refinement::compute_certificate(right);
+        const auto left_wl2 = graphs::weisfeiler_leman::compute_certificate<2>(left);
+        const auto right_wl2 = graphs::weisfeiler_leman::compute_certificate<2>(right);
 
         EXPECT_EQ(left_cr.get_round_summaries() == right_cr.get_round_summaries(), ygg::common::as_bool(pair, "color_refinement_equal", "certificate_pair"));
         EXPECT_EQ(left_cr.get_colors() == right_cr.get_colors(), ygg::common::as_bool(pair, "color_refinement_colors_equal", "certificate_pair"));
@@ -143,7 +146,7 @@ TEST(RunirTests, NautyCanonicalizationIsThreadSafe)
     auto matches = std::atomic(true);
 
     {
-        auto workers = std::vector<std::jthread> {};
+        auto workers = urd::Store<urd::sequence<std::jthread>> {};
         workers.reserve(8);
         for (size_t i = 0; i < 8; ++i)
         {

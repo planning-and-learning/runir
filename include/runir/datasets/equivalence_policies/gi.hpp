@@ -36,7 +36,7 @@ struct EquivalencePolicy<GIEquivalenceTag>
 {
 private:
     ColorRepository& m_colors;
-    ygg::UnorderedMap<graphs::nauty::SparseGraph, StateGraphVertexRef> m_certificate_to_representative;
+    urd::Store<urd::map<graphs::nauty::SparseGraph, StateGraphVertexRef>> m_certificate_to_representative;
     std::mutex m_mutex;
 
 public:

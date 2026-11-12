@@ -1,10 +1,12 @@
 #include "detail.hpp"
-#include "runir/graphs/algorithms.hpp"
+#include "runir/graphs/bgl/algorithms.hpp"
 #include "runir/graphs/static_graph.hpp"
 #include "runir/graphs/static_graph_builder.hpp"
 
 #include <algorithm>
 #include <limits>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 namespace runir::kr::ps::detail
 {
@@ -19,10 +21,10 @@ struct ComponentProfile
     std::uint64_t boolean_flipped_to_false = 0;
 };
 
-std::vector<ComponentProfile>
-summarize_opposing_changes(const std::vector<PolicyEdge>& edges, const QualitativePolicy& policy, const StrongComponents& components)
+urd::Store<urd::sequence<ComponentProfile>>
+summarize_opposing_changes(const urd::Store<urd::sequence<PolicyEdge>>& edges, const QualitativePolicy& policy, const StrongComponents& components)
 {
-    auto profiles = std::vector<ComponentProfile>(components.count);
+    auto profiles = urd::Store<urd::sequence<ComponentProfile>>(components.count);
     for (const auto& edge : edges)
     {
         if (!edge.alive || components.component_of[edge.source] != components.component_of[edge.target])
@@ -41,10 +43,10 @@ summarize_opposing_changes(const std::vector<PolicyEdge>& edges, const Qualitati
     return profiles;
 }
 
-bool remove_unopposed_edges(std::vector<PolicyEdge>& edges,
+bool remove_unopposed_edges(urd::Store<urd::sequence<PolicyEdge>>& edges,
                             const QualitativePolicy& policy,
                             const StrongComponents& components,
-                            const std::vector<ComponentProfile>& component_profiles)
+                            const urd::Store<urd::sequence<ComponentProfile>>& component_profiles)
 {
     auto removed = false;
     for (auto& edge : edges)
@@ -69,7 +71,7 @@ bool remove_unopposed_edges(std::vector<PolicyEdge>& edges,
     return removed;
 }
 
-bool contains_cycle(const std::vector<PolicyEdge>& edges, const StrongComponents& components)
+bool contains_cycle(const urd::Store<urd::sequence<PolicyEdge>>& edges, const StrongComponents& components)
 {
     return std::any_of(edges.begin(),
                        edges.end(),
@@ -78,7 +80,7 @@ bool contains_cycle(const std::vector<PolicyEdge>& edges, const StrongComponents
 
 }  // namespace
 
-StrongComponents find_strong_components(const std::vector<PolicyEdge>& edges, std::size_t num_vertices)
+StrongComponents find_strong_components(const urd::Store<urd::sequence<PolicyEdge>>& edges, std::size_t num_vertices)
 {
     if (num_vertices > std::numeric_limits<graphs::VertexIndex>::max())
         throw std::invalid_argument("structural_termination: a policy graph has too many vertices");
@@ -93,11 +95,11 @@ StrongComponents find_strong_components(const std::vector<PolicyEdge>& edges, st
             builder.add_directed_edge(static_cast<graphs::VertexIndex>(edge.source), static_cast<graphs::VertexIndex>(edge.target));
 
     const auto graph = graphs::StaticGraph<> { builder };
-    auto [num_components, component_of] = graphs::algorithms::strong_components(graph);
+    auto [num_components, component_of] = graphs::bgl::strong_components(graph);
     return { num_components, std::move(component_of) };
 }
 
-SieveResult sieve_policy_graph(std::vector<PolicyEdge>& edges, const QualitativePolicy& policy)
+SieveResult sieve_policy_graph(urd::Store<urd::sequence<PolicyEdge>>& edges, const QualitativePolicy& policy)
 {
     auto components = StrongComponents {};
     auto removed_edges = true;
@@ -112,10 +114,11 @@ SieveResult sieve_policy_graph(std::vector<PolicyEdge>& edges, const Qualitative
 
 namespace
 {
-PolicySieveResult sieve_policy_for_rules(const QualitativePolicy& policy, std::size_t max_features, const std::vector<std::size_t>& rule_positions)
+PolicySieveResult
+sieve_policy_for_rules(const QualitativePolicy& policy, std::size_t max_features, const urd::Store<urd::sequence<std::size_t>>& rule_positions)
 {
     auto projected_components = project_policy_components(policy, rule_positions);
-    auto result = PolicySieveResult { .components = {}, .scc_feature_positions = std::vector<SccFeaturePositions> {} };
+    auto result = PolicySieveResult { .components = {}, .scc_feature_positions = urd::Store<urd::sequence<SccFeaturePositions>> {} };
     result.scc_feature_positions->reserve(projected_components.size());
     for (const auto& projected : projected_components)
         result.scc_feature_positions->push_back(SccFeaturePositions { projected.boolean_positions, projected.numerical_positions });
@@ -134,7 +137,7 @@ PolicySieveResult sieve_policy_for_rules(const QualitativePolicy& policy, std::s
         auto sieve = sieve_policy_graph(edges, projected.policy);
         if (sieve.has_cycle)
         {
-            std::erase_if(edges, [&](const auto& edge) { return !edge.alive || sieve.component_of[edge.source] != sieve.component_of[edge.target]; });
+            erase_if(edges, [&](const auto& edge) { return !edge.alive || sieve.component_of[edge.source] != sieve.component_of[edge.target]; });
             result.components.push_back(SievedPolicyComponent { std::move(projected), std::move(edges), std::move(sieve) });
         }
     }
@@ -160,7 +163,7 @@ PolicySieveResult sieve_policy(const QualitativePolicy& policy, std::size_t max_
         return sieve_policy(policy, max_features, incomplete_result);
     }
 
-    auto rule_positions = std::vector<std::size_t> {};
+    auto rule_positions = urd::Store<urd::sequence<std::size_t>> {};
     rule_positions.reserve(policy.rule_profiles.size());
     for (std::size_t position = 0; position < policy.rule_profiles.size(); ++position)
         rule_positions.push_back(position);

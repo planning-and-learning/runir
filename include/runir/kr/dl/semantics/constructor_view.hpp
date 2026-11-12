@@ -3,29 +3,24 @@
 
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/query_view.hpp"
-#include "runir/kr/dl/semantics/boolean_view.hpp"
-#include "runir/kr/dl/semantics/concept_view.hpp"
-#include "runir/kr/dl/semantics/numerical_view.hpp"
-#include "runir/kr/dl/semantics/role_view.hpp"
+#include "runir/kr/dl/record_view.hpp"
 
 #include <tuple>
-#include <yggdrasil/containers/variant.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
 
-namespace ygg
+namespace urd
 {
+template<runir::kr::dl::CategoryTag Category, typename V>
+struct view_mixin<runir::kr::dl::Constructor<Category>, V>
+{
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
-template<runir::kr::dl::CategoryTag Category, formalism::SymbolContextFor<runir::kr::dl::Constructor<Category>> C>
-class View<Index<runir::kr::dl::Constructor<Category>>, C> : public ygg::IndexViewBase<runir::kr::dl::Constructor<Category>, C>
-{
 public:
-    using ygg::IndexViewBase<runir::kr::dl::Constructor<Category>, C>::IndexViewBase;
-
-    auto get_variant() const noexcept { return make_view(this->get_data().variant, this->get_context()); }
-    [[nodiscard]] bool is_static() const noexcept { return this->get_data().is_static; }
+    auto get_variant() const noexcept { return self().template member<&urd::record_of<V>::variant>(); }
+    [[nodiscard]] bool is_static() const noexcept { return self().data().is_static; }
 };
-
-}
+}  // namespace urd
 
 #endif

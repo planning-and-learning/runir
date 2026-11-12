@@ -5,11 +5,16 @@
 #include <runir/kr/dl/grammar/constructor_repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/base/repository.hpp>
-#include <runir/kr/ps/ext/execution_repository.hpp>
+#include <runir/kr/ps/execution_repository.hpp>
+#include <runir/kr/ps/ext/execution_data.hpp>
 #include <runir/kr/ps/ext/execution_view.hpp>
-#include <runir/kr/ps/icp/execution_repository.hpp>
+#include <runir/kr/ps/ext/repository.hpp>
+#include <runir/kr/ps/icp/execution_data.hpp>
 #include <runir/kr/ps/icp/execution_view.hpp>
+#include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/uns/repository.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 namespace runir::tests
 {
@@ -43,8 +48,8 @@ static_assert(rejects_symbol<kr::uns::Repository, kr::ps::base::Sketch>());
 template<tyr::TaskKind Kind>
 consteval bool execution_interning_contracts()
 {
-    using ExtRepository = kr::ps::ext::ExecutionRepository<Kind>;
-    using IcpRepository = kr::ps::icp::ExecutionRepository<Kind>;
+    using ExtRepository = kr::ps::ExecutionRepository<kr::ExtFamilyTag, Kind>;
+    using IcpRepository = kr::ps::ExecutionRepository<kr::IcpFamilyTag, Kind>;
     return InternsData<ExtRepository, kr::ps::ext::ProgramState<Kind>> && InternsData<IcpRepository, kr::ps::icp::Histories>
            && rejects_symbol<ExtRepository, kr::ps::ext::Module>() && rejects_symbol<IcpRepository, kr::ps::icp::Module>();
 }
@@ -74,7 +79,7 @@ static_assert(!QueryProjectionCategory<kr::dl::BooleanTag> && !QueryProjectionCa
 template<typename Kind>
 concept GeneratesConstructors =
     requires(kr::dl::cnf_grammar::GrammarView grammar,
-             const std::vector<tyr::planning::PackedStateView<Kind>>& states,
+             const urd::Store<urd::sequence<tyr::planning::PackedStateView<Kind>>>& states,
              kr::dl::ConstructorRepository& constructors,
              kr::dl::semantics::DenotationRepository& denotations,
              const kr::dl::cnf_grammar::GenerateOptions& options) { kr::dl::cnf_grammar::generate<Kind>(grammar, states, constructors, denotations, options); };
@@ -88,16 +93,16 @@ static_assert(kr::dl::ConceptConstructorTag<kr::dl::RegisterTag>);
 consteval bool can_checkout_constructors()
 {
     return requires(kr::dl::Builder& builder, kr::dl::grammar::Builder& grammar_builder, kr::dl::cnf_grammar::Builder& cnf_builder) {
-        kr::dl::checkout<kr::dl::Concept<kr::dl::TopTag>>(builder);
-        kr::dl::grammar::checkout<kr::dl::grammar::Concept<kr::dl::TopTag>>(grammar_builder);
-        kr::dl::cnf_grammar::checkout<kr::dl::cnf_grammar::Concept<kr::dl::TopTag>>(cnf_builder);
+        kr::dl::checkout<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::TopTag>>(builder);
+        kr::dl::grammar::checkout<kr::dl::Concept<kr::dl::grammar::GrammarFamily, kr::dl::TopTag>>(grammar_builder);
+        kr::dl::cnf_grammar::checkout<kr::dl::Concept<kr::dl::cnf_grammar::CnfGrammarFamily, kr::dl::TopTag>>(cnf_builder);
     };
 }
 
 static_assert(can_checkout_constructors());
 
 template<typename B>
-concept SemanticCheckout = requires(B& builder) { kr::dl::checkout<kr::dl::Concept<kr::dl::TopTag>>(builder); };
+concept SemanticCheckout = requires(B& builder) { kr::dl::checkout<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::TopTag>>(builder); };
 
 static_assert(!SemanticCheckout<kr::dl::grammar::Builder>);
 static_assert(!SemanticCheckout<kr::dl::cnf_grammar::Builder>);

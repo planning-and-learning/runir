@@ -8,16 +8,12 @@
 #include "runir/kr/ps/base/rule_view.hpp"
 #include "runir/kr/ps/base/sketch_data.hpp"
 #include "runir/kr/ps/base/sketch_view.hpp"
-#include "runir/kr/ps/condition_data.hpp"
-#include "runir/kr/ps/condition_view.hpp"
 #include "runir/kr/ps/dl/condition_data.hpp"
 #include "runir/kr/ps/dl/condition_view.hpp"
 #include "runir/kr/ps/dl/effect_data.hpp"
 #include "runir/kr/ps/dl/effect_view.hpp"
 #include "runir/kr/ps/dl/feature_data.hpp"
 #include "runir/kr/ps/dl/feature_view.hpp"
-#include "runir/kr/ps/effect_data.hpp"
-#include "runir/kr/ps/effect_view.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 #include "runir/kr/ps/repository.hpp"
 
@@ -27,13 +23,13 @@
 namespace runir::kr::ps::base
 {
 
-using Builder = ygg::ApplyTypeListT<ygg::formalism::BuilderStorage, RepositoryTypes>;
+using Builder = boost::mp11::mp_apply<ygg::formalism::BuilderStorage, RepositoryTypes>;
 
 using ygg::formalism::checkout;
 
 template<typename T>
     requires ygg::formalism::SupportsSymbol<Repository, T>
-void prepare_for_insert(Repository&, ygg::Data<T>& data)
+void prepare_for_insert(Repository&, urd::data<T>& data)
 { canonicalize(data); }
 
 using ygg::formalism::insert;

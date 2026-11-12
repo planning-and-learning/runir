@@ -2,17 +2,15 @@
 
 #include <gtest/gtest.h>
 #include <runir/graphs/cycle.hpp>
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
-#include <runir/kr/ps/base/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/ps/base/dl/parser.hpp>
 #include <runir/kr/ps/base/dl/sketch_factory.hpp>
 #include <runir/kr/ps/base/dl/structural_termination.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <set>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/formalism/planning/parser.hpp>
-#include <yggdrasil/semantics/comparison.hpp>
 #include <yggdrasil/serialization/json.hpp>
 
 namespace runir::tests
@@ -21,24 +19,24 @@ namespace runir::tests
 namespace
 {
 
-auto counterexample_rules(const kr::ps::base::dl::SieveStructuralTerminationResult& sieve) -> std::set<ygg::Index<kr::ps::Rule<kr::BaseFamilyTag>>>
+auto counterexample_rules(const kr::ps::base::dl::SieveStructuralTerminationResult& sieve) -> std::set<urd::index<kr::ps::Rule<kr::BaseFamilyTag>>>
 {
-    auto rules = std::set<ygg::Index<kr::ps::Rule<kr::BaseFamilyTag>>> {};
-    for (const auto& edge : sieve.counterexample->get_edges())
-        rules.insert(edge.get_property().get_index());
-    auto surviving = std::set<ygg::Index<kr::ps::Rule<kr::BaseFamilyTag>>> {};
+    auto rules = std::set<urd::index<kr::ps::Rule<kr::BaseFamilyTag>>> {};
+    for (const auto edge : sieve.counterexample->get_edge_indices())
+        rules.insert(sieve.counterexample->get_edge_property(edge).index());
+    auto surviving = std::set<urd::index<kr::ps::Rule<kr::BaseFamilyTag>>> {};
     for (const auto rule : sieve.surviving_rules)
-        surviving.insert(rule.get_index());
+        surviving.insert(rule.index());
     EXPECT_EQ(surviving.size(), sieve.surviving_rules.size());
     EXPECT_EQ(surviving, rules);
     return rules;
 }
 
-auto sketch_rules(kr::ps::base::SketchView sketch) -> std::set<ygg::Index<kr::ps::Rule<kr::BaseFamilyTag>>>
+auto sketch_rules(kr::ps::base::SketchView sketch) -> std::set<urd::index<kr::ps::Rule<kr::BaseFamilyTag>>>
 {
-    auto rules = std::set<ygg::Index<kr::ps::Rule<kr::BaseFamilyTag>>> {};
+    auto rules = std::set<urd::index<kr::ps::Rule<kr::BaseFamilyTag>>> {};
     for (auto rule : sketch.get_rules())
-        rules.insert(rule.get_index());
+        rules.insert(rule.index());
     return rules;
 }
 
@@ -73,7 +71,7 @@ TEST(RunirTests, StructuralTerminationEmptySketchIsTerminating)
     const auto without_incomplete = kr::ps::base::dl::structural_termination(sketch, kr::ps::dl::default_max_features, false);
     EXPECT_TRUE(result.is_terminating());
     ASSERT_TRUE(result.incomplete_result.has_value());
-    EXPECT_EQ(result.incomplete_result.value().status, kr::ps::base::dl::IncompleteStructuralTerminationStatus::TERMINATING);
+    EXPECT_EQ(result.incomplete_result.value().status, kr::ps::dl::IncompleteStructuralTerminationStatus::TERMINATING);
     EXPECT_FALSE(result.sieve_result.has_value());
     EXPECT_TRUE(without_incomplete.is_terminating());
     EXPECT_FALSE(without_incomplete.incomplete_result.has_value());
@@ -94,7 +92,7 @@ TEST(RunirTests, StructuralTerminationBooleanOscillatorCounterexample)
     const auto booleans = sketch.get_features<kr::dl::BooleanTag>();
     ASSERT_FALSE(result.is_terminating());
     ASSERT_TRUE(result.incomplete_result.has_value());
-    EXPECT_EQ(result.incomplete_result.value().status, kr::ps::base::dl::IncompleteStructuralTerminationStatus::UNKNOWN);
+    EXPECT_EQ(result.incomplete_result.value().status, kr::ps::dl::IncompleteStructuralTerminationStatus::UNKNOWN);
     ASSERT_TRUE(result.sieve_result.has_value());
     ASSERT_NE(result.sieve_result.value().counterexample, nullptr);
     EXPECT_EQ(result.sieve_result.value().counterexample->get_num_vertices(), 2);
@@ -168,7 +166,7 @@ TEST(RunirTests, StructuralTerminationTppDetails)
     const auto without_incomplete = kr::ps::base::dl::structural_termination(sketch, 3, false);
     EXPECT_TRUE(result.is_terminating());
     ASSERT_TRUE(result.incomplete_result.has_value());
-    EXPECT_EQ(result.incomplete_result.value().status, kr::ps::base::dl::IncompleteStructuralTerminationStatus::TERMINATING);
+    EXPECT_EQ(result.incomplete_result.value().status, kr::ps::dl::IncompleteStructuralTerminationStatus::TERMINATING);
     EXPECT_FALSE(result.sieve_result.has_value());
     ASSERT_TRUE(without_incomplete.sieve_result.has_value());
     EXPECT_EQ(without_incomplete.sieve_result.value().counterexample, nullptr);

@@ -6,37 +6,34 @@
 #include <concepts>
 #include <tuple>
 #include <tyr/formalism/planning/domain_view.hpp>
-#include <yggdrasil/containers/optional.hpp>
-#include <yggdrasil/containers/vector.hpp>
-#include <yggdrasil/core/dependent_false.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
 
-namespace ygg
+namespace urd
 {
+template<typename V>
+struct view_mixin<runir::kr::dl::grammar::GrammarTag, V>
+{
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
-template<formalism::SymbolContextFor<runir::kr::dl::grammar::GrammarTag> C>
-class View<Index<runir::kr::dl::grammar::GrammarTag>, C> : public ygg::IndexViewBase<runir::kr::dl::grammar::GrammarTag, C>
-{
 public:
-    using ygg::IndexViewBase<runir::kr::dl::grammar::GrammarTag, C>::IndexViewBase;
-
-    auto get_domain() const noexcept { return make_view(this->get_data().domain, this->get_context().get_planning_repository()); }
+    auto get_domain() const noexcept { return urd::resolve(self().data().domain, self().context().get_planning_repository()); }
 
     template<runir::kr::dl::CategoryTag Category>
     auto get_start() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return make_view(this->get_data().concept_start, this->get_context());
+            return self().template member<&urd::record_of<V>::concept_start>();
         else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return make_view(this->get_data().role_start, this->get_context());
+            return self().template member<&urd::record_of<V>::role_start>();
         else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-            return make_view(this->get_data().boolean_start, this->get_context());
+            return self().template member<&urd::record_of<V>::boolean_start>();
         else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-            return make_view(this->get_data().numerical_start, this->get_context());
+            return self().template member<&urd::record_of<V>::numerical_start>();
         else
         {
-            static_assert(ygg::dependent_false<Category>::value, "unhandled DL category in get_start");
+            static_assert(false, "unhandled DL category in get_start");
         }
     }
 
@@ -44,20 +41,19 @@ public:
     auto get_derivation_rules() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return make_view(this->get_data().concept_derivation_rules, this->get_context());
+            return self().template member<&urd::record_of<V>::concept_derivation_rules>();
         else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return make_view(this->get_data().role_derivation_rules, this->get_context());
+            return self().template member<&urd::record_of<V>::role_derivation_rules>();
         else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-            return make_view(this->get_data().boolean_derivation_rules, this->get_context());
+            return self().template member<&urd::record_of<V>::boolean_derivation_rules>();
         else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-            return make_view(this->get_data().numerical_derivation_rules, this->get_context());
+            return self().template member<&urd::record_of<V>::numerical_derivation_rules>();
         else
         {
-            static_assert(ygg::dependent_false<Category>::value, "unhandled DL category in get_derivation_rules");
+            static_assert(false, "unhandled DL category in get_derivation_rules");
         }
     }
 };
-
-}  // namespace ygg
+}  // namespace urd
 
 #endif

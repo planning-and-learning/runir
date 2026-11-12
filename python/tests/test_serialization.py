@@ -47,7 +47,7 @@ def test_fields_describe_native_layouts_without_instances() -> None:
     assert list(ext.ProgramProofEdgeLabel.Fields.__members__) == ["action", "rule"]
     assert list(StateGraphEdgeLabel.Fields.__members__) == ["action", "cost"]
     assert list(semantics.BooleanNonempty.Fields.__members__) == ["arg"]
-    assert list(fp.FluentPredicateBinding.Fields.__members__) == ["relation", "objects"]
+    assert list(fp.FluentPredicateRow.Fields.__members__) == ["relation", "objects"]
     for module_state, call_stack, program_state in (
         (ext.GroundModuleState, ext.GroundCallStack, ext.GroundProgramState),
         (ext.LiftedModuleState, ext.LiftedCallStack, ext.LiftedProgramState),
@@ -81,31 +81,31 @@ def test_runir_preserves_tyr_field_enum_identity() -> None:
             """
 from pytyr.formalism import planning as fp
 import pytyr.serialization
-fields = fp.ActionBinding.Fields
+fields = fp.ActionRow.Fields
 import pyrunir.serialization
-assert fp.ActionBinding.Fields is fields
+assert fp.ActionRow.Fields is fields
 """,
         ],
         check=True,
     )
 
 
-@pytest.mark.parametrize("native_type", ["Rule", "ActionBinding", "FluentPredicateBinding"])
+@pytest.mark.parametrize("native_type", ["Rule", "ActionRow", "FluentPredicateRow"])
 def test_matching_field_enums_are_accepted_by_their_library(native_type: str) -> None:
     dictionaries = Dictionaries()
     if native_type == "Rule":
         runir_serialization.register_table(dictionaries, base.Rule, "selected", "s", fields=[base.Rule.Fields.symbol])
         assert runir_serialization.table(dictionaries, base.Rule) == []
-    elif native_type == "ActionBinding":
+    elif native_type == "ActionRow":
         tyr_serialization.register_table(
-            dictionaries, fp.ActionBinding, "selected", "s", fields=[fp.ActionBinding.Fields.objects]
+            dictionaries, fp.ActionRow, "selected", "s", fields=[fp.ActionRow.Fields.objects]
         )
-        assert tyr_serialization.table(dictionaries, fp.ActionBinding) == []
+        assert tyr_serialization.table(dictionaries, fp.ActionRow) == []
     else:
         tyr_serialization.register_table(
-            dictionaries, fp.FluentPredicateBinding, "selected", "s", fields=[fp.FluentPredicateBinding.Fields.relation]
+            dictionaries, fp.FluentPredicateRow, "selected", "s", fields=[fp.FluentPredicateRow.Fields.relation]
         )
-        assert tyr_serialization.table(dictionaries, fp.FluentPredicateBinding) == []
+        assert tyr_serialization.table(dictionaries, fp.FluentPredicateRow) == []
 
 
 @pytest.mark.parametrize("operand", ["c_top", "r_universal"])
@@ -161,7 +161,7 @@ def test_rule_text_requires_an_explicit_projection(gripper_planning_domain: fp.P
 
     dictionaries = Dictionaries()
     register_table(dictionaries, base.Rule, "rules", "r")
-    with pytest.raises(ValueError, match=r"^Unregistered serialization type: .*ConditionVariant"):
+    with pytest.raises(ValueError, match=r"^Unregistered serialization type: .*Condition"):
         serialize(dictionaries, rule)
 
     dictionaries = Dictionaries()
@@ -237,7 +237,6 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
     dictionaries = Dictionaries()
     tyr_serialization.register_table(dictionaries, ground.State, "states", "s")
     tyr_serialization.register_table(dictionaries, fp.FluentGroundAtom, "atoms", "a", fields=())
-    tyr_serialization.register_table(dictionaries, fp.FunctionExpression, "expressions", "x")
     register_table(dictionaries, ext.GroundProgramState, "program_states", "e")
     register_table(dictionaries, ext.GroundModuleState, "module_states", "z")
     register_table(dictionaries, ext.GroundCallStack, "call_stacks", "c")
@@ -256,9 +255,6 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
         },
     )
 
-    constant = domain.get_repository().create(fp.FunctionExpressionData(3.5))
-    assert tyr_serialization.serialize(dictionaries, constant) == "x0"
-    assert tyr_serialization.table(dictionaries, fp.FunctionExpression) == [{"variant": 3.5}]
     assert serialize(dictionaries, initial) == "e0"
     assert tyr_serialization.serialize(dictionaries, initial.state) == "s0"
     assert serialize(dictionaries, step.target) == "e1"

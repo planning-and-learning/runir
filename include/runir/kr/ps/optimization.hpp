@@ -4,9 +4,13 @@
 #include "runir/kr/detail/record_key.hpp"
 #include "runir/kr/ps/repository.hpp"
 
-#include <yggdrasil/containers/associative_containers.hpp>
-#include <yggdrasil/core/children.hpp>
-#include <yggdrasil/core/type_list.hpp>
+#include <boost/mp11.hpp>
+#include <urd/elements/children.hpp>
+#include <urd/repr/maps/std_map.hpp>
+#include <urd/repr/maps/unordered_flat_map.hpp>
+#include <urd/repr/values/std_set.hpp>
+#include <urd/repr/values/unordered_flat_set.hpp>
+#include <urd/store.hpp>
 #include <yggdrasil/formalism/interning.hpp>
 
 /// Language-neutral rewriting and inspection of ps records (sketches, programs, modules, rules, classifiers, features).
@@ -15,7 +19,7 @@ namespace runir::kr::ps
 {
 
 template<FamilyTag Family, typename RepositoryTypes, typename T>
-using RecordView = ygg::View<ygg::Index<T>, BasicRepository<Family, RepositoryTypes>>;
+using RecordView = urd::index_view<T, BasicRepository<Family, RepositoryTypes>>;
 
 /// Rebuilds ps records bottom-up. Records the leaf policy can rewrite (leaves.rewrite(view, repository)) are delegated
 /// to it; every other record is reinserted with rewritten children, so records whose children are unchanged keep their
@@ -34,9 +38,9 @@ public:
     {
         const auto key = runir::kr::detail::record_key<RepositoryTypes>(view);
         if (const auto it = m_rewritten.find(key); it != m_rewritten.end())
-            return ygg::make_view(ygg::Index<T>(it->second), *m_repository);
+            return m_repository->view(urd::index<T>(it->second));
         const auto result = rewrite(view);
-        m_rewritten.emplace(key, result.get_index().get_value());
+        m_rewritten.emplace(key, result.index().value);
         return result;
     }
 
@@ -48,14 +52,15 @@ private:
             return m_leaves.rewrite(view, *m_repository);
         else
         {
-            auto data = ygg::map_children<RepositoryTypes>(view, [&]<typename U>(View<U> child) { return optimize<U>(child); });
+            auto data =
+                urd::map_children<RepositoryTypes, T>(view.data(), view.context(), [&]<typename U>(View<U> child) { return optimize<U>(child).index(); });
             return ygg::formalism::insert(*m_repository, data).first;
         }
     }
 
     BasicRepository<Family, RepositoryTypes>* m_repository;
     Leaves m_leaves;
-    ygg::UnorderedMap<runir::kr::detail::RecordKey, ygg::uint_t> m_rewritten;  ///< Rewritten record index by record.
+    urd::Store<urd::map<runir::kr::detail::RecordKey, ygg::uint_t>> m_rewritten;  ///< Rewritten record index by record.
 };
 
 /// Visits every record reachable from the added records once and hands those the leaf policy accepts
@@ -75,14 +80,14 @@ public:
         if constexpr (requires { m_leaves.add(view); })
             m_leaves.add(view);
         else
-            ygg::for_each_child<RepositoryTypes>(view, [&]<typename U>(View<U> child) { add<U>(child); });
+            urd::for_each_child<RepositoryTypes, T>(view.data(), view.context(), [&]<typename U>(View<U> child) { add<U>(child); });
     }
 
     [[nodiscard]] const Leaves& get_leaves() const noexcept { return m_leaves; }
 
 private:
     Leaves m_leaves;
-    ygg::UnorderedSet<runir::kr::detail::RecordKey> m_visited;
+    urd::Store<urd::set<runir::kr::detail::RecordKey>> m_visited;
 };
 
 }  // namespace runir::kr::ps

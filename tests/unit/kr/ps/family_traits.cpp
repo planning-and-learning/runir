@@ -26,26 +26,26 @@ static_assert(std::same_as<kr::ps::base::Repository::DlRepositoryPtr, ExtConstru
 static_assert(std::same_as<kr::uns::Repository::DlRepositoryPtr, UnsConstructors>);
 static_assert(std::is_invocable_v<decltype(&IcpFactory::create), IcpFactory&, ExtConstructors>);
 static_assert(
-    !std::same_as<ygg::Index<kr::ps::Feature<kr::IcpFamilyTag, kr::dl::ConceptTag>>, ygg::Index<kr::ps::Feature<kr::ExtFamilyTag, kr::dl::ConceptTag>>>);
+    !std::same_as<urd::index<kr::ps::Feature<kr::IcpFamilyTag, kr::dl::ConceptTag>>, urd::index<kr::ps::Feature<kr::ExtFamilyTag, kr::dl::ConceptTag>>>);
 
 using IcpQuery = kr::ps::ConcreteFeature<kr::IcpFamilyTag, kr::DlTag, kr::ps::dl::QueryFeature>;
-static_assert(std::same_as<typename ygg::Data<IcpQuery>::Expression, kr::dl::Query<>>);
+static_assert(std::same_as<typename urd::data<IcpQuery>::Expression, kr::dl::Query<>>);
 
 // Classifiers expose Boolean features, without acquiring policy conditions or effects.
-static_assert(std::same_as<kr::ps::PsConditionTypes<kr::UnsFamilyTag>, ygg::TypeList<>>);
-static_assert(std::same_as<kr::ps::PsEffectTypes<kr::UnsFamilyTag>, ygg::TypeList<>>);
+static_assert(std::same_as<kr::ps::PsConditionTypes<kr::UnsFamilyTag>, boost::mp11::mp_list<>>);
+static_assert(std::same_as<kr::ps::PsEffectTypes<kr::UnsFamilyTag>, boost::mp11::mp_list<>>);
 
 template<typename T>
 concept StoredType = requires {
-    sizeof(ygg::Index<T>);
-    sizeof(ygg::Data<T>);
+    sizeof(urd::index<T>);
+    sizeof(urd::data<T>);
 };
 
 template<typename T, typename Repository>
-concept ViewableType = StoredType<T> && requires { sizeof(ygg::View<ygg::Index<T>, Repository>); };
+concept ViewableType = StoredType<T> && requires { sizeof(urd::index_view<T, Repository>); };
 
 template<typename Repository, typename... Types>
-consteval bool usable_inventory(ygg::TypeList<Types...>)
+consteval bool usable_inventory(boost::mp11::mp_list<Types...>)
 { return (ViewableType<Types, Repository> && ...); }
 
 static_assert(usable_inventory<kr::ps::base::Repository>(kr::ps::PsCoreTypes<kr::BaseFamilyTag> {}));
@@ -58,25 +58,24 @@ using BaseRole = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::DlTag, kr::dl::R
 using BaseQuery = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::DlTag, kr::ps::dl::QueryFeature>;
 using UnsNumerical = kr::ps::ConcreteFeature<kr::UnsFamilyTag, kr::DlTag, kr::dl::NumericalTag>;
 using UnsPositive = kr::ps::ConcreteCondition<kr::UnsFamilyTag, kr::DlTag, kr::dl::BooleanTag, kr::ps::dl::Positive>;
-using BaseCustomTypes = ygg::ConcatTypeListsT<
+using BaseCustomTypes = boost::mp11::mp_append<
     kr::ps::PsCoreTypes<kr::BaseFamilyTag>,
-    ygg::TypeList<BaseRole, BaseQuery, kr::ps::Feature<kr::BaseFamilyTag, kr::dl::RoleTag>, kr::ps::Feature<kr::BaseFamilyTag, kr::ps::dl::QueryFeature>>>;
-using UnsCustomTypes = ygg::ConcatTypeListsT<kr::ps::PsCoreTypes<kr::UnsFamilyTag>,
-                                             ygg::TypeList<UnsNumerical, kr::ps::Feature<kr::UnsFamilyTag, kr::dl::NumericalTag>>,
-                                             kr::ps::detail::PsConditionTypes<kr::UnsFamilyTag>,
-                                             kr::ps::detail::PsEffectTypes<kr::UnsFamilyTag>>;
+    boost::mp11::
+        mp_list<BaseRole, BaseQuery, kr::ps::Feature<kr::BaseFamilyTag, kr::dl::RoleTag>, kr::ps::Feature<kr::BaseFamilyTag, kr::ps::dl::QueryFeature>>>;
+using UnsCustomTypes = boost::mp11::mp_append<kr::ps::PsCoreTypes<kr::UnsFamilyTag>,
+                                              boost::mp11::mp_list<UnsNumerical, kr::ps::Feature<kr::UnsFamilyTag, kr::dl::NumericalTag>>,
+                                              kr::ps::detail::PsConcreteConditionTypes<kr::UnsFamilyTag>,
+                                              kr::ps::detail::PsConcreteEffectTypes<kr::UnsFamilyTag>>;
 using BaseCustomRepository = kr::ps::BasicRepository<kr::BaseFamilyTag, BaseCustomTypes>;
 using UnsCustomRepository = kr::ps::BasicRepository<kr::UnsFamilyTag, UnsCustomTypes>;
 static_assert(usable_inventory<BaseCustomRepository>(BaseCustomTypes {}));
 static_assert(usable_inventory<UnsCustomRepository>(UnsCustomTypes {}));
 static_assert(usable_inventory<kr::ps::ext::Repository>(kr::ps::PsCoreTypes<kr::BaseFamilyTag> {}));
 
-using BaseFeatureInExt = ygg::View<ygg::Index<kr::ps::Feature<kr::BaseFamilyTag, kr::dl::BooleanTag>>, kr::ps::ext::Repository>;
-using BaseConditionInExt = ygg::View<ygg::Index<kr::ps::ConditionVariant<kr::BaseFamilyTag>>, kr::ps::ext::Repository>;
-static_assert(requires(BaseFeatureInExt feature, BaseConditionInExt condition) {
+using BaseFeatureInExt = urd::index_view<kr::ps::Feature<kr::BaseFamilyTag, kr::dl::BooleanTag>, kr::ps::ext::Repository>;
+static_assert(requires(BaseFeatureInExt feature) {
     feature.get_symbol();
     feature.get_variant();
-    condition.get_variant();
 });
 
 // Storage contexts remain structural; no exact repository type is required.
@@ -84,13 +83,19 @@ struct BaseFeatureStorage
 {
     const BaseCustomRepository* repository;
     [[nodiscard]] const auto& get_dl_repository() const { return repository->get_dl_repository(); }
-    [[nodiscard]] const auto& get_index() const { return repository->get_index(); }
-    friend const BaseCustomRepository& get_repository(const BaseFeatureStorage& storage) { return *storage.repository; }
+    [[nodiscard]] std::size_t layer() const { return repository->layer(); }
+    [[maybe_unused]] friend const BaseCustomRepository& get_repository(const BaseFeatureStorage& storage) { return *storage.repository; }
+    template<typename T>
+    [[nodiscard]] decltype(auto) operator[](urd::index<T> index) const
+    { return (*repository)[index]; }
+    template<typename T>
+    [[nodiscard]] urd::index_view<T, BaseFeatureStorage> view(urd::index<T> index) const
+    { return { index, this }; }
 };
 
 template<typename Type, typename Repository, typename Context>
 concept CanEvaluate =
-    StoredType<Type> && requires(ygg::View<ygg::Index<Type>, Repository>& view, Context& context) { kr::ps::evaluate<tyr::GroundTag>(view, context); };
+    StoredType<Type> && requires(urd::index_view<Type, Repository>& view, Context& context) { kr::ps::evaluate<tyr::GroundTag>(view, context); };
 
 using BaseStateContext = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
 using UnsStateContext = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
@@ -118,7 +123,7 @@ static_assert(!StoredType<BooleanDecreases>);
 static_assert(!CanEvaluate<InvalidFeature, BaseCustomRepository, BaseStateContext>);
 
 template<typename Kind, typename Type, typename Repository, typename Context>
-concept CanCheckCompatibility = requires(ygg::View<ygg::Index<Type>, Repository> view, Context& context) {
+concept CanCheckCompatibility = requires(urd::index_view<Type, Repository> view, Context& context) {
     { kr::ps::is_compatible_with<Kind>(view, context) } -> std::same_as<bool>;
 };
 
@@ -138,14 +143,12 @@ consteval bool observation_contracts()
     static_assert(!CanCheckCompatibility<tyr::GroundTag, kr::ps::ConcreteEffect<Family, kr::DlTag, Boolean, kr::ps::dl::Decreases>, Repository, Context>);
     static_assert(!CanCheckCompatibility<tyr::GroundTag, kr::ps::ConcreteCondition<Family, void, Boolean, kr::ps::dl::Positive>, Repository, Context>);
     static_assert(!CanCheckCompatibility<tyr::GroundTag, kr::ps::ConcreteEffect<Family, void, Numerical, kr::ps::dl::Decreases>, Repository, Context>);
-    static_assert(!CanCheckCompatibility<tyr::GroundTag, kr::ps::ConcreteConditionVariant<Family, void>, Repository, Context>);
-    static_assert(!CanCheckCompatibility<tyr::GroundTag, kr::ps::ConcreteEffectVariant<Family, void>, Repository, Context>);
 
     // The variant alternatives and repository inventory share one ordered list.
-    using Conditions = ygg::ApplyTypeListT<::cista::offset::variant, ygg::MapTypeListT<ygg::Index, kr::ps::detail::PsConcreteConditionTypes<Family>>>;
-    using Effects = ygg::ApplyTypeListT<::cista::offset::variant, ygg::MapTypeListT<ygg::Index, kr::ps::detail::PsConcreteEffectTypes<Family>>>;
-    static_assert(std::same_as<typename ygg::Data<kr::ps::ConcreteConditionVariant<Family, kr::DlTag>>::Variant, Conditions>);
-    static_assert(std::same_as<typename ygg::Data<kr::ps::ConcreteEffectVariant<Family, kr::DlTag>>::Variant, Effects>);
+    using Conditions = urd::index_variant<kr::ps::detail::PsConcreteConditionTypes<Family>>;
+    using Effects = urd::index_variant<kr::ps::detail::PsConcreteEffectTypes<Family>>;
+    static_assert(std::same_as<kr::ps::ConditionVariant<Family>, Conditions>);
+    static_assert(std::same_as<kr::ps::EffectVariant<Family>, Effects>);
     return true;
 }
 
@@ -155,7 +158,7 @@ static_assert(observation_contracts<kr::IcpFamilyTag, kr::ps::icp::Repository>()
 static_assert(observation_contracts<kr::UnsFamilyTag, UnsCustomRepository>());
 
 // Compile the implementation body as well as checking its callable signature.
-[[maybe_unused]] bool check_custom_uns_condition(ygg::View<ygg::Index<UnsPositive>, UnsCustomRepository> condition, UnsStateContext& context)
+[[maybe_unused]] bool check_custom_uns_condition(urd::index_view<UnsPositive, UnsCustomRepository> condition, UnsStateContext& context)
 { return kr::ps::is_compatible_with<tyr::GroundTag>(condition, context); }
 
 }  // namespace

@@ -10,21 +10,21 @@
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <yggdrasil/containers/variant.hpp>
+#include <urd/elements/flat.hpp>
 #include <yggdrasil/io/iostream.hpp>
 
 namespace runir::kr::uns
 {
 
 template<typename C>
-std::string literal(ygg::View<ygg::Index<runir::kr::uns::ClassifierLiteral>, C> view)
+std::string literal(urd::index_view<runir::kr::uns::ClassifierLiteral, C> view)
 {
-    const auto symbol = ygg::visit([](auto feature) { return feature.get_symbol(); }, view.get_feature());
+    const auto symbol = std::visit([](auto feature) { return feature.get_symbol(); }, view.get_feature());
     return view.get_polarity() ? symbol.str() : fmt::format("(not {})", symbol);
 }
 
 template<typename C>
-std::string clause(ygg::View<ygg::Index<runir::kr::uns::ClassifierClause>, C> view)
+std::string clause(urd::index_view<runir::kr::uns::ClassifierClause, C> view)
 {
     auto os = std::ostringstream {};
     os << "(and";
@@ -35,7 +35,7 @@ std::string clause(ygg::View<ygg::Index<runir::kr::uns::ClassifierClause>, C> vi
 }
 
 template<typename C>
-std::string classifier(ygg::View<ygg::Index<runir::kr::uns::Classifier>, C> view)
+std::string classifier(urd::index_view<runir::kr::uns::Classifier, C> view)
 {
     auto os = std::ostringstream {};
     os << "(:classifier\n";
@@ -81,23 +81,23 @@ std::string classifier(ygg::View<ygg::Index<runir::kr::uns::Classifier>, C> view
 }  // namespace runir::kr::uns
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::uns::ClassifierLiteral>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::uns::ClassifierLiteral, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::uns::ClassifierLiteral>, C>;
+    using View = urd::index_view<runir::kr::uns::ClassifierLiteral, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::uns::literal(view), ctx); }
 };
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::uns::ClassifierClause>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::uns::ClassifierClause, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::uns::ClassifierClause>, C>;
+    using View = urd::index_view<runir::kr::uns::ClassifierClause, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::uns::clause(view), ctx); }
 };
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::uns::Classifier>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<urd::index_view<runir::kr::uns::Classifier, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::uns::Classifier>, C>;
+    using View = urd::index_view<runir::kr::uns::Classifier, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::uns::classifier(view), ctx); }
 };
 

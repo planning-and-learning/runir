@@ -141,29 +141,6 @@ def test_generate_lifted_uses_domain_constructors_and_task_denotations(gripper_d
         cnf_grammar.generate_lifted(cnf, [], foreign_repository, denotation_repository, options)
 
 
-def test_distance_evaluation_handles_shortest_zero_and_infinity(gripper_data_dir: Path) -> None:
-    planning_domain, search_context, task_context = _make_gripper_context(gripper_data_dir)
-    state = search_context.state_repository.get_initial_state(search_context.axiom_evaluator).pack()
-
-    nominals = '((c_1 (c_nominal "rooma"))(c_2 (c_nominal "roomb"))(c_3 (c_bot))(r_1 (r_universal))'
-    result = _generate(
-        f"{nominals}(n_0 (n_distance c_1 r_1 c_2))(n_0 (n_distance c_1 r_1 c_1))(n_0 (n_distance c_3 r_1 c_2)))",
-        [state],
-        planning_domain,
-        task_context,
-        4,
-    )
-
-    storage = semantics.EvaluationStorage(task_context.dl_denotation_repository)
-    context = semantics.GroundStateEvaluationContext(state.unpack(), task_context.dl_builder, storage)
-    values = [feature.evaluate(context).get() for feature in result.numericals]
-    storage.reset_all()
-    refreshed_values = [feature.evaluate(context).get() for feature in result.numericals]
-
-    assert values == [1, 0, 2**32 - 1]
-    assert refreshed_values == values
-
-
 def test_generate_distinguishes_ordered_state_denotation_vectors(gripper_data_dir: Path) -> None:
     planning_domain, search_context, task_context = _make_gripper_context(gripper_data_dir)
     initial_node = search_context.successor_generator.get_initial_node(

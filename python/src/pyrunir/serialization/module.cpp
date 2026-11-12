@@ -1,3 +1,5 @@
+#include "pyrunir/module.hpp"
+
 #include "bindings.hpp"
 
 namespace runir::serialization

@@ -31,15 +31,16 @@
 #include <limits>
 #include <memory>
 #include <tuple>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::datasets
 {
 
-struct EquivalenceVertexLabel : ygg::comparison::Mixin<EquivalenceVertexLabel>
+struct EquivalenceVertexLabel : urd::compared_by_identity<EquivalenceVertexLabel>
 {
     ygg::uint_t state_graph_index = 0;
     graphs::VertexIndex state_vertex_index = 0;
@@ -52,12 +53,12 @@ struct EquivalenceVertexLabel : ygg::comparison::Mixin<EquivalenceVertexLabel>
     }
 
     static constexpr auto cista_members() noexcept
-    { return ygg::Members<&EquivalenceVertexLabel::state_graph_index, &EquivalenceVertexLabel::state_vertex_index> {}; }
+    { return urd::Members<&EquivalenceVertexLabel::state_graph_index, &EquivalenceVertexLabel::state_vertex_index> {}; }
     static constexpr auto identifying_members() noexcept
-    { return ygg::Members<&EquivalenceVertexLabel::state_graph_index, &EquivalenceVertexLabel::state_vertex_index> {}; }
+    { return urd::Members<&EquivalenceVertexLabel::state_graph_index, &EquivalenceVertexLabel::state_vertex_index> {}; }
 };
 
-struct AnnotatedEquivalenceVertexLabel : ygg::comparison::Mixin<AnnotatedEquivalenceVertexLabel>
+struct AnnotatedEquivalenceVertexLabel : urd::compared_by_identity<AnnotatedEquivalenceVertexLabel>
 {
     ygg::uint_t state_graph_index = 0;
     graphs::VertexIndex state_vertex_index = 0;
@@ -87,7 +88,7 @@ struct AnnotatedEquivalenceVertexLabel : ygg::comparison::Mixin<AnnotatedEquival
 
     static constexpr auto cista_members() noexcept
     {
-        return ygg::Members<&AnnotatedEquivalenceVertexLabel::state_graph_index,
+        return urd::Members<&AnnotatedEquivalenceVertexLabel::state_graph_index,
                             &AnnotatedEquivalenceVertexLabel::state_vertex_index,
                             &AnnotatedEquivalenceVertexLabel::goal_distance,
                             &AnnotatedEquivalenceVertexLabel::is_initial,
@@ -98,7 +99,7 @@ struct AnnotatedEquivalenceVertexLabel : ygg::comparison::Mixin<AnnotatedEquival
 
     static constexpr auto identifying_members() noexcept
     {
-        return ygg::Members<&AnnotatedEquivalenceVertexLabel::state_graph_index,
+        return urd::Members<&AnnotatedEquivalenceVertexLabel::state_graph_index,
                             &AnnotatedEquivalenceVertexLabel::state_vertex_index,
                             &AnnotatedEquivalenceVertexLabel::goal_distance,
                             &AnnotatedEquivalenceVertexLabel::is_initial,
@@ -108,7 +109,7 @@ struct AnnotatedEquivalenceVertexLabel : ygg::comparison::Mixin<AnnotatedEquival
     }
 };
 
-struct EquivalenceEdgeLabel : ygg::comparison::Mixin<EquivalenceEdgeLabel>
+struct EquivalenceEdgeLabel : urd::compared_by_identity<EquivalenceEdgeLabel>
 {
     ygg::uint_t state_graph_index = 0;
     graphs::EdgeIndex state_edge_index = 0;
@@ -121,9 +122,9 @@ struct EquivalenceEdgeLabel : ygg::comparison::Mixin<EquivalenceEdgeLabel>
     }
 
     static constexpr auto cista_members() noexcept
-    { return ygg::Members<&EquivalenceEdgeLabel::state_graph_index, &EquivalenceEdgeLabel::state_edge_index> {}; }
+    { return urd::Members<&EquivalenceEdgeLabel::state_graph_index, &EquivalenceEdgeLabel::state_edge_index> {}; }
     static constexpr auto identifying_members() noexcept
-    { return ygg::Members<&EquivalenceEdgeLabel::state_graph_index, &EquivalenceEdgeLabel::state_edge_index> {}; }
+    { return urd::Members<&EquivalenceEdgeLabel::state_graph_index, &EquivalenceEdgeLabel::state_edge_index> {}; }
 };
 
 using EquivalenceGraphBuilder = graphs::StaticGraphBuilder<EquivalenceVertexLabel, EquivalenceEdgeLabel>;
@@ -145,7 +146,7 @@ using DynamicAnnotatedEquivalenceGraph = graphs::DynamicGraph<AnnotatedEquivalen
 template<tyr::TaskKind Kind>
 struct EquivalenceGraphConstructionResult
 {
-    std::vector<StateGraphGenerationResult<Kind>> state_graph_results;
+    urd::Store<urd::sequence<StateGraphGenerationResult<Kind>>> state_graph_results;
     std::unique_ptr<EquivalenceGraph> graph;
 };
 

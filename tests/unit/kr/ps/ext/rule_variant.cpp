@@ -2,17 +2,18 @@
 
 #include <concepts>
 #include <runir/kr/ps/ext/repository.hpp>
-#include <runir/kr/ps/ext/rule_variant_data.hpp>
-#include <runir/kr/ps/ext/rule_variant_view.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <runir/kr/ps/rule_variant_data.hpp>
+#include <runir/kr/ps/rule_variant_view.hpp>
+#include <urd/elements/flat.hpp>
+#include <yggdrasil/core/config.hpp>
 
 namespace runir::tests
 {
 
 using Entity = kr::ps::Rule<kr::ExtFamilyTag>;
-using Index = ygg::Index<Entity>;
-using Data = ygg::Data<Entity>;
-using View = ygg::View<Index, kr::ps::ext::Repository>;
+using Index = urd::index<Entity>;
+using Data = urd::data<Entity>;
+using View = urd::index_view<Entity, kr::ps::ext::Repository>;
 
 static_assert(std::constructible_from<Index, ygg::uint_t>);
 static_assert(std::totally_ordered<Index>);
@@ -23,10 +24,9 @@ static_assert(requires(Data& data) {
     data.index;
     data.symbol;
     data.variant;
-    data.clear();
 });
 static_assert(requires(const View& view) {
-    view.get_index();
+    view.index();
     view.get_symbol();
     view.get_variant();
 });
@@ -35,7 +35,7 @@ static_assert(requires(Data& data) {
     canonicalize(data);
     { is_canonical(data) } -> std::same_as<bool>;
 });
-static_assert(requires(kr::ps::ext::Repository& repository, ygg::Data<kr::ps::Rule<kr::BaseFamilyTag>>& data) {
+static_assert(requires(kr::ps::ext::Repository& repository, urd::data<kr::ps::Rule<kr::BaseFamilyTag>>& data) {
     canonicalize(data);
     { is_canonical(data) } -> std::same_as<bool>;
     kr::ps::ext::insert(repository, data);

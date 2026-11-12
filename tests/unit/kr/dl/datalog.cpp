@@ -19,7 +19,6 @@
 #include <runir/kr/dl/semantics/incremental/delta.hpp>
 #include <runir/kr/dl/semantics/incremental/evaluation.hpp>
 #include <runir/kr/dl/semantics/interning.hpp>
-#include <runir/kr/dl/semantics/state_evaluation.hpp>
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/domain_context.hpp>
 #include <runir/kr/errors.hpp>
@@ -34,7 +33,6 @@
 #include <string>
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <vector>
-#include <yggdrasil/containers/dynamic_bitset.hpp>
 #include <yggdrasil/serialization/json.hpp>
 
 namespace runir::tests
@@ -72,9 +70,9 @@ std::vector<int64_t> values(Module module_, Context& context)
 {
     auto result = std::vector<int64_t>();
     for (const auto feature : module_.template get_features<kr::dl::NumericalTag>())
-        result.push_back(static_cast<int64_t>(kr::dl::semantics::evaluate<tyr::LiftedTag>(feature.get_feature(), context).get()));
+        result.push_back(static_cast<int64_t>(kr::dl::semantics::evaluate<tyr::LiftedTag>(feature.get_feature(), context).value()));
     for (const auto feature : module_.template get_features<kr::dl::BooleanTag>())
-        result.push_back(static_cast<int64_t>(kr::dl::semantics::evaluate<tyr::LiftedTag>(feature.get_feature(), context).get()));
+        result.push_back(static_cast<int64_t>(kr::dl::semantics::evaluate<tyr::LiftedTag>(feature.get_feature(), context).value()));
     return result;
 }
 
@@ -105,9 +103,9 @@ TEST(RunirTests, DatalogHeadsAreFeatures)
     {
         auto result = std::vector<int64_t>();
         for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
-            result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(feature.get_feature())).get()));
+            result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(feature.get_feature())).value()));
         for (const auto feature : module_.get_features<kr::dl::BooleanTag>())
-            result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(feature.get_feature())).get()));
+            result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(feature.get_feature())).value()));
         return result;
     };
     auto& workspace = builder.get_workspace().get_database_workspace();
@@ -166,7 +164,7 @@ TEST(RunirTests, DatalogRulesReadFeaturesInModules)
     auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.get_state(), builder, storage);
     auto result = std::vector<int64_t>();
     for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
-        result.push_back(static_cast<int64_t>(kr::dl::semantics::evaluate<tyr::LiftedTag>(feature.get_feature(), context).get()));
+        result.push_back(static_cast<int64_t>(kr::dl::semantics::evaluate<tyr::LiftedTag>(feature.get_feature(), context).value()));
     // start = {a, c} (markers); next = {b} (a -> b); both = {a, b, c}; pair = {(b, b)}.
     EXPECT_EQ(result, (std::vector<int64_t> { 1, 3, 1, 1 }));
 
@@ -320,8 +318,8 @@ TEST(RunirTests, DatalogRulesReadRegistersByName)
     const auto domain_context = kr::DomainContext::create(search->task->get_domain());
     const auto module_ = kr::ps::ext::dl::parse_module(module_text, search->task->get_domain().get_domain(), *domain_context->ext_repository);
     const auto domain = search->task->get_domain().get_domain();
-    const auto a = domain.get_constants()[0].get_index(), b = domain.get_constants()[1].get_index(), c = domain.get_constants()[2].get_index();
-    auto register_data = std::array<ygg::Data<kr::dl::semantics::RegisterValues>, 2> {};
+    const auto a = domain.get_constants()[0].index(), b = domain.get_constants()[1].index(), c = domain.get_constants()[2].index();
+    auto register_data = std::array<urd::data<kr::dl::semantics::RegisterValues>, 2> {};
     for (auto& data : register_data)
     {
         data.concept_values.resize(1);
@@ -332,18 +330,18 @@ TEST(RunirTests, DatalogRulesReadRegistersByName)
     register_data[0].role_values[0] = cista::pair(b, c);
     register_data[1].concept_values[0] = c;
     register_data[1].role_values[0] = cista::pair(b, b);
-    const auto registers = [&](size_t i) { return ygg::make_view(register_data[i], *search->task->get_repository()); };
+    const auto registers = [&](size_t i) { return urd::resolve(register_data[i], *search->task->get_repository()); };
 
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     auto builder = kr::dl::semantics::Builder();
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     // from = {a, b}: one marker.
-    auto from = ygg::Builder<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(3);
-    from.get().set(a.get_value());
-    from.get().set(b.get_value());
-    auto argument_data = ygg::Data<kr::dl::semantics::CallArguments>();
-    argument_data.concept_arguments.push_back(kr::dl::semantics::insert(denotations, from, builder).first.get_index());
+    auto from = urd::builder<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(3);
+    from.get().set(static_cast<ygg::uint_t>(a.value));
+    from.get().set(static_cast<ygg::uint_t>(b.value));
+    auto argument_data = urd::data<kr::dl::semantics::CallArguments>();
+    argument_data.concept_arguments.push_back(kr::dl::semantics::insert(denotations, from, builder).first.index());
     const auto arguments = kr::dl::semantics::insert(denotations, argument_data).first;
     const auto context_for = [&](size_t i)
     { return kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(initial.get_state(), builder, storage, arguments, registers(i)); };
@@ -366,7 +364,7 @@ TEST(RunirTests, DatalogRulesReadRegistersByName)
     {
         auto result = std::vector<int64_t>();
         for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
-            result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(feature.get_feature())).get()));
+            result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(feature.get_feature())).value()));
         return result;
     };
     auto& workspace = builder.get_workspace().get_database_workspace();
@@ -409,17 +407,17 @@ TEST(RunirTests, DatalogRulesReadBooleanAndNumericalArgumentsAndFeatures)
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     const auto arguments = [&](bool on, ygg::uint_t bound)
     {
-        auto boolean = ygg::Data<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>();
+        auto boolean = urd::data<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>();
         boolean.value = on;
-        auto numerical = ygg::Data<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>();
+        auto numerical = urd::data<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>();
         numerical.value = bound;
-        auto data = ygg::Data<kr::dl::semantics::CallArguments>();
-        data.boolean_arguments.push_back(denotations.insert(boolean).first.get_index());
-        data.numerical_arguments.push_back(denotations.insert(numerical).first.get_index());
+        auto data = urd::data<kr::dl::semantics::CallArguments>();
+        data.boolean_arguments.push_back(denotations.insert(boolean).first.index());
+        data.numerical_arguments.push_back(denotations.insert(numerical).first.index());
         return kr::dl::semantics::insert(denotations, data).first;
     };
-    const auto register_data = ygg::Data<kr::dl::semantics::RegisterValues>();
-    const auto registers = ygg::make_view(register_data, *search->task->get_repository());
+    const auto register_data = urd::data<kr::dl::semantics::RegisterValues>();
+    const auto registers = urd::resolve(register_data, *search->task->get_repository());
     auto roots = std::vector<kr::dl::semantics::incremental::EvaluationRoot>();
     for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
         roots.emplace_back(feature.get_feature());
@@ -438,9 +436,9 @@ TEST(RunirTests, DatalogRulesReadBooleanAndNumericalArgumentsAndFeatures)
         auto state_evaluation = evaluation.enter(context);
         auto incremental = std::vector<int64_t>();
         for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
-            incremental.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(feature.get_feature())).get()));
+            incremental.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(feature.get_feature())).value()));
         for (const auto feature : module_.get_features<kr::dl::BooleanTag>())
-            incremental.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(feature.get_feature())).get()));
+            incremental.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(feature.get_feature())).value()));
         EXPECT_EQ(incremental, result);
     }
     {
@@ -450,9 +448,9 @@ TEST(RunirTests, DatalogRulesReadBooleanAndNumericalArgumentsAndFeatures)
         {
             auto result = std::vector<int64_t>();
             for (const auto feature : module_.get_features<kr::dl::NumericalTag>())
-                result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(feature.get_feature())).get()));
+                result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(feature.get_feature())).value()));
             for (const auto feature : module_.get_features<kr::dl::BooleanTag>())
-                result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(feature.get_feature())).get()));
+                result.push_back(static_cast<int64_t>(state_evaluation.evaluate(evaluation.graph().get_index(feature.get_feature())).value()));
             return result;
         };
         auto& workspace = builder.get_workspace().get_database_workspace();
@@ -505,8 +503,8 @@ TEST(RunirTests, DatalogRejectsInvalidPrograms)
                        "(:numerical (:symbol f) (:expression (n_add g (n_const 1)))) (:numerical (:symbol g) (:expression (n_add f (n_const 1))))"),
                  kr::InvalidExpressionError);  // cycle
     // Syntax the grammar rejects: a nested aggregate, a negation without an atom, a count with a value variable.
-    EXPECT_THROW(parse("(:rule (r ?x) (marker ?x) (count ?n ((count ?m ((edge ?x ?y))))))", read), kr::ParseError);
-    EXPECT_THROW(parse("(:rule (r ?x) (marker ?x) (not))", read), kr::ParseError);
+    EXPECT_THROW(parse("(:rule (r ?x) (marker ?x) (count ?n ((count ?m ((edge ?x ?y))))))", read), ygg::diagnostics::ParseError);
+    EXPECT_THROW(parse("(:rule (r ?x) (marker ?x) (not))", read), ygg::diagnostics::ParseError);
     EXPECT_THROW(parse("(:rule (r ?x) (marker ?x) (count ?n ?v ((edge ?x ?v))))", read), kr::InvalidExpressionError);
     // A section that no feature reads is still checked.
     EXPECT_THROW(parse("(:rule (r ?x) (unknown ?x))", "(:numerical (:symbol f) (:expression (n_const 1)))"), kr::UndefinedSymbolError);
@@ -531,32 +529,32 @@ struct QueryCategory
 {
 };
 
-/// A denotation as sorted strings: concept members, role pairs, query rows (bytes) or a Boolean or numerical value.
+/// A denotation as sorted strings: concept members, role pairs, query rows or a Boolean or numerical value.
 template<typename Category, typename V>
-std::vector<std::string> contents(const V& value, size_t num_objects)
+std::vector<std::string> contents(const V& value)
 {
     auto result = std::vector<std::string>();
     if constexpr (std::same_as<Category, kr::dl::ConceptTag>)
     {
-        for (const auto object : ygg::set_bit_indices(value.get()))
-            result.push_back(std::to_string(object));
+        for (const auto element : value.indices())
+            result.push_back(std::to_string(element.value));
     }
     else if constexpr (std::same_as<Category, kr::dl::RoleTag>)
     {
-        for (size_t source = 0; source < num_objects; ++source)
-            for (const auto target : ygg::set_bit_indices(value.get(static_cast<ygg::uint_t>(source))))
-                result.push_back(std::to_string(source) + "," + std::to_string(target));
+        for (const auto [source, target] : value.indices())
+            result.push_back(std::to_string(source.value) + "," + std::to_string(target.value));
     }
     else if constexpr (std::same_as<Category, kr::dl::BooleanTag> || std::same_as<Category, kr::dl::NumericalTag>)
-        result.push_back(std::to_string(value.get()));
+        result.push_back(std::to_string(value.value()));
     else
     {
         auto rows = std::set<std::string>();
         for (size_t i = 0; i < value.size(); ++i)
         {
             auto text = std::string();
-            for (const auto byte : value.row(i))
-                text.append(std::to_string(std::to_integer<int>(byte))).push_back(' ');
+            const auto row = value.row(i).get_values();
+            for (size_t c = 0; c < row.size(); ++c)
+                text.append(std::to_string(row.get(c))).push_back(' ');
             rows.insert(std::move(text));
         }
         result.assign(rows.begin(), rows.end());
@@ -565,7 +563,7 @@ std::vector<std::string> contents(const V& value, size_t num_objects)
 }
 }  // namespace
 
-/// Every DL constructor, n_distance and q_must_pass next to a Datalog formulation read through a head feature
+/// Every DL constructor next to a Datalog formulation read through a head feature
 /// (fixtures/kr/dl/expressivity/cases.json): along a random walk of a task whose actions toggle every atom, the rules
 /// agree with the constructor, in full and in incremental evaluation.
 TEST(RunirTests, DatalogExpressesTheDlConstructors)
@@ -654,7 +652,6 @@ TEST(RunirTests, DatalogExpressesTheDlConstructors)
 
     auto random = std::mt19937(3);
     auto node = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
-    const auto num_objects = static_cast<size_t>(node.get_state().get_task().get_task().get_num_objects());
     // Per case, the constructor's values seen, so that each case is checked on more than one value.
     auto seen = std::vector<std::set<std::vector<std::string>>>(cases.size());
     const auto check = [&](auto& context, auto& incremental, int step)
@@ -664,11 +661,11 @@ TEST(RunirTests, DatalogExpressesTheDlConstructors)
                   [&]<typename Category>(Category, auto dl, auto rules)
                   {
                       storage.reset_dynamic();
-                      const auto expected = contents<Category>(kr::dl::semantics::evaluate<tyr::LiftedTag>(dl, context), num_objects);
+                      const auto expected = contents<Category>(kr::dl::semantics::evaluate<tyr::LiftedTag>(dl, context));
                       storage.reset_dynamic();
-                      EXPECT_EQ(contents<Category>(kr::dl::semantics::evaluate<tyr::LiftedTag>(rules, context), num_objects), expected)
+                      EXPECT_EQ(contents<Category>(kr::dl::semantics::evaluate<tyr::LiftedTag>(rules, context)), expected)
                           << cases[i].name << ", step " << step;
-                      EXPECT_EQ(contents<Category>(incremental.evaluate(evaluation.graph().get_index(rules)), num_objects), expected)
+                      EXPECT_EQ(contents<Category>(incremental.evaluate(evaluation.graph().get_index(rules))), expected)
                           << cases[i].name << " (incremental), step " << step;
                       seen[i].insert(expected);
                   });
@@ -693,18 +690,20 @@ TEST(RunirTests, DatalogExpressesTheDlConstructors)
     }
     // The goal is fixed, so its constructors and constants keep their value; every other case takes several.
     for (size_t i = 0; i < cases.size(); ++i)
+    {
         if (cases[i].name.find("goal") == std::string::npos && cases[i].name.find("const") == std::string::npos && cases[i].name != "c_bot"
             && cases[i].name != "c_top" && cases[i].name != "c_one_of" && cases[i].name != "c_nominal" && cases[i].name != "r_universal")
+        {
             EXPECT_GT(seen[i].size(), 1) << cases[i].name;
+        }
+    }
 }
 
-/// The ramp heights still needed for the goal of Autoscale Termes p16, per state of a random walk, with full and with
-/// incremental evaluation: both agree, and their times are printed.
-TEST(RunirTests, DatalogDistanceEqualsNDistanceOnTermes)
+/// The robot's distance to the depot over NEIGHBOR as weighted rules with a minimizing goal head over the depots, read by
+/// a numerical head feature, along a random walk of Autoscale Termes p16: full and incremental evaluation agree, and the
+/// distance is infinity (the largest uint_t) exactly where no depot is reachable, which a Boolean head feature tells.
+TEST(RunirTests, DatalogDistanceAgreesInFullAndIncrementalEvaluationOnTermes)
 {
-    // The robot's distance to the depot over NEIGHBOR, as n_distance and as weighted rules with a minimizing goal head over the depots
-    // read by a numerical head feature, along a random walk of Autoscale Termes p16, with full and incremental evaluation; both are
-    // infinity (the largest uint_t) where no depot is reachable, which a Boolean head feature tells.
     const auto directory = benchmark_path("classical/autoscale-benchmarks-main/21.11-agile-strips/termes");
     const auto search = make_lifted_context(directory / "domain.pddl", directory / "p16.pddl");
     const auto domain_context = kr::DomainContext::create(search->task->get_domain());
@@ -716,15 +715,13 @@ TEST(RunirTests, DatalogDistanceEqualsNDistanceOnTermes)
     (:rule (best (min ?w)) (dist ?p ?w) (is-depot ?p))
     (:rule (reached) (best ?w)))
   (:features
-    (:numerical (:symbol to-depot) (:expression (n_distance (c_atomic_state "at") (r_atomic_state "neighbor") (c_atomic_state "is-depot"))))
     (:numerical (:symbol closest) (:head best))
     (:boolean (:symbol reachable) (:head reached)))
   (:rules))
 )",
                                                        search->task->get_domain().get_domain(),
                                                        *domain_context->ext_repository);
-    const auto distance = module_.get_features<kr::dl::NumericalTag>()[0].get_feature();
-    const auto best = module_.get_features<kr::dl::NumericalTag>()[1].get_feature();
+    const auto best = module_.get_features<kr::dl::NumericalTag>()[0].get_feature();
     const auto reachable = module_.get_features<kr::dl::BooleanTag>()[0].get_feature();
     auto builder = kr::dl::semantics::Builder();
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
@@ -738,8 +735,7 @@ TEST(RunirTests, DatalogDistanceEqualsNDistanceOnTermes)
         auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(node.get_state(), builder, storage);
         static_cast<void>(evaluation.enter(context).evaluate(evaluation.graph().get_index(best)));
     }
-    auto rules = std::vector<double>(), constructor = std::vector<double>();
-    const auto seconds = [](auto start) { return std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count(); };
+    auto finite = 0;
     for (int step = 0; step < 300; ++step)
     {
         const auto successors = search->successor_generator->get_successor_nodes(node, *search->state_repository, *search->axiom_evaluator);
@@ -748,29 +744,16 @@ TEST(RunirTests, DatalogDistanceEqualsNDistanceOnTermes)
         delta.assign<tyr::LiftedTag>(node.get_state(), next.get_state());
         storage.reset_dynamic();
         auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(next.get_state(), builder, storage);
-        auto start = std::chrono::steady_clock::now();
-        const auto expected = kr::dl::semantics::evaluate<tyr::LiftedTag>(distance, context).get();
-        constructor.push_back(seconds(start));
-        storage.reset_dynamic();
-        start = std::chrono::steady_clock::now();
-        const auto value = kr::dl::semantics::evaluate<tyr::LiftedTag>(best, context).get();
-        rules.push_back(seconds(start));
-        ASSERT_EQ(value, expected) << "step " << step;
-        ASSERT_EQ(kr::dl::semantics::evaluate<tyr::LiftedTag>(reachable, context).get(), expected != std::numeric_limits<ygg::uint_t>::max());
+        const auto expected = kr::dl::semantics::evaluate<tyr::LiftedTag>(best, context).value();
+        finite += expected != std::numeric_limits<ygg::uint_t>::max();
+        ASSERT_EQ(kr::dl::semantics::evaluate<tyr::LiftedTag>(reachable, context).value(), expected != std::numeric_limits<ygg::uint_t>::max());
         storage.reset_dynamic();
         auto incremental = evaluation.enter(context, delta, workspace);
-        ASSERT_EQ(incremental.evaluate(evaluation.graph().get_index(best)).get(), expected) << "step " << step;
-        ASSERT_EQ(incremental.evaluate(evaluation.graph().get_index(reachable)).get(), expected != std::numeric_limits<ygg::uint_t>::max());
+        ASSERT_EQ(incremental.evaluate(evaluation.graph().get_index(best)).value(), expected) << "step " << step;
+        ASSERT_EQ(incremental.evaluate(evaluation.graph().get_index(reachable)).value(), expected != std::numeric_limits<ygg::uint_t>::max());
         node = next;
     }
-    const auto report = [](const char* name, std::vector<double> times)
-    {
-        std::ranges::sort(times);
-        const auto mean = std::accumulate(times.begin(), times.end(), 0.0) / static_cast<double>(times.size());
-        std::cout << name << ": median " << times[times.size() / 2] * 1e6 << " us, mean " << mean * 1e6 << " us\n";
-    };
-    report("n_distance (full)", constructor);
-    report("weighted rules (full)", rules);
+    EXPECT_GT(finite, 0);
 }
 
 TEST(RunirTests, DatalogTermesTiming)
@@ -816,11 +799,11 @@ TEST(RunirTests, DatalogTermesTiming)
         storage.reset_dynamic();
         auto context = kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>(next.get_state(), builder, storage);
         auto start = std::chrono::steady_clock::now();
-        const auto expected = kr::dl::semantics::evaluate<tyr::LiftedTag>(feature, context).get();
+        const auto expected = kr::dl::semantics::evaluate<tyr::LiftedTag>(feature, context).value();
         full.push_back(seconds(start));
         storage.reset_dynamic();
         start = std::chrono::steady_clock::now();
-        const auto value = evaluation.enter(context, delta, workspace).evaluate(index).get();
+        const auto value = evaluation.enter(context, delta, workspace).evaluate(index).value();
         incremental.push_back(seconds(start));
         ASSERT_EQ(value, expected);
         node = next;

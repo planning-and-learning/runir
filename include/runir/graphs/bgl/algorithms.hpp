@@ -2,7 +2,9 @@
 #define RUNIR_GRAPHS_BGL_ALGORITHMS_HPP_
 
 #include "runir/graphs/bgl/graph_adapters.hpp"
-#include "runir/graphs/bgl/property_maps.hpp"
+
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic push
@@ -15,11 +17,15 @@
 #include <boost/graph/floyd_warshall_shortest.hpp>
 #include <boost/graph/strong_components.hpp>
 #include <boost/graph/topological_sort.hpp>
+#include <boost/property_map/function_property_map.hpp>
+#include <boost/property_map/property_map.hpp>
 #include <concepts>
+#include <functional>
 #include <iterator>
 #include <limits>
 #include <queue>
 #include <type_traits>
+#include <utility>
 
 namespace runir::graphs::bgl
 {
@@ -72,47 +78,46 @@ public:
     void finish_vertex(VertexIndex vertex, const G&) { m_visitor->finish_vertex(vertex); }
 };
 
-template<typename G>
-inline constexpr bool IsDenseGraphV = IsDenseGraph<std::remove_cvref_t<G>>;
+/// What an algorithm returns per vertex (per edge): a sequence by index in a dense graph, else a map by index.
+template<typename G, typename Value>
+using VertexMapStorage = std::conditional_t<IsDenseGraph<G>, urd::Store<urd::sequence<Value>>, urd::Store<urd::map<VertexIndex, Value>>>;
 
 template<typename G, typename Value>
-using VertexMapStorage = std::conditional_t<IsDenseGraphV<G>, std::vector<Value>, ygg::UnorderedMap<VertexIndex, Value>>;
+using EdgeMapStorage = std::conditional_t<IsDenseGraph<G>, urd::Store<urd::sequence<Value>>, urd::Store<urd::map<EdgeIndex, Value>>>;
 
 template<typename G, typename Value>
-using EdgeMapStorage = std::conditional_t<IsDenseGraphV<G>, std::vector<Value>, ygg::UnorderedMap<EdgeIndex, Value>>;
+using DistanceMatrixStorage = std::conditional_t<IsDenseGraph<G>,
+                                                 urd::Store<urd::sequence<urd::Store<urd::sequence<Value>>>>,
+                                                 urd::Store<urd::map<VertexIndex, urd::Store<urd::map<VertexIndex, Value>>>>>;
 
-template<typename G, typename Value>
-using VertexReadWritePropertyMap =
-    std::conditional_t<IsDenseGraphV<G>, DenseReadWritePropertyMap<VertexIndex, Value>, SparseReadWritePropertyMap<VertexIndex, Value>>;
+/// A Boost property map over a VertexMapStorage or EdgeMapStorage.
+template<typename Value>
+auto make_property_map(urd::Store<urd::sequence<Value>>& values)
+{ return boost::make_iterator_property_map(values.begin(), boost::typed_identity_property_map<ygg::uint_t>()); }
 
-template<typename G, typename Value>
-using EdgeReadPropertyMap = std::conditional_t<IsDenseGraphV<G>, DenseReadPropertyMap<EdgeIndex, Value>, SparseReadPropertyMap<EdgeIndex, Value>>;
+template<typename Value>
+auto make_property_map(const urd::Store<urd::sequence<Value>>& values)
+{ return boost::make_iterator_property_map(values.begin(), boost::typed_identity_property_map<ygg::uint_t>()); }
 
-template<typename G>
-using VertexIndexPropertyMap = std::conditional_t<IsDenseGraphV<G>, IdentityReadPropertyMap<VertexIndex>, SparseReadPropertyMap<VertexIndex, VertexIndex>>;
+template<typename Value>
+auto make_property_map(urd::Store<urd::map<ygg::uint_t, Value>>& values)
+{ return boost::associative_property_map<urd::Store<urd::map<ygg::uint_t, Value>>>(values); }
 
-template<typename G, typename Value>
-using DistanceMatrixStorage =
-    std::conditional_t<IsDenseGraphV<G>, std::vector<std::vector<Value>>, ygg::UnorderedMap<VertexIndex, ygg::UnorderedMap<VertexIndex, Value>>>;
+template<typename Value>
+auto make_property_map(const urd::Store<urd::map<ygg::uint_t, Value>>& values)
+{ return boost::const_associative_property_map<urd::Store<urd::map<ygg::uint_t, Value>>>(values); }
 
-template<typename G, typename Value>
-using BasicMatrix = std::conditional_t<IsDenseGraphV<G>, DenseBasicMatrix<VertexIndex, Value>, SparseBasicMatrix<VertexIndex, Value>>;
-
-template<IsGraph G>
-auto make_vertex_index_map(const G& graph)
+/// Calls `f` with Boost's vertex index map: the vertex itself in a dense graph, else its dense index (dense_vertex_indices).
+template<IsGraph G, typename F>
+decltype(auto) with_vertex_index_map(const G& graph, F&& f)
 {
-    if constexpr (IsDenseGraphV<G>)
-    {
-        static_cast<void>(graph);
-        return IdentityReadPropertyMap<VertexIndex>();
-    }
+    if constexpr (IsDenseGraph<G>)
+        return std::forward<F>(f)(boost::typed_identity_property_map<VertexIndex>());
     else
     {
-        auto remap = ygg::UnorderedMap<VertexIndex, VertexIndex>();
-        VertexIndex index = 0;
-        for (auto vertex : graph.get_vertex_indices())
-            remap.emplace(vertex, index++);
-        return remap;
+        const auto vertices = dense_vertex_indices(graph);
+        return std::forward<F>(f)(boost::make_function_property_map<VertexIndex>(
+            [&vertices](VertexIndex vertex) { return static_cast<VertexIndex>(vertices.position(vertices.find(vertex))); }));
     }
 }
 
@@ -121,7 +126,7 @@ auto make_vertex_map_storage(const G& graph, const Value& value)
 {
     auto result = VertexMapStorage<G, Value>();
 
-    if constexpr (IsDenseGraphV<G>)
+    if constexpr (IsDenseGraph<G>)
     {
         result.resize(graph.get_num_vertices(), value);
     }
@@ -140,72 +145,50 @@ auto strong_components(const G& graph)
     using Component = typename boost::graph_traits<G>::vertices_size_type;
 
     auto components = make_vertex_map_storage(graph, Component {});
-    auto component_map = VertexReadWritePropertyMap<G, Component>(components);
-    auto vertex_index_storage = make_vertex_index_map(graph);
-
-    if constexpr (IsDenseGraphV<G>)
-    {
-        const auto count = boost::strong_components(graph, component_map, boost::vertex_index_map(vertex_index_storage));
-        return std::make_pair(count, components);
-    }
-    else
-    {
-        auto vertex_index_map = VertexIndexPropertyMap<G>(vertex_index_storage);
-        const auto count = boost::strong_components(graph, component_map, boost::vertex_index_map(vertex_index_map));
-        return std::make_pair(count, components);
-    }
+    const auto count = with_vertex_index_map(
+        graph,
+        [&](auto vertex_index_map) { return boost::strong_components(graph, make_property_map(components), boost::vertex_index_map(vertex_index_map)); });
+    return std::make_pair(count, components);
 }
 
-template<IsGraph G, std::input_iterator SourceInputIterator>
-    requires std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
-auto breadth_first_visit(const G& graph, SourceInputIterator first, SourceInputIterator last, auto visitor)
+/// With a Boost visitor; a TraversalVisitor goes by reference through the overload below.
+template<IsGraph G, typename Visitor>
+    requires(!std::derived_from<Visitor, TraversalVisitor<G>>)
+auto breadth_first_visit(const G& graph, const VertexIndexList& sources, Visitor visitor)
 {
-    using Vertex = VertexIndex;
-
     auto colors = make_vertex_map_storage(graph, boost::white_color);
-    auto color_map = VertexReadWritePropertyMap<G, boost::default_color_type>(colors);
-    auto buffer = boost::queue<Vertex>();
+    auto buffer = boost::queue<VertexIndex>();
 
-    boost::breadth_first_search(graph, first, last, buffer, visitor, color_map);
+    boost::breadth_first_search(graph, sources.begin(), sources.end(), buffer, visitor, make_property_map(colors));
 
     return colors;
 }
 
-template<IsGraph G, std::input_iterator SourceInputIterator>
-    requires std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
-auto breadth_first_visit(const G& graph, SourceInputIterator first, SourceInputIterator last, TraversalVisitor<G>& visitor)
-{ return breadth_first_visit(graph, first, last, BoostTraversalVisitor<G>(visitor)); }
+template<IsGraph G>
+auto breadth_first_visit(const G& graph, const VertexIndexList& sources, TraversalVisitor<G>& visitor)
+{ return breadth_first_visit(graph, sources, BoostTraversalVisitor<G>(visitor)); }
 
 template<IsGraph G>
-auto breadth_first_visit(const G& graph, const std::vector<VertexIndex>& sources, TraversalVisitor<G>& visitor)
-{ return breadth_first_visit(graph, sources.begin(), sources.end(), visitor); }
-
-template<IsGraph G, std::input_iterator SourceInputIterator>
-    requires std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
-auto breadth_first_search(const G& graph, SourceInputIterator first, SourceInputIterator last)
+auto breadth_first_search(const G& graph, const VertexIndexList& sources)
 {
-    using Vertex = VertexIndex;
-    using Edge = EdgeIndex;
     using Distance = ygg::uint_t;
 
-    const auto infinity = std::numeric_limits<Distance>::max();
     auto predecessors = make_vertex_map_storage(graph, boost::graph_traits<G>::null_vertex());
-    auto distances = make_vertex_map_storage(graph, infinity);
-    for (auto it = first; it != last; ++it)
-        distances[*it] = 0;
+    auto distances = make_vertex_map_storage(graph, std::numeric_limits<Distance>::max());
+    for (auto source : sources)
+        distances[source] = 0;
+
+    using PredecessorMap = decltype(make_property_map(predecessors));
+    using DistanceMap = decltype(make_property_map(distances));
 
     struct Visitor : boost::bfs_visitor<>
     {
-        VertexReadWritePropertyMap<G, Vertex> predecessors;
-        VertexReadWritePropertyMap<G, Distance> distances;
+        PredecessorMap predecessors;
+        DistanceMap distances;
 
-        Visitor(VertexReadWritePropertyMap<G, Vertex> predecessors_, VertexReadWritePropertyMap<G, Distance> distances_) :
-            predecessors(predecessors_),
-            distances(distances_)
-        {
-        }
+        Visitor(PredecessorMap predecessors_, DistanceMap distances_) : predecessors(predecessors_), distances(distances_) {}
 
-        void tree_edge(Edge edge, const G& graph_)
+        void tree_edge(EdgeIndex edge, const G& graph_)
         {
             const auto lhs = source(edge, graph_);
             const auto rhs = target(edge, graph_);
@@ -214,183 +197,102 @@ auto breadth_first_search(const G& graph, SourceInputIterator first, SourceInput
         }
     };
 
-    auto predecessor_map = VertexReadWritePropertyMap<G, Vertex>(predecessors);
-    auto distance_map = VertexReadWritePropertyMap<G, Distance>(distances);
-    auto visitor = Visitor(predecessor_map, distance_map);
-
-    breadth_first_visit(graph, first, last, visitor);
+    breadth_first_visit(graph, sources, Visitor(make_property_map(predecessors), make_property_map(distances)));
 
     return std::make_tuple(predecessors, distances);
 }
 
-template<IsGraph G>
-auto breadth_first_search(const G& graph, const std::vector<VertexIndex>& sources)
-{ return breadth_first_search(graph, sources.begin(), sources.end()); }
-
-template<IsGraph G, std::input_iterator SourceInputIterator>
-    requires std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
-auto depth_first_visit(const G& graph, SourceInputIterator first, SourceInputIterator last, auto visitor)
+/// With a Boost visitor; a TraversalVisitor goes by reference through the overload below.
+template<IsGraph G, typename Visitor>
+    requires(!std::derived_from<Visitor, TraversalVisitor<G>>)
+auto depth_first_visit(const G& graph, const VertexIndexList& sources, Visitor visitor)
 {
     auto colors = make_vertex_map_storage(graph, boost::white_color);
-    auto color_map = VertexReadWritePropertyMap<G, boost::default_color_type>(colors);
+    auto color_map = make_property_map(colors);
 
-    for (; first != last; ++first)
-        if (get(color_map, *first) == boost::white_color)
-            boost::depth_first_search(graph, visitor, color_map, *first);
+    for (auto source : sources)
+        if (get(color_map, source) == boost::white_color)
+            boost::depth_first_search(graph, visitor, color_map, source);
 
     return colors;
 }
 
-template<IsGraph G, std::input_iterator SourceInputIterator>
-    requires std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
-auto depth_first_visit(const G& graph, SourceInputIterator first, SourceInputIterator last, TraversalVisitor<G>& visitor)
-{ return depth_first_visit(graph, first, last, BoostTraversalVisitor<G>(visitor)); }
+template<IsGraph G>
+auto depth_first_visit(const G& graph, const VertexIndexList& sources, TraversalVisitor<G>& visitor)
+{ return depth_first_visit(graph, sources, BoostTraversalVisitor<G>(visitor)); }
 
 template<IsGraph G>
-auto depth_first_visit(const G& graph, const std::vector<VertexIndex>& sources, TraversalVisitor<G>& visitor)
-{ return depth_first_visit(graph, sources.begin(), sources.end(), visitor); }
-
-template<IsGraph G, std::input_iterator SourceInputIterator>
-    requires std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
-auto depth_first_search(const G& graph, SourceInputIterator first, SourceInputIterator last)
+auto depth_first_search(const G& graph, const VertexIndexList& sources)
 {
-    using Vertex = VertexIndex;
-    using Edge = EdgeIndex;
-
     auto predecessors = make_vertex_map_storage(graph, boost::graph_traits<G>::null_vertex());
+
+    using PredecessorMap = decltype(make_property_map(predecessors));
 
     struct Visitor : boost::dfs_visitor<>
     {
-        VertexReadWritePropertyMap<G, Vertex> predecessors;
+        PredecessorMap predecessors;
 
-        explicit Visitor(VertexReadWritePropertyMap<G, Vertex> predecessors_) : predecessors(predecessors_) {}
+        explicit Visitor(PredecessorMap predecessors_) : predecessors(predecessors_) {}
 
-        void tree_edge(Edge edge, const G& graph_) { put(predecessors, target(edge, graph_), source(edge, graph_)); }
+        void tree_edge(EdgeIndex edge, const G& graph_) { put(predecessors, target(edge, graph_), source(edge, graph_)); }
     };
 
-    auto predecessor_map = VertexReadWritePropertyMap<G, Vertex>(predecessors);
-    auto visitor = Visitor(predecessor_map);
-
-    depth_first_visit(graph, first, last, visitor);
+    depth_first_visit(graph, sources, Visitor(make_property_map(predecessors)));
 
     return predecessors;
 }
 
 template<IsGraph G>
-auto depth_first_search(const G& graph, const std::vector<VertexIndex>& sources)
-{ return depth_first_search(graph, sources.begin(), sources.end()); }
-
-template<IsGraph G>
 auto topological_sort(const G& graph)
 {
-    using Vertex = VertexIndex;
-
-    auto result = std::vector<Vertex>();
+    auto result = urd::Store<urd::sequence<VertexIndex>>();
     auto colors = make_vertex_map_storage(graph, boost::white_color);
-    auto color_map = VertexReadWritePropertyMap<G, boost::default_color_type>(colors);
 
-    boost::topological_sort(graph, std::back_inserter(result), boost::color_map(color_map));
+    boost::topological_sort(graph, std::back_inserter(result), boost::color_map(make_property_map(colors)));
 
     return result;
 }
 
-template<IsGraph G, typename Cost, std::input_iterator SourceInputIterator>
-    requires std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
-auto dijkstra_shortest_paths_impl(const G& graph, const EdgeMapStorage<G, Cost>& weights, SourceInputIterator first, SourceInputIterator last)
+/// Cost is not deduced (weights are EdgeMapStorage<G, Cost>): name it.
+template<IsGraph G, typename Cost>
+auto dijkstra_shortest_paths(const G& graph, const EdgeMapStorage<G, Cost>& weights, const VertexIndexList& sources)
 {
-    using Vertex = VertexIndex;
-
     auto predecessors = make_vertex_map_storage(graph, boost::graph_traits<G>::null_vertex());
     auto distances = make_vertex_map_storage(graph, std::numeric_limits<Cost>::max());
-    auto predecessor_map = VertexReadWritePropertyMap<G, Vertex>(predecessors);
-    auto distance_map = VertexReadWritePropertyMap<G, Cost>(distances);
-    auto weight_map = EdgeReadPropertyMap<G, Cost>(weights);
-    auto vertex_index_storage = make_vertex_index_map(graph);
-    auto compare = std::less<Cost>();
-    auto combine = std::plus<Cost>();
-    auto infinity = std::numeric_limits<Cost>::max();
-    auto zero = Cost {};
 
-    if constexpr (IsDenseGraphV<G>)
-    {
-        boost::dijkstra_shortest_paths(graph,
-                                       first,
-                                       last,
-                                       predecessor_map,
-                                       distance_map,
-                                       weight_map,
-                                       vertex_index_storage,
-                                       compare,
-                                       combine,
-                                       infinity,
-                                       zero,
-                                       boost::default_dijkstra_visitor());
-    }
-    else
-    {
-        auto vertex_index_map = VertexIndexPropertyMap<G>(vertex_index_storage);
-        boost::dijkstra_shortest_paths(graph,
-                                       first,
-                                       last,
-                                       predecessor_map,
-                                       distance_map,
-                                       weight_map,
-                                       vertex_index_map,
-                                       compare,
-                                       combine,
-                                       infinity,
-                                       zero,
-                                       boost::default_dijkstra_visitor());
-    }
+    with_vertex_index_map(graph,
+                          [&](auto vertex_index_map)
+                          {
+                              boost::dijkstra_shortest_paths(graph,
+                                                             sources.begin(),
+                                                             sources.end(),
+                                                             make_property_map(predecessors),
+                                                             make_property_map(distances),
+                                                             make_property_map(weights),
+                                                             vertex_index_map,
+                                                             std::less<Cost>(),
+                                                             std::plus<Cost>(),
+                                                             std::numeric_limits<Cost>::max(),
+                                                             Cost {},
+                                                             boost::default_dijkstra_visitor());
+                          });
 
     return std::make_tuple(predecessors, distances);
 }
 
-template<IsGraph G, typename Cost, std::input_iterator SourceInputIterator>
-    requires IsDenseGraphV<G> && std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
-auto dijkstra_shortest_paths(const G& graph, const std::vector<Cost>& weights, SourceInputIterator first, SourceInputIterator last)
-{ return dijkstra_shortest_paths_impl<G, Cost>(graph, weights, first, last); }
-
+/// Cost is not deduced (weights are EdgeMapStorage<G, Cost>): name it.
 template<IsGraph G, typename Cost>
-    requires IsDenseGraphV<G>
-auto dijkstra_shortest_paths(const G& graph, const std::vector<Cost>& weights, const std::vector<VertexIndex>& sources)
-{ return dijkstra_shortest_paths(graph, weights, sources.begin(), sources.end()); }
-
-template<IsGraph G, typename Cost, std::input_iterator SourceInputIterator>
-    requires(!IsDenseGraphV<G>) && std::same_as<std::iter_value_t<SourceInputIterator>, VertexIndex>
-auto dijkstra_shortest_paths(const G& graph, const ygg::UnorderedMap<EdgeIndex, Cost>& weights, SourceInputIterator first, SourceInputIterator last)
-{ return dijkstra_shortest_paths_impl<G, Cost>(graph, weights, first, last); }
-
-template<IsGraph G, typename Cost>
-    requires(!IsDenseGraphV<G>)
-auto dijkstra_shortest_paths(const G& graph, const ygg::UnorderedMap<EdgeIndex, Cost>& weights, const std::vector<VertexIndex>& sources)
-{ return dijkstra_shortest_paths(graph, weights, sources.begin(), sources.end()); }
-
-template<IsGraph G, typename Cost>
-auto floyd_warshall_all_pairs_shortest_paths_impl(const G& graph, const EdgeMapStorage<G, Cost>& weights)
+auto floyd_warshall_all_pairs_shortest_paths(const G& graph, const EdgeMapStorage<G, Cost>& weights)
 {
     auto distances = DistanceMatrixStorage<G, Cost>();
 
-    if constexpr (IsDenseGraphV<G>)
-        distances.assign(graph.get_num_vertices(), std::vector<Cost>(graph.get_num_vertices()));
+    if constexpr (IsDenseGraph<G>)
+        distances.assign(graph.get_num_vertices(), urd::Store<urd::sequence<Cost>>(graph.get_num_vertices()));
 
-    auto distance_matrix = BasicMatrix<G, Cost>(distances);
-    auto weight_map = EdgeReadPropertyMap<G, Cost>(weights);
-
-    boost::floyd_warshall_all_pairs_shortest_paths(graph, distance_matrix, boost::weight_map(weight_map));
+    boost::floyd_warshall_all_pairs_shortest_paths(graph, distances, boost::weight_map(make_property_map(weights)));
 
     return distances;
 }
-
-template<IsGraph G, typename Cost>
-    requires IsDenseGraphV<G>
-auto floyd_warshall_all_pairs_shortest_paths(const G& graph, const std::vector<Cost>& weights)
-{ return floyd_warshall_all_pairs_shortest_paths_impl<G, Cost>(graph, weights); }
-
-template<IsGraph G, typename Cost>
-    requires(!IsDenseGraphV<G>)
-auto floyd_warshall_all_pairs_shortest_paths(const G& graph, const ygg::UnorderedMap<EdgeIndex, Cost>& weights)
-{ return floyd_warshall_all_pairs_shortest_paths_impl<G, Cost>(graph, weights); }
 
 }  // namespace runir::graphs::bgl
 

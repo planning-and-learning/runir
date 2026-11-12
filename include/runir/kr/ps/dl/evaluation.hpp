@@ -14,7 +14,7 @@ template<tyr::TaskKind Kind,
          runir::kr::ps::dl::FeatureTag FeatureTag,
          typename C,
          runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context>
-auto evaluate(ygg::View<ygg::Index<ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>>, C> feature, Context& context)
+auto evaluate(urd::index_view<ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>, C> feature, Context& context)
 {
     using runir::kr::dl::semantics::evaluate;
     return evaluate<Kind>(feature.get_expression(), context);

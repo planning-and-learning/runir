@@ -8,8 +8,9 @@
 #include <cstddef>
 #include <optional>
 #include <stdexcept>
-#include <tyr/formalism/planning/datas.hpp>
 #include <tyr/planning/state_view_concepts.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 
@@ -20,7 +21,7 @@ namespace detail
 {
 /// Appends the atoms of kind F true in `lhs` but not in `rhs`.
 template<tyr::TaskKind Kind, tyr::formalism::FactKind F, tyr::planning::StateViewConcept<Kind> Lhs, tyr::planning::StateViewConcept<Kind> Rhs>
-void append_only_in(const Lhs& lhs, const Rhs& rhs, std::vector<tyr::formalism::planning::AtomView<tyr::GroundTag, F>>& atoms)
+void append_only_in(const Lhs& lhs, const Rhs& rhs, urd::Store<urd::sequence<tyr::formalism::planning::AtomView<tyr::GroundTag, F>>>& atoms)
 {
     for (const auto atom : lhs.template get_atoms_view<F>())
         if (!rhs.test(atom))
@@ -54,10 +55,10 @@ struct Delta
 {
     struct Values
     {
-        std::vector<tyr::formalism::planning::AtomView<tyr::GroundTag, tyr::formalism::FluentTag>> fluent_atoms;
-        std::vector<tyr::formalism::planning::AtomView<tyr::GroundTag, tyr::formalism::DerivedTag>> derived_atoms;
-        std::vector<std::pair<RegisterIdentifier<ConceptTag>, tyr::formalism::planning::ObjectView>> concept_registers;
-        std::vector<std::pair<RegisterIdentifier<RoleTag>, std::pair<tyr::formalism::planning::ObjectView, tyr::formalism::planning::ObjectView>>>
+        urd::Store<urd::sequence<tyr::formalism::planning::AtomView<tyr::GroundTag, tyr::formalism::FluentTag>>> fluent_atoms;
+        urd::Store<urd::sequence<tyr::formalism::planning::AtomView<tyr::GroundTag, tyr::formalism::DerivedTag>>> derived_atoms;
+        urd::Store<urd::sequence<std::pair<RegisterIdentifier<ConceptTag>, tyr::formalism::planning::ObjectView>>> concept_registers;
+        urd::Store<urd::sequence<std::pair<RegisterIdentifier<RoleTag>, std::pair<tyr::formalism::planning::ObjectView, tyr::formalism::planning::ObjectView>>>>
             role_registers;
 
         void clear() noexcept
@@ -108,11 +109,11 @@ namespace detail
 template<ConceptOrRoleTag Category, RegisterValuesViewConcept Source, RegisterValuesViewConcept Target, typename Value>
 void assign_register_delta(Source source,
                            Target target,
-                           std::vector<std::pair<RegisterIdentifier<Category>, Value>>& removed,
-                           std::vector<std::pair<RegisterIdentifier<Category>, Value>>& added)
+                           urd::Store<urd::sequence<std::pair<RegisterIdentifier<Category>, Value>>>& removed,
+                           urd::Store<urd::sequence<std::pair<RegisterIdentifier<Category>, Value>>>& added)
 {
-    const auto before = source.template get<Category>();
-    const auto after = target.template get<Category>();
+    const auto before = source.template values<Category>();
+    const auto after = target.template values<Category>();
     const auto snapshot = [](const auto& values, size_t i) -> std::optional<Value>
     {
         if (i >= values.size() || !values[i])
@@ -121,7 +122,7 @@ void assign_register_delta(Source source,
         if constexpr (std::same_as<Category, ConceptTag>)
             return value;
         else
-            return std::pair(value.get_first(), value.get_second());
+            return std::pair(value.first, value.second);
     };
     for (size_t i = 0; i < std::max(before.size(), after.size()); ++i)
     {

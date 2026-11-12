@@ -6,13 +6,8 @@
 namespace runir::kr::dl
 {
 
-void bind_grammar_concept(nb::module_& m);
-void bind_grammar_role(nb::module_& m);
-void bind_grammar_boolean(nb::module_& m);
-void bind_grammar_numerical(nb::module_& m);
-void bind_grammar_constructor(nb::module_& m);
+void bind_grammar_records(nb::module_& m);
 void bind_grammar_non_terminal(nb::module_& m);
-void bind_grammar_constructor_or_non_terminal(nb::module_& m);
 void bind_grammar_grammar(nb::module_& m);
 void bind_grammar_constructor_repository(nb::module_& m);
 void bind_grammar_factory(nb::module_& m);

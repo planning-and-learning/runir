@@ -395,25 +395,6 @@
       "category": "numerical",
       "dl": "(n_max (n_count (c_atomic_state \"p\")) (n_count (c_atomic_state \"q\")))",
       "datalog": "(:rule (na ?n) (count ?n ((p ?x)))) (:rule (nb ?n) (count ?n ((q ?x)))) (:rule (r ?z) (na ?x) (nb ?y) (= ?z (max ?x ?y)))"
-    },
-    {
-      "name": "n_distance",
-      "category": "numerical",
-      "dl": "(n_distance (c_atomic_state \"p\") (r_atomic_state \"e\") (c_atomic_state \"q\"))",
-      "datalog": "(:rule (d ?x (min 0)) (p ?x)) (:rule (d ?y (min ?v)) (d ?x ?w) (e ?x ?y) (= ?v (+ ?w 1))) (:rule (r (min ?w)) (d ?x ?w) (q ?x))"
-    },
-    {
-      "name": "n_distance query",
-      "category": "numerical",
-      "dl": "(n_distance (q_atomic_state \"p\" (v)) (q_atomic_state \"f\" (v w)) (q_atomic_goal \"q\" true (v)))",
-      "datalog": "(:rule (d ?x (min 0)) (p ?x)) (:rule (d ?y (min ?v)) (d ?x ?w) (f ?x ?y) (= ?v (+ ?w 1))) (:rule (r (min ?w)) (d ?x ?w) (goal q ?x))"
-    },
-    {
-      "name": "q_must_pass",
-      "category": "query",
-      "dl": "(q_must_pass () (q_atomic_state \"p\" (v)) (q_atomic_state \"e\" (v w)) (q_atomic_state \"q\" (v)) (q_concept x (c_top)))",
-      "datalog": "(:rule (reach ?v) (p ?v)) (:rule (reach ?w) (reach ?v) (e ?v ?w)) (:rule (avoid ?x ?v) (object ?x) (p ?v) (!= ?v ?x)) (:rule (avoid ?x ?w) (avoid ?x ?v) (e ?v ?w) (!= ?w ?x)) (:rule (escapes ?x) (avoid ?x ?t) (q ?t)) (:rule (r ?x) (object ?x) (reach ?t) (q ?t) (not (escapes ?x)))",
-      "columns": "(x)"
     }
   ]
 }

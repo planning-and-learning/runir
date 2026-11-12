@@ -9,18 +9,17 @@
 #include <boost/variant/apply_visitor.hpp>
 #include <charconv>
 #include <concepts>
-#include <set>
 #include <stdexcept>
 #include <string_view>
+#include <tyr/datalog/lifted/database/datalog/construction.hpp>
+#include <tyr/datalog/lifted/database/datalog/evaluator.hpp>
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/database/datalog/construction.hpp>
-#include <yggdrasil/database/datalog/evaluator.hpp>
 
 namespace runir::kr::parser::datalog
 {
 
 namespace dl = runir::kr::dl;
-namespace ydl = ygg::database::datalog;
+namespace ydl = tyr::datalog::database::datalog;
 
 void FeatureResolver::declare(const ast::Identifier& name, std::function<FeatureReference()> parse)
 {
@@ -66,8 +65,8 @@ public:
                    dl::Builder& builder,
                    FeatureResolver& features,
                    const ext_constructors::ModuleReferences& references,
-                   const std::map<std::string, size_t>& arities,
-                   const std::set<std::string>& weighted,
+                   const urd::Store<urd::map<std::string, size_t>, urd::sorted>& arities,
+                   const urd::Store<urd::set<std::string>, urd::sorted>& weighted,
                    const DiagnosticContext& diagnostics) :
         m_domain(domain),
         m_context(repository, builder, diagnostics, &references),
@@ -80,7 +79,7 @@ public:
             data->arity = arity;
             data->name = name;
             data->weighted = weighted.contains(name);
-            m_derived.emplace(name, ydl::insert(datalog(), *data).first.get_index());
+            m_derived.emplace(name, ydl::insert(datalog(), *data).first.index());
         }
     }
 
@@ -91,7 +90,7 @@ public:
         auto head_terms = syntax.head.terms;
         if (syntax.head.min)
             head_terms.push_back(*syntax.head.min);
-        rule->head = atom(syntax.head.relation, head_terms, head_relation(syntax.head.relation)).get_index();
+        rule->head = atom(syntax.head.relation, head_terms, head_relation(syntax.head.relation)).index();
         for (const auto& literal : syntax.body)
             boost::apply_visitor(
                 [&]<typename T>(const T& node)
@@ -104,7 +103,7 @@ public:
                 literal);
         try
         {
-            m_rules.push_back(ydl::insert(datalog(), *rule).first.get_index());
+            m_rules.push_back(ydl::insert(datalog(), *rule).first.index());
         }
         catch (const std::invalid_argument& error)
         {
@@ -114,33 +113,36 @@ public:
 
     /// Per head that a feature reads, a program with that head as its one output, so that reading a head evaluates only
     /// what it depends on; the inputs it does not read are empty queries.
-    std::map<std::string, ygg::Index<dl::DatalogProgram>> finish(const ast::Identifier& reference, const std::set<std::string>& read_heads)
+    urd::Store<urd::map<std::string, urd::index<dl::DatalogProgram>>, urd::sorted> finish(const ast::Identifier& reference,
+                                                                                          const urd::Store<urd::set<std::string>, urd::sorted>& read_heads)
     {
         auto program = ydl::checkout<ydl::Program>(m_datalog_builder);
         for (const auto rule : m_rules)
             program->rules.push_back(rule);
         const auto view = ydl::insert(datalog(), *program).first;
+        // The evaluators below only plan the program; they read no relations.
+        const auto layer = ygg::FreeRelationRepository();
         try
         {
             // Validates the stratification.
-            auto heads = std::vector<ydl::RelationView>();
+            auto heads = urd::Store<urd::sequence<ydl::RelationView>>();
             for (const auto& [name, relation] : m_derived)
-                heads.emplace_back(relation, datalog());
-            [[maybe_unused]] const auto evaluator = ydl::Evaluator(view, heads);
+                heads.push_back(datalog().view(relation));
+            [[maybe_unused]] const auto evaluator = ydl::Evaluator(layer, view, heads);
         }
         catch (const std::invalid_argument& error)
         {
             m_context.diagnostics().throw_at(reference, InvalidExpressionError(std::string("Datalog program: ") + error.what()));
         }
-        auto programs = std::map<std::string, ygg::Index<dl::DatalogProgram>>();
+        auto programs = urd::Store<urd::map<std::string, urd::index<dl::DatalogProgram>>, urd::sorted>();
         for (const auto& [name, relation] : m_derived)
         {
             if (!read_heads.contains(name))
                 continue;
-            const auto output = ydl::RelationView(relation, datalog());
-            const auto evaluator = ydl::Evaluator(view, std::span(&output, 1));
+            const auto output = datalog().view(relation);
+            const auto evaluator = ydl::Evaluator(layer, view, std::span(&output, 1));
             auto data = constructors::checkout<dl::DatalogProgram>(m_context);
-            data->program = view.get_index();
+            data->program = view.index();
             for (size_t slot = 0; slot < m_inputs.size(); ++slot)
             {
                 if (evaluator.reads(slot))
@@ -148,28 +150,28 @@ public:
                 else
                 {
                     auto empty = constructors::checkout<dl::Query<dl::QueryEmptyTag>>(m_context);
-                    empty->columns = columns(ygg::make_view(m_inputs[slot], m_context.repository()).get_schema().size());
-                    data->inputs.push_back(query(constructors::intern(m_context, *empty).get_index()));
+                    empty->columns = columns(m_context.repository().view(m_inputs[slot]).get_schema().size());
+                    data->inputs.push_back(query(constructors::intern(m_context, *empty).index()));
                 }
             }
             data->outputs.push_back(relation);
-            programs.emplace(name, constructors::intern(m_context, *data).get_index());
+            programs.emplace(name, constructors::intern(m_context, *data).index());
         }
         return programs;
     }
 
-    ygg::Index<ydl::Relation> derived(const std::string& name) const { return m_derived.at(name); }
+    [[nodiscard]] urd::index<ydl::Relation> derived(const std::string& name) const { return m_derived.at(name); }
 
 private:
     tyr::formalism::planning::DomainView m_domain;
     ext_constructors::ConstructorContext m_context;
     FeatureResolver* m_features;
     ydl::DatalogBuilder m_datalog_builder;
-    std::map<std::string, ygg::Index<ydl::Relation>> m_derived;
-    std::vector<ygg::Index<dl::Query<>>> m_inputs;
-    std::map<ygg::uint_t, ygg::Index<ydl::Relation>> m_input_relations;  ///< By input query index.
-    std::map<std::string, ygg::uint_t> m_variables;
-    std::vector<ygg::Index<ydl::Rule>> m_rules;
+    urd::Store<urd::map<std::string, urd::index<ydl::Relation>>, urd::sorted> m_derived;
+    urd::Store<urd::sequence<urd::index<dl::Query<>>>> m_inputs;
+    urd::Store<urd::map<ygg::uint_t, urd::index<ydl::Relation>>, urd::sorted> m_input_relations;  ///< By input query index.
+    urd::Store<urd::map<std::string, ygg::uint_t>, urd::sorted> m_variables;
+    urd::Store<urd::sequence<urd::index<ydl::Rule>>> m_rules;
 
     ydl::DatalogRepository& datalog() { return m_context.repository().get_datalog_repository(); }
 
@@ -187,10 +189,10 @@ private:
                 m_context.diagnostics().throw_at(name, InvalidExpressionError("The number " + name.text + " is too large."));
             return ydl::Term::constant(value);
         }
-        return ydl::Term::constant(static_cast<ygg::uint_t>(require_object(m_domain, name, m_context.diagnostics())));
+        return ydl::Term::constant(require_object(m_domain, name, m_context.diagnostics()).value);
     }
 
-    ydl::AtomView atom(const ast::Identifier& name, const std::vector<ast::Identifier>& terms, ygg::Index<ydl::Relation> relation)
+    ydl::AtomView atom(const ast::Identifier& name, const urd::Store<urd::sequence<ast::Identifier>>& terms, urd::index<ydl::Relation> relation)
     {
         auto data = ydl::checkout<ydl::Atom>(m_datalog_builder);
         data->relation = relation;
@@ -202,11 +204,11 @@ private:
         }
         catch (const std::invalid_argument&)
         {
-            m_context.diagnostics().throw_at(name, ArityMismatchError(name.text, ydl::RelationView(relation, datalog()).get_arity(), terms.size()));
+            m_context.diagnostics().throw_at(name, ArityMismatchError(name.text, datalog().view(relation).get_arity(), terms.size()));
         }
     }
 
-    ygg::Index<ydl::Relation> head_relation(const ast::Identifier& name)
+    urd::index<ydl::Relation> head_relation(const ast::Identifier& name)
     {
         const auto it = m_derived.find(name.text);
         if (it == m_derived.end())
@@ -215,37 +217,38 @@ private:
     }
 
     /// The columns _0, ..., _{arity - 1} of an input query, read positionally.
-    ygg::IndexList<dl::QueryColumn> columns(size_t arity) const
+    [[nodiscard]] urd::flat_vector<urd::index<dl::QueryColumn>> columns(size_t arity) const
     {
-        auto names = std::vector<runir::kr::dl::grammar::ast::Identifier>(arity);
+        auto names = urd::Store<urd::sequence<runir::kr::dl::grammar::ast::Identifier>>(arity);
         for (size_t i = 0; i < arity; ++i)
             names[i].text = "_" + std::to_string(i);
         return constructors::parse_columns(names, m_context);
     }
     template<typename Tag>
-    ygg::Index<dl::Query<>> query(ygg::Index<dl::Query<Tag>> index) const
-    { return constructors::intern_query(m_context, index).get_index(); }
+    [[nodiscard]] urd::index<dl::Query<>> query(urd::index<dl::Query<Tag>> index) const
+    { return constructors::intern_query(m_context, index).index(); }
 
     /// The input relation of an input query, a new input slot for a new query.
-    ygg::Index<ydl::Relation> input(ygg::Index<dl::Query<>> query, const std::string& name)
+    urd::index<ydl::Relation> input(urd::index<dl::Query<>> query, const std::string& name)
     {
-        if (const auto it = m_input_relations.find(query.get_value()); it != m_input_relations.end())
+        if (const auto it = m_input_relations.find(query.value); it != m_input_relations.end())
             return it->second;
         auto data = ydl::checkout<ydl::Relation>(m_datalog_builder);
         data->id = m_inputs.size();
-        data->arity = ygg::make_view(query, m_context.repository()).get_schema().size();
+        data->arity = m_context.repository().view(query).get_schema().size();
+        data->input = true;
         data->input_slot = m_inputs.size();
         data->name = name;
-        const auto relation = ydl::insert(datalog(), *data).first.get_index();
+        const auto relation = ydl::insert(datalog(), *data).first.index();
         m_inputs.push_back(query);
-        m_input_relations.emplace(query.get_value(), relation);
+        m_input_relations.emplace(query.value, relation);
         return relation;
     }
 
     /// A predicate's atoms in the state, or in the goal's positive or negative literals.
-    ygg::Index<ydl::Relation> predicate(const ast::Identifier& name, size_t arity, bool goal, bool polarity = true)
+    urd::index<ydl::Relation> predicate(const ast::Identifier& name, size_t arity, bool goal, bool polarity = true)
     {
-        const auto make = [&]<typename T>(T, auto predicate) -> ygg::Index<dl::Query<>>
+        const auto make = [&]<typename T>(T, auto predicate) -> urd::index<dl::Query<>>
         {
             if (goal)
             {
@@ -253,19 +256,19 @@ private:
                 data->predicate = predicate;
                 data->polarity = polarity;
                 data->columns = columns(arity);
-                return query(constructors::intern(m_context, *data).get_index());
+                return query(constructors::intern(m_context, *data).index());
             }
             auto data = constructors::checkout<dl::Query<dl::AtomicStateTag<T>>>(m_context);
             data->predicate = predicate;
             data->columns = columns(arity);
-            return query(constructors::intern(m_context, *data).get_index());
+            return query(constructors::intern(m_context, *data).index());
         };
         const auto index = runir::kr::parser::resolve_predicate(m_domain, name, arity, goal ? "goal atom" : "atom", m_context.diagnostics(), make);
         return input(index, (goal ? (polarity ? "goal " : "goal not ") : "") + name.text);
     }
 
     /// A concept or role register or argument of the module, as the constructor that reads it.
-    std::optional<FeatureReference> module_reference(const ast::Identifier& name) const
+    [[nodiscard]] std::optional<FeatureReference> module_reference(const ast::Identifier& name) const
     {
         const auto& references = *m_context.references();
         const auto find = [&](const auto& table) -> std::optional<std::decay_t<decltype(table.by_name.begin()->second)>>
@@ -278,25 +281,25 @@ private:
         {
             auto data = dl::checkout<Record>(m_context.builder());
             data->reference = reference;
-            return constructors::intern_constructor<Category>(m_context, ext_constructors::intern(m_context, *data).get_index()).get_index();
+            return constructors::intern_constructor<Category>(m_context, ext_constructors::intern(m_context, *data).index()).index();
         };
         if (const auto r = find(references.concept_registers))
-            return reading.template operator()<dl::ConceptTag, dl::Concept<dl::RegisterTag>>(*r);
+            return reading.template operator()<dl::ConceptTag, dl::Concept<dl::SemanticFamily, dl::RegisterTag>>(*r);
         if (const auto r = find(references.role_registers))
-            return reading.template operator()<dl::RoleTag, dl::Role<dl::RegisterTag>>(*r);
+            return reading.template operator()<dl::RoleTag, dl::Role<dl::SemanticFamily, dl::RegisterTag>>(*r);
         if (const auto r = find(references.concept_arguments))
-            return reading.template operator()<dl::ConceptTag, dl::Concept<dl::ArgumentTag<dl::ConceptTag>>>(*r);
+            return reading.template operator()<dl::ConceptTag, dl::Concept<dl::SemanticFamily, dl::ArgumentTag<dl::ConceptTag>>>(*r);
         if (const auto r = find(references.role_arguments))
-            return reading.template operator()<dl::RoleTag, dl::Role<dl::ArgumentTag<dl::RoleTag>>>(*r);
+            return reading.template operator()<dl::RoleTag, dl::Role<dl::SemanticFamily, dl::ArgumentTag<dl::RoleTag>>>(*r);
         if (const auto r = find(references.boolean_arguments))
-            return reading.template operator()<dl::BooleanTag, dl::Boolean<dl::ArgumentTag<dl::BooleanTag>>>(*r);
+            return reading.template operator()<dl::BooleanTag, dl::Boolean<dl::SemanticFamily, dl::ArgumentTag<dl::BooleanTag>>>(*r);
         if (const auto r = find(references.numerical_arguments))
-            return reading.template operator()<dl::NumericalTag, dl::Numerical<dl::ArgumentTag<dl::NumericalTag>>>(*r);
+            return reading.template operator()<dl::NumericalTag, dl::Numerical<dl::SemanticFamily, dl::ArgumentTag<dl::NumericalTag>>>(*r);
         return std::nullopt;
     }
 
     /// The relation of a body atom: a head, a feature, a register or argument of the module, or a domain predicate.
-    ygg::Index<ydl::Relation> body_relation(const ast::Identifier& name, size_t arity)
+    urd::index<ydl::Relation> body_relation(const ast::Identifier& name, size_t arity)
     {
         if (const auto it = m_derived.find(name.text); it != m_derived.end())
             return it->second;
@@ -306,34 +309,34 @@ private:
         if (feature)
         {
             const auto index = std::visit(
-                [&]<typename T>(ygg::Index<T> resolved) -> ygg::Index<dl::Query<>>
+                [&]<typename T>(urd::index<T> resolved) -> urd::index<dl::Query<>>
                 {
                     if constexpr (std::same_as<T, dl::Constructor<dl::ConceptTag>>)
                     {
                         auto data = constructors::checkout<dl::Query<dl::QueryConceptTag>>(m_context);
                         data->arg = resolved;
                         data->columns = columns(1);
-                        return query(constructors::intern(m_context, *data).get_index());
+                        return query(constructors::intern(m_context, *data).index());
                     }
                     else if constexpr (std::same_as<T, dl::Constructor<dl::RoleTag>>)
                     {
                         auto data = constructors::checkout<dl::Query<dl::QueryRoleTag>>(m_context);
                         data->arg = resolved;
                         data->columns = columns(2);
-                        return query(constructors::intern(m_context, *data).get_index());
+                        return query(constructors::intern(m_context, *data).index());
                     }
                     else if constexpr (std::same_as<T, dl::Constructor<dl::BooleanTag>>)
                     {
                         auto data = constructors::checkout<dl::Query<dl::QueryBooleanTag>>(m_context);
                         data->arg = resolved;
-                        return query(constructors::intern(m_context, *data).get_index());
+                        return query(constructors::intern(m_context, *data).index());
                     }
                     else if constexpr (std::same_as<T, dl::Constructor<dl::NumericalTag>>)
                     {
                         auto data = constructors::checkout<dl::Query<dl::QueryNumericalTag>>(m_context);
                         data->arg = resolved;
                         data->columns = columns(1);
-                        return query(constructors::intern(m_context, *data).get_index());
+                        return query(constructors::intern(m_context, *data).index());
                     }
                     else
                         return resolved;
@@ -346,22 +349,21 @@ private:
 
     /// Adds a literal other than an aggregate: an atom, a goal atom, a negated atom or goal atom, a comparison or arithmetic.
     void condition(const xast::DatalogCondition& syntax,
-                   ygg::IndexList<ydl::Atom>& atoms,
-                   ygg::IndexList<ydl::Atom>& negated,
-                   cista::offset::vector<ydl::Comparison>& comparisons,
-                   cista::offset::vector<ydl::Arithmetic>& arithmetic)
+                   urd::flat_vector<urd::index<ydl::Atom>>& atoms,
+                   urd::flat_vector<urd::index<ydl::Atom>>& negated,
+                   urd::flat_vector<ydl::Comparison>& comparisons,
+                   urd::flat_vector<ydl::Arithmetic>& arithmetic)
     {
         boost::apply_visitor(
             [&]<typename T>(const T& node)
             {
                 if constexpr (std::same_as<T, xast::DatalogNegation>)
-                    negated.push_back(atom(node.atom.relation, node.atom.terms, body_relation(node.atom.relation, node.atom.terms.size())).get_index());
+                    negated.push_back(atom(node.atom.relation, node.atom.terms, body_relation(node.atom.relation, node.atom.terms.size())).index());
                 else if constexpr (std::same_as<T, xast::DatalogNegatedGoal>)
                     negated.push_back(
-                        atom(node.atom.predicate, node.atom.terms, predicate(node.atom.predicate, node.atom.terms.size(), true, !node.atom.negative))
-                            .get_index());
+                        atom(node.atom.predicate, node.atom.terms, predicate(node.atom.predicate, node.atom.terms.size(), true, !node.atom.negative)).index());
                 else if constexpr (std::same_as<T, xast::DatalogGoalAtom>)
-                    atoms.push_back(atom(node.predicate, node.terms, predicate(node.predicate, node.terms.size(), true, !node.negative)).get_index());
+                    atoms.push_back(atom(node.predicate, node.terms, predicate(node.predicate, node.terms.size(), true, !node.negative)).index());
                 else if constexpr (std::same_as<T, xast::DatalogComparison>)
                 {
                     using Operator = xast::DatalogComparisonOperator;
@@ -403,13 +405,13 @@ private:
                     arithmetic.push_back(ydl::Arithmetic { operation, lhs, rhs, term(node.result).value });
                 }
                 else
-                    atoms.push_back(atom(node.relation, node.terms, body_relation(node.relation, node.terms.size())).get_index());
+                    atoms.push_back(atom(node.relation, node.terms, body_relation(node.relation, node.terms.size())).index());
             },
             syntax);
     }
 
     /// (count ?n (condition...)), (sum ?n ?v (condition...)), (min ...), (max ...).
-    void aggregate(const xast::DatalogAggregate& syntax, ygg::IndexList<ydl::Aggregate>& aggregates)
+    void aggregate(const xast::DatalogAggregate& syntax, urd::flat_vector<urd::index<ydl::Aggregate>>& aggregates)
     {
         using Function = xast::DatalogAggregateFunction;
         if ((syntax.function == Function::COUNT) == syntax.value.has_value())
@@ -427,7 +429,7 @@ private:
             condition(literal, data->atoms, data->negated, data->comparisons, data->arithmetic);
         try
         {
-            aggregates.push_back(ydl::insert(datalog(), *data).first.get_index());
+            aggregates.push_back(ydl::insert(datalog(), *data).first.index());
         }
         catch (const std::invalid_argument& error)
         {
@@ -439,7 +441,7 @@ private:
 }  // namespace
 
 DatalogSection::DatalogSection(const DatalogRules* rules,
-                               std::set<std::string> read_heads,
+                               urd::Store<urd::set<std::string>, urd::sorted> read_heads,
                                tyr::formalism::planning::DomainView domain,
                                runir::kr::dl::ConstructorRepository& repository,
                                runir::kr::dl::Builder& builder,
@@ -458,7 +460,7 @@ DatalogSection::DatalogSection(const DatalogRules* rules,
     if (!rules)
         return;
     // The heads, their arities and whether they keep least values, so that rules may use heads defined later.
-    auto minimizing = std::map<std::string, bool>();
+    auto minimizing = urd::Store<urd::map<std::string, bool>, urd::sorted>();
     for (const auto& rule : *rules)
     {
         const auto& name = rule.head.relation;

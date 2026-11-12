@@ -6,38 +6,37 @@
 
 #include <concepts>
 #include <tuple>
-#include <yggdrasil/containers/vector.hpp>
-#include <yggdrasil/core/dependent_false.hpp>
+#include <urd/elements/flat.hpp>
+#include <yggdrasil/core/config.hpp>
 
-namespace ygg
+namespace urd
 {
+template<typename V>
+struct view_mixin<runir::kr::dl::semantics::CallArguments, V>
+{
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
-template<typename C>
-class View<Index<runir::kr::dl::semantics::CallArguments>, C> : public ygg::IndexViewBase<runir::kr::dl::semantics::CallArguments, C>
-{
 public:
-    using ygg::IndexViewBase<runir::kr::dl::semantics::CallArguments, C>::IndexViewBase;
-
     template<runir::kr::dl::CategoryTag Category>
-    auto get() const noexcept
+    auto arguments() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return make_view(this->get_data().concept_arguments, this->get_context());
+            return urd::resolve(self().data().concept_arguments, self().context());
         else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return make_view(this->get_data().role_arguments, this->get_context());
+            return urd::resolve(self().data().role_arguments, self().context());
         else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-            return make_view(this->get_data().boolean_arguments, this->get_context());
+            return urd::resolve(self().data().boolean_arguments, self().context());
         else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-            return make_view(this->get_data().numerical_arguments, this->get_context());
+            return urd::resolve(self().data().numerical_arguments, self().context());
         else
-            static_assert(dependent_false<Category>::value, "unhandled argument category");
+            static_assert(false, "unhandled argument category");
     }
 
     template<runir::kr::dl::CategoryTag Category>
     auto at(runir::kr::dl::ArgumentIdentifier<Category> arg) const
-    { return get<Category>().at(static_cast<size_t>(ygg::uint_t(arg))); }
+    { return arguments<Category>().at(static_cast<size_t>(ygg::uint_t(arg.value))); }
 };
-
-}  // namespace ygg
+}  // namespace urd
 
 #endif

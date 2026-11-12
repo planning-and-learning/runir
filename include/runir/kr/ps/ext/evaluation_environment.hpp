@@ -13,6 +13,8 @@
 #include <algorithm>
 #include <optional>
 #include <stdexcept>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <utility>
 #include <vector>
 
@@ -47,12 +49,12 @@ private:
 
     runir::kr::dl::semantics::Builder* m_dl_builder;
     runir::kr::dl::semantics::DenotationRepository* m_dl_denotation_repository;
-    ExecutionRepository<Kind>* m_execution_repository;
+    ExecutionRepository<ExtFamilyTag, Kind>* m_execution_repository;
     runir::kr::dl::semantics::EvaluationStorage m_dl_storage;
     runir::kr::dl::semantics::EvaluationStorage m_dl_target_storage;
     runir::kr::dl::semantics::DenotationCaches m_call_caches;
     ProgramView m_program;
-    std::vector<ModuleEvaluation> m_modules;
+    urd::Store<urd::sequence<ModuleEvaluation>> m_modules;
     ModuleEvaluation* m_current = nullptr;
     std::optional<Invocation> m_invocation;
 
@@ -73,7 +75,7 @@ public:
         m_program(program)
     {
         m_modules.reserve(program.get_modules().size());
-        auto roots = std::vector<runir::kr::dl::semantics::incremental::EvaluationRoot> {};
+        auto roots = urd::Store<urd::sequence<runir::kr::dl::semantics::incremental::EvaluationRoot>> {};
         for (const auto module_ : program.get_modules())
         {
             roots.clear();
@@ -96,8 +98,6 @@ public:
     EvaluationEnvironment& operator=(EvaluationEnvironment&&) = delete;
     ~EvaluationEnvironment() = default;
 
-    auto& get_dl_storage() noexcept { return m_dl_storage; }
-    auto& get_dl_target_storage() noexcept { return m_dl_target_storage; }
     auto& get_dl_caches() noexcept { return m_dl_storage.get_caches(); }
     auto& get_dl_target_caches() noexcept { return m_dl_target_storage.get_caches(); }
 
@@ -136,7 +136,7 @@ public:
     auto make_dl_context(S state)
     {
         const auto program = state.get_program();
-        if (&state.get_context() != m_execution_repository || &program.get_context() != &m_program.get_context() || program != m_program)
+        if (&state.context() != m_execution_repository || &program.context() != &m_program.context() || program != m_program)
             throw std::invalid_argument("EvaluationEnvironment requires an execution state from the selected task and program.");
         select_source(state);
         const auto module_state = state.get_module_state();
@@ -156,7 +156,7 @@ public:
     template<tyr::planning::StateViewConcept<Kind> S, runir::kr::dl::semantics::RegisterValuesViewConcept R>
     auto make_call_context(S state, runir::kr::dl::semantics::CallArgumentsView arguments, R registers)
     {
-        if (&arguments.get_context() != m_dl_denotation_repository)
+        if (&arguments.context() != m_dl_denotation_repository)
             throw std::invalid_argument("Call argument evaluation requires arguments from the selected task repository.");
         using StateDlContext = runir::kr::dl::semantics::StateEvaluationContext<Kind, S>;
         return StateDlContext(std::move(state), *m_dl_builder, m_call_caches, *m_dl_denotation_repository, m_dl_storage, arguments, registers);

@@ -5,17 +5,32 @@
 
 #include <concepts>
 #include <tuple>
+#include <type_traits>
+#include <urd/elements/flat.hpp>
+#include <urd/repr/records/records.hpp>
+#include <urd/store.hpp>
 #include <utility>
-#include <yggdrasil/containers/detail/indexed_hash_set_impl.hpp>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
 #include <yggdrasil/semantics/canonicalization.hpp>
 
-namespace ygg
+namespace runir::graphs::detail
 {
 
-namespace detail
+/// The property type P of VertexProperty<P> and EdgeProperty<P>.
+template<typename T>
+struct PropertyOf;
+template<Property P>
+struct PropertyOf<VertexProperty<P>> : std::type_identity<P>
 {
+};
+template<Property P>
+struct PropertyOf<EdgeProperty<P>> : std::type_identity<P>
+{
+};
+
+/// What names a graph's properties: VertexProperty<P> or EdgeProperty<P>.
+template<typename T>
+concept PropertyTag = requires { typename PropertyOf<T>::type; };
+
 template<typename T>
 concept HasIsCanonical = requires(const T& value) {
     { ygg::is_canonical(value) } -> std::same_as<bool>;
@@ -23,99 +38,52 @@ concept HasIsCanonical = requires(const T& value) {
 
 template<typename T>
 concept HasCanonicalize = requires(T& value) { ygg::canonicalize(value); };
-}
 
-template<runir::graphs::Property P>
-struct Data<runir::graphs::VertexProperty<P>>
+}  // namespace runir::graphs::detail
+
+namespace urd
 {
-    P value {};
 
-    Data() = default;
-    explicit Data(P value_) noexcept : value(std::move(value_)) {}
+/// A vertex's or an edge's property, as its graph's property pool holds it.
+template<runir::graphs::detail::PropertyTag T>
+struct data<T>
+{
+    typename runir::graphs::detail::PropertyOf<T>::type value {};
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::value> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::value> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    data() = default;
+    explicit data(decltype(value) value_) noexcept : value(std::move(value_)) {}
+
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::value> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::value> {}; }
 };
 
-template<runir::graphs::Property P>
-struct Data<runir::graphs::EdgeProperty<P>>
-{
-    P value {};
-
-    Data() = default;
-    explicit Data(P value_) noexcept : value(std::move(value_)) {}
-
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::value> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::value> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
-};
-
-template<runir::graphs::Property P>
-bool is_canonical(const Data<runir::graphs::VertexProperty<P>>& data) noexcept
-{
-    if constexpr (detail::HasIsCanonical<P>)
-        return ygg::is_canonical(data.value);
-    else
-        return true;
-}
-
-template<runir::graphs::Property P>
-bool is_canonical(const Data<runir::graphs::EdgeProperty<P>>& data) noexcept
-{
-    if constexpr (detail::HasIsCanonical<P>)
-        return ygg::is_canonical(data.value);
-    else
-        return true;
-}
-
-template<runir::graphs::Property P>
-void canonicalize(Data<runir::graphs::VertexProperty<P>>& data) noexcept
-{
-    if constexpr (detail::HasCanonicalize<P>)
-        ygg::canonicalize(data.value);
-}
-
-template<runir::graphs::Property P>
-void canonicalize(Data<runir::graphs::EdgeProperty<P>>& data) noexcept
-{
-    if constexpr (detail::HasCanonicalize<P>)
-        ygg::canonicalize(data.value);
-}
-
-}  // namespace ygg
+}  // namespace urd
 
 namespace runir::graphs
 {
 
-template<typename Tag>
-class PropertyMap
+template<detail::PropertyTag T>
+bool is_canonical(const urd::data<T>& data) noexcept
 {
-private:
-    ygg::IndexedHashSet<Tag> m_set;
+    if constexpr (detail::HasIsCanonical<decltype(data.value)>)
+        return ygg::is_canonical(data.value);
+    else
+        return true;
+}
 
-public:
-    using Index = ygg::Index<Tag>;
-    using Data = ygg::Data<Tag>;
+template<detail::PropertyTag T>
+void canonicalize(urd::data<T>& data) noexcept
+{
+    if constexpr (detail::HasCanonicalize<decltype(data.value)>)
+        ygg::canonicalize(data.value);
+}
 
-    PropertyMap() = default;
-
-    void clear() noexcept { m_set.clear(); }
-
-    auto insert(const Data& data) { return m_set.insert(data); }
-
-    [[nodiscard]] auto get(Index index) const noexcept -> const Data& { return m_set[index]; }
-    auto operator[](Index index) const noexcept -> const Data& { return get(index); }
-    [[nodiscard]] auto get_value(Index index) const noexcept -> const auto& { return get(index).value; }
-
-    [[nodiscard]] auto size() const noexcept -> std::size_t { return m_set.size(); }
-};
+/// The distinct properties of a graph's vertices and edges, interned in a urd pool: a handle is a property's index.
+template<Property P>
+using VertexPropertyMap = urd::Store<urd::pool<urd::data<VertexProperty<P>>>>;
 
 template<Property P>
-using VertexPropertyMap = PropertyMap<VertexProperty<P>>;
-
-template<Property P>
-using EdgePropertyMap = PropertyMap<EdgeProperty<P>>;
+using EdgePropertyMap = urd::Store<urd::pool<urd::data<EdgeProperty<P>>>>;
 
 }  // namespace runir::graphs
 

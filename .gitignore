@@ -5,7 +5,7 @@ wheelhouse/
 __pycache__/
 *.py[cod]
 .pytest_cache/
-.venv/
+.venv
 .vscode/
 
 # Benchmark data materialized by pypddl-datasets (see README)

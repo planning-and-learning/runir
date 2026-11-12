@@ -5,6 +5,9 @@
 
 #include <cassert>
 #include <ranges>
+#include <urd/repr/maps/csr_multimap.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 
 namespace runir::graphs
@@ -15,8 +18,8 @@ class BackwardStaticGraphView
 {
 private:
     const G* m_graph;
-    EdgeIndexList m_out_edges;
-    std::vector<ygg::uint_t> m_out_edge_offsets;
+    /// The graph's edges by target, each target's in edge order: its reversed out edges.
+    urd::Store<urd::map<VertexIndex, EdgeIndex>, urd::multi, urd::dense, urd::frozen> m_out_edges;
 
     [[nodiscard]] auto get_graph() const noexcept -> const G&
     {
@@ -28,19 +31,11 @@ private:
 
     void initialize()
     {
-        m_out_edges.clear();
-        m_out_edges.resize(get_graph().get_num_edges());
-        m_out_edge_offsets.assign(get_graph().get_num_vertices() + 1, 0);
-
+        auto reversed = urd::Store<urd::sequence<std::pair<VertexIndex, EdgeIndex>>>();
+        reversed.reserve(get_graph().get_num_edges());
         for (auto edge : get_graph().get_edge_indices())
-            ++m_out_edge_offsets[get_graph().get_target(edge) + 1];
-
-        for (std::size_t i = 1; i < m_out_edge_offsets.size(); ++i)
-            m_out_edge_offsets[i] += m_out_edge_offsets[i - 1];
-
-        auto next_offsets = m_out_edge_offsets;
-        for (auto edge : get_graph().get_edge_indices())
-            m_out_edges[next_offsets[get_graph().get_target(edge)]++] = edge;
+            reversed.emplace_back(get_graph().get_target(edge), edge);
+        m_out_edges = decltype(m_out_edges)(reversed.begin(), reversed.end());
     }
 
 public:
@@ -49,14 +44,12 @@ public:
     using VertexType = typename G::VertexType;
     using EdgeType = typename G::EdgeType;
 
-    explicit BackwardStaticGraphView(const G& graph) : m_graph(&graph), m_out_edges(), m_out_edge_offsets() { initialize(); }
+    explicit BackwardStaticGraphView(const G& graph) : m_graph(&graph), m_out_edges() { initialize(); }
 
     [[nodiscard]] auto get_vertices() const noexcept -> const auto& { return get_graph().get_vertices(); }
     [[nodiscard]] auto get_edges() const noexcept -> const auto& { return get_graph().get_edges(); }
-    [[nodiscard]] auto get_vertex_property(VertexPropertyIndex<VertexPropertyType> property) const noexcept -> const VertexPropertyType&
-    { return get_graph().get_vertex_property(property); }
-    [[nodiscard]] auto get_edge_property(EdgePropertyIndex<EdgePropertyType> property) const noexcept -> const EdgePropertyType&
-    { return get_graph().get_edge_property(property); }
+    [[nodiscard]] auto get_vertex_property(VertexIndex vertex) const noexcept -> const VertexPropertyType& { return get_graph().get_vertex_property(vertex); }
+    [[nodiscard]] auto get_edge_property(EdgeIndex edge) const noexcept -> const EdgePropertyType& { return get_graph().get_edge_property(edge); }
 
     [[nodiscard]] auto get_vertex(VertexIndex vertex) const noexcept -> const VertexType& { return get_graph().get_vertex(vertex); }
     [[nodiscard]] auto get_edge(EdgeIndex edge) const noexcept -> const EdgeType& { return get_graph().get_edge(edge); }
@@ -73,36 +66,25 @@ public:
     [[nodiscard]] auto get_out_edge_indices(VertexIndex vertex) const noexcept
     {
         assert_valid_vertex(vertex);
-        const auto begin = m_out_edge_offsets[vertex];
-        const auto end = m_out_edge_offsets[vertex + 1];
-        return std::ranges::subrange(m_out_edges.begin() + begin, m_out_edges.begin() + end);
+        const auto [first, last] = m_out_edges.equal_range(vertex);
+        return std::ranges::subrange(first, last) | std::views::values;
     }
 
     [[nodiscard]] auto get_out_degree(VertexIndex vertex) const noexcept -> Degree
     {
         assert_valid_vertex(vertex);
-        return m_out_edge_offsets[vertex + 1] - m_out_edge_offsets[vertex];
+        return static_cast<Degree>(m_out_edges.count(vertex));
     }
 
     [[nodiscard]] auto get_out_edges(VertexIndex vertex) const noexcept
-    {
-        return get_out_edge_indices(vertex) | std::views::transform([this](EdgeIndex edge) -> const EdgeType& { return get_edge(edge); });
-    }
+    { return urd::transform(get_out_edge_indices(vertex), detail::ReadThrough<BackwardStaticGraphView, &BackwardStaticGraphView::get_edge> { this }); }
 
     [[nodiscard]] auto get_successor_indices(VertexIndex vertex) const noexcept
-    {
-        return get_out_edge_indices(vertex) | std::views::transform([this](EdgeIndex edge) { return get_target(edge); });
-    }
+    { return urd::transform(get_out_edge_indices(vertex), detail::ReadThrough<BackwardStaticGraphView, &BackwardStaticGraphView::get_target> { this }); }
 
     [[nodiscard]] auto get_successors(VertexIndex vertex) const noexcept
-    {
-        return get_successor_indices(vertex) | std::views::transform([this](VertexIndex successor) -> const VertexType& { return get_vertex(successor); });
-    }
+    { return urd::transform(get_successor_indices(vertex), detail::ReadThrough<BackwardStaticGraphView, &BackwardStaticGraphView::get_vertex> { this }); }
 };
-
-template<IsDenseGraph G>
-auto backward(const G& graph)
-{ return BackwardStaticGraphView<G>(graph); }
 
 }  // namespace runir::graphs
 

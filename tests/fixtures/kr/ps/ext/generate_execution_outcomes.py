@@ -15,7 +15,7 @@ from pyyggdrasil.execution import ExecutionContext
 
 from pyrunir.datasets import GroundTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext
-from pyrunir.kr.ps import ext
+from pyrunir.kr.ps import ProofStatus, ext
 from pyrunir.kr.ps.ext import dl
 
 ROOT = Path(__file__).resolve().parents[5]
@@ -55,10 +55,10 @@ def main() -> None:
         options.universal = case["universal"]
         result = ext.find_ground_solution(task_context, program, options)
         case["status"] = {
-            ext.ProgramProofStatus.SUCCESS: "success",
-            ext.ProgramProofStatus.FAILURE: "failure",
-            ext.ProgramProofStatus.OUT_OF_TIME: "out_of_time",
-            ext.ProgramProofStatus.OUT_OF_STATES: "out_of_states",
+            ProofStatus.SUCCESS: "success",
+            ProofStatus.FAILURE: "failure",
+            ProofStatus.OUT_OF_TIME: "out_of_time",
+            ProofStatus.OUT_OF_STATES: "out_of_states",
         }[result.status]
         case["num_vertices"] = result.graph.get_num_vertices()
         case["num_edges"] = result.graph.get_num_edges()

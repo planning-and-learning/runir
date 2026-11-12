@@ -1,0 +1,124 @@
+(:program
+  (:entry transport)
+  (:module
+    (:symbol transport)
+    (:arguments)
+    (:registers
+      (:concept truck)
+      (:concept parcel)
+      (:concept target))
+    (:entry initialize)
+    (:memory
+      initialize
+      select_parcel
+      locate_parcel
+      collect
+      locate_goal
+      deliver)
+    (:datalog
+      (:rule (anything ?x) (object ?x))
+      (:rule (vehicle-with-capacity ?v) (capacity ?v ?c))
+      (:rule (undelivered ?x) (goal at ?x ?y) (not (at ?x ?y)))
+      (:rule (sel-truck ?t) (truck ?t))
+      (:rule (sel-parcel ?p) (parcel ?p))
+      (:rule (parcel-location ?l) (parcel ?p) (at ?p ?l))
+      (:rule (parcel-destination ?l) (parcel ?p) (goal at ?p ?l))
+      (:rule (remaining-count ?n) (count ?n ((undelivered ?x))))
+      (:rule (reach ?l (min 0)) (truck ?t) (at ?t ?l))
+      (:rule (reach ?m (min ?v)) (reach ?l ?w) (road ?l ?m) (= ?v (+ ?w 1)))
+      (:rule (to-target (min ?w)) (reach ?l ?w) (target ?l)))
+    (:features
+      (:concept (:symbol any) (:head anything))
+      (:concept (:symbol vehicles) (:head vehicle-with-capacity))
+      (:concept (:symbol pending) (:head undelivered))
+      (:concept (:symbol selected_truck) (:head sel-truck))
+      (:concept (:symbol selected_parcel) (:head sel-parcel))
+      (:concept (:symbol parcel_location) (:head parcel-location))
+      (:concept (:symbol parcel_destination) (:head parcel-destination))
+      (:numerical (:symbol remaining) (:head remaining-count))
+      (:numerical (:symbol distance) (:head to-target)))
+    (:rules
+      (:rule
+        (:symbol bind_truck)
+        (:expression
+          (:source-memory initialize)
+          (:target-memory select_parcel)
+          (:load
+            (:conditions)
+            (:concept vehicles)
+            (:register (:concept truck))
+            (:effects (unchanged remaining)))))
+      (:rule
+        (:symbol bind_parcel)
+        (:expression
+          (:source-memory select_parcel)
+          (:target-memory locate_parcel)
+          (:load
+            (:conditions)
+            (:concept pending)
+            (:register (:concept parcel))
+            (:effects (unchanged remaining)))))
+      (:rule
+        (:symbol bind_pickup_location)
+        (:expression
+          (:source-memory locate_parcel)
+          (:target-memory collect)
+          (:load
+            (:conditions)
+            (:concept parcel_location)
+            (:register (:concept target))
+            (:effects (unchanged remaining)))))
+      (:rule
+        (:symbol approach_parcel)
+        (:expression
+          (:source-memory collect)
+          (:target-memory collect)
+          (:do
+            (:conditions)
+            (:action "drive")
+            (:arguments selected_truck any any)
+            (:effects
+              (unchanged remaining)
+              (decreases distance)))))
+      (:rule
+        (:symbol pick_up_parcel)
+        (:expression
+          (:source-memory collect)
+          (:target-memory locate_goal)
+          (:do
+            (:conditions)
+            (:action "pick-up")
+            (:arguments selected_truck any selected_parcel any any)
+            (:effects (unchanged remaining)))))
+      (:rule
+        (:symbol bind_delivery_location)
+        (:expression
+          (:source-memory locate_goal)
+          (:target-memory deliver)
+          (:load
+            (:conditions)
+            (:concept parcel_destination)
+            (:register (:concept target))
+            (:effects (unchanged remaining)))))
+      (:rule
+        (:symbol approach_destination)
+        (:expression
+          (:source-memory deliver)
+          (:target-memory deliver)
+          (:do
+            (:conditions)
+            (:action "drive")
+            (:arguments selected_truck any any)
+            (:effects
+              (unchanged remaining)
+              (decreases distance)))))
+      (:rule
+        (:symbol deliver_parcel)
+        (:expression
+          (:source-memory deliver)
+          (:target-memory select_parcel)
+          (:do
+            (:conditions)
+            (:action "drop")
+            (:arguments selected_truck any selected_parcel any any)
+            (:effects (decreases remaining))))))))

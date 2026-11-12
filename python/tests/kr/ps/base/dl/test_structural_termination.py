@@ -10,10 +10,10 @@ from fixture_utils import load_fixture, read_fixture
 from pytyr.formalism.planning import PlanningDomain
 
 from pyrunir.kr.dl.semantics import ConstructorRepositoryFactory
+from pyrunir.kr.ps import IncompleteStructuralTerminationStatus
 from pyrunir.kr.ps.base import Repository, RepositoryFactory
 from pyrunir.kr.ps.base.dl import (
     BooleanFeature,
-    IncompleteStructuralTerminationStatus,
     SccStructuralTerminationResult,
     SieveStructuralTerminationResult,
     SketchFactory,
@@ -206,7 +206,7 @@ def test_structural_termination_tpp_sketch_is_terminating(gripper_planning_domai
     (scc_result,) = sieve_result.scc_results
     assert isinstance(scc_result, SccStructuralTerminationResult)
     assert scc_result.booleans == []
-    assert [feature.get_index() for feature in scc_result.numericals] == [feature.get_index() for feature in numericals]
+    assert [feature.index() for feature in scc_result.numericals] == [feature.index() for feature in numericals]
 
 
 def test_structural_termination_oscillator_counterexample_has_positional_valuations(
@@ -231,7 +231,7 @@ def test_structural_termination_oscillator_counterexample_has_positional_valuati
 
     (feature,) = sketch.get_boolean_features()
     assert isinstance(feature, BooleanFeature)
-    assert [item.get_index() for item in scc_result.booleans] == [feature.get_index()]
+    assert [item.index() for item in scc_result.booleans] == [feature.index()]
     assert scc_result.numericals == []
 
     # Positional valuations: one vertex per truth value of b1.
@@ -250,8 +250,8 @@ def test_structural_termination_oscillator_counterexample_has_positional_valuati
         hash(first_vertex)
 
     # The two-cycle uses both rules; each edge flips b1.
-    rules = {counterexample.get_edge_property(edge).get_index() for edge in counterexample.get_edge_indices()}
-    assert rules == {rule.get_index() for rule in sketch.get_rules()}
+    rules = {counterexample.get_edge_property(edge).index() for edge in counterexample.get_edge_indices()}
+    assert rules == {rule.index() for rule in sketch.get_rules()}
     for edge in counterexample.get_edge_indices():
         source = counterexample.get_vertex_property(counterexample.get_source(edge)).boolean_values & 1
         target = counterexample.get_vertex_property(counterexample.get_target(edge)).boolean_values & 1
@@ -274,11 +274,11 @@ def test_structural_termination_numerical_cycle_counterexample_uses_both_rules(
     assert not sieve_result.is_terminating()
     counterexample = sieve_result.counterexample
     assert counterexample is not None
-    rules = {counterexample.get_edge_property(edge).get_index() for edge in counterexample.get_edge_indices()}
-    assert rules == {rule.get_index() for rule in sketch.get_rules()}
+    rules = {counterexample.get_edge_property(edge).index() for edge in counterexample.get_edge_indices()}
+    assert rules == {rule.index() for rule in sketch.get_rules()}
     surviving_rules = sieve_result.surviving_rules
     assert len(surviving_rules) == len(rules)
-    assert {rule.get_index() for rule in surviving_rules} == rules
+    assert {rule.index() for rule in surviving_rules} == rules
     assert counterexample.get_num_edges() > len(surviving_rules)
 
     cycle = counterexample.find_edge_cycle()
@@ -297,11 +297,11 @@ def test_incomplete_structural_termination_reports_blocking_reasons(gripper_plan
 
     assert not result.is_terminating()
     assert len(result.surviving_rules) == 2
-    assert {surviving.rule.get_index() for surviving in result.surviving_rules} == {
-        rule.get_index() for rule in sketch.get_rules()
+    assert {surviving.rule.index() for surviving in result.surviving_rules} == {
+        rule.index() for rule in sketch.get_rules()
     }
     for surviving in result.surviving_rules:
         (reason,) = surviving.blocking_reasons
         assert isinstance(reason.feature, BooleanFeature)
         (opposing,) = reason.opposing_rules
-        assert opposing.get_index() != surviving.rule.get_index()
+        assert opposing.index() != surviving.rule.index()

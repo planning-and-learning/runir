@@ -9,7 +9,6 @@
 #include <runir/kr/ps/ext/repository.hpp>
 #include <tyr/formalism/planning/parser.hpp>
 #include <variant>
-#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::tests
 {

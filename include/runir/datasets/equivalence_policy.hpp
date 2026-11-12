@@ -26,7 +26,6 @@
 #include <tyr/planning/state_repository.hpp>
 #include <utility>
 #include <yggdrasil/core/config.hpp>
-#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::datasets
 {
@@ -34,7 +33,7 @@ namespace runir::datasets
 template<typename Tag>
 struct EquivalencePolicy;
 
-struct StateGraphVertexRef : ygg::comparison::Mixin<StateGraphVertexRef>
+struct StateGraphVertexRef : urd::compared_by_identity<StateGraphVertexRef>
 {
     ygg::uint_t state_graph_index = 0;
     graphs::VertexIndex state_vertex_index = 0;
@@ -47,13 +46,13 @@ struct StateGraphVertexRef : ygg::comparison::Mixin<StateGraphVertexRef>
     }
 
     static constexpr auto cista_members() noexcept
-    { return ygg::Members<&StateGraphVertexRef::state_graph_index, &StateGraphVertexRef::state_vertex_index> {}; }
+    { return urd::Members<&StateGraphVertexRef::state_graph_index, &StateGraphVertexRef::state_vertex_index> {}; }
     static constexpr auto identifying_members() noexcept
-    { return ygg::Members<&StateGraphVertexRef::state_graph_index, &StateGraphVertexRef::state_vertex_index> {}; }
+    { return urd::Members<&StateGraphVertexRef::state_graph_index, &StateGraphVertexRef::state_vertex_index> {}; }
 };
 
 template<tyr::TaskKind Kind>
-struct StateGraphVertexCandidate : ygg::comparison::Mixin<StateGraphVertexCandidate<Kind>>
+struct StateGraphVertexCandidate : urd::compared_by_identity<StateGraphVertexCandidate<Kind>>
 {
     ygg::uint_t state_graph_index = 0;
     tyr::planning::StateView<Kind> state;
@@ -64,9 +63,9 @@ struct StateGraphVertexCandidate : ygg::comparison::Mixin<StateGraphVertexCandid
     {
     }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&StateGraphVertexCandidate::state_graph_index, &StateGraphVertexCandidate::state> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&StateGraphVertexCandidate::state_graph_index, &StateGraphVertexCandidate::state> {}; }
     static constexpr auto identifying_members() noexcept
-    { return ygg::Members<&StateGraphVertexCandidate::state_graph_index, &StateGraphVertexCandidate::state> {}; }
+    { return urd::Members<&StateGraphVertexCandidate::state_graph_index, &StateGraphVertexCandidate::state> {}; }
 };
 
 struct RepresentativeResult

@@ -4,30 +4,25 @@
 #include "runir/kr/ps/icp/declarations.hpp"
 
 #include <tuple>
+#include <urd/elements/flat.hpp>
 #include <utility>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
 
-namespace ygg
+namespace urd
 {
 
 template<>
-struct Data<runir::kr::ps::icp::Program>
+struct data<runir::kr::ps::icp::Program>
 {
-    Index<runir::kr::ps::icp::Program> index;
-    Index<runir::kr::ps::icp::Module> module;
+    urd::index<runir::kr::ps::icp::Program> index;
+    urd::index<runir::kr::ps::icp::Module> module;
 
-    Data() = default;
-    Data(Index<runir::kr::ps::icp::Module> module_) : index(), module(module_) {}
-    template<typename C>
-    Data(::ygg::View<Index<runir::kr::ps::icp::Module>, C> module_) : index(), module()
-    { set(module_, module); }
+    data() = default;
+    data(urd::index<runir::kr::ps::icp::Module> module_) : index(), module(module_) {}
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::module> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::module> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::module> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::module> {}; }
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 #endif

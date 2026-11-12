@@ -6,8 +6,7 @@
 #include "runir/kr/uns/classifier_view.hpp"
 
 #include <tyr/planning/declarations.hpp>
-#include <yggdrasil/containers/variant.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 
 namespace runir::kr::uns
 {
@@ -16,14 +15,14 @@ namespace runir::kr::uns
 // The DNF is an OR over clauses of an AND over literals: an empty OR evaluates to false and an
 // empty AND evaluates to true.
 template<tyr::TaskKind Kind, typename C, runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context>
-bool classify(ygg::View<ygg::Index<runir::kr::uns::Classifier>, C> classifier, Context& context)
+bool classify(urd::index_view<runir::kr::uns::Classifier, C> classifier, Context& context)
 {
     for (auto clause : classifier.get_clauses())
     {
         bool satisfied = true;
         for (auto literal : clause.get_literals())
         {
-            const bool value = ygg::visit([&](auto feature) { return runir::kr::ps::evaluate<Kind>(feature, context).get(); }, literal.get_feature());
+            const bool value = std::visit([&](auto feature) { return runir::kr::ps::evaluate<Kind>(feature, context).value(); }, literal.get_feature());
             if (literal.get_polarity() ? !value : value)
             {
                 satisfied = false;

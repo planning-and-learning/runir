@@ -5,39 +5,39 @@
 #include "runir/kr/ps/base/detail/search_node.hpp"
 #include "runir/kr/ps/base/sketch_executor_data.hpp"
 
-#include <limits>
 #include <memory>
 #include <optional>
 #include <span>
 #include <tuple>
+#include <urd/repr/maps/index_map.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
-#include <yggdrasil/containers/segmented_vector.hpp>
 
 namespace runir::kr::ps::base::detail
 {
 
 template<tyr::TaskKind Kind>
 void build_proof_graph(SketchProofResults<Kind>& result,
-                       const ygg::SegmentedVector<SearchNode<Kind>>& nodes,
+                       const SearchNodes<Kind>& nodes,
                        std::span<const Predecessor<Kind>> predecessors,
                        std::optional<tyr::planning::PackedStateView<Kind>> initial)
 {
     using VertexLabel = SketchProofVertexLabel<Kind>;
     using Edge = std::tuple<graphs::VertexIndex, graphs::VertexIndex, SketchProofEdgeLabel>;
-    constexpr auto no_vertex = std::numeric_limits<graphs::VertexIndex>::max();
 
-    auto graph_indices = std::vector<graphs::VertexIndex>(nodes.size(), no_vertex);
-    auto vertices = std::vector<VertexLabel> {};
+    auto graph_indices = urd::Store<urd::map<urd::index<tyr::planning::State<Kind>>, graphs::VertexIndex>, urd::dense> {};
+    graph_indices.reserve(nodes.size());
+    auto vertices = urd::Store<urd::sequence<VertexLabel>> {};
     result.deadend_states.clear();
     result.open_states.clear();
     const auto add_vertex = [&](const tyr::planning::PackedStateView<Kind>& state)
     {
-        const auto index = ygg::uint_t(state.get_index());
-        auto& vertex = graph_indices[index];
-        if (vertex != no_vertex)
+        const auto [entry, inserted] = graph_indices.try_emplace(state.index(), static_cast<graphs::VertexIndex>(vertices.size()));
+        const auto vertex = entry->second;
+        if (!inserted)
             return vertex;
-        vertex = static_cast<graphs::VertexIndex>(vertices.size());
-        const auto& node = nodes[index];
+        const auto& node = nodes.at(state.index());
         if (node.is_deadend)
             result.deadend_states.push_back(vertex);
         if (node.is_open)
@@ -48,7 +48,7 @@ void build_proof_graph(SketchProofResults<Kind>& result,
     if (initial)
         add_vertex(*initial);
 
-    auto edges = std::vector<Edge> {};
+    auto edges = urd::Store<urd::sequence<Edge>> {};
     edges.reserve(predecessors.size());
     for (const auto& predecessor : predecessors)
     {

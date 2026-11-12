@@ -1,23 +1,26 @@
 #include "planning_fixtures.hpp"
+#include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/declarations.hpp"
 
 #include <filesystem>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <memory>
 #include <ranges>
-#include <runir/kr/dl/detail/repository_instantiations.hpp>
 #include <runir/kr/dl/optimization.hpp>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/detail/repository_instantiations.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
-#include <runir/kr/dl/semantics/state_evaluation.hpp>
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <string>
+#include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
 #include <vector>
 
 namespace runir::tests
@@ -48,21 +51,21 @@ void check_optimized_queries()
     using Context = kr::dl::semantics::StateEvaluationContext<Kind>;
     auto builder = kr::dl::semantics::Builder();
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
-    auto empty_arguments = ygg::Data<kr::dl::semantics::CallArguments>();
-    auto register_data = ygg::Data<kr::dl::semantics::RegisterValues>();
+    auto empty_arguments = urd::data<kr::dl::semantics::CallArguments>();
+    auto register_data = urd::data<kr::dl::semantics::RegisterValues>();
     register_data.concept_values.resize(1);
     register_data.role_values.resize(1);
     const auto arguments = kr::dl::semantics::insert(denotations, empty_arguments).first;
     const auto registers = kr::dl::semantics::insert(denotations, register_data).first;
     // One storage per state, so dynamic results are never shared across states.
-    auto storages = std::vector<std::unique_ptr<kr::dl::semantics::EvaluationStorage>>();
-    auto contexts = std::vector<std::unique_ptr<Context>>();
+    auto storages = urd::Store<urd::sequence<std::unique_ptr<kr::dl::semantics::EvaluationStorage>>>();
+    auto contexts = urd::Store<urd::sequence<std::unique_ptr<Context>>>();
     for (const auto& state : states)
     {
         storages.push_back(std::make_unique<kr::dl::semantics::EvaluationStorage>(denotations));
         contexts.push_back(std::make_unique<Context>(state, builder, *storages.back(), arguments, registers));
     }
-    auto context_pointers = std::vector<Context*>();
+    auto context_pointers = urd::Store<urd::sequence<Context*>>();
     for (const auto& context : contexts)
         context_pointers.push_back(context.get());
 
@@ -70,17 +73,7 @@ void check_optimized_queries()
     const auto fixed = std::string(R"((q_atomic_state "fixed" (x y z)))");
     const auto edges = std::string(R"((r_or (r_atomic_state "edge") (r_inverse (r_atomic_state "edge"))))");
     const auto triangle = "(n_count (q_join (q_join (q_role (x y) " + edges + ") (q_role (y z) " + edges + ")) (q_role (x z) " + edges + ")))";
-    // Edges evaluated per vertex keep their joins: planning them for full evaluation would add semijoins.
-    const auto path = "(q_join (q_role (x z) " + edges + ") (q_join (q_role (z w) " + edges + ") (q_role (w y) " + edges + ")))";
-    const auto distance = "(n_distance (q_concept x (c_atomic_state \"marker\")) (q_project (x y) " + path + ") (q_concept y (c_atomic_state \"marker\")))";
-    const auto joins = [](const std::string& formatted)
-    {
-        size_t result = 0;
-        for (auto position = formatted.find("(q_join"); position != std::string::npos; position = formatted.find("(q_join", position + 1))
-            ++result;
-        return result;
-    };
-    const auto expressions = std::vector<std::string> {
+    const auto expressions = urd::Store<urd::sequence<std::string>> {
         triangle,
         R"((n_count (q_project (x) (q_join (q_atomic_state "assignment" (x y z w)) (q_atomic_state "required" (x y z))))))",
         "(n_count (q_join " + triple + R"( (q_role (x y) (r_atomic_state "edge")))))",
@@ -89,7 +82,6 @@ void check_optimized_queries()
         // A query nested inside a leaf's concept argument is optimized too.
         "(n_count (c_project x (q_join " + triple + " (q_concept x (c_project z (q_join " + triple + " " + fixed + "))))))",
         "(n_count (q_generic_join (x y z) (x y z) " + triple + " " + fixed + "))",
-        distance,
     };
 
     {
@@ -102,7 +94,7 @@ void check_optimized_queries()
         EXPECT_NE(warnings.get()[0].message.find(never + " was empty in all"), std::string::npos) << warnings.get()[0].message;
         const auto optimized = kr::dl::optimize(original, *repository, statistics);
         for (auto* context : context_pointers)
-            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(optimized, *context).get(), kr::dl::semantics::evaluate<Kind>(original, *context).get());
+            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(optimized, *context).value(), kr::dl::semantics::evaluate<Kind>(original, *context).value());
     }
 
     for (const auto& text : expressions)
@@ -137,15 +129,11 @@ void check_optimized_queries()
             const auto formatted = fmt::format("{}", optimized);
             EXPECT_EQ(kr::ps::ext::dl::parse_numerical(formatted, domain, *repository), optimized) << formatted;
             for (auto* context : context_pointers)
-                EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(optimized, *context).get(), kr::dl::semantics::evaluate<Kind>(original, *context).get())
+                EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(optimized, *context).value(), kr::dl::semantics::evaluate<Kind>(original, *context).value())
                     << text << " => " << formatted;
             if (text == triangle)
             {
                 EXPECT_NE(formatted.find("q_generic_join"), std::string::npos) << formatted;
-            }
-            if (text == distance)
-            {
-                EXPECT_EQ(joins(formatted), joins(text)) << formatted;
             }
         }
     }

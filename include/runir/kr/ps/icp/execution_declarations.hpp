@@ -1,11 +1,13 @@
 #ifndef RUNIR_KR_PS_ICP_EXECUTION_DECLARATIONS_HPP_
 #define RUNIR_KR_PS_ICP_EXECUTION_DECLARATIONS_HPP_
 
+#include "runir/kr/declarations.hpp"
 #include "runir/kr/dl/semantics/declarations.hpp"
+#include "runir/kr/ps/declarations.hpp"
 
-#include <memory>
+#include <boost/mp11.hpp>
 #include <tyr/planning/declarations.hpp>
-#include <yggdrasil/core/types.hpp>
+#include <urd/elements/flat.hpp>
 
 namespace runir::kr::ps::icp
 {
@@ -20,19 +22,13 @@ struct ProgramState
 };
 
 template<tyr::TaskKind Kind>
-class ExecutionRepository;
+using ExecutionRepositoryTypes = boost::mp11::mp_list<Histories, ProgramState<Kind>>;
 
 template<tyr::TaskKind Kind>
-class ExecutionRepositoryFactory;
+using ProgramStateView = urd::index_view<ProgramState<Kind>, ExecutionRepository<IcpFamilyTag, Kind>>;
 
 template<tyr::TaskKind Kind>
-using ExecutionRepositoryPtr = std::shared_ptr<ExecutionRepository<Kind>>;
-
-template<tyr::TaskKind Kind>
-using ProgramStateView = ygg::View<ygg::Index<ProgramState<Kind>>, ExecutionRepository<Kind>>;
-
-template<tyr::TaskKind Kind>
-using HistoriesView = ygg::View<ygg::Index<Histories>, ExecutionRepository<Kind>>;
+using HistoriesView = urd::index_view<Histories, ExecutionRepository<IcpFamilyTag, Kind>>;
 
 }
 

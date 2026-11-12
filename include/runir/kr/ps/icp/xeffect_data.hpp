@@ -6,46 +6,35 @@
 
 #include <cista/containers/variant.h>
 #include <tuple>
+#include <urd/elements/flat.hpp>
 #include <utility>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
 
-namespace ygg
+namespace urd
 {
 
 template<>
-struct Data<runir::kr::ps::icp::XEffect>
+struct data<runir::kr::ps::icp::XEffect>
 {
-    Index<runir::kr::ps::icp::XEffect> index;
+    urd::index<runir::kr::ps::icp::XEffect> index;
     runir::kr::ps::icp::EffectOperation operation {};
-    ::cista::offset::variant<runir::kr::ps::icp::ArgumentPosition, Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> object;
-    Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>> feature;
+    urd::flat_variant<runir::kr::ps::icp::ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> object;
+    urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>> feature;
 
-    Data() = default;
-    Data(runir::kr::ps::icp::EffectOperation operation_,
-         ::cista::offset::variant<runir::kr::ps::icp::ArgumentPosition, Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> object_,
-         Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>> feature_) :
+    data() = default;
+    data(runir::kr::ps::icp::EffectOperation operation_,
+         urd::flat_variant<runir::kr::ps::icp::ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> object_,
+         urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>> feature_) :
         index(),
         operation(operation_),
         object(std::move(object_)),
         feature(feature_)
     {
     }
-    template<typename C>
-    Data(runir::kr::ps::icp::EffectOperation operation_,
-         ::cista::offset::variant<runir::kr::ps::icp::ArgumentPosition, Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> object_,
-         ::ygg::View<Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>>, C> feature_) :
-        index(),
-        operation(operation_),
-        object(std::move(object_)),
-        feature()
-    { set(feature_, feature); }
 
-    static constexpr auto cista_members() noexcept { return ygg::Members<&Data::index, &Data::operation, &Data::object, &Data::feature> {}; }
-    static constexpr auto identifying_members() noexcept { return ygg::Members<&Data::operation, &Data::object, &Data::feature> {}; }
-    void clear() noexcept { ygg::clear_members(*this); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operation, &data::object, &data::feature> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::operation, &data::object, &data::feature> {}; }
 };
 
-}  // namespace ygg
+}  // namespace urd
 
 #endif
