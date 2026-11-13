@@ -7,13 +7,13 @@
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/serialization/kr/dl/argument_view.hpp"
 #include "runir/serialization/kr/dl/register_view.hpp"
-#include "runir/serialization/types/fields.hpp"
 
 #include <tyr/serialization/formalism/planning/planning.hpp>
 #include <yggdrasil/serialization/dictionaries.hpp>
+#include <yggdrasil/serialization/fields.hpp>
 
 /// Serialization of DL constructors of every category and of queries: every record by its fields
-/// (runir/serialization/types/fields.hpp), a constructor or a query of any kind by its variant.
+/// (yggdrasil/serialization/fields.hpp), a constructor or a query of any kind by its variant.
 
 namespace ygg::serialization
 {

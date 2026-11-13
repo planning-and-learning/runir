@@ -119,6 +119,21 @@ struct TernaryData
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
+/// A state's atoms of a predicate: no polarity, a negative one is a negation of it.
+template<typename Self, tyr::formalism::FactKind T>
+struct AtomData
+{
+    urd::index<Self> index;
+    urd::index<tyr::formalism::Predicate<T>> predicate;
+
+    AtomData() = default;
+    explicit AtomData(urd::index<tyr::formalism::Predicate<T>> predicate_) : index(), predicate(predicate_) {}
+
+    static constexpr auto cista_members() noexcept { return urd::Members<&AtomData::index, &AtomData::predicate> {}; }
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"predicate", &AtomData::predicate>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+};
+
 template<typename Self, tyr::formalism::FactKind T>
 struct PredicateData
 {

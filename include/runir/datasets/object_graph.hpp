@@ -39,12 +39,6 @@ using ObjectGraph = urd::Store<urd::graph<VertexIndex, std::monostate, ColorView
 // The concepts it is bound and searched by (urd/graphs.hpp): a renamed member is a compile error, not a lost feature.
 static_assert(urd::incidence_graph<ObjectGraph> && urd::edge_list_graph<ObjectGraph>);
 
-/// The coloring of an object graph's vertices: their colors' indices, the same for equal colors across graphs.
-inline auto vertex_colors(const ObjectGraph& graph)
-{
-    return [&graph](VertexIndex vertex) { return graph.vertex_value(vertex).index(); };
-}
-
 template<tyr::TaskKind Kind>
 auto create_object_graph(tyr::planning::StateView<Kind> state, ColorRepository& repository) -> std::unique_ptr<ObjectGraph>;
 

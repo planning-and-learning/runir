@@ -86,29 +86,6 @@ auto difference(const auto& lhs, const auto& rhs)
     return result;
 }
 
-template<kr::dl::ConceptOrRoleTag Category, tyr::formalism::FactKind Fact>
-auto negative_atomic(kr::dl::ConstructorView<Category> positive, kr::dl::ConstructorRepository& repository)
-{
-    if constexpr (std::same_as<Category, kr::dl::ConceptTag>)
-    {
-        auto data = std::get<urd::index_view<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::AtomicStateTag<Fact>>, runir::kr::dl::ConstructorRepository>>(
-                        positive.get_variant())
-                        .data();
-        data.polarity = false;
-        auto wrapper = urd::data<kr::dl::Constructor<Category>>(kr::dl::insert(repository, data).first.index());
-        return kr::dl::insert(repository, wrapper).first;
-    }
-    else
-    {
-        auto data = std::get<urd::index_view<kr::dl::Role<kr::dl::SemanticFamily, kr::dl::AtomicStateTag<Fact>>, runir::kr::dl::ConstructorRepository>>(
-                        positive.get_variant())
-                        .data();
-        data.polarity = false;
-        auto wrapper = urd::data<kr::dl::Constructor<Category>>(kr::dl::insert(repository, data).first.index());
-        return kr::dl::insert(repository, wrapper).first;
-    }
-}
-
 template<tyr::TaskKind Kind>
 void check_planning_graph(tyr::planning::StateView<Kind> source, tyr::planning::StateView<Kind> target)
 {
@@ -128,7 +105,7 @@ void check_planning_graph(tyr::planning::StateView<Kind> source, tyr::planning::
         {
             if (predicate.get_arity() != 1)
                 continue;
-            auto atom = urd::data<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::AtomicStateTag<Fact>>>(predicate.index(), true);
+            auto atom = urd::data<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::AtomicStateTag<Fact>>>(predicate.index());
             auto concept_data = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(kr::dl::insert(*constructors, atom).first.index());
             const auto concept_ = kr::dl::insert(*constructors, concept_data).first;
             auto query_data = urd::data<kr::dl::Query<kr::dl::QueryConceptTag>> {};
@@ -431,8 +408,6 @@ void check_incremental_evaluation()
     const auto concept_expressions = std::vector {
         present,
         copied_present,
-        negative_atomic<kr::dl::ConceptTag, tyr::formalism::FluentTag>(present, *constructors),
-        negative_atomic<kr::dl::ConceptTag, tyr::formalism::DerivedTag>(copied_present, *constructors),
         kr::ps::ext::dl::parse_concept("(c_register 0)", domain, *constructors),
         kr::ps::ext::dl::parse_concept("(c_argument 0)", domain, *constructors),
         kr::ps::ext::dl::parse_concept(R"((c_and (c_atomic_state "fixed") (c_not (c_nominal "a"))))", domain, *constructors),
@@ -477,8 +452,6 @@ void check_incremental_evaluation()
     const auto role_expressions = std::vector {
         edge,
         copied_edge,
-        negative_atomic<kr::dl::RoleTag, tyr::formalism::FluentTag>(edge, *constructors),
-        negative_atomic<kr::dl::RoleTag, tyr::formalism::DerivedTag>(copied_edge, *constructors),
         kr::ps::ext::dl::parse_role("(r_register 0)", domain, *constructors),
         kr::ps::ext::dl::parse_role("(r_argument 0)", domain, *constructors),
         kr::ps::ext::dl::parse_role("(r_inverse (r_universal))", domain, *constructors),

@@ -57,7 +57,7 @@ concept SymbolList = std::ranges::range<T> && is_planning_symbol<std::remove_cvr
 
 /// The keyword and components of a constructor record, without parentheses: its fields, in record order (urd::Fields),
 /// each as it is written: a planning symbol (or a list of them) by its quoted name, a polarity as a Boolean keyword,
-/// anything else as fmt formats it. Concept and role atoms of the state print no polarity: their syntax has none.
+/// anything else as fmt formats it.
 template<CategoryTag Category, typename Tag, typename View>
 std::string record_text(View view)
 {
@@ -76,12 +76,7 @@ std::string record_text(View view)
         else
             add(component);
     };
-    urd::for_each_field<urd::record_of<View>>(
-        [&]<typename F>()
-        {
-            if constexpr (!(F::name == "polarity" && is_atomic_state_tag_v<Tag> && !std::same_as<Category, BooleanTag>) )
-                add_component(view.template member<F::member>());
-        });
+    urd::for_each_field<urd::record_of<View>>([&]<typename F>() { add_component(view.template member<F::member>()); });
     return text;
 }
 

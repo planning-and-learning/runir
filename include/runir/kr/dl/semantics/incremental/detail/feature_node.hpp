@@ -135,13 +135,23 @@ private:
     Evaluators prepare_distance(NumericalView<DistanceTag> expression, QueryView<> edges, GraphBuilder<Kind>& graph)
     { return QueryEdgeDistanceEvaluator<Kind>(expression, edges, graph, m_dependencies); }
 
+    /// A state atom's evaluator: a Boolean one with its polarity, a concept or role one without.
+    template<tyr::formalism::FactKind Fact, typename View>
+    static AtomicEvaluator<Kind, Category, Fact> atomic(View expression)
+    {
+        if constexpr (std::same_as<Category, BooleanTag>)
+            return AtomicEvaluator<Kind, Category, Fact>(expression.get_predicate(), expression.get_polarity());
+        else
+            return AtomicEvaluator<Kind, Category, Fact>(expression.get_predicate());
+    }
+
     template<template<typename, typename> typename Expression, typename Tag, typename C>
     Evaluators prepare(urd::index_view<Expression<SemanticFamily, Tag>, C> expression, GraphBuilder<Kind>& graph)
     {
         if constexpr (std::same_as<Tag, AtomicStateTag<tyr::formalism::FluentTag>>)
-            return AtomicEvaluator<Kind, Category, tyr::formalism::FluentTag>(expression.get_predicate(), expression.get_polarity());
+            return atomic<tyr::formalism::FluentTag>(expression);
         else if constexpr (std::same_as<Tag, AtomicStateTag<tyr::formalism::DerivedTag>>)
-            return AtomicEvaluator<Kind, Category, tyr::formalism::DerivedTag>(expression.get_predicate(), expression.get_polarity());
+            return atomic<tyr::formalism::DerivedTag>(expression);
         else if constexpr (std::same_as<Tag, RegisterTag>)
             return RegisterEvaluator<Kind, Category>(expression.get_register().get_identifier());
         else if constexpr (std::same_as<Tag, ArgumentTag<Category>>)

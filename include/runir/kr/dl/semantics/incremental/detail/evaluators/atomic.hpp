@@ -22,10 +22,19 @@ template<tyr::TaskKind Kind, CategoryTag Category, tyr::formalism::FactKind Fact
 struct AtomicEvaluator
 {
     tyr::formalism::planning::PredicateView<Fact> predicate;
-    bool polarity;
+    bool polarity = true;  ///< a Boolean atom's; a concept or role atom is the state's atoms of its predicate
     DenotationState<Category> value;
 
-    AtomicEvaluator(tyr::formalism::planning::PredicateView<Fact> predicate_, bool polarity_) : predicate(predicate_), polarity(polarity_) {}
+    explicit AtomicEvaluator(tyr::formalism::planning::PredicateView<Fact> predicate_)
+        requires ConceptOrRoleTag<Category>
+        : predicate(predicate_)
+    {
+    }
+    AtomicEvaluator(tyr::formalism::planning::PredicateView<Fact> predicate_, bool polarity_)
+        requires std::same_as<Category, BooleanTag>
+        : predicate(predicate_), polarity(polarity_)
+    {
+    }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context)
     {
@@ -49,8 +58,6 @@ struct AtomicEvaluator
                 else
                     builder.set(objects[0], objects[1], true);
             }
-            if (!polarity)
-                builder.flip();
         }
     }
     void update(EvaluationGraph<Kind>&, const Delta& delta, tyr::datalog::database::Workspace&)
@@ -81,14 +88,14 @@ private:
             if constexpr (std::same_as<Category, BooleanTag>)
                 return value.get_value() == polarity;
             else
-                return value.contains(atom_element(atom)) == polarity;
+                return value.contains(atom_element(atom));
         };
         const auto change = [&]([[maybe_unused]] auto atom, bool is_present)
         {
             if constexpr (std::same_as<Category, BooleanTag>)
                 value.set(is_present == polarity);
             else
-                value.set(atom_element(atom), is_present == polarity);
+                value.set(atom_element(atom), is_present);
         };
         for (const auto atom : added)
             if (atom.get_predicate() == predicate && present(atom))

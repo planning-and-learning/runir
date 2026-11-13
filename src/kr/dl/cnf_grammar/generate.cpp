@@ -246,6 +246,11 @@ private:
     }
 
     template<runir::kr::dl::CategoryTag Category, typename T, typename Predicate>
+    auto intern_predicate(Predicate predicate)
+    {
+        return intern_wrapped<Category, T>([&](auto& data) { data.predicate = predicate; });
+    }
+    template<runir::kr::dl::CategoryTag Category, typename T, typename Predicate>
     auto intern_predicate(Predicate predicate, bool polarity)
     {
         return intern_wrapped<Category, T>(
@@ -408,8 +413,7 @@ private:
             [&]
             {
                 return intern_predicate<runir::kr::dl::ConceptTag, runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::AtomicStateTag<T>>>(
-                    constructor.data().predicate,
-                    constructor.data().polarity);
+                    constructor.data().predicate);
             });
     }
 
@@ -640,8 +644,7 @@ private:
             [&]
             {
                 return intern_predicate<runir::kr::dl::RoleTag, runir::kr::dl::Role<runir::kr::dl::SemanticFamily, runir::kr::dl::AtomicStateTag<T>>>(
-                    constructor.data().predicate,
-                    constructor.data().polarity);
+                    constructor.data().predicate);
             });
     }
 

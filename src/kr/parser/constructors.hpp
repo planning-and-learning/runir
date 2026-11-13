@@ -351,7 +351,6 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptAtomicState& node, tyr::for
                                                 {
                                                     auto data = checkout<TargetConcept<Context, runir::kr::dl::AtomicStateTag<T>>>(context);
                                                     data->predicate = predicate;
-                                                    data->polarity = true;
                                                     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).index());
                                                 });
 }
@@ -512,7 +511,6 @@ auto parse(const runir::kr::dl::grammar::ast::RoleAtomicState& node, tyr::formal
                                                 {
                                                     auto data = checkout<TargetRole<Context, runir::kr::dl::AtomicStateTag<T>>>(context);
                                                     data->predicate = predicate;
-                                                    data->polarity = true;
                                                     return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).index());
                                                 });
 }

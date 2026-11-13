@@ -18,7 +18,15 @@ struct data<runir::kr::dl::Role<F, runir::kr::dl::UniversalTag>> : runir::kr::dl
 };
 
 template<typename F, typename Tag>
-    requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)
+    requires runir::kr::dl::is_atomic_state_tag_v<Tag>
+struct data<runir::kr::dl::Role<F, Tag>> : runir::kr::dl::AtomData<runir::kr::dl::Role<F, Tag>, runir::kr::dl::TagFactKind<Tag>>
+{
+    using Base = runir::kr::dl::AtomData<runir::kr::dl::Role<F, Tag>, runir::kr::dl::TagFactKind<Tag>>;
+    using Base::Base;
+};
+
+template<typename F, typename Tag>
+    requires runir::kr::dl::is_atomic_goal_tag_v<Tag>
 struct data<runir::kr::dl::Role<F, Tag>> : runir::kr::dl::PredicateData<runir::kr::dl::Role<F, Tag>, runir::kr::dl::TagFactKind<Tag>>
 {
     using Base = runir::kr::dl::PredicateData<runir::kr::dl::Role<F, Tag>, runir::kr::dl::TagFactKind<Tag>>;

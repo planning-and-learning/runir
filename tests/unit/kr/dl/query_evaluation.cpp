@@ -1126,11 +1126,17 @@ void check_predicate_repository_identity()
         auto context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.get_state(), builder, storage);
         const auto check = [&]<typename Tag>()
         {
-            auto concept_data = urd::data<kr::dl::Concept<kr::dl::SemanticFamily, Tag>>(predicates[1], true);
+            auto concept_data = urd::data<kr::dl::Concept<kr::dl::SemanticFamily, Tag>>();
+            concept_data.predicate = predicates[1];
+            if constexpr (kr::dl::is_atomic_goal_tag_v<Tag>)
+                concept_data.polarity = true;
             auto concept_wrapper = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(kr::dl::insert(*repository, concept_data).first.index());
             EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(kr::dl::insert(*repository, concept_wrapper).first, context).value().count(), size_t(expected));
 
-            auto role_data = urd::data<kr::dl::Role<kr::dl::SemanticFamily, Tag>>(predicates[2], true);
+            auto role_data = urd::data<kr::dl::Role<kr::dl::SemanticFamily, Tag>>();
+            role_data.predicate = predicates[2];
+            if constexpr (kr::dl::is_atomic_goal_tag_v<Tag>)
+                role_data.polarity = true;
             auto role_wrapper = urd::data<kr::dl::Constructor<kr::dl::RoleTag>>(kr::dl::insert(*repository, role_data).first.index());
             EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(kr::dl::insert(*repository, role_wrapper).first, context).count(), size_t(expected));
 

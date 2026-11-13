@@ -8,14 +8,14 @@
 #include "runir/serialization/kr/ps/icp/indexical_view.hpp"
 #include "runir/serialization/kr/ps/memory_state_view.hpp"
 #include "runir/serialization/kr/ps/module_symbol_view.hpp"
-#include "runir/serialization/types/fields.hpp"
 
 #include <yggdrasil/serialization/dictionaries.hpp>
+#include <yggdrasil/serialization/fields.hpp>
 
 namespace ygg::serialization
 {
 
-// A rule is described by its fields (runir/serialization/types/fields.hpp).
+// A rule is described by its fields (yggdrasil/serialization/fields.hpp).
 
 }
 

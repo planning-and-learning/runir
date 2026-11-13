@@ -72,9 +72,6 @@ void evaluate_atomic_state_concept(urd::index_view<Concept<SemanticFamily, Atomi
         assert(ygg::uint_t(object.value) < num_objects);
         bitset.set(ygg::uint_t(object.value));
     }
-
-    if (!constructor.get_polarity())
-        bitset.flip();
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
@@ -110,10 +107,6 @@ void evaluate_atomic_state_role(urd::index_view<Role<SemanticFamily, AtomicState
         assert(ygg::uint_t(rhs.value) < num_objects);
         result.get(lhs).set(ygg::uint_t(rhs.value));
     }
-
-    if (!constructor.get_polarity())
-        for (ygg::uint_t object = 0; object < num_objects; ++object)
-            result.get(urd::index<tyr::formalism::Object>(object)).flip();
 }
 
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>

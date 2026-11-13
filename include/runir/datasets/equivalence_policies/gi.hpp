@@ -47,7 +47,7 @@ public:
     StateGraphVertexRef get_or_create_representative(const StateGraphVertexCandidate<Kind>& candidate, Allocate allocate)
     {
         auto object_graph = create_object_graph(candidate.state, m_colors);
-        auto certificate = vefr::canonical_form(*object_graph, vertex_colors(*object_graph));
+        auto certificate = vefr::canonical_form(*object_graph, [&](VertexIndex v) { return object_graph->vertex_value(v).index(); });
 
         const auto lock = std::lock_guard(m_mutex);
         if (const auto it = m_certificate_to_representative.find(certificate); it != m_certificate_to_representative.end())
