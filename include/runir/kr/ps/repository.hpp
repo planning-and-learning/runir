@@ -51,6 +51,14 @@ public:
     auto& get_dl_repository() noexcept { return *m_dl_repository.get(); }
     [[nodiscard]] const auto& get_dl_repository() const noexcept { return *m_dl_repository.get(); }
     [[nodiscard]] const auto& get_dl_repository_ptr() const noexcept { return m_dl_repository; }
+
+    using Base::view;
+    /// An index of a symbol this repository does not hold (a register, a DL record, a planning symbol) as its view
+    /// through the DL repository, which resolves it: so that a rule's every member is read as urd reads any (urd::resolve).
+    template<typename T>
+        requires(!ygg::formalism::SupportsSymbol<Base, T>)
+    [[nodiscard]] auto view(urd::index<T> index) const
+    { return get_dl_repository().view(index); }
 };
 
 template<FamilyTag Family, typename RepositoryTypes>

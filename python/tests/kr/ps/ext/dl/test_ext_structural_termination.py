@@ -6,6 +6,7 @@ import sys
 from collections.abc import Callable
 
 import pytest
+import pyvefr
 from fixture_utils import read_fixture
 from pytyr.formalism.planning import PlanningDomain
 
@@ -38,10 +39,10 @@ def test_counterexample_properties_keep_the_graph_alive(
     references = sys.getrefcount(graph)
     read_property: Callable[[], str]
     if vertex_property:
-        label = graph.get_vertex_property(next(iter(graph.get_vertex_indices())))
+        label = graph.vertex_value(next(iter(graph.vertices())))
         read_property = label.memory_state.get_name
     else:
-        label = graph.get_edge_property(next(iter(graph.get_edge_indices())))
+        label = graph.edge_value(next(iter(range(graph.num_edges))))
 
         def read_edge_label() -> str:
             return str(label)
@@ -150,7 +151,7 @@ def test_ext_structural_termination_feature_mask_boundary(
             assert len(scc_result.numericals) == 1
             counterexample = sieve_result.counterexample
             assert counterexample is not None
-            (vertex,) = [counterexample.get_vertex_property(index) for index in counterexample.get_vertex_indices()]
+            (vertex,) = [counterexample.vertex_value(index) for index in counterexample.vertices()]
             assert vertex.boolean_values == 0
             assert type(vertex.numerical_values) is int
             assert vertex.numerical_values == 1 << (num_numericals - 1)
@@ -226,7 +227,7 @@ def test_ext_structural_termination_counterexample_spans_memory_states(gripper_p
     assert not sieve_result.is_terminating()
     counterexample = sieve_result.counterexample
     assert counterexample is not None
-    vertices = [counterexample.get_vertex_property(vertex) for vertex in counterexample.get_vertex_indices()]
+    vertices = [counterexample.vertex_value(vertex) for vertex in counterexample.vertices()]
     assert {vertex.memory_state.get_name() for vertex in vertices} == {"m0", "m1"}
     assert vertices[0] == vertices[0]
     assert vertices[0] <= vertices[0]
@@ -236,13 +237,13 @@ def test_ext_structural_termination_counterexample_spans_memory_states(gripper_p
         assert 0 <= vertex.boolean_values < 1 << len(booleans)
         assert 0 <= vertex.numerical_values < 1 << len(numericals)
 
-    edges = [counterexample.get_edge_property(edge) for edge in counterexample.get_edge_indices()]
+    edges = [counterexample.edge_value(edge) for edge in range(counterexample.num_edges)]
     assert len({edge.index() for edge in edges}) == 2
-    cycle = counterexample.find_edge_cycle()
+    cycle = [edge.id for edge in pyvefr.find_cycle(counterexample)]
     assert len(cycle) == 2
     assert len(set(cycle)) == 2
     for edge, next_edge in zip(cycle, cycle[1:] + cycle[:1], strict=True):
-        assert counterexample.get_target(edge) == counterexample.get_source(next_edge)
+        assert counterexample.target(edge) == counterexample.source(next_edge)
 
 
 @pytest.mark.parametrize("use_incomplete_preprocessing", [False, True])
@@ -276,7 +277,7 @@ def test_ext_structural_termination_lifts_projected_components(
         ((), (numericals[1].index(),)),
     }
 
-    vertices = [counterexample.get_vertex_property(vertex) for vertex in counterexample.get_vertex_indices()]
+    vertices = [counterexample.vertex_value(vertex) for vertex in counterexample.vertices()]
     assert {vertex.memory_state.get_name() for vertex in vertices} == {"m0", "m1", "m2"}
     positive_n0 = False
     positive_n1 = False
@@ -296,20 +297,20 @@ def test_ext_structural_termination_lifts_projected_components(
     assert positive_n0
     assert positive_n1
 
-    edges = [counterexample.get_edge_property(edge) for edge in counterexample.get_edge_indices()]
+    edges = [counterexample.edge_value(edge) for edge in range(counterexample.num_edges)]
     assert {edge.get_symbol() for edge in edges} == {"keep_n0", "keep_n1", "to_false", "to_true"}
     surviving_rules = sieve_result.surviving_rules
     surviving_rule_ids = {rule.index() for rule in surviving_rules}
     assert len(surviving_rules) == len(surviving_rule_ids) == 4
     assert surviving_rule_ids == {edge.index() for edge in edges}
 
-    cycle = counterexample.find_edge_cycle()
+    cycle = [edge.id for edge in pyvefr.find_cycle(counterexample)]
     assert cycle
     assert len(cycle) == len(set(cycle))
-    assert set(cycle) <= set(counterexample.get_edge_indices())
+    assert set(cycle) <= set(range(counterexample.num_edges))
     for edge, next_edge in zip(cycle, cycle[1:] + cycle[:1], strict=True):
-        assert counterexample.get_target(edge) == counterexample.get_source(next_edge)
-    assert {counterexample.get_edge_property(edge).index() for edge in cycle} < surviving_rule_ids
+        assert counterexample.target(edge) == counterexample.source(next_edge)
+    assert {counterexample.edge_value(edge).index() for edge in cycle} < surviving_rule_ids
 
 
 def test_ext_incomplete_structural_termination_uses_memory_components(gripper_planning_domain: PlanningDomain) -> None:

@@ -1,4 +1,3 @@
-add_subdirectory(graphs)
 add_subdirectory(datasets)
 add_subdirectory(kr)
 
@@ -21,7 +20,6 @@ target_include_directories(core
 target_link_libraries(core
     INTERFACE
         runir::datasets
-        runir::graphs
         runir::kr
 )
 

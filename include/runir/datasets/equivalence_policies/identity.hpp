@@ -20,6 +20,8 @@
 
 #include "runir/datasets/equivalence_policy.hpp"
 
+#include <concepts>
+
 namespace runir::datasets
 {
 
@@ -30,12 +32,9 @@ struct IdentityEquivalenceTag
 template<>
 struct EquivalencePolicy<IdentityEquivalenceTag>
 {
-    template<tyr::TaskKind Kind>
-    auto get_or_create_representative(const StateGraphVertexCandidate<Kind>& candidate, const StateGraphVertexFactory& allocate) -> RepresentativeResult
-    {
-        static_cast<void>(candidate);
-        return { allocate(), true };
-    }
+    template<tyr::TaskKind Kind, std::invocable Allocate>
+    StateGraphVertexRef get_or_create_representative(const StateGraphVertexCandidate<Kind>& /*candidate*/, Allocate allocate)
+    { return allocate(); }
 };
 
 }  // namespace runir::datasets

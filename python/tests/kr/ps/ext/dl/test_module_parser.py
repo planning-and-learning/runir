@@ -407,11 +407,11 @@ def test_terminating_program_executes_and_proves_from_python() -> None:
     gc.collect()
     classified_result = ext.find_ground_solution(task_context, program, classified_options)
     assert classified_result.status == ProofStatus.FAILURE
-    assert classified_result.graph.get_num_vertices() == 1
-    assert classified_result.graph.get_num_edges() == 0
+    assert classified_result.graph.num_vertices == 1
+    assert classified_result.graph.num_edges == 0
     assert len(classified_result.deadend_states) == 1
     assert classified_result.open_states == []
-    classified_label = classified_result.graph.get_vertex_property(classified_result.deadend_states[0])
+    classified_label = classified_result.graph.vertex_value(classified_result.deadend_states[0])
     assert not classified_label.is_goal
     assert not classified_label.is_alive
     assert classified_label.is_unsolvable
@@ -422,19 +422,19 @@ def test_terminating_program_executes_and_proves_from_python() -> None:
     proof = ext.find_ground_solution(task_context, program, proof_options)
     assert proof.status == ProofStatus.SUCCESS
     assert proof.is_successful()
-    assert proof.graph.get_num_vertices() == search_result.graph.get_num_vertices()
-    vertex = next(iter(proof.graph.get_vertex_indices()))
-    assert isinstance(proof.graph.get_successor_indices(vertex), list)
-    edge = next(iter(proof.graph.get_edge_indices()))
-    assert proof.graph.get_source(edge) in proof.graph.get_vertex_indices()
-    assert proof.graph.get_target(edge) in proof.graph.get_vertex_indices()
-    assert edge in proof.graph.get_out_edge_indices(proof.graph.get_source(edge))
-    edge_label = proof.graph.get_edge_property(edge)
+    assert proof.graph.num_vertices == search_result.graph.num_vertices
+    vertex = next(iter(proof.graph.vertices()))
+    assert isinstance(proof.graph.neighbours(vertex), list)
+    edge = next(iter(range(proof.graph.num_edges)))
+    assert proof.graph.source(edge) in proof.graph.vertices()
+    assert proof.graph.target(edge) in proof.graph.vertices()
+    assert edge in [out.id for out in proof.graph.out_edges(proof.graph.source(edge))]
+    edge_label = proof.graph.edge_value(edge)
     assert ext.ProgramProofEdgeLabel is ext.GroundProgramProofEdgeLabel
     assert isinstance(edge_label, ext.ProgramProofEdgeLabel)
     if edge_label.action is not None:
         assert isinstance(edge_label.action, ActionRow)
-    vertex_label = proof.graph.get_vertex_property(vertex)
+    vertex_label = proof.graph.vertex_value(vertex)
     assert vertex_label.program_state.module_state.memory_state is not None
     frame = vertex_label.program_state.module_state
     assert len(frame.registers.concept_values) == len(frame.module.get_concept_registers())
@@ -487,13 +487,13 @@ def test_executor_fixture(case: ExecutionFixture) -> None:
         "out_of_states": ProofStatus.OUT_OF_STATES,
     }[case["status"]]
     assert result.status == expected_status
-    assert result.graph.get_num_vertices() == case["num_vertices"]
-    assert result.graph.get_num_edges() == case["num_edges"]
+    assert result.graph.num_vertices == case["num_vertices"]
+    assert result.graph.num_edges == case["num_edges"]
     assert len(result.deadend_states) == case["num_deadends"]
     assert bool(result.open_states) == case["has_open_states"]
     assert len(result.cycle) == case["cycle_length"]
     for vertex in result.deadend_states:
-        assert result.graph.get_vertex_property(vertex).is_unsolvable
+        assert result.graph.vertex_value(vertex).is_unsolvable
 
 
 def test_program_parser_rejects_missing_action() -> None:
@@ -740,8 +740,8 @@ def test_lifted_execution_views_and_proof_labels_survive_owner_destruction(mode:
     options.universal = True
     options.state_memorization = mode
     result = ext.find_lifted_solution(task_context, program, options)
-    vertex = next(iter(result.graph.get_vertex_indices()))
-    label = result.graph.get_vertex_property(vertex)
+    vertex = next(iter(result.graph.vertices()))
+    label = result.graph.vertex_value(vertex)
     assert isinstance(label, ext.LiftedProgramProofVertexLabel)
 
     del result, expander, initial, program, repository, dl_repository, task_context, search_context, lifted_task

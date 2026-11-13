@@ -12,6 +12,7 @@
 #include <concepts>
 #include <cstdint>
 #include <memory>
+#include <type_traits>
 #include <urd/elements/flat.hpp>
 
 namespace runir::kr::ps::ext
@@ -76,6 +77,14 @@ template<typename T>
 concept RuleKind = BindingRuleKind<T> || std::same_as<T, SketchTag> || std::same_as<T, DoTag> || std::same_as<T, CallTag> || std::same_as<T, ActionTag>
                    || std::same_as<T, BacktrackTag>;
 
+/// A rule that leads to a target memory state: every rule but a Backtrack guard, which has none (docs/proof-search.rst).
+template<typename T>
+concept TransitionRuleKind = RuleKind<T> && !std::same_as<T, BacktrackTag>;
+
+/// A rule with effects: the binding rules, Sketch, Do and Action.
+template<typename T>
+concept EffectRuleKind = BindingRuleKind<T> || std::same_as<T, SketchTag> || std::same_as<T, DoTag> || std::same_as<T, ActionTag>;
+
 /// DL category bound by a rule tag.
 template<BindingRuleKind Tag>
 using RuleCategoryFor = typename Tag::Category;
@@ -125,6 +134,22 @@ using RuleVariantView = urd::index_view<ps::Rule<ExtFamilyTag>, Repository>;
 template<RuleKind Kind>
 using RuleView = urd::index_view<Rule<Kind>, Repository>;
 
+/// The kind of a rule, or of its view.
+template<typename T>
+struct rule_kind;
+template<RuleKind Kind>
+struct rule_kind<Rule<Kind>>
+{
+    using type = Kind;
+};
+template<RuleKind Kind, typename C>
+struct rule_kind<urd::index_view<Rule<Kind>, C>>
+{
+    using type = Kind;
+};
+template<typename T>
+using rule_kind_t = typename rule_kind<std::remove_cvref_t<T>>::type;
+
 template<typename R>
 concept LoadRuleView = std::same_as<R, RuleView<LoadTag<runir::kr::dl::ConceptTag>>> || std::same_as<R, RuleView<LoadTag<runir::kr::dl::RoleTag>>>;
 
@@ -135,6 +160,13 @@ template<typename R>
 concept BindingRuleView = LoadRuleView<R> || ChooseRuleView<R>;
 
 }  // namespace runir::kr::ps::ext
+
+namespace runir::kr::ps
+{
+/// ext's guards: a Backtrack rule leads to no target memory state.
+template<ext::RuleKind Kind, typename C>
+inline constexpr bool transition_rule<urd::index_view<ext::Rule<Kind>, C>> = ext::TransitionRuleKind<Kind>;
+}  // namespace runir::kr::ps
 
 template<>
 struct runir::kr::ps::FamilyTypes<runir::kr::ExtFamilyTag>

@@ -2,7 +2,6 @@ from pathlib import Path
 
 from . import (
     datasets as datasets,
-    graphs as graphs,
     kr as kr,
     serialization as serialization,
 )

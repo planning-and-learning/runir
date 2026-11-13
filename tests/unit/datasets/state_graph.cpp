@@ -5,21 +5,35 @@
 #include <memory>
 #include <runir/datasets/state_graph.hpp>
 #include <stdexcept>
+#include <tuple>
+#include <vector>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/state_builder.hpp>
 #include <tyr/planning/state_repository.hpp>
+#include <utility>
 
 namespace runir::tests
 {
+
+namespace
+{
+/// A state graph of one state, without transitions.
+datasets::StateGraph<tyr::GroundTag> single_state_graph(tyr::planning::PackedStateView<tyr::GroundTag> state)
+{
+    using Graph = datasets::StateGraph<tyr::GroundTag>;
+    using Edge = std::tuple<VertexIndex, VertexIndex, datasets::StateGraphEdgeLabel>;
+    using Label = vertex_label_t<Graph>;
+    const auto vertices = std::vector<Label> { Label { std::move(state) } };
+    return Graph(urd::graph_data<Edge, Label> { 1, {}, {}, vertices });
+}
+}  // namespace
 
 TEST(StateGraphTest, RejectsUnsupportedCostMode)
 {
     auto context = make_gripper_ground_context();
 
-    auto builder = datasets::StateGraphBuilder<tyr::GroundTag> {};
     const auto initial_state = context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator).get_state();
-    [[maybe_unused]] const auto initial_vertex = builder.add_vertex(datasets::StateGraphVertexLabel<tyr::GroundTag> { initial_state.pack() });
-    auto graph = datasets::StateGraph<tyr::GroundTag>(builder);
+    const auto graph = single_state_graph(initial_state.pack());
 
     EXPECT_THROW(
         try {
@@ -36,16 +50,16 @@ TEST(StateGraphTest, AnnotatesGeneratedGraphWithReachabilityAndGoalMetadata)
     auto context = make_gripper_ground_context();
     const auto graph = datasets::generate_state_graph(*context);
     const auto annotated = datasets::annotate_state_graph(*context, *graph, datasets::StateGraphCostMode::UNIT_COST);
-    const auto& forward_graph = annotated->get_forward_graph();
+    const auto& forward_graph = *annotated;
 
-    ASSERT_GT(forward_graph.get_num_vertices(), 0);
+    ASSERT_GT(forward_graph.num_vertices(), 0);
 
     auto num_initial = std::size_t { 0 };
     auto num_goal = std::size_t { 0 };
     auto num_alive = std::size_t { 0 };
-    for (auto vertex : forward_graph.get_vertex_indices())
+    for (auto vertex : forward_graph.vertices())
     {
-        const auto& label = forward_graph.get_vertex_property(vertex);
+        const auto& label = forward_graph.vertex_value(vertex);
         if (label.is_initial)
         {
             ++num_initial;
@@ -87,11 +101,11 @@ TEST(StateGraphTest, KeepsInitialVertexWhenStateLimitIsZero)
 
     EXPECT_EQ(result.status, tyr::planning::SearchStatus::OUT_OF_STATES);
     ASSERT_NE(result.graph, nullptr);
-    const auto& graph = result.graph->get_forward_graph();
-    ASSERT_EQ(graph.get_num_vertices(), 1);
-    EXPECT_EQ(graph.get_vertex_property(0).state,
+    const auto& graph = *result.graph;
+    ASSERT_EQ(graph.num_vertices(), 1);
+    EXPECT_EQ(graph.vertex_value(0).state,
               context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator).get_state().pack());
-    EXPECT_EQ(&graph.get_vertex_property(0).state.get_state_repository(), context->state_repository.get());
+    EXPECT_EQ(&graph.vertex_value(0).state.get_state_repository(), context->state_repository.get());
 }
 
 TEST(StateGraphTest, LabelsDoNotRetainUnpackedBuilders)
@@ -101,19 +115,18 @@ TEST(StateGraphTest, LabelsDoNotRetainUnpackedBuilders)
     const auto retained = [&]
     {
         const urd::data<tyr::planning::State<tyr::GroundTag>>* released_builder = nullptr;
-        auto builder = datasets::StateGraphBuilder<tyr::GroundTag> {};
+        auto graph = [&]
         {
             const auto node = context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator);
             released_builder = &node.get_state().data();
-            builder.add_vertex(datasets::StateGraphVertexLabel<tyr::GroundTag> { node.get_state().pack() });
-        }
-        auto graph = datasets::StateGraph<tyr::GroundTag>(builder);
+            return single_state_graph(node.get_state().pack());
+        }();
         {
             const auto recycled_builder = context->state_repository->get_state_builder();
             EXPECT_EQ(recycled_builder.get(), released_builder);
         }
         const auto annotated = datasets::annotate_state_graph(*context, graph, datasets::StateGraphCostMode::UNIT_COST);
-        return annotated->get_forward_graph().get_vertex_property(0).state;
+        return annotated->vertex_value(0).state;
     }();
 
     EXPECT_EQ(retained.unpack().pack(), retained);

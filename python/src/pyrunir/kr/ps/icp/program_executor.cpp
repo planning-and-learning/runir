@@ -16,7 +16,6 @@
 #include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
 #include <optional>
-#include <pyrunir/graphs/graph.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_policy.hpp>
@@ -31,14 +30,14 @@
 #include <string>
 #include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/declarations.hpp>
+#include <urd/python/graphs.hpp>
 #include <utility>
+#include <vefr/dot.hpp>
+#include <vefr/python/bindings.hpp>
 #include <yggdrasil/python/bindings.hpp>
 
 namespace runir::kr::ps::icp
 {
-
-using runir::graphs::bind_forward_graph;
-using runir::graphs::bind_readable_graph_methods;
 
 namespace
 {
@@ -124,10 +123,11 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     urd::python::add_comparison(vertex_label);
     urd::python::add_hash(vertex_label);
 
-    auto graph = nb::class_<Graph>(m, (std::string(prefix) + "ProgramProofGraph").c_str());
-    graph.def(nb::init<>());
-    bind_readable_graph_methods<true>(graph);
-    bind_forward_graph(graph);
+    {
+        auto graph = nb::class_<Graph>(m, (std::string(prefix) + "ProgramProofGraph").c_str());
+        urd::python::bind_graph(graph);
+        vefr::python::bind_algorithms(graph, vefr::vertex_data, vefr::edge_data);
+    }
 
     nb::class_<Results>(m, (std::string(prefix) + "ProgramProofResults").c_str())
         .def_ro("status", &Results::status)

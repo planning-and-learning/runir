@@ -1,8 +1,7 @@
 #ifndef RUNIR_KR_PS_PROGRAM_PROOF_GRAPH_HPP_
 #define RUNIR_KR_PS_PROGRAM_PROOF_GRAPH_HPP_
 
-#include "runir/graphs/static_graph.hpp"
-#include "runir/graphs/static_graph_builder.hpp"
+#include "runir/datasets/graph_types.hpp"
 #include "runir/kr/ps/declarations.hpp"
 
 #include <cista/containers/optional.h>
@@ -11,6 +10,7 @@
 #include <tyr/formalism/planning/repository.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <urd/elements/flat.hpp>
+#include <urd/repr/graphs/csr_graph.hpp>
 #include <utility>
 #include <yggdrasil/formalism/row_view.hpp>
 
@@ -63,11 +63,9 @@ struct ProgramProofEdgeLabel : urd::compared_by_identity<ProgramProofEdgeLabel<F
     static constexpr auto identifying_members() noexcept { return urd::Members<&ProgramProofEdgeLabel::action, &ProgramProofEdgeLabel::rule> {}; }
 };
 
+/// The program states a program's proof search reached and the transitions it took: a frozen graph, each labelled.
 template<ProgramFamilyTag Family, tyr::TaskKind Kind>
-using ProgramProofGraphBuilder = graphs::StaticGraphBuilder<ProgramProofVertexLabel<Family, Kind>, ProgramProofEdgeLabel<Family>>;
-
-template<ProgramFamilyTag Family, tyr::TaskKind Kind>
-using ProgramProofGraph = graphs::StaticGraph<ProgramProofVertexLabel<Family, Kind>, ProgramProofEdgeLabel<Family>>;
+using ProgramProofGraph = urd::Store<urd::graph<VertexIndex, ProgramProofEdgeLabel<Family>, ProgramProofVertexLabel<Family, Kind>>, urd::frozen>;
 
 }  // namespace runir::kr::ps
 

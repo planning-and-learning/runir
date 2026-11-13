@@ -1,8 +1,7 @@
 #ifndef RUNIR_KR_PS_EXT_DL_STRUCTURAL_TERMINATION_DATA_HPP_
 #define RUNIR_KR_PS_EXT_DL_STRUCTURAL_TERMINATION_DATA_HPP_
 
-#include "runir/graphs/static_graph.hpp"
-#include "runir/graphs/static_graph_builder.hpp"
+#include "runir/datasets/graph_types.hpp"
 #include "runir/kr/ps/dl/structural_termination.hpp"
 #include "runir/kr/ps/ext/dl/incomplete_structural_termination_data.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
@@ -12,6 +11,7 @@
 #include <memory>
 #include <optional>
 #include <urd/elements/flat.hpp>
+#include <urd/repr/graphs/csr_graph.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <vector>
@@ -55,7 +55,10 @@ struct ModulePolicyGraphVertexLabel : urd::compared_by_identity<ModulePolicyGrap
     }
 };
 
-using ModulePolicyGraph = graphs::StaticGraph<ModulePolicyGraphVertexLabel, RuleVariantView>;
+/// A counterexample to a module's termination: feature valuations with memory states and the rules between them.
+using ModulePolicyGraph = urd::Store<urd::graph<VertexIndex, RuleVariantView, ModulePolicyGraphVertexLabel>, urd::frozen>;
+// The concepts it is bound and searched by (urd/graphs.hpp): a renamed member is a compile error, not a lost feature.
+static_assert(urd::incidence_graph<ModulePolicyGraph> && urd::edge_list_graph<ModulePolicyGraph>);
 using SccStructuralTerminationResult = runir::kr::ps::dl::SccStructuralTerminationResult<runir::kr::ExtFamilyTag, runir::kr::ps::ext::Repository>;
 
 struct ModuleSieveStructuralTerminationResult

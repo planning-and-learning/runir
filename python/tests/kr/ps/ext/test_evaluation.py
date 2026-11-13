@@ -243,7 +243,7 @@ def test_call_rule_arguments_preserve_feature_views_and_order() -> None:
     module = program.get_entry_module()
     rule = module.get_memory_transitions()[0][0].get_variant()
     assert isinstance(rule, ext.CallRule)
-    arguments = rule.get_call_arguments()
+    arguments = rule.get_arguments()
     assert arguments == [
         module.get_concept_features()[0],
         module.get_role_features()[0],
@@ -735,9 +735,9 @@ def test_initial_goal_classifier_and_zero_time_results(
         assert proof.statistics.choice_depth == 0
         assert proof.statistics.choice_width == 0
         assert proof.open_states == []
-        assert proof.graph.get_num_vertices() == 1
-        assert proof.graph.get_num_edges() == 0
-        label = proof.graph.get_vertex_property(0)
+        assert proof.graph.num_vertices == 1
+        assert proof.graph.num_edges == 0
+        label = proof.graph.vertex_value(0)
         assert label.is_initial
         assert label.is_goal == initial_goal_satisfied
         assert label.is_unsolvable == (not initial_goal_satisfied)

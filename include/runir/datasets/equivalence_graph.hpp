@@ -20,17 +20,15 @@
 
 #include "runir/datasets/config.hpp"
 #include "runir/datasets/equivalence_policy.hpp"
+#include "runir/datasets/graph_types.hpp"
 #include "runir/datasets/object_graph.hpp"
 #include "runir/datasets/state_graph.hpp"
 #include "runir/datasets/task_class.hpp"
-#include "runir/graphs/bidirectional_static_graph.hpp"
-#include "runir/graphs/dynamic_graph.hpp"
-#include "runir/graphs/static_graph.hpp"
-#include "runir/graphs/static_graph_builder.hpp"
 
 #include <limits>
 #include <memory>
 #include <tuple>
+#include <urd/repr/graphs/csr_graph.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <utility>
@@ -43,10 +41,10 @@ namespace runir::datasets
 struct EquivalenceVertexLabel : urd::compared_by_identity<EquivalenceVertexLabel>
 {
     ygg::uint_t state_graph_index = 0;
-    graphs::VertexIndex state_vertex_index = 0;
+    VertexIndex state_vertex_index = 0;
 
     EquivalenceVertexLabel() = default;
-    constexpr EquivalenceVertexLabel(ygg::uint_t state_graph_index_, graphs::VertexIndex state_vertex_index_) noexcept :
+    constexpr EquivalenceVertexLabel(ygg::uint_t state_graph_index_, VertexIndex state_vertex_index_) noexcept :
         state_graph_index(state_graph_index_),
         state_vertex_index(state_vertex_index_)
     {
@@ -61,7 +59,7 @@ struct EquivalenceVertexLabel : urd::compared_by_identity<EquivalenceVertexLabel
 struct AnnotatedEquivalenceVertexLabel : urd::compared_by_identity<AnnotatedEquivalenceVertexLabel>
 {
     ygg::uint_t state_graph_index = 0;
-    graphs::VertexIndex state_vertex_index = 0;
+    VertexIndex state_vertex_index = 0;
     ygg::float_t goal_distance = std::numeric_limits<ygg::float_t>::infinity();
     bool is_initial = false;
     bool is_goal = false;
@@ -70,7 +68,7 @@ struct AnnotatedEquivalenceVertexLabel : urd::compared_by_identity<AnnotatedEqui
 
     AnnotatedEquivalenceVertexLabel() = default;
     AnnotatedEquivalenceVertexLabel(ygg::uint_t state_graph_index_,
-                                    graphs::VertexIndex state_vertex_index_,
+                                    VertexIndex state_vertex_index_,
                                     ygg::float_t goal_distance_,
                                     bool is_initial_,
                                     bool is_goal_,
@@ -112,10 +110,10 @@ struct AnnotatedEquivalenceVertexLabel : urd::compared_by_identity<AnnotatedEqui
 struct EquivalenceEdgeLabel : urd::compared_by_identity<EquivalenceEdgeLabel>
 {
     ygg::uint_t state_graph_index = 0;
-    graphs::EdgeIndex state_edge_index = 0;
+    EdgeIndex state_edge_index = 0;
 
     EquivalenceEdgeLabel() = default;
-    constexpr EquivalenceEdgeLabel(ygg::uint_t state_graph_index_, graphs::EdgeIndex state_edge_index_) noexcept :
+    constexpr EquivalenceEdgeLabel(ygg::uint_t state_graph_index_, EdgeIndex state_edge_index_) noexcept :
         state_graph_index(state_graph_index_),
         state_edge_index(state_edge_index_)
     {
@@ -127,21 +125,17 @@ struct EquivalenceEdgeLabel : urd::compared_by_identity<EquivalenceEdgeLabel>
     { return urd::Members<&EquivalenceEdgeLabel::state_graph_index, &EquivalenceEdgeLabel::state_edge_index> {}; }
 };
 
-using EquivalenceGraphBuilder = graphs::StaticGraphBuilder<EquivalenceVertexLabel, EquivalenceEdgeLabel>;
+/// The classes of states the equivalence policy finds across tasks, each represented by a state of a state graph, and an
+/// edge between two classes where a transition leads from a state of one to a state of the other (labelled by the first
+/// such transition, by its number in its state graph): a frozen graph that keeps its in-edges.
+using EquivalenceGraph = urd::Store<urd::graph<VertexIndex, EquivalenceEdgeLabel, EquivalenceVertexLabel>, urd::frozen, urd::bidirectional>;
 
-using StaticEquivalenceGraph = graphs::StaticGraph<EquivalenceVertexLabel, EquivalenceEdgeLabel>;
-
-using EquivalenceGraph = graphs::BidirectionalStaticGraph<EquivalenceVertexLabel, EquivalenceEdgeLabel>;
-
-using DynamicEquivalenceGraph = graphs::DynamicGraph<EquivalenceVertexLabel, EquivalenceEdgeLabel>;
-
-using AnnotatedEquivalenceGraphBuilder = graphs::StaticGraphBuilder<AnnotatedEquivalenceVertexLabel, EquivalenceEdgeLabel>;
-
-using StaticAnnotatedEquivalenceGraph = graphs::StaticGraph<AnnotatedEquivalenceVertexLabel, EquivalenceEdgeLabel>;
-
-using AnnotatedEquivalenceGraph = graphs::BidirectionalStaticGraph<AnnotatedEquivalenceVertexLabel, EquivalenceEdgeLabel>;
-
-using DynamicAnnotatedEquivalenceGraph = graphs::DynamicGraph<AnnotatedEquivalenceVertexLabel, EquivalenceEdgeLabel>;
+/// An equivalence graph whose classes know their goal distance and whether they are initial, goal, alive or unsolvable.
+using AnnotatedEquivalenceGraph =
+    urd::Store<urd::graph<VertexIndex, EquivalenceEdgeLabel, AnnotatedEquivalenceVertexLabel>, urd::frozen, urd::bidirectional>;
+// The concepts it is bound and searched by (urd/graphs.hpp): a renamed member is a compile error, not a lost feature.
+static_assert(urd::bidirectional_graph<EquivalenceGraph> && urd::edge_list_graph<EquivalenceGraph>);
+static_assert(urd::bidirectional_graph<AnnotatedEquivalenceGraph> && urd::edge_list_graph<AnnotatedEquivalenceGraph>);
 
 template<tyr::TaskKind Kind>
 struct EquivalenceGraphConstructionResult
@@ -160,13 +154,6 @@ template<tyr::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
 auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts,
                                 Policy& policy,
                                 const StateGraphGenerationOptions& state_graph_options = StateGraphGenerationOptions())
-    -> EquivalenceGraphConstructionResult<Kind>;
-
-template<tyr::TaskKind Kind>
-auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts, EquivalencePolicyMode policy_mode) -> EquivalenceGraphConstructionResult<Kind>;
-
-template<tyr::TaskKind Kind>
-auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts, const EquivalenceGraphGenerationOptions& options = EquivalenceGraphGenerationOptions())
     -> EquivalenceGraphConstructionResult<Kind>;
 
 template<tyr::TaskKind Kind>

@@ -9,6 +9,7 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <limits>
+#include <ranges>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation.hpp>
 #include <runir/kr/ps/ext/detail/search_path.hpp>
@@ -75,11 +76,11 @@ TEST(RunirTests, ExtFindSolutionTreatsClassifierMatchesAsTerminalFailures)
 
     EXPECT_EQ(result.status, kr::ps::ProofStatus::FAILURE);
     ASSERT_TRUE(result.graph);
-    ASSERT_EQ(result.graph->get_num_vertices(), 1);
-    EXPECT_EQ(result.graph->get_num_edges(), 0);
+    ASSERT_EQ(result.graph->num_vertices(), 1);
+    EXPECT_EQ(result.graph->num_edges(), 0);
     ASSERT_EQ(result.deadend_states.size(), 1);
     EXPECT_TRUE(result.open_states.empty());
-    const auto& label = result.graph->get_vertex_property(result.deadend_states.front());
+    const auto& label = result.graph->vertex_value(result.deadend_states.front());
     EXPECT_FALSE(label.is_goal);
     EXPECT_FALSE(label.is_alive);
     EXPECT_TRUE(label.is_unsolvable);
@@ -143,13 +144,13 @@ TEST(RunirTests, ExtSketchUsesOnlyImmediateOutcomesAndUniversalPreservesParallel
     const auto universal = kr::ps::ext::find_solution(task_context, program, universal_options);
     ASSERT_TRUE(greedy.graph);
     ASSERT_TRUE(universal.graph);
-    EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
-    EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
+    EXPECT_EQ(greedy.graph->out_degree(0), 1);
+    EXPECT_EQ(universal.graph->out_degree(0), steps.size());
 
-    auto targets = urd::Store<urd::set<runir::graphs::VertexIndex>> {};
-    for (const auto edge : universal.graph->get_out_edge_indices(0))
-        targets.insert(universal.graph->get_target(edge));
-    EXPECT_LT(targets.size(), universal.graph->get_out_degree(0));
+    auto targets = urd::Store<urd::set<runir::VertexIndex>> {};
+    for (const auto edge : universal.graph->out_edges(0))
+        targets.insert(universal.graph->target(edge));
+    EXPECT_LT(targets.size(), universal.graph->out_degree(0));
 
     const auto two_step_module = kr::ps::ext::dl::parse_module(
         read_fixture("kr/ps/ext/executor/ext_sketch_uses_only_immediate_outcomes_and_universal_preserves_parallel_edges/two_step_module.module"),
@@ -166,8 +167,8 @@ TEST(RunirTests, ExtSketchUsesOnlyImmediateOutcomesAndUniversalPreservesParallel
     const auto rejected = kr::ps::ext::find_solution(task_context, two_step_program, rejected_options);
     EXPECT_EQ(rejected.status, kr::ps::ProofStatus::FAILURE);
     ASSERT_TRUE(rejected.graph);
-    EXPECT_EQ(rejected.graph->get_num_vertices(), 1);
-    EXPECT_EQ(rejected.graph->get_num_edges(), 0);
+    EXPECT_EQ(rejected.graph->num_vertices(), 1);
+    EXPECT_EQ(rejected.graph->num_edges(), 0);
 }
 
 TEST(RunirTests, ExtFindSolutionRejectsCyclesBeforeInterningStates)
@@ -231,8 +232,8 @@ TEST(RunirTests, ExtExecutorFixtureOutcomesMatch)
         const auto status = ygg::common::as_string(test_case, "status", "case");
         EXPECT_EQ(kr::ps::to_string(result.status), status);
         ASSERT_TRUE(result.graph);
-        EXPECT_EQ(result.graph->get_num_vertices(), ygg::common::as_size(test_case, "num_vertices", "case"));
-        EXPECT_EQ(result.graph->get_num_edges(), ygg::common::as_size(test_case, "num_edges", "case"));
+        EXPECT_EQ(result.graph->num_vertices(), ygg::common::as_size(test_case, "num_vertices", "case"));
+        EXPECT_EQ(result.graph->num_edges(), ygg::common::as_size(test_case, "num_edges", "case"));
         EXPECT_EQ(result.deadend_states.size(), ygg::common::as_size(test_case, "num_deadends", "case"));
         EXPECT_EQ(!result.open_states.empty(), ygg::common::as_bool(test_case, "has_open_states", "case"));
         EXPECT_EQ(result.cycle.size(), ygg::common::as_size(test_case, "cycle_length", "case"));
@@ -358,11 +359,11 @@ void check_backtrack_execution()
             EXPECT_EQ(rejected.statistics.num_expanded, 1);
             EXPECT_EQ(rejected.statistics.num_backtracks, 0);
             ASSERT_TRUE(rejected.graph);
-            EXPECT_EQ(rejected.graph->get_num_vertices(), 1);
-            EXPECT_EQ(rejected.graph->get_num_edges(), 0);
+            EXPECT_EQ(rejected.graph->num_vertices(), 1);
+            EXPECT_EQ(rejected.graph->num_edges(), 0);
             ASSERT_EQ(rejected.deadend_states.size(), 1);
             EXPECT_TRUE(rejected.open_states.empty());
-            EXPECT_FALSE(rejected.graph->get_vertex_property(rejected.deadend_states.front()).is_unsolvable);
+            EXPECT_FALSE(rejected.graph->vertex_value(rejected.deadend_states.front()).is_unsolvable);
 
             const auto selected = kr::ps::ext::find_solution(context, choices, options);
             ASSERT_EQ(selected.status, Status::SUCCESS);
@@ -374,7 +375,7 @@ void check_backtrack_execution()
             if (mode == Mode::ALL)
             {
                 ASSERT_EQ(selected.deadend_states.size(), 1);
-                EXPECT_FALSE(selected.graph->get_vertex_property(selected.deadend_states.front()).is_unsolvable);
+                EXPECT_FALSE(selected.graph->vertex_value(selected.deadend_states.front()).is_unsolvable);
             }
             if (!universal)
             {
@@ -390,7 +391,7 @@ void check_backtrack_execution()
             ASSERT_TRUE(blocked.graph);
             ASSERT_EQ(blocked.deadend_states.size(), 1);
             EXPECT_TRUE(blocked.open_states.empty());
-            const auto& deadend = blocked.graph->get_vertex_property(blocked.deadend_states.front());
+            const auto& deadend = blocked.graph->vertex_value(blocked.deadend_states.front());
             EXPECT_FALSE(deadend.is_unsolvable);
             EXPECT_EQ(deadend.program_state.get_module_state().get_module().get_name(), "callee");
             EXPECT_EQ(deadend.program_state.get_module_state().get_memory_state().get_name(), "m2");
@@ -555,9 +556,9 @@ void check_choice_execution()
     {
         ASSERT_TRUE(result.graph);
         auto expandable = static_cast<std::size_t>(0);
-        for (const auto vertex : result.graph->get_vertex_indices())
+        for (const auto vertex : result.graph->vertices())
         {
-            const auto& label = result.graph->get_vertex_property(vertex);
+            const auto& label = result.graph->vertex_value(vertex);
             expandable += !label.is_goal && !label.is_unsolvable;
         }
         EXPECT_EQ(result.statistics.num_expanded, expandable);
@@ -764,17 +765,17 @@ void check_choice_execution()
         EXPECT_EQ(state_limited.statistics.num_expanded, 1);
         EXPECT_EQ(state_limited.statistics.num_generated, 1);  // Only the selected binding is generated before the state limit.
         ASSERT_TRUE(state_limited.graph);
-        EXPECT_EQ(state_limited.graph->get_num_vertices(), 1);
-        EXPECT_EQ(state_limited.graph->get_num_edges(), 0);
+        EXPECT_EQ(state_limited.graph->num_vertices(), 1);
+        EXPECT_EQ(state_limited.graph->num_edges(), 0);
         limited.max_num_states = 0;
         const auto no_states = kr::ps::ext::find_solution(context, program, limited);
         EXPECT_EQ(no_states.status, Status::OUT_OF_STATES);
         EXPECT_EQ(no_states.statistics.num_expanded, 0);
         EXPECT_EQ(no_states.statistics.num_generated, 0);
         ASSERT_TRUE(no_states.graph);
-        EXPECT_EQ(no_states.graph->get_num_vertices(), 0);
-        EXPECT_EQ(no_states.graph->get_num_edges(), 0);
-        limited.max_num_states = result.graph->get_num_vertices() - 1;
+        EXPECT_EQ(no_states.graph->num_vertices(), 0);
+        EXPECT_EQ(no_states.graph->num_edges(), 0);
+        limited.max_num_states = result.graph->num_vertices() - 1;
         EXPECT_EQ(kr::ps::ext::find_solution(context, program, limited).status, Status::OUT_OF_STATES);
         limited = options;
         limited.max_time = std::chrono::steady_clock::duration::zero();
@@ -790,8 +791,8 @@ void check_choice_execution()
         EXPECT_EQ(first.statistics.num_expanded, second.statistics.num_expanded);
         EXPECT_EQ(first.statistics.num_generated, second.statistics.num_generated);
         EXPECT_EQ(first.status, second.status);
-        EXPECT_EQ(first.graph->get_num_vertices(), second.graph->get_num_vertices());
-        EXPECT_EQ(first.graph->get_num_edges(), second.graph->get_num_edges());
+        EXPECT_EQ(first.graph->num_vertices(), second.graph->num_vertices());
+        EXPECT_EQ(first.graph->num_edges(), second.graph->num_edges());
 
         // All alternatives fail, but converging bindings reuse the permanently explored suffix.
         const auto replayed =
@@ -812,22 +813,22 @@ void check_choice_execution()
         EXPECT_EQ(replay_second.statistics.num_generated, replay_first.statistics.num_generated);
         ASSERT_TRUE(replay_first.graph);
         ASSERT_TRUE(replay_second.graph);
-        ASSERT_EQ(replay_first.graph->get_num_vertices(), 13);
-        ASSERT_EQ(replay_second.graph->get_num_vertices(), replay_first.graph->get_num_vertices());
-        ASSERT_EQ(replay_first.graph->get_num_edges(), 18);  // Retain every attempted transition into the shared suffix.
-        ASSERT_EQ(replay_second.graph->get_num_edges(), replay_first.graph->get_num_edges());
+        ASSERT_EQ(replay_first.graph->num_vertices(), 13);
+        ASSERT_EQ(replay_second.graph->num_vertices(), replay_first.graph->num_vertices());
+        ASSERT_EQ(replay_first.graph->num_edges(), 18);  // Retain every attempted transition into the shared suffix.
+        ASSERT_EQ(replay_second.graph->num_edges(), replay_first.graph->num_edges());
         expect_single_expansion(replay_first);
         expect_single_expansion(replay_second);
         EXPECT_EQ(replay_first.open_states, replay_second.open_states);
         EXPECT_EQ(replay_first.deadend_states, replay_second.deadend_states);
         EXPECT_EQ(replay_first.cycle, replay_second.cycle);
-        for (const auto vertex : replay_first.graph->get_vertex_indices())
-            EXPECT_TRUE(replay_first.graph->get_vertex_property(vertex) == replay_second.graph->get_vertex_property(vertex));
-        for (const auto edge : replay_first.graph->get_edge_indices())
+        for (const auto vertex : replay_first.graph->vertices())
+            EXPECT_TRUE(replay_first.graph->vertex_value(vertex) == replay_second.graph->vertex_value(vertex));
+        for (const auto edge : std::views::iota(std::size_t { 0 }, replay_first.graph->num_edges()))
         {
-            EXPECT_EQ(replay_first.graph->get_source(edge), replay_second.graph->get_source(edge));
-            EXPECT_EQ(replay_first.graph->get_target(edge), replay_second.graph->get_target(edge));
-            EXPECT_TRUE(replay_first.graph->get_edge_property(edge) == replay_second.graph->get_edge_property(edge));
+            EXPECT_EQ(replay_first.graph->source(edge), replay_second.graph->source(edge));
+            EXPECT_EQ(replay_first.graph->target(edge), replay_second.graph->target(edge));
+            EXPECT_TRUE(replay_first.graph->edge_value(edge) == replay_second.graph->edge_value(edge));
         }
     }
 
@@ -849,7 +850,7 @@ void check_choice_execution()
     expect_single_expansion(parallel_result);
     ASSERT_TRUE(parallel_result.graph);
     EXPECT_EQ(context->execution_repository->template size<kr::ps::ext::ProgramState<Kind>>() - states_before_parallel,
-              parallel_result.graph->get_num_vertices());  // Untried bindings do not intern program states.
+              parallel_result.graph->num_vertices());  // Untried bindings do not intern program states.
 
     // A second Choose must satisfy its own obligation when its first binding reaches an already proved child.
     const auto shared_choice =
@@ -864,14 +865,14 @@ void check_choice_execution()
     EXPECT_EQ(shared_choice_result.statistics.num_generated, 5);
     expect_single_expansion(shared_choice_result);
     ASSERT_TRUE(shared_choice_result.graph);
-    EXPECT_EQ(shared_choice_result.graph->get_num_vertices(), 5);
-    EXPECT_EQ(shared_choice_result.graph->get_out_degree(0), 2);
-    auto shared_targets = urd::Store<urd::set<graphs::VertexIndex>> {};
+    EXPECT_EQ(shared_choice_result.graph->num_vertices(), 5);
+    EXPECT_EQ(shared_choice_result.graph->out_degree(0), 2);
+    auto shared_targets = urd::Store<urd::set<VertexIndex>> {};
     auto shared_rules = std::set<std::string> {};
-    for (const auto edge : shared_choice_result.graph->get_out_edge_indices(0))
+    for (const auto edge : shared_choice_result.graph->out_edges(0))
     {
-        shared_targets.insert(shared_choice_result.graph->get_target(edge));
-        const auto& rule = shared_choice_result.graph->get_edge_property(edge).rule;
+        shared_targets.insert(shared_choice_result.graph->target(edge));
+        const auto& rule = shared_choice_result.graph->edge_value(edge).rule;
         ASSERT_TRUE(rule);
         shared_rules.insert(std::string(rule->get_symbol()));
     }
@@ -905,7 +906,7 @@ void check_choice_execution()
     // An additional ordinary obligation exhausts the budget before the whole proof is available.
     const auto partial = make_program(choice_module("partial-unequal-depths", reconverged_rules + choice_rule("exceed-limit", "m2", "m6", load_goal)));
     auto limited = universal;
-    limited.max_num_states = reconverged_result.graph->get_num_vertices();
+    limited.max_num_states = reconverged_result.graph->num_vertices();
     const auto partial_result = kr::ps::ext::find_solution(context, partial, limited);
     EXPECT_EQ(partial_result.status, Status::OUT_OF_STATES);
     EXPECT_EQ(partial_result.statistics.choice_depth, 0);
@@ -921,9 +922,9 @@ void check_choice_execution()
     ASSERT_TRUE(required_choice_result.graph);
     auto goals = 0;
     auto failed_bindings = 0;
-    for (const auto vertex : required_choice_result.graph->get_vertex_indices())
+    for (const auto vertex : required_choice_result.graph->vertices())
     {
-        const auto& label = required_choice_result.graph->get_vertex_property(vertex);
+        const auto& label = required_choice_result.graph->vertex_value(vertex);
         goals += label.is_goal;
         failed_bindings += label.program_state.get_module_state().get_memory_state().get_name() == "m6";
     }
@@ -1012,8 +1013,8 @@ void check_ordinary_execution_keeps_complete_graph()
         const auto greedy = kr::ps::ext::find_solution(context, program, options);
         EXPECT_EQ(greedy.status, kr::ps::ProofStatus::FAILURE);
         ASSERT_TRUE(greedy.graph);
-        EXPECT_EQ(greedy.graph->get_num_vertices(), diamond ? 5 : 4);
-        EXPECT_EQ(greedy.graph->get_num_edges(), diamond ? 4 : 3);
+        EXPECT_EQ(greedy.graph->num_vertices(), diamond ? 5 : 4);
+        EXPECT_EQ(greedy.graph->num_edges(), diamond ? 4 : 3);
         EXPECT_EQ(greedy.open_states.size(), 1);
         EXPECT_TRUE(greedy.deadend_states.empty());
         EXPECT_FALSE(greedy.plan);
@@ -1026,20 +1027,20 @@ void check_ordinary_execution_keeps_complete_graph()
             const auto complete = kr::ps::ext::find_solution(context, program, options);
             EXPECT_EQ(complete.status, kr::ps::ProofStatus::FAILURE);
             ASSERT_TRUE(complete.graph);
-            EXPECT_EQ(complete.graph->get_num_vertices(), diamond ? 9 : 7);
-            EXPECT_EQ(complete.graph->get_num_edges(), diamond ? 9 : 7);
-            EXPECT_EQ(complete.graph->get_out_degree(0), 2);
+            EXPECT_EQ(complete.graph->num_vertices(), diamond ? 9 : 7);
+            EXPECT_EQ(complete.graph->num_edges(), diamond ? 9 : 7);
+            EXPECT_EQ(complete.graph->out_degree(0), 2);
             EXPECT_EQ(complete.open_states.size(), classify ? 0 : 1);
             EXPECT_EQ(complete.deadend_states.size(), classify ? 1 : 0);
             EXPECT_TRUE(complete.cycle.empty());
             EXPECT_FALSE(complete.plan);
             auto goals = 0;
-            for (const auto vertex : complete.graph->get_vertex_indices())
-                goals += complete.graph->get_vertex_property(vertex).is_goal;
+            for (const auto vertex : complete.graph->vertices())
+                goals += complete.graph->vertex_value(vertex).is_goal;
             EXPECT_EQ(goals, 1);  // A failing load outcome must not prevent exploration of the other outcome.
             const auto& failures = classify ? complete.deadend_states : complete.open_states;
             ASSERT_EQ(failures.size(), 1);
-            const auto& failure = complete.graph->get_vertex_property(failures.front());
+            const auto& failure = complete.graph->vertex_value(failures.front());
             EXPECT_FALSE(failure.is_goal);
             EXPECT_EQ(failure.is_alive, !classify);
             EXPECT_EQ(failure.is_unsolvable, classify);
@@ -1050,18 +1051,18 @@ void check_ordinary_execution_keeps_complete_graph()
             EXPECT_EQ(second.status, first.status);
             ASSERT_TRUE(first.graph);
             ASSERT_TRUE(second.graph);
-            ASSERT_EQ(first.graph->get_num_vertices(), second.graph->get_num_vertices());
-            ASSERT_EQ(first.graph->get_num_edges(), second.graph->get_num_edges());
+            ASSERT_EQ(first.graph->num_vertices(), second.graph->num_vertices());
+            ASSERT_EQ(first.graph->num_edges(), second.graph->num_edges());
             EXPECT_EQ(first.open_states, second.open_states);
             EXPECT_EQ(first.deadend_states, second.deadend_states);
             EXPECT_EQ(first.cycle, second.cycle);
-            for (const auto vertex : first.graph->get_vertex_indices())
-                EXPECT_TRUE(first.graph->get_vertex_property(vertex) == second.graph->get_vertex_property(vertex));
-            for (const auto edge : first.graph->get_edge_indices())
+            for (const auto vertex : first.graph->vertices())
+                EXPECT_TRUE(first.graph->vertex_value(vertex) == second.graph->vertex_value(vertex));
+            for (const auto edge : std::views::iota(std::size_t { 0 }, first.graph->num_edges()))
             {
-                EXPECT_EQ(first.graph->get_source(edge), second.graph->get_source(edge));
-                EXPECT_EQ(first.graph->get_target(edge), second.graph->get_target(edge));
-                EXPECT_TRUE(first.graph->get_edge_property(edge) == second.graph->get_edge_property(edge));
+                EXPECT_EQ(first.graph->source(edge), second.graph->source(edge));
+                EXPECT_EQ(first.graph->target(edge), second.graph->target(edge));
+                EXPECT_TRUE(first.graph->edge_value(edge) == second.graph->edge_value(edge));
             }
         }
     }
@@ -1201,10 +1202,10 @@ void check_state_memorization()
             EXPECT_EQ(result.statistics.choice_width, 2);  // The successful binding is last, but the original width is retained.
             EXPECT_NE(fmt::format("{}", result).find("choice_depth=1, choice_width=2"), std::string::npos);
             EXPECT_EQ(result.statistics.num_expanded, 5);
-            EXPECT_EQ(result.graph->get_num_vertices(), mode == Mode::ALL ? 6 : 4);
-            EXPECT_EQ(result.graph->get_num_edges(), mode == Mode::ALL ? 5 : 3);
+            EXPECT_EQ(result.graph->num_vertices(), mode == Mode::ALL ? 6 : 4);
+            EXPECT_EQ(result.graph->num_edges(), mode == Mode::ALL ? 5 : 3);
             EXPECT_EQ(result.open_states.empty(), mode != Mode::ALL);
-            EXPECT_EQ(result.task_context_owner->execution_repository->template size<kr::ps::ext::ProgramState<Kind>>(), result.graph->get_num_vertices());
+            EXPECT_EQ(result.task_context_owner->execution_repository->template size<kr::ps::ext::ProgramState<Kind>>(), result.graph->num_vertices());
             EXPECT_EQ(result.task_context_owner->search_context->state_repository->num_states(), mode == Mode::ALL ? 4 : 3);
             EXPECT_EQ(result.plan.has_value(), !universal);
             if (result.plan)
@@ -1257,9 +1258,9 @@ void check_state_memorization()
                 EXPECT_EQ(called.plan->get_length(), 2);
             }
             auto child_states = 0;
-            for (const auto vertex : called.graph->get_vertex_indices())
+            for (const auto vertex : called.graph->vertices())
             {
-                const auto frame = called.graph->get_vertex_property(vertex).program_state.get_module_state();
+                const auto frame = called.graph->vertex_value(vertex).program_state.get_module_state();
                 if (frame.get_module().get_name() == "child")
                 {
                     ++child_states;
@@ -1285,9 +1286,9 @@ void check_state_memorization()
                 EXPECT_EQ(nested_called.plan->get_length(), 2);
             }
             auto grandchild_states = 0;
-            for (const auto vertex : nested_called.graph->get_vertex_indices())
+            for (const auto vertex : nested_called.graph->vertices())
             {
-                const auto state = nested_called.graph->get_vertex_property(vertex).program_state;
+                const auto state = nested_called.graph->vertex_value(vertex).program_state;
                 if (state.get_module_state().get_module().get_name() != "grandchild")
                     continue;
                 ++grandchild_states;
@@ -1314,9 +1315,9 @@ void check_state_memorization()
             auto first_invocations = 0;
             auto second_invocations = 0;
             auto restored_callers = 0;
-            for (const auto vertex : recalled.graph->get_vertex_indices())
+            for (const auto vertex : recalled.graph->vertices())
             {
-                const auto frame = recalled.graph->get_vertex_property(vertex).program_state.get_module_state();
+                const auto frame = recalled.graph->vertex_value(vertex).program_state.get_module_state();
                 const auto memory = frame.get_memory_state().get_name();
                 if (frame.get_module().get_name() == "child" && (memory == "first" || memory == "second"))
                 {
@@ -1345,7 +1346,7 @@ void check_state_memorization()
                 EXPECT_EQ(bounded.statistics.choice_width, 0);
                 EXPECT_EQ(bounded.statistics.num_expanded, maximum);
                 EXPECT_EQ(bounded.statistics.num_generated, maximum);
-                EXPECT_EQ(bounded.graph->get_num_vertices(), maximum);
+                EXPECT_EQ(bounded.graph->num_vertices(), maximum);
                 EXPECT_FALSE(bounded.plan);
             }
             options.max_time = std::chrono::steady_clock::duration::zero();
@@ -1417,9 +1418,9 @@ void check_state_memorization()
         const auto result = run(separate_choices, options);
         ASSERT_EQ(result.status, Status::SUCCESS);
         ASSERT_TRUE(result.graph);
-        EXPECT_EQ(result.graph->get_num_vertices(), mode == Mode::ALL ? 8 : 5);
+        EXPECT_EQ(result.graph->num_vertices(), mode == Mode::ALL ? 8 : 5);
         EXPECT_EQ(result.task_context_owner->execution_repository->template size<kr::ps::ext::ProgramState<Kind>>(),
-                  result.graph->get_num_vertices() + (mode == Mode::CHOICE ? 1 : 0));
+                  result.graph->num_vertices() + (mode == Mode::CHOICE ? 1 : 0));
         EXPECT_EQ(result.task_context_owner->search_context->state_repository->num_states(), mode == Mode::ALL ? 4 : 3);
     }
 }

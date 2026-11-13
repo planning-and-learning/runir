@@ -1,6 +1,7 @@
 #include "successor_expander_fixtures.hpp"
 
 #include <gtest/gtest.h>
+#include <ranges>
 #include <urd/repr/values/unordered_flat_set.hpp>
 #include <urd/store.hpp>
 
@@ -349,11 +350,11 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     const auto universal = kr::ps::ext::find_solution(task_context, program, universal_options);
     ASSERT_TRUE(greedy.graph);
     ASSERT_TRUE(universal.graph);
-    ASSERT_EQ(greedy.graph->get_out_degree(0), 1);
-    EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
+    ASSERT_EQ(greedy.graph->out_degree(0), 1);
+    EXPECT_EQ(universal.graph->out_degree(0), steps.size());
 
-    const auto edge = greedy.graph->get_out_edge_indices(0).front();
-    const auto selected = greedy.graph->get_vertex_property(greedy.graph->get_target(edge)).program_state;
+    const auto edge = greedy.graph->out_edges(0).front();
+    const auto selected = greedy.graph->vertex_value(greedy.graph->target(edge)).program_state;
     const auto actual_loaded = selected.get_module_state().get_registers().template values<kr::dl::ConceptTag>()[0];
     const auto expected_loaded = steps.front().get_target().get_module_state().get_registers().template values<kr::dl::ConceptTag>()[0];
     ASSERT_TRUE(actual_loaded);
@@ -366,7 +367,7 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     const auto bounded = kr::ps::ext::find_solution(task_context, program, options);
     EXPECT_EQ(bounded.status, kr::ps::ProofStatus::OUT_OF_STATES);
     ASSERT_TRUE(bounded.graph);
-    EXPECT_EQ(bounded.graph->get_num_vertices(), 1);
+    EXPECT_EQ(bounded.graph->num_vertices(), 1);
 }
 
 TEST(RunirTests, ExtRoleLoadRuleEnumeratesAllPairsAndAdvancesMemory)
@@ -468,8 +469,8 @@ TEST(RunirTests, ExtSuccessorEnumerationCombinesAllApplicableRuleKinds)
     const auto universal = kr::ps::ext::find_solution(task_context, program, universal_options);
     ASSERT_TRUE(greedy.graph);
     ASSERT_TRUE(universal.graph);
-    ASSERT_EQ(greedy.graph->get_out_degree(0), 1);
-    EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
+    ASSERT_EQ(greedy.graph->out_degree(0), 1);
+    EXPECT_EQ(universal.graph->out_degree(0), steps.size());
 }
 
 TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
@@ -730,11 +731,11 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     const auto universal = kr::ps::ext::find_solution(task_context, program, universal_options);
     ASSERT_TRUE(greedy.graph);
     ASSERT_TRUE(universal.graph);
-    ASSERT_EQ(greedy.graph->get_out_degree(0), 1);
-    EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
+    ASSERT_EQ(greedy.graph->out_degree(0), 1);
+    EXPECT_EQ(universal.graph->out_degree(0), steps.size());
 
-    const auto edge = greedy.graph->get_out_edge_indices(0).front();
-    const auto selected = greedy.graph->get_vertex_property(greedy.graph->get_target(edge)).program_state;
+    const auto edge = greedy.graph->out_edges(0).front();
+    const auto selected = greedy.graph->vertex_value(greedy.graph->target(edge)).program_state;
     EXPECT_EQ(selected.get_state().index(), steps.front().get_target().get_state().index());
     EXPECT_EQ(selected.get_module_state().get_memory_state().index(), steps.front().get_target().get_module_state().get_memory_state().index());
 }
@@ -766,8 +767,8 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
     const auto result = kr::ps::ext::find_solution(task_context, program, options);
     EXPECT_EQ(result.status, kr::ps::ProofStatus::FAILURE);
     ASSERT_TRUE(result.graph);
-    EXPECT_EQ(result.graph->get_num_vertices(), 1);
-    EXPECT_EQ(result.graph->get_num_edges(), 0);
+    EXPECT_EQ(result.graph->num_vertices(), 1);
+    EXPECT_EQ(result.graph->num_edges(), 0);
     EXPECT_TRUE(result.deadend_states.empty());
     EXPECT_FALSE(result.open_states.empty());
 }
@@ -878,8 +879,8 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     const auto universal = kr::ps::ext::find_solution(task_context, program, universal_options);
     ASSERT_TRUE(greedy.graph);
     ASSERT_TRUE(universal.graph);
-    ASSERT_EQ(greedy.graph->get_out_degree(0), 1);
-    EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
+    ASSERT_EQ(greedy.graph->out_degree(0), 1);
+    EXPECT_EQ(universal.graph->out_degree(0), steps.size());
 }
 
 TEST(RunirTests, ExtExplicitApplicationDistinguishesCollidingRuleIdsAcrossRepositories)

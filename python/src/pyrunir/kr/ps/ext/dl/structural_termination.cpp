@@ -6,18 +6,19 @@
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
-#include <pyrunir/graphs/graph.hpp>
+#include <runir/kr/ps/ext/dl/formatter.hpp>
 #include <runir/kr/ps/ext/dl/incomplete_structural_termination.hpp>
 #include <runir/kr/ps/ext/dl/structural_termination.hpp>
+#include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
+#include <urd/python/graphs.hpp>
 #include <vector>
+#include <vefr/dot.hpp>
+#include <vefr/python/bindings.hpp>
 #include <yggdrasil/python/bindings.hpp>
 
 namespace runir::kr::ps::ext::dl
 {
-
-using runir::graphs::bind_forward_graph;
-using runir::graphs::bind_readable_graph_methods;
 
 void bind_structural_termination(nb::module_& m)
 {
@@ -51,9 +52,11 @@ void bind_structural_termination(nb::module_& m)
                             .def_ro("memory_state", &ModulePolicyGraphVertexLabel::memory_state);
     urd::python::add_comparison(vertex_label);
 
-    auto graph = nb::class_<ModulePolicyGraph>(m, "ModulePolicyGraph");
-    bind_readable_graph_methods<true>(graph);
-    bind_forward_graph(graph);
+    {
+        auto graph = nb::class_<ModulePolicyGraph>(m, "ModulePolicyGraph");
+        urd::python::bind_graph(graph);
+        vefr::python::bind_algorithms(graph, vefr::vertex_data, vefr::edge_data);
+    }
 
     nb::class_<SccStructuralTerminationResult>(m, "SccStructuralTerminationResult")
         .def_ro("booleans", &SccStructuralTerminationResult::booleans)

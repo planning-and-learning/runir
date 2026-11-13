@@ -75,7 +75,8 @@ inline auto object_indices(DenotationBits bits) noexcept
 inline auto object_pair_indices(DenotationBits bits, ygg::uint_t num_objects) noexcept
 {
     return urd::transform(urd::set_bit_indices(bits),
-                          [row_bits = static_cast<std::size_t>(DenotationBits::num_blocks(num_objects) * DenotationBits::Digits)](std::size_t bit)
+                          static_cast<std::size_t>(DenotationBits::num_blocks(num_objects) * DenotationBits::Digits),
+                          [](std::size_t row_bits, std::size_t bit)
                           {
                               return std::pair(urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(bit / row_bits)),
                                                urd::index<tyr::formalism::Object>(static_cast<ygg::uint_t>(bit % row_bits)));

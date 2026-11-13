@@ -107,18 +107,17 @@ private:
         m_denotations = { &repository, &repository };
     }
 
-    /// Without registers, the registers are empty.
     StateEvaluationContext(S state,
                            Builder& builder,
                            EvaluationStorage& storage,
-                           std::optional<BorrowedRegisterValuesView> registers,
+                           BorrowedRegisterValuesView registers,
                            std::optional<CallArgumentsView> arguments) :
         m_state(std::move(state)),
         m_builder(&builder),
         m_caches(&storage.get_caches()),
         m_denotations { &storage.get_denotation_repository(false), &storage.get_denotation_repository(true) },
         m_intermediates(&storage),
-        m_registers(registers.value_or(BorrowedRegisterValuesView(&detail::empty_register_values(), m_state.get_formalism_repository().get()))),
+        m_registers(registers),
         m_arguments(arguments)
     {
         if (storage.get_denotation_repository(false).get_formalism_repository_ptr() != m_state.get_formalism_repository())
@@ -128,8 +127,13 @@ private:
 public:
     using KindType = Kind;
 
+    /// Outside a program: no registers bound (empty) and no arguments.
     StateEvaluationContext(S state, Builder& builder, EvaluationStorage& storage) :
-        StateEvaluationContext(std::move(state), builder, storage, std::nullopt, std::nullopt)
+        StateEvaluationContext(state,
+                               builder,
+                               storage,
+                               BorrowedRegisterValuesView(&detail::empty_register_values(), state.get_formalism_repository().get()),
+                               std::nullopt)
     {
     }
 

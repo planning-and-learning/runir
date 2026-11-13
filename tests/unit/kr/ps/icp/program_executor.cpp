@@ -191,16 +191,16 @@ void check_executor()
     const auto greedy = kr::ps::icp::find_solution(context, branching, options);
     EXPECT_EQ(greedy.status, Status::FAILURE);
     EXPECT_FALSE(greedy.plan);
-    EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
+    EXPECT_EQ(greedy.graph->out_degree(0), 1);
     options.universal = true;
     const auto complete = kr::ps::icp::find_solution(context, branching, options);
     EXPECT_EQ(complete.status, Status::FAILURE);
-    EXPECT_EQ(complete.graph->get_out_degree(0), 2);
+    EXPECT_EQ(complete.graph->out_degree(0), 2);
     auto goals = 0U;
     auto non_goals = 0U;
-    for (const auto vertex : complete.graph->get_vertex_indices())
+    for (const auto vertex : complete.graph->vertices())
     {
-        const auto goal = complete.graph->get_vertex_property(vertex).is_goal;
+        const auto goal = complete.graph->vertex_value(vertex).is_goal;
         goals += goal;
         non_goals += !goal;
     }
@@ -216,7 +216,7 @@ void check_executor()
     const auto empty_result = kr::ps::icp::find_solution(context, empty, options);
     EXPECT_EQ(empty_result.status, Status::FAILURE);
     EXPECT_FALSE(empty_result.deadend_states.empty());
-    EXPECT_EQ(empty_result.graph->get_num_edges(), 2);
+    EXPECT_EQ(empty_result.graph->num_edges(), 2);
 
     const auto cycle_program = program(context,
                                        module(rule("select", "m0", "m1", load("Here")) + rule("repeat", "m1", "m1", load("Here"))
@@ -225,8 +225,8 @@ void check_executor()
     EXPECT_EQ(cycle.status, Status::FAILURE);
     EXPECT_FALSE(cycle.cycle.empty());
     goals = 0;
-    for (const auto vertex : cycle.graph->get_vertex_indices())
-        goals += cycle.graph->get_vertex_property(vertex).is_goal;
+    for (const auto vertex : cycle.graph->vertices())
+        goals += cycle.graph->vertex_value(vertex).is_goal;
     EXPECT_EQ(goals, 1);
 
     // Parallel rules share their target configuration and its expansion, while preserving both labeled edges.
@@ -235,15 +235,15 @@ void check_executor()
                 module(rule("first", "m0", "m1", move("Good")) + rule("parallel", "m0", "m1", move("Good")) + rule("finish", "m1", "m2", move("Goal"))));
     const auto joined = kr::ps::icp::find_solution(context, parallel, options);
     EXPECT_EQ(joined.status, Status::SUCCESS);
-    EXPECT_EQ(joined.graph->get_num_vertices(), 3);
-    EXPECT_EQ(joined.graph->get_num_edges(), 3);
+    EXPECT_EQ(joined.graph->num_vertices(), 3);
+    EXPECT_EQ(joined.graph->num_edges(), 3);
     EXPECT_EQ(joined.statistics.num_expanded, 2);
 
     const auto unset = program(context, module(rule("unset", "m0", "m1", R"((:crule (:action "move") (:arguments from to)
         (:conditions) (:xconditions (not-belongs (:register (:concept r0)) (:concept Empty))) (:xeffects)))")));
     const auto unset_result = kr::ps::icp::find_solution(context, unset, options);
     EXPECT_EQ(unset_result.status, Status::FAILURE);
-    EXPECT_EQ(unset_result.graph->get_num_edges(), 0);
+    EXPECT_EQ(unset_result.graph->num_edges(), 0);
 
     options.max_num_states = 0;
     EXPECT_EQ(kr::ps::icp::find_solution(context, filtered, options).status, Status::OUT_OF_STATES);

@@ -448,9 +448,7 @@ def test_action_structural_counterexample_retains_query_rule(preprocessing: bool
     variant = rule.get_variant()
     assert isinstance(variant, ext.ActionRule)
     assert variant.get_query_feature().get_symbol() == "selected"
-    assert all(
-        isinstance(graph.get_edge_property(index).get_variant(), ext.ActionRule) for index in graph.get_edge_indices()
-    )
+    assert all(isinstance(graph.edge_value(index).get_variant(), ext.ActionRule) for index in range(graph.num_edges))
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])

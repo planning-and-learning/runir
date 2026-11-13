@@ -114,11 +114,11 @@ public:
 
     auto get_predicate() const noexcept
         requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)
-    { return urd::resolve(self().data().predicate, self().context().get_planning_repository()); }
+    { return self().template member<&urd::record_of<V>::predicate>(); }
 
     auto get_object() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QuerySelectValueTag>
-    { return urd::resolve(self().data().object, self().context().get_planning_repository()); }
+    { return self().template member<&urd::record_of<V>::object>(); }
 
     auto get_polarity() const noexcept
         requires runir::kr::dl::is_atomic_goal_tag_v<Tag>

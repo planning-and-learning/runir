@@ -60,8 +60,8 @@ def main() -> None:
             ProofStatus.OUT_OF_TIME: "out_of_time",
             ProofStatus.OUT_OF_STATES: "out_of_states",
         }[result.status]
-        case["num_vertices"] = result.graph.get_num_vertices()
-        case["num_edges"] = result.graph.get_num_edges()
+        case["num_vertices"] = result.graph.num_vertices
+        case["num_edges"] = result.graph.num_edges
         case["num_deadends"] = len(result.deadend_states)
         case["has_open_states"] = bool(result.open_states)
         case["cycle_length"] = len(result.cycle)

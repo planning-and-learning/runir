@@ -20,9 +20,10 @@
 
 #include "runir/datasets/equivalence_policy.hpp"
 #include "runir/datasets/object_graph.hpp"
-#include "runir/graphs/algorithms/nauty.hpp"
 
+#include <concepts>
 #include <mutex>
+#include <vefr/nauty.hpp>
 
 namespace runir::datasets
 {
@@ -36,26 +37,25 @@ struct EquivalencePolicy<GIEquivalenceTag>
 {
 private:
     ColorRepository& m_colors;
-    urd::Store<urd::map<graphs::nauty::SparseGraph, StateGraphVertexRef>> m_certificate_to_representative;
+    urd::Store<urd::map<vefr::CanonicalForm, StateGraphVertexRef>> m_certificate_to_representative;
     std::mutex m_mutex;
 
 public:
     explicit EquivalencePolicy(ColorRepository& colors) : m_colors(colors) {}
 
-    template<tyr::TaskKind Kind>
-    auto get_or_create_representative(const StateGraphVertexCandidate<Kind>& candidate, const StateGraphVertexFactory& allocate) -> RepresentativeResult
+    template<tyr::TaskKind Kind, std::invocable Allocate>
+    StateGraphVertexRef get_or_create_representative(const StateGraphVertexCandidate<Kind>& candidate, Allocate allocate)
     {
         auto object_graph = create_object_graph(candidate.state, m_colors);
-        auto certificate = graphs::nauty::SparseGraph(*object_graph);
-        certificate.canonize();
+        auto certificate = vefr::canonical_form(*object_graph, vertex_colors(*object_graph));
 
         const auto lock = std::lock_guard(m_mutex);
         if (const auto it = m_certificate_to_representative.find(certificate); it != m_certificate_to_representative.end())
-            return { it->second, false };
+            return it->second;
 
         const auto representative = allocate();
         m_certificate_to_representative.emplace(std::move(certificate), representative);
-        return { representative, true };
+        return representative;
     }
 };
 

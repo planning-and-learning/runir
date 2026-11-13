@@ -17,7 +17,6 @@
 
 #include "runir/datasets/state_graph.hpp"
 
-#include "runir/graphs/bgl/algorithms.hpp"
 #include "state_graph_fragment.hpp"
 
 #include <cassert>
@@ -36,6 +35,8 @@
 #include <urd/store.hpp>
 #include <utility>
 #include <vector>
+#include <vefr/algorithms.hpp>
+#include <vefr/reversed.hpp>
 
 namespace runir::datasets
 {
@@ -43,34 +44,31 @@ namespace runir::datasets
 namespace
 {
 
+/// Each vertex's distance to a goal: searched backwards from the goal vertices, an edge costing one or its action's cost.
 template<typename G>
-auto compute_goal_distances(const G& graph, const graphs::VertexIndexList& goal_vertices, StateGraphCostMode cost_mode)
+auto compute_goal_distances(const G& graph, const VertexIndexList& goal_vertices, StateGraphCostMode cost_mode)
 {
+    const auto backward = vefr::reversed(graph);
+    auto result = urd::Store<urd::sequence<ygg::float_t>>(graph.num_vertices(), std::numeric_limits<ygg::float_t>::infinity());
     switch (cost_mode)
     {
         case StateGraphCostMode::UNIT_COST:
         {
-            const auto [predecessors, distances] = graphs::bgl::breadth_first_search(graph, goal_vertices);
-            static_cast<void>(predecessors);
-
-            auto result = urd::Store<urd::sequence<ygg::float_t>>(distances.size(), std::numeric_limits<ygg::float_t>::infinity());
-            for (graphs::VertexIndex vertex = 0; vertex < distances.size(); ++vertex)
-                if (distances[vertex] != std::numeric_limits<ygg::uint_t>::max())
-                    result[vertex] = static_cast<ygg::float_t>(distances[vertex]);
+            const auto paths = vefr::breadth_first_search(backward, goal_vertices);
+            for (const auto vertex : graph.vertices())
+                if (const auto distance = paths.distances[vertex])
+                    result[vertex] = static_cast<ygg::float_t>(*distance);
             return result;
         }
         case StateGraphCostMode::ACTION_COST:
         {
-            auto weights = urd::Store<urd::sequence<ygg::float_t>>(graph.get_num_edges(), 0);
-            for (auto edge : graph.get_edge_indices())
-                weights[edge] = graph.get_edge_property(edge).cost;
-
-            const auto [predecessors, distances] = graphs::bgl::dijkstra_shortest_paths<G, ygg::float_t>(graph, weights, goal_vertices);
-            static_cast<void>(predecessors);
-            return distances;
+            const auto cost = [&graph](std::size_t edge) { return graph[edge].cost; };
+            const auto paths = vefr::dijkstra_shortest_paths(backward, goal_vertices, cost);
+            for (const auto vertex : graph.vertices())
+                result[vertex] = paths.distances[vertex];
+            return result;
         }
     }
-
     throw std::runtime_error(fmt::format("Unsupported state graph cost mode: {}.", static_cast<int>(cost_mode)));
 }
 
@@ -113,18 +111,17 @@ template<tyr::TaskKind Kind>
 auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kind>& graph, StateGraphCostMode cost_mode)
     -> std::unique_ptr<AnnotatedStateGraph<Kind>>
 {
-    const auto& forward_graph = graph.get_forward_graph();
     auto goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*context.task);
     const auto static_goal_satisfied = goal_strategy.is_static_goal_satisfied(*context.task);
     const auto initial_state = context.successor_generator->get_initial_node(*context.state_repository, *context.axiom_evaluator).get_state();
     const auto packed_initial_state = initial_state.pack();
 
-    auto is_goal = urd::Store<urd::set<graphs::VertexIndex>, urd::dense> {};
-    auto goal_vertices = graphs::VertexIndexList {};
+    auto is_goal = urd::Store<urd::set<VertexIndex>, urd::dense> {};
+    auto goal_vertices = VertexIndexList {};
 
-    for (auto vertex_index : forward_graph.get_vertex_indices())
+    for (const auto vertex_index : graph.vertices())
     {
-        const auto state = forward_graph.get_vertex_property(vertex_index).state.unpack();
+        const auto state = graph.vertex_value(vertex_index).state.unpack();
         if (static_goal_satisfied && goal_strategy.is_dynamic_goal_satisfied(initial_state, state))
         {
             is_goal.insert(vertex_index);
@@ -132,29 +129,30 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kin
         }
     }
 
-    const auto goal_distance = compute_goal_distances(graph.get_backward_graph(), goal_vertices, cost_mode);
+    const auto goal_distance = compute_goal_distances(graph, goal_vertices, cost_mode);
 
-    auto builder = AnnotatedStateGraphBuilder<Kind> {};
-    for (auto vertex_index : forward_graph.get_vertex_indices())
+    using Result = AnnotatedStateGraph<Kind>;
+    auto vertices = urd::Store<urd::sequence<vertex_label_t<Result>, VertexIndex>> {};
+    vertices.reserve(graph.num_vertices());
+    for (const auto vertex_index : graph.vertices())
     {
-        const auto& state = forward_graph.get_vertex_property(vertex_index).state;
+        const auto& state = graph.vertex_value(vertex_index).state;
         const auto is_alive = goal_distance[vertex_index] != std::numeric_limits<ygg::float_t>::infinity();
-        [[maybe_unused]] const auto added = builder.add_vertex(AnnotatedStateGraphVertexLabel<Kind> { state,
-                                                                                                      goal_distance[vertex_index],
-                                                                                                      state == packed_initial_state,
-                                                                                                      is_goal.contains(vertex_index),
-                                                                                                      is_alive,
-                                                                                                      !is_alive });
-        assert(added == vertex_index);
+        vertices.push_back(AnnotatedStateGraphVertexLabel<Kind> { state,
+                                                                  goal_distance[vertex_index],
+                                                                  state == packed_initial_state,
+                                                                  is_goal.contains(vertex_index),
+                                                                  is_alive,
+                                                                  !is_alive });
     }
 
-    for (auto edge_index : forward_graph.get_edge_indices())
-    {
-        const auto& edge = forward_graph.get_edge(edge_index);
-        builder.add_directed_edge(edge.get_source(), edge.get_target(), forward_graph.get_edge_property(edge_index));
-    }
-
-    return std::make_unique<AnnotatedStateGraph<Kind>>(std::move(builder));
+    // The same edges in the same order: the annotated graph numbers them as the state graph does.
+    using Edge = std::tuple<VertexIndex, VertexIndex, StateGraphEdgeLabel>;
+    auto edges = urd::Store<urd::sequence<Edge>> {};
+    edges.reserve(graph.num_edges());
+    for (const auto edge : graph.edges())
+        edges.emplace_back(graph.source(edge), graph.target(edge), graph[edge]);
+    return std::make_unique<Result>(urd::graph_data<Edge, vertex_label_t<Result>> { vertices.size(), edges, {}, vertices });
 }
 
 template auto generate_state_graph_result<tyr::GroundTag>(TaskSearchContext<tyr::GroundTag>&, const StateGraphGenerationOptions&)

@@ -9,6 +9,7 @@
 #include "runir/serialization/kr/ps/feature_view.hpp"
 #include "runir/serialization/kr/ps/memory_state_view.hpp"
 #include "runir/serialization/kr/ps/module_symbol_view.hpp"
+#include "runir/serialization/types/fields.hpp"
 
 #include <yggdrasil/serialization/dictionaries.hpp>
 
@@ -22,36 +23,7 @@ void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::
     ar.variant([](const auto& value) { return value.get_feature(); });
 }
 
-template<typename Archive, runir::kr::ps::ext::RuleKind Kind, typename C>
-void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::ps::ext::Rule<Kind>, C>>)
-{
-    using Value = urd::index_view<runir::kr::ps::ext::Rule<Kind>, C>;
-
-    ar.field("source", [](const auto& value) -> decltype(auto) { return (value.get_source()); });
-    if constexpr (requires(const Value& value) { value.get_target(); })
-        ar.field("target", [](const auto& value) -> decltype(auto) { return (value.get_target()); });
-    ar.field("conditions", [](const auto& value) -> decltype(auto) { return (value.get_conditions()); });
-    if constexpr (requires(const Value& value) { value.get_effects(); })
-        ar.field("effects", [](const auto& value) -> decltype(auto) { return (value.get_effects()); });
-    if constexpr (requires(const Value& value) { value.get_feature(); })
-    {
-        ar.field("feature", [](const auto& value) -> decltype(auto) { return (value.get_feature()); });
-        ar.field("register", [](const auto& value) -> decltype(auto) { return (value.get_register()); });
-    }
-    if constexpr (requires(const Value& value) { value.get_order(); })
-        ar.field("order", [](const auto& value) { return value.get_order(); });
-    if constexpr (requires(const Value& value) { value.get_action_name(); })
-        ar.field("action_name", [](const auto& value) -> decltype(auto) { return (value.get_action_name()); });
-    if constexpr (requires(const Value& value) { value.get_action_arguments(); })
-        ar.field("arguments", [](const auto& value) -> decltype(auto) { return (value.get_action_arguments()); });
-    if constexpr (requires(const Value& value) { value.get_query_feature(); })
-        ar.field("query_feature", [](const auto& value) -> decltype(auto) { return (value.get_query_feature()); });
-    if constexpr (requires(const Value& value) { value.get_callee(); })
-    {
-        ar.field("callee", [](const auto& value) -> decltype(auto) { return (value.get_callee()); });
-        ar.field("arguments", [](const auto& value) -> decltype(auto) { return (urd::resolve(value.data().arguments, value.context())); });
-    }
-}
+// A rule is described by its fields (runir/serialization/types/fields.hpp).
 
 }
 

@@ -19,11 +19,8 @@
 #define RUNIR_DATASETS_STATE_GRAPH_HPP_
 
 #include "runir/datasets/config.hpp"
+#include "runir/datasets/graph_types.hpp"
 #include "runir/datasets/task_class.hpp"
-#include "runir/graphs/bidirectional_static_graph.hpp"
-#include "runir/graphs/dynamic_graph.hpp"
-#include "runir/graphs/static_graph.hpp"
-#include "runir/graphs/static_graph_builder.hpp"
 
 #include <chrono>
 #include <limits>
@@ -34,6 +31,7 @@
 #include <tyr/formalism/planning/declarations.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <tyr/planning/algorithms/declarations.hpp>
+#include <urd/repr/graphs/csr_graph.hpp>
 #include <utility>
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/formalism/row_view.hpp>
@@ -110,29 +108,17 @@ struct StateGraphEdgeLabel : urd::compared_by_identity<StateGraphEdgeLabel>
     static constexpr auto identifying_members() noexcept { return urd::Members<&StateGraphEdgeLabel::action_index, &StateGraphEdgeLabel::cost> {}; }
 };
 
+/// A task's reachable states and their transitions: a frozen graph that keeps its in-edges (goal distances search it
+/// backwards), each state labelled by its state, each edge by its action and cost.
 template<tyr::TaskKind Kind>
-using StateGraphBuilder = graphs::StaticGraphBuilder<StateGraphVertexLabel<Kind>, StateGraphEdgeLabel>;
+using StateGraph = urd::Store<urd::graph<VertexIndex, StateGraphEdgeLabel, StateGraphVertexLabel<Kind>>, urd::frozen, urd::bidirectional>;
 
+/// A state graph whose states know their goal distance and whether they are initial, goal, alive or unsolvable.
 template<tyr::TaskKind Kind>
-using StaticStateGraph = graphs::StaticGraph<StateGraphVertexLabel<Kind>, StateGraphEdgeLabel>;
-
-template<tyr::TaskKind Kind>
-using StateGraph = graphs::BidirectionalStaticGraph<StateGraphVertexLabel<Kind>, StateGraphEdgeLabel>;
-
-template<tyr::TaskKind Kind>
-using DynamicStateGraph = graphs::DynamicGraph<StateGraphVertexLabel<Kind>, StateGraphEdgeLabel>;
-
-template<tyr::TaskKind Kind>
-using AnnotatedStateGraphBuilder = graphs::StaticGraphBuilder<AnnotatedStateGraphVertexLabel<Kind>, StateGraphEdgeLabel>;
-
-template<tyr::TaskKind Kind>
-using StaticAnnotatedStateGraph = graphs::StaticGraph<AnnotatedStateGraphVertexLabel<Kind>, StateGraphEdgeLabel>;
-
-template<tyr::TaskKind Kind>
-using AnnotatedStateGraph = graphs::BidirectionalStaticGraph<AnnotatedStateGraphVertexLabel<Kind>, StateGraphEdgeLabel>;
-
-template<tyr::TaskKind Kind>
-using DynamicAnnotatedStateGraph = graphs::DynamicGraph<AnnotatedStateGraphVertexLabel<Kind>, StateGraphEdgeLabel>;
+using AnnotatedStateGraph = urd::Store<urd::graph<VertexIndex, StateGraphEdgeLabel, AnnotatedStateGraphVertexLabel<Kind>>, urd::frozen, urd::bidirectional>;
+// The concepts it is bound and searched by (urd/graphs.hpp): a renamed member is a compile error, not a lost feature.
+static_assert(urd::bidirectional_graph<StateGraph<tyr::GroundTag>> && urd::edge_list_graph<StateGraph<tyr::GroundTag>>);
+static_assert(urd::bidirectional_graph<AnnotatedStateGraph<tyr::LiftedTag>> && urd::edge_list_graph<AnnotatedStateGraph<tyr::LiftedTag>>);
 
 struct StateGraphGenerationOptions
 {

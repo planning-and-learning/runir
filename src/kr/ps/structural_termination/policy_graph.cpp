@@ -1,5 +1,5 @@
 #include "detail.hpp"
-#include "runir/graphs/declarations.hpp"
+#include "runir/datasets/graph_types.hpp"
 
 #include <bit>
 #include <limits>
@@ -61,7 +61,7 @@ void append_rule_edges(const QualitativePolicy& policy, std::size_t rule_positio
         // including the single empty assignment when no target bits are free.
         for (auto subset = std::uint64_t { 0 };; subset = (subset - free) & free)
         {
-            if (edges.size() == std::numeric_limits<graphs::EdgeIndex>::max())
+            if (edges.size() == std::numeric_limits<EdgeIndex>::max())
                 throw std::invalid_argument("structural_termination: an expanded policy graph has too many edges");
             const auto target = static_cast<std::size_t>(fixed_target | subset) * policy.num_memory_states + profile.target_memory_position;
             edges.push_back(PolicyEdge { source, target, rule_position });

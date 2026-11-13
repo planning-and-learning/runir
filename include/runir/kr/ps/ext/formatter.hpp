@@ -225,8 +225,8 @@ struct fmt::formatter<runir::kr::ps::ext::ProgramProofResults<Kind>>
                               "ProgramProofResults(status={}, graph_vertices={}, graph_edges={}, deadend_states={}, open_states={}, cycle={}, "
                               "num_expanded={}, num_generated={}, num_backtracks={}, choice_depth={}, choice_width={})",
                               runir::kr::ps::to_string(result.status),
-                              result.graph ? result.graph->get_num_vertices() : 0,
-                              result.graph ? result.graph->get_num_edges() : 0,
+                              result.graph ? result.graph->num_vertices() : 0,
+                              result.graph ? result.graph->num_edges() : 0,
                               result.deadend_states.size(),
                               result.open_states.size(),
                               result.cycle.size(),

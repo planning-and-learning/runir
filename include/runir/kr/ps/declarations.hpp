@@ -15,6 +15,11 @@ namespace runir::kr::ps
 
 using runir::kr::FamilyTag;
 
+/// Whether a rule (its view) leads to a target memory state. Every rule does but a family's guards, which the family
+/// states (ext: Backtrack, ext/declarations.hpp).
+template<typename RuleView>
+inline constexpr bool transition_rule = true;
+
 // Rule
 
 template<FamilyTag Family>

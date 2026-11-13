@@ -293,9 +293,9 @@ private:
                               const std::optional<Labels>& required,
                               tyr::datalog::database::Evaluation evaluation = tyr::datalog::database::Evaluation::full)
     {
-        const auto key = std::pair { root, required.value_or(Labels {}) };
-        auto& optimized = evaluation == tyr::datalog::database::Evaluation::bound ? m_bound : required ? m_projected : m_optimized;
-        if (const auto it = optimized.find(key); it != optimized.end())
+        // Keyed as asked: no required labels (every column) and none required (no column) are different queries.
+        const auto key = std::tuple { root, required, evaluation };
+        if (const auto it = m_optimized.find(key); it != m_optimized.end())
             return it->second;
         auto translator = detail::QueryTranslator();
         auto translated = translator.translate(root);
@@ -317,16 +317,15 @@ private:
                                                            std::span<const tyr::datalog::database::Evaluation>(&evaluation, 1),
                                                            statistics);
         const auto result = detail::lower(plan, leaves, *m_repository).front();
-        optimized.emplace(key, result);
+        m_optimized.emplace(key, result);
         return result;
     }
 
     ConstructorRepository* m_repository;
     const QueryStatistics* m_statistics;
     urd::Store<urd::map<runir::kr::detail::RecordKey, ygg::uint_t>> m_rewritten;  ///< Rewritten record index by record.
-    urd::Store<urd::map<std::pair<QueryView<>, Labels>, QueryView<>>> m_optimized;
-    urd::Store<urd::map<std::pair<QueryView<>, Labels>, QueryView<>>> m_projected;
-    urd::Store<urd::map<std::pair<QueryView<>, Labels>, QueryView<>>> m_bound;
+    /// Optimized maximal queries, by query, required labels and evaluation.
+    urd::Store<urd::map<std::tuple<QueryView<>, std::optional<Labels>, tyr::datalog::database::Evaluation>, QueryView<>>> m_optimized;
 };
 
 /// Measures fixed query leaves one sample state at a time. Each add evaluates every leaf in one state, so a caller may
@@ -341,7 +340,8 @@ public:
     template<tyr::TaskKind Kind, semantics::StateEvaluationContextConcept<Kind> Context>
     void add(Context& context)
     {
-        m_objects = std::max(m_objects.value_or(0), static_cast<size_t>(semantics::detail::num_objects<Kind>(context)));
+        const auto objects = static_cast<size_t>(semantics::detail::num_objects<Kind>(context));
+        m_objects = m_objects ? std::max(*m_objects, objects) : objects;  // none until the first sample
         for (const auto leaf : m_leaves)
             m_accumulator.add(leaf, semantics::evaluate<Kind>(leaf, context));
     }

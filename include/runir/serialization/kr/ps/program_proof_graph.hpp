@@ -2,7 +2,7 @@
 #define RUNIR_SERIALIZATION_KR_PS_PROGRAM_PROOF_GRAPH_HPP_
 
 #include "runir/kr/ps/program_proof_graph.hpp"
-#include "runir/serialization/graphs/static_graph.hpp"
+#include "runir/serialization/graphs/graph.hpp"
 #include "runir/serialization/kr/ps/rule_variant_view.hpp"
 #include "tyr/serialization/formalism/planning/planning.hpp"
 #include "yggdrasil/serialization/dictionaries.hpp"

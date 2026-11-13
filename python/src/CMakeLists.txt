@@ -31,7 +31,6 @@ nanobind_add_module(
     pyrunir/datasets/module.cpp
     pyrunir/datasets/state_graph.cpp
     pyrunir/datasets/task_class.cpp
-    pyrunir/graphs/module.cpp
     ${PYRUNIR_SERIALIZATION_SOURCES}
     ${PYRUNIR_KR_SOURCES}
     BACKEND_MODULE nanobind_backend
@@ -44,7 +43,7 @@ brokkr_python_module_rpaths(PYRUNIR _pyrunir)
 
 install(TARGETS _pyrunir DESTINATION "pyrunir" COMPONENT pyrunir)
 
-foreach(runir_target IN ITEMS core datasets graphs kr)
+foreach(runir_target IN ITEMS core datasets kr)
     set_property(
         TARGET ${runir_target} PROPERTY INTERFACE_INCLUDE_DIRECTORIES
         "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
@@ -58,7 +57,7 @@ brokkr_install_native_export(
     NAMESPACE runir::
     EXPORT_NAME pyrunirRunirTargets
     EXPORT_FILE runirTargets.cmake
-    TARGETS core datasets graphs kr
+    TARGETS core datasets kr
     HEADER_DIRS "${CMAKE_SOURCE_DIR}/include/runir"
     CONFIG_TEMPLATE "${CMAKE_SOURCE_DIR}/Config.cmake.in"
     VERSION_FILE "${CMAKE_BINARY_DIR}/runirConfigVersion.cmake"
@@ -83,7 +82,6 @@ brokkr_install_python_files(
         pyrunir/__init__.pyi
         pyrunir/py.typed
         pyrunir/datasets/__init__.py
-        pyrunir/graphs/__init__.py
         pyrunir/kr/__init__.py
         pyrunir/kr/dl/__init__.py
         pyrunir/kr/dl/semantics/__init__.py
@@ -108,14 +106,14 @@ brokkr_install_python_files(
 
 brokkr_install_provider_env(
     PYRUNIR pyrunir
-    PREFIXES "${LOKI_NATIVE_PREFIX}" "${TYR_NATIVE_PREFIX}" "${YGGDRASIL_NATIVE_PREFIX}" "${URD_NATIVE_PREFIX}"
+    PREFIXES "${LOKI_NATIVE_PREFIX}" "${TYR_NATIVE_PREFIX}" "${YGGDRASIL_NATIVE_PREFIX}" "${URD_NATIVE_PREFIX}" "${VEFR_NATIVE_PREFIX}"
 )
 
 brokkr_install_python_stubs(
     PYRUNIR pyrunir
     MODULE pyrunir._pyrunir
     PRIVATE_MODULE _pyrunir
-    RENAME_PACKAGES pyrunir pytyr pypddl pyyggdrasil
+    RENAME_PACKAGES pyrunir pytyr pypddl pyyggdrasil pyvefr
 )
 
 # pyrunir/kr/__init__.py re-exports pyyggdrasil's ParseError and SemanticError. nanobind's stub

@@ -25,13 +25,12 @@ private:
 public:
     auto get_source() const noexcept { return self().template member<&urd::record_of<V>::source>(); }
     auto get_target() const noexcept
-        requires(!std::same_as<Kind, runir::kr::ps::ext::BacktrackTag>)
+        requires runir::kr::ps::ext::TransitionRuleKind<Kind>
     { return self().template member<&urd::record_of<V>::target>(); }
     auto get_conditions() const noexcept { return self().template member<&urd::record_of<V>::conditions>(); }
 
     auto get_effects() const noexcept
-        requires(runir::kr::ps::ext::BindingRuleKind<Kind> || std::same_as<Kind, runir::kr::ps::ext::SketchTag> || std::same_as<Kind, runir::kr::ps::ext::DoTag>
-                 || std::same_as<Kind, runir::kr::ps::ext::ActionTag>)
+        requires runir::kr::ps::ext::EffectRuleKind<Kind>
     { return self().template member<&urd::record_of<V>::effects>(); }
 
     auto get_feature() const noexcept
@@ -40,7 +39,7 @@ public:
 
     auto get_register() const noexcept
         requires runir::kr::ps::ext::BindingRuleKind<Kind>
-    { return urd::resolve(self().data().reg, get_repository(self().context()).get_dl_repository()); }
+    { return self().template member<&urd::record_of<V>::reg>(); }
 
     auto get_order() const noexcept
         requires(std::same_as<Kind, runir::kr::ps::ext::ChooseTag<runir::kr::dl::ConceptTag>>

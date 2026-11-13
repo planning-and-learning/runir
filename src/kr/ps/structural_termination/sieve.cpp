@@ -1,12 +1,13 @@
 #include "detail.hpp"
-#include "runir/graphs/bgl/algorithms.hpp"
-#include "runir/graphs/static_graph.hpp"
-#include "runir/graphs/static_graph_builder.hpp"
+#include "runir/datasets/graph_types.hpp"
 
 #include <algorithm>
 #include <limits>
+#include <urd/repr/graphs/csr_graph.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
+#include <utility>
+#include <vefr/algorithms.hpp>
 
 namespace runir::kr::ps::detail
 {
@@ -82,21 +83,20 @@ bool contains_cycle(const urd::Store<urd::sequence<PolicyEdge>>& edges, const St
 
 StrongComponents find_strong_components(const urd::Store<urd::sequence<PolicyEdge>>& edges, std::size_t num_vertices)
 {
-    if (num_vertices > std::numeric_limits<graphs::VertexIndex>::max())
+    if (num_vertices > std::numeric_limits<VertexIndex>::max())
         throw std::invalid_argument("structural_termination: a policy graph has too many vertices");
-    if (edges.size() > std::numeric_limits<graphs::EdgeIndex>::max())
+    if (edges.size() > std::numeric_limits<EdgeIndex>::max())
         throw std::invalid_argument("structural_termination: a policy graph has too many edges");
 
-    auto builder = graphs::StaticGraphBuilder<> {};
-    for (std::size_t vertex = 0; vertex < num_vertices; ++vertex)
-        builder.add_vertex();
+    using Edge = std::pair<VertexIndex, VertexIndex>;
+    auto alive = urd::Store<urd::sequence<Edge>> {};
     for (const auto& edge : edges)
         if (edge.alive)
-            builder.add_directed_edge(static_cast<graphs::VertexIndex>(edge.source), static_cast<graphs::VertexIndex>(edge.target));
-
-    const auto graph = graphs::StaticGraph<> { builder };
-    auto [num_components, component_of] = graphs::bgl::strong_components(graph);
-    return { num_components, std::move(component_of) };
+            alive.emplace_back(static_cast<VertexIndex>(edge.source), static_cast<VertexIndex>(edge.target));
+    const auto graph = urd::Store<urd::graph<VertexIndex>, urd::frozen>(urd::graph_data<Edge> { num_vertices, alive, {} });
+    auto components = vefr::strong_components(graph);
+    auto component_of = urd::Store<urd::sequence<std::size_t>>(components.component.begin(), components.component.end());
+    return { components.count, std::move(component_of) };
 }
 
 SieveResult sieve_policy_graph(urd::Store<urd::sequence<PolicyEdge>>& edges, const QualitativePolicy& policy)
@@ -127,7 +127,7 @@ sieve_policy_for_rules(const QualitativePolicy& policy, std::size_t max_features
     {
         if (projected.policy.num_booleans > max_features || projected.policy.num_numericals > max_features - projected.policy.num_booleans)
             throw std::invalid_argument("structural_termination: a residual memory component has too many relevant features.");
-        if (projected.policy.num_vertices() > std::numeric_limits<graphs::VertexIndex>::max())
+        if (projected.policy.num_vertices() > std::numeric_limits<VertexIndex>::max())
             throw std::invalid_argument("structural_termination: a residual policy graph has too many vertices");
     }
 

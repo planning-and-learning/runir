@@ -6,6 +6,7 @@ import sys
 from typing import TypedDict, cast
 
 import pytest
+import pyvefr
 from fixture_utils import load_fixture, read_fixture
 from pytyr.formalism.planning import PlanningDomain
 
@@ -50,7 +51,7 @@ def test_counterexample_rule_keeps_the_graph_alive(gripper_planning_domain: Plan
     graph = sieve_result.counterexample
     assert graph is not None
     references = sys.getrefcount(graph)
-    rule = graph.get_edge_property(next(iter(graph.get_edge_indices())))
+    rule = graph.edge_value(next(iter(range(graph.num_edges))))
     assert sys.getrefcount(graph) > references
     expected = str(rule)
 
@@ -150,7 +151,7 @@ def test_structural_termination_feature_mask_boundary(
             assert scc_result.numericals == []
             counterexample = sieve_result.counterexample
             assert counterexample is not None
-            (vertex,) = [counterexample.get_vertex_property(index) for index in counterexample.get_vertex_indices()]
+            (vertex,) = [counterexample.vertex_value(index) for index in counterexample.vertices()]
             assert type(vertex.boolean_values) is int
             assert vertex.boolean_values == 1 << (num_booleans - 1)
             assert vertex.numerical_values == 0
@@ -226,8 +227,8 @@ def test_structural_termination_oscillator_counterexample_has_positional_valuati
     assert isinstance(scc_result, SccStructuralTerminationResult)
     counterexample = sieve_result.counterexample
     assert counterexample is not None
-    assert counterexample.get_num_vertices() == 2
-    assert counterexample.get_num_edges() == 2
+    assert counterexample.num_vertices == 2
+    assert counterexample.num_edges == 2
 
     (feature,) = sketch.get_boolean_features()
     assert isinstance(feature, BooleanFeature)
@@ -235,13 +236,11 @@ def test_structural_termination_oscillator_counterexample_has_positional_valuati
     assert scc_result.numericals == []
 
     # Positional valuations: one vertex per truth value of b1.
-    valuations = {
-        counterexample.get_vertex_property(vertex).boolean_values for vertex in counterexample.get_vertex_indices()
-    }
+    valuations = {counterexample.vertex_value(vertex).boolean_values for vertex in counterexample.vertices()}
     assert valuations == {0, 1}
-    first_vertex_index = next(iter(counterexample.get_vertex_indices()))
-    first_vertex = counterexample.get_vertex_property(first_vertex_index)
-    same_vertex = counterexample.get_vertex_property(first_vertex_index)
+    first_vertex_index = next(iter(counterexample.vertices()))
+    first_vertex = counterexample.vertex_value(first_vertex_index)
+    same_vertex = counterexample.vertex_value(first_vertex_index)
     assert type(first_vertex.boolean_values) is int
     assert type(first_vertex.numerical_values) is int
     assert first_vertex == same_vertex
@@ -250,11 +249,11 @@ def test_structural_termination_oscillator_counterexample_has_positional_valuati
         hash(first_vertex)
 
     # The two-cycle uses both rules; each edge flips b1.
-    rules = {counterexample.get_edge_property(edge).index() for edge in counterexample.get_edge_indices()}
+    rules = {counterexample.edge_value(edge).index() for edge in range(counterexample.num_edges)}
     assert rules == {rule.index() for rule in sketch.get_rules()}
-    for edge in counterexample.get_edge_indices():
-        source = counterexample.get_vertex_property(counterexample.get_source(edge)).boolean_values & 1
-        target = counterexample.get_vertex_property(counterexample.get_target(edge)).boolean_values & 1
+    for edge in range(counterexample.num_edges):
+        source = counterexample.vertex_value(counterexample.source(edge)).boolean_values & 1
+        target = counterexample.vertex_value(counterexample.target(edge)).boolean_values & 1
         assert source != target
 
 
@@ -274,19 +273,19 @@ def test_structural_termination_numerical_cycle_counterexample_uses_both_rules(
     assert not sieve_result.is_terminating()
     counterexample = sieve_result.counterexample
     assert counterexample is not None
-    rules = {counterexample.get_edge_property(edge).index() for edge in counterexample.get_edge_indices()}
+    rules = {counterexample.edge_value(edge).index() for edge in range(counterexample.num_edges)}
     assert rules == {rule.index() for rule in sketch.get_rules()}
     surviving_rules = sieve_result.surviving_rules
     assert len(surviving_rules) == len(rules)
     assert {rule.index() for rule in surviving_rules} == rules
-    assert counterexample.get_num_edges() > len(surviving_rules)
+    assert counterexample.num_edges > len(surviving_rules)
 
-    cycle = counterexample.find_edge_cycle()
+    cycle = [edge.id for edge in pyvefr.find_cycle(counterexample)]
     assert cycle
     assert len(cycle) == len(set(cycle))
-    assert set(cycle) <= set(counterexample.get_edge_indices())
+    assert set(cycle) <= set(range(counterexample.num_edges))
     for edge, next_edge in zip(cycle, cycle[1:] + cycle[:1], strict=True):
-        assert counterexample.get_target(edge) == counterexample.get_source(next_edge)
+        assert counterexample.target(edge) == counterexample.source(next_edge)
 
 
 def test_incomplete_structural_termination_reports_blocking_reasons(gripper_planning_domain: PlanningDomain) -> None:

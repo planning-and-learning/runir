@@ -12,10 +12,11 @@ from pathlib import Path
 _import_module("pypddl")
 _import_module("pytyr")
 _import_module("pyyggdrasil")
+# pyvefr registers the types runir's graphs share (Edge, Visitor, ...) and the algorithms they extend.
+_import_module("pyvefr")
 
 from pyrunir import (
     datasets as datasets,
-    graphs as graphs,
     kr as kr,
     serialization as serialization,
 )

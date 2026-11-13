@@ -39,8 +39,8 @@ struct fmt::formatter<runir::kr::ps::ext::dl::ModuleStructuralTerminationResult>
         URD_ASSUME(result.sieve_result.has_value());
         return fmt::format_to(context.out(),
                               "ModuleStructuralTerminationResult(non-terminating, counterexample with {} vertices and {} edges)",
-                              result.sieve_result->counterexample->get_num_vertices(),
-                              result.sieve_result->counterexample->get_num_edges());
+                              result.sieve_result->counterexample->num_vertices(),
+                              result.sieve_result->counterexample->num_edges());
     }
 };
 

@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <gtest/gtest.h>
+#include <ranges>
 #include <runir/datasets/state_graph.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
@@ -84,18 +85,18 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         EXPECT_TRUE(result.open_states.empty()) << test_case.domain;
         EXPECT_TRUE(result.cycle.empty()) << test_case.domain;
         EXPECT_FALSE(result.plan) << test_case.domain;
-        EXPECT_GT(result.graph->get_num_vertices(), 0) << test_case.domain;
+        EXPECT_GT(result.graph->num_vertices(), 0) << test_case.domain;
 
         auto search_options = kr::ps::base::SketchSearchOptions<tyr::GroundTag> {};
         const auto fragment = kr::ps::base::find_solution(task_context, sketch, search_options);
         EXPECT_TRUE(fragment.is_successful()) << test_case.domain;
         ASSERT_TRUE(fragment.graph) << test_case.domain;
-        EXPECT_GT(fragment.graph->get_num_vertices(), 0) << test_case.domain;
-        EXPECT_EQ(fragment.graph->get_num_edges() + 1, fragment.graph->get_num_vertices()) << test_case.domain;
-        EXPECT_LE(fragment.graph->get_num_vertices(), result.graph->get_num_vertices()) << test_case.domain;
+        EXPECT_GT(fragment.graph->num_vertices(), 0) << test_case.domain;
+        EXPECT_EQ(fragment.graph->num_edges() + 1, fragment.graph->num_vertices()) << test_case.domain;
+        EXPECT_LE(fragment.graph->num_vertices(), result.graph->num_vertices()) << test_case.domain;
         ASSERT_TRUE(fragment.plan) << test_case.domain;
         const auto& plan = *fragment.plan;
-        EXPECT_EQ(plan.get_length(), fragment.graph->get_num_edges()) << test_case.domain;
+        EXPECT_EQ(plan.get_length(), fragment.graph->num_edges()) << test_case.domain;
         auto& generator = *context->successor_generator;
         auto replay = generator.get_initial_node(*context->state_repository, *context->axiom_evaluator);
         EXPECT_EQ(plan.get_start_node().get_state().index(), replay.get_state().index());
@@ -108,7 +109,7 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         }
         EXPECT_EQ(plan.get_cost(), replay.get_metric());
         EXPECT_EQ(plan.get_cost(), plan.get_length());
-        const auto& terminal = fragment.graph->get_vertex_property(fragment.graph->get_num_vertices() - 1);
+        const auto& terminal = fragment.graph->vertex_value(fragment.graph->num_vertices() - 1);
         EXPECT_TRUE(terminal.is_goal);
         EXPECT_EQ(replay.get_state().index(), terminal.state.index());
 
@@ -189,12 +190,12 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     // Moving between rooms and back closes a cycle before either state satisfies the goal.
     EXPECT_EQ(universal.status, kr::ps::ProofStatus::FAILURE);
     EXPECT_FALSE(universal.cycle.empty());
-    EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
-    EXPECT_EQ(universal.graph->get_out_degree(0), num_accepted);
+    EXPECT_EQ(greedy.graph->out_degree(0), 1);
+    EXPECT_EQ(universal.graph->out_degree(0), num_accepted);
 
-    for (const auto edge : universal.graph->get_out_edge_indices(0))
+    for (const auto edge : universal.graph->out_edges(0))
     {
-        const auto target_state = universal.graph->get_vertex_property(universal.graph->get_target(edge)).state.index();
+        const auto target_state = universal.graph->vertex_value(universal.graph->target(edge)).state.index();
         EXPECT_NE(std::ranges::find_if(immediate, [&](const auto& successor) { return successor.node.get_state().index() == target_state; }), immediate.end());
     }
 
@@ -207,12 +208,12 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     EXPECT_EQ(bounded.status, kr::ps::ProofStatus::OUT_OF_STATES);
     EXPECT_FALSE(bounded.plan);
     ASSERT_TRUE(bounded.graph);
-    EXPECT_EQ(bounded.graph->get_num_vertices(), 1);
+    EXPECT_EQ(bounded.graph->num_vertices(), 1);
     EXPECT_EQ(bounded_search->state_repository->num_states(), 2);
     EXPECT_EQ(bounded.statistics.num_expanded, 1);
     // The first move stays in the current room: it is generated but rejected by sketch matching.
     EXPECT_EQ(bounded.statistics.num_generated, 2);
-    const auto& packed_state = bounded.graph->get_vertex_property(0).state;
+    const auto& packed_state = bounded.graph->vertex_value(0).state;
     EXPECT_EQ(packed_state.index(), state.index());
     EXPECT_EQ(packed_state.unpack().pack(), packed_state);
 
@@ -238,8 +239,8 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     EXPECT_EQ(rejected.status, kr::ps::ProofStatus::FAILURE);
     EXPECT_FALSE(rejected.plan);
     ASSERT_TRUE(rejected.graph);
-    EXPECT_EQ(rejected.graph->get_num_vertices(), 1);
-    EXPECT_EQ(rejected.graph->get_num_edges(), 0);
+    EXPECT_EQ(rejected.graph->num_vertices(), 1);
+    EXPECT_EQ(rejected.graph->num_edges(), 0);
     EXPECT_TRUE(rejected.deadend_states.empty());
     EXPECT_FALSE(rejected.open_states.empty());
     EXPECT_EQ(rejected.statistics.num_expanded, 1);

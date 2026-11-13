@@ -2,7 +2,7 @@
 #define RUNIR_SERIALIZATION_KR_PS_BASE_SKETCH_PROOF_GRAPH_HPP_
 
 #include "runir/kr/ps/base/sketch_proof_graph.hpp"
-#include "runir/serialization/graphs/static_graph.hpp"
+#include "runir/serialization/graphs/graph.hpp"
 #include "runir/serialization/kr/ps/base/rule_view.hpp"
 #include "tyr/serialization/formalism/planning/planning.hpp"
 #include "tyr/serialization/planning/state_view.hpp"

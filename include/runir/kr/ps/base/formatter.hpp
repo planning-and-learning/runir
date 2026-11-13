@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_BASE_FORMATTER_HPP_
 #define RUNIR_KR_PS_BASE_FORMATTER_HPP_
 
-#include "runir/graphs/formatter.hpp"
+#include "runir/datasets/formatter.hpp"
 #include "runir/kr/ps/base/dl/formatter.hpp"
 #include "runir/kr/ps/base/rule_view.hpp"
 #include "runir/kr/ps/base/sketch_executor_data.hpp"
@@ -122,8 +122,8 @@ std::string sketch_proof_results(const runir::kr::ps::base::SketchProofResults<K
                        runir::kr::ps::to_string(result.status),
                        result.statistics.num_expanded,
                        result.statistics.num_generated,
-                       result.graph ? result.graph->get_num_vertices() : 0,
-                       result.graph ? result.graph->get_num_edges() : 0,
+                       result.graph ? result.graph->num_vertices() : 0,
+                       result.graph ? result.graph->num_edges() : 0,
                        result.deadend_states.size(),
                        result.open_states.size(),
                        result.cycle.size());

@@ -50,8 +50,16 @@ struct data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::LoadTag<Category>>>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::feature, &data::reg, &data::effects> {}; }
-    static constexpr auto identifying_members() noexcept
-    { return urd::Members<&data::source, &data::target, &data::conditions, &data::feature, &data::reg, &data::effects> {}; }
+    static constexpr auto fields() noexcept
+    {
+        return urd::Fields<urd::field<"source", &data::source>,
+                           urd::field<"target", &data::target>,
+                           urd::field<"conditions", &data::conditions>,
+                           urd::field<"feature", &data::feature>,
+                           urd::field<"register", &data::reg>,
+                           urd::field<"effects", &data::effects>> {};
+    }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
 template<>
@@ -100,17 +108,18 @@ struct data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>>
                             &data::xconditions,
                             &data::xeffects> {};
     }
-    static constexpr auto identifying_members() noexcept
+    static constexpr auto fields() noexcept
     {
-        return urd::Members<&data::source,
-                            &data::target,
-                            &data::conditions,
-                            &data::effects,
-                            &data::action_name,
-                            &data::argument_names,
-                            &data::xconditions,
-                            &data::xeffects> {};
+        return urd::Fields<urd::field<"source", &data::source>,
+                           urd::field<"target", &data::target>,
+                           urd::field<"conditions", &data::conditions>,
+                           urd::field<"effects", &data::effects>,
+                           urd::field<"action_name", &data::action_name>,
+                           urd::field<"argument_names", &data::argument_names>,
+                           urd::field<"xconditions", &data::xconditions>,
+                           urd::field<"xeffects", &data::xeffects>> {};
     }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
 }  // namespace urd

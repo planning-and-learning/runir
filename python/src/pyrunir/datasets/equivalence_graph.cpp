@@ -4,7 +4,6 @@
 #include <memory>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/vector.h>
-#include <pyrunir/graphs/graph.hpp>
 #include <runir/datasets/equivalence_graph.hpp>
 #include <runir/datasets/formatter.hpp>
 #include <stdexcept>
@@ -12,18 +11,14 @@
 #include <tyr/formalism/planning/planning_domain.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/task.hpp>
+#include <urd/python/graphs.hpp>
 #include <utility>
+#include <vefr/dot.hpp>
+#include <vefr/python/bindings.hpp>
 #include <yggdrasil/python/bindings.hpp>
 
 namespace runir::datasets
 {
-
-using runir::graphs::bind_bidirectional_static_graph;
-using runir::graphs::bind_forward_graph;
-using runir::graphs::bind_labeled_constructible_graph;
-using runir::graphs::bind_labeled_dynamic_graph;
-using runir::graphs::bind_materialized_bidirectional_graph;
-using runir::graphs::bind_readable_graph;
 
 namespace
 {
@@ -53,16 +48,13 @@ void bind_equivalence_graph_generation_for_kind(nb::module_& m, const char* clas
             nb::rv_policy::reference_internal);
 
     m.def((std::string("generate_") + function_prefix + "_equivalence_graph").c_str(),
-          [](ContextList contexts, const EquivalenceGraphGenerationOptions& options, ColorRepository* color_repository)
-          {
-              if (color_repository)
-                  return std::make_shared<Result>(generate_equivalence_graph<Kind>(contexts, options, *color_repository));
-              return std::make_shared<Result>(generate_equivalence_graph<Kind>(contexts, options));
-          },
+          [](ContextList contexts, const EquivalenceGraphGenerationOptions& options, ColorRepository& color_repository)
+          { return generate_equivalence_graph<Kind>(contexts, options, color_repository); },
           "contexts"_a,
-          "options"_a = EquivalenceGraphGenerationOptions(),
-          "color_repository"_a = nb::none(),
-          nb::keep_alive<0, 1>());
+          "options"_a,
+          "color_repository"_a,
+          nb::keep_alive<0, 1>(),
+          nb::keep_alive<0, 3>());
 }
 
 }  // namespace
@@ -122,49 +114,16 @@ void bind_equivalence_graph(nb::module_& m)
     urd::python::add_comparison(edge_label);
     urd::python::add_hash(edge_label);
 
-    auto builder = nb::class_<EquivalenceGraphBuilder>(m, "EquivalenceGraphBuilder");
-    builder.def(nb::init<>()).def("clear", &EquivalenceGraphBuilder::clear);
-    bind_readable_graph(builder);
-    bind_materialized_bidirectional_graph(builder);
-    bind_labeled_constructible_graph(builder);
-
-    auto static_graph = nb::class_<StaticEquivalenceGraph>(m, "StaticEquivalenceGraph");
-    static_graph.def(nb::init<>()).def(nb::init<const EquivalenceGraphBuilder&>());
-    bind_readable_graph(static_graph);
-    bind_forward_graph(static_graph);
-
-    auto backward_graph = nb::class_<graphs::BackwardStaticGraphView<StaticEquivalenceGraph>>(m, "BackwardEquivalenceGraphView");
-    bind_readable_graph(backward_graph);
-    bind_forward_graph(backward_graph);
-
-    auto graph = nb::class_<EquivalenceGraph>(m, "EquivalenceGraph");
-    graph.def(nb::init<const EquivalenceGraphBuilder&>());
-    bind_bidirectional_static_graph(graph);
-
-    auto dynamic_graph = nb::class_<DynamicEquivalenceGraph>(m, "DynamicEquivalenceGraph");
-    bind_labeled_dynamic_graph(dynamic_graph);
-
-    auto annotated_builder = nb::class_<AnnotatedEquivalenceGraphBuilder>(m, "AnnotatedEquivalenceGraphBuilder");
-    annotated_builder.def(nb::init<>()).def("clear", &AnnotatedEquivalenceGraphBuilder::clear);
-    bind_readable_graph(annotated_builder);
-    bind_materialized_bidirectional_graph(annotated_builder);
-    bind_labeled_constructible_graph(annotated_builder);
-
-    auto static_annotated_graph = nb::class_<StaticAnnotatedEquivalenceGraph>(m, "StaticAnnotatedEquivalenceGraph");
-    static_annotated_graph.def(nb::init<>()).def(nb::init<const AnnotatedEquivalenceGraphBuilder&>());
-    bind_readable_graph(static_annotated_graph);
-    bind_forward_graph(static_annotated_graph);
-
-    auto backward_annotated_graph = nb::class_<graphs::BackwardStaticGraphView<StaticAnnotatedEquivalenceGraph>>(m, "BackwardAnnotatedEquivalenceGraphView");
-    bind_readable_graph(backward_annotated_graph);
-    bind_forward_graph(backward_annotated_graph);
-
-    auto annotated_graph = nb::class_<AnnotatedEquivalenceGraph>(m, "AnnotatedEquivalenceGraph");
-    annotated_graph.def(nb::init<const AnnotatedEquivalenceGraphBuilder&>());
-    bind_bidirectional_static_graph(annotated_graph);
-
-    auto dynamic_annotated_graph = nb::class_<DynamicAnnotatedEquivalenceGraph>(m, "DynamicAnnotatedEquivalenceGraph");
-    bind_labeled_dynamic_graph(dynamic_annotated_graph);
+    {
+        auto graph = nb::class_<EquivalenceGraph>(m, "EquivalenceGraph");
+        urd::python::bind_graph(graph);
+        vefr::python::bind_algorithms(graph, vefr::vertex_data, vefr::edge_data);
+    }
+    {
+        auto graph = nb::class_<AnnotatedEquivalenceGraph>(m, "AnnotatedEquivalenceGraph");
+        urd::python::bind_graph(graph);
+        vefr::python::bind_algorithms(graph, vefr::vertex_data, vefr::edge_data);
+    }
 
     bind_equivalence_graph_generation_for_kind<tyr::GroundTag>(m, "Ground", "ground");
     bind_equivalence_graph_generation_for_kind<tyr::LiftedTag>(m, "Lifted", "lifted");

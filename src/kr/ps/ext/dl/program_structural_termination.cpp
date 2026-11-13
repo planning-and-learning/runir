@@ -1,4 +1,4 @@
-#include "runir/graphs/bgl/algorithms.hpp"
+#include "runir/datasets/graph_types.hpp"
 #include "runir/kr/ps/ext/dl/structural_termination.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
 #include "structural_termination/detail.hpp"
@@ -7,9 +7,11 @@
 #include <optional>
 #include <tuple>
 #include <type_traits>
+#include <urd/repr/graphs/adjacency_lists.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <vector>
+#include <vefr/algorithms.hpp>
 
 namespace runir::kr::ps::ext::dl
 {
@@ -36,7 +38,8 @@ void analyze_modules(ProgramView program,
 
 struct ModuleCallGraph
 {
-    graphs::StaticGraph<std::tuple<>, RuleVariantView> graph;
+    /// Modules, and an edge labelled by each call rule from the caller to the callee, numbered as found.
+    urd::Store<urd::graph<VertexIndex, RuleVariantView>, urd::monotone> graph;
     urd::Store<urd::sequence<RuleVariantView>> unresolved_rules;
 };
 
@@ -52,9 +55,7 @@ std::optional<std::size_t> find_module(ProgramView program, ModuleSymbolView sym
 ModuleCallGraph build_module_call_graph(ProgramView program)
 {
     const auto modules = program.get_modules();
-    auto builder = graphs::StaticGraphBuilder<std::tuple<>, RuleVariantView> {};
-    for (std::size_t position = 0; position < modules.size(); ++position)
-        builder.add_vertex();
+    auto graph = decltype(ModuleCallGraph::graph)(urd::graph_data<std::tuple<VertexIndex, VertexIndex, RuleVariantView>> { modules.size(), {}, {} });
 
     auto unresolved_rules = urd::Store<urd::sequence<RuleVariantView>> {};
     for (std::size_t source_module = 0; source_module < modules.size(); ++source_module)
@@ -74,9 +75,7 @@ ModuleCallGraph build_module_call_graph(ProgramView program)
                                 unresolved_rules.push_back(rule_variant);
                                 return;
                             }
-                            builder.add_directed_edge(static_cast<graphs::VertexIndex>(source_module),
-                                                      static_cast<graphs::VertexIndex>(*target_module),
-                                                      rule_variant);
+                            graph.add_edge(static_cast<VertexIndex>(source_module), static_cast<VertexIndex>(*target_module), rule_variant);
                         }
                     },
                     rule_variant.get_variant());
@@ -84,7 +83,7 @@ ModuleCallGraph build_module_call_graph(ProgramView program)
         }
     }
 
-    return { graphs::StaticGraph<std::tuple<>, RuleVariantView> { builder }, std::move(unresolved_rules) };
+    return { std::move(graph), std::move(unresolved_rules) };
 }
 
 }  // namespace
@@ -93,11 +92,11 @@ urd::Store<urd::sequence<RuleVariantView>> find_recursive_call_rules(ProgramView
 {
     const auto call_graph = build_module_call_graph(program);
     auto result = call_graph.unresolved_rules;
-    const auto [num_components, component_of] = graphs::bgl::strong_components(call_graph.graph);
-    static_cast<void>(num_components);
-    for (const auto& edge : call_graph.graph.get_edges())
-        if (component_of[edge.get_source()] == component_of[edge.get_target()])
-            result.push_back(call_graph.graph.get_edge_property(edge.get_index()));
+    const auto components = vefr::strong_components(call_graph.graph);
+    const auto& graph = call_graph.graph;
+    for (const auto edge : graph.edges())
+        if (components.component[graph.source(edge)] == components.component[graph.target(edge)])
+            result.push_back(graph[edge]);
     return result;
 }
 

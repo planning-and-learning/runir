@@ -47,6 +47,12 @@ constexpr std::string_view to_string(ProgramOutcome outcome)
 /// One rule application or caller return, including local failures whose target remains the source state.
 /// Search completion and resource limits are reported separately from these steps.
 /// `Target` is how the expander stores program states: interned views by default.
+/// A planning successor with a packed form, which a step keeps (ProgramStep::planning_successor): one whose state lies in
+/// the state repository. A successor that a storage only borrows (urd::borrowed_view) has none.
+template<typename Successor>
+concept PackableSuccessor = requires(const Successor& successor) { successor.pack(); };
+static_assert(PackableSuccessor<tyr::planning::LabeledNode<tyr::GroundTag>> && PackableSuccessor<tyr::planning::LabeledNode<tyr::LiftedTag>>);
+
 template<ProgramFamilyTag Family, tyr::TaskKind Kind, typename Target = ProgramStateView<Family, Kind>>
 struct ProgramStep
 {
@@ -56,6 +62,7 @@ struct ProgramStep
     Target target;
     std::optional<datasets::StateGraphEdgeLabel> state_transition = std::nullopt;
     std::optional<RuleView<Family>> rule = std::nullopt;
+    /// The planning successor, packed; none where the storage only borrows its successors (PackableSuccessor).
     std::optional<tyr::planning::PackedLabeledNode<Kind>> planning_successor = std::nullopt;
 
     ProgramStep(ProgramOutcome status_, Target target_, runir::kr::TaskContextPtr<Kind> task_context_) :

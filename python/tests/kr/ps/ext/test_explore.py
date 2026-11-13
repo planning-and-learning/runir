@@ -144,15 +144,15 @@ def test_search_from_a_start_state_continues_from_a_proof_graph_vertex(
     options = ext.LiftedProgramSearchOptions()
     options.max_time = timedelta(seconds=10)
     graph = ext.find_lifted_solution(task_context, program, options).graph
-    goal = next(v for v in graph.get_vertex_indices() if graph.get_vertex_property(v).is_goal)
-    predecessor = next(graph.get_source(edge) for edge in graph.get_edge_indices() if graph.get_target(edge) == goal)
-    start = graph.get_vertex_property(predecessor).program_state
+    goal = next(v for v in graph.vertices() if graph.vertex_value(v).is_goal)
+    predecessor = next(graph.source(edge) for edge in range(graph.num_edges) if graph.target(edge) == goal)
+    start = graph.vertex_value(predecessor).program_state
     options.start_state = start
     resumed = ext.find_lifted_solution(task_context, program, options)
     assert resumed.is_successful()
     assert resumed.plan is None
-    initial = [v for v in resumed.graph.get_vertex_indices() if resumed.graph.get_vertex_property(v).is_initial]
-    assert [resumed.graph.get_vertex_property(v).program_state for v in initial] == [start]
+    initial = [v for v in resumed.graph.vertices() if resumed.graph.vertex_value(v).is_initial]
+    assert [resumed.graph.vertex_value(v).program_state for v in initial] == [start]
 
 
 def test_standalone_expressions_reference_registers_by_name(gripper_parser: Parser) -> None:

@@ -18,14 +18,14 @@
 #ifndef RUNIR_DATASETS_OBJECT_GRAPH_HPP_
 #define RUNIR_DATASETS_OBJECT_GRAPH_HPP_
 
+#include "runir/datasets/graph_types.hpp"
 #include "runir/datasets/object_graph_color.hpp"
-#include "runir/graphs/static_graph.hpp"
-#include "runir/graphs/static_graph_builder.hpp"
 
 #include <cstddef>
 #include <memory>
 #include <tuple>
 #include <tyr/planning/state_repository.hpp>
+#include <urd/repr/graphs/csr_graph.hpp>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -33,11 +33,17 @@
 namespace runir::datasets
 {
 
-using ObjectGraphBuilder = graphs::StaticGraphBuilder<ColorView, std::tuple<>>;
+/// A state's objects, each colored by the predicates it occurs in, adjacent (both ways) where they occur together in an
+/// atom: a simple undirected graph, as vefr::canonical_form reads it, each object labelled by its color.
+using ObjectGraph = urd::Store<urd::graph<VertexIndex, std::monostate, ColorView>, urd::frozen, urd::positional>;
+// The concepts it is bound and searched by (urd/graphs.hpp): a renamed member is a compile error, not a lost feature.
+static_assert(urd::incidence_graph<ObjectGraph> && urd::edge_list_graph<ObjectGraph>);
 
-using ObjectGraph = graphs::StaticGraph<ColorView, std::tuple<>>;
-
-inline auto get_vertex_color(const ObjectGraph& graph, graphs::VertexIndex vertex) -> urd::index<Color> { return graph.get_vertex_property(vertex).index(); }
+/// The coloring of an object graph's vertices: their colors' indices, the same for equal colors across graphs.
+inline auto vertex_colors(const ObjectGraph& graph)
+{
+    return [&graph](VertexIndex vertex) { return graph.vertex_value(vertex).index(); };
+}
 
 template<tyr::TaskKind Kind>
 auto create_object_graph(tyr::planning::StateView<Kind> state, ColorRepository& repository) -> std::unique_ptr<ObjectGraph>;

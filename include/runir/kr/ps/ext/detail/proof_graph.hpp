@@ -1,7 +1,6 @@
 #ifndef RUNIR_KR_PS_EXT_DETAIL_PROOF_GRAPH_HPP_
 #define RUNIR_KR_PS_EXT_DETAIL_PROOF_GRAPH_HPP_
 
-#include "runir/graphs/cycle.hpp"
 #include "runir/kr/ps/ext/detail/search_node.hpp"
 #include "runir/kr/ps/ext/detail/search_path.hpp"
 #include "runir/kr/ps/ext/program_executor_data.hpp"
@@ -18,10 +17,14 @@
 #include <urd/store.hpp>
 #include <utility>
 #include <vector>
+#include <vefr/algorithms.hpp>
 #include <yggdrasil/core/config.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
+
+// The concepts it is bound and searched by (urd/graphs.hpp): a renamed member is a compile error, not a lost feature.
+static_assert(urd::incidence_graph<ProgramProofGraph<ExtFamilyTag, tyr::GroundTag>> && urd::edge_list_graph<ProgramProofGraph<ExtFamilyTag, tyr::LiftedTag>>);
 
 /// Materialize every recorded transition in discovery order, preserving parallel edges and rejected branches.
 /// Open/deadend/cycle diagnostics describe the explored graph; they do not override the search's AND/OR result.
@@ -32,16 +35,16 @@ void build_proof_graph(ProgramProofResults<Kind>& result,
                        std::optional<ProgramStateView<Kind>> initial)
 {
     using VertexLabel = ProgramProofVertexLabel<ExtFamilyTag, Kind>;
-    using Edge = std::tuple<graphs::VertexIndex, graphs::VertexIndex, ProgramProofEdgeLabel<ExtFamilyTag>>;
+    using Edge = std::tuple<VertexIndex, VertexIndex, ProgramProofEdgeLabel<ExtFamilyTag>>;
 
-    auto graph_indices = urd::Store<urd::map<urd::index<ProgramState<Kind>>, graphs::VertexIndex>, urd::dense> {};
+    auto graph_indices = urd::Store<urd::map<urd::index<ProgramState<Kind>>, VertexIndex>, urd::dense> {};
     graph_indices.reserve(nodes.size());
     auto vertices = urd::Store<urd::sequence<VertexLabel>> {};
     result.deadend_states.clear();
     result.open_states.clear();
     const auto add_vertex = [&](ProgramStateView<Kind> state)
     {
-        const auto [entry, inserted] = graph_indices.try_emplace(state.index(), static_cast<graphs::VertexIndex>(vertices.size()));
+        const auto [entry, inserted] = graph_indices.try_emplace(state.index(), static_cast<VertexIndex>(vertices.size()));
         const auto vertex = entry->second;
         if (!inserted)
             return vertex;
@@ -68,8 +71,8 @@ void build_proof_graph(ProgramProofResults<Kind>& result,
             label.rule = *predecessor.rule;
         edges.emplace_back(source, target, std::move(label));
     }
-    result.graph = std::make_shared<ProgramProofGraph<ExtFamilyTag, Kind>>(std::span<const VertexLabel>(vertices), std::span<const Edge>(edges));
-    result.cycle = graphs::find_cycle(*result.graph);
+    result.graph = std::make_shared<ProgramProofGraph<ExtFamilyTag, Kind>>(urd::graph_data<Edge, vertex_label_t<ProgramProofGraph<ExtFamilyTag, Kind>>> { vertices.size(), edges, {}, vertices });
+    result.cycle = vefr::find_vertex_cycle(*result.graph);
 }
 
 /// Materialize only a selected reached path; it is diagnostic, not a complete AND/OR proof.
@@ -84,14 +87,14 @@ void build_witness_graph(ProgramProofResults<Kind>& result,
         path.push_back(current);
     std::ranges::reverse(path);
     using Vertex = ProgramProofVertexLabel<ExtFamilyTag, Kind>;
-    using Edge = std::tuple<graphs::VertexIndex, graphs::VertexIndex, ProgramProofEdgeLabel<ExtFamilyTag>>;
+    using Edge = std::tuple<VertexIndex, VertexIndex, ProgramProofEdgeLabel<ExtFamilyTag>>;
     auto vertices = urd::Store<urd::sequence<Vertex>> {};
     auto edges = urd::Store<urd::sequence<Edge>> {};
     vertices.reserve(path.size());
     for (std::size_t i = 0; i < path.size(); ++i)
     {
         const auto& entry = *path[i];
-        const auto index = static_cast<graphs::VertexIndex>(i);
+        const auto index = static_cast<VertexIndex>(i);
         // Retained paths are initialized; only released pool entries lack a state.
         URD_ASSUME(entry.state.has_value());
         vertices.emplace_back(expander.materialize(expander.view(*entry.state)), i == 0, entry.is_goal, !entry.is_unsolvable, entry.is_unsolvable);
@@ -109,7 +112,7 @@ void build_witness_graph(ProgramProofResults<Kind>& result,
             edges.emplace_back(index - 1, index, std::move(label));
         }
     }
-    result.graph = std::make_shared<ProgramProofGraph<ExtFamilyTag, Kind>>(std::span<const Vertex>(vertices), std::span<const Edge>(edges));
+    result.graph = std::make_shared<ProgramProofGraph<ExtFamilyTag, Kind>>(urd::graph_data<Edge, vertex_label_t<ProgramProofGraph<ExtFamilyTag, Kind>>> { vertices.size(), edges, {}, vertices });
 }
 
 }  // namespace runir::kr::ps::ext::detail

@@ -50,6 +50,14 @@ public:
         return *m_planning_repository.get();
     }
     [[nodiscard]] const auto& get_planning_repository_ptr() const noexcept { return m_planning_repository; }
+
+    using Base::view;
+    /// An index of a symbol this repository does not hold (a predicate, an object) as its view through the planning
+    /// repository, which holds it: so that a record's every member is read as urd reads any (urd::resolve).
+    template<typename T>
+        requires(!ygg::formalism::SupportsSymbol<Base, T>)
+    [[nodiscard]] auto view(urd::index<T> index) const
+    { return get_planning_repository().view(index); }
 };
 
 template<typename RepositoryTypes>

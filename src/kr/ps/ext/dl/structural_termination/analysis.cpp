@@ -3,9 +3,14 @@
 #include "runir/kr/ps/ext/repository.hpp"
 
 #include <cstddef>
+#include <ranges>
 #include <stdexcept>
 #include <type_traits>
+#include <tyr/formalism/planning/repository.hpp>
+#include <urd/elements/concepts.hpp>
+#include <urd/elements/view.hpp>
 #include <utility>
+#include <variant>
 
 namespace runir::kr::ps::ext::dl::detail
 {
@@ -20,53 +25,45 @@ using RegisterConstructor = std::conditional_t<std::same_as<Category, runir::kr:
 template<runir::kr::dl::CategoryTag Category>
 using RegisterConstructorView = urd::index_view<RegisterConstructor<Category>, runir::kr::dl::ConstructorRepository>;
 
-template<runir::kr::dl::CategoryTag Category, typename VariantView>
-bool variant_references_register(VariantView view, runir::kr::dl::RegisterIdentifier<Category> reg);
+/// A view of a record that declares its fields (urd::Fields).
+template<typename V>
+concept RecordView = requires(const V& view) { view.data(); } && urd::HasFields<urd::record_of<V>>;
 
-template<runir::kr::dl::CategoryTag Category, typename View>
-bool references_register(View view, runir::kr::dl::RegisterIdentifier<Category> reg)
+/// A range of children: any range but text.
+template<typename T>
+concept ChildRange = std::ranges::range<T> && !std::same_as<std::remove_cvref_t<std::ranges::range_value_t<T>>, char>;
+
+template<typename T>
+inline constexpr bool is_variant = false;
+template<typename... Ts>
+inline constexpr bool is_variant<std::variant<Ts...>> = true;
+
+/// Whether `value` refers to the register `reg`: a register constructor of it; a record through any of its fields; a
+/// variant through its alternative; a range through any element. Anything else (a number, a name, a planning symbol)
+/// holds no record.
+template<runir::kr::dl::CategoryTag Category, typename Value>
+bool references_register(const Value& value, runir::kr::dl::RegisterIdentifier<Category> reg)
 {
-    if constexpr (requires { view.get_variant(); })
+    if constexpr (std::same_as<Value, RegisterConstructorView<Category>>)
+        return value.get_register().get_identifier() == reg;
+    else if constexpr (is_variant<Value>)
+        return std::visit([&](const auto& child) { return references_register<Category>(child, reg); }, value);
+    else if constexpr (RecordView<Value>)
     {
-        return variant_references_register(view.get_variant(), reg);
-    }
-    else
-    {
-        if constexpr (std::same_as<View, RegisterConstructorView<Category>>)
-            return view.get_register().get_identifier() == reg;
-
-        // Count, nonempty and distance operands are variant views over concept, role or query.
-        const auto child_references_register = [&](auto child)
-        {
-            if constexpr (requires { child.get_variant(); })
-                return references_register(child, reg);
-            else
-                return variant_references_register(child, reg);
-        };
         auto result = false;
-        if constexpr (requires { view.get_arg(); })
-            result = result || child_references_register(view.get_arg());
-        if constexpr (requires { view.get_lhs(); })
-            result = result || child_references_register(view.get_lhs());
-        if constexpr (requires { view.get_rhs(); })
-            result = result || child_references_register(view.get_rhs());
-        if constexpr (requires { view.get_mid(); })
-            result = result || child_references_register(view.get_mid());
-        if constexpr (requires { view.get_args(); })
-            for (const auto arg : view.get_args())
-                result = result || child_references_register(arg);
-        if constexpr (requires { view.get_role(); })
-            result = result || references_register(view.get_role(), reg);
-        if constexpr (requires { view.get_concept(); })
-            result = result || references_register(view.get_concept(), reg);
+        urd::for_each_field<urd::record_of<Value>>([&]<typename F>()
+                                                   { result = result || references_register<Category>(value.template member<F::member>(), reg); });
         return result;
     }
-}
-
-template<runir::kr::dl::CategoryTag Category, typename VariantView>
-bool variant_references_register(VariantView view, runir::kr::dl::RegisterIdentifier<Category> reg)
-{
-    return std::visit([&](auto child) { return references_register(child, reg); }, view);
+    else if constexpr (ChildRange<Value>)
+    {
+        for (const auto& child : value)
+            if (references_register<Category>(child, reg))
+                return true;
+        return false;
+    }
+    else
+        return false;
 }
 
 template<typename FeatureTag, typename C, runir::kr::dl::CategoryTag Category>
@@ -121,20 +118,21 @@ Analysis analyze_module(ModuleView module_)
             std::visit(
                 [&](auto concrete_rule)
                 {
-                    // Terminal rules have no outgoing qualitative transition.
-                    if constexpr (requires { concrete_rule.get_target(); })
+                    using Kind = rule_kind_t<decltype(concrete_rule)>;
+                    // A Backtrack guard leads to no target: no qualitative transition.
+                    if constexpr (TransitionRuleKind<Kind>)
                     {
                         auto profile = runir::kr::ps::detail::RuleProfile(booleans.size(), numericals.size());
                         profile.source_memory_position = memory_position(concrete_rule.get_source());
                         profile.target_memory_position = memory_position(concrete_rule.get_target());
                         for (auto condition : concrete_rule.get_conditions())
                             std::visit([&](auto concrete) { ps::detail::record_condition(module_, profile, concrete); }, condition);
-                        if constexpr (requires { concrete_rule.get_effects(); })
+                        if constexpr (EffectRuleKind<Kind>)
                         {
                             for (auto effect : concrete_rule.get_effects())
                                 std::visit([&](auto concrete) { ps::detail::record_effect(module_, profile, concrete); }, effect);
                         }
-                        if constexpr (requires { concrete_rule.get_register(); })
+                        if constexpr (BindingRuleKind<Kind>)
                             record_binding_effects(module_, profile, concrete_rule.get_register().get_identifier());
                         // Other rules leave unmentioned features unconstrained.
                         // Call rules have no effect entries.

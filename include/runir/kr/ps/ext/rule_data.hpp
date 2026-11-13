@@ -53,8 +53,16 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<Category>>>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::feature, &data::reg, &data::effects> {}; }
-    static constexpr auto identifying_members() noexcept
-    { return urd::Members<&data::source, &data::target, &data::conditions, &data::feature, &data::reg, &data::effects> {}; }
+    static constexpr auto fields() noexcept
+    {
+        return urd::Fields<urd::field<"source", &data::source>,
+                           urd::field<"target", &data::target>,
+                           urd::field<"conditions", &data::conditions>,
+                           urd::field<"feature", &data::feature>,
+                           urd::field<"register", &data::reg>,
+                           urd::field<"effects", &data::effects>> {};
+    }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
 template<runir::kr::dl::CategoryTag Category>
@@ -92,8 +100,17 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ChooseTag<Category>>>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::feature, &data::reg, &data::effects, &data::order> {}; }
-    static constexpr auto identifying_members() noexcept
-    { return urd::Members<&data::source, &data::target, &data::conditions, &data::feature, &data::reg, &data::effects, &data::order> {}; }
+    static constexpr auto fields() noexcept
+    {
+        return urd::Fields<urd::field<"source", &data::source>,
+                           urd::field<"target", &data::target>,
+                           urd::field<"conditions", &data::conditions>,
+                           urd::field<"feature", &data::feature>,
+                           urd::field<"register", &data::reg>,
+                           urd::field<"effects", &data::effects>,
+                           urd::field<"order", &data::order>> {};
+    }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
 template<>
@@ -119,7 +136,14 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>>
     }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::effects> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::Members<&data::source, &data::target, &data::conditions, &data::effects> {}; }
+    static constexpr auto fields() noexcept
+    {
+        return urd::Fields<urd::field<"source", &data::source>,
+                           urd::field<"target", &data::target>,
+                           urd::field<"conditions", &data::conditions>,
+                           urd::field<"effects", &data::effects>> {};
+    }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
 template<>
@@ -152,8 +176,16 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::effects, &data::action_name, &data::arguments> {}; }
-    static constexpr auto identifying_members() noexcept
-    { return urd::Members<&data::source, &data::target, &data::conditions, &data::effects, &data::action_name, &data::arguments> {}; }
+    static constexpr auto fields() noexcept
+    {
+        return urd::Fields<urd::field<"source", &data::source>,
+                           urd::field<"target", &data::target>,
+                           urd::field<"conditions", &data::conditions>,
+                           urd::field<"effects", &data::effects>,
+                           urd::field<"action_name", &data::action_name>,
+                           urd::field<"arguments", &data::arguments>> {};
+    }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
 template<>
@@ -186,8 +218,16 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::effects, &data::action_name, &data::query_feature> {}; }
-    static constexpr auto identifying_members() noexcept
-    { return urd::Members<&data::source, &data::target, &data::conditions, &data::effects, &data::action_name, &data::query_feature> {}; }
+    static constexpr auto fields() noexcept
+    {
+        return urd::Fields<urd::field<"source", &data::source>,
+                           urd::field<"target", &data::target>,
+                           urd::field<"conditions", &data::conditions>,
+                           urd::field<"effects", &data::effects>,
+                           urd::field<"action_name", &data::action_name>,
+                           urd::field<"query_feature", &data::query_feature>> {};
+    }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
 template<>
@@ -217,8 +257,15 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::callee, &data::arguments> {}; }
-    static constexpr auto identifying_members() noexcept
-    { return urd::Members<&data::source, &data::target, &data::conditions, &data::callee, &data::arguments> {}; }
+    static constexpr auto fields() noexcept
+    {
+        return urd::Fields<urd::field<"source", &data::source>,
+                           urd::field<"target", &data::target>,
+                           urd::field<"conditions", &data::conditions>,
+                           urd::field<"callee", &data::callee>,
+                           urd::field<"arguments", &data::arguments>> {};
+    }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
 template<>
@@ -237,7 +284,8 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::BacktrackTag>>
     }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::source, &data::conditions> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::Members<&data::source, &data::conditions> {}; }
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"source", &data::source>, urd::field<"conditions", &data::conditions>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
 }  // namespace urd

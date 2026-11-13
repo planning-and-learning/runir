@@ -30,7 +30,7 @@ public:
 
     auto get_register() const noexcept
         requires runir::kr::ps::icp::BindingRuleKind<Kind>
-    { return urd::resolve(self().data().reg, get_repository(self().context()).get_dl_repository()); }
+    { return self().template member<&urd::record_of<V>::reg>(); }
 
     const auto& get_action_name() const noexcept
         requires std::same_as<Kind, runir::kr::ps::icp::CruleTag>

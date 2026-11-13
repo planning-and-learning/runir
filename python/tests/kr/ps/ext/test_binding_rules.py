@@ -53,26 +53,26 @@ def _interns_to(
         concept_load = ext.ConceptLoadRuleData()
         _set_common_fields(concept_load, rule, effects)
         concept_load.feature = rule.get_feature().index()
-        concept_load.reg = rule.get_register().index()
+        concept_load.register = rule.get_register().index()
         return repository.insert(concept_load)[0] == rule
     if isinstance(rule, ext.RoleLoadRule):
         role_load = ext.RoleLoadRuleData()
         _set_common_fields(role_load, rule, effects)
         role_load.feature = rule.get_feature().index()
-        role_load.reg = rule.get_register().index()
+        role_load.register = rule.get_register().index()
         return repository.insert(role_load)[0] == rule
     if isinstance(rule, ext.ConceptChooseRule):
         concept_choose = ext.ConceptChooseRuleData()
         _set_common_fields(concept_choose, rule, effects)
         concept_choose.feature = rule.get_feature().index()
-        concept_choose.reg = rule.get_register().index()
+        concept_choose.register = rule.get_register().index()
         if order is not None:
             concept_choose.order = order
         return repository.insert(concept_choose)[0] == rule
     role_choose = ext.RoleChooseRuleData()
     _set_common_fields(role_choose, rule, effects)
     role_choose.feature = rule.get_feature().index()
-    role_choose.reg = rule.get_register().index()
+    role_choose.register = rule.get_register().index()
     if order is not None:
         role_choose.order = order
     return repository.insert(role_choose)[0] == rule

@@ -40,7 +40,7 @@
 namespace runir::datasets::detail
 {
 
-using StateGraphEdgeKey = std::tuple<graphs::VertexIndex, graphs::VertexIndex, tyr::formalism::planning::ActionRowView, ygg::float_t>;
+using StateGraphEdgeKey = std::tuple<VertexIndex, VertexIndex, tyr::formalism::planning::ActionRowView, ygg::float_t>;
 
 template<tyr::TaskKind Kind>
 struct StateGraphTransition
@@ -118,8 +118,11 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(const StateGraphEventHandler
     if (!events.get_start())
         throw std::logic_error("State graph search did not report its initial state.");
 
-    auto builder = StateGraphBuilder<Kind> {};
-    auto packed_to_vertex = urd::Store<urd::map<tyr::planning::PackedStateView<Kind>, graphs::VertexIndex>> {};
+    using Graph = StateGraph<Kind>;
+    using Edge = std::tuple<VertexIndex, VertexIndex, StateGraphEdgeLabel>;
+    auto vertices = urd::Store<urd::sequence<StateGraphVertexLabel<Kind>, VertexIndex>> {};
+    auto graph_edges = urd::Store<urd::sequence<Edge>> {};
+    auto packed_to_vertex = urd::Store<urd::map<tyr::planning::PackedStateView<Kind>, VertexIndex>> {};
     /// The materialized states by vertex: a state's vertex is its position.
     auto states = urd::Store<urd::set<tyr::planning::PackedStateView<Kind>>, urd::positional>(urd::layer { 0 });
     auto edges = urd::Store<urd::set<StateGraphEdgeKey>> {};
@@ -130,11 +133,11 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(const StateGraphEventHandler
 
         auto state = tyr::planning::materialize_state(packed.unpack(), target_repository, axiom_evaluator).pack();
         const auto [it, inserted] = states.insert(state);
-        const auto vertex = static_cast<graphs::VertexIndex>(states.position(it));
+        const auto vertex = static_cast<VertexIndex>(states.position(it));
         if (inserted)
         {
-            [[maybe_unused]] const auto added = builder.add_vertex(StateGraphVertexLabel<Kind> { std::move(state) });
-            assert(added == vertex);
+            assert(vertices.size() == vertex);
+            vertices.push_back(StateGraphVertexLabel<Kind> { std::move(state) });
         }
         packed_to_vertex.emplace(packed, vertex);
         return vertex;
@@ -148,11 +151,11 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(const StateGraphEventHandler
             const auto source = get_or_create_vertex(transition.source);
             const auto target = get_or_create_vertex(transition.target);
             if (edges.emplace(source, target, transition.action, transition.cost).second)
-                builder.add_directed_edge(source, target, StateGraphEdgeLabel { transition.action, transition.cost });
+                graph_edges.emplace_back(source, target, StateGraphEdgeLabel { transition.action, transition.cost });
         }
     }
 
-    return std::make_unique<StateGraph<Kind>>(std::move(builder));
+    return std::make_unique<Graph>(urd::graph_data<Edge, StateGraphVertexLabel<Kind>> { vertices.size(), graph_edges, {}, vertices });
 }
 
 }  // namespace runir::datasets::detail

@@ -18,10 +18,9 @@
 #ifndef RUNIR_DATASETS_EQUIVALENCE_POLICY_HPP_
 #define RUNIR_DATASETS_EQUIVALENCE_POLICY_HPP_
 
-#include "runir/graphs/declarations.hpp"
+#include "runir/datasets/graph_types.hpp"
 
 #include <concepts>
-#include <functional>
 #include <tuple>
 #include <tyr/planning/state_repository.hpp>
 #include <utility>
@@ -36,10 +35,10 @@ struct EquivalencePolicy;
 struct StateGraphVertexRef : urd::compared_by_identity<StateGraphVertexRef>
 {
     ygg::uint_t state_graph_index = 0;
-    graphs::VertexIndex state_vertex_index = 0;
+    VertexIndex state_vertex_index = 0;
 
     StateGraphVertexRef() = default;
-    constexpr StateGraphVertexRef(ygg::uint_t state_graph_index_, graphs::VertexIndex state_vertex_index_) noexcept :
+    constexpr StateGraphVertexRef(ygg::uint_t state_graph_index_, VertexIndex state_vertex_index_) noexcept :
         state_graph_index(state_graph_index_),
         state_vertex_index(state_vertex_index_)
     {
@@ -68,19 +67,11 @@ struct StateGraphVertexCandidate : urd::compared_by_identity<StateGraphVertexCan
     { return urd::Members<&StateGraphVertexCandidate::state_graph_index, &StateGraphVertexCandidate::state> {}; }
 };
 
-struct RepresentativeResult
-{
-    StateGraphVertexRef representative;
-    bool inserted = false;
-};
-
-/// Called at most once, and only when the policy creates a new equivalence class.
-using StateGraphVertexFactory = std::function<StateGraphVertexRef()>;
-
+/// A policy names the representative of a state's equivalence class: get_or_create_representative(candidate, allocate)
+/// returns the class's representative, calling allocate() (once) for it only where the class is new.
 template<typename Policy, typename Kind>
-concept IsEquivalencePolicy = requires(Policy& policy, StateGraphVertexCandidate<Kind> vertex_candidate, const StateGraphVertexFactory& allocate) {
-    requires tyr::TaskKind<Kind>;
-    { policy.get_or_create_representative(vertex_candidate, allocate) } -> std::same_as<RepresentativeResult>;
+concept IsEquivalencePolicy = tyr::TaskKind<Kind> && requires(Policy& policy, StateGraphVertexCandidate<Kind> candidate) {
+    { policy.get_or_create_representative(candidate, [] { return StateGraphVertexRef {}; }) } -> std::same_as<StateGraphVertexRef>;
 };
 
 }  // namespace runir::datasets

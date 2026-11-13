@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_BASE_SKETCH_EXECUTOR_DATA_HPP_
 #define RUNIR_KR_PS_BASE_SKETCH_EXECUTOR_DATA_HPP_
 
-#include "runir/graphs/declarations.hpp"
+#include "runir/datasets/graph_types.hpp"
 #include "runir/kr/declarations.hpp"
 #include "runir/kr/ps/base/sketch_proof_graph.hpp"
 #include "runir/kr/ps/proof_status.hpp"
@@ -35,9 +35,9 @@ struct SketchProofResults
     runir::kr::TaskContextPtr<Kind> task_context_owner;
     std::shared_ptr<SketchProofGraph<Kind>> graph;
     std::optional<tyr::planning::PackedPlan<Kind>> plan = std::nullopt;
-    runir::graphs::VertexIndexList deadend_states;
-    runir::graphs::VertexIndexList open_states;
-    runir::graphs::VertexIndexList cycle;
+    runir::VertexIndexList deadend_states;
+    runir::VertexIndexList open_states;
+    runir::VertexIndexList cycle;
     SketchSearchStatistics statistics;
 
     [[nodiscard]] bool is_successful() const noexcept { return status == ProofStatus::SUCCESS; }

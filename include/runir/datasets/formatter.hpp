@@ -4,7 +4,6 @@
 #include "runir/datasets/equivalence_graph.hpp"
 #include "runir/datasets/object_graph.hpp"
 #include "runir/datasets/state_graph.hpp"
-#include "runir/graphs/formatter.hpp"
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -13,10 +12,25 @@
 #include <tyr/formalism/planning/formatter.hpp>
 #include <utility>
 #include <variant>
+#include <vefr/dot.hpp>
 #include <yggdrasil/formatting/cista_formatters.hpp>
+
+namespace runir
+{
+
+}  // namespace runir
 
 namespace fmt
 {
+
+/// A runir graph prints as DOT (vefr::to_dot: each vertex and edge labelled by its label).
+template<runir::labeled_graph G>
+struct formatter<G, char> : formatter<std::string_view>
+{
+    template<typename FormatContext>
+    auto format(const G& graph, FormatContext& ctx) const
+    { return formatter<std::string_view>::format(vefr::to_dot(graph, vefr::vertex_data, vefr::edge_data), ctx); }
+};
 
 template<::tyr::formalism::FactKind T>
 struct formatter<urd::index_view<runir::datasets::PredicateColor<T>, runir::datasets::ColorRepository>, char> : formatter<std::string_view>

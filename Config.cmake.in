@@ -15,9 +15,13 @@ brokkr_find_python_native_prefix(pytyr TYR_NATIVE_PREFIX)
 
 find_dependency(tyr @RUNIR_TYR_REQUIRED_VERSION@ CONFIG COMPONENTS core PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
 
+brokkr_find_python_native_prefix(pyvefr VEFR_NATIVE_PREFIX)
+
+find_dependency(vefr @RUNIR_VEFR_REQUIRED_VERSION@ CONFIG PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
+
 # Components
 
-set(_runir_supported_components core datasets graphs kr)
+set(_runir_supported_components core datasets kr)
 if(NOT runir_FIND_COMPONENTS)
     set(runir_FIND_COMPONENTS core)
 endif()

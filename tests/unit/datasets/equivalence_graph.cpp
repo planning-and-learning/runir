@@ -91,32 +91,37 @@ TEST_P(EquivalenceGraphTest, MatchesExpectedProperties)
     auto options = datasets::EquivalenceGraphGenerationOptions {};
     options.policy_mode = param.equivalence_policy;
 
-    const auto result = datasets::generate_equivalence_graph(contexts, options);
+    auto colors = datasets::ColorRepositoryFactory {}.create(contexts.front()->task->get_domain().get_repository());
+    const auto result = datasets::generate_equivalence_graph(contexts, options, *colors);
     const auto figure = fmt::format("{}", *result.graph);
 
     std::cout << "EQUIVALENCE_GRAPH_FIGURE " << param.name << "\n" << figure;
-    EXPECT_EQ(result.graph->get_forward_graph().get_num_vertices(), param.expected_num_vertices);
-    EXPECT_EQ(result.graph->get_forward_graph().get_num_edges(), param.expected_num_edges);
+    EXPECT_EQ(result.graph->num_vertices(), param.expected_num_vertices);
+    EXPECT_EQ(result.graph->num_edges(), param.expected_num_edges);
     ASSERT_EQ(result.state_graph_results.size(), param.task_files.size());
     for (const auto& state_graph_result : result.state_graph_results)
     {
         ASSERT_NE(state_graph_result.graph, nullptr);
-        EXPECT_GT(state_graph_result.graph->get_forward_graph().get_num_vertices(), 0);
+        EXPECT_GT(state_graph_result.graph->num_vertices(), 0);
     }
 
     if (param.equivalence_policy == datasets::EquivalencePolicyMode::GI && result.state_graph_results.size() == 1)
     {
-        EXPECT_EQ(result.state_graph_results.front().graph->get_forward_graph().get_num_vertices(), result.graph->get_forward_graph().get_num_vertices());
+        EXPECT_EQ(result.state_graph_results.front().graph->num_vertices(), result.graph->num_vertices());
     }
 }
 
 TEST(EquivalenceGraphTest, RejectsUnsupportedPolicyMode)
 {
-    auto contexts = datasets::TaskSearchContextList<tyr::GroundTag> {};
+    const auto root = benchmark_path("classical/tests/gripper");
+    auto contexts = make_ground_contexts(root / "domain.pddl", { root / "test-1.pddl" });
+    auto colors = datasets::ColorRepositoryFactory {}.create(contexts.front()->task->get_domain().get_repository());
+    auto options = datasets::EquivalenceGraphGenerationOptions {};
+    options.policy_mode = static_cast<datasets::EquivalencePolicyMode>(255);
 
     EXPECT_THROW(
         try {
-            static_cast<void>(datasets::generate_equivalence_graph(contexts, static_cast<datasets::EquivalencePolicyMode>(255)));
+            static_cast<void>(datasets::generate_equivalence_graph(contexts, options, *colors));
         } catch (const std::runtime_error& error) {
             EXPECT_STREQ(error.what(), "Unsupported equivalence policy mode: 255.");
             throw;
@@ -130,9 +135,10 @@ TEST(EquivalenceGraphTest, RejectsCrossGraphConcreteStateEdge)
     auto contexts = make_ground_contexts(root / "domain.pddl", { root / "test-1.pddl", root / "test-1.pddl" });
     auto options = datasets::EquivalenceGraphGenerationOptions {};
     options.policy_mode = datasets::EquivalencePolicyMode::GI;
+    auto colors = datasets::ColorRepositoryFactory {}.create(contexts.front()->task->get_domain().get_repository());
 
     EXPECT_THROW(
-        try { static_cast<void>(datasets::generate_equivalence_graph(contexts, options)); } catch (const std::runtime_error& error) {
+        try { static_cast<void>(datasets::generate_equivalence_graph(contexts, options, *colors)); } catch (const std::runtime_error& error) {
             EXPECT_STREQ(error.what(), "Cannot create a concrete state edge to a representative in a different state graph.");
             throw;
         },
@@ -154,8 +160,8 @@ TEST(EquivalenceGraphTest, ReusesColorsAcrossProblems)
         options.policy_mode = datasets::EquivalencePolicyMode::GI;
         const auto result = datasets::generate_equivalence_graph(problem_contexts, options, *colors);
 
-        EXPECT_EQ(result.graph->get_forward_graph().get_num_vertices(), 18);
-        EXPECT_EQ(result.graph->get_forward_graph().get_num_edges(), 60);
+        EXPECT_EQ(result.graph->num_vertices(), 18);
+        EXPECT_EQ(result.graph->num_edges(), 60);
         if (iteration == 0)
             num_colors = colors->size<datasets::Color>();
         else

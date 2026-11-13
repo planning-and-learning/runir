@@ -14,6 +14,7 @@
 #include "runir/kr/ps/icp/xeffect_view.hpp"
 #include "runir/kr/ps/memory_state_view.hpp"
 #include "runir/kr/ps/module_symbol_view.hpp"
+#include "runir/kr/ps/program_proof_graph.hpp"
 #include "runir/kr/ps/rule_variant_view.hpp"
 
 #include <concepts>
@@ -172,6 +173,22 @@ struct fmt::formatter<urd::index_view<runir::kr::ps::icp::XEffect, C>> : fmt::fo
         std::ostringstream os;
         runir::kr::ps::icp::append_indexical(os, view, urd::Store<urd::sequence<std::string>> {});
         return fmt::formatter<std::string_view>::format(os.str(), context);
+    }
+};
+
+template<tyr::TaskKind Kind>
+struct fmt::formatter<runir::kr::ps::ProgramProofVertexLabel<runir::kr::IcpFamilyTag, Kind>>
+{
+    constexpr auto parse(format_parse_context& context) { return context.begin(); }
+    auto format(const auto& label, format_context& context) const
+    {
+        return fmt::format_to(context.out(),
+                              "state={} initial={} goal={} alive={} unsolvable={}",
+                              label.program_state.get_state().index(),
+                              label.is_initial,
+                              label.is_goal,
+                              label.is_alive,
+                              label.is_unsolvable);
     }
 };
 

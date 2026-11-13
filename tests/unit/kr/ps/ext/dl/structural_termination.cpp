@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
-#include <runir/graphs/cycle.hpp>
+#include <ranges>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/ps/ext/dl/incomplete_structural_termination.hpp>
@@ -22,6 +22,7 @@
 #include <urd/store.hpp>
 #include <utility>
 #include <vector>
+#include <vefr/algorithms.hpp>
 
 namespace runir::tests
 {
@@ -87,8 +88,8 @@ TEST(RunirTests, ExtStructuralTerminationBacktrackHasNoEdgesAndDoesNotPruneOther
                 {
                     EXPECT_EQ(sieve.surviving_rules.front().get_symbol(), "loop");
                     ASSERT_NE(sieve.counterexample, nullptr);
-                    ASSERT_EQ(sieve.counterexample->get_num_edges(), 1);
-                    EXPECT_EQ(sieve.counterexample->get_edge_property(0).get_symbol(), "loop");
+                    ASSERT_EQ(sieve.counterexample->num_edges(), 1);
+                    EXPECT_EQ(sieve.counterexample->edge_value(0).get_symbol(), "loop");
                 }
                 else
                 {
@@ -362,13 +363,13 @@ TEST(RunirTests, ExtStructuralTerminationUnconstrainedReturnIsNotTerminating)
     // The counterexample cycle uses both rules and spans both memory states.
     auto rule_indices = urd::Store<urd::set<urd::index<kr::ps::Rule<kr::ExtFamilyTag>>>> {};
     const auto& counterexample = *result.sieve_result.value().counterexample;
-    for (const auto edge : counterexample.get_edge_indices())
-        rule_indices.insert(counterexample.get_edge_property(edge).index());
+    for (const auto edge : std::views::iota(std::size_t { 0 }, counterexample.num_edges()))
+        rule_indices.insert(counterexample.edge_value(edge).index());
     EXPECT_EQ(rule_indices.size(), 2);
 
     auto memory_state_indices = urd::Store<urd::set<urd::index<kr::ps::MemoryState<kr::ExtFamilyTag>>>> {};
-    for (const auto vertex : counterexample.get_vertex_indices())
-        memory_state_indices.insert(counterexample.get_vertex_property(vertex).memory_state.index());
+    for (const auto vertex : counterexample.vertices())
+        memory_state_indices.insert(counterexample.vertex_value(vertex).memory_state.index());
     EXPECT_EQ(memory_state_indices.size(), 2);
 }
 
@@ -401,18 +402,18 @@ TEST(RunirTests, ExtStructuralTerminationPreservesSparseMemoryStateIdentities)
         ASSERT_TRUE(result.sieve_result.has_value());
         ASSERT_NE(result.sieve_result.value().counterexample, nullptr);
         const auto& graph = *result.sieve_result.value().counterexample;
-        ASSERT_GT(graph.get_num_edges(), 0);
-        for (const auto& edge : graph.get_edges())
+        ASSERT_GT(graph.num_edges(), 0);
+        for (const auto edge : graph.edges())
             std::visit(
                 [&](auto rule)
                 {
-                    EXPECT_EQ(graph.get_vertex_property(edge.get_source()).memory_state.index(), rule.get_source().index());
+                    EXPECT_EQ(graph.vertex_value(graph.source(edge)).memory_state.index(), rule.get_source().index());
                     if constexpr (requires { rule.get_target(); })
-                        EXPECT_EQ(graph.get_vertex_property(edge.get_target()).memory_state.index(), rule.get_target().index());
+                        EXPECT_EQ(graph.vertex_value(graph.target(edge)).memory_state.index(), rule.get_target().index());
                     else
                         ADD_FAILURE() << "Terminal rules cannot label structural termination edges.";
                 },
-                graph.get_edge_property(edge.get_index()).get_variant());
+                graph[edge].get_variant());
     }
 }
 
@@ -436,13 +437,13 @@ TEST(RunirTests, ExtStructuralTerminationIgnoresOneWayBridgeBetweenMemoryCycles)
 
     auto rules = urd::Store<urd::set<urd::index<kr::ps::Rule<kr::ExtFamilyTag>>>> {};
     const auto& counterexample = *result.sieve_result.value().counterexample;
-    for (const auto edge : counterexample.get_edge_indices())
-        rules.insert(counterexample.get_edge_property(edge).index());
+    for (const auto edge : std::views::iota(std::size_t { 0 }, counterexample.num_edges()))
+        rules.insert(counterexample.edge_value(edge).index());
     EXPECT_EQ(rules.size(), 2);
 
     auto memory_states = std::set<std::string> {};
-    for (const auto vertex : counterexample.get_vertex_indices())
-        memory_states.emplace(counterexample.get_vertex_property(vertex).memory_state.get_name());
+    for (const auto vertex : counterexample.vertices())
+        memory_states.emplace(counterexample.vertex_value(vertex).memory_state.get_name());
     EXPECT_EQ(memory_states, (std::set<std::string> { "m2", "m3" }));
 }
 
@@ -477,8 +478,8 @@ TEST(RunirTests, ExtSurvivingRulesRetainOnlyResidualLabelsAcrossRuleVariants)
             ASSERT_NE(result.sieve_result.value().counterexample, nullptr);
             auto edge_symbols = std::set<std::string> {};
             const auto& counterexample = *result.sieve_result.value().counterexample;
-            for (const auto edge : counterexample.get_edge_indices())
-                edge_symbols.emplace(counterexample.get_edge_property(edge).get_symbol());
+            for (const auto edge : std::views::iota(std::size_t { 0 }, counterexample.num_edges()))
+                edge_symbols.emplace(counterexample.edge_value(edge).get_symbol());
             EXPECT_EQ(symbols, edge_symbols);
         }
     }
@@ -528,9 +529,9 @@ TEST(RunirTests, ExtStructuralTerminationLiftsProjectedComponentsToGlobalAxes)
     auto memory_states = std::set<std::string> {};
     auto saw_positive_n0 = false;
     auto saw_positive_n1 = false;
-    for (const auto vertex : result.sieve_result.value().counterexample->get_vertex_indices())
+    for (const auto vertex : result.sieve_result.value().counterexample->vertices())
     {
-        const auto& label = result.sieve_result.value().counterexample->get_vertex_property(vertex);
+        const auto& label = result.sieve_result.value().counterexample->vertex_value(vertex);
         EXPECT_LE(label.boolean_values, 1);
         EXPECT_LE(label.numerical_values, 3);
         memory_states.emplace(label.memory_state.get_name());
@@ -554,11 +555,11 @@ TEST(RunirTests, ExtStructuralTerminationLiftsProjectedComponentsToGlobalAxes)
     EXPECT_TRUE(saw_positive_n1);
 
     auto rule_symbols = std::set<std::string> {};
-    for (const auto edge : result.sieve_result.value().counterexample->get_edge_indices())
-        rule_symbols.emplace(result.sieve_result.value().counterexample->get_edge_property(edge).get_symbol());
+    for (const auto edge : std::views::iota(std::size_t { 0 }, result.sieve_result.value().counterexample->num_edges()))
+        rule_symbols.emplace(result.sieve_result.value().counterexample->edge_value(edge).get_symbol());
     EXPECT_EQ(rule_symbols, (std::set<std::string> { "keep_n0", "keep_n1", "to_false", "to_true" }));
     EXPECT_EQ(result.sieve_result.value().surviving_rules.size(), 4);
-    EXPECT_LT(graphs::find_edge_cycle(*result.sieve_result.value().counterexample).size(), result.sieve_result.value().surviving_rules.size());
+    EXPECT_LT(vefr::find_cycle(*result.sieve_result.value().counterexample).size(), result.sieve_result.value().surviving_rules.size());
 }
 
 TEST(RunirTests, ExtStructuralTerminationAppliesFeatureLimitPerResidualComponent)
@@ -580,8 +581,8 @@ TEST(RunirTests, ExtStructuralTerminationAppliesFeatureLimitPerResidualComponent
     ASSERT_TRUE(result.sieve_result.has_value());
     ASSERT_NE(result.sieve_result.value().counterexample, nullptr);
     const auto& counterexample = *result.sieve_result.value().counterexample;
-    for (const auto vertex : counterexample.get_vertex_indices())
-        EXPECT_LT(counterexample.get_vertex_property(vertex).numerical_values, std::uint64_t { 1 } << 15);
+    for (const auto vertex : counterexample.vertices())
+        EXPECT_LT(counterexample.vertex_value(vertex).numerical_values, std::uint64_t { 1 } << 15);
 }
 
 TEST(RunirTests, ExtStructuralTerminationAcyclicProgramCallsAreTerminating)

@@ -11,6 +11,7 @@
 #include <type_traits>
 #include <tyr/formalism/declarations.hpp>
 #include <urd/elements/flat.hpp>
+#include <urd/elements/view.hpp>
 
 namespace runir::kr::dl
 {
@@ -992,5 +993,23 @@ using ArgumentView = urd::index_view<Argument<Category>, ConstructorRepository>;
 template<ConceptOrRoleTag Category>
 using RegisterView = urd::index_view<Register<Category>, ConstructorRepository>;
 }
+
+/// Register and argument identifiers are positions, not references to stored records: a view reads them as they are.
+template<runir::kr::dl::ConceptOrRoleTag Category>
+struct urd::resolution<urd::index<runir::kr::dl::RegisterSlot<Category>>> : urd::resolution<std::size_t>
+{
+    template<typename C>
+    static const urd::index<runir::kr::dl::RegisterSlot<Category>>& of(const urd::index<runir::kr::dl::RegisterSlot<Category>>& at,
+                                                                       const C& /*context*/) noexcept
+    { return at; }  // NOLINT(bugprone-return-const-ref-from-parameter): the member lives in the record
+};
+template<runir::kr::dl::CategoryTag Category>
+struct urd::resolution<urd::index<runir::kr::dl::ArgumentSlot<Category>>> : urd::resolution<std::size_t>
+{
+    template<typename C>
+    static const urd::index<runir::kr::dl::ArgumentSlot<Category>>& of(const urd::index<runir::kr::dl::ArgumentSlot<Category>>& at,
+                                                                       const C& /*context*/) noexcept
+    { return at; }  // NOLINT(bugprone-return-const-ref-from-parameter): the member lives in the record
+};
 
 #endif

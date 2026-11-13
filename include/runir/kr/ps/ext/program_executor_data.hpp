@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_EXT_PROGRAM_EXECUTOR_DATA_HPP_
 #define RUNIR_KR_PS_EXT_PROGRAM_EXECUTOR_DATA_HPP_
 
-#include "runir/graphs/declarations.hpp"
+#include "runir/datasets/graph_types.hpp"
 #include "runir/kr/declarations.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
 #include "runir/kr/ps/program_proof_graph.hpp"
@@ -77,9 +77,9 @@ struct ProgramProofResults
     /// CHOICE may also retain interned choice sources in the task repository outside this graph.
     std::shared_ptr<ProgramProofGraph<ExtFamilyTag, Kind>> graph;
     std::optional<tyr::planning::PackedPlan<Kind>> plan = std::nullopt;
-    runir::graphs::VertexIndexList deadend_states;
-    runir::graphs::VertexIndexList open_states;
-    runir::graphs::VertexIndexList cycle;
+    runir::VertexIndexList deadend_states;
+    runir::VertexIndexList open_states;
+    runir::VertexIndexList cycle;
     ProgramSearchStatistics statistics;
 
     [[nodiscard]] bool is_successful() const noexcept { return status == ProofStatus::SUCCESS; }

@@ -41,7 +41,7 @@ class ObjectGraphConstructionContext
 {
 private:
     using ObjectView = tyr::formalism::planning::ObjectView;
-    using Edge = std::pair<graphs::VertexIndex, graphs::VertexIndex>;
+    using Edge = std::pair<VertexIndex, VertexIndex>;
 
     ColorRepository* m_repository;
     /// The objects by vertex: an object's vertex is its position.
@@ -49,15 +49,15 @@ private:
     urd::Store<urd::sequence<urd::data<Color>::VariantList>> m_vertex_colors;
     urd::Store<urd::set<Edge>> m_edges;
 
-    auto get_or_create_vertex(ObjectView object) -> graphs::VertexIndex
+    auto get_or_create_vertex(ObjectView object) -> VertexIndex
     {
         const auto [it, inserted] = m_objects.insert(object);
         if (inserted)
             m_vertex_colors.emplace_back();
-        return static_cast<graphs::VertexIndex>(m_objects.position(it));
+        return static_cast<VertexIndex>(m_objects.position(it));
     }
 
-    void add_undirected_edge(graphs::VertexIndex lhs, graphs::VertexIndex rhs)
+    void add_undirected_edge(VertexIndex lhs, VertexIndex rhs)
     {
         if (lhs == rhs)
             return;
@@ -77,7 +77,7 @@ public:
     void add_atom(tyr::formalism::planning::AtomView<::tyr::GroundTag, T> atom)
     {
         const auto objects = atom.get_objects();
-        auto vertices = graphs::VertexIndexList {};
+        auto vertices = VertexIndexList {};
         vertices.reserve(objects.size());
 
         for (std::size_t i = 0; i < objects.size(); ++i)
@@ -97,18 +97,23 @@ public:
 
     auto release() && -> std::unique_ptr<ObjectGraph>
     {
-        auto builder = ObjectGraphBuilder {};
-
+        auto vertices = urd::Store<urd::sequence<ColorView, VertexIndex>> {};
+        vertices.reserve(m_vertex_colors.size());
         for (auto& colors : m_vertex_colors)
         {
             auto color_data = urd::data<Color>(std::move(colors));
-            builder.add_vertex(m_repository->insert(color_data).first);
+            vertices.push_back(m_repository->insert(color_data).first);
         }
 
+        auto edges = urd::Store<urd::sequence<Edge>> {};
+        edges.reserve(2 * m_edges.size());
         for (const auto& [source, target] : m_edges)
-            builder.add_undirected_edge(source, target);
+        {
+            edges.emplace_back(source, target);
+            edges.emplace_back(target, source);
+        }
 
-        return std::make_unique<ObjectGraph>(std::move(builder));
+        return std::make_unique<ObjectGraph>(urd::graph_data<Edge, ColorView> { vertices.size(), edges, {}, vertices });
     }
 };
 

@@ -99,12 +99,12 @@ def test_search_statistics_count_generation_before_filtering_and_deduplication(t
     assert greedy.plan is not None
     assert greedy.plan.get_length() == 1
     step = greedy.plan.get_labeled_succ_nodes()[0]
-    edge = next(iter(greedy.graph.get_edge_indices()))
-    source = greedy.graph.get_vertex_property(greedy.graph.get_source(edge))
-    target = greedy.graph.get_vertex_property(greedy.graph.get_target(edge))
+    edge = next(iter(range(greedy.graph.num_edges)))
+    source = greedy.graph.vertex_value(greedy.graph.source(edge))
+    target = greedy.graph.vertex_value(greedy.graph.target(edge))
     assert _same_state(greedy.plan.get_start_node().get_state(), source.state)
     assert _same_state(step.node.get_state(), target.state)
-    assert step.label == greedy.graph.get_edge_property(edge).action
+    assert step.label == greedy.graph.edge_value(edge).action
     assert target.is_goal
     assert greedy.plan.get_cost() == step.node.get_metric()
 
@@ -114,8 +114,8 @@ def test_search_statistics_count_generation_before_filtering_and_deduplication(t
     assert universal.plan is None
     assert universal.statistics.num_expanded == 1
     assert universal.statistics.num_generated == 2
-    assert universal.graph.get_num_vertices() == 2
-    actions = [universal.graph.get_edge_property(edge).action for edge in universal.graph.get_edge_indices()]
+    assert universal.graph.num_vertices == 2
+    actions = [universal.graph.edge_value(edge).action for edge in range(universal.graph.num_edges)]
     assert len(actions) == 2
     assert actions[0] != actions[1]
 
@@ -125,10 +125,10 @@ def test_search_statistics_count_generation_before_filtering_and_deduplication(t
     assert rejected.plan is None
     assert rejected.statistics.num_expanded == 1
     assert rejected.statistics.num_generated == 2
-    assert rejected.graph.get_num_edges() == 0
+    assert rejected.graph.num_edges == 0
     assert rejected.deadend_states == []
     assert len(rejected.open_states) == 1
-    assert rejected.graph.get_vertex_property(rejected.open_states[0]).is_initial
+    assert rejected.graph.vertex_value(rejected.open_states[0]).is_initial
 
     options.max_num_states = 1
     bounded = _find_solution(context, sketch, options)
@@ -153,8 +153,8 @@ def test_search_statistics_count_generation_before_filtering_and_deduplication(t
     unadmitted = _find_solution(context, sketch, options)
     assert unadmitted.status == ProofStatus.OUT_OF_STATES
     assert unadmitted.plan is None
-    assert unadmitted.graph.get_num_vertices() == 0
-    assert unadmitted.graph.get_num_edges() == 0
+    assert unadmitted.graph.num_vertices == 0
+    assert unadmitted.graph.num_edges == 0
     assert unadmitted.statistics.num_expanded == 0
     assert unadmitted.statistics.num_generated == 0
     assert unadmitted.deadend_states == []
@@ -190,7 +190,7 @@ def test_initial_goal_is_not_expanded(tmp_path: Path, kind: str) -> None:
     assert result.plan.empty()
     assert result.plan.get_cost() == 0
     assert result.plan.get_start_node().get_metric() == 7
-    initial = result.graph.get_vertex_property(next(iter(result.graph.get_vertex_indices())))
+    initial = result.graph.vertex_value(next(iter(result.graph.vertices())))
     assert initial.is_initial
     assert initial.is_goal
     assert _same_state(result.plan.get_start_node().get_state(), initial.state)

@@ -8,35 +8,14 @@
 #include "runir/serialization/kr/ps/icp/indexical_view.hpp"
 #include "runir/serialization/kr/ps/memory_state_view.hpp"
 #include "runir/serialization/kr/ps/module_symbol_view.hpp"
+#include "runir/serialization/types/fields.hpp"
 
 #include <yggdrasil/serialization/dictionaries.hpp>
 
 namespace ygg::serialization
 {
 
-template<typename Archive, runir::kr::ps::icp::RuleKind Kind, typename C>
-void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::ps::icp::Rule<Kind>, C>>)
-{
-    using Value = urd::index_view<runir::kr::ps::icp::Rule<Kind>, C>;
-
-    ar.field("source", [](const auto& value) -> decltype(auto) { return (value.get_source()); });
-    ar.field("target", [](const auto& value) -> decltype(auto) { return (value.get_target()); });
-    ar.field("conditions", [](const auto& value) -> decltype(auto) { return (value.get_conditions()); });
-    if constexpr (requires(const Value& value) { value.get_effects(); })
-        ar.field("effects", [](const auto& value) -> decltype(auto) { return (value.get_effects()); });
-    if constexpr (requires(const Value& value) { value.get_feature(); })
-    {
-        ar.field("feature", [](const auto& value) -> decltype(auto) { return (value.get_feature()); });
-        ar.field("register", [](const auto& value) -> decltype(auto) { return (value.get_register()); });
-    }
-    if constexpr (requires(const Value& value) { value.get_action_name(); })
-    {
-        ar.field("action_name", [](const auto& value) { return value.get_action_name(); });
-        ar.field("argument_names", [](const auto& value) { return value.get_argument_names(); });
-        ar.field("xconditions", [](const auto& value) { return value.get_xconditions(); });
-        ar.field("xeffects", [](const auto& value) { return value.get_xeffects(); });
-    }
-}
+// A rule is described by its fields (runir/serialization/types/fields.hpp).
 
 }
 

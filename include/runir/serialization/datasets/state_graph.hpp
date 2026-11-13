@@ -2,7 +2,7 @@
 #define RUNIR_SERIALIZATION_DATASETS_STATE_GRAPH_HPP_
 
 #include "runir/datasets/state_graph.hpp"
-#include "runir/serialization/graphs/bidirectional_static_graph.hpp"
+#include "runir/serialization/graphs/graph.hpp"
 #include "tyr/serialization/formalism/planning/planning.hpp"
 #include "tyr/serialization/planning/state_view.hpp"
 #include "yggdrasil/serialization/dictionaries.hpp"

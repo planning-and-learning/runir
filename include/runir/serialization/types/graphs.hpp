@@ -26,9 +26,7 @@ using EdgeProperties = boost::mp11::mp_list<datasets::StateGraphEdgeLabel,
                                             kr::ps::ProgramProofEdgeLabel<kr::IcpFamilyTag>>;
 
 template<tyr::TaskKind Kind>
-using StateGraphs = boost::mp11::mp_list<datasets::StaticStateGraph<Kind>,
-                                         datasets::StateGraph<Kind>,
-                                         datasets::StaticAnnotatedStateGraph<Kind>,
+using StateGraphs = boost::mp11::mp_list<datasets::StateGraph<Kind>,
                                          datasets::AnnotatedStateGraph<Kind>,
                                          kr::ps::base::SketchProofGraph<Kind>,
                                          kr::ps::ProgramProofGraph<kr::ExtFamilyTag, Kind>,

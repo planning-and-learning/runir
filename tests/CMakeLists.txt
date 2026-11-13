@@ -27,8 +27,6 @@ target_link_libraries(runir_test_planning_fixtures PRIVATE runir::datasets TBB::
 add_runir_test(runir_datasets_equivalence_graph unit/datasets/equivalence_graph.cpp runir::datasets runir_test_planning_fixtures)
 add_runir_test(runir_datasets_object_graph unit/datasets/object_graph.cpp runir::datasets runir_test_planning_fixtures)
 add_runir_test(runir_datasets_state_graph unit/datasets/state_graph.cpp runir::datasets runir_test_planning_fixtures)
-add_runir_test(runir_graphs_color_refinement unit/graphs/algorithms/color_refinement.cpp runir::graphs)
-add_runir_test(runir_graphs_static_graph unit/graphs/static_graph.cpp runir::graphs)
 
 set(RUNIR_KR_DL_TYPE_TEST_SOURCES
     unit/kr/dl/argument.cpp

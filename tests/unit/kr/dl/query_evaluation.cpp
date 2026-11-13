@@ -41,6 +41,21 @@ namespace runir::tests
 {
 namespace
 {
+
+// What a query or numerical record keeps besides its fields, derived when it is inserted.
+template<typename D>
+concept SchemaRecord = requires(const D& data) { data.schema; };
+template<typename D>
+concept PlannedRecord = requires(const D& data) { data.plan; };
+template<typename D>
+concept KeyedPlanRecord = requires(const D& data) { data.plan.lhs_keys(); };
+template<typename D>
+concept TwoSidedPlanRecord = requires(const D& data) { data.plan.lhs_position(); };
+template<typename D>
+concept OneSidedPlanRecord = requires(const D& data) { data.plan.position(); };
+/// A distance: the numerical with a middle operand, which keeps a plan.
+template<typename V>
+concept DistanceView = requires(const V& view) { view.get_mid(); };
 using ObjectIndex = urd::index<tyr::formalism::Object>;
 using ColumnIndex = urd::index<ygg::Column>;
 
@@ -399,7 +414,7 @@ void check_distance_queries()
         return std::visit(
             [&]<typename Concrete>(Concrete concrete) -> ygg::uint_t
             {
-                if constexpr (requires { concrete.get_mid(); })
+                if constexpr (DistanceView<Concrete>)
                 {
                     const auto& plan = concrete.data().plan;
                     auto children = context.child_context();
@@ -566,26 +581,26 @@ void check_cached_queries()
                              [&](const auto& decoded)
                              {
                                  EXPECT_EQ(decoded.columns, expected_columns);
-                                 if constexpr (requires { decoded.schema; })
+                                 if constexpr (SchemaRecord<std::remove_cvref_t<decltype(decoded)>>)
                                  {
                                      EXPECT_TRUE(std::ranges::equal(decoded.schema, concrete.get_schema()));
                                  }
-                                 if constexpr (requires { data.plan; })
+                                 if constexpr (PlannedRecord<std::remove_cvref_t<decltype(data)>>)
                                  {
                                      EXPECT_TRUE(std::ranges::equal(decoded.plan.output_columns(), concrete.get_schema()));
                                  }
-                                 if constexpr (requires { data.plan.lhs_keys(); })
+                                 if constexpr (KeyedPlanRecord<std::remove_cvref_t<decltype(data)>>)
                                  {
                                      EXPECT_TRUE(std::ranges::equal(decoded.plan.lhs_keys(), data.plan.lhs_keys()));
                                      EXPECT_TRUE(std::ranges::equal(decoded.plan.rhs_keys(), data.plan.rhs_keys()));
                                      EXPECT_TRUE(std::ranges::equal(decoded.plan.rhs_payload(), data.plan.rhs_payload()));
                                  }
-                                 if constexpr (requires { decoded.plan.lhs_position(); })
+                                 if constexpr (TwoSidedPlanRecord<std::remove_cvref_t<decltype(decoded)>>)
                                  {
                                      EXPECT_EQ(decoded.plan.lhs_position(), 1);
                                      EXPECT_EQ(decoded.plan.rhs_position(), 0);
                                  }
-                                 if constexpr (requires { decoded.plan.position(); })
+                                 if constexpr (OneSidedPlanRecord<std::remove_cvref_t<decltype(decoded)>>)
                                  {
                                      EXPECT_EQ(decoded.plan.position(), 1);
                                  }
@@ -596,47 +611,47 @@ void check_cached_queries()
         stale.columns.clear();
         stale.columns.push_back(x);
         stale.columns.push_back(x);
-        if constexpr (requires { stale.schema; })
+        if constexpr (SchemaRecord<std::remove_cvref_t<decltype(stale)>>)
             stale.schema.clear();
-        if constexpr (requires { stale.plan; })
+        if constexpr (PlannedRecord<std::remove_cvref_t<decltype(stale)>>)
             stale.plan = {};
         EXPECT_EQ(stale, concrete.data());
         const auto [same, stale_created] = ygg::formalism::insert(repo, stale);
         EXPECT_FALSE(stale_created);
         EXPECT_EQ(same.index(), concrete.index());
         EXPECT_EQ(stale.columns, expected_columns);
-        if constexpr (requires { stale.schema; })
+        if constexpr (SchemaRecord<std::remove_cvref_t<decltype(stale)>>)
         {
             EXPECT_TRUE(std::ranges::equal(stale.schema, concrete.get_schema()));
         }
-        if constexpr (requires { stale.plan; })
+        if constexpr (PlannedRecord<std::remove_cvref_t<decltype(stale)>>)
         {
             EXPECT_TRUE(std::ranges::equal(stale.plan.output_columns(), concrete.get_schema()));
         }
-        if constexpr (requires { stale.plan.lhs_position(); })
+        if constexpr (TwoSidedPlanRecord<std::remove_cvref_t<decltype(stale)>>)
         {
             EXPECT_EQ(stale.plan.lhs_position(), 1);
             EXPECT_EQ(stale.plan.rhs_position(), 0);
         }
-        if constexpr (requires { stale.plan.position(); })
+        if constexpr (OneSidedPlanRecord<std::remove_cvref_t<decltype(stale)>>)
         {
             EXPECT_EQ(stale.plan.position(), 1);
         }
         urd::clear_members(stale);
-        if constexpr (requires { stale.schema; })
+        if constexpr (SchemaRecord<std::remove_cvref_t<decltype(stale)>>)
         {
             EXPECT_TRUE(stale.schema.empty());
         }
-        if constexpr (requires { stale.plan; })
+        if constexpr (PlannedRecord<std::remove_cvref_t<decltype(stale)>>)
         {
             EXPECT_TRUE(stale.plan.output_columns().empty());
         }
-        if constexpr (requires { stale.plan.lhs_position(); })
+        if constexpr (TwoSidedPlanRecord<std::remove_cvref_t<decltype(stale)>>)
         {
             EXPECT_EQ(stale.plan.lhs_position(), 0);
             EXPECT_EQ(stale.plan.rhs_position(), 0);
         }
-        if constexpr (requires { stale.plan.position(); })
+        if constexpr (OneSidedPlanRecord<std::remove_cvref_t<decltype(stale)>>)
         {
             EXPECT_EQ(stale.plan.position(), 0);
         }
@@ -1327,7 +1342,7 @@ ygg::uint_t reference_distance(kr::dl::ConstructorView<kr::dl::NumericalTag> num
     return std::visit(
         [&]<typename Concrete>(Concrete concrete) -> ygg::uint_t
         {
-            if constexpr (requires { concrete.get_mid(); })
+            if constexpr (DistanceView<Concrete>)
             {
                 const auto& plan = concrete.data().plan;
                 auto children = context.child_context();

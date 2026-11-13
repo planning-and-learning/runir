@@ -1,8 +1,6 @@
 #include "runir/kr/ps/dl/structural_termination.hpp"
 
-#include "runir/graphs/cycle.hpp"
-#include "runir/graphs/declarations.hpp"
-#include "runir/graphs/static_graph_builder.hpp"
+#include "runir/datasets/graph_types.hpp"
 #include "structural_termination/detail.hpp"
 
 #include <algorithm>
@@ -12,12 +10,14 @@
 #include <string>
 #include <tuple>
 #include <urd/bits.hpp>
+#include <urd/repr/graphs/adjacency_lists.hpp>
 #include <urd/repr/maps/index_map.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/repr/values/dense_set.hpp>
 #include <urd/repr/values/std_set.hpp>
 #include <urd/store.hpp>
 #include <utility>
+#include <vefr/algorithms.hpp>
 #include <yggdrasil/semantics/canonicalization.hpp>
 
 namespace runir::kr::ps::detail
@@ -56,9 +56,9 @@ void validate_policy(const QualitativePolicy& policy)
     policy.validate_feature_capacity();
     if (policy.num_memory_states == 0)
         throw std::invalid_argument("structural_termination: a qualitative policy requires at least one memory state");
-    if (policy.num_memory_states > std::numeric_limits<graphs::VertexIndex>::max())
+    if (policy.num_memory_states > std::numeric_limits<VertexIndex>::max())
         throw std::invalid_argument("structural_termination: the policy has too many memory states");
-    if (policy.rule_profiles.size() > std::numeric_limits<graphs::EdgeIndex>::max())
+    if (policy.rule_profiles.size() > std::numeric_limits<EdgeIndex>::max())
         throw std::invalid_argument("structural_termination: the policy has too many rules");
 
     for (std::size_t position = 0; position < policy.rule_profiles.size(); ++position)
@@ -200,14 +200,15 @@ urd::Store<urd::sequence<std::size_t>> StructuralTerminationResult::get_cyclic_r
 
 urd::Store<urd::sequence<std::size_t>> CounterexampleComponent::get_cycle() const
 {
-    // Keep builder edge order identical to this component's public edge positions.
-    auto graph = graphs::StaticGraphBuilder<> {};
-    for (std::size_t position = 0; position < vertices.size(); ++position)
-        graph.add_vertex();
+    // A growing graph numbers its edges as added: an edge's number is its position in `edges`.
+    auto graph =
+        urd::Store<urd::graph<VertexIndex>, urd::monotone, urd::positional>(urd::graph_data<std::pair<VertexIndex, VertexIndex>> { vertices.size(), {}, {} });
     for (const auto& edge : edges)
-        graph.add_directed_edge(static_cast<graphs::VertexIndex>(edge.source_vertex_position), static_cast<graphs::VertexIndex>(edge.target_vertex_position));
-    const auto cycle = graphs::find_edge_cycle(graph);
-    return { cycle.begin(), cycle.end() };
+        graph.add_edge(static_cast<VertexIndex>(edge.source_vertex_position), static_cast<VertexIndex>(edge.target_vertex_position));
+    auto result = urd::Store<urd::sequence<std::size_t>> {};
+    for (const auto& edge : vefr::find_cycle(graph))
+        result.push_back(edge.id);
+    return result;
 }
 
 IncompletePolicyResult incomplete_structural_termination(const QualitativePolicy& policy, bool use_memory_scc_scope)

@@ -54,7 +54,7 @@ def test_base_proof_properties_keep_the_graph_and_sketch_alive(
     proof = find_ground_solution(context, sketch, GroundSketchSearchOptions())
     graph = proof.graph
     references = sys.getrefcount(graph)
-    vertex = graph.get_vertex_property(next(iter(graph.get_vertex_indices())))
+    vertex = graph.vertex_value(next(iter(graph.vertices())))
     assert isinstance(vertex.state, PackedState)
     assert vertex.state.unpack().pack() == vertex.state
     assert sys.getrefcount(graph) > references
@@ -64,7 +64,7 @@ def test_base_proof_properties_keep_the_graph_and_sketch_alive(
     assert sys.getrefcount(vertex) > references
     assert state == vertex.state
     references = sys.getrefcount(graph)
-    edge = graph.get_edge_property(next(iter(graph.get_edge_indices())))
+    edge = graph.edge_value(next(iter(range(graph.num_edges))))
     assert sys.getrefcount(graph) > references
     rule = edge.rule
     action = edge.action
@@ -251,15 +251,15 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
     assert proof_result.open_states == []
     assert proof_result.cycle == []
     assert isinstance(proof_result.graph, GroundSketchProofGraph)
-    assert proof_result.graph.get_num_vertices() > 0
-    vertex = next(iter(proof_result.graph.get_vertex_indices()))
-    assert isinstance(proof_result.graph.get_successor_indices(vertex), list)
-    if proof_result.graph.get_num_edges() > 0:
-        edge = next(iter(proof_result.graph.get_edge_indices()))
-        assert proof_result.graph.get_source(edge) in proof_result.graph.get_vertex_indices()
-        assert proof_result.graph.get_target(edge) in proof_result.graph.get_vertex_indices()
-        assert edge in proof_result.graph.get_out_edge_indices(proof_result.graph.get_source(edge))
-        edge_label = proof_result.graph.get_edge_property(edge)
+    assert proof_result.graph.num_vertices > 0
+    vertex = next(iter(proof_result.graph.vertices()))
+    assert isinstance(proof_result.graph.neighbours(vertex), list)
+    if proof_result.graph.num_edges > 0:
+        edge = next(iter(range(proof_result.graph.num_edges)))
+        assert proof_result.graph.source(edge) in proof_result.graph.vertices()
+        assert proof_result.graph.target(edge) in proof_result.graph.vertices()
+        assert edge in [out.id for out in proof_result.graph.out_edges(proof_result.graph.source(edge))]
+        edge_label = proof_result.graph.edge_value(edge)
         assert isinstance(edge_label, SketchProofEdgeLabel)
         assert isinstance(edge_label.action, ActionRow)
 
@@ -295,11 +295,11 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
     gc.collect()
     classified_result = find_ground_solution(task_context, sketch, classified_options)
     assert classified_result.status == ProofStatus.FAILURE
-    assert classified_result.graph.get_num_vertices() == 1
-    assert classified_result.graph.get_num_edges() == 0
+    assert classified_result.graph.num_vertices == 1
+    assert classified_result.graph.num_edges == 0
     assert len(classified_result.deadend_states) == 1
     assert classified_result.open_states == []
-    classified_label = classified_result.graph.get_vertex_property(classified_result.deadend_states[0])
+    classified_label = classified_result.graph.vertex_value(classified_result.deadend_states[0])
     assert not classified_label.is_goal
     assert not classified_label.is_alive
     assert classified_label.is_unsolvable

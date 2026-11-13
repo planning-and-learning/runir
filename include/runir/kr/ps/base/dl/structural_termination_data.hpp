@@ -1,8 +1,7 @@
 #ifndef RUNIR_KR_PS_BASE_DL_STRUCTURAL_TERMINATION_DATA_HPP_
 #define RUNIR_KR_PS_BASE_DL_STRUCTURAL_TERMINATION_DATA_HPP_
 
-#include "runir/graphs/static_graph.hpp"
-#include "runir/graphs/static_graph_builder.hpp"
+#include "runir/datasets/graph_types.hpp"
 #include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/dl/incomplete_structural_termination_data.hpp"
 #include "runir/kr/ps/dl/structural_termination.hpp"
@@ -11,6 +10,7 @@
 #include <memory>
 #include <optional>
 #include <urd/elements/flat.hpp>
+#include <urd/repr/graphs/csr_graph.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 #include <vector>
@@ -44,7 +44,10 @@ struct PolicyGraphVertexLabel : urd::compared_by_identity<PolicyGraphVertexLabel
     { return urd::Members<&PolicyGraphVertexLabel::boolean_values, &PolicyGraphVertexLabel::numerical_values> {}; }
 };
 
-using PolicyGraph = graphs::StaticGraph<PolicyGraphVertexLabel, RuleView>;
+/// A counterexample to termination: feature valuations and the rules between them, a frozen graph.
+using PolicyGraph = urd::Store<urd::graph<VertexIndex, RuleView, PolicyGraphVertexLabel>, urd::frozen>;
+// The concepts it is bound and searched by (urd/graphs.hpp): a renamed member is a compile error, not a lost feature.
+static_assert(urd::incidence_graph<PolicyGraph> && urd::edge_list_graph<PolicyGraph>);
 using SccStructuralTerminationResult = runir::kr::ps::dl::SccStructuralTerminationResult<runir::kr::BaseFamilyTag, runir::kr::ps::base::Repository>;
 
 struct SieveStructuralTerminationResult

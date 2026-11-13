@@ -20,37 +20,26 @@ namespace runir::kr::ps::icp
 namespace
 {
 
+/// A rule's record: its fields (urd::Fields) as attributes and as the arguments of its __init__.
 template<typename T>
-auto bind_rule_data(nb::module_& m, const char* name)
+void bind_rule_data(nb::module_& m, const char* name)
 {
     using Data = urd::data<T>;
-    auto cls = nb::class_<Data>(m, name)
-                   .def(nb::init<>())
-                   .def_rw("index", &Data::index)
-                   .def_rw("source", &Data::source)
-                   .def_rw("target", &Data::target)
-                   .def_rw("conditions", &Data::conditions);
-    if constexpr (requires { &Data::effects; })
-        cls.def_rw("effects", &Data::effects);
+    auto cls = nb::class_<Data>(m, name).def(nb::init<>()).def_rw("index", &Data::index);
+    runir::kr::python::def_fields<Repository>(cls);
     urd::python::add_comparison(cls);
-    return cls;
 }
 
+/// A rule's view: get_<name> for each field of its record.
 template<typename T>
-auto bind_rule_view(nb::module_& m, const char* name)
+void bind_rule_view(nb::module_& m, const char* name)
 {
     using View = urd::index_view<T, Repository>;
-    auto cls = nb::class_<View>(m, name)
-                   .def("index", &View::index)
-                   .def("get_source", &View::get_source)
-                   .def("get_target", &View::get_target)
-                   .def("get_conditions", &View::get_conditions);
-    if constexpr (requires { &View::get_effects; })
-        cls.def("get_effects", &View::get_effects);
+    auto cls = nb::class_<View>(m, name).def("index", &View::index);
+    urd::python::bind_field_getters(cls);
     ygg::add_print(cls);
     urd::python::add_comparison(cls);
     urd::python::add_hash(cls);
-    return cls;
 }
 
 }  // namespace
@@ -65,109 +54,13 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     urd::python::bind_index<urd::index<ConceptLoad>>(m, "ConceptLoadRuleIndex");
     urd::python::bind_index<urd::index<RoleLoad>>(m, "RoleLoadRuleIndex");
     urd::python::bind_index<urd::index<Crule>>(m, "CruleRuleIndex");
-    using DlRepository = runir::kr::dl::ConstructorRepository;
-    using MemoryStateIndex = urd::index<MemoryState<IcpFamilyTag>>;
-    using ConditionIndexList = runir::kr::ps::ConditionList<runir::kr::IcpFamilyTag>;
-    using ConditionViewList = urd::Store<urd::sequence<urd::resolved_t<runir::kr::ps::ConditionVariant<runir::kr::IcpFamilyTag>, Repository>>>;
-    using EffectIndexList = runir::kr::ps::EffectList<runir::kr::IcpFamilyTag>;
-    using EffectViewList = urd::Store<urd::sequence<urd::resolved_t<runir::kr::ps::EffectVariant<runir::kr::IcpFamilyTag>, Repository>>>;
-    using ConceptFeatureIndex = urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>>;
-    using RoleFeatureIndex = urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::RoleTag>>;
-    using ConceptRegisterIndex = urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>;
-    using RoleRegisterIndex = urd::index<runir::kr::dl::Register<runir::kr::dl::RoleTag>>;
+    bind_rule_data<ConceptLoad>(m, "ConceptLoadRuleData");
+    bind_rule_data<RoleLoad>(m, "RoleLoadRuleData");
+    bind_rule_data<Crule>(m, "CruleRuleData");
 
-    bind_rule_data<ConceptLoad>(m, "ConceptLoadRuleData")
-        .def(nb::init<MemoryStateIndex, MemoryStateIndex, ConditionIndexList, ConceptFeatureIndex, ConceptRegisterIndex, EffectIndexList>(),
-             "source"_a,
-             "target"_a,
-             "conditions"_a,
-             "feature"_a,
-             "reg"_a,
-             "effects"_a)
-        .def(urd::python::init_from_views<MemoryStateView,
-                                          MemoryStateView,
-                                          const ConditionViewList&,
-                                          urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>, Repository>,
-                                          urd::index_view<runir::kr::dl::Register<runir::kr::dl::ConceptTag>, DlRepository>,
-                                          const EffectViewList&>(),
-             "source"_a,
-             "target"_a,
-             "conditions"_a,
-             "feature"_a,
-             "reg"_a,
-             "effects"_a)
-        .def_rw("feature", &urd::data<ConceptLoad>::feature)
-        .def_rw("reg", &urd::data<ConceptLoad>::reg);
-    bind_rule_data<RoleLoad>(m, "RoleLoadRuleData")
-        .def(nb::init<MemoryStateIndex, MemoryStateIndex, ConditionIndexList, RoleFeatureIndex, RoleRegisterIndex, EffectIndexList>(),
-             "source"_a,
-             "target"_a,
-             "conditions"_a,
-             "feature"_a,
-             "reg"_a,
-             "effects"_a)
-        .def(urd::python::init_from_views<MemoryStateView,
-                                          MemoryStateView,
-                                          const ConditionViewList&,
-                                          urd::index_view<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::RoleTag>, Repository>,
-                                          urd::index_view<runir::kr::dl::Register<runir::kr::dl::RoleTag>, DlRepository>,
-                                          const EffectViewList&>(),
-             "source"_a,
-             "target"_a,
-             "conditions"_a,
-             "feature"_a,
-             "reg"_a,
-             "effects"_a)
-        .def_rw("feature", &urd::data<RoleLoad>::feature)
-        .def_rw("reg", &urd::data<RoleLoad>::reg);
-    bind_rule_data<Crule>(m, "CruleRuleData")
-        .def(nb::init<MemoryStateIndex,
-                      MemoryStateIndex,
-                      ConditionIndexList,
-                      EffectIndexList,
-                      urd::flat_string,
-                      urd::flat_vector<urd::flat_string>,
-                      urd::flat_vector<urd::index<XCondition>>,
-                      urd::flat_vector<urd::index<XEffect>>>(),
-             "source"_a,
-             "target"_a,
-             "conditions"_a,
-             "effects"_a,
-             "action_name"_a,
-             "argument_names"_a,
-             "xconditions"_a,
-             "xeffects"_a)
-        .def(urd::python::init_from_views<MemoryStateView,
-                                          MemoryStateView,
-                                          const ConditionViewList&,
-                                          const EffectViewList&,
-                                          urd::flat_string,
-                                          urd::flat_vector<urd::flat_string>,
-                                          const urd::Store<urd::sequence<urd::index_view<XCondition, Repository>>>&,
-                                          const urd::Store<urd::sequence<urd::index_view<XEffect, Repository>>>&>(),
-             "source"_a,
-             "target"_a,
-             "conditions"_a,
-             "effects"_a,
-             "action_name"_a,
-             "argument_names"_a,
-             "xconditions"_a,
-             "xeffects"_a)
-        .def_rw("action_name", &urd::data<Crule>::action_name)
-        .def_rw("argument_names", &urd::data<Crule>::argument_names)
-        .def_rw("xconditions", &urd::data<Crule>::xconditions)
-        .def_rw("xeffects", &urd::data<Crule>::xeffects);
-    bind_rule_view<ConceptLoad>(m, "ConceptLoadRule")
-        .def("get_feature", &RuleView<LoadTag<runir::kr::dl::ConceptTag>>::get_feature)
-        .def("get_register", &RuleView<LoadTag<runir::kr::dl::ConceptTag>>::get_register);
-    bind_rule_view<RoleLoad>(m, "RoleLoadRule")
-        .def("get_feature", &RuleView<LoadTag<runir::kr::dl::RoleTag>>::get_feature)
-        .def("get_register", &RuleView<LoadTag<runir::kr::dl::RoleTag>>::get_register);
-    bind_rule_view<Crule>(m, "CruleRule")
-        .def("get_action_name", &RuleView<CruleTag>::get_action_name)
-        .def("get_argument_names", &RuleView<CruleTag>::get_argument_names)
-        .def("get_xconditions", &RuleView<CruleTag>::get_xconditions)
-        .def("get_xeffects", &RuleView<CruleTag>::get_xeffects);
+    bind_rule_view<ConceptLoad>(m, "ConceptLoadRule");
+    bind_rule_view<RoleLoad>(m, "RoleLoadRule");
+    bind_rule_view<Crule>(m, "CruleRule");
     ygg::bind_insert<ConceptLoad>(repository);
     ygg::bind_insert<RoleLoad>(repository);
     ygg::bind_insert<Crule>(repository);

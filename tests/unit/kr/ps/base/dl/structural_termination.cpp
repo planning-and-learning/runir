@@ -1,7 +1,7 @@
 #include "fixtures.hpp"
 
 #include <gtest/gtest.h>
-#include <runir/graphs/cycle.hpp>
+#include <ranges>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/ps/base/dl/parser.hpp>
@@ -11,6 +11,7 @@
 #include <set>
 #include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/formalism/planning/parser.hpp>
+#include <vefr/algorithms.hpp>
 #include <yggdrasil/serialization/json.hpp>
 
 namespace runir::tests
@@ -22,8 +23,8 @@ namespace
 auto counterexample_rules(const kr::ps::base::dl::SieveStructuralTerminationResult& sieve) -> std::set<urd::index<kr::ps::Rule<kr::BaseFamilyTag>>>
 {
     auto rules = std::set<urd::index<kr::ps::Rule<kr::BaseFamilyTag>>> {};
-    for (const auto edge : sieve.counterexample->get_edge_indices())
-        rules.insert(sieve.counterexample->get_edge_property(edge).index());
+    for (const auto edge : std::views::iota(std::size_t { 0 }, sieve.counterexample->num_edges()))
+        rules.insert(sieve.counterexample->edge_value(edge).index());
     auto surviving = std::set<urd::index<kr::ps::Rule<kr::BaseFamilyTag>>> {};
     for (const auto rule : sieve.surviving_rules)
         surviving.insert(rule.index());
@@ -95,8 +96,8 @@ TEST(RunirTests, StructuralTerminationBooleanOscillatorCounterexample)
     EXPECT_EQ(result.incomplete_result.value().status, kr::ps::dl::IncompleteStructuralTerminationStatus::UNKNOWN);
     ASSERT_TRUE(result.sieve_result.has_value());
     ASSERT_NE(result.sieve_result.value().counterexample, nullptr);
-    EXPECT_EQ(result.sieve_result.value().counterexample->get_num_vertices(), 2);
-    EXPECT_EQ(result.sieve_result.value().counterexample->get_num_edges(), 2);
+    EXPECT_EQ(result.sieve_result.value().counterexample->num_vertices(), 2);
+    EXPECT_EQ(result.sieve_result.value().counterexample->num_edges(), 2);
     EXPECT_EQ(counterexample_rules(result.sieve_result.value()), sketch_rules(sketch));
     ASSERT_EQ(result.sieve_result.value().scc_results.size(), 1);
     ASSERT_EQ(result.sieve_result.value().scc_results.front().booleans.size(), 1);
@@ -116,7 +117,7 @@ TEST(RunirTests, StructuralTerminationNumericalCycleCounterexample)
     ASSERT_FALSE(result.is_terminating());
     ASSERT_TRUE(result.sieve_result.has_value());
     ASSERT_NE(result.sieve_result.value().counterexample, nullptr);
-    EXPECT_GE(result.sieve_result.value().counterexample->get_num_edges(), 2);
+    EXPECT_GE(result.sieve_result.value().counterexample->num_edges(), 2);
     EXPECT_EQ(counterexample_rules(result.sieve_result.value()), sketch_rules(sketch));
     ASSERT_EQ(result.sieve_result.value().scc_results.size(), 1);
     EXPECT_TRUE(result.sieve_result.value().scc_results.front().booleans.empty());
@@ -147,11 +148,11 @@ TEST(RunirTests, StructuralTerminationSurvivingRulesIncludeDisjointCycles)
         ASSERT_TRUE(result.sieve_result.has_value());
         const auto& sieve = result.sieve_result.value();
         ASSERT_NE(sieve.counterexample, nullptr);
-        EXPECT_EQ(sieve.counterexample->get_num_vertices(), 2);
-        EXPECT_EQ(sieve.counterexample->get_num_edges(), 4);
+        EXPECT_EQ(sieve.counterexample->num_vertices(), 2);
+        EXPECT_EQ(sieve.counterexample->num_edges(), 4);
         EXPECT_EQ(counterexample_rules(sieve), sketch_rules(sketch));
         EXPECT_EQ(sieve.surviving_rules.size(), 3);
-        EXPECT_EQ(graphs::find_edge_cycle(*sieve.counterexample).size(), 1);
+        EXPECT_EQ(vefr::find_cycle(*sieve.counterexample).size(), 1);
     }
 }
 

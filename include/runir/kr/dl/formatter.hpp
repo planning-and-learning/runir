@@ -6,8 +6,12 @@
 
 #include <concepts>
 #include <fmt/format.h>
+#include <ranges>
 #include <string>
 #include <string_view>
+#include <type_traits>
+#include <urd/elements/concepts.hpp>
+#include <urd/elements/view.hpp>
 #include <yggdrasil/formatting/formatter.hpp>
 
 namespace runir::kr::dl
@@ -40,44 +44,44 @@ inline constexpr std::string_view record_keyword<ConceptTag, RegisterTag> = Conc
 template<>
 inline constexpr std::string_view record_keyword<RoleTag, RegisterTag> = RoleRegisterSyntaxTag::keyword;
 
-/// The keyword and components of a constructor record, without parentheses: what its view holds, in record order.
-/// Concept and role atoms of the state print no polarity.
+/// Whether X is a planning symbol (a predicate or an object view), which a record prints as its quoted name.
+template<typename X>
+inline constexpr bool is_planning_symbol = false;
+template<tyr::formalism::FactKind K, typename C>
+inline constexpr bool is_planning_symbol<urd::index_view<tyr::formalism::Predicate<K>, C>> = true;
+template<typename C>
+inline constexpr bool is_planning_symbol<urd::index_view<tyr::formalism::Object, C>> = true;
+/// A list of planning symbols (objects).
+template<typename T>
+concept SymbolList = std::ranges::range<T> && is_planning_symbol<std::remove_cvref_t<std::ranges::range_value_t<T>>>;
+
+/// The keyword and components of a constructor record, without parentheses: its fields, in record order (urd::Fields),
+/// each as it is written: a planning symbol (or a list of them) by its quoted name, a polarity as a Boolean keyword,
+/// anything else as fmt formats it. Concept and role atoms of the state print no polarity: their syntax has none.
 template<CategoryTag Category, typename Tag, typename View>
 std::string record_text(View view)
 {
     auto text = std::string(record_keyword<Category, Tag>);
     const auto add = [&text](const auto& component) { text += fmt::format(" {}", component); };
     const auto add_name = [&text](auto symbol) { text += fmt::format(" {:?}", symbol.get_name().view()); };
-
-    if constexpr (requires { view.get_predicate(); })
-        add_name(view.get_predicate());
-    if constexpr (requires { view.get_polarity(); } && !(is_atomic_state_tag_v<Tag> && !std::same_as<Category, BooleanTag>) )
-        add(boolean(view.get_polarity()));
-    if constexpr (requires { view.get_n(); })
-        add(view.get_n());
-    if constexpr (requires { view.get_role(); })
-        add(view.get_role());
-    if constexpr (requires { view.get_concept(); })
-        add(view.get_concept());
-    if constexpr (requires { view.get_lhs(); })
-        add(view.get_lhs());
-    if constexpr (requires { view.get_mid(); })
-        add(view.get_mid());
-    if constexpr (requires { view.get_rhs(); })
-        add(view.get_rhs());
-    if constexpr (requires { view.get_arg(); })
-        add(view.get_arg());
-    if constexpr (requires { view.get_register(); })
-        add(view.get_register());
-    if constexpr (requires { view.get_argument(); })
-        add(view.get_argument());
-    if constexpr (requires { view.get_value(); })
-        add(fmt::format("{}", view.get_value()));
-    if constexpr (requires { view.get_object(); })
-        add_name(view.get_object());
-    if constexpr (requires { view.get_objects(); })
-        for (auto object : view.get_objects())
-            add_name(object);
+    const auto add_component = [&]<typename T>(const T& component)
+    {
+        if constexpr (is_planning_symbol<T>)
+            add_name(component);
+        else if constexpr (std::same_as<T, bool>)
+            add(boolean(component));
+        else if constexpr (SymbolList<T>)
+            for (auto symbol : component)
+                add_name(symbol);
+        else
+            add(component);
+    };
+    urd::for_each_field<urd::record_of<View>>(
+        [&]<typename F>()
+        {
+            if constexpr (!(F::name == "polarity" && is_atomic_state_tag_v<Tag> && !std::same_as<Category, BooleanTag>) )
+                add_component(view.template member<F::member>());
+        });
     return text;
 }
 

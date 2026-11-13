@@ -24,7 +24,7 @@ target_link_libraries(datasets
     PUBLIC
         yggdrasil::yggdrasil
         fmt::fmt-header-only
-        runir::graphs
+        vefr::vefr
         tyr::core
 )
 

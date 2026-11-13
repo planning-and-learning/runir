@@ -14,6 +14,7 @@ from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 from pyyggdrasil.execution import ExecutionContext
 
 from pyrunir.datasets import (
+    ColorRepositoryFactory,
     EquivalenceGraphGenerationOptions,
     EquivalencePolicyMode,
     GroundTaskSearchContext,
@@ -57,10 +58,11 @@ def main() -> None:
     for case in suite["tests"]:
         options = EquivalenceGraphGenerationOptions()
         options.policy_mode = POLICIES[case["equivalence_policy"]]
-        result = generate_ground_equivalence_graph(make_contexts(case), options)
-        graph = result.graph.get_forward_graph()
-        case["expected_num_vertices"] = graph.get_num_vertices()
-        case["expected_num_edges"] = graph.get_num_edges()
+        contexts = make_contexts(case)
+        result = generate_ground_equivalence_graph(contexts, options, ColorRepositoryFactory().create(contexts[0].task))
+        graph = result.graph
+        case["expected_num_vertices"] = graph.num_vertices
+        case["expected_num_edges"] = graph.num_edges
     SUITE.write_text(json.dumps(suite, indent=2) + "\n", encoding="utf-8")
 
 

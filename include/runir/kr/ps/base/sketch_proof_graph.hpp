@@ -1,8 +1,7 @@
 #ifndef RUNIR_KR_PS_BASE_SKETCH_PROOF_GRAPH_HPP_
 #define RUNIR_KR_PS_BASE_SKETCH_PROOF_GRAPH_HPP_
 
-#include "runir/graphs/static_graph.hpp"
-#include "runir/graphs/static_graph_builder.hpp"
+#include "runir/datasets/graph_types.hpp"
 #include "runir/kr/ps/base/declarations.hpp"
 #include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/base/rule_view.hpp"
@@ -11,6 +10,7 @@
 #include <tyr/formalism/declarations.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/state_repository.hpp>
+#include <urd/repr/graphs/csr_graph.hpp>
 #include <utility>
 #include <yggdrasil/formalism/row_view.hpp>
 
@@ -64,8 +64,12 @@ struct SketchProofEdgeLabel : urd::compared_by_identity<SketchProofEdgeLabel>
     static constexpr auto identifying_members() noexcept { return urd::Members<&SketchProofEdgeLabel::action, &SketchProofEdgeLabel::rule> {}; }
 };
 
+/// The states a sketch's proof search reached and the transitions it took, each labelled by its action and rule: a
+/// frozen graph, each state labelled too.
 template<tyr::TaskKind Kind>
-using SketchProofGraph = graphs::StaticGraph<SketchProofVertexLabel<Kind>, SketchProofEdgeLabel>;
+using SketchProofGraph = urd::Store<urd::graph<VertexIndex, SketchProofEdgeLabel, SketchProofVertexLabel<Kind>>, urd::frozen>;
+// The concepts it is bound and searched by (urd/graphs.hpp): a renamed member is a compile error, not a lost feature.
+static_assert(urd::incidence_graph<SketchProofGraph<tyr::GroundTag>> && urd::edge_list_graph<SketchProofGraph<tyr::LiftedTag>>);
 
 }  // namespace runir::kr::ps::base
 

@@ -3,6 +3,7 @@
 
 #include "runir/kr/dl/declarations.hpp"
 
+#include <boost/mp11.hpp>
 #include <cista/containers/variant.h>
 #include <cista/containers/vector.h>
 #include <tuple>
@@ -18,6 +19,11 @@
 namespace runir::kr::dl
 {
 
+/// The name of a reference field: what it references, a register or an argument.
+template<typename Reference>
+inline constexpr urd::fixed_string reference_field_name =
+    boost::mp11::mp_similar<Reference, Register<ConceptTag>>::value ? urd::fixed_string("register") : urd::fixed_string("argument");
+
 template<typename Self>
 struct NullaryData
 {
@@ -26,7 +32,8 @@ struct NullaryData
     NullaryData() = default;
 
     static constexpr auto cista_members() noexcept { return urd::Members<&NullaryData::index> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::Members<> {}; }
+    static constexpr auto fields() noexcept { return urd::Fields<> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
 template<typename Self, typename Identifier>
@@ -39,7 +46,8 @@ struct IdentifierData
     explicit IdentifierData(Identifier identifier_) : index(), identifier(std::move(identifier_)) {}
 
     static constexpr auto cista_members() noexcept { return urd::Members<&IdentifierData::index, &IdentifierData::identifier> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::Members<&IdentifierData::identifier> {}; }
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"value", &IdentifierData::identifier>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
 template<typename Self, typename Reference>
@@ -54,7 +62,8 @@ struct ReferenceData
     explicit ReferenceData(urd::index<Reference> reference_) : index(), reference(std::move(reference_)) {}
 
     static constexpr auto cista_members() noexcept { return urd::Members<&ReferenceData::index, &ReferenceData::reference> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::Members<&ReferenceData::reference> {}; }
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<reference_field_name<Reference>, &ReferenceData::reference>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
 /// The operand types below are as stored: an index, or a variant of them (a grammar symbol, a semantic collection).
@@ -70,7 +79,8 @@ struct UnaryData
     UnaryData(Arg arg_) : index(), arg(std::move(arg_)) {}
 
     static constexpr auto cista_members() noexcept { return urd::Members<&UnaryData::index, &UnaryData::arg> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::Members<&UnaryData::arg> {}; }
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"arg", &UnaryData::arg>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
 template<typename Self, typename Lhs, typename Rhs>
@@ -84,7 +94,8 @@ struct BinaryData
     BinaryData(Lhs lhs_, Rhs rhs_) : index(), lhs(std::move(lhs_)), rhs(std::move(rhs_)) {}
 
     static constexpr auto cista_members() noexcept { return urd::Members<&BinaryData::index, &BinaryData::lhs, &BinaryData::rhs> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::Members<&BinaryData::lhs, &BinaryData::rhs> {}; }
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"lhs", &BinaryData::lhs>, urd::field<"rhs", &BinaryData::rhs>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
 /// Distance: sources and targets are vertices, the middle operand edges.
@@ -103,7 +114,9 @@ struct TernaryData
     TernaryData(Vertex lhs_, Edge mid_, Vertex rhs_) : index(), lhs(std::move(lhs_)), mid(std::move(mid_)), rhs(std::move(rhs_)) {}
 
     static constexpr auto cista_members() noexcept { return urd::Members<&TernaryData::index, &TernaryData::lhs, &TernaryData::mid, &TernaryData::rhs> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::Members<&TernaryData::lhs, &TernaryData::mid, &TernaryData::rhs> {}; }
+    static constexpr auto fields() noexcept
+    { return urd::Fields<urd::field<"lhs", &TernaryData::lhs>, urd::field<"mid", &TernaryData::mid>, urd::field<"rhs", &TernaryData::rhs>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
 template<typename Self, tyr::formalism::FactKind T>
@@ -117,7 +130,9 @@ struct PredicateData
     PredicateData(urd::index<tyr::formalism::Predicate<T>> predicate_, bool polarity_) : index(), predicate(predicate_), polarity(polarity_) {}
 
     static constexpr auto cista_members() noexcept { return urd::Members<&PredicateData::index, &PredicateData::predicate, &PredicateData::polarity> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::Members<&PredicateData::predicate, &PredicateData::polarity> {}; }
+    static constexpr auto fields() noexcept
+    { return urd::Fields<urd::field<"predicate", &PredicateData::predicate>, urd::field<"polarity", &PredicateData::polarity>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
 template<typename Self>
@@ -130,7 +145,8 @@ struct ObjectData
     ObjectData(urd::index<tyr::formalism::Object> object_) : index(), object(object_) {}
 
     static constexpr auto cista_members() noexcept { return urd::Members<&ObjectData::index, &ObjectData::object> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::Members<&ObjectData::object> {}; }
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"object", &ObjectData::object>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
 template<typename Self, typename Role>
@@ -145,7 +161,9 @@ struct NumberRestrictionData
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&NumberRestrictionData::index, &NumberRestrictionData::n, &NumberRestrictionData::role> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::Members<&NumberRestrictionData::n, &NumberRestrictionData::role> {}; }
+    static constexpr auto fields() noexcept
+    { return urd::Fields<urd::field<"n", &NumberRestrictionData::n>, urd::field<"role", &NumberRestrictionData::role>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
 template<typename Self, typename Role, typename Concept>
@@ -168,8 +186,13 @@ struct QualifiedNumberRestrictionData
                             &QualifiedNumberRestrictionData::role,
                             &QualifiedNumberRestrictionData::concept_> {};
     }
-    static constexpr auto identifying_members() noexcept
-    { return urd::Members<&QualifiedNumberRestrictionData::n, &QualifiedNumberRestrictionData::role, &QualifiedNumberRestrictionData::concept_> {}; }
+    static constexpr auto fields() noexcept
+    {
+        return urd::Fields<urd::field<"n", &QualifiedNumberRestrictionData::n>,
+                           urd::field<"role", &QualifiedNumberRestrictionData::role>,
+                           urd::field<"concept", &QualifiedNumberRestrictionData::concept_>> {};
+    }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
 template<typename Self, typename Role>
@@ -186,7 +209,9 @@ struct RoleFillersData
     // Roles and objects live in different repositories, hence the separate context parameters.
 
     static constexpr auto cista_members() noexcept { return urd::Members<&RoleFillersData::index, &RoleFillersData::role, &RoleFillersData::objects> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::Members<&RoleFillersData::role, &RoleFillersData::objects> {}; }
+    static constexpr auto fields() noexcept
+    { return urd::Fields<urd::field<"role", &RoleFillersData::role>, urd::field<"objects", &RoleFillersData::objects>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
 template<typename Self>
@@ -199,7 +224,8 @@ struct ObjectListData
     explicit ObjectListData(urd::flat_vector<urd::index<tyr::formalism::Object>> objects_) : index(), objects(std::move(objects_)) {}
 
     static constexpr auto cista_members() noexcept { return urd::Members<&ObjectListData::index, &ObjectListData::objects> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::Members<&ObjectListData::objects> {}; }
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"objects", &ObjectListData::objects>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
 }

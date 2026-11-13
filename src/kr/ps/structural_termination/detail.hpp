@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_STRUCTURAL_TERMINATION_DETAIL_HPP_
 #define RUNIR_KR_PS_STRUCTURAL_TERMINATION_DETAIL_HPP_
 
-#include "runir/graphs/static_graph_builder.hpp"
+#include "runir/datasets/graph_types.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/dl/structural_termination.hpp"
 
@@ -13,11 +13,14 @@
 #include <limits>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <span>
 #include <stdexcept>
+#include <tuple>
 #include <urd/elements/flat.hpp>
 #include <urd/repr/maps/index_map.hpp>
 #include <urd/repr/sequences/sequence.hpp>
+#include <urd/repr/values/unordered_flat_set.hpp>
 #include <urd/store.hpp>
 #include <utility>
 #include <vector>
@@ -118,15 +121,16 @@ struct PolicySieveResult
     std::optional<urd::Store<urd::sequence<SccFeaturePositions>>> scc_feature_positions;
 };
 
-template<typename Graph>
-auto surviving_rules(const Graph& graph) -> urd::Store<urd::sequence<graphs::GraphEdgePropertyType<Graph>>>
+/// The distinct rules of `edges`, in the order they first label one.
+template<typename Edges>
+auto surviving_rules(const Edges& edges)
 {
-    // Static counterexample graphs already intern exactly their retained edge labels.
-    const auto& properties = graph.get_edge_property_map();
-    auto rules = urd::Store<urd::sequence<graphs::GraphEdgePropertyType<Graph>>> {};
-    rules.reserve(properties.size());
-    for (const auto& property : properties)
-        rules.push_back(property.value);
+    using Rule = std::tuple_element_t<2, std::ranges::range_value_t<Edges>>;
+    auto seen = urd::Store<urd::set<Rule>> {};
+    auto rules = urd::Store<urd::sequence<Rule>> {};
+    for (const auto& edge : edges)
+        if (seen.insert(std::get<2>(edge)).second)
+            rules.push_back(std::get<2>(edge));
     return rules;
 }
 
@@ -197,11 +201,13 @@ Result materialize_result(Definition definition,
         return result;
 
     result.status = decltype(result.status)::NON_TERMINATING;
-    auto builder = graphs::StaticGraphBuilder<graphs::GraphVertexPropertyType<Graph>, graphs::GraphEdgePropertyType<Graph>> {};
+    using Edge = std::tuple<VertexIndex, VertexIndex, edge_label_t<Graph>>;
+    auto vertices = urd::Store<urd::sequence<vertex_label_t<Graph>, VertexIndex>> {};
+    auto edges = urd::Store<urd::sequence<Edge>> {};
     for (const auto& component : sieve_result.components)
     {
         const auto& projected = component.projected;
-        auto vertex_remap = urd::Store<urd::map<std::size_t, graphs::VertexIndex>, urd::dense> {};
+        auto vertex_remap = urd::Store<urd::map<std::size_t, VertexIndex>, urd::dense> {};
         vertex_remap.reserve(projected.policy.num_vertices());
         const auto map_vertex = [&](std::size_t vertex)
         {
@@ -209,13 +215,18 @@ Result materialize_result(Definition definition,
                 return found->second;
             auto [booleans, numericals] = unproject_vertex(vertex, projected);
             const auto memory_position = projected.memory_positions[vertex % projected.policy.num_memory_states];
-            return vertex_remap.emplace(vertex, builder.add_vertex(make_vertex_label(booleans, numericals, memory_position))).first->second;
+            vertices.push_back(make_vertex_label(booleans, numericals, memory_position));
+            return vertex_remap.emplace(vertex, static_cast<VertexIndex>(vertices.size() - 1)).first->second;
         };
         for (const auto& edge : component.edges)
-            builder.add_directed_edge(map_vertex(edge.source), map_vertex(edge.target), analysis.rules[projected.rule_positions[edge.rule_position]]);
+        {
+            const auto source = map_vertex(edge.source);
+            const auto target = map_vertex(edge.target);
+            edges.emplace_back(source, target, analysis.rules[projected.rule_positions[edge.rule_position]]);
+        }
     }
-    sieve.counterexample = std::make_shared<Graph>(std::move(builder));
-    sieve.surviving_rules = surviving_rules(*sieve.counterexample);
+    sieve.surviving_rules = surviving_rules(edges);
+    sieve.counterexample = std::make_shared<Graph>(urd::graph_data<Edge, vertex_label_t<Graph>> { vertices.size(), edges, {}, vertices });
     return result;
 }
 

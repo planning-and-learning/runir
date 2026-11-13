@@ -131,6 +131,7 @@ endif()
 
 set(RUNIR_YGGDRASIL_REQUIRED_VERSION 0.7.2)
 set(RUNIR_TYR_REQUIRED_VERSION 0.8.0)
+set(RUNIR_VEFR_REQUIRED_VERSION 0.1.0)
 
 brokkr_find_python_native_prefix(pyurd URD_PREFIX)
 brokkr_find_python_native_prefix(pyurd_native URD_NATIVE_PREFIX)
@@ -150,6 +151,8 @@ brokkr_find_python_native_prefix(pypddl LOKI_NATIVE_PREFIX)
 brokkr_find_python_native_prefix(pytyr TYR_NATIVE_PREFIX)
 brokkr_register_python_native_runtime_prefix("pypddl/native" "${LOKI_NATIVE_PREFIX}")
 brokkr_register_python_native_runtime_prefix("pytyr/native" "${TYR_NATIVE_PREFIX}")
+brokkr_find_python_native_prefix(pyvefr VEFR_NATIVE_PREFIX)
+brokkr_register_python_native_runtime_prefix("pyvefr/native" "${VEFR_NATIVE_PREFIX}")
 brokkr_register_python_native_runtime_prefix("pyyggdrasil" "${YGGDRASIL_NATIVE_PREFIX}")
 brokkr_register_python_native_runtime_prefix("pyurd_native" "${URD_NATIVE_PREFIX}")
 
@@ -173,6 +176,9 @@ find_package(
 if(tyr_FOUND)
     message(STATUS "Found tyr: ${tyr_DIR} (found version ${tyr_VERSION})")
 endif()
+
+find_package(vefr ${RUNIR_VEFR_REQUIRED_VERSION} CONFIG REQUIRED PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
+message(STATUS "Found vefr: ${vefr_DIR} (found version ${vefr_VERSION})")
 
 # Benchmark setup
 

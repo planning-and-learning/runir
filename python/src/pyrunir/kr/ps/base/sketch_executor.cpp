@@ -8,18 +8,17 @@
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
-#include <pyrunir/graphs/graph.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
 #include <runir/kr/ps/base/sketch_executor.hpp>
 #include <runir/kr/ps/base/successor_expander.hpp>
 #include <tyr/planning/declarations.hpp>
+#include <urd/python/graphs.hpp>
+#include <vefr/dot.hpp>
+#include <vefr/python/bindings.hpp>
 #include <yggdrasil/python/bindings.hpp>
 
 namespace runir::kr::ps::base
 {
-
-using runir::graphs::bind_forward_graph;
-using runir::graphs::bind_readable_graph_methods;
 
 namespace
 {
@@ -40,10 +39,11 @@ void bind_sketch_proof_types(nb::module_& m, const char* prefix)
     urd::python::add_comparison(vertex_label);
     urd::python::add_hash(vertex_label);
 
-    auto graph = nb::class_<Graph>(m, (std::string(prefix) + "SketchProofGraph").c_str());
-    graph.def(nb::init<>());
-    bind_readable_graph_methods<true>(graph);
-    bind_forward_graph(graph);
+    {
+        auto graph = nb::class_<Graph>(m, (std::string(prefix) + "SketchProofGraph").c_str());
+        urd::python::bind_graph(graph);
+        vefr::python::bind_algorithms(graph, vefr::vertex_data, vefr::edge_data);
+    }
 
     nb::class_<Results>(m, (std::string(prefix) + "SketchProofResults").c_str())
         .def_ro("status", &Results::status)

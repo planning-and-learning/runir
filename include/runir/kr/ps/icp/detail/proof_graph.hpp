@@ -1,7 +1,6 @@
 #ifndef RUNIR_KR_PS_ICP_DETAIL_PROOF_GRAPH_HPP_
 #define RUNIR_KR_PS_ICP_DETAIL_PROOF_GRAPH_HPP_
 
-#include "runir/graphs/cycle.hpp"
 #include "runir/kr/ps/icp/detail/search_node.hpp"
 #include "runir/kr/ps/icp/program_executor_data.hpp"
 
@@ -13,16 +12,20 @@
 #include <urd/store.hpp>
 #include <utility>
 #include <vector>
+#include <vefr/algorithms.hpp>
 
 namespace runir::kr::ps::icp::detail
 {
+
+// The concepts it is bound and searched by (urd/graphs.hpp): a renamed member is a compile error, not a lost feature.
+static_assert(urd::incidence_graph<ProgramProofGraph<IcpFamilyTag, tyr::GroundTag>> && urd::edge_list_graph<ProgramProofGraph<IcpFamilyTag, tyr::LiftedTag>>);
 
 /// Materialize reached states and recorded transitions in discovery order, preserving parallel edges.
 template<tyr::TaskKind Kind>
 void build_proof_graph(ProgramProofResults<Kind>& result, const urd::Store<urd::sequence<SearchNode<Kind>>>& nodes, std::span<const Predecessor> predecessors)
 {
     using VertexLabel = ProgramProofVertexLabel<IcpFamilyTag, Kind>;
-    using Edge = std::tuple<graphs::VertexIndex, graphs::VertexIndex, ProgramProofEdgeLabel<IcpFamilyTag>>;
+    using Edge = std::tuple<VertexIndex, VertexIndex, ProgramProofEdgeLabel<IcpFamilyTag>>;
 
     auto vertices = urd::Store<urd::sequence<VertexLabel>> {};
     vertices.reserve(nodes.size());
@@ -48,8 +51,8 @@ void build_proof_graph(ProgramProofResults<Kind>& result, const urd::Store<urd::
             label.rule = *predecessor.rule;
         edges.emplace_back(predecessor.source, predecessor.target, std::move(label));
     }
-    result.graph = std::make_shared<ProgramProofGraph<IcpFamilyTag, Kind>>(std::span<const VertexLabel>(vertices), std::span<const Edge>(edges));
-    result.cycle = graphs::find_cycle(*result.graph);
+    result.graph = std::make_shared<ProgramProofGraph<IcpFamilyTag, Kind>>(urd::graph_data<Edge, vertex_label_t<ProgramProofGraph<IcpFamilyTag, Kind>>> { vertices.size(), edges, {}, vertices });
+    result.cycle = vefr::find_vertex_cycle(*result.graph);
 }
 
 }  // namespace runir::kr::ps::icp::detail
