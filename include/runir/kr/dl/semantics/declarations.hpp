@@ -38,7 +38,6 @@ class DenotationRepository;
 /// The repository owning what is viewed through a DenotationRepository: itself (denotation_repository.hpp). Declared
 /// with the class, so that a view's constraints find it whenever they are first checked.
 const DenotationRepository& get_repository(const DenotationRepository& repository) noexcept;
-class DenotationRepositoryFactory;
 class EvaluationWorkspace;
 
 class DenotationCaches;

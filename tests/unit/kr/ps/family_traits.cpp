@@ -16,7 +16,6 @@ namespace runir::tests::ps_family_traits
 namespace
 {
 
-using IcpFactory = kr::ps::icp::RepositoryFactory;
 using ExtConstructors = kr::dl::ConstructorRepositoryPtr;
 using UnsConstructors = kr::dl::ConstructorRepositoryPtr;
 
@@ -24,7 +23,7 @@ using UnsConstructors = kr::dl::ConstructorRepositoryPtr;
 static_assert(std::same_as<kr::ps::icp::Repository::DlRepositoryPtr, ExtConstructors>);
 static_assert(std::same_as<kr::ps::base::Repository::DlRepositoryPtr, ExtConstructors>);
 static_assert(std::same_as<kr::uns::Repository::DlRepositoryPtr, UnsConstructors>);
-static_assert(std::is_invocable_v<decltype(&IcpFactory::create), IcpFactory&, ExtConstructors>);
+static_assert(std::is_constructible_v<kr::ps::icp::Repository, ExtConstructors>);
 static_assert(
     !std::same_as<urd::index<kr::ps::Feature<kr::IcpFamilyTag, kr::dl::ConceptTag>>, urd::index<kr::ps::Feature<kr::ExtFamilyTag, kr::dl::ConceptTag>>>);
 

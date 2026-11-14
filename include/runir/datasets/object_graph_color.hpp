@@ -39,7 +39,7 @@
 #include <variant>
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
-#include <yggdrasil/formalism/symbol_repository.hpp>
+#include <yggdrasil/formalism/symbol_context.hpp>
 #include <yggdrasil/semantics/canonicalization.hpp>
 
 namespace runir::datasets
@@ -61,7 +61,6 @@ enum class PredicateContext : std::uint8_t
 };
 
 class ColorRepository;
-class ColorRepositoryFactory;
 
 }  // namespace runir::datasets
 
@@ -148,7 +147,9 @@ namespace runir::datasets
 
 template<::tyr::formalism::FactKind T>
 bool is_canonical(const urd::data<PredicateColor<T>>&) noexcept
-{ return true; }
+{
+    return true;
+}
 
 template<::tyr::formalism::FactKind T>
 void canonicalize(urd::data<PredicateColor<T>>&) noexcept
@@ -159,23 +160,26 @@ inline bool is_canonical(const urd::data<Color>& data) noexcept { return ygg::is
 
 inline void canonicalize(urd::data<Color>& data) { ygg::canonicalize(data.values); }
 
-class ColorRepository
+/// The symbol types of a color repository.
+using ColorTypes = boost::mp11::mp_list<PredicateColor<::tyr::formalism::StaticTag>, PredicateColor<::tyr::formalism::FluentTag>, Color>;
+
+class ColorRepository : public ygg::formalism::SymbolContext<ColorRepository, ColorTypes, true>
 {
-    friend class ColorRepositoryFactory;
+    using Base = ygg::formalism::SymbolContext<ColorRepository, ColorTypes, true>;
 
 private:
-    ygg::formalism::ConcurrentSymbolRepository<PredicateColor<::tyr::formalism::StaticTag>, PredicateColor<::tyr::formalism::FluentTag>, Color>
-        m_symbol_repository;
     std::shared_ptr<const ::tyr::formalism::planning::Repository> m_planning_repository;
     std::size_t m_index;
 
-    ColorRepository(std::size_t index, std::shared_ptr<const ::tyr::formalism::planning::Repository> planning_repository) :
-        m_symbol_repository(nullptr),
-        m_planning_repository(std::move(planning_repository)),
-        m_index(index)
-    { assert(m_planning_repository); }
-
 public:
+    /// Over the planning repository whose predicates its colors refer to. Numbered by ygg::next_layer(), the process-wide
+    /// counter, so that no two contexts share a number.
+    explicit ColorRepository(std::shared_ptr<const ::tyr::formalism::planning::Repository> planning_repository) :
+        m_planning_repository(std::move(planning_repository)),
+        m_index(ygg::next_layer())
+    {
+        assert(m_planning_repository);
+    }
     ColorRepository(const ColorRepository&) = delete;
     ColorRepository& operator=(const ColorRepository&) = delete;
     ColorRepository(ColorRepository&&) = delete;
@@ -191,15 +195,11 @@ public:
     }
     [[nodiscard]] const auto& get_planning_repository_ptr() const noexcept { return m_planning_repository; }
 
-    void clear() noexcept { m_symbol_repository.clear(); }
-
     template<typename T>
     std::optional<urd::index_view<T, ColorRepository>> find(const urd::data<T>& data) const noexcept
     {
         assert(is_canonical(data));
-        if (const auto index = m_symbol_repository.get<T>().find(data); !index.is_none())
-            return urd::index_view<T, ColorRepository>(index, this);
-        return std::nullopt;
+        return Base::find(data);
     }
 
     template<typename T>
@@ -207,32 +207,8 @@ public:
     {
         canonicalize(data);
         assert(is_canonical(data));
-        const auto [index, created] = ygg::formalism::intern(m_symbol_repository.get<T>(), data);
-        return { urd::index_view<T, ColorRepository>(index, this), created };
+        return Base::insert(data);
     }
-
-    /// An index as its view here (urd's resolves contract): what compositions of indices are read through (urd::resolve).
-    template<typename T>
-    [[nodiscard]] urd::index_view<T, ColorRepository> view(urd::index<T> index) const noexcept
-    { return { index, this }; }
-
-    template<typename T>
-    const urd::data<T>& operator[](urd::index<T> index) const noexcept
-    { return m_symbol_repository[index]; }
-
-    template<typename T>
-    [[nodiscard]] std::size_t size() const noexcept
-    { return m_symbol_repository.size<T>(); }
-};
-
-class ColorRepositoryFactory
-{
-private:
-    std::size_t m_next_index = 0;
-
-public:
-    std::shared_ptr<ColorRepository> create(std::shared_ptr<const ::tyr::formalism::planning::Repository> planning_repository)
-    { return std::shared_ptr<ColorRepository>(new ColorRepository(m_next_index++, std::move(planning_repository))); }
 };
 
 using ColorView = urd::index_view<Color, ColorRepository>;

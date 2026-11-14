@@ -44,8 +44,8 @@ TEST(RunirTests, ExtSyntacticComplexityAggregatesDeclaredFeatures)
 {
     const auto domain = benchmark_path("classical/tests/gripper/domain.pddl");
     const auto planning_domain = tyr::formalism::planning::Parser(domain).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
 
     const auto concept_expression = create_top_concept(*dl_repository);
     const auto role = kr::ps::ext::dl::parse_role("(r_universal)", planning_domain.get_domain(), *dl_repository);
@@ -104,10 +104,8 @@ TEST(RunirTests, ExtModuleParserLowersArgumentRegisterMemorySections)
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactory();
-    auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
-    auto repository = repository_factory.create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
 
     const auto description = read_fixture("kr/ps/ext/executor/ext_module_parser_lowers_argument_register_memory_sections/description.module");
 
@@ -130,10 +128,8 @@ TEST(RunirTests, ExtModuleParserLowersNamedCalleesWithoutPreexistingModules)
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactory();
-    auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
-    auto repository = repository_factory.create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
 
     const auto caller_description =
         read_fixture("kr/ps/ext/executor/ext_module_parser_lowers_named_callees_without_preexisting_modules/caller_description.module");
@@ -169,10 +165,8 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidModuleSets)
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactory();
-    auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
-    auto repository = repository_factory.create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
 
     const auto caller_with_argument = read_fixture("kr/ps/ext/executor/ext_module_parser_rejects_invalid_module_sets/caller_with_argument.module");
     const auto callee_without_arguments =
@@ -192,10 +186,8 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidDoActions)
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactory();
-    auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
-    auto repository = repository_factory.create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
 
     const auto unknown_action = read_fixture("kr/ps/ext/executor/ext_module_parser_rejects_invalid_do_actions/unknown_action.module");
     try
@@ -241,10 +233,8 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactory();
-    auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
-    auto repository = repository_factory.create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
 
     const auto expect_parse_error_containing = [&](const auto& module_text, const std::string& expected_fragment)
     {
@@ -320,10 +310,8 @@ TEST(RunirTests, ExtProgramParserRejectsInvalidProgramWiring)
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactory();
-    auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
-    auto repository = repository_factory.create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
 
     EXPECT_THROW(kr::ps::ext::dl::parse_program(read_fixture("kr/ps/ext/executor/ext_program_parser_rejects_invalid_program_wiring/case_2.program"),
                                                 planning_task.get_domain().get_domain(),
@@ -412,10 +400,8 @@ TEST(RunirTests, ExtModuleParserLowersPaperFactoryDescriptionsAgainstBlocksworld
     const auto task_file = benchmark_path("classical/profiling/blocksworld-large-simple/p-300-4.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactory();
-    auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
-    auto repository = repository_factory.create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
 
     const auto modules = kr::ps::ext::dl::parse_modules(kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_descriptions(),
                                                         planning_task.get_domain().get_domain(),
@@ -453,10 +439,8 @@ TEST(RunirTests, ExtModuleFormatterRoundTripsPaperFactoryDescriptions)
     const auto task_file = benchmark_path("classical/profiling/blocksworld-large-simple/p-300-4.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactory();
-    auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
-    auto repository = repository_factory.create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
 
     const auto modules = kr::ps::ext::dl::parse_modules(kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_descriptions(),
                                                         planning_task.get_domain().get_domain(),
@@ -497,10 +481,8 @@ TEST(RunirTests, ExtModuleFormatterPreservesOrderedDeclarations)
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactory();
-    auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
-    auto repository = repository_factory.create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
 
     const auto seed = read_fixture("kr/ps/ext/executor/ext_module_formatter_preserves_ordered_declarations/seed.module");
     const auto target = read_fixture("kr/ps/ext/executor/ext_module_formatter_preserves_ordered_declarations/target.module");
@@ -519,8 +501,8 @@ TEST(RunirTests, ExtModuleFormatterPreservesOrderedDeclarations)
     EXPECT_EQ(registers[1].get_name(), "RX");
 
     const auto formatted = fmt::format("{}", module_);
-    auto reparsed_dl_repository = dl_repository_factory.create(planning_task.get_repository());
-    auto reparsed_repository = repository_factory.create(reparsed_dl_repository);
+    auto reparsed_dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto reparsed_repository = std::make_shared<kr::ps::ext::Repository>(reparsed_dl_repository);
     const auto reparsed = kr::ps::ext::dl::parse_module(formatted, planning_task.get_domain().get_domain(), *reparsed_repository);
     EXPECT_EQ(fmt::format("{}", reparsed), formatted);
     EXPECT_EQ(reparsed.get_arguments<kr::dl::ConceptTag>()[0].get_name(), "Y");
@@ -533,10 +515,8 @@ TEST(RunirTests, ExtModuleFormatterEscapesQuotedStringContents)
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactory();
-    auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
-    auto repository = repository_factory.create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
 
     const auto description = read_fixture("kr/ps/ext/executor/ext_module_formatter_escapes_quoted_string_contents/description.module");
 
@@ -556,10 +536,8 @@ TEST(RunirTests, ExtModuleFormatterOmitsEmptyNestedRuleMetadata)
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactory();
-    auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
-    auto repository = repository_factory.create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
 
     const auto description = read_fixture("kr/ps/ext/executor/ext_module_formatter_omits_empty_nested_rule_metadata/description.module");
 
@@ -583,10 +561,8 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactory();
-    auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
-    auto repository = repository_factory.create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
 
     const auto description = read_fixture("kr/ps/ext/executor/ext_module_parser_lowers_supported_transitions/description.module");
 
@@ -629,8 +605,8 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
 TEST(RunirTests, ExtBindingRulesParseEffectsAndRoundTrip)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
 
     for (const auto* keyword : { "load", "choose" })
         for (const auto* category : { "concept", "role" })
@@ -699,8 +675,7 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactory();
-    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
 
     const auto concept_argument =
         kr::ps::ext::dl::parse_concept(read_fixture("kr/ps/ext/executor/ext_module_parser_lowers_ext_dl_concept_and_role_expressions/case_1.dsl"),
@@ -780,10 +755,8 @@ TEST(RunirTests, ExtModuleFactoryCreatesEmptyModule)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/profiling/blocksworld-large-simple/domain.pddl")).get_domain();
 
-    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactory();
-    auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create(planning_domain.get_repository());
-    auto repository = repository_factory.create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
 
     const auto empty = kr::ps::ext::dl::ModuleFactory::create_empty(*repository);
     EXPECT_EQ(empty.get_name(), "empty");
@@ -802,8 +775,8 @@ TEST(RunirTests, ExtModuleFactoryCreatesEmptyModule)
 TEST(RunirTests, ExtChooseOrderRoundTrip)
 {
     const auto domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(domain.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(domain.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     for (const auto* category : { "concept", "role" })
     {
         const auto source = [&](const char* order)

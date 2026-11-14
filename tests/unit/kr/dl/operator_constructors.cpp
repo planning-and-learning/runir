@@ -29,7 +29,7 @@ auto wrap_role(runir::kr::dl::ConstructorRepository& repository, auto role)
 TEST(RunirTests, SyntacticComplexityRecursesIntoConceptChildren)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto repository = runir::kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
+    auto repository = std::make_shared<runir::kr::dl::ConstructorRepository>(planning_domain.get_repository());
     auto& repo = *repository;
 
     auto universal_data = urd::data<runir::kr::dl::Role<runir::kr::dl::SemanticFamily, runir::kr::dl::UniversalTag>>();

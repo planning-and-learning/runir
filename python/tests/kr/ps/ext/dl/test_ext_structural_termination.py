@@ -10,7 +10,7 @@ import pyvefr
 from fixture_utils import read_fixture
 from pytyr.formalism.planning import PlanningDomain
 
-from pyrunir.kr.dl import ConstructorRepositoryFactory as DlRepositoryFactory
+from pyrunir.kr.dl import ConstructorRepository as DlRepository
 from pyrunir.kr.ps import IncompleteStructuralTerminationStatus, ext
 from pyrunir.kr.ps.ext import dl
 
@@ -21,8 +21,8 @@ PROJECTED_COMPONENTS_MODULE = read_fixture("kr/ps/ext/dl/projected_components.mo
 
 
 def _repository(planning_domain: PlanningDomain) -> ext.Repository:
-    dl_repository = DlRepositoryFactory().create(planning_domain)
-    return ext.RepositoryFactory().create(dl_repository)
+    dl_repository = DlRepository(planning_domain)
+    return ext.Repository(dl_repository)
 
 
 @pytest.mark.parametrize("vertex_property", [False, True])

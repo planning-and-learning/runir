@@ -40,7 +40,7 @@ void check_optimized_queries()
             return make_lifted_context(directory / "domain.pddl", directory / "task.pddl");
     }();
     const auto domain = search->task->get_domain().get_domain();
-    auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
+    auto repository = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
 
     // Sample states: the initial state and its successors (removing triples).
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
@@ -50,7 +50,7 @@ void check_optimized_queries()
 
     using Context = kr::dl::semantics::StateEvaluationContext<Kind>;
     auto builder = kr::dl::semantics::Builder();
-    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto empty_arguments = urd::data<kr::dl::semantics::CallArguments>();
     auto register_data = urd::data<kr::dl::semantics::RegisterValues>();
     register_data.concept_values.resize(1);

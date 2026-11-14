@@ -86,7 +86,7 @@ TEST(RunirTests, ComparisonsAndConstantsEvaluateAndFormat)
     const auto& task = search->task;
     const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
 
-    auto repository = runir::kr::dl::ConstructorRepositoryFactory().create(task->get_repository());
+    auto repository = std::make_shared<runir::kr::dl::ConstructorRepository>(task->get_repository());
     auto& repo = *repository;
 
     // c_top -> n_count(c_top)
@@ -101,7 +101,7 @@ TEST(RunirTests, ComparisonsAndConstantsEvaluateAndFormat)
 
     // Evaluation context over the initial state.
     auto builder = runir::kr::dl::semantics::Builder();
-    auto denotation_repository = runir::kr::dl::semantics::DenotationRepositoryFactory().create(task->get_repository());
+    auto denotation_repository = runir::kr::dl::semantics::DenotationRepository(task->get_repository());
     auto storage = runir::kr::dl::semantics::EvaluationStorage(denotation_repository);
     auto context = runir::kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>(state, builder, storage);
 
@@ -175,11 +175,11 @@ TEST(RunirTests, ArithmeticAndLogicalOperatorsEvaluateAndFormat)
     const auto& task = search->task;
     const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
 
-    auto repository = runir::kr::dl::ConstructorRepositoryFactory().create(task->get_repository());
+    auto repository = std::make_shared<runir::kr::dl::ConstructorRepository>(task->get_repository());
     auto& repo = *repository;
 
     auto builder = runir::kr::dl::semantics::Builder();
-    auto denotation_repository = runir::kr::dl::semantics::DenotationRepositoryFactory().create(task->get_repository());
+    auto denotation_repository = runir::kr::dl::semantics::DenotationRepository(task->get_repository());
     auto storage = runir::kr::dl::semantics::EvaluationStorage(denotation_repository);
     auto context = runir::kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>(state, builder, storage);
 

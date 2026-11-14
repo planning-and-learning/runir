@@ -12,7 +12,7 @@ from pypddl_datasets import data_root
 from pytyr.formalism.planning import Parser
 
 from pyrunir.kr.dl import cnf_grammar
-from pyrunir.kr.dl.grammar import ConstructorRepositoryFactory, GrammarFactory, GrammarSpecification, parse_grammar
+from pyrunir.kr.dl.grammar import ConstructorRepository, GrammarFactory, GrammarSpecification, parse_grammar
 
 ROOT = Path(__file__).resolve().parents[6]
 SUITE = ROOT / "tests/support/data/kr/dl/grammar/factory.json"
@@ -34,12 +34,12 @@ def main() -> None:
     for case in suite["cases"]:
         planning_domain = Parser(Path(data_root()) / case["domain_file"], ParserOptions()).get_domain()
         domain = planning_domain.get_domain()
-        repository = ConstructorRepositoryFactory().create(planning_domain)
+        repository = ConstructorRepository(planning_domain)
         grammar = GrammarFactory.create(GrammarSpecification.FRANCE_ET_AL_AAAI2021, domain, repository)
         grammar_text = str(grammar)
         (ROOT / "tests/support/data" / case["grammar_file"]).write_text(grammar_text, encoding="utf-8")
 
-        cnf_repository = cnf_grammar.ConstructorRepositoryFactory().create(planning_domain)
+        cnf_repository = cnf_grammar.ConstructorRepository(planning_domain)
         cnf_text = str(cnf_grammar.translate(parse_grammar(grammar_text, domain, repository), cnf_repository))
         (ROOT / "tests/support/data" / case["cnf_file"]).write_text(cnf_text, encoding="utf-8")
 

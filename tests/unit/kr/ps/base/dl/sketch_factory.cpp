@@ -33,13 +33,11 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesParse)
         { "classical/tests/delivery/domain.pddl", kr::ps::base::dl::SketchSpecification::DELIVERY_FRANCE_ET_AL_AAAI2021 },
     };
 
-    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactory();
-    auto repository_factory = kr::ps::base::RepositoryFactory();
     for (const auto& test_case : cases)
     {
         const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path(test_case.domain)).get_domain();
-        auto dl_repository = dl_repository_factory.create(planning_domain.get_repository());
-        auto repository = repository_factory.create(dl_repository);
+        auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+        auto repository = std::make_shared<kr::ps::base::Repository>(dl_repository);
         const auto sketch = kr::ps::base::dl::SketchFactory::create(test_case.specification, planning_domain.get_domain(), *repository);
 
         EXPECT_EQ(sketch.index(), urd::index<kr::ps::base::Sketch>(0));
@@ -64,8 +62,8 @@ TEST(RunirTests, RejectsUnknownSketchFactorySpecification)
 TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
-    auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::ps::base::Repository>(dl_repository);
 
     const auto sketch = kr::ps::base::dl::parse_sketch(read_fixture("kr/dl/grammar/policy_parser.sketch"), planning_domain.get_domain(), *repository);
 

@@ -14,7 +14,7 @@ from pyyggdrasil.execution import ExecutionContext
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext, LiftedTaskContext
 from pyrunir.kr.dl import cnf_grammar, semantics
-from pyrunir.kr.dl.grammar import ConstructorRepositoryFactory, parse_grammar
+from pyrunir.kr.dl.grammar import ConstructorRepository, parse_grammar
 
 
 def _make_gripper_context(
@@ -41,9 +41,9 @@ def _generate(
     task_context: GroundTaskContext,
     max_syntactic_complexity: int,
 ) -> cnf_grammar.GenerateResults:
-    grammar_repository = ConstructorRepositoryFactory().create(planning_domain)
+    grammar_repository = ConstructorRepository(planning_domain)
     grammar = parse_grammar(grammar_description, planning_domain.get_domain(), grammar_repository)
-    cnf_repository = cnf_grammar.ConstructorRepositoryFactory().create(planning_domain)
+    cnf_repository = cnf_grammar.ConstructorRepository(planning_domain)
     cnf = cnf_grammar.translate(grammar, cnf_repository)
     options = cnf_grammar.GenerateOptions()
     options.max_syntactic_complexity = max_syntactic_complexity
@@ -101,9 +101,9 @@ def test_generate_lifted_uses_domain_constructors_and_task_denotations(gripper_d
     task_context = LiftedTaskContext(DomainContext(planning_domain), search)
     state = search.state_repository.get_initial_state(search.axiom_evaluator).pack()
     output_repository = task_context.domain_context.base_repository.get_dl_repository()
-    grammar_repository = ConstructorRepositoryFactory().create(planning_domain)
+    grammar_repository = ConstructorRepository(planning_domain)
     grammar = parse_grammar("((c_0 (c_top))(n_0 (n_count c_0)))", planning_domain.get_domain(), grammar_repository)
-    cnf_repository = cnf_grammar.ConstructorRepositoryFactory().create(planning_domain)
+    cnf_repository = cnf_grammar.ConstructorRepository(planning_domain)
     cnf = cnf_grammar.translate(grammar, cnf_repository)
     options = cnf_grammar.GenerateOptions()
     options.max_syntactic_complexity = 2
@@ -136,7 +136,7 @@ def test_generate_lifted_uses_domain_constructors_and_task_denotations(gripper_d
     with pytest.raises(ValueError, match="states and output repository for the same planning domain"):
         cnf_grammar.generate_lifted(cnf, [foreign_state], output_repository, denotation_repository, options)
 
-    foreign_repository = semantics.ConstructorRepositoryFactory().create(foreign_parser.get_domain())
+    foreign_repository = semantics.ConstructorRepository(foreign_parser.get_domain())
     with pytest.raises(ValueError, match="grammar and output repository for the same planning domain"):
         cnf_grammar.generate_lifted(cnf, [], foreign_repository, denotation_repository, options)
 

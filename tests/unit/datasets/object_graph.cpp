@@ -16,8 +16,7 @@ namespace runir::tests
 TEST(ObjectGraphTest, InitialStateObjectGraphIsSimpleAndCanonicalizesVertexColors)
 {
     auto context = make_gripper_ground_context();
-    auto color_repository_factory = datasets::ColorRepositoryFactory {};
-    auto color_repository = color_repository_factory.create(context->task->get_domain().get_repository());
+    auto color_repository = std::make_shared<datasets::ColorRepository>(context->task->get_domain().get_repository());
 
     const auto initial_state = context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator).get_state();
     const auto graph = datasets::create_object_graph(initial_state, *color_repository);

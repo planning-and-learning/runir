@@ -91,7 +91,7 @@ TEST_P(EquivalenceGraphTest, MatchesExpectedProperties)
     auto options = datasets::EquivalenceGraphGenerationOptions {};
     options.policy_mode = param.equivalence_policy;
 
-    auto colors = datasets::ColorRepositoryFactory {}.create(contexts.front()->task->get_domain().get_repository());
+    auto colors = std::make_shared<datasets::ColorRepository>(contexts.front()->task->get_domain().get_repository());
     const auto result = datasets::generate_equivalence_graph(contexts, options, *colors);
     const auto figure = fmt::format("{}", *result.graph);
 
@@ -115,7 +115,7 @@ TEST(EquivalenceGraphTest, RejectsUnsupportedPolicyMode)
 {
     const auto root = benchmark_path("classical/tests/gripper");
     auto contexts = make_ground_contexts(root / "domain.pddl", { root / "test-1.pddl" });
-    auto colors = datasets::ColorRepositoryFactory {}.create(contexts.front()->task->get_domain().get_repository());
+    auto colors = std::make_shared<datasets::ColorRepository>(contexts.front()->task->get_domain().get_repository());
     auto options = datasets::EquivalenceGraphGenerationOptions {};
     options.policy_mode = static_cast<datasets::EquivalencePolicyMode>(255);
 
@@ -135,7 +135,7 @@ TEST(EquivalenceGraphTest, RejectsCrossGraphConcreteStateEdge)
     auto contexts = make_ground_contexts(root / "domain.pddl", { root / "test-1.pddl", root / "test-1.pddl" });
     auto options = datasets::EquivalenceGraphGenerationOptions {};
     options.policy_mode = datasets::EquivalencePolicyMode::GI;
-    auto colors = datasets::ColorRepositoryFactory {}.create(contexts.front()->task->get_domain().get_repository());
+    auto colors = std::make_shared<datasets::ColorRepository>(contexts.front()->task->get_domain().get_repository());
 
     EXPECT_THROW(
         try { static_cast<void>(datasets::generate_equivalence_graph(contexts, options, *colors)); } catch (const std::runtime_error& error) {
@@ -149,8 +149,7 @@ TEST(EquivalenceGraphTest, ReusesColorsAcrossProblems)
 {
     const auto root = benchmark_path("classical/tests/gripper");
     auto contexts = make_ground_contexts(root / "domain.pddl", { root / "test-1.pddl", root / "test-1.pddl" });
-    auto factory = datasets::ColorRepositoryFactory {};
-    auto colors = factory.create(contexts.front()->task->get_domain().get_repository());
+    auto colors = std::make_shared<datasets::ColorRepository>(contexts.front()->task->get_domain().get_repository());
     auto num_colors = std::size_t { 0 };
 
     for (std::size_t iteration = 0; iteration < contexts.size(); ++iteration)

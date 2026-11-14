@@ -418,12 +418,12 @@ template<tyr::TaskKind Kind, CategoryTag Category, StateEvaluationContextConcept
 auto evaluate(ConstructorView<Category> constructor, Context& context) -> DenotationView<Category>
 {
     const auto is_static = constructor.is_static();
-    auto& cache = context.get_caches().template get<Category>(is_static);
-    if (const auto it = cache.find(constructor); it != cache.end())
-        return it->second;
+    auto& caches = context.get_caches();
+    if (const auto cached = caches.find(is_static, constructor))
+        return *cached;
 
     auto result_context = context.for_result(is_static);
-    return cache.emplace(constructor, evaluate_impl<Kind>(constructor, result_context)).first->second;
+    return caches.insert(is_static, constructor, evaluate_impl<Kind>(constructor, result_context));
 }
 
 template<tyr::TaskKind Kind, typename C, StateEvaluationContextConcept<Kind> Context>
@@ -452,13 +452,13 @@ auto evaluate_impl(urd::index_view<Query<Tag>, C> constructor, Context& context)
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
 auto evaluate(urd::index_view<Query<>, C> constructor, Context& context) -> QueryDenotationView
 {
-    auto& cache = context.get_caches().get_queries(constructor.is_static());
-    if (const auto it = cache.find(constructor); it != cache.end())
-        return it->second;
+    auto& caches = context.get_caches();
+    if (const auto cached = caches.find_query(constructor.is_static(), constructor))
+        return *cached;
 
     auto output = context.for_result(constructor.is_static());
     const auto result = std::visit([&](auto child) { return evaluate_impl<Kind>(child, output); }, constructor.get_variant());
-    return cache.emplace(constructor, result).first->second;
+    return caches.insert_query(constructor.is_static(), constructor, result);
 }
 
 template<tyr::TaskKind Kind, ConceptOrRoleTag Category, StateEvaluationContextConcept<Kind> Context, typename C>

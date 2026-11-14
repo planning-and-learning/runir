@@ -13,7 +13,6 @@ from pyrunir._pyrunir.kr.ps.base import (
     LiftedSketchProofVertexLabel as LiftedSketchProofVertexLabel,
     LiftedSketchSearchOptions as LiftedSketchSearchOptions,
     Repository as Repository,
-    RepositoryFactory as RepositoryFactory,
     Rule as Rule,
     RuleData as RuleData,
     RuleIndex as RuleIndex,

@@ -17,7 +17,6 @@ from pyrunir._pyrunir.kr.dl import (
     ConceptRegisterIdentifier as ConceptRegisterIdentifier,
     ConceptRegisterIndex as ConceptRegisterIndex,
     ConstructorRepository as ConstructorRepository,
-    ConstructorRepositoryFactory as ConstructorRepositoryFactory,
     NumericalArgument as NumericalArgument,
     NumericalArgumentData as NumericalArgumentData,
     NumericalArgumentIdentifier as NumericalArgumentIdentifier,

@@ -17,7 +17,6 @@ void bind_module_definitions(nb::module_& m)
     auto semantics_module = m.def_submodule("semantics");
     bind_semantics_module_definitions(semantics_module);
     m.attr("ConstructorRepository") = semantics_module.attr("ConstructorRepository");
-    m.attr("ConstructorRepositoryFactory") = semantics_module.attr("ConstructorRepositoryFactory");
 
     auto grammar_module = m.def_submodule("grammar");
     bind_grammar_module_definitions(grammar_module);

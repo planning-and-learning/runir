@@ -23,8 +23,8 @@ auto gripper_domain() -> std::filesystem::path { return benchmark_path("classica
 TEST(RunirTests, ExtIncompleteStructuralTerminationMapsNumericalOpponent)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(gripper_domain()).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     const auto module_ =
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/incomplete_numerical_opponent.module"), planning_domain.get_domain(), *repository);
 
@@ -46,8 +46,8 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationMapsNumericalOpponent)
 TEST(RunirTests, ExtIncompleteStructuralTerminationUsesMemorySeparation)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(gripper_domain()).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     const auto module_ = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/separated_boolean.module"), planning_domain.get_domain(), *repository);
 
     const auto result = kr::ps::ext::dl::incomplete_structural_termination(module_);
@@ -60,8 +60,8 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationUsesMemorySeparation)
 TEST(RunirTests, ExtIncompleteStructuralTerminationSeparatedRegisterLoadDoesNotBlockDecrease)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(gripper_domain()).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     const auto module_ = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/incomplete_register_load.module"), planning_domain.get_domain(), *repository);
 
     const auto result = kr::ps::ext::dl::incomplete_structural_termination(module_);
@@ -75,8 +75,8 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationSeparatedRegisterLoadDoesNotB
 TEST(RunirTests, ExtIncompleteStructuralTerminationHasNoFeatureLimit)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(gripper_domain()).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     const auto module_ = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/incomplete_many_features.module"), planning_domain.get_domain(), *repository);
 
     const auto result = kr::ps::ext::dl::incomplete_structural_termination(module_);
@@ -88,8 +88,8 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationHasNoFeatureLimit)
 TEST(RunirTests, ExtIncompleteStructuralTerminationAcyclicCallIsLocallyTerminating)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(gripper_domain()).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     const auto program =
         kr::ps::ext::dl::parse_program(read_fixture("kr/ps/ext/dl/incomplete_acyclic_calls.program"), planning_domain.get_domain(), *repository);
 
@@ -105,8 +105,8 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationAcyclicCallIsLocallyTerminati
 TEST(RunirTests, ExtIncompleteStructuralTerminationReportsRecursiveCalls)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(gripper_domain()).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     const auto program =
         kr::ps::ext::dl::parse_program(read_fixture("kr/ps/ext/dl/incomplete_recursive_calls.program"), planning_domain.get_domain(), *repository);
 
@@ -121,8 +121,8 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationReportsRecursiveCalls)
 TEST(RunirTests, ExtIncompleteStructuralTerminationAcyclicEmptyProgramIsTerminating)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(gripper_domain()).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     const auto program = kr::ps::ext::dl::parse_program(read_fixture("kr/ps/ext/dl/acyclic_empty.program"), planning_domain.get_domain(), *repository);
 
     const auto result = kr::ps::ext::dl::incomplete_structural_termination(program);

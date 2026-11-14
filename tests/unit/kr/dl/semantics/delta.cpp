@@ -143,7 +143,7 @@ void check_delta()
     check_state_delta<Kind>(source, target);
     check_state_delta<Kind>(source, target);
 
-    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto source_registers = urd::data<kr::dl::semantics::RegisterValues> {};
     source_registers.concept_values.resize(3);
     source_registers.concept_values[0] = Object(0);

@@ -25,7 +25,6 @@ using SketchTypes = boost::mp11::mp_list<runir::kr::ps::Rule<runir::kr::BaseFami
 using RepositoryTypes = boost::mp11::mp_append<runir::kr::ps::PsCoreTypes<runir::kr::BaseFamilyTag>, SketchTypes>;
 using Repository = runir::kr::ps::BasicRepository<runir::kr::BaseFamilyTag, RepositoryTypes>;
 using RepositoryPtr = std::shared_ptr<Repository>;
-using RepositoryFactory = runir::kr::ps::BasicRepositoryFactory<runir::kr::BaseFamilyTag, RepositoryTypes>;
 
 using SketchView = urd::index_view<runir::kr::ps::base::Sketch, Repository>;
 using RuleView = urd::index_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, Repository>;

@@ -52,8 +52,8 @@ TEST(RunirTests, PolicyExtParserNegativeFixtures)
 {
     const auto planning_domain = parse_gripper_domain();
     const auto domain = planning_domain.get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     const auto suite = load_fixture_json("kr/ps/parser_negative.json");
     const auto& cases = ygg::common::as_array(ygg::common::require_member(ygg::common::as_object(suite, "suite"), "cases", "suite"), "suite.cases");
 
@@ -84,8 +84,8 @@ TEST(RunirTests, ExtendedModuleFormatterPreservesAlternativeRuleGrouping)
 {
     const auto planning_domain = parse_gripper_domain();
     const auto domain = planning_domain.get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     const auto module_ = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/parser/alternative_rules.module"), domain, *repository);
 
     ASSERT_EQ(module_.get_memory_transitions().size(), 1);
@@ -105,8 +105,8 @@ TEST(RunirTests, ExtendedBacktrackRulesRoundTripWithoutTargetOrEffects)
 {
     const auto planning_domain = parse_gripper_domain();
     const auto domain = planning_domain.get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     const auto description = R"((:module
       (:symbol pruning)
       (:arguments)
@@ -152,8 +152,8 @@ TEST(RunirTests, ExtendedBacktrackRulesRejectInvalidTargetsAndConditions)
 {
     const auto planning_domain = parse_gripper_domain();
     const auto domain = planning_domain.get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     const auto parse = [&](const std::string& expression)
     {
         return kr::ps::ext::dl::parse_module("(:module (:symbol pruning) (:arguments) (:registers) (:entry start) (:memory start done) (:features) "
@@ -175,8 +175,8 @@ TEST(RunirTests, RelationalExpressionsRoundTripAndRejectGenerationGrammars)
 {
     const auto planning_domain = parse_gripper_domain();
     const auto domain = planning_domain.get_domain();
-    auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
-    auto grammar_repository = kr::dl::grammar::ConstructorRepositoryFactory().create(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto grammar_repository = std::make_shared<kr::dl::grammar::ConstructorRepository>(planning_domain.get_repository());
 
     const urd::Store<urd::sequence<std::string>> expressions {
         R"((n_count (q_project () (q_atomic_state "at" (X Y)))))",
@@ -273,7 +273,7 @@ TEST(RunirTests, SearchEdgesRejectClosuresAndSearches)
 {
     const auto planning_domain = parse_gripper_domain();
     const auto domain = planning_domain.get_domain();
-    auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
     const auto parse = [&](const std::string& expression) { return kr::ps::ext::dl::parse_numerical(expression, domain, *repository); };
     const auto* const message = "no transitive closure, n_distance or q_must_pass in the edges of n_distance or q_must_pass";
 
@@ -313,8 +313,8 @@ TEST(RunirTests, ExtendedQueryFeatureActionRuleRoundTrip)
 {
     const auto planning_domain = parse_gripper_domain();
     const auto domain = planning_domain.get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     const auto description = R"((:module
       (:symbol query_actions)
       (:arguments (:concept rooms))
@@ -375,8 +375,8 @@ TEST(RunirTests, ExtendedQueryActionRuleRejectsInvalidReferencesAndArity)
 {
     const auto planning_domain = parse_gripper_domain();
     const auto domain = planning_domain.get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     const auto parse = [&](const std::string& action, const std::string& query, const std::string& features)
     {
         return kr::ps::ext::dl::parse_module("(:module (:symbol test) (:arguments) (:registers) (:entry start) (:memory start done) (:features " + features
@@ -421,8 +421,8 @@ TEST(RunirTests, ExtendedQueryActionRuleUsesNormalizedActionArity)
     const auto domain = planning_domain.get_domain();
     ASSERT_EQ(domain.get_actions().size(), 1);
     EXPECT_EQ(domain.get_actions().front().get_arity(), 2);
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     const auto parse = [&](const std::string& query)
     {
         return kr::ps::ext::dl::parse_module("(:module (:symbol witness) (:arguments) (:registers) (:entry start) (:memory start done) "

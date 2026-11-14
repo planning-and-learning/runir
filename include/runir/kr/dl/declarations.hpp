@@ -934,9 +934,6 @@ namespace detail
 template<typename RepositoryTypes>
 class BasicConstructorRepository;
 
-template<typename RepositoryTypes>
-class BasicConstructorRepositoryFactory;
-
 }  // namespace detail
 
 using ConceptTypes = RecordTypes<SemanticFamily, ConceptTag>;
@@ -967,7 +964,6 @@ using ConstructorRepository = runir::kr::dl::detail::BasicConstructorRepository<
 
 using ConstructorRepositoryPtr = std::shared_ptr<ConstructorRepository>;
 
-using ConstructorRepositoryFactory = runir::kr::dl::detail::BasicConstructorRepositoryFactory<ConstructorRepositoryTypes>;
 
 template<ConstructorOf<SemanticFamily, ConceptTag> Tag>
 using ConceptView = urd::index_view<Concept<SemanticFamily, Tag>, ConstructorRepository>;

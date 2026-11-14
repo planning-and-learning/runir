@@ -12,33 +12,31 @@
 #include <urd/config.hpp>
 #include <urd/elements/flat.hpp>
 #include <utility>
-#include <yggdrasil/formalism/symbol_repository.hpp>
+#include <yggdrasil/formalism/symbol_context.hpp>
 
 namespace runir::kr::ps
 {
 
 template<FamilyTag Family, typename RepositoryTypes>
-class BasicRepository : public ygg::formalism::SymbolRepositoryBase<BasicRepository<Family, RepositoryTypes>, RepositoryTypes>
+class BasicRepository : public ygg::formalism::SymbolContext<BasicRepository<Family, RepositoryTypes>, RepositoryTypes>
 {
-    using Base = ygg::formalism::SymbolRepositoryBase<BasicRepository<Family, RepositoryTypes>, RepositoryTypes>;
+    using Base = ygg::formalism::SymbolContext<BasicRepository<Family, RepositoryTypes>, RepositoryTypes>;
 
 public:
     using DlRepositoryPtr = runir::kr::dl::ConstructorRepositoryPtr;
 
 private:
-    template<FamilyTag, typename>
-    friend class BasicRepositoryFactory;
-
     DlRepositoryPtr m_dl_repository;
     size_t m_index;
 
-    BasicRepository(size_t index, DlRepositoryPtr dl_repository) : m_dl_repository(std::move(dl_repository)), m_index(index)
+public:
+    /// Over the DL repository whose records its rules refer to. Numbered by ygg::next_layer(), the process-wide counter,
+    /// so that no two contexts share a number.
+    explicit BasicRepository(DlRepositoryPtr dl_repository) : m_dl_repository(std::move(dl_repository)), m_index(ygg::next_layer())
     {
         assert(m_dl_repository);
         this->clear();
     }
-
-public:
     BasicRepository(const BasicRepository&) = delete;
     BasicRepository& operator=(const BasicRepository&) = delete;
     BasicRepository(BasicRepository&&) = delete;
@@ -53,26 +51,12 @@ public:
     [[nodiscard]] const auto& get_dl_repository_ptr() const noexcept { return m_dl_repository; }
 
     using Base::view;
-    /// An index of a symbol this repository does not hold (a register, a DL record, a planning symbol) as its view
-    /// through the DL repository, which resolves it: so that a rule's every member is read as urd reads any (urd::resolve).
+    /// A DL symbol (a register, a constructor) as its view in the DL repository, which holds it: so that urd resolves
+    /// every member of a rule through this context (urd's resolves contract).
     template<typename T>
-        requires(!ygg::formalism::SupportsSymbol<Base, T>)
-    [[nodiscard]] auto view(urd::index<T> index) const
+        requires ygg::formalism::SupportsSymbol<runir::kr::dl::ConstructorRepository, T>
+    [[nodiscard]] urd::index_view<T, runir::kr::dl::ConstructorRepository> view(urd::index<T> index) const
     { return get_dl_repository().view(index); }
-};
-
-template<FamilyTag Family, typename RepositoryTypes>
-class BasicRepositoryFactory
-{
-private:
-    size_t m_next_index = 0;
-
-public:
-    using Repository = BasicRepository<Family, RepositoryTypes>;
-    using DlRepositoryPtr = typename Repository::DlRepositoryPtr;
-    /// Defined in detail/repository_impl.hpp: an in-class definition would construct and destroy every symbol pool
-    /// in each caller (template rule 7).
-    std::shared_ptr<Repository> create(DlRepositoryPtr dl_repository);
 };
 
 template<FamilyTag Family, typename RepositoryTypes>
@@ -85,8 +69,5 @@ inline BasicRepository<Family, RepositoryTypes>& get_repository(BasicRepository<
 
 }  // namespace runir::kr::ps
 
-#ifdef RUNIR_HEADER_INSTANTIATION
-#include "runir/kr/ps/detail/repository_impl.hpp"
-#endif
 
 #endif

@@ -68,7 +68,6 @@ from pyrunir._pyrunir.kr.ps.ext import (
     ProgramProofEdgeLabel as ProgramProofEdgeLabel,
     ProgramSearchStatistics as ProgramSearchStatistics,
     Repository as Repository,
-    RepositoryFactory as RepositoryFactory,
     RoleChoice as RoleChoice,
     RoleChooseRule as RoleChooseRule,
     RoleChooseRuleData as RoleChooseRuleData,

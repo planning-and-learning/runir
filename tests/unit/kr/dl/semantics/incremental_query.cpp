@@ -105,7 +105,7 @@ void check_atomic_projection()
     const auto second = std::ranges::find_if(second_candidates, [&](const auto& candidate) { return objects_of(candidate.label)[0].index() == a; });
     ASSERT_NE(second, second_candidates.end());
 
-    auto constructors = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
+    auto constructors = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
     const auto triple = parse_query(R"((q_atomic_state "triple" (x y z)))", domain, *constructors);
     const auto copied = parse_query(R"((q_atomic_state "copied" (x y z)))", domain, *constructors);
     const auto ready = parse_query(R"((q_atomic_state "ready" ()))", domain, *constructors);
@@ -128,7 +128,7 @@ void check_atomic_projection()
         layer,
         std::get<urd::index_view<kr::dl::Query<kr::dl::QueryProjectTag>, runir::kr::dl::ConstructorRepository>>(projected_copied.get_variant()).data().plan);
     auto workspace = tyr::datalog::database::Workspace {};
-    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto builder = kr::dl::semantics::Builder {};
     auto register_data = urd::data<kr::dl::semantics::RegisterValues> {};
@@ -251,9 +251,9 @@ void check_query_graph()
         nodes.push_back(successors.front().node);
     }
 
-    auto constructors = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
+    auto constructors = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
     const auto domain = search->task->get_domain().get_domain();
-    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto builder = kr::dl::semantics::Builder {};
     auto register_data = urd::data<kr::dl::semantics::RegisterValues> {};
@@ -388,7 +388,7 @@ void check_query_graph()
     evaluator.initialize(initial_context);
     const auto other = make_search();
     const auto other_initial = other->successor_generator->get_initial_node(*other->state_repository, *other->axiom_evaluator);
-    auto other_denotations = kr::dl::semantics::DenotationRepositoryFactory().create(other->task->get_repository());
+    auto other_denotations = kr::dl::semantics::DenotationRepository(other->task->get_repository());
     auto other_storage = kr::dl::semantics::EvaluationStorage(other_denotations);
     const auto other_registers = urd::resolve(register_data, *other->task->get_repository());
     auto other_argument_data = urd::data<kr::dl::semantics::CallArguments> {};

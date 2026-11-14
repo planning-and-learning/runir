@@ -16,10 +16,10 @@ namespace runir::kr
 DomainContextPtr DomainContext::create(const tyr::formalism::planning::PlanningDomain& domain) { return DomainContextPtr(new DomainContext(domain)); }
 
 DomainContext::DomainContext(const tyr::formalism::planning::PlanningDomain& domain) :
-    ext_repository(runir::kr::ps::ext::RepositoryFactory().create(runir::kr::dl::ConstructorRepositoryFactory().create(domain.get_repository()))),
-    base_repository(runir::kr::ps::base::RepositoryFactory().create(ext_repository->get_dl_repository_ptr())),
-    icp_repository(runir::kr::ps::icp::RepositoryFactory().create(ext_repository->get_dl_repository_ptr())),
-    uns_repository(runir::kr::uns::RepositoryFactory().create(ext_repository->get_dl_repository_ptr()))
+    ext_repository(std::make_shared<runir::kr::ps::ext::Repository>(std::make_shared<runir::kr::dl::ConstructorRepository>(domain.get_repository()))),
+    base_repository(std::make_shared<runir::kr::ps::base::Repository>(ext_repository->get_dl_repository_ptr())),
+    icp_repository(std::make_shared<runir::kr::ps::icp::Repository>(ext_repository->get_dl_repository_ptr())),
+    uns_repository(std::make_shared<runir::kr::uns::Repository>(ext_repository->get_dl_repository_ptr()))
 {
 }
 

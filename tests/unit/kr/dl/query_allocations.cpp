@@ -65,9 +65,9 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../support/data/kr/dl/query";
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
-    auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
+    auto repository = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();
-    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto arguments = urd::data<kr::dl::semantics::CallArguments>();
     auto registers = urd::data<kr::dl::semantics::RegisterValues>();
@@ -132,7 +132,7 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../support/data/kr/dl/query";
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
-    auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
+    auto repository = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
     const auto count = kr::ps::ext::dl::parse_numerical(R"((n_count (q_project (x) (q_atomic_state "triple" (x y z)))))",
                                                         search->task->get_domain().get_domain(),
                                                         *repository);
@@ -164,7 +164,7 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
         std::get<urd::index_view<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(graph_count.get_variant())
             .get_arg());
     auto graph = QueryRootEvaluator<tyr::GroundTag>(*search->task, graph_query);
-    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto builder = kr::dl::semantics::Builder {};
     auto argument_data = urd::data<kr::dl::semantics::CallArguments> {};
@@ -252,7 +252,7 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     const auto domain = search->task->get_domain().get_domain();
-    auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
+    auto repository = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
     auto concepts = urd::Store<urd::sequence<RootEvaluator<tyr::GroundTag, kr::dl::ConceptTag>>> {};
     auto roles = urd::Store<urd::sequence<RootEvaluator<tyr::GroundTag, kr::dl::RoleTag>>> {};
     auto numericals = urd::Store<urd::sequence<RootEvaluator<tyr::GroundTag, kr::dl::NumericalTag>>> {};
@@ -342,7 +342,7 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
         states.push_back(next.get_state());
     }
 
-    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto builder = kr::dl::semantics::Builder {};
     auto argument_data = urd::data<kr::dl::semantics::CallArguments> {};
@@ -459,7 +459,7 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
     using ColumnIndex = urd::index<ygg::Column>;
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../support/data/kr/dl/query";
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
-    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto& repository = denotations.get_relation_repository();
     auto dl_builder = kr::dl::semantics::Builder();
     const auto columns = std::array { ygg::ColumnLayout { ColumnIndex(0), ygg::type_id<urd::index<tyr::formalism::Object>> },
@@ -511,7 +511,7 @@ TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
     using ColumnIndex = urd::index<ygg::Column>;
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../support/data/kr/dl/query";
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
-    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto& repository = denotations.get_relation_repository();
     auto dl_builder = kr::dl::semantics::Builder();
     const auto columns = std::array { ygg::ColumnLayout { ColumnIndex(0), ygg::type_id<urd::index<tyr::formalism::Object>> },

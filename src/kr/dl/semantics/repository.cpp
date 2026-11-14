@@ -5,17 +5,17 @@
 #include <memory>
 #include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <utility>
+#include <yggdrasil/formalism/symbol_context_instantiations.hpp>
+#include <yggdrasil/formalism/builder_instantiations.hpp>
+#include "runir/kr/dl/semantics/builder.hpp"
 
 namespace runir::kr::dl::semantics
 {
 
-DenotationRepository::DenotationRepository(size_t index,
-                                           DenotationRepositoryFactory factory,
-                                           std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository) :
+DenotationRepository::DenotationRepository(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository) :
     m_vector_repository(),
     m_formalism_repository(std::move(formalism_repository)),
-    m_factory(std::move(factory)),
-    m_index(index)
+    m_index(ygg::next_layer())
 {
     assert(m_formalism_repository);
     this->reset();
@@ -23,12 +23,10 @@ DenotationRepository::DenotationRepository(size_t index,
 
 DenotationRepository::~DenotationRepository() = default;
 
-DenotationRepository DenotationRepositoryFactory::create(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository)
-{ return DenotationRepository(m_indices.next(), *this, std::move(formalism_repository)); }
-
-DenotationRepositoryPtr DenotationRepositoryFactory::create_shared(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository)
-{ return DenotationRepositoryPtr(new DenotationRepository(m_indices.next(), *this, std::move(formalism_repository))); }
-
 }  // namespace runir::kr::dl::semantics
 
 RUNIR_KR_DL_SEMANTICS_INTERNS()
+
+// The symbols and builders of the library's repositories, which its other sources only declare.
+YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::dl::semantics::DenotationRepository, 6)
+YGG_FORMALISM_BUILDER(, runir::kr::dl::semantics::DenotationDataStorage, 9)

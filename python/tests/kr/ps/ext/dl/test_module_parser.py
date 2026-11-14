@@ -28,7 +28,7 @@ from pyrunir.kr import (
     SemanticError,
     UndefinedSymbolError,
 )
-from pyrunir.kr.dl import ConstructorRepositoryFactory as DlRepositoryFactory
+from pyrunir.kr.dl import ConstructorRepository as DlRepository
 from pyrunir.kr.dl.semantics import CallArguments, RegisterValues
 from pyrunir.kr.ps import ProofStatus, ext
 from pyrunir.kr.ps.ext import dl
@@ -123,8 +123,8 @@ def _terminating_context_and_program() -> tuple[GroundTaskContext, PlanningDomai
 
 def _repositories() -> tuple[PlanningDomain, ext.Repository]:
     planning_domain = Parser(_blocksworld_data_dir() / "domain.pddl", ParserOptions()).get_domain()
-    dl_repository = DlRepositoryFactory().create(planning_domain)
-    repository = ext.RepositoryFactory().create(dl_repository)
+    dl_repository = DlRepository(planning_domain)
+    repository = ext.Repository(dl_repository)
     return planning_domain, repository
 
 
@@ -428,7 +428,7 @@ def test_terminating_program_executes_and_proves_from_python() -> None:
     edge = next(iter(range(proof.graph.num_edges)))
     assert proof.graph.source(edge) in proof.graph.vertices()
     assert proof.graph.target(edge) in proof.graph.vertices()
-    assert edge in [out.id for out in proof.graph.out_edges(proof.graph.source(edge))]
+    assert edge in list(proof.graph.out_edges(proof.graph.source(edge)))
     edge_label = proof.graph.edge_value(edge)
     assert ext.ProgramProofEdgeLabel is ext.GroundProgramProofEdgeLabel
     assert isinstance(edge_label, ext.ProgramProofEdgeLabel)

@@ -30,6 +30,7 @@ from datetime import timedelta
 from pathlib import Path
 from typing import TypeVar
 
+import pyvefr
 from pypddl.formalism import ParserOptions
 from pytyr.formalism.planning import Parser
 from pytyr.planning import SearchBudget, lifted
@@ -160,17 +161,17 @@ def _abstract_cycle(module: Module, graph: ModulePolicyGraph) -> list[str]:
     numericals = [feature.get_symbol() for feature in module.get_numerical_features()]
 
     def state(vertex: int) -> str:
-        label = graph.get_vertex_property(vertex)
+        label = graph.vertex_value(vertex)
         true = [name for i, name in enumerate(booleans) if label.boolean_values & (1 << i)]
         positive = [name for i, name in enumerate(numericals) if label.numerical_values & (1 << i)]
         return f"{label.memory_state.get_name()}[{' '.join(true)}; {' '.join(positive)}]"
 
     cycle: list[str] = []
-    edges = graph.find_edge_cycle()
+    edges = pyvefr.find_cycle(graph)
     for edge in edges:
-        cycle += [state(graph.get_source(edge)), f"--{graph.get_edge_property(edge).get_symbol()}-->"]
+        cycle += [state(edge.source), f"--{graph.edge_value(edge.id).get_symbol()}-->"]
     if edges:
-        cycle.append(state(graph.get_target(edges[-1])))
+        cycle.append(state(edges[-1].target))
     return cycle
 
 
@@ -325,13 +326,13 @@ class Session:
         search = self._search(task, prove=prove)
         result = search.result
         graph = result.graph
-        initial = next((v for v in graph.get_vertex_indices() if graph.get_vertex_property(v).is_initial), None)
+        initial = next((v for v in graph.vertices() if graph.vertex_value(v).is_initial), None)
         failure = (
             None
             if result.status == ProofStatus.SUCCESS
             else next(iter((*result.open_states, *result.deadend_states)), None)
         )
-        goals = {v for v in graph.get_vertex_indices() if graph.get_vertex_property(v).is_goal}
+        goals = {v for v in graph.vertices() if graph.vertex_value(v).is_goal}
         target: set[int] = (
             goals if result.status == ProofStatus.SUCCESS else ({failure} if failure is not None else set())
         )
@@ -498,15 +499,15 @@ class Session:
         graph = search.graph
         rule, bindings = self._bindings(ref)
         tried = {
-            register_value(graph.get_vertex_property(graph.get_target(edge)).program_state.module_state, rule): edge
-            for edge in graph.get_out_edge_indices(ref.vertex)
-            if is_choose(graph.get_edge_property(edge).rule)
+            register_value(graph.vertex_value(graph.target(edge)).program_state.module_state, rule): edge
+            for edge in graph.out_edges(ref.vertex)
+            if is_choose(graph.edge_value(edge).rule)
         }
         rows: list[tuple[str, int, Outcome, str | None, int | None, LiftedProgramState]] = []
         for rank, (binding, target) in enumerate(bindings, 1):
             name = str(binding)
             if binding in tried:
-                child = graph.get_target(tried[binding])
+                child = graph.target(tried[binding])
                 solved = search.status.get(child)
                 outcome: Outcome = "succeeded" if solved is True else "failed" if solved is False else "unknown"
                 ending = self._ending(search, child) if outcome == "failed" else None
@@ -533,7 +534,7 @@ class Session:
             else:
                 rows.append((name, rank, "untried", None, None, target))
         task_context = self._task_context(ref.task)
-        source = graph.get_vertex_property(ref.vertex).program_state
+        source = graph.vertex_value(ref.vertex).program_state
         values = [self._feature_values(task_context, source, row[5], rule, row[0]) for row in rows]
         reference = next((i for i, row in enumerate(rows) if row[2] in ("succeeded", "succeeds")), 0)
         atoms = distinguishing_atoms(
@@ -604,7 +605,7 @@ class Session:
         ref = binding.point
         _, bindings = self._bindings(ref)
         target = next(state for name, state in bindings if str(name) == binding.binding)
-        source = self._search(ref.task, prove=ref.proof).graph.get_vertex_property(ref.vertex).program_state
+        source = self._search(ref.task, prove=ref.proof).graph.vertex_value(ref.vertex).program_state
         task_context = self._task_context(ref.task)
         return self._evaluate(
             task_context, feature, source if feature.category == "concept" else target, binding.binding
@@ -659,7 +660,7 @@ class Session:
 
     def vertex(self, ref: VertexRef, /) -> Vertex:
         """Memory state, registers, declared Boolean and numerical feature values and fluent atoms at `ref`."""
-        label = self._search(ref.task, prove=ref.proof).graph.get_vertex_property(ref.vertex)
+        label = self._search(ref.task, prove=ref.proof).graph.vertex_value(ref.vertex)
         program_state = label.program_state
         module_state = program_state.module_state
         module = module_state.module
@@ -692,7 +693,7 @@ class Session:
         """
         task_context = self._task_context(ref.task)
         search = task_context.search_context
-        program_state = self._search(ref.task, prove=ref.proof).graph.get_vertex_property(ref.vertex).program_state
+        program_state = self._search(ref.task, prove=ref.proof).graph.vertex_value(ref.vertex).program_state
         module_state = program_state.module_state
         expander = LiftedSuccessorExpander(task_context, self._program)
         before = self._state_values(task_context, program_state.state, module_state)
@@ -715,9 +716,9 @@ class Session:
         task_context = self._task_context(ref.task)
         search = task_context.search_context
         module_state = (
-            self._search(ref.task, prove=ref.proof).graph.get_vertex_property(ref.vertex).program_state.module_state
+            self._search(ref.task, prove=ref.proof).graph.vertex_value(ref.vertex).program_state.module_state
         )
-        state = self._search(ref.task, prove=ref.proof).graph.get_vertex_property(ref.vertex).state
+        state = self._search(ref.task, prove=ref.proof).graph.vertex_value(ref.vertex).state
         options = gbfs_lazy.lifted.Options()
         options.start_node = search.successor_generator.get_node(search.state_repository, state.index())
         options.search_budget = SearchBudget(
@@ -779,9 +780,9 @@ class Session:
                 high = middle
         graph = self._search(task, prove=prove).graph
         edge = next(
-            edge for edge in graph.get_out_edge_indices(path[low].vertex) if graph.get_target(edge) == path[high].vertex
+            edge for edge in graph.out_edges(path[low].vertex) if graph.target(edge) == path[high].vertex
         )
-        label = graph.get_edge_property(edge)
+        label = graph.edge_value(edge)
         return DeadEnd(
             task,
             path[low],
@@ -914,15 +915,15 @@ class Session:
         points: list[ChoicePoint] = []
         for vertex in on_path:
             edges = [
-                edge for edge in graph.get_out_edge_indices(vertex) if is_choose(graph.get_edge_property(edge).rule)
+                edge for edge in graph.out_edges(vertex) if is_choose(graph.edge_value(edge).rule)
             ]
             if not edges:
                 continue
             ref = VertexRef(task, vertex)
             rule, bindings = self._bindings(ref)
-            children = [graph.get_target(edge) for edge in edges]
+            children = [graph.target(edge) for edge in edges]
             successor = next_on_path.get(vertex)
-            chosen = next((rank for rank, edge in enumerate(edges, 1) if graph.get_target(edge) == successor), None)
+            chosen = next((rank for rank, edge in enumerate(edges, 1) if graph.target(edge) == successor), None)
             solved = search.status.get(successor) if successor is not None else None
             points.append(
                 ChoicePoint(
@@ -943,7 +944,7 @@ class Session:
             return self._binding_cache[key]
         task_context = self._task_context(ref.task)
         graph = self._search(ref.task, prove=ref.proof).graph
-        source = graph.get_vertex_property(ref.vertex).program_state
+        source = graph.vertex_value(ref.vertex).program_state
         expander = LiftedSuccessorExpander(task_context, self._program)
         choices: list[ConceptChoice | RoleChoice] = []
 

@@ -24,7 +24,7 @@ def _created(insert: Callable[[], tuple[T, bool]]) -> T:
 
 def test_insert_returns_creation_flag_and_retains_owner_on_view(gripper_planning_domain: PlanningDomain) -> None:
     def create_view() -> dl.semantics.QueryColumn:
-        repository = dl.semantics.ConstructorRepositoryFactory().create(gripper_planning_domain)
+        repository = dl.semantics.ConstructorRepository(gripper_planning_domain)
         data = dl.semantics.QueryColumnData()
         data.name = "retained"
         before = sys.getrefcount(repository)
@@ -113,8 +113,8 @@ def test_repository_constructs_queries_and_semantic_wrappers(
     names: list[str],
 ) -> None:
     semantics = dl.semantics
-    repository = semantics.ConstructorRepositoryFactory().create(gripper_planning_domain)
-    assert dl.ConstructorRepositoryFactory is semantics.ConstructorRepositoryFactory
+    repository = semantics.ConstructorRepository(gripper_planning_domain)
+    assert dl.ConstructorRepository is semantics.ConstructorRepository
     assert dl.ConstructorRepository is semantics.ConstructorRepository
 
     columns: list[dl.semantics.QueryColumnIndex] = []
@@ -188,6 +188,6 @@ def _check_role_register(repository: dl.ConstructorRepository) -> None:
 def test_repository_constructs_references(
     gripper_planning_domain: PlanningDomain, check: Callable[[dl.ConstructorRepository], None]
 ) -> None:
-    assert dl.ConstructorRepositoryFactory is dl.semantics.ConstructorRepositoryFactory
     assert dl.ConstructorRepository is dl.semantics.ConstructorRepository
-    check(dl.semantics.ConstructorRepositoryFactory().create(gripper_planning_domain))
+    assert dl.ConstructorRepository is dl.semantics.ConstructorRepository
+    check(dl.semantics.ConstructorRepository(gripper_planning_domain))

@@ -5,6 +5,7 @@ add_library(kr SHARED
     dl/query_construction.cpp
     dl/repository.cpp
     dl/translations/ygg_query.cpp
+    dl/semantics/denotation_caches.cpp
     dl/semantics/evaluation.cpp
     dl/semantics/formatter.cpp
     dl/semantics/heuristics/projection.cpp

@@ -8,7 +8,7 @@ from pyrunir.kr import dl
 
 def test_value_and_view_constructors_build_equal_data(gripper_planning_domain: PlanningDomain) -> None:
     semantics = dl.semantics
-    repository = semantics.ConstructorRepositoryFactory().create(gripper_planning_domain)
+    repository = semantics.ConstructorRepository(gripper_planning_domain)
 
     top = repository.insert(semantics.ConceptTopData())[0]
     concept = repository.insert(semantics.ConceptData(top.index()))[0]
@@ -29,7 +29,7 @@ def test_value_and_view_constructors_build_equal_data(gripper_planning_domain: P
 
 def test_view_variant_constructor_builds_equal_data(gripper_planning_domain: PlanningDomain) -> None:
     semantics = dl.semantics
-    repository = semantics.ConstructorRepositoryFactory().create(gripper_planning_domain)
+    repository = semantics.ConstructorRepository(gripper_planning_domain)
 
     top = repository.insert(semantics.ConceptTopData())[0]
     assert semantics.ConceptData(top) == semantics.ConceptData(top.index())

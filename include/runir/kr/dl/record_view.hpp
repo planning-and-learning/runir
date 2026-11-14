@@ -34,7 +34,7 @@ public:
     // NOLINTNEXTLINE(bugprone-exception-escape): resolving throws only for a record that breaks the precondition stated at the mixin
     [[nodiscard]] auto get_predicate() const noexcept
         requires requires(const urd::record_of<V>& record) { record.predicate; }
-    { return self().template member<&urd::record_of<V>::predicate>(); }
+    { return urd::resolve(self().data().predicate, self().context().get_planning_repository()); }
 
     [[nodiscard]] auto get_polarity() const noexcept
         requires requires(const urd::record_of<V>& record) { record.polarity; }
@@ -43,11 +43,11 @@ public:
     // NOLINTNEXTLINE(bugprone-exception-escape): resolving throws only for a record that breaks the precondition stated at the mixin
     [[nodiscard]] auto get_object() const noexcept
         requires requires(const urd::record_of<V>& record) { record.object; }
-    { return self().template member<&urd::record_of<V>::object>(); }
+    { return urd::resolve(self().data().object, self().context().get_planning_repository()); }
 
     [[nodiscard]] auto get_objects() const noexcept
         requires requires(const urd::record_of<V>& record) { record.objects; }
-    { return self().template member<&urd::record_of<V>::objects>(); }
+    { return urd::resolve(self().data().objects, self().context().get_planning_repository()); }
 
     [[nodiscard]] auto get_n() const noexcept
         requires requires(const urd::record_of<V>& record) { record.n; }

@@ -51,7 +51,7 @@ static_assert(view_aliases(kr::dl::CategoryTags {}));
 TEST(RunirKrDlArgument, ExposesNameAndIdentifier)
 {
     auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
-    auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_repository);
+    auto repository = std::make_shared<kr::dl::ConstructorRepository>(planning_repository);
     auto data = urd::data<kr::dl::Argument<kr::dl::ConceptTag>>(std::string("source"), kr::dl::ArgumentIdentifier<kr::dl::ConceptTag>(3));
     const auto argument = repository->insert(data).first;
 

@@ -10,31 +10,30 @@
 #include <urd/config.hpp>
 #include <urd/elements/flat.hpp>
 #include <utility>
-#include <yggdrasil/formalism/symbol_repository.hpp>
+#include <yggdrasil/formalism/symbol_context.hpp>
 
 namespace runir::kr::dl::detail
 {
 
 template<typename RepositoryTypes>
-class BasicConstructorRepository : public ygg::formalism::SymbolRepositoryBase<BasicConstructorRepository<RepositoryTypes>, RepositoryTypes>
+class BasicConstructorRepository : public ygg::formalism::SymbolContext<BasicConstructorRepository<RepositoryTypes>, RepositoryTypes>
 {
-    using Base = ygg::formalism::SymbolRepositoryBase<BasicConstructorRepository<RepositoryTypes>, RepositoryTypes>;
-
-    friend class BasicConstructorRepositoryFactory<RepositoryTypes>;
+    using Base = ygg::formalism::SymbolContext<BasicConstructorRepository<RepositoryTypes>, RepositoryTypes>;
 
 private:
     std::shared_ptr<const tyr::formalism::planning::Repository> m_planning_repository;
     size_t m_index;
 
-    BasicConstructorRepository(size_t index, std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository) :
+public:
+    /// Over the planning repository whose symbols its records refer to. Numbered by ygg::next_layer(), the process-wide
+    /// counter, so that no two contexts share a number.
+    explicit BasicConstructorRepository(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository) :
         m_planning_repository(std::move(planning_repository)),
-        m_index(index)
+        m_index(ygg::next_layer())
     {
         assert(m_planning_repository);
         this->clear();
     }
-
-public:
     BasicConstructorRepository(const BasicConstructorRepository&) = delete;
     BasicConstructorRepository& operator=(const BasicConstructorRepository&) = delete;
     BasicConstructorRepository(BasicConstructorRepository&&) = delete;
@@ -52,26 +51,12 @@ public:
     [[nodiscard]] const auto& get_planning_repository_ptr() const noexcept { return m_planning_repository; }
 
     using Base::view;
-    /// An index of a symbol this repository does not hold (a predicate, an object) as its view through the planning
-    /// repository, which holds it: so that a record's every member is read as urd reads any (urd::resolve).
+    /// A planning symbol (a predicate, an object) as its view in the planning repository, which holds it: so that urd
+    /// resolves every member of a record through this context (urd's resolves contract).
     template<typename T>
-        requires(!ygg::formalism::SupportsSymbol<Base, T>)
-    [[nodiscard]] auto view(urd::index<T> index) const
+        requires ygg::formalism::SupportsSymbol<tyr::formalism::planning::Repository, T>
+    [[nodiscard]] urd::index_view<T, tyr::formalism::planning::Repository> view(urd::index<T> index) const
     { return get_planning_repository().view(index); }
-};
-
-template<typename RepositoryTypes>
-class BasicConstructorRepositoryFactory
-{
-private:
-    size_t m_next_index = 0;
-
-public:
-    BasicConstructorRepositoryFactory() = default;
-
-    /// Defined in detail/constructor_repository_impl.hpp: an in-class definition would construct and destroy every
-    /// symbol pool in each caller (template rule 7).
-    std::shared_ptr<BasicConstructorRepository<RepositoryTypes>> create(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository);
 };
 
 template<typename RepositoryTypes>
@@ -85,8 +70,5 @@ inline BasicConstructorRepository<RepositoryTypes>& get_repository(BasicConstruc
 
 }  // namespace runir::kr::dl::detail
 
-#ifdef RUNIR_HEADER_INSTANTIATION
-#include "runir/kr/dl/detail/constructor_repository_impl.hpp"
-#endif
 
 #endif

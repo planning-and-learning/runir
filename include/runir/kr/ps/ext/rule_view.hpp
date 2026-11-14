@@ -39,7 +39,7 @@ public:
 
     auto get_register() const noexcept
         requires runir::kr::ps::ext::BindingRuleKind<Kind>
-    { return self().template member<&urd::record_of<V>::reg>(); }
+    { return urd::resolve(self().data().reg, get_repository(self().context()).get_dl_repository()); }
 
     auto get_order() const noexcept
         requires(std::same_as<Kind, runir::kr::ps::ext::ChooseTag<runir::kr::dl::ConceptTag>>

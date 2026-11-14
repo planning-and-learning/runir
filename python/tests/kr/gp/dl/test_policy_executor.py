@@ -12,7 +12,7 @@ from pytyr.planning.ground import LabeledNode, Node, PackedState
 from pyrunir.datasets import GroundTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext
 from pyrunir.kr.dl.semantics import (
-    ConstructorRepositoryFactory,
+    ConstructorRepository,
     EvaluationStorage,
     GroundStateEvaluationContext,
     LiftedStateEvaluationContext,
@@ -23,7 +23,7 @@ from pyrunir.kr.ps.base import (
     GroundSketchProofGraph,
     GroundSketchSearchOptions,
     LiftedSketchSearchOptions,
-    RepositoryFactory as SketchRepositoryFactory,
+    Repository as SketchRepository,
     Rule,
     SketchProofEdgeLabel,
     SketchSearchStatistics,
@@ -78,8 +78,8 @@ def test_base_proof_properties_keep_the_graph_and_sketch_alive(
 
 def test_base_sketch_exposes_declared_features(gripper_planning_domain: PlanningDomain) -> None:
     planning_domain = gripper_planning_domain
-    dl_repository = ConstructorRepositoryFactory().create(planning_domain)
-    sketch_repository = SketchRepositoryFactory().create(dl_repository)
+    dl_repository = ConstructorRepository(planning_domain)
+    sketch_repository = SketchRepository(dl_repository)
     sketch = parse_sketch(read_fixture("kr/ps/base/dl/declared_features.sketch"), planning_domain, sketch_repository)
 
     assert [feature.get_variant().get_symbol() for feature in sketch.get_boolean_features()] == []
@@ -258,7 +258,7 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
         edge = next(iter(range(proof_result.graph.num_edges)))
         assert proof_result.graph.source(edge) in proof_result.graph.vertices()
         assert proof_result.graph.target(edge) in proof_result.graph.vertices()
-        assert edge in [out.id for out in proof_result.graph.out_edges(proof_result.graph.source(edge))]
+        assert edge in list(proof_result.graph.out_edges(proof_result.graph.source(edge)))
         edge_label = proof_result.graph.edge_value(edge)
         assert isinstance(edge_label, SketchProofEdgeLabel)
         assert isinstance(edge_label.action, ActionRow)

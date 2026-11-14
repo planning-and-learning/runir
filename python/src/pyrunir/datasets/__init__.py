@@ -7,7 +7,6 @@ from pyrunir._pyrunir.datasets import (
     AnnotatedEquivalenceGraph as AnnotatedEquivalenceGraph,
     AnnotatedEquivalenceVertexLabel as AnnotatedEquivalenceVertexLabel,
     ColorRepository as ColorRepository,
-    ColorRepositoryFactory as ColorRepositoryFactory,
     EquivalenceEdgeLabel as EquivalenceEdgeLabel,
     EquivalenceGraph as EquivalenceGraph,
     EquivalenceGraphGenerationOptions as EquivalenceGraphGenerationOptions,

@@ -104,7 +104,6 @@ from pyrunir._pyrunir.kr.dl.grammar import (
     ConceptValueRestrictionData as ConceptValueRestrictionData,
     ConceptValueRestrictionIndex as ConceptValueRestrictionIndex,
     ConstructorRepository as ConstructorRepository,
-    ConstructorRepositoryFactory as ConstructorRepositoryFactory,
     Grammar as Grammar,
     GrammarFactory as GrammarFactory,
     GrammarIndex as GrammarIndex,

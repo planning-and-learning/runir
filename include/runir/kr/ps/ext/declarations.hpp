@@ -120,7 +120,6 @@ using RepositoryTypes =
     boost::mp11::mp_append<runir::kr::ps::base::RepositoryTypes, runir::kr::ps::PsCoreTypes<runir::kr::ExtFamilyTag>, RuleTypes, ProgramTypes>;
 using Repository = runir::kr::ps::BasicRepository<runir::kr::ExtFamilyTag, RepositoryTypes>;
 using RepositoryPtr = std::shared_ptr<Repository>;
-using RepositoryFactory = runir::kr::ps::BasicRepositoryFactory<runir::kr::ExtFamilyTag, RepositoryTypes>;
 
 using ConceptRegisterView = urd::index_view<runir::kr::dl::Register<runir::kr::dl::ConceptTag>, runir::kr::dl::ConstructorRepository>;
 using RoleRegisterView = urd::index_view<runir::kr::dl::Register<runir::kr::dl::RoleTag>, runir::kr::dl::ConstructorRepository>;

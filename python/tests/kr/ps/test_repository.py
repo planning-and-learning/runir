@@ -10,20 +10,20 @@ from pytyr.formalism.planning import PlanningDomain
 
 from pyrunir.datasets import GroundTaskClass
 from pyrunir.kr import DomainContext
-from pyrunir.kr.dl import ConstructorRepositoryFactory as DlRepositoryFactory
+from pyrunir.kr.dl import ConstructorRepository as DlRepository
 from pyrunir.kr.ps import base, ext, icp
 from pyrunir.kr.uns import dl as uns_dl
 
 
 def test_base_and_ext_repositories_construct_programmatically(gripper_planning_domain: PlanningDomain) -> None:
-    base_repository = base.RepositoryFactory().create(DlRepositoryFactory().create(gripper_planning_domain))
+    base_repository = base.Repository(DlRepository(gripper_planning_domain))
     rule_data = base.RuleData()
     rule_data.symbol = "r"
     rule = base_repository.insert(rule_data)[0]
     assert rule.get_symbol() == "r"
     assert base_repository.insert(rule_data)[0] == rule
 
-    ext_repository = ext.RepositoryFactory().create(DlRepositoryFactory().create(gripper_planning_domain))
+    ext_repository = ext.Repository(DlRepository(gripper_planning_domain))
     memory_state_data = ext.MemoryStateData()
     memory_state_data.name = "m0"
     memory_state = ext_repository.insert(memory_state_data)[0]

@@ -169,7 +169,7 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
     data.variant = atom.index()
     assert data.variant == atom.index()
     assert [column.get_name() for column in atom.get_columns()] == ["ball", "room"]
-    assert list(semantics.QueryProject.Fields.__members__) == ["columns", "arg"]
+    assert list(semantics.QueryProject.Fields.__members__) == ["arg", "columns"]
     assert list(semantics.QueryColumn.Fields.__members__) == ["name"]
 
     dictionaries = Dictionaries()
@@ -238,7 +238,7 @@ def test_query_program_round_trip_preserves_named_references(gripper_planning_do
     join = query.get_variant()
     assert isinstance(join, semantics.QueryJoin)
     assert [column.get_name() for column in join.get_columns()] == ["ball", "room"]
-    assert list(semantics.QueryJoin.Fields.__members__) == ["columns", "lhs", "rhs"]
+    assert list(semantics.QueryJoin.Fields.__members__) == ["lhs", "rhs"]
 
 
 @pytest.mark.parametrize(
@@ -394,8 +394,7 @@ def test_query_column_retains_owner_after_list_and_repository_scope(
     gripper_planning_domain: PlanningDomain, owner_kind: str
 ) -> None:
     def column_after_owner_scope() -> tuple[semantics.QueryColumn, str]:
-        factory = semantics.ConstructorRepositoryFactory()
-        repository = factory.create(gripper_planning_domain)
+        repository = semantics.ConstructorRepository(gripper_planning_domain)
         column_indices: list[semantics.QueryColumnIndex] = []
         for name in ("left", "right"):
             data = semantics.QueryColumnData()

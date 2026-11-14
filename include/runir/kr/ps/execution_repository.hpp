@@ -16,7 +16,7 @@
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/formalism/builder.hpp>
 #include <yggdrasil/formalism/interning.hpp>
-#include <yggdrasil/formalism/symbol_repository.hpp>
+#include <yggdrasil/formalism/symbol_context.hpp>
 
 namespace runir::kr::ps
 {
@@ -25,24 +25,24 @@ namespace runir::kr::ps
 /// denotation and program repositories.
 template<ProgramFamilyTag Family, tyr::TaskKind Kind>
 class ExecutionRepository :
-    public ygg::formalism::SymbolRepositoryBase<ExecutionRepository<Family, Kind>, typename FamilyTypes<Family>::template ExecutionRepositoryTypes<Kind>>
+    public ygg::formalism::SymbolContext<ExecutionRepository<Family, Kind>, typename FamilyTypes<Family>::template ExecutionRepositoryTypes<Kind>>
 {
-    using Base = ygg::formalism::SymbolRepositoryBase<ExecutionRepository<Family, Kind>, typename FamilyTypes<Family>::template ExecutionRepositoryTypes<Kind>>;
+    using Base = ygg::formalism::SymbolContext<ExecutionRepository<Family, Kind>, typename FamilyTypes<Family>::template ExecutionRepositoryTypes<Kind>>;
     using ProgramRepositoryPtr = std::shared_ptr<Repository<Family>>;
 
-    friend class ExecutionRepositoryFactory<Family, Kind>;
-
 private:
-    ygg::uint_t m_index;
+    std::size_t m_index;
     tyr::planning::StateRepositoryPtr<Kind> m_state_repository;
     runir::kr::dl::semantics::DenotationRepositoryPtr m_denotation_repository;
     ProgramRepositoryPtr m_program_repository;
 
-    ExecutionRepository(ygg::uint_t index,
-                        tyr::planning::StateRepositoryPtr<Kind> state_repository,
+public:
+    /// Over the task's state, denotation and program repositories. Numbered by ygg::next_layer(), the process-wide
+    /// counter, so that no two contexts share a number.
+    ExecutionRepository(tyr::planning::StateRepositoryPtr<Kind> state_repository,
                         runir::kr::dl::semantics::DenotationRepositoryPtr denotation_repository,
                         ProgramRepositoryPtr program_repository) :
-        m_index(index),
+        m_index(ygg::next_layer()),
         m_state_repository(std::move(state_repository)),
         m_denotation_repository(std::move(denotation_repository)),
         m_program_repository(std::move(program_repository))
@@ -51,8 +51,6 @@ private:
         assert(m_denotation_repository);
         assert(m_program_repository);
     }
-
-public:
     ExecutionRepository(const ExecutionRepository&) = delete;
     ExecutionRepository& operator=(const ExecutionRepository&) = delete;
     ExecutionRepository(ExecutionRepository&&) = delete;
@@ -70,24 +68,6 @@ public:
 template<ProgramFamilyTag Family, tyr::TaskKind Kind>
 inline const ExecutionRepository<Family, Kind>& get_repository(const ExecutionRepository<Family, Kind>& context URD_LIFETIMEBOUND) noexcept
 { return context; }
-
-template<ProgramFamilyTag Family, tyr::TaskKind Kind>
-class ExecutionRepositoryFactory
-{
-private:
-    ygg::uint_t m_next_index = 0;
-
-public:
-    ExecutionRepositoryPtr<Family, Kind> create_shared(tyr::planning::StateRepositoryPtr<Kind> state_repository,
-                                                       runir::kr::dl::semantics::DenotationRepositoryPtr denotation_repository,
-                                                       std::shared_ptr<Repository<Family>> program_repository)
-    {
-        return ExecutionRepositoryPtr<Family, Kind>(new ExecutionRepository<Family, Kind>(m_next_index++,
-                                                                                          std::move(state_repository),
-                                                                                          std::move(denotation_repository),
-                                                                                          std::move(program_repository)));
-    }
-};
 
 /// Execution records are canonical as built.
 template<ProgramFamilyTag Family, tyr::TaskKind Kind, typename T>

@@ -37,8 +37,8 @@ TEST(RunirTests, PolicyBaseParserNegativeFixtures)
 {
     const auto planning_domain = parse_gripper_domain();
     const auto domain = planning_domain.get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
-    auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::ps::base::Repository>(dl_repository);
     const auto suite = load_fixture_json("kr/ps/parser_negative.json");
     const auto& cases = ygg::common::as_array(ygg::common::require_member(ygg::common::as_object(suite, "suite"), "cases", "suite"), "suite.cases");
 
@@ -58,8 +58,8 @@ TEST(RunirTests, PolicyParserSemanticErrorPointsAtExactIdentifier)
 {
     const auto planning_domain = parse_gripper_domain();
     const auto domain = planning_domain.get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
-    auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::ps::base::Repository>(dl_repository);
     const auto description = read_fixture("kr/ps/parser/base_duplicate_feature.sketch");
     const auto first_same = description.find("same");
     ASSERT_NE(first_same, std::string::npos);
@@ -90,8 +90,8 @@ TEST(RunirTests, PolicyBaseParserRejectsRegistersAndArguments)
 {
     const auto planning_domain = parse_gripper_domain();
     const auto domain = planning_domain.get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
-    auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::ps::base::Repository>(dl_repository);
 
     for (const auto* expression : { "(b_nonempty (c_register 0))", "(b_argument 0)" })
     {

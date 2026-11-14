@@ -425,10 +425,10 @@ TEST(RunirTests, BaseSketchTransitionsRefreshDynamicQueriesAndReuseStaticQueries
         ASSERT_GT(successors.size(), 1);
         ASSERT_TRUE(matches(source, successors.front().node.get_state()));
 
-        auto& static_queries = expander.get_environment().get_dl_caches().get_queries(true);
+        const auto static_queries = expander.get_environment().get_dl_caches().get_queries(true);
         ASSERT_EQ(static_queries.size(), 1);
-        const auto static_storage = std::vector(static_queries.begin()->second.data().rows.begin(), static_queries.begin()->second.data().rows.end());
-        EXPECT_EQ(static_queries.begin()->second.size(), 2);
+        const auto static_storage = std::vector(static_queries.front().data().rows.begin(), static_queries.front().data().rows.end());
+        EXPECT_EQ(static_queries.front().size(), 2);
 
         EXPECT_TRUE(matches(source, successors.back().node.get_state()));
         const auto target = successors.front().node.get_state();
@@ -438,8 +438,9 @@ TEST(RunirTests, BaseSketchTransitionsRefreshDynamicQueriesAndReuseStaticQueries
         EXPECT_TRUE(matches(target, next.front().node.get_state()));
         EXPECT_TRUE(matches(source, target));
 
-        ASSERT_EQ(static_queries.size(), 1);
-        EXPECT_TRUE(std::ranges::equal(static_queries.begin()->second.data().rows, static_storage));
+        const auto later_static_queries = expander.get_environment().get_dl_caches().get_queries(true);
+        ASSERT_EQ(later_static_queries.size(), 1);
+        EXPECT_TRUE(std::ranges::equal(later_static_queries.front().data().rows, static_storage));
     };
     check.template operator()<tyr::GroundTag>();
     check.template operator()<tyr::LiftedTag>();

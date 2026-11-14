@@ -11,7 +11,6 @@ from pyrunir._pyrunir.kr.uns import (
     ClassifierLiteral as ClassifierLiteral,
     ClassifierLiteralIndex as ClassifierLiteralIndex,
     Repository as Repository,
-    RepositoryFactory as RepositoryFactory,
     classify as classify,
 )
 from pyrunir.kr.uns import dl as dl

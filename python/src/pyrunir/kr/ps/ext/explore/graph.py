@@ -47,10 +47,10 @@ def _postorder(graph: LiftedProgramProofGraph) -> list[int]:
     """All vertices of `graph`, each after the successors first reached from it by depth-first search."""
     order: list[int] = []
     seen: set[int] = set()
-    for root in graph.get_vertex_indices():
+    for root in graph.vertices():
         if root in seen:
             continue
-        stack = [(root, iter(graph.get_successor_indices(root)))]
+        stack = [(root, iter(graph.neighbours(root)))]
         seen.add(root)
         while stack:
             vertex, successors = stack[-1]
@@ -60,7 +60,7 @@ def _postorder(graph: LiftedProgramProofGraph) -> list[int]:
                 stack.pop()
             elif child not in seen:
                 seen.add(child)
-                stack.append((child, iter(graph.get_successor_indices(child))))
+                stack.append((child, iter(graph.neighbours(child))))
     return order
 
 
@@ -73,8 +73,8 @@ def vertex_status(result: LiftedProgramProofResults) -> dict[int, bool | None]:
     failed = set(result.open_states) | set(result.deadend_states)
     status: dict[int, bool | None] = {}
     for vertex in _postorder(graph):
-        label = graph.get_vertex_property(vertex)
-        edges = list(graph.get_out_edge_indices(vertex))
+        label = graph.vertex_value(vertex)
+        edges = list(graph.out_edges(vertex))
         if label.is_goal:
             status[vertex] = True
         elif vertex in failed or label.is_unsolvable:
@@ -82,8 +82,8 @@ def vertex_status(result: LiftedProgramProofResults) -> dict[int, bool | None]:
         elif not edges:
             status[vertex] = None
         else:
-            values = [status.get(graph.get_target(edge)) for edge in edges]
-            if any(is_choose(graph.get_edge_property(edge).rule) for edge in edges):
+            values = [status.get(graph.target(edge)) for edge in edges]
+            if any(is_choose(graph.edge_value(edge).rule) for edge in edges):
                 status[vertex] = (
                     True if any(v is True for v in values) else (False if all(v is False for v in values) else None)
                 )
@@ -105,7 +105,7 @@ def shortest_path(graph: LiftedProgramProofGraph, start: int, targets: set[int])
             while (parent := parents[path[-1]]) is not None:
                 path.append(parent)
             return path[::-1]
-        for child in graph.get_successor_indices(vertex):
+        for child in graph.neighbours(vertex):
             if child not in parents:
                 parents[child] = vertex
                 queue.append(child)
@@ -117,7 +117,7 @@ def reachable_count(graph: LiftedProgramProofGraph, start: int) -> int:
     seen = {start}
     stack = [start]
     while stack:
-        for child in graph.get_successor_indices(stack.pop()):
+        for child in graph.neighbours(stack.pop()):
             if child not in seen:
                 seen.add(child)
                 stack.append(child)

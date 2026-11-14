@@ -11,7 +11,7 @@ from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
 from pytyr.formalism.planning import Parser
 
-from pyrunir.kr.dl import ConstructorRepositoryFactory as DlRepositoryFactory
+from pyrunir.kr.dl import ConstructorRepository as DlRepository
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext import dl
 
@@ -43,8 +43,8 @@ class Suite(TypedDict):
 def main() -> None:
     suite = cast("Suite", json.loads(SUITE.read_text(encoding="utf-8")))
     planning_domain = Parser(Path(data_root()) / suite["domain_file"], ParserOptions()).get_domain()
-    dl_repository = DlRepositoryFactory().create(planning_domain)
-    repository = ext.RepositoryFactory().create(dl_repository)
+    dl_repository = DlRepository(planning_domain)
+    repository = ext.Repository(dl_repository)
     modules = dl.ModuleFactory.create_bonet_et_al_icaps2024_modules(planning_domain, repository)
     suite["modules"] = [
         {

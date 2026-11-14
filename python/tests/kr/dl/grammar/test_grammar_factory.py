@@ -11,7 +11,7 @@ from pypddl_datasets import data_root
 from pytyr.formalism.planning import Parser
 
 from pyrunir.kr.dl import cnf_grammar
-from pyrunir.kr.dl.grammar import ConstructorRepositoryFactory, GrammarFactory, GrammarSpecification, parse_grammar
+from pyrunir.kr.dl.grammar import ConstructorRepository, GrammarFactory, GrammarSpecification, parse_grammar
 
 
 class GrammarFactoryFixture(TypedDict):
@@ -29,14 +29,14 @@ CASES = cast("list[GrammarFactoryFixture]", _SUITE["cases"])
 def test_grammar_factory_fixture(case: GrammarFactoryFixture) -> None:
     planning_domain = Parser(Path(data_root()) / case["domain_file"], ParserOptions()).get_domain()
     domain = planning_domain.get_domain()
-    repository = ConstructorRepositoryFactory().create(planning_domain)
+    repository = ConstructorRepository(planning_domain)
 
     grammar = GrammarFactory.create(GrammarSpecification.FRANCE_ET_AL_AAAI2021, domain, repository)
     formatted = str(grammar)
     assert formatted == read_fixture(case["grammar_file"])
     assert str(parse_grammar(formatted, domain, repository)) == formatted
 
-    cnf_repository = cnf_grammar.ConstructorRepositoryFactory().create(planning_domain)
+    cnf_repository = cnf_grammar.ConstructorRepository(planning_domain)
     cnf_formatted = str(cnf_grammar.translate(grammar, cnf_repository))
     assert cnf_formatted == read_fixture(case["cnf_file"])
     reparsed = parse_grammar(cnf_formatted, domain, repository)

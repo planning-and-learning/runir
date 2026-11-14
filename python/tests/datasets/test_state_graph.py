@@ -16,7 +16,7 @@ from pytyr.planning.lifted import GroundTaskInstantiationOptions, PackedState as
 from pyyggdrasil.execution import ExecutionContext
 
 from pyrunir.datasets import (
-    ColorRepositoryFactory,
+    ColorRepository,
     EquivalenceGraphGenerationOptions,
     EquivalencePolicyMode,
     GroundTaskSearchContext,
@@ -66,10 +66,10 @@ def test_state_graph_labels_keep_the_graph_alive(ground_gripper_search_context: 
     edge = graph.edges()[0]
 
     references = sys.getrefcount(graph)
-    vertex = graph.vertex_value(edge.source)
+    vertex = graph.vertex_value(graph.source(edge))
     assert sys.getrefcount(graph) > references
     references = sys.getrefcount(graph)
-    edge_label = graph.edge_value(edge.id)
+    edge_label = graph.edge_value(edge)
     assert sys.getrefcount(graph) > references
     state = vertex.state
     assert isinstance(state, GroundPackedState)
@@ -101,7 +101,7 @@ def test_ground_state_graph_labels_own_packed_states_and_action_bindings(gripper
     context = GroundTaskSearchContext(task, execution_context)
 
     graph = generate_ground_state_graph(context, _state_graph_options())
-    edge_label = graph.edge_value(graph.edges()[0].id)
+    edge_label = graph.edge_value(graph.edges()[0])
 
     assert isinstance(edge_label, StateGraphEdgeLabel)
     assert isinstance(edge_label.action, ActionRow)
@@ -125,7 +125,7 @@ def test_lifted_state_graph_labels_own_packed_states_and_action_bindings(gripper
     context = LiftedTaskSearchContext(task, execution_context)
 
     graph = generate_lifted_state_graph(context, _state_graph_options())
-    edge_label = graph.edge_value(graph.edges()[0].id)
+    edge_label = graph.edge_value(graph.edges()[0])
 
     assert isinstance(edge_label, StateGraphEdgeLabel)
     assert isinstance(edge_label.action, ActionRow)
@@ -150,7 +150,7 @@ def test_generate_ground_equivalence_graph_exposes_owned_result_graphs(
     options.policy_mode = EquivalencePolicyMode.IDENTITY
     options.state_graph_options.max_num_states = 4
 
-    colors = ColorRepositoryFactory().create(ground_gripper_search_context.task)
+    colors = ColorRepository(ground_gripper_search_context.task)
     result = generate_ground_equivalence_graph([ground_gripper_search_context], options, colors)
 
     forward_graph = result.graph
@@ -175,7 +175,7 @@ def test_generate_ground_equivalence_graph_exposes_owned_result_graphs(
 def test_object_graph_color_repository_can_be_reused(ground_gripper_search_context: GroundTaskSearchContext) -> None:
     options = EquivalenceGraphGenerationOptions()
     options.policy_mode = EquivalencePolicyMode.GI
-    colors = ColorRepositoryFactory().create(ground_gripper_search_context.task)
+    colors = ColorRepository(ground_gripper_search_context.task)
 
     generate_ground_equivalence_graph([ground_gripper_search_context], options, colors)
     num_colors = colors.num_colors
@@ -191,7 +191,7 @@ def test_equivalence_graph_fixture_counts(case: EquivalenceGraphFixture) -> None
     options.policy_mode = EQUIVALENCE_POLICIES[case["equivalence_policy"]]
 
     contexts = _make_ground_contexts(case)
-    result = generate_ground_equivalence_graph(contexts, options, ColorRepositoryFactory().create(contexts[0].task))
+    result = generate_ground_equivalence_graph(contexts, options, ColorRepository(contexts[0].task))
     graph = result.graph
 
     assert graph.num_vertices == case["expected_num_vertices"]

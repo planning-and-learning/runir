@@ -109,9 +109,9 @@ def test_binding_rules_parse_construct_and_serialize(
         "source",
         "target",
         "conditions",
-        "effects",
         "feature",
         "register",
+        "effects",
     ] + (["order"] if kind == "choose" else [])
     dictionaries = Dictionaries()
     register_table(dictionaries, ext.RuleVariant, "variants", "v")

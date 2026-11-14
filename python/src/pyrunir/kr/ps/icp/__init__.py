@@ -52,7 +52,6 @@ from pyrunir._pyrunir.kr.ps.icp import (
     ProgramProofEdgeLabel as ProgramProofEdgeLabel,
     ProgramSearchStatistics as ProgramSearchStatistics,
     Repository as Repository,
-    RepositoryFactory as RepositoryFactory,
     ResetPair as ResetPair,
     RoleLoadRule as RoleLoadRule,
     RoleLoadRuleData as RoleLoadRuleData,

@@ -45,8 +45,8 @@ void bind_query(nb::module_& m, const char* name)
     urd::python::add_hash(view);
     view.def("syntactic_complexity", [](View value) { return semantics::syntactic_complexity(value); });
     urd::python::bind_field_getters(view);
-    // A query's result columns: a field where they are given, derived elsewhere.
-    if constexpr (!std::same_as<Tag, void> && !urd::has_field<Data>("columns"))
+    // A query's result columns: a field where they are given, derived elsewhere (the root's: its concrete query's).
+    if constexpr (!urd::has_field<Data>("columns"))
         view.def("get_columns", &View::get_columns);
     if constexpr (std::same_as<Tag, void>)
     {

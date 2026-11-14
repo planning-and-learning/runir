@@ -116,7 +116,7 @@ TEST(RunirKrDlConcept, RoutesUnaryBinaryAndNumberRestrictionData)
     using Concept = kr::dl::Constructor<kr::dl::ConceptTag>;
     using Role = kr::dl::Constructor<kr::dl::RoleTag>;
     auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
-    auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_repository);
+    auto repository = std::make_shared<kr::dl::ConstructorRepository>(planning_repository);
 
     auto unary_data = urd::data<kr::dl::Concept<SemanticFamily, kr::dl::NegationTag>>(urd::index<Concept>(3));
     const auto unary = repository->insert(unary_data).first;
@@ -138,7 +138,7 @@ TEST(RunirKrDlRole, RoutesUnaryAndMixedBinaryData)
     using Concept = kr::dl::Constructor<kr::dl::ConceptTag>;
     using Role = kr::dl::Constructor<kr::dl::RoleTag>;
     auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
-    auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_repository);
+    auto repository = std::make_shared<kr::dl::ConstructorRepository>(planning_repository);
 
     auto unary_data = urd::data<kr::dl::Role<SemanticFamily, kr::dl::InverseTag>>(urd::index<Role>(3));
     const auto unary = repository->insert(unary_data).first;
@@ -154,7 +154,7 @@ TEST(RunirKrDlBoolean, RoutesConstantUnaryAndBinaryData)
 {
     using Constructor = kr::dl::Constructor<kr::dl::BooleanTag>;
     auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
-    auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_repository);
+    auto repository = std::make_shared<kr::dl::ConstructorRepository>(planning_repository);
 
     auto constant_data = urd::data<kr::dl::Boolean<SemanticFamily, kr::dl::BooleanConstantTag>>(true);
     const auto constant = repository->insert(constant_data).first;
@@ -176,7 +176,7 @@ TEST(RunirKrDlNumerical, RoutesValueBinaryAndDistanceData)
     using Role = kr::dl::Constructor<kr::dl::RoleTag>;
     using Numerical = kr::dl::Constructor<kr::dl::NumericalTag>;
     auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
-    auto repository = kr::dl::ConstructorRepositoryFactory().create(planning_repository);
+    auto repository = std::make_shared<kr::dl::ConstructorRepository>(planning_repository);
 
     auto constant_data = urd::data<kr::dl::Numerical<SemanticFamily, kr::dl::NumericalConstantTag>>(7);
     EXPECT_EQ(repository->insert(constant_data).first.get_value(), 7);
@@ -203,13 +203,13 @@ namespace
 {
 
 /// A grammar tree: its family, non-terminals and repository.
-template<typename F, template<typename> typename NonTerminalTemplate, typename Factory>
+template<typename F, template<typename> typename NonTerminalTemplate, typename R>
 struct GrammarTree
 {
     using Family = F;
     template<typename Category>
     using NonTerminal = NonTerminalTemplate<Category>;
-    using RepositoryFactory = Factory;
+    using Repository = R;
 };
 
 template<typename Tree>
@@ -219,8 +219,8 @@ class RunirKrDlGrammarNumerical : public testing::Test
 
 }  // namespace
 
-using GrammarTrees = testing::Types<GrammarTree<GrammarFamily, kr::dl::grammar::NonTerminal, kr::dl::grammar::ConstructorRepositoryFactory>,
-                                    GrammarTree<CnfGrammarFamily, kr::dl::cnf_grammar::NonTerminal, kr::dl::cnf_grammar::ConstructorRepositoryFactory>>;
+using GrammarTrees = testing::Types<GrammarTree<GrammarFamily, kr::dl::grammar::NonTerminal, kr::dl::grammar::ConstructorRepository>,
+                                    GrammarTree<CnfGrammarFamily, kr::dl::cnf_grammar::NonTerminal, kr::dl::cnf_grammar::ConstructorRepository>>;
 TYPED_TEST_SUITE(RunirKrDlGrammarNumerical, GrammarTrees);
 
 TYPED_TEST(RunirKrDlGrammarNumerical, ExposesDistanceOperands)
@@ -229,7 +229,7 @@ TYPED_TEST(RunirKrDlGrammarNumerical, ExposesDistanceOperands)
     using ConceptOperand = kr::dl::operand_t<F, kr::dl::ConceptTag>;
     using RoleOperand = kr::dl::operand_t<F, kr::dl::RoleTag>;
     auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
-    auto repository = typename TypeParam::RepositoryFactory().create(planning_repository);
+    auto repository = std::make_shared<typename TypeParam::Repository>(planning_repository);
 
     auto source_data = urd::data<typename TypeParam::template NonTerminal<kr::dl::ConceptTag>>(std::string("source"));
     auto role_data = urd::data<typename TypeParam::template NonTerminal<kr::dl::RoleTag>>(std::string("role"));

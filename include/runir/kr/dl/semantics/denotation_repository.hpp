@@ -21,29 +21,14 @@
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/core/index_sequence.hpp>
 #include <yggdrasil/formalism/interning.hpp>
-#include <yggdrasil/formalism/symbol_repository.hpp>
+#include <yggdrasil/formalism/symbol_context.hpp>
 
 namespace runir::kr::dl::semantics
 {
 
-class DenotationRepositoryFactory
+class DenotationRepository : public ygg::formalism::SymbolContext<DenotationRepository, DenotationRecordTypes>
 {
-    friend class DenotationRepository;
-
-private:
-    // Copies share identity sequences.
-    ygg::IndexSequence m_indices;
-
-public:
-    DenotationRepository create(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository);
-    DenotationRepositoryPtr create_shared(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository);
-};
-
-class DenotationRepository : public ygg::formalism::SymbolRepositoryBase<DenotationRepository, DenotationRecordTypes>
-{
-    using Base = ygg::formalism::SymbolRepositoryBase<DenotationRepository, DenotationRecordTypes>;
-
-    friend class DenotationRepositoryFactory;
+    using Base = ygg::formalism::SymbolContext<DenotationRepository, DenotationRecordTypes>;
 
     /// The denotations' blocks, interned in a urd pool (stored flat): a handle is a vec_index.
     using VectorRepository = urd::Store<urd::pool<DenotationBlocks>>;
@@ -51,14 +36,13 @@ class DenotationRepository : public ygg::formalism::SymbolRepositoryBase<Denotat
     VectorRepository m_vector_repository;
     ygg::FreeRelationRepository m_relation_repository;
     std::shared_ptr<const tyr::formalism::planning::Repository> m_formalism_repository;
-    DenotationRepositoryFactory m_factory;
     size_t m_index;
 
-    // Constructor, destructor and factory functions are defined in the library (template rule 7): inline ones
-    // would construct and destroy every symbol pool in each caller, and those pools are instantiated there.
-    DenotationRepository(size_t index, DenotationRepositoryFactory factory, std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository);
-
 public:
+    /// Over the planning repository whose objects its denotations range over. Numbered by ygg::next_layer(), the
+    /// process-wide counter, so that no two contexts share a number. The constructor and destructor are defined in the
+    /// library (template rule 7): inline ones would construct and destroy the vector and relation pools in each caller.
+    explicit DenotationRepository(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository);
     ~DenotationRepository();
     DenotationRepository(const DenotationRepository&) = delete;
     DenotationRepository& operator=(const DenotationRepository&) = delete;
@@ -67,7 +51,6 @@ public:
 
     /// The repository's number, as urd's views ask of a context.
     [[nodiscard]] std::size_t layer() const noexcept { return m_index; }
-    [[nodiscard]] auto get_factory() const noexcept { return m_factory; }
     [[nodiscard]] const tyr::formalism::planning::Repository& get_formalism_repository() const noexcept
     {
         assert(m_formalism_repository);

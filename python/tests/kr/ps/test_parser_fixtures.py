@@ -8,9 +8,9 @@ from fixture_utils import load_fixture, read_fixture
 from pytyr.formalism.planning import PlanningDomain
 
 from pyrunir.kr import SemanticError
-from pyrunir.kr.dl import ConstructorRepositoryFactory as DlRepositoryFactory
+from pyrunir.kr.dl import ConstructorRepository as DlRepository
 from pyrunir.kr.ps import ext
-from pyrunir.kr.ps.base import RepositoryFactory as BaseRepositoryFactory
+from pyrunir.kr.ps.base import Repository as BaseRepository
 from pyrunir.kr.ps.base.dl import parse_sketch
 from pyrunir.kr.ps.ext import dl
 
@@ -28,11 +28,11 @@ CASES = cast("list[ParserFixture]", _SUITE["cases"])
 
 def _parse(case: ParserFixture, description: str, domain: PlanningDomain) -> None:
     """Parse ``description`` with the parser that ``case`` names."""
-    dl_repository = DlRepositoryFactory().create(domain)
+    dl_repository = DlRepository(domain)
     if case["parser"] == "base_sketch":
-        parse_sketch(description, domain, BaseRepositoryFactory().create(dl_repository))
+        parse_sketch(description, domain, BaseRepository(dl_repository))
         return
-    repository = ext.RepositoryFactory().create(dl_repository)
+    repository = ext.Repository(dl_repository)
     if case["parser"] == "ext_module":
         dl.parse_module(description, domain, repository)
     else:

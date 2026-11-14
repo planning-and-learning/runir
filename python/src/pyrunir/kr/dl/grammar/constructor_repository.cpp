@@ -14,13 +14,9 @@ void bind_grammar_constructor_repository(nb::module_& m)
     auto repository = nb::class_<runir::kr::dl::grammar::ConstructorRepository>(m, "ConstructorRepository");
     repository.def("clear", &runir::kr::dl::grammar::ConstructorRepository::clear).def("layer", &runir::kr::dl::grammar::ConstructorRepository::layer);
 
-    auto factory = nb::class_<runir::kr::dl::grammar::ConstructorRepositoryFactory>(m, "ConstructorRepositoryFactory");
-    factory.def(nb::init<>())
-        .def(
-            "create",
-            [](runir::kr::dl::grammar::ConstructorRepositoryFactory& self, const tyr::formalism::planning::PlanningDomain& planning_domain)
-            { return self.create(planning_domain.get_repository()); },
-            nb::arg("planning_domain"));
+    repository.def(nb::new_([](const tyr::formalism::planning::PlanningDomain& planning_domain)
+                            { return std::make_shared<runir::kr::dl::grammar::ConstructorRepository>(planning_domain.get_repository()); }),
+                   nb::arg("planning_domain"));
 }
 
 }  // namespace runir::kr::dl

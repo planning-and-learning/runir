@@ -159,7 +159,7 @@ public:
         if (m_states->empty())
             return !seen.constructors.insert(std::pair(lhs, constructor)).second;
 
-        const auto was_cached = m_denotation_caches.front().template get<Category>(constructor.is_static()).contains(constructor);
+        const auto was_cached = m_denotation_caches.front().find(constructor.is_static(), constructor).has_value();
         seen.scratch.clear();
 
         for (size_t i = 0; i < m_states->size(); ++i)
@@ -182,7 +182,7 @@ public:
 
         if (!is_novel && !was_cached)
             for (auto& caches : m_denotation_caches)
-                caches.template get<Category>(constructor.is_static()).erase(constructor);
+                caches.erase(constructor.is_static(), constructor);
 
         return !is_novel;
     }

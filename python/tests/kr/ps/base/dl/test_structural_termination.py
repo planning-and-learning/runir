@@ -10,9 +10,9 @@ import pyvefr
 from fixture_utils import load_fixture, read_fixture
 from pytyr.formalism.planning import PlanningDomain
 
-from pyrunir.kr.dl.semantics import ConstructorRepositoryFactory
+from pyrunir.kr.dl.semantics import ConstructorRepository
 from pyrunir.kr.ps import IncompleteStructuralTerminationStatus
-from pyrunir.kr.ps.base import Repository, RepositoryFactory
+from pyrunir.kr.ps.base import Repository
 from pyrunir.kr.ps.base.dl import (
     BooleanFeature,
     SccStructuralTerminationResult,
@@ -38,8 +38,8 @@ TPP = read_fixture("kr/ps/base/dl/tpp.sketch")
 
 
 def make_repository(planning_domain: PlanningDomain) -> Repository:
-    dl_repository = ConstructorRepositoryFactory().create(planning_domain)
-    return RepositoryFactory().create(dl_repository)
+    dl_repository = ConstructorRepository(planning_domain)
+    return Repository(dl_repository)
 
 
 def test_counterexample_rule_keeps_the_graph_alive(gripper_planning_domain: PlanningDomain) -> None:

@@ -32,8 +32,8 @@ TEST(RunirTests, ExtStructuralTerminationEmptyModuleIsTerminating)
     const auto domain = benchmark_path("classical/tests/gripper/domain.pddl");
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_task.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     const auto module_ = kr::ps::ext::dl::ModuleFactory::create_empty(*repository);
 
     const auto result = kr::ps::ext::dl::structural_termination(module_);
@@ -50,8 +50,8 @@ TEST(RunirTests, ExtStructuralTerminationEmptyModuleIsTerminating)
 TEST(RunirTests, ExtStructuralTerminationBacktrackHasNoEdgesAndDoesNotPruneOtherRules)
 {
     const auto domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(domain.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(domain.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     for (const auto cycle : { false, true })
     {
         SCOPED_TRACE(cycle);
@@ -106,8 +106,8 @@ TEST(RunirTests, ExtStructuralTerminationDecreaseWithUnchangedReturnIsTerminatin
     const auto domain = benchmark_path("classical/tests/gripper/domain.pddl");
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_task.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     // m0 -> m1 decreases fn; m1 -> m0 keeps fn unchanged: every memory cycle
     // strictly decreases fn, so the module terminates.
     const auto module_ = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/terminating.module"), planning_task.get_domain().get_domain(), *repository);
@@ -137,8 +137,8 @@ TEST(RunirTests, ExtStructuralTerminationUsesDoRuleEffects)
     const auto domain = benchmark_path("classical/tests/gripper/domain.pddl");
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_task.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     // The do edge declares fn unchanged, and the return edge decreases fn.
     // This is structurally terminating even though a do edge is in the memory cycle.
     const auto module_ =
@@ -152,8 +152,8 @@ TEST(RunirTests, ExtStructuralTerminationUsesDoRuleEffects)
 TEST(RunirTests, ExtStructuralTerminationActionRulesUseEffectOverapproximation)
 {
     const auto domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(domain.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(domain.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
 
     for (const auto& [effect, terminating] : urd::Store<urd::sequence<std::pair<std::string, bool>>> { { "(unchanged n)", true },
                                                                                                        { "(decreases n)", true },
@@ -228,8 +228,8 @@ TEST(RunirTests, ExtStructuralTerminationLoadPreservesRegisterIndependentFeature
     const auto domain = benchmark_path("classical/tests/gripper/domain.pddl");
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_task.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     // Loading r0 does not change the planning state and fn does not mention r0.
     // The load edge should therefore preserve fn, allowing the following
     // decreasing sketch edge to prove the memory cycle terminating.
@@ -246,8 +246,8 @@ TEST(RunirTests, ExtStructuralTerminationLoadUnconstrainsRegisterDependentFeatur
     const auto domain = benchmark_path("classical/tests/gripper/domain.pddl");
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_task.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     // Here fn is the cardinality of the concept stored in r0. The load edge
     // writes r0, so fn is unconstrained and can restore the ranking after the
     // decreasing edge; SIEVE must leave a counterexample cycle.
@@ -264,8 +264,8 @@ TEST(RunirTests, ExtStructuralTerminationLoadUnconstrainsRegisterDependentFeatur
 TEST(RunirTests, ExtStructuralTerminationFindsRegistersInsideQueries)
 {
     const auto domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(domain.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(domain.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     for (const auto* expression : { "c_top", "c_register r0" })
     {
         auto source = read_fixture("kr/ps/ext/dl/load_dependent.module");
@@ -286,8 +286,8 @@ TEST(RunirTests, ExtStructuralTerminationLoadUnconstrainsRoleRegisterDependentFe
     const auto domain = benchmark_path("classical/tests/gripper/domain.pddl");
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_task.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     // Here fn counts objects reached through the role stored in r0. The load edge
     // writes r0, so fn is unconstrained and can restore the ranking after the
     // decreasing edge; SIEVE must leave a counterexample cycle.
@@ -304,8 +304,8 @@ TEST(RunirTests, ExtStructuralTerminationLoadUnconstrainsRoleRegisterDependentFe
 TEST(RunirTests, ExtStructuralTerminationChoosePreservesBindingSemantics)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     for (const auto& fixture : { "load_independent", "load_dependent", "role_load_dependent" })
     {
         auto source = read_fixture(std::string("kr/ps/ext/dl/") + fixture + ".module");
@@ -320,8 +320,8 @@ TEST(RunirTests, ExtStructuralTerminationChoosePreservesBindingSemantics)
 TEST(RunirTests, ExtStructuralTerminationBindingEffectsOverrideImplicitPreservation)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     for (const auto* kind : { "load", "choose" })
         for (const auto* expression : { "c_top", "c_register selected" })
             for (const auto* effect : { "increases", "decreases", "unchanged" })
@@ -347,8 +347,8 @@ TEST(RunirTests, ExtStructuralTerminationUnconstrainedReturnIsNotTerminating)
     const auto domain = benchmark_path("classical/tests/gripper/domain.pddl");
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_task.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     // As above, but the return rule m1 -> m0 leaves fn unconstrained: the
     // memory cycle can restore fn, so termination cannot be proven.
     const auto module_ =
@@ -378,8 +378,8 @@ TEST(RunirTests, ExtStructuralTerminationPreservesSparseMemoryStateIdentities)
     const auto domain = benchmark_path("classical/tests/gripper/domain.pddl");
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_task.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     for (const auto* name : { "unused_before", "m1", "unused_between", "m0" })
     {
         auto data = urd::data<kr::ps::MemoryState<kr::ExtFamilyTag>>(std::string(name));
@@ -422,8 +422,8 @@ TEST(RunirTests, ExtStructuralTerminationIgnoresOneWayBridgeBetweenMemoryCycles)
     const auto domain = benchmark_path("classical/tests/gripper/domain.pddl");
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_task.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     // m0 <-> m1 terminates on fa, m2 <-> m3 does not terminate on fb, and
     // the one-way bridge m1 -> m2 cannot participate in a cycle.
     const auto module_ =
@@ -452,8 +452,8 @@ TEST(RunirTests, ExtSurvivingRulesRetainOnlyResidualLabelsAcrossRuleVariants)
     const auto domain = benchmark_path("classical/tests/gripper/domain.pddl");
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_task.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     const std::pair<const char*, std::set<std::string>> cases[] = {
         { "kr/ps/ext/dl/one_way_bridge.module", { "auto31", "auto33" } },
         { "kr/ps/ext/dl/load_dependent.module", { "auto13", "auto15" } },
@@ -490,8 +490,8 @@ TEST(RunirTests, ExtStructuralTerminationLiftsProjectedComponentsToGlobalAxes)
     const auto domain = benchmark_path("classical/tests/gripper/domain.pddl");
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_task.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     const auto module_ =
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/projected_components.module"), planning_task.get_domain().get_domain(), *repository);
 
@@ -567,8 +567,8 @@ TEST(RunirTests, ExtStructuralTerminationAppliesFeatureLimitPerResidualComponent
     const auto domain = benchmark_path("classical/tests/gripper/domain.pddl");
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_task.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
 
     const auto module_ =
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/split_features.module"), planning_task.get_domain().get_domain(), *repository);
@@ -590,8 +590,8 @@ TEST(RunirTests, ExtStructuralTerminationAcyclicProgramCallsAreTerminating)
     const auto domain = benchmark_path("classical/tests/gripper/domain.pddl");
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_task.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     const auto program =
         kr::ps::ext::dl::parse_program(read_fixture("kr/ps/ext/dl/acyclic_calls.program"), planning_task.get_domain().get_domain(), *repository);
 
@@ -607,8 +607,8 @@ TEST(RunirTests, ExtStructuralTerminationRecursiveProgramCallsAreNotTerminating)
     const auto domain = benchmark_path("classical/tests/gripper/domain.pddl");
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     const auto planning_task = tyr::formalism::planning::Parser(domain).parse_task(task_file);
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_task.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_task.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     // Each module is locally acyclic, so per-module structural termination is
     // insufficient. The program-level call graph root -> leaf -> root is a
     // recursive module cycle and is conservatively rejected.
@@ -627,8 +627,8 @@ TEST(RunirTests, ExtStructuralTerminationRecursiveProgramCallsAreNotTerminating)
 TEST(RunirTests, ExtStructuralTerminationPreservesCallLabelsAndOrder)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository());
-    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository());
+    auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
     const auto original = kr::ps::ext::dl::parse_program(read_fixture("kr/ps/ext/dl/ordered_calls.program"), planning_domain.get_domain(), *repository);
 
     for (const auto omit_target : { false, true })

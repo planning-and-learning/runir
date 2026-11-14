@@ -83,7 +83,6 @@ using IndexicalTypes = boost::mp11::mp_list<XCondition, XEffect>;
 using RepositoryTypes = boost::mp11::mp_append<ps::PsCoreTypes<runir::kr::IcpFamilyTag>, RuleTypes, ProgramTypes, IndexicalTypes>;
 using Repository = ps::BasicRepository<IcpFamilyTag, RepositoryTypes>;
 using RepositoryPtr = std::shared_ptr<Repository>;
-using RepositoryFactory = ps::BasicRepositoryFactory<IcpFamilyTag, RepositoryTypes>;
 using MemoryStateView = urd::index_view<MemoryState<IcpFamilyTag>, Repository>;
 using ModuleSymbolView = urd::index_view<ModuleSymbol<IcpFamilyTag>, Repository>;
 using ModuleView = urd::index_view<Module, Repository>;

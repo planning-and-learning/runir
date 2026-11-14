@@ -125,7 +125,7 @@ TEST(RunirKrDlSemanticsDenotation, BuilderIdentityUsesValuesRatherThanRegistrati
 TEST(RunirKrDlSemanticsDenotation, ExposesScalarValues)
 {
     auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
-    auto repository = kr::dl::semantics::DenotationRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::semantics::DenotationRepository(planning_repository);
 
     auto boolean_data = urd::data<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>(true);
     auto numerical_data = urd::data<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>(9);
@@ -145,7 +145,7 @@ TEST(RunirKrDlSemanticsDenotation, CountsRolePairs)
     EXPECT_EQ(builder.count(), 2);
 
     auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
-    auto repository = kr::dl::semantics::DenotationRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::semantics::DenotationRepository(planning_repository);
     const auto vec_index = repository.get_vector_repository().insert(builder.blocks).first;
     auto data = urd::data<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(builder.get_num_objects(), vec_index);
     const auto view = repository.insert(data).first;
@@ -296,7 +296,7 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsOutliveViewWrappers)
         auto data = urd::data<tyr::formalism::Object>(std::string(name));
         (void) planning_repository->insert(data);
     }
-    auto repository = kr::dl::semantics::DenotationRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::semantics::DenotationRepository(planning_repository);
 
     auto concept_builder = urd::builder<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(3);
     concept_builder.get().set(0);
@@ -359,7 +359,7 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsSurviveRepositoryGrowthAndSkipRolePa
         auto data = urd::data<tyr::formalism::Object>("object" + std::to_string(i));
         (void) planning_repository->insert(data);
     }
-    auto repository = kr::dl::semantics::DenotationRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::semantics::DenotationRepository(planning_repository);
     auto concept_builder = urd::builder<Concept>(num_objects);
     concept_builder.get().set(0);
     concept_builder.get().set(64);
@@ -444,7 +444,7 @@ TEST(RunirKrDlSemanticsDenotation, RoleStorageBitsetsPreserveRowPadding)
         auto data = urd::data<tyr::formalism::Object>("object" + std::to_string(i));
         (void) planning_repository->insert(data);
     }
-    auto repository = kr::dl::semantics::DenotationRepositoryFactory().create(planning_repository);
+    auto repository = kr::dl::semantics::DenotationRepository(planning_repository);
     for (const auto size : { ygg::uint_t { 0 }, ygg::uint_t { 1 }, digits - 1, digits, digits + 1, ygg::uint_t { 130 } })
     {
         SCOPED_TRACE(size);

@@ -69,8 +69,8 @@ struct Fixture
 
     Fixture() :
         planning_domain(tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain()),
-        dl_repository(kr::dl::ConstructorRepositoryFactory().create(planning_domain.get_repository())),
-        repository(kr::uns::RepositoryFactory().create(dl_repository))
+        dl_repository(std::make_shared<kr::dl::ConstructorRepository>(planning_domain.get_repository())),
+        repository(std::make_shared<kr::uns::Repository>(dl_repository))
     {
     }
 

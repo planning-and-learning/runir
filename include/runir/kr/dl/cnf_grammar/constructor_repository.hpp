@@ -24,7 +24,6 @@
 namespace runir::kr::dl::cnf_grammar
 {
 
-using ConstructorSymbolRepository = boost::mp11::mp_apply<ygg::formalism::SymbolRepository, ConstructorRepositoryTypes>;
 
 using Builder = boost::mp11::mp_apply<ygg::formalism::BuilderStorage, ConstructorRepositoryTypes>;
 
@@ -39,13 +38,5 @@ void prepare_for_insert(ConstructorRepository&, urd::data<T>& data)
 using ygg::formalism::insert;
 }
 
-#ifndef RUNIR_HEADER_INSTANTIATION
-namespace runir::kr::dl::detail
-{
-
-extern template class BasicConstructorRepositoryFactory<runir::kr::dl::cnf_grammar::ConstructorRepositoryTypes>;
-
-}  // namespace runir::kr::dl::detail
-#endif
 
 #endif

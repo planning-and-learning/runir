@@ -16,8 +16,8 @@ class EvaluationStorage
 
 public:
     explicit EvaluationStorage(const DenotationRepository& prototype) :
-        m_static_denotations(prototype.get_factory().create_shared(prototype.get_formalism_repository_ptr())),
-        m_dynamic_denotations(prototype.get_factory().create_shared(prototype.get_formalism_repository_ptr()))
+        m_static_denotations(std::make_shared<DenotationRepository>(prototype.get_formalism_repository_ptr())),
+        m_dynamic_denotations(std::make_shared<DenotationRepository>(prototype.get_formalism_repository_ptr()))
     {
     }
 

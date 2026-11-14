@@ -20,13 +20,15 @@ namespace runir::kr::dl::semantics
 /// columns, relation).
 using BuilderDataTypes = boost::mp11::mp_append<DenotationRecordTypes, boost::mp11::mp_list<ygg::Row<ygg::Schema>, ygg::Columns, ygg::Relation<ygg::Schema>>>;
 
+/// The storage of denotation records and free relations to build in.
+using DenotationDataStorage = boost::mp11::mp_apply<ygg::formalism::BuilderStorage, BuilderDataTypes>;
+
 class Builder
 {
 private:
     template<typename T>
     using DenotationPool = urd::Store<urd::slots<urd::builder<T>>>;
     using DenotationBuilderStorage = boost::mp11::mp_rename<boost::mp11::mp_transform<DenotationPool, DenotationTypes>, std::tuple>;
-    using DenotationDataStorage = boost::mp11::mp_apply<ygg::formalism::BuilderStorage, BuilderDataTypes>;
 
     DenotationBuilderStorage m_builders;
     DenotationDataStorage m_data;

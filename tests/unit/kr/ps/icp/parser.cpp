@@ -62,8 +62,8 @@ std::string replaced(std::string value, const std::string& from, const std::stri
 TEST(RunirTests, IcpParserRoundTripAndValidation)
 {
     const auto planning = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
-    auto constructors = kr::dl::ConstructorRepositoryFactory().create(planning.get_repository());
-    auto repository = kr::ps::icp::RepositoryFactory().create(constructors);
+    auto constructors = std::make_shared<kr::dl::ConstructorRepository>(planning.get_repository());
+    auto repository = std::make_shared<kr::ps::icp::Repository>(constructors);
     const auto parse = [&](const std::string& text) { return kr::ps::icp::dl::parse_module(text, planning.get_domain(), *repository); };
     const auto module = parse(policy());
     ASSERT_EQ(module.get_memory_transitions().size(), 2);

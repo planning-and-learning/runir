@@ -59,7 +59,7 @@ int run(std::span<char*> args)
     const auto text = must_pass_text(std::string(std::istreambuf_iterator<char>(file), {}));
     const auto search = runir::tests::make_lifted_context(args[1], args[2]);
     const auto domain = search->task->get_domain().get_domain();
-    auto repository = runir::kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
+    auto repository = std::make_shared<runir::kr::dl::ConstructorRepository>(search->task->get_repository());
     const auto count = runir::kr::ps::ext::dl::parse_numerical("(n_count " + text + ")", domain, *repository);
     const auto query = std::get<urd::index_view<runir::kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(
         std::get<urd::index_view<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(
@@ -70,7 +70,7 @@ int run(std::span<char*> args)
 
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     auto builder = runir::kr::dl::semantics::Builder();
-    auto denotations = runir::kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto denotations = runir::kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto empty_arguments = urd::data<runir::kr::dl::semantics::CallArguments>();
     auto register_data = urd::data<runir::kr::dl::semantics::RegisterValues>();
     register_data.concept_values.resize(1);

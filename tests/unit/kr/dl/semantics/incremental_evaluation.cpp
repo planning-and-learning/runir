@@ -90,8 +90,8 @@ template<tyr::TaskKind Kind>
 void check_planning_graph(tyr::planning::StateView<Kind> source, tyr::planning::StateView<Kind> target)
 {
     const auto& task = source.get_task();
-    auto constructors = kr::dl::ConstructorRepositoryFactory().create(task.get_repository());
-    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(task.get_repository());
+    auto constructors = std::make_shared<kr::dl::ConstructorRepository>(task.get_repository());
+    auto denotations = kr::dl::semantics::DenotationRepository(task.get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto builder = kr::dl::semantics::Builder {};
     auto delta = kr::dl::semantics::incremental::Delta {};
@@ -176,8 +176,8 @@ void check_incremental_evaluation()
     const auto a = domain.get_constants()[0].index();
     const auto b = domain.get_constants()[1].index();
     const auto c = domain.get_constants()[2].index();
-    auto constructors = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
-    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto constructors = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
+    auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto builder = kr::dl::semantics::Builder {};
     auto workspace = tyr::datalog::database::Workspace {};
@@ -242,10 +242,10 @@ void check_incremental_evaluation()
         EXPECT_EQ(repository.template size<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>(), 0);
         EXPECT_EQ(repository.template size<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>(), 0);
         EXPECT_TRUE(repository.get_relation_repository().template size<ygg::Relation<ygg::Schema>>() == 0);
-        EXPECT_TRUE(storage.get_caches().template get<kr::dl::ConceptTag>(false).empty());
-        EXPECT_TRUE(storage.get_caches().template get<kr::dl::RoleTag>(false).empty());
-        EXPECT_TRUE(storage.get_caches().template get<kr::dl::BooleanTag>(false).empty());
-        EXPECT_TRUE(storage.get_caches().template get<kr::dl::NumericalTag>(false).empty());
+        EXPECT_EQ(storage.get_caches().template size<kr::dl::ConceptTag>(false), 0);
+        EXPECT_EQ(storage.get_caches().template size<kr::dl::RoleTag>(false), 0);
+        EXPECT_EQ(storage.get_caches().template size<kr::dl::BooleanTag>(false), 0);
+        EXPECT_EQ(storage.get_caches().template size<kr::dl::NumericalTag>(false), 0);
     };
 
     const auto check = [&]<kr::dl::CategoryTag Category>(kr::dl::ConstructorView<Category> expression)
@@ -353,7 +353,7 @@ void check_incremental_evaluation()
         expect_no_delta(final_state);
         expect_unpublished();
         EXPECT_TRUE(storage.get_denotation_repository(true).get_vector_repository().empty());
-        EXPECT_TRUE(storage.get_caches().template get<Category>(true).empty());
+        EXPECT_EQ(storage.get_caches().template size<Category>(true), 0);
         compare_full(final_state, final_context);
 
         // Demands may skip states, move backwards, and reenter with new arguments.

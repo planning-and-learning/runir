@@ -30,6 +30,7 @@
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
+#include <yggdrasil/formalism/symbol_context_instantiations.hpp>
 
 namespace runir::datasets
 {
@@ -183,3 +184,6 @@ template auto create_object_graph<tyr::GroundTag>(tyr::planning::StateView<tyr::
 template auto create_object_graph<tyr::LiftedTag>(tyr::planning::StateView<tyr::LiftedTag>, ColorRepository&) -> std::unique_ptr<ObjectGraph>;
 
 }  // namespace runir::datasets
+
+// The color repository's symbols, which the library's other sources only declare.
+YGG_FORMALISM_SYMBOL_CONTEXT(, runir::datasets::ColorRepository, 3)

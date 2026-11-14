@@ -62,23 +62,14 @@ void bind_equivalence_graph_generation_for_kind(nb::module_& m, const char* clas
 void bind_equivalence_graph(nb::module_& m)
 {
     using namespace nb::literals;
-    nb::class_<ColorRepository>(m, "ColorRepository").def_prop_ro("num_colors", [](const ColorRepository& self) { return self.size<Color>(); });
-
-    nb::class_<ColorRepositoryFactory>(m, "ColorRepositoryFactory")
-        .def(nb::init<>())
-        .def(
-            "create",
-            [](ColorRepositoryFactory& self, const tyr::formalism::planning::PlanningDomain& planning_domain)
-            { return self.create(planning_domain.get_repository()); },
-            "planning_domain"_a)
-        .def(
-            "create",
-            [](ColorRepositoryFactory& self, const tyr::planning::Task<tyr::GroundTag>& task) { return self.create(task.get_domain().get_repository()); },
-            "ground_task"_a)
-        .def(
-            "create",
-            [](ColorRepositoryFactory& self, const tyr::planning::Task<tyr::LiftedTag>& task) { return self.create(task.get_domain().get_repository()); },
-            "lifted_task"_a);
+    nb::class_<ColorRepository>(m, "ColorRepository")
+        .def(nb::new_([](const tyr::formalism::planning::PlanningDomain& planning_domain) { return std::make_shared<ColorRepository>(planning_domain.get_repository()); }),
+             "planning_domain"_a)
+        .def(nb::new_([](const tyr::planning::Task<tyr::GroundTag>& task) { return std::make_shared<ColorRepository>(task.get_domain().get_repository()); }),
+             "ground_task"_a)
+        .def(nb::new_([](const tyr::planning::Task<tyr::LiftedTag>& task) { return std::make_shared<ColorRepository>(task.get_domain().get_repository()); }),
+             "lifted_task"_a)
+        .def_prop_ro("num_colors", [](const ColorRepository& self) { return self.size<Color>(); });
 
     nb::class_<EquivalenceGraphGenerationOptions>(m, "EquivalenceGraphGenerationOptions")
         .def(nb::init<>())

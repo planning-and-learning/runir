@@ -8,8 +8,8 @@ from pytyr.formalism.planning import PlanningDomain
 from pyyggdrasil.diagnostics import Diagnostic, format_diagnostic
 
 from pyrunir.kr import DuplicateDefinitionError, ParseError, SemanticError
-from pyrunir.kr.dl.semantics import ConstructorRepositoryFactory
-from pyrunir.kr.ps.base import RepositoryFactory
+from pyrunir.kr.dl.semantics import ConstructorRepository
+from pyrunir.kr.ps.base import Repository
 from pyrunir.kr.ps.base.dl import parse_sketch
 
 
@@ -20,7 +20,7 @@ def test_parser_rejects_missing_and_extra_closes_with_owned_context(
     source = "; UTF-8 é, ignored )\n(:sketch (:features) (:rules)" + suffix
     if suffix:
         source += ")"
-    repository = RepositoryFactory().create(ConstructorRepositoryFactory().create(gripper_planning_domain))
+    repository = Repository(ConstructorRepository(gripper_planning_domain))
     with pytest.raises(ParseError) as raised:
         parse_sketch(source, gripper_planning_domain, repository)
 
@@ -50,7 +50,7 @@ def test_parser_rejects_missing_and_extra_closes_with_owned_context(
 
 def test_parser_preserves_semicolon_comments(gripper_planning_domain: PlanningDomain) -> None:
     source = "(:sketch\n; )\n (:features) (:rules)) ; ("
-    repository = RepositoryFactory().create(ConstructorRepositoryFactory().create(gripper_planning_domain))
+    repository = Repository(ConstructorRepository(gripper_planning_domain))
     parse_sketch(source, gripper_planning_domain, repository)
 
 
@@ -66,7 +66,7 @@ def test_constructor_error_belongs_to_deepest_recognized_parent(
     gripper_planning_domain: PlanningDomain, expression: str, owner: str, unexpected: str
 ) -> None:
     source = f"(:sketch (:features (:boolean (:symbol b) (:expression (b_nonempty {expression})))) (:rules))"
-    repository = RepositoryFactory().create(ConstructorRepositoryFactory().create(gripper_planning_domain))
+    repository = Repository(ConstructorRepository(gripper_planning_domain))
     with pytest.raises(ParseError) as raised:
         parse_sketch(source, gripper_planning_domain, repository)
     diagnostic = raised.value.diagnostic
@@ -103,7 +103,7 @@ def test_constructor_expectations_use_complete_readable_messages(
     unexpected: str,
 ) -> None:
     source = f"(:sketch (:features (:boolean (:symbol b) (:expression (b_nonempty {expression})))) (:rules))"
-    repository = RepositoryFactory().create(ConstructorRepositoryFactory().create(gripper_planning_domain))
+    repository = Repository(ConstructorRepository(gripper_planning_domain))
     with pytest.raises(ParseError) as raised:
         parse_sketch(source, gripper_planning_domain, repository)
     diagnostic = raised.value.diagnostic
@@ -134,7 +134,7 @@ def test_constructor_expectations_use_complete_readable_messages(
 def test_missing_sections_have_complete_readable_messages(
     gripper_planning_domain: PlanningDomain, source: str, message: str
 ) -> None:
-    repository = RepositoryFactory().create(ConstructorRepositoryFactory().create(gripper_planning_domain))
+    repository = Repository(ConstructorRepository(gripper_planning_domain))
     with pytest.raises(ParseError) as raised:
         parse_sketch(source, gripper_planning_domain, repository)
     assert raised.value.diagnostic.message == message
@@ -148,7 +148,7 @@ def test_semantic_error_retains_exact_identifier_span(gripper_planning_domain: P
         "(:rule (:symbol same) (:expression (:conditions) (:effects))) "
         "(:rule (:symbol same) (:expression (:conditions) (:effects)))))"
     )
-    repository = RepositoryFactory().create(ConstructorRepositoryFactory().create(gripper_planning_domain))
+    repository = Repository(ConstructorRepository(gripper_planning_domain))
     with pytest.raises(DuplicateDefinitionError, match="Duplicate rule definition: same") as raised:
         parse_sketch(source, gripper_planning_domain, repository)
     diagnostic = raised.value.diagnostic

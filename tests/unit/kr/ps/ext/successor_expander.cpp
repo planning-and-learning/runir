@@ -888,9 +888,7 @@ TEST(RunirTests, ExtExplicitApplicationDistinguishesCollidingRuleIdsAcrossReposi
 {
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/ps/ext/choose";
     const auto context = create_task_context<tyr::GroundTag>(directory / "domain.pddl", directory / "task.pddl");
-    auto foreign_factory = kr::ps::ext::RepositoryFactory {};
-    const auto foreign_repository = foreign_factory.create(context->domain_context->ext_repository->get_dl_repository_ptr());
-    const auto distinct_repository = foreign_factory.create(context->domain_context->ext_repository->get_dl_repository_ptr());
+    const auto foreign_repository = std::make_shared<kr::ps::ext::Repository>(context->domain_context->ext_repository->get_dl_repository_ptr());
     const auto make_module = [&](kr::ps::ext::Repository& repository, const char* target)
     {
         return kr::ps::ext::dl::parse_module(fmt::format(R"((:module (:symbol policy) (:arguments) (:registers)
@@ -906,7 +904,6 @@ TEST(RunirTests, ExtExplicitApplicationDistinguishesCollidingRuleIdsAcrossReposi
     auto& repository = *context->domain_context->ext_repository;
     const auto prepared_module = make_module(repository, "prepared");
     const auto foreign_module = make_module(*foreign_repository, "external");
-    const auto distinct_module = make_module(*distinct_repository, "external");
     const auto prepared_rule = prepared_module.get_memory_transitions()[0][0];
     const auto foreign_rule = foreign_module.get_memory_transitions()[0][0];
     ASSERT_EQ(prepared_rule.index(), foreign_rule.index());
@@ -917,19 +914,14 @@ TEST(RunirTests, ExtExplicitApplicationDistinguishesCollidingRuleIdsAcrossReposi
     const auto planning_node = initial_planning_node(expander);
     const auto initial = expander.initial_state(planning_node.get_state());
     const auto prepared = expander.apply(initial, prepared_rule);
-    const auto foreign = expander.apply(initial, foreign_rule);
     ASSERT_TRUE(prepared);
-    ASSERT_TRUE(foreign);
-    ASSERT_TRUE(foreign.value().rule);
     EXPECT_EQ(prepared.value().get_target().get_module_state().get_memory_state().get_name(), "prepared");
-    EXPECT_EQ(foreign.value().get_target().get_module_state().get_memory_state().get_name(), "external");
-    EXPECT_EQ(&foreign.value().rule.value().context(), &foreign_rule.context());
 
-    // A colliding memory index from a different repository identity cannot
-    // make a rule applicable to the current program state.
-    ASSERT_EQ(distinct_module.get_entry_memory_state().index(), initial.get_module_state().get_memory_state().index());
-    ASSERT_NE(distinct_module.get_entry_memory_state(), initial.get_module_state().get_memory_state());
-    EXPECT_FALSE(expander.apply(initial, distinct_module.get_memory_transitions()[0][0]));
+    // Every repository has its own number: a colliding memory index from another repository is a different memory
+    // state, so the other repository's rule does not apply to the current program state.
+    ASSERT_EQ(foreign_module.get_entry_memory_state().index(), initial.get_module_state().get_memory_state().index());
+    ASSERT_NE(foreign_module.get_entry_memory_state(), initial.get_module_state().get_memory_state());
+    EXPECT_FALSE(expander.apply(initial, foreign_rule));
 }
 
 TEST(RunirTests, ExtQueryActionContractsGround) { expect_query_action_contracts<tyr::GroundTag>(); }

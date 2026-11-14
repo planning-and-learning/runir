@@ -22,7 +22,6 @@
 namespace runir::kr::dl::grammar
 {
 
-using ConstructorSymbolRepository = boost::mp11::mp_apply<ygg::formalism::SymbolRepository, ConstructorRepositoryTypes>;
 
 using Builder = boost::mp11::mp_apply<ygg::formalism::BuilderStorage, ConstructorRepositoryTypes>;
 
@@ -38,13 +37,5 @@ using ygg::formalism::insert;
 
 }  // namespace runir::kr::dl::grammar
 
-#ifndef RUNIR_HEADER_INSTANTIATION
-namespace runir::kr::dl::detail
-{
-
-extern template class BasicConstructorRepositoryFactory<runir::kr::dl::grammar::ConstructorRepositoryTypes>;
-
-}  // namespace runir::kr::dl::detail
-#endif
 
 #endif

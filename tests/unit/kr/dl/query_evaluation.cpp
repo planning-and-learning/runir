@@ -135,9 +135,9 @@ void check_queries()
     const auto search = query_search_context<Kind>();
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     const auto domain = search->task->get_domain().get_domain();
-    auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
+    auto repository = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();
-    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto empty_arguments = urd::data<kr::dl::semantics::CallArguments>();
     auto registers = urd::data<kr::dl::semantics::RegisterValues>();
@@ -371,7 +371,7 @@ void check_queries()
     }
 
     // Argument nodes forward their durable identity, while computed roots use the selected output binding.
-    auto destination = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto destination = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto destination_memo = kr::dl::semantics::DenotationCaches {};
     auto argument_output = persistent_context(argument_context, destination_memo, destination, storage);
     const auto retained_argument = kr::dl::semantics::evaluate<Kind>(argument, argument_output);
@@ -397,9 +397,9 @@ void check_distance_queries()
     const auto search = query_search_context<Kind>();
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     const auto domain = search->task->get_domain().get_domain();
-    auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
+    auto repository = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();
-    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto arguments = urd::data<kr::dl::semantics::CallArguments>();
     auto registers = urd::data<kr::dl::semantics::RegisterValues>();
@@ -531,12 +531,11 @@ void check_cached_queries()
 {
     const auto search = query_search_context<tyr::GroundTag>();
     const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
-    auto factory = kr::dl::ConstructorRepositoryFactory();
-    auto repository = factory.create(search->task->get_repository());
-    auto other_repository = factory.create(search->task->get_repository());
+    auto repository = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
+    auto other_repository = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
     auto& repo = *repository;
     auto builder = kr::dl::semantics::Builder();
-    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto& caches = storage.get_caches();
     auto context = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>(state, builder, storage);
@@ -753,7 +752,7 @@ void check_cached_queries()
     const auto count = kr::dl::insert(repo, count_wrapper).first;
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(count, context).value(), 3);
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(count, context).value(), 3);
-    EXPECT_TRUE(caches.template get<kr::dl::ConceptTag>(true).contains(top));
+    EXPECT_TRUE(caches.find(true, top).has_value());
 
     auto projection_data = urd::data<kr::dl::QueryProjection<kr::dl::ConceptTag>>();
     projection_data.arg = renamed.index();
@@ -838,9 +837,9 @@ void check_query_cache_across_states()
     const auto search = query_search_context<Kind>();
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     const auto domain = search->task->get_domain().get_domain();
-    auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
+    auto repository = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();
-    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto& caches = storage.get_caches();
     auto empty_arguments = urd::data<kr::dl::semantics::CallArguments>();
@@ -913,9 +912,9 @@ void check_query_cache_across_states()
                                                                 kr::dl::semantics::insert(denotations, registers).first);
     storage.reset_dynamic();
     EXPECT_TRUE(caches.get_queries(false).empty());
-    EXPECT_TRUE(caches.template get<kr::dl::NumericalTag>(false).empty());
-    EXPECT_TRUE(caches.get_queries(true).contains(fixed));
-    EXPECT_TRUE(caches.template get<kr::dl::NumericalTag>(true).contains(fixed_count));
+    EXPECT_EQ(caches.template size<kr::dl::NumericalTag>(false), 0);
+    EXPECT_TRUE(caches.find_query(true, fixed).has_value());
+    EXPECT_TRUE(caches.find(true, fixed_count).has_value());
     EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(fixed, next).data().rows, fixed_rows.data().rows));
     EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(goal, next).data().rows, goal_rows.data().rows));
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(derived, next).size(), 3);
@@ -942,7 +941,7 @@ void check_query_cache_across_states()
     auto persistent = persistent_context(context, persistent_memo, denotations, storage);
     const auto retained = kr::dl::semantics::evaluate<Kind>(dynamic_role, persistent);
     EXPECT_EQ(storage.get_denotation_repository(false).template size<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(), 0);
-    EXPECT_FALSE(caches.template get<kr::dl::RoleTag>(false).contains(dynamic_role));
+    EXPECT_FALSE(caches.find(false, dynamic_role).has_value());
     const auto source_value = kr::dl::semantics::evaluate<Kind>(dynamic_role, context);
     auto target_storage = kr::dl::semantics::EvaluationStorage(denotations);
     EXPECT_NE(&target_storage.get_denotation_repository(false), &storage.get_denotation_repository(false));
@@ -959,9 +958,9 @@ void check_query_cache_across_states()
     storage.reset_all();
     EXPECT_EQ(caches.get_static_join_indexes().size(), 0);
     EXPECT_TRUE(caches.get_queries(true).empty());
-    EXPECT_TRUE(caches.template get<kr::dl::NumericalTag>(true).empty());
+    EXPECT_EQ(caches.template size<kr::dl::NumericalTag>(true), 0);
     EXPECT_TRUE(caches.get_queries(false).empty());
-    EXPECT_TRUE(caches.template get<kr::dl::NumericalTag>(false).empty());
+    EXPECT_EQ(caches.template size<kr::dl::NumericalTag>(false), 0);
     EXPECT_EQ(storage.get_denotation_repository(false).template size<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(), 0);
     EXPECT_EQ(storage.get_denotation_repository(true).template size<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(), 0);
     EXPECT_EQ(retained.count(), 4);
@@ -970,7 +969,7 @@ void check_query_cache_across_states()
     EXPECT_EQ(caches.get_static_join_indexes().size(), 1);
     storage.reset_all();
     EXPECT_TRUE(caches.get_queries(false).empty());
-    EXPECT_TRUE(caches.template get<kr::dl::NumericalTag>(false).empty());
+    EXPECT_EQ(caches.template size<kr::dl::NumericalTag>(false), 0);
 }
 
 template<tyr::TaskKind Kind>
@@ -979,9 +978,9 @@ void check_query_cache_across_bindings()
     const auto search = query_search_context<Kind>();
     const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
     const auto domain = search->task->get_domain().get_domain();
-    auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
+    auto repository = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();
-    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto& caches = storage.get_caches();
     auto empty_arguments = urd::data<kr::dl::semantics::CallArguments>();
@@ -1049,8 +1048,8 @@ void check_query_cache_across_bindings()
                                                                    ygg::encode_value<ygg::uint_t>(c.index().value),
                                                                    ygg::encode_value<ygg::uint_t>(a.index().value) }));
     EXPECT_TRUE(std::ranges::equal(rhs_role_rows.columns(), role_register_rhs.get_schema()));
-    EXPECT_TRUE(caches.template get<kr::dl::NumericalTag>(false).contains(register_count));
-    EXPECT_FALSE(caches.template get<kr::dl::NumericalTag>(true).contains(register_count));
+    EXPECT_TRUE(caches.find(false, register_count).has_value());
+    EXPECT_FALSE(caches.find(true, register_count).has_value());
 
     registers.concept_values[0].reset();
     registers.role_values[0].reset();
@@ -1115,14 +1114,13 @@ void check_predicate_repository_identity()
         ASSERT_NE(other, predicate);
         EXPECT_EQ(task->get_repository()->view(predicate.index()), predicate);
     }
-    auto constructor_factory = kr::dl::ConstructorRepositoryFactory();
     for (const auto& planning_repository : { domain.get_repository(), task->get_repository(), foreign })
     {
         const auto expected = planning_repository != foreign;
         SCOPED_TRACE(expected ? "same predicate owner" : "different predicate owner");
-        auto repository = constructor_factory.create(planning_repository);
+        auto repository = std::make_shared<kr::dl::ConstructorRepository>(planning_repository);
         auto builder = kr::dl::semantics::Builder();
-        auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(task->get_repository());
+        auto denotations = kr::dl::semantics::DenotationRepository(task->get_repository());
         auto storage = kr::dl::semantics::EvaluationStorage(denotations);
         auto context = kr::dl::semantics::StateEvaluationContext<Kind>(initial.get_state(), builder, storage);
         const auto check = [&]<typename Tag>()
@@ -1190,8 +1188,8 @@ void check_query_object_views()
     ASSERT_TRUE(task);
     const auto search = datasets::TaskSearchContext<Kind>::create(task, execution);
     const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
-    auto constructors = kr::dl::ConstructorRepositoryFactory().create(task->get_repository());
-    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(task->get_repository());
+    auto constructors = std::make_shared<kr::dl::ConstructorRepository>(task->get_repository());
+    auto denotations = kr::dl::semantics::DenotationRepository(task->get_repository());
     auto builder = kr::dl::semantics::Builder {};
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto arguments = urd::data<kr::dl::semantics::CallArguments> {};
@@ -1264,9 +1262,9 @@ void check_multiword_bit_evaluation()
         ASSERT_EQ(domain.get_constants()[i].get_name(), name(i));
         ASSERT_EQ(ygg::uint_t(domain.get_constants()[i].index().value), i);
     }
-    auto repository = kr::dl::ConstructorRepositoryFactory().create(task->get_repository());
+    auto repository = std::make_shared<kr::dl::ConstructorRepository>(task->get_repository());
     kr::dl::semantics::Builder builder;
-    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(task->get_repository());
+    auto denotations = kr::dl::semantics::DenotationRepository(task->get_repository());
     kr::dl::semantics::EvaluationStorage storage(denotations);
     urd::data<kr::dl::semantics::CallArguments> arguments;
     urd::data<kr::dl::semantics::RegisterValues> registers;
@@ -1378,9 +1376,9 @@ void check_distance_reuse_across_states()
     const auto successors = search->successor_generator->get_labeled_successor_nodes(initial, *search->state_repository, *search->axiom_evaluator);
     ASSERT_FALSE(successors.empty());
     const auto domain = search->task->get_domain().get_domain();
-    auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
+    auto repository = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();
-    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto arguments = urd::data<kr::dl::semantics::CallArguments>();
     auto registers = urd::data<kr::dl::semantics::RegisterValues>();
@@ -1439,7 +1437,7 @@ TEST(RunirQueries, StaticnessIsInferredAndSerializedWithoutChangingIdentity)
 {
     const auto search = query_search_context<tyr::GroundTag>();
     const auto domain = search->task->get_domain().get_domain();
-    auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
+    auto repository = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
     const auto fixed = std::string(R"((q_atomic_state "fixed" (x y z)))");
     const auto triple = std::string(R"((q_atomic_state "triple" (x y z)))");
     const auto cases = urd::Store<urd::sequence<std::pair<std::string, bool>>> {
@@ -1506,9 +1504,9 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     const auto search = query_search_context<tyr::GroundTag>();
     const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
     const auto domain = search->task->get_domain().get_domain();
-    auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
+    auto repository = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder();
-    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
     auto& caches = storage.get_caches();
     auto empty_arguments = urd::data<kr::dl::semantics::CallArguments>();
@@ -1555,7 +1553,7 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     EXPECT_FALSE(raw.is_static());
     const auto raw_rows = kr::dl::semantics::evaluate<tyr::GroundTag>(raw, context);
     EXPECT_TRUE(std::ranges::equal(raw_rows.data().rows, original_rows.data().rows));
-    EXPECT_TRUE(caches.get_queries(false).contains(raw));
+    EXPECT_TRUE(caches.find_query(false, raw).has_value());
 
     auto raw_nested_data = urd::data<kr::dl::Query<kr::dl::QueryRenameTag>>();
     raw_nested_data.arg = raw.index();
@@ -1569,28 +1567,28 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     EXPECT_TRUE(std::ranges::equal(raw_nested_rows.columns(), raw_nested.get_schema()));
     EXPECT_TRUE(std::ranges::equal(raw_rows.columns(), raw.get_schema()));
     EXPECT_TRUE(std::ranges::equal(original_rows.columns(), query.get_schema()));
-    EXPECT_TRUE(caches.get_queries(false).contains(raw_nested));
+    EXPECT_TRUE(caches.find_query(false, raw_nested).has_value());
 
     storage.reset_all();
-    EXPECT_FALSE(caches.get_queries(false).contains(raw));
-    EXPECT_FALSE(caches.get_queries(false).contains(raw_nested));
-    EXPECT_FALSE(caches.get_queries(true).contains(query));
+    EXPECT_FALSE(caches.find_query(false, raw).has_value());
+    EXPECT_FALSE(caches.find_query(false, raw_nested).has_value());
+    EXPECT_FALSE(caches.find_query(true, query).has_value());
     const auto rebuilt_nested = kr::dl::semantics::evaluate<tyr::GroundTag>(raw_nested, context);
     EXPECT_EQ(rebuilt_nested.size(), 2);
     EXPECT_TRUE(std::ranges::equal(rebuilt_nested.columns(), raw_nested.get_schema()));
     EXPECT_TRUE(std::ranges::equal(rebuilt_nested.data().rows, kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).data().rows));
-    EXPECT_TRUE(caches.get_queries(false).contains(raw_nested));
+    EXPECT_TRUE(caches.find_query(false, raw_nested).has_value());
     const auto rebuilt = kr::dl::semantics::evaluate<tyr::GroundTag>(raw, context);
     EXPECT_EQ(rebuilt.size(), 2);
     EXPECT_TRUE(std::ranges::equal(rebuilt.columns(), raw.get_schema()));
     EXPECT_TRUE(std::ranges::equal(rebuilt.data().rows, kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).data().rows));
-    EXPECT_TRUE(caches.get_queries(false).contains(raw));
+    EXPECT_TRUE(caches.find_query(false, raw).has_value());
 }
 
 TEST(RunirQueries, QueryResultIdentityIncludesOrderedSchemaAndUnorderedRows)
 {
     const auto search = query_search_context<tyr::GroundTag>();
-    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto& repository = denotations.get_relation_repository();
     auto dl_builder = kr::dl::semantics::Builder();
     using Row = std::array<ObjectIndex, 2>;
@@ -1631,9 +1629,9 @@ TEST(RunirQueries, PersistentRenameSurvivesIntermediateResetAndConstructorReleas
     const auto search = query_search_context<tyr::GroundTag>();
     const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
     const auto domain = search->task->get_domain().get_domain();
-    auto constructors = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
+    auto constructors = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
     auto builder = kr::dl::semantics::Builder {};
-    auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto intermediates = kr::dl::semantics::EvaluationStorage(denotations);
     auto output_memo = kr::dl::semantics::DenotationCaches {};
     auto arguments = urd::data<kr::dl::semantics::CallArguments> {};

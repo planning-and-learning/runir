@@ -18,13 +18,13 @@ namespace runir::tests
 TEST(RunirTests, UnsClassifierClassifies)
 {
     auto search = make_gripper_ground_context();
-    auto dl_repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
-    auto repository = kr::uns::RepositoryFactory().create(dl_repository);
+    auto dl_repository = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
+    auto repository = std::make_shared<kr::uns::Repository>(dl_repository);
     const auto classifier = kr::uns::dl::parse_classifier(read_fixture("kr/uns/positive.classifier"), search->task->get_domain().get_domain(), *repository);
 
     const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
     auto builder = kr::dl::semantics::Builder();
-    auto denotation_repository = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto denotation_repository = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotation_repository);
     auto context = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>(state, builder, storage);
 

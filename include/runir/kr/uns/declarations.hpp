@@ -34,7 +34,6 @@ using RepositoryTypes =
     boost::mp11::mp_append<runir::kr::ps::PsFeatureTypes<runir::kr::UnsFamilyTag>, boost::mp11::mp_list<ClassifierLiteral, ClassifierClause, Classifier>>;
 using Repository = runir::kr::ps::BasicRepository<runir::kr::UnsFamilyTag, RepositoryTypes>;
 using RepositoryPtr = std::shared_ptr<Repository>;
-using RepositoryFactory = runir::kr::ps::BasicRepositoryFactory<runir::kr::UnsFamilyTag, RepositoryTypes>;
 
 using ClassifierLiteralView = urd::index_view<runir::kr::uns::ClassifierLiteral, Repository>;
 using ClassifierClauseView = urd::index_view<runir::kr::uns::ClassifierClause, Repository>;

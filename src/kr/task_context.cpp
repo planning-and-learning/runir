@@ -14,6 +14,8 @@
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/task.hpp>
 #include <utility>
+#include <yggdrasil/formalism/symbol_context_instantiations.hpp>
+#include <yggdrasil/formalism/builder_instantiations.hpp>
 
 namespace runir::kr
 {
@@ -36,13 +38,13 @@ TaskContext<Kind>::TaskContext(DomainContextPtr domain_context_, runir::datasets
     domain_context(std::move(domain_context_)),
     search_context(std::move(search_context_)),
     dl_builder(),
-    dl_denotation_repository(runir::kr::dl::semantics::DenotationRepositoryFactory().create_shared(search_context->task->get_repository())),
+    dl_denotation_repository(std::make_shared<runir::kr::dl::semantics::DenotationRepository>(search_context->task->get_repository())),
     execution_builder(),
-    execution_repository(runir::kr::ps::ExecutionRepositoryFactory<runir::kr::ExtFamilyTag, Kind>().create_shared(search_context->state_repository,
+    execution_repository(std::make_shared<runir::kr::ps::ExecutionRepository<runir::kr::ExtFamilyTag, Kind>>(search_context->state_repository,
                                                                                                                   dl_denotation_repository,
                                                                                                                   domain_context->ext_repository)),
     icp_execution_builder(),
-    icp_execution_repository(runir::kr::ps::ExecutionRepositoryFactory<runir::kr::IcpFamilyTag, Kind>().create_shared(search_context->state_repository,
+    icp_execution_repository(std::make_shared<runir::kr::ps::ExecutionRepository<runir::kr::IcpFamilyTag, Kind>>(search_context->state_repository,
                                                                                                                       dl_denotation_repository,
                                                                                                                       domain_context->icp_repository))
 {
@@ -52,3 +54,13 @@ template struct TaskContext<tyr::GroundTag>;
 template struct TaskContext<tyr::LiftedTag>;
 
 }  // namespace runir::kr
+
+// The symbols and builders of the library's repositories, which its other sources only declare.
+YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::ps::ext::GroundExecutionRepository, 3)
+YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::ps::ext::LiftedExecutionRepository, 3)
+YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::ps::icp::GroundExecutionRepository, 2)
+YGG_FORMALISM_SYMBOL_CONTEXT(, runir::kr::ps::icp::LiftedExecutionRepository, 2)
+YGG_FORMALISM_BUILDER(, runir::kr::ps::ext::GroundExecutionBuilder, 3)
+YGG_FORMALISM_BUILDER(, runir::kr::ps::ext::LiftedExecutionBuilder, 3)
+YGG_FORMALISM_BUILDER(, runir::kr::ps::icp::GroundExecutionBuilder, 2)
+YGG_FORMALISM_BUILDER(, runir::kr::ps::icp::LiftedExecutionBuilder, 2)

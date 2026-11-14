@@ -19,7 +19,7 @@ namespace runir::kr::dl::cnf_grammar::detail
 
 struct TranslationContext
 {
-    using GrammarData = urd::unique_slot_ptr<urd::data<Grammar>>;
+    using GrammarData = ygg::formalism::BuilderHandle<Grammar>;
 
     const runir::kr::dl::grammar::GrammarView& source;
     ConstructorRepository& repository;
