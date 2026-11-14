@@ -485,7 +485,7 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
     for (size_t repeat = 0; repeat < 1000; ++repeat)
     {
         denotations.reset();
-        reused &= repository.symbols().template size<ygg::Relation<ygg::Schema>>() == 0;
+        reused &= repository.template size<ygg::Relation<ygg::Schema>>() == 0;
         auto next = repository.get_relation_builder<ygg::Schema>(repeat % 2 ? renamed : columns);
         // Cista schema storage uses malloc, which the global new/delete counter does not cover.
         reused &= next.get() == slot;
@@ -522,7 +522,7 @@ TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
     const auto cycle = [&](size_t generation)
     {
         denotations.reset();
-        valid &= repository.symbols().template size<ygg::Relation<ygg::Schema>>() == 0;
+        valid &= repository.template size<ygg::Relation<ygg::Schema>>() == 0;
         for (ygg::uint_t i = 0; i < 512; ++i)
         {
             const auto object = ObjectIndex(static_cast<ygg::uint_t>(i + generation * 512));
@@ -543,7 +543,7 @@ TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
             valid &= kr::dl::semantics::insert(denotations, *duplicate, dl_builder).first == value;
             valid &= kr::dl::semantics::rename(denotations, value, aliases, dl_builder) == alias;
         }
-        valid &= repository.symbols().template size<ygg::Relation<ygg::Schema>>() == 1024;
+        valid &= repository.template size<ygg::Relation<ygg::Schema>>() == 1024;
     };
     for (size_t repeat = 0; repeat < 8; ++repeat)
         cycle(repeat);

@@ -2,6 +2,7 @@
 
 #include <gtest/gtest.h>
 #include <ranges>
+#include <runir/kr/ps/ext/detail/successor_expander_impl.hpp>
 #include <urd/repr/values/unordered_flat_set.hpp>
 #include <urd/store.hpp>
 

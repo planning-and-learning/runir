@@ -1,13 +1,13 @@
 find_package(Boost REQUIRED COMPONENTS json PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
 find_package(GTest CONFIG REQUIRED PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
 
-add_library(runir_test_fixtures STATIC unit/fixtures.cpp)
-target_include_directories(runir_test_fixtures PUBLIC ${PROJECT_SOURCE_DIR}/tests/unit)
+add_library(runir_test_fixtures STATIC support/fixtures.cpp)
+target_include_directories(runir_test_fixtures PUBLIC ${PROJECT_SOURCE_DIR}/tests/unit ${PROJECT_SOURCE_DIR}/tests/support)
 target_link_libraries(runir_test_fixtures PRIVATE yggdrasil::yggdrasil Boost::json)
 target_compile_definitions(runir_test_fixtures PRIVATE ROOT_DIR="${PROJECT_SOURCE_DIR}")
 
 function(add_runir_test test_name source_file)
-    add_executable(${test_name} ${source_file} unit/main.cpp)
+    add_executable(${test_name} ${source_file} support/main.cpp)
     target_link_libraries(${test_name}
         PRIVATE
             ${ARGN}
@@ -20,13 +20,14 @@ function(add_runir_test test_name source_file)
     set_tests_properties(${test_name} PROPERTIES FAIL_REGULAR_EXPRESSION "does NOT link in any test case;Running 0 tests")
 endfunction()
 
-add_library(runir_test_planning_fixtures STATIC unit/planning_fixtures.cpp)
-target_include_directories(runir_test_planning_fixtures PUBLIC ${PROJECT_SOURCE_DIR}/tests/unit)
+add_library(runir_test_planning_fixtures STATIC support/planning_fixtures.cpp)
+target_include_directories(runir_test_planning_fixtures PUBLIC ${PROJECT_SOURCE_DIR}/tests/unit ${PROJECT_SOURCE_DIR}/tests/support)
 target_link_libraries(runir_test_planning_fixtures PRIVATE runir::datasets TBB::tbb runir_test_fixtures)
 
 add_runir_test(runir_datasets_equivalence_graph unit/datasets/equivalence_graph.cpp runir::datasets runir_test_planning_fixtures)
 add_runir_test(runir_datasets_object_graph unit/datasets/object_graph.cpp runir::datasets runir_test_planning_fixtures)
 add_runir_test(runir_datasets_state_graph unit/datasets/state_graph.cpp runir::datasets runir_test_planning_fixtures)
+add_runir_test(runir_serialization unit/serialization/serialization.cpp runir::datasets runir::kr)
 
 set(RUNIR_KR_DL_TYPE_TEST_SOURCES
     unit/kr/dl/argument.cpp
@@ -58,9 +59,9 @@ set(RUNIR_KR_PS_TYPE_TEST_SOURCES
     unit/kr/ps/evaluation_context.cpp
     unit/kr/ps/base/rule.cpp
     unit/kr/ps/base/sketch.cpp
-    unit/kr/ps/base/dl/condition.cpp
-    unit/kr/ps/base/dl/effect.cpp
-    unit/kr/ps/base/dl/feature.cpp
+    unit/kr/ps/base/dl_condition.cpp
+    unit/kr/ps/base/dl_effect.cpp
+    unit/kr/ps/base/dl_feature.cpp
     unit/kr/ps/ext/execution.cpp
     unit/kr/ps/ext/feature.cpp
     unit/kr/ps/ext/memory_state.cpp
@@ -69,16 +70,16 @@ set(RUNIR_KR_PS_TYPE_TEST_SOURCES
     unit/kr/ps/ext/module_symbol.cpp
     unit/kr/ps/ext/rule.cpp
     unit/kr/ps/ext/rule_variant.cpp
-    unit/kr/ps/ext/dl/condition.cpp
-    unit/kr/ps/ext/dl/effect.cpp
-    unit/kr/ps/ext/dl/feature.cpp
+    unit/kr/ps/ext/dl_condition.cpp
+    unit/kr/ps/ext/dl_effect.cpp
+    unit/kr/ps/ext/dl_feature.cpp
 )
 add_library(runir_kr_ps_types OBJECT ${RUNIR_KR_PS_TYPE_TEST_SOURCES})
 target_link_libraries(runir_kr_ps_types PRIVATE runir::kr)
 brokkr_unity_directories(
     runir_kr_ps_types
     ENABLED ${RUNIR_UNITY_BUILD}
-    DIRECTORIES unit/kr/ps unit/kr/ps/base unit/kr/ps/base/dl unit/kr/ps/ext unit/kr/ps/ext/dl
+    DIRECTORIES unit/kr/ps unit/kr/ps/base unit/kr/ps/ext
 )
 
 add_runir_test(runir_kr_ps_abstract_structural_termination unit/kr/ps/structural_termination.cpp runir::kr)
@@ -144,7 +145,7 @@ add_runir_test(
 )
 brokkr_unity_directories(runir_kr_dl_operators ENABLED ${RUNIR_UNITY_BUILD} DIRECTORIES unit/kr/dl)
 add_runir_test(runir_kr_uns_classifier
-    "unit/kr/uns/classifier.cpp;unit/kr/uns/classifier_evaluation.cpp;unit/kr/uns/feature.cpp;unit/kr/uns/dl/feature.cpp"
+    "unit/kr/uns/classifier.cpp;unit/kr/uns/classifier_evaluation.cpp;unit/kr/uns/feature.cpp;unit/kr/uns/dl_feature.cpp"
     runir::datasets
     runir::kr
     runir_test_planning_fixtures

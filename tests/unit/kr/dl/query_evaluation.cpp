@@ -1609,7 +1609,7 @@ TEST(RunirQueries, QueryResultIdentityIncludesOrderedSchemaAndUnorderedRows)
     EXPECT_EQ(intern(columns, rows), first);
     EXPECT_NE(intern({ ColumnIndex(1), ColumnIndex(0) }, rows), first);
     EXPECT_EQ(intern(columns, { rows[1], rows[0] }), first);
-    EXPECT_EQ(repository.symbols().template size<ygg::Relation<ygg::Schema>>(), 2);
+    EXPECT_EQ(repository.template size<ygg::Relation<ygg::Schema>>(), 2);
 
     auto renamed_columns = std::array { ygg::ColumnLayout { ColumnIndex(6), ygg::type_id<urd::index<tyr::formalism::Object>> },
                                         ygg::ColumnLayout { ColumnIndex(7), ygg::type_id<urd::index<tyr::formalism::Object>> } };

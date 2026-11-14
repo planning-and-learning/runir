@@ -241,7 +241,7 @@ void check_incremental_evaluation()
         EXPECT_EQ(repository.template size<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(), 0);
         EXPECT_EQ(repository.template size<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>(), 0);
         EXPECT_EQ(repository.template size<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>(), 0);
-        EXPECT_TRUE(repository.get_relation_repository().symbols().template size<ygg::Relation<ygg::Schema>>() == 0);
+        EXPECT_TRUE(repository.get_relation_repository().template size<ygg::Relation<ygg::Schema>>() == 0);
         EXPECT_TRUE(storage.get_caches().template get<kr::dl::ConceptTag>(false).empty());
         EXPECT_TRUE(storage.get_caches().template get<kr::dl::RoleTag>(false).empty());
         EXPECT_TRUE(storage.get_caches().template get<kr::dl::BooleanTag>(false).empty());

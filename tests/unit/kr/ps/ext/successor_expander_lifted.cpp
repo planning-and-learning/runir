@@ -1,6 +1,7 @@
 #include "successor_expander_fixtures.hpp"
 
 #include <gtest/gtest.h>
+#include <runir/kr/ps/ext/detail/successor_expander_impl.hpp>
 
 namespace runir::tests
 {

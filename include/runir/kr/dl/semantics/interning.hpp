@@ -82,7 +82,7 @@ insert(DenotationRepository& repository, const urd::builder<ygg::Relation<ygg::S
 {
     auto& relations = repository.get_relation_repository();
     auto relation = checkout<ygg::Relation<ygg::Schema>>(builder);
-    relation->pool = relations.schema(source.columns() | std::views::transform(&ygg::ColumnLayout::type));
+    relation->pool = relations.schema(source.columns());
     auto row = checkout<ygg::Row<ygg::Schema>>(builder);
     row->relation = relation->pool;
     const auto rows = relations.view(source);

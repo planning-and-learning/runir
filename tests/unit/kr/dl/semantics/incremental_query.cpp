@@ -136,7 +136,7 @@ void check_atomic_projection()
     auto argument_data = urd::data<kr::dl::semantics::CallArguments> {};
     const auto arguments = denotations.insert(argument_data).first;
     const auto publications = [&]
-    { return storage.get_denotation_repository(false).get_relation_repository().symbols().template size<ygg::Relation<ygg::Schema>>(); };
+    { return storage.get_denotation_repository(false).get_relation_repository().template size<ygg::Relation<ygg::Schema>>(); };
     const auto compare_full = [&](const auto& state)
     {
         storage.reset_dynamic();
@@ -227,7 +227,7 @@ void check_atomic_projection()
     EXPECT_EQ(triple_leaf.get_result().size(), 2);
     EXPECT_FALSE(triple_projection.get_result().contains(std::array<ygg::Value, 1> { ygg::encode_value<ygg::uint_t>(a.value) }));
     EXPECT_TRUE(ready_leaf.get_result().empty());
-    EXPECT_TRUE(denotations.get_relation_repository().symbols().template size<ygg::Relation<ygg::Schema>>() == 0);
+    EXPECT_TRUE(denotations.get_relation_repository().template size<ygg::Relation<ygg::Schema>>() == 0);
 }
 
 template<tyr::TaskKind Kind>
@@ -315,7 +315,7 @@ void check_query_graph()
         const auto expect_unpublished = [&]
         {
             EXPECT_TRUE(storage.get_caches().get_queries(false).empty());
-            EXPECT_TRUE(storage.get_denotation_repository(false).get_relation_repository().symbols().template size<ygg::Relation<ygg::Schema>>() == 0);
+            EXPECT_TRUE(storage.get_denotation_repository(false).get_relation_repository().template size<ygg::Relation<ygg::Schema>>() == 0);
         };
         const auto compare_full = [&](auto& evaluated, const auto& state)
         {
@@ -351,7 +351,7 @@ void check_query_graph()
         {
             // Its feature child may be interned; the static query root is owned here.
             EXPECT_TRUE(storage.get_caches().get_queries(true).empty());
-            EXPECT_TRUE(storage.get_denotation_repository(true).get_relation_repository().symbols().template size<ygg::Relation<ygg::Schema>>() == 0);
+            EXPECT_TRUE(storage.get_denotation_repository(true).get_relation_repository().template size<ygg::Relation<ygg::Schema>>() == 0);
         }
         EXPECT_THROW(initial.get_delta(), std::logic_error);  // Initialized, not updated from a delta.
         compare_full(initial, nodes.front().get_state());
@@ -377,7 +377,7 @@ void check_query_graph()
         auto final_state = evaluator.initialize(final_context);
         expect_unpublished();
         EXPECT_TRUE(storage.get_caches().get_queries(true).empty());
-        EXPECT_TRUE(storage.get_denotation_repository(true).get_relation_repository().symbols().template size<ygg::Relation<ygg::Schema>>() == 0);
+        EXPECT_TRUE(storage.get_denotation_repository(true).get_relation_repository().template size<ygg::Relation<ygg::Schema>>() == 0);
         EXPECT_THROW(final_state.get_delta(), std::logic_error);  // Initialized, not updated from a delta.
         compare_full(final_state, final_context.get_state());
     }
