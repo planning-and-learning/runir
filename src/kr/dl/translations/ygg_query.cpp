@@ -7,6 +7,52 @@
 namespace runir::kr::dl::detail
 {
 
+namespace
+{
+
+template<typename V>
+inline constexpr bool is_complement_view_v = false;
+template<typename C>
+inline constexpr bool is_complement_view_v<urd::index_view<Role<SemanticFamily, ComplementTag>, C>> = true;
+template<typename C>
+inline constexpr bool is_complement_view_v<urd::index_view<Concept<SemanticFamily, NegationTag>, C>> = true;
+
+/// Calls f(argument) if the query is a role or concept leaf over a complement (r_complement, c_not); returns whether.
+template<typename F>
+    requires boost::mp11::mp_all_of_q<boost::mp11::mp_list<ConstructorView<RoleTag>, ConstructorView<ConceptTag>>,
+                                      boost::mp11::mp_bind_front<std::is_invocable, F>>::value
+bool visit_complement_argument(QueryView<> query, F f)
+{
+    return std::visit(
+        [&]<typename Tag>(QueryView<Tag> concrete)
+        {
+            if constexpr (std::same_as<Tag, QueryRoleTag> || std::same_as<Tag, QueryConceptTag>)
+                return std::visit(
+                    [&]<typename V>(V constructor)
+                    {
+                        if constexpr (is_complement_view_v<V>)
+                        {
+                            f(constructor.get_arg());
+                            return true;
+                        }
+                        else
+                            return false;
+                    },
+                    concrete.get_arg().get_variant());
+            else
+                return false;
+        },
+        query.get_variant());
+}
+
+/// Whether a query is a role or concept leaf over a complement (r_complement, c_not).
+bool is_complement_leaf(QueryView<> query)
+{
+    return visit_complement_argument(query, [](auto) {});
+}
+
+}  // namespace
+
 QueryTranslator::YggQuery QueryTranslator::translate(DlQuery query)
 {
     if (const auto it = m_translated.find(query); it != m_translated.end())

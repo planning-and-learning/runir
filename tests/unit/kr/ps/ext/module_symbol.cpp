@@ -7,7 +7,7 @@
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/core/config.hpp>
 
-namespace runir::tests
+namespace runir::tests::ps_ext_module_symbol
 {
 
 using Entity = kr::ps::ModuleSymbol<kr::ExtFamilyTag>;

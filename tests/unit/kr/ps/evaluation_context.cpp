@@ -12,7 +12,7 @@
 #include <tyr/planning/state_repository.hpp>
 #include <utility>
 
-namespace runir::tests
+namespace runir::tests::ps_evaluation_context
 {
 namespace
 {
@@ -191,4 +191,4 @@ static_assert(!CanCheckCompatibility<tyr::GroundTag, kr::ps::base::SketchView, I
 }
 
 }  // namespace
-}  // namespace runir::tests
+}  // namespace runir::tests::ps_evaluation_context

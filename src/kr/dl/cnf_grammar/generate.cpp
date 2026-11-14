@@ -4,6 +4,7 @@
 #include "runir/kr/dl/cnf_grammar/constructor_repository.hpp"
 #include "runir/kr/dl/cnf_grammar/detail/repository_instantiations.hpp"
 #include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/detail/repository_instantiations.hpp"
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/denotation_caches.hpp"

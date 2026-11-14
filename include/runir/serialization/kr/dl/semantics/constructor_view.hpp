@@ -31,6 +31,21 @@ void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::
     ar.variant([](const auto& value) -> decltype(auto) { return (value.get_variant()); });
 }
 
+/// Writing a constructor or a query of any kind writes the record it holds, and so every kind below it: written once,
+/// in pyrunir (pyrunir/serialization/kr/dl/constructor.cpp), instead of in every file that writes a record holding one
+/// (brokkr's template rules, rule 24).
+template<typename T>
+using DictionaryWriter = FieldWriter<Dictionaries::Archive, T>;
+void describe_fields(DictionaryWriter<runir::kr::dl::QueryView<>>& ar, std::type_identity<runir::kr::dl::QueryView<>> type);
+void describe_fields(DictionaryWriter<runir::kr::dl::ConstructorView<runir::kr::dl::ConceptTag>>& ar,
+                     std::type_identity<runir::kr::dl::ConstructorView<runir::kr::dl::ConceptTag>> type);
+void describe_fields(DictionaryWriter<runir::kr::dl::ConstructorView<runir::kr::dl::RoleTag>>& ar,
+                     std::type_identity<runir::kr::dl::ConstructorView<runir::kr::dl::RoleTag>> type);
+void describe_fields(DictionaryWriter<runir::kr::dl::ConstructorView<runir::kr::dl::BooleanTag>>& ar,
+                     std::type_identity<runir::kr::dl::ConstructorView<runir::kr::dl::BooleanTag>> type);
+void describe_fields(DictionaryWriter<runir::kr::dl::ConstructorView<runir::kr::dl::NumericalTag>>& ar,
+                     std::type_identity<runir::kr::dl::ConstructorView<runir::kr::dl::NumericalTag>> type);
+
 }
 
 #endif

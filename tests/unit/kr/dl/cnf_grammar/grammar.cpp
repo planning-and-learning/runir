@@ -10,7 +10,7 @@
 #include <utility>
 #include <yggdrasil/core/config.hpp>
 
-namespace runir::tests
+namespace runir::tests::dl_cnf_grammar_grammar
 {
 
 namespace

@@ -16,7 +16,7 @@
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
 
-namespace runir::tests
+namespace runir::tests::dl_family_traits
 {
 namespace
 {
@@ -108,4 +108,4 @@ static_assert(!SemanticCheckout<kr::dl::grammar::Builder>);
 static_assert(!SemanticCheckout<kr::dl::cnf_grammar::Builder>);
 
 }  // namespace
-}  // namespace runir::tests
+}  // namespace runir::tests::dl_family_traits

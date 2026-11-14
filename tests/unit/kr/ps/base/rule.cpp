@@ -8,7 +8,7 @@
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/core/config.hpp>
 
-namespace runir::tests
+namespace runir::tests::ps_base_rule
 {
 
 using Entity = kr::ps::Rule<kr::BaseFamilyTag>;

@@ -236,22 +236,18 @@ ModuleView lower_module(const ast::Module& module,
                             rule->argument_names.emplace_back(argument.text);
                         }
                         const auto object = [&](const ast::Object& source)
+                            -> urd::flat_variant<ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>
                         {
-                            return boost::apply_visitor(
-                                [&]<typename Value>(
-                                    const Value& value) -> urd::flat_variant<ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>
-                                {
-                                    if constexpr (std::same_as<Value, ast::ArgumentObject>)
-                                    {
-                                        const auto found = arguments.find(value.name.text);
-                                        if (found == arguments.end())
-                                            diagnostics.throw_at(value.name, UndefinedSymbolError("action argument", value.name.text));
-                                        return ArgumentPosition { static_cast<ygg::uint_t>(arguments.position(found)) };
-                                    }
-                                    else
-                                        return require(references.concept_registers.by_name, value.name, "concept register", diagnostics);
-                                },
-                                source.get());
+                            // Not a generic visitor lambda: clang 18 crashes on one nested in this lambda.
+                            if (const auto* argument = boost::get<ast::ArgumentObject>(&source.get()))
+                            {
+                                const auto found = arguments.find(argument->name.text);
+                                if (found == arguments.end())
+                                    diagnostics.throw_at(argument->name, UndefinedSymbolError("action argument", argument->name.text));
+                                return ArgumentPosition { static_cast<ygg::uint_t>(arguments.position(found)) };
+                            }
+                            const auto& register_ = boost::get<ast::RegisterObject>(source.get());
+                            return require(references.concept_registers.by_name, register_.name, "concept register", diagnostics);
                         };
                         for (const auto& condition : concrete.xconditions)
                         {

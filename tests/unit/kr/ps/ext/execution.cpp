@@ -13,7 +13,7 @@
 #include <utility>
 #include <yggdrasil/core/config.hpp>
 
-namespace runir::tests
+namespace runir::tests::ps_ext_execution
 {
 
 namespace

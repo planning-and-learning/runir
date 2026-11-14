@@ -3,7 +3,7 @@
 #include <runir/kr/dl/repository.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 
-namespace runir::tests
+namespace runir::tests::dl_register
 {
 
 namespace

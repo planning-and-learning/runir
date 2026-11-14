@@ -4,6 +4,8 @@
 #include "fixtures.hpp"
 #include "module_fixtures.hpp"
 #include "planning_fixtures.hpp"
+#include "runir/kr/dl/detail/repository_instantiations.hpp"
+#include "runir/kr/ps/detail/repository_instantiations.hpp"
 #include "successor_fixtures.hpp"
 
 #include <algorithm>

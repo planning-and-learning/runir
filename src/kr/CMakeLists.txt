@@ -1,13 +1,16 @@
 add_library(kr SHARED
     domain_context.cpp
     task_context.cpp
+    dl/optimization.cpp
     dl/query_construction.cpp
     dl/repository.cpp
     dl/translations/ygg_query.cpp
     dl/semantics/evaluation.cpp
+    dl/semantics/formatter.cpp
     dl/semantics/heuristics/projection.cpp
     dl/semantics/repository.cpp
     dl/semantics/state_evaluation_context.cpp
+    dl/semantics/syntactic_complexity.cpp
     dl/cnf_grammar/constructor_repository.cpp
     dl/cnf_grammar/generate.cpp
     dl/cnf_grammar/symbol_repositories.cpp

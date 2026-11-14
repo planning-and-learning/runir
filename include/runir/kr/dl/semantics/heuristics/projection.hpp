@@ -286,46 +286,15 @@ struct EdgeAbstraction
     urd::Store<urd::sequence<size_t>> slots;  ///< The edge query's slot of each input of the plan.
 };
 
-namespace detail
-{
-/// Defined in the library: the call in abstract_edges() does not depend on its template parameter, so an inline
-/// definition would instantiate the query compiler in every includer (template rule 4).
-tyr::datalog::database::QueryPlan compile_edge_plan(const urd::Store<urd::sequence<tyr::datalog::database::QueryView<>>>& roots);
-}
-
 /// The abstraction of a translated edge query, or nullopt if no column is constrained at both ends (blind search).
-/// `from` and `to` are the edge columns of the two vertices of an edge, in vertex order.
-inline std::optional<EdgeAbstraction> abstract_edges(dl::detail::QueryTranslator& translator,
-                                                     tyr::datalog::database::QueryView<> edges,
-                                                     std::span<const ygg::ColumnLayout> from,
-                                                     std::span<const ygg::ColumnLayout> to)
-{
-    const auto k = from.size();
-    auto projections = urd::Store<urd::sequence<tyr::datalog::database::QueryView<>>>();
-    for (size_t i = 0; i < k; ++i)
-        projections.push_back(translator.project(edges, std::array { from[i].label, to[i].label }));
-    const auto& slots = translator.get_slots();
-    const auto relaxation = translator.relax(projections, [&](size_t slot) { return slots[slot].is_static; });
-
-    auto roots = urd::Store<urd::sequence<tyr::datalog::database::QueryView<>>>();
-    auto patterns = urd::Store<urd::sequence<size_t>>();
-    for (size_t i = 0; i < k; ++i)
-        if (const auto& relaxed = relaxation.queries[i]; relaxed && relaxed->columns().size() == 2)
-        {
-            roots.push_back(*relaxed);
-            patterns.push_back(i);
-        }
-    if (roots.empty())
-        return std::nullopt;
-    return EdgeAbstraction { detail::compile_edge_plan(roots), std::move(patterns), relaxation.slots };
-}
-
-inline std::optional<EdgeAbstraction>
-abstract_edges(dl::detail::QueryTranslator& translator, tyr::datalog::database::QueryView<> edges, const tyr::datalog::database::DistancePlan& plan)
-{
-    const auto columns = plan.edge_columns();
-    return abstract_edges(translator, edges, columns.first(plan.arity()), columns.subspan(plan.arity()));
-}
+/// `from` and `to` are the edge columns of the two vertices of an edge, in vertex order. Defined in the library: it
+/// relaxes and compiles queries, which every includer would instantiate otherwise (brokkr's template rules, rule 24).
+std::optional<EdgeAbstraction> abstract_edges(dl::detail::QueryTranslator& translator,
+                                              tyr::datalog::database::QueryView<> edges,
+                                              std::span<const ygg::ColumnLayout> from,
+                                              std::span<const ygg::ColumnLayout> to);
+std::optional<EdgeAbstraction>
+abstract_edges(dl::detail::QueryTranslator& translator, tyr::datalog::database::QueryView<> edges, const tyr::datalog::database::DistancePlan& plan);
 
 /// The pattern database heuristic of an abstraction; `slot_rows(slot)` returns a static slot's rows. The columns of
 /// u[i] and v[i] are found in each abstract edge query by label.

@@ -44,6 +44,10 @@ set(RUNIR_KR_DL_TYPE_TEST_SOURCES
     unit/kr/dl/cnf_grammar/substitution_rule.cpp
 )
 add_runir_test(runir_kr_dl_types "${RUNIR_KR_DL_TYPE_TEST_SOURCES}" runir::kr)
+# Type tests of one directory include the same headers and check their types against them: batched, the headers and
+# the types are compiled once (rule 11). Each file has its own namespace, runir::tests::<path>, so that its local names
+# do not meet another file's. unit/kr/dl exceeds the heaviest translation unit merged.
+brokkr_unity_directories(runir_kr_dl_types ENABLED ${RUNIR_UNITY_BUILD} DIRECTORIES unit/kr/dl/grammar unit/kr/dl/cnf_grammar)
 add_runir_test(runir_kr_dl_delta unit/kr/dl/semantics/delta.cpp runir::kr runir_test_planning_fixtures)
 add_runir_test(runir_kr_dl_incremental_query unit/kr/dl/semantics/incremental_query.cpp runir::kr runir_test_planning_fixtures)
 add_runir_test(runir_kr_dl_incremental_evaluation unit/kr/dl/semantics/incremental_evaluation.cpp runir::kr runir_test_planning_fixtures)
@@ -71,6 +75,11 @@ set(RUNIR_KR_PS_TYPE_TEST_SOURCES
 )
 add_library(runir_kr_ps_types OBJECT ${RUNIR_KR_PS_TYPE_TEST_SOURCES})
 target_link_libraries(runir_kr_ps_types PRIVATE runir::kr)
+brokkr_unity_directories(
+    runir_kr_ps_types
+    ENABLED ${RUNIR_UNITY_BUILD}
+    DIRECTORIES unit/kr/ps unit/kr/ps/base unit/kr/ps/base/dl unit/kr/ps/ext unit/kr/ps/ext/dl
+)
 
 add_runir_test(runir_kr_ps_abstract_structural_termination unit/kr/ps/structural_termination.cpp runir::kr)
 target_include_directories(runir_kr_ps_abstract_structural_termination PRIVATE ${PROJECT_SOURCE_DIR}/src)
@@ -133,6 +142,7 @@ add_runir_test(
     runir::kr
     runir_test_planning_fixtures
 )
+brokkr_unity_directories(runir_kr_dl_operators ENABLED ${RUNIR_UNITY_BUILD} DIRECTORIES unit/kr/dl/operators)
 add_runir_test(runir_kr_uns_classifier
     "unit/kr/uns/classifier.cpp;unit/kr/uns/classifier_evaluation.cpp;unit/kr/uns/feature.cpp;unit/kr/uns/dl/feature.cpp"
     runir::datasets

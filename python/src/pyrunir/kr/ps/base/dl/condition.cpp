@@ -1,4 +1,5 @@
 #include "bindings.hpp"
+#include "observation.hpp"
 #include "pyrunir/kr/ps/dl/binding_utils.hpp"
 #include "pyrunir/module.hpp"
 
@@ -11,28 +12,6 @@
 
 namespace runir::kr::ps::base::dl
 {
-
-namespace
-{
-
-template<typename T>
-void bind_observation(nb::module_& m, RepositoryBinding& repository, const char* name)
-{
-    using View = urd::index_view<T, Repository>;
-    using GroundContext = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>;
-    using LiftedContext = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
-    runir::kr::python::bind_observation<T>(m, repository, name)
-        .def(
-            "is_compatible_with",
-            [](View value, GroundContext& context) { return runir::kr::ps::is_compatible_with<tyr::GroundTag>(value, context); },
-            nb::arg("context"))
-        .def(
-            "is_compatible_with",
-            [](View value, LiftedContext& context) { return runir::kr::ps::is_compatible_with<tyr::LiftedTag>(value, context); },
-            nb::arg("context"));
-}
-
-}  // namespace
 
 void bind_condition(nb::module_& m, RepositoryBinding& repository)
 {

@@ -10,7 +10,7 @@
 #include <urd/elements/hash.hpp>
 #include <utility>
 
-namespace runir::tests
+namespace runir::tests::dl_semantics_denotation
 {
 
 namespace

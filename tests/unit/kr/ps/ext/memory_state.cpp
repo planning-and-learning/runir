@@ -7,7 +7,7 @@
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/core/config.hpp>
 
-namespace runir::tests
+namespace runir::tests::ps_ext_memory_state
 {
 
 using Entity = kr::ps::MemoryState<kr::ExtFamilyTag>;

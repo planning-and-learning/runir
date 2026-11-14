@@ -8,7 +8,7 @@
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/core/config.hpp>
 
-namespace runir::tests
+namespace runir::tests::dl_grammar_derivation_rule
 {
 
 namespace

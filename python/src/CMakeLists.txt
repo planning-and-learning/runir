@@ -37,6 +37,30 @@ nanobind_add_module(
 )
 
 target_link_libraries(_pyrunir PRIVATE runir::core)
+# The bindings are the build's heaviest translation units: where memory is tight, cap how many compile at once
+# (-DRUNIR_PYTHON_COMPILE_JOBS=6 at -j12 lowers the peak memory by about 4 GB in the same wall time; 4 is slower), so
+# that they do not take every parallel slot at the same time.
+set(RUNIR_PYTHON_COMPILE_JOBS "" CACHE STRING "Most pyrunir translation units compiled at once (Ninja); empty: no limit.")
+brokkr_limit_compile_jobs(_pyrunir JOBS "${RUNIR_PYTHON_COMPILE_JOBS}")
+# Batched merged below the heaviest TU; kr/dl/semantics, kr/ps/ext, kr/ps/ext/dl, kr/ps/icp and serialization/kr/{dl,ps}
+# exceed it merged, their sources sharing too little.
+brokkr_unity_directories(
+    _pyrunir
+    ENABLED ${RUNIR_UNITY_BUILD}
+    DIRECTORIES
+        pyrunir/datasets
+        pyrunir/kr
+        pyrunir/kr/dl
+        pyrunir/kr/dl/cnf_grammar
+        pyrunir/kr/dl/grammar
+        pyrunir/kr/ps/base
+        pyrunir/kr/ps/base/dl
+        pyrunir/kr/ps/icp/dl
+        pyrunir/kr/uns
+        pyrunir/kr/uns/dl
+        pyrunir/serialization
+        pyrunir/serialization/kr
+)
 target_include_directories(_pyrunir PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 
 brokkr_python_module_rpaths(PYRUNIR _pyrunir)

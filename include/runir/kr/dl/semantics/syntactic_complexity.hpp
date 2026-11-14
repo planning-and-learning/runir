@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_SYNTACTIC_COMPLEXITY_HPP_
 #define RUNIR_KR_DL_SEMANTICS_SYNTACTIC_COMPLEXITY_HPP_
 
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/query_view.hpp"
 #include "runir/kr/dl/record_view.hpp"
 #include "runir/kr/dl/semantics/call_arguments_view.hpp"
@@ -37,11 +38,13 @@ std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Query<Tag>, C> v
 template<runir::kr::dl::ConceptOrRoleTag Category, typename C>
 std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::QueryProjection<Category>, C> view);
 
-template<runir::kr::dl::CategoryTag Category, typename C>
-std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Constructor<Category>, C> view)
-{
-    return std::visit([](auto child) { return syntactic_complexity(child); }, view.get_variant());
-}
+/// The complexity of a constructor or a query of any kind. Each visits its operands, of every kind in turn, so the
+/// library compiles it once instead of every file that measures one (brokkr's template rules, rule 24).
+std::size_t syntactic_complexity(ConstructorView<ConceptTag> view);
+std::size_t syntactic_complexity(ConstructorView<RoleTag> view);
+std::size_t syntactic_complexity(ConstructorView<BooleanTag> view);
+std::size_t syntactic_complexity(ConstructorView<NumericalTag> view);
+std::size_t syntactic_complexity(QueryView<> view);
 
 template<typename Tag, typename C>
     requires runir::kr::dl::ConceptConstructorTag<Tag>
@@ -120,9 +123,7 @@ std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Numerical<runir:
 template<typename Tag, typename C>
 std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Query<Tag>, C> view)
 {
-    if constexpr (std::same_as<Tag, void>)
-        return std::visit([](auto child) { return syntactic_complexity(child); }, view.get_variant());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::QueryMustPassTag>)
+    if constexpr (std::same_as<Tag, runir::kr::dl::QueryMustPassTag>)
         return 1 + syntactic_complexity(view.get_sources()) + syntactic_complexity(view.get_edges()) + syntactic_complexity(view.get_targets())
                + syntactic_complexity(view.get_probes());
     else if constexpr (requires { view.get_args(); })

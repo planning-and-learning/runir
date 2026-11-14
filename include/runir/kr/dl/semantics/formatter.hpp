@@ -30,6 +30,14 @@
 namespace runir::kr::dl::semantics
 {
 
+/// The text of a constructor or a query of any kind. Formatting one formats its operands, of every kind in turn, so the
+/// library compiles it once instead of every file that formats one (brokkr's template rules, rule 24).
+std::string text(ConstructorView<ConceptTag> view);
+std::string text(ConstructorView<RoleTag> view);
+std::string text(ConstructorView<BooleanTag> view);
+std::string text(ConstructorView<NumericalTag> view);
+std::string text(QueryView<> view);
+
 template<typename... Components>
 std::string constructor(std::string_view keyword, Components&&... components)
 {
@@ -48,7 +56,7 @@ template<typename Tag, typename C>
 std::string query(urd::index_view<runir::kr::dl::Query<Tag>, C> view)
 {
     if constexpr (std::same_as<Tag, void>)
-        return fmt::format("{}", view.get_variant());
+        return text(view);
     else if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
         return constructor("q_atomic_state", fmt::format("{:?}", view.get_predicate().get_name().view()), query_columns(view.get_columns()));
     else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
@@ -178,11 +186,11 @@ struct fmt::formatter<urd::index_view<runir::kr::dl::Register<Category>, C>> : f
     { return fmt::format_to(ctx.out(), "{}", value.get_name()); }
 };
 
-template<runir::kr::dl::CategoryTag Category, typename C>
-struct fmt::formatter<urd::index_view<runir::kr::dl::Constructor<Category>, C>> : fmt::formatter<std::string_view>
+template<runir::kr::dl::CategoryTag Category>
+struct fmt::formatter<runir::kr::dl::ConstructorView<Category>> : fmt::formatter<std::string_view>
 {
-    using View = urd::index_view<runir::kr::dl::Constructor<Category>, C>;
-    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(fmt::format("{}", view.get_variant()), ctx); }
+    auto format(runir::kr::dl::ConstructorView<Category> view, format_context& ctx) const
+    { return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::text(view), ctx); }
 };
 
 template<runir::kr::dl::CategoryTag Category, typename C>

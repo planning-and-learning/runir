@@ -4,7 +4,7 @@
 #include <tyr/formalism/planning/repository.hpp>
 #include <utility>
 
-namespace runir::tests
+namespace runir::tests::dl_constructor
 {
 
 namespace

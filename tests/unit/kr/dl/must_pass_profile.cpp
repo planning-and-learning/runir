@@ -23,6 +23,7 @@
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <span>
 #include <string>
+#include <tyr/datalog/lifted/database/detail/repository_instantiations.hpp>
 #include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
 

@@ -11,7 +11,7 @@
 #include <type_traits>
 #include <tyr/planning/state_repository.hpp>
 
-namespace runir::tests
+namespace runir::tests::ps_family_traits
 {
 namespace
 {
@@ -162,4 +162,4 @@ static_assert(observation_contracts<kr::UnsFamilyTag, UnsCustomRepository>());
 { return kr::ps::is_compatible_with<tyr::GroundTag>(condition, context); }
 
 }  // namespace
-}  // namespace runir::tests
+}  // namespace runir::tests::ps_family_traits

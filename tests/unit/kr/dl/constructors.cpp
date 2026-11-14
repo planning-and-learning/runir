@@ -9,7 +9,7 @@
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/core/config.hpp>
 
-namespace runir::tests
+namespace runir::tests::dl_constructors
 {
 
 namespace
@@ -247,4 +247,4 @@ TYPED_TEST(RunirKrDlGrammarNumerical, ExposesDistanceOperands)
     EXPECT_EQ(distance.get_rhs(), urd::resolve(ConceptOperand(target.index()), *repository));
 }
 
-}  // namespace runir::tests
+}  // namespace runir::tests::dl_constructors

@@ -1,6 +1,7 @@
 #include "planning_fixtures.hpp"
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/detail/repository_instantiations.hpp"
 
 #include <algorithm>
 #include <array>
