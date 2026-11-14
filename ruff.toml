@@ -40,7 +40,7 @@ ban-relative-imports = "all"
 # be loaded first, so the subpackage imports follow those calls.
 "python/src/pyrunir/__init__.py" = ["E402"]
 # Command-line entry points and scripts print their output.
-"{python/src/pyrunir/__main__.py,profiling/**,experiments/**,python/examples/**,tests/fixtures/**}" = ["T201"]
+"{python/src/pyrunir/__main__.py,profiling/**,experiments/**,python/examples/**,tests/support/generators/**}" = ["T201"]
 # Standalone scripts, run by path or by the build frontend, not packages.
 "{profiling/**,experiments/**,python/examples/**,python/pyrunir_build_backend.py}" = ["INP001"]
 

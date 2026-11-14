@@ -279,7 +279,7 @@ void check_backtrack_execution()
     using Status = kr::ps::ProofStatus;
     using Mode = kr::ps::ext::StateMemorization;
     using Outcome = kr::ps::ProgramOutcome;
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/ps/ext/choose";
     const auto search = [&]
     {
         if constexpr (std::same_as<Kind, tyr::GroundTag>)
@@ -404,7 +404,7 @@ void check_and_backtracking()
 {
     using Status = kr::ps::ProofStatus;
     using Mode = kr::ps::ext::StateMemorization;
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/ps/ext/choose";
     const auto search = [&]
     {
         if constexpr (std::same_as<Kind, tyr::GroundTag>)
@@ -535,7 +535,7 @@ template<tyr::TaskKind Kind>
 void check_choice_execution()
 {
     using Status = kr::ps::ProofStatus;
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/ps/ext/choose";
     auto search_context = [&]()
     {
         if constexpr (std::same_as<Kind, tyr::GroundTag>)
@@ -951,7 +951,7 @@ TEST(RunirTests, ExtAndBacktrackingInLiftedExecution) { check_and_backtracking<t
 TEST(RunirTests, ExtBacktrackRulesUseFullAndDeltaEvaluation)
 {
     using Kind = tyr::GroundTag;
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/ps/ext/choose";
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     auto context = kr::TaskContext<Kind>::create(kr::DomainContext::create(search->task->get_domain()), search);
     auto& repository = *context->domain_context->ext_repository;
@@ -978,7 +978,7 @@ namespace
 template<tyr::TaskKind Kind>
 void check_ordinary_execution_keeps_complete_graph()
 {
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/ps/ext/choose";
     auto search_context = [&]()
     {
         if constexpr (std::same_as<Kind, tyr::GroundTag>)
@@ -1081,7 +1081,7 @@ void check_state_memorization()
 {
     using Mode = kr::ps::ext::StateMemorization;
     using Status = kr::ps::ProofStatus;
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/ps/ext/choose";
     // Fresh repositories make retained-state assertions independent of previous searches.
     const auto run = [&](const std::string& modules, const kr::ps::ext::ProgramSearchOptions<Kind>& options)
     {

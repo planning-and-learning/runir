@@ -62,7 +62,7 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
     ASSERT_EQ(checked.allocations, 4);
     ASSERT_EQ(checked.deallocations, 4);
 
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/dl/query";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../support/data/kr/dl/query";
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
@@ -129,7 +129,7 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
 TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
 {
     using Fluent = tyr::formalism::FluentTag;
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/dl/query";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../support/data/kr/dl/query";
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     auto repository = kr::dl::ConstructorRepositoryFactory().create(search->task->get_repository());
@@ -248,7 +248,7 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
 
 TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
 {
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/dl/incremental";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../support/data/kr/dl/incremental";
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     const auto domain = search->task->get_domain().get_domain();
@@ -457,7 +457,7 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
 TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
 {
     using ColumnIndex = urd::index<ygg::Column>;
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/dl/query";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../support/data/kr/dl/query";
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto& repository = denotations.get_relation_repository();
@@ -509,7 +509,7 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
 TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
 {
     using ColumnIndex = urd::index<ygg::Column>;
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/dl/query";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../support/data/kr/dl/query";
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     auto denotations = kr::dl::semantics::DenotationRepositoryFactory().create(search->task->get_repository());
     auto& repository = denotations.get_relation_repository();
@@ -560,7 +560,7 @@ TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
 TEST(RunirSearch, WarmedProgramSearchAllocationsGrowWithContainerCapacity)
 {
     using Path = kr::ps::ext::detail::SearchPath<tyr::GroundTag, kr::ps::ext::InternedExecutionStorage<tyr::GroundTag>>;
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/ps/ext/choose";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../support/data/kr/ps/ext/choose";
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     auto context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(search->task->get_domain()), search);
 
@@ -712,7 +712,7 @@ void expect_warmed_action_expansions(const kr::TaskContextPtr<Kind>& context, kr
 template<tyr::TaskKind Kind>
 void expect_warmed_action_storage()
 {
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/ps/ext/choose";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../support/data/kr/ps/ext/choose";
     const auto search = [&]
     {
         if constexpr (std::same_as<Kind, tyr::GroundTag>)

@@ -33,6 +33,7 @@ from typing import TypeVar
 from pypddl.formalism import ParserOptions
 from pytyr.formalism.planning import Parser
 from pytyr.planning import SearchBudget, lifted
+from pytyr.planning.algorithms import gbfs_lazy
 from pyyggdrasil.execution import ExecutionContext
 
 from pyrunir.datasets import LiftedTaskSearchContext
@@ -717,14 +718,14 @@ class Session:
             self._search(ref.task, prove=ref.proof).graph.get_vertex_property(ref.vertex).program_state.module_state
         )
         state = self._search(ref.task, prove=ref.proof).graph.get_vertex_property(ref.vertex).state
-        options = lifted.gbfs_lazy.Options()
+        options = gbfs_lazy.lifted.Options()
         options.start_node = search.successor_generator.get_node(search.state_repository, state.index())
         options.search_budget = SearchBudget(
             max_num_states=budget.max_states, max_time=timedelta(seconds=budget.max_seconds)
         )
         self._check_budget()
         started = time.monotonic()
-        found = lifted.gbfs_lazy.find_solution(
+        found = gbfs_lazy.lifted.find_solution(
             search.task,
             search.state_repository,
             search.axiom_evaluator,

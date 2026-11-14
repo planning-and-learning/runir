@@ -155,7 +155,7 @@ void check_planning_graph(tyr::planning::StateView<Kind> source, tyr::planning::
 template<tyr::TaskKind Kind>
 void check_incremental_evaluation()
 {
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/dl/incremental";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/dl/incremental";
     const auto search = [&]
     {
         if constexpr (std::same_as<Kind, tyr::GroundTag>)

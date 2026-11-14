@@ -31,7 +31,7 @@ namespace
 template<tyr::TaskKind Kind>
 void check_optimized_queries()
 {
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/dl/query";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../support/data/kr/dl/query";
     const auto search = [&]
     {
         if constexpr (std::same_as<Kind, tyr::GroundTag>)

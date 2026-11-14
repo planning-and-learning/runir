@@ -189,7 +189,7 @@ TEST(RunirTests, ExtChooseUsesNaturalBindingOrder)
 TEST(RunirTests, ExtChoicesRetainBindingsAcrossChildEvaluationAndPoolReuse)
 {
     using Choice = kr::ps::ext::detail::Choice<kr::dl::ConceptTag>;
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/ps/ext/choose";
     const auto context = create_task_context<tyr::GroundTag>(directory / "domain.pddl", directory / "task.pddl");
     auto& search = *context->search_context;
     auto& repository = *context->domain_context->ext_repository;
@@ -885,7 +885,7 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
 
 TEST(RunirTests, ExtExplicitApplicationDistinguishesCollidingRuleIdsAcrossRepositories)
 {
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/ps/ext/choose";
     const auto context = create_task_context<tyr::GroundTag>(directory / "domain.pddl", directory / "task.pddl");
     auto foreign_factory = kr::ps::ext::RepositoryFactory {};
     const auto foreign_repository = foreign_factory.create(context->domain_context->ext_repository->get_dl_repository_ptr());

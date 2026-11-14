@@ -10,7 +10,7 @@ namespace runir::tests
 namespace
 {
 
-auto fixture_path(std::string_view relative) -> std::filesystem::path { return std::filesystem::path(ROOT_DIR) / "tests/fixtures" / relative; }
+auto fixture_path(std::string_view relative) -> std::filesystem::path { return std::filesystem::path(ROOT_DIR) / "tests/support/data" / relative; }
 
 }  // namespace
 

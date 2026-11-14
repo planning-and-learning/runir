@@ -21,7 +21,7 @@ from pyrunir.datasets import (
     generate_ground_equivalence_graph,
 )
 
-SUITE = Path(__file__).with_name("equivalence_graph.json")
+SUITE = Path(__file__).resolve().parents[4] / "tests/support/data/datasets/equivalence_graph.json"
 POLICIES = {
     "identity": EquivalencePolicyMode.IDENTITY,
     "gi": EquivalencePolicyMode.GI,

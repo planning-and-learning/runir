@@ -120,7 +120,7 @@ void check_state_delta(tyr::planning::StateView<Kind> source, tyr::planning::Sta
 template<tyr::TaskKind Kind>
 void check_delta()
 {
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/dl/query";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/dl/query";
     const auto search = [&]
     {
         if constexpr (std::same_as<Kind, tyr::GroundTag>)

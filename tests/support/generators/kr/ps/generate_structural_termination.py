@@ -15,8 +15,8 @@ from pyrunir.kr.dl import ConstructorRepositoryFactory as DlRepositoryFactory
 from pyrunir.kr.ps.base import RepositoryFactory as BaseRepositoryFactory
 from pyrunir.kr.ps.base.dl import parse_sketch, structural_termination as base_structural_termination
 
-ROOT = Path(__file__).resolve().parents[4]
-SUITE = Path(__file__).with_name("structural_termination.json")
+ROOT = Path(__file__).resolve().parents[5]
+SUITE = ROOT / "tests/support/data/kr/ps/structural_termination.json"
 
 
 class Case(TypedDict):
@@ -36,7 +36,7 @@ def main() -> None:
     base_dl_repository = DlRepositoryFactory().create(planning_domain)
     base_repository = BaseRepositoryFactory().create(base_dl_repository)
     for case in suite["base"]:
-        description = (ROOT / "tests/fixtures" / case["file"]).read_text(encoding="utf-8")
+        description = (ROOT / "tests/support/data" / case["file"]).read_text(encoding="utf-8")
         case["terminating"] = base_structural_termination(
             parse_sketch(description, planning_domain, base_repository)
         ).is_terminating()

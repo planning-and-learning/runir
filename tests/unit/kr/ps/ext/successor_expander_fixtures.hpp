@@ -97,7 +97,7 @@ void expect_initial_program_state_uses_expander_repository()
 template<tyr::TaskKind Kind>
 void expect_module_return_preserves_callee_planning_state()
 {
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/ps/ext/choose";
     const auto context = create_task_context<Kind>(directory / "domain.pddl", directory / "task.pddl");
     const auto program = kr::ps::ext::dl::parse_program(R"(
 (:program (:entry caller)
@@ -181,7 +181,7 @@ void expect_module_return_preserves_callee_planning_state()
 template<tyr::TaskKind Kind>
 void expect_borrowed_query_evaluation()
 {
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/ps/ext/choose";
     const auto task_context = create_task_context<Kind>(directory / "domain.pddl", directory / "task.pddl");
     auto& repository = *task_context->domain_context->ext_repository;
     auto& search = *task_context->search_context;
@@ -550,7 +550,7 @@ void expect_control_only_steps_do_not_generate_planning_successors()
 template<tyr::TaskKind Kind>
 void expect_transient_program_states_retain_values_and_intern_callers()
 {
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/ps/ext/choose";
     const auto context = create_task_context<Kind>(directory / "domain.pddl", directory / "task.pddl");
     auto& repository = *context->domain_context->ext_repository;
     auto& search = *context->search_context;
@@ -665,7 +665,7 @@ void expect_transient_program_states_retain_values_and_intern_callers()
 template<tyr::TaskKind Kind, kr::ps::ext::RuleKind Tag>
 void expect_unknown_action_rejected_during_preparation()
 {
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/ps/ext/choose";
     const auto task_context = create_task_context<Kind>(directory / "domain.pddl", directory / "task.pddl");
     auto& repository = *task_context->domain_context->ext_repository;
     const auto parsed = kr::ps::ext::dl::parse_module(R"(
@@ -717,7 +717,7 @@ void expect_query_action_contracts()
     for (const auto scenario : { 0, 1, 2, 3, 4 })
     {
         SCOPED_TRACE(fmt::format("query action scenario={}", scenario));
-        const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+        const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/ps/ext/choose";
         const auto task_context = create_task_context<Kind>(directory / "domain.pddl", directory / "task.pddl");
         auto& repository = *task_context->domain_context->ext_repository;
         const auto query = scenario == 1 ? fmt::format("(q_difference {} {})", valid_query, valid_query) :
@@ -846,7 +846,7 @@ void expect_callback_selection_stops_after_selected_rule()
 {
     for (const auto choose : { false, true })
     {
-        const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+        const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/ps/ext/choose";
         const auto task_context = create_task_context<Kind>(directory / "domain.pddl", directory / "task.pddl");
         auto& repository = *task_context->domain_context->ext_repository;
         const auto source = fmt::format(R"(
@@ -879,7 +879,7 @@ void expect_callback_selection_stops_after_selected_rule()
 template<tyr::TaskKind Kind>
 void expect_rule_occurrence_order()
 {
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/ps/ext/choose";
     const auto task_context = create_task_context<Kind>(directory / "domain.pddl", directory / "task.pddl");
     auto& repository = *task_context->domain_context->ext_repository;
     const auto domain = task_context->search_context->task->get_domain().get_domain();
@@ -1014,7 +1014,7 @@ void expect_callback_sketch_order_and_cancellation()
 template<tyr::TaskKind Kind>
 void expect_query_action_existential_binding()
 {
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/action_existential";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/ps/ext/action_existential";
     const auto task_context = create_task_context<Kind>(directory / "domain.pddl", directory / "task.pddl");
     auto& repository = *task_context->domain_context->ext_repository;
     const auto domain = task_context->search_context->task->get_domain().get_domain();
@@ -1050,7 +1050,7 @@ void expect_query_action_nullary_binding()
 {
     for (const auto empty : { false, true })
     {
-        const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/action_nullary";
+        const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/ps/ext/action_nullary";
         const auto task_context = create_task_context<Kind>(directory / "domain.pddl", directory / "task.pddl");
         auto& repository = *task_context->domain_context->ext_repository;
         const auto truth = std::string(R"((q_atomic_state "truth" ()))");

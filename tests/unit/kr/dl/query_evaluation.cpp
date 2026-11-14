@@ -83,7 +83,7 @@ static_assert(!std::is_convertible_v<urd::index<tyr::formalism::Object>, ColumnI
 template<tyr::TaskKind Kind>
 auto query_search_context()
 {
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/dl/query";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../support/data/kr/dl/query";
     if constexpr (std::same_as<Kind, tyr::GroundTag>)
         return make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     else

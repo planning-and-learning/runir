@@ -64,7 +64,7 @@ std::string module(const std::string& rules, const std::string& resets = "")
 template<tyr::TaskKind Kind>
 auto make_context(const std::string& fixture)
 {
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext" / fixture;
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/ps/ext" / fixture;
     auto search = [&]()
     {
         if constexpr (std::same_as<Kind, tyr::GroundTag>)

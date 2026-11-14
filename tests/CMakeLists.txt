@@ -137,12 +137,12 @@ add_runir_test(
 )
 add_runir_test(
     runir_kr_dl_operators
-    "unit/kr/dl/operators/constructors.cpp;unit/kr/dl/operators/parser.cpp;unit/kr/dl/operators/evaluation.cpp"
+    "unit/kr/dl/operator_constructors.cpp;unit/kr/dl/operator_parser.cpp;unit/kr/dl/operator_evaluation.cpp"
     runir::datasets
     runir::kr
     runir_test_planning_fixtures
 )
-brokkr_unity_directories(runir_kr_dl_operators ENABLED ${RUNIR_UNITY_BUILD} DIRECTORIES unit/kr/dl/operators)
+brokkr_unity_directories(runir_kr_dl_operators ENABLED ${RUNIR_UNITY_BUILD} DIRECTORIES unit/kr/dl)
 add_runir_test(runir_kr_uns_classifier
     "unit/kr/uns/classifier.cpp;unit/kr/uns/classifier_evaluation.cpp;unit/kr/uns/feature.cpp;unit/kr/uns/dl/feature.cpp"
     runir::datasets

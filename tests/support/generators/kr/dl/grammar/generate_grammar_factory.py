@@ -14,8 +14,8 @@ from pytyr.formalism.planning import Parser
 from pyrunir.kr.dl import cnf_grammar
 from pyrunir.kr.dl.grammar import ConstructorRepositoryFactory, GrammarFactory, GrammarSpecification, parse_grammar
 
-ROOT = Path(__file__).resolve().parents[5]
-SUITE = Path(__file__).with_name("factory.json")
+ROOT = Path(__file__).resolve().parents[6]
+SUITE = ROOT / "tests/support/data/kr/dl/grammar/factory.json"
 
 
 class Case(TypedDict):
@@ -37,11 +37,11 @@ def main() -> None:
         repository = ConstructorRepositoryFactory().create(planning_domain)
         grammar = GrammarFactory.create(GrammarSpecification.FRANCE_ET_AL_AAAI2021, domain, repository)
         grammar_text = str(grammar)
-        (ROOT / "tests/fixtures" / case["grammar_file"]).write_text(grammar_text, encoding="utf-8")
+        (ROOT / "tests/support/data" / case["grammar_file"]).write_text(grammar_text, encoding="utf-8")
 
         cnf_repository = cnf_grammar.ConstructorRepositoryFactory().create(planning_domain)
         cnf_text = str(cnf_grammar.translate(parse_grammar(grammar_text, domain, repository), cnf_repository))
-        (ROOT / "tests/fixtures" / case["cnf_file"]).write_text(cnf_text, encoding="utf-8")
+        (ROOT / "tests/support/data" / case["cnf_file"]).write_text(cnf_text, encoding="utf-8")
 
 
 if __name__ == "__main__":

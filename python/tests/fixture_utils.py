@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import cast
 
-FIXTURE_ROOT = Path(__file__).resolve().parents[2] / "tests" / "fixtures"
+FIXTURE_ROOT = Path(__file__).resolve().parents[2] / "tests" / "support" / "data"
 
 
 def read_fixture(relative: str) -> str:

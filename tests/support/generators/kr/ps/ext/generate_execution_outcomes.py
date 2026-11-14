@@ -18,8 +18,8 @@ from pyrunir.kr import DomainContext, GroundTaskContext
 from pyrunir.kr.ps import ProofStatus, ext
 from pyrunir.kr.ps.ext import dl
 
-ROOT = Path(__file__).resolve().parents[5]
-SUITE = Path(__file__).with_name("execution.json")
+ROOT = Path(__file__).resolve().parents[6]
+SUITE = ROOT / "tests/support/data/kr/ps/ext/execution.json"
 
 
 class Case(TypedDict):
@@ -49,7 +49,7 @@ def main() -> None:
     task_context = GroundTaskContext(DomainContext(planning_domain), GroundTaskSearchContext(task, execution_context))
 
     for case in suite["cases"]:
-        description = (ROOT / "tests/fixtures" / case["program_file"]).read_text(encoding="utf-8")
+        description = (ROOT / "tests/support/data" / case["program_file"]).read_text(encoding="utf-8")
         program = dl.parse_program(description, planning_domain, task_context.domain_context.ext_repository)
         options = ext.GroundProgramSearchOptions()
         options.universal = case["universal"]

@@ -57,7 +57,7 @@ static_assert(!acquires_builder.template operator()<kr::dl::semantics::Denotatio
 
 auto query_search()
 {
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/dl/query";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../support/data/kr/dl/query";
     return make_ground_context(directory / "domain.pddl", directory / "task.pddl");
 }
 

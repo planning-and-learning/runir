@@ -87,7 +87,7 @@ void expect_empty_delta(auto& evaluator)
 template<tyr::TaskKind Kind>
 void check_atomic_projection()
 {
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/dl/query";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/dl/query";
     const auto search = [&]
     {
         if constexpr (std::same_as<Kind, tyr::GroundTag>)
@@ -233,7 +233,7 @@ void check_atomic_projection()
 template<tyr::TaskKind Kind>
 void check_query_graph()
 {
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/dl/query";
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/dl/query";
     const auto make_search = [&]
     {
         if constexpr (std::same_as<Kind, tyr::GroundTag>)

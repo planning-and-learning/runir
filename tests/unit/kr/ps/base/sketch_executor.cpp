@@ -385,7 +385,7 @@ TEST(RunirTests, BaseSketchTransitionsRefreshDynamicQueriesAndReuseStaticQueries
 {
     const auto check = []<tyr::TaskKind Kind>()
     {
-        const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/dl/query";
+        const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../support/data/kr/dl/query";
         datasets::TaskSearchContextPtr<Kind> search;
         if constexpr (std::same_as<Kind, tyr::GroundTag>)
             search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
