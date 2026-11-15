@@ -126,7 +126,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     {
         auto graph = nb::class_<Graph>(m, (std::string(prefix) + "ProgramProofGraph").c_str());
         urd::python::bind_graph(graph);
-        vefr::python::bind_algorithms(graph, vefr::vertex_data, vefr::edge_data);
+        vefr::python::bind_algorithms(graph, vefr::python::one_color, vefr::vertex_data, vefr::edge_data);
     }
 
     nb::class_<Results>(m, (std::string(prefix) + "ProgramProofResults").c_str())

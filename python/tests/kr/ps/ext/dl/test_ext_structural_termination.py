@@ -6,7 +6,6 @@ import sys
 from collections.abc import Callable
 
 import pytest
-import pyvefr
 from fixture_utils import read_fixture
 from pytyr.formalism.planning import PlanningDomain
 
@@ -239,7 +238,7 @@ def test_ext_structural_termination_counterexample_spans_memory_states(gripper_p
 
     edges = [counterexample.edge_value(edge) for edge in range(counterexample.num_edges)]
     assert len({edge.index() for edge in edges}) == 2
-    cycle = [edge.id for edge in pyvefr.find_cycle(counterexample)]
+    cycle = [edge.id for edge in counterexample.find_cycle()]
     assert len(cycle) == 2
     assert len(set(cycle)) == 2
     for edge, next_edge in zip(cycle, cycle[1:] + cycle[:1], strict=True):
@@ -304,7 +303,7 @@ def test_ext_structural_termination_lifts_projected_components(
     assert len(surviving_rules) == len(surviving_rule_ids) == 4
     assert surviving_rule_ids == {edge.index() for edge in edges}
 
-    cycle = [edge.id for edge in pyvefr.find_cycle(counterexample)]
+    cycle = [edge.id for edge in counterexample.find_cycle()]
     assert cycle
     assert len(cycle) == len(set(cycle))
     assert set(cycle) <= set(range(counterexample.num_edges))

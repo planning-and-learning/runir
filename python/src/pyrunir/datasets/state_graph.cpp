@@ -48,12 +48,12 @@ void bind_state_graph_for_kind(nb::module_& m, const char* class_prefix, const c
     {
         auto graph = nb::class_<Graph>(m, (std::string(class_prefix) + "StateGraph").c_str());
         urd::python::bind_graph(graph);
-        vefr::python::bind_algorithms(graph, vefr::vertex_data, vefr::edge_data);
+        vefr::python::bind_algorithms(graph, vefr::python::one_color, vefr::vertex_data, vefr::edge_data);
     }
     {
         auto graph = nb::class_<AnnotatedGraph>(m, (std::string(class_prefix) + "AnnotatedStateGraph").c_str());
         urd::python::bind_graph(graph);
-        vefr::python::bind_algorithms(graph, vefr::vertex_data, vefr::edge_data);
+        vefr::python::bind_algorithms(graph, vefr::python::one_color, vefr::vertex_data, vefr::edge_data);
     }
 
     nb::class_<Result>(m, (std::string(class_prefix) + "StateGraphGenerationResult").c_str())

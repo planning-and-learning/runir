@@ -109,12 +109,12 @@ void bind_equivalence_graph(nb::module_& m)
     {
         auto graph = nb::class_<EquivalenceGraph>(m, "EquivalenceGraph");
         urd::python::bind_graph(graph);
-        vefr::python::bind_algorithms(graph, vefr::vertex_data, vefr::edge_data);
+        vefr::python::bind_algorithms(graph, vefr::python::one_color, vefr::vertex_data, vefr::edge_data);
     }
     {
         auto graph = nb::class_<AnnotatedEquivalenceGraph>(m, "AnnotatedEquivalenceGraph");
         urd::python::bind_graph(graph);
-        vefr::python::bind_algorithms(graph, vefr::vertex_data, vefr::edge_data);
+        vefr::python::bind_algorithms(graph, vefr::python::one_color, vefr::vertex_data, vefr::edge_data);
     }
 
     bind_equivalence_graph_generation_for_kind<tyr::GroundTag>(m, "Ground", "ground");

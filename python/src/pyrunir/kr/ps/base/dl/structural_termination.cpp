@@ -34,7 +34,7 @@ void bind_structural_termination(nb::module_& m)
     {
         auto graph = nb::class_<PolicyGraph>(m, "PolicyGraph");
         urd::python::bind_graph(graph);
-        vefr::python::bind_algorithms(graph, vefr::vertex_data, vefr::edge_data);
+        vefr::python::bind_algorithms(graph, vefr::python::one_color, vefr::vertex_data, vefr::edge_data);
     }
 
     nb::class_<SccStructuralTerminationResult>(m, "SccStructuralTerminationResult")

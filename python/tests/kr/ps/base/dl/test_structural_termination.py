@@ -6,7 +6,6 @@ import sys
 from typing import TypedDict, cast
 
 import pytest
-import pyvefr
 from fixture_utils import load_fixture, read_fixture
 from pytyr.formalism.planning import PlanningDomain
 
@@ -280,7 +279,7 @@ def test_structural_termination_numerical_cycle_counterexample_uses_both_rules(
     assert {rule.index() for rule in surviving_rules} == rules
     assert counterexample.num_edges > len(surviving_rules)
 
-    cycle = [edge.id for edge in pyvefr.find_cycle(counterexample)]
+    cycle = [edge.id for edge in counterexample.find_cycle()]
     assert cycle
     assert len(cycle) == len(set(cycle))
     assert set(cycle) <= set(range(counterexample.num_edges))

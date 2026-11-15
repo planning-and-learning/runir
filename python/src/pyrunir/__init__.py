@@ -12,7 +12,7 @@ from pathlib import Path
 _import_module("pypddl")
 _import_module("pytyr")
 _import_module("pyyggdrasil")
-# pyvefr registers the types runir's graphs share (Edge, Visitor, ...) and the algorithms they extend.
+# pyvefr registers the types the algorithms on runir's graphs share (Edge, Visitor, the certificates, ...).
 _import_module("pyvefr")
 
 from pyrunir import (

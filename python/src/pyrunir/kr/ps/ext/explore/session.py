@@ -30,7 +30,6 @@ from datetime import timedelta
 from pathlib import Path
 from typing import TypeVar
 
-import pyvefr
 from pypddl.formalism import ParserOptions
 from pytyr.formalism.planning import Parser
 from pytyr.planning import SearchBudget, lifted
@@ -167,7 +166,7 @@ def _abstract_cycle(module: Module, graph: ModulePolicyGraph) -> list[str]:
         return f"{label.memory_state.get_name()}[{' '.join(true)}; {' '.join(positive)}]"
 
     cycle: list[str] = []
-    edges = pyvefr.find_cycle(graph)
+    edges = graph.find_cycle()
     for edge in edges:
         cycle += [state(edge.source), f"--{graph.edge_value(edge.id).get_symbol()}-->"]
     if edges:
