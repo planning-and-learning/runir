@@ -2,8 +2,8 @@
 
 #include "runir/kr/dl/grammar/detail/repository_instantiations.hpp"
 
-#include <yggdrasil/formalism/symbol_context_instantiations.hpp>
 #include <yggdrasil/formalism/builder_instantiations.hpp>
+#include <yggdrasil/formalism/symbol_context_instantiations.hpp>
 
 RUNIR_KR_DL_GRAMMAR_INTERNS()
 

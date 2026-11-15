@@ -51,7 +51,8 @@ void build_proof_graph(ProgramProofResults<Kind>& result, const urd::Store<urd::
             label.rule = *predecessor.rule;
         edges.emplace_back(predecessor.source, predecessor.target, std::move(label));
     }
-    result.graph = std::make_shared<ProgramProofGraph<IcpFamilyTag, Kind>>(urd::graph_data<Edge, vertex_label_t<ProgramProofGraph<IcpFamilyTag, Kind>>> { vertices.size(), edges, {}, vertices });
+    result.graph = std::make_shared<ProgramProofGraph<IcpFamilyTag, Kind>>(
+        urd::graph_data<Edge, vertex_label_t<ProgramProofGraph<IcpFamilyTag, Kind>>> { vertices.size(), edges, {}, vertices });
     result.cycle = vefr::find_vertex_cycle(*result.graph);
 }
 

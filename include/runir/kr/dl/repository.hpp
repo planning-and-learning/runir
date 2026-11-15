@@ -19,7 +19,6 @@
 namespace runir::kr::dl
 {
 
-
 using Builder = boost::mp11::mp_apply<ygg::formalism::BuilderStorage, ConstructorRepositoryTypes>;
 
 using runir::kr::dl::detail::get_repository;
@@ -35,6 +34,5 @@ void prepare_for_insert(ConstructorRepository& repository, urd::data<T>& data)
 
 using ygg::formalism::insert;
 }
-
 
 #endif

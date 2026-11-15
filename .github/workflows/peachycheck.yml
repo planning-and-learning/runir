@@ -23,11 +23,11 @@ jobs:
           # clang-tidy needs compile_commands.json, pyright the package in
           # .venv with its mcp extra, which the explore server imports (the
           # stubs are generated at install). The native
-          # dependencies come with the pyyggdrasil, pypddl and pytyr wheels.
+          # dependencies come with the pyyggdrasil, pypddl, pytyr and pyvefr wheels.
           prepare: |
             "$PYTHON" -m venv .venv
             .venv/bin/python -m pip install 'scikit-build-core>=1.0.3,<2' 'cmake>=3.21' 'ninja>=1.5' \
-              'nanobind-backend>=1.0' 'pybrokkr>=0.1.4,<0.2' 'pyyggdrasil>=0.9.0,<0.10' 'pypddl>=1.10.0,<1.11' 'pytyr>=0.9.0,<0.10' \
+              'nanobind-backend>=1.0' 'pybrokkr>=0.1.4,<0.2' 'pyyggdrasil>=0.9.0,<0.10' 'pypddl>=1.10.0,<1.11' 'pytyr>=0.9.0,<0.10' 'pyvefr>=0.2.0,<0.3' \
               'pypddl-datasets>=0.0.17,<0.1'
             PREFIX="$(.venv/bin/python -c 'import pytyr, pypddl, pyyggdrasil; print(f"{pytyr.native_prefix()};{pypddl.native_prefix()};{pyyggdrasil.native_prefix()}")')"
             cmake -S . -B build/peachycheck -G Ninja -DCMAKE_MAKE_PROGRAM="$PWD/.venv/bin/ninja" \

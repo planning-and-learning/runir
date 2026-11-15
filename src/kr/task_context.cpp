@@ -14,8 +14,8 @@
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/task.hpp>
 #include <utility>
-#include <yggdrasil/formalism/symbol_context_instantiations.hpp>
 #include <yggdrasil/formalism/builder_instantiations.hpp>
+#include <yggdrasil/formalism/symbol_context_instantiations.hpp>
 
 namespace runir::kr
 {
@@ -41,12 +41,12 @@ TaskContext<Kind>::TaskContext(DomainContextPtr domain_context_, runir::datasets
     dl_denotation_repository(std::make_shared<runir::kr::dl::semantics::DenotationRepository>(search_context->task->get_repository())),
     execution_builder(),
     execution_repository(std::make_shared<runir::kr::ps::ExecutionRepository<runir::kr::ExtFamilyTag, Kind>>(search_context->state_repository,
-                                                                                                                  dl_denotation_repository,
-                                                                                                                  domain_context->ext_repository)),
+                                                                                                             dl_denotation_repository,
+                                                                                                             domain_context->ext_repository)),
     icp_execution_builder(),
     icp_execution_repository(std::make_shared<runir::kr::ps::ExecutionRepository<runir::kr::IcpFamilyTag, Kind>>(search_context->state_repository,
-                                                                                                                      dl_denotation_repository,
-                                                                                                                      domain_context->icp_repository))
+                                                                                                                 dl_denotation_repository,
+                                                                                                                 domain_context->icp_repository))
 {
 }
 

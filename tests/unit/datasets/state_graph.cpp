@@ -6,11 +6,11 @@
 #include <runir/datasets/state_graph.hpp>
 #include <stdexcept>
 #include <tuple>
-#include <vector>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/state_builder.hpp>
 #include <tyr/planning/state_repository.hpp>
 #include <utility>
+#include <vector>
 
 namespace runir::tests
 {

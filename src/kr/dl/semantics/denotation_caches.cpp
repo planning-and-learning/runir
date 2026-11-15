@@ -97,10 +97,10 @@ void DenotationCaches::reset_all() noexcept
 }
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage): explicit instantiations, declarations, which no function gives
-#define RUNIR_DENOTATION_CACHES(Category)                                                                                                \
-    template std::optional<DenotationView<Category>> DenotationCaches::find<Category>(bool, ConstructorView<Category>) const;         \
-    template DenotationView<Category> DenotationCaches::insert<Category>(bool, ConstructorView<Category>, DenotationView<Category>);  \
-    template void DenotationCaches::erase<Category>(bool, ConstructorView<Category>);                                                 \
+#define RUNIR_DENOTATION_CACHES(Category)                                                                                            \
+    template std::optional<DenotationView<Category>> DenotationCaches::find<Category>(bool, ConstructorView<Category>) const;        \
+    template DenotationView<Category> DenotationCaches::insert<Category>(bool, ConstructorView<Category>, DenotationView<Category>); \
+    template void DenotationCaches::erase<Category>(bool, ConstructorView<Category>);                                                \
     template std::size_t DenotationCaches::size<Category>(bool) const;
 // NOLINTEND(cppcoreguidelines-macro-usage)
 

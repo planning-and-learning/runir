@@ -147,9 +147,7 @@ namespace runir::datasets
 
 template<::tyr::formalism::FactKind T>
 bool is_canonical(const urd::data<PredicateColor<T>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<::tyr::formalism::FactKind T>
 void canonicalize(urd::data<PredicateColor<T>>&) noexcept
@@ -177,9 +175,7 @@ public:
     explicit ColorRepository(std::shared_ptr<const ::tyr::formalism::planning::Repository> planning_repository) :
         m_planning_repository(std::move(planning_repository)),
         m_index(ygg::next_layer())
-    {
-        assert(m_planning_repository);
-    }
+    { assert(m_planning_repository); }
     ColorRepository(const ColorRepository&) = delete;
     ColorRepository& operator=(const ColorRepository&) = delete;
     ColorRepository(ColorRepository&&) = delete;

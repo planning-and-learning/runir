@@ -964,7 +964,6 @@ using ConstructorRepository = runir::kr::dl::detail::BasicConstructorRepository<
 
 using ConstructorRepositoryPtr = std::shared_ptr<ConstructorRepository>;
 
-
 template<ConstructorOf<SemanticFamily, ConceptTag> Tag>
 using ConceptView = urd::index_view<Concept<SemanticFamily, Tag>, ConstructorRepository>;
 

@@ -131,8 +131,7 @@ struct EquivalenceEdgeLabel : urd::compared_by_identity<EquivalenceEdgeLabel>
 using EquivalenceGraph = urd::Store<urd::graph<VertexIndex, EquivalenceEdgeLabel, EquivalenceVertexLabel>, urd::frozen, urd::bidirectional>;
 
 /// An equivalence graph whose classes know their goal distance and whether they are initial, goal, alive or unsolvable.
-using AnnotatedEquivalenceGraph =
-    urd::Store<urd::graph<VertexIndex, EquivalenceEdgeLabel, AnnotatedEquivalenceVertexLabel>, urd::frozen, urd::bidirectional>;
+using AnnotatedEquivalenceGraph = urd::Store<urd::graph<VertexIndex, EquivalenceEdgeLabel, AnnotatedEquivalenceVertexLabel>, urd::frozen, urd::bidirectional>;
 // The concepts it is bound and searched by (urd/graphs.hpp): a renamed member is a compile error, not a lost feature.
 static_assert(urd::bidirectional_graph<EquivalenceGraph> && urd::edge_list_graph<EquivalenceGraph>);
 static_assert(urd::bidirectional_graph<AnnotatedEquivalenceGraph> && urd::edge_list_graph<AnnotatedEquivalenceGraph>);

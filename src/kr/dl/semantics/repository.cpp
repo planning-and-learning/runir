@@ -1,3 +1,4 @@
+#include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/dl/semantics/detail/repository_instantiations.hpp"
 
@@ -5,9 +6,8 @@
 #include <memory>
 #include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <utility>
-#include <yggdrasil/formalism/symbol_context_instantiations.hpp>
 #include <yggdrasil/formalism/builder_instantiations.hpp>
-#include "runir/kr/dl/semantics/builder.hpp"
+#include <yggdrasil/formalism/symbol_context_instantiations.hpp>
 
 namespace runir::kr::dl::semantics
 {

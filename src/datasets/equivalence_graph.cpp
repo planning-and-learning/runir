@@ -290,7 +290,8 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(TaskSearchContext<Kind>& con
         }
     }
 
-    return std::make_unique<StateGraph<Kind>>(urd::graph_data<StateEdge, StateGraphVertexLabel<Kind>> { state_vertices.size(), state_graph_edges, {}, state_vertices });
+    return std::make_unique<StateGraph<Kind>>(
+        urd::graph_data<StateEdge, StateGraphVertexLabel<Kind>> { state_vertices.size(), state_graph_edges, {}, state_vertices });
 }
 
 template<tyr::TaskKind Kind>
@@ -339,7 +340,8 @@ auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts, Policy& p
     }
 
     return { std::move(state_graph_results),
-             std::make_unique<EquivalenceGraph>(urd::graph_data<EquivalenceEdge, EquivalenceVertexLabel> { equivalence.vertices.size(), equivalence.edges, {}, equivalence.vertices }) };
+             std::make_unique<EquivalenceGraph>(
+                 urd::graph_data<EquivalenceEdge, EquivalenceVertexLabel> { equivalence.vertices.size(), equivalence.edges, {}, equivalence.vertices }) };
 }
 
 template<tyr::TaskKind Kind>

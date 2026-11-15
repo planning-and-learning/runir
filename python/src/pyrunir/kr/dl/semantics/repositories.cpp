@@ -115,7 +115,8 @@ void bind_semantics_repositories(nb::module_& m)
     nb::class_<runir::kr::dl::semantics::Builder>(m, "Builder").def(nb::init<>());
 
     auto denotations = nb::class_<DenotationRepository>(m, "DenotationRepository")
-                           .def(nb::new_([](const tyr::formalism::planning::PlanningDomain& planning_domain) { return std::make_shared<DenotationRepository>(planning_domain.get_repository()); }),
+                           .def(nb::new_([](const tyr::formalism::planning::PlanningDomain& planning_domain)
+                                         { return std::make_shared<DenotationRepository>(planning_domain.get_repository()); }),
                                 nb::arg("planning_domain"))
                            .def("layer", &DenotationRepository::layer)
                            .def(
@@ -130,7 +131,6 @@ void bind_semantics_repositories(nb::module_& m)
     ygg::bind_insert<semantics::CallArguments>(denotations);
     ygg::bind_insert<semantics::RegisterValues>(denotations);
 
-
     runir::kr::python::bind_evaluation_storage(m);
     runir::kr::python::bind_state_evaluation_context<tyr::GroundTag>(m, "GroundStateEvaluationContext");
     runir::kr::python::bind_state_evaluation_context<tyr::LiftedTag>(m, "LiftedStateEvaluationContext");
@@ -139,9 +139,9 @@ void bind_semantics_repositories(nb::module_& m)
     repository.def("clear", &runir::kr::dl::ConstructorRepository::clear).def("layer", &runir::kr::dl::ConstructorRepository::layer);
     bind_constructors(repository, ConstructorRepositoryTypes {});
 
-    using ConstructorRepository = runir::kr::dl::ConstructorRepository;
     repository
-        .def(nb::new_([](const tyr::formalism::planning::PlanningDomain& planning_domain) { return std::make_shared<ConstructorRepository>(planning_domain.get_repository()); }),
+        .def(nb::new_([](const tyr::formalism::planning::PlanningDomain& planning_domain)
+                      { return std::make_shared<ConstructorRepository>(planning_domain.get_repository()); }),
              nb::arg("planning_domain"))
         .def(nb::new_([](const tyr::planning::Task<tyr::GroundTag>& task) { return std::make_shared<ConstructorRepository>(task.get_repository()); }),
              nb::arg("ground_task"))

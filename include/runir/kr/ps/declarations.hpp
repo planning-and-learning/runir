@@ -59,7 +59,6 @@ struct ConcreteEffect;
 template<FamilyTag Family, typename RepositoryTypes>
 class BasicRepository;
 
-
 /// A family's own types, specialized in the family's declarations.hpp: `Repository` for the policy families; the
 /// program families (ext, icp) also name `ConcreteRuleTypes`, `ExecutionRepositoryTypes<Kind>` and `ProgramState<Kind>`.
 template<FamilyTag Family>

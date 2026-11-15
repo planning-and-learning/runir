@@ -70,5 +70,4 @@ inline BasicConstructorRepository<RepositoryTypes>& get_repository(BasicConstruc
 
 }  // namespace runir::kr::dl::detail
 
-
 #endif

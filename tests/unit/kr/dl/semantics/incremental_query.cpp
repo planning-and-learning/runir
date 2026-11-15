@@ -135,8 +135,7 @@ void check_atomic_projection()
     const auto registers = urd::resolve(register_data, *search->task->get_repository());
     auto argument_data = urd::data<kr::dl::semantics::CallArguments> {};
     const auto arguments = denotations.insert(argument_data).first;
-    const auto publications = [&]
-    { return storage.get_denotation_repository(false).get_relation_repository().template size<ygg::Relation<ygg::Schema>>(); };
+    const auto publications = [&] { return storage.get_denotation_repository(false).get_relation_repository().template size<ygg::Relation<ygg::Schema>>(); };
     const auto compare_full = [&](const auto& state)
     {
         storage.reset_dynamic();

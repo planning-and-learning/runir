@@ -22,7 +22,6 @@
 namespace runir::kr::dl::grammar
 {
 
-
 using Builder = boost::mp11::mp_apply<ygg::formalism::BuilderStorage, ConstructorRepositoryTypes>;
 
 using runir::kr::dl::detail::get_repository;
@@ -36,6 +35,5 @@ void prepare_for_insert(ConstructorRepository&, urd::data<T>& data)
 using ygg::formalism::insert;
 
 }  // namespace runir::kr::dl::grammar
-
 
 #endif

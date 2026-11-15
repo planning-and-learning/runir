@@ -56,7 +56,8 @@ void build_proof_graph(SketchProofResults<Kind>& result,
         const auto target = add_vertex(predecessor.target);
         edges.emplace_back(source, target, SketchProofEdgeLabel(predecessor.action, predecessor.rule));
     }
-    result.graph = std::make_shared<SketchProofGraph<Kind>>(urd::graph_data<Edge, vertex_label_t<SketchProofGraph<Kind>>> { vertices.size(), edges, {}, vertices });
+    result.graph =
+        std::make_shared<SketchProofGraph<Kind>>(urd::graph_data<Edge, vertex_label_t<SketchProofGraph<Kind>>> { vertices.size(), edges, {}, vertices });
     result.cycle = vefr::find_vertex_cycle(*result.graph);
 }
 

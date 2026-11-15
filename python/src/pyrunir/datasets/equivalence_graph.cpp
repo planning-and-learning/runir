@@ -63,7 +63,8 @@ void bind_equivalence_graph(nb::module_& m)
 {
     using namespace nb::literals;
     nb::class_<ColorRepository>(m, "ColorRepository")
-        .def(nb::new_([](const tyr::formalism::planning::PlanningDomain& planning_domain) { return std::make_shared<ColorRepository>(planning_domain.get_repository()); }),
+        .def(nb::new_([](const tyr::formalism::planning::PlanningDomain& planning_domain)
+                      { return std::make_shared<ColorRepository>(planning_domain.get_repository()); }),
              "planning_domain"_a)
         .def(nb::new_([](const tyr::planning::Task<tyr::GroundTag>& task) { return std::make_shared<ColorRepository>(task.get_domain().get_repository()); }),
              "ground_task"_a)

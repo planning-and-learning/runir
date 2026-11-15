@@ -20,7 +20,8 @@ std::string make_graph_dot()
     using Edge = std::tuple<runir::VertexIndex, runir::VertexIndex, std::string>;
     const auto edges = std::vector<Edge> { { 0, 1, "edge" } };
     const auto names = std::vector<std::string> { "source", "target" };
-    const auto graph = urd::Store<urd::graph<runir::VertexIndex, std::string, std::string>, urd::frozen>(urd::graph_data<Edge, std::string> { 2, edges, {}, names });
+    const auto graph =
+        urd::Store<urd::graph<runir::VertexIndex, std::string, std::string>, urd::frozen>(urd::graph_data<Edge, std::string> { 2, edges, {}, names });
     return vefr::to_dot(graph, vefr::vertex_data, vefr::edge_data);
 }
 

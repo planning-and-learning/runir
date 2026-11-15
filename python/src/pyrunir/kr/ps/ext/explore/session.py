@@ -715,9 +715,7 @@ class Session:
         budget = budget or self._budget
         task_context = self._task_context(ref.task)
         search = task_context.search_context
-        module_state = (
-            self._search(ref.task, prove=ref.proof).graph.vertex_value(ref.vertex).program_state.module_state
-        )
+        module_state = self._search(ref.task, prove=ref.proof).graph.vertex_value(ref.vertex).program_state.module_state
         state = self._search(ref.task, prove=ref.proof).graph.vertex_value(ref.vertex).state
         options = gbfs_lazy.lifted.Options()
         options.start_node = search.successor_generator.get_node(search.state_repository, state.index())
@@ -779,9 +777,7 @@ class Session:
             else:
                 high = middle
         graph = self._search(task, prove=prove).graph
-        edge = next(
-            edge for edge in graph.out_edges(path[low].vertex) if graph.target(edge) == path[high].vertex
-        )
+        edge = next(edge for edge in graph.out_edges(path[low].vertex) if graph.target(edge) == path[high].vertex)
         label = graph.edge_value(edge)
         return DeadEnd(
             task,
@@ -914,9 +910,7 @@ class Session:
         next_on_path = dict(itertools.pairwise(on_path))
         points: list[ChoicePoint] = []
         for vertex in on_path:
-            edges = [
-                edge for edge in graph.out_edges(vertex) if is_choose(graph.edge_value(edge).rule)
-            ]
+            edges = [edge for edge in graph.out_edges(vertex) if is_choose(graph.edge_value(edge).rule)]
             if not edges:
                 continue
             ref = VertexRef(task, vertex)

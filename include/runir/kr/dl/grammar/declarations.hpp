@@ -68,7 +68,6 @@ using ConstructorRepository = runir::kr::dl::detail::BasicConstructorRepository<
 
 using ConstructorRepositoryPtr = std::shared_ptr<ConstructorRepository>;
 
-
 template<runir::kr::dl::ConstructorOf<GrammarFamily, runir::kr::dl::ConceptTag> Tag>
 using ConceptView = urd::index_view<runir::kr::dl::Concept<GrammarFamily, Tag>, ConstructorRepository>;
 

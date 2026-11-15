@@ -120,9 +120,7 @@ TEST(EquivalenceGraphTest, RejectsUnsupportedPolicyMode)
     options.policy_mode = static_cast<datasets::EquivalencePolicyMode>(255);
 
     EXPECT_THROW(
-        try {
-            static_cast<void>(datasets::generate_equivalence_graph(contexts, options, *colors));
-        } catch (const std::runtime_error& error) {
+        try { static_cast<void>(datasets::generate_equivalence_graph(contexts, options, *colors)); } catch (const std::runtime_error& error) {
             EXPECT_STREQ(error.what(), "Unsupported equivalence policy mode: 255.");
             throw;
         },

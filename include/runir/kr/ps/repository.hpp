@@ -69,5 +69,4 @@ inline BasicRepository<Family, RepositoryTypes>& get_repository(BasicRepository<
 
 }  // namespace runir::kr::ps
 
-
 #endif

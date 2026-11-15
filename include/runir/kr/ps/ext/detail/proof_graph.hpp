@@ -71,7 +71,8 @@ void build_proof_graph(ProgramProofResults<Kind>& result,
             label.rule = *predecessor.rule;
         edges.emplace_back(source, target, std::move(label));
     }
-    result.graph = std::make_shared<ProgramProofGraph<ExtFamilyTag, Kind>>(urd::graph_data<Edge, vertex_label_t<ProgramProofGraph<ExtFamilyTag, Kind>>> { vertices.size(), edges, {}, vertices });
+    result.graph = std::make_shared<ProgramProofGraph<ExtFamilyTag, Kind>>(
+        urd::graph_data<Edge, vertex_label_t<ProgramProofGraph<ExtFamilyTag, Kind>>> { vertices.size(), edges, {}, vertices });
     result.cycle = vefr::find_vertex_cycle(*result.graph);
 }
 
@@ -112,7 +113,8 @@ void build_witness_graph(ProgramProofResults<Kind>& result,
             edges.emplace_back(index - 1, index, std::move(label));
         }
     }
-    result.graph = std::make_shared<ProgramProofGraph<ExtFamilyTag, Kind>>(urd::graph_data<Edge, vertex_label_t<ProgramProofGraph<ExtFamilyTag, Kind>>> { vertices.size(), edges, {}, vertices });
+    result.graph = std::make_shared<ProgramProofGraph<ExtFamilyTag, Kind>>(
+        urd::graph_data<Edge, vertex_label_t<ProgramProofGraph<ExtFamilyTag, Kind>>> { vertices.size(), edges, {}, vertices });
 }
 
 }  // namespace runir::kr::ps::ext::detail

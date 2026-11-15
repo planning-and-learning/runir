@@ -6,8 +6,9 @@
 #include "runir/kr/ps/icp/execution_data.hpp"
 #include "runir/kr/ps/icp/repository.hpp"
 #include "runir/kr/uns/repository.hpp"
-#include <yggdrasil/formalism/symbol_context_instantiations.hpp>
+
 #include <yggdrasil/formalism/builder_instantiations.hpp>
+#include <yggdrasil/formalism/symbol_context_instantiations.hpp>
 
 RUNIR_KR_PS_INTERNS()
 

@@ -71,7 +71,9 @@ struct StateGraphVertexCandidate : urd::compared_by_identity<StateGraphVertexCan
 /// returns the class's representative, calling allocate() (once) for it only where the class is new.
 template<typename Policy, typename Kind>
 concept IsEquivalencePolicy = tyr::TaskKind<Kind> && requires(Policy& policy, StateGraphVertexCandidate<Kind> candidate) {
-    { policy.get_or_create_representative(candidate, [] { return StateGraphVertexRef {}; }) } -> std::same_as<StateGraphVertexRef>;
+    {
+        policy.get_or_create_representative(candidate, [] { return StateGraphVertexRef {}; })
+    } -> std::same_as<StateGraphVertexRef>;
 };
 
 }  // namespace runir::datasets
