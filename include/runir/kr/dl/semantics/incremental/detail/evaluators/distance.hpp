@@ -131,8 +131,8 @@ struct QueryEdgeDistanceEvaluator
                 // The slot's change as SlotChanges reads it: views `added` and `removed`.
                 struct Change
                 {
-                    ygg::FreeBuilderRelationView added;
-                    ygg::FreeBuilderRelationView removed;
+                    ygg::FreeRelationBuilderView added;
+                    ygg::FreeRelationBuilderView removed;
                 };
                 const auto [added, removed] = graph.change(slots[slot]).change();
                 return Change { added, removed };

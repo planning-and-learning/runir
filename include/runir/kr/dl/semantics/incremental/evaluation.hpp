@@ -135,7 +135,7 @@ public:
     /// see IncrementalEvaluation).
     template<CategoryTag Category>
     [[nodiscard]] BorrowedDenotationView<Category> result(EvaluationIndex<Category> index) const;
-    [[nodiscard]] ygg::FreeBuilderRelationView result(QueryEvaluationIndex index) const;
+    [[nodiscard]] ygg::FreeRelationBuilderView result(QueryEvaluationIndex index) const;
     template<ConceptOrRoleTag Category>
     [[nodiscard]] const DenotationDelta<Category>& change(EvaluationIndex<Category> index) const;
     [[nodiscard]] const tyr::datalog::database::incremental::Delta& change(QueryEvaluationIndex index) const;
@@ -281,7 +281,7 @@ private:
     template<CategoryTag Category>
     [[nodiscard]] BorrowedDenotationView<Category> get_result(EvaluationIndex<Category> index) const
     { return m_graph.result(index); }
-    [[nodiscard]] ygg::FreeBuilderRelationView get_result(QueryEvaluationIndex index) const { return m_graph.result(index); }
+    [[nodiscard]] ygg::FreeRelationBuilderView get_result(QueryEvaluationIndex index) const { return m_graph.result(index); }
     template<ConceptOrRoleTag Category>
     [[nodiscard]] size_t size(EvaluationIndex<Category> index) const
     { return m_graph.cardinality(index); }
@@ -335,7 +335,7 @@ public:
     template<CategoryTag Category>
     BorrowedDenotationView<Category> evaluate(EvaluationIndex<Category> index)
     { return current(static_cast<ygg::uint_t>(index.value)).get_result(index); }
-    ygg::FreeBuilderRelationView evaluate(QueryEvaluationIndex index) { return current(static_cast<ygg::uint_t>(index.value)).get_result(index); }
+    ygg::FreeRelationBuilderView evaluate(QueryEvaluationIndex index) { return current(static_cast<ygg::uint_t>(index.value)).get_result(index); }
     template<ConceptOrRoleTag Category>
     size_t size(EvaluationIndex<Category> index)
     { return current(static_cast<ygg::uint_t>(index.value)).size(index); }

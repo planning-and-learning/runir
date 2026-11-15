@@ -56,8 +56,8 @@ public:
     void update(std::span<const tyr::formalism::planning::AtomView<tyr::GroundTag, Fact>> added,
                 std::span<const tyr::formalism::planning::AtomView<tyr::GroundTag, Fact>> removed);
 
-    [[nodiscard]] ygg::FreeBuilderRelationView get_result() const& noexcept { return m_layer->view(m_result); }
-    [[nodiscard]] ygg::FreeBuilderRelationView get_result() const&& = delete;
+    [[nodiscard]] ygg::FreeRelationBuilderView get_result() const& noexcept { return m_layer->view(m_result); }
+    [[nodiscard]] ygg::FreeRelationBuilderView get_result() const&& = delete;
     [[nodiscard]] const tyr::datalog::database::incremental::Delta& get_delta() const& noexcept { return m_delta; }
     [[nodiscard]] const tyr::datalog::database::incremental::Delta& get_delta() const&& = delete;
 };

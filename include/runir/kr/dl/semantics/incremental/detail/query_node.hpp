@@ -41,7 +41,7 @@ public:
     void initialize(EvaluationGraph<Kind>& graph, Context& context);
     void update(EvaluationGraph<Kind>& graph, const Delta& delta, tyr::datalog::database::Workspace& workspace);
     [[nodiscard]] std::span<const ygg::uint_t> get_dependencies() const noexcept { return m_dependencies; }
-    [[nodiscard]] ygg::FreeBuilderRelationView get_result() const;
+    [[nodiscard]] ygg::FreeRelationBuilderView get_result() const;
     [[nodiscard]] const tyr::datalog::database::incremental::Delta& get_delta() const;
 
 private:
@@ -85,9 +85,9 @@ void QueryNode<Kind>::update(EvaluationGraph<Kind>& graph, const Delta& delta, t
 }
 
 template<tyr::TaskKind Kind>
-ygg::FreeBuilderRelationView QueryNode<Kind>::get_result() const
+ygg::FreeRelationBuilderView QueryNode<Kind>::get_result() const
 {
-    return std::visit([](const auto& operation) -> ygg::FreeBuilderRelationView { return operation.get_result(); }, m_operation);
+    return std::visit([](const auto& operation) -> ygg::FreeRelationBuilderView { return operation.get_result(); }, m_operation);
 }
 
 template<tyr::TaskKind Kind>
