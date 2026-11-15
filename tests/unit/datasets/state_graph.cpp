@@ -9,7 +9,6 @@
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/state_builder.hpp>
 #include <tyr/planning/state_repository.hpp>
-#include <utility>
 #include <vector>
 
 namespace runir::tests
@@ -23,7 +22,7 @@ datasets::StateGraph<tyr::GroundTag> single_state_graph(tyr::planning::PackedSta
     using Graph = datasets::StateGraph<tyr::GroundTag>;
     using Edge = std::tuple<VertexIndex, VertexIndex, datasets::StateGraphEdgeLabel>;
     using Label = vertex_label_t<Graph>;
-    const auto vertices = std::vector<Label> { Label { std::move(state) } };
+    const auto vertices = std::vector<Label> { Label { state } };
     return Graph(urd::graph_data<Edge, Label> { 1, {}, {}, vertices });
 }
 }  // namespace

@@ -128,7 +128,7 @@ public:
     using KindType = Kind;
 
     /// Outside a program: no registers bound (empty) and no arguments.
-    StateEvaluationContext(S state, Builder& builder, EvaluationStorage& storage) :
+    StateEvaluationContext(const S& state, Builder& builder, EvaluationStorage& storage) :
         StateEvaluationContext(state,
                                builder,
                                storage,
