@@ -2,19 +2,19 @@
 requires = [
     "scikit-build-core>=1.0.3,<2",
     "nanobind-backend>=1.0",
-    "pyyggdrasil>=0.7.2,<0.8",
-    "pyurd>=0.1.2,<0.2",
-    "pybrokkr>=0.1.2,<0.2",
-    "pytyr>=0.8.0,<0.9",
-    "pypddl>=1.8.0,<1.9",
-    "pyvefr>=0.1.0,<0.2",
+    "pyyggdrasil>=0.9.0,<0.10",
+    "pyurd>=0.2.0,<0.3",
+    "pybrokkr>=0.1.4,<0.2",
+    "pytyr>=0.9.0,<0.10",
+    "pypddl>=1.10.0,<1.11",
+    "pyvefr>=0.2.0,<0.3",
 ]
 build-backend = "pyrunir_build_backend"
 backend-path = ["python"]
 
 [project]
 name = "pyrunir"
-version = "0.8.0"
+version = "0.9.0"
 description = "Runir description logic feature library"
 readme = "README.md"
 license = "GPL-3.0-or-later"
@@ -24,12 +24,12 @@ authors = [
 ]
 dependencies = [
     "nanobind-backend>=1.0",
-    "pyyggdrasil>=0.7.2,<0.8",
-    "pyurd>=0.1.2,<0.2",
-    "pybrokkr>=0.1.2,<0.2",
-    "pytyr>=0.8.0,<0.9",
-    "pypddl>=1.8.0,<1.9",
-    "pyvefr>=0.1.0,<0.2",
+    "pyyggdrasil>=0.9.0,<0.10",
+    "pyurd>=0.2.0,<0.3",
+    "pybrokkr>=0.1.4,<0.2",
+    "pytyr>=0.9.0,<0.10",
+    "pypddl>=1.10.0,<1.11",
+    "pyvefr>=0.2.0,<0.3",
 ]
 
 [project.optional-dependencies]
@@ -96,7 +96,7 @@ container-engine = "docker"
 # Because --no-isolation also skips scikit-build-core's dynamic build tools,
 # cmake/ninja must be installed here too (manylinux ships cmake but not ninja).
 build-frontend = { name = "build", args = ["--no-isolation"] }
-before-build = "n=0; until python -m pip install --no-cache-dir 'scikit-build-core>=1.0.3,<2' 'cmake>=3.21' 'ninja>=1.5' 'nanobind-backend>=1.0' 'pypddl>=1.8.0,<1.9' 'pyyggdrasil>=0.7.2,<0.8' 'pytyr>=0.8.0,<0.9' 'pybrokkr>=0.1.2,<0.2' 'pyvefr>=0.1.0,<0.2'; do n=$((n+1)); [ $n -ge 30 ] && exit 1; echo 'provider wheels not on the index yet; retrying in 60s'; sleep 60; done"
+before-build = "n=0; until python -m pip install --no-cache-dir 'scikit-build-core>=1.0.3,<2' 'cmake>=3.21' 'ninja>=1.5' 'nanobind-backend>=1.0' 'pypddl>=1.10.0,<1.11' 'pyyggdrasil>=0.9.0,<0.10' 'pytyr>=0.9.0,<0.10' 'pybrokkr>=0.1.4,<0.2' 'pyvefr>=0.2.0,<0.3'; do n=$((n+1)); [ $n -ge 30 ] && exit 1; echo 'provider wheels not on the index yet; retrying in 60s'; sleep 60; done"
 
 [tool.cibuildwheel.linux]
 repair-wheel-command = "python -m pyurd.repair --providers pypddl,pyyggdrasil,pytyr,pyurd_native,pyvefr --dest-dir {dest_dir} {wheel}"
