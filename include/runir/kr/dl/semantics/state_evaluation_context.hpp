@@ -138,8 +138,8 @@ public:
     }
 
     /// Retain computed roots in an existing repository while children use reusable storage.
-    StateEvaluationContext(S state, Builder& builder, DenotationCaches& caches, DenotationRepository& repository, EvaluationStorage& intermediates) :
-        StateEvaluationContext(std::move(state), builder, intermediates)
+    StateEvaluationContext(const S& state, Builder& builder, DenotationCaches& caches, DenotationRepository& repository, EvaluationStorage& intermediates) :
+        StateEvaluationContext(state, builder, intermediates)
     { select_roots(caches, repository); }
 
     template<RegisterValuesViewConcept R>

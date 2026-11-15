@@ -58,13 +58,13 @@ private:
     DlContext m_target_context;
 
 public:
-    TransitionEvaluationContext(S source_state,
-                                S target_state,
+    TransitionEvaluationContext(const S& source_state,
+                                const S& target_state,
                                 runir::kr::dl::semantics::Builder& dl_builder,
                                 runir::kr::dl::semantics::EvaluationStorage& source,
                                 runir::kr::dl::semantics::EvaluationStorage& target) :
-        m_source_context(std::move(source_state), dl_builder, source),  //
-        m_target_context(std::move(target_state), dl_builder, target)
+        m_source_context(source_state, dl_builder, source),  //
+        m_target_context(target_state, dl_builder, target)
     {
     }
 
