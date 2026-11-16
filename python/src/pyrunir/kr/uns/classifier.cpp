@@ -16,6 +16,7 @@
 #include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/state_repository.hpp>
 #include <urd/elements/flat.hpp>
+#include <urd/python/bindings.hpp>
 #include <yggdrasil/python/bindings.hpp>
 
 namespace runir::kr::uns
@@ -25,19 +26,10 @@ void bind_classifier(nb::module_& m)
 {
     using namespace nb::literals;
     using Family = runir::kr::UnsFamilyTag;
-    using View = urd::index_view<Classifier, Repository>;
-    urd::python::bind_index<urd::index<Classifier>>(m, "ClassifierIndex");
-    auto cls = nb::class_<View>(m, "Classifier")
-                   .def("index", &View::index)
-                   .def("get_features", &View::get_features)
-                   .def("get_clauses", &View::get_clauses)
-                   .def("get_symbol", &View::get_symbol)
-                   .def("syntactic_complexity", [](View view) { return syntactic_complexity(view); });
-    ygg::add_print(cls);
-    urd::python::add_comparison(cls);
-    urd::python::add_hash(cls);
-    runir::kr::python::bind_ps_optimize<Family, Repository>(cls);
-
+    urd::python::bind_data<Classifier>(m);
+    urd::python::bind_view<ClassifierView>(m);
+    m.def("syntactic_complexity", [](ClassifierView classifier) { return syntactic_complexity(classifier); }, "classifier"_a);
+    runir::kr::python::bind_ps_optimize<Family, Repository, ClassifierView>(m);
     m.def(
         "classify",
         [](const ClassifierView& classifier, runir::kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>& context)

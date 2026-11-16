@@ -43,7 +43,7 @@ public:
             return false;
         const auto module_ = state.get_module_state();
         auto target = context.storage->store(context.planning_state,
-                                             module_.get_module(),
+                                             module_.get_mod(),
                                              m_rule.get_target(),
                                              module_.get_registers(),
                                              module_.get_arguments(),

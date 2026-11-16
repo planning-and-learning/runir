@@ -48,7 +48,7 @@ public:
         const auto planning_task = m_task->search_context->task->get_task();
         auto empty = m_task->dl_builder.template get_builder<Denotation>(static_cast<ygg::uint_t>(planning_task.get_num_objects()));
         m_empty = runir::kr::dl::semantics::insert(*m_task->dl_denotation_repository, *empty, m_task->dl_builder).first.index();
-        const auto module = program.get_module();
+        const auto module = program.get_entry_mod();
         const auto features = module.template get_features<Concept>();
         m_reset_predecessors.resize(features.size());
         m_changed.reserve(features.size());
@@ -66,7 +66,7 @@ public:
 
     ProgramStateView<Kind> initial_state(tyr::planning::StateView<Kind> state)
     {
-        const auto module = m_program.get_module();
+        const auto module = m_program.get_entry_mod();
         auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(m_task->dl_builder);
         registers->concept_values.resize(module.template get_registers<Concept>().size());
         registers->role_values.resize(module.template get_registers<runir::kr::dl::RoleTag>().size());
@@ -91,7 +91,7 @@ public:
         histories->concepts.clear();
         for (const auto concept_ : previous)
             urd::append(histories->concepts, concept_);
-        const auto features = m_program.get_module().template get_features<Concept>();
+        const auto features = m_program.get_entry_mod().template get_features<Concept>();
         m_changed.clear();
         bool progress = !binding;
         for (std::size_t i = 0; i < features.size(); ++i)

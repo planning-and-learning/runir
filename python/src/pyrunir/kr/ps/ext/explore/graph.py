@@ -14,19 +14,19 @@ from pytyr.planning import lifted
 
 from pyrunir.kr.ps import ProofStatus
 from pyrunir.kr.ps.ext import (
-    ConceptChooseRule,
-    LiftedModuleState,
     LiftedProgramProofGraph,
     LiftedProgramProofResults,
-    RoleChooseRule,
-    RuleVariant,
+    ModuleStateLifted,
+    RuleChooseConcept,
+    RuleChooseRole,
+    RuleExt,
 )
 from pyrunir.kr.ps.ext.explore.results import Value
 
 
-def is_choose(rule: RuleVariant | None) -> bool:
+def is_choose(rule: RuleExt | None) -> bool:
     """Return whether `rule` is a concept or role Choose rule."""
-    return rule is not None and isinstance(rule.get_variant(), (ConceptChooseRule, RoleChooseRule))
+    return rule is not None and isinstance(rule.get_variant(), (RuleChooseConcept, RuleChooseRole))
 
 
 def failure_category(result: LiftedProgramProofResults) -> str | None:
@@ -138,18 +138,18 @@ def object_name(value: Object | tuple[Object, Object] | None) -> str | None:
     return str(value.get_name())
 
 
-def register_value(module_state: LiftedModuleState, rule: RuleVariant) -> str | None:
+def register_value(module_state: ModuleStateLifted, rule: RuleExt) -> str | None:
     """Return the name of the value held by the register that the Choose rule `rule` binds.
 
     Raises:
         TypeError: If `rule` is not a Choose rule.
     """
     variant = rule.get_variant()
-    registers = module_state.registers
-    if isinstance(variant, ConceptChooseRule):
-        return object_name(registers.concept_values[variant.get_slot().get_identifier().value])
-    if isinstance(variant, RoleChooseRule):
-        return object_name(registers.role_values[variant.get_slot().get_identifier().value])
+    registers = module_state.get_registers()
+    if isinstance(variant, RuleChooseConcept):
+        return object_name(registers.get_concept_values()[variant.get_slot().get_identifier().value])
+    if isinstance(variant, RuleChooseRole):
+        return object_name(registers.get_role_values()[variant.get_slot().get_identifier().value])
     msg = f"{rule.get_symbol()} is not a Choose rule"
     raise TypeError(msg)
 

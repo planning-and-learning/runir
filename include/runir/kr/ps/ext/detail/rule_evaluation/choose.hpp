@@ -57,7 +57,7 @@ public:
         auto registers = checkout<runir::kr::dl::semantics::RegisterValues>((*context.task_context)->dl_builder);
         const auto module_ = state.get_module_state();
         auto target = context.storage->store(context.planning_state,
-                                             module_.get_module(),
+                                             module_.get_mod(),
                                              rule.get_target(),
                                              bound_registers<Kind>(rule, module_.get_registers(), choice.current(), *registers, *context.storage),
                                              module_.get_arguments(),

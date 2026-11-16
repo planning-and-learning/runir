@@ -3,10 +3,71 @@
 
 #include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
 #include <runir/kr/dl/cnf_grammar/formatter.hpp>
+#include <urd/python/bindings.hpp>
 
 namespace runir::kr::dl
 {
 
-void bind_cnf_grammar_records(nb::module_& m) { python::bind_records<cnf_grammar::CnfGrammarFamily, cnf_grammar::ConstructorRepository>(m); }
+void bind_cnf_grammar_records(nb::module_& m)
+{
+    using tyr::formalism::DerivedTag;
+    using tyr::formalism::FluentTag;
+    using tyr::formalism::StaticTag;
+
+    urd::python::bind_data<Concept<cnf_grammar::CnfGrammarFamily, BotTag>>(m);
+    urd::python::bind_data<Concept<cnf_grammar::CnfGrammarFamily, TopTag>>(m);
+    urd::python::bind_data<Concept<cnf_grammar::CnfGrammarFamily, AtomicStateTag<StaticTag>>>(m);
+    urd::python::bind_data<Concept<cnf_grammar::CnfGrammarFamily, AtomicStateTag<FluentTag>>>(m);
+    urd::python::bind_data<Concept<cnf_grammar::CnfGrammarFamily, AtomicStateTag<DerivedTag>>>(m);
+    urd::python::bind_data<Concept<cnf_grammar::CnfGrammarFamily, AtomicGoalTag<StaticTag>>>(m);
+    urd::python::bind_data<Concept<cnf_grammar::CnfGrammarFamily, AtomicGoalTag<FluentTag>>>(m);
+    urd::python::bind_data<Concept<cnf_grammar::CnfGrammarFamily, AtomicGoalTag<DerivedTag>>>(m);
+    urd::python::bind_data<Concept<cnf_grammar::CnfGrammarFamily, IntersectionTag>>(m);
+    urd::python::bind_data<Concept<cnf_grammar::CnfGrammarFamily, UnionTag>>(m);
+    urd::python::bind_data<Concept<cnf_grammar::CnfGrammarFamily, NegationTag>>(m);
+    urd::python::bind_data<Concept<cnf_grammar::CnfGrammarFamily, ValueRestrictionTag>>(m);
+    urd::python::bind_data<Concept<cnf_grammar::CnfGrammarFamily, ExistentialQuantificationTag>>(m);
+    urd::python::bind_data<Concept<cnf_grammar::CnfGrammarFamily, AtLeastNumberRestrictionTag>>(m);
+    urd::python::bind_data<Concept<cnf_grammar::CnfGrammarFamily, AtMostNumberRestrictionTag>>(m);
+    urd::python::bind_data<Concept<cnf_grammar::CnfGrammarFamily, ExactNumberRestrictionTag>>(m);
+    urd::python::bind_data<Concept<cnf_grammar::CnfGrammarFamily, QualifiedAtLeastNumberRestrictionTag>>(m);
+    urd::python::bind_data<Concept<cnf_grammar::CnfGrammarFamily, QualifiedAtMostNumberRestrictionTag>>(m);
+    urd::python::bind_data<Concept<cnf_grammar::CnfGrammarFamily, QualifiedExactNumberRestrictionTag>>(m);
+    urd::python::bind_data<Concept<cnf_grammar::CnfGrammarFamily, RoleValueMapTag>>(m);
+    urd::python::bind_data<Concept<cnf_grammar::CnfGrammarFamily, AgreementTag>>(m);
+    urd::python::bind_data<Concept<cnf_grammar::CnfGrammarFamily, RoleFillersTag>>(m);
+    urd::python::bind_data<Concept<cnf_grammar::CnfGrammarFamily, OneOfTag>>(m);
+    urd::python::bind_data<Concept<cnf_grammar::CnfGrammarFamily, NominalTag>>(m);
+    urd::python::bind_data<Role<cnf_grammar::CnfGrammarFamily, UniversalTag>>(m);
+    urd::python::bind_data<Role<cnf_grammar::CnfGrammarFamily, AtomicStateTag<StaticTag>>>(m);
+    urd::python::bind_data<Role<cnf_grammar::CnfGrammarFamily, AtomicStateTag<FluentTag>>>(m);
+    urd::python::bind_data<Role<cnf_grammar::CnfGrammarFamily, AtomicStateTag<DerivedTag>>>(m);
+    urd::python::bind_data<Role<cnf_grammar::CnfGrammarFamily, AtomicGoalTag<StaticTag>>>(m);
+    urd::python::bind_data<Role<cnf_grammar::CnfGrammarFamily, AtomicGoalTag<FluentTag>>>(m);
+    urd::python::bind_data<Role<cnf_grammar::CnfGrammarFamily, AtomicGoalTag<DerivedTag>>>(m);
+    urd::python::bind_data<Role<cnf_grammar::CnfGrammarFamily, IntersectionTag>>(m);
+    urd::python::bind_data<Role<cnf_grammar::CnfGrammarFamily, UnionTag>>(m);
+    urd::python::bind_data<Role<cnf_grammar::CnfGrammarFamily, ComplementTag>>(m);
+    urd::python::bind_data<Role<cnf_grammar::CnfGrammarFamily, InverseTag>>(m);
+    urd::python::bind_data<Role<cnf_grammar::CnfGrammarFamily, CompositionTag>>(m);
+    urd::python::bind_data<Role<cnf_grammar::CnfGrammarFamily, TransitiveClosureTag>>(m);
+    urd::python::bind_data<Role<cnf_grammar::CnfGrammarFamily, ReflexiveTransitiveClosureTag>>(m);
+    urd::python::bind_data<Role<cnf_grammar::CnfGrammarFamily, RestrictionTag>>(m);
+    urd::python::bind_data<Role<cnf_grammar::CnfGrammarFamily, IdentityTag>>(m);
+    urd::python::bind_data<Boolean<cnf_grammar::CnfGrammarFamily, AtomicStateTag<StaticTag>>>(m);
+    urd::python::bind_data<Boolean<cnf_grammar::CnfGrammarFamily, AtomicStateTag<FluentTag>>>(m);
+    urd::python::bind_data<Boolean<cnf_grammar::CnfGrammarFamily, AtomicStateTag<DerivedTag>>>(m);
+    urd::python::bind_data<Boolean<cnf_grammar::CnfGrammarFamily, AtomicGoalTag<StaticTag>>>(m);
+    urd::python::bind_data<Boolean<cnf_grammar::CnfGrammarFamily, AtomicGoalTag<FluentTag>>>(m);
+    urd::python::bind_data<Boolean<cnf_grammar::CnfGrammarFamily, AtomicGoalTag<DerivedTag>>>(m);
+    urd::python::bind_data<Boolean<cnf_grammar::CnfGrammarFamily, NonemptyTag>>(m);
+    urd::python::bind_data<Numerical<cnf_grammar::CnfGrammarFamily, CountTag>>(m);
+    urd::python::bind_data<Numerical<cnf_grammar::CnfGrammarFamily, DistanceTag>>(m);
+
+    python::bind_record_views<cnf_grammar::CnfGrammarFamily, cnf_grammar::ConstructorRepository>(m, ConceptTag {});
+    python::bind_record_views<cnf_grammar::CnfGrammarFamily, cnf_grammar::ConstructorRepository>(m, RoleTag {});
+    python::bind_record_views<cnf_grammar::CnfGrammarFamily, cnf_grammar::ConstructorRepository>(m, BooleanTag {});
+    python::bind_record_views<cnf_grammar::CnfGrammarFamily, cnf_grammar::ConstructorRepository>(m, NumericalTag {});
+}
 
 }  // namespace runir::kr::dl

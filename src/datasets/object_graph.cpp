@@ -47,7 +47,7 @@ private:
     ColorRepository* m_repository;
     /// The objects by vertex: an object's vertex is its position.
     urd::Store<urd::set<ObjectView>, urd::positional> m_objects;
-    urd::Store<urd::sequence<urd::data<Color>::VariantList>> m_vertex_colors;
+    urd::Store<urd::sequence<urd::flat_vector<ColorVariant>>> m_vertex_colors;
     urd::Store<urd::set<Edge>> m_edges;
 
     auto get_or_create_vertex(ObjectView object) -> VertexIndex
@@ -133,7 +133,7 @@ void add_objects(tyr::planning::StateView<Kind> state, ObjectGraphConstructionCo
 template<tyr::TaskKind Kind>
 void add_atoms(tyr::planning::StateView<Kind> state, ObjectGraphConstructionContext& context)
 {
-    for (auto atom : state.template get_atoms_view<tyr::formalism::StaticTag>())
+    for (auto atom : state.template get_atoms<tyr::formalism::StaticTag>())
         context.template add_atom<PredicateContext::STATE>(atom);
 
     for (auto fact : state.get_fluent_facts_view())

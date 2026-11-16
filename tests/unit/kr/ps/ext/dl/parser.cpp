@@ -338,12 +338,12 @@ TEST(RunirTests, ExtendedQueryFeatureActionRuleRoundTrip)
     const auto module_ = kr::ps::ext::dl::parse_module(description, domain, *repository);
     ASSERT_EQ(module_.get_query_features().size(), 3);
     const auto query_feature = module_.get_query_features().front();
-    EXPECT_EQ(query_feature.get_symbol(), "moves");
-    const auto columns = query_feature.get_expression().get_columns();
+    EXPECT_EQ(std::visit([](auto concrete) { return concrete.get_symbol(); }, query_feature.get_variant()), "moves");
+    const auto columns = columns_of(std::visit([](auto concrete) { return concrete.get_feature(); }, query_feature.get_variant()));
     ASSERT_EQ(columns.size(), 2);
     EXPECT_EQ(columns[0].get_name(), "to");
     EXPECT_EQ(columns[1].get_name(), "from");
-    EXPECT_TRUE(module_.get_query_features().back().get_expression().get_schema().empty());
+    EXPECT_TRUE(schema_of(std::visit([](auto concrete) { return concrete.get_feature(); }, module_.get_query_features().back().get_variant())).empty());
     EXPECT_EQ(kr::ps::ext::syntactic_complexity(module_), 13);
 
     ASSERT_EQ(module_.get_memory_transitions().size(), 1);

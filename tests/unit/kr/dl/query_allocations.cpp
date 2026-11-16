@@ -187,7 +187,7 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
         changes[i].assign<tyr::GroundTag>(current.get_state(), register_view, next.get_state(), register_view);
         contexts.emplace_back(next.get_state(), builder, storage, arguments, register_values);
         auto objects = urd::Store<urd::set<ObjectIndex>> {};
-        for (const auto atom : next.get_state().get_atoms_view(atomic.get_predicate()))
+        for (const auto atom : next.get_state().get_atoms(atomic.get_predicate()))
             objects.insert(atom.get_row().template get<ObjectIndex>(0));
         projected_sizes[i + 1] = objects.size();
         current = next;

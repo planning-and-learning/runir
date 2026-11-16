@@ -75,7 +75,7 @@ TEST(RunirTests, IcpParserRoundTripAndValidation)
     EXPECT_EQ(parse(rendered), module);
     EXPECT_NE(rendered.find(":effects"), std::string::npos);
     const auto program = kr::ps::icp::dl::parse_program("(:program (:entry visit) " + rendered + ")", planning.get_domain(), *repository);
-    EXPECT_EQ(program.get_module(), module);
+    EXPECT_EQ(program.get_entry_mod(), module);
 
     for (const auto& invalid :
          { replaced(policy(), "(:arguments)", "(:arguments (:concept input))"),

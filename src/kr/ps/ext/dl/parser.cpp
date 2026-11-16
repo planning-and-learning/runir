@@ -56,9 +56,7 @@ using runir::kr::parser::constructors::parse_constructor;
 
 template<typename T>
 auto intern(Repository& repository, urd::data<T>& data)
-{
-    return runir::kr::ps::ext::insert(repository, data).first;
-}
+{ return runir::kr::ps::ext::insert(repository, data).first; }
 
 template<typename T>
 struct AstCategory
@@ -357,9 +355,7 @@ auto parse_do_argument(const ast::SymbolExpression& expression,
                        const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>,
                                         urd::stable_refs>& concept_features,
                        const runir::kr::parser::DiagnosticContext& diagnostics)
-{
-    return require_feature(concept_features, expression.symbol, diagnostics);
-}
+{ return require_feature(concept_features, expression.symbol, diagnostics); }
 
 auto parse_call_argument(
     const ast::SymbolExpression& expression,
@@ -651,7 +647,8 @@ auto parse_rule(
                     diagnostics.throw_at(concrete.action,
                                          runir::kr::UndefinedSymbolError("action in domain '" + domain.get_name().str() + "'", concrete.action.text));
                 const auto query_feature = require_feature(query_features, concrete.query_feature, diagnostics);
-                const auto query_arity = urd::resolve(query_feature, repository).get_expression().get_schema().size();
+                const auto query_arity =
+                    schema_of(std::visit([](auto concrete) { return concrete.get_feature(); }, urd::resolve(query_feature, repository).get_variant())).size();
                 if (query_arity != action->get_arity())
                     diagnostics.throw_at(concrete.query_feature,
                                          runir::kr::ArityMismatchError("action " + concrete.action.text, action->get_arity(), query_arity));
@@ -1142,7 +1139,7 @@ ProgramView parse_program(const std::string& description, tyr::formalism::planni
         module_indices_by_name.emplace(module_.name.text, view.index());
     }
 
-    data->entry_module = module_indices_by_name.at(ast.entry.text);
+    data->entry_mod = module_indices_by_name.at(ast.entry.text);
     return intern(repository, *data);
 }
 

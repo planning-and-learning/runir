@@ -16,7 +16,6 @@
 #include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
 #include <optional>
-#include <pyrunir/kr/binding_utils.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_policy.hpp>
@@ -32,6 +31,7 @@
 #include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <urd/dot.hpp>
+#include <urd/python/bindings.hpp>
 #include <urd/python/graphs.hpp>
 #include <utility>
 #include <vefr/python/bindings.hpp>
@@ -154,35 +154,14 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     bind_feature_evaluation<Kind, runir::kr::dl::NumericalTag>(m);
     bind_feature_evaluation<Kind, runir::kr::ps::dl::QueryFeature>(m);
 
-    auto module_state = nb::class_<LocalStateView>(m, (std::string(prefix) + "ModuleState").c_str())
-                            .def_prop_ro("state", &LocalStateView::get_state, nb::keep_alive<0, 1>())
-                            .def_prop_ro("module", &LocalStateView::get_module)
-                            .def_prop_ro("memory_state", &LocalStateView::get_memory_state)
-                            .def_prop_ro("registers", &LocalStateView::get_registers)
-                            .def_prop_ro("arguments", &LocalStateView::get_arguments);
-    ygg::add_print(module_state);
-    urd::python::add_comparison(module_state);
-    urd::python::add_hash(module_state);
-
-    auto call_stack = nb::class_<StackView>(m, (std::string(prefix) + "CallStack").c_str())
-                          .def_prop_ro("module", &StackView::get_module)
-                          .def_prop_ro("return_memory_state", &StackView::get_return_memory_state)
-                          .def_prop_ro("registers", &StackView::get_registers)
-                          .def_prop_ro("arguments", &StackView::get_arguments)
-                          .def_prop_ro("caller", &StackView::get_caller)
-                          .def_prop_ro("has_caller", [](const StackView& self) { return self.data().caller.has_value(); });
-    ygg::add_print(call_stack);
-    urd::python::add_comparison(call_stack);
-    urd::python::add_hash(call_stack);
-
-    auto program_state = nb::class_<StateView>(m, (std::string(prefix) + "ProgramState").c_str())
-                             .def_prop_ro("state", &StateView::get_state, nb::keep_alive<0, 1>())
-                             .def_prop_ro("program", &StateView::get_program)
-                             .def_prop_ro("module_state", &StateView::get_module_state)
-                             .def_prop_ro("call_stack", &StateView::get_call_stack);
-    ygg::add_print(program_state);
-    urd::python::add_comparison(program_state);
-    urd::python::add_hash(program_state);
+    // The records are bound first (bind_data, bind_program_executor). The planning state of a module or program state:
+    // the registered state, not the index its record holds.
+    urd::python::bind_view<LocalStateView>(m).def("get_state", &LocalStateView::get_state, nb::keep_alive<0, 1>());
+    // A call stack's record has no task kind: the views of its ground and lifted repositories are bound in a module of
+    // their own (ground, lifted), where each has its name.
+    auto kind_module = m.def_submodule(std::string(prefix) == "Ground" ? "ground" : "lifted");
+    urd::python::bind_view<StackView>(kind_module);
+    urd::python::bind_view<StateView>(m).def("get_state", &StateView::get_state, nb::keep_alive<0, 1>());
 
     auto vertex_label = nb::class_<VertexLabel>(m, (std::string(prefix) + "ProgramProofVertexLabel").c_str())
                             .def_ro("program_state", &VertexLabel::program_state)
@@ -307,6 +286,11 @@ void bind_program_executor(nb::module_& m)
     m.attr("GroundProgramProofEdgeLabel") = edge_label;
     m.attr("LiftedProgramProofEdgeLabel") = edge_label;
 
+    urd::python::bind_data<ModuleState<tyr::GroundTag>>(m);
+    urd::python::bind_data<ModuleState<tyr::LiftedTag>>(m);
+    urd::python::bind_data<CallStack>(m);
+    urd::python::bind_data<ProgramState<tyr::GroundTag>>(m);
+    urd::python::bind_data<ProgramState<tyr::LiftedTag>>(m);
     bind_execution_types<tyr::GroundTag>(m, "Ground");
     bind_execution_types<tyr::LiftedTag>(m, "Lifted");
 

@@ -67,13 +67,13 @@ template<tyr::TaskKind Kind>
 struct builder<runir::kr::ps::ext::ModuleState<Kind>>
 {
     runir::kr::ps::ext::BuiltState<Kind> state;
-    urd::index<runir::kr::ps::ext::Module> module_;
+    urd::index<runir::kr::ps::ext::Module> mod;
     urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> memory_state;
     runir::kr::ps::ext::BuiltRegisters registers;
     urd::index<runir::kr::dl::semantics::CallArguments> arguments;
 
     static constexpr auto identifying_members() noexcept
-    { return urd::Members<&builder::state, &builder::module_, &builder::memory_state, &builder::registers, &builder::arguments> {}; }
+    { return urd::Members<&builder::state, &builder::mod, &builder::memory_state, &builder::registers, &builder::arguments> {}; }
 };
 
 /// Owns mutable module values and references an interned caller chain.

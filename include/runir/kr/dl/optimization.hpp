@@ -62,9 +62,7 @@ public:
 
     template<typename T>
     RecordView<T> optimize(RecordView<T> view)
-    {
-        return memoized(view);
-    }
+    { return memoized(view); }
 
 private:
     using Labels = urd::Store<urd::sequence<urd::index<ygg::Column>>>;
@@ -103,7 +101,7 @@ private:
                 return root;
             },
             root.get_variant());
-        auto data = urd::make<QueryProjection<Category>>(root, view.get_columns());
+        auto data = urd::make<QueryProjection<Category>>(root, view.get_columns(), tyr::datalog::database::ProjectionPlan());  // the plan: derived on insert
         return runir::kr::dl::insert(*m_repository, data).first;
     }
 
@@ -185,15 +183,11 @@ class QueryStatisticsCollector
 public:
     template<typename T>
     void add(RecordView<T> expression)
-    {
-        collect<T>(expression);
-    }
+    { collect<T>(expression); }
 
     /// A sampler for the collected leaves, to measure sample states one at a time.
     [[nodiscard]] QueryStatisticsSampler sampler() const
-    {
-        return QueryStatisticsSampler(urd::Store<urd::sequence<QueryView<>>>(m_leaves.begin(), m_leaves.end()));
-    }
+    { return QueryStatisticsSampler(urd::Store<urd::sequence<QueryView<>>>(m_leaves.begin(), m_leaves.end())); }
 
     /// The statistics of the collected leaves over contexts, one state evaluation context per sample state, measured
     /// state by state (see QueryStatisticsSampler).
@@ -216,15 +210,11 @@ private:
 
     template<typename T>
     bool first_visit(RecordView<T> view)
-    {
-        return m_visited.insert(runir::kr::detail::record_key<ConstructorRepositoryTypes>(view)).second;
-    }
+    { return m_visited.insert(runir::kr::detail::record_key<ConstructorRepositoryTypes>(view)).second; }
 
     template<typename T, typename F>
     static void for_each_child(RecordView<T> view, F&& f)
-    {
-        urd::for_each_child<ConstructorRepositoryTypes, T>(view, std::forward<F>(f));
-    }
+    { urd::for_each_child<ConstructorRepositoryTypes, T>(view, std::forward<F>(f)); }
 
     template<typename T>
     void collect_children(RecordView<T> view)

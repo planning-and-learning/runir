@@ -13,22 +13,36 @@
 namespace runir::kr::dl::cnf_grammar
 {
 
-struct Grammar;
+struct Grammar
+{
+    static constexpr auto name = "Grammar";
+};
 
 template<runir::kr::dl::CategoryTag Category>
-struct NonTerminal;
+struct NonTerminal
+{
+    static constexpr auto name = "NonTerminal";
+};
 
 template<runir::kr::dl::CategoryTag Category>
-struct DerivationRule;
+struct DerivationRule
+{
+    static constexpr auto name = "DerivationRule";
+};
 
 template<runir::kr::dl::CategoryTag Category>
-struct SubstitutionRule;
+struct SubstitutionRule
+{
+    static constexpr auto name = "SubstitutionRule";
+};
 
 struct CnfGrammarFamily;
 
 /// CNF grammar constructors: the base constructor tags, operands non-terminals.
 struct CnfGrammarFamily
 {
+    static constexpr auto name = "CnfGrammar";
+
     template<runir::kr::dl::CategoryTag Category>
     using Tags = runir::kr::dl::BaseConstructorTags<Category>;
 

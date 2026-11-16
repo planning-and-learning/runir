@@ -37,14 +37,17 @@ namespace urd
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag>
 struct data<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>>
 {
-    using Expression = typename runir::kr::ps::dl::FeatureExpression<Family, FeatureTag>::Type;
-
     urd::index<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>> index;
-    urd::index<Expression> feature;
+    urd::index<typename runir::kr::ps::dl::FeatureExpression<Family, FeatureTag>::Type> feature;
     urd::flat_string symbol;
 
     data() = default;
-    data(urd::index<Expression> feature_, urd::flat_string symbol_) : index(), feature(std::move(feature_)), symbol(std::move(symbol_)) {}
+    data(urd::index<typename runir::kr::ps::dl::FeatureExpression<Family, FeatureTag>::Type> feature_, urd::flat_string symbol_) :
+        index(),
+        feature(std::move(feature_)),
+        symbol(std::move(symbol_))
+    {
+    }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;

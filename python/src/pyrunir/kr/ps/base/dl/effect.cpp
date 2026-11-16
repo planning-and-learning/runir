@@ -16,28 +16,22 @@ namespace runir::kr::ps::base::dl
 void bind_effect(nb::module_& m, RepositoryBinding& repository)
 {
     using Family = runir::kr::BaseFamilyTag;
-    bind_observation<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Positive>>(m,
-                                                                                                                                      repository,
-                                                                                                                                      "PositiveBooleanEffect");
-    bind_observation<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Negative>>(m,
-                                                                                                                                      repository,
-                                                                                                                                      "NegativeBooleanEffect");
-    bind_observation<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::BooleanTag, runir::kr::ps::dl::Unchanged>>(
-        m,
-        repository,
-        "UnchangedBooleanEffect");
-    bind_observation<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::Increases>>(
-        m,
-        repository,
-        "IncreasesNumericalEffect");
-    bind_observation<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::Decreases>>(
-        m,
-        repository,
-        "DecreasesNumericalEffect");
-    bind_observation<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::dl::NumericalTag, runir::kr::ps::dl::Unchanged>>(
-        m,
-        repository,
-        "UnchangedNumericalEffect");
+    using runir::kr::DlTag;
+    using runir::kr::dl::BooleanTag;
+    using runir::kr::dl::NumericalTag;
+    using namespace runir::kr::ps::dl;
+    urd::python::bind_data<runir::kr::ps::ConcreteEffect<Family, DlTag, BooleanTag, Positive>>(m);
+    urd::python::bind_data<runir::kr::ps::ConcreteEffect<Family, DlTag, BooleanTag, Negative>>(m);
+    urd::python::bind_data<runir::kr::ps::ConcreteEffect<Family, DlTag, BooleanTag, Unchanged>>(m);
+    urd::python::bind_data<runir::kr::ps::ConcreteEffect<Family, DlTag, NumericalTag, Increases>>(m);
+    urd::python::bind_data<runir::kr::ps::ConcreteEffect<Family, DlTag, NumericalTag, Decreases>>(m);
+    urd::python::bind_data<runir::kr::ps::ConcreteEffect<Family, DlTag, NumericalTag, Unchanged>>(m);
+    bind_observation<runir::kr::ps::ConcreteEffect<Family, DlTag, BooleanTag, Positive>>(m, repository);
+    bind_observation<runir::kr::ps::ConcreteEffect<Family, DlTag, BooleanTag, Negative>>(m, repository);
+    bind_observation<runir::kr::ps::ConcreteEffect<Family, DlTag, BooleanTag, Unchanged>>(m, repository);
+    bind_observation<runir::kr::ps::ConcreteEffect<Family, DlTag, NumericalTag, Increases>>(m, repository);
+    bind_observation<runir::kr::ps::ConcreteEffect<Family, DlTag, NumericalTag, Decreases>>(m, repository);
+    bind_observation<runir::kr::ps::ConcreteEffect<Family, DlTag, NumericalTag, Unchanged>>(m, repository);
 }
 
 }  // namespace runir::kr::ps::base::dl

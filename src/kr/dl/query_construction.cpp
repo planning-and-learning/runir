@@ -50,7 +50,7 @@ void prepare(urd::data<Numerical<SemanticFamily, DistanceTag>>& data, const Cons
             {
                 if constexpr (std::same_as<T, Query<>>)
                 {
-                    const auto schema = repository.view(index).get_schema();
+                    const auto schema = schema_of(repository.view(index));
                     auto result = urd::flat_vector<ygg::ColumnLayout>();
                     result.set(schema.begin(), schema.end());
                     return result;

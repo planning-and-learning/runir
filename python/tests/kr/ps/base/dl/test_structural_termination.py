@@ -13,7 +13,7 @@ from pyrunir.kr.dl.semantics import ConstructorRepository
 from pyrunir.kr.ps import IncompleteStructuralTerminationStatus
 from pyrunir.kr.ps.base import Repository
 from pyrunir.kr.ps.base.dl import (
-    BooleanFeature,
+    FeatureBaseBoolean,
     SccStructuralTerminationResult,
     SieveStructuralTerminationResult,
     SketchFactory,
@@ -230,7 +230,7 @@ def test_structural_termination_oscillator_counterexample_has_positional_valuati
     assert counterexample.num_edges == 2
 
     (feature,) = sketch.get_boolean_features()
-    assert isinstance(feature, BooleanFeature)
+    assert isinstance(feature, FeatureBaseBoolean)
     assert [item.index() for item in scc_result.booleans] == [feature.index()]
     assert scc_result.numericals == []
 
@@ -300,6 +300,6 @@ def test_incomplete_structural_termination_reports_blocking_reasons(gripper_plan
     }
     for surviving in result.surviving_rules:
         (reason,) = surviving.blocking_reasons
-        assert isinstance(reason.feature, BooleanFeature)
+        assert isinstance(reason.feature, FeatureBaseBoolean)
         (opposing,) = reason.opposing_rules
         assert opposing.index() != surviving.rule.index()

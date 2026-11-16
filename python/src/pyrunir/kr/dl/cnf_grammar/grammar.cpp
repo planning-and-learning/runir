@@ -6,21 +6,32 @@
 #include <runir/kr/dl/cnf_grammar/formatter.hpp>
 #include <runir/kr/dl/cnf_grammar/grammar_view.hpp>
 #include <tyr/formalism/planning/repository.hpp>
-#include <yggdrasil/python/bindings.hpp>
+#include <urd/python/bindings.hpp>
 
 namespace runir::kr::dl
 {
 
 void bind_cnf_grammar_grammar(nb::module_& m)
 {
-    using Type = runir::kr::dl::cnf_grammar::Grammar;
-    using View = urd::index_view<Type, runir::kr::dl::cnf_grammar::ConstructorRepository>;
-
-    urd::python::bind_index<urd::index<Type>>(m, "GrammarIndex");
-    auto cls = nb::class_<View>(m, "Grammar").def("index", &View::index);
-    ygg::add_print(cls);
-    urd::python::add_comparison(cls);
-    urd::python::add_hash(cls);
+    using Repository = runir::kr::dl::cnf_grammar::ConstructorRepository;
+    urd::python::bind_data<runir::kr::dl::cnf_grammar::DerivationRule<ConceptTag>>(m);
+    urd::python::bind_data<runir::kr::dl::cnf_grammar::DerivationRule<RoleTag>>(m);
+    urd::python::bind_data<runir::kr::dl::cnf_grammar::DerivationRule<BooleanTag>>(m);
+    urd::python::bind_data<runir::kr::dl::cnf_grammar::DerivationRule<NumericalTag>>(m);
+    urd::python::bind_view<urd::index_view<runir::kr::dl::cnf_grammar::DerivationRule<ConceptTag>, Repository>>(m);
+    urd::python::bind_view<urd::index_view<runir::kr::dl::cnf_grammar::DerivationRule<RoleTag>, Repository>>(m);
+    urd::python::bind_view<urd::index_view<runir::kr::dl::cnf_grammar::DerivationRule<BooleanTag>, Repository>>(m);
+    urd::python::bind_view<urd::index_view<runir::kr::dl::cnf_grammar::DerivationRule<NumericalTag>, Repository>>(m);
+    urd::python::bind_data<runir::kr::dl::cnf_grammar::SubstitutionRule<ConceptTag>>(m);
+    urd::python::bind_data<runir::kr::dl::cnf_grammar::SubstitutionRule<RoleTag>>(m);
+    urd::python::bind_data<runir::kr::dl::cnf_grammar::SubstitutionRule<BooleanTag>>(m);
+    urd::python::bind_data<runir::kr::dl::cnf_grammar::SubstitutionRule<NumericalTag>>(m);
+    urd::python::bind_view<urd::index_view<runir::kr::dl::cnf_grammar::SubstitutionRule<ConceptTag>, Repository>>(m);
+    urd::python::bind_view<urd::index_view<runir::kr::dl::cnf_grammar::SubstitutionRule<RoleTag>, Repository>>(m);
+    urd::python::bind_view<urd::index_view<runir::kr::dl::cnf_grammar::SubstitutionRule<BooleanTag>, Repository>>(m);
+    urd::python::bind_view<urd::index_view<runir::kr::dl::cnf_grammar::SubstitutionRule<NumericalTag>, Repository>>(m);
+    urd::python::bind_data<runir::kr::dl::cnf_grammar::Grammar>(m);
+    urd::python::bind_view<urd::index_view<runir::kr::dl::cnf_grammar::Grammar, Repository>>(m);
 }
 
 }  // namespace runir::kr::dl

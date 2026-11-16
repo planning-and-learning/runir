@@ -37,9 +37,7 @@ struct data<runir::kr::ps::icp::XCondition>
     ~data() = default;
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"operation", &data::operation>, urd::field<"object", &data::object>, urd::field<"feature", &data::feature>> {};
-    }
+    { return urd::Fields<urd::field<"operation", &data::operation>, urd::field<"object", &data::object>, urd::field<"feature", &data::feature>> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::operation, &data::object, &data::feature> {}; }
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operation, &data::object, &data::feature> {}; }
 };

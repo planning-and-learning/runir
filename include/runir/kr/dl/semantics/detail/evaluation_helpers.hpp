@@ -66,7 +66,7 @@ void evaluate_atomic_state_concept(urd::index_view<Concept<SemanticFamily, Atomi
     auto bitset = result.get();
 
     const auto predicate = constructor.get_predicate();
-    for (const auto atom : context.get_state().get_atoms_view(predicate))
+    for (const auto atom : context.get_state().get_atoms(predicate))
     {
         const auto object = detail::object_index(atom, 0);
         assert(ygg::uint_t(object.value) < num_objects);
@@ -83,7 +83,7 @@ void evaluate_atomic_goal_concept(urd::index_view<Concept<SemanticFamily, Atomic
     auto bitset = result.get();
 
     const auto predicate = constructor.get_predicate();
-    for (const auto atom : context.get_state().get_task().get_task().get_goal().template get_atoms_view<T>(constructor.get_polarity(), predicate))
+    for (const auto atom : context.get_state().get_task().get_task().get_goal().template get_atoms<T>(constructor.get_polarity(), predicate))
     {
         const auto object = detail::object_index(atom, 0);
         assert(ygg::uint_t(object.value) < num_objects);
@@ -99,7 +99,7 @@ void evaluate_atomic_state_role(urd::index_view<Role<SemanticFamily, AtomicState
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
 
     const auto predicate = constructor.get_predicate();
-    for (const auto atom : context.get_state().get_atoms_view(predicate))
+    for (const auto atom : context.get_state().get_atoms(predicate))
     {
         const auto lhs = detail::object_index(atom, 0);
         const auto rhs = detail::object_index(atom, 1);
@@ -117,7 +117,7 @@ void evaluate_atomic_goal_role(urd::index_view<Role<SemanticFamily, AtomicGoalTa
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
 
     const auto predicate = constructor.get_predicate();
-    for (const auto atom : context.get_state().get_task().get_task().get_goal().template get_atoms_view<T>(constructor.get_polarity(), predicate))
+    for (const auto atom : context.get_state().get_task().get_task().get_goal().template get_atoms<T>(constructor.get_polarity(), predicate))
     {
         const auto lhs = detail::object_index(atom, 0);
         const auto rhs = detail::object_index(atom, 1);
@@ -130,7 +130,7 @@ void evaluate_atomic_goal_role(urd::index_view<Role<SemanticFamily, AtomicGoalTa
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
 bool evaluate_atomic_state_boolean(urd::index_view<Boolean<SemanticFamily, AtomicStateTag<T>>, C> constructor, Context& context)
 {
-    auto atoms = context.get_state().get_atoms_view(constructor.get_predicate());
+    auto atoms = context.get_state().get_atoms(constructor.get_predicate());
     const auto value = atoms.begin() != atoms.end();
     return constructor.get_polarity() ? value : !value;
 }
@@ -138,7 +138,7 @@ bool evaluate_atomic_state_boolean(urd::index_view<Boolean<SemanticFamily, Atomi
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
 bool evaluate_atomic_goal_boolean(urd::index_view<Boolean<SemanticFamily, AtomicGoalTag<T>>, C> constructor, Context& context)
 {
-    auto atoms = context.get_state().get_task().get_task().get_goal().template get_atoms_view<T>(constructor.get_polarity(), constructor.get_predicate());
+    auto atoms = context.get_state().get_task().get_task().get_goal().template get_atoms<T>(constructor.get_polarity(), constructor.get_predicate());
     return atoms.begin() != atoms.end();
 }
 

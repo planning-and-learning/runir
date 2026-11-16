@@ -149,9 +149,7 @@ private:
         return [this, &graph](size_t slot) { return graph.result(slots[slot]); };
     }
     static bool modified(const EvaluationGraph<Kind>& graph, QueryEvaluationIndex index)
-    {
-        return !graph.change(index).added.empty() || !graph.change(index).removed.empty();
-    }
+    { return !graph.change(index).added.empty() || !graph.change(index).removed.empty(); }
     void set_targets(const EvaluationGraph<Kind>& graph)
     {
         URD_ASSUME(heuristic.has_value());  // Built by initialize(), which precedes every update().

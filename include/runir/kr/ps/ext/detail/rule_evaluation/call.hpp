@@ -56,7 +56,7 @@ private:
         rule.for_each_call_argument(
             [&]<typename FeatureTag, typename FC>(urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>, FC> argument)
             {
-                const auto denotation = evaluate<Kind>(argument.get_expression(), state_context);
+                const auto denotation = evaluate<Kind>(std::visit([](auto concrete) { return concrete.get_feature(); }, argument.get_variant()), state_context);
                 if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)
                     result->concept_arguments.push_back(denotation.index());
                 else if constexpr (std::same_as<FeatureTag, runir::kr::dl::RoleTag>)

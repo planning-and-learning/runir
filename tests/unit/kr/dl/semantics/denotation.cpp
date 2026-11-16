@@ -61,7 +61,7 @@ using Concept = Denotation<kr::dl::ConceptTag>;
 using ConceptView = kr::dl::semantics::DenotationView<kr::dl::ConceptTag>;
 static_assert(requires(urd::data<Concept>& data, const urd::builder<Concept>& builder, const ConceptView& view) {
     data.num_objects;
-    data.vec_index;
+    data.blocks;
     builder.get();
     view.value();
     view.begin();
@@ -71,7 +71,7 @@ using Role = Denotation<kr::dl::RoleTag>;
 using RoleView = kr::dl::semantics::DenotationView<kr::dl::RoleTag>;
 static_assert(requires(urd::data<Role>& data, const urd::builder<Role>& builder, const RoleView& view, urd::index<tyr::formalism::Object> object) {
     data.num_objects;
-    data.vec_index;
+    data.blocks;
     builder.get(object);
     builder.get_num_objects();
     builder.storage_bits();
@@ -145,8 +145,8 @@ TEST(RunirKrDlSemanticsDenotation, CountsRolePairs)
 
     auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
     auto repository = kr::dl::semantics::DenotationRepository(planning_repository);
-    const auto vec_index = repository.get_vector_repository().insert(builder.blocks).first;
-    auto data = urd::data<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(builder.get_num_objects(), vec_index);
+    const auto blocks = repository.get_vector_repository().insert(builder.blocks).first;
+    auto data = urd::data<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(builder.get_num_objects(), blocks);
     const auto view = repository.insert(data).first;
 
     EXPECT_TRUE(view.any());

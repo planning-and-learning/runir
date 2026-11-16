@@ -51,41 +51,45 @@ lower(const tyr::datalog::database::QueryPlan& plan, std::span<const QueryView<>
                     return leaves[node.get_input_slot()];
                 else if constexpr (std::same_as<Tag, tyr::datalog::database::QueryJoinTag>)
                 {
-                    auto data = urd::data<Query<QueryJoinTag>>(child(node.get_left_operand()).index(), child(node.get_right_operand()).index());
+                    auto data = urd::data<Query<QueryJoinTag>>(child(node.get_left_operand()).index(), child(node.get_right_operand()).index(), {}, {});
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, tyr::datalog::database::QueryUnionTag>)
                 {
-                    auto data = urd::data<Query<QueryUnionTag>>(child(node.get_left_operand()).index(), child(node.get_right_operand()).index());
+                    auto data = urd::data<Query<QueryUnionTag>>(child(node.get_left_operand()).index(), child(node.get_right_operand()).index(), {}, {});
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, tyr::datalog::database::QueryDifferenceTag>)
                 {
-                    auto data = urd::data<Query<QueryDifferenceTag>>(child(node.get_left_operand()).index(), child(node.get_right_operand()).index());
+                    auto data = urd::data<Query<QueryDifferenceTag>>(child(node.get_left_operand()).index(), child(node.get_right_operand()).index(), {}, {});
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, tyr::datalog::database::QueryProjectTag>)
                 {
-                    auto data = urd::data<Query<QueryProjectTag>>(child(node.get_operand()).index(), query_columns_from_labels(node.get_labels()));
+                    auto data = urd::data<Query<QueryProjectTag>>(child(node.get_operand()).index(), query_columns_from_labels(node.get_labels()), {});
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, tyr::datalog::database::QueryRenameTag>)
                 {
-                    auto data = urd::data<Query<QueryRenameTag>>(child(node.get_operand()).index(), query_columns_from_labels(node.get_labels()));
+                    auto data = urd::data<Query<QueryRenameTag>>(child(node.get_operand()).index(), query_columns_from_labels(node.get_labels()), {});
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, tyr::datalog::database::QuerySelectEqualTag>)
                 {
                     auto data = urd::data<Query<QuerySelectEqualTag>>(child(node.get_operand()).index(),
                                                                       urd::index<QueryColumn>(node.get_left_column().value),
-                                                                      urd::index<QueryColumn>(node.get_right_column().value));
+                                                                      urd::index<QueryColumn>(node.get_right_column().value),
+                                                                      {},
+                                                                      {});
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, tyr::datalog::database::QuerySelectValueTag>)
                 {
                     auto data = urd::data<Query<QuerySelectValueTag>>(child(node.get_operand()).index(),
                                                                       urd::index<QueryColumn>(node.get_column().value),
-                                                                      urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(node.get_constant())));
+                                                                      urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(node.get_constant())),
+                                                                      {},
+                                                                      {});
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, tyr::datalog::database::QueryGenericJoinTag>)
@@ -98,15 +102,16 @@ lower(const tyr::datalog::database::QueryPlan& plan, std::span<const QueryView<>
                     {
                         // A single input only reorders its columns.
                         const auto input = child(inputs.front());
-                        if (std::ranges::equal(input.get_columns(), output_order, {}, [](auto column) { return column.index(); }))
+                        if (std::ranges::equal(columns_of(input), output_order, {}, [](auto column) { return column.index(); }))
                             return input;
-                        auto data = urd::data<Query<QueryProjectTag>>(input.index(), output_order);
+                        auto data = urd::data<Query<QueryProjectTag>>(input.index(), output_order, {});
                         return insert_query(repository, data);
                     }
                     urd::flat_vector<urd::index<Query<>>> args;
                     for (const auto input : inputs)
                         args.push_back(child(input).index());
-                    auto data = urd::data<Query<QueryGenericJoinTag>>(std::move(args), query_columns_from_labels(node.get_variable_order()), output_order);
+                    auto data =
+                        urd::data<Query<QueryGenericJoinTag>>(std::move(args), query_columns_from_labels(node.get_variable_order()), output_order, {}, {});
                     return insert_query(repository, data);
                 }
                 else if constexpr (std::same_as<Tag, tyr::datalog::database::QueryEmptyTag>)
@@ -118,7 +123,7 @@ lower(const tyr::datalog::database::QueryPlan& plan, std::span<const QueryView<>
                             throw std::logic_error("Query optimization: an empty relation has a non-object column.");
                         columns.push_back(urd::index<QueryColumn>(column.label.value));
                     }
-                    auto data = urd::data<Query<QueryEmptyTag>>(std::move(columns));
+                    auto data = urd::data<Query<QueryEmptyTag>>(std::move(columns), {});
                     return insert_query(repository, data);
                 }
                 else
@@ -137,29 +142,19 @@ lower(const tyr::datalog::database::QueryPlan& plan, std::span<const QueryView<>
 
 template<>
 RecordView<Constructor<ConceptTag>> QueryOptimizer::optimize(RecordView<Constructor<ConceptTag>> view)
-{
-    return memoized(view);
-}
+{ return memoized(view); }
 template<>
 RecordView<Constructor<RoleTag>> QueryOptimizer::optimize(RecordView<Constructor<RoleTag>> view)
-{
-    return memoized(view);
-}
+{ return memoized(view); }
 template<>
 RecordView<Constructor<BooleanTag>> QueryOptimizer::optimize(RecordView<Constructor<BooleanTag>> view)
-{
-    return memoized(view);
-}
+{ return memoized(view); }
 template<>
 RecordView<Constructor<NumericalTag>> QueryOptimizer::optimize(RecordView<Constructor<NumericalTag>> view)
-{
-    return memoized(view);
-}
+{ return memoized(view); }
 template<>
 RecordView<Query<>> QueryOptimizer::optimize(RecordView<Query<>> view)
-{
-    return optimize_root(view, std::nullopt);
-}
+{ return optimize_root(view, std::nullopt); }
 
 template<>
 void QueryStatisticsCollector::collect(RecordView<Constructor<ConceptTag>> view)
@@ -231,7 +226,9 @@ RecordView<Query<QueryMustPassTag>> QueryOptimizer::rewrite(RecordView<Query<Que
                                                    optimize_root(view.get_sources(), std::nullopt).index(),
                                                    optimize_root(view.get_edges(), std::nullopt, tyr::datalog::database::Evaluation::bound).index(),
                                                    optimize_root(view.get_targets(), std::nullopt).index(),
-                                                   optimize_root(view.get_probes(), std::nullopt).index());
+                                                   optimize_root(view.get_probes(), std::nullopt).index(),
+                                                   view.get_columns(),
+                                                   tyr::datalog::database::MustPassPlan());  // columns and plan: derived on insert
     return runir::kr::dl::insert(*m_repository, data).first;
 }
 

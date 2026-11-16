@@ -316,7 +316,7 @@ ProjectionHeuristic make_projection_heuristic(const ygg::FreeRelationRepository&
         const auto i = abstraction.patterns[r];
         const auto query = abstraction.plan[abstraction.plan.roots()[r]];
         auto& database = databases.emplace_back(PatternDatabase { i, tyr::datalog::database::bound::QueryEvaluator(layer, query) });
-        const auto columns = query.columns();
+        const auto columns = tyr::datalog::database::columns_of(query);
         database.u_position = static_cast<size_t>(std::ranges::find(columns, from[i].label, &ygg::ColumnLayout::label) - columns.begin());
         database.v_position = static_cast<size_t>(std::ranges::find(columns, to[i].label, &ygg::ColumnLayout::label) - columns.begin());
         for (const auto slot : tyr::datalog::database::input_slots(std::span(&query, 1)))

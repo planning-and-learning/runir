@@ -71,8 +71,8 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
 {
     if constexpr (std::same_as<Tag, QueryJoinTag>)
     {
-        const auto lhs = urd::resolve(data.left_operand, repository).get_schema();
-        const auto rhs = urd::resolve(data.right_operand, repository).get_schema();
+        const auto lhs = schema_of(urd::resolve(data.left_operand, repository));
+        const auto rhs = schema_of(urd::resolve(data.right_operand, repository));
         data.plan = tyr::datalog::database::JoinPlan(lhs, rhs);
         data.columns.clear();
         data.columns.reserve(data.plan.output_columns().size());
@@ -81,7 +81,7 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
     }
     else if constexpr (std::same_as<Tag, QueryProjectTag>)
     {
-        const auto arg = urd::resolve(data.operand, repository).get_schema();
+        const auto arg = schema_of(urd::resolve(data.operand, repository));
         data.plan = tyr::datalog::database::ProjectionPlan(arg, query_labels(data.columns));
     }
     else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
@@ -92,7 +92,7 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
         urd::Store<urd::sequence<urd::index<QueryColumn>>> input_columns;
         for (const auto arg : data.args)
         {
-            const auto schema = urd::resolve(arg, repository).get_schema();
+            const auto schema = schema_of(urd::resolve(arg, repository));
             inputs.emplace_back(schema.begin(), schema.end());
             for (const auto column : get_query_columns(arg, repository))
                 if (std::ranges::find(input_columns, column) == input_columns.end())
@@ -117,10 +117,10 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
         require_keys("sources", data.sources);
         require_keys("edges", data.edges);
         require_keys("targets", data.targets);
-        const auto sources = urd::resolve(data.sources, repository).get_schema();
-        const auto edges = urd::resolve(data.edges, repository).get_schema();
-        const auto targets = urd::resolve(data.targets, repository).get_schema();
-        const auto probes = urd::resolve(data.probes, repository).get_schema();
+        const auto sources = schema_of(urd::resolve(data.sources, repository));
+        const auto edges = schema_of(urd::resolve(data.edges, repository));
+        const auto targets = schema_of(urd::resolve(data.targets, repository));
+        const auto probes = schema_of(urd::resolve(data.probes, repository));
         if (probes.size() != 1)
             throw std::invalid_argument("q_must_pass: the probes must have one column.");
         data.plan = tyr::datalog::database::MustPassPlan(sources, edges, targets, probes, data.keys.size());
@@ -129,8 +129,8 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
     }
     else if constexpr (std::same_as<Tag, QueryUnionTag> || std::same_as<Tag, QueryDifferenceTag>)
     {
-        const auto lhs = urd::resolve(data.left_operand, repository).get_schema();
-        const auto rhs = urd::resolve(data.right_operand, repository).get_schema();
+        const auto lhs = schema_of(urd::resolve(data.left_operand, repository));
+        const auto rhs = schema_of(urd::resolve(data.right_operand, repository));
         if (!std::ranges::equal(lhs, rhs))
             throw std::invalid_argument("Query: union and difference require identical ordered columns.");
         data.columns = get_query_columns(data.left_operand, repository);
@@ -139,14 +139,14 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
     else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
     {
         data.columns = get_query_columns(data.operand, repository);
-        data.plan = tyr::datalog::database::SelectEqualPlan(urd::resolve(data.operand, repository).get_schema(),
+        data.plan = tyr::datalog::database::SelectEqualPlan(schema_of(urd::resolve(data.operand, repository)),
                                                             urd::index<ygg::Column>(data.left_column.value),
                                                             urd::index<ygg::Column>(data.right_column.value));
     }
     else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
     {
         data.columns = get_query_columns(data.operand, repository);
-        data.plan = tyr::datalog::database::SelectValuePlan(urd::resolve(data.operand, repository).get_schema(),
+        data.plan = tyr::datalog::database::SelectValuePlan(schema_of(urd::resolve(data.operand, repository)),
                                                             urd::index<ygg::Column>(data.column.value),
                                                             ygg::type_id<urd::index<tyr::formalism::Object>>,
                                                             ygg::encode_value(data.object));
@@ -160,7 +160,7 @@ void prepare(urd::data<Query<Tag>>& data, const Repository& repository)
         else if constexpr (std::same_as<Tag, QueryConceptTag> || std::same_as<Tag, QueryRoleTag>)
             require_query_arity(arity, std::same_as<Tag, QueryConceptTag> ? 1 : 2);
         else if constexpr (std::same_as<Tag, QueryRenameTag>)
-            require_query_arity(arity, urd::resolve(data.operand, repository).get_schema().size());
+            require_query_arity(arity, schema_of(urd::resolve(data.operand, repository)).size());
     }
 }
 
@@ -169,7 +169,7 @@ void prepare(urd::data<QueryProjection<Category>>& data, const Repository& repos
 {
     const auto columns = query_columns(data.columns);
     require_query_arity(columns.size(), std::same_as<Category, ConceptTag> ? 1 : 2);
-    const auto arg = urd::resolve(data.operand, repository).get_schema();
+    const auto arg = schema_of(urd::resolve(data.operand, repository));
     data.plan = tyr::datalog::database::ProjectionPlan(arg, query_labels(data.columns));
 }
 

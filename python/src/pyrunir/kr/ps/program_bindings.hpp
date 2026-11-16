@@ -1,7 +1,6 @@
 #ifndef PYRUNIR_KR_PS_PROGRAM_BINDINGS_HPP_
 #define PYRUNIR_KR_PS_PROGRAM_BINDINGS_HPP_
 
-#include "pyrunir/kr/binding_utils.hpp"
 #include "pyrunir/module.hpp"
 
 #include <memory>
@@ -16,7 +15,7 @@
 #include <runir/kr/ps/repository.hpp>
 #include <runir/kr/ps/rule_variant_data.hpp>
 #include <runir/kr/ps/rule_variant_view.hpp>
-#include <string>
+#include <urd/python/bindings.hpp>
 #include <yggdrasil/python/bindings.hpp>
 
 /// Bindings every policy family (base, ext, icp) or program family (ext, icp) shares; each family's module calls them
@@ -39,48 +38,18 @@ void bind_repository(nb::module_& /*m*/, nb::class_<runir::kr::ps::BasicReposito
         .def("get_dl_repository", [](Repository& self) -> auto& { return self.get_dl_repository(); }, nb::rv_policy::reference_internal);
 }
 
-/// A memory state or module symbol: a record holding its name.
-template<typename T, typename Repository>
-void bind_named(nb::module_& m, nb::class_<Repository>& repository, const std::string& name)
-{
-    using Data = urd::data<T>;
-    using View = urd::index_view<T, Repository>;
-    urd::python::bind_index<urd::index<T>>(m, name + "Index");
-    auto data = nb::class_<Data>(m, (name + "Data").c_str())
-                    .def(nb::init<>())
-                    .def(nb::init<urd::flat_string>(), nb::arg("name"))
-                    .def_rw("index", &Data::index)
-                    .def_rw("name", &Data::name);
-    urd::python::add_comparison(data);
-    auto view = nb::class_<View>(m, name.c_str()).def("index", &View::index).def("get_name", &View::get_name);
-    ygg::add_print(view);
-    urd::python::add_comparison(view);
-    urd::python::add_hash(view);
-    ygg::bind_insert<T>(repository);
-}
-
+/// The views of the memory states, module symbols and rule variants of a program family (ext, icp), whose records are
+/// bound first (bind_data), and their insertion into the family's repository.
 template<runir::kr::ps::ProgramFamilyTag Family>
-void bind_rule_variant(nb::module_& m, nb::class_<runir::kr::ps::Repository<Family>>& repository)
+void bind_program_record_views(nb::module_& m, nb::class_<runir::kr::ps::Repository<Family>>& repository)
 {
-    using T = runir::kr::ps::Rule<Family>;
     using Repository = runir::kr::ps::Repository<Family>;
-    using Data = urd::data<T>;
-    using View = urd::index_view<T, Repository>;
-    urd::python::bind_index<urd::index<T>>(m, "RuleVariantIndex");
-    auto data =
-        nb::class_<Data>(m, "RuleVariantData")
-            .def(nb::init<>())
-            .def(nb::init<urd::flat_string, typename Data::Variant>(), nb::arg("symbol"), nb::arg("variant"))
-            .def(urd::python::init_from_views<urd::flat_string, urd::resolved_t<typename Data::Variant, Repository>>(), nb::arg("symbol"), nb::arg("variant"))
-            .def_rw("index", &Data::index)
-            .def_rw("symbol", &Data::symbol)
-            .def_rw("variant", &Data::variant);
-    urd::python::add_comparison(data);
-    auto view = nb::class_<View>(m, "RuleVariant").def("index", &View::index).def("get_symbol", &View::get_symbol).def("get_variant", &View::get_variant);
-    ygg::add_print(view);
-    urd::python::add_comparison(view);
-    urd::python::add_hash(view);
-    ygg::bind_insert<T>(repository);
+    urd::python::bind_view<urd::index_view<runir::kr::ps::MemoryState<Family>, Repository>>(m);
+    urd::python::bind_view<urd::index_view<runir::kr::ps::ModuleSymbol<Family>, Repository>>(m);
+    urd::python::bind_view<urd::index_view<runir::kr::ps::Rule<Family>, Repository>>(m);
+    ygg::bind_insert<runir::kr::ps::MemoryState<Family>>(repository);
+    ygg::bind_insert<runir::kr::ps::ModuleSymbol<Family>>(repository);
+    ygg::bind_insert<runir::kr::ps::Rule<Family>>(repository);
 }
 
 }  // namespace runir::kr::python

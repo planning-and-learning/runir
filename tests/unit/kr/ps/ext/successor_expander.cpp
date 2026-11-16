@@ -122,9 +122,7 @@ TEST(RunirTests, ExtDistanceFeatureEvaluationDoesNotRetainTaskDenotations)
 TEST(RunirTests, ExtInitialStatesUseExpanderRepositoryGround) { expect_initial_program_state_uses_expander_repository<tyr::GroundTag>(); }
 
 TEST(RunirTests, ExtTransientProgramStatesRetainValuesAndInternCallersGround)
-{
-    expect_transient_program_states_retain_values_and_intern_callers<tyr::GroundTag>();
-}
+{ expect_transient_program_states_retain_values_and_intern_callers<tyr::GroundTag>(); }
 
 TEST(RunirTests, ExtChooseUsesNaturalBindingOrder)
 {
@@ -558,7 +556,7 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     EXPECT_EQ(call_steps.front().status, kr::ps::ProgramOutcome::APPLIED);
     const auto call_target = call_steps.front().get_target();
     const auto module_state = call_target.get_module_state();
-    EXPECT_EQ(module_state.get_module().index(), callee.index());
+    EXPECT_EQ(module_state.get_mod().index(), callee.index());
     EXPECT_EQ(module_state.get_memory_state().index(), callee_entry.index());
     const auto arguments = module_state.get_arguments();
     const auto concept_arguments = arguments.arguments<kr::dl::ConceptTag>();
@@ -611,7 +609,7 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     ASSERT_EQ(return_steps.size(), 1);
     EXPECT_EQ(return_steps.front().status, kr::ps::ProgramOutcome::RESTORED_CALLER);
     EXPECT_EQ(return_steps.front().get_target().get_call_stack(), caller_frame.value().get_caller());
-    EXPECT_EQ(return_steps.front().get_target().get_module_state().get_module().index(), caller.index());
+    EXPECT_EQ(return_steps.front().get_target().get_module_state().get_mod().index(), caller.index());
     EXPECT_EQ(return_steps.front().get_target().get_module_state().get_memory_state().index(), caller_return.index());
 
     const auto repeated_call_steps = collect_steps(expander, initial_state);
@@ -659,7 +657,7 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
     const auto steps = collect_steps(expander, expander.initial_state(planning_node.get_state()));
     ASSERT_EQ(steps.size(), 1);
     EXPECT_EQ(steps.front().status, kr::ps::ProgramOutcome::APPLIED);
-    EXPECT_EQ(steps.front().get_target().get_module_state().get_module().index(), callee.index());
+    EXPECT_EQ(steps.front().get_target().get_module_state().get_mod().index(), callee.index());
     EXPECT_EQ(steps.front().get_target().get_module_state().get_memory_state().index(), callee_entry.index());
 }
 

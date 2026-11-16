@@ -22,23 +22,25 @@
 namespace runir::kr::python
 {
 
-/// optimize(repository[, statistics]) and collect_query_statistics(contexts) on any ps record view: a feature, a
-/// sketch, a program, a module or a classifier.
+/// optimize(view, repository[, statistics]), collect_query_statistics(view, contexts) and query_statistics_sampler(view)
+/// of any ps record view: a feature, a sketch, a program, a module or a classifier.
 template<runir::kr::FamilyTag Family, typename Repository, typename View>
-void bind_ps_optimize(nanobind::class_<View>& cls)
+void bind_ps_optimize(nanobind::module_& m)
 {
     namespace nb = nanobind;
     using Statistics = runir::kr::dl::QueryStatistics;
     using GroundContext = runir::kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
     using LiftedContext = runir::kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>;
-    cls.def(
-           "optimize",
-           [](const View& view, Repository& repository) { return runir::kr::ps::dl::optimize(view, repository); },
-           nb::arg("repository"),
-           nb::keep_alive<0, 2>())
+    m.def(
+         "optimize",
+         [](const View& view, Repository& repository) { return runir::kr::ps::dl::optimize(view, repository); },
+         nb::arg("view"),
+         nb::arg("repository"),
+         nb::keep_alive<0, 2>())
         .def(
             "optimize",
             [](const View& view, Repository& repository, const Statistics& statistics) { return runir::kr::ps::dl::optimize(view, repository, statistics); },
+            nb::arg("view"),
             nb::arg("repository"),
             nb::arg("statistics"),
             nb::keep_alive<0, 2>())
@@ -51,6 +53,7 @@ void bind_ps_optimize(nanobind::class_<View>& cls)
                 ygg::issue_warnings(warnings);
                 return statistics;
             },
+            nb::arg("view"),
             nb::arg("contexts"))
         .def(
             "collect_query_statistics",
@@ -61,8 +64,9 @@ void bind_ps_optimize(nanobind::class_<View>& cls)
                 ygg::issue_warnings(warnings);
                 return statistics;
             },
+            nb::arg("view"),
             nb::arg("contexts"))
-        .def("query_statistics_sampler", [](const View& view) { return runir::kr::ps::dl::query_statistics_sampler(view); });
+        .def("query_statistics_sampler", [](const View& view) { return runir::kr::ps::dl::query_statistics_sampler(view); }, nb::arg("view"));
 }
 
 }  // namespace runir::kr::python

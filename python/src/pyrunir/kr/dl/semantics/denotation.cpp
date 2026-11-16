@@ -3,7 +3,6 @@
 
 #include <concepts>
 #include <cstddef>
-#include <nanobind/make_iterator.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/vector.h>
 #include <optional>
@@ -11,55 +10,38 @@
 #include <runir/kr/dl/semantics/denotation_view.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <tyr/formalism/object_view.hpp>
+#include <urd/python/bindings.hpp>
 #include <urd/python/owner.hpp>
 #include <vector>
-#include <yggdrasil/python/bindings.hpp>
 
 namespace runir::kr::dl
 {
 namespace
 {
 
+/// The view of the denotation of Category (its record is bound first, bind_data); a concept's or role's denotation also gives its objects (or
+/// object pairs) as the views it holds, and a boolean's or numerical's its value.
 template<CategoryTag Category>
-void bind_denotation_view(nb::module_& m, const char* name)
+void bind_denotation_view(nb::module_& m)
 {
-    using Type = runir::kr::dl::semantics::Denotation<Category>;
-    using View = urd::index_view<Type, runir::kr::dl::semantics::DenotationRepository>;
-
-    auto cls = nb::class_<View>(m, name).def("index", &View::index);
-    ygg::add_print(cls);
-    urd::python::add_comparison(cls);
-    urd::python::add_hash(cls);
-
-    if constexpr (BooleanOrNumericalTag<Category>)
-        cls.def("get", [](View view) { return view.value(); });
-
-    if constexpr (std::same_as<Category, ConceptTag>)
-        cls.def(
-            "__iter__",
-            [](const View& view) { return nb::make_iterator(nb::type<View>(), "ConceptDenotationIterator", view.begin(), view.end()); },
-            nb::keep_alive<0, 1>());
-
-    if constexpr (std::same_as<Category, RoleTag>)
-        cls.def(
-            "__iter__",
-            [](const View& view) { return nb::make_iterator(nb::type<View>(), "RoleDenotationIterator", view.begin(), view.end()); },
-            nb::keep_alive<0, 1>());
+    using View = urd::index_view<runir::kr::dl::semantics::Denotation<Category>, runir::kr::dl::semantics::DenotationRepository>;
+    auto cls = urd::python::bind_view<View>(m);
+    if constexpr (ConceptOrRoleTag<Category>)
+        cls.def("views", &View::views);
 }
 
 }  // namespace
 
 void bind_semantics_denotation(nb::module_& m)
 {
-    urd::python::bind_index<urd::index<runir::kr::dl::semantics::Denotation<BooleanTag>>>(m, "BooleanDenotationIndex");
-    urd::python::bind_index<urd::index<runir::kr::dl::semantics::Denotation<NumericalTag>>>(m, "NumericalDenotationIndex");
-    urd::python::bind_index<urd::index<runir::kr::dl::semantics::Denotation<ConceptTag>>>(m, "ConceptDenotationIndex");
-    urd::python::bind_index<urd::index<runir::kr::dl::semantics::Denotation<RoleTag>>>(m, "RoleDenotationIndex");
-
-    bind_denotation_view<BooleanTag>(m, "BooleanDenotation");
-    bind_denotation_view<NumericalTag>(m, "NumericalDenotation");
-    bind_denotation_view<ConceptTag>(m, "ConceptDenotation");
-    bind_denotation_view<RoleTag>(m, "RoleDenotation");
+    urd::python::bind_data<semantics::Denotation<BooleanTag>>(m);
+    urd::python::bind_data<semantics::Denotation<NumericalTag>>(m);
+    urd::python::bind_data<semantics::Denotation<ConceptTag>>(m);
+    urd::python::bind_data<semantics::Denotation<RoleTag>>(m);
+    bind_denotation_view<BooleanTag>(m);
+    bind_denotation_view<NumericalTag>(m);
+    bind_denotation_view<ConceptTag>(m);
+    bind_denotation_view<RoleTag>(m);
 }
 
 }  // namespace runir::kr::dl

@@ -9,10 +9,10 @@ from fixture_utils import load_fixture, read_fixture
 from pytyr.formalism.planning import PlanningDomain
 
 from pyrunir.datasets import GroundTaskSearchContext
-from pyrunir.kr import DomainContext, GroundTaskContext, SemanticError
+from pyrunir.kr import DomainContext, GroundTaskContext, SemanticError, uns
 from pyrunir.kr.dl import semantics
 from pyrunir.kr.uns import classify
-from pyrunir.kr.uns.dl import BooleanFeature, ConcreteBooleanFeature, parse_classifier
+from pyrunir.kr.uns.dl import ConcreteFeatureUnsDlBoolean, FeatureUnsBoolean, parse_classifier
 
 
 class ClassifierFixture(TypedDict):
@@ -41,14 +41,14 @@ def test_classifier_fixture(
         classifier = parse_classifier(description, gripper_planning_domain, domain_context.uns_repository)
         assert classifier.get_symbol() == symbol
         for feature in classifier.get_features():
-            assert isinstance(feature, BooleanFeature)
+            assert isinstance(feature, FeatureUnsBoolean)
             concrete = feature.get_variant()
-            assert isinstance(concrete, ConcreteBooleanFeature)
-            assert feature.get_expression() == concrete.get_expression()
-            assert feature.get_symbol() == concrete.get_symbol()
+            assert isinstance(concrete, ConcreteFeatureUnsDlBoolean)
+            assert feature.get_variant().get_feature() == concrete.get_feature()
+            assert feature.get_variant().get_symbol() == concrete.get_symbol()
         for clause in classifier.get_clauses():
             for literal in clause.get_literals():
-                assert isinstance(literal.get_feature(), BooleanFeature)
+                assert isinstance(literal.get_feature(), FeatureUnsBoolean)
         assert str(parse_classifier(str(classifier), gripper_planning_domain, domain_context.uns_repository)) == str(
             classifier
         )
@@ -76,7 +76,7 @@ def test_classifier_and_features_use_the_context_cache(
     feature = classifier.get_features()[0]
 
     assert classify(classifier, context) is True
-    assert feature.evaluate(context).get() is True
-    assert feature.get_variant().evaluate(context).get() is True
+    assert uns.dl.evaluate(feature, context).get_value() is True
+    assert uns.dl.evaluate(feature.get_variant(), context).get_value() is True
     storage.reset_all()
     assert classify(classifier, context) is True

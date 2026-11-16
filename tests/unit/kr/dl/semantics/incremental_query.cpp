@@ -346,7 +346,7 @@ void check_query_graph()
         EXPECT_THROW(fresh.get_delta(), std::logic_error);
         auto initial = evaluator.initialize(initial_context);
         expect_unpublished();
-        EXPECT_TRUE(std::ranges::equal(initial.get_result().columns(), query.get_schema()));
+        EXPECT_TRUE(std::ranges::equal(initial.get_result().columns(), schema_of(query)));
         if (expression == static_role)
         {
             // Its feature child may be interned; the static query root is owned here.

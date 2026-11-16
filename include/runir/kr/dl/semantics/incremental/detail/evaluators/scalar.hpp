@@ -34,9 +34,7 @@ struct ScalarBinaryEvaluator
     }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
-    {
-        refresh(graph);
-    }
+    { refresh(graph); }
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&) { refresh(graph); }
 };
 
@@ -49,9 +47,7 @@ struct LogicalNotEvaluator
     explicit LogicalNotEvaluator(EvaluationIndex<BooleanTag> child_) : child(child_) {}
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
-    {
-        value.set(!graph.result(child).value());
-    }
+    { value.set(!graph.result(child).value()); }
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&) { value.set(!graph.result(child).value()); }
 };
 

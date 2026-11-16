@@ -14,11 +14,13 @@ namespace runir::kr::ps::icp
 
 struct Histories
 {
+    static constexpr auto name = "Histories";
 };
 
 template<tyr::TaskKind Kind>
 struct ProgramState
 {
+    static constexpr auto name = "ProgramState";
 };
 
 template<tyr::TaskKind Kind>

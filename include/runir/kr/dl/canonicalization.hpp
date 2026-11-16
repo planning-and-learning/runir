@@ -17,9 +17,7 @@ void canonicalize(urd::data<QueryProjection<Category>>&) noexcept
 }
 template<ConceptOrRoleTag Category>
 bool is_canonical(const urd::data<QueryProjection<Category>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 inline void canonicalize(urd::data<QueryColumn>&) noexcept {}
 inline bool is_canonical(const urd::data<QueryColumn>&) noexcept { return true; }
@@ -29,9 +27,7 @@ void canonicalize(urd::data<Query<Tag>>&) noexcept
 }
 template<typename Tag>
 bool is_canonical(const urd::data<Query<Tag>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 /// Orders the two operands of a commutative binary constructor so that equal expressions get equal data.
 template<typename T>
@@ -47,45 +43,31 @@ void canonicalize_commutative_binary(urd::data<T>& data) noexcept
 
 template<typename F, typename Tag>
 bool is_canonical(const urd::data<Concept<F, Tag>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<typename F, typename Tag>
 bool is_canonical(const urd::data<Role<F, Tag>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<typename F, typename Tag>
 bool is_canonical(const urd::data<Boolean<F, Tag>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<typename F, typename Tag>
 bool is_canonical(const urd::data<Numerical<F, Tag>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<CategoryTag Category>
 bool is_canonical(const urd::data<Constructor<Category>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<CategoryTag Category>
 bool is_canonical(const urd::data<Argument<Category>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<ConceptOrRoleTag Category>
 bool is_canonical(const urd::data<Register<Category>>&) noexcept
-{
-    return true;
-}
+{ return true; }
 
 template<typename F, typename Tag>
 void canonicalize(urd::data<Concept<F, Tag>>&) noexcept
@@ -131,63 +113,43 @@ void canonicalize(urd::data<Register<Category>>&) noexcept
 
 template<typename F>
 bool is_canonical(const urd::data<Concept<F, IntersectionTag>>& data) noexcept
-{
-    return data.left_operand <= data.right_operand;
-}
+{ return data.left_operand <= data.right_operand; }
 
 template<typename F>
 bool is_canonical(const urd::data<Concept<F, UnionTag>>& data) noexcept
-{
-    return data.left_operand <= data.right_operand;
-}
+{ return data.left_operand <= data.right_operand; }
 
 template<typename F>
 bool is_canonical(const urd::data<Concept<F, AgreementTag>>& data) noexcept
-{
-    return data.left_operand <= data.right_operand;
-}
+{ return data.left_operand <= data.right_operand; }
 
 template<typename F>
 bool is_canonical(const urd::data<Role<F, IntersectionTag>>& data) noexcept
-{
-    return data.left_operand <= data.right_operand;
-}
+{ return data.left_operand <= data.right_operand; }
 
 template<typename F>
 bool is_canonical(const urd::data<Role<F, UnionTag>>& data) noexcept
-{
-    return data.left_operand <= data.right_operand;
-}
+{ return data.left_operand <= data.right_operand; }
 
 template<typename F>
 void canonicalize(urd::data<Concept<F, IntersectionTag>>& data) noexcept
-{
-    canonicalize_commutative_binary(data);
-}
+{ canonicalize_commutative_binary(data); }
 
 template<typename F>
 void canonicalize(urd::data<Concept<F, UnionTag>>& data) noexcept
-{
-    canonicalize_commutative_binary(data);
-}
+{ canonicalize_commutative_binary(data); }
 
 template<typename F>
 void canonicalize(urd::data<Concept<F, AgreementTag>>& data) noexcept
-{
-    canonicalize_commutative_binary(data);
-}
+{ canonicalize_commutative_binary(data); }
 
 template<typename F>
 void canonicalize(urd::data<Role<F, IntersectionTag>>& data) noexcept
-{
-    canonicalize_commutative_binary(data);
-}
+{ canonicalize_commutative_binary(data); }
 
 template<typename F>
 void canonicalize(urd::data<Role<F, UnionTag>>& data) noexcept
-{
-    canonicalize_commutative_binary(data);
-}
+{ canonicalize_commutative_binary(data); }
 
 }  // namespace runir
 

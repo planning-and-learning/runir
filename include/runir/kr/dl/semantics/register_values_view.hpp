@@ -21,6 +21,9 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
+    auto get_concept_values() const noexcept { return self().template member<&urd::record_of<V>::concept_values>(); }
+    auto get_role_values() const noexcept { return self().template member<&urd::record_of<V>::role_values>(); }
+
     /// The formalism repository: the context's, or the context itself for a register record held outside it.
     const auto& get_formalism_repository() const noexcept
     {
@@ -34,9 +37,9 @@ public:
     auto values() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return self().template member<&urd::record_of<V>::concept_values>();
+            return get_concept_values();
         else
-            return self().template member<&urd::record_of<V>::role_values>();
+            return get_role_values();
     }
 
     template<runir::kr::dl::ConceptOrRoleTag Category>

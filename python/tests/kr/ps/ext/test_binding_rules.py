@@ -13,23 +13,23 @@ from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext.dl import parse_module
 from pyrunir.serialization import register_table, serialize, table
 
-BindingRule: TypeAlias = ext.ConceptLoadRule | ext.RoleLoadRule | ext.ConceptChooseRule | ext.RoleChooseRule
+BindingRule: TypeAlias = ext.RuleLoadConcept | ext.RuleLoadRole | ext.RuleChooseConcept | ext.RuleChooseRole
 BindingRuleData: TypeAlias = (
-    ext.ConceptLoadRuleData | ext.RoleLoadRuleData | ext.ConceptChooseRuleData | ext.RoleChooseRuleData
+    ext.RuleLoadConceptData | ext.RuleLoadRoleData | ext.RuleChooseConceptData | ext.RuleChooseRoleData
 )
 EffectIndex: TypeAlias = (
-    ext.dl.PositiveBooleanEffectIndex
-    | ext.dl.NegativeBooleanEffectIndex
-    | ext.dl.UnchangedBooleanEffectIndex
-    | ext.dl.IncreasesNumericalEffectIndex
-    | ext.dl.DecreasesNumericalEffectIndex
-    | ext.dl.UnchangedNumericalEffectIndex
+    ext.dl.ConcreteEffectExtDlBooleanPositiveIndex
+    | ext.dl.ConcreteEffectExtDlBooleanNegativeIndex
+    | ext.dl.ConcreteEffectExtDlBooleanUnchangedIndex
+    | ext.dl.ConcreteEffectExtDlNumericalIncreasesIndex
+    | ext.dl.ConcreteEffectExtDlNumericalDecreasesIndex
+    | ext.dl.ConcreteEffectExtDlNumericalUnchangedIndex
 )
 RULE_TYPES = {
-    ("concept", "load"): ext.ConceptLoadRule,
-    ("role", "load"): ext.RoleLoadRule,
-    ("concept", "choose"): ext.ConceptChooseRule,
-    ("role", "choose"): ext.RoleChooseRule,
+    ("concept", "load"): ext.RuleLoadConcept,
+    ("role", "load"): ext.RuleLoadRole,
+    ("concept", "choose"): ext.RuleChooseConcept,
+    ("role", "choose"): ext.RuleChooseRole,
 }
 
 
@@ -49,27 +49,27 @@ def _interns_to(
     order: Sequence[ext.OrderTermIndex] | None = None,
 ) -> bool:
     """Rebuild ``rule``'s data with ``effects`` and ``order`` and report whether it interns to ``rule``."""
-    if isinstance(rule, ext.ConceptLoadRule):
-        concept_load = ext.ConceptLoadRuleData()
+    if isinstance(rule, ext.RuleLoadConcept):
+        concept_load = ext.RuleLoadConceptData()
         _set_common_fields(concept_load, rule, effects)
         concept_load.feature = rule.get_feature().index()
         concept_load.slot = rule.get_slot().index()
         return repository.insert(concept_load)[0] == rule
-    if isinstance(rule, ext.RoleLoadRule):
-        role_load = ext.RoleLoadRuleData()
+    if isinstance(rule, ext.RuleLoadRole):
+        role_load = ext.RuleLoadRoleData()
         _set_common_fields(role_load, rule, effects)
         role_load.feature = rule.get_feature().index()
         role_load.slot = rule.get_slot().index()
         return repository.insert(role_load)[0] == rule
-    if isinstance(rule, ext.ConceptChooseRule):
-        concept_choose = ext.ConceptChooseRuleData()
+    if isinstance(rule, ext.RuleChooseConcept):
+        concept_choose = ext.RuleChooseConceptData()
         _set_common_fields(concept_choose, rule, effects)
         concept_choose.feature = rule.get_feature().index()
         concept_choose.slot = rule.get_slot().index()
         if order is not None:
             concept_choose.order = order
         return repository.insert(concept_choose)[0] == rule
-    role_choose = ext.RoleChooseRuleData()
+    role_choose = ext.RuleChooseRoleData()
     _set_common_fields(role_choose, rule, effects)
     role_choose.feature = rule.get_feature().index()
     role_choose.slot = rule.get_slot().index()
@@ -114,14 +114,18 @@ def test_binding_rules_parse_construct_and_serialize(
         "effects",
     ] + (["order"] if kind == "choose" else [])
     dictionaries = Dictionaries()
-    register_table(dictionaries, ext.RuleVariant, "variants", "v")
+    register_table(dictionaries, ext.RuleExt, "variants", "v")
     register_table(dictionaries, rule_type, "bindings", "r", fields=("source", "target", "effects"))
-    register_table(dictionaries, ext.MemoryState, "memory", "m")
+    register_table(dictionaries, ext.MemoryStateExt, "memory", "m")
     register_table(
-        dictionaries, ext.dl.IncreasesNumericalEffect, "effects", "e", project=lambda effect: {"text": str(effect)}
+        dictionaries,
+        ext.dl.ConcreteEffectExtDlNumericalIncreases,
+        "effects",
+        "e",
+        project=lambda effect: {"text": str(effect)},
     )
     assert serialize(dictionaries, variant) == "v0"
-    assert table(dictionaries, ext.RuleVariant) == [{"symbol": "bind", "variant": "r0"}]
+    assert table(dictionaries, ext.RuleExt) == [{"symbol": "bind", "variant": "r0"}]
     assert table(dictionaries, rule_type) == [
         {
             "source": "m0",
@@ -130,7 +134,7 @@ def test_binding_rules_parse_construct_and_serialize(
         }
     ]
     effects_table = [{"text": str(effect)} for effect in rule.get_effects()]
-    assert table(dictionaries, ext.dl.IncreasesNumericalEffect) == effects_table
+    assert table(dictionaries, ext.dl.ConcreteEffectExtDlNumericalIncreases) == effects_table
 
 
 @pytest.mark.parametrize(("category", "expression"), [("concept", "c_top"), ("role", "r_universal")])
@@ -148,7 +152,7 @@ def test_choose_order_data_and_serialization(
           (:order (max flag) (min n) (max flag)))))))"""
     module = parse_module(source, gripper_planning_domain, repository)
     rule = module.get_memory_transitions()[0][0].get_variant()
-    assert isinstance(rule, (ext.ConceptChooseRule, ext.RoleChooseRule))
+    assert isinstance(rule, (ext.RuleChooseConcept, ext.RuleChooseRole))
     terms = rule.get_order()
     assert terms[0].index() == terms[2].index()
     assert [t.get_direction() for t in terms] == [
@@ -156,7 +160,7 @@ def test_choose_order_data_and_serialization(
         ext.OrderDirection.MIN,
         ext.OrderDirection.MAX,
     ]
-    assert [t.get_feature().get_symbol() for t in terms] == ["flag", "n", "flag"]
+    assert [t.get_feature().get_variant().get_symbol() for t in terms] == ["flag", "n", "flag"]
     assert str(parse_module(str(module), gripper_planning_domain, repository)) == str(module)
     values: list[ext.OrderTermIndex] = []
     for term in terms:
@@ -168,9 +172,19 @@ def test_choose_order_data_and_serialization(
     assert _interns_to(repository, rule, None, values)
     assert not _interns_to(repository, rule, None, list(reversed(values[:2])))
     dictionaries = Dictionaries()
-    register_table(dictionaries, ext.dl.BooleanFeature, "booleans", "b", project=lambda f: {"symbol": f.get_symbol()})
     register_table(
-        dictionaries, ext.dl.NumericalFeature, "numericals", "n", project=lambda f: {"symbol": f.get_symbol()}
+        dictionaries,
+        ext.dl.FeatureExtBoolean,
+        "booleans",
+        "b",
+        project=lambda f: {"symbol": f.get_variant().get_symbol()},
+    )
+    register_table(
+        dictionaries,
+        ext.dl.FeatureExtNumerical,
+        "numericals",
+        "n",
+        project=lambda f: {"symbol": f.get_variant().get_symbol()},
     )
     register_table(dictionaries, ext.OrderTerm, "ordering", "o")
     register_table(dictionaries, type(rule), "rules", "r", fields=("order",))

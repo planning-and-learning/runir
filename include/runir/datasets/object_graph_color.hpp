@@ -49,10 +49,12 @@ namespace runir::datasets
 template<::tyr::formalism::FactKind T>
 struct PredicateColor
 {
+    static constexpr auto name = "PredicateColor";
 };
 
 struct Color
 {
+    static constexpr auto name = "Color";
 };
 
 enum class PredicateContext : std::uint8_t
@@ -62,6 +64,10 @@ enum class PredicateContext : std::uint8_t
 };
 
 class ColorRepository;
+
+/// One predicate color of a vertex color: of a static or a fluent predicate.
+using ColorVariant =
+    urd::index_variant<boost::mp11::mp_transform<PredicateColor, boost::mp11::mp_list<::tyr::formalism::StaticTag, ::tyr::formalism::FluentTag>>>;
 
 }  // namespace runir::datasets
 
@@ -103,23 +109,20 @@ struct data<runir::datasets::PredicateColor<T>>
 template<>
 struct data<runir::datasets::Color>
 {
-    using Variant = urd::index_variant<
-        boost::mp11::mp_transform<runir::datasets::PredicateColor, boost::mp11::mp_list<::tyr::formalism::StaticTag, ::tyr::formalism::FluentTag>>>;
-    using VariantList = urd::flat_vector<Variant>;
-
     urd::index<runir::datasets::Color> index;
-    VariantList values;
+    urd::flat_vector<runir::datasets::ColorVariant> values;
 
     data() = default;
-    explicit data(VariantList values_) : index(), values(std::move(values_)) {}
-    data(const data&) = delete;
-    data& operator=(const data&) = delete;
-    data(data&&) = default;
-    data& operator=(data&&) = default;
+    explicit data(urd::flat_vector<runir::datasets::ColorVariant> values_) : index(), values(std::move(values_)) {}
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
     ~data() = default;
 
-    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::values> {}; }
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"values", &data::values>> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::values> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::values> {}; }
 };
 
 }  // namespace urd
@@ -135,7 +138,7 @@ private:
 public:
     auto get_predicate() const noexcept { return self().template member<&urd::record_of<V>::predicate>(); }
     auto get_argument_position() const noexcept { return self().template member<&urd::record_of<V>::argument_position>(); }
-    auto get_predicate_context() const noexcept { return self().template member<&urd::record_of<V>::context>(); }
+    auto get_context() const noexcept { return self().template member<&urd::record_of<V>::context>(); }
 };
 
 template<typename V>
@@ -145,7 +148,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_colors() const noexcept { return self().template member<&urd::record_of<V>::values>(); }
+    auto get_values() const noexcept { return self().template member<&urd::record_of<V>::values>(); }
 };
 }  // namespace urd
 

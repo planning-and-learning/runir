@@ -83,7 +83,7 @@ void AtomicQueryEvaluator<Fact>::initialize(const State& state)
     m_initialized = false;
     m_result.clear();
     m_delta.clear();
-    for (const auto atom : state.get_atoms_view(m_predicate))
+    for (const auto atom : state.get_atoms(m_predicate))
         m_result.insert(encode_object_row(atom.get_row().get_key().second, m_row));
     m_initialized = true;
 }

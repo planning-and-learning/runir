@@ -17,6 +17,8 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <tyr/datalog/lifted/database/semantics/must_pass_plan.hpp>
+#include <tyr/datalog/lifted/database/syntax/formatter.hpp>
 #include <tyr/formalism/planning/formatter.hpp>
 #include <urd/elements/flat.hpp>
 #include <urd/format.hpp>
@@ -50,9 +52,7 @@ std::string constructor(std::string_view keyword, Components&&... components)
 
 template<typename Columns>
 std::string query_columns(Columns columns)
-{
-    return fmt::format("({})", fmt::join(columns, " "));
-}
+{ return fmt::format("({})", fmt::join(columns, " ")); }
 
 template<typename Tag, typename C>
 std::string query(urd::index_view<runir::kr::dl::Query<Tag>, C> view)
@@ -130,14 +130,14 @@ std::string denotation(urd::index_view<runir::kr::dl::semantics::Denotation<Cate
     }
     else if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
     {
-        return fmt::format("{}{}", Category::name, view.value());
+        return fmt::format("{}{}", Category::keyword, view.value());
     }
     else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
     {
         auto pairs = urd::Store<urd::sequence<std::string>> {};
         for (auto [source, target] : view)
             pairs.push_back(fmt::format("({}, {})", source.index(), target.index()));
-        return fmt::format("{}{{{}}}", Category::name, fmt::join(pairs, ", "));
+        return fmt::format("{}{{{}}}", Category::keyword, fmt::join(pairs, ", "));
     }
     else
     {
@@ -156,9 +156,7 @@ template<typename C>
 struct fmt::formatter<urd::index_view<runir::kr::dl::QueryColumn, C>> : fmt::formatter<std::string_view>
 {
     auto format(const urd::index_view<runir::kr::dl::QueryColumn, C>& value, format_context& ctx) const
-    {
-        return fmt::format_to(ctx.out(), "{}", value.get_name());
-    }
+    { return fmt::format_to(ctx.out(), "{}", value.get_name()); }
 };
 
 template<typename Tag, typename C>
@@ -173,36 +171,28 @@ struct fmt::formatter<urd::index_view<runir::kr::dl::QueryProjection<Category>, 
 {
     using View = urd::index_view<runir::kr::dl::QueryProjection<Category>, C>;
     auto format(View view, format_context& ctx) const
-    {
-        return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::query_projection(view), ctx);
-    }
+    { return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::query_projection(view), ctx); }
 };
 
 template<runir::kr::dl::CategoryTag Category, typename C>
 struct fmt::formatter<urd::index_view<runir::kr::dl::Argument<Category>, C>> : fmt::formatter<std::string_view>
 {
     auto format(const urd::index_view<runir::kr::dl::Argument<Category>, C>& value, format_context& ctx) const
-    {
-        return fmt::format_to(ctx.out(), "{}", value.get_name());
-    }
+    { return fmt::format_to(ctx.out(), "{}", value.get_name()); }
 };
 
 template<runir::kr::dl::ConceptOrRoleTag Category, typename C>
 struct fmt::formatter<urd::index_view<runir::kr::dl::Register<Category>, C>> : fmt::formatter<std::string_view>
 {
     auto format(const urd::index_view<runir::kr::dl::Register<Category>, C>& value, format_context& ctx) const
-    {
-        return fmt::format_to(ctx.out(), "{}", value.get_name());
-    }
+    { return fmt::format_to(ctx.out(), "{}", value.get_name()); }
 };
 
 template<runir::kr::dl::CategoryTag Category>
 struct fmt::formatter<runir::kr::dl::ConstructorView<Category>> : fmt::formatter<std::string_view>
 {
     auto format(runir::kr::dl::ConstructorView<Category> view, format_context& ctx) const
-    {
-        return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::text(view), ctx);
-    }
+    { return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::text(view), ctx); }
 };
 
 template<runir::kr::dl::CategoryTag Category, typename C>
@@ -238,6 +228,35 @@ struct fmt::formatter<urd::index_view<runir::kr::dl::semantics::CallArguments, C
                               value.template arguments<runir::kr::dl::BooleanTag>(),
                               value.template arguments<runir::kr::dl::NumericalTag>());
     }
+};
+
+/// A flat pair (a role's register value) as ({}, {}): yggdrasil's cista formatters write no pair.
+template<typename T1, typename T2>
+struct fmt::formatter<urd::flat_pair<T1, T2>, char>
+{
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template<typename FormatContext>
+    auto format(const urd::flat_pair<T1, T2>& pair, FormatContext& ctx) const
+    { return fmt::format_to(ctx.out(), "({}, {})", pair.first, pair.second); }
+};
+
+/// A must-pass plan as tyr writes its other plans: its output columns.
+template<>
+struct fmt::formatter<tyr::datalog::database::MustPassPlan, char>
+{
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template<typename FormatContext>
+    auto format(const tyr::datalog::database::MustPassPlan& plan, FormatContext& ctx) const
+    { return fmt::format_to(ctx.out(), "[{}]", fmt::join(plan.output_columns(), ", ")); }
+};
+
+/// The query of any operation is named Query (its tag's argument, void, has no name).
+template<>
+struct urd::name_of<runir::kr::dl::Query<>>
+{
+    static std::string named() { return "Query"; }
 };
 
 #endif

@@ -51,53 +51,61 @@ inline void bind_query_statistics(nanobind::module_& m)
              });
 }
 
-/// optimize(repository[, statistics]) and collect_query_statistics(contexts) on a DL expression view.
+/// optimize(expression, repository[, statistics]), collect_query_statistics(expression, contexts) and
+/// query_statistics_sampler(expression) of a DL expression view.
 template<typename View>
-void bind_optimize(nanobind::class_<View>& cls)
+void bind_optimize(nanobind::module_& m)
 {
     namespace nb = nanobind;
     using Repository = runir::kr::dl::ConstructorRepository;
     using Statistics = runir::kr::dl::QueryStatistics;
     using GroundContext = runir::kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
     using LiftedContext = runir::kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>;
-    cls.def(
-           "optimize",
-           [](const View& view, Repository& repository) { return runir::kr::dl::optimize(view, repository); },
-           nb::arg("repository"),
-           nb::keep_alive<0, 2>())
+    m.def(
+         "optimize",
+         [](const View& expression, Repository& repository) { return runir::kr::dl::optimize(expression, repository); },
+         nb::arg("expression"),
+         nb::arg("repository"),
+         nb::keep_alive<0, 2>())
         .def(
             "optimize",
-            [](const View& view, Repository& repository, const Statistics& statistics) { return runir::kr::dl::optimize(view, repository, statistics); },
+            [](const View& expression, Repository& repository, const Statistics& statistics)
+            { return runir::kr::dl::optimize(expression, repository, statistics); },
+            nb::arg("expression"),
             nb::arg("repository"),
             nb::arg("statistics"),
             nb::keep_alive<0, 2>())
         .def(
             "collect_query_statistics",
-            [](const View& view, const urd::Store<urd::sequence<GroundContext*>>& contexts)
+            [](const View& expression, const urd::Store<urd::sequence<GroundContext*>>& contexts)
             {
                 auto warnings = ygg::diagnostics::Warnings();
-                auto statistics = runir::kr::dl::collect_query_statistics<tyr::GroundTag>(view, contexts, warnings);
+                auto statistics = runir::kr::dl::collect_query_statistics<tyr::GroundTag>(expression, contexts, warnings);
                 ygg::issue_warnings(warnings);
                 return statistics;
             },
+            nb::arg("expression"),
             nb::arg("contexts"))
         .def(
             "collect_query_statistics",
-            [](const View& view, const urd::Store<urd::sequence<LiftedContext*>>& contexts)
+            [](const View& expression, const urd::Store<urd::sequence<LiftedContext*>>& contexts)
             {
                 auto warnings = ygg::diagnostics::Warnings();
-                auto statistics = runir::kr::dl::collect_query_statistics<tyr::LiftedTag>(view, contexts, warnings);
+                auto statistics = runir::kr::dl::collect_query_statistics<tyr::LiftedTag>(expression, contexts, warnings);
                 ygg::issue_warnings(warnings);
                 return statistics;
             },
+            nb::arg("expression"),
             nb::arg("contexts"))
-        .def("query_statistics_sampler",
-             [](const View& view)
-             {
-                 auto collector = runir::kr::dl::QueryStatisticsCollector();
-                 collector.add(view);
-                 return collector.sampler();
-             });
+        .def(
+            "query_statistics_sampler",
+            [](const View& expression)
+            {
+                auto collector = runir::kr::dl::QueryStatisticsCollector();
+                collector.add(expression);
+                return collector.sampler();
+            },
+            nb::arg("expression"));
 }
 
 }  // namespace runir::kr::python

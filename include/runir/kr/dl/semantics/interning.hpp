@@ -31,7 +31,7 @@ urd::builder<Denotation<Category>>& assign(urd::builder<Denotation<Category>>& d
 {
     if constexpr (ConceptOrRoleTag<Category>)
     {
-        const auto blocks = source.get_vector();
+        const auto blocks = source.get_blocks();
         destination.blocks.assign(blocks.begin(), blocks.end());
         destination.num_objects = source.get_num_objects();
     }
@@ -66,7 +66,7 @@ template<CategoryTag Category>
     if constexpr (ConceptOrRoleTag<Category>)
     {
         data->num_objects = source.num_objects;
-        data->vec_index = repository.get_vector_repository().insert(source.blocks).first;
+        data->blocks = repository.get_vector_repository().insert(source.blocks).first;
     }
     else
         data->value = source.value;
@@ -147,8 +147,8 @@ template<CategoryTag Category>
         if (source.context().get_formalism_repository_ptr() != repository.get_formalism_repository_ptr())
             throw std::invalid_argument("Denotation copying requires the same formalism repository.");
         data->num_objects = source.get_num_objects();
-        const auto blocks = source.get_vector();
-        data->vec_index = repository.get_vector_repository().insert(blocks).first;
+        const auto blocks = source.get_blocks();
+        data->blocks = repository.get_vector_repository().insert(blocks).first;
     }
     else
         data->value = source.value();

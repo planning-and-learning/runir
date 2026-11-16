@@ -12,6 +12,7 @@
 #include <cista/containers/vector.h>
 #include <string>
 #include <tuple>
+#include <type_traits>
 #include <urd/elements/flat.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
@@ -22,15 +23,16 @@
 namespace urd
 {
 
-template<runir::kr::dl::CategoryTag Category>
-struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<Category>>>
+template<runir::kr::ps::ext::BindingRuleKind Kind>
+    requires std::is_same_v<Kind, runir::kr::ps::ext::LoadTag<runir::kr::ps::ext::RuleCategoryFor<Kind>>>
+struct data<runir::kr::ps::ext::Rule<Kind>>
 {
-    urd::index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<Category>>> index;
+    urd::index<runir::kr::ps::ext::Rule<Kind>> index;
     urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> source;
     urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> target;
     runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions;
-    urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, Category>> feature;
-    urd::index<runir::kr::dl::Register<Category>> slot;
+    urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::ext::RuleCategoryFor<Kind>>> feature;
+    urd::index<runir::kr::dl::Register<runir::kr::ps::ext::RuleCategoryFor<Kind>>> slot;
     runir::kr::ps::EffectList<runir::kr::ExtFamilyTag> effects;
 
     data() = default;
@@ -38,8 +40,8 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<Category>>>
     data(urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> source_,
          urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> target_,
          runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions_,
-         urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, Category>> feature_,
-         urd::index<runir::kr::dl::Register<Category>> slot_,
+         urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::ext::RuleCategoryFor<Kind>>> feature_,
+         urd::index<runir::kr::dl::Register<runir::kr::ps::ext::RuleCategoryFor<Kind>>> slot_,
          runir::kr::ps::EffectList<runir::kr::ExtFamilyTag> effects_) :
         index(),
         source(source_),
@@ -52,8 +54,8 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<Category>>>
     }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
     static constexpr auto fields() noexcept
@@ -67,20 +69,19 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<Category>>>
     }
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
     static constexpr auto cista_members() noexcept
-    {
-        return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::feature, &data::slot, &data::effects> {};
-    }
+    { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::feature, &data::slot, &data::effects> {}; }
 };
 
-template<runir::kr::dl::CategoryTag Category>
-struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ChooseTag<Category>>>
+template<runir::kr::ps::ext::BindingRuleKind Kind>
+    requires std::is_same_v<Kind, runir::kr::ps::ext::ChooseTag<runir::kr::ps::ext::RuleCategoryFor<Kind>>>
+struct data<runir::kr::ps::ext::Rule<Kind>>
 {
-    urd::index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ChooseTag<Category>>> index;
+    urd::index<runir::kr::ps::ext::Rule<Kind>> index;
     urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> source;
     urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> target;
     runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions;
-    urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, Category>> feature;
-    urd::index<runir::kr::dl::Register<Category>> slot;
+    urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::ext::RuleCategoryFor<Kind>>> feature;
+    urd::index<runir::kr::dl::Register<runir::kr::ps::ext::RuleCategoryFor<Kind>>> slot;
     runir::kr::ps::EffectList<runir::kr::ExtFamilyTag> effects;
 
     urd::flat_vector<urd::index<runir::kr::ps::ext::OrderTerm>> order;
@@ -90,8 +91,8 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ChooseTag<Category>>>
     data(urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> source_,
          urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> target_,
          runir::kr::ps::ConditionList<runir::kr::ExtFamilyTag> conditions_,
-         urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, Category>> feature_,
-         urd::index<runir::kr::dl::Register<Category>> slot_,
+         urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::ext::RuleCategoryFor<Kind>>> feature_,
+         urd::index<runir::kr::dl::Register<runir::kr::ps::ext::RuleCategoryFor<Kind>>> slot_,
          runir::kr::ps::EffectList<runir::kr::ExtFamilyTag> effects_,
          urd::flat_vector<urd::index<runir::kr::ps::ext::OrderTerm>> order_) :
         index(),
@@ -106,8 +107,8 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ChooseTag<Category>>>
     }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
     static constexpr auto fields() noexcept
@@ -122,9 +123,7 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ChooseTag<Category>>>
     }
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
     static constexpr auto cista_members() noexcept
-    {
-        return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::feature, &data::slot, &data::effects, &data::order> {};
-    }
+    { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::feature, &data::slot, &data::effects, &data::order> {}; }
 };
 
 template<>
@@ -150,8 +149,8 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>>
     }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
     static constexpr auto fields() noexcept
@@ -194,8 +193,8 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>
     }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
     static constexpr auto fields() noexcept
@@ -209,9 +208,7 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>
     }
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
     static constexpr auto cista_members() noexcept
-    {
-        return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::effects, &data::action_name, &data::arguments> {};
-    }
+    { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::effects, &data::action_name, &data::arguments> {}; }
 };
 
 template<>
@@ -243,8 +240,8 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>>
     }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
     static constexpr auto fields() noexcept
@@ -258,9 +255,7 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>>
     }
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
     static constexpr auto cista_members() noexcept
-    {
-        return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::effects, &data::action_name, &data::query_feature> {};
-    }
+    { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::effects, &data::action_name, &data::query_feature> {}; }
 };
 
 template<>
@@ -289,8 +284,8 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>>
     }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
     static constexpr auto fields() noexcept
@@ -303,9 +298,7 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>>
     }
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
     static constexpr auto cista_members() noexcept
-    {
-        return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::callee, &data::arguments> {};
-    }
+    { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::callee, &data::arguments> {}; }
 };
 
 template<>
@@ -324,8 +317,8 @@ struct data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::BacktrackTag>>
     }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"source", &data::source>, urd::field<"conditions", &data::conditions>> {}; }

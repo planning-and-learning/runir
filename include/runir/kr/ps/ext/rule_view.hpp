@@ -25,73 +25,51 @@ private:
 
 public:
     auto get_source() const noexcept { return self().template member<&urd::record_of<V>::source>(); }
+
     auto get_target() const noexcept
         requires runir::kr::ps::ext::TransitionRuleKind<Kind>
-    {
-        return self().template member<&urd::record_of<V>::target>();
-    }
-    auto get_conditions() const noexcept { return self().template member<&urd::record_of<V>::conditions>(); }
+    { return self().template member<&urd::record_of<V>::target>(); }
 
-    auto get_effects() const noexcept
-        requires runir::kr::ps::ext::EffectRuleKind<Kind>
-    {
-        return self().template member<&urd::record_of<V>::effects>();
-    }
+    auto get_conditions() const noexcept { return self().template member<&urd::record_of<V>::conditions>(); }
 
     auto get_feature() const noexcept
         requires runir::kr::ps::ext::BindingRuleKind<Kind>
-    {
-        return self().template member<&urd::record_of<V>::feature>();
-    }
+    { return self().template member<&urd::record_of<V>::feature>(); }
 
     auto get_slot() const noexcept
         requires runir::kr::ps::ext::BindingRuleKind<Kind>
-    {
-        return self().template member<&urd::record_of<V>::slot>();
-    }
+    { return self().template member<&urd::record_of<V>::slot>(); }
+
+    auto get_effects() const noexcept
+        requires runir::kr::ps::ext::EffectRuleKind<Kind>
+    { return self().template member<&urd::record_of<V>::effects>(); }
 
     auto get_order() const noexcept
         requires(std::same_as<Kind, runir::kr::ps::ext::ChooseTag<runir::kr::dl::ConceptTag>>
                  || std::same_as<Kind, runir::kr::ps::ext::ChooseTag<runir::kr::dl::RoleTag>>)
-    {
-        return self().template member<&urd::record_of<V>::order>();
-    }
+    { return self().template member<&urd::record_of<V>::order>(); }
 
     const auto& get_action_name() const noexcept
         requires(std::same_as<Kind, runir::kr::ps::ext::DoTag> || std::same_as<Kind, runir::kr::ps::ext::ActionTag>)
-    {
-        return self().template member<&urd::record_of<V>::action_name>();
-    }
-
-    auto get_action_arguments() const noexcept
-        requires std::same_as<Kind, runir::kr::ps::ext::DoTag>
-    {
-        return self().template member<&urd::record_of<V>::arguments>();
-    }
+    { return self().template member<&urd::record_of<V>::action_name>(); }
 
     auto get_query_feature() const noexcept
         requires std::same_as<Kind, runir::kr::ps::ext::ActionTag>
-    {
-        return self().template member<&urd::record_of<V>::query_feature>();
-    }
+    { return self().template member<&urd::record_of<V>::query_feature>(); }
 
     auto get_callee() const noexcept
         requires std::same_as<Kind, runir::kr::ps::ext::CallTag>
-    {
-        return self().template member<&urd::record_of<V>::callee>();
-    }
+    { return self().template member<&urd::record_of<V>::callee>(); }
 
-    auto get_call_arguments() const noexcept
-        requires std::same_as<Kind, runir::kr::ps::ext::CallTag>
-    {
-        return self().template member<&urd::record_of<V>::arguments>();
-    }
+    auto get_arguments() const noexcept
+        requires(std::same_as<Kind, runir::kr::ps::ext::DoTag> || std::same_as<Kind, runir::kr::ps::ext::CallTag>)
+    { return self().template member<&urd::record_of<V>::arguments>(); }
 
     template<typename F>
     void for_each_call_argument(F function) const
         requires std::same_as<Kind, runir::kr::ps::ext::CallTag>
     {
-        for (const auto& argument : self().template member<&urd::record_of<V>::arguments>())
+        for (const auto& argument : get_arguments())
             std::visit(function, argument);
     }
 };

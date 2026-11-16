@@ -31,9 +31,9 @@ private:
     {
         auto result = urd::Store<urd::sequence<runir::kr::dl::semantics::incremental::EvaluationRoot>> {};
         for (const auto feature : sketch.get_features<runir::kr::dl::BooleanTag>())
-            result.emplace_back(feature.get_expression());
+            result.emplace_back(std::visit([](auto concrete) { return concrete.get_feature(); }, feature.get_variant()));
         for (const auto feature : sketch.get_features<runir::kr::dl::NumericalTag>())
-            result.emplace_back(feature.get_expression());
+            result.emplace_back(std::visit([](auto concrete) { return concrete.get_feature(); }, feature.get_variant()));
         return result;
     }
 

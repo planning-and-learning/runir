@@ -1,12 +1,12 @@
 #ifndef PYRUNIR_KR_DL_EVALUATION_BINDINGS_HPP_
 #define PYRUNIR_KR_DL_EVALUATION_BINDINGS_HPP_
 
-#include "pyrunir/kr/binding_utils.hpp"
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
+#include <cstddef>
 #include <nanobind/nanobind.h>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
@@ -16,20 +16,23 @@
 namespace runir::kr::python
 {
 
+/// evaluate(expression, context) of a DL expression view (a constructor or a query), in a ground or a lifted state.
 template<typename View>
-void bind_evaluate(nanobind::class_<View>& cls)
+void bind_evaluate(nanobind::module_& m)
 {
     namespace nb = nanobind;
     using GroundContext = runir::kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
     using LiftedContext = runir::kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag>;
-    cls.def(
-           "evaluate",
-           [](const View& view, GroundContext& context) { return runir::kr::dl::semantics::evaluate<tyr::GroundTag>(view, context); },
-           nb::arg("context"),
-           nb::keep_alive<0, 2>())
+    m.def(
+         "evaluate",
+         [](const View& expression, GroundContext& context) { return runir::kr::dl::semantics::evaluate<tyr::GroundTag>(expression, context); },
+         nb::arg("expression"),
+         nb::arg("context"),
+         nb::keep_alive<0, 2>())
         .def(
             "evaluate",
-            [](const View& view, LiftedContext& context) { return runir::kr::dl::semantics::evaluate<tyr::LiftedTag>(view, context); },
+            [](const View& expression, LiftedContext& context) { return runir::kr::dl::semantics::evaluate<tyr::LiftedTag>(expression, context); },
+            nb::arg("expression"),
             nb::arg("context"),
             nb::keep_alive<0, 2>());
 }
@@ -43,52 +46,74 @@ void bind_state_evaluation_context(nanobind::module_& m, const char* name)
     using Caches = runir::kr::dl::semantics::DenotationCaches;
     auto cls = nb::class_<Context>(m, name);
     // Programs bind arguments and registers; other languages evaluate without them.
-    def_new_keeping_arguments_alive(
-        cls,
-        [](tyr::planning::StateView<Kind> state, runir::kr::dl::semantics::Builder& builder, Storage& storage) { return Context(state, builder, storage); },
-        nb::arg("state"),
-        nb::arg("builder"),
-        nb::arg("storage"));
-    def_new_keeping_arguments_alive(
-        cls,
-        [](tyr::planning::StateView<Kind> state,
-           runir::kr::dl::semantics::Builder& builder,
-           Caches& caches,
-           runir::kr::dl::semantics::DenotationRepository& repository,
-           Storage& intermediates) { return Context(state, builder, caches, repository, intermediates); },
-        nb::arg("state"),
-        nb::arg("builder"),
-        nb::arg("caches"),
-        nb::arg("repository"),
-        nb::arg("intermediates"));
-    def_new_keeping_arguments_alive(
-        cls,
-        [](tyr::planning::StateView<Kind> state,
-           runir::kr::dl::semantics::Builder& builder,
-           Storage& storage,
-           runir::kr::dl::semantics::CallArgumentsView arguments,
-           runir::kr::dl::semantics::RegisterValuesView registers) { return Context(state, builder, storage, arguments, registers); },
-        nb::arg("state"),
-        nb::arg("builder"),
-        nb::arg("storage"),
-        nb::arg("arguments"),
-        nb::arg("registers"));
-    def_new_keeping_arguments_alive(
-        cls,
-        [](tyr::planning::StateView<Kind> state,
-           runir::kr::dl::semantics::Builder& builder,
-           Caches& caches,
-           runir::kr::dl::semantics::DenotationRepository& repository,
-           Storage& intermediates,
-           runir::kr::dl::semantics::CallArgumentsView arguments,
-           runir::kr::dl::semantics::RegisterValuesView registers) { return Context(state, builder, caches, repository, intermediates, arguments, registers); },
-        nb::arg("state"),
-        nb::arg("builder"),
-        nb::arg("caches"),
-        nb::arg("repository"),
-        nb::arg("intermediates"),
-        nb::arg("arguments"),
-        nb::arg("registers"));
+    // keep_alive<0, i>: the result (0) keeps constructor argument i alive; self is 1, the arguments start at 2.
+    constexpr std::size_t first_argument = 2;
+    constexpr std::size_t second_argument = 3;
+    constexpr std::size_t third_argument = 4;
+    constexpr std::size_t fourth_argument = 5;
+    constexpr std::size_t fifth_argument = 6;
+    constexpr std::size_t sixth_argument = 7;
+    constexpr std::size_t seventh_argument = 8;
+    cls.def(nb::new_([](tyr::planning::StateView<Kind> state, runir::kr::dl::semantics::Builder& builder, Storage& storage)
+                     { return Context(state, builder, storage); }),
+            nb::arg("state"),
+            nb::arg("builder"),
+            nb::arg("storage"),
+            nb::keep_alive<0, first_argument>(),
+            nb::keep_alive<0, second_argument>(),
+            nb::keep_alive<0, third_argument>());
+    cls.def(nb::new_([](tyr::planning::StateView<Kind> state,
+                        runir::kr::dl::semantics::Builder& builder,
+                        Caches& caches,
+                        runir::kr::dl::semantics::DenotationRepository& repository,
+                        Storage& intermediates) { return Context(state, builder, caches, repository, intermediates); }),
+            nb::arg("state"),
+            nb::arg("builder"),
+            nb::arg("caches"),
+            nb::arg("repository"),
+            nb::arg("intermediates"),
+            nb::keep_alive<0, first_argument>(),
+            nb::keep_alive<0, second_argument>(),
+            nb::keep_alive<0, third_argument>(),
+            nb::keep_alive<0, fourth_argument>(),
+            nb::keep_alive<0, fifth_argument>());
+    cls.def(nb::new_([](tyr::planning::StateView<Kind> state,
+                        runir::kr::dl::semantics::Builder& builder,
+                        Storage& storage,
+                        runir::kr::dl::semantics::CallArgumentsView arguments,
+                        runir::kr::dl::semantics::RegisterValuesView registers) { return Context(state, builder, storage, arguments, registers); }),
+            nb::arg("state"),
+            nb::arg("builder"),
+            nb::arg("storage"),
+            nb::arg("arguments"),
+            nb::arg("registers"),
+            nb::keep_alive<0, first_argument>(),
+            nb::keep_alive<0, second_argument>(),
+            nb::keep_alive<0, third_argument>(),
+            nb::keep_alive<0, fourth_argument>(),
+            nb::keep_alive<0, fifth_argument>());
+    cls.def(nb::new_([](tyr::planning::StateView<Kind> state,
+                        runir::kr::dl::semantics::Builder& builder,
+                        Caches& caches,
+                        runir::kr::dl::semantics::DenotationRepository& repository,
+                        Storage& intermediates,
+                        runir::kr::dl::semantics::CallArgumentsView arguments,
+                        runir::kr::dl::semantics::RegisterValuesView registers)
+                     { return Context(state, builder, caches, repository, intermediates, arguments, registers); }),
+            nb::arg("state"),
+            nb::arg("builder"),
+            nb::arg("caches"),
+            nb::arg("repository"),
+            nb::arg("intermediates"),
+            nb::arg("arguments"),
+            nb::arg("registers"),
+            nb::keep_alive<0, first_argument>(),
+            nb::keep_alive<0, second_argument>(),
+            nb::keep_alive<0, third_argument>(),
+            nb::keep_alive<0, fourth_argument>(),
+            nb::keep_alive<0, fifth_argument>(),
+            nb::keep_alive<0, sixth_argument>(),
+            nb::keep_alive<0, seventh_argument>());
     cls.def("get_state", &Context::get_state, nb::rv_policy::copy, nb::keep_alive<0, 1>());
 }
 

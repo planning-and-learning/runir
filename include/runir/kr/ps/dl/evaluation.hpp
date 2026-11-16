@@ -17,7 +17,7 @@ template<tyr::TaskKind Kind,
 auto evaluate(urd::index_view<ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>, C> feature, Context& context)
 {
     using runir::kr::dl::semantics::evaluate;
-    return evaluate<Kind>(feature.get_expression(), context);
+    return evaluate<Kind>(feature.get_feature(), context);
 }
 
 }  // namespace runir::kr::ps

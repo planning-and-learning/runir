@@ -394,7 +394,7 @@ void check_backtrack_execution()
             EXPECT_TRUE(blocked.open_states.empty());
             const auto& deadend = blocked.graph->vertex_value(blocked.deadend_states.front());
             EXPECT_FALSE(deadend.is_unsolvable);
-            EXPECT_EQ(deadend.program_state.get_module_state().get_module().get_name(), "callee");
+            EXPECT_EQ(deadend.program_state.get_module_state().get_mod().get_symbol().get_name(), "callee");
             EXPECT_EQ(deadend.program_state.get_module_state().get_memory_state().get_name(), "m2");
             EXPECT_TRUE(deadend.program_state.get_call_stack());
         }
@@ -1262,7 +1262,7 @@ void check_state_memorization()
             for (const auto vertex : called.graph->vertices())
             {
                 const auto frame = called.graph->vertex_value(vertex).program_state.get_module_state();
-                if (frame.get_module().get_name() == "child")
+                if (frame.get_mod().get_symbol().get_name() == "child")
                 {
                     ++child_states;
                     const auto arguments = frame.get_arguments();
@@ -1290,16 +1290,16 @@ void check_state_memorization()
             for (const auto vertex : nested_called.graph->vertices())
             {
                 const auto state = nested_called.graph->vertex_value(vertex).program_state;
-                if (state.get_module_state().get_module().get_name() != "grandchild")
+                if (state.get_module_state().get_mod().get_symbol().get_name() != "grandchild")
                     continue;
                 ++grandchild_states;
                 const auto saved_child = state.get_call_stack();
                 ASSERT_TRUE(saved_child);
-                EXPECT_EQ(saved_child->get_module().get_name(), "child");
+                EXPECT_EQ(saved_child->get_mod().get_symbol().get_name(), "child");
                 EXPECT_EQ(saved_child->get_return_memory_state().get_name(), "m2");
                 const auto saved_main = saved_child->get_caller();
                 ASSERT_TRUE(saved_main);
-                EXPECT_EQ(saved_main->get_module().get_name(), "main");
+                EXPECT_EQ(saved_main->get_mod().get_symbol().get_name(), "main");
                 EXPECT_EQ(saved_main->get_return_memory_state().get_name(), "m2");
                 EXPECT_EQ(saved_main->get_registers().template values<kr::dl::ConceptTag>().at(0).value().get_name(), "goal");
                 EXPECT_FALSE(saved_main->get_caller());
@@ -1320,7 +1320,7 @@ void check_state_memorization()
             {
                 const auto frame = recalled.graph->vertex_value(vertex).program_state.get_module_state();
                 const auto memory = frame.get_memory_state().get_name();
-                if (frame.get_module().get_name() == "child" && (memory == "first" || memory == "second"))
+                if (frame.get_mod().get_symbol().get_name() == "child" && (memory == "first" || memory == "second"))
                 {
                     first_invocations += memory == "first";
                     second_invocations += memory == "second";
@@ -1328,7 +1328,7 @@ void check_state_memorization()
                     EXPECT_EQ(frame.get_arguments().template arguments<kr::dl::BooleanTag>().at(0).value(), memory == "first");
                     EXPECT_EQ(frame.get_arguments().template arguments<kr::dl::NumericalTag>().at(0).value(), memory == "first" ? 1 : 0);
                 }
-                if (frame.get_module().get_name() == "main" && (memory == "m2" || memory == "m4"))
+                if (frame.get_mod().get_symbol().get_name() == "main" && (memory == "m2" || memory == "m4"))
                 {
                     ++restored_callers;
                     EXPECT_EQ(frame.get_registers().template values<kr::dl::ConceptTag>().at(0).value().get_name(), "goal");
@@ -1487,7 +1487,7 @@ void check_transient_builder_values_and_reuse()
     auto first = pool.make_shared();
     first->program = program.index();
     auto& first_module = first->module_state;
-    first_module.module_ = module_.index();
+    first_module.mod = module_.index();
     first_module.memory_state = module_.get_entry_memory_state().index();
     auto arguments = kr::dl::semantics::checkout<kr::dl::semantics::CallArguments>(context->dl_builder);
     const auto argument_view = kr::dl::semantics::insert(*context->dl_denotation_repository, *arguments).first;
@@ -1495,9 +1495,9 @@ void check_transient_builder_values_and_reuse()
     const auto program_state = urd::resolve(*first, *context->execution_repository);
     const auto module_state = program_state.get_module_state();
     EXPECT_TRUE(urd::EqualTo<kr::ps::ext::ProgramView> {}(program_state.get_program(), program));
-    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::ModuleView> {}(module_state.get_module(), module_));
+    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::ModuleView> {}(module_state.get_mod(), module_));
     EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(module_state.get_memory_state(), module_.get_entry_memory_state()));
-    EXPECT_EQ(&module_state.get_module().context(), &repository);
+    EXPECT_EQ(&module_state.get_mod().context(), &repository);
     EXPECT_EQ(&module_state.get_state().get_task(), search->task.get());
     EXPECT_EQ(&module_state.get_state().get_fact_storage(), &first_module.state.builder.fact_storage);
     EXPECT_TRUE(urd::EqualTo<kr::dl::semantics::CallArgumentsView> {}(module_state.get_arguments(), argument_view));
@@ -1526,14 +1526,12 @@ void check_transient_builder_values_and_reuse()
     first_module.state.builder.numeric_storage.values = { 3.0 };
 
     // Transient module values use the same interned callers as registered execution states.
-    auto tail_data =
-        urd::data<kr::ps::ext::CallStack>(first_module.module_, first_module.memory_state, registered_registers.index(), first_module.arguments, {});
+    auto tail_data = urd::data<kr::ps::ext::CallStack>(first_module.mod, first_module.memory_state, registered_registers.index(), first_module.arguments, {});
     const auto tail = kr::ps::ext::insert(*context->execution_repository, tail_data).first;
     auto head_registers = runir::tests::copy_fields(first_module.registers.values);
     head_registers.concept_values.front() = urd::index<tyr::formalism::Object>(1);
     const auto head_register_values = kr::dl::semantics::insert(*context->dl_denotation_repository, head_registers).first;
-    auto head_data =
-        urd::data<kr::ps::ext::CallStack>(first_module.module_, first_module.memory_state, head_register_values.index(), first_module.arguments, {});
+    auto head_data = urd::data<kr::ps::ext::CallStack>(first_module.mod, first_module.memory_state, head_register_values.index(), first_module.arguments, {});
     head_data.caller = tail.index();
     const auto head = kr::ps::ext::insert(*context->execution_repository, head_data).first;
     first->call_stack = head.index();
@@ -1542,7 +1540,7 @@ void check_transient_builder_values_and_reuse()
     const auto stack = program_state.get_call_stack();
     ASSERT_TRUE(stack);
     EXPECT_EQ(stack.value().index(), head.index());
-    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::ModuleView> {}(stack.value().get_module(), module_));
+    EXPECT_TRUE(urd::EqualTo<kr::ps::ext::ModuleView> {}(stack.value().get_mod(), module_));
     EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(stack.value().get_return_memory_state(), module_.get_entry_memory_state()));
     EXPECT_TRUE(urd::EqualTo<kr::dl::semantics::CallArgumentsView> {}(stack.value().get_arguments(), argument_view));
     EXPECT_EQ(stack.value().get_registers().at(concept_id).value().index(), urd::index<tyr::formalism::Object>(1));
@@ -1557,7 +1555,7 @@ void check_transient_builder_values_and_reuse()
     separate->program = first->program;
     auto& separate_module = separate->module_state;
     separate_module.state = first_module.state;
-    separate_module.module_ = first_module.module_;
+    separate_module.mod = first_module.mod;
     separate_module.memory_state = first_module.memory_state;
     separate_module.registers.values = runir::tests::copy_fields(first_module.registers.values);
     separate_module.arguments = first_module.arguments;

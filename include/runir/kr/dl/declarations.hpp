@@ -22,22 +22,26 @@ namespace runir::kr::dl
 
 struct ConceptTag
 {
-    static constexpr auto name = "concept";
+    static constexpr auto name = "Concept";
+    static constexpr auto keyword = "concept";
 };
 
 struct RoleTag
 {
-    static constexpr auto name = "role";
+    static constexpr auto name = "Role";
+    static constexpr auto keyword = "role";
 };
 
 struct BooleanTag
 {
-    static constexpr auto name = "boolean";
+    static constexpr auto name = "Boolean";
+    static constexpr auto keyword = "boolean";
 };
 
 struct NumericalTag
 {
-    static constexpr auto name = "numerical";
+    static constexpr auto name = "Numerical";
+    static constexpr auto keyword = "numerical";
 };
 
 template<typename T>
@@ -73,23 +77,27 @@ struct FalseTag
 
 struct BotTag
 {
+    static constexpr auto name = "Bot";
     static constexpr auto keyword = "c_bot";
 };
 
 struct TopTag
 {
+    static constexpr auto name = "Top";
     static constexpr auto keyword = "c_top";
 };
 
 template<tyr::formalism::FactKind T>
 struct AtomicStateTag
 {
+    static constexpr auto name = "AtomicState";
     using FactKind = T;
 };
 
 template<tyr::formalism::FactKind T>
 struct AtomicGoalTag
 {
+    static constexpr auto name = "AtomicGoal";
     using FactKind = T;
 };
 
@@ -99,136 +107,163 @@ using TagFactKind = typename Tag::FactKind;
 
 struct IntersectionTag
 {
+    static constexpr auto name = "Intersection";
     static constexpr auto keyword = "c_and";
 };
 
 struct UnionTag
 {
+    static constexpr auto name = "Union";
     static constexpr auto keyword = "c_or";
 };
 
 struct NegationTag
 {
+    static constexpr auto name = "Negation";
     static constexpr auto keyword = "c_not";
 };
 
 struct ValueRestrictionTag
 {
+    static constexpr auto name = "ValueRestriction";
     static constexpr auto keyword = "c_all";
 };
 
 struct ExistentialQuantificationTag
 {
+    static constexpr auto name = "ExistentialQuantification";
     static constexpr auto keyword = "c_some";
 };
 
 struct AtLeastNumberRestrictionTag
 {
+    static constexpr auto name = "AtLeastNumberRestriction";
     static constexpr auto keyword = "c_at_least";
 };
 
 struct AtMostNumberRestrictionTag
 {
+    static constexpr auto name = "AtMostNumberRestriction";
     static constexpr auto keyword = "c_at_most";
 };
 
 struct ExactNumberRestrictionTag
 {
+    static constexpr auto name = "ExactNumberRestriction";
     static constexpr auto keyword = "c_exactly";
 };
 
 struct QualifiedAtLeastNumberRestrictionTag
 {
+    static constexpr auto name = "QualifiedAtLeastNumberRestriction";
     static constexpr auto keyword = AtLeastNumberRestrictionTag::keyword;
 };
 
 struct QualifiedAtMostNumberRestrictionTag
 {
+    static constexpr auto name = "QualifiedAtMostNumberRestriction";
     static constexpr auto keyword = AtMostNumberRestrictionTag::keyword;
 };
 
 struct QualifiedExactNumberRestrictionTag
 {
+    static constexpr auto name = "QualifiedExactNumberRestriction";
     static constexpr auto keyword = ExactNumberRestrictionTag::keyword;
 };
 
 struct RoleValueMapTag
 {
+    static constexpr auto name = "RoleValueMap";
     static constexpr auto keyword = "c_subset";
 };
 
 struct AgreementTag
 {
+    static constexpr auto name = "Agreement";
     static constexpr auto keyword = "c_same_as";
 };
 
 struct RoleFillersTag
 {
+    static constexpr auto name = "RoleFillers";
     static constexpr auto keyword = "c_fillers";
 };
 
 struct OneOfTag
 {
+    static constexpr auto name = "OneOf";
     static constexpr auto keyword = "c_one_of";
 };
 
 struct NominalTag
 {
+    static constexpr auto name = "Nominal";
     static constexpr auto keyword = "c_nominal";
 };
 
 struct UniversalTag
 {
+    static constexpr auto name = "Universal";
     static constexpr auto keyword = "r_universal";
 };
 
 struct ComplementTag
 {
+    static constexpr auto name = "Complement";
     static constexpr auto keyword = "r_complement";
 };
 
 struct InverseTag
 {
+    static constexpr auto name = "Inverse";
     static constexpr auto keyword = "r_inverse";
 };
 
 struct CompositionTag
 {
+    static constexpr auto name = "Composition";
     static constexpr auto keyword = "r_composition";
 };
 
 struct TransitiveClosureTag
 {
+    static constexpr auto name = "TransitiveClosure";
     static constexpr auto keyword = "r_transitive_closure";
 };
 
 struct ReflexiveTransitiveClosureTag
 {
+    static constexpr auto name = "ReflexiveTransitiveClosure";
     static constexpr auto keyword = "r_reflexive_transitive_closure";
 };
 
 struct RestrictionTag
 {
+    static constexpr auto name = "Restriction";
     static constexpr auto keyword = "r_restriction";
 };
 
 struct IdentityTag
 {
+    static constexpr auto name = "Identity";
     static constexpr auto keyword = "r_identity";
 };
 
 struct NonemptyTag
 {
+    static constexpr auto name = "Nonempty";
     static constexpr auto keyword = "b_nonempty";
 };
 
 struct CountTag
 {
+    static constexpr auto name = "Count";
     static constexpr auto keyword = "n_count";
 };
 
 struct DistanceTag
 {
+    static constexpr auto name = "Distance";
     static constexpr auto keyword = "n_distance";
 };
 
@@ -325,20 +360,24 @@ inline constexpr bool is_atomic_goal_tag_v = IsAtomicGoalTag<T>::value;
 template<CategoryTag Category>
 struct Argument
 {
+    static constexpr auto name = "Argument";
 };
 
 template<ConceptOrRoleTag Category>
 struct Register
 {
+    static constexpr auto name = "Register";
 };
 
 struct RegisterTag
 {
+    static constexpr auto name = "Register";
 };
 
 template<CategoryTag Category>
 struct ArgumentTag
 {
+    static constexpr auto name = "Argument";
     static constexpr auto keyword = []
     {
         if constexpr (std::same_as<Category, ConceptTag>)
@@ -379,72 +418,84 @@ struct ComparisonTagMarker
 
 struct BooleanEqTag : ComparisonTagMarker
 {
+    static constexpr auto name = "BooleanEq";
     using OperandCategory = BooleanTag;
     static constexpr auto keyword = "b_eq";
 };
 
 struct BooleanNeTag : ComparisonTagMarker
 {
+    static constexpr auto name = "BooleanNe";
     using OperandCategory = BooleanTag;
     static constexpr auto keyword = "b_neq";
 };
 
 struct BooleanLtTag : ComparisonTagMarker
 {
+    static constexpr auto name = "BooleanLt";
     using OperandCategory = BooleanTag;
     static constexpr auto keyword = "b_lt";
 };
 
 struct BooleanLeTag : ComparisonTagMarker
 {
+    static constexpr auto name = "BooleanLe";
     using OperandCategory = BooleanTag;
     static constexpr auto keyword = "b_le";
 };
 
 struct BooleanGtTag : ComparisonTagMarker
 {
+    static constexpr auto name = "BooleanGt";
     using OperandCategory = BooleanTag;
     static constexpr auto keyword = "b_gt";
 };
 
 struct BooleanGeTag : ComparisonTagMarker
 {
+    static constexpr auto name = "BooleanGe";
     using OperandCategory = BooleanTag;
     static constexpr auto keyword = "b_ge";
 };
 
 struct NumericalEqTag : ComparisonTagMarker
 {
+    static constexpr auto name = "NumericalEq";
     using OperandCategory = NumericalTag;
     static constexpr auto keyword = "n_eq";
 };
 
 struct NumericalNeTag : ComparisonTagMarker
 {
+    static constexpr auto name = "NumericalNe";
     using OperandCategory = NumericalTag;
     static constexpr auto keyword = "n_neq";
 };
 
 struct NumericalLtTag : ComparisonTagMarker
 {
+    static constexpr auto name = "NumericalLt";
     using OperandCategory = NumericalTag;
     static constexpr auto keyword = "n_lt";
 };
 
 struct NumericalLeTag : ComparisonTagMarker
 {
+    static constexpr auto name = "NumericalLe";
     using OperandCategory = NumericalTag;
     static constexpr auto keyword = "n_le";
 };
 
 struct NumericalGtTag : ComparisonTagMarker
 {
+    static constexpr auto name = "NumericalGt";
     using OperandCategory = NumericalTag;
     static constexpr auto keyword = "n_gt";
 };
 
 struct NumericalGeTag : ComparisonTagMarker
 {
+    static constexpr auto name = "NumericalGe";
     using OperandCategory = NumericalTag;
     static constexpr auto keyword = "n_ge";
 };
@@ -565,11 +616,13 @@ using comparison_operand_t = typename T::OperandCategory;
 
 struct BooleanConstantTag
 {
+    static constexpr auto name = "BooleanConstant";
     static constexpr auto keyword = "b_const";
 };
 
 struct NumericalConstantTag
 {
+    static constexpr auto name = "NumericalConstant";
     static constexpr auto keyword = "n_const";
 };
 
@@ -579,31 +632,37 @@ struct NumericalBinaryTagMarker
 
 struct AddTag : NumericalBinaryTagMarker
 {
+    static constexpr auto name = "Add";
     static constexpr auto keyword = "n_add";
 };
 
 struct SubTag : NumericalBinaryTagMarker
 {
+    static constexpr auto name = "Sub";
     static constexpr auto keyword = "n_sub";
 };
 
 struct MulTag : NumericalBinaryTagMarker
 {
+    static constexpr auto name = "Mul";
     static constexpr auto keyword = "n_mul";
 };
 
 struct DivTag : NumericalBinaryTagMarker
 {
+    static constexpr auto name = "Div";
     static constexpr auto keyword = "n_div";
 };
 
 struct MinTag : NumericalBinaryTagMarker
 {
+    static constexpr auto name = "Min";
     static constexpr auto keyword = "n_min";
 };
 
 struct MaxTag : NumericalBinaryTagMarker
 {
+    static constexpr auto name = "Max";
     static constexpr auto keyword = "n_max";
 };
 
@@ -616,11 +675,13 @@ struct LogicalBinaryTagMarker
 
 struct AndTag : LogicalBinaryTagMarker
 {
+    static constexpr auto name = "And";
     static constexpr auto keyword = "b_and";
 };
 
 struct OrTag : LogicalBinaryTagMarker
 {
+    static constexpr auto name = "Or";
     static constexpr auto keyword = "b_or";
 };
 
@@ -629,17 +690,27 @@ concept LogicalBinaryTag = std::derived_from<T, LogicalBinaryTagMarker>;
 
 struct NotTag
 {
+    static constexpr auto name = "Not";
     static constexpr auto keyword = "b_not";
 };
 
 // Relational expressions are intermediate queries, not a new feature category.
-struct QueryColumn;
+struct QueryColumn
+{
+    static constexpr auto name = "QueryColumn";
+};
 
 template<typename Tag = void>
-struct Query;
+struct Query
+{
+    static constexpr auto name = "Query";
+};
 
 template<ConceptOrRoleTag Category>
-struct QueryProjection;
+struct QueryProjection
+{
+    static constexpr auto name = "QueryProjection";
+};
 
 struct ProjectTag
 {
@@ -657,61 +728,73 @@ struct RoleProjectSyntaxTag
 
 struct QueryConceptTag
 {
+    static constexpr auto name = "Concept";
     static constexpr auto keyword = "q_concept";
 };
 
 struct QueryRoleTag
 {
+    static constexpr auto name = "Role";
     static constexpr auto keyword = "q_role";
 };
 
 struct QueryJoinTag
 {
+    static constexpr auto name = "Join";
     static constexpr auto keyword = "q_join";
 };
 
 struct QueryProjectTag
 {
+    static constexpr auto name = "Project";
     static constexpr auto keyword = "q_project";
 };
 
 struct QueryRenameTag
 {
+    static constexpr auto name = "Rename";
     static constexpr auto keyword = "q_rename";
 };
 
 struct QuerySelectEqualTag
 {
+    static constexpr auto name = "SelectEqual";
     static constexpr auto keyword = "q_select_equal";
 };
 
 struct QuerySelectValueTag
 {
+    static constexpr auto name = "SelectValue";
     static constexpr auto keyword = "q_select_value";
 };
 
 struct QueryUnionTag
 {
+    static constexpr auto name = "Union";
     static constexpr auto keyword = "q_union";
 };
 
 struct QueryDifferenceTag
 {
+    static constexpr auto name = "Difference";
     static constexpr auto keyword = "q_difference";
 };
 
 struct QueryGenericJoinTag
 {
+    static constexpr auto name = "GenericJoin";
     static constexpr auto keyword = "q_generic_join";
 };
 
 struct QueryEmptyTag
 {
+    static constexpr auto name = "Empty";
     static constexpr auto keyword = "q_empty";
 };
 
 struct QueryMustPassTag
 {
+    static constexpr auto name = "MustPass";
     static constexpr auto keyword = "q_must_pass";
 };
 
@@ -733,6 +816,9 @@ using QueryConstructorTags = boost::mp11::mp_list<AtomicStateTag<tyr::formalism:
                                                   QueryGenericJoinTag,
                                                   QueryEmptyTag,
                                                   QueryMustPassTag>;
+
+/// The set operations: left_operand and right_operand of identical columns, and a SetPlan.
+using QuerySetTags = boost::mp11::mp_list<QueryUnionTag, QueryDifferenceTag>;
 
 using BaseConceptConstructorTags = boost::mp11::mp_list<BotTag,
                                                         TopTag,
@@ -885,8 +971,8 @@ concept RoleBinaryTag = std::same_as<T, IntersectionTag> || std::same_as<T, Unio
 
 /// One role: operand.
 template<typename T>
-concept RoleUnaryTag = std::same_as<T, ComplementTag> || std::same_as<T, InverseTag> || std::same_as<T, TransitiveClosureTag>
-                       || std::same_as<T, ReflexiveTransitiveClosureTag>;
+concept RoleUnaryTag =
+    std::same_as<T, ComplementTag> || std::same_as<T, InverseTag> || std::same_as<T, TransitiveClosureTag> || std::same_as<T, ReflexiveTransitiveClosureTag>;
 
 /**
  * Constructor records
@@ -903,16 +989,28 @@ template<typename Tag, typename Family, typename Category>
 concept ConstructorOf = boost::mp11::mp_contains<typename Family::template Tags<Category>, Tag>::value;
 
 template<typename Family, ConstructorOf<Family, ConceptTag> Tag>
-struct Concept;
+struct Concept
+{
+    static constexpr auto name = "Concept";
+};
 
 template<typename Family, ConstructorOf<Family, RoleTag> Tag>
-struct Role;
+struct Role
+{
+    static constexpr auto name = "Role";
+};
 
 template<typename Family, ConstructorOf<Family, BooleanTag> Tag>
-struct Boolean;
+struct Boolean
+{
+    static constexpr auto name = "Boolean";
+};
 
 template<typename Family, ConstructorOf<Family, NumericalTag> Tag>
-struct Numerical;
+struct Numerical
+{
+    static constexpr auto name = "Numerical";
+};
 
 /// How a record of Family stores an operand of Category.
 template<typename Family, CategoryTag Category>
@@ -952,11 +1050,16 @@ template<typename Family, CategoryTag Category>
 using RecordTypes = boost::mp11::mp_transform_q<boost::mp11::mp_bind_front_q<record_of<Category>, Family>, typename Family::template Tags<Category>>;
 
 template<CategoryTag Category>
-struct Constructor;
+struct Constructor
+{
+    static constexpr auto name = "Constructor";
+};
 
 /// Semantic constructors: every constructor tag, operands interned as constructors, collections also as queries.
 struct SemanticFamily
 {
+    static constexpr auto name = "Semantic";
+
     template<CategoryTag Category>
     using Tags = by_category<Category, ConceptConstructorTags, RoleConstructorTags, BooleanConstructorTags, NumericalConstructorTags>;
 

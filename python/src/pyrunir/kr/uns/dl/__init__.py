@@ -4,12 +4,17 @@
 """Description logic features for unsolvability classifiers."""
 
 from pyrunir._pyrunir.kr.uns.dl import (
-    BooleanFeature as BooleanFeature,
-    BooleanFeatureData as BooleanFeatureData,
-    BooleanFeatureIndex as BooleanFeatureIndex,
     ClassifierFactory as ClassifierFactory,
-    ConcreteBooleanFeature as ConcreteBooleanFeature,
-    ConcreteBooleanFeatureData as ConcreteBooleanFeatureData,
-    ConcreteBooleanFeatureIndex as ConcreteBooleanFeatureIndex,
+    ConcreteFeatureUnsDlBoolean as ConcreteFeatureUnsDlBoolean,
+    ConcreteFeatureUnsDlBooleanData as ConcreteFeatureUnsDlBooleanData,
+    ConcreteFeatureUnsDlBooleanIndex as ConcreteFeatureUnsDlBooleanIndex,
+    FeatureUnsBoolean as FeatureUnsBoolean,
+    FeatureUnsBooleanData as FeatureUnsBooleanData,
+    FeatureUnsBooleanIndex as FeatureUnsBooleanIndex,
+    collect_query_statistics as collect_query_statistics,
+    evaluate as evaluate,
+    optimize as optimize,
     parse_classifier as parse_classifier,
+    query_statistics_sampler as query_statistics_sampler,
+    syntactic_complexity as syntactic_complexity,
 )

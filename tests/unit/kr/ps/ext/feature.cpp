@@ -21,17 +21,15 @@ using View = urd::index_view<Entity, kr::ps::ext::Repository>;
 template<typename Entity, typename Concrete>
 concept FeatureContract =
     std::constructible_from<urd::index<Entity>, ygg::uint_t> && std::totally_ordered<urd::index<Entity>> && std::totally_ordered<urd::data<Entity>>
-    && std::totally_ordered<View<Entity>> && std::same_as<typename urd::data<Entity>::Variant, urd::flat_variant<urd::index<Concrete>>>
+    && std::totally_ordered<View<Entity>> && std::same_as<decltype(urd::data<Entity>::variant), urd::flat_variant<urd::index<Concrete>>>
     && requires(urd::data<Entity>& data, const View<Entity>& view) {
            data.index;
            data.variant;
-           { ::cista::to_tuple(std::as_const(data)) } -> std::same_as<std::tuple<const urd::index<Entity>&, const typename urd::data<Entity>::Variant&>>;
-           requires std::same_as<std::remove_cvref_t<std::tuple_element_t<0, urd::detail::identity_t<urd::data<Entity>>>>, typename urd::data<Entity>::Variant>;
+           { ::cista::to_tuple(std::as_const(data)) } -> std::same_as<std::tuple<const urd::index<Entity>&, const decltype(urd::data<Entity>::variant)&>>;
+           requires std::same_as<std::remove_cvref_t<std::tuple_element_t<0, urd::detail::identity_t<urd::data<Entity>>>>,
+                                 decltype(urd::data<Entity>::variant)>;
            view.index();
            view.get_variant();
-           view.get_symbol();
-           view.get_expression();
-           view.get_feature();
        };
 
 using ConceptFeature = kr::ps::Feature<kr::ExtFamilyTag, kr::dl::ConceptTag>;

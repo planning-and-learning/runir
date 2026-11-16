@@ -22,13 +22,13 @@ namespace
 
 auto wrap_boolean(runir::kr::dl::ConstructorRepository& repository, auto boolean)
 {
-    auto data = urd::data<runir::kr::dl::Constructor<runir::kr::dl::BooleanTag>>(boolean.index());
+    auto data = urd::data<runir::kr::dl::Constructor<runir::kr::dl::BooleanTag>>(boolean.index(), false);
     return repository.insert(data).first;
 }
 
 auto wrap_numerical(runir::kr::dl::ConstructorRepository& repository, auto numerical)
 {
-    auto data = urd::data<runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>>(numerical.index());
+    auto data = urd::data<runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>>(numerical.index(), false);
     return repository.insert(data).first;
 }
 
@@ -92,7 +92,7 @@ TEST(RunirTests, ComparisonsAndConstantsEvaluateAndFormat)
     // c_top -> n_count(c_top)
     auto top_data = urd::data<runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::TopTag>>();
     auto top = repo.insert(top_data).first;
-    auto top_ctor_data = urd::data<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>(top.index());
+    auto top_ctor_data = urd::data<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>(top.index(), false);
     auto top_ctor = repo.insert(top_ctor_data).first;
 
     auto count_data = urd::data<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::CountTag>>(top_ctor.index());

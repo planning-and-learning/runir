@@ -75,8 +75,7 @@ public:
         requires ygg::formalism::SupportsSymbol<runir::kr::dl::semantics::DenotationRepository, T>
     [[nodiscard]] auto view(urd::index<T> index) const
     { return get_denotation_repository().view(index); }
-    [[nodiscard]] tyr::planning::PackedStateView<Kind> view(urd::index<tyr::planning::State<Kind>> index) const
-    { return get_state_repository().view(index); }
+    [[nodiscard]] tyr::planning::PackedStateView<Kind> view(urd::index<tyr::planning::State<Kind>> index) const { return get_state_repository().view(index); }
 };
 
 template<ProgramFamilyTag Family, tyr::TaskKind Kind>

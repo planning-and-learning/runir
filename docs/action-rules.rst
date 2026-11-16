@@ -91,7 +91,7 @@ The default ``StateMemorization.ALL`` expands each program state at most once an
 Python access
 -------------
 
-Module evaluation uses the ``ext.GroundProgramState`` or ``ext.LiftedProgramState`` values the successor expander
+Module evaluation uses the ``ext.ProgramStateGround`` or ``ext.ProgramStateLifted`` values the successor expander
 produces, with the matching ``GroundEvaluationEnvironment`` or ``LiftedEvaluationEnvironment``.
 
 **Expanding.** ``expander.initial_state(planning_state)`` takes a Tyr planning state, such as
@@ -112,7 +112,7 @@ produces, with the matching ``GroundEvaluationEnvironment`` or ``LiftedEvaluatio
 ``ActionRule.get_query_feature()`` the rule's selector, and ``feature.get_expression().get_columns()`` its schema.
 ``environment.make_dl_context(program_state)`` creates a context that borrows the state's registers and arguments, and
 ``ext.evaluate(feature, state_context)`` returns the feature's denotation: Boolean and numerical ones give their value
-through ``.get()``, concept and role ones are iterable.
+through ``.get_value()``, concept and role ones give their objects (or object pairs) through ``.views()``.
 
 .. code:: python
 

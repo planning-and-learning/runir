@@ -22,12 +22,12 @@ static_assert(std::totally_ordered<View>);
 static_assert(std::same_as<View, kr::ps::ext::ProgramView>);
 static_assert(requires(Data& data) {
     data.index;
-    data.entry_module;
+    data.entry_mod;
     data.modules;
 });
 static_assert(requires(const View& view, kr::ps::ext::ModuleSymbolView symbol) {
     view.index();
-    view.get_entry_module();
+    view.get_entry_mod();
     view.get_modules();
     view.find_module(symbol);
 });

@@ -22,9 +22,7 @@ concept IndexedDataView = std::constructible_from<urd::index<T>, ygg::uint_t> &&
 
 template<typename... Ts>
 consteval bool indexed_data_views(boost::mp11::mp_list<Ts...>)
-{
-    return (IndexedDataView<Ts, kr::dl::ConstructorRepository> && ...);
-}
+{ return (IndexedDataView<Ts, kr::dl::ConstructorRepository> && ...); }
 
 template<typename Category>
 consteval bool view_alias()
@@ -42,9 +40,7 @@ consteval bool view_alias()
 
 template<typename... Categories>
 consteval bool view_aliases(boost::mp11::mp_list<Categories...>)
-{
-    return (view_alias<Categories>() && ...);
-}
+{ return (view_alias<Categories>() && ...); }
 
 template<typename Category>
 consteval bool query_projection_contract()
@@ -52,12 +48,17 @@ consteval bool query_projection_contract()
     using Entity = kr::dl::QueryProjection<Category>;
     using Repository = kr::dl::ConstructorRepository;
     using View = urd::index_view<Entity, Repository>;
-    return urd::resolves<Repository, Entity> && requires(urd::data<Entity>& data, const View& view) {
+    return urd::resolves<Repository, Entity>&&
+        requires(urd::data<Entity> & data, const View& view)
+    {
         data.operand;
         data.columns;
         view.get_operand();
         view.get_columns();
-    } && requires(const View& view) { view.get_plan(); };
+    }
+    &&
+        requires(const View& view)
+    { view.get_plan(); };
 }
 
 template<typename... Tags>
@@ -81,7 +82,7 @@ TEST(RunirKrDlConstructor, PreservesConcreteVariant)
     using Constructor = kr::dl::Constructor<kr::dl::ConceptTag>;
     auto planning_repository = std::make_shared<tyr::formalism::planning::Repository>();
     auto repository = std::make_shared<kr::dl::ConstructorRepository>(planning_repository);
-    auto data = urd::data<Constructor>(urd::index<Concrete>(6));
+    auto data = urd::data<Constructor>(urd::index<Concrete>(6), false);
     const auto constructor = repository->insert(data).first;
 
     ASSERT_TRUE((std::holds_alternative<urd::index_view<Concrete, runir::kr::dl::ConstructorRepository>>(constructor.get_variant())));
@@ -96,12 +97,12 @@ TEST(RunirKrDlConstructor, SharedInterningCanonicalizesAndPrepares)
         auto repository = std::make_shared<kr::dl::ConstructorRepository>(planning_repository);
         auto top = urd::data<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::TopTag>>();
         auto bot = urd::data<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::BotTag>>();
-        auto first_data = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(ygg::formalism::insert(*repository, top).first.index());
-        auto second_data = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(ygg::formalism::insert(*repository, bot).first.index());
+        auto first_data = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(ygg::formalism::insert(*repository, top).first.index(), false);
+        auto second_data = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(ygg::formalism::insert(*repository, bot).first.index(), false);
         const auto first = ygg::formalism::insert(*repository, first_data).first;
         const auto second = ygg::formalism::insert(*repository, second_data).first;
-        EXPECT_TRUE(first.is_static());
-        EXPECT_TRUE(second.is_static());
+        EXPECT_TRUE(first.get_is_static());
+        EXPECT_TRUE(second.get_is_static());
 
         auto data = urd::data<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::IntersectionTag>>(second.index(), first.index());
         ASSERT_FALSE(kr::dl::is_canonical(data));

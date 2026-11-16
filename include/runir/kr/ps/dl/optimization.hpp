@@ -29,7 +29,7 @@ public:
     RecordView<Family, RepositoryTypes, ConcreteFeature<Family, DlTag, FeatureTag>>
     rewrite(RecordView<Family, RepositoryTypes, ConcreteFeature<Family, DlTag, FeatureTag>> view, BasicRepository<Family, RepositoryTypes>& repository)
     {
-        const auto expression = view.get_expression();
+        const auto expression = view.get_feature();
         const auto optimized = m_optimizer.optimize(expression);
         if (optimized == expression)
             return view;
@@ -48,7 +48,7 @@ class FeatureStatisticsCollector
 public:
     template<typename FeatureTag, typename RepositoryTypes>
     void add(RecordView<Family, RepositoryTypes, ConcreteFeature<Family, DlTag, FeatureTag>> view)
-    { m_collector.add(view.get_expression()); }
+    { m_collector.add(view.get_feature()); }
 
     [[nodiscard]] const runir::kr::dl::QueryStatisticsCollector& get_collector() const noexcept { return m_collector; }
 

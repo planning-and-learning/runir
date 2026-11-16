@@ -51,9 +51,7 @@ struct data<runir::kr::dl::semantics::CallArguments>
     static constexpr auto identifying_members() noexcept
     { return urd::Members<&data::concept_arguments, &data::role_arguments, &data::boolean_arguments, &data::numerical_arguments> {}; }
     static constexpr auto cista_members() noexcept
-    {
-        return urd::Members<&data::index, &data::concept_arguments, &data::role_arguments, &data::boolean_arguments, &data::numerical_arguments> {};
-    }
+    { return urd::Members<&data::index, &data::concept_arguments, &data::role_arguments, &data::boolean_arguments, &data::numerical_arguments> {}; }
 };
 
 }  // namespace urd

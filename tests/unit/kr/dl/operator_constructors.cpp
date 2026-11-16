@@ -14,13 +14,13 @@ namespace
 
 auto wrap_concept(runir::kr::dl::ConstructorRepository& repository, auto value)
 {
-    auto data = urd::data<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>(value.index());
+    auto data = urd::data<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>(value.index(), false);
     return repository.insert(data).first;
 }
 
 auto wrap_role(runir::kr::dl::ConstructorRepository& repository, auto role)
 {
-    auto data = urd::data<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>(role.index());
+    auto data = urd::data<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>(role.index(), false);
     return repository.insert(data).first;
 }
 

@@ -31,6 +31,9 @@
 namespace runir::kr::ps::ext
 {
 
+/// An order direction as fmt writes it (format_as).
+inline const char* format_as(OrderDirection direction) noexcept { return direction == OrderDirection::MIN ? "min" : "max"; }
+
 template<runir::kr::ps::ext::RuleKind Kind, typename C>
 void append_rule_body(std::ostream& os, urd::index_view<runir::kr::ps::ext::Rule<Kind>, C> view)
 {
@@ -38,11 +41,12 @@ void append_rule_body(std::ostream& os, urd::index_view<runir::kr::ps::ext::Rule
     if constexpr (runir::kr::ps::ext::BindingRuleKind<Kind>)
     {
         using Category = RuleCategoryFor<Kind>;
-        os << ygg::print_indent << "(:" << Category::name << ' ' << view.get_feature().get_symbol() << ")\n";
+        os << ygg::print_indent << "(:" << Category::keyword << ' '
+           << std::visit([](auto concrete) { return concrete.get_symbol(); }, view.get_feature().get_variant()) << ")\n";
         os << ygg::print_indent << "(:register\n";
         {
             ygg::IndentScope scope(os);
-            os << ygg::print_indent << "(:" << Category::name << ' ' << view.get_slot().get_name() << ")\n";
+            os << ygg::print_indent << "(:" << Category::keyword << ' ' << view.get_slot().get_name() << ")\n";
         }
         os << ygg::print_indent << ")\n";
         if (!view.get_effects().empty())
@@ -54,8 +58,10 @@ void append_rule_body(std::ostream& os, urd::index_view<runir::kr::ps::ext::Rule
                                       view.get_order(),
                                       [](std::ostream& output, auto term)
                                       {
-                                          output << '(' << (term.get_direction() == OrderDirection::MIN ? "min" : "max") << ' ';
-                                          std::visit([&](auto feature) { output << feature.get_symbol(); }, term.get_feature());
+                                          output << '(' << format_as(term.get_direction()) << ' ';
+                                          std::visit([&](auto feature)
+                                                     { output << std::visit([](auto concrete) { return concrete.get_symbol(); }, feature.get_variant()); },
+                                                     term.get_feature());
                                           output << ')';
                                       });
     }
@@ -66,20 +72,26 @@ void append_rule_body(std::ostream& os, urd::index_view<runir::kr::ps::ext::Rule
     else if constexpr (std::same_as<Kind, runir::kr::ps::ext::DoTag>)
     {
         os << ygg::print_indent << "(:action " << fmt::format("{:?}", view.get_action_name().view()) << ")\n";
-        append_inline_section(os, "arguments", view.get_action_arguments(), [](std::ostream& output, auto argument) { output << argument.get_symbol(); });
+        append_inline_section(os,
+                              "arguments",
+                              view.get_arguments(),
+                              [](std::ostream& output, auto argument)
+                              { output << std::visit([](auto concrete) { return concrete.get_symbol(); }, argument.get_variant()); });
         append_effects(os, view.get_effects());
     }
     else if constexpr (std::same_as<Kind, runir::kr::ps::ext::ActionTag>)
     {
         os << ygg::print_indent << "(:action " << fmt::format("{:?}", view.get_action_name().view()) << ")\n";
-        os << ygg::print_indent << "(:query " << view.get_query_feature().get_symbol() << ")\n";
+        os << ygg::print_indent << "(:query " << std::visit([](auto concrete) { return concrete.get_symbol(); }, view.get_query_feature().get_variant())
+           << ")\n";
         append_effects(os, view.get_effects());
     }
     else if constexpr (std::same_as<Kind, runir::kr::ps::ext::CallTag>)
     {
         os << ygg::print_indent << "(:callee " << view.get_callee().get_name() << ")\n";
         os << ygg::print_indent << "(:arguments";
-        view.for_each_call_argument([&](auto argument) { os << ' ' << argument.get_symbol(); });
+        view.for_each_call_argument([&](auto argument)
+                                    { os << ' ' << std::visit([](auto concrete) { return concrete.get_symbol(); }, argument.get_variant()); });
         os << ")\n";
     }
 }
@@ -101,7 +113,7 @@ void append_module(std::ostream& os, urd::index_view<runir::kr::ps::ext::Module,
     os << ygg::print_indent << "(:module\n";
     {
         ygg::IndentScope scope(os);
-        os << ygg::print_indent << "(:symbol " << view.get_name() << ")\n";
+        os << ygg::print_indent << "(:symbol " << view.get_symbol().get_name() << ")\n";
 
         os << ygg::print_indent << "(:arguments";
         append_declarations<runir::kr::dl::ConceptTag>(os, view.template get_arguments<runir::kr::dl::ConceptTag>());
@@ -121,7 +133,7 @@ void append_program(std::ostream& os, urd::index_view<runir::kr::ps::ext::Progra
     os << ygg::print_indent << "(:program\n";
     {
         ygg::IndentScope scope(os);
-        os << ygg::print_indent << "(:entry " << view.get_entry_module().get_name() << ")\n";
+        os << ygg::print_indent << "(:entry " << view.get_entry_mod().get_symbol().get_name() << ")\n";
         for (auto module_ : view.get_modules())
         {
             append_module(os, module_);
@@ -158,9 +170,9 @@ struct fmt::formatter<urd::index_view<runir::kr::ps::ext::ModuleState<Kind>, C>>
     auto format(const auto& value, format_context& context) const
     {
         return fmt::format_to(context.out(),
-                              "ModuleState(state={}, module={}, memory_state={}, registers={}, arguments={})",
+                              "ModuleState(state={}, mod={}, memory_state={}, registers={}, arguments={})",
                               value.get_state().index(),
-                              value.get_module().get_name(),
+                              value.get_mod().get_symbol().get_name(),
                               value.get_memory_state(),
                               value.get_registers(),
                               value.get_arguments());
@@ -174,8 +186,8 @@ struct fmt::formatter<urd::index_view<runir::kr::ps::ext::CallStack, C>>
     auto format(const auto& value, format_context& context) const -> format_context::iterator
     {
         return fmt::format_to(context.out(),
-                              "CallStack(module={}, return_memory_state={}, registers={}, arguments={}, caller={})",
-                              value.get_module().get_name(),
+                              "CallStack(mod={}, return_memory_state={}, registers={}, arguments={}, caller={})",
+                              value.get_mod().get_symbol().get_name(),
                               value.get_return_memory_state(),
                               value.get_registers(),
                               value.get_arguments(),
@@ -207,7 +219,7 @@ struct fmt::formatter<runir::kr::ps::ProgramProofVertexLabel<runir::kr::ExtFamil
         return fmt::format_to(context.out(),
                               "state={} module={} initial={} goal={} alive={} unsolvable={}",
                               state.get_state().index(),
-                              state.get_module_state().get_module().get_name(),
+                              state.get_module_state().get_mod().get_symbol().get_name(),
                               label.is_initial,
                               label.is_goal,
                               label.is_alive,

@@ -21,14 +21,19 @@ namespace runir::kr::dl::semantics
 
 struct RegisterValues
 {
+    static constexpr auto name = "RegisterValues";
 };
 
 struct CallArguments
 {
+    static constexpr auto name = "CallArguments";
 };
 
 template<CategoryTag Category>
-struct Denotation;
+struct Denotation
+{
+    static constexpr auto name = "Denotation";
+};
 
 using DenotationTypes = boost::mp11::mp_list<Denotation<BooleanTag>, Denotation<NumericalTag>, Denotation<ConceptTag>, Denotation<RoleTag>>;
 using DenotationRecordTypes = boost::mp11::mp_append<DenotationTypes, boost::mp11::mp_list<RegisterValues, CallArguments>>;

@@ -17,16 +17,19 @@ namespace runir::kr::uns
 // A literal of the classifier DNF: a boolean feature together with a polarity.
 struct ClassifierLiteral
 {
+    static constexpr auto name = "ClassifierLiteral";
 };
 
 // A clause of the classifier DNF: a conjunction of literals.
 struct ClassifierClause
 {
+    static constexpr auto name = "ClassifierClause";
 };
 
 // A classifier: named boolean features + a DNF (disjunction of clauses) over those features.
 struct Classifier
 {
+    static constexpr auto name = "Classifier";
     static constexpr auto keyword = "classifier";
 };
 

@@ -13,10 +13,11 @@ from pytyr.formalism.planning import Parser
 from pytyr.planning import lifted
 from pyyggdrasil.execution import ExecutionContext
 from pyyggdrasil.serialization import Dictionaries
+from relation_utils import values
 
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext, LiftedTaskContext
-from pyrunir.kr.dl.semantics import ConceptDenotation, GroundStateEvaluationContext, LiftedStateEvaluationContext
+from pyrunir.kr.dl.semantics import DenotationConcept, GroundStateEvaluationContext, LiftedStateEvaluationContext
 from pyrunir.kr.ps import ProofStatus, icp
 from pyrunir.serialization import register_table, serialize, table
 
@@ -58,7 +59,6 @@ PROGRAM = """(:program (:entry main)
 
 StateT_contra = TypeVar("StateT_contra", contravariant=True)
 StepT_co = TypeVar("StepT_co", covariant=True)
-ExpressionT_co = TypeVar("ExpressionT_co", covariant=True)
 
 TaskContext = GroundTaskContext | LiftedTaskContext
 SearchOptions = icp.GroundProgramSearchOptions | icp.LiftedProgramSearchOptions
@@ -162,31 +162,20 @@ def test_search_and_round_trip(kind: str, *, universal: bool) -> None:
     assert (result.plan is None) == universal
 
 
-class _FeatureVariant(Protocol[ExpressionT_co]):
-    def syntactic_complexity(self) -> int: ...
-
-    def get_feature(self) -> ExpressionT_co: ...
-
-
-class _Feature(Protocol[ExpressionT_co]):
-    def get_symbol(self) -> str: ...
-
-    def syntactic_complexity(self) -> int: ...
-
-    def get_variant(self) -> _FeatureVariant[ExpressionT_co]: ...
-
-    def get_feature(self) -> ExpressionT_co: ...
-
-    def get_expression(self) -> ExpressionT_co: ...
+IcpFeature = (
+    icp.dl.FeatureIcpConcept
+    | icp.dl.FeatureIcpRole
+    | icp.dl.FeatureIcpBoolean
+    | icp.dl.FeatureIcpNumerical
+    | icp.dl.FeatureIcpQuery
+)
 
 
-def check_feature_complexity(features: Sequence[_Feature[ExpressionT_co]], symbol: str, complexity: int) -> None:
-    """Check the complexity and feature views of the feature named ``symbol``."""
-    feature = next(value for value in features if value.get_symbol() == symbol)
-    assert feature.syntactic_complexity() == complexity
-    assert feature.get_variant().syntactic_complexity() == complexity
-    assert feature.get_feature() == feature.get_expression()
-    assert feature.get_variant().get_feature() == feature.get_expression()
+def check_feature_complexity(features: Sequence[IcpFeature], symbol: str, complexity: int) -> None:
+    """Check the complexity of the feature named ``symbol`` and of its concrete feature."""
+    feature = next(value for value in features if value.get_variant().get_symbol() == symbol)
+    assert icp.dl.syntactic_complexity(feature) == complexity
+    assert icp.dl.syntactic_complexity(feature.get_variant()) == complexity
 
 
 def test_feature_complexity_uses_the_shared_dl_language() -> None:
@@ -197,7 +186,7 @@ def test_feature_complexity_uses_the_shared_dl_language() -> None:
       (:query (:symbol locations)""",
     )
     context, program = context_and_program("Lifted", source)
-    module = program.get_module()
+    module = program.get_entry_mod()
     cases = (
         (module.get_concept_features(), "candidates", 3),
         (module.get_role_features(), "carrying", 1),
@@ -207,9 +196,9 @@ def test_feature_complexity_uses_the_shared_dl_language() -> None:
     )
     for features, symbol, complexity in cases:
         check_feature_complexity(features, symbol, complexity)
-    total = sum(feature.syntactic_complexity() for features, _, _ in cases for feature in features)
-    assert module.syntactic_complexity() == total
-    assert program.syntactic_complexity() == total
+    total = sum(icp.dl.syntactic_complexity(feature) for features, _, _ in cases for feature in features)
+    assert icp.syntactic_complexity(module) == total
+    assert icp.syntactic_complexity(program) == total
     domain = context.search_context.task.get_formalism_task().get_domain()
     assert icp.dl.parse_program(str(program), domain, context.domain_context.icp_repository) == program
 
@@ -218,24 +207,24 @@ def check_loaded_features(
     module: icp.Module, dl_context: GroundStateEvaluationContext | LiftedStateEvaluationContext
 ) -> None:
     """Check the features of the gripper program after loading the selected balls."""
-    numericals = {feature.get_symbol(): feature for feature in module.get_numerical_features()}
-    assert icp.evaluate(numericals["selected_count"], dl_context).get() == 1
-    assert icp.evaluate(numericals["carried_count"], dl_context).get() == 0
+    numericals = {feature.get_variant().get_symbol(): feature for feature in module.get_numerical_features()}
+    assert icp.evaluate(numericals["selected_count"], dl_context).get_value() == 1
+    assert icp.evaluate(numericals["carried_count"], dl_context).get_value() == 0
     (query,) = module.get_query_features()
     relation = icp.evaluate(query, dl_context)
     assert relation.arity() == 2
-    rows = {tuple(row) for row in relation}
+    rows = {values(row) for row in relation.get_rows()}
     assert len(rows) == 2
     assert len({ball for ball, _ in rows}) == 2
-    robot = next(feature for feature in module.get_concept_features() if feature.get_symbol() == "robot")
-    assert {room for _, room in rows} == {int(room.index()) for room in icp.evaluate(robot, dl_context)}
+    robot = next(feature for feature in module.get_concept_features() if feature.get_variant().get_symbol() == "robot")
+    assert {room for _, room in rows} == {int(room.index()) for room in icp.evaluate(robot, dl_context).views()}
 
 
 def check_history_tables(
-    state_type: type[icp.GroundProgramState] | type[icp.LiftedProgramState],
-    history_type: type[icp.GroundHistories] | type[icp.LiftedHistories],
-    initial: icp.GroundProgramState | icp.LiftedProgramState,
-    loaded: icp.GroundProgramState | icp.LiftedProgramState,
+    state_type: type[icp.ProgramStateGround] | type[icp.ProgramStateLifted],
+    history_type: type[icp.ground.Histories] | type[icp.lifted.Histories],
+    initial: icp.ProgramStateGround | icp.ProgramStateLifted,
+    loaded: icp.ProgramStateGround | icp.ProgramStateLifted,
 ) -> None:
     """Check that the initial and loaded program states serialize with distinct histories."""
     dictionaries = Dictionaries()
@@ -243,10 +232,10 @@ def check_history_tables(
     register_table(dictionaries, history_type, "histories", "h")
     register_table(
         dictionaries,
-        ConceptDenotation,
+        DenotationConcept,
         "concepts",
         "c",
-        project=lambda value: {"values": [obj.get_name() for obj in value]},
+        project=lambda value: {"values": [obj.get_name() for obj in value.views()]},
     )
     assert serialize(dictionaries, initial) == "s0"
     assert serialize(dictionaries, loaded) == "s1"
@@ -264,23 +253,23 @@ def check_histories_ground() -> None:
     search = context.search_context
     node = search.successor_generator.get_initial_node(search.state_repository, search.axiom_evaluator)
     initial = expander.initial_state(node.get_state())
-    assert all(len(list(history)) == 0 for history in initial.histories.concepts)
+    assert all(len(history.views()) == 0 for history in initial.get_histories().get_concepts())
     (step,) = collect_steps(expander, initial)
     loaded = step.target
-    assert loaded.state == initial.state
+    assert loaded.get_state() == initial.get_state()
     assert loaded != initial
-    assert loaded.memory_state.get_name() == "pick"
+    assert loaded.get_memory_state().get_name() == "pick"
     environment = icp.GroundEvaluationEnvironment(context, program)
     dl_context = environment.make_dl_context(loaded)
-    check_loaded_features(loaded.module, dl_context)
+    check_loaded_features(loaded.get_module(), dl_context)
     assert len(collect_steps(expander, loaded)) == 2
-    histories = loaded.histories
-    counts = [len(list(history)) for history in histories.concepts]
+    histories = loaded.get_histories()
+    counts = [len(history.views()) for history in histories.get_concepts()]
     assert sum(counts) == 1
-    check_history_tables(icp.GroundProgramState, icp.GroundHistories, initial, loaded)
+    check_history_tables(icp.ProgramStateGround, icp.ground.Histories, initial, loaded)
     del context, program, environment, dl_context, expander, initial, loaded, step
     gc.collect()
-    assert [len(list(history)) for history in histories.concepts] == counts
+    assert [len(history.views()) for history in histories.get_concepts()] == counts
 
 
 def check_histories_lifted() -> None:
@@ -290,23 +279,23 @@ def check_histories_lifted() -> None:
     search = context.search_context
     node = search.successor_generator.get_initial_node(search.state_repository, search.axiom_evaluator)
     initial = expander.initial_state(node.get_state())
-    assert all(len(list(history)) == 0 for history in initial.histories.concepts)
+    assert all(len(history.views()) == 0 for history in initial.get_histories().get_concepts())
     (step,) = collect_steps(expander, initial)
     loaded = step.target
-    assert loaded.state == initial.state
+    assert loaded.get_state() == initial.get_state()
     assert loaded != initial
-    assert loaded.memory_state.get_name() == "pick"
+    assert loaded.get_memory_state().get_name() == "pick"
     environment = icp.LiftedEvaluationEnvironment(context, program)
     dl_context = environment.make_dl_context(loaded)
-    check_loaded_features(loaded.module, dl_context)
+    check_loaded_features(loaded.get_module(), dl_context)
     assert len(collect_steps(expander, loaded)) == 2
-    histories = loaded.histories
-    counts = [len(list(history)) for history in histories.concepts]
+    histories = loaded.get_histories()
+    counts = [len(history.views()) for history in histories.get_concepts()]
     assert sum(counts) == 1
-    check_history_tables(icp.LiftedProgramState, icp.LiftedHistories, initial, loaded)
+    check_history_tables(icp.ProgramStateLifted, icp.lifted.Histories, initial, loaded)
     del context, program, environment, dl_context, expander, initial, loaded, step
     gc.collect()
-    assert [len(list(history)) for history in histories.concepts] == counts
+    assert [len(history.views()) for history in histories.get_concepts()] == counts
 
 
 @pytest.mark.parametrize("kind", ["Ground", "Lifted"])
@@ -330,26 +319,26 @@ def test_resource_limits(kind: str) -> None:
 
 def test_serialization_fields_and_program_projection() -> None:
     _context, program = context_and_program("Lifted")
-    assert "histories" in icp.LiftedProgramState.Fields.__members__
-    assert "effects" in icp.ConceptLoadRule.Fields.__members__
-    assert "xeffects" in icp.CruleRule.Fields.__members__
+    assert "histories" in icp.ProgramStateLifted.Fields.__members__
+    assert "effects" in icp.RuleLoadConcept.Fields.__members__
+    assert "xeffects" in icp.RuleCrule.Fields.__members__
     dictionaries = Dictionaries()
     register_table(
-        dictionaries, icp.Program, "programs", "p", project=lambda value: {"module": str(value.get_module())}
+        dictionaries, icp.Program, "programs", "p", project=lambda value: {"entry_mod": str(value.get_entry_mod())}
     )
     assert serialize(dictionaries, program) == "p0"
-    assert table(dictionaries, icp.Program) == [{"module": str(program.get_module())}]
+    assert table(dictionaries, icp.Program) == [{"entry_mod": str(program.get_entry_mod())}]
     pick = next(
         variant.get_variant()
-        for transition in program.get_module().get_memory_transitions()
+        for transition in program.get_entry_mod().get_memory_transitions()
         for variant in transition
         if variant.get_symbol() == "pick"
     )
-    assert isinstance(pick, icp.CruleRule)
+    assert isinstance(pick, icp.RuleCrule)
     (condition,) = pick.get_xconditions()
     dictionaries = Dictionaries()
     register_table(dictionaries, icp.XCondition, "conditions", "x")
-    register_table(dictionaries, icp.dl.ConceptFeature, "features", "f", fields=())
+    register_table(dictionaries, icp.dl.FeatureIcpConcept, "features", "f", fields=())
     assert serialize(dictionaries, condition) == "x0"
     assert table(dictionaries, icp.XCondition) == [
         {

@@ -43,14 +43,14 @@ struct AtomicEvaluator
         if constexpr (std::same_as<Category, BooleanTag>)
         {
             bool present = false;
-            for ([[maybe_unused]] const auto atom : context.get_state().get_atoms_view(predicate))
+            for ([[maybe_unused]] const auto atom : context.get_state().get_atoms(predicate))
                 present = true;
             value.set(present == polarity);
         }
         else
         {
             auto& builder = value.initialize(semantics::detail::num_objects<Kind>(context));
-            for (const auto atom : context.get_state().get_atoms_view(predicate))
+            for (const auto atom : context.get_state().get_atoms(predicate))
             {
                 const auto objects = atom.get_row().template get<urd::index<tyr::formalism::Object>>();
                 if constexpr (std::same_as<Category, ConceptTag>)

@@ -7,6 +7,7 @@
 #include <runir/kr/uns/formatter.hpp>
 #include <runir/kr/uns/repository.hpp>
 #include <urd/elements/flat.hpp>
+#include <urd/python/bindings.hpp>
 #include <yggdrasil/python/bindings.hpp>
 
 namespace runir::kr::uns
@@ -14,13 +15,8 @@ namespace runir::kr::uns
 
 void bind_classifier_literal(nb::module_& m)
 {
-    using View = urd::index_view<ClassifierLiteral, Repository>;
-    urd::python::bind_index<urd::index<ClassifierLiteral>>(m, "ClassifierLiteralIndex");
-    auto cls =
-        nb::class_<View>(m, "ClassifierLiteral").def("index", &View::index).def("get_feature", &View::get_feature).def("get_polarity", &View::get_polarity);
-    ygg::add_print(cls);
-    urd::python::add_comparison(cls);
-    urd::python::add_hash(cls);
+    urd::python::bind_data<ClassifierLiteral>(m);
+    urd::python::bind_view<ClassifierLiteralView>(m);
 }
 
 }  // namespace runir::kr::uns

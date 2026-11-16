@@ -75,9 +75,7 @@ private:
 
     template<typename T, typename Initialize>
     Constructor<Category> intern_concrete(Initialize&& initialize)
-    {
-        return intern<T>(std::forward<Initialize>(initialize)).index();
-    }
+    { return intern<T>(std::forward<Initialize>(initialize)).index(); }
 
     template<typename T>
     auto intern_nullary()
@@ -252,29 +250,21 @@ public:
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::BotTag>)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
-    {
-        return intern_nullary<Concept<CnfGrammarFamily, runir::kr::dl::BotTag>>();
-    }
+    { return intern_nullary<Concept<CnfGrammarFamily, runir::kr::dl::BotTag>>(); }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::TopTag>)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
-    {
-        return intern_nullary<Concept<CnfGrammarFamily, runir::kr::dl::TopTag>>();
-    }
+    { return intern_nullary<Concept<CnfGrammarFamily, runir::kr::dl::TopTag>>(); }
 
     template<tyr::formalism::FactKind T>
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::AtomicStateTag<T>> source)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
-    {
-        return intern_predicate<Concept<CnfGrammarFamily, runir::kr::dl::AtomicStateTag<T>>>(source.get_predicate());
-    }
+    { return intern_predicate<Concept<CnfGrammarFamily, runir::kr::dl::AtomicStateTag<T>>>(source.get_predicate()); }
 
     template<tyr::formalism::FactKind T>
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::AtomicGoalTag<T>> source)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
-    {
-        return intern_predicate<Concept<CnfGrammarFamily, runir::kr::dl::AtomicGoalTag<T>>>(source.get_predicate(), source.get_polarity());
-    }
+    { return intern_predicate<Concept<CnfGrammarFamily, runir::kr::dl::AtomicGoalTag<T>>>(source.get_predicate(), source.get_polarity()); }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::IntersectionTag> source)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
@@ -408,23 +398,17 @@ public:
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::UniversalTag>)
         requires std::same_as<Category, runir::kr::dl::RoleTag>
-    {
-        return intern_nullary<Role<CnfGrammarFamily, runir::kr::dl::UniversalTag>>();
-    }
+    { return intern_nullary<Role<CnfGrammarFamily, runir::kr::dl::UniversalTag>>(); }
 
     template<tyr::formalism::FactKind T>
     auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::AtomicStateTag<T>> source)
         requires std::same_as<Category, runir::kr::dl::RoleTag>
-    {
-        return intern_predicate<Role<CnfGrammarFamily, runir::kr::dl::AtomicStateTag<T>>>(source.get_predicate());
-    }
+    { return intern_predicate<Role<CnfGrammarFamily, runir::kr::dl::AtomicStateTag<T>>>(source.get_predicate()); }
 
     template<tyr::formalism::FactKind T>
     auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::AtomicGoalTag<T>> source)
         requires std::same_as<Category, runir::kr::dl::RoleTag>
-    {
-        return intern_predicate<Role<CnfGrammarFamily, runir::kr::dl::AtomicGoalTag<T>>>(source.get_predicate(), source.get_polarity());
-    }
+    { return intern_predicate<Role<CnfGrammarFamily, runir::kr::dl::AtomicGoalTag<T>>>(source.get_predicate(), source.get_polarity()); }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::IntersectionTag> source)
         requires std::same_as<Category, runir::kr::dl::RoleTag>
@@ -496,16 +480,12 @@ public:
     template<tyr::formalism::FactKind T>
     auto translate_concrete_constructor(runir::kr::dl::grammar::BooleanView<runir::kr::dl::AtomicStateTag<T>> source)
         requires std::same_as<Category, runir::kr::dl::BooleanTag>
-    {
-        return intern_predicate<Boolean<CnfGrammarFamily, runir::kr::dl::AtomicStateTag<T>>>(source.get_predicate(), source.get_polarity());
-    }
+    { return intern_predicate<Boolean<CnfGrammarFamily, runir::kr::dl::AtomicStateTag<T>>>(source.get_predicate(), source.get_polarity()); }
 
     template<tyr::formalism::FactKind T>
     auto translate_concrete_constructor(runir::kr::dl::grammar::BooleanView<runir::kr::dl::AtomicGoalTag<T>> source)
         requires std::same_as<Category, runir::kr::dl::BooleanTag>
-    {
-        return intern_predicate<Boolean<CnfGrammarFamily, runir::kr::dl::AtomicGoalTag<T>>>(source.get_predicate(), source.get_polarity());
-    }
+    { return intern_predicate<Boolean<CnfGrammarFamily, runir::kr::dl::AtomicGoalTag<T>>>(source.get_predicate(), source.get_polarity()); }
 
     auto translate_concrete_constructor(runir::kr::dl::grammar::BooleanView<runir::kr::dl::NonemptyTag> source)
         requires std::same_as<Category, runir::kr::dl::BooleanTag>

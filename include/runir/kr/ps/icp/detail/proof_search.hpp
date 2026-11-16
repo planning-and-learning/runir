@@ -4,7 +4,7 @@
 #include "runir/kr/ps/detail/search_space.hpp"
 #include "runir/kr/ps/icp/detail/proof_graph.hpp"
 #include "runir/kr/ps/icp/detail/search_node.hpp"
-#include "runir/kr/ps/icp/program_executor.hpp"
+#include "runir/kr/ps/icp/program_executor_decl.hpp"
 #include "runir/kr/ps/icp/successor_expander.hpp"
 #include "runir/kr/ps/unsolvability.hpp"
 

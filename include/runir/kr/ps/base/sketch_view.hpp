@@ -19,20 +19,22 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
+    auto get_boolean_features() const noexcept { return self().template member<&urd::record_of<V>::boolean_features>(); }
+    auto get_numerical_features() const noexcept { return self().template member<&urd::record_of<V>::numerical_features>(); }
+    auto get_rules() const noexcept { return self().template member<&urd::record_of<V>::rules>(); }
+
     template<typename FeatureTag>
     auto get_features() const noexcept
     {
         if constexpr (std::same_as<FeatureTag, runir::kr::dl::BooleanTag>)
-            return self().template member<&urd::record_of<V>::boolean_features>();
+            return get_boolean_features();
         else if constexpr (std::same_as<FeatureTag, runir::kr::dl::NumericalTag>)
-            return self().template member<&urd::record_of<V>::numerical_features>();
+            return get_numerical_features();
         else
         {
             static_assert(false, "unhandled feature tag in Sketch::get_features");
         }
     }
-
-    auto get_rules() const noexcept { return self().template member<&urd::record_of<V>::rules>(); }
 };
 }  // namespace urd
 

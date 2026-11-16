@@ -38,32 +38,39 @@ from pyyggdrasil.execution import ExecutionContext
 
 from pyrunir.datasets import LiftedTaskSearchContext
 from pyrunir.kr import DomainContext, LiftedTaskContext
-from pyrunir.kr.dl.semantics import Boolean, Concept, EvaluationStorage, LiftedStateEvaluationContext, Numerical
+from pyrunir.kr.dl import semantics
+from pyrunir.kr.dl.semantics import (
+    ConstructorBoolean,
+    ConstructorConcept,
+    ConstructorNumerical,
+    EvaluationStorage,
+    LiftedStateEvaluationContext,
+)
 from pyrunir.kr.ps import ProofStatus
 from pyrunir.kr.ps.ext import (
     ConceptChoice,
-    ConceptChooseRule,
-    LiftedModuleState,
     LiftedProgramProofGraph,
     LiftedProgramProofResults,
     LiftedProgramSearchOptions,
-    LiftedProgramState,
     LiftedSuccessorExpander,
     Module,
+    ModuleStateLifted,
     Program,
     ProgramSearchStatistics,
+    ProgramStateLifted,
     RoleChoice,
-    RoleChooseRule,
-    RuleVariant,
+    RuleChooseConcept,
+    RuleChooseRole,
+    RuleExt,
     StateMemorization,
     evaluate,
     find_lifted_solution,
 )
 from pyrunir.kr.ps.ext.dl import (
-    BooleanFeature,
-    ConceptFeature,
+    FeatureExtBoolean,
+    FeatureExtConcept,
+    FeatureExtNumerical,
     ModulePolicyGraph,
-    NumericalFeature,
     parse_boolean,
     parse_concept,
     parse_numerical,
@@ -127,8 +134,8 @@ def resident_mib() -> float:
     return int(statm.split()[1]) * os.sysconf("SC_PAGE_SIZE") / 2**20
 
 
-_Expression = Concept | Boolean | Numerical
-_DeclaredFeature = ConceptFeature | BooleanFeature | NumericalFeature
+_Expression = ConstructorConcept | ConstructorBoolean | ConstructorNumerical
+_DeclaredFeature = FeatureExtConcept | FeatureExtBoolean | FeatureExtNumerical
 
 
 @dataclass(slots=True)
@@ -156,8 +163,8 @@ def _abstract_cycle(module: Module, graph: ModulePolicyGraph) -> list[str]:
 
     States are written `memory[true Booleans; positive numericals]`, rules as `--rule-->`.
     """
-    booleans = [feature.get_symbol() for feature in module.get_boolean_features()]
-    numericals = [feature.get_symbol() for feature in module.get_numerical_features()]
+    booleans = [feature.get_variant().get_symbol() for feature in module.get_boolean_features()]
+    numericals = [feature.get_variant().get_symbol() for feature in module.get_numerical_features()]
 
     def state(vertex: int) -> str:
         label = graph.vertex_value(vertex)
@@ -180,7 +187,7 @@ def _choose_rules(module: Module) -> dict[str, ChooseRule]:
     for bodies in module.get_memory_transitions():
         for body in bodies:
             variant = body.get_variant()
-            if isinstance(variant, ConceptChooseRule | RoleChooseRule):
+            if isinstance(variant, RuleChooseConcept | RuleChooseRole):
                 rules[body.get_symbol()] = ChooseRule(body.get_symbol(), str(variant.get_slot().get_name()))
     return rules
 
@@ -214,7 +221,7 @@ class Session:
         self._workers = options.workers
         self._release_mib = options.release_mib  # scans over many tasks evict their searches above this resident size
         self._binding_cache: dict[
-            tuple[int, VertexRef], tuple[RuleVariant, list[tuple[str | None, LiftedProgramState]]]
+            tuple[int, VertexRef], tuple[RuleExt, list[tuple[str | None, ProgramStateLifted]]]
         ] = {}
         self._parse_cache: dict[tuple[int, Feature], _DeclaredFeature | _Expression] = {}
         self._initial = parse_program(program, self._parser.get_domain(), self._domain.ext_repository)
@@ -224,7 +231,7 @@ class Session:
         self._proofs: dict[str, _Search] = {}
         self._text = program
         self._program = parse_program(program, self._parser.get_domain(), self._domain.ext_repository)
-        self._module = self._program.get_entry_module()
+        self._module = self._program.get_entry_mod()
         self._rules = _choose_rules(self._module)
 
     # -- boundary -----------------------------------------------------------------------------------------------------
@@ -254,7 +261,7 @@ class Session:
             raise ValueError(msg) from error
         self._text = text
         self._program = program
-        self._module = program.get_entry_module()
+        self._module = program.get_entry_mod()
         self.release()
         self._rules = _choose_rules(self._module)
 
@@ -414,7 +421,9 @@ class Session:
             surviving = tuple(rule.get_symbol() for rule in sieve.surviving_rules) if sieve is not None else ()
             cycle = _abstract_cycle(module, sieve.counterexample) if sieve is not None else []
             modules.append(
-                ModuleTermination(str(module.get_name()), module_result.status.name.lower(), surviving, tuple(cycle))
+                ModuleTermination(
+                    str(module.get_symbol().get_name()), module_result.status.name.lower(), surviving, tuple(cycle)
+                )
             )
         return Termination(
             result.is_terminating(),
@@ -498,11 +507,11 @@ class Session:
         graph = search.graph
         rule, bindings = self._bindings(ref)
         tried = {
-            register_value(graph.vertex_value(graph.target(edge)).program_state.module_state, rule): edge
+            register_value(graph.vertex_value(graph.target(edge)).program_state.get_module_state(), rule): edge
             for edge in graph.out_edges(ref.vertex)
             if is_choose(graph.edge_value(edge).rule)
         }
-        rows: list[tuple[str, int, Outcome, str | None, int | None, LiftedProgramState]] = []
+        rows: list[tuple[str, int, Outcome, str | None, int | None, ProgramStateLifted]] = []
         for rank, (binding, target) in enumerate(bindings, 1):
             name = str(binding)
             if binding in tried:
@@ -537,7 +546,9 @@ class Session:
         values = [self._feature_values(task_context, source, row[5], rule, row[0]) for row in rows]
         reference = next((i for i, row in enumerate(rows) if row[2] in ("succeeded", "succeeds")), 0)
         atoms = distinguishing_atoms(
-            [object_atoms(source.state, row[0]) for row in rows], object_types(source.state), [row[0] for row in rows]
+            [object_atoms(source.get_state(), row[0]) for row in rows],
+            object_types(source.get_state()),
+            [row[0] for row in rows],
         )
         return [
             Alternative(
@@ -661,23 +672,27 @@ class Session:
         """Memory state, registers, declared Boolean and numerical feature values and fluent atoms at `ref`."""
         label = self._search(ref.task, prove=ref.proof).graph.vertex_value(ref.vertex)
         program_state = label.program_state
-        module_state = program_state.module_state
-        module = module_state.module
+        module_state = program_state.get_module_state()
+        module = module_state.get_mod()
         registers: dict[str, str | None] = {
             **{
                 str(r.get_name()): object_name(v)
-                for r, v in zip(module.get_concept_registers(), module_state.registers.concept_values, strict=True)
+                for r, v in zip(
+                    module.get_concept_registers(), module_state.get_registers().get_concept_values(), strict=True
+                )
             },
             **{
                 str(r.get_name()): object_name(v)
-                for r, v in zip(module.get_role_registers(), module_state.registers.role_values, strict=True)
+                for r, v in zip(
+                    module.get_role_registers(), module_state.get_registers().get_role_values(), strict=True
+                )
             },
         }
         task_context = self._task_context(ref.task)
         features = self._feature_values(task_context, program_state, program_state, None, None)
         return Vertex(
             ref=ref,
-            memory=str(module_state.memory_state.get_name()),
+            memory=str(module_state.get_memory_state().get_name()),
             registers=registers,
             atoms=tuple(str(atom) for atom in label.state.fluent_atoms()),
             features=features,
@@ -693,10 +708,10 @@ class Session:
         task_context = self._task_context(ref.task)
         search = task_context.search_context
         program_state = self._search(ref.task, prove=ref.proof).graph.vertex_value(ref.vertex).program_state
-        module_state = program_state.module_state
+        module_state = program_state.get_module_state()
         expander = LiftedSuccessorExpander(task_context, self._program)
-        before = self._state_values(task_context, program_state.state, module_state)
-        node = search.successor_generator.get_node(search.state_repository, program_state.state.index())
+        before = self._state_values(task_context, program_state.get_state(), module_state)
+        node = search.successor_generator.get_node(search.state_repository, program_state.get_state().index())
         steps: list[Step] = []
         for successor in search.successor_generator.get_labeled_successor_nodes(
             node, search.state_repository, search.axiom_evaluator
@@ -714,7 +729,9 @@ class Session:
         budget = budget or self._budget
         task_context = self._task_context(ref.task)
         search = task_context.search_context
-        module_state = self._search(ref.task, prove=ref.proof).graph.vertex_value(ref.vertex).program_state.module_state
+        module_state = (
+            self._search(ref.task, prove=ref.proof).graph.vertex_value(ref.vertex).program_state.get_module_state()
+        )
         state = self._search(ref.task, prove=ref.proof).graph.vertex_value(ref.vertex).state
         options = gbfs_lazy.lifted.Options()
         options.start_node = search.successor_generator.get_node(search.state_repository, state.index())
@@ -790,17 +807,17 @@ class Session:
     # -- internals -----------------------------------------------------------------------------------------------------
 
     def _state_values(
-        self, task_context: LiftedTaskContext, state: lifted.State, module_state: LiftedModuleState
+        self, task_context: LiftedTaskContext, state: lifted.State, module_state: ModuleStateLifted
     ) -> dict[str, Value]:
         storage = EvaluationStorage(task_context.dl_denotation_repository)
         context = LiftedStateEvaluationContext(
-            state, task_context.dl_builder, storage, module_state.arguments, module_state.registers
+            state, task_context.dl_builder, storage, module_state.get_arguments(), module_state.get_registers()
         )
         values: dict[str, Value] = {}
         for feature in self._module.get_boolean_features():
-            values[feature.get_symbol()] = evaluate(feature, context).get()
+            values[feature.get_variant().get_symbol()] = evaluate(feature, context).get_value()
         for feature in self._module.get_numerical_features():
-            values[feature.get_symbol()] = evaluate(feature, context).get()
+            values[feature.get_variant().get_symbol()] = evaluate(feature, context).get_value()
         return values
 
     def _task_context(self, task: Task) -> LiftedTaskContext:
@@ -818,7 +835,7 @@ class Session:
         *,
         program: Program | None = None,
         universal: bool = False,
-        start: LiftedProgramState | None = None,
+        start: ProgramStateLifted | None = None,
     ) -> tuple[LiftedProgramProofResults, float]:
         self._check_budget()
         program = program or self._program
@@ -930,7 +947,7 @@ class Session:
             )
         return points
 
-    def _bindings(self, ref: VertexRef) -> tuple[RuleVariant, list[tuple[str | None, LiftedProgramState]]]:
+    def _bindings(self, ref: VertexRef) -> tuple[RuleExt, list[tuple[str | None, ProgramStateLifted]]]:
         """The Choose rule at `ref` and its bindings in `:order` rank as (object name, target program state)."""
         key = (id(self._program), ref)
         if key in self._binding_cache:
@@ -950,10 +967,10 @@ class Session:
         expander.for_each_successor(source, ProgramSearchStatistics(), emit, lambda: False)
         choice = choices[0]
         rule = choice.rule
-        bindings: list[tuple[str | None, LiftedProgramState]] = []
+        bindings: list[tuple[str | None, ProgramStateLifted]] = []
         while not choice.exhausted():
             step = expander.apply_choice(source, choice, ProgramSearchStatistics())
-            bindings.append((register_value(step.target.module_state, rule), step.target))
+            bindings.append((register_value(step.target.get_module_state(), rule), step.target))
             choice.advance()
         self._binding_cache[key] = (rule, bindings)
         return rule, bindings
@@ -969,11 +986,17 @@ class Session:
     def _declared_features(self) -> dict[str, Feature]:
         features: dict[str, Feature] = {}
         for feature in self._module.get_concept_features():
-            features[feature.get_symbol()] = Feature(feature.get_symbol(), "concept", feature.get_symbol())
+            features[feature.get_variant().get_symbol()] = Feature(
+                feature.get_variant().get_symbol(), "concept", feature.get_variant().get_symbol()
+            )
         for feature in self._module.get_boolean_features():
-            features[feature.get_symbol()] = Feature(feature.get_symbol(), "boolean", feature.get_symbol())
+            features[feature.get_variant().get_symbol()] = Feature(
+                feature.get_variant().get_symbol(), "boolean", feature.get_variant().get_symbol()
+            )
         for feature in self._module.get_numerical_features():
-            features[feature.get_symbol()] = Feature(feature.get_symbol(), "numerical", feature.get_symbol())
+            features[feature.get_variant().get_symbol()] = Feature(
+                feature.get_variant().get_symbol(), "numerical", feature.get_variant().get_symbol()
+            )
         return features
 
     def _expression_category(self, expression: str) -> Category:
@@ -1006,7 +1029,7 @@ class Session:
                     if feature.category == "boolean"
                     else self._module.get_numerical_features()
                 )
-                parsed = next(f for f in declared if f.get_symbol() == feature.name)
+                parsed = next(f for f in declared if f.get_variant().get_symbol() == feature.name)
             elif feature.category == "concept":
                 parsed = parse_concept(feature.expression, domain, self._module, repository)
             elif feature.category == "boolean":
@@ -1017,35 +1040,43 @@ class Session:
         return self._parse_cache[key]
 
     def _context(
-        self, task_context: LiftedTaskContext, program_state: LiftedProgramState
+        self, task_context: LiftedTaskContext, program_state: ProgramStateLifted
     ) -> LiftedStateEvaluationContext:
         storage = EvaluationStorage(task_context.dl_denotation_repository)
-        module_state = program_state.module_state
+        module_state = program_state.get_module_state()
         return LiftedStateEvaluationContext(
-            program_state.state, task_context.dl_builder, storage, module_state.arguments, module_state.registers
+            program_state.get_state(),
+            task_context.dl_builder,
+            storage,
+            module_state.get_arguments(),
+            module_state.get_registers(),
         )
 
     def _evaluate(
-        self, task_context: LiftedTaskContext, feature: Feature, program_state: LiftedProgramState, binding: str | None
+        self, task_context: LiftedTaskContext, feature: Feature, program_state: ProgramStateLifted, binding: str | None
     ) -> Value:
         parsed = self._parse(feature)
         context = self._context(task_context, program_state)
-        if isinstance(parsed, (ConceptFeature, Concept)):
-            denotation = evaluate(parsed, context) if isinstance(parsed, ConceptFeature) else parsed.evaluate(context)
-            members = {str(member.get_name()) for member in denotation}
+        if isinstance(parsed, (FeatureExtConcept, ConstructorConcept)):
+            denotation = (
+                evaluate(parsed, context)
+                if isinstance(parsed, FeatureExtConcept)
+                else semantics.evaluate(parsed, context)
+            )
+            members = {str(member.get_name()) for member in denotation.views()}
             return binding in members if binding is not None else len(members)
-        if isinstance(parsed, BooleanFeature):
-            return evaluate(parsed, context).get()
-        if isinstance(parsed, NumericalFeature):
-            return evaluate(parsed, context).get()
-        return parsed.evaluate(context).get()
+        if isinstance(parsed, FeatureExtBoolean):
+            return evaluate(parsed, context).get_value()
+        if isinstance(parsed, FeatureExtNumerical):
+            return evaluate(parsed, context).get_value()
+        return semantics.evaluate(parsed, context).get_value()
 
     def _feature_values(
         self,
         task_context: LiftedTaskContext,
-        source: LiftedProgramState,
-        target: LiftedProgramState,
-        rule: RuleVariant | None,
+        source: ProgramStateLifted,
+        target: ProgramStateLifted,
+        rule: RuleExt | None,
         binding: str | None,
     ) -> dict[str, Value]:
         """Declared features for a binding (concepts: membership at the source) or, without a rule, at one state."""

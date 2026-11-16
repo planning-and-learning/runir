@@ -26,12 +26,8 @@ private:
     const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_state() const
-    {
-        const auto state = self().template member<&urd::record_of<V>::state>();
-        return get_repository(self().context()).get_state_repository().get_registered_state(state.index());
-    }
-    auto get_module() const noexcept { return self().template member<&urd::record_of<V>::module_>(); }
+    auto get_state() const { return self().template member<&urd::record_of<V>::state>().unpack(); }
+    auto get_mod() const noexcept { return self().template member<&urd::record_of<V>::mod>(); }
     auto get_memory_state() const noexcept { return self().template member<&urd::record_of<V>::memory_state>(); }
     auto get_registers() const noexcept { return self().template member<&urd::record_of<V>::registers>(); }
     auto get_arguments() const noexcept { return self().template member<&urd::record_of<V>::arguments>(); }
@@ -45,9 +41,8 @@ private:
     const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_module() const noexcept { return self().template member<&urd::record_of<V>::module_>(); }
-    auto get_return_memory_state() const noexcept
-    { return self().template member<&urd::record_of<V>::return_memory_state>(); }
+    auto get_mod() const noexcept { return self().template member<&urd::record_of<V>::mod>(); }
+    auto get_return_memory_state() const noexcept { return self().template member<&urd::record_of<V>::return_memory_state>(); }
     auto get_registers() const noexcept { return self().template member<&urd::record_of<V>::registers>(); }
     auto get_arguments() const noexcept { return self().template member<&urd::record_of<V>::arguments>(); }
 
@@ -65,9 +60,8 @@ private:
 public:
     auto get_program() const noexcept { return self().template member<&urd::record_of<V>::program>(); }
     auto get_module_state() const noexcept { return self().template member<&urd::record_of<V>::module_state>(); }
-    auto get_state() const { return get_module_state().get_state(); }
-
     auto get_call_stack() const { return self().template member<&urd::record_of<V>::call_stack>(); }
+    auto get_state() const { return get_module_state().get_state(); }
 };
 
 /// A module state being built: its planning state is not registered yet, so it is read as the builder's view.
@@ -87,7 +81,7 @@ namespace runir::kr::ps::ext
 template<typename S, typename Kind>
 concept ModuleStateViewConcept = tyr::TaskKind<Kind> && requires(const std::remove_reference_t<S>& state) {
     { state.get_state() } -> tyr::planning::StateViewConcept<Kind>;
-    { state.get_module() } -> std::same_as<ModuleView>;
+    { state.get_mod() } -> std::same_as<ModuleView>;
     { state.get_memory_state() } -> std::same_as<MemoryStateView>;
     { state.get_registers() } -> runir::kr::dl::semantics::RegisterValuesViewConcept;
     { state.get_arguments() } -> std::same_as<runir::kr::dl::semantics::CallArgumentsView>;

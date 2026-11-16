@@ -18,17 +18,22 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
+    auto get_concept_arguments() const noexcept { return self().template member<&urd::record_of<V>::concept_arguments>(); }
+    auto get_role_arguments() const noexcept { return self().template member<&urd::record_of<V>::role_arguments>(); }
+    auto get_boolean_arguments() const noexcept { return self().template member<&urd::record_of<V>::boolean_arguments>(); }
+    auto get_numerical_arguments() const noexcept { return self().template member<&urd::record_of<V>::numerical_arguments>(); }
+
     template<runir::kr::dl::CategoryTag Category>
     auto arguments() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return self().template member<&urd::record_of<V>::concept_arguments>();
+            return get_concept_arguments();
         else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return self().template member<&urd::record_of<V>::role_arguments>();
+            return get_role_arguments();
         else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-            return self().template member<&urd::record_of<V>::boolean_arguments>();
+            return get_boolean_arguments();
         else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-            return self().template member<&urd::record_of<V>::numerical_arguments>();
+            return get_numerical_arguments();
         else
             static_assert(false, "unhandled argument category");
     }

@@ -17,15 +17,18 @@ namespace runir::kr::ps::ext
 template<tyr::TaskKind Kind>
 struct ModuleState
 {
+    static constexpr auto name = "ModuleState";
 };
 
 struct CallStack
 {
+    static constexpr auto name = "CallStack";
 };
 
 template<tyr::TaskKind Kind>
 struct ProgramState
 {
+    static constexpr auto name = "ProgramState";
 };
 
 template<tyr::TaskKind Kind>

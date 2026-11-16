@@ -31,6 +31,7 @@
 #include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <urd/dot.hpp>
+#include <urd/python/bindings.hpp>
 #include <urd/python/graphs.hpp>
 #include <utility>
 #include <vefr/python/bindings.hpp>
@@ -95,20 +96,13 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     bind_feature_evaluation<Kind, runir::kr::dl::NumericalTag>(m);
     bind_feature_evaluation<Kind, runir::kr::ps::dl::QueryFeature>(m);
 
-    auto histories = nb::class_<HistoryView>(m, (std::string(prefix) + "Histories").c_str())
-                         .def_prop_ro("concepts", &HistoryView::get_concepts, nb::rv_policy::reference_internal);
-    urd::python::add_comparison(histories);
-    urd::python::add_hash(histories);
-
-    auto program_state = nb::class_<StateView>(m, (std::string(prefix) + "ProgramState").c_str())
-                             .def_prop_ro("state", &StateView::get_state, nb::keep_alive<0, 1>())
-                             .def_prop_ro("program", &StateView::get_program)
-                             .def_prop_ro("module", &StateView::get_module)
-                             .def_prop_ro("memory_state", &StateView::get_memory_state)
-                             .def_prop_ro("registers", &StateView::get_registers)
-                             .def_prop_ro("histories", &StateView::get_histories);
-    urd::python::add_comparison(program_state);
-    urd::python::add_hash(program_state);
+    // The records are bound first (bind_data, bind_program_executor).
+    // Histories have no task kind: the views of their ground and lifted repositories are bound in a module of their own
+    // (ground, lifted), where each has its name.
+    auto kind_module = m.def_submodule(std::string(prefix) == "Ground" ? "ground" : "lifted");
+    urd::python::bind_view<HistoryView>(kind_module);
+    // The planning state of a program state: the registered state, not the index its record holds.
+    urd::python::bind_view<StateView>(m).def("get_state", &StateView::get_state, nb::keep_alive<0, 1>()).def("get_module", &StateView::get_module);
 
     auto vertex_label = nb::class_<VertexLabel>(m, (std::string(prefix) + "ProgramProofVertexLabel").c_str())
                             .def_ro("program_state", &VertexLabel::program_state)
@@ -197,6 +191,9 @@ void bind_program_executor(nb::module_& m)
     m.attr("GroundProgramProofEdgeLabel") = edge_label;
     m.attr("LiftedProgramProofEdgeLabel") = edge_label;
 
+    urd::python::bind_data<Histories>(m);
+    urd::python::bind_data<ProgramState<tyr::GroundTag>>(m);
+    urd::python::bind_data<ProgramState<tyr::LiftedTag>>(m);
     bind_execution_types<tyr::GroundTag>(m, "Ground");
     bind_execution_types<tyr::LiftedTag>(m, "Lifted");
 

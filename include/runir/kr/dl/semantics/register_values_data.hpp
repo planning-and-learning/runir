@@ -45,9 +45,7 @@ struct data<runir::kr::dl::semantics::RegisterValues>
     ~data() = default;
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"concept_values", &data::concept_values>, urd::field<"role_values", &data::role_values>> {};
-    }
+    { return urd::Fields<urd::field<"concept_values", &data::concept_values>, urd::field<"role_values", &data::role_values>> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::concept_values, &data::role_values> {}; }
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::concept_values, &data::role_values> {}; }
 };

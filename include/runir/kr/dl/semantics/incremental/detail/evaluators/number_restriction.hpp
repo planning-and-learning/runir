@@ -23,13 +23,9 @@ struct NumberRestrictionEvaluator
     NumberRestrictionEvaluator(EvaluationIndex<RoleTag> role_, ygg::uint_t threshold_) : role(role_), threshold(threshold_) {}
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
-    {
-        initialize_set(Tag {}, value, graph.result(role), graph.change(role), threshold, graph.set_workspace());
-    }
+    { initialize_set(Tag {}, value, graph.result(role), graph.change(role), threshold, graph.set_workspace()); }
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
-    {
-        update_set(Tag {}, value, graph.result(role), graph.change(role), threshold, graph.set_workspace());
-    }
+    { update_set(Tag {}, value, graph.result(role), graph.change(role), threshold, graph.set_workspace()); }
 };
 
 template<tyr::TaskKind Kind, typename Tag>
@@ -59,9 +55,7 @@ struct QualifiedNumberRestrictionEvaluator
                        graph.set_workspace());
     }
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
-    {
-        update_set(Tag {}, value, graph.result(role), graph.change(role), graph.result(qualifier), graph.change(qualifier), threshold, graph.set_workspace());
-    }
+    { update_set(Tag {}, value, graph.result(role), graph.change(role), graph.result(qualifier), graph.change(qualifier), threshold, graph.set_workspace()); }
 };
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

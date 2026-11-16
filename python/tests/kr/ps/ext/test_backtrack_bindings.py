@@ -37,8 +37,8 @@ def test_backtrack_rule_construct_format_and_serialize(
     module = parse_module(source, gripper_planning_domain, repository)
     variant = module.get_memory_transitions()[0][0]
     rule = variant.get_variant()
-    assert isinstance(rule, ext.BacktrackRule)
-    assert isinstance(rule.index(), ext.BacktrackRuleIndex)
+    assert isinstance(rule, ext.RuleBacktrack)
+    assert isinstance(rule.index(), ext.RuleBacktrackIndex)
     assert rule.get_source().get_name() == "m"
     assert len(rule.get_conditions()) == bool(conditions)
     assert not hasattr(rule, "get_target")
@@ -47,26 +47,28 @@ def test_backtrack_rule_construct_format_and_serialize(
     assert ":target-memory" not in str(module)
     assert str(parse_module(str(module), gripper_planning_domain, repository)) == str(module)
 
-    data = ext.BacktrackRuleData()
+    data = ext.RuleBacktrackData()
     data.source = rule.get_source().index()
     data.conditions = [condition.index() for condition in rule.get_conditions()]
     assert not hasattr(data, "target")
     assert not hasattr(data, "effects")
     assert repository.insert(data)[0] == rule
 
-    assert list(ext.BacktrackRule.Fields.__members__) == ["source", "conditions"]
+    assert list(ext.RuleBacktrack.Fields.__members__) == ["source", "conditions"]
     dictionaries = Dictionaries()
-    register_table(dictionaries, ext.RuleVariant, "variants", "v")
-    register_table(dictionaries, ext.BacktrackRule, "backtrack", "r")
-    register_table(dictionaries, ext.MemoryState, "memory", "m")
+    register_table(dictionaries, ext.RuleExt, "variants", "v")
+    register_table(dictionaries, ext.RuleBacktrack, "backtrack", "r")
+    register_table(dictionaries, ext.MemoryStateExt, "memory", "m")
     register_table(
         dictionaries,
-        ext.dl.PositiveBooleanCondition,
+        ext.dl.ConcreteConditionExtDlBooleanPositive,
         "conditions",
         "c",
         project=lambda condition: {"text": str(condition)},
     )
     assert serialize(dictionaries, variant) == "v0"
-    assert table(dictionaries, ext.RuleVariant) == [{"symbol": "reject", "variant": "r0"}]
-    assert table(dictionaries, ext.BacktrackRule) == [{"source": "m0", "conditions": ["c0"] if conditions else []}]
-    assert table(dictionaries, ext.dl.PositiveBooleanCondition) == ([{"text": "(positive bad)"}] if conditions else [])
+    assert table(dictionaries, ext.RuleExt) == [{"symbol": "reject", "variant": "r0"}]
+    assert table(dictionaries, ext.RuleBacktrack) == [{"source": "m0", "conditions": ["c0"] if conditions else []}]
+    assert table(dictionaries, ext.dl.ConcreteConditionExtDlBooleanPositive) == (
+        [{"text": "(positive bad)"}] if conditions else []
+    )

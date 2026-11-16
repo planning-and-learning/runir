@@ -5,7 +5,6 @@
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/detail/evaluation_helpers.hpp"
 #include "runir/kr/dl/semantics/distance_evaluation.hpp"
-#include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/evaluation_decl.hpp"
 #include "runir/kr/dl/semantics/evaluation_storage.hpp"
 #include "runir/kr/dl/semantics/query_evaluation.hpp"
@@ -417,7 +416,7 @@ auto evaluate_impl(ConstructorView<Category> constructor, Context& context) -> D
 template<tyr::TaskKind Kind, CategoryTag Category, StateEvaluationContextConcept<Kind> Context>
 auto evaluate(ConstructorView<Category> constructor, Context& context) -> DenotationView<Category>
 {
-    const auto is_static = constructor.is_static();
+    const auto is_static = constructor.get_is_static();
     auto& caches = context.get_caches();
     if (const auto cached = caches.find(is_static, constructor))
         return *cached;
@@ -453,12 +452,12 @@ template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typena
 auto evaluate(urd::index_view<Query<>, C> constructor, Context& context) -> QueryDenotationView
 {
     auto& caches = context.get_caches();
-    if (const auto cached = caches.find_query(constructor.is_static(), constructor))
+    if (const auto cached = caches.find_query(constructor.get_is_static(), constructor))
         return *cached;
 
-    auto output = context.for_result(constructor.is_static());
+    auto output = context.for_result(constructor.get_is_static());
     const auto result = std::visit([&](auto child) { return evaluate_impl<Kind>(child, output); }, constructor.get_variant());
-    return caches.insert_query(constructor.is_static(), constructor, result);
+    return caches.insert_query(constructor.get_is_static(), constructor, result);
 }
 
 template<tyr::TaskKind Kind, ConceptOrRoleTag Category, StateEvaluationContextConcept<Kind> Context, typename C>
@@ -478,7 +477,7 @@ auto evaluate_impl(urd::index_view<QueryProjection<Category>, C> constructor, Co
     {
         auto bits = result->get();
         const auto object = position(0);
-        for (const auto row : relation.rows())
+        for (const auto row : relation.get_rows())
             bits.set(ygg::decode_value<ygg::uint_t>(row.value(object)));
     }
     else
@@ -486,7 +485,7 @@ auto evaluate_impl(urd::index_view<QueryProjection<Category>, C> constructor, Co
         static_assert(std::same_as<Category, RoleTag>);
         const auto source = position(0);
         const auto target = position(1);
-        for (const auto row : relation.rows())
+        for (const auto row : relation.get_rows())
             result->get(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(row.value(source))))
                 .set(ygg::decode_value<ygg::uint_t>(row.value(target)));
     }
@@ -523,27 +522,19 @@ auto evaluate_impl(urd::index_view<Role<SemanticFamily, RegisterTag>, C> constru
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
 auto evaluate_impl(urd::index_view<Concept<SemanticFamily, ArgumentTag<ConceptTag>>, C> constructor, Context& context) -> DenotationView<ConceptTag>
-{
-    return argument_value(context, constructor.get_argument().get_identifier());
-}
+{ return argument_value(context, constructor.get_argument().get_identifier()); }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
 auto evaluate_impl(urd::index_view<Role<SemanticFamily, ArgumentTag<RoleTag>>, C> constructor, Context& context) -> DenotationView<RoleTag>
-{
-    return argument_value(context, constructor.get_argument().get_identifier());
-}
+{ return argument_value(context, constructor.get_argument().get_identifier()); }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
 auto evaluate_impl(urd::index_view<Boolean<SemanticFamily, ArgumentTag<BooleanTag>>, C> constructor, Context& context) -> DenotationView<BooleanTag>
-{
-    return argument_value(context, constructor.get_argument().get_identifier());
-}
+{ return argument_value(context, constructor.get_argument().get_identifier()); }
 
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context, typename C>
 auto evaluate_impl(urd::index_view<Numerical<SemanticFamily, ArgumentTag<NumericalTag>>, C> constructor, Context& context) -> DenotationView<NumericalTag>
-{
-    return argument_value(context, constructor.get_argument().get_identifier());
-}
+{ return argument_value(context, constructor.get_argument().get_identifier()); }
 
 }  // namespace runir::kr::dl::semantics
 

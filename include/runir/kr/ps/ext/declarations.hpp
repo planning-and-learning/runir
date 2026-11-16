@@ -20,6 +20,7 @@ namespace runir::kr::ps::ext
 
 struct OrderTerm
 {
+    static constexpr auto name = "OrderTerm";
 };
 
 enum class OrderDirection : std::uint8_t
@@ -32,12 +33,14 @@ enum class OrderDirection : std::uint8_t
 
 struct SketchTag
 {
+    static constexpr auto name = "Sketch";
     static constexpr auto keyword = "sketch";
 };
 
 template<runir::kr::dl::CategoryTag CategoryT>
 struct LoadTag
 {
+    static constexpr auto name = "Load";
     using Category = CategoryT;
     static constexpr auto keyword = "load";
 };
@@ -45,27 +48,32 @@ struct LoadTag
 template<runir::kr::dl::CategoryTag CategoryT>
 struct ChooseTag
 {
+    static constexpr auto name = "Choose";
     using Category = CategoryT;
     static constexpr auto keyword = "choose";
 };
 
 struct DoTag
 {
+    static constexpr auto name = "Do";
     static constexpr auto keyword = "do";
 };
 
 struct ActionTag
 {
+    static constexpr auto name = "Action";
     static constexpr auto keyword = "action";
 };
 
 struct CallTag
 {
+    static constexpr auto name = "Call";
     static constexpr auto keyword = "call";
 };
 
 struct BacktrackTag
 {
+    static constexpr auto name = "Backtrack";
     static constexpr auto keyword = "backtrack";
 };
 
@@ -92,14 +100,17 @@ using RuleCategoryFor = typename Tag::Category;
 template<RuleKind Kind>
 struct Rule
 {
+    static constexpr auto name = "Rule";
 };
 
 struct Module
 {
+    static constexpr auto name = "Module";
 };
 
 struct Program
 {
+    static constexpr auto name = "Program";
 };
 
 using LoadRuleTypes = boost::mp11::mp_list<Rule<LoadTag<runir::kr::dl::ConceptTag>>, Rule<LoadTag<runir::kr::dl::RoleTag>>>;

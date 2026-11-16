@@ -8,6 +8,13 @@
 namespace runir::kr::dl
 {
 
-void bind_grammar_non_terminal(nb::module_& m) { python::bind_non_terminals<grammar::NonTerminal, grammar::ConstructorRepository>(m); }
+void bind_grammar_non_terminal(nb::module_& m)
+{
+    urd::python::bind_data<grammar::NonTerminal<ConceptTag>>(m);
+    urd::python::bind_data<grammar::NonTerminal<RoleTag>>(m);
+    urd::python::bind_data<grammar::NonTerminal<BooleanTag>>(m);
+    urd::python::bind_data<grammar::NonTerminal<NumericalTag>>(m);
+    python::bind_non_terminal_views<grammar::NonTerminal, grammar::ConstructorRepository>(m);
+}
 
 }  // namespace runir::kr::dl

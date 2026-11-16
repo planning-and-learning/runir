@@ -15,25 +15,36 @@
 #include <variant>
 #include <vector>
 
+namespace runir::kr::uns
+{
+
+/// The boolean feature of a classifier literal (one alternative, mirroring the kr/ps condition layering).
+using ClassifierLiteralVariant = urd::flat_variant<urd::index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>>>;
+
+}  // namespace runir::kr::uns
+
 namespace urd
 {
 
-// A literal: a boolean feature (wrapped in a single-alternative variant, mirroring the kr/ps condition
-// layering) together with a polarity (true = the feature must hold, false = negated).
+// A literal: a boolean feature together with a polarity (true = the feature must hold, false = negated).
 template<>
 struct data<runir::kr::uns::ClassifierLiteral>
 {
-    using Variant = urd::flat_variant<urd::index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>>>;
-
     urd::index<runir::kr::uns::ClassifierLiteral> index;
-    Variant variant;
+    runir::kr::uns::ClassifierLiteralVariant feature;
     bool polarity = true;
 
     data() = default;
-    data(Variant variant_, bool polarity_) : index(), variant(std::move(variant_)), polarity(polarity_) {}
+    data(runir::kr::uns::ClassifierLiteralVariant feature_, bool polarity_) : index(), feature(std::move(feature_)), polarity(polarity_) {}
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
+    ~data() = default;
 
-    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::variant, &data::polarity> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::Members<&data::variant, &data::polarity> {}; }
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"feature", &data::feature>, urd::field<"polarity", &data::polarity>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::feature, &data::polarity> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::feature, &data::polarity> {}; }
 };
 
 // A clause: a conjunction of literals.
@@ -47,8 +58,8 @@ struct data<runir::kr::uns::ClassifierClause>
     data(urd::flat_vector<urd::index<runir::kr::uns::ClassifierLiteral>> literals_) : index(), literals(std::move(literals_)) {}
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"literals", &data::literals>> {}; }
@@ -77,14 +88,12 @@ struct data<runir::kr::uns::Classifier>
     }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"symbol", &data::symbol>, urd::field<"features", &data::features>, urd::field<"clauses", &data::clauses>> {};
-    }
+    { return urd::Fields<urd::field<"symbol", &data::symbol>, urd::field<"features", &data::features>, urd::field<"clauses", &data::clauses>> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::symbol, &data::features, &data::clauses> {}; }
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::symbol, &data::features, &data::clauses> {}; }
 };

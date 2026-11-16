@@ -2,12 +2,20 @@
 #define RUNIR_CNF_GRAMMAR_NON_TERMINAL_VIEW_HPP_
 
 #include "runir/kr/dl/cnf_grammar/non_terminal_data.hpp"
-#include "runir/kr/dl/detail/grammar_views.hpp"
 
-namespace runir::kr::dl::detail
+#include <urd/elements/view.hpp>
+
+namespace urd
 {
-template<CategoryTag Category>
-inline constexpr bool is_grammar_non_terminal<cnf_grammar::NonTerminal<Category>> = true;
-}  // namespace runir::kr::dl::detail
+template<runir::kr::dl::CategoryTag Category, typename V>
+struct view_mixin<runir::kr::dl::cnf_grammar::NonTerminal<Category>, V>
+{
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
+
+public:
+    const auto& get_name() const noexcept { return self().template member<&urd::record_of<V>::name>(); }
+};
+}  // namespace urd
 
 #endif

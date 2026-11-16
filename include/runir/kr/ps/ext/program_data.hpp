@@ -17,13 +17,13 @@ template<>
 struct data<runir::kr::ps::ext::Program>
 {
     urd::index<runir::kr::ps::ext::Program> index;
-    urd::index<runir::kr::ps::ext::Module> entry_module;
+    urd::index<runir::kr::ps::ext::Module> entry_mod;
     urd::flat_vector<urd::index<runir::kr::ps::ext::Module>> modules;
 
     data() = default;
-    data(urd::index<runir::kr::ps::ext::Module> entry_module_, urd::flat_vector<urd::index<runir::kr::ps::ext::Module>> modules_) :
+    data(urd::index<runir::kr::ps::ext::Module> entry_mod_, urd::flat_vector<urd::index<runir::kr::ps::ext::Module>> modules_) :
         index(),
-        entry_module(entry_module_),
+        entry_mod(entry_mod_),
         modules(std::move(modules_))
     {
     }
@@ -33,9 +33,9 @@ struct data<runir::kr::ps::ext::Program>
     data& operator=(data&& other) = default;
     ~data() = default;
 
-    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"entry_module", &data::entry_module>, urd::field<"modules", &data::modules>> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::Members<&data::entry_module, &data::modules> {}; }
-    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::entry_module, &data::modules> {}; }
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"entry_mod", &data::entry_mod>, urd::field<"modules", &data::modules>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::entry_mod, &data::modules> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::entry_mod, &data::modules> {}; }
 };
 
 }  // namespace urd

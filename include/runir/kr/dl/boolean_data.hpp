@@ -21,7 +21,7 @@ struct data<runir::kr::dl::Boolean<F, Tag>>
     data(urd::index<tyr::formalism::Predicate<runir::kr::dl::TagFactKind<Tag>>> predicate_, bool polarity_) :
         index(),
         predicate(std::move(predicate_)),
-        polarity(std::move(polarity_))
+        polarity(polarity_)
     {
     }
     data(const data& other) = delete;
@@ -61,7 +61,7 @@ struct data<runir::kr::dl::Boolean<F, runir::kr::dl::ArgumentTag<runir::kr::dl::
     urd::index<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>> argument;
 
     data() = default;
-    explicit data(urd::index<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>> argument_) : index(), argument(std::move(argument_)) {}
+    explicit data(urd::index<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>> argument_) : index(), argument(argument_) {}
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -95,9 +95,7 @@ struct data<runir::kr::dl::Boolean<F, Tag>>
     ~data() = default;
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"left_operand", &data::left_operand>, urd::field<"right_operand", &data::right_operand>> {};
-    }
+    { return urd::Fields<urd::field<"left_operand", &data::left_operand>, urd::field<"right_operand", &data::right_operand>> {}; }
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::left_operand, &data::right_operand> {}; }
 };
@@ -109,7 +107,7 @@ struct data<runir::kr::dl::Boolean<F, runir::kr::dl::BooleanConstantTag>>
     bool value = false;
 
     data() = default;
-    explicit data(bool value_) : index(), value(std::move(value_)) {}
+    explicit data(bool value_) : index(), value(value_) {}
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -142,9 +140,7 @@ struct data<runir::kr::dl::Boolean<F, Tag>>
     ~data() = default;
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"left_operand", &data::left_operand>, urd::field<"right_operand", &data::right_operand>> {};
-    }
+    { return urd::Fields<urd::field<"left_operand", &data::left_operand>, urd::field<"right_operand", &data::right_operand>> {}; }
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::left_operand, &data::right_operand> {}; }
 };

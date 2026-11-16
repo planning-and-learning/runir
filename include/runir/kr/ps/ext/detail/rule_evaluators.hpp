@@ -198,7 +198,7 @@ public:
             backtracked = true;
             return emit(std::forward<Failure>(failure));
         };
-        for (const auto rule : source_rules(state.get_module_state().get_module(), state.get_module_state().get_memory_state()))
+        for (const auto rule : source_rules(state.get_module_state().get_mod(), state.get_module_state().get_memory_state()))
         {
             if (stop())
                 return false;
@@ -215,7 +215,7 @@ public:
             if (backtracked)
                 return true;
         }
-        for (const auto rule : source_rules(state.get_module_state().get_module(), state.get_module_state().get_memory_state()))
+        for (const auto rule : source_rules(state.get_module_state().get_mod(), state.get_module_state().get_memory_state()))
         {
             if (stop())
                 return false;
@@ -276,14 +276,14 @@ public:
                                                  State state,
                                                  const tyr::planning::LabeledNode<Kind, PlanningState>& candidate)
     {
-        for (const auto rule : source_rules(state.get_module_state().get_module(), state.get_module_state().get_memory_state()))
+        for (const auto rule : source_rules(state.get_module_state().get_mod(), state.get_module_state().get_memory_state()))
         {
             const auto variant = rule.get_variant();
             if (std::holds_alternative<ext::RuleView<BacktrackTag>>(variant)
                 && ext::rule_is_applicable(std::get<ext::RuleView<BacktrackTag>>(variant), state, context.planning_state, *context.environment))
                 return std::nullopt;
         }
-        for (const auto rule : source_rules(state.get_module_state().get_module(), state.get_module_state().get_memory_state()))
+        for (const auto rule : source_rules(state.get_module_state().get_mod(), state.get_module_state().get_memory_state()))
         {
             const auto matched = with_rule(rule,
                                            [&](const auto& concrete) -> std::optional<RuleVariantView>

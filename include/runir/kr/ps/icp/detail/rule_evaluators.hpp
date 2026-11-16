@@ -99,7 +99,7 @@ class RuleEvaluators
 public:
     RuleEvaluators(TaskContextPtr<Kind> task, ProgramView program) : m_workspace(std::move(task), program)
     {
-        for (const auto transition : program.get_module().get_memory_transitions())
+        for (const auto transition : program.get_entry_mod().get_memory_transitions())
             for (const auto variant : transition)
                 m_evaluators.push_back(std::visit([&]<RuleKind Tag>(RuleView<Tag> rule) -> Evaluator
                                                   { return RuleEvaluator<Kind, Tag>(*get_task_context(), rule, variant); },

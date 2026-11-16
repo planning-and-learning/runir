@@ -97,7 +97,7 @@ ClassifierView parse_classifier(const std::string& description, tyr::formalism::
 
         constexpr auto polarity = std::same_as<Literal, runir::kr::uns::dl::ast::PositiveLiteral>;
         auto literal_data = runir::kr::uns::checkout<runir::kr::uns::ClassifierLiteral>(builder);
-        literal_data->variant = it->second;
+        literal_data->feature = it->second;
         literal_data->polarity = polarity;
         return intern(repository, *literal_data).index();
     };

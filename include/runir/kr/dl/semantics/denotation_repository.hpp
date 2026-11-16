@@ -30,7 +30,7 @@ class DenotationRepository : public ygg::formalism::SymbolContext<DenotationRepo
 {
     using Base = ygg::formalism::SymbolContext<DenotationRepository, DenotationRecordTypes>;
 
-    /// The denotations' blocks, interned in a urd pool (stored flat): a handle is a vec_index.
+    /// The denotations' blocks, interned in a urd pool (stored flat): a denotation's blocks field is its handle.
     using VectorRepository = urd::Store<urd::pool<DenotationBlocks>>;
 
     VectorRepository m_vector_repository;
@@ -68,7 +68,7 @@ public:
     }
 
     using Base::view;
-    /// A denotation's blocks (its vec_index) as the vector repository holds them: so that urd resolves every member of a
+    /// A denotation's blocks as the vector repository holds them: so that urd resolves every member of a
     /// denotation through this context.
     [[nodiscard]] auto view(urd::index<DenotationBlocks> index) const { return m_vector_repository.at(index); }
     /// A planning symbol (an object) as its view in the formalism repository, which holds it: so that urd resolves

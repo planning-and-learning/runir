@@ -43,7 +43,6 @@ static_assert(requires(Data& data) {
 static_assert(requires(const View& view) {
     view.index();
     view.get_symbol();
-    view.get_name();
     view.template get_arguments<kr::dl::ConceptTag>();
     view.template get_arguments<kr::dl::RoleTag>();
     view.template get_arguments<kr::dl::BooleanTag>();

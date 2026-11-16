@@ -47,7 +47,7 @@ auto planning_step(Storage& storage,
 {
     const auto module_ = state.get_module_state();
     auto target =
-        storage.store(successor.node.get_state(), module_.get_module(), memory_state, module_.get_registers(), module_.get_arguments(), state.get_call_stack());
+        storage.store(successor.node.get_state(), module_.get_mod(), memory_state, module_.get_registers(), module_.get_arguments(), state.get_call_stack());
     auto step = applied<Kind, Storage>(std::move(target), rule, task_context);
     if constexpr (PackableSuccessor<tyr::planning::LabeledNode<Kind, PS>>)
         step.planning_successor = successor.pack();

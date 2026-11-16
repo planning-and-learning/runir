@@ -80,13 +80,13 @@ concept ModuleStateContract = tyr::TaskKind<Kind> && IndexedDataView<kr::ps::ext
                               && requires(urd::data<kr::ps::ext::ModuleState<Kind>>& data, const kr::ps::ext::ModuleStateView<Kind>& view) {
                                      data.index;
                                      data.state;
-                                     data.module_;
+                                     data.mod;
                                      data.memory_state;
                                      data.registers;
                                      data.arguments;
                                      view.index();
                                      view.get_state();
-                                     view.get_module();
+                                     view.get_mod();
                                      view.get_memory_state();
                                      view.get_registers();
                                      view.get_arguments();
@@ -97,13 +97,13 @@ concept CallStackContract =
     tyr::TaskKind<Kind> && IndexedDataView<kr::ps::ext::CallStack, Kind> && std::same_as<View<kr::ps::ext::CallStack, Kind>, kr::ps::ext::CallStackView<Kind>>
     && requires(urd::data<kr::ps::ext::CallStack>& data, const kr::ps::ext::CallStackView<Kind>& view) {
            data.index;
-           data.module_;
+           data.mod;
            data.return_memory_state;
            data.registers;
            data.arguments;
            data.caller;
            view.index();
-           view.get_module();
+           view.get_mod();
            view.get_return_memory_state();
            view.get_registers();
            view.get_arguments();

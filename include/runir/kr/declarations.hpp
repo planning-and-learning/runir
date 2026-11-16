@@ -19,6 +19,7 @@ using TaskContextPtr = std::shared_ptr<TaskContext<Kind>>;
 
 struct DlTag
 {
+    static constexpr auto name = "Dl";
 };
 
 struct BaseFamilyTag
@@ -43,10 +44,6 @@ struct UnsFamilyTag
 
 template<typename T>
 concept FamilyTag = std::same_as<T, BaseFamilyTag> || std::same_as<T, ExtFamilyTag> || std::same_as<T, UnsFamilyTag> || std::same_as<T, IcpFamilyTag>;
-
-/// Index variant of a `urd::data<T>` record.
-template<typename Data>
-using DataVariant = typename Data::Variant;
 
 }  // namespace runir::kr
 

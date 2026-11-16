@@ -15,12 +15,21 @@ namespace runir::kr::dl::grammar
 {
 
 template<runir::kr::dl::CategoryTag Category>
-struct NonTerminal;
+struct NonTerminal
+{
+    static constexpr auto name = "NonTerminal";
+};
 
 template<runir::kr::dl::CategoryTag Category>
-struct DerivationRule;
+struct DerivationRule
+{
+    static constexpr auto name = "DerivationRule";
+};
 
-struct GrammarTag;
+struct GrammarTag
+{
+    static constexpr auto name = "Grammar";
+};
 
 struct GrammarFamily;
 
@@ -28,6 +37,8 @@ struct GrammarFamily;
 /// The records name the family's tags, so the symbol type is spelled here, after Tags, rather than before the family.
 struct GrammarFamily
 {
+    static constexpr auto name = "Grammar";
+
     template<runir::kr::dl::CategoryTag Category>
     using Tags = runir::kr::dl::BaseConstructorTags<Category>;
 

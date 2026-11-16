@@ -19,7 +19,7 @@ template<typename Archive, ::tyr::TaskKind Kind>
 void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ModuleStateView<Kind>>)
 {
     ar.field("state", [](const auto& value) -> decltype(auto) { return (value.get_state()); });
-    ar.field("module", [](const auto& value) -> decltype(auto) { return (value.get_module()); });
+    ar.field("mod", [](const auto& value) -> decltype(auto) { return (value.get_mod()); });
     ar.field("memory_state", [](const auto& value) -> decltype(auto) { return (value.get_memory_state()); });
     ar.field("registers", [](const auto& value) -> decltype(auto) { return (value.get_registers()); });
     ar.field("arguments", [](const auto& value) -> decltype(auto) { return (value.get_arguments()); });
@@ -28,7 +28,7 @@ void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::Modul
 template<typename Archive, ::tyr::TaskKind Kind>
 void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::CallStackView<Kind>>)
 {
-    ar.field("module", [](const auto& value) -> decltype(auto) { return (value.get_module()); });
+    ar.field("mod", [](const auto& value) -> decltype(auto) { return (value.get_mod()); });
     ar.field("return_memory_state", [](const auto& value) -> decltype(auto) { return (value.get_return_memory_state()); });
     ar.field("registers", [](const auto& value) -> decltype(auto) { return (value.get_registers()); });
     ar.field("arguments", [](const auto& value) -> decltype(auto) { return (value.get_arguments()); });

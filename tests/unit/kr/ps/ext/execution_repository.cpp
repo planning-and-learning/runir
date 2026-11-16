@@ -36,7 +36,7 @@ void expect_execution_records_round_trip()
     {
         auto data = builder.template checkout<kr::ps::ext::ModuleState<Kind>>();
         data->state = urd::index<tyr::planning::State<Kind>>(5);
-        data->module_ = urd::index<kr::ps::ext::Module>(1);
+        data->mod = urd::index<kr::ps::ext::Module>(1);
         data->memory_state = urd::index<kr::ps::MemoryState<kr::ExtFamilyTag>>(2);
         data->registers = urd::index<kr::dl::semantics::RegisterValues>(3);
         data->arguments = urd::index<kr::dl::semantics::CallArguments>(4);
@@ -44,7 +44,7 @@ void expect_execution_records_round_trip()
     }
     {
         auto data = builder.template checkout<kr::ps::ext::CallStack>();
-        data->module_ = urd::index<kr::ps::ext::Module>(1);
+        data->mod = urd::index<kr::ps::ext::Module>(1);
         data->return_memory_state = urd::index<kr::ps::MemoryState<kr::ExtFamilyTag>>(2);
         data->registers = urd::index<kr::dl::semantics::RegisterValues>(3);
         data->arguments = urd::index<kr::dl::semantics::CallArguments>(4);
@@ -185,7 +185,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     {
         auto data = execution_builder.checkout<kr::ps::ext::ModuleState<tyr::GroundTag>>();
         urd::store(data->state, state);
-        urd::store(data->module_, caller);
+        urd::store(data->mod, caller);
         urd::store(data->memory_state, caller_return);
         urd::store(data->registers, registers);
         urd::store(data->arguments, arguments);
@@ -196,7 +196,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     {
         auto data = execution_builder.checkout<kr::ps::ext::ModuleState<tyr::GroundTag>>();
         urd::store(data->state, state);
-        urd::store(data->module_, callee);
+        urd::store(data->mod, callee);
         urd::store(data->memory_state, callee_entry);
         urd::store(data->registers, registers);
         urd::store(data->arguments, arguments);
@@ -211,7 +211,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         EXPECT_EQ(duplicate, callee_configuration);
         EXPECT_EQ(data.index, duplicate.index());
         EXPECT_EQ(&duplicate.context(), execution_repository.get());
-        EXPECT_EQ(&duplicate.get_module().context(), repository.get());
+        EXPECT_EQ(&duplicate.get_mod().context(), repository.get());
         EXPECT_EQ(&duplicate.get_registers().context(), &denotations);
         const auto found = execution_repository->find(data);
         ASSERT_TRUE(found);
@@ -235,7 +235,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     const auto caller_frame = [&]()
     {
         auto data = execution_builder.checkout<kr::ps::ext::CallStack>();
-        urd::store(data->module_, caller);
+        urd::store(data->mod, caller);
         urd::store(data->return_memory_state, caller_return);
         urd::store(data->registers, registers);
         urd::store(data->arguments, arguments);
@@ -244,7 +244,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     const auto callee_frame = [&]()
     {
         auto data = execution_builder.checkout<kr::ps::ext::CallStack>();
-        urd::store(data->module_, callee);
+        urd::store(data->mod, callee);
         urd::store(data->return_memory_state, callee_entry);
         urd::store(data->registers, registers);
         urd::store(data->arguments, arguments);
@@ -288,7 +288,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         urd::store(data->module_state, caller_configuration);
         return execution_repository->insert(*data).first;
     }();
-    EXPECT_EQ(returned_state.get_module_state().get_module().get_name(), "caller");
+    EXPECT_EQ(returned_state.get_module_state().get_mod().get_symbol().get_name(), "caller");
     EXPECT_EQ(returned_state.get_program().index(), program.index());
     EXPECT_EQ(returned_state.get_module_state(), caller_configuration);
     EXPECT_EQ(returned_state.get_state().index(), state.index());

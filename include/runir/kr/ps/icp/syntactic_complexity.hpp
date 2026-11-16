@@ -28,7 +28,7 @@ std::size_t syntactic_complexity(urd::index_view<Module, C> view)
 
 template<typename C>
 std::size_t syntactic_complexity(urd::index_view<Program, C> view)
-{ return syntactic_complexity(view.get_module()); }
+{ return syntactic_complexity(view.get_entry_mod()); }
 
 }  // namespace runir::kr::ps::icp
 

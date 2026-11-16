@@ -203,8 +203,8 @@ TEST(RunirEvaluationStorage, BorrowedDenotationsExposeReadOnlyValuesAndMatchInde
         EXPECT_EQ(indexed_iterator, indexed.end());
         if constexpr (std::same_as<Category, kr::dl::RoleTag>)
         {
-            const auto borrowed_row = borrowed.views(object(0));
-            const auto indexed_row = indexed.views(object(0));
+            const auto borrowed_row = borrowed.views_from(object(0));
+            const auto indexed_row = indexed.views_from(object(0));
             static_assert(std::ranges::forward_range<decltype(borrowed_row)>);
             static_assert(std::ranges::forward_range<decltype(indexed_row)>);
             static_assert(std::same_as<decltype(borrowed.begin(object(0))), decltype(indexed.begin(object(0)))>);
@@ -216,11 +216,11 @@ TEST(RunirEvaluationStorage, BorrowedDenotationsExposeReadOnlyValuesAndMatchInde
             const auto targets = std::array { object(num_objects - 1) };
             EXPECT_TRUE(std::ranges::equal(borrowed_row, targets));
             EXPECT_TRUE(std::ranges::equal(indexed_row, targets));
-            EXPECT_TRUE(borrowed.views(object(1)).empty());
-            EXPECT_TRUE(indexed.views(object(1)).empty());
+            EXPECT_TRUE(borrowed.views_from(object(1)).empty());
+            EXPECT_TRUE(indexed.views_from(object(1)).empty());
             // Row iterators borrow storage directly, not the temporary view or range.
-            auto borrowed_target = urd::resolve(builder, *formalism).views(object(0)).begin();
-            auto indexed_target = kr::dl::semantics::DenotationView<Category>(indexed).views(object(0)).begin();
+            auto borrowed_target = urd::resolve(builder, *formalism).views_from(object(0)).begin();
+            auto indexed_target = kr::dl::semantics::DenotationView<Category>(indexed).views_from(object(0)).begin();
             EXPECT_EQ(*borrowed_target++, targets.front());
             EXPECT_EQ(*indexed_target++, targets.front());
             EXPECT_EQ(borrowed_target, borrowed_row.end());
@@ -609,8 +609,8 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     };
     const auto left = query("(q_role (left_source left_target) (r_universal))", *first_repository);
     const auto right = query("(q_role (right_source right_target) (r_universal))", *second_repository);
-    ASSERT_EQ(left.get_columns()[0].index(), right.get_columns()[0].index());
-    ASSERT_NE(left.get_columns()[0].get_name(), right.get_columns()[0].get_name());
+    ASSERT_EQ(columns_of(left)[0].index(), columns_of(right)[0].index());
+    ASSERT_NE(columns_of(left)[0].get_name(), columns_of(right)[0].get_name());
     using ColumnIndex = urd::index<ygg::Column>;
     const auto columns = std::array { ColumnIndex(0), ColumnIndex(1) };
     const auto reversed_columns = std::array { ColumnIndex(1), ColumnIndex(0) };
@@ -626,7 +626,7 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
 
     const auto left_alias = query("(q_rename (left_target left_source) (q_role (left_source left_target) (r_universal)))", *first_repository);
     const auto right_alias = query("(q_rename (right_target right_source) (q_role (right_source right_target) (r_universal)))", *second_repository);
-    ASSERT_EQ(left_alias.get_columns()[0].index(), right_alias.get_columns()[0].index());
+    ASSERT_EQ(columns_of(left_alias)[0].index(), columns_of(right_alias)[0].index());
     const auto renamed_left = kr::dl::semantics::evaluate<tyr::GroundTag>(left_alias, context);
     const auto renamed_right = kr::dl::semantics::evaluate<tyr::GroundTag>(right_alias, context);
     EXPECT_TRUE(std::ranges::equal(renamed_left.columns(), reversed_columns, {}, &ygg::ColumnLayout::label));

@@ -28,7 +28,7 @@ static_assert(
     !std::same_as<urd::index<kr::ps::Feature<kr::IcpFamilyTag, kr::dl::ConceptTag>>, urd::index<kr::ps::Feature<kr::ExtFamilyTag, kr::dl::ConceptTag>>>);
 
 using IcpQuery = kr::ps::ConcreteFeature<kr::IcpFamilyTag, kr::DlTag, kr::ps::dl::QueryFeature>;
-static_assert(std::same_as<typename urd::data<IcpQuery>::Expression, kr::dl::Query<>>);
+static_assert(std::same_as<decltype(urd::data<IcpQuery>::feature), urd::index<kr::dl::Query<>>>);
 
 // Classifiers expose Boolean features, without acquiring policy conditions or effects.
 static_assert(std::same_as<kr::ps::PsConditionTypes<kr::UnsFamilyTag>, boost::mp11::mp_list<>>);
@@ -72,10 +72,7 @@ static_assert(usable_inventory<UnsCustomRepository>(UnsCustomTypes {}));
 static_assert(usable_inventory<kr::ps::ext::Repository>(kr::ps::PsCoreTypes<kr::BaseFamilyTag> {}));
 
 using BaseFeatureInExt = urd::index_view<kr::ps::Feature<kr::BaseFamilyTag, kr::dl::BooleanTag>, kr::ps::ext::Repository>;
-static_assert(requires(BaseFeatureInExt feature) {
-    feature.get_symbol();
-    feature.get_variant();
-});
+static_assert(requires(BaseFeatureInExt feature) { feature.get_variant(); });
 
 // Storage contexts remain structural; no exact repository type is required.
 struct BaseFeatureStorage

@@ -26,14 +26,14 @@ std::optional<EdgeAbstraction> abstract_edges(dl::detail::QueryTranslator& trans
     auto roots = urd::Store<urd::sequence<tyr::datalog::database::QueryView<>>>();
     auto patterns = urd::Store<urd::sequence<size_t>>();
     for (size_t i = 0; i < k; ++i)
-        if (const auto& relaxed = relaxation.queries[i]; relaxed && relaxed->columns().size() == 2)
+        if (const auto& relaxed = relaxation.queries[i]; relaxed && tyr::datalog::database::columns_of(*relaxed).size() == 2)
         {
             roots.push_back(*relaxed);
             patterns.push_back(i);
         }
     if (roots.empty())
         return std::nullopt;
-    return EdgeAbstraction { tyr::datalog::database::compile(roots), std::move(patterns), relaxation.slots };
+    return EdgeAbstraction { tyr::datalog::database::compile_plan(roots), std::move(patterns), relaxation.slots };
 }
 
 std::optional<EdgeAbstraction>

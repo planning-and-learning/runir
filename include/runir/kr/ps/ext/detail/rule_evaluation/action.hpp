@@ -95,7 +95,7 @@ public:
             return true;
         auto state_context = context.make_dl_context(state);
         const auto query = evaluate<Kind>(rule.get_query_feature(), state_context);
-        for (const auto row : query.rows())
+        for (const auto row : query.get_rows())
         {
             if (stop())
                 return false;

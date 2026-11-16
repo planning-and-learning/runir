@@ -2,9 +2,9 @@ KR evaluation storage and rule evaluators
 =========================================
 
 Every DL expression is evaluated with ``evaluate<Kind>(expression, context)`` in C++ or
-``expression.evaluate(context)`` in Python, and a policy feature with ``evaluate<Kind>(feature, context)``. The caller
-names the task kind (``tyr::GroundTag`` or ``tyr::LiftedTag``); the context selects the result repositories and the
-memoization.
+``semantics.evaluate(expression, context)`` in Python, and a policy feature with ``evaluate<Kind>(feature, context)``.
+The caller names the task kind (``tyr::GroundTag`` or ``tyr::LiftedTag``); the context selects the result repositories
+and the memoization.
 
 All results belong to a ``DenotationRepository``. Concept, role, Boolean and numerical results are interned
 denotation views. A query returns a ``QueryDenotationView``, a Yggdrasil relation view over typed Tyr object indices
@@ -94,7 +94,7 @@ Storage and lifetime
    context = semantics.GroundStateEvaluationContext(
        state, builder, scratch, arguments, registers
    )
-   value = expression.evaluate(context)
+   value = semantics.evaluate(expression, context)
 
 Use ``LiftedStateEvaluationContext`` for lifted states; C++ constructors take the same arguments in the same order.
 Contexts for sketches and classifiers omit ``arguments`` and ``registers``, and evaluating a register or argument
@@ -148,7 +148,7 @@ separate root caches, the durable repository and the intermediate storage:
    context = semantics.GroundStateEvaluationContext(
        state, builder, root_memo, denotation_repository, scratch, arguments, registers
    )
-   value = expression.evaluate(context)
+   value = semantics.evaluate(expression, context)
 
    root_memo.reset_dynamic()
    scratch.reset_dynamic()

@@ -11,21 +11,24 @@
 namespace runir::kr::ps::base::dl
 {
 
-/// Binds observation T (a condition or an effect) with its compatibility with ground and lifted transitions.
+/// The view of observation T (a condition or an effect, bound by bind_data first), its insertion and its compatibility
+/// with ground and lifted transitions: is_compatible_with(observation, context).
 template<typename T>
-void bind_observation(nb::module_& m, RepositoryBinding& repository, const char* name)
+void bind_observation(nb::module_& m, RepositoryBinding& repository)
 {
     using View = urd::index_view<T, Repository>;
     using GroundContext = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>;
     using LiftedContext = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
-    runir::kr::python::bind_observation<T>(m, repository, name)
+    runir::kr::python::bind_observation_view<T>(repository, m);
+    m.def(
+         "is_compatible_with",
+         [](View observation, GroundContext& context) { return runir::kr::ps::is_compatible_with<tyr::GroundTag>(observation, context); },
+         nb::arg("observation"),
+         nb::arg("context"))
         .def(
             "is_compatible_with",
-            [](View value, GroundContext& context) { return runir::kr::ps::is_compatible_with<tyr::GroundTag>(value, context); },
-            nb::arg("context"))
-        .def(
-            "is_compatible_with",
-            [](View value, LiftedContext& context) { return runir::kr::ps::is_compatible_with<tyr::LiftedTag>(value, context); },
+            [](View observation, LiftedContext& context) { return runir::kr::ps::is_compatible_with<tyr::LiftedTag>(observation, context); },
+            nb::arg("observation"),
             nb::arg("context"));
 }
 

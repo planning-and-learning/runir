@@ -39,24 +39,16 @@ public:
     void update(EvaluationGraph<Kind>& graph, const Delta& delta, tyr::datalog::database::Workspace& workspace);
     [[nodiscard]] std::span<const ygg::uint_t> get_dependencies() const noexcept { return m_dependencies; }
     [[nodiscard]] BorrowedDenotationView<Category> get_result(const tyr::formalism::planning::Repository& repository) const
-    {
-        return state().get_result(repository);
-    }
+    { return state().get_result(repository); }
     [[nodiscard]] const auto& get_delta() const
         requires ConceptOrRoleTag<Category>
-    {
-        return state().get_delta();
-    }
+    { return state().get_delta(); }
     [[nodiscard]] size_t size() const
         requires ConceptOrRoleTag<Category>
-    {
-        return state().size();
-    }
+    { return state().size(); }
     [[nodiscard]] bool changed() const
         requires BooleanOrNumericalTag<Category>
-    {
-        return state().changed();
-    }
+    { return state().changed(); }
 
 private:
     using ConceptOperations = boost::mp11::mp_list<AtomicEvaluator<Kind, Category, tyr::formalism::FluentTag>,
@@ -135,19 +127,13 @@ private:
 
     template<ConceptOrRoleTag Projected, typename C>
     Evaluators prepare(urd::index_view<QueryProjection<Projected>, C> expression, GraphBuilder<Kind>& graph)
-    {
-        return ProjectionEvaluator<Kind, Category>(graph.layer(), graph.prepare(expression.get_operand(), m_dependencies), expression.get_plan());
-    }
+    { return ProjectionEvaluator<Kind, Category>(graph.layer(), graph.prepare(expression.get_operand(), m_dependencies), expression.get_plan()); }
 
     Evaluators prepare_distance(NumericalView<DistanceTag> expression, ConstructorView<RoleTag>, GraphBuilder<Kind>& graph)
-    {
-        return RoleEdgeDistanceEvaluator<Kind>(expression, graph, m_dependencies);
-    }
+    { return RoleEdgeDistanceEvaluator<Kind>(expression, graph, m_dependencies); }
     /// Query edges can range over pair vertices; maintaining them would materialize every edge.
     Evaluators prepare_distance(NumericalView<DistanceTag> expression, QueryView<> edges, GraphBuilder<Kind>& graph)
-    {
-        return QueryEdgeDistanceEvaluator<Kind>(expression, edges, graph, m_dependencies);
-    }
+    { return QueryEdgeDistanceEvaluator<Kind>(expression, edges, graph, m_dependencies); }
 
     /// A state atom's evaluator: a Boolean one with its polarity, a concept or role one without.
     template<tyr::formalism::FactKind Fact, typename View>
@@ -225,8 +211,8 @@ private:
 template<tyr::TaskKind Kind, CategoryTag Category>
 FeatureNode<Kind, Category>::FeatureNode(ConstructorView<Category> expression, GraphBuilder<Kind>& graph) :
     m_expression(expression),
-    m_evaluator(expression.is_static() ? Evaluators(StaticEvaluator<Kind, Category>(expression)) :
-                                         std::visit([&](auto concrete) { return prepare(concrete, graph); }, expression.get_variant()))
+    m_evaluator(expression.get_is_static() ? Evaluators(StaticEvaluator<Kind, Category>(expression)) :
+                                             std::visit([&](auto concrete) { return prepare(concrete, graph); }, expression.get_variant()))
 {
 }
 

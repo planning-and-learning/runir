@@ -12,7 +12,7 @@ namespace ygg::serialization
 template<typename Archive, typename C>
 void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::ps::ext::Program, C>>)
 {
-    ar.field("entry_module", [](const auto& value) -> decltype(auto) { return (value.get_entry_module()); });
+    ar.field("entry_mod", [](const auto& value) -> decltype(auto) { return (value.get_entry_mod()); });
     ar.field("modules", [](const auto& value) -> decltype(auto) { return (value.get_modules()); });
 }
 

@@ -3,7 +3,9 @@
 
 import json
 from pathlib import Path
-from typing import cast
+from typing import TypeVar, cast
+
+RecordT = TypeVar("RecordT")
 
 FIXTURE_ROOT = Path(__file__).resolve().parents[2] / "tests" / "support" / "data"
 
@@ -16,3 +18,14 @@ def load_fixture(relative: str) -> dict[str, object]:
     value: object = json.loads(read_fixture(relative))
     assert isinstance(value, dict)
     return cast("dict[str, object]", value)
+
+
+def record(data_type: type[RecordT], **fields: object) -> RecordT:
+    """A record built as Python builds one: its empty __init__, then each field assigned.
+
+    A view, or a list of views, is stored as its index.
+    """
+    data = data_type()
+    for name, value in fields.items():
+        setattr(data, name, value)
+    return data

@@ -18,15 +18,6 @@ private:
 
 public:
     auto get_variant() const noexcept { return self().template member<&urd::record_of<V>::variant>(); }
-    auto get_symbol() const noexcept
-    {
-        return std::visit([](auto feature) { return feature.get_symbol(); }, get_variant());
-    }
-    auto get_expression() const noexcept
-    {
-        return std::visit([](auto feature) { return feature.get_expression(); }, get_variant());
-    }
-    auto get_feature() const noexcept { return get_expression(); }
 };
 }  // namespace urd
 

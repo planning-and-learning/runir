@@ -154,7 +154,7 @@ QueryTranslator::YggQuery QueryTranslator::complement_argument(DlQuery complemen
     auto slot = QuerySlot {};
     const auto columns = schema(complement);
     slot.columns.assign(columns.begin(), columns.end());
-    slot.is_static = complement.is_static();
+    slot.is_static = complement.get_is_static();
     visit_complement_argument(complement,
                               [&]<typename V>(V argument)
                               {
@@ -174,7 +174,7 @@ QueryTranslator::YggQuery QueryTranslator::translate_concrete(DlQuery query, Que
     {
         const auto columns = concrete.get_schema();
         return input(
-            QuerySlot { QuerySlot::Kind::QUERY, static_cast<ygg::uint_t>(query.index().value), { columns.begin(), columns.end() }, query.is_static() });
+            QuerySlot { QuerySlot::Kind::QUERY, static_cast<ygg::uint_t>(query.index().value), { columns.begin(), columns.end() }, query.get_is_static() });
     }
     else if constexpr (std::same_as<Tag, QueryJoinTag>)
     {

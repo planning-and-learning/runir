@@ -18,8 +18,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_expression() const noexcept { return self().template member<&urd::record_of<V>::feature>(); }
-    auto get_feature() const noexcept { return get_expression(); }
+    auto get_feature() const noexcept { return self().template member<&urd::record_of<V>::feature>(); }
     const auto& get_symbol() const noexcept { return self().template member<&urd::record_of<V>::symbol>(); }
 };
 }  // namespace urd

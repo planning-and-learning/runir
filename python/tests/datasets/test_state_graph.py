@@ -10,9 +10,9 @@ import pytest
 from fixture_utils import load_fixture
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
-from pytyr.formalism.planning import ActionRow, Parser
-from pytyr.planning.ground import PackedState as GroundPackedState
-from pytyr.planning.lifted import GroundTaskInstantiationOptions, PackedState as LiftedPackedState, Task
+from pytyr.formalism.planning import Parser, RowActionLifted
+from pytyr.planning.ground import PackedStateGround
+from pytyr.planning.lifted import GroundTaskInstantiationOptions, PackedStateLifted, Task
 from pyyggdrasil.execution import ExecutionContext
 
 from pyrunir.datasets import (
@@ -72,7 +72,7 @@ def test_state_graph_labels_keep_the_graph_alive(ground_gripper_search_context: 
     edge_label = graph.edge_value(edge)
     assert sys.getrefcount(graph) > references
     state = vertex.state
-    assert isinstance(state, GroundPackedState)
+    assert isinstance(state, PackedStateGround)
     action = edge_label.action
     expected = (str(state.unpack()), str(action))
 
@@ -104,10 +104,10 @@ def test_ground_state_graph_labels_own_packed_states_and_action_bindings(gripper
     edge_label = graph.edge_value(graph.edges()[0])
 
     assert isinstance(edge_label, StateGraphEdgeLabel)
-    assert isinstance(edge_label.action, ActionRow)
+    assert isinstance(edge_label.action, RowActionLifted)
     states = [graph.vertex_value(vertex).state for vertex in graph.vertices()]
     for state in states:
-        assert isinstance(state, GroundPackedState)
+        assert isinstance(state, PackedStateGround)
         assert state.get_state_repository().layer() == context.state_repository.layer()
 
     state = states[-1]
@@ -128,10 +128,10 @@ def test_lifted_state_graph_labels_own_packed_states_and_action_bindings(gripper
     edge_label = graph.edge_value(graph.edges()[0])
 
     assert isinstance(edge_label, StateGraphEdgeLabel)
-    assert isinstance(edge_label.action, ActionRow)
+    assert isinstance(edge_label.action, RowActionLifted)
     states = [graph.vertex_value(vertex).state for vertex in graph.vertices()]
     for state in states:
-        assert isinstance(state, LiftedPackedState)
+        assert isinstance(state, PackedStateLifted)
         assert state.get_state_repository().layer() == context.state_repository.layer()
 
     state = states[-1]

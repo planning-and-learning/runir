@@ -3,7 +3,7 @@
 
 #include "runir/kr/dl/semantics/incremental/detail/feature_node.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/query_node.hpp"
-#include "runir/kr/dl/semantics/incremental/evaluation.hpp"
+#include "runir/kr/dl/semantics/incremental/evaluation_decl.hpp"
 
 namespace runir::kr::dl::semantics::incremental
 {

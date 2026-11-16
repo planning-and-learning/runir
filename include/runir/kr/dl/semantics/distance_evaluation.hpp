@@ -38,8 +38,8 @@ DistanceFeature<Distance>
 make_distance_feature(const ygg::FreeRelationRepository& layer, const tyr::datalog::database::DistancePlan& plan, ConstructorView<RoleTag> edges)
 {
     const auto columns = plan.edge_columns();
-    return { { QuerySlot { QuerySlot::Kind::ROLE, static_cast<ygg::uint_t>(edges.index().value), { columns.begin(), columns.end() }, edges.is_static() } },
-             Distance(layer, plan, edges.is_static()),
+    return { { QuerySlot { QuerySlot::Kind::ROLE, static_cast<ygg::uint_t>(edges.index().value), { columns.begin(), columns.end() }, edges.get_is_static() } },
+             Distance(layer, plan, edges.get_is_static()),
              std::nullopt };
 }
 

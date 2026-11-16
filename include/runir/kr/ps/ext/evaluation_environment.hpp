@@ -82,7 +82,7 @@ public:
             const auto append = [&]<typename FeatureTag>()
             {
                 for (const auto feature : module_.template get_features<FeatureTag>())
-                    roots.emplace_back(feature.get_expression());
+                    roots.emplace_back(std::visit([](auto concrete) { return concrete.get_feature(); }, feature.get_variant()));
             };
             append.template operator()<runir::kr::dl::ConceptTag>();
             append.template operator()<runir::kr::dl::RoleTag>();
@@ -120,7 +120,7 @@ public:
     void select_source(S state)
     {
         const auto module_ = state.get_module_state();
-        const auto invocation = Invocation { module_.get_module(), module_.get_arguments(), state.get_call_stack() };
+        const auto invocation = Invocation { module_.get_mod(), module_.get_arguments(), state.get_call_stack() };
         if (m_invocation == invocation)
             return;
         const auto found = std::ranges::find(m_modules, invocation.module_, &ModuleEvaluation::module_);

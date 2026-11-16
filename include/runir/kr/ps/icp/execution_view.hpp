@@ -29,12 +29,11 @@ private:
 
 public:
     auto get_program() const { return self().template member<&urd::record_of<V>::program>(); }
-    auto get_module() const { return get_program().get_module(); }
     auto get_memory_state() const { return self().template member<&urd::record_of<V>::memory_state>(); }
     auto get_registers() const { return self().template member<&urd::record_of<V>::registers>(); }
     auto get_histories() const { return self().template member<&urd::record_of<V>::histories>(); }
-    auto get_state() const
-    { return self().context().get_state_repository().get_registered_state(self().template member<&urd::record_of<V>::state>().index()); }
+    auto get_state() const { return self().template member<&urd::record_of<V>::state>().unpack(); }
+    auto get_module() const { return get_program().get_entry_mod(); }
 };
 }  // namespace urd
 

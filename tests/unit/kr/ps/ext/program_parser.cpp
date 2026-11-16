@@ -61,7 +61,7 @@ TEST(RunirTests, ExtSyntacticComplexityAggregatesDeclaredFeatures)
     {
         const auto concrete = std::visit([](auto view) { return kr::dl::semantics::syntactic_complexity(view.get_feature()); }, feature.get_variant());
         EXPECT_EQ(kr::ps::syntactic_complexity(feature), concrete);
-        EXPECT_EQ(concrete, kr::dl::semantics::syntactic_complexity(feature.get_expression()));
+        EXPECT_EQ(concrete, kr::dl::semantics::syntactic_complexity(std::visit([](auto concrete) { return concrete.get_feature(); }, feature.get_variant())));
         EXPECT_EQ(concrete, expected);
     };
     expect_feature_complexity(concept_feature, 1);
@@ -111,7 +111,7 @@ TEST(RunirTests, ExtModuleParserLowersArgumentRegisterMemorySections)
     const auto description = read_fixture("kr/ps/ext/executor/ext_module_parser_lowers_argument_register_memory_sections/description.module");
 
     const auto module_ = kr::ps::ext::dl::parse_module(description, planning_task.get_domain().get_domain(), *repository);
-    EXPECT_EQ(module_.get_name(), "entry");
+    EXPECT_EQ(module_.get_symbol().get_name(), "entry");
     EXPECT_EQ(module_.get_arguments<kr::dl::ConceptTag>().size(), 1);
     EXPECT_EQ(module_.get_arguments<kr::dl::RoleTag>().size(), 1);
     EXPECT_EQ(module_.get_arguments<kr::dl::BooleanTag>().size(), 1);
@@ -139,8 +139,8 @@ TEST(RunirTests, ExtModuleParserLowersNamedCalleesWithoutPreexistingModules)
 
     const auto modules = kr::ps::ext::dl::parse_modules({ caller_description, callee_description }, planning_task.get_domain().get_domain(), *repository);
     ASSERT_EQ(modules.size(), 2);
-    EXPECT_EQ(modules[0].get_name(), "caller");
-    EXPECT_EQ(modules[1].get_name(), "callee");
+    EXPECT_EQ(modules[0].get_symbol().get_name(), "caller");
+    EXPECT_EQ(modules[1].get_symbol().get_name(), "callee");
 
     ASSERT_EQ(modules[0].context()[modules[0].index()].memory_transitions.size(), 1);
     const auto rules = modules[0].get_memory_transitions()[0];
@@ -415,7 +415,7 @@ TEST(RunirTests, ExtModuleParserLowersPaperFactoryDescriptionsAgainstBlocksworld
     {
         const auto& expected = ygg::common::as_object(cases[i], "module");
         const auto module_ = modules[i];
-        EXPECT_EQ(module_.get_name(), ygg::common::as_string(expected, "name", "module"));
+        EXPECT_EQ(module_.get_symbol().get_name(), ygg::common::as_string(expected, "name", "module"));
         EXPECT_EQ(module_.get_features<kr::dl::ConceptTag>().size(), ygg::common::as_size(expected, "concept_features", "module"));
         EXPECT_EQ(module_.get_features<kr::dl::RoleTag>().size(), ygg::common::as_size(expected, "role_features", "module"));
         EXPECT_EQ(module_.get_features<kr::dl::BooleanTag>().size(), ygg::common::as_size(expected, "boolean_features", "module"));
@@ -426,11 +426,11 @@ TEST(RunirTests, ExtModuleParserLowersPaperFactoryDescriptionsAgainstBlocksworld
 
     const auto program = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program(planning_task.get_domain().get_domain(), *repository);
     const auto& expected_program = ygg::common::as_object(ygg::common::require_member(suite_object, "program", "suite"), "suite.program");
-    EXPECT_EQ(program.get_entry_module().get_name(), ygg::common::as_string(expected_program, "entry", "program"));
+    EXPECT_EQ(program.get_entry_mod().get_symbol().get_name(), ygg::common::as_string(expected_program, "entry", "program"));
     const auto& expected_modules = ygg::common::as_array(ygg::common::require_member(expected_program, "modules", "program"), "program.modules");
     ASSERT_EQ(program.get_modules().size(), expected_modules.size());
     for (std::size_t i = 0; i < expected_modules.size(); ++i)
-        EXPECT_EQ(program.get_modules()[i].get_name(), ygg::common::as_string(expected_modules[i], "program.module"));
+        EXPECT_EQ(program.get_modules()[i].get_symbol().get_name(), ygg::common::as_string(expected_modules[i], "program.module"));
     EXPECT_EQ(kr::ps::ext::syntactic_complexity(program), ygg::common::as_size(expected_program, "syntactic_complexity", "program"));
 }
 
@@ -454,7 +454,7 @@ TEST(RunirTests, ExtModuleFormatterRoundTripsPaperFactoryDescriptions)
         try
         {
             const auto reparsed = kr::ps::ext::dl::parse_module(formatted, planning_task.get_domain().get_domain(), *repository);
-            EXPECT_EQ(reparsed.get_name(), module_.get_name());
+            EXPECT_EQ(reparsed.get_symbol().get_name(), module_.get_symbol().get_name());
             EXPECT_EQ(reparsed.get_memory_states().size(), module_.get_memory_states().size());
             EXPECT_EQ(reparsed.get_memory_transitions().size(), module_.get_memory_transitions().size());
             EXPECT_EQ(reparsed.get_arguments<kr::dl::ConceptTag>().size(), module_.get_arguments<kr::dl::ConceptTag>().size());
@@ -464,7 +464,7 @@ TEST(RunirTests, ExtModuleFormatterRoundTripsPaperFactoryDescriptions)
         }
         catch (const std::exception& err)
         {
-            FAIL() << "Failed to reparse formatted module " << module_.get_name() << ": " << err.what() << "\n" << formatted;
+            FAIL() << "Failed to reparse formatted module " << module_.get_symbol().get_name() << ": " << err.what() << "\n" << formatted;
         }
     }
 
@@ -472,7 +472,7 @@ TEST(RunirTests, ExtModuleFormatterRoundTripsPaperFactoryDescriptions)
     const auto formatted_program = fmt::format("{}", program);
     EXPECT_NE(formatted_program.find(formatter_fragment("module_factory_sketch")), std::string::npos) << formatted_program;
     const auto reparsed_program = kr::ps::ext::dl::parse_program(formatted_program, planning_task.get_domain().get_domain(), *repository);
-    EXPECT_EQ(reparsed_program.get_entry_module().get_name(), program.get_entry_module().get_name());
+    EXPECT_EQ(reparsed_program.get_entry_mod().get_symbol().get_name(), program.get_entry_mod().get_symbol().get_name());
     EXPECT_EQ(reparsed_program.get_modules().size(), program.get_modules().size());
 }
 
@@ -527,7 +527,7 @@ TEST(RunirTests, ExtModuleFormatterEscapesQuotedStringContents)
     EXPECT_EQ(formatted.find(std::string(":") + "description"), std::string::npos) << formatted;
 
     const auto reparsed = kr::ps::ext::dl::parse_module(formatted, planning_task.get_domain().get_domain(), *repository);
-    EXPECT_EQ(reparsed.get_name(), module_.get_name());
+    EXPECT_EQ(reparsed.get_symbol().get_name(), module_.get_symbol().get_name());
     EXPECT_EQ(fmt::format("{}", reparsed), formatted);
 }
 
@@ -596,7 +596,7 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
             using View = std::decay_t<decltype(rule)>;
             using Expected = urd::index_view<kr::ps::ext::Rule<kr::ps::ext::DoTag>, kr::ps::ext::Repository>;
             if constexpr (std::same_as<View, Expected>)
-                return rule.get_action_name() == "pick" && rule.get_action_arguments().size() == 3 && rule.get_effects().size() == 1;
+                return rule.get_action_name() == "pick" && rule.get_arguments().size() == 3 && rule.get_effects().size() == 1;
             else
                 return false;
         },
@@ -645,7 +645,7 @@ TEST(RunirTests, ExtBindingRulesParseEffectsAndRoundTrip)
                         if constexpr (kr::ps::ext::BindingRuleView<R>)
                         {
                             EXPECT_EQ(kr::ps::ext::ChooseRuleView<R>, std::string(keyword) == "choose");
-                            EXPECT_EQ(rule.get_feature().get_symbol(), "F");
+                            EXPECT_EQ(std::visit([](auto concrete) { return concrete.get_symbol(); }, rule.get_feature().get_variant()), "F");
                             EXPECT_EQ(rule.get_slot().get_name(), "r");
                             EXPECT_EQ(rule.get_effects().size(), expected_effects);
                             auto data = runir::tests::copy_fields(rule.context()[rule.index()]);
@@ -760,14 +760,14 @@ TEST(RunirTests, ExtModuleFactoryCreatesEmptyModule)
     auto repository = std::make_shared<kr::ps::ext::Repository>(dl_repository);
 
     const auto empty = kr::ps::ext::dl::ModuleFactory::create_empty(*repository);
-    EXPECT_EQ(empty.get_name(), "empty");
+    EXPECT_EQ(empty.get_symbol().get_name(), "empty");
     EXPECT_EQ(empty.get_entry_memory_state().get_name(), "m0");
     EXPECT_EQ(empty.get_memory_states().size(), 1);
     EXPECT_EQ(kr::ps::ext::syntactic_complexity(empty), 0);
 
     const auto description = kr::ps::ext::dl::ModuleFactory::create_empty_description();
     const auto reparsed = kr::ps::ext::dl::parse_module(description, planning_domain.get_domain(), *repository);
-    EXPECT_EQ(reparsed.get_name(), empty.get_name());
+    EXPECT_EQ(reparsed.get_symbol().get_name(), empty.get_symbol().get_name());
     EXPECT_EQ(reparsed.get_entry_memory_state().get_name(), empty.get_entry_memory_state().get_name());
     EXPECT_EQ(reparsed.get_memory_states().size(), empty.get_memory_states().size());
     EXPECT_EQ(kr::ps::ext::syntactic_complexity(reparsed), 0);

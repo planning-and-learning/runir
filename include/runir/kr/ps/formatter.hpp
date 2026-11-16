@@ -24,24 +24,15 @@
 namespace runir::kr::ps
 {
 
-template<runir::kr::ps::dl::FeatureTag FeatureTag>
-constexpr std::string_view feature_type()
-{
-    if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::QueryFeature>)
-        return FeatureTag::keyword;
-    else
-        return FeatureTag::name;
-}
-
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, typename C>
 void append_feature(std::ostream& os, urd::index_view<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>, C> view)
 {
-    os << ygg::print_indent << "(:" << feature_type<FeatureTag>() << "\n";
+    os << ygg::print_indent << "(:" << FeatureTag::keyword << "\n";
     {
         ygg::IndentScope scope(os);
         os << ygg::print_indent << "(:symbol " << view.get_symbol() << ")\n";
         os << ygg::print_indent << "(:expression ";
-        fmt::format_to(std::ostream_iterator<char>(os), "{}", view.get_expression());
+        fmt::format_to(std::ostream_iterator<char>(os), "{}", view.get_feature());
         os << ")\n";
     }
     os << ygg::print_indent << ')';
@@ -67,7 +58,12 @@ template<runir::kr::FamilyTag Family,
          runir::kr::ps::dl::ConditionObservationTag<FeatureTag> ObservationTag,
          typename C>
 Out condition(urd::index_view<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, C> view, const Out& out)
-{ return fmt::format_to(out, "({} {})", ObservationTag::keyword, view.get_feature().get_symbol()); }
+{
+    return fmt::format_to(out,
+                          "({} {})",
+                          ObservationTag::keyword,
+                          std::visit([](auto concrete) { return concrete.get_symbol(); }, view.get_feature().get_variant()));
+}
 
 template<typename Out, typename... Views>
 Out condition(const std::variant<Views...>& view, Out out)
@@ -81,7 +77,12 @@ template<runir::kr::FamilyTag Family,
          runir::kr::ps::dl::EffectObservationTag<FeatureTag> ObservationTag,
          typename C>
 Out effect(urd::index_view<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, C> view, const Out& out)
-{ return fmt::format_to(out, "({} {})", ObservationTag::keyword, view.get_feature().get_symbol()); }
+{
+    return fmt::format_to(out,
+                          "({} {})",
+                          ObservationTag::keyword,
+                          std::visit([](auto concrete) { return concrete.get_symbol(); }, view.get_feature().get_variant()));
+}
 
 template<typename Out, typename... Views>
 Out effect(const std::variant<Views...>& view, Out out)
@@ -135,7 +136,7 @@ template<runir::kr::dl::CategoryTag Category, typename Arguments>
 void append_declarations(std::ostream& os, Arguments arguments)
 {
     for (auto argument : arguments)
-        os << " (:" << Category::name << ' ' << argument.get_name() << ')';
+        os << " (:" << Category::keyword << ' ' << argument.get_name() << ')';
 }
 
 template<ProgramFamilyTag Family, typename C>

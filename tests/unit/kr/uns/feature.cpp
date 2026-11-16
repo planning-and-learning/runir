@@ -29,21 +29,18 @@ static_assert(std::totally_ordered<Index>);
 static_assert(std::totally_ordered<Data>);
 static_assert(std::totally_ordered<View>);
 static_assert(std::same_as<View, kr::uns::dl::BooleanFeatureView>);
-static_assert(std::same_as<Data::Variant, urd::flat_variant<urd::index<Concrete>>>);
+static_assert(std::same_as<decltype(Data::variant), urd::flat_variant<urd::index<Concrete>>>);
 static_assert(requires(Data& data) {
     data.index;
     data.variant;
-    { ::cista::to_tuple(std::as_const(data)) } -> std::same_as<std::tuple<const Index&, const Data::Variant&>>;
-    requires std::same_as<std::remove_cvref_t<std::tuple_element_t<0, urd::detail::identity_t<Data>>>, Data::Variant>;
+    { ::cista::to_tuple(std::as_const(data)) } -> std::same_as<std::tuple<const Index&, const decltype(Data::variant)&>>;
+    requires std::same_as<std::remove_cvref_t<std::tuple_element_t<0, urd::detail::identity_t<Data>>>, decltype(Data::variant)>;
     { canonicalize(data) } -> std::same_as<void>;
     { is_canonical(data) } -> std::same_as<bool>;
 });
 static_assert(requires(const View& view) {
     view.index();
     view.get_variant();
-    view.get_symbol();
-    view.get_expression();
-    view.get_feature();
 });
 
 static_assert(requires(View feature, kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>& context) {

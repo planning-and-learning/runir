@@ -19,7 +19,8 @@ namespace runir::kr::uns
 template<typename C>
 std::string literal(urd::index_view<runir::kr::uns::ClassifierLiteral, C> view)
 {
-    const auto symbol = std::visit([](auto feature) { return feature.get_symbol(); }, view.get_feature());
+    const auto symbol =
+        std::visit([](auto feature) { return std::visit([](auto concrete) { return concrete.get_symbol(); }, feature.get_variant()); }, view.get_feature());
     return view.get_polarity() ? symbol.str() : fmt::format("(not {})", symbol);
 }
 

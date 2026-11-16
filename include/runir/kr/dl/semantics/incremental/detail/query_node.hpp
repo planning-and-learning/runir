@@ -100,7 +100,7 @@ template<tyr::TaskKind Kind>
 auto QueryNode<Kind>::prepare_operation(QueryView<> expression, GraphBuilder<Kind>& graph) -> Operation
 {
     const auto& layer = graph.layer();
-    if (expression.is_static())
+    if (expression.get_is_static())
         return QueryStaticEvaluator<Kind>(layer, expression);
     return std::visit(
         [&]<typename Tag>(QueryView<Tag> concrete) -> Operation

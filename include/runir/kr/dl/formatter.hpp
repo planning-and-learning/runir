@@ -55,9 +55,9 @@ inline constexpr bool is_planning_symbol<urd::index_view<tyr::formalism::Object,
 template<typename T>
 concept SymbolList = std::ranges::range<T> && is_planning_symbol<std::remove_cvref_t<std::ranges::range_value_t<T>>>;
 
-/// The keyword and components of a constructor record, without parentheses: its fields, in record order (urd::Fields),
-/// each as it is written: a planning symbol (or a list of them) by its quoted name, a polarity as a Boolean keyword,
-/// anything else as fmt formats it.
+/// The keyword and components of a constructor record, without parentheses: what identifies it (its identifying
+/// members, in record order; not a derived field such as a distance's plan), each as it is written: a planning symbol (or a list of them) by its quoted name, a
+/// polarity as a Boolean keyword, anything else as fmt formats it.
 template<CategoryTag Category, typename Tag, typename View>
 std::string record_text(View view)
 {
@@ -76,7 +76,7 @@ std::string record_text(View view)
         else
             add(component);
     };
-    urd::for_each_field<urd::record_of<View>>([&]<typename F>() { add_component(view.template member<F::member>()); });
+    [&]<auto... Ms>(urd::Members<Ms...> /*members*/) { (add_component(view.template member<Ms>()), ...); }(urd::record_of<View>::identifying_members());
     return text;
 }
 

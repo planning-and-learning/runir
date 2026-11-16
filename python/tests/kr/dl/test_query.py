@@ -4,10 +4,11 @@
 import gc
 
 import pytest
-from pytyr.formalism.planning import Object, ObjectIndex, PlanningDomain
+from pytyr.formalism import ObjectIndex
+from pytyr.formalism.planning import Object, PlanningDomain
 from pyyggdrasil import formalism
 from pyyggdrasil.serialization import Dictionaries
-from relation_utils import rename
+from relation_utils import rename, values
 
 from pyrunir.datasets import GroundTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext, UndefinedSymbolError
@@ -19,30 +20,34 @@ from pyrunir.kr.uns.dl import parse_classifier
 from pyrunir.serialization import register_table, serialize, table
 
 
-def _row_values(rows: formalism.RelationView) -> list[int]:
-    values: list[int] = []
-    for row in rows:
-        for value in row:
+def _row_values(rows: formalism.RelationSchema) -> list[int]:
+    result: list[int] = []
+    for row in rows.get_rows():
+        for value in values(row):
             assert isinstance(value, int)
-            values.append(value)
-    return values
+            result.append(value)
+    return result
 
 
-def _boolean_arg(expression: semantics.Boolean) -> semantics.Concept | semantics.Role | semantics.Query:
+def _boolean_arg(
+    expression: semantics.ConstructorBoolean,
+) -> semantics.ConstructorConcept | semantics.ConstructorRole | semantics.Query:
     variant = expression.get_variant()
-    assert isinstance(variant, semantics.BooleanNonempty)
+    assert isinstance(variant, semantics.BooleanSemanticNonempty)
     return variant.get_operand()
 
 
-def _numerical_arg(expression: semantics.Numerical) -> semantics.Concept | semantics.Role | semantics.Query:
+def _numerical_arg(
+    expression: semantics.ConstructorNumerical,
+) -> semantics.ConstructorConcept | semantics.ConstructorRole | semantics.Query:
     variant = expression.get_variant()
-    assert isinstance(variant, semantics.NumericalCount)
+    assert isinstance(variant, semantics.NumericalSemanticCount)
     return variant.get_operand()
 
 
-def _concept_query(expression: semantics.Concept) -> semantics.Query:
+def _concept_query(expression: semantics.ConstructorConcept) -> semantics.Query:
     variant = expression.get_variant()
-    assert isinstance(variant, semantics.ConceptProject)
+    assert isinstance(variant, semantics.QueryProjectionConcept)
     return variant.get_operand()
 
 
@@ -73,7 +78,7 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
             gripper_planning_domain,
             context.base_repository,
         )
-        expression = owner.get_boolean_features()[0].get_expression()
+        expression = owner.get_boolean_features()[0].get_variant().get_feature()
     elif family == "ext":
         owner = parse_program(
             "".join(
@@ -85,14 +90,14 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
             gripper_planning_domain,
             context.ext_repository,
         )
-        expression = owner.get_entry_module().get_boolean_features()[0].get_expression()
+        expression = owner.get_entry_mod().get_boolean_features()[0].get_variant().get_feature()
     else:
         owner = parse_classifier(
             f"(:classifier (:symbol root) (:features {feature}) (:expression (or (and value))))",
             gripper_planning_domain,
             context.uns_repository,
         )
-        expression = owner.get_features()[0].get_expression()
+        expression = owner.get_features()[0].get_variant().get_feature()
 
     task = GroundTaskContext(context, ground_gripper_search_context)
     state = ground_gripper_search_context.state_repository.get_initial_state(
@@ -108,38 +113,38 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
         else ()
     )
     evaluation_context = semantics.GroundStateEvaluationContext(state, task.dl_builder, storage, *bindings)
-    assert expression.evaluate(evaluation_context).get() is True
+    assert semantics.evaluate(expression, evaluation_context).get_value() is True
     persistent_caches = semantics.DenotationCaches()
     repository = task.dl_denotation_repository
     retained_context = semantics.GroundStateEvaluationContext(
         state, task.dl_builder, persistent_caches, repository, storage, *bindings
     )
-    retained = expression.evaluate(retained_context)
+    retained = semantics.evaluate(expression, retained_context)
     query = _boolean_arg(expression)
     assert isinstance(query, semantics.Query)
-    retained_query = query.evaluate(retained_context)
+    retained_query = semantics.evaluate(query, retained_context)
     relations = task.dl_denotation_repository.get_relation_repository()
     assert isinstance(relations, formalism.RelationRepository)
-    assert isinstance(retained_query, formalism.RelationView)
-    assert isinstance(retained_query.index(), formalism.RelationIndex)
-    assert all(isinstance(row, formalism.RelationRow) for row in retained_query)
+    assert isinstance(retained_query, formalism.RelationSchema)
+    assert isinstance(retained_query.index(), formalism.RelationSchemaIndex)
+    assert all(isinstance(row, formalism.RowSchema) for row in retained_query.get_rows())
     assert all(
         isinstance(repository.get_object(ObjectIndex(object_)), Object) for object_ in _row_values(retained_query)
     )
-    assert rename(relations, retained_query, list(retained_query.columns())) == retained_query
-    retained_rows = {tuple(row) for row in retained_query}
+    assert rename(relations, retained_query, [column.label for column in retained_query.columns()]) == retained_query
+    retained_rows = {values(row) for row in retained_query.get_rows()}
     storage.reset_dynamic()
-    assert expression.evaluate(evaluation_context).get() is True
+    assert semantics.evaluate(expression, evaluation_context).get_value() is True
     storage.reset_all()
-    assert retained.get() is True
-    assert {tuple(row) for row in retained_query} == retained_rows
-    assert expression.evaluate(evaluation_context).get() is True
-    ordinary_query = query.evaluate(evaluation_context)
+    assert retained.get_value() is True
+    assert {values(row) for row in retained_query.get_rows()} == retained_rows
+    assert semantics.evaluate(expression, evaluation_context).get_value() is True
+    ordinary_query = semantics.evaluate(query, evaluation_context)
     del evaluation_context, retained_context, persistent_caches, storage, repository, relations, task, state, bindings
     gc.collect()
-    assert retained.get() is True
-    assert {tuple(row) for row in retained_query} == retained_rows
-    assert {tuple(row) for row in ordinary_query} == retained_rows
+    assert retained.get_value() is True
+    assert {values(row) for row in retained_query.get_rows()} == retained_rows
+    assert {values(row) for row in ordinary_query.get_rows()} == retained_rows
 
     formatted = str(owner)
     assert source in formatted
@@ -154,8 +159,8 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
     assert str(reparsed) == formatted
 
     assert str(expression) == source
-    assert expression.syntactic_complexity() == 3
-    assert [column.get_name() for column in query.get_columns()] == ["ball"]
+    assert semantics.syntactic_complexity(expression) == 3
+    assert [column.get_name() for column in query.get_variant().get_columns()] == ["ball"]
     project = query.get_variant()
     assert isinstance(project, semantics.QueryProject)
     assert [column.get_name() for column in project.get_columns()] == ["ball"]
@@ -221,20 +226,22 @@ def test_query_program_round_trip_preserves_named_references(gripper_planning_do
     reparsed = parse_program(formatted, gripper_planning_domain, fresh_context.ext_repository)
 
     assert str(reparsed) == formatted
-    assert reparsed.get_entry_module().get_name() == "root"
-    assert len(reparsed.get_entry_module().get_memory_transitions()) == 1
-    assert str(reparsed.get_entry_module().get_role_features()[0].get_expression()) == (
+    assert reparsed.get_entry_mod().get_symbol().get_name() == "root"
+    assert len(reparsed.get_entry_mod().get_memory_transitions()) == 1
+    assert str(reparsed.get_entry_mod().get_role_features()[0].get_variant().get_feature()) == (
         '(r_project room ball (q_atomic_state "at" (ball room)))'
     )
-    worker = next(module for module in reparsed.get_modules() if module.get_name() == "worker")
+    worker = next(module for module in reparsed.get_modules() if module.get_symbol().get_name() == "worker")
     assert [argument.get_name() for argument in worker.get_concept_arguments()] == ["X"]
     assert [register.get_name() for register in worker.get_role_registers()] == ["R"]
-    assert str(worker.get_concept_features()[0].get_expression()) == (
+    assert str(worker.get_concept_features()[0].get_variant().get_feature()) == (
         "(c_project ball (q_join (q_concept ball (c_argument X)) (q_role (ball room) (r_register R))))"
     )
-    assert str(worker.get_numerical_features()[0].get_expression()) == ("(n_count (q_role (ball room) (r_register R)))")
-    query = _concept_query(worker.get_concept_features()[0].get_expression())
-    assert [column.get_name() for column in query.get_columns()] == ["ball", "room"]
+    assert str(worker.get_numerical_features()[0].get_variant().get_feature()) == (
+        "(n_count (q_role (ball room) (r_register R)))"
+    )
+    query = _concept_query(worker.get_concept_features()[0].get_variant().get_feature())
+    assert [column.get_name() for column in query.get_variant().get_columns()] == ["ball", "room"]
     join = query.get_variant()
     assert isinstance(join, semantics.QueryJoin)
     assert [column.get_name() for column in join.get_columns()] == ["ball", "room"]
@@ -285,8 +292,8 @@ def test_query_count_evaluation(
     storage = semantics.EvaluationStorage(task.dl_denotation_repository)
     context = semantics.GroundStateEvaluationContext(state, task.dl_builder, storage)
     owner = _sketch(f"(n_count {query})", "numerical", gripper_planning_domain, domain)
-    expression = owner.get_numerical_features()[0].get_expression()
-    assert expression.evaluate(context).get() == expected
+    expression = owner.get_numerical_features()[0].get_variant().get_feature()
+    assert semantics.evaluate(expression, context).get_value() == expected
     assert str(expression) == f"(n_count {query})"
 
 
@@ -319,8 +326,8 @@ def test_query_distance_evaluation(
     storage = semantics.EvaluationStorage(task.dl_denotation_repository)
     context = semantics.GroundStateEvaluationContext(state, task.dl_builder, storage)
     owner = _sketch(expression, "numerical", gripper_planning_domain, domain)
-    feature = owner.get_numerical_features()[0].get_expression()
-    assert feature.evaluate(context).get() == expected
+    feature = owner.get_numerical_features()[0].get_variant().get_feature()
+    assert semantics.evaluate(feature, context).get_value() == expected
     assert str(feature) == expression
 
 
@@ -346,20 +353,23 @@ def test_concept_and_role_projection_bindings(
         gripper_planning_domain,
         domain.base_repository,
     )
-    features = {feature.get_symbol(): feature.get_expression() for feature in owner.get_numerical_features()}
+    features = {
+        feature.get_variant().get_symbol(): feature.get_variant().get_feature()
+        for feature in owner.get_numerical_features()
+    }
     concept = _numerical_arg(features["balls"])
     role = _numerical_arg(features["reverse"])
-    assert isinstance(concept, semantics.Concept)
-    assert isinstance(role, semantics.Role)
-    assert isinstance(concept.get_variant(), semantics.ConceptProject)
-    assert not hasattr(semantics.ConceptTop, "get_columns")
-    assert not hasattr(semantics.RoleUniversal, "get_columns")
-    assert not hasattr(semantics.ConceptProject, "get_plan")
-    assert not hasattr(semantics.RoleProject, "get_plan")
-    assert isinstance(role.get_variant(), semantics.RoleProject)
-    assert concept.syntactic_complexity() == role.syntactic_complexity() == 2
-    assert {value.get_name() for value in concept.evaluate(context)} == {"ball1", "ball2"}
-    assert {(lhs.get_name(), rhs.get_name()) for lhs, rhs in role.evaluate(context)} == {
+    assert isinstance(concept, semantics.ConstructorConcept)
+    assert isinstance(role, semantics.ConstructorRole)
+    assert isinstance(concept.get_variant(), semantics.QueryProjectionConcept)
+    assert not hasattr(semantics.ConceptSemanticTop, "get_columns")
+    assert not hasattr(semantics.RoleSemanticUniversal, "get_columns")
+    assert not hasattr(semantics.QueryProjectionConcept, "get_plan")
+    assert not hasattr(semantics.QueryProjectionRole, "get_plan")
+    assert isinstance(role.get_variant(), semantics.QueryProjectionRole)
+    assert semantics.syntactic_complexity(concept) == semantics.syntactic_complexity(role) == 2
+    assert {value.get_name() for value in semantics.evaluate(concept, context).views()} == {"ball1", "ball2"}
+    assert {(lhs.get_name(), rhs.get_name()) for lhs, rhs in semantics.evaluate(role, context).views()} == {
         ("rooma", "ball1"),
         ("rooma", "ball2"),
     }
@@ -371,22 +381,25 @@ def test_concept_and_role_projection_bindings(
     retained_context = semantics.GroundStateEvaluationContext(
         state, task.dl_builder, persistent_caches, repository, storage
     )
-    saved_concept = concept.evaluate(retained_context)
-    saved_role = role.evaluate(retained_context)
-    saved_count = features["balls"].evaluate(retained_context)
-    saved_boolean = owner.get_boolean_features()[0].get_expression().evaluate(retained_context)
+    saved_concept = semantics.evaluate(concept, retained_context)
+    saved_role = semantics.evaluate(role, retained_context)
+    saved_count = semantics.evaluate(features["balls"], retained_context)
+    saved_boolean = semantics.evaluate(owner.get_boolean_features()[0].get_variant().get_feature(), retained_context)
     storage.reset_all()
-    assert concept.evaluate(retained_context) == saved_concept
-    assert role.evaluate(retained_context) == saved_role
-    assert features["balls"].evaluate(retained_context) == saved_count
-    assert owner.get_boolean_features()[0].get_expression().evaluate(retained_context) == saved_boolean
-    assert {value.get_name() for value in saved_concept} == {"ball1", "ball2"}
-    assert {(lhs.get_name(), rhs.get_name()) for lhs, rhs in saved_role} == {
+    assert semantics.evaluate(concept, retained_context) == saved_concept
+    assert semantics.evaluate(role, retained_context) == saved_role
+    assert semantics.evaluate(features["balls"], retained_context) == saved_count
+    assert (
+        semantics.evaluate(owner.get_boolean_features()[0].get_variant().get_feature(), retained_context)
+        == saved_boolean
+    )
+    assert {value.get_name() for value in saved_concept.views()} == {"ball1", "ball2"}
+    assert {(lhs.get_name(), rhs.get_name()) for lhs, rhs in saved_role.views()} == {
         ("rooma", "ball1"),
         ("rooma", "ball2"),
     }
-    assert saved_count.get() == 2
-    assert saved_boolean.get() is True
+    assert saved_count.get_value() == 2
+    assert saved_boolean.get_value() is True
 
 
 @pytest.mark.parametrize("owner_kind", ["query", "concrete", "concept", "role"])
@@ -401,8 +414,8 @@ def test_query_column_retains_owner_after_list_and_repository_scope(
             data.name = name
             column_indices.append(repository.insert(data)[0].index())
 
-        role_data = semantics.RoleData()
-        role_data.variant = repository.insert(semantics.RoleUniversalData())[0].index()
+        role_data = semantics.ConstructorRoleData()
+        role_data.variant = repository.insert(semantics.RoleSemanticUniversalData())[0].index()
         role = repository.insert(role_data)[0]
         concrete_data = semantics.QueryRoleData()
         concrete_data.operand = role.index()
@@ -413,13 +426,17 @@ def test_query_column_retains_owner_after_list_and_repository_scope(
         query = repository.insert(query_data)[0]
 
         if owner_kind in ("concept", "role"):
-            data = semantics.ConceptProjectData() if owner_kind == "concept" else semantics.RoleProjectData()
+            data = (
+                semantics.QueryProjectionConceptData()
+                if owner_kind == "concept"
+                else semantics.QueryProjectionRoleData()
+            )
             data.operand = query.index()
             data.columns = column_indices[1:] if owner_kind == "concept" else column_indices[::-1]
             owner = repository.insert(data)[0]
             expected = ["right"] if owner_kind == "concept" else ["right", "left"]
         else:
-            owner = query if owner_kind == "query" else concrete
+            owner = query.get_variant() if owner_kind == "query" else concrete
             expected = ["left", "right"]
         columns = owner.get_columns()
         assert isinstance(columns, list)
@@ -450,7 +467,7 @@ def test_native_ext_query_construction_derives_schema_and_evaluates(
         gripper_planning_domain,
         domain.ext_repository,
     )
-    expression = program.get_entry_module().get_numerical_features()[0].get_expression()
+    expression = program.get_entry_mod().get_numerical_features()[0].get_variant().get_feature()
     query_arg = _numerical_arg(expression)
     assert isinstance(query_arg, semantics.Query)
     original = query_arg.get_variant()
@@ -463,10 +480,10 @@ def test_native_ext_query_construction_derives_schema_and_evaluates(
     query_data = semantics.QueryData()
     query_data.variant = joined.index()
     query = repository.insert(query_data)[0]
-    count_data = semantics.NumericalCountData()
+    count_data = semantics.NumericalSemanticCountData()
     count_data.operand = query.index()
     count = repository.insert(count_data)[0]
-    numerical_data = semantics.NumericalData()
+    numerical_data = semantics.ConstructorNumericalData()
     numerical_data.variant = count.index()
     rewritten = repository.insert(numerical_data)[0]
 
@@ -477,4 +494,6 @@ def test_native_ext_query_construction_derives_schema_and_evaluates(
     arguments = task.dl_denotation_repository.insert(semantics.CallArgumentsData())[0]
     registers = task.dl_denotation_repository.insert(semantics.RegisterValuesData())[0]
     context = semantics.GroundStateEvaluationContext(state, task.dl_builder, storage, arguments, registers)
-    assert rewritten.evaluate(context).get() == expression.evaluate(context).get() == 2
+    assert (
+        semantics.evaluate(rewritten, context).get_value() == semantics.evaluate(expression, context).get_value() == 2
+    )

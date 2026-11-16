@@ -429,7 +429,7 @@ void check_rejected_bindings_stay_unpublished()
         auto workspace = kr::ps::icp::detail::RuleEvaluationWorkspace<Kind>(context, rejected);
         auto evaluation_context = kr::ps::RuleEvaluationContext<kr::IcpFamilyTag, Kind> { &workspace, state.get_state() };
         const auto published_before_matching = count_bindings();
-        for (const auto rules : rejected.get_module().get_memory_transitions())
+        for (const auto rules : rejected.get_entry_mod().get_memory_transitions())
             for (const auto variant : rules)
                 std::visit(
                     [&]<kr::ps::icp::RuleKind Tag>(kr::ps::icp::RuleView<Tag> concrete)
@@ -476,7 +476,7 @@ void check_load_evaluator_entry_checks()
         const auto histories_before = task->icp_execution_repository->template size<kr::ps::icp::Histories>();
         const auto registers_before = task->dl_denotation_repository->template size<kr::dl::semantics::RegisterValues>();
         auto steps = urd::Store<urd::sequence<kr::ps::ProgramStep<kr::IcpFamilyTag, Kind>>> {};
-        for (const auto rules : policy.get_module().get_memory_transitions())
+        for (const auto rules : policy.get_entry_mod().get_memory_transitions())
             for (const auto variant : rules)
                 std::visit(
                     [&]<kr::ps::icp::RuleKind Tag>(kr::ps::icp::RuleView<Tag> concrete)
@@ -605,13 +605,13 @@ void check_rule_evaluator_scheduling()
 
     // Repeated occurrences keep module order in both natural and grouped expansion.
     auto& repository = *context->domain_context->icp_repository;
-    const auto module_data_view = policy.get_module();
+    const auto module_data_view = policy.get_entry_mod();
     auto module_data = runir::tests::copy_fields(module_data_view.context()[module_data_view.index()]);
     module_data.memory_transitions.clear();
     for (const auto row : { 1, 0, 1 })
         module_data.memory_transitions.push_back(module_data_view.context()[module_data_view.index()].memory_transitions[row]);
     auto program_data = policy.context()[policy.index()];
-    program_data.module = kr::ps::icp::insert(repository, module_data).first.index();
+    program_data.entry_mod = kr::ps::icp::insert(repository, module_data).first.index();
     const auto repeated_policy = kr::ps::icp::insert(repository, program_data).first;
     auto repeated_expander = kr::ps::icp::SuccessorExpander<Kind>(context, repeated_policy);
     const auto repeated_source = initial(repeated_expander);

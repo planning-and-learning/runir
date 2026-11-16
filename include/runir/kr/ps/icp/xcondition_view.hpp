@@ -14,9 +14,8 @@ private:
 
 public:
     auto get_operation() const noexcept { return self().template member<&urd::record_of<V>::operation>(); }
-    auto get_object_reference() const noexcept { return self().template member<&urd::record_of<V>::object>(); }
-    auto get_concept_feature() const noexcept { return self().template member<&urd::record_of<V>::feature>(); }
-    auto get_feature() const noexcept { return get_concept_feature(); }
+    auto get_object() const noexcept { return self().template member<&urd::record_of<V>::object>(); }
+    auto get_feature() const noexcept { return self().template member<&urd::record_of<V>::feature>(); }
 };
 }  // namespace urd
 

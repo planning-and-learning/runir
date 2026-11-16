@@ -36,7 +36,7 @@ using Classifier = kr::uns::Classifier;
 static_assert(IndexedDataView<Literal> && std::same_as<View<Literal>, kr::uns::ClassifierLiteralView>
               && requires(urd::data<Literal>& data, const View<Literal>& view) {
                      data.index;
-                     data.variant;
+                     data.feature;
                      data.polarity;
                      view.index();
                      view.get_feature();
@@ -107,7 +107,8 @@ TEST(RunirTests, UnsClassifierParsesAndFormats)
     const auto concrete_complexity =
         std::visit([](auto concrete) { return kr::dl::semantics::syntactic_complexity(concrete.get_feature()); }, feature.get_variant());
     EXPECT_EQ(kr::ps::syntactic_complexity(feature), concrete_complexity);
-    EXPECT_EQ(concrete_complexity, kr::dl::semantics::syntactic_complexity(feature.get_expression()));
+    EXPECT_EQ(concrete_complexity,
+              kr::dl::semantics::syntactic_complexity(std::visit([](auto concrete) { return concrete.get_feature(); }, feature.get_variant())));
     EXPECT_EQ(kr::uns::syntactic_complexity(classifier), 7);
     auto empty_data = urd::data<kr::uns::Classifier>(std::string("empty"), {}, {});
     EXPECT_EQ(kr::uns::syntactic_complexity(fixture.repository->insert(empty_data).first), 0);

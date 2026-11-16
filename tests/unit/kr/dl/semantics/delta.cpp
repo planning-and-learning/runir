@@ -43,7 +43,7 @@ template<tyr::TaskKind Kind, tyr::formalism::FactKind Fact, typename State>
 auto atoms(const State& state)
 {
     auto result = urd::Store<urd::sequence<tyr::formalism::planning::AtomView<tyr::GroundTag, Fact>>> {};
-    for (const auto atom : state.template get_atoms_view<Fact>())
+    for (const auto atom : state.template get_atoms<Fact>())
         result.push_back(atom);
     std::ranges::sort(result);
     return result;

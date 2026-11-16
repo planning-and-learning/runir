@@ -10,46 +10,55 @@ namespace runir::kr::ps::dl
 
 struct QueryFeature
 {
+    static constexpr auto name = "Query";
     static constexpr auto keyword = "query";
 };
 
 struct Positive
 {
+    static constexpr auto name = "Positive";
     static constexpr auto keyword = "positive";
 };
 
 struct Negative
 {
+    static constexpr auto name = "Negative";
     static constexpr auto keyword = "negative";
 };
 
 struct EqualZero
 {
+    static constexpr auto name = "EqualZero";
     static constexpr auto keyword = "equal_zero";
 };
 
 struct GreaterZero
 {
+    static constexpr auto name = "GreaterZero";
     static constexpr auto keyword = "greater_zero";
 };
 
 struct Increases
 {
+    static constexpr auto name = "Increases";
     static constexpr auto keyword = "increases";
 };
 
 struct Decreases
 {
+    static constexpr auto name = "Decreases";
     static constexpr auto keyword = "decreases";
 };
 
 struct Unchanged
 {
+    static constexpr auto name = "Unchanged";
     static constexpr auto keyword = "unchanged";
 };
 
 struct Unconstrained
 {
+    static constexpr auto name = "Unconstrained";
     static constexpr auto keyword = "unconstrained";
 };
 

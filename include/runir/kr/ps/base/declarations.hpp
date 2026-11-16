@@ -16,6 +16,7 @@ namespace runir::kr::ps::base
 
 struct Sketch
 {
+    static constexpr auto name = "Sketch";
 };
 
 using FeatureTypes = runir::kr::ps::PsFeatureTypes<runir::kr::BaseFamilyTag>;

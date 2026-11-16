@@ -12,21 +12,32 @@
 #include <utility>
 #include <variant>
 
+namespace runir::kr::ps::ext
+{
+
+/// The feature an order term orders by: a boolean or numerical feature.
+using OrderTermFeature = urd::index_variant<
+    boost::mp11::mp_transform_q<boost::mp11::mp_bind_front<runir::kr::ps::Feature, runir::kr::ExtFamilyTag>, runir::kr::dl::BooleanOrNumericalTags>>;
+
+}  // namespace runir::kr::ps::ext
+
 namespace urd
 {
 
 template<>
 struct data<runir::kr::ps::ext::OrderTerm>
 {
-    using Feature = urd::index_variant<
-        boost::mp11::mp_transform_q<boost::mp11::mp_bind_front<runir::kr::ps::Feature, runir::kr::ExtFamilyTag>, runir::kr::dl::BooleanOrNumericalTags>>;
-
     urd::index<runir::kr::ps::ext::OrderTerm> index;
     runir::kr::ps::ext::OrderDirection direction = runir::kr::ps::ext::OrderDirection::MIN;
-    Feature feature;
+    runir::kr::ps::ext::OrderTermFeature feature;
 
     data() = default;
-    data(runir::kr::ps::ext::OrderDirection direction_, Feature feature_) : index(), direction(direction_), feature(std::move(feature_)) {}
+    data(runir::kr::ps::ext::OrderDirection direction_, runir::kr::ps::ext::OrderTermFeature feature_) :
+        index(),
+        direction(direction_),
+        feature(std::move(feature_))
+    {
+    }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;

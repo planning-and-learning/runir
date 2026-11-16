@@ -25,8 +25,8 @@ BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::QueryMustPass, keys, sour
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptProject, columns, operand)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::RoleProject, columns, operand)
 
-BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::dl::grammar::ast::NonTerminal)(Category), name)
-BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::dl::grammar::ast::DerivationRule)(Category), lhs, rhs)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::dl::grammar::ast::NonTerminal) (Category), name)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::dl::grammar::ast::DerivationRule) (Category), lhs, rhs)
 
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptBot)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptTop)

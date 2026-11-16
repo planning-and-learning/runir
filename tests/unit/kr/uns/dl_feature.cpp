@@ -44,7 +44,6 @@ static_assert(requires(Data& data) {
 });
 static_assert(requires(const View& view) {
     view.index();
-    view.get_expression();
     view.get_feature();
     view.get_symbol();
 });

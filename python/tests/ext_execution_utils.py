@@ -15,7 +15,7 @@ from pyrunir.kr.ps import ext
 
 TaskContext: TypeAlias = GroundTaskContext | LiftedTaskContext
 Expander: TypeAlias = ext.GroundSuccessorExpander | ext.LiftedSuccessorExpander
-ProgramState: TypeAlias = ext.GroundProgramState | ext.LiftedProgramState
+ProgramState: TypeAlias = ext.ProgramStateGround | ext.ProgramStateLifted
 EvaluationEnvironment: TypeAlias = ext.GroundEvaluationEnvironment | ext.LiftedEvaluationEnvironment
 ExecutionStep: TypeAlias = ext.GroundProgramExecutionStep | ext.LiftedProgramExecutionStep
 Outcome: TypeAlias = ExecutionStep | ext.ConceptChoice | ext.RoleChoice
@@ -57,9 +57,9 @@ def initial_program_state(expander: Expander, state: PlanningState) -> ProgramSt
 def make_dl_context(environment: EvaluationEnvironment, state: ProgramState) -> DlContext:
     """Return the description-logic evaluation context of `state` in `environment`."""
     if isinstance(environment, ext.GroundEvaluationEnvironment):
-        assert isinstance(state, ext.GroundProgramState)
+        assert isinstance(state, ext.ProgramStateGround)
         return environment.make_dl_context(state)
-    assert isinstance(state, ext.LiftedProgramState)
+    assert isinstance(state, ext.ProgramStateLifted)
     return environment.make_dl_context(state)
 
 
@@ -71,9 +71,9 @@ def for_each_successor(
 ) -> bool:
     """Emit every immediate outcome of `state`, never stopping early."""
     if isinstance(expander, ext.GroundSuccessorExpander):
-        assert isinstance(state, ext.GroundProgramState)
+        assert isinstance(state, ext.ProgramStateGround)
         return expander.for_each_successor(state, statistics, emit, lambda: False)
-    assert isinstance(state, ext.LiftedProgramState)
+    assert isinstance(state, ext.ProgramStateLifted)
     return expander.for_each_successor(state, statistics, emit, lambda: False)
 
 
@@ -85,9 +85,9 @@ def apply_choice(
 ) -> ExecutionStep:
     """Apply the current binding of `choice` to `state`."""
     if isinstance(expander, ext.GroundSuccessorExpander):
-        assert isinstance(state, ext.GroundProgramState)
+        assert isinstance(state, ext.ProgramStateGround)
         return expander.apply_choice(state, choice, statistics)
-    assert isinstance(state, ext.LiftedProgramState)
+    assert isinstance(state, ext.ProgramStateLifted)
     return expander.apply_choice(state, choice, statistics)
 
 

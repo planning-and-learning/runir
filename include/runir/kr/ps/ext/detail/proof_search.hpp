@@ -8,7 +8,7 @@
 #include "runir/kr/ps/ext/detail/search_storage.hpp"
 #include "runir/kr/ps/ext/detail/successor_expander_impl.hpp"
 #include "runir/kr/ps/ext/dl/structural_termination.hpp"
-#include "runir/kr/ps/ext/program_executor.hpp"
+#include "runir/kr/ps/ext/program_executor_decl.hpp"
 #include "runir/kr/ps/unsolvability.hpp"
 
 #include <algorithm>
@@ -325,8 +325,8 @@ ProgramProofResults<Kind> find_solution(SuccessorExpander<Kind, ExecutionStorage
     auto path_pool = urd::Store<urd::slots<SearchPath<Kind, ExecutionStorage>>> {};
     auto first_goal = PathPtr {};
     auto witness = PathPtr {};
-    const auto status =
-        depth_first_search<Kind>(expander, initial_node.get_state().unpack(), initial, options, classifier, storage, statistics, path_pool, first_goal, witness);
+    const auto status = depth_first_search<
+        Kind>(expander, initial_node.get_state().unpack(), initial, options, classifier, storage, statistics, path_pool, first_goal, witness);
 
     auto result = ProgramProofResults<Kind> {};
     result.task_context_owner = task_context;

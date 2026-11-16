@@ -23,7 +23,7 @@ namespace detail
 template<tyr::TaskKind Kind, tyr::formalism::FactKind F, tyr::planning::StateViewConcept<Kind> Lhs, tyr::planning::StateViewConcept<Kind> Rhs>
 void append_only_in(const Lhs& lhs, const Rhs& rhs, urd::Store<urd::sequence<tyr::formalism::planning::AtomView<tyr::GroundTag, F>>>& atoms)
 {
-    for (const auto atom : lhs.template get_atoms_view<F>())
+    for (const auto atom : lhs.template get_atoms<F>())
         if (!rhs.test(atom))
             atoms.push_back(atom);
 }

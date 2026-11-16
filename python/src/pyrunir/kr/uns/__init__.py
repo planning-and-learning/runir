@@ -6,11 +6,18 @@
 from pyrunir._pyrunir.kr.uns import (
     Classifier as Classifier,
     ClassifierClause as ClassifierClause,
+    ClassifierClauseData as ClassifierClauseData,
     ClassifierClauseIndex as ClassifierClauseIndex,
+    ClassifierData as ClassifierData,
     ClassifierIndex as ClassifierIndex,
     ClassifierLiteral as ClassifierLiteral,
+    ClassifierLiteralData as ClassifierLiteralData,
     ClassifierLiteralIndex as ClassifierLiteralIndex,
     Repository as Repository,
     classify as classify,
+    collect_query_statistics as collect_query_statistics,
+    optimize as optimize,
+    query_statistics_sampler as query_statistics_sampler,
+    syntactic_complexity as syntactic_complexity,
 )
 from pyrunir.kr.uns import dl as dl

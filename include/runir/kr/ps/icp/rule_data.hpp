@@ -9,6 +9,7 @@
 #include <cista/containers/vector.h>
 #include <string>
 #include <tuple>
+#include <type_traits>
 #include <urd/elements/flat.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
@@ -19,15 +20,16 @@
 namespace urd
 {
 
-template<runir::kr::dl::CategoryTag Category>
-struct data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::LoadTag<Category>>>
+template<runir::kr::ps::icp::BindingRuleKind Kind>
+    requires std::is_same_v<Kind, runir::kr::ps::icp::LoadTag<runir::kr::ps::icp::RuleCategoryFor<Kind>>>
+struct data<runir::kr::ps::icp::Rule<Kind>>
 {
-    urd::index<runir::kr::ps::icp::Rule<runir::kr::ps::icp::LoadTag<Category>>> index;
+    urd::index<runir::kr::ps::icp::Rule<Kind>> index;
     urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> source;
     urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> target;
     runir::kr::ps::ConditionList<runir::kr::IcpFamilyTag> conditions;
-    urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, Category>> feature;
-    urd::index<runir::kr::dl::Register<Category>> slot;
+    urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::ps::icp::RuleCategoryFor<Kind>>> feature;
+    urd::index<runir::kr::dl::Register<runir::kr::ps::icp::RuleCategoryFor<Kind>>> slot;
     runir::kr::ps::EffectList<runir::kr::IcpFamilyTag> effects;
 
     data() = default;
@@ -35,8 +37,8 @@ struct data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::LoadTag<Category>>>
     data(urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> source_,
          urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> target_,
          runir::kr::ps::ConditionList<runir::kr::IcpFamilyTag> conditions_,
-         urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, Category>> feature_,
-         urd::index<runir::kr::dl::Register<Category>> slot_,
+         urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::ps::icp::RuleCategoryFor<Kind>>> feature_,
+         urd::index<runir::kr::dl::Register<runir::kr::ps::icp::RuleCategoryFor<Kind>>> slot_,
          runir::kr::ps::EffectList<runir::kr::IcpFamilyTag> effects_) :
         index(),
         source(source_),
@@ -49,8 +51,8 @@ struct data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::LoadTag<Category>>>
     }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
     static constexpr auto fields() noexcept
@@ -64,9 +66,7 @@ struct data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::LoadTag<Category>>>
     }
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
     static constexpr auto cista_members() noexcept
-    {
-        return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::feature, &data::slot, &data::effects> {};
-    }
+    { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::feature, &data::slot, &data::effects> {}; }
 };
 
 template<>
@@ -104,8 +104,8 @@ struct data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>>
     }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
     static constexpr auto fields() noexcept

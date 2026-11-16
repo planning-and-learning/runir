@@ -24,7 +24,7 @@ struct data<runir::kr::ps::ext::ModuleState<Kind>>
 {
     urd::index<runir::kr::ps::ext::ModuleState<Kind>> index;
     urd::index<tyr::planning::State<Kind>> state;
-    urd::index<runir::kr::ps::ext::Module> module_;
+    urd::index<runir::kr::ps::ext::Module> mod;
     urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> memory_state;
     urd::index<runir::kr::dl::semantics::RegisterValues> registers;
     urd::index<runir::kr::dl::semantics::CallArguments> arguments;
@@ -38,7 +38,7 @@ struct data<runir::kr::ps::ext::ModuleState<Kind>>
          urd::index<runir::kr::dl::semantics::CallArguments> arguments_) :
         index(),
         state(std::move(state_)),
-        module_(module_index),
+        mod(module_index),
         memory_state(memory_state_),
         registers(registers_),
         arguments(arguments_)
@@ -53,24 +53,22 @@ struct data<runir::kr::ps::ext::ModuleState<Kind>>
     static constexpr auto fields() noexcept
     {
         return urd::Fields<urd::field<"state", &data::state>,
-                           urd::field<"module_", &data::module_>,
+                           urd::field<"mod", &data::mod>,
                            urd::field<"memory_state", &data::memory_state>,
                            urd::field<"registers", &data::registers>,
                            urd::field<"arguments", &data::arguments>> {};
     }
     static constexpr auto identifying_members() noexcept
-    { return urd::Members<&data::state, &data::module_, &data::memory_state, &data::registers, &data::arguments> {}; }
+    { return urd::Members<&data::state, &data::mod, &data::memory_state, &data::registers, &data::arguments> {}; }
     static constexpr auto cista_members() noexcept
-    {
-        return urd::Members<&data::index, &data::state, &data::module_, &data::memory_state, &data::registers, &data::arguments> {};
-    }
+    { return urd::Members<&data::index, &data::state, &data::mod, &data::memory_state, &data::registers, &data::arguments> {}; }
 };
 
 template<>
 struct data<runir::kr::ps::ext::CallStack>
 {
     urd::index<runir::kr::ps::ext::CallStack> index;
-    urd::index<runir::kr::ps::ext::Module> module_;
+    urd::index<runir::kr::ps::ext::Module> mod;
     urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> return_memory_state;
     urd::index<runir::kr::dl::semantics::RegisterValues> registers;
     urd::index<runir::kr::dl::semantics::CallArguments> arguments;
@@ -84,7 +82,7 @@ struct data<runir::kr::ps::ext::CallStack>
          urd::index<runir::kr::dl::semantics::CallArguments> arguments_,
          urd::flat_optional<urd::index<runir::kr::ps::ext::CallStack>> caller_) :
         index(),
-        module_(module_index),
+        mod(module_index),
         return_memory_state(return_memory_state_),
         registers(registers_),
         arguments(arguments_),
@@ -99,18 +97,16 @@ struct data<runir::kr::ps::ext::CallStack>
 
     static constexpr auto fields() noexcept
     {
-        return urd::Fields<urd::field<"module_", &data::module_>,
+        return urd::Fields<urd::field<"mod", &data::mod>,
                            urd::field<"return_memory_state", &data::return_memory_state>,
                            urd::field<"registers", &data::registers>,
                            urd::field<"arguments", &data::arguments>,
                            urd::field<"caller", &data::caller>> {};
     }
     static constexpr auto identifying_members() noexcept
-    { return urd::Members<&data::module_, &data::return_memory_state, &data::registers, &data::arguments, &data::caller> {}; }
+    { return urd::Members<&data::mod, &data::return_memory_state, &data::registers, &data::arguments, &data::caller> {}; }
     static constexpr auto cista_members() noexcept
-    {
-        return urd::Members<&data::index, &data::module_, &data::return_memory_state, &data::registers, &data::arguments, &data::caller> {};
-    }
+    { return urd::Members<&data::index, &data::mod, &data::return_memory_state, &data::registers, &data::arguments, &data::caller> {}; }
 };
 
 template<tyr::TaskKind Kind>

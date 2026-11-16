@@ -3,9 +3,9 @@
 
 #include "runir/kr/ps/icp/detail/rule_evaluation/context.hpp"
 
-#include <variant>
 #include <tyr/formalism/planning/action_view.hpp>
 #include <urd/elements/flat.hpp>
+#include <variant>
 
 namespace runir::kr::ps::icp::detail
 {
@@ -27,8 +27,7 @@ class RuleEvaluator<Kind, CruleTag>
     }
 
     template<ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
-    [[nodiscard]] std::optional<ygg::uint_t>
-    resolve(const auto& reference, runir::kr::dl::semantics::RegisterValuesView registers, Binding binding) const
+    [[nodiscard]] std::optional<ygg::uint_t> resolve(const auto& reference, runir::kr::dl::semantics::RegisterValuesView registers, Binding binding) const
     {
         return std::visit(
             [&]<typename Ref>(const Ref& ref) -> std::optional<ygg::uint_t>
@@ -66,10 +65,10 @@ public:
     {
         for (const auto condition : m_rule.get_xconditions())
         {
-            const auto object = resolve(condition.get_object_reference(), state.get_registers(), binding);
+            const auto object = resolve(condition.get_object(), state.get_registers(), binding);
             if (!object)
                 return false;
-            const auto contains = evaluate<Kind>(condition.get_concept_feature(), context).value().test(*object);
+            const auto contains = evaluate<Kind>(condition.get_feature(), context).value().test(*object);
             if (contains != (condition.get_operation() == ConditionOperation::BELONGS))
                 return false;
         }
@@ -95,11 +94,11 @@ public:
         auto transition = context.make_dl_transition_context(state, candidate);
         for (const auto effect : m_rule.get_xeffects())
         {
-            const auto object = resolve(effect.get_object_reference(), state.get_registers(), candidate.label);
+            const auto object = resolve(effect.get_object(), state.get_registers(), candidate.label);
             if (!object)
                 return false;
-            const auto before = evaluate<Kind>(effect.get_concept_feature(), transition.get_source_context()).value().test(*object);
-            const auto after = evaluate<Kind>(effect.get_concept_feature(), transition.get_target_context()).value().test(*object);
+            const auto before = evaluate<Kind>(effect.get_feature(), transition.get_source_context()).value().test(*object);
+            const auto after = evaluate<Kind>(effect.get_feature(), transition.get_target_context()).value().test(*object);
             if (effect.get_operation() == EffectOperation::ENTER ? (before || !after) : (!before || after))
                 return false;
         }

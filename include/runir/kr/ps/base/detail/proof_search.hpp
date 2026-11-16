@@ -4,7 +4,7 @@
 #include "runir/kr/ps/base/detail/proof_graph.hpp"
 #include "runir/kr/ps/base/detail/search_node.hpp"
 #include "runir/kr/ps/base/repository.hpp"
-#include "runir/kr/ps/base/sketch_executor.hpp"
+#include "runir/kr/ps/base/sketch_executor_decl.hpp"
 #include "runir/kr/ps/base/successor_expander.hpp"
 #include "runir/kr/ps/detail/search_space.hpp"
 #include "runir/kr/ps/unsolvability.hpp"
@@ -54,7 +54,7 @@ ProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
 
     const auto get_or_create_state = [&](const tyr::planning::StateView<Kind>& state) -> std::optional<bool>
     {
-        const auto found = nodes.find(state.index());
+        const auto found = nodes.find(state.pack().index());
         if ((num_reached > 0 && state == initial_state) || (found != nodes.end() && found->second.parent_state))
             return false;
         if (num_reached >= options.max_num_states)

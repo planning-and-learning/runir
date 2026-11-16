@@ -1,7 +1,7 @@
 #include "bindings.hpp"
-#include "pyrunir/kr/binding_utils.hpp"
 #include "pyrunir/module.hpp"
 
+#include <cstddef>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_caches.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
@@ -23,18 +23,27 @@ void bind_transition_evaluation_context(nb::module_& m, const char* name)
     using Storage = runir::kr::dl::semantics::EvaluationStorage;
 
     auto cls = nb::class_<Context>(m, name);
-    runir::kr::python::def_new_keeping_arguments_alive(
-        cls,
-        [](tyr::planning::StateView<Kind> source_state,
-           tyr::planning::StateView<Kind> target_state,
-           runir::kr::dl::semantics::Builder& builder,
-           Storage& source,
-           Storage& target) { return Context(source_state, target_state, builder, source, target); },
-        nb::arg("source_state"),
-        nb::arg("target_state"),
-        nb::arg("builder"),
-        nb::arg("source_storage"),
-        nb::arg("target_storage"));
+    // keep_alive<0, i>: the result (0) keeps constructor argument i alive; self is 1, the arguments start at 2.
+    constexpr std::size_t first_argument = 2;
+    constexpr std::size_t second_argument = 3;
+    constexpr std::size_t third_argument = 4;
+    constexpr std::size_t fourth_argument = 5;
+    constexpr std::size_t fifth_argument = 6;
+    cls.def(nb::new_([](tyr::planning::StateView<Kind> source_state,
+                        tyr::planning::StateView<Kind> target_state,
+                        runir::kr::dl::semantics::Builder& builder,
+                        Storage& source,
+                        Storage& target) { return Context(source_state, target_state, builder, source, target); }),
+            nb::arg("source_state"),
+            nb::arg("target_state"),
+            nb::arg("builder"),
+            nb::arg("source_storage"),
+            nb::arg("target_storage"),
+            nb::keep_alive<0, first_argument>(),
+            nb::keep_alive<0, second_argument>(),
+            nb::keep_alive<0, third_argument>(),
+            nb::keep_alive<0, fourth_argument>(),
+            nb::keep_alive<0, fifth_argument>());
     cls.def("get_source_state", &Context::get_source_state, nb::rv_policy::copy, nb::keep_alive<0, 1>())
         .def("get_target_state", &Context::get_target_state, nb::rv_policy::copy, nb::keep_alive<0, 1>());
 }

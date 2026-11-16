@@ -31,27 +31,35 @@ concept IndexedDataView = std::constructible_from<urd::index<T>, ygg::uint_t> &&
 
 /// Which members a record holds, in the order of record_view.hpp.
 template<typename Data>
-constexpr auto members = std::array { requires(Data & data) { data.predicate;
-}
-, requires(Data& data) { data.polarity; }, requires(Data& data) { data.object; }, requires(Data& data) { data.objects; }, requires(Data& data) { data.n; },
-    requires(Data& data) { data.role; }, requires(Data& data) { data.qualifier; }, requires(Data& data) { data.operand; },
-    requires(Data& data) { data.left_operand; }, requires(Data& data) { data.right_operand; }, requires(Data& data) { data.sources; },
-    requires(Data& data) { data.edges; }, requires(Data& data) { data.targets; }, requires(Data& data) { data.slot; }, requires(Data& data) { data.argument; },
+constexpr auto members = std::array {
+    requires(Data& data) { data.predicate; },     requires(Data& data) { data.polarity; }, requires(Data& data) { data.object; },
+    requires(Data& data) { data.objects; },       requires(Data& data) { data.n; },        requires(Data& data) { data.role; },
+    requires(Data& data) { data.qualifier; },     requires(Data& data) { data.operand; },  requires(Data& data) { data.left_operand; },
+    requires(Data& data) { data.right_operand; }, requires(Data& data) { data.sources; },  requires(Data& data) { data.edges; },
+    requires(Data& data) { data.targets; },       requires(Data& data) { data.slot; },     requires(Data& data) { data.argument; },
     requires(Data& data) { data.value; },
 };
 
 /// Which accessors a view has, in the order of members.
 template<typename View>
-constexpr auto accessors = std::array { requires(const View& view) { view.get_predicate();
-}
-, requires(const View& view) { view.get_polarity(); }, requires(const View& view) { view.get_object(); }, requires(const View& view) { view.get_objects(); },
-    requires(const View& view) { view.get_n(); }, requires(const View& view) { view.get_role(); }, requires(const View& view) { view.get_qualifier(); },
-    requires(const View& view) { view.get_operand(); }, requires(const View& view) { view.get_left_operand(); },
-    requires(const View& view) { view.get_right_operand(); }, requires(const View& view) { view.get_sources(); },
-    requires(const View& view) { view.get_edges(); }, requires(const View& view) { view.get_targets(); }, requires(const View& view) { view.get_slot(); },
-    requires(const View& view) { view.get_argument(); }, requires(const View& view) { view.get_value(); },
-}
-;
+constexpr auto accessors = std::array {
+    requires(const View& view) { view.get_predicate(); },
+    requires(const View& view) { view.get_polarity(); },
+    requires(const View& view) { view.get_object(); },
+    requires(const View& view) { view.get_objects(); },
+    requires(const View& view) { view.get_n(); },
+    requires(const View& view) { view.get_role(); },
+    requires(const View& view) { view.get_qualifier(); },
+    requires(const View& view) { view.get_operand(); },
+    requires(const View& view) { view.get_left_operand(); },
+    requires(const View& view) { view.get_right_operand(); },
+    requires(const View& view) { view.get_sources(); },
+    requires(const View& view) { view.get_edges(); },
+    requires(const View& view) { view.get_targets(); },
+    requires(const View& view) { view.get_slot(); },
+    requires(const View& view) { view.get_argument(); },
+    requires(const View& view) { view.get_value(); },
+};
 
 /// A record and its view through Repository: indexed, and the view has an accessor for each member, and no other.
 template<typename Repository, typename... Ts>

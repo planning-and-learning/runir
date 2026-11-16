@@ -89,9 +89,9 @@ void expect_initial_program_state_uses_expander_repository()
     task_context.reset();
     repository.reset();
     dl_repository.reset();
-    EXPECT_EQ(state.get_module_state().get_module().get_name(), "module");
+    EXPECT_EQ(state.get_module_state().get_mod().get_symbol().get_name(), "module");
     EXPECT_EQ(state.get_module_state().get_memory_state().get_name(), "entry");
-    EXPECT_EQ(state.get_program().get_entry_module().get_name(), "module");
+    EXPECT_EQ(state.get_program().get_entry_mod().get_symbol().get_name(), "module");
     EXPECT_FALSE(state.get_call_stack());
 }
 
@@ -158,7 +158,7 @@ void expect_module_return_preserves_callee_planning_state()
         EXPECT_FALSE(returns.front().planning_successor);
         const auto returned = returns.front().get_target();
         EXPECT_EQ(returned.get_state().index(), moved.get_state().index());
-        EXPECT_EQ(returned.get_module_state().get_module(), suspended_callee->get_module());
+        EXPECT_EQ(returned.get_module_state().get_mod(), suspended_callee->get_mod());
         EXPECT_EQ(returned.get_module_state().get_memory_state(), suspended_callee->get_return_memory_state());
         EXPECT_EQ(returned.get_module_state().get_registers(), suspended_callee->get_registers());
         EXPECT_EQ(returned.get_module_state().get_arguments(), callee.get_module_state().get_arguments());
@@ -170,7 +170,7 @@ void expect_module_return_preserves_callee_planning_state()
         EXPECT_FALSE(outer_returns.front().planning_successor);
         const auto caller = outer_returns.front().get_target();
         EXPECT_EQ(caller.get_state().index(), moved.get_state().index());
-        EXPECT_EQ(caller.get_module_state().get_module(), suspended->get_module());
+        EXPECT_EQ(caller.get_module_state().get_mod(), suspended->get_mod());
         EXPECT_EQ(caller.get_module_state().get_memory_state(), suspended->get_return_memory_state());
         EXPECT_EQ(caller.get_module_state().get_registers(), suspended->get_registers());
         EXPECT_EQ(caller.get_module_state().get_arguments(), suspended->get_arguments());
@@ -201,7 +201,7 @@ void expect_borrowed_query_evaluation()
     auto environment = kr::ps::ext::EvaluationEnvironment<Kind, kr::dl::semantics::FullEvaluationPolicy<Kind>>(*task_context, program);
     auto state_context = environment.make_dl_context(state);
     const auto feature = module_.get_query_features()[0];
-    const auto query = feature.get_expression();
+    const auto query = std::visit([](auto concrete) { return concrete.get_feature(); }, feature.get_variant());
     {
         const auto rows = kr::ps::evaluate<Kind>(feature, state_context);
         ASSERT_EQ(rows.size(), 1);
@@ -209,7 +209,7 @@ void expect_borrowed_query_evaluation()
         const auto cached = environment.get_dl_caches().find_query(false, query).value();
         EXPECT_TRUE(std::ranges::equal(rows.get_rows(), cached.get_rows()));
         EXPECT_EQ(rows.columns().data(), cached.columns().data());
-        EXPECT_TRUE(std::ranges::equal(rows.columns(), query.get_schema()));
+        EXPECT_TRUE(std::ranges::equal(rows.columns(), schema_of(query)));
 
         const auto successors = search.successor_generator->get_labeled_successor_nodes(initial, *search.state_repository, *search.axiom_evaluator);
         ASSERT_FALSE(successors.empty());
@@ -265,7 +265,7 @@ void expect_borrowed_query_evaluation()
     EXPECT_TRUE(environment.get_dl_caches().get_queries(false).empty());
     const auto rebuilt = kr::ps::evaluate<Kind>(feature, state_context);
     EXPECT_EQ(rebuilt.size(), 1);
-    EXPECT_TRUE(std::ranges::equal(rebuilt.columns(), query.get_schema()));
+    EXPECT_TRUE(std::ranges::equal(rebuilt.columns(), schema_of(query)));
 }
 
 template<tyr::TaskKind Kind>
@@ -610,7 +610,7 @@ void expect_transient_program_states_retain_values_and_intern_callers()
     ASSERT_TRUE(caller);
     EXPECT_EQ(caller.value().index(), inner_caller.index());
     const auto returned = storage.store(storage.view(copy).get_state(),
-                                        caller.value().get_module(),
+                                        caller.value().get_mod(),
                                         caller.value().get_return_memory_state(),
                                         caller.value().get_registers(),
                                         caller.value().get_arguments(),

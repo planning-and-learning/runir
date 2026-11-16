@@ -70,7 +70,7 @@ template<typename FeatureTag, typename C, runir::kr::dl::CategoryTag Category>
 bool feature_references_register(urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>, C> feature,
                                  runir::kr::dl::RegisterIdentifier<Category> reg)
 {
-    return std::visit([&](auto concrete) { return references_register(concrete.get_expression(), reg); }, feature.get_variant());
+    return std::visit([&](auto concrete) { return references_register(concrete.get_feature(), reg); }, feature.get_variant());
 }
 
 template<runir::kr::dl::CategoryTag Category>

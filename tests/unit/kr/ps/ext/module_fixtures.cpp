@@ -47,7 +47,7 @@ auto create_program(kr::ps::ext::Repository& repository, kr::ps::ext::ModuleView
     -> kr::ps::ext::ProgramView
 {
     auto data = urd::data<kr::ps::ext::Program>();
-    data.entry_module = entry.index();
+    data.entry_mod = entry.index();
     for (auto module_ : modules)
         data.modules.push_back(module_.index());
     kr::ps::ext::canonicalize(data);
@@ -58,7 +58,7 @@ auto create_top_concept(kr::dl::ConstructorRepository& repository) -> kr::dl::Co
 {
     auto top_data = urd::data<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::TopTag>>();
     const auto top = repository.insert(top_data).first;
-    auto constructor_data = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(top.index());
+    auto constructor_data = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(top.index(), false);
     return kr::dl::insert(repository, constructor_data).first;
 }
 

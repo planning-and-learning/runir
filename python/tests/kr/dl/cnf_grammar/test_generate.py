@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from pypddl.formalism import ParserOptions
 from pytyr.formalism.planning import Parser, PlanningDomain
-from pytyr.planning.ground import PackedState
+from pytyr.planning.ground import PackedStateGround
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 from pyyggdrasil.execution import ExecutionContext
 
@@ -36,7 +36,7 @@ def _make_gripper_context(
 
 def _generate(
     grammar_description: str,
-    states: Sequence[PackedState],
+    states: Sequence[PackedStateGround],
     planning_domain: PlanningDomain,
     task_context: GroundTaskContext,
     max_syntactic_complexity: int,
@@ -57,14 +57,14 @@ def _generate(
 
 
 def _concept_vector(
-    concept: semantics.Concept, states: Sequence[PackedState], task_context: GroundTaskContext
+    concept: semantics.ConstructorConcept, states: Sequence[PackedStateGround], task_context: GroundTaskContext
 ) -> tuple[tuple[str, ...], ...]:
     result: list[tuple[str, ...]] = []
     storage = semantics.EvaluationStorage(task_context.dl_denotation_repository)
     for state in states:
         storage.reset_dynamic()
         context = semantics.GroundStateEvaluationContext(state.unpack(), task_context.dl_builder, storage)
-        result.append(tuple(sorted(object_.get_name() for object_ in concept.evaluate(context))))
+        result.append(tuple(sorted(object_.get_name() for object_ in semantics.evaluate(concept, context).views())))
     return tuple(result)
 
 
@@ -86,10 +86,10 @@ def test_generate_ground_and_cached_evaluation(gripper_data_dir: Path) -> None:
 
     storage = semantics.EvaluationStorage(task_context.dl_denotation_repository)
     context = semantics.GroundStateEvaluationContext(state.unpack(), task_context.dl_builder, storage)
-    assert len(list(result.concepts[0].evaluate(context))) == 6
-    assert len(list(result.roles[0].evaluate(context))) == 36
-    assert result.booleans[0].evaluate(context).get() is True
-    assert result.numericals[0].evaluate(context).get() == 6
+    assert len(semantics.evaluate(result.concepts[0], context).views()) == 6
+    assert len(semantics.evaluate(result.roles[0], context).views()) == 36
+    assert semantics.evaluate(result.booleans[0], context).get_value() is True
+    assert semantics.evaluate(result.numericals[0], context).get_value() == 6
 
 
 def test_generate_lifted_uses_domain_constructors_and_task_denotations(gripper_data_dir: Path) -> None:
@@ -112,8 +112,8 @@ def test_generate_lifted_uses_domain_constructors_and_task_denotations(gripper_d
     result = cnf_grammar.generate_lifted(cnf, [state], output_repository, denotation_repository, options)
     storage = semantics.EvaluationStorage(task_context.dl_denotation_repository)
     context = semantics.LiftedStateEvaluationContext(state.unpack(), task_context.dl_builder, storage)
-    assert len(list(result.concepts[0].evaluate(context))) == 6
-    assert result.numericals[0].evaluate(context).get() == 6
+    assert len(semantics.evaluate(result.concepts[0], context).views()) == 6
+    assert semantics.evaluate(result.numericals[0], context).get_value() == 6
 
     other_task = Task(parser.parse_task(gripper_data_dir / "test-1.pddl", ParserOptions()))
     other_search = LiftedTaskSearchContext(other_task, execution)
@@ -156,9 +156,9 @@ def test_distance_evaluation_handles_shortest_zero_and_infinity(gripper_data_dir
 
     storage = semantics.EvaluationStorage(task_context.dl_denotation_repository)
     context = semantics.GroundStateEvaluationContext(state.unpack(), task_context.dl_builder, storage)
-    values = [feature.evaluate(context).get() for feature in result.numericals]
+    values = [semantics.evaluate(feature, context).get_value() for feature in result.numericals]
     storage.reset_all()
-    refreshed_values = [feature.evaluate(context).get() for feature in result.numericals]
+    refreshed_values = [semantics.evaluate(feature, context).get_value() for feature in result.numericals]
 
     assert values == [1, 0, 2**32 - 1]
     assert refreshed_values == values
@@ -202,7 +202,7 @@ def test_generate_keeps_equal_denotations_in_distinct_nonterminals(gripper_data_
     assert result.statistics.num_pruned == 0
     assert result.statistics.num_kept == 2
     assert len(result.concepts) == 1
-    assert result.concepts[0].syntactic_complexity() == 3
+    assert semantics.syntactic_complexity(result.concepts[0]) == 3
 
 
 def test_generate_computes_substitution_closure_independent_of_rule_order(gripper_data_dir: Path) -> None:
@@ -233,7 +233,7 @@ def test_generate_deduplicates_commutative_candidates(gripper_data_dir: Path) ->
     assert result.statistics.num_generated == 5
     assert result.statistics.num_pruned == 2
     assert result.statistics.num_kept == 3
-    assert sum(concept.syntactic_complexity() == 3 for concept in result.concepts) == 1
+    assert sum(semantics.syntactic_complexity(concept) == 3 for concept in result.concepts) == 1
 
 
 def test_generate_terminates_substitution_closure_cycle_without_states(gripper_data_dir: Path) -> None:

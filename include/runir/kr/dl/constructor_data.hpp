@@ -31,19 +31,22 @@ namespace urd
 template<runir::kr::dl::CategoryTag Category>
 struct data<runir::kr::dl::Constructor<Category>>
 {
-    using Variant = runir::kr::dl::detail::ConstructorDataVariant<Category>;
-
     urd::index<runir::kr::dl::Constructor<Category>> index;
-    Variant variant;
+    runir::kr::dl::detail::ConstructorDataVariant<Category> variant;
     bool is_static = false;
 
     data() = default;
-    // is_static is derived during insertion and therefore not a constructor parameter.
-    explicit data(Variant variant_) : index(), variant(std::move(variant_)) {}
+    data(runir::kr::dl::detail::ConstructorDataVariant<Category> variant_, bool is_static_) : index(), variant(std::move(variant_)), is_static(is_static_) {}
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
 
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"variant", &data::variant>, urd::field<"is_static", &data::is_static>> {}; }
+    // is_static is derived from the variant before the record is interned (detail::prepare): stored, not identifying.
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::variant> {}; }
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::variant, &data::is_static> {}; }
-    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"variant", &data::variant>> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
 }  // namespace urd

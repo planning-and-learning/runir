@@ -66,8 +66,8 @@ constexpr auto numerical_expression_section_def =
     context(":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::dl_numerical > lit(")")];
 
 constexpr auto boolean_feature_def = context(
-    "boolean feature")[(lit("(") >> lit(":") >> keyword(runir::kr::dl::BooleanTag::name)) > symbol_section_def > boolean_expression_section_def > lit(")")];
-constexpr auto numerical_feature_def = context("numerical feature")[(lit("(") >> lit(":") >> keyword(runir::kr::dl::NumericalTag::name)) > symbol_section_def
+    "boolean feature")[(lit("(") >> lit(":") >> keyword(runir::kr::dl::BooleanTag::keyword)) > symbol_section_def > boolean_expression_section_def > lit(")")];
+constexpr auto numerical_feature_def = context("numerical feature")[(lit("(") >> lit(":") >> keyword(runir::kr::dl::NumericalTag::keyword)) > symbol_section_def
                                                                     > numerical_expression_section_def > lit(")")];
 constexpr auto feature_def = boolean_feature | numerical_feature;
 

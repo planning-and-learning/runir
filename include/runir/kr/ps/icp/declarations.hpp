@@ -19,18 +19,22 @@ namespace runir::kr::ps::icp
 
 struct Module
 {
+    static constexpr auto name = "Module";
 };
 
 struct Program
 {
+    static constexpr auto name = "Program";
 };
 
 struct XCondition
 {
+    static constexpr auto name = "XCondition";
 };
 
 struct XEffect
 {
+    static constexpr auto name = "XEffect";
 };
 
 enum class ConditionOperation : std::uint8_t
@@ -48,12 +52,14 @@ enum class EffectOperation : std::uint8_t
 template<runir::kr::dl::CategoryTag CategoryT>
 struct LoadTag
 {
+    static constexpr auto name = "Load";
     using Category = CategoryT;
     static constexpr auto keyword = "load";
 };
 
 struct CruleTag
 {
+    static constexpr auto name = "Crule";
     static constexpr auto keyword = "crule";
 };
 
@@ -70,6 +76,7 @@ using RuleCategoryFor = typename Tag::Category;
 template<RuleKind Kind>
 struct Rule
 {
+    static constexpr auto name = "Rule";
 };
 
 using LoadRuleTypes = boost::mp11::mp_list<Rule<LoadTag<runir::kr::dl::ConceptTag>>, Rule<LoadTag<runir::kr::dl::RoleTag>>>;

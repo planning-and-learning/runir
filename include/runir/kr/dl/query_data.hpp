@@ -20,11 +20,17 @@
 #include <variant>
 #include <vector>
 
+namespace runir::kr::dl
+{
+
+/// The concrete query a query holds: one of the query constructors.
+using QueryVariant = urd::index_variant<boost::mp11::mp_transform<Query, QueryConstructorTags>>;
+
+}  // namespace runir::kr::dl
+
 namespace urd
 {
 
-// Query schemas, plans, and resolved positions are derived during checked
-// construction. They are serialized with the node but do not define its identity.
 template<>
 struct data<runir::kr::dl::QueryColumn>
 {
@@ -35,39 +41,38 @@ struct data<runir::kr::dl::QueryColumn>
     explicit data(urd::flat_string name_) : index(), name(std::move(name_)) {}
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"name", &data::name>> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::name> {}; }
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::name> {}; }
 };
 
+// A query's derived fields (its schema, or its columns and plan, and a query's is_static) are computed from its other
+// fields and its children before it is interned (detail::prepare). They are stored, but do not identify it.
 template<>
 struct data<runir::kr::dl::Query<>>
 {
-private:
-    template<typename Tag>
-    using AlternativeIndex = urd::index<runir::kr::dl::Query<Tag>>;
-
-public:
-    using Variant = boost::mp11::mp_apply<cista::offset::variant, boost::mp11::mp_transform<AlternativeIndex, runir::kr::dl::QueryConstructorTags>>;
-
     urd::index<runir::kr::dl::Query<>> index;
-    Variant variant;
+    runir::kr::dl::QueryVariant variant;
     bool is_static = false;
 
     data() = default;
-    // is_static is derived during insertion and therefore not a constructor parameter.
-    explicit data(Variant variant_) : index(), variant(std::move(variant_)) {}
+    data(runir::kr::dl::QueryVariant variant_, bool is_static_) : index(), variant(std::move(variant_)), is_static(is_static_) {}
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
+    ~data() = default;
 
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"variant", &data::variant>, urd::field<"is_static", &data::is_static>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::variant> {}; }
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::variant, &data::is_static> {}; }
-    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"variant", &data::variant>> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
 };
 
-template<tyr::formalism::FactKind T>
+template<typename T>
 struct data<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>>
 {
     urd::index<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>> index;
@@ -76,25 +81,28 @@ struct data<runir::kr::dl::Query<runir::kr::dl::AtomicStateTag<T>>>
     urd::flat_vector<ygg::ColumnLayout> schema {};
 
     data() = default;
-    // schema is derived during insertion and therefore not a constructor parameter.
-    data(urd::index<tyr::formalism::Predicate<T>> predicate_, urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_) :
+    data(urd::index<tyr::formalism::Predicate<T>> predicate_,
+         urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
+         urd::flat_vector<ygg::ColumnLayout> schema_) :
         index(),
-        predicate(std::move(predicate_)),
-        columns(std::move(columns_))
+        predicate(predicate_),
+        columns(std::move(columns_)),
+        schema(std::move(schema_))
     {
     }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
-    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"predicate", &data::predicate>, urd::field<"columns", &data::columns>> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto fields() noexcept
+    { return urd::Fields<urd::field<"predicate", &data::predicate>, urd::field<"columns", &data::columns>, urd::field<"schema", &data::schema>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::predicate, &data::columns> {}; }
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::predicate, &data::columns, &data::schema> {}; }
 };
 
-template<tyr::formalism::FactKind T>
+template<typename T>
 struct data<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>>
 {
     urd::index<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>> index;
@@ -104,25 +112,31 @@ struct data<runir::kr::dl::Query<runir::kr::dl::AtomicGoalTag<T>>>
     urd::flat_vector<ygg::ColumnLayout> schema {};
 
     data() = default;
-    // schema is derived during insertion and therefore not a constructor parameter.
-    data(urd::index<tyr::formalism::Predicate<T>> predicate_, bool polarity_, urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_) :
+    data(urd::index<tyr::formalism::Predicate<T>> predicate_,
+         bool polarity_,
+         urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
+         urd::flat_vector<ygg::ColumnLayout> schema_) :
         index(),
-        predicate(std::move(predicate_)),
+        predicate(predicate_),
         polarity(polarity_),
-        columns(std::move(columns_))
+        columns(std::move(columns_)),
+        schema(std::move(schema_))
     {
     }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
     static constexpr auto fields() noexcept
     {
-        return urd::Fields<urd::field<"predicate", &data::predicate>, urd::field<"polarity", &data::polarity>, urd::field<"columns", &data::columns>> {};
+        return urd::Fields<urd::field<"predicate", &data::predicate>,
+                           urd::field<"polarity", &data::polarity>,
+                           urd::field<"columns", &data::columns>,
+                           urd::field<"schema", &data::schema>> {};
     }
-    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::predicate, &data::polarity, &data::columns> {}; }
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::predicate, &data::polarity, &data::columns, &data::schema> {}; }
 };
 
@@ -135,21 +149,24 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>>
     urd::flat_vector<ygg::ColumnLayout> schema {};
 
     data() = default;
-    // schema is derived during insertion and therefore not a constructor parameter.
-    data(urd::index<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>> operand_, urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_) :
+    data(urd::index<runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>> operand_,
+         urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
+         urd::flat_vector<ygg::ColumnLayout> schema_) :
         index(),
         operand(operand_),
-        columns(std::move(columns_))
+        columns(std::move(columns_)),
+        schema(std::move(schema_))
     {
     }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
-    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"operand", &data::operand>, urd::field<"columns", &data::columns>> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto fields() noexcept
+    { return urd::Fields<urd::field<"operand", &data::operand>, urd::field<"columns", &data::columns>, urd::field<"schema", &data::schema>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::operand, &data::columns> {}; }
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operand, &data::columns, &data::schema> {}; }
 };
 
@@ -162,21 +179,24 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>>
     urd::flat_vector<ygg::ColumnLayout> schema {};
 
     data() = default;
-    // schema is derived during insertion and therefore not a constructor parameter.
-    data(urd::index<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>> operand_, urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_) :
+    data(urd::index<runir::kr::dl::Constructor<runir::kr::dl::RoleTag>> operand_,
+         urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
+         urd::flat_vector<ygg::ColumnLayout> schema_) :
         index(),
         operand(operand_),
-        columns(std::move(columns_))
+        columns(std::move(columns_)),
+        schema(std::move(schema_))
     {
     }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
-    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"operand", &data::operand>, urd::field<"columns", &data::columns>> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto fields() noexcept
+    { return urd::Fields<urd::field<"operand", &data::operand>, urd::field<"columns", &data::columns>, urd::field<"schema", &data::schema>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::operand, &data::columns> {}; }
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operand, &data::columns, &data::schema> {}; }
 };
 
@@ -190,32 +210,37 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryJoinTag>>
     tyr::datalog::database::JoinPlan plan {};
 
     data() = default;
-    // columns and plan are derived during insertion and therefore not constructor parameters.
-    data(urd::index<runir::kr::dl::Query<>> left_operand_, urd::index<runir::kr::dl::Query<>> right_operand_) :
+    data(urd::index<runir::kr::dl::Query<>> left_operand_,
+         urd::index<runir::kr::dl::Query<>> right_operand_,
+         urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
+         tyr::datalog::database::JoinPlan plan_) :
         index(),
         left_operand(left_operand_),
-        right_operand(right_operand_)
+        right_operand(right_operand_),
+        columns(std::move(columns_)),
+        plan(std::move(plan_))
     {
     }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
     static constexpr auto fields() noexcept
     {
-        return urd::Fields<urd::field<"left_operand", &data::left_operand>, urd::field<"right_operand", &data::right_operand>> {};
+        return urd::Fields<urd::field<"left_operand", &data::left_operand>,
+                           urd::field<"right_operand", &data::right_operand>,
+                           urd::field<"columns", &data::columns>,
+                           urd::field<"plan", &data::plan>> {};
     }
-    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::left_operand, &data::right_operand> {}; }
     static constexpr auto cista_members() noexcept
-    {
-        return urd::Members<&data::index, &data::left_operand, &data::right_operand, &data::columns, &data::plan> {};
-    }
+    { return urd::Members<&data::index, &data::left_operand, &data::right_operand, &data::columns, &data::plan> {}; }
 };
 
 template<typename Tag>
-    requires(std::same_as<Tag, runir::kr::dl::QueryUnionTag> || std::same_as<Tag, runir::kr::dl::QueryDifferenceTag>)
+    requires boost::mp11::mp_contains<runir::kr::dl::QuerySetTags, Tag>::value
 struct data<runir::kr::dl::Query<Tag>>
 {
     urd::index<runir::kr::dl::Query<Tag>> index;
@@ -225,23 +250,33 @@ struct data<runir::kr::dl::Query<Tag>>
     tyr::datalog::database::SetPlan plan {};
 
     data() = default;
-    // columns and plan are derived during insertion and therefore not constructor parameters.
-    data(urd::index<runir::kr::dl::Query<>> left_operand_, urd::index<runir::kr::dl::Query<>> right_operand_) :
+    data(urd::index<runir::kr::dl::Query<>> left_operand_,
+         urd::index<runir::kr::dl::Query<>> right_operand_,
+         urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
+         tyr::datalog::database::SetPlan plan_) :
         index(),
         left_operand(left_operand_),
-        right_operand(right_operand_)
+        right_operand(right_operand_),
+        columns(std::move(columns_)),
+        plan(std::move(plan_))
     {
     }
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
+    ~data() = default;
 
-    static constexpr auto cista_members() noexcept
-    {
-        return urd::Members<&data::index, &data::left_operand, &data::right_operand, &data::columns, &data::plan> {};
-    }
     static constexpr auto fields() noexcept
     {
-        return urd::Fields<urd::field<"left_operand", &data::left_operand>, urd::field<"right_operand", &data::right_operand>> {};
+        return urd::Fields<urd::field<"left_operand", &data::left_operand>,
+                           urd::field<"right_operand", &data::right_operand>,
+                           urd::field<"columns", &data::columns>,
+                           urd::field<"plan", &data::plan>> {};
     }
-    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::left_operand, &data::right_operand> {}; }
+    static constexpr auto cista_members() noexcept
+    { return urd::Members<&data::index, &data::left_operand, &data::right_operand, &data::columns, &data::plan> {}; }
 };
 
 template<>
@@ -253,21 +288,24 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryProjectTag>>
     tyr::datalog::database::ProjectionPlan plan {};
 
     data() = default;
-    // plan is derived during insertion and therefore not a constructor parameter.
-    data(urd::index<runir::kr::dl::Query<>> operand_, urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_) :
+    data(urd::index<runir::kr::dl::Query<>> operand_,
+         urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
+         tyr::datalog::database::ProjectionPlan plan_) :
         index(),
         operand(operand_),
-        columns(std::move(columns_))
+        columns(std::move(columns_)),
+        plan(std::move(plan_))
     {
     }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
-    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"operand", &data::operand>, urd::field<"columns", &data::columns>> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto fields() noexcept
+    { return urd::Fields<urd::field<"operand", &data::operand>, urd::field<"columns", &data::columns>, urd::field<"plan", &data::plan>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::operand, &data::columns> {}; }
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operand, &data::columns, &data::plan> {}; }
 };
 
@@ -280,21 +318,24 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryRenameTag>>
     urd::flat_vector<ygg::ColumnLayout> schema {};
 
     data() = default;
-    // schema is derived during insertion and therefore not a constructor parameter.
-    data(urd::index<runir::kr::dl::Query<>> operand_, urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_) :
+    data(urd::index<runir::kr::dl::Query<>> operand_,
+         urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
+         urd::flat_vector<ygg::ColumnLayout> schema_) :
         index(),
         operand(operand_),
-        columns(std::move(columns_))
+        columns(std::move(columns_)),
+        schema(std::move(schema_))
     {
     }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
-    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"operand", &data::operand>, urd::field<"columns", &data::columns>> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto fields() noexcept
+    { return urd::Fields<urd::field<"operand", &data::operand>, urd::field<"columns", &data::columns>, urd::field<"schema", &data::schema>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::operand, &data::columns> {}; }
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operand, &data::columns, &data::schema> {}; }
 };
 
@@ -309,32 +350,36 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>>
     tyr::datalog::database::SelectEqualPlan plan {};
 
     data() = default;
-    // columns and plan are derived during insertion and therefore not constructor parameters.
     data(urd::index<runir::kr::dl::Query<>> operand_,
          urd::index<runir::kr::dl::QueryColumn> left_column_,
-         urd::index<runir::kr::dl::QueryColumn> right_column_) :
+         urd::index<runir::kr::dl::QueryColumn> right_column_,
+         urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
+         tyr::datalog::database::SelectEqualPlan plan_) :
         index(),
         operand(operand_),
         left_column(left_column_),
-        right_column(right_column_)
+        right_column(right_column_),
+        columns(std::move(columns_)),
+        plan(std::move(plan_))
     {
     }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
     static constexpr auto fields() noexcept
     {
-        return urd::
-            Fields<urd::field<"operand", &data::operand>, urd::field<"left_column", &data::left_column>, urd::field<"right_column", &data::right_column>> {};
+        return urd::Fields<urd::field<"operand", &data::operand>,
+                           urd::field<"left_column", &data::left_column>,
+                           urd::field<"right_column", &data::right_column>,
+                           urd::field<"columns", &data::columns>,
+                           urd::field<"plan", &data::plan>> {};
     }
-    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::operand, &data::left_column, &data::right_column> {}; }
     static constexpr auto cista_members() noexcept
-    {
-        return urd::Members<&data::index, &data::operand, &data::left_column, &data::right_column, &data::columns, &data::plan> {};
-    }
+    { return urd::Members<&data::index, &data::operand, &data::left_column, &data::right_column, &data::columns, &data::plan> {}; }
 };
 
 template<>
@@ -348,29 +393,36 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>>
     tyr::datalog::database::SelectValuePlan plan {};
 
     data() = default;
-    // columns and plan are derived during insertion and therefore not constructor parameters.
-    data(urd::index<runir::kr::dl::Query<>> operand_, urd::index<runir::kr::dl::QueryColumn> column_, urd::index<tyr::formalism::Object> object_) :
+    data(urd::index<runir::kr::dl::Query<>> operand_,
+         urd::index<runir::kr::dl::QueryColumn> column_,
+         urd::index<tyr::formalism::Object> object_,
+         urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
+         tyr::datalog::database::SelectValuePlan plan_) :
         index(),
         operand(operand_),
         column(column_),
-        object(object_)
+        object(object_),
+        columns(std::move(columns_)),
+        plan(std::move(plan_))
     {
     }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
     static constexpr auto fields() noexcept
     {
-        return urd::Fields<urd::field<"operand", &data::operand>, urd::field<"column", &data::column>, urd::field<"object", &data::object>> {};
+        return urd::Fields<urd::field<"operand", &data::operand>,
+                           urd::field<"column", &data::column>,
+                           urd::field<"object", &data::object>,
+                           urd::field<"columns", &data::columns>,
+                           urd::field<"plan", &data::plan>> {};
     }
-    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::operand, &data::column, &data::object> {}; }
     static constexpr auto cista_members() noexcept
-    {
-        return urd::Members<&data::index, &data::operand, &data::column, &data::object, &data::columns, &data::plan> {};
-    }
+    { return urd::Members<&data::index, &data::operand, &data::column, &data::object, &data::columns, &data::plan> {}; }
 };
 
 template<>
@@ -384,32 +436,36 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryGenericJoinTag>>
     tyr::datalog::database::GenericJoinPlan plan {};
 
     data() = default;
-    // columns and plan are derived during insertion and therefore not constructor parameters.
     data(urd::flat_vector<urd::index<runir::kr::dl::Query<>>> args_,
          urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> variable_order_,
-         urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> output_order_) :
+         urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> output_order_,
+         urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
+         tyr::datalog::database::GenericJoinPlan plan_) :
         index(),
         args(std::move(args_)),
         variable_order(std::move(variable_order_)),
-        output_order(std::move(output_order_))
+        output_order(std::move(output_order_)),
+        columns(std::move(columns_)),
+        plan(std::move(plan_))
     {
     }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
     static constexpr auto fields() noexcept
     {
-        return urd::
-            Fields<urd::field<"args", &data::args>, urd::field<"variable_order", &data::variable_order>, urd::field<"output_order", &data::output_order>> {};
+        return urd::Fields<urd::field<"args", &data::args>,
+                           urd::field<"variable_order", &data::variable_order>,
+                           urd::field<"output_order", &data::output_order>,
+                           urd::field<"columns", &data::columns>,
+                           urd::field<"plan", &data::plan>> {};
     }
-    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::args, &data::variable_order, &data::output_order> {}; }
     static constexpr auto cista_members() noexcept
-    {
-        return urd::Members<&data::index, &data::args, &data::variable_order, &data::output_order, &data::columns, &data::plan> {};
-    }
+    { return urd::Members<&data::index, &data::args, &data::variable_order, &data::output_order, &data::columns, &data::plan> {}; }
 };
 
 /// q_must_pass (keys...) sources edges targets probes: per key, the probe objects that every path from the key's sources
@@ -427,24 +483,27 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryMustPassTag>>
     tyr::datalog::database::MustPassPlan plan {};
 
     data() = default;
-    // columns and plan are derived during insertion and therefore not constructor parameters.
     data(urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> keys_,
          urd::index<runir::kr::dl::Query<>> sources_,
          urd::index<runir::kr::dl::Query<>> edges_,
          urd::index<runir::kr::dl::Query<>> targets_,
-         urd::index<runir::kr::dl::Query<>> probes_) :
+         urd::index<runir::kr::dl::Query<>> probes_,
+         urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
+         tyr::datalog::database::MustPassPlan plan_) :
         index(),
         keys(std::move(keys_)),
         sources(sources_),
         edges(edges_),
         targets(targets_),
-        probes(probes_)
+        probes(probes_),
+        columns(std::move(columns_)),
+        plan(std::move(plan_))
     {
     }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
     static constexpr auto fields() noexcept
@@ -453,13 +512,13 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryMustPassTag>>
                            urd::field<"sources", &data::sources>,
                            urd::field<"edges", &data::edges>,
                            urd::field<"targets", &data::targets>,
-                           urd::field<"probes", &data::probes>> {};
+                           urd::field<"probes", &data::probes>,
+                           urd::field<"columns", &data::columns>,
+                           urd::field<"plan", &data::plan>> {};
     }
-    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::keys, &data::sources, &data::edges, &data::targets, &data::probes> {}; }
     static constexpr auto cista_members() noexcept
-    {
-        return urd::Members<&data::index, &data::keys, &data::sources, &data::edges, &data::targets, &data::probes, &data::columns, &data::plan> {};
-    }
+    { return urd::Members<&data::index, &data::keys, &data::sources, &data::edges, &data::targets, &data::probes, &data::columns, &data::plan> {}; }
 };
 
 template<>
@@ -470,16 +529,20 @@ struct data<runir::kr::dl::Query<runir::kr::dl::QueryEmptyTag>>
     urd::flat_vector<ygg::ColumnLayout> schema {};
 
     data() = default;
-    // schema is derived during insertion and therefore not a constructor parameter.
-    explicit data(urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_) : index(), columns(std::move(columns_)) {}
+    data(urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_, urd::flat_vector<ygg::ColumnLayout> schema_) :
+        index(),
+        columns(std::move(columns_)),
+        schema(std::move(schema_))
+    {
+    }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
-    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"columns", &data::columns>> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"columns", &data::columns>, urd::field<"schema", &data::schema>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::columns> {}; }
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::columns, &data::schema> {}; }
 };
 
@@ -492,21 +555,24 @@ struct data<runir::kr::dl::QueryProjection<Category>>
     tyr::datalog::database::ProjectionPlan plan {};
 
     data() = default;
-    // plan is derived during insertion and therefore not a constructor parameter.
-    data(urd::index<runir::kr::dl::Query<>> operand_, urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_) :
+    data(urd::index<runir::kr::dl::Query<>> operand_,
+         urd::flat_vector<urd::index<runir::kr::dl::QueryColumn>> columns_,
+         tyr::datalog::database::ProjectionPlan plan_) :
         index(),
         operand(operand_),
-        columns(std::move(columns_))
+        columns(std::move(columns_)),
+        plan(std::move(plan_))
     {
     }
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
-    data(data&& other) = default;
-    data& operator=(data&& other) = default;
+    data(data&& other) noexcept = default;
+    data& operator=(data&& other) noexcept = default;
     ~data() = default;
 
-    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"operand", &data::operand>, urd::field<"columns", &data::columns>> {}; }
-    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto fields() noexcept
+    { return urd::Fields<urd::field<"operand", &data::operand>, urd::field<"columns", &data::columns>, urd::field<"plan", &data::plan>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::Members<&data::operand, &data::columns> {}; }
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operand, &data::columns, &data::plan> {}; }
 };
 

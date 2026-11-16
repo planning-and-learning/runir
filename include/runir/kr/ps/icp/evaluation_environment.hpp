@@ -30,8 +30,8 @@ class EvaluationEnvironment
         auto result = urd::Store<urd::sequence<runir::kr::dl::semantics::incremental::EvaluationRoot>> {};
         const auto append = [&]<typename FeatureTag>()
         {
-            for (const auto feature : program.get_module().template get_features<FeatureTag>())
-                result.emplace_back(feature.get_expression());
+            for (const auto feature : program.get_entry_mod().template get_features<FeatureTag>())
+                result.emplace_back(std::visit([](auto concrete) { return concrete.get_feature(); }, feature.get_variant()));
         };
         append.template operator()<runir::kr::dl::ConceptTag>();
         append.template operator()<runir::kr::dl::RoleTag>();

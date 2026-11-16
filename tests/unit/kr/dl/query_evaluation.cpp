@@ -552,7 +552,7 @@ void check_cached_queries()
     column_data.name = "renamed";
     const auto renamed_column = kr::dl::insert(repo, column_data).first.index();
     auto top_data = urd::data<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::TopTag>>();
-    auto top_wrapper = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(kr::dl::insert(repo, top_data).first.index());
+    auto top_wrapper = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(kr::dl::insert(repo, top_data).first.index(), false);
     const auto top = kr::dl::insert(repo, top_wrapper).first;
     using Lift = kr::dl::Query<kr::dl::QueryConceptTag>;
     auto lift_data = urd::data<Lift>();
@@ -664,7 +664,7 @@ void check_cached_queries()
 
         query_data.variant = concrete.index();
         const auto wrapper = kr::dl::insert(repo, query_data).first;
-        EXPECT_TRUE(std::ranges::equal(wrapper.get_columns(), expected_columns, {}, [](auto column) { return column.index(); }));
+        EXPECT_TRUE(std::ranges::equal(columns_of(wrapper), expected_columns, {}, [](auto column) { return column.index(); }));
         return wrapper;
     };
     auto join_data = urd::data<kr::dl::Query<kr::dl::QueryJoinTag>>();
@@ -754,7 +754,7 @@ void check_cached_queries()
     check_inferred_schema(value_data);
 
     auto count_data = urd::data<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>>(renamed.index());
-    auto count_wrapper = urd::data<kr::dl::Constructor<kr::dl::NumericalTag>>(kr::dl::insert(repo, count_data).first.index());
+    auto count_wrapper = urd::data<kr::dl::Constructor<kr::dl::NumericalTag>>(kr::dl::insert(repo, count_data).first.index(), false);
     const auto count = kr::dl::insert(repo, count_wrapper).first;
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(count, context).value(), 3);
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(count, context).value(), 3);
@@ -764,7 +764,7 @@ void check_cached_queries()
     projection_data.operand = renamed.index();
     projection_data.columns.push_back(renamed_column);
     check_projection_plan(projection_data, std::array<size_t, 1> { 0 });
-    auto projection_wrapper = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(kr::dl::insert(repo, projection_data).first.index());
+    auto projection_wrapper = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(kr::dl::insert(repo, projection_data).first.index(), false);
     const auto projection = kr::dl::insert(repo, projection_wrapper).first;
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(projection, context).value().count(), 3);
 
@@ -772,8 +772,8 @@ void check_cached_queries()
     const auto held_storage = std::vector(held.get_rows().begin(), held.get_rows().end());
     const auto* held_columns = held.columns().data();
     EXPECT_EQ(held.columns()[0].label, ColumnIndex(ygg::uint_t(renamed_column.value)));
-    EXPECT_NE(held_columns, renamed.get_schema().data());
-    EXPECT_TRUE(std::ranges::equal(held.columns(), renamed.get_schema()));
+    EXPECT_NE(held_columns, schema_of(renamed).data());
+    EXPECT_TRUE(std::ranges::equal(held.columns(), schema_of(renamed)));
     EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).get_rows(), held_storage));
     auto nested_rename_data = runir::tests::copy_fields(rename_data);
     nested_rename_data.operand = renamed.index();
@@ -1029,7 +1029,7 @@ void check_query_cache_across_bindings()
     EXPECT_TRUE(rhs_rows.contains(std::array<ygg::Value, 3> { ygg::encode_value<ygg::uint_t>(a.index().value),
                                                               ygg::encode_value<ygg::uint_t>(c.index().value),
                                                               ygg::encode_value<ygg::uint_t>(b.index().value) }));
-    EXPECT_TRUE(std::ranges::equal(rhs_rows.columns(), register_rhs.get_schema()));
+    EXPECT_TRUE(std::ranges::equal(rhs_rows.columns(), schema_of(register_rhs)));
     EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(role_register_rhs, bound).empty());
     registers.concept_values[0] = b.index();
     registers.role_values[0] = ::cista::pair(b.index(), c.index());
@@ -1047,7 +1047,7 @@ void check_query_cache_across_bindings()
     EXPECT_TRUE(rhs_role_rows.contains(std::array<ygg::Value, 3> { ygg::encode_value<ygg::uint_t>(b.index().value),
                                                                    ygg::encode_value<ygg::uint_t>(c.index().value),
                                                                    ygg::encode_value<ygg::uint_t>(a.index().value) }));
-    EXPECT_TRUE(std::ranges::equal(rhs_role_rows.columns(), role_register_rhs.get_schema()));
+    EXPECT_TRUE(std::ranges::equal(rhs_role_rows.columns(), schema_of(role_register_rhs)));
     EXPECT_TRUE(caches.find(false, register_count).has_value());
     EXPECT_FALSE(caches.find(true, register_count).has_value());
 
@@ -1129,18 +1129,18 @@ void check_predicate_repository_identity()
             concept_data.predicate = predicates[1];
             if constexpr (kr::dl::is_atomic_goal_tag_v<Tag>)
                 concept_data.polarity = true;
-            auto concept_wrapper = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(kr::dl::insert(*repository, concept_data).first.index());
+            auto concept_wrapper = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(kr::dl::insert(*repository, concept_data).first.index(), false);
             EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(kr::dl::insert(*repository, concept_wrapper).first, context).value().count(), size_t(expected));
 
             auto role_data = urd::data<kr::dl::Role<kr::dl::SemanticFamily, Tag>>();
             role_data.predicate = predicates[2];
             if constexpr (kr::dl::is_atomic_goal_tag_v<Tag>)
                 role_data.polarity = true;
-            auto role_wrapper = urd::data<kr::dl::Constructor<kr::dl::RoleTag>>(kr::dl::insert(*repository, role_data).first.index());
+            auto role_wrapper = urd::data<kr::dl::Constructor<kr::dl::RoleTag>>(kr::dl::insert(*repository, role_data).first.index(), false);
             EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(kr::dl::insert(*repository, role_wrapper).first, context).count(), size_t(expected));
 
             auto boolean_data = urd::data<kr::dl::Boolean<kr::dl::SemanticFamily, Tag>>(predicates[0], true);
-            auto boolean_wrapper = urd::data<kr::dl::Constructor<kr::dl::BooleanTag>>(kr::dl::insert(*repository, boolean_data).first.index());
+            auto boolean_wrapper = urd::data<kr::dl::Constructor<kr::dl::BooleanTag>>(kr::dl::insert(*repository, boolean_data).first.index(), false);
             EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(kr::dl::insert(*repository, boolean_wrapper).first, context).value(), expected);
 
             auto column = urd::data<kr::dl::QueryColumn>();
@@ -1463,10 +1463,10 @@ TEST(RunirQueries, StaticnessIsInferredAndSerializedWithoutChangingIdentity)
     };
     const auto check_metadata = [&](auto expression, bool expected)
     {
-        EXPECT_EQ(expression.is_static(), expected);
+        EXPECT_EQ(expression.get_is_static(), expected);
         check_relocated_data((*repository)[expression.index()], [&](const auto& decoded) { EXPECT_EQ(decoded.is_static, expected); });
-        auto stale = (*repository)[expression.index()];
-        stale.is_static = !expected;
+        const auto& stored = (*repository)[expression.index()];
+        auto stale = std::remove_cvref_t<decltype(stored)>(stored.variant, !expected);
         EXPECT_EQ(stale, (*repository)[expression.index()]);
         using Data = std::remove_cvref_t<decltype(stale)>;
         EXPECT_EQ(urd::Hash<Data>()(stale), urd::Hash<Data>()((*repository)[expression.index()]));
@@ -1483,20 +1483,22 @@ TEST(RunirQueries, StaticnessIsInferredAndSerializedWithoutChangingIdentity)
         check_metadata(parse_query(description, domain, *repository), expected);
         check_metadata(kr::ps::ext::dl::parse_numerical("(n_count " + description + ")", domain, *repository), expected);
     }
-    EXPECT_TRUE(kr::ps::ext::dl::parse_concept("(c_project x " + fixed + ")", domain, *repository).is_static());
-    EXPECT_FALSE(kr::ps::ext::dl::parse_concept("(c_project x " + triple + ")", domain, *repository).is_static());
-    EXPECT_TRUE(kr::ps::ext::dl::parse_role(R"((r_reflexive_transitive_closure (r_atomic_state "edge")))", domain, *repository).is_static());
-    EXPECT_FALSE(kr::ps::ext::dl::parse_role(R"((r_reflexive_transitive_closure (r_register 0)))", domain, *repository).is_static());
-    EXPECT_TRUE(kr::ps::ext::dl::parse_boolean("(b_nonempty " + fixed + ")", domain, *repository).is_static());
-    EXPECT_TRUE(kr::ps::ext::dl::parse_boolean("(b_nonempty (q_generic_join (x y z) (x y z) " + fixed + " " + fixed + "))", domain, *repository).is_static());
-    EXPECT_FALSE(kr::ps::ext::dl::parse_boolean("(b_nonempty (q_generic_join (x y z) (x y z) " + fixed + " " + triple + "))", domain, *repository).is_static());
-    EXPECT_TRUE(kr::ps::ext::dl::parse_boolean("(b_nonempty (q_empty (x)))", domain, *repository).is_static());
+    EXPECT_TRUE(kr::ps::ext::dl::parse_concept("(c_project x " + fixed + ")", domain, *repository).get_is_static());
+    EXPECT_FALSE(kr::ps::ext::dl::parse_concept("(c_project x " + triple + ")", domain, *repository).get_is_static());
+    EXPECT_TRUE(kr::ps::ext::dl::parse_role(R"((r_reflexive_transitive_closure (r_atomic_state "edge")))", domain, *repository).get_is_static());
+    EXPECT_FALSE(kr::ps::ext::dl::parse_role(R"((r_reflexive_transitive_closure (r_register 0)))", domain, *repository).get_is_static());
+    EXPECT_TRUE(kr::ps::ext::dl::parse_boolean("(b_nonempty " + fixed + ")", domain, *repository).get_is_static());
+    EXPECT_TRUE(
+        kr::ps::ext::dl::parse_boolean("(b_nonempty (q_generic_join (x y z) (x y z) " + fixed + " " + fixed + "))", domain, *repository).get_is_static());
+    EXPECT_FALSE(
+        kr::ps::ext::dl::parse_boolean("(b_nonempty (q_generic_join (x y z) (x y z) " + fixed + " " + triple + "))", domain, *repository).get_is_static());
+    EXPECT_TRUE(kr::ps::ext::dl::parse_boolean("(b_nonempty (q_empty (x)))", domain, *repository).get_is_static());
     EXPECT_FALSE(kr::ps::ext::dl::parse_boolean("(b_nonempty (q_must_pass (x) (q_project (x y) " + triple + ") " + triple + " (q_project (x z) " + triple
                                                     + R"() (q_concept p (c_top)))))",
                                                 domain,
                                                 *repository)
-                     .is_static());
-    EXPECT_FALSE(kr::ps::ext::dl::parse_boolean("(b_nonempty " + triple + ")", domain, *repository).is_static());
+                     .get_is_static());
+    EXPECT_FALSE(kr::ps::ext::dl::parse_boolean("(b_nonempty " + triple + ")", domain, *repository).get_is_static());
 }
 
 TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullaryJoins)
@@ -1528,9 +1530,9 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     EXPECT_TRUE(std::ranges::equal(renamed_rows.get_rows(), original_rows.get_rows()));
     EXPECT_TRUE(std::ranges::equal(nested_rows.get_rows(), original_rows.get_rows()));
     EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(renamed, context).get_rows(), original_rows.get_rows()));
-    EXPECT_TRUE(std::ranges::equal(original_rows.columns(), query.get_schema()));
-    EXPECT_TRUE(std::ranges::equal(renamed_rows.columns(), renamed.get_schema()));
-    EXPECT_TRUE(std::ranges::equal(nested_rows.columns(), nested.get_schema()));
+    EXPECT_TRUE(std::ranges::equal(original_rows.columns(), schema_of(query)));
+    EXPECT_TRUE(std::ranges::equal(renamed_rows.columns(), schema_of(renamed)));
+    EXPECT_TRUE(std::ranges::equal(nested_rows.columns(), schema_of(nested)));
     EXPECT_FALSE(std::ranges::equal(original_rows.columns(), renamed_rows.columns()));
 
     const auto truth = parse_query("(q_project () " + description + ")", domain, *repository);
@@ -1541,32 +1543,32 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     const auto false_join = parse_query("(q_join " + description + " (q_atomic_state \"missing\" ()))", domain, *repository);
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(true_join, context).size(), original_rows.size());
     EXPECT_TRUE(kr::dl::semantics::evaluate<tyr::GroundTag>(false_join, context).empty());
-    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).columns(), query.get_schema()));
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).columns(), schema_of(query)));
 
     auto raw_rename_data = urd::data<kr::dl::Query<kr::dl::QueryRenameTag>>();
     raw_rename_data.operand = query.index();
-    for (const auto column : query.get_columns())
+    for (const auto column : columns_of(query))
         raw_rename_data.columns.push_back(column.index());
     std::swap(raw_rename_data.columns.front(), raw_rename_data.columns.back());
-    auto raw_wrapper = urd::data<kr::dl::Query<>>(kr::dl::insert(*repository, raw_rename_data).first.index());
+    auto raw_wrapper = urd::data<kr::dl::Query<>>(kr::dl::insert(*repository, raw_rename_data).first.index(), false);
     const auto raw = repository->insert(raw_wrapper).first;
-    EXPECT_FALSE(raw.is_static());
+    EXPECT_FALSE(raw.get_is_static());
     const auto raw_rows = kr::dl::semantics::evaluate<tyr::GroundTag>(raw, context);
     EXPECT_TRUE(std::ranges::equal(raw_rows.get_rows(), original_rows.get_rows()));
     EXPECT_TRUE(caches.find_query(false, raw).has_value());
 
     auto raw_nested_data = urd::data<kr::dl::Query<kr::dl::QueryRenameTag>>();
     raw_nested_data.operand = raw.index();
-    for (const auto column : nested.get_columns())
+    for (const auto column : columns_of(nested))
         raw_nested_data.columns.push_back(column.index());
-    auto raw_nested_wrapper = urd::data<kr::dl::Query<>>(kr::dl::insert(*repository, raw_nested_data).first.index());
+    auto raw_nested_wrapper = urd::data<kr::dl::Query<>>(kr::dl::insert(*repository, raw_nested_data).first.index(), false);
     const auto raw_nested = repository->insert(raw_nested_wrapper).first;
-    EXPECT_FALSE(raw_nested.is_static());
+    EXPECT_FALSE(raw_nested.get_is_static());
     const auto raw_nested_rows = kr::dl::semantics::evaluate<tyr::GroundTag>(raw_nested, context);
     EXPECT_TRUE(std::ranges::equal(raw_nested_rows.get_rows(), original_rows.get_rows()));
-    EXPECT_TRUE(std::ranges::equal(raw_nested_rows.columns(), raw_nested.get_schema()));
-    EXPECT_TRUE(std::ranges::equal(raw_rows.columns(), raw.get_schema()));
-    EXPECT_TRUE(std::ranges::equal(original_rows.columns(), query.get_schema()));
+    EXPECT_TRUE(std::ranges::equal(raw_nested_rows.columns(), schema_of(raw_nested)));
+    EXPECT_TRUE(std::ranges::equal(raw_rows.columns(), schema_of(raw)));
+    EXPECT_TRUE(std::ranges::equal(original_rows.columns(), schema_of(query)));
     EXPECT_TRUE(caches.find_query(false, raw_nested).has_value());
 
     storage.reset_all();
@@ -1575,12 +1577,12 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     EXPECT_FALSE(caches.find_query(true, query).has_value());
     const auto rebuilt_nested = kr::dl::semantics::evaluate<tyr::GroundTag>(raw_nested, context);
     EXPECT_EQ(rebuilt_nested.size(), 2);
-    EXPECT_TRUE(std::ranges::equal(rebuilt_nested.columns(), raw_nested.get_schema()));
+    EXPECT_TRUE(std::ranges::equal(rebuilt_nested.columns(), schema_of(raw_nested)));
     EXPECT_TRUE(std::ranges::equal(rebuilt_nested.get_rows(), kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).get_rows()));
     EXPECT_TRUE(caches.find_query(false, raw_nested).has_value());
     const auto rebuilt = kr::dl::semantics::evaluate<tyr::GroundTag>(raw, context);
     EXPECT_EQ(rebuilt.size(), 2);
-    EXPECT_TRUE(std::ranges::equal(rebuilt.columns(), raw.get_schema()));
+    EXPECT_TRUE(std::ranges::equal(rebuilt.columns(), schema_of(raw)));
     EXPECT_TRUE(std::ranges::equal(rebuilt.get_rows(), kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).get_rows()));
     EXPECT_TRUE(caches.find_query(false, raw).has_value());
 }

@@ -80,9 +80,7 @@ struct data<runir::kr::ps::icp::ProgramState<Kind>>
     static constexpr auto identifying_members() noexcept
     { return urd::Members<&data::program, &data::memory_state, &data::registers, &data::histories, &data::state> {}; }
     static constexpr auto cista_members() noexcept
-    {
-        return urd::Members<&data::index, &data::program, &data::memory_state, &data::registers, &data::histories, &data::state> {};
-    }
+    { return urd::Members<&data::index, &data::program, &data::memory_state, &data::registers, &data::histories, &data::state> {}; }
 };
 
 }  // namespace urd

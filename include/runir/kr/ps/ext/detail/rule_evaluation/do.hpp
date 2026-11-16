@@ -56,7 +56,7 @@ private:
                                 RuleView<DoTag> rule,
                                 State state) const
     {
-        const auto arguments = rule.get_action_arguments();
+        const auto arguments = rule.get_arguments();
         auto& denotations = workspace.denotations;
         denotations.clear();
         auto state_context = context.make_dl_context(state);

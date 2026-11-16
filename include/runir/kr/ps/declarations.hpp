@@ -23,15 +23,24 @@ inline constexpr bool transition_rule = true;
 // Rule
 
 template<FamilyTag Family>
-struct Rule;
+struct Rule
+{
+    static constexpr auto name = "Rule";
+};
 
 // Feature
 
 template<FamilyTag Family, typename FeatureTag>
-struct Feature;
+struct Feature
+{
+    static constexpr auto name = "Feature";
+};
 
 template<FamilyTag Family, typename LanguageTag, typename FeatureTag>
-struct ConcreteFeature;
+struct ConcreteFeature
+{
+    static constexpr auto name = "ConcreteFeature";
+};
 
 // Transition evaluation
 
@@ -47,12 +56,18 @@ class TransitionEvaluationContext;
 // Condition
 
 template<FamilyTag Family, typename LanguageTag, typename FeatureTag, typename ObservationTag>
-struct ConcreteCondition;
+struct ConcreteCondition
+{
+    static constexpr auto name = "ConcreteCondition";
+};
 
 // Effect
 
 template<FamilyTag Family, typename LanguageTag, typename FeatureTag, typename ObservationTag>
-struct ConcreteEffect;
+struct ConcreteEffect
+{
+    static constexpr auto name = "ConcreteEffect";
+};
 
 // Repository
 
@@ -80,10 +95,16 @@ template<typename T>
 concept ProgramFamilyTag = std::same_as<T, ExtFamilyTag> || std::same_as<T, IcpFamilyTag>;
 
 template<ProgramFamilyTag Family>
-struct MemoryState;
+struct MemoryState
+{
+    static constexpr auto name = "MemoryState";
+};
 
 template<ProgramFamilyTag Family>
-struct ModuleSymbol;
+struct ModuleSymbol
+{
+    static constexpr auto name = "ModuleSymbol";
+};
 
 template<ProgramFamilyTag Family, tyr::TaskKind Kind>
 class ExecutionRepository;

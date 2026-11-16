@@ -60,7 +60,7 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     data(urd::index<tyr::formalism::Predicate<runir::kr::dl::TagFactKind<Tag>>> predicate_, bool polarity_) :
         index(),
         predicate(std::move(predicate_)),
-        polarity(std::move(polarity_))
+        polarity(polarity_)
     {
     }
     data(const data& other) = delete;
@@ -95,9 +95,7 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     ~data() = default;
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"left_operand", &data::left_operand>, urd::field<"right_operand", &data::right_operand>> {};
-    }
+    { return urd::Fields<urd::field<"left_operand", &data::left_operand>, urd::field<"right_operand", &data::right_operand>> {}; }
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::left_operand, &data::right_operand> {}; }
 };
@@ -154,7 +152,7 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> role;
 
     data() = default;
-    data(ygg::uint_t n_, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> role_) : index(), n(std::move(n_)), role(std::move(role_)) {}
+    data(ygg::uint_t n_, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> role_) : index(), n(n_), role(std::move(role_)) {}
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -177,7 +175,7 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     data() = default;
     data(ygg::uint_t n_, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> role_, runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag> qualifier_) :
         index(),
-        n(std::move(n_)),
+        n(n_),
         role(std::move(role_)),
         qualifier(std::move(qualifier_))
     {
@@ -189,9 +187,7 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     ~data() = default;
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"n", &data::n>, urd::field<"role", &data::role>, urd::field<"qualifier", &data::qualifier>> {};
-    }
+    { return urd::Fields<urd::field<"n", &data::n>, urd::field<"role", &data::role>, urd::field<"qualifier", &data::qualifier>> {}; }
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::n, &data::role, &data::qualifier> {}; }
 };
@@ -217,9 +213,7 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     ~data() = default;
 
     static constexpr auto fields() noexcept
-    {
-        return urd::Fields<urd::field<"left_operand", &data::left_operand>, urd::field<"right_operand", &data::right_operand>> {};
-    }
+    { return urd::Fields<urd::field<"left_operand", &data::left_operand>, urd::field<"right_operand", &data::right_operand>> {}; }
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::left_operand, &data::right_operand> {}; }
 };
@@ -275,7 +269,7 @@ struct data<runir::kr::dl::Concept<F, runir::kr::dl::NominalTag>>
     urd::index<tyr::formalism::Object> object;
 
     data() = default;
-    explicit data(urd::index<tyr::formalism::Object> object_) : index(), object(std::move(object_)) {}
+    explicit data(urd::index<tyr::formalism::Object> object_) : index(), object(object_) {}
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -294,7 +288,7 @@ struct data<runir::kr::dl::Concept<F, runir::kr::dl::RegisterTag>>
     urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>> slot;
 
     data() = default;
-    explicit data(urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>> slot_) : index(), slot(std::move(slot_)) {}
+    explicit data(urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>> slot_) : index(), slot(slot_) {}
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -313,7 +307,7 @@ struct data<runir::kr::dl::Concept<F, runir::kr::dl::ArgumentTag<runir::kr::dl::
     urd::index<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>> argument;
 
     data() = default;
-    explicit data(urd::index<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>> argument_) : index(), argument(std::move(argument_)) {}
+    explicit data(urd::index<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>> argument_) : index(), argument(argument_) {}
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;

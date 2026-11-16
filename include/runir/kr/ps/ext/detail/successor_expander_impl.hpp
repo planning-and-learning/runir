@@ -7,7 +7,7 @@
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
 #include "runir/kr/ps/ext/detail/rule_evaluation/context.hpp"
 #include "runir/kr/ps/ext/detail/rule_evaluators.hpp"
-#include "runir/kr/ps/ext/successor_expander.hpp"
+#include "runir/kr/ps/ext/successor_expander_decl.hpp"
 #include "runir/kr/task_context.hpp"
 
 #include <algorithm>
@@ -160,7 +160,7 @@ auto SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::fallback(S sta
     if (const auto caller = state.get_call_stack())
     {
         auto target = m_storage.store(planning_state,
-                                      caller->get_module(),
+                                      caller->get_mod(),
                                       caller->get_return_memory_state(),
                                       caller->get_registers(),
                                       caller->get_arguments(),

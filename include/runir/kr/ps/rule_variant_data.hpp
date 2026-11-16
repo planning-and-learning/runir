@@ -12,6 +12,15 @@
 #include <utility>
 #include <variant>
 
+namespace runir::kr::ps
+{
+
+/// The concrete rule a rule variant of Family holds: one of the family's rule kinds.
+template<runir::kr::ps::ProgramFamilyTag Family>
+using RuleVariant = urd::index_variant<typename runir::kr::ps::FamilyTypes<Family>::ConcreteRuleTypes>;
+
+}  // namespace runir::kr::ps
+
 namespace urd
 {
 
@@ -19,17 +28,21 @@ namespace urd
 template<runir::kr::ps::ProgramFamilyTag Family>
 struct data<runir::kr::ps::Rule<Family>>
 {
-    using Variant = urd::index_variant<typename runir::kr::ps::FamilyTypes<Family>::ConcreteRuleTypes>;
-
     urd::index<runir::kr::ps::Rule<Family>> index;
     urd::flat_string symbol;
-    Variant variant;
+    runir::kr::ps::RuleVariant<Family> variant;
 
     data() = default;
-    data(urd::flat_string symbol_, Variant variant_) : index(), symbol(std::move(symbol_)), variant(std::move(variant_)) {}
+    data(urd::flat_string symbol_, runir::kr::ps::RuleVariant<Family> variant_) : index(), symbol(std::move(symbol_)), variant(std::move(variant_)) {}
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
 
-    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::symbol, &data::variant> {}; }
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"symbol", &data::symbol>, urd::field<"variant", &data::variant>> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::symbol, &data::variant> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::symbol, &data::variant> {}; }
 };
 
 }  // namespace urd

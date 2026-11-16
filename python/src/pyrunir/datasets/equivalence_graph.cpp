@@ -12,6 +12,7 @@
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/task.hpp>
 #include <urd/dot.hpp>
+#include <urd/python/bindings.hpp>
 #include <urd/python/graphs.hpp>
 #include <utility>
 #include <vefr/python/bindings.hpp>
@@ -71,6 +72,15 @@ void bind_equivalence_graph(nb::module_& m)
         .def(nb::new_([](const tyr::planning::Task<tyr::LiftedTag>& task) { return std::make_shared<ColorRepository>(task.get_domain().get_repository()); }),
              "lifted_task"_a)
         .def_prop_ro("num_colors", [](const ColorRepository& self) { return self.size<Color>(); });
+
+    // The colors of an object graph's vertices, read in their ColorRepository.
+    nb::enum_<PredicateContext>(m, "PredicateContext").value("STATE", PredicateContext::STATE).value("GOAL", PredicateContext::GOAL);
+    urd::python::bind_data<PredicateColor<tyr::formalism::StaticTag>>(m);
+    urd::python::bind_data<PredicateColor<tyr::formalism::FluentTag>>(m);
+    urd::python::bind_data<Color>(m);
+    urd::python::bind_view<urd::index_view<PredicateColor<tyr::formalism::StaticTag>, ColorRepository>>(m);
+    urd::python::bind_view<urd::index_view<PredicateColor<tyr::formalism::FluentTag>, ColorRepository>>(m);
+    urd::python::bind_view<ColorView>(m);
 
     nb::class_<EquivalenceGraphGenerationOptions>(m, "EquivalenceGraphGenerationOptions")
         .def(nb::init<>())

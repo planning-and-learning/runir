@@ -49,7 +49,7 @@ public:
                  {
                      auto roots = urd::Store<urd::sequence<runir::kr::dl::semantics::incremental::EvaluationRoot>> {};
                      for (const auto feature : classifier.get_features())
-                         roots.emplace_back(feature.get_expression());
+                         roots.emplace_back(std::visit([](auto concrete) { return concrete.get_feature(); }, feature.get_variant()));
                      return roots;
                  }())
     {

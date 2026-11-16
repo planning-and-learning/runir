@@ -3,12 +3,21 @@
 
 #include "runir/kr/dl/cnf_grammar/derivation_rule_data.hpp"
 #include "runir/kr/dl/cnf_grammar/non_terminal_view.hpp"
-#include "runir/kr/dl/detail/grammar_views.hpp"
 
-namespace runir::kr::dl::detail
+#include <urd/elements/view.hpp>
+
+namespace urd
 {
-template<CategoryTag Category>
-inline constexpr bool is_grammar_derivation_rule<cnf_grammar::DerivationRule<Category>> = true;
-}  // namespace runir::kr::dl::detail
+template<runir::kr::dl::CategoryTag Category, typename V>
+struct view_mixin<runir::kr::dl::cnf_grammar::DerivationRule<Category>, V>
+{
+private:
+    [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
+
+public:
+    auto get_lhs() const noexcept { return self().template member<&urd::record_of<V>::lhs>(); }
+    auto get_rhs() const noexcept { return self().template member<&urd::record_of<V>::rhs>(); }
+};
+}  // namespace urd
 
 #endif

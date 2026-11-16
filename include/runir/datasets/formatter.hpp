@@ -15,10 +15,13 @@
 #include <variant>
 #include <yggdrasil/formatting/cista_formatters.hpp>
 
-namespace runir
+namespace runir::datasets
 {
 
-}  // namespace runir
+/// A predicate context as fmt writes it (format_as).
+inline const char* format_as(PredicateContext context) noexcept { return context == PredicateContext::STATE ? "state" : "goal"; }
+
+}  // namespace runir::datasets
 
 namespace fmt
 {
@@ -39,7 +42,7 @@ struct formatter<urd::index_view<runir::datasets::PredicateColor<T>, runir::data
     auto format(const urd::index_view<runir::datasets::PredicateColor<T>, runir::datasets::ColorRepository>& color, FormatContext& ctx) const
     {
         const auto predicate = color.get_predicate();
-        const auto context = color.get_predicate_context() == runir::datasets::PredicateContext::STATE ? "state" : "goal";
+        const auto context = format_as(color.get_context());
         const auto text = fmt::format("{}:{}[{}]", context, predicate, color.get_argument_position());
         return formatter<std::string_view>::format(text, ctx);
     }
@@ -51,7 +54,7 @@ struct formatter<runir::datasets::ColorView, char> : formatter<std::string_view>
     template<typename FormatContext>
     auto format(const runir::datasets::ColorView& color, FormatContext& ctx) const
     {
-        const auto text = fmt::format("{}", color.get_colors());
+        const auto text = fmt::format("{}", color.get_values());
         return formatter<std::string_view>::format(text, ctx);
     }
 };

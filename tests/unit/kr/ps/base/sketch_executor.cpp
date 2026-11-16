@@ -99,19 +99,19 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         EXPECT_EQ(plan.get_length(), fragment.graph->num_edges()) << test_case.domain;
         auto& generator = *context->successor_generator;
         auto replay = generator.get_initial_node(*context->state_repository, *context->axiom_evaluator);
-        EXPECT_EQ(plan.get_start_node().get_state().index(), replay.get_state().index());
+        EXPECT_EQ(plan.get_start_node().get_state().index(), replay.get_state().pack().index());
         EXPECT_EQ(plan.get_start_node().get_metric(), replay.get_metric());
         for (const auto& step : plan.get_labeled_succ_nodes())
         {
             replay = generator.get_successor_node(replay, step.label, *context->state_repository, *context->axiom_evaluator);
-            EXPECT_EQ(step.node.get_state().index(), replay.get_state().index());
+            EXPECT_EQ(step.node.get_state().index(), replay.get_state().pack().index());
             EXPECT_EQ(step.node.get_metric(), replay.get_metric());
         }
         EXPECT_EQ(plan.get_cost(), replay.get_metric());
         EXPECT_EQ(plan.get_cost(), plan.get_length());
         const auto& terminal = fragment.graph->vertex_value(fragment.graph->num_vertices() - 1);
         EXPECT_TRUE(terminal.is_goal);
-        EXPECT_EQ(replay.get_state().index(), terminal.state.index());
+        EXPECT_EQ(replay.get_state().pack().index(), terminal.state.index());
 
         auto expander = kr::ps::base::SuccessorExpander<tyr::GroundTag, kr::dl::semantics::FullEvaluationPolicy<tyr::GroundTag>>(*task_context, sketch);
         const auto state = context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator).get_state();
@@ -196,7 +196,8 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     for (const auto edge : universal.graph->out_edges(0))
     {
         const auto target_state = universal.graph->vertex_value(universal.graph->target(edge)).state.index();
-        EXPECT_NE(std::ranges::find_if(immediate, [&](const auto& successor) { return successor.node.get_state().index() == target_state; }), immediate.end());
+        EXPECT_NE(std::ranges::find_if(immediate, [&](const auto& successor) { return successor.node.get_state().pack().index() == target_state; }),
+                  immediate.end());
     }
 
     auto options = kr::ps::base::SketchSearchOptions<tyr::GroundTag> {};
@@ -214,7 +215,7 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     // The first move stays in the current room: it is generated but rejected by sketch matching.
     EXPECT_EQ(bounded.statistics.num_generated, 2);
     const auto& packed_state = bounded.graph->vertex_value(0).state;
-    EXPECT_EQ(packed_state.index(), state.index());
+    EXPECT_EQ(packed_state.index(), state.pack().index());
     EXPECT_EQ(packed_state.unpack().pack(), packed_state);
 
     const auto two_step_only = kr::ps::base::dl::parse_sketch(

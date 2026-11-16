@@ -83,7 +83,7 @@ static_assert(TransitionRuleContract<Do> && requires(urd::data<Entity<Do>>& data
     data.arguments;
     view.get_effects();
     view.get_action_name();
-    view.get_action_arguments();
+    view.get_arguments();
 });
 static_assert(TransitionRuleContract<Action> && requires(urd::data<Entity<Action>>& data, const View<Action>& view) {
     data.effects;

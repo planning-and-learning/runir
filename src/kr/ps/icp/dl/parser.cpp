@@ -34,9 +34,7 @@ using runir::kr::parser::ext_constructors::parse;
 
 template<typename T>
 auto intern(Repository& repository, urd::data<T>& data)
-{
-    return insert(repository, data).first;
-}
+{ return insert(repository, data).first; }
 
 using runir::kr::parser::observations::append_conditions;
 using runir::kr::parser::observations::append_effects;
@@ -339,7 +337,7 @@ ProgramView parse_program(const std::string& description, tyr::formalism::planni
     if (node.entry.text != node.module.name.text)
         diagnostics.throw_at(node.entry, UndefinedSymbolError("entry module", node.entry.text));
     auto data = urd::data<Program> {};
-    data.module = lower_module(node.module, domain, repository, diagnostics).index();
+    data.entry_mod = lower_module(node.module, domain, repository, diagnostics).index();
     return intern(repository, data);
 }
 
