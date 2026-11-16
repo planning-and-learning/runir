@@ -1,6 +1,7 @@
 #include "fixtures.hpp"
 #include "module_fixtures.hpp"
 #include "planning_fixtures.hpp"
+#include "record_copy.hpp"
 #include "successor_fixtures.hpp"
 
 #include <algorithm>
@@ -1433,12 +1434,6 @@ TEST(RunirTests, ExtLiftedStateMemorizationPreservesSemanticsAndRetainsOnlyWitne
 namespace
 {
 
-template<typename View>
-struct MutableDataAccess : View
-{
-    auto data() -> decltype(std::declval<const View&>().data());
-};
-
 template<tyr::TaskKind Kind>
 struct ReferenceModuleStateAccess : kr::ps::ext::ModuleStateView<Kind>
 {
@@ -1464,15 +1459,12 @@ void check_transient_builder_values_and_reuse()
     static_assert(kr::dl::semantics::RegisterValuesViewConcept<kr::dl::semantics::RegisterValuesView&>);
     static_assert(kr::dl::semantics::RegisterValuesViewConcept<const kr::dl::semantics::BorrowedRegisterValuesView&>);
     static_assert(!kr::dl::semantics::RegisterValuesViewConcept<volatile kr::dl::semantics::RegisterValuesView&>);
-    static_assert(!kr::dl::semantics::RegisterValuesViewConcept<MutableDataAccess<kr::dl::semantics::BorrowedRegisterValuesView>&>);
     static_assert(kr::ps::ext::ModuleStateViewConcept<kr::ps::ext::ModuleStateView<Kind>&, Kind>);
     static_assert(kr::ps::ext::ModuleStateViewConcept<const kr::ps::ext::BuilderModuleStateView<Kind>&, Kind>);
     static_assert(!kr::ps::ext::ModuleStateViewConcept<volatile kr::ps::ext::ModuleStateView<Kind>&, Kind>);
-    static_assert(!kr::ps::ext::ModuleStateViewConcept<MutableDataAccess<kr::ps::ext::ModuleStateView<Kind>>&, Kind>);
     static_assert(kr::ps::ext::ProgramStateViewConcept<kr::ps::ext::ProgramStateView<Kind>&, Kind>);
     static_assert(kr::ps::ext::ProgramStateViewConcept<const kr::ps::ext::BuilderProgramStateView<Kind>&, Kind>);
     static_assert(!kr::ps::ext::ProgramStateViewConcept<volatile kr::ps::ext::ProgramStateView<Kind>&, Kind>);
-    static_assert(!kr::ps::ext::ProgramStateViewConcept<MutableDataAccess<kr::ps::ext::ProgramStateView<Kind>>&, Kind>);
     static_assert(kr::ps::ext::ProgramStateViewConcept<ReferenceProgramStateAccess<Kind>, Kind>);
     constexpr auto has_index = []<typename V>() { return requires(const V& view) { view.index(); }; };
     static_assert(!has_index.template operator()<kr::ps::ext::BuilderProgramStateView<Kind>>());
@@ -1502,22 +1494,21 @@ void check_transient_builder_values_and_reuse()
     first_module.arguments = argument_view.index();
     const auto program_state = urd::resolve(*first, *context->execution_repository);
     const auto module_state = program_state.get_module_state();
-    EXPECT_EQ(&module_state.data(), &first_module);
     EXPECT_TRUE(urd::EqualTo<kr::ps::ext::ProgramView> {}(program_state.get_program(), program));
     EXPECT_TRUE(urd::EqualTo<kr::ps::ext::ModuleView> {}(module_state.get_module(), module_));
     EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(module_state.get_memory_state(), module_.get_entry_memory_state()));
     EXPECT_EQ(&module_state.get_module().context(), &repository);
     EXPECT_EQ(&module_state.get_state().get_task(), search->task.get());
-    EXPECT_EQ(&module_state.get_state().data(), &first_module.state);
-    EXPECT_EQ(&module_state.get_registers().data(), &first_module.registers);
+    EXPECT_EQ(&module_state.get_state().get_fact_storage(), &first_module.state.builder.fact_storage);
     EXPECT_TRUE(urd::EqualTo<kr::dl::semantics::CallArgumentsView> {}(module_state.get_arguments(), argument_view));
     EXPECT_EQ(&module_state.get_arguments().context(), context->dl_denotation_repository.get());
     EXPECT_FALSE(program_state.get_call_stack());
-    first_module.registers.concept_values.emplace_back(urd::index<tyr::formalism::Object>(0));
-    first_module.registers.role_values.emplace_back(
+    first_module.registers.values.concept_values.emplace_back(urd::index<tyr::formalism::Object>(0));
+    first_module.registers.values.role_values.emplace_back(
         urd::flat_pair<urd::index<tyr::formalism::Object>, urd::index<tyr::formalism::Object>>(urd::index<tyr::formalism::Object>(0),
                                                                                                urd::index<tyr::formalism::Object>(1)));
-    const auto registered_registers = kr::dl::semantics::insert(*context->dl_denotation_repository, first_module.registers).first;
+    EXPECT_EQ(module_state.get_registers().template values<kr::dl::ConceptTag>().base().data(), first_module.registers.values.concept_values.data());
+    const auto registered_registers = kr::dl::semantics::insert(*context->dl_denotation_repository, first_module.registers.values).first;
     const auto borrowed_registers = module_state.get_registers();
     const auto concept_id = kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(0);
     const auto role_id = kr::dl::RegisterIdentifier<kr::dl::RoleTag>(0);
@@ -1525,20 +1516,20 @@ void check_transient_builder_values_and_reuse()
     EXPECT_EQ(&borrowed_registers.at(concept_id).value().context(), &registered_registers.at(concept_id).value().context());
     EXPECT_EQ(borrowed_registers.at(role_id).value().first.index(), registered_registers.at(role_id).value().first.index());
     EXPECT_EQ(borrowed_registers.at(role_id).value().second.index(), registered_registers.at(role_id).value().second.index());
-    auto& facts = first_module.state.fact_storage;
+    auto& facts = first_module.state.builder.fact_storage;
     if constexpr (std::same_as<Kind, tyr::GroundTag>)
         facts.values = { 1, 0 };
     else
     {
         facts.indices.insert(0);
     }
-    first_module.state.numeric_storage.values = { 3.0 };
+    first_module.state.builder.numeric_storage.values = { 3.0 };
 
     // Transient module values use the same interned callers as registered execution states.
     auto tail_data =
         urd::data<kr::ps::ext::CallStack>(first_module.module_, first_module.memory_state, registered_registers.index(), first_module.arguments, {});
     const auto tail = kr::ps::ext::insert(*context->execution_repository, tail_data).first;
-    auto head_registers = first_module.registers;
+    auto head_registers = runir::tests::copy_fields(first_module.registers.values);
     head_registers.concept_values.front() = urd::index<tyr::formalism::Object>(1);
     const auto head_register_values = kr::dl::semantics::insert(*context->dl_denotation_repository, head_registers).first;
     auto head_data =
@@ -1563,47 +1554,53 @@ void check_transient_builder_values_and_reuse()
 
     // Program copies own their mutable module values and share immutable callers.
     auto separate = pool.make_shared();
-    *separate = *first;
+    separate->program = first->program;
     auto& separate_module = separate->module_state;
-    EXPECT_NE(std::ranges::data(separate_module.state.numeric_storage.values), std::ranges::data(first_module.state.numeric_storage.values));
-    EXPECT_NE(separate_module.registers.concept_values.data(), first_module.registers.concept_values.data());
+    separate_module.state = first_module.state;
+    separate_module.module_ = first_module.module_;
+    separate_module.memory_state = first_module.memory_state;
+    separate_module.registers.values = runir::tests::copy_fields(first_module.registers.values);
+    separate_module.arguments = first_module.arguments;
+    separate->call_stack = first->call_stack;
+    EXPECT_NE(std::ranges::data(separate_module.state.builder.numeric_storage.values), std::ranges::data(first_module.state.builder.numeric_storage.values));
+    EXPECT_NE(separate_module.registers.values.concept_values.data(), first_module.registers.values.concept_values.data());
     EXPECT_EQ(*separate->call_stack, *first->call_stack);
     EXPECT_TRUE(urd::EqualTo<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
     EXPECT_EQ(urd::Hash<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first), urd::Hash<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*separate));
-    separate_module.state.atom_storage.indices.insert(0);
+    separate_module.state.builder.atom_storage.indices.insert(0);
     EXPECT_TRUE(urd::EqualTo<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
     EXPECT_EQ(urd::Hash<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first), urd::Hash<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*separate));
     if constexpr (std::same_as<Kind, tyr::GroundTag>)
-        separate_module.state.fact_storage.values.front() = 0;
+        separate_module.state.builder.fact_storage.values.front() = 0;
     else
-        separate_module.state.fact_storage.indices.erase(0);
+        separate_module.state.builder.fact_storage.indices.erase(0);
     EXPECT_FALSE(urd::EqualTo<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
-    separate_module.state = first_module.state;
-    separate_module.state.numeric_storage.values.front() = 4.0;
-    EXPECT_EQ(first_module.state.numeric_storage.values.front(), 3.0);
+    separate_module.state.builder = first_module.state.builder;
+    separate_module.state.builder.numeric_storage.values.front() = 4.0;
+    EXPECT_EQ(first_module.state.builder.numeric_storage.values.front(), 3.0);
     EXPECT_FALSE(urd::EqualTo<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
-    separate_module.state = first_module.state;
-    separate_module.registers.concept_values.front() = urd::index<tyr::formalism::Object>(1);
-    EXPECT_EQ(first_module.registers.concept_values.front().value(), urd::index<tyr::formalism::Object>(0));
+    separate_module.state.builder = first_module.state.builder;
+    separate_module.registers.values.concept_values.front() = urd::index<tyr::formalism::Object>(1);
+    EXPECT_EQ(first_module.registers.values.concept_values.front().value(), urd::index<tyr::formalism::Object>(0));
     EXPECT_FALSE(urd::EqualTo<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
-    separate_module.registers = first_module.registers;
+    separate_module.registers.values = runir::tests::copy_fields(first_module.registers.values);
     separate->call_stack = tail.index();
     EXPECT_EQ(program_state.get_call_stack().value().index(), head.index());
     EXPECT_FALSE(urd::EqualTo<urd::builder<kr::ps::ext::ProgramState<Kind>>> {}(*first, *separate));
 
     // Releasing a program retains its mutable module buffers for reuse.
     const auto slot = separate.get();
-    const auto buffer = std::ranges::data(separate_module.state.numeric_storage.values);
-    const auto capacity = separate_module.state.numeric_storage.values.capacity();
-    const auto concept_buffer = separate_module.registers.concept_values.data();
-    const auto role_buffer = separate_module.registers.role_values.data();
+    const auto buffer = std::ranges::data(separate_module.state.builder.numeric_storage.values);
+    const auto capacity = separate_module.state.builder.numeric_storage.values.capacity();
+    const auto concept_buffer = separate_module.registers.values.concept_values.data();
+    const auto role_buffer = separate_module.registers.values.role_values.data();
     separate = {};
     auto reused = pool.make_shared();
     EXPECT_EQ(reused.get(), slot);
-    EXPECT_EQ(std::ranges::data(reused->module_state.state.numeric_storage.values), buffer);
-    EXPECT_EQ(reused->module_state.state.numeric_storage.values.capacity(), capacity);
-    EXPECT_EQ(reused->module_state.registers.concept_values.data(), concept_buffer);
-    EXPECT_EQ(reused->module_state.registers.role_values.data(), role_buffer);
+    EXPECT_EQ(std::ranges::data(reused->module_state.state.builder.numeric_storage.values), buffer);
+    EXPECT_EQ(reused->module_state.state.builder.numeric_storage.values.capacity(), capacity);
+    EXPECT_EQ(reused->module_state.registers.values.concept_values.data(), concept_buffer);
+    EXPECT_EQ(reused->module_state.registers.values.role_values.data(), role_buffer);
     EXPECT_EQ(caller.value().get_registers().at(concept_id).value().index(), urd::index<tyr::formalism::Object>(0));
 }
 

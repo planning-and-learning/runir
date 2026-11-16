@@ -848,6 +848,47 @@ using BaseConstructorTags =
     by_category<Category, BaseConceptConstructorTags, BaseRoleConstructorTags, BaseBooleanConstructorTags, BaseNumericalConstructorTags>;
 
 /**
+ * Record shapes: the constructor tags whose records hold the same children (one data<> and view_mixin<> each).
+ */
+
+template<typename T>
+concept NullaryConceptTag = std::same_as<T, BotTag> || std::same_as<T, TopTag>;
+
+template<typename T>
+concept AtomicTag = is_atomic_state_tag_v<T> || is_atomic_goal_tag_v<T>;
+
+/// Two concepts: left and right.
+template<typename T>
+concept ConceptBinaryTag = std::same_as<T, IntersectionTag> || std::same_as<T, UnionTag>;
+
+/// A role and the concept that qualifies it: role and qualifier.
+template<typename T>
+concept QuantificationTag = std::same_as<T, ValueRestrictionTag> || std::same_as<T, ExistentialQuantificationTag>;
+
+/// A number and a role: n and role.
+template<typename T>
+concept NumberRestrictionTag =
+    std::same_as<T, AtLeastNumberRestrictionTag> || std::same_as<T, AtMostNumberRestrictionTag> || std::same_as<T, ExactNumberRestrictionTag>;
+
+/// A number, a role and the concept that qualifies it: n, role and qualifier.
+template<typename T>
+concept QualifiedNumberRestrictionTag = std::same_as<T, QualifiedAtLeastNumberRestrictionTag> || std::same_as<T, QualifiedAtMostNumberRestrictionTag>
+                                        || std::same_as<T, QualifiedExactNumberRestrictionTag>;
+
+/// Two roles, read as a concept: left and right.
+template<typename T>
+concept RoleComparisonTag = std::same_as<T, RoleValueMapTag> || std::same_as<T, AgreementTag>;
+
+/// Two roles: left and right.
+template<typename T>
+concept RoleBinaryTag = std::same_as<T, IntersectionTag> || std::same_as<T, UnionTag> || std::same_as<T, CompositionTag>;
+
+/// One role: operand.
+template<typename T>
+concept RoleUnaryTag = std::same_as<T, ComplementTag> || std::same_as<T, InverseTag> || std::same_as<T, TransitiveClosureTag>
+                       || std::same_as<T, ReflexiveTransitiveClosureTag>;
+
+/**
  * Constructor records
  *
  * The semantic constructors and the two grammar forms share one set of records, Concept/Role/Boolean/Numerical<Family,

@@ -26,11 +26,15 @@ private:
     const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_state() const { return get_repository(self().context()).get_state_repository().get_registered_state(self().data().state); }
-    auto get_module() const noexcept { return urd::resolve(self().data().module_, get_repository(self().context()).get_program_repository()); }
-    auto get_memory_state() const noexcept { return urd::resolve(self().data().memory_state, get_repository(self().context()).get_program_repository()); }
-    auto get_registers() const noexcept { return urd::resolve(self().data().registers, get_repository(self().context()).get_denotation_repository()); }
-    auto get_arguments() const noexcept { return urd::resolve(self().data().arguments, get_repository(self().context()).get_denotation_repository()); }
+    auto get_state() const
+    {
+        const auto state = self().template member<&urd::record_of<V>::state>();
+        return get_repository(self().context()).get_state_repository().get_registered_state(state.index());
+    }
+    auto get_module() const noexcept { return self().template member<&urd::record_of<V>::module_>(); }
+    auto get_memory_state() const noexcept { return self().template member<&urd::record_of<V>::memory_state>(); }
+    auto get_registers() const noexcept { return self().template member<&urd::record_of<V>::registers>(); }
+    auto get_arguments() const noexcept { return self().template member<&urd::record_of<V>::arguments>(); }
 };
 
 /// Getters shared by the index and data views of a call stack frame.
@@ -41,13 +45,13 @@ private:
     const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_module() const noexcept { return urd::resolve(self().data().module_, get_repository(self().context()).get_program_repository()); }
+    auto get_module() const noexcept { return self().template member<&urd::record_of<V>::module_>(); }
     auto get_return_memory_state() const noexcept
-    { return urd::resolve(self().data().return_memory_state, get_repository(self().context()).get_program_repository()); }
-    auto get_registers() const noexcept { return urd::resolve(self().data().registers, get_repository(self().context()).get_denotation_repository()); }
-    auto get_arguments() const noexcept { return urd::resolve(self().data().arguments, get_repository(self().context()).get_denotation_repository()); }
+    { return self().template member<&urd::record_of<V>::return_memory_state>(); }
+    auto get_registers() const noexcept { return self().template member<&urd::record_of<V>::registers>(); }
+    auto get_arguments() const noexcept { return self().template member<&urd::record_of<V>::arguments>(); }
 
-    auto get_caller() const { return urd::resolve(self().data().caller, self().context()); }
+    auto get_caller() const { return self().template member<&urd::record_of<V>::caller>(); }
 };
 
 /// Getters shared by the index, data, and builder views of a program state. A builder may move when
@@ -59,19 +63,14 @@ private:
     const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_program() const noexcept { return urd::resolve(self().data().program, get_repository(self().context()).get_program_repository()); }
-    auto get_module_state() const noexcept { return urd::resolve(self().data().module_state, self().context()); }
+    auto get_program() const noexcept { return self().template member<&urd::record_of<V>::program>(); }
+    auto get_module_state() const noexcept { return self().template member<&urd::record_of<V>::module_state>(); }
     auto get_state() const { return get_module_state().get_state(); }
 
-    auto get_call_stack() const
-    {
-        const auto& call_stack = self().data().call_stack;
-        return call_stack ? std::optional(urd::resolve(*call_stack, self().context())) : std::nullopt;
-    }
+    auto get_call_stack() const { return self().template member<&urd::record_of<V>::call_stack>(); }
 };
 
-/// Borrows inline construction data: the state is not yet registered and the registers live in the
-/// formalism repository, so these two getters differ from the interned views.
+/// A module state being built: its planning state is not registered yet, so it is read as the builder's view.
 template<tyr::TaskKind Kind, typename V>
 struct urd::view_mixin<urd::builder<runir::kr::ps::ext::ModuleState<Kind>>, V> : urd::view_mixin<runir::kr::ps::ext::ModuleState<Kind>, V>
 {
@@ -79,8 +78,7 @@ private:
     const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_state() const { return urd::resolve(self().data().state, get_repository(self().context()).get_state_repository()); }
-    auto get_registers() const noexcept { return urd::resolve(self().data().registers, get_repository(self().context()).get_formalism_repository()); }
+    auto get_state() const { return self().template member<&urd::record_of<V>::state>(); }
 };
 
 namespace runir::kr::ps::ext
@@ -93,7 +91,6 @@ concept ModuleStateViewConcept = tyr::TaskKind<Kind> && requires(const std::remo
     { state.get_memory_state() } -> std::same_as<MemoryStateView>;
     { state.get_registers() } -> runir::kr::dl::semantics::RegisterValuesViewConcept;
     { state.get_arguments() } -> std::same_as<runir::kr::dl::semantics::CallArgumentsView>;
-    state.data();
     state.context();
 };
 
@@ -104,7 +101,6 @@ concept ProgramStateViewConcept = tyr::TaskKind<Kind> && requires(const std::rem
     { state.get_program() } -> std::same_as<ProgramView>;
     { state.get_module_state() } -> ModuleStateViewConcept<Kind>;
     { state.get_call_stack() } -> std::same_as<std::optional<CallStackView<Kind>>>;
-    state.data();
     state.context();
 };
 

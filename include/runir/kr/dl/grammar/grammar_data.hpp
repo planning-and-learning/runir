@@ -53,11 +53,27 @@ struct data<runir::kr::dl::grammar::GrammarTag>
         domain(domain_)
     {
     }
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
 
-    static constexpr auto cista_members() noexcept
+    static constexpr auto fields() noexcept
     {
-        return urd::Members<&data::index,
-                            &data::concept_start,
+        return urd::Fields<urd::field<"concept_start", &data::concept_start>,
+                           urd::field<"role_start", &data::role_start>,
+                           urd::field<"boolean_start", &data::boolean_start>,
+                           urd::field<"numerical_start", &data::numerical_start>,
+                           urd::field<"concept_derivation_rules", &data::concept_derivation_rules>,
+                           urd::field<"role_derivation_rules", &data::role_derivation_rules>,
+                           urd::field<"boolean_derivation_rules", &data::boolean_derivation_rules>,
+                           urd::field<"numerical_derivation_rules", &data::numerical_derivation_rules>,
+                           urd::field<"domain", &data::domain>> {};
+    }
+    static constexpr auto identifying_members() noexcept
+    {
+        return urd::Members<&data::concept_start,
                             &data::role_start,
                             &data::boolean_start,
                             &data::numerical_start,
@@ -67,9 +83,10 @@ struct data<runir::kr::dl::grammar::GrammarTag>
                             &data::numerical_derivation_rules,
                             &data::domain> {};
     }
-    static constexpr auto identifying_members() noexcept
+    static constexpr auto cista_members() noexcept
     {
-        return urd::Members<&data::concept_start,
+        return urd::Members<&data::index,
+                            &data::concept_start,
                             &data::role_start,
                             &data::boolean_start,
                             &data::numerical_start,

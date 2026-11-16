@@ -42,8 +42,7 @@ consteval bool scalar_denotation()
         data.value;
         builder.get();
         view.value();
-    } && std::same_as<decltype(std::declval<urd::data<T>&>().get_data()), decltype((std::declval<urd::data<T>&>().value))>
-           && std::same_as<decltype(std::declval<const urd::data<T>&>().get_data()), decltype((std::declval<const urd::data<T>&>().value))>;
+    };
 }
 
 template<typename... Ts>

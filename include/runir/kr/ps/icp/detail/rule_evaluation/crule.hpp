@@ -3,6 +3,7 @@
 
 #include "runir/kr/ps/icp/detail/rule_evaluation/context.hpp"
 
+#include <variant>
 #include <tyr/formalism/planning/action_view.hpp>
 #include <urd/elements/flat.hpp>
 
@@ -27,22 +28,20 @@ class RuleEvaluator<Kind, CruleTag>
 
     template<ygg::RowViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>> Binding>
     [[nodiscard]] std::optional<ygg::uint_t>
-    resolve(const urd::flat_variant<ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>& reference,
-            runir::kr::dl::semantics::RegisterValuesView registers,
-            Binding binding) const
+    resolve(const auto& reference, runir::kr::dl::semantics::RegisterValuesView registers, Binding binding) const
     {
-        return reference.apply(
-            [&]<typename Ref>(Ref ref) -> std::optional<ygg::uint_t>
+        return std::visit(
+            [&]<typename Ref>(const Ref& ref) -> std::optional<ygg::uint_t>
             {
                 if constexpr (std::same_as<Ref, ArgumentPosition>)
                     return static_cast<ygg::uint_t>(binding.value(ref.value));  // an object column: the object's index
                 else
                 {
-                    const auto reg = urd::resolve(ref, m_rule.context().get_dl_repository());
-                    const auto object = registers.at(reg.get_identifier());
+                    const auto object = registers.at(ref.get_identifier());
                     return object ? std::optional(ygg::uint_t(object.value().index().value)) : std::nullopt;
                 }
-            });
+            },
+            reference);
     }
 
 public:
@@ -114,10 +113,11 @@ public:
                                           const tyr::planning::LabeledNode<Kind>& candidate,
                                           HistoriesView<Kind> histories) const
     {
-        auto target = source.data();
-        target.state = candidate.node.get_state().index();
-        target.memory_state = m_rule.get_target().index();
-        target.histories = histories.index();
+        auto target = urd::data<ProgramState<Kind>>(source.get_program().index(),
+                                                    m_rule.get_target().index(),
+                                                    source.get_registers().index(),
+                                                    histories.index(),
+                                                    candidate.node.get_state().index());
         auto step = ProgramStep<IcpFamilyTag, Kind>(ProgramOutcome::APPLIED, workspace.intern(target), workspace.get_task_context());
         step.rule = m_variant;
         step.planning_successor = candidate.pack();

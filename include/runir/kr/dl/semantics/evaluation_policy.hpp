@@ -87,7 +87,7 @@ class DeltaEvaluationPolicy
                                               context.registers());
                 return m_evaluation.enter(context, m_delta, detail::get_database_workspace(context.get_workspace()));
             }();
-            m_state.assign(context.get_state().data());
+            m_state.assign(context.get_state());
             assign(m_registers, context.registers());
             m_has_previous = m_entered = true;
             return evaluation;

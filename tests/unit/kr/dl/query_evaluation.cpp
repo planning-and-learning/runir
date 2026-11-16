@@ -1,4 +1,5 @@
 #include "planning_fixtures.hpp"
+#include "record_copy.hpp"
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/detail/repository_instantiations.hpp"
@@ -49,14 +50,14 @@ concept SchemaRecord = requires(const D& data) { data.schema; };
 template<typename D>
 concept PlannedRecord = requires(const D& data) { data.plan; };
 template<typename D>
-concept KeyedPlanRecord = requires(const D& data) { data.plan.lhs_keys(); };
+concept KeyedPlanRecord = requires(const D& data) { data.plan.left_keys(); };
 template<typename D>
-concept TwoSidedPlanRecord = requires(const D& data) { data.plan.lhs_position(); };
+concept TwoSidedPlanRecord = requires(const D& data) { data.plan.left_position(); };
 template<typename D>
 concept OneSidedPlanRecord = requires(const D& data) { data.plan.position(); };
-/// A distance: the numerical with a middle operand, which keeps a plan.
+/// A distance: the numerical with an edges operand, which keeps a plan.
 template<typename V>
-concept DistanceView = requires(const V& view) { view.get_mid(); };
+concept DistanceView = requires(const V& view) { view.get_edges(); };
 using ObjectIndex = urd::index<tyr::formalism::Object>;
 using ColumnIndex = urd::index<ygg::Column>;
 
@@ -95,7 +96,7 @@ auto parse_query(const std::string& expression, tyr::formalism::planning::Domain
     const auto count = kr::ps::ext::dl::parse_numerical("(n_count " + expression + ")", domain, repository);
     return std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(
         std::get<urd::index_view<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant())
-            .get_arg());
+            .get_operand());
 }
 
 template<typename Data, typename Check>
@@ -350,7 +351,8 @@ void check_queries()
         argument_data.concept_arguments.push_back(a_set.index());
         const auto arguments = kr::dl::semantics::insert(denotations, argument_data).first;
         const auto& planning_state = initial.get_state();
-        const auto planning_builder = urd::builder<tyr::planning::State<Kind>> { planning_state.data() };
+        auto planning_builder = urd::builder<tyr::planning::State<Kind>>();
+        planning_builder.assign(planning_state);
         auto borrowed_context = kr::dl::semantics::StateEvaluationContext<Kind, tyr::planning::BuilderStateView<Kind>>(
             urd::resolve(planning_builder, planning_state.get_state_repository()),
             builder,
@@ -358,9 +360,9 @@ void check_queries()
             arguments,
             urd::resolve(registers, *search->task->get_repository()));
         static_assert(std::is_same_v<decltype(borrowed_context.arguments()), kr::dl::semantics::CallArgumentsView>);
-        EXPECT_EQ(&borrowed_context.arguments().data(), &arguments.data());
+        EXPECT_EQ(borrowed_context.arguments(), arguments);
         auto copied_context = borrowed_context;
-        EXPECT_EQ(&copied_context.arguments().data(), &arguments.data());
+        EXPECT_EQ(copied_context.arguments(), arguments);
         storage.reset_dynamic();
         EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(argument, borrowed_context), a_set);
         EXPECT_EQ(storage.get_denotation_repository(false).template size<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(), 0);
@@ -417,13 +419,13 @@ void check_distance_queries()
             {
                 if constexpr (DistanceView<Concrete>)
                 {
-                    const auto& plan = concrete.data().plan;
+                    const auto& plan = concrete.get_plan();
                     auto children = context.child_context();
                     const auto relation = [&](auto argument, auto columns)
                     { return std::visit([&](auto child) { return kr::dl::semantics::detail::evaluate_relation<Kind>(child, columns, children); }, argument); };
-                    const auto sources = relation(concrete.get_lhs(), plan.source_columns());
-                    const auto edges = relation(concrete.get_mid(), plan.edge_columns());
-                    const auto targets = relation(concrete.get_rhs(), plan.target_columns());
+                    const auto sources = relation(concrete.get_sources(), plan.source_columns());
+                    const auto edges = relation(concrete.get_edges(), plan.edge_columns());
+                    const auto targets = relation(concrete.get_targets(), plan.target_columns());
                     auto distances = urd::builder<ygg::Relation<ygg::Schema>>(plan.output_columns());
                     auto workspace = tyr::datalog::database::DistanceWorkspace(plan);
                     return tyr::datalog::database::min_distance(sources, edges, targets, plan, distances, workspace);
@@ -521,9 +523,13 @@ void check_distance_queries()
     using Distance = urd::data<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::DistanceTag>>;
     const auto source = kr::ps::ext::dl::parse_concept(R"((c_nominal "a"))", domain, *repository);
     const auto role = kr::ps::ext::dl::parse_role(edge, domain, *repository);
-    auto mismatched = Distance(source.index(), role.index(), parse_query(pair("c"), domain, *repository).index());
+    auto mismatched = Distance();
+    mismatched.sources = source.index();
+    mismatched.edges = role.index();
+    mismatched.targets = parse_query(pair("c"), domain, *repository).index();
     EXPECT_THROW(static_cast<void>(kr::dl::insert(*repository, mismatched)), std::invalid_argument);
-    mismatched = Distance(source.index(), parse_query(pair_edges, domain, *repository).index(), source.index());
+    mismatched.edges = parse_query(pair_edges, domain, *repository).index();
+    mismatched.targets = source.index();
     EXPECT_THROW(static_cast<void>(kr::dl::insert(*repository, mismatched)), std::invalid_argument);
 }
 
@@ -550,7 +556,7 @@ void check_cached_queries()
     const auto top = kr::dl::insert(repo, top_wrapper).first;
     using Lift = kr::dl::Query<kr::dl::QueryConceptTag>;
     auto lift_data = urd::data<Lift>();
-    lift_data.arg = top.index();
+    lift_data.operand = top.index();
     EXPECT_THROW(static_cast<void>(kr::dl::insert(repo, lift_data)), std::invalid_argument);
     EXPECT_EQ(repo.template size<Lift>(), 0);
     lift_data.columns.push_back(x);
@@ -564,7 +570,7 @@ void check_cached_queries()
     query_data.variant = lift.index();
     const auto query = kr::dl::insert(repo, query_data).first;
     auto rename_data = urd::data<kr::dl::Query<kr::dl::QueryRenameTag>>();
-    rename_data.arg = query.index();
+    rename_data.operand = query.index();
     rename_data.columns.push_back(renamed_column);
     query_data.variant = kr::dl::insert(repo, rename_data).first.index();
     const auto renamed = kr::dl::insert(repo, query_data).first;
@@ -575,9 +581,9 @@ void check_cached_queries()
     const auto check_inferred_schema = [&](auto& data)
     {
         const auto concrete = kr::dl::insert(repo, data).first;
-        EXPECT_EQ(concrete.data().columns, expected_columns);
+        EXPECT_EQ(repo[concrete.index()].columns, expected_columns);
 
-        check_relocated_data(concrete.data(),
+        check_relocated_data(repo[concrete.index()],
                              [&](const auto& decoded)
                              {
                                  EXPECT_EQ(decoded.columns, expected_columns);
@@ -591,14 +597,14 @@ void check_cached_queries()
                                  }
                                  if constexpr (KeyedPlanRecord<std::remove_cvref_t<decltype(data)>>)
                                  {
-                                     EXPECT_TRUE(std::ranges::equal(decoded.plan.lhs_keys(), data.plan.lhs_keys()));
-                                     EXPECT_TRUE(std::ranges::equal(decoded.plan.rhs_keys(), data.plan.rhs_keys()));
-                                     EXPECT_TRUE(std::ranges::equal(decoded.plan.rhs_payload(), data.plan.rhs_payload()));
+                                     EXPECT_TRUE(std::ranges::equal(decoded.plan.left_keys(), data.plan.left_keys()));
+                                     EXPECT_TRUE(std::ranges::equal(decoded.plan.right_keys(), data.plan.right_keys()));
+                                     EXPECT_TRUE(std::ranges::equal(decoded.plan.right_payload(), data.plan.right_payload()));
                                  }
                                  if constexpr (TwoSidedPlanRecord<std::remove_cvref_t<decltype(decoded)>>)
                                  {
-                                     EXPECT_EQ(decoded.plan.lhs_position(), 1);
-                                     EXPECT_EQ(decoded.plan.rhs_position(), 0);
+                                     EXPECT_EQ(decoded.plan.left_position(), 1);
+                                     EXPECT_EQ(decoded.plan.right_position(), 0);
                                  }
                                  if constexpr (OneSidedPlanRecord<std::remove_cvref_t<decltype(decoded)>>)
                                  {
@@ -607,7 +613,7 @@ void check_cached_queries()
                              });
 
         // Derived columns, plans and positions neither change identity nor override child schemas.
-        auto stale = data;
+        auto stale = runir::tests::copy_fields(data);
         stale.columns.clear();
         stale.columns.push_back(x);
         stale.columns.push_back(x);
@@ -615,7 +621,7 @@ void check_cached_queries()
             stale.schema.clear();
         if constexpr (PlannedRecord<std::remove_cvref_t<decltype(stale)>>)
             stale.plan = {};
-        EXPECT_EQ(stale, concrete.data());
+        EXPECT_EQ(stale, repo[concrete.index()]);
         const auto [same, stale_created] = ygg::formalism::insert(repo, stale);
         EXPECT_FALSE(stale_created);
         EXPECT_EQ(same.index(), concrete.index());
@@ -630,8 +636,8 @@ void check_cached_queries()
         }
         if constexpr (TwoSidedPlanRecord<std::remove_cvref_t<decltype(stale)>>)
         {
-            EXPECT_EQ(stale.plan.lhs_position(), 1);
-            EXPECT_EQ(stale.plan.rhs_position(), 0);
+            EXPECT_EQ(stale.plan.left_position(), 1);
+            EXPECT_EQ(stale.plan.right_position(), 0);
         }
         if constexpr (OneSidedPlanRecord<std::remove_cvref_t<decltype(stale)>>)
         {
@@ -648,8 +654,8 @@ void check_cached_queries()
         }
         if constexpr (TwoSidedPlanRecord<std::remove_cvref_t<decltype(stale)>>)
         {
-            EXPECT_EQ(stale.plan.lhs_position(), 0);
-            EXPECT_EQ(stale.plan.rhs_position(), 0);
+            EXPECT_EQ(stale.plan.left_position(), 0);
+            EXPECT_EQ(stale.plan.right_position(), 0);
         }
         if constexpr (OneSidedPlanRecord<std::remove_cvref_t<decltype(stale)>>)
         {
@@ -662,24 +668,24 @@ void check_cached_queries()
         return wrapper;
     };
     auto join_data = urd::data<kr::dl::Query<kr::dl::QueryJoinTag>>();
-    join_data.lhs = renamed.index();
-    join_data.rhs = query.index();
+    join_data.left_operand = renamed.index();
+    join_data.right_operand = query.index();
     const auto joined = check_inferred_schema(join_data);
-    join_data.lhs = joined.index();
+    join_data.left_operand = joined.index();
     check_inferred_schema(join_data);  // The shared x column is not appended twice.
     check_relocated_data(join_data,
                          [&](const auto& decoded)
                          {
-                             urd::builder<ygg::Relation<ygg::Schema>> lhs(decoded.plan.lhs_columns()), rhs(decoded.plan.rhs_columns()),
+                             urd::builder<ygg::Relation<ygg::Schema>> left_operand(decoded.plan.left_columns()), right_operand(decoded.plan.right_columns()),
                                  result(decoded.plan.output_columns());
-                             lhs.insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(10)),
-                                                                    ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(20)) });
-                             lhs.insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(30)),
-                                                                    ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(40)) });
-                             rhs.insert(std::array<ygg::Value, 1> { ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(20)) });
+                             left_operand.insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(10)),
+                                                                             ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(20)) });
+                             left_operand.insert(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(30)),
+                                                                             ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(40)) });
+                             right_operand.insert(std::array<ygg::Value, 1> { ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(20)) });
                              tyr::datalog::database::Workspace scratch;
                              const auto layer = ygg::FreeRelationRepository();
-                             tyr::datalog::database::join(layer.view(lhs), layer.view(rhs), decoded.plan, result, scratch);
+                             tyr::datalog::database::join(layer.view(left_operand), layer.view(right_operand), decoded.plan, result, scratch);
                              EXPECT_EQ(result.size(), 1);
                              EXPECT_TRUE(result.contains(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(ygg::uint_t(10)),
                                                                                      ygg::encode_value<ygg::uint_t>(ygg::uint_t(20)) }));
@@ -688,7 +694,7 @@ void check_cached_queries()
     const auto check_projection_plan = [&](auto& data, auto positions)
     {
         const auto concrete = kr::dl::insert(repo, data).first;
-        check_relocated_data(concrete.data(),
+        check_relocated_data(repo[concrete.index()],
                              [&](const auto& decoded)
                              {
                                  EXPECT_TRUE(std::ranges::equal(decoded.plan.positions(), positions, {}, slice_position));
@@ -706,9 +712,9 @@ void check_cached_queries()
                                  for (size_t i = 0; i < positions.size(); ++i)
                                      EXPECT_EQ(ObjectIndex(ygg::decode_value<ygg::uint_t>(layer.view(result).row(0).value(i))), ObjectIndex(10 + positions[i]));
                              });
-        auto stale = data;
+        auto stale = runir::tests::copy_fields(data);
         stale.plan = {};
-        EXPECT_EQ(stale, concrete.data());
+        EXPECT_EQ(stale, repo[concrete.index()]);
         const auto [same, stale_created] = kr::dl::insert(repo, stale);
         EXPECT_FALSE(stale_created);
         EXPECT_EQ(same.index(), concrete.index());
@@ -719,30 +725,30 @@ void check_cached_queries()
         EXPECT_TRUE(stale.plan.positions().empty());
     };
     auto project_data = urd::data<kr::dl::Query<kr::dl::QueryProjectTag>>();
-    project_data.arg = joined.index();
+    project_data.operand = joined.index();
     project_data.columns.push_back(x);
     project_data.columns.push_back(renamed_column);
     check_projection_plan(project_data, std::array<size_t, 2> { 1, 0 });
     auto role_projection_data = urd::data<kr::dl::QueryProjection<kr::dl::RoleTag>>();
-    role_projection_data.arg = project_data.arg;
+    role_projection_data.operand = project_data.operand;
     role_projection_data.columns = project_data.columns;
     check_projection_plan(role_projection_data, std::array<size_t, 2> { 1, 0 });
 
     auto union_data = urd::data<kr::dl::Query<kr::dl::QueryUnionTag>>();
-    union_data.lhs = joined.index();
-    union_data.rhs = joined.index();
+    union_data.left_operand = joined.index();
+    union_data.right_operand = joined.index();
     check_inferred_schema(union_data);
     auto difference_data = urd::data<kr::dl::Query<kr::dl::QueryDifferenceTag>>();
-    difference_data.lhs = joined.index();
-    difference_data.rhs = joined.index();
+    difference_data.left_operand = joined.index();
+    difference_data.right_operand = joined.index();
     check_inferred_schema(difference_data);
     auto equal_data = urd::data<kr::dl::Query<kr::dl::QuerySelectEqualTag>>();
-    equal_data.arg = joined.index();
-    equal_data.lhs_column = x;
-    equal_data.rhs_column = renamed_column;
+    equal_data.operand = joined.index();
+    equal_data.left_column = x;
+    equal_data.right_column = renamed_column;
     check_inferred_schema(equal_data);
     auto value_data = urd::data<kr::dl::Query<kr::dl::QuerySelectValueTag>>();
-    value_data.arg = joined.index();
+    value_data.operand = joined.index();
     value_data.column = x;
     value_data.object = search->task->get_domain().get_domain().get_constants()[0].index();
     check_inferred_schema(value_data);
@@ -755,7 +761,7 @@ void check_cached_queries()
     EXPECT_TRUE(caches.find(true, top).has_value());
 
     auto projection_data = urd::data<kr::dl::QueryProjection<kr::dl::ConceptTag>>();
-    projection_data.arg = renamed.index();
+    projection_data.operand = renamed.index();
     projection_data.columns.push_back(renamed_column);
     check_projection_plan(projection_data, std::array<size_t, 1> { 0 });
     auto projection_wrapper = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(kr::dl::insert(repo, projection_data).first.index());
@@ -763,19 +769,19 @@ void check_cached_queries()
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(projection, context).value().count(), 3);
 
     const auto held = kr::dl::semantics::evaluate<tyr::GroundTag>(renamed, context);
-    const auto held_storage = std::vector(held.data().rows.begin(), held.data().rows.end());
+    const auto held_storage = std::vector(held.get_rows().begin(), held.get_rows().end());
     const auto* held_columns = held.columns().data();
     EXPECT_EQ(held.columns()[0].label, ColumnIndex(ygg::uint_t(renamed_column.value)));
     EXPECT_NE(held_columns, renamed.get_schema().data());
     EXPECT_TRUE(std::ranges::equal(held.columns(), renamed.get_schema()));
-    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).data().rows, held_storage));
-    auto nested_rename_data = rename_data;
-    nested_rename_data.arg = renamed.index();
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).get_rows(), held_storage));
+    auto nested_rename_data = runir::tests::copy_fields(rename_data);
+    nested_rename_data.operand = renamed.index();
     nested_rename_data.columns[0] = x;
     query_data.variant = kr::dl::insert(repo, nested_rename_data).first.index();
     const auto nested = kr::dl::semantics::evaluate<tyr::GroundTag>(kr::dl::insert(repo, query_data).first, context);
     EXPECT_EQ(nested.columns()[0].label, ColumnIndex(ygg::uint_t(x.value)));
-    EXPECT_TRUE(std::ranges::equal(nested.data().rows, held_storage));
+    EXPECT_TRUE(std::ranges::equal(nested.get_rows(), held_storage));
     EXPECT_EQ(nested.size(), held.size());
     EXPECT_EQ(held.columns()[0].label, ColumnIndex(ygg::uint_t(renamed_column.value)));
     // Owned labels and shared rows remain valid during repository/cache growth.
@@ -787,7 +793,7 @@ void check_cached_queries()
         query_data.variant = kr::dl::insert(repo, rename_data).first.index();
         const auto extra_query = kr::dl::insert(repo, query_data).first;
         const auto other = kr::dl::semantics::evaluate<tyr::GroundTag>(extra_query, context);
-        EXPECT_TRUE(std::ranges::equal(other.data().rows, held_storage));
+        EXPECT_TRUE(std::ranges::equal(other.get_rows(), held_storage));
         EXPECT_EQ(held.size(), 3);
         EXPECT_EQ(held.columns().data(), held_columns);
         EXPECT_EQ(held.columns()[0].label, ColumnIndex(ygg::uint_t(renamed_column.value)));
@@ -802,7 +808,7 @@ void check_cached_queries()
     column_data.name = "other";
     const auto other_column = kr::dl::insert(other_repo, column_data).first.index();
     top_wrapper.variant = kr::dl::insert(other_repo, top_data).first.index();
-    lift_data.arg = kr::dl::insert(other_repo, top_wrapper).first.index();
+    lift_data.operand = kr::dl::insert(other_repo, top_wrapper).first.index();
     lift_data.columns[0] = other_column;
     query_data.variant = kr::dl::insert(other_repo, lift_data).first.index();
     const auto other_query = kr::dl::insert(other_repo, query_data).first;
@@ -815,9 +821,9 @@ void check_cached_queries()
     EXPECT_EQ(cached.size(), 3);
     EXPECT_EQ(other_cached.size(), 3);
     EXPECT_NE(cached, other_cached);
-    EXPECT_TRUE(std::ranges::equal(cached.data().rows, other_cached.data().rows));
-    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).data().rows, cached.data().rows));
-    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(other_query, context).data().rows, other_cached.data().rows));
+    EXPECT_TRUE(std::ranges::equal(cached.get_rows(), other_cached.get_rows()));
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).get_rows(), cached.get_rows()));
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(other_query, context).get_rows(), other_cached.get_rows()));
 
     // Clear invalidates the borrowed views; reevaluation reconstructs rows and schemas.
     storage.reset_all();
@@ -826,7 +832,7 @@ void check_cached_queries()
     const auto rebuilt = kr::dl::semantics::evaluate<tyr::GroundTag>(renamed, context);
     EXPECT_EQ(rebuilt.size(), 3);
     EXPECT_EQ(rebuilt.columns()[0].label, ColumnIndex(ygg::uint_t(renamed_column.value)));
-    EXPECT_TRUE(std::ranges::equal(rebuilt.data().rows, kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).data().rows));
+    EXPECT_TRUE(std::ranges::equal(rebuilt.get_rows(), kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).get_rows()));
     storage.reset_all();
     repo.clear();
 }
@@ -880,21 +886,18 @@ void check_query_cache_across_states()
     const auto goal_rows = kr::dl::semantics::evaluate<Kind>(goal, context);
     EXPECT_EQ(fixed_rows.size(), 2);
     EXPECT_EQ(goal_rows.size(), 1);
-    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(fixed, context).data().rows, fixed_rows.data().rows));
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(fixed, context).get_rows(), fixed_rows.get_rows()));
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(derived, context).size(), 4);
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(ready, context).size(), 1);
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(count, context).value(), 4);
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(fixed_count, context).value(), 2);
-    // A fully static join caches its result without retaining an additional index.
+    // A fully static join caches its result.
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(static_join, context).size(), fixed_rows.size());
-    EXPECT_EQ(caches.get_static_join_indexes().size(), 0);
     EXPECT_TRUE(check_mixed_joins(context));
-    // Opposite join orientations share one index over the same static rows and keys.
-    EXPECT_EQ(caches.get_static_join_indexes().size(), 1);
 
     const auto successors = search->successor_generator->get_successor_nodes(initial, *search->state_repository, *search->axiom_evaluator);
     ASSERT_FALSE(successors.empty());
-    // Only removing (triple a b c) empties the join; the static index survives state changes.
+    // Only removing (triple a b c) empties the join.
     auto empty_joins = size_t { 0 };
     for (const auto& successor : successors)
     {
@@ -902,7 +905,6 @@ void check_query_cache_across_states()
             kr::dl::semantics::StateEvaluationContext<Kind>(successor.get_state(), builder, storage, context.arguments(), context.registers());
         storage.reset_dynamic();
         empty_joins += !check_mixed_joins(successor_context);
-        EXPECT_EQ(caches.get_static_join_indexes().size(), 1);
     }
     EXPECT_EQ(empty_joins, 1);
     auto next = kr::dl::semantics::StateEvaluationContext<Kind>(successors.front().get_state(),
@@ -915,8 +917,8 @@ void check_query_cache_across_states()
     EXPECT_EQ(caches.template size<kr::dl::NumericalTag>(false), 0);
     EXPECT_TRUE(caches.find_query(true, fixed).has_value());
     EXPECT_TRUE(caches.find(true, fixed_count).has_value());
-    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(fixed, next).data().rows, fixed_rows.data().rows));
-    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(goal, next).data().rows, goal_rows.data().rows));
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(fixed, next).get_rows(), fixed_rows.get_rows()));
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(goal, next).get_rows(), goal_rows.get_rows()));
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(derived, next).size(), 3);
     EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(ready, next).empty());
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(count, next).value(), 3);
@@ -956,7 +958,6 @@ void check_query_cache_across_states()
     EXPECT_EQ(retained.count(), 4);
 
     storage.reset_all();
-    EXPECT_EQ(caches.get_static_join_indexes().size(), 0);
     EXPECT_TRUE(caches.get_queries(true).empty());
     EXPECT_EQ(caches.template size<kr::dl::NumericalTag>(true), 0);
     EXPECT_TRUE(caches.get_queries(false).empty());
@@ -964,9 +965,8 @@ void check_query_cache_across_states()
     EXPECT_EQ(storage.get_denotation_repository(false).template size<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(), 0);
     EXPECT_EQ(storage.get_denotation_repository(true).template size<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(), 0);
     EXPECT_EQ(retained.count(), 4);
-    // A full clear releases indexed rows as well; reevaluation must rebuild the shared index.
+    // A full clear releases the cached rows as well; reevaluation rebuilds them.
     EXPECT_TRUE(check_mixed_joins(context));
-    EXPECT_EQ(caches.get_static_join_indexes().size(), 1);
     storage.reset_all();
     EXPECT_TRUE(caches.get_queries(false).empty());
     EXPECT_EQ(caches.template size<kr::dl::NumericalTag>(false), 0);
@@ -1036,7 +1036,7 @@ void check_query_cache_across_bindings()
     argument_values.concept_arguments[0] = b_set.index();
     auto rebound = make_bound();
     storage.reset_dynamic();
-    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(fixed, rebound).data().rows, fixed_rows.data().rows));
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(fixed, rebound).get_rows(), fixed_rows.get_rows()));
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(register_count, rebound).value(), 0);
     EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(argument, rebound).empty());
     EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(role_register, rebound).empty());
@@ -1349,13 +1349,13 @@ ygg::uint_t reference_distance(kr::dl::ConstructorView<kr::dl::NumericalTag> num
         {
             if constexpr (DistanceView<Concrete>)
             {
-                const auto& plan = concrete.data().plan;
+                const auto& plan = concrete.get_plan();
                 auto children = context.child_context();
                 const auto relation = [&](auto argument, auto columns)
                 { return std::visit([&](auto child) { return kr::dl::semantics::detail::evaluate_relation<Kind>(child, columns, children); }, argument); };
-                const auto sources = relation(concrete.get_lhs(), plan.source_columns());
-                const auto edges = relation(concrete.get_mid(), plan.edge_columns());
-                const auto targets = relation(concrete.get_rhs(), plan.target_columns());
+                const auto sources = relation(concrete.get_sources(), plan.source_columns());
+                const auto edges = relation(concrete.get_edges(), plan.edge_columns());
+                const auto targets = relation(concrete.get_targets(), plan.target_columns());
                 auto distances = urd::builder<ygg::Relation<ygg::Schema>>(plan.output_columns());
                 auto workspace = tyr::datalog::database::DistanceWorkspace(plan);
                 return tyr::datalog::database::min_distance(sources, edges, targets, plan, distances, workspace);
@@ -1464,12 +1464,12 @@ TEST(RunirQueries, StaticnessIsInferredAndSerializedWithoutChangingIdentity)
     const auto check_metadata = [&](auto expression, bool expected)
     {
         EXPECT_EQ(expression.is_static(), expected);
-        check_relocated_data(expression.data(), [&](const auto& decoded) { EXPECT_EQ(decoded.is_static, expected); });
-        auto stale = expression.data();
+        check_relocated_data((*repository)[expression.index()], [&](const auto& decoded) { EXPECT_EQ(decoded.is_static, expected); });
+        auto stale = (*repository)[expression.index()];
         stale.is_static = !expected;
-        EXPECT_EQ(stale, expression.data());
+        EXPECT_EQ(stale, (*repository)[expression.index()]);
         using Data = std::remove_cvref_t<decltype(stale)>;
-        EXPECT_EQ(urd::Hash<Data>()(stale), urd::Hash<Data>()(expression.data()));
+        EXPECT_EQ(urd::Hash<Data>()(stale), urd::Hash<Data>()((*repository)[expression.index()]));
         const auto [same, created] = ygg::formalism::insert(*repository, stale);
         EXPECT_FALSE(created);
         EXPECT_EQ(same.index(), expression.index());
@@ -1525,9 +1525,9 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     const auto original_rows = kr::dl::semantics::evaluate<tyr::GroundTag>(query, context);
     const auto renamed_rows = kr::dl::semantics::evaluate<tyr::GroundTag>(renamed, context);
     const auto nested_rows = kr::dl::semantics::evaluate<tyr::GroundTag>(nested, context);
-    EXPECT_TRUE(std::ranges::equal(renamed_rows.data().rows, original_rows.data().rows));
-    EXPECT_TRUE(std::ranges::equal(nested_rows.data().rows, original_rows.data().rows));
-    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(renamed, context).data().rows, original_rows.data().rows));
+    EXPECT_TRUE(std::ranges::equal(renamed_rows.get_rows(), original_rows.get_rows()));
+    EXPECT_TRUE(std::ranges::equal(nested_rows.get_rows(), original_rows.get_rows()));
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(renamed, context).get_rows(), original_rows.get_rows()));
     EXPECT_TRUE(std::ranges::equal(original_rows.columns(), query.get_schema()));
     EXPECT_TRUE(std::ranges::equal(renamed_rows.columns(), renamed.get_schema()));
     EXPECT_TRUE(std::ranges::equal(nested_rows.columns(), nested.get_schema()));
@@ -1544,7 +1544,7 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).columns(), query.get_schema()));
 
     auto raw_rename_data = urd::data<kr::dl::Query<kr::dl::QueryRenameTag>>();
-    raw_rename_data.arg = query.index();
+    raw_rename_data.operand = query.index();
     for (const auto column : query.get_columns())
         raw_rename_data.columns.push_back(column.index());
     std::swap(raw_rename_data.columns.front(), raw_rename_data.columns.back());
@@ -1552,18 +1552,18 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     const auto raw = repository->insert(raw_wrapper).first;
     EXPECT_FALSE(raw.is_static());
     const auto raw_rows = kr::dl::semantics::evaluate<tyr::GroundTag>(raw, context);
-    EXPECT_TRUE(std::ranges::equal(raw_rows.data().rows, original_rows.data().rows));
+    EXPECT_TRUE(std::ranges::equal(raw_rows.get_rows(), original_rows.get_rows()));
     EXPECT_TRUE(caches.find_query(false, raw).has_value());
 
     auto raw_nested_data = urd::data<kr::dl::Query<kr::dl::QueryRenameTag>>();
-    raw_nested_data.arg = raw.index();
+    raw_nested_data.operand = raw.index();
     for (const auto column : nested.get_columns())
         raw_nested_data.columns.push_back(column.index());
     auto raw_nested_wrapper = urd::data<kr::dl::Query<>>(kr::dl::insert(*repository, raw_nested_data).first.index());
     const auto raw_nested = repository->insert(raw_nested_wrapper).first;
     EXPECT_FALSE(raw_nested.is_static());
     const auto raw_nested_rows = kr::dl::semantics::evaluate<tyr::GroundTag>(raw_nested, context);
-    EXPECT_TRUE(std::ranges::equal(raw_nested_rows.data().rows, original_rows.data().rows));
+    EXPECT_TRUE(std::ranges::equal(raw_nested_rows.get_rows(), original_rows.get_rows()));
     EXPECT_TRUE(std::ranges::equal(raw_nested_rows.columns(), raw_nested.get_schema()));
     EXPECT_TRUE(std::ranges::equal(raw_rows.columns(), raw.get_schema()));
     EXPECT_TRUE(std::ranges::equal(original_rows.columns(), query.get_schema()));
@@ -1576,12 +1576,12 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     const auto rebuilt_nested = kr::dl::semantics::evaluate<tyr::GroundTag>(raw_nested, context);
     EXPECT_EQ(rebuilt_nested.size(), 2);
     EXPECT_TRUE(std::ranges::equal(rebuilt_nested.columns(), raw_nested.get_schema()));
-    EXPECT_TRUE(std::ranges::equal(rebuilt_nested.data().rows, kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).data().rows));
+    EXPECT_TRUE(std::ranges::equal(rebuilt_nested.get_rows(), kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).get_rows()));
     EXPECT_TRUE(caches.find_query(false, raw_nested).has_value());
     const auto rebuilt = kr::dl::semantics::evaluate<tyr::GroundTag>(raw, context);
     EXPECT_EQ(rebuilt.size(), 2);
     EXPECT_TRUE(std::ranges::equal(rebuilt.columns(), raw.get_schema()));
-    EXPECT_TRUE(std::ranges::equal(rebuilt.data().rows, kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).data().rows));
+    EXPECT_TRUE(std::ranges::equal(rebuilt.get_rows(), kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).get_rows()));
     EXPECT_TRUE(caches.find_query(false, raw).has_value());
 }
 
@@ -1614,7 +1614,7 @@ TEST(RunirQueries, QueryResultIdentityIncludesOrderedSchemaAndUnorderedRows)
     const auto renamed = kr::dl::semantics::rename(denotations, first, renamed_columns, dl_builder);
     renamed_columns[0].label = ColumnIndex(99);
     EXPECT_EQ(renamed.columns()[0].label, ColumnIndex(6));
-    EXPECT_TRUE(std::ranges::equal(renamed.data().rows, first.data().rows));
+    EXPECT_TRUE(std::ranges::equal(renamed.get_rows(), first.get_rows()));
     EXPECT_NE(renamed, first);
     EXPECT_EQ(kr::dl::semantics::rename(denotations,
                                         renamed,

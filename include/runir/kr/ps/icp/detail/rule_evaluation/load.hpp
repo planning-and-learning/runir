@@ -52,7 +52,7 @@ public:
             if (stop())
                 return false;
             runir::kr::dl::semantics::assign(*registers, source.get_registers());
-            runir::kr::dl::semantics::assign_register(*registers, m_rule.get_register().get_identifier(), value);
+            runir::kr::dl::semantics::assign_register(*registers, m_rule.get_slot().get_identifier(), value);
             const auto target_registers = insert(*task->dl_denotation_repository, *registers).first;
             environment.reset_target();
             auto transition = context.make_dl_transition_context(source, target_registers);
@@ -61,10 +61,11 @@ public:
             const auto histories = workspace.update_histories(source, transition, std::nullopt, stop);
             if (!histories)
                 continue;
-            auto target = source.data();
-            target.memory_state = m_rule.get_target().index();
-            target.registers = target_registers.index();
-            target.histories = histories->index();
+            auto target = urd::data<ProgramState<Kind>>(source.get_program().index(),
+                                                        m_rule.get_target().index(),
+                                                        target_registers.index(),
+                                                        histories->index(),
+                                                        source.get_state().index());
             auto step = ProgramStep<IcpFamilyTag, Kind>(ProgramOutcome::APPLIED, workspace.intern(target), task);
             step.rule = m_variant;
             if (!output(std::move(step)))

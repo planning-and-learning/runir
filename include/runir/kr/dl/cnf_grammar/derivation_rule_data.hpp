@@ -4,6 +4,7 @@
 #include "runir/kr/dl/cnf_grammar/declarations.hpp"
 
 #include <tuple>
+#include <type_traits>
 #include <urd/elements/flat.hpp>
 #include <utility>
 
@@ -24,9 +25,15 @@ struct data<runir::kr::dl::cnf_grammar::DerivationRule<Category>>
         rhs(std::move(rhs_))
     {
     }
+    static constexpr bool copyable() noexcept
+    {
+        static_assert(std::is_trivially_copyable_v<data>, "a copyable record is trivially copyable");
+        return true;
+    }
 
-    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::lhs, &data::rhs> {}; }
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"lhs", &data::lhs>, urd::field<"rhs", &data::rhs>> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::lhs, &data::rhs> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::lhs, &data::rhs> {}; }
 };
 
 }

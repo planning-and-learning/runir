@@ -71,7 +71,9 @@ struct QueryAtomicEvaluator : AtomicQueryEvaluator<Fact>
     }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>&, Context& context)
-    { AtomicQueryEvaluator<Fact>::template initialize<Kind>(context.get_state()); }
+    {
+        AtomicQueryEvaluator<Fact>::template initialize<Kind>(context.get_state());
+    }
     void update(EvaluationGraph<Kind>&, const Delta& delta, tyr::datalog::database::Workspace&)
     {
         if constexpr (std::same_as<Fact, tyr::formalism::FluentTag>)
@@ -93,9 +95,13 @@ struct QueryProjectionEvaluator : tyr::datalog::database::incremental::Projectio
     }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context)
-    { tyr::datalog::database::incremental::ProjectionEvaluator::initialize(graph.result(argument), context.get_workspace().get_database_workspace()); }
+    {
+        tyr::datalog::database::incremental::ProjectionEvaluator::initialize(graph.result(argument), context.get_workspace().get_database_workspace());
+    }
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace& workspace)
-    { tyr::datalog::database::incremental::ProjectionEvaluator::update(graph.change(argument).change(), workspace); }
+    {
+        tyr::datalog::database::incremental::ProjectionEvaluator::update(graph.change(argument).change(), workspace);
+    }
 };
 
 template<tyr::TaskKind Kind>
@@ -115,9 +121,13 @@ struct QueryJoinEvaluator : tyr::datalog::database::incremental::JoinEvaluator
     }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context)
-    { tyr::datalog::database::incremental::JoinEvaluator::initialize(graph.result(lhs), graph.result(rhs), context.get_workspace().get_database_workspace()); }
+    {
+        tyr::datalog::database::incremental::JoinEvaluator::initialize(graph.result(lhs), graph.result(rhs), context.get_workspace().get_database_workspace());
+    }
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace& workspace)
-    { tyr::datalog::database::incremental::JoinEvaluator::update(graph.change(lhs).change(), graph.change(rhs).change(), workspace); }
+    {
+        tyr::datalog::database::incremental::JoinEvaluator::update(graph.change(lhs).change(), graph.change(rhs).change(), workspace);
+    }
 };
 
 template<tyr::TaskKind Kind>
@@ -166,7 +176,9 @@ struct QueryFromDenotationEvaluator : QueryValue
     }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
-    { semantics::detail::insert_denotation_rows<Category>(graph.result(argument), this->clear()); }
+    {
+        semantics::detail::insert_denotation_rows<Category>(graph.result(argument), this->clear());
+    }
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     {
         this->delta.clear();
@@ -196,12 +208,13 @@ struct QuerySetCombinationEvaluator : QueryValue
     template<tyr::datalog::database::RelationViewConcept Rows, std::invocable<decltype(std::declval<const Rows&>().row(0)), bool> Emit>
     void evaluate_rows(EvaluationGraph<Kind>& graph, const Rows& rows, Emit emit)
     {
-        const auto left = graph.result(lhs);
-        const auto right = graph.result(rhs);
+        const auto left_operand = graph.result(lhs);
+        const auto right_operand = graph.result(rhs);
         for (size_t i = 0; i < rows.size(); ++i)
         {
             const auto row = rows.row(i);
-            const auto present = std::same_as<Tag, QueryUnionTag> ? left.contains(row) || right.contains(row) : left.contains(row) && !right.contains(row);
+            const auto present = std::same_as<Tag, QueryUnionTag> ? left_operand.contains(row) || right_operand.contains(row) :
+                                                                    left_operand.contains(row) && !right_operand.contains(row);
             // Children hold their final contents: a row mentioned by both
             // deltas must not produce a temporary removal/addition pair.
             emit(row, present);
@@ -253,13 +266,13 @@ struct QuerySelectionEvaluator : QueryValue
             const auto row = rows.row(i);
             if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
             {
-                const auto& plan = expression.data().plan;
-                if (row.value(plan.lhs_position()) != row.value(plan.rhs_position()))
+                const auto& plan = expression.get_plan();
+                if (row.value(plan.left_position()) != row.value(plan.right_position()))
                     continue;
             }
             else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
             {
-                const auto& plan = expression.data().plan;
+                const auto& plan = expression.get_plan();
                 if (row.value(plan.position()) != plan.value())
                     continue;
             }

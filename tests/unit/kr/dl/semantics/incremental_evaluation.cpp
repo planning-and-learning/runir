@@ -109,7 +109,7 @@ void check_planning_graph(tyr::planning::StateView<Kind> source, tyr::planning::
             auto concept_data = urd::data<kr::dl::Constructor<kr::dl::ConceptTag>>(kr::dl::insert(*constructors, atom).first.index());
             const auto concept_ = kr::dl::insert(*constructors, concept_data).first;
             auto query_data = urd::data<kr::dl::Query<kr::dl::QueryConceptTag>> {};
-            query_data.arg = concept_.index();
+            query_data.operand = concept_.index();
             query_data.columns.push_back(x);
             auto query_wrapper = urd::data<kr::dl::Query<>>(kr::dl::insert(*constructors, query_data).first.index());
             const auto query = kr::dl::insert(*constructors, query_wrapper).first;
@@ -300,7 +300,7 @@ void check_incremental_evaluation()
         const auto retained_view = initial.get_result();
         const ygg::uint_t* blocks = nullptr;
         if constexpr (kr::dl::ConceptOrRoleTag<Category>)
-            blocks = retained_view.data().blocks.data();
+            blocks = retained_view.get_blocks().data();
         expect_no_delta(initial);
         expect_unpublished();
         compare_full(initial, initial_context);
@@ -314,7 +314,7 @@ void check_incremental_evaluation()
             // get_delta() and changed() throw unless the root was updated from the delta.
             if constexpr (kr::dl::ConceptOrRoleTag<Category>)
             {
-                EXPECT_EQ(state.get_result().data().blocks.data(), blocks);
+                EXPECT_EQ(state.get_result().get_blocks().data(), blocks);
                 EXPECT_EQ(elements<Category>(retained_view), snapshot(state.get_result()));
                 EXPECT_TRUE(std::ranges::is_permutation(state.get_delta().added, difference(snapshot(state.get_result()), before)));
                 EXPECT_TRUE(std::ranges::is_permutation(state.get_delta().removed, difference(before, snapshot(state.get_result()))));
@@ -347,7 +347,8 @@ void check_incremental_evaluation()
         EXPECT_EQ(before_reset, current);
         storage.reset_all();
         EXPECT_EQ(snapshot(retained_view), before_reset);
-        const auto borrowed_builder = urd::builder<tyr::planning::State<Kind>> { nodes.back().get_state().data() };
+        auto borrowed_builder = urd::builder<tyr::planning::State<Kind>>();
+        borrowed_builder.assign(nodes.back().get_state());
         auto final_context = context_for(urd::resolve(borrowed_builder, *search->state_repository), 2, other_arguments);
         auto final_state = evaluator.initialize(final_context);
         expect_no_delta(final_state);
@@ -542,7 +543,7 @@ void check_incremental_evaluation()
     const auto query_count = kr::ps::ext::dl::parse_numerical("(n_count (q_role (x y) " + edge_text + "))", domain, *constructors);
     const auto query = std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(
         std::get<urd::index_view<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(query_count.get_variant())
-            .get_arg());
+            .get_operand());
     // Duplicate roots and explicitly requested shared children do not duplicate nodes.
     auto evaluation = kr::dl::semantics::incremental::IncrementalEvaluation<Kind>(
         *search->task,
@@ -611,7 +612,8 @@ void check_incremental_evaluation()
     auto initial_context = context_for(nodes.front().get_state(), 0, arguments);
     // Copying the task preserves the formalism repository but changes task identity.
     const auto other_repository = std::make_shared<tyr::planning::StateRepository<Kind>>(std::make_shared<tyr::planning::Task<Kind>>(*search->task));
-    const auto borrowed_builder = urd::builder<tyr::planning::State<Kind>> { nodes.front().get_state().data() };
+    auto borrowed_builder = urd::builder<tyr::planning::State<Kind>>();
+    borrowed_builder.assign(nodes.front().get_state());
     auto foreign_context = context_for(urd::resolve(borrowed_builder, *other_repository), 0, arguments);
     const auto policy_roots = std::array<kr::dl::semantics::incremental::EvaluationRoot, 1> { source_count };
     auto policy = kr::dl::semantics::DeltaEvaluationPolicy<Kind>(*search->task, policy_roots);
@@ -630,8 +632,8 @@ void check_incremental_evaluation()
     compare_graph(initial, initial_context);
     const auto source_view = initial.evaluate(source_id);
     const auto edge_view = initial.evaluate(edge_id);
-    const auto* source_blocks = source_view.data().blocks.data();
-    const auto* edge_blocks = edge_view.data().blocks.data();
+    const auto* source_blocks = source_view.get_blocks().data();
+    const auto* edge_blocks = edge_view.get_blocks().data();
     // The previous state's query rows and scalars, read from its handle before entering the next state.
     auto before_query = query_rows(initial.evaluate(query_id));
     auto before_scalars = scalar_values(initial);
@@ -644,8 +646,8 @@ void check_incremental_evaluation()
         auto state = evaluation.enter(context, delta, workspace);
         demand_all(state);
         expect_unpublished();
-        EXPECT_EQ(source_view.data().blocks.data(), source_blocks);
-        EXPECT_EQ(edge_view.data().blocks.data(), edge_blocks);
+        EXPECT_EQ(source_view.get_blocks().data(), source_blocks);
+        EXPECT_EQ(edge_view.get_blocks().data(), edge_blocks);
         const auto after_source = elements<kr::dl::ConceptTag>(source_view);
         const auto after_edge = elements<kr::dl::RoleTag>(edge_view);
         EXPECT_TRUE(std::ranges::is_permutation(state.delta(source_id).added, difference(after_source, before_source)));

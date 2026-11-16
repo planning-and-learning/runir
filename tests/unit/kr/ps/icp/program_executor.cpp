@@ -1,5 +1,6 @@
 #include "fixtures.hpp"
 #include "planning_fixtures.hpp"
+#include "record_copy.hpp"
 
 #include <algorithm>
 #include <array>
@@ -292,7 +293,8 @@ void check_histories()
     EXPECT_EQ(source.get_state(), step2.front().target.get_state());
 
     // Equal planning state, memory, and registers with different histories must have distinct identities.
-    auto cleared = step2.front().target.data();
+    const auto cleared_view = step2.front().target;
+    auto cleared = cleared_view.context()[cleared_view.index()];
     cleared.histories = source.get_histories().index();
     const auto unvisited = kr::ps::icp::insert(*context->icp_execution_repository, cleared).first;
     EXPECT_NE(unvisited, step2.front().target);
@@ -543,14 +545,15 @@ void check_rule_evaluator_scheduling()
 
     {
         auto data = urd::data<kr::ps::icp::Histories>();
-        data.concepts = source.get_histories().data().concepts;
+        const auto source_histories = source.get_histories();
+        data.concepts = source_histories.context()[source_histories.index()].concepts;
         ASSERT_FALSE(data.concepts.empty());
         data.concepts.push_back(data.concepts.front());
         const auto* buffer = data.concepts.data();
         const auto expected_size = data.concepts.size();
         const auto [stored, created] = ygg::formalism::insert(*context->icp_execution_repository, data);
         EXPECT_TRUE(created);
-        EXPECT_EQ(stored.data().concepts, data.concepts);
+        EXPECT_EQ(stored.context()[stored.index()].concepts, data.concepts);
         EXPECT_EQ(data.concepts.size(), expected_size);
         EXPECT_EQ(data.concepts.data(), buffer);
         EXPECT_FALSE(kr::ps::icp::insert(*context->icp_execution_repository, data).second);
@@ -602,11 +605,12 @@ void check_rule_evaluator_scheduling()
 
     // Repeated occurrences keep module order in both natural and grouped expansion.
     auto& repository = *context->domain_context->icp_repository;
-    auto module_data = policy.get_module().data();
+    const auto module_data_view = policy.get_module();
+    auto module_data = runir::tests::copy_fields(module_data_view.context()[module_data_view.index()]);
     module_data.memory_transitions.clear();
     for (const auto row : { 1, 0, 1 })
-        module_data.memory_transitions.push_back(policy.get_module().data().memory_transitions[row]);
-    auto program_data = policy.data();
+        module_data.memory_transitions.push_back(module_data_view.context()[module_data_view.index()].memory_transitions[row]);
+    auto program_data = policy.context()[policy.index()];
     program_data.module = kr::ps::icp::insert(repository, module_data).first.index();
     const auto repeated_policy = kr::ps::icp::insert(repository, program_data).first;
     auto repeated_expander = kr::ps::icp::SuccessorExpander<Kind>(context, repeated_policy);

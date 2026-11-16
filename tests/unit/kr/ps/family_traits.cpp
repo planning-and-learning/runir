@@ -90,6 +90,11 @@ struct BaseFeatureStorage
     template<typename T>
     [[nodiscard]] urd::index_view<T, BaseFeatureStorage> view(urd::index<T> index) const
     { return { index, this }; }
+    /// A DL record as its view in the DL repository, which holds it.
+    template<typename T>
+        requires ygg::formalism::SupportsSymbol<kr::dl::ConstructorRepository, T>
+    [[nodiscard]] auto view(urd::index<T> index) const
+    { return get_dl_repository().view(index); }
 };
 
 template<typename Type, typename Repository, typename Context>

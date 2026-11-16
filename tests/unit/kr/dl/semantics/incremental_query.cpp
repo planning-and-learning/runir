@@ -46,7 +46,7 @@ auto parse_query(const std::string& expression, tyr::formalism::planning::Domain
     const auto count = kr::ps::ext::dl::parse_numerical("(n_count " + expression + ")", domain, repository);
     return std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(
         std::get<urd::index_view<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant())
-            .get_arg());
+            .get_operand());
 }
 
 auto rows(const auto& relation)
@@ -123,10 +123,10 @@ void check_atomic_projection()
         std::get<urd::index_view<kr::dl::Query<kr::dl::AtomicStateTag<Fluent>>, runir::kr::dl::ConstructorRepository>>(ready.get_variant()));
     auto triple_projection = tyr::datalog::database::incremental::ProjectionEvaluator(
         layer,
-        std::get<urd::index_view<kr::dl::Query<kr::dl::QueryProjectTag>, runir::kr::dl::ConstructorRepository>>(projected_triple.get_variant()).data().plan);
+        std::get<urd::index_view<kr::dl::Query<kr::dl::QueryProjectTag>, runir::kr::dl::ConstructorRepository>>(projected_triple.get_variant()).get_plan());
     auto copied_projection = tyr::datalog::database::incremental::ProjectionEvaluator(
         layer,
-        std::get<urd::index_view<kr::dl::Query<kr::dl::QueryProjectTag>, runir::kr::dl::ConstructorRepository>>(projected_copied.get_variant()).data().plan);
+        std::get<urd::index_view<kr::dl::Query<kr::dl::QueryProjectTag>, runir::kr::dl::ConstructorRepository>>(projected_copied.get_variant()).get_plan());
     auto workspace = tyr::datalog::database::Workspace {};
     auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
@@ -221,7 +221,8 @@ void check_atomic_projection()
     EXPECT_TRUE(ready_leaf.get_delta().added.contains(std::array<ygg::Value, 0> {}));
 
     // Reinitialization replaces the baseline and clears every previously emitted delta.
-    const auto borrowed_builder = urd::builder<tyr::planning::State<Kind>> { second->node.get_state().data() };
+    auto borrowed_builder = urd::builder<tyr::planning::State<Kind>>();
+    borrowed_builder.assign(second->node.get_state());
     initialize(urd::resolve(borrowed_builder, *search->state_repository));
     EXPECT_EQ(triple_leaf.get_result().size(), 2);
     EXPECT_FALSE(triple_projection.get_result().contains(std::array<ygg::Value, 1> { ygg::encode_value<ygg::uint_t>(a.value) }));
@@ -371,7 +372,8 @@ void check_query_graph()
         EXPECT_EQ(before_reset, current);
         storage.reset_all();
         EXPECT_EQ(rows(retained), before_reset);
-        const auto borrowed_builder = urd::builder<tyr::planning::State<Kind>> { nodes.back().get_state().data() };
+        auto borrowed_builder = urd::builder<tyr::planning::State<Kind>>();
+        borrowed_builder.assign(nodes.back().get_state());
         auto final_context = context_for(urd::resolve(borrowed_builder, *search->state_repository));
         auto final_state = evaluator.initialize(final_context);
         expect_unpublished();

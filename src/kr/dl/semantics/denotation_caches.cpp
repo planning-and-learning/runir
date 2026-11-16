@@ -2,7 +2,6 @@
 
 #include <array>
 #include <tuple>
-#include <tyr/datalog/lifted/database/semantics/join_index.hpp>
 #include <tyr/datalog/lifted/database/semantics/relation_view.hpp>
 #include <urd/repr/maps/std_map.hpp>
 #include <urd/repr/maps/unordered_flat_map.hpp>
@@ -36,7 +35,6 @@ struct DenotationCaches::Impl
     { return std::get<Cache<Category>>(partitions[is_static].values); }
 
     std::array<Partition, 2> partitions;
-    tyr::datalog::database::JoinIndexCache static_join_indexes;
 };
 
 DenotationCaches::DenotationCaches() : m_impl(std::make_unique<Impl>()) {}
@@ -84,14 +82,10 @@ std::vector<QueryDenotationView> DenotationCaches::get_queries(bool is_static) c
     return results;
 }
 
-tyr::datalog::database::JoinIndexCache& DenotationCaches::get_static_join_indexes() noexcept { return m_impl->static_join_indexes; }
-const tyr::datalog::database::JoinIndexCache& DenotationCaches::get_static_join_indexes() const noexcept { return m_impl->static_join_indexes; }
-
 void DenotationCaches::reset_dynamic() noexcept { m_impl->partitions[false].clear(); }
 
 void DenotationCaches::reset_all() noexcept
 {
-    m_impl->static_join_indexes.clear();
     reset_dynamic();
     m_impl->partitions[true].clear();
 }

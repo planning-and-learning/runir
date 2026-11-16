@@ -16,7 +16,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    const auto& get_name() const noexcept { return self().data().name; }
+    const auto& get_name() const noexcept { return self().template member<&urd::record_of<V>::name>(); }
 };
 
 template<typename Tag, typename V>
@@ -28,59 +28,85 @@ private:
 public:
     auto get_variant() const noexcept
         requires std::same_as<Tag, void>
-    { return self().template member<&urd::record_of<V>::variant>(); }
+    {
+        return self().template member<&urd::record_of<V>::variant>();
+    }
 
     [[nodiscard]] bool is_static() const noexcept
         requires std::same_as<Tag, void>
-    { return self().data().is_static; }
+    {
+        return self().template member<&urd::record_of<V>::is_static>();
+    }
 
-    auto get_arg() const noexcept
+    auto get_operand() const noexcept
         requires(std::same_as<Tag, runir::kr::dl::QueryConceptTag> || std::same_as<Tag, runir::kr::dl::QueryRoleTag>
                  || std::same_as<Tag, runir::kr::dl::QueryProjectTag> || std::same_as<Tag, runir::kr::dl::QueryRenameTag>
                  || std::same_as<Tag, runir::kr::dl::QuerySelectEqualTag> || std::same_as<Tag, runir::kr::dl::QuerySelectValueTag>)
-    { return self().template member<&urd::record_of<V>::arg>(); }
+    {
+        return self().template member<&urd::record_of<V>::operand>();
+    }
 
-    auto get_lhs() const noexcept
+    auto get_left_operand() const noexcept
         requires(std::same_as<Tag, runir::kr::dl::QueryJoinTag> || std::same_as<Tag, runir::kr::dl::QueryUnionTag>
                  || std::same_as<Tag, runir::kr::dl::QueryDifferenceTag>)
-    { return self().template member<&urd::record_of<V>::lhs>(); }
+    {
+        return self().template member<&urd::record_of<V>::left_operand>();
+    }
 
-    auto get_rhs() const noexcept
+    auto get_right_operand() const noexcept
         requires(std::same_as<Tag, runir::kr::dl::QueryJoinTag> || std::same_as<Tag, runir::kr::dl::QueryUnionTag>
                  || std::same_as<Tag, runir::kr::dl::QueryDifferenceTag>)
-    { return self().template member<&urd::record_of<V>::rhs>(); }
+    {
+        return self().template member<&urd::record_of<V>::right_operand>();
+    }
 
     auto get_args() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag>
-    { return self().template member<&urd::record_of<V>::args>(); }
+    {
+        return self().template member<&urd::record_of<V>::args>();
+    }
 
     auto get_variable_order() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag>
-    { return self().template member<&urd::record_of<V>::variable_order>(); }
+    {
+        return self().template member<&urd::record_of<V>::variable_order>();
+    }
 
     auto get_output_order() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag>
-    { return self().template member<&urd::record_of<V>::output_order>(); }
+    {
+        return self().template member<&urd::record_of<V>::output_order>();
+    }
 
     auto get_keys() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
-    { return self().template member<&urd::record_of<V>::keys>(); }
+    {
+        return self().template member<&urd::record_of<V>::keys>();
+    }
 
     auto get_sources() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
-    { return self().template member<&urd::record_of<V>::sources>(); }
+    {
+        return self().template member<&urd::record_of<V>::sources>();
+    }
 
     auto get_edges() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
-    { return self().template member<&urd::record_of<V>::edges>(); }
+    {
+        return self().template member<&urd::record_of<V>::edges>();
+    }
 
     auto get_targets() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
-    { return self().template member<&urd::record_of<V>::targets>(); }
+    {
+        return self().template member<&urd::record_of<V>::targets>();
+    }
 
     auto get_probes() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QueryMustPassTag>
-    { return self().template member<&urd::record_of<V>::probes>(); }
+    {
+        return self().template member<&urd::record_of<V>::probes>();
+    }
 
     auto get_columns() const noexcept
     {
@@ -90,39 +116,61 @@ public:
             return self().template member<&urd::record_of<V>::columns>();
     }
 
+    /// Its plan, derived when it was interned.
+    const auto& get_plan() const noexcept
+        requires(std::same_as<Tag, runir::kr::dl::QueryJoinTag> || std::same_as<Tag, runir::kr::dl::QueryUnionTag>
+                 || std::same_as<Tag, runir::kr::dl::QueryDifferenceTag> || std::same_as<Tag, runir::kr::dl::QueryProjectTag>
+                 || std::same_as<Tag, runir::kr::dl::QuerySelectEqualTag> || std::same_as<Tag, runir::kr::dl::QuerySelectValueTag>
+                 || std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag> || std::same_as<Tag, runir::kr::dl::QueryMustPassTag>)
+    {
+        return self().template member<&urd::record_of<V>::plan>();
+    }
+
     [[nodiscard]] std::span<const ygg::ColumnLayout> get_schema() const noexcept
     {
         if constexpr (std::same_as<Tag, void>)
             return std::visit([](auto concrete) { return concrete.get_schema(); }, get_variant());
-        else if constexpr (requires { self().data().plan.output_columns(); })
-            return self().data().plan.output_columns();
+        else if constexpr (requires { self().template member<&urd::record_of<V>::plan>().output_columns(); })
+            return self().template member<&urd::record_of<V>::plan>().output_columns();
         else
-            return { self().data().schema.data(), self().data().schema.size() };
+            return { self().template member<&urd::record_of<V>::schema>().data(), self().template member<&urd::record_of<V>::schema>().size() };
     }
 
-    auto get_lhs_column() const noexcept
+    auto get_left_column() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QuerySelectEqualTag>
-    { return self().template member<&urd::record_of<V>::lhs_column>(); }
+    {
+        return self().template member<&urd::record_of<V>::left_column>();
+    }
 
-    auto get_rhs_column() const noexcept
+    auto get_right_column() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QuerySelectEqualTag>
-    { return self().template member<&urd::record_of<V>::rhs_column>(); }
+    {
+        return self().template member<&urd::record_of<V>::right_column>();
+    }
 
     auto get_column() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QuerySelectValueTag>
-    { return self().template member<&urd::record_of<V>::column>(); }
+    {
+        return self().template member<&urd::record_of<V>::column>();
+    }
 
     auto get_predicate() const noexcept
         requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)
-    { return urd::resolve(self().data().predicate, self().context().get_planning_repository()); }
+    {
+        return self().template member<&urd::record_of<V>::predicate>();
+    }
 
     auto get_object() const noexcept
         requires std::same_as<Tag, runir::kr::dl::QuerySelectValueTag>
-    { return urd::resolve(self().data().object, self().context().get_planning_repository()); }
+    {
+        return self().template member<&urd::record_of<V>::object>();
+    }
 
     auto get_polarity() const noexcept
         requires runir::kr::dl::is_atomic_goal_tag_v<Tag>
-    { return self().data().polarity; }
+    {
+        return self().template member<&urd::record_of<V>::polarity>();
+    }
 };
 
 template<runir::kr::dl::ConceptOrRoleTag Category, typename V>
@@ -132,8 +180,10 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_arg() const noexcept { return self().template member<&urd::record_of<V>::arg>(); }
+    auto get_operand() const noexcept { return self().template member<&urd::record_of<V>::operand>(); }
     auto get_columns() const noexcept { return self().template member<&urd::record_of<V>::columns>(); }
+    /// Its plan, derived when it was interned.
+    const auto& get_plan() const noexcept { return self().template member<&urd::record_of<V>::plan>(); }
 };
 }  // namespace urd
 

@@ -7,7 +7,7 @@
 #include <runir/datasets/object_graph.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/ground/task.hpp>
-#include <vefr/dot.hpp>
+#include <urd/dot.hpp>
 #include <vefr/properties.hpp>
 
 namespace runir::tests
@@ -25,14 +25,15 @@ TEST(ObjectGraphTest, InitialStateObjectGraphIsSimpleAndCanonicalizesVertexColor
     ASSERT_GT(graph->num_edges(), 0);
     EXPECT_TRUE(vefr::is_simple_undirected(*graph));
 
-    const auto figure = vefr::to_dot(*graph, vefr::vertex_data, vefr::unlabeled);
+    const auto figure = urd::to_dot(*graph, urd::vertex_data, urd::unlabeled);
     EXPECT_NE(figure.find("digraph G"), std::string::npos);
     EXPECT_NE(figure.find("state:"), std::string::npos);
     EXPECT_NE(figure.find("goal:"), std::string::npos);
 
     for (const auto vertex : graph->vertices())
     {
-        const auto& colors = graph->vertex_value(vertex).data().values;
+        const auto color = graph->vertex_value(vertex);
+        const auto& colors = color.context()[color.index()].values;
         EXPECT_TRUE(std::ranges::is_sorted(colors));
         EXPECT_EQ(std::ranges::adjacent_find(colors), colors.end());
     }

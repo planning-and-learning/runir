@@ -3,13 +3,59 @@
 
 #include "runir/kr/dl/semantics/declarations.hpp"
 #include "runir/kr/dl/semantics/register_values_data.hpp"
+#include "runir/kr/dl/semantics/register_values_view.hpp"
 #include "runir/kr/ps/ext/declarations.hpp"
 #include "runir/kr/ps/ext/execution_declarations.hpp"
 
 #include <cista/containers/optional.h>
 #include <tuple>
 #include <tyr/planning/state_builder.hpp>
+#include <tyr/planning/state_view.hpp>
 #include <urd/elements/flat.hpp>
+
+namespace runir::kr::ps::ext
+{
+/// The planning state a module state is built over: a state builder, which its views read through the task's state
+/// repository (urd::resolution below), not through the execution repository the module state is read through.
+template<tyr::TaskKind Kind>
+struct BuiltState
+{
+    urd::builder<tyr::planning::State<Kind>> builder;
+
+    static constexpr auto identifying_members() noexcept { return urd::Members<&BuiltState::builder> {}; }
+};
+
+/// The register values a module state is built with, which its views read through the task's formalism repository
+/// (urd::resolution below), not through the execution repository the module state is read through.
+struct BuiltRegisters
+{
+    urd::data<runir::kr::dl::semantics::RegisterValues> values;
+
+    static constexpr auto identifying_members() noexcept { return urd::Members<&BuiltRegisters::values> {}; }
+};
+}  // namespace runir::kr::ps::ext
+
+/// A built state read through an execution repository: its builder's view through the repository's state repository.
+template<tyr::TaskKind Kind>
+struct urd::resolution<runir::kr::ps::ext::BuiltState<Kind>>
+{
+    template<typename C>
+    static tyr::planning::BuilderStateView<Kind> of(const runir::kr::ps::ext::BuiltState<Kind>& member, const C& context) noexcept
+    { return urd::resolve(member.builder, context.get_state_repository()); }
+    template<typename C>
+    static void of(const runir::kr::ps::ext::BuiltState<Kind>&& member, const C& context) = delete;
+};
+
+/// Built registers read through an execution repository: their view through the repository's formalism repository.
+template<>
+struct urd::resolution<runir::kr::ps::ext::BuiltRegisters>
+{
+    template<typename C>
+    static runir::kr::dl::semantics::BorrowedRegisterValuesView of(const runir::kr::ps::ext::BuiltRegisters& member, const C& context) noexcept
+    { return urd::resolve(member.values, context.get_formalism_repository()); }
+    template<typename C>
+    static void of(const runir::kr::ps::ext::BuiltRegisters&& member, const C& context) = delete;
+};
 
 namespace urd
 {
@@ -20,10 +66,10 @@ namespace urd
 template<tyr::TaskKind Kind>
 struct builder<runir::kr::ps::ext::ModuleState<Kind>>
 {
-    urd::builder<tyr::planning::State<Kind>> state;
+    runir::kr::ps::ext::BuiltState<Kind> state;
     urd::index<runir::kr::ps::ext::Module> module_;
     urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> memory_state;
-    urd::data<runir::kr::dl::semantics::RegisterValues> registers;
+    runir::kr::ps::ext::BuiltRegisters registers;
     urd::index<runir::kr::dl::semantics::CallArguments> arguments;
 
     static constexpr auto identifying_members() noexcept

@@ -70,11 +70,33 @@ struct data<runir::kr::ps::ext::Module>
         memory_transitions(std::move(memory_transitions_))
     {
     }
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
 
-    static constexpr auto cista_members() noexcept
+    static constexpr auto fields() noexcept
     {
-        return urd::Members<&data::index,
-                            &data::symbol,
+        return urd::Fields<urd::field<"symbol", &data::symbol>,
+                           urd::field<"concept_arguments", &data::concept_arguments>,
+                           urd::field<"role_arguments", &data::role_arguments>,
+                           urd::field<"boolean_arguments", &data::boolean_arguments>,
+                           urd::field<"numerical_arguments", &data::numerical_arguments>,
+                           urd::field<"concept_registers", &data::concept_registers>,
+                           urd::field<"role_registers", &data::role_registers>,
+                           urd::field<"concept_features", &data::concept_features>,
+                           urd::field<"role_features", &data::role_features>,
+                           urd::field<"boolean_features", &data::boolean_features>,
+                           urd::field<"numerical_features", &data::numerical_features>,
+                           urd::field<"query_features", &data::query_features>,
+                           urd::field<"entry_memory_state", &data::entry_memory_state>,
+                           urd::field<"memory_states", &data::memory_states>,
+                           urd::field<"memory_transitions", &data::memory_transitions>> {};
+    }
+    static constexpr auto identifying_members() noexcept
+    {
+        return urd::Members<&data::symbol,
                             &data::concept_arguments,
                             &data::role_arguments,
                             &data::boolean_arguments,
@@ -90,9 +112,10 @@ struct data<runir::kr::ps::ext::Module>
                             &data::memory_states,
                             &data::memory_transitions> {};
     }
-    static constexpr auto identifying_members() noexcept
+    static constexpr auto cista_members() noexcept
     {
-        return urd::Members<&data::symbol,
+        return urd::Members<&data::index,
+                            &data::symbol,
                             &data::concept_arguments,
                             &data::role_arguments,
                             &data::boolean_arguments,

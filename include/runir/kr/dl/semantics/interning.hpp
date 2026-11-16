@@ -31,9 +31,9 @@ urd::builder<Denotation<Category>>& assign(urd::builder<Denotation<Category>>& d
 {
     if constexpr (ConceptOrRoleTag<Category>)
     {
-        const auto blocks = source.context().get_vector_repository().at(source.data().vec_index);
+        const auto blocks = source.get_vector();
         destination.blocks.assign(blocks.begin(), blocks.end());
-        destination.num_objects = source.data().num_objects;
+        destination.num_objects = source.get_num_objects();
     }
     else
         destination.value = source.value();
@@ -46,9 +46,9 @@ urd::builder<Denotation<Category>>& assign(urd::builder<Denotation<Category>>& d
 {
     if constexpr (ConceptOrRoleTag<Category>)
     {
-        if (&destination != &source.data())
+        if (&destination.blocks != &source.get_blocks())
         {
-            destination.blocks = source.data().blocks;
+            destination.blocks = source.get_blocks();
             destination.num_objects = source.get_num_objects();
         }
     }
@@ -90,7 +90,7 @@ insert(DenotationRepository& repository, const urd::builder<ygg::Relation<ygg::S
     {
         const auto values = rows.row(i).get_values();
         row->values.set(values.begin(), values.end());
-        relation->rows.push_back(relations.insert(*row).first.data().row);
+        urd::append(relation->rows, relations.insert(*row).first);
     }
     auto columns = checkout<ygg::Columns>(builder);
     columns->values.set(source.columns().begin(), source.columns().end());
@@ -106,8 +106,10 @@ rename(DenotationRepository& repository, QueryDenotationView source, std::span<c
     auto columns = checkout<ygg::Columns>(builder);
     columns->values.set(labels.begin(), labels.end());
     auto relation = checkout<ygg::Relation<ygg::Schema>>(builder);
-    relation->pool = source.data().pool;
-    relation->rows.set(source.data().rows.begin(), source.data().rows.end());
+    urd::store(relation->pool, source.get_pool());
+    relation->rows.clear();
+    for (const auto row : source.get_rows())
+        urd::append(relation->rows, row);
     relation->columns = relations.insert(*columns).first.index();
     return relations.insert(*relation).first;
 }
@@ -129,7 +131,7 @@ rename(DenotationRepository& repository, QueryDenotationView source, std::span<c
 {
     if (&source.context() == &context.repository())
         return { source, false };
-    return copy(BorrowedRegisterValuesView(&source.data(), &source.get_formalism_repository()), context);
+    return copy(BorrowedRegisterValuesView(&source.context()[source.index()], &source.get_formalism_repository()), context);
 }
 
 template<CategoryTag Category>
@@ -144,8 +146,8 @@ template<CategoryTag Category>
     {
         if (source.context().get_formalism_repository_ptr() != repository.get_formalism_repository_ptr())
             throw std::invalid_argument("Denotation copying requires the same formalism repository.");
-        data->num_objects = source.data().num_objects;
-        const auto blocks = source.context().get_vector_repository().at(source.data().vec_index);
+        data->num_objects = source.get_num_objects();
+        const auto blocks = source.get_vector();
         data->vec_index = repository.get_vector_repository().insert(blocks).first;
     }
     else

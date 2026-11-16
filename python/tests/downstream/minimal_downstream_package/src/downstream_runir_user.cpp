@@ -5,9 +5,9 @@
 #include <runir/runir.hpp>
 #include <string>
 #include <tuple>
+#include <urd/dot.hpp>
 #include <urd/repr/graphs/csr_graph.hpp>
 #include <vector>
-#include <vefr/dot.hpp>
 
 namespace nb = nanobind;
 
@@ -22,7 +22,7 @@ std::string make_graph_dot()
     const auto names = std::vector<std::string> { "source", "target" };
     const auto graph =
         urd::Store<urd::graph<runir::VertexIndex, std::string, std::string>, urd::frozen>(urd::graph_data<Edge, std::string> { 2, edges, {}, names });
-    return vefr::to_dot(graph, vefr::vertex_data, vefr::edge_data);
+    return urd::to_dot(graph, urd::vertex_data, urd::edge_data);
 }
 
 }  // namespace

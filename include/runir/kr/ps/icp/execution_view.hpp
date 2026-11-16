@@ -18,7 +18,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_concepts() const { return urd::resolve(self().data().concepts, self().context().get_denotation_repository()); }
+    auto get_concepts() const { return self().template member<&urd::record_of<V>::concepts>(); }
 };
 
 template<tyr::TaskKind Kind, typename V>
@@ -28,12 +28,13 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_program() const { return urd::resolve(self().data().program, self().context().get_program_repository()); }
+    auto get_program() const { return self().template member<&urd::record_of<V>::program>(); }
     auto get_module() const { return get_program().get_module(); }
-    auto get_memory_state() const { return urd::resolve(self().data().memory_state, self().context().get_program_repository()); }
-    auto get_registers() const { return urd::resolve(self().data().registers, self().context().get_denotation_repository()); }
+    auto get_memory_state() const { return self().template member<&urd::record_of<V>::memory_state>(); }
+    auto get_registers() const { return self().template member<&urd::record_of<V>::registers>(); }
     auto get_histories() const { return self().template member<&urd::record_of<V>::histories>(); }
-    auto get_state() const { return self().context().get_state_repository().get_registered_state(self().data().state); }
+    auto get_state() const
+    { return self().context().get_state_repository().get_registered_state(self().template member<&urd::record_of<V>::state>().index()); }
 };
 }  // namespace urd
 

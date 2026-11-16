@@ -27,7 +27,7 @@ struct data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::LoadTag<Category>>>
     urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> target;
     runir::kr::ps::ConditionList<runir::kr::IcpFamilyTag> conditions;
     urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, Category>> feature;
-    urd::index<runir::kr::dl::Register<Category>> reg;
+    urd::index<runir::kr::dl::Register<Category>> slot;
     runir::kr::ps::EffectList<runir::kr::IcpFamilyTag> effects;
 
     data() = default;
@@ -36,30 +36,37 @@ struct data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::LoadTag<Category>>>
          urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> target_,
          runir::kr::ps::ConditionList<runir::kr::IcpFamilyTag> conditions_,
          urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, Category>> feature_,
-         urd::index<runir::kr::dl::Register<Category>> reg_,
+         urd::index<runir::kr::dl::Register<Category>> slot_,
          runir::kr::ps::EffectList<runir::kr::IcpFamilyTag> effects_) :
         index(),
         source(source_),
         target(target_),
         conditions(std::move(conditions_)),
         feature(std::move(feature_)),
-        reg(std::move(reg_)),
+        slot(std::move(slot_)),
         effects(std::move(effects_))
     {
     }
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
 
-    static constexpr auto cista_members() noexcept
-    { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::feature, &data::reg, &data::effects> {}; }
     static constexpr auto fields() noexcept
     {
         return urd::Fields<urd::field<"source", &data::source>,
                            urd::field<"target", &data::target>,
                            urd::field<"conditions", &data::conditions>,
                            urd::field<"feature", &data::feature>,
-                           urd::field<"register", &data::reg>,
+                           urd::field<"slot", &data::slot>,
                            urd::field<"effects", &data::effects>> {};
     }
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto cista_members() noexcept
+    {
+        return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::feature, &data::slot, &data::effects> {};
+    }
 };
 
 template<>
@@ -95,19 +102,12 @@ struct data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>>
         xeffects(std::move(xeffects_))
     {
     }
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
 
-    static constexpr auto cista_members() noexcept
-    {
-        return urd::Members<&data::index,
-                            &data::source,
-                            &data::target,
-                            &data::conditions,
-                            &data::effects,
-                            &data::action_name,
-                            &data::argument_names,
-                            &data::xconditions,
-                            &data::xeffects> {};
-    }
     static constexpr auto fields() noexcept
     {
         return urd::Fields<urd::field<"source", &data::source>,
@@ -120,6 +120,18 @@ struct data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>>
                            urd::field<"xeffects", &data::xeffects>> {};
     }
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto cista_members() noexcept
+    {
+        return urd::Members<&data::index,
+                            &data::source,
+                            &data::target,
+                            &data::conditions,
+                            &data::effects,
+                            &data::action_name,
+                            &data::argument_names,
+                            &data::xconditions,
+                            &data::xeffects> {};
+    }
 };
 
 }  // namespace urd

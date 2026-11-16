@@ -4,6 +4,7 @@
 #include "fixtures.hpp"
 #include "module_fixtures.hpp"
 #include "planning_fixtures.hpp"
+#include "record_copy.hpp"
 #include "runir/kr/dl/detail/repository_instantiations.hpp"
 #include "runir/kr/ps/detail/repository_instantiations.hpp"
 #include "successor_fixtures.hpp"
@@ -204,9 +205,9 @@ void expect_borrowed_query_evaluation()
     {
         const auto rows = kr::ps::evaluate<Kind>(feature, state_context);
         ASSERT_EQ(rows.size(), 1);
-        EXPECT_TRUE(std::ranges::equal(kr::ps::evaluate<Kind>(feature, state_context).data().rows, rows.data().rows));
+        EXPECT_TRUE(std::ranges::equal(kr::ps::evaluate<Kind>(feature, state_context).get_rows(), rows.get_rows()));
         const auto cached = environment.get_dl_caches().find_query(false, query).value();
-        EXPECT_TRUE(std::ranges::equal(rows.data().rows, cached.data().rows));
+        EXPECT_TRUE(std::ranges::equal(rows.get_rows(), cached.get_rows()));
         EXPECT_EQ(rows.columns().data(), cached.columns().data());
         EXPECT_TRUE(std::ranges::equal(rows.columns(), query.get_schema()));
 
@@ -223,11 +224,13 @@ void expect_borrowed_query_evaluation()
             ASSERT_EQ(target_rows.size(), 1);
             EXPECT_NE(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(target_rows.row(0).value(0))),
                       urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(rows.row(0).value(0))));
-            EXPECT_NE(target_rows.relation_identity(), rows.relation_identity());  // independent caches: other layers
+            EXPECT_NE(&target_rows.context(), &rows.context());  // independent caches: other layers
 
             // The indexed program state supplies bindings; its prepared planning view may use builder storage.
-            const auto source_builder = urd::builder<tyr::planning::State<Kind>> { planning_node.get_state().data() };
-            const auto target_builder = urd::builder<tyr::planning::State<Kind>> { successors.front().node.get_state().data() };
+            auto source_builder = urd::builder<tyr::planning::State<Kind>>();
+            source_builder.assign(planning_node.get_state());
+            auto target_builder = urd::builder<tyr::planning::State<Kind>>();
+            target_builder.assign(successors.front().node.get_state());
             const auto prepared_source = urd::resolve(source_builder, *search.state_repository);
             const auto prepared_target = urd::resolve(target_builder, *search.state_repository);
             auto storage = kr::ps::ext::InternedExecutionStorage<Kind>(task_context, program);
@@ -256,7 +259,7 @@ void expect_borrowed_query_evaluation()
         environment.reset_target();
         EXPECT_TRUE(environment.get_dl_caches().find_query(false, query).has_value());
         EXPECT_EQ(rows.size(), 1);
-        EXPECT_TRUE(std::ranges::equal(kr::ps::evaluate<Kind>(feature, state_context).data().rows, rows.data().rows));
+        EXPECT_TRUE(std::ranges::equal(kr::ps::evaluate<Kind>(feature, state_context).get_rows(), rows.get_rows()));
     }
     environment.reset_source();
     EXPECT_TRUE(environment.get_dl_caches().get_queries(false).empty());
@@ -582,19 +585,23 @@ void expect_transient_program_states_retain_values_and_intern_callers()
     EXPECT_FALSE(outer_caller.get_caller());
 
     const auto first = storage.successor(source, bindings.front());
-    const auto scratch = &first.get_state().data();
-    const auto expected = *scratch;
+    const auto* scratch = &first.get_state().get_fact_storage();
+    auto expected = urd::builder<tyr::planning::State<Kind>>();
+    expected.assign(first.get_state());
     const auto retained = storage.store(first.get_state(), module_, entry, initial_module.get_registers(), initial_module.get_arguments(), inner_caller);
     ASSERT_TRUE(retained->call_stack);
     EXPECT_EQ(*retained->call_stack, inner_caller.index());
 
     // Generating another candidate overwrites scratch, but not the accepted program state.
     const auto second = storage.successor(source, bindings.back());
-    EXPECT_EQ(&second.get_state().data(), scratch);
-    EXPECT_TRUE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(retained->module_state.state, expected));
-    EXPECT_FALSE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(retained->module_state.state, second.get_state().data()));
-    EXPECT_TRUE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(initial->module_state.state,
-                                                                          urd::builder<tyr::planning::State<Kind>> { initial_node.get_state().data() }));
+    EXPECT_EQ(&second.get_state().get_fact_storage(), scratch);
+    auto second_values = urd::builder<tyr::planning::State<Kind>>();
+    second_values.assign(second.get_state());
+    auto initial_values = urd::builder<tyr::planning::State<Kind>>();
+    initial_values.assign(initial_node.get_state());
+    EXPECT_TRUE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(retained->module_state.state.builder, expected));
+    EXPECT_FALSE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(retained->module_state.state.builder, second_values));
+    EXPECT_TRUE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(initial->module_state.state.builder, initial_values));
 
     const auto copy = storage.retain(storage.view(retained));
     ASSERT_TRUE(copy->call_stack);
@@ -634,32 +641,32 @@ void expect_transient_program_states_retain_values_and_intern_callers()
     const auto registers = storage.registers(register_values);
     auto recycled = storage.store(planning, module_, inner_return, registers, initial_module.get_arguments(), inner_caller);
     const auto* slot = recycled.get();
-    const auto numeric_buffer = std::ranges::data(recycled->module_state.state.numeric_storage.values);
-    const auto numeric_capacity = recycled->module_state.state.numeric_storage.values.capacity();
-    const auto concept_buffer = recycled->module_state.registers.concept_values.data();
-    const auto concept_capacity = recycled->module_state.registers.concept_values.allocated_size_;
-    const auto role_buffer = recycled->module_state.registers.role_values.data();
-    const auto role_capacity = recycled->module_state.registers.role_values.allocated_size_;
+    const auto numeric_buffer = std::ranges::data(recycled->module_state.state.builder.numeric_storage.values);
+    const auto numeric_capacity = recycled->module_state.state.builder.numeric_storage.values.capacity();
+    const auto concept_buffer = recycled->module_state.registers.values.concept_values.data();
+    const auto concept_capacity = recycled->module_state.registers.values.concept_values.allocated_size_;
+    const auto role_buffer = recycled->module_state.registers.values.role_values.data();
+    const auto role_capacity = recycled->module_state.registers.values.role_values.allocated_size_;
     recycled = {};
-    planning_values.assign(initial_node.get_state().data());
+    planning_values.assign(initial_node.get_state());
     planning_values.numeric_storage.values = { 4.0 };
     register_values.concept_values.front() = urd::index<tyr::formalism::Object>(1);
     register_values.role_values.front().value().first = urd::index<tyr::formalism::Object>(1);
     register_values.role_values.front().value().second = urd::index<tyr::formalism::Object>(0);
     const auto reused = storage.store(planning, module_, entry, registers, initial_module.get_arguments(), {});
     EXPECT_EQ(reused.get(), slot);
-    EXPECT_EQ(std::ranges::data(reused->module_state.state.numeric_storage.values), numeric_buffer);
-    EXPECT_EQ(reused->module_state.state.numeric_storage.values.capacity(), numeric_capacity);
-    EXPECT_EQ(reused->module_state.registers.concept_values.data(), concept_buffer);
-    EXPECT_EQ(reused->module_state.registers.concept_values.allocated_size_, concept_capacity);
-    EXPECT_EQ(reused->module_state.registers.role_values.data(), role_buffer);
-    EXPECT_EQ(reused->module_state.registers.role_values.allocated_size_, role_capacity);
-    EXPECT_EQ(reused->module_state.state.numeric_storage.values.front(), 4.0);
-    EXPECT_TRUE(urd::EqualTo<urd::data<kr::dl::semantics::RegisterValues>> {}(reused->module_state.registers, register_values));
+    EXPECT_EQ(std::ranges::data(reused->module_state.state.builder.numeric_storage.values), numeric_buffer);
+    EXPECT_EQ(reused->module_state.state.builder.numeric_storage.values.capacity(), numeric_capacity);
+    EXPECT_EQ(reused->module_state.registers.values.concept_values.data(), concept_buffer);
+    EXPECT_EQ(reused->module_state.registers.values.concept_values.allocated_size_, concept_capacity);
+    EXPECT_EQ(reused->module_state.registers.values.role_values.data(), role_buffer);
+    EXPECT_EQ(reused->module_state.registers.values.role_values.allocated_size_, role_capacity);
+    EXPECT_EQ(reused->module_state.state.builder.numeric_storage.values.front(), 4.0);
+    EXPECT_TRUE(urd::EqualTo<urd::data<kr::dl::semantics::RegisterValues>> {}(reused->module_state.registers.values, register_values));
     EXPECT_FALSE(storage.view(reused).get_call_stack());
     EXPECT_EQ(storage.view(reused).get_module_state().get_memory_state().index(), entry.index());
-    EXPECT_TRUE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(reused->module_state.state, planning_values));
-    EXPECT_TRUE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(retained->module_state.state, expected));
+    EXPECT_TRUE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(reused->module_state.state.builder, planning_values));
+    EXPECT_TRUE(urd::EqualTo<urd::builder<tyr::planning::State<Kind>>> {}(retained->module_state.state.builder, expected));
 }
 
 template<tyr::TaskKind Kind, kr::ps::ext::RuleKind Tag>
@@ -687,7 +694,7 @@ void expect_unknown_action_rejected_during_preparation()
     const auto action_rule = repository.insert(action_data).first;
     auto variant_data = urd::data<kr::ps::Rule<kr::ExtFamilyTag>>(std::string("missing-schema"), action_rule.index());
     const auto variant = repository.insert(variant_data).first;
-    auto module_data = parsed.data();
+    auto module_data = runir::tests::copy_fields(parsed.context()[parsed.index()]);
     auto transition = urd::flat_vector<urd::index<kr::ps::Rule<kr::ExtFamilyTag>>> {};
     transition.push_back(variant.index());
     module_data.memory_transitions.push_back(std::move(transition));
@@ -897,11 +904,11 @@ void expect_rule_occurrence_order()
 )",
                                                       domain,
                                                       repository);
-    auto data = parsed.data();
+    auto data = runir::tests::copy_fields(parsed.context()[parsed.index()]);
     data.memory_transitions.clear();
     // Occurrences, including repetitions, retain module order rather than rule-index order.
     for (const auto row : { 1, 2, 0, 1 })
-        data.memory_transitions.push_back(parsed.data().memory_transitions[row]);
+        data.memory_transitions.push_back(parsed.context()[parsed.index()].memory_transitions[row]);
     const auto module_ = repository.insert(data).first;
     const auto other = kr::ps::ext::dl::parse_module(R"(
 (:module (:symbol other) (:arguments) (:registers)

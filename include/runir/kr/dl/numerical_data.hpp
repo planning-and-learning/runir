@@ -5,75 +5,163 @@
 
 #include <tyr/datalog/lifted/database/semantics/distance_plan.hpp>
 #include <urd/elements/flat.hpp>
+#include <utility>
 #include <yggdrasil/core/config.hpp>
 
 namespace urd
 {
 
 template<typename F>
-struct data<runir::kr::dl::Numerical<F, runir::kr::dl::CountTag>> :
-    runir::kr::dl::UnaryData<runir::kr::dl::Numerical<F, runir::kr::dl::CountTag>, typename F::Argument>
+struct data<runir::kr::dl::Numerical<F, runir::kr::dl::CountTag>>
 {
-    using Base = runir::kr::dl::UnaryData<runir::kr::dl::Numerical<F, runir::kr::dl::CountTag>, typename F::Argument>;
-    using Base::Base;
+    urd::index<runir::kr::dl::Numerical<F, runir::kr::dl::CountTag>> index;
+    typename F::Argument operand;
+
+    data() = default;
+    explicit data(typename F::Argument operand_) : index(), operand(std::move(operand_)) {}
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
+
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"operand", &data::operand>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operand> {}; }
 };
 
-/// n_distance(sources, edges, targets).
+/// n_distance(sources, edges, targets): sources and targets are vertices, edges the middle operand.
 template<typename F>
-struct data<runir::kr::dl::Numerical<F, runir::kr::dl::DistanceTag>> :
-    runir::kr::dl::TernaryData<runir::kr::dl::Numerical<F, runir::kr::dl::DistanceTag>, typename F::Vertex, typename F::Edge>
+struct data<runir::kr::dl::Numerical<F, runir::kr::dl::DistanceTag>>
 {
-    using Base = runir::kr::dl::TernaryData<runir::kr::dl::Numerical<F, runir::kr::dl::DistanceTag>, typename F::Vertex, typename F::Edge>;
-    using Base::Base;
+    urd::index<runir::kr::dl::Numerical<F, runir::kr::dl::DistanceTag>> index;
+    typename F::Vertex sources;
+    typename F::Edge edges;
+    typename F::Vertex targets;
+
+    data() = default;
+    data(typename F::Vertex sources_, typename F::Edge edges_, typename F::Vertex targets_) :
+        index(),
+        sources(std::move(sources_)),
+        edges(std::move(edges_)),
+        targets(std::move(targets_))
+    {
+    }
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
+
+    static constexpr auto fields() noexcept
+    {
+        return urd::Fields<urd::field<"sources", &data::sources>, urd::field<"edges", &data::edges>, urd::field<"targets", &data::targets>> {};
+    }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::sources, &data::edges, &data::targets> {}; }
 };
 
-/// A semantic distance also holds its plan: sources/targets are k-column vertices, edges 2k columns.
+/// A semantic distance also holds its plan, derived from its children before it is interned: sources and targets
+/// are k-column vertices, edges 2k columns. The plan is derived, so it is not a field (not identifying), as in the queries.
 template<>
-struct data<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::DistanceTag>> :
-    runir::kr::dl::TernaryData<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::DistanceTag>,
-                               runir::kr::dl::SemanticFamily::Vertex,
-                               runir::kr::dl::SemanticFamily::Edge>
+struct data<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::DistanceTag>>
 {
-    using Base = runir::kr::dl::TernaryData<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::DistanceTag>,
-                                            runir::kr::dl::SemanticFamily::Vertex,
-                                            runir::kr::dl::SemanticFamily::Edge>;
-    using Base::Base;
-
-    /// Derived on insertion from the argument schemas; not identifying.
+    urd::index<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::DistanceTag>> index;
+    runir::kr::dl::SemanticFamily::Vertex sources;
+    runir::kr::dl::SemanticFamily::Edge edges;
+    runir::kr::dl::SemanticFamily::Vertex targets;
     tyr::datalog::database::DistancePlan plan {};
 
-    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::lhs, &data::mid, &data::rhs, &data::plan> {}; }
+    data() = default;
+    data(runir::kr::dl::SemanticFamily::Vertex sources_,
+         runir::kr::dl::SemanticFamily::Edge edges_,
+         runir::kr::dl::SemanticFamily::Vertex targets_,
+         tyr::datalog::database::DistancePlan plan_) :
+        index(),
+        sources(std::move(sources_)),
+        edges(std::move(edges_)),
+        targets(std::move(targets_)),
+        plan(std::move(plan_))
+    {
+    }
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
+
+    static constexpr auto fields() noexcept
+    {
+        return urd::Fields<urd::field<"sources", &data::sources>, urd::field<"edges", &data::edges>, urd::field<"targets", &data::targets>> {};
+    }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::sources, &data::edges, &data::targets, &data::plan> {}; }
 };
 
 template<typename F>
-struct data<runir::kr::dl::Numerical<F, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>> :
-    runir::kr::dl::ReferenceData<runir::kr::dl::Numerical<F, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
-                                 runir::kr::dl::Argument<runir::kr::dl::NumericalTag>>
+struct data<runir::kr::dl::Numerical<F, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>>
 {
-    using Base = runir::kr::dl::ReferenceData<runir::kr::dl::Numerical<F, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
-                                              runir::kr::dl::Argument<runir::kr::dl::NumericalTag>>;
-    using Base::Base;
+    urd::index<runir::kr::dl::Numerical<F, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>> index;
+    urd::index<runir::kr::dl::Argument<runir::kr::dl::NumericalTag>> argument;
+
+    data() = default;
+    explicit data(urd::index<runir::kr::dl::Argument<runir::kr::dl::NumericalTag>> argument_) : index(), argument(std::move(argument_)) {}
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
+
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"argument", &data::argument>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::argument> {}; }
 };
 
 template<typename F>
-struct data<runir::kr::dl::Numerical<F, runir::kr::dl::NumericalConstantTag>> :
-    runir::kr::dl::IdentifierData<runir::kr::dl::Numerical<F, runir::kr::dl::NumericalConstantTag>, ygg::uint_t>
+struct data<runir::kr::dl::Numerical<F, runir::kr::dl::NumericalConstantTag>>
 {
-    using Base = runir::kr::dl::IdentifierData<runir::kr::dl::Numerical<F, runir::kr::dl::NumericalConstantTag>, ygg::uint_t>;
-    using Base::Base;
+    urd::index<runir::kr::dl::Numerical<F, runir::kr::dl::NumericalConstantTag>> index;
+    ygg::uint_t value = 0;
+
+    data() = default;
+    explicit data(ygg::uint_t value_) : index(), value(std::move(value_)) {}
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
+
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"value", &data::value>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::value> {}; }
 };
 
-// Binary numerical operators (add/sub/mul/div/min/max): a Numerical over two Numerical operands.
 template<typename F, runir::kr::dl::NumericalBinaryTag Tag>
-struct data<runir::kr::dl::Numerical<F, Tag>> :
-    runir::kr::dl::BinaryData<runir::kr::dl::Numerical<F, Tag>,
-                              runir::kr::dl::operand_t<F, runir::kr::dl::NumericalTag>,
-                              runir::kr::dl::operand_t<F, runir::kr::dl::NumericalTag>>
+struct data<runir::kr::dl::Numerical<F, Tag>>
 {
-    using Base = runir::kr::dl::BinaryData<runir::kr::dl::Numerical<F, Tag>,
-                                           runir::kr::dl::operand_t<F, runir::kr::dl::NumericalTag>,
-                                           runir::kr::dl::operand_t<F, runir::kr::dl::NumericalTag>>;
-    using Base::Base;
+    urd::index<runir::kr::dl::Numerical<F, Tag>> index;
+    runir::kr::dl::operand_t<F, runir::kr::dl::NumericalTag> left_operand;
+    runir::kr::dl::operand_t<F, runir::kr::dl::NumericalTag> right_operand;
+
+    data() = default;
+    data(runir::kr::dl::operand_t<F, runir::kr::dl::NumericalTag> left_operand_, runir::kr::dl::operand_t<F, runir::kr::dl::NumericalTag> right_operand_) :
+        index(),
+        left_operand(std::move(left_operand_)),
+        right_operand(std::move(right_operand_))
+    {
+    }
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
+
+    static constexpr auto fields() noexcept
+    {
+        return urd::Fields<urd::field<"left_operand", &data::left_operand>, urd::field<"right_operand", &data::right_operand>> {};
+    }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::left_operand, &data::right_operand> {}; }
 };
 
 }  // namespace urd

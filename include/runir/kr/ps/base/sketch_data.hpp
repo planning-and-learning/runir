@@ -33,9 +33,20 @@ struct data<runir::kr::ps::base::Sketch>
         rules(std::move(rules_))
     {
     }
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
 
-    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::boolean_features, &data::numerical_features, &data::rules> {}; }
+    static constexpr auto fields() noexcept
+    {
+        return urd::Fields<urd::field<"boolean_features", &data::boolean_features>,
+                           urd::field<"numerical_features", &data::numerical_features>,
+                           urd::field<"rules", &data::rules>> {};
+    }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::boolean_features, &data::numerical_features, &data::rules> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::boolean_features, &data::numerical_features, &data::rules> {}; }
 };
 
 }  // namespace urd

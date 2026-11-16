@@ -62,7 +62,9 @@ public:
 
     template<typename T>
     RecordView<T> optimize(RecordView<T> view)
-    { return memoized(view); }
+    {
+        return memoized(view);
+    }
 
 private:
     using Labels = urd::Store<urd::sequence<urd::index<ygg::Column>>>;
@@ -81,9 +83,8 @@ private:
     template<typename T>
     RecordView<T> rewrite(RecordView<T> view)
     {
-        auto data = urd::map_children<ConstructorRepositoryTypes, T>(view.data(),
-                                                                     view.context(),
-                                                                     [&]<typename U>(RecordView<U> child) { return optimize<U>(child).index(); });
+        auto data = urd::data<T>();
+        urd::map_children<ConstructorRepositoryTypes, T>(view, data, [&]<typename U>(RecordView<U> child) { return optimize<U>(child).index(); });
         return runir::kr::dl::insert(*m_repository, data).first;
     }
 
@@ -92,17 +93,17 @@ private:
     template<ConceptOrRoleTag Category>
     RecordView<QueryProjection<Category>> rewrite(RecordView<QueryProjection<Category>> view)
     {
-        auto root = optimize_root(view.get_arg(), detail::query_labels(view.data().columns));
+        auto root = optimize_root(view.get_operand(), detail::query_labels(view.get_columns()));
         root = std::visit(
             [&]<typename Tag>(QueryView<Tag> concrete) -> QueryView<>
             {
                 if constexpr (std::same_as<Tag, QueryProjectTag>)
                     if (std::ranges::equal(concrete.get_columns(), view.get_columns()))
-                        return concrete.get_arg();
+                        return concrete.get_operand();
                 return root;
             },
             root.get_variant());
-        auto data = urd::data<QueryProjection<Category>>(root.index(), view.data().columns);
+        auto data = urd::make<QueryProjection<Category>>(root, view.get_columns());
         return runir::kr::dl::insert(*m_repository, data).first;
     }
 
@@ -184,11 +185,15 @@ class QueryStatisticsCollector
 public:
     template<typename T>
     void add(RecordView<T> expression)
-    { collect<T>(expression); }
+    {
+        collect<T>(expression);
+    }
 
     /// A sampler for the collected leaves, to measure sample states one at a time.
     [[nodiscard]] QueryStatisticsSampler sampler() const
-    { return QueryStatisticsSampler(urd::Store<urd::sequence<QueryView<>>>(m_leaves.begin(), m_leaves.end())); }
+    {
+        return QueryStatisticsSampler(urd::Store<urd::sequence<QueryView<>>>(m_leaves.begin(), m_leaves.end()));
+    }
 
     /// The statistics of the collected leaves over contexts, one state evaluation context per sample state, measured
     /// state by state (see QueryStatisticsSampler).
@@ -211,11 +216,15 @@ private:
 
     template<typename T>
     bool first_visit(RecordView<T> view)
-    { return m_visited.insert(runir::kr::detail::record_key<ConstructorRepositoryTypes>(view)).second; }
+    {
+        return m_visited.insert(runir::kr::detail::record_key<ConstructorRepositoryTypes>(view)).second;
+    }
 
     template<typename T, typename F>
     static void for_each_child(RecordView<T> view, F&& f)
-    { urd::for_each_child<ConstructorRepositoryTypes, T>(view.data(), view.context(), std::forward<F>(f)); }
+    {
+        urd::for_each_child<ConstructorRepositoryTypes, T>(view, std::forward<F>(f));
+    }
 
     template<typename T>
     void collect_children(RecordView<T> view)

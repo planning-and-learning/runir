@@ -8,6 +8,8 @@
 
 #include <optional>
 #include <string>
+#include <type_traits>
+#include <variant>
 #include <yggdrasil/serialization/dictionaries.hpp>
 
 namespace ygg::serialization
@@ -28,19 +30,18 @@ void describe_fields(Archive& ar, std::type_identity<urd::index_view<T, C>>)
     ar.field("argument_position",
              [](const auto& value) -> std::optional<ygg::uint_t>
              {
-                 if (::cista::holds_alternative<runir::kr::ps::icp::ArgumentPosition>(value.get_object_reference()))
-                     return value.get_object_reference().template as<runir::kr::ps::icp::ArgumentPosition>().value;
+                 const auto reference = value.get_object_reference();
+                 if (const auto* position = std::get_if<runir::kr::ps::icp::ArgumentPosition>(&reference))
+                     return position->value;
                  return std::nullopt;
              });
-    ar.field("register",
+    ar.field("slot",
              [](const auto& value)
              {
-                 using RegisterIndex = urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>;
-                 using RegisterView = decltype(urd::resolve(RegisterIndex {}, get_repository(value.context()).get_dl_repository()));
-                 std::optional<RegisterView> result;
-                 if (::cista::holds_alternative<RegisterIndex>(value.get_object_reference()))
-                     result = urd::resolve(value.get_object_reference().template as<RegisterIndex>(), get_repository(value.context()).get_dl_repository());
-                 return result;
+                 const auto reference = value.get_object_reference();
+                 using RegisterView = std::variant_alternative_t<1, std::remove_const_t<decltype(reference)>>;
+                 const auto* reg = std::get_if<RegisterView>(&reference);
+                 return reg ? std::optional<RegisterView>(*reg) : std::nullopt;
              });
     ar.field("concept", [](const auto& value) { return value.get_concept_feature(); });
 }

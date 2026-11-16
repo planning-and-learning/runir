@@ -55,11 +55,15 @@ using TargetNumerical = runir::kr::dl::Numerical<typename Context::Target::Famil
 
 template<typename T>
 const T& unwrap(const T& value URD_LIFETIMEBOUND) noexcept
-{ return value; }
+{
+    return value;
+}
 
 template<typename T>
 const T& unwrap(const boost::spirit::x3::forward_ast<T>& value) noexcept
-{ return value.get(); }
+{
+    return value.get();
+}
 
 template<typename T>
 struct UnwrapTraits
@@ -79,11 +83,15 @@ using Unwrapped = typename UnwrapTraits<T>::Type;
 
 template<typename T, typename Context>
 auto checkout(const Context& context)
-{ return ygg::formalism::checkout<T>(context.builder()); }
+{
+    return ygg::formalism::checkout<T>(context.builder());
+}
 
 template<typename Context, typename T>
 auto intern(const Context& context, urd::data<T>& data)
-{ return insert(context.repository(), data).first; }
+{
+    return insert(context.repository(), data).first;
+}
 
 /// A semantic constructor is interned; a grammar constructor is stored as it is.
 template<runir::kr::dl::CategoryTag Category, typename Context, typename T>
@@ -172,9 +180,9 @@ auto parse(const runir::kr::dl::grammar::ast::QueryAtomicGoal& node, tyr::formal
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::QueryConcept& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
-    const auto arg = urd::to_stored(parse(node.arg, domain, context));
+    const auto arg = parse(node.operand, domain, context);
     auto data = checkout<runir::kr::dl::Query<runir::kr::dl::QueryConceptTag>>(context);
-    data->arg = arg;
+    urd::store(data->operand, arg);
     data->columns = parse_columns(node.columns, context);
     return intern_query(context, intern(context, *data).index());
 }
@@ -182,9 +190,9 @@ auto parse(const runir::kr::dl::grammar::ast::QueryConcept& node, tyr::formalism
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::QueryRole& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
-    const auto arg = urd::to_stored(parse(node.arg, domain, context));
+    const auto arg = parse(node.operand, domain, context);
     auto data = checkout<runir::kr::dl::Query<runir::kr::dl::QueryRoleTag>>(context);
-    data->arg = arg;
+    urd::store(data->operand, arg);
     data->columns = parse_columns(node.columns, context);
     return intern_query(context, intern(context, *data).index());
 }
@@ -192,20 +200,20 @@ auto parse(const runir::kr::dl::grammar::ast::QueryRole& node, tyr::formalism::p
 template<typename Tag, typename Context>
 auto parse(const runir::kr::dl::grammar::ast::QueryBinary<Tag>& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
-    const auto lhs = parse(node.lhs.get(), domain, context).index();
-    const auto rhs = parse(node.rhs.get(), domain, context).index();
+    const auto lhs = parse(node.left_operand.get(), domain, context).index();
+    const auto rhs = parse(node.right_operand.get(), domain, context).index();
     auto data = checkout<runir::kr::dl::Query<Tag>>(context);
-    data->lhs = lhs;
-    data->rhs = rhs;
+    urd::store(data->left_operand, lhs);
+    urd::store(data->right_operand, rhs);
     return intern_query(context, intern(context, *data).index());
 }
 
 template<typename Tag, typename Context>
 auto parse(const runir::kr::dl::grammar::ast::QueryColumns<Tag>& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
-    const auto arg = parse(node.arg.get(), domain, context).index();
+    const auto arg = parse(node.operand.get(), domain, context).index();
     auto data = checkout<runir::kr::dl::Query<Tag>>(context);
-    data->arg = arg;
+    urd::store(data->operand, arg);
     data->columns = parse_columns(node.columns, context);
     return intern_query(context, intern(context, *data).index());
 }
@@ -250,21 +258,21 @@ auto parse(const runir::kr::dl::grammar::ast::QueryMustPass& node, tyr::formalis
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::QuerySelectEqual& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
-    const auto arg = parse(node.arg.get(), domain, context).index();
+    const auto arg = parse(node.operand.get(), domain, context).index();
     auto data = checkout<runir::kr::dl::Query<runir::kr::dl::QuerySelectEqualTag>>(context);
-    data->arg = arg;
-    data->lhs_column = parse_column(node.lhs_column, context);
-    data->rhs_column = parse_column(node.rhs_column, context);
+    urd::store(data->operand, arg);
+    data->left_column = parse_column(node.left_column, context);
+    data->right_column = parse_column(node.right_column, context);
     return intern_query(context, intern(context, *data).index());
 }
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::QuerySelectValue& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
-    const auto arg = parse(node.arg.get(), domain, context).index();
+    const auto arg = parse(node.operand.get(), domain, context).index();
     const auto object = runir::kr::parser::require_object(domain, node.object_name, context.diagnostics());
     auto data = checkout<runir::kr::dl::Query<runir::kr::dl::QuerySelectValueTag>>(context);
-    data->arg = arg;
+    urd::store(data->operand, arg);
     data->column = parse_column(node.column, context);
     data->object = object;
     return intern_query(context, intern(context, *data).index());
@@ -295,10 +303,12 @@ QueryView parse(const runir::kr::dl::grammar::ast::Query& node, tyr::formalism::
         node.get());
 }
 
-/// Parses one alternative of a concept/role/query operand into the member variant Result.
+/// Parses one alternative of a concept/role/query operand into the member variant Result, as Result stores it.
 template<typename Result, typename Node, typename Context>
 Result parse_collection_operand(const Node& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{ return Result(urd::to_stored(parse(node, domain, context))); }
+{
+    return urd::stored<Result>(parse(node, domain, context));
+}
 
 template<typename Result, typename Operand, typename Context>
 Result parse_operand(const Operand& node, tyr::formalism::planning::DomainView domain, const Context& context)
@@ -311,9 +321,9 @@ auto parse(const runir::kr::dl::grammar::ast::Constructor<Category, runir::kr::d
            tyr::formalism::planning::DomainView domain,
            const Context& context)
 {
-    const auto arg = urd::to_stored(parse(node.arg, domain, context));
+    const auto arg = parse(node.operand, domain, context);
     auto data = checkout<runir::kr::dl::QueryProjection<Category>>(context);
-    data->arg = arg;
+    urd::store(data->operand, arg);
     data->columns = parse_columns(node.columns, context);
     try
     {
@@ -375,29 +385,48 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptAtomicGoal& node, tyr::form
 template<typename Tag, typename Ast, typename Context>
 auto parse_binary_concept(const Ast& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
-    const auto lhs = parse(node.lhs, domain, context);
-    const auto rhs = parse(node.rhs, domain, context);
+    const auto left = parse(node.left_operand, domain, context);
+    const auto right = parse(node.right_operand, domain, context);
     auto data = checkout<TargetConcept<Context, Tag>>(context);
-    data->lhs = urd::to_stored(lhs);
-    data->rhs = urd::to_stored(rhs);
+    urd::store(data->left_operand, left);
+    urd::store(data->right_operand, right);
+    return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).index());
+}
+
+template<typename Tag, typename Ast, typename Context>
+auto parse_quantification_concept(const Ast& node, tyr::formalism::planning::DomainView domain, const Context& context)
+{
+    const auto role = parse(node.role, domain, context);
+    const auto qualifier = parse(node.qualifier, domain, context);
+    auto data = checkout<TargetConcept<Context, Tag>>(context);
+    urd::store(data->role, role);
+    urd::store(data->qualifier, qualifier);
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).index());
 }
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptIntersection& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{ return parse_binary_concept<runir::kr::dl::IntersectionTag>(node, domain, context); }
+{
+    return parse_binary_concept<runir::kr::dl::IntersectionTag>(node, domain, context);
+}
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptUnion& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{ return parse_binary_concept<runir::kr::dl::UnionTag>(node, domain, context); }
+{
+    return parse_binary_concept<runir::kr::dl::UnionTag>(node, domain, context);
+}
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptValueRestriction& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{ return parse_binary_concept<runir::kr::dl::ValueRestrictionTag>(node, domain, context); }
+{
+    return parse_quantification_concept<runir::kr::dl::ValueRestrictionTag>(node, domain, context);
+}
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptExistentialQuantification& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{ return parse_binary_concept<runir::kr::dl::ExistentialQuantificationTag>(node, domain, context); }
+{
+    return parse_quantification_concept<runir::kr::dl::ExistentialQuantificationTag>(node, domain, context);
+}
 
 template<typename Tag, typename Ast, typename Context>
 auto parse_number_restriction_concept(const Ast& node, tyr::formalism::planning::DomainView domain, const Context& context)
@@ -405,31 +434,37 @@ auto parse_number_restriction_concept(const Ast& node, tyr::formalism::planning:
     const auto role = parse(node.role, domain, context);
     auto data = checkout<TargetConcept<Context, Tag>>(context);
     data->n = node.n;
-    data->role = urd::to_stored(role);
+    urd::store(data->role, role);
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).index());
 }
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptAtLeastNumberRestriction& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{ return parse_number_restriction_concept<runir::kr::dl::AtLeastNumberRestrictionTag>(node, domain, context); }
+{
+    return parse_number_restriction_concept<runir::kr::dl::AtLeastNumberRestrictionTag>(node, domain, context);
+}
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptAtMostNumberRestriction& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{ return parse_number_restriction_concept<runir::kr::dl::AtMostNumberRestrictionTag>(node, domain, context); }
+{
+    return parse_number_restriction_concept<runir::kr::dl::AtMostNumberRestrictionTag>(node, domain, context);
+}
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptExactNumberRestriction& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{ return parse_number_restriction_concept<runir::kr::dl::ExactNumberRestrictionTag>(node, domain, context); }
+{
+    return parse_number_restriction_concept<runir::kr::dl::ExactNumberRestrictionTag>(node, domain, context);
+}
 
 template<typename Tag, typename Ast, typename Context>
 auto parse_qualified_number_restriction_concept(const Ast& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
     const auto role = parse(node.role, domain, context);
-    const auto concept_view = parse(node.concept_, domain, context);
+    const auto qualifier = parse(node.qualifier, domain, context);
     auto data = checkout<TargetConcept<Context, Tag>>(context);
     data->n = node.n;
-    data->role = urd::to_stored(role);
-    data->concept_ = urd::to_stored(concept_view);
+    urd::store(data->role, role);
+    urd::store(data->qualifier, qualifier);
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).index());
 }
 
@@ -437,32 +472,42 @@ template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptQualifiedAtLeastNumberRestriction& node,
            tyr::formalism::planning::DomainView domain,
            const Context& context)
-{ return parse_qualified_number_restriction_concept<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>(node, domain, context); }
+{
+    return parse_qualified_number_restriction_concept<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>(node, domain, context);
+}
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptQualifiedAtMostNumberRestriction& node,
            tyr::formalism::planning::DomainView domain,
            const Context& context)
-{ return parse_qualified_number_restriction_concept<runir::kr::dl::QualifiedAtMostNumberRestrictionTag>(node, domain, context); }
+{
+    return parse_qualified_number_restriction_concept<runir::kr::dl::QualifiedAtMostNumberRestrictionTag>(node, domain, context);
+}
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptQualifiedExactNumberRestriction& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{ return parse_qualified_number_restriction_concept<runir::kr::dl::QualifiedExactNumberRestrictionTag>(node, domain, context); }
+{
+    return parse_qualified_number_restriction_concept<runir::kr::dl::QualifiedExactNumberRestrictionTag>(node, domain, context);
+}
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptRoleValueMap& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{ return parse_binary_concept<runir::kr::dl::RoleValueMapTag>(node, domain, context); }
+{
+    return parse_binary_concept<runir::kr::dl::RoleValueMapTag>(node, domain, context);
+}
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptAgreement& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{ return parse_binary_concept<runir::kr::dl::AgreementTag>(node, domain, context); }
+{
+    return parse_binary_concept<runir::kr::dl::AgreementTag>(node, domain, context);
+}
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptRoleFillers& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
     const auto role = parse(node.role, domain, context);
     auto data = checkout<TargetConcept<Context, runir::kr::dl::RoleFillersTag>>(context);
-    data->role = urd::to_stored(role);
+    urd::store(data->role, role);
     runir::kr::parser::append_objects(domain, node.object_names, context.diagnostics(), data->objects);
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).index());
 }
@@ -478,9 +523,9 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptOneOf& node, tyr::formalism
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::ConceptNegation& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
-    const auto arg = parse(node.arg, domain, context);
+    const auto operand = parse(node.operand, domain, context);
     auto data = checkout<TargetConcept<Context, runir::kr::dl::NegationTag>>(context);
-    data->arg = urd::to_stored(arg);
+    urd::store(data->operand, operand);
     return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).index());
 }
 
@@ -535,68 +580,82 @@ auto parse(const runir::kr::dl::grammar::ast::RoleAtomicGoal& node, tyr::formali
 template<typename Tag, typename Ast, typename Context>
 auto parse_binary_role(const Ast& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
-    const auto lhs = parse(node.lhs, domain, context);
-    const auto rhs = parse(node.rhs, domain, context);
+    const auto left = parse(node.left_operand, domain, context);
+    const auto right = parse(node.right_operand, domain, context);
     auto data = checkout<TargetRole<Context, Tag>>(context);
-    data->lhs = urd::to_stored(lhs);
-    data->rhs = urd::to_stored(rhs);
+    urd::store(data->left_operand, left);
+    urd::store(data->right_operand, right);
     return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).index());
 }
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::RoleIntersection& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{ return parse_binary_role<runir::kr::dl::IntersectionTag>(node, domain, context); }
+{
+    return parse_binary_role<runir::kr::dl::IntersectionTag>(node, domain, context);
+}
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::RoleUnion& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{ return parse_binary_role<runir::kr::dl::UnionTag>(node, domain, context); }
+{
+    return parse_binary_role<runir::kr::dl::UnionTag>(node, domain, context);
+}
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::RoleComposition& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{ return parse_binary_role<runir::kr::dl::CompositionTag>(node, domain, context); }
+{
+    return parse_binary_role<runir::kr::dl::CompositionTag>(node, domain, context);
+}
 
 template<typename Tag, typename Ast, typename Context>
 auto parse_unary_role(const Ast& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
-    const auto arg = parse(node.arg, domain, context);
+    const auto operand = parse(node.operand, domain, context);
     auto data = checkout<TargetRole<Context, Tag>>(context);
-    data->arg = urd::to_stored(arg);
+    urd::store(data->operand, operand);
     return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).index());
 }
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::RoleComplement& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{ return parse_unary_role<runir::kr::dl::ComplementTag>(node, domain, context); }
+{
+    return parse_unary_role<runir::kr::dl::ComplementTag>(node, domain, context);
+}
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::RoleInverse& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{ return parse_unary_role<runir::kr::dl::InverseTag>(node, domain, context); }
+{
+    return parse_unary_role<runir::kr::dl::InverseTag>(node, domain, context);
+}
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::RoleTransitiveClosure& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{ return parse_unary_role<runir::kr::dl::TransitiveClosureTag>(node, domain, context); }
+{
+    return parse_unary_role<runir::kr::dl::TransitiveClosureTag>(node, domain, context);
+}
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::RoleReflexiveTransitiveClosure& node, tyr::formalism::planning::DomainView domain, const Context& context)
-{ return parse_unary_role<runir::kr::dl::ReflexiveTransitiveClosureTag>(node, domain, context); }
+{
+    return parse_unary_role<runir::kr::dl::ReflexiveTransitiveClosureTag>(node, domain, context);
+}
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::RoleRestriction& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
-    const auto lhs = parse(node.lhs, domain, context);
-    const auto rhs = parse(node.rhs, domain, context);
+    const auto role = parse(node.role, domain, context);
+    const auto qualifier = parse(node.qualifier, domain, context);
     auto data = checkout<TargetRole<Context, runir::kr::dl::RestrictionTag>>(context);
-    data->lhs = urd::to_stored(lhs);
-    data->rhs = urd::to_stored(rhs);
+    urd::store(data->role, role);
+    urd::store(data->qualifier, qualifier);
     return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).index());
 }
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::RoleIdentity& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
-    const auto arg = parse(node.arg, domain, context);
+    const auto operand = parse(node.operand, domain, context);
     auto data = checkout<TargetRole<Context, runir::kr::dl::IdentityTag>>(context);
-    data->arg = urd::to_stored(arg);
+    urd::store(data->operand, operand);
     return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).index());
 }
 
@@ -638,10 +697,10 @@ template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::BooleanNonempty& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
     using Data = urd::data<TargetBoolean<Context, runir::kr::dl::NonemptyTag>>;
-    const auto arg = parse_operand<typename Data::Arg>(node.arg, domain, context);
+    const auto operand = parse_operand<decltype(Data::operand)>(node.operand, domain, context);
 
     auto data = checkout<TargetBoolean<Context, runir::kr::dl::NonemptyTag>>(context);
-    data->arg = arg;
+    urd::store(data->operand, operand);
     return intern_constructor<runir::kr::dl::BooleanTag>(context, intern(context, *data).index());
 }
 
@@ -649,10 +708,10 @@ template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::NumericalCount& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
     using Data = urd::data<TargetNumerical<Context, runir::kr::dl::CountTag>>;
-    const auto arg = parse_operand<typename Data::Arg>(node.arg, domain, context);
+    const auto operand = parse_operand<decltype(Data::operand)>(node.operand, domain, context);
 
     auto data = checkout<TargetNumerical<Context, runir::kr::dl::CountTag>>(context);
-    data->arg = arg;
+    urd::store(data->operand, operand);
     return intern_constructor<runir::kr::dl::NumericalTag>(context, intern(context, *data).index());
 }
 
@@ -660,13 +719,13 @@ template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::NumericalDistance& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
     using Data = urd::data<TargetNumerical<Context, runir::kr::dl::DistanceTag>>;
-    const auto lhs = parse_operand<typename Data::Vertex>(node.lhs, domain, context);
-    const auto mid = parse_operand<typename Data::Edge>(node.mid, domain, context);
-    const auto rhs = parse_operand<typename Data::Vertex>(node.rhs, domain, context);
+    const auto sources = parse_operand<decltype(Data::sources)>(node.sources, domain, context);
+    const auto edges = parse_operand<decltype(Data::edges)>(node.edges, domain, context);
+    const auto targets = parse_operand<decltype(Data::targets)>(node.targets, domain, context);
     auto data = checkout<TargetNumerical<Context, runir::kr::dl::DistanceTag>>(context);
-    data->lhs = lhs;
-    data->mid = mid;
-    data->rhs = rhs;
+    urd::store(data->sources, sources);
+    data->edges = edges;
+    urd::store(data->targets, targets);
     return intern_constructor<runir::kr::dl::NumericalTag>(context, intern(context, *data).index());
 }
 
@@ -676,11 +735,11 @@ auto parse(const runir::kr::dl::grammar::ast::Constructor<runir::kr::dl::Boolean
            tyr::formalism::planning::DomainView domain,
            const Context& context)
 {
-    const auto lhs = urd::to_stored(parse(node.lhs, domain, context));
-    const auto rhs = urd::to_stored(parse(node.rhs, domain, context));
+    const auto left = parse(node.left_operand, domain, context);
+    const auto right = parse(node.right_operand, domain, context);
     auto data = checkout<TargetBoolean<Context, Tag>>(context);
-    data->lhs = lhs;
-    data->rhs = rhs;
+    urd::store(data->left_operand, left);
+    urd::store(data->right_operand, right);
     return intern_constructor<runir::kr::dl::BooleanTag>(context, intern(context, *data).index());
 }
 
@@ -689,11 +748,11 @@ auto parse(const runir::kr::dl::grammar::ast::Constructor<runir::kr::dl::Numeric
            tyr::formalism::planning::DomainView domain,
            const Context& context)
 {
-    const auto lhs = urd::to_stored(parse(node.lhs, domain, context));
-    const auto rhs = urd::to_stored(parse(node.rhs, domain, context));
+    const auto left = parse(node.left_operand, domain, context);
+    const auto right = parse(node.right_operand, domain, context);
     auto data = checkout<TargetNumerical<Context, Tag>>(context);
-    data->lhs = lhs;
-    data->rhs = rhs;
+    urd::store(data->left_operand, left);
+    urd::store(data->right_operand, right);
     return intern_constructor<runir::kr::dl::NumericalTag>(context, intern(context, *data).index());
 }
 
@@ -701,7 +760,7 @@ template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::BooleanConstant& node, tyr::formalism::planning::DomainView, const Context& context)
 {
     auto data = checkout<TargetBoolean<Context, runir::kr::dl::BooleanConstantTag>>(context);
-    data->identifier = node.value;
+    data->value = node.value;
     return intern_constructor<runir::kr::dl::BooleanTag>(context, intern(context, *data).index());
 }
 
@@ -709,16 +768,16 @@ template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::NumericalConstant& node, tyr::formalism::planning::DomainView, const Context& context)
 {
     auto data = checkout<TargetNumerical<Context, runir::kr::dl::NumericalConstantTag>>(context);
-    data->identifier = node.value;
+    data->value = node.value;
     return intern_constructor<runir::kr::dl::NumericalTag>(context, intern(context, *data).index());
 }
 
 template<typename Context>
 auto parse(const runir::kr::dl::grammar::ast::BooleanNot& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
-    const auto arg = urd::to_stored(parse(node.arg, domain, context));
+    const auto operand = parse(node.operand, domain, context);
     auto data = checkout<TargetBoolean<Context, runir::kr::dl::NotTag>>(context);
-    data->arg = arg;
+    urd::store(data->operand, operand);
     return intern_constructor<runir::kr::dl::BooleanTag>(context, intern(context, *data).index());
 }
 

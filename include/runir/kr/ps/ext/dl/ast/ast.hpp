@@ -83,7 +83,7 @@ struct LoadRule : boost::spirit::x3::position_tagged
 {
     urd::Store<urd::sequence<Condition>> conditions;
     Identifier feature;
-    Identifier reg;
+    Identifier slot;
     urd::Store<urd::sequence<Effect>> effects;
 };
 
@@ -98,7 +98,7 @@ struct ChooseRule : boost::spirit::x3::position_tagged
 {
     urd::Store<urd::sequence<Condition>> conditions;
     Identifier feature;
-    Identifier reg;
+    Identifier slot;
     urd::Store<urd::sequence<Effect>> effects;
     urd::Store<urd::sequence<OrderTerm>> order;
 };

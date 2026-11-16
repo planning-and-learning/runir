@@ -29,6 +29,7 @@
 #include <urd/elements/flat.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
+#include <variant>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/io/iostream.hpp>
@@ -44,7 +45,7 @@ template<typename Predicate, typename ArgumentNames>
 void append_indexical(std::ostream& os, Predicate predicate, const ArgumentNames& arguments)
 {
     os << '(' << operation_name(predicate.get_operation());
-    predicate.get_object_reference().apply(
+    std::visit(
         [&]<typename Reference>(const Reference& reference)
         {
             if constexpr (std::same_as<Reference, ArgumentPosition>)
@@ -58,8 +59,9 @@ void append_indexical(std::ostream& os, Predicate predicate, const ArgumentNames
                 os << ')';
             }
             else
-                os << " (:register (:concept " << urd::resolve(reference, predicate.context().get_dl_repository()).get_name() << "))";
-        });
+                os << " (:register (:concept " << reference.get_name() << "))";
+        },
+        predicate.get_object_reference());
     os << " (:concept " << predicate.get_concept_feature().get_symbol() << "))";
 }
 
@@ -86,7 +88,7 @@ void append_rule_body(std::ostream& os, urd::index_view<runir::kr::ps::icp::Rule
         append_conditions(os, view.get_conditions());
         using Category = RuleCategoryFor<Kind>;
         os << ygg::print_indent << "(:" << Category::name << ' ' << view.get_feature().get_symbol() << ")\n";
-        os << ygg::print_indent << "(:register (:" << Category::name << ' ' << view.get_register().get_name() << "))\n";
+        os << ygg::print_indent << "(:register (:" << Category::name << ' ' << view.get_slot().get_name() << "))\n";
         append_effects(os, view.get_effects());
     }
 }

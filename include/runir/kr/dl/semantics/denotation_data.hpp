@@ -4,6 +4,7 @@
 #include "runir/kr/dl/semantics/declarations.hpp"
 
 #include <tuple>
+#include <type_traits>
 #include <urd/elements/flat.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
@@ -27,12 +28,15 @@ struct data<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>>
 
     data() = default;
     explicit data(bool value_) noexcept : value(value_) {}
+    static constexpr bool copyable() noexcept
+    {
+        static_assert(std::is_trivially_copyable_v<data>, "a copyable record is trivially copyable");
+        return true;
+    }
 
-    auto get_data() noexcept -> bool& { return value; }
-    [[nodiscard]] auto get_data() const noexcept -> const bool& { return value; }
-
-    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::value> {}; }
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"value", &data::value>> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::value> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::value> {}; }
 };
 
 template<>
@@ -43,12 +47,15 @@ struct data<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>>
 
     data() = default;
     explicit data(ygg::uint_t value_) noexcept : value(value_) {}
+    static constexpr bool copyable() noexcept
+    {
+        static_assert(std::is_trivially_copyable_v<data>, "a copyable record is trivially copyable");
+        return true;
+    }
 
-    auto get_data() noexcept -> ygg::uint_t& { return value; }
-    [[nodiscard]] auto get_data() const noexcept -> const ygg::uint_t& { return value; }
-
-    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::value> {}; }
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"value", &data::value>> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::value> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::value> {}; }
 };
 
 template<>
@@ -64,9 +71,15 @@ struct data<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>
         vec_index(vec_index_)
     {
     }
+    static constexpr bool copyable() noexcept
+    {
+        static_assert(std::is_trivially_copyable_v<data>, "a copyable record is trivially copyable");
+        return true;
+    }
 
-    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::num_objects, &data::vec_index> {}; }
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"num_objects", &data::num_objects>, urd::field<"vec_index", &data::vec_index>> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::num_objects, &data::vec_index> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::num_objects, &data::vec_index> {}; }
 };
 
 template<>
@@ -82,9 +95,15 @@ struct data<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>
         vec_index(vec_index_)
     {
     }
+    static constexpr bool copyable() noexcept
+    {
+        static_assert(std::is_trivially_copyable_v<data>, "a copyable record is trivially copyable");
+        return true;
+    }
 
-    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::num_objects, &data::vec_index> {}; }
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"num_objects", &data::num_objects>, urd::field<"vec_index", &data::vec_index>> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::num_objects, &data::vec_index> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::num_objects, &data::vec_index> {}; }
 };
 
 }

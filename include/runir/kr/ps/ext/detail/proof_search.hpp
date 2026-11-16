@@ -41,7 +41,7 @@ template<tyr::TaskKind Kind,
          StateMemorization Memorization,
          UnsolvabilityConcept<Kind> Unsolvability>
 ProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>& expander,
-                               const tyr::planning::PackedStateView<Kind>& initial_state,
+                               const tyr::planning::StateView<Kind>& initial_state,
                                const StorageStoredState<ExecutionStorage>& initial,
                                const ProgramSearchOptions<Kind>& options,
                                Unsolvability& classifier,
@@ -67,7 +67,6 @@ ProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, Evaluat
     auto& search = *task_context->search_context;
     const bool and_backtracking = options.and_backtracking && !options.universal;
     const auto stopwatch = options.max_time ? std::optional<ygg::CountdownWatch>(*options.max_time) : std::nullopt;
-    const auto initial_planning_state = initial_state.unpack();
     auto goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*search.task);
     const bool static_goal = goal_strategy.is_static_goal_satisfied(*search.task);
     auto stack = urd::Store<urd::sequence<Frame>> {};
@@ -81,7 +80,7 @@ ProofStatus depth_first_search(SuccessorExpander<Kind, ExecutionStorage, Evaluat
     const auto classify = [&](ProgramStateViewConcept<Kind> auto state)
     {
         const auto planning_state = state.get_state();
-        const bool goal = static_goal && goal_strategy.is_dynamic_goal_satisfied(initial_planning_state, planning_state.data());
+        const bool goal = static_goal && goal_strategy.is_dynamic_goal_satisfied(initial_state, planning_state);
         return std::pair(goal, !goal && classifier.is_unsolvable(planning_state));
     };
     const auto record_transition = [&](ProgramStateViewConcept<Kind> auto source, const Step& step, std::size_t choice_width)
@@ -327,7 +326,7 @@ ProgramProofResults<Kind> find_solution(SuccessorExpander<Kind, ExecutionStorage
     auto first_goal = PathPtr {};
     auto witness = PathPtr {};
     const auto status =
-        depth_first_search<Kind>(expander, initial_node.get_state(), initial, options, classifier, storage, statistics, path_pool, first_goal, witness);
+        depth_first_search<Kind>(expander, initial_node.get_state().unpack(), initial, options, classifier, storage, statistics, path_pool, first_goal, witness);
 
     auto result = ProgramProofResults<Kind> {};
     result.task_context_owner = task_context;

@@ -27,9 +27,15 @@ struct data<runir::kr::ps::ext::Program>
         modules(std::move(modules_))
     {
     }
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
 
-    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::entry_module, &data::modules> {}; }
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"entry_module", &data::entry_module>, urd::field<"modules", &data::modules>> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::entry_module, &data::modules> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::entry_module, &data::modules> {}; }
 };
 
 }  // namespace urd

@@ -1,4 +1,5 @@
 #include "planning_fixtures.hpp"
+#include "record_copy.hpp"
 
 #include <algorithm>
 #include <array>
@@ -76,8 +77,10 @@ template<tyr::TaskKind Kind>
 void check_state_delta(tyr::planning::StateView<Kind> source, tyr::planning::StateView<Kind> target)
 {
     auto delta = kr::dl::semantics::incremental::Delta {};
-    const auto source_builder = urd::builder<tyr::planning::State<Kind>> { source.data() };
-    const auto target_builder = urd::builder<tyr::planning::State<Kind>> { target.data() };
+    auto source_builder = urd::builder<tyr::planning::State<Kind>>();
+    source_builder.assign(source);
+    auto target_builder = urd::builder<tyr::planning::State<Kind>>();
+    target_builder.assign(target);
     const auto borrowed_source = urd::resolve(source_builder, source.get_state_repository());
     const auto borrowed_target = urd::resolve(target_builder, target.get_state_repository());
     delta.template assign<Kind>(borrowed_source, borrowed_target);
@@ -169,8 +172,10 @@ void check_delta()
     EXPECT_TRUE(delta.empty());
 
     // Copied builders exercise the borrowed state path used by NONE and CHOICE search.
-    const auto source_builder = urd::builder<tyr::planning::State<Kind>> { source.data() };
-    const auto target_builder = urd::builder<tyr::planning::State<Kind>> { target.data() };
+    auto source_builder = urd::builder<tyr::planning::State<Kind>>();
+    source_builder.assign(source);
+    auto target_builder = urd::builder<tyr::planning::State<Kind>>();
+    target_builder.assign(target);
     const auto borrowed_source = urd::resolve(source_builder, *search->state_repository);
     const auto borrowed_target = urd::resolve(target_builder, *search->state_repository);
     const auto assign = [&] { delta.template assign<Kind>(borrowed_source, source_register_view, borrowed_target, target_register_view); };
@@ -212,7 +217,7 @@ void check_delta()
     expect_same_side(delta.removed, original.removed);
 
     // Adding unassigned slots changes the register layout without changing feature inputs.
-    auto resized_registers = source_registers;
+    auto resized_registers = runir::tests::copy_fields(source_registers);
     resized_registers.concept_values.resize(4);
     resized_registers.role_values.resize(4);
     delta.template assign<Kind>(source, source_register_view, source, urd::resolve(resized_registers, *search->task->get_repository()));

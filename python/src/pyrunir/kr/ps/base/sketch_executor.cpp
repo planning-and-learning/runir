@@ -12,8 +12,8 @@
 #include <runir/kr/ps/base/sketch_executor.hpp>
 #include <runir/kr/ps/base/successor_expander.hpp>
 #include <tyr/planning/declarations.hpp>
+#include <urd/dot.hpp>
 #include <urd/python/graphs.hpp>
-#include <vefr/dot.hpp>
 #include <vefr/python/bindings.hpp>
 #include <yggdrasil/python/bindings.hpp>
 
@@ -42,7 +42,7 @@ void bind_sketch_proof_types(nb::module_& m, const char* prefix)
     {
         auto graph = nb::class_<Graph>(m, (std::string(prefix) + "SketchProofGraph").c_str());
         urd::python::bind_graph(graph);
-        vefr::python::bind_algorithms(graph, vefr::python::one_color, vefr::vertex_data, vefr::edge_data);
+        vefr::python::bind_algorithms(graph, vefr::python::one_color, urd::vertex_data, urd::edge_data);
     }
 
     nb::class_<Results>(m, (std::string(prefix) + "SketchProofResults").c_str())

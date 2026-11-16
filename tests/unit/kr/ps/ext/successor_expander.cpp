@@ -122,7 +122,9 @@ TEST(RunirTests, ExtDistanceFeatureEvaluationDoesNotRetainTaskDenotations)
 TEST(RunirTests, ExtInitialStatesUseExpanderRepositoryGround) { expect_initial_program_state_uses_expander_repository<tyr::GroundTag>(); }
 
 TEST(RunirTests, ExtTransientProgramStatesRetainValuesAndInternCallersGround)
-{ expect_transient_program_states_retain_values_and_intern_callers<tyr::GroundTag>(); }
+{
+    expect_transient_program_states_retain_values_and_intern_callers<tyr::GroundTag>();
+}
 
 TEST(RunirTests, ExtChooseUsesNaturalBindingOrder)
 {
@@ -297,7 +299,7 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     load_data.source = source.index();
     load_data.target = target.index();
     load_data.feature = top_feature.index();
-    load_data.reg = reg.index();
+    load_data.slot = reg.index();
     kr::ps::ext::canonicalize(load_data);
     const auto load = repository->insert(load_data).first;
 
@@ -588,8 +590,9 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     auto evaluation_context = environment.make_dl_context(call_target);
     const auto initial_context = environment.make_dl_context(initial_state);
     EXPECT_TRUE(initial_context.arguments().template arguments<kr::dl::ConceptTag>().empty());
-    EXPECT_EQ(&evaluation_context.arguments().data(), &arguments.data());
-    EXPECT_EQ(&evaluation_context.registers().data(), &module_state.get_registers().data());
+    EXPECT_EQ(evaluation_context.arguments(), arguments);
+    EXPECT_EQ(evaluation_context.registers().template values<kr::dl::ConceptTag>().base().data(),
+              module_state.get_registers().template values<kr::dl::ConceptTag>().base().data());
     EXPECT_EQ(evaluation_context.arguments().template arguments<kr::dl::ConceptTag>()[0].index(), concept_arguments[0].index());
     EXPECT_TRUE(evaluation_context.arguments().template arguments<kr::dl::BooleanTag>()[0].value());
     EXPECT_EQ(evaluation_context.arguments().template arguments<kr::dl::NumericalTag>()[0].value(), numerical_arguments[0].value());
@@ -599,8 +602,8 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
                                                                         arguments,
                                                                         module_state.get_registers(),
                                                                         module_state.get_registers());
-    EXPECT_EQ(&evaluation_transition.get_source_context().arguments().data(), &arguments.data());
-    EXPECT_EQ(&evaluation_transition.get_target_context().arguments().data(), &arguments.data());
+    EXPECT_EQ(evaluation_transition.get_source_context().arguments(), arguments);
+    EXPECT_EQ(evaluation_transition.get_target_context().arguments(), arguments);
 
     const auto caller_frame = call_target.get_call_stack();
     ASSERT_TRUE(caller_frame);

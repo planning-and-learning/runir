@@ -110,30 +110,30 @@ auto QueryNode<Kind>::prepare_operation(QueryView<> expression, GraphBuilder<Kin
             else if constexpr (std::same_as<Tag, AtomicStateTag<tyr::formalism::DerivedTag>>)
                 return QueryAtomicEvaluator<Kind, tyr::formalism::DerivedTag>(layer, concrete);
             else if constexpr (std::same_as<Tag, QueryProjectTag>)
-                return QueryProjectionEvaluator<Kind>(layer, graph.prepare(concrete.get_arg(), m_dependencies), concrete.data().plan);
+                return QueryProjectionEvaluator<Kind>(layer, graph.prepare(concrete.get_operand(), m_dependencies), concrete.get_plan());
             else if constexpr (std::same_as<Tag, QueryJoinTag>)
                 return QueryJoinEvaluator<Kind>(layer,
-                                                graph.prepare(concrete.get_lhs(), m_dependencies),
-                                                graph.prepare(concrete.get_rhs(), m_dependencies),
-                                                concrete.data().plan);
+                                                graph.prepare(concrete.get_left_operand(), m_dependencies),
+                                                graph.prepare(concrete.get_right_operand(), m_dependencies),
+                                                concrete.get_plan());
             else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
             {
                 auto args = urd::Store<urd::sequence<QueryEvaluationIndex>> {};
                 for (const auto arg : concrete.get_args())
                     args.push_back(graph.prepare(arg, m_dependencies));
-                return QueryGenericJoinEvaluator<Kind>(layer, std::move(args), concrete.data().plan);
+                return QueryGenericJoinEvaluator<Kind>(layer, std::move(args), concrete.get_plan());
             }
             else if constexpr (std::same_as<Tag, QueryConceptTag>)
-                return QueryFromDenotationEvaluator<Kind, ConceptTag>(layer, graph.prepare(concrete.get_arg(), m_dependencies), concrete.get_schema());
+                return QueryFromDenotationEvaluator<Kind, ConceptTag>(layer, graph.prepare(concrete.get_operand(), m_dependencies), concrete.get_schema());
             else if constexpr (std::same_as<Tag, QueryRoleTag>)
-                return QueryFromDenotationEvaluator<Kind, RoleTag>(layer, graph.prepare(concrete.get_arg(), m_dependencies), concrete.get_schema());
+                return QueryFromDenotationEvaluator<Kind, RoleTag>(layer, graph.prepare(concrete.get_operand(), m_dependencies), concrete.get_schema());
             else if constexpr (std::same_as<Tag, QueryUnionTag> || std::same_as<Tag, QueryDifferenceTag>)
                 return QuerySetCombinationEvaluator<Kind, Tag>(layer,
-                                                               graph.prepare(concrete.get_lhs(), m_dependencies),
-                                                               graph.prepare(concrete.get_rhs(), m_dependencies),
+                                                               graph.prepare(concrete.get_left_operand(), m_dependencies),
+                                                               graph.prepare(concrete.get_right_operand(), m_dependencies),
                                                                concrete.get_schema());
             else if constexpr (std::same_as<Tag, QueryRenameTag> || std::same_as<Tag, QuerySelectEqualTag> || std::same_as<Tag, QuerySelectValueTag>)
-                return QuerySelectionEvaluator<Kind, Tag>(layer, graph.prepare(concrete.get_arg(), m_dependencies), concrete);
+                return QuerySelectionEvaluator<Kind, Tag>(layer, graph.prepare(concrete.get_operand(), m_dependencies), concrete);
             else if constexpr (std::same_as<Tag, QueryMustPassTag>)
                 return QueryMustPassEvaluator<Kind>(concrete, graph, m_dependencies);
             else

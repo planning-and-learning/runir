@@ -33,7 +33,7 @@ struct QueryMustPassEvaluator : QueryValue
         sources(graph.prepare(expression.get_sources(), dependencies)),
         targets(graph.prepare(expression.get_targets(), dependencies)),
         probes(graph.prepare(expression.get_probes(), dependencies)),
-        feature(semantics::detail::make_must_pass_feature(graph.layer(), expression.data().plan, expression.get_edges())),
+        feature(semantics::detail::make_must_pass_feature(graph.layer(), expression.get_plan(), expression.get_edges())),
         computed(expression.get_schema())
     {
         const auto edges = expression.get_edges();

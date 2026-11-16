@@ -34,9 +34,9 @@ public:
     auto values() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return urd::resolve(self().data().concept_values, get_formalism_repository());
+            return self().template member<&urd::record_of<V>::concept_values>();
         else
-            return urd::resolve(self().data().role_values, get_formalism_repository());
+            return self().template member<&urd::record_of<V>::role_values>();
     }
 
     template<runir::kr::dl::ConceptOrRoleTag Category>

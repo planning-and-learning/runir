@@ -64,101 +64,27 @@ struct data<runir::kr::dl::cnf_grammar::Grammar>
         domain(domain_)
     {
     }
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
 
-    template<runir::kr::dl::CategoryTag Category>
-    constexpr auto& get_start() noexcept
+    static constexpr auto fields() noexcept
     {
-        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return concept_start;
-        else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return role_start;
-        else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-            return boolean_start;
-        else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-            return numerical_start;
-    }
-
-    template<runir::kr::dl::CategoryTag Category>
-    [[nodiscard]] constexpr const auto& get_start() const noexcept
-    {
-        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return concept_start;
-        else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return role_start;
-        else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-            return boolean_start;
-        else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-            return numerical_start;
-    }
-
-    template<runir::kr::dl::CategoryTag Category>
-    constexpr auto& get_derivation_rules() noexcept
-    {
-        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return concept_derivation_rules;
-        else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return role_derivation_rules;
-        else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-            return boolean_derivation_rules;
-        else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-            return numerical_derivation_rules;
-    }
-
-    template<runir::kr::dl::CategoryTag Category>
-    [[nodiscard]] constexpr const auto& get_derivation_rules() const noexcept
-    {
-        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return concept_derivation_rules;
-        else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return role_derivation_rules;
-        else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-            return boolean_derivation_rules;
-        else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-            return numerical_derivation_rules;
-    }
-
-    template<runir::kr::dl::CategoryTag Category>
-    constexpr auto& get_substitution_rules() noexcept
-    {
-        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return concept_substitution_rules;
-        else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return role_substitution_rules;
-        else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-            return boolean_substitution_rules;
-        else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-            return numerical_substitution_rules;
-    }
-
-    template<runir::kr::dl::CategoryTag Category>
-    [[nodiscard]] constexpr const auto& get_substitution_rules() const noexcept
-    {
-        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return concept_substitution_rules;
-        else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return role_substitution_rules;
-        else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-            return boolean_substitution_rules;
-        else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-            return numerical_substitution_rules;
-    }
-
-    static constexpr auto cista_members() noexcept
-    {
-        return urd::Members<&data::index,
-                            &data::concept_start,
-                            &data::role_start,
-                            &data::boolean_start,
-                            &data::numerical_start,
-                            &data::concept_derivation_rules,
-                            &data::role_derivation_rules,
-                            &data::boolean_derivation_rules,
-                            &data::numerical_derivation_rules,
-                            &data::concept_substitution_rules,
-                            &data::role_substitution_rules,
-                            &data::boolean_substitution_rules,
-                            &data::numerical_substitution_rules,
-                            &data::domain> {};
+        return urd::Fields<urd::field<"concept_start", &data::concept_start>,
+                           urd::field<"role_start", &data::role_start>,
+                           urd::field<"boolean_start", &data::boolean_start>,
+                           urd::field<"numerical_start", &data::numerical_start>,
+                           urd::field<"concept_derivation_rules", &data::concept_derivation_rules>,
+                           urd::field<"role_derivation_rules", &data::role_derivation_rules>,
+                           urd::field<"boolean_derivation_rules", &data::boolean_derivation_rules>,
+                           urd::field<"numerical_derivation_rules", &data::numerical_derivation_rules>,
+                           urd::field<"concept_substitution_rules", &data::concept_substitution_rules>,
+                           urd::field<"role_substitution_rules", &data::role_substitution_rules>,
+                           urd::field<"boolean_substitution_rules", &data::boolean_substitution_rules>,
+                           urd::field<"numerical_substitution_rules", &data::numerical_substitution_rules>,
+                           urd::field<"domain", &data::domain>> {};
     }
     static constexpr auto identifying_members() noexcept
     {
@@ -176,8 +102,73 @@ struct data<runir::kr::dl::cnf_grammar::Grammar>
                             &data::numerical_substitution_rules,
                             &data::domain> {};
     }
+    static constexpr auto cista_members() noexcept
+    {
+        return urd::Members<&data::index,
+                            &data::concept_start,
+                            &data::role_start,
+                            &data::boolean_start,
+                            &data::numerical_start,
+                            &data::concept_derivation_rules,
+                            &data::role_derivation_rules,
+                            &data::boolean_derivation_rules,
+                            &data::numerical_derivation_rules,
+                            &data::concept_substitution_rules,
+                            &data::role_substitution_rules,
+                            &data::boolean_substitution_rules,
+                            &data::numerical_substitution_rules,
+                            &data::domain> {};
+    }
 };
 
 }  // namespace urd
+
+namespace runir::kr::dl::cnf_grammar
+{
+/// The member of a grammar record holding the start non-terminal of a category.
+template<CategoryTag Category>
+consteval auto start_member() noexcept
+{
+    using Data = urd::data<Grammar>;
+    if constexpr (std::same_as<Category, ConceptTag>)
+        return &Data::concept_start;
+    else if constexpr (std::same_as<Category, RoleTag>)
+        return &Data::role_start;
+    else if constexpr (std::same_as<Category, BooleanTag>)
+        return &Data::boolean_start;
+    else
+        return &Data::numerical_start;
+}
+
+/// The member of a grammar record holding the derivation rules of a category.
+template<CategoryTag Category>
+consteval auto derivation_rules_member() noexcept
+{
+    using Data = urd::data<Grammar>;
+    if constexpr (std::same_as<Category, ConceptTag>)
+        return &Data::concept_derivation_rules;
+    else if constexpr (std::same_as<Category, RoleTag>)
+        return &Data::role_derivation_rules;
+    else if constexpr (std::same_as<Category, BooleanTag>)
+        return &Data::boolean_derivation_rules;
+    else
+        return &Data::numerical_derivation_rules;
+}
+
+/// The member of a grammar record holding the substitution rules of a category.
+template<CategoryTag Category>
+consteval auto substitution_rules_member() noexcept
+{
+    using Data = urd::data<Grammar>;
+    if constexpr (std::same_as<Category, ConceptTag>)
+        return &Data::concept_substitution_rules;
+    else if constexpr (std::same_as<Category, RoleTag>)
+        return &Data::role_substitution_rules;
+    else if constexpr (std::same_as<Category, BooleanTag>)
+        return &Data::boolean_substitution_rules;
+    else
+        return &Data::numerical_substitution_rules;
+}
+}  // namespace runir::kr::dl::cnf_grammar
 
 #endif

@@ -66,53 +66,22 @@ template<typename Category>
 consteval bool data_accessors()
 {
     using Data = urd::data<kr::dl::cnf_grammar::Grammar>;
-    using Mutable = Data&;
-    using Const = const Data&;
+    using kr::dl::cnf_grammar::derivation_rules_member;
+    using kr::dl::cnf_grammar::start_member;
+    using kr::dl::cnf_grammar::substitution_rules_member;
 
     if constexpr (std::same_as<Category, kr::dl::ConceptTag>)
-        return std::same_as<decltype(std::declval<Mutable>().template get_start<Category>()), decltype((std::declval<Mutable>().concept_start))>
-               && std::same_as<decltype(std::declval<Const>().template get_start<Category>()), decltype((std::declval<Const>().concept_start))>
-               && std::same_as<decltype(std::declval<Mutable>().template get_derivation_rules<Category>()),
-                               decltype((std::declval<Mutable>().concept_derivation_rules))>
-               && std::same_as<decltype(std::declval<Const>().template get_derivation_rules<Category>()),
-                               decltype((std::declval<Const>().concept_derivation_rules))>
-               && std::same_as<decltype(std::declval<Mutable>().template get_substitution_rules<Category>()),
-                               decltype((std::declval<Mutable>().concept_substitution_rules))>
-               && std::same_as<decltype(std::declval<Const>().template get_substitution_rules<Category>()),
-                               decltype((std::declval<Const>().concept_substitution_rules))>;
+        return start_member<Category>() == &Data::concept_start && derivation_rules_member<Category>() == &Data::concept_derivation_rules
+               && substitution_rules_member<Category>() == &Data::concept_substitution_rules;
     else if constexpr (std::same_as<Category, kr::dl::RoleTag>)
-        return std::same_as<decltype(std::declval<Mutable>().template get_start<Category>()), decltype((std::declval<Mutable>().role_start))>
-               && std::same_as<decltype(std::declval<Const>().template get_start<Category>()), decltype((std::declval<Const>().role_start))>
-               && std::same_as<decltype(std::declval<Mutable>().template get_derivation_rules<Category>()),
-                               decltype((std::declval<Mutable>().role_derivation_rules))>
-               && std::same_as<decltype(std::declval<Const>().template get_derivation_rules<Category>()),
-                               decltype((std::declval<Const>().role_derivation_rules))>
-               && std::same_as<decltype(std::declval<Mutable>().template get_substitution_rules<Category>()),
-                               decltype((std::declval<Mutable>().role_substitution_rules))>
-               && std::same_as<decltype(std::declval<Const>().template get_substitution_rules<Category>()),
-                               decltype((std::declval<Const>().role_substitution_rules))>;
+        return start_member<Category>() == &Data::role_start && derivation_rules_member<Category>() == &Data::role_derivation_rules
+               && substitution_rules_member<Category>() == &Data::role_substitution_rules;
     else if constexpr (std::same_as<Category, kr::dl::BooleanTag>)
-        return std::same_as<decltype(std::declval<Mutable>().template get_start<Category>()), decltype((std::declval<Mutable>().boolean_start))>
-               && std::same_as<decltype(std::declval<Const>().template get_start<Category>()), decltype((std::declval<Const>().boolean_start))>
-               && std::same_as<decltype(std::declval<Mutable>().template get_derivation_rules<Category>()),
-                               decltype((std::declval<Mutable>().boolean_derivation_rules))>
-               && std::same_as<decltype(std::declval<Const>().template get_derivation_rules<Category>()),
-                               decltype((std::declval<Const>().boolean_derivation_rules))>
-               && std::same_as<decltype(std::declval<Mutable>().template get_substitution_rules<Category>()),
-                               decltype((std::declval<Mutable>().boolean_substitution_rules))>
-               && std::same_as<decltype(std::declval<Const>().template get_substitution_rules<Category>()),
-                               decltype((std::declval<Const>().boolean_substitution_rules))>;
+        return start_member<Category>() == &Data::boolean_start && derivation_rules_member<Category>() == &Data::boolean_derivation_rules
+               && substitution_rules_member<Category>() == &Data::boolean_substitution_rules;
     else if constexpr (std::same_as<Category, kr::dl::NumericalTag>)
-        return std::same_as<decltype(std::declval<Mutable>().template get_start<Category>()), decltype((std::declval<Mutable>().numerical_start))>
-               && std::same_as<decltype(std::declval<Const>().template get_start<Category>()), decltype((std::declval<Const>().numerical_start))>
-               && std::same_as<decltype(std::declval<Mutable>().template get_derivation_rules<Category>()),
-                               decltype((std::declval<Mutable>().numerical_derivation_rules))>
-               && std::same_as<decltype(std::declval<Const>().template get_derivation_rules<Category>()),
-                               decltype((std::declval<Const>().numerical_derivation_rules))>
-               && std::same_as<decltype(std::declval<Mutable>().template get_substitution_rules<Category>()),
-                               decltype((std::declval<Mutable>().numerical_substitution_rules))>
-               && std::same_as<decltype(std::declval<Const>().template get_substitution_rules<Category>()),
-                               decltype((std::declval<Const>().numerical_substitution_rules))>;
+        return start_member<Category>() == &Data::numerical_start && derivation_rules_member<Category>() == &Data::numerical_derivation_rules
+               && substitution_rules_member<Category>() == &Data::numerical_substitution_rules;
     else
         return false;
 }

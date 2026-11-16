@@ -67,6 +67,17 @@ public:
         m_relation_repository.clear();
     }
 
+    using Base::view;
+    /// A denotation's blocks (its vec_index) as the vector repository holds them: so that urd resolves every member of a
+    /// denotation through this context.
+    [[nodiscard]] auto view(urd::index<DenotationBlocks> index) const { return m_vector_repository.at(index); }
+    /// A planning symbol (an object) as its view in the formalism repository, which holds it: so that urd resolves
+    /// every member of a register record through this context.
+    template<typename T>
+        requires ygg::formalism::SupportsSymbol<tyr::formalism::planning::Repository, T>
+    [[nodiscard]] urd::index_view<T, tyr::formalism::planning::Repository> view(urd::index<T> index) const
+    { return get_formalism_repository().view(index); }
+
     [[nodiscard]] const auto& get_vector_repository() const noexcept { return m_vector_repository; }
     auto& get_vector_repository() noexcept { return m_vector_repository; }
     [[nodiscard]] const auto& get_relation_repository() const noexcept { return m_relation_repository; }

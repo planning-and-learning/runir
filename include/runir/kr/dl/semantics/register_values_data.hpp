@@ -38,9 +38,18 @@ struct data<runir::kr::dl::semantics::RegisterValues>
         role_values(std::move(role_values_))
     {
     }
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
 
-    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::concept_values, &data::role_values> {}; }
+    static constexpr auto fields() noexcept
+    {
+        return urd::Fields<urd::field<"concept_values", &data::concept_values>, urd::field<"role_values", &data::role_values>> {};
+    }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::concept_values, &data::role_values> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::concept_values, &data::role_values> {}; }
 };
 
 }  // namespace urd
@@ -64,14 +73,24 @@ void assign_register(urd::data<RegisterValues>& data,
     data.index = {};
 }
 
-/// Replace mutable values while retaining buffers and invalidating published identity.
+/// Replace mutable values while retaining buffers and invalidating published identity. A view of `data` itself (its
+/// values read from data's own storage) leaves them as they are.
 template<RegisterValuesViewConcept R>
 urd::data<RegisterValues>& assign(urd::data<RegisterValues>& data, R source)
 {
-    if (&data != &source.data())
+    const auto concept_values = source.template values<ConceptTag>();
+    if (concept_values.base().data() != data.concept_values.data())
     {
-        data.concept_values = source.data().concept_values;
-        data.role_values = source.data().role_values;
+        data.concept_values.clear();
+        for (const auto& value : concept_values)
+            urd::append(data.concept_values, value);
+    }
+    const auto role_values = source.template values<RoleTag>();
+    if (role_values.base().data() != data.role_values.data())
+    {
+        data.role_values.clear();
+        for (const auto& value : role_values)
+            urd::append(data.role_values, value);
     }
     data.index = {};
     return data;

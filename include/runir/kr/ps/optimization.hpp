@@ -52,8 +52,8 @@ private:
             return m_leaves.rewrite(view, *m_repository);
         else
         {
-            auto data =
-                urd::map_children<RepositoryTypes, T>(view.data(), view.context(), [&]<typename U>(View<U> child) { return optimize<U>(child).index(); });
+            auto data = urd::data<T>();
+            urd::map_children<RepositoryTypes, T>(view, data, [&]<typename U>(View<U> child) { return optimize<U>(child).index(); });
             return ygg::formalism::insert(*m_repository, data).first;
         }
     }
@@ -80,7 +80,7 @@ public:
         if constexpr (requires { m_leaves.add(view); })
             m_leaves.add(view);
         else
-            urd::for_each_child<RepositoryTypes, T>(view.data(), view.context(), [&]<typename U>(View<U> child) { add<U>(child); });
+            urd::for_each_child<RepositoryTypes, T>(view, [&]<typename U>(View<U> child) { add<U>(child); });
     }
 
     [[nodiscard]] const Leaves& get_leaves() const noexcept { return m_leaves; }

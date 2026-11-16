@@ -1,4 +1,5 @@
 #include "fixtures.hpp"
+#include "record_copy.hpp"
 
 #include <cstdint>
 #include <fmt/format.h>
@@ -633,7 +634,7 @@ TEST(RunirTests, ExtStructuralTerminationPreservesCallLabelsAndOrder)
 
     for (const auto omit_target : { false, true })
     {
-        auto data = original.data();
+        auto data = runir::tests::copy_fields(original.context()[original.index()]);
         if (omit_target)
             data.modules.pop_back();
         const auto program = repository->insert(data).first;

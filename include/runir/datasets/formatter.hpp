@@ -10,9 +10,9 @@
 #include <string>
 #include <string_view>
 #include <tyr/formalism/planning/formatter.hpp>
+#include <urd/dot.hpp>
 #include <utility>
 #include <variant>
-#include <vefr/dot.hpp>
 #include <yggdrasil/formatting/cista_formatters.hpp>
 
 namespace runir
@@ -23,13 +23,13 @@ namespace runir
 namespace fmt
 {
 
-/// A runir graph prints as DOT (vefr::to_dot: each vertex and edge labelled by its label).
+/// A runir graph prints as DOT (urd::to_dot: each vertex and edge labelled by its label).
 template<runir::labeled_graph G>
 struct formatter<G, char> : formatter<std::string_view>
 {
     template<typename FormatContext>
     auto format(const G& graph, FormatContext& ctx) const
-    { return formatter<std::string_view>::format(vefr::to_dot(graph, vefr::vertex_data, vefr::edge_data), ctx); }
+    { return formatter<std::string_view>::format(urd::to_dot(graph, urd::vertex_data, urd::edge_data), ctx); }
 };
 
 template<::tyr::formalism::FactKind T>

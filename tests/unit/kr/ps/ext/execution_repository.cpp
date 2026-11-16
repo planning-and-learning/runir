@@ -1,5 +1,6 @@
 #include "module_fixtures.hpp"
 #include "planning_fixtures.hpp"
+#include "record_copy.hpp"
 
 #include <algorithm>
 #include <cista/serialization.h>
@@ -163,7 +164,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     }();
     {
         auto data = kr::dl::semantics::checkout<kr::dl::semantics::CallArguments>(dl_builder);
-        data->boolean_arguments = arguments.data().boolean_arguments;
+        data->boolean_arguments = denotations[arguments.index()].boolean_arguments;
         const auto found = denotations.find(*data);
         ASSERT_TRUE(found);
         EXPECT_EQ(found.value().index(), arguments.index());
@@ -183,27 +184,27 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     const auto caller_configuration = [&]()
     {
         auto data = execution_builder.checkout<kr::ps::ext::ModuleState<tyr::GroundTag>>();
-        data->state = urd::to_stored(state);
-        data->module_ = urd::to_stored(caller);
-        data->memory_state = urd::to_stored(caller_return);
-        data->registers = urd::to_stored(registers);
-        data->arguments = urd::to_stored(arguments);
+        urd::store(data->state, state);
+        urd::store(data->module_, caller);
+        urd::store(data->memory_state, caller_return);
+        urd::store(data->registers, registers);
+        urd::store(data->arguments, arguments);
         return execution_repository->insert(*data).first;
     }();
 
     const auto callee_configuration = [&]()
     {
         auto data = execution_builder.checkout<kr::ps::ext::ModuleState<tyr::GroundTag>>();
-        data->state = urd::to_stored(state);
-        data->module_ = urd::to_stored(callee);
-        data->memory_state = urd::to_stored(callee_entry);
-        data->registers = urd::to_stored(registers);
-        data->arguments = urd::to_stored(arguments);
+        urd::store(data->state, state);
+        urd::store(data->module_, callee);
+        urd::store(data->memory_state, callee_entry);
+        urd::store(data->registers, registers);
+        urd::store(data->arguments, arguments);
         return execution_repository->insert(*data).first;
     }();
 
     {
-        auto data = callee_configuration.data();
+        auto data = callee_configuration.context()[callee_configuration.index()];
         data.index = urd::index<kr::ps::ext::ModuleState<tyr::GroundTag>>();
         const auto [duplicate, created] = execution_repository->insert(data);
         EXPECT_FALSE(created);
@@ -220,7 +221,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
             search_context->successor_generator->get_successor_nodes(initial, *search_context->state_repository, *search_context->axiom_evaluator);
         const auto changed = std::ranges::find_if(successors, [&](const auto& node) { return node.get_state().index() != state.index(); });
         ASSERT_NE(changed, successors.end());
-        data.state = urd::to_stored(changed->get_state());
+        urd::store(data.state, changed->get_state());
         const auto [changed_configuration, changed_created] = execution_repository->insert(data);
         EXPECT_TRUE(changed_created);
         EXPECT_EQ(data.index, changed_configuration.index());
@@ -234,29 +235,29 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     const auto caller_frame = [&]()
     {
         auto data = execution_builder.checkout<kr::ps::ext::CallStack>();
-        data->module_ = urd::to_stored(caller);
-        data->return_memory_state = urd::to_stored(caller_return);
-        data->registers = urd::to_stored(registers);
-        data->arguments = urd::to_stored(arguments);
+        urd::store(data->module_, caller);
+        urd::store(data->return_memory_state, caller_return);
+        urd::store(data->registers, registers);
+        urd::store(data->arguments, arguments);
         return execution_repository->insert(*data).first;
     }();
     const auto callee_frame = [&]()
     {
         auto data = execution_builder.checkout<kr::ps::ext::CallStack>();
-        data->module_ = urd::to_stored(callee);
-        data->return_memory_state = urd::to_stored(callee_entry);
-        data->registers = urd::to_stored(registers);
-        data->arguments = urd::to_stored(arguments);
-        data->caller = urd::to_stored(std::optional { caller_frame });
+        urd::store(data->module_, callee);
+        urd::store(data->return_memory_state, callee_entry);
+        urd::store(data->registers, registers);
+        urd::store(data->arguments, arguments);
+        urd::store(data->caller, std::optional { caller_frame });
         return execution_repository->insert(*data).first;
     }();
     {
-        auto nested_caller_data = caller_frame.data();
+        auto nested_caller_data = runir::tests::copy_fields(caller_frame.context()[caller_frame.index()]);
         nested_caller_data.caller = caller_frame.index();
         const auto nested_caller = execution_repository->insert(nested_caller_data).first;
         auto data = execution_builder.checkout<kr::ps::ext::ProgramState<tyr::GroundTag>>();
-        data->program = urd::to_stored(program);
-        data->module_state = urd::to_stored(callee_configuration);
+        urd::store(data->program, program);
+        urd::store(data->module_state, callee_configuration);
         data->call_stack = caller_frame.index();
         const auto first = execution_repository->insert(*data).first;
         data->call_stack = nested_caller.index();
@@ -283,8 +284,8 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     const auto returned_state = [&]()
     {
         auto data = execution_builder.checkout<kr::ps::ext::ProgramState<tyr::GroundTag>>();
-        data->program = urd::to_stored(program);
-        data->module_state = urd::to_stored(caller_configuration);
+        urd::store(data->program, program);
+        urd::store(data->module_state, caller_configuration);
         return execution_repository->insert(*data).first;
     }();
     EXPECT_EQ(returned_state.get_module_state().get_module().get_name(), "caller");

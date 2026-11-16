@@ -50,10 +50,10 @@ template<typename Kind>
 concept BindingRuleContract =
     kr::ps::ext::BindingRuleKind<Kind> && TransitionRuleContract<Kind> && requires(urd::data<Entity<Kind>>& data, const View<Kind>& view) {
         data.feature;
-        data.reg;
+        data.slot;
         data.effects;
         view.get_feature();
-        view.get_register();
+        view.get_slot();
         view.get_effects();
     };
 

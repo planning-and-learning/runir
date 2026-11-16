@@ -31,31 +31,27 @@ concept IndexedDataView = std::constructible_from<urd::index<T>, ygg::uint_t> &&
 
 /// Which members a record holds, in the order of record_view.hpp.
 template<typename Data>
-constexpr auto members = std::array {
-    requires(Data& data) { data.predicate; },  requires(Data& data) { data.polarity; }, requires(Data& data) { data.object; },
-    requires(Data& data) { data.objects; },    requires(Data& data) { data.n; },        requires(Data& data) { data.role; },
-    requires(Data& data) { data.concept_; },   requires(Data& data) { data.arg; },      requires(Data& data) { data.lhs; },
-    requires(Data& data) { data.mid; },        requires(Data& data) { data.rhs; },      requires(Data& data) { data.reference; },
-    requires(Data& data) { data.identifier; },
+constexpr auto members = std::array { requires(Data & data) { data.predicate;
+}
+, requires(Data& data) { data.polarity; }, requires(Data& data) { data.object; }, requires(Data& data) { data.objects; }, requires(Data& data) { data.n; },
+    requires(Data& data) { data.role; }, requires(Data& data) { data.qualifier; }, requires(Data& data) { data.operand; },
+    requires(Data& data) { data.left_operand; }, requires(Data& data) { data.right_operand; }, requires(Data& data) { data.sources; },
+    requires(Data& data) { data.edges; }, requires(Data& data) { data.targets; }, requires(Data& data) { data.slot; }, requires(Data& data) { data.argument; },
+    requires(Data& data) { data.value; },
 };
 
 /// Which accessors a view has, in the order of members.
 template<typename View>
-constexpr auto accessors = std::array {
-    requires(const View& view) { view.get_predicate(); },
-    requires(const View& view) { view.get_polarity(); },
-    requires(const View& view) { view.get_object(); },
-    requires(const View& view) { view.get_objects(); },
-    requires(const View& view) { view.get_n(); },
-    requires(const View& view) { view.get_role(); },
-    requires(const View& view) { view.get_concept(); },
-    requires(const View& view) { view.get_arg(); },
-    requires(const View& view) { view.get_lhs(); },
-    requires(const View& view) { view.get_mid(); },
-    requires(const View& view) { view.get_rhs(); },
-    requires(const View& view) { view.get_register(); } || requires(const View& view) { view.get_argument(); },
-    requires(const View& view) { view.get_value(); },
-};
+constexpr auto accessors = std::array { requires(const View& view) { view.get_predicate();
+}
+, requires(const View& view) { view.get_polarity(); }, requires(const View& view) { view.get_object(); }, requires(const View& view) { view.get_objects(); },
+    requires(const View& view) { view.get_n(); }, requires(const View& view) { view.get_role(); }, requires(const View& view) { view.get_qualifier(); },
+    requires(const View& view) { view.get_operand(); }, requires(const View& view) { view.get_left_operand(); },
+    requires(const View& view) { view.get_right_operand(); }, requires(const View& view) { view.get_sources(); },
+    requires(const View& view) { view.get_edges(); }, requires(const View& view) { view.get_targets(); }, requires(const View& view) { view.get_slot(); },
+    requires(const View& view) { view.get_argument(); }, requires(const View& view) { view.get_value(); },
+}
+;
 
 /// A record and its view through Repository: indexed, and the view has an accessor for each member, and no other.
 template<typename Repository, typename... Ts>
@@ -64,7 +60,7 @@ consteval bool records_and_views(boost::mp11::mp_list<Ts...>)
     return ((
                 IndexedDataView<Ts, Repository> && members<urd::data<Ts>> == accessors<urd::index_view<Ts, Repository>>
                 && !requires(const urd::index_view<Ts, Repository>& view) { view.get_columns(); }
-                && !requires(const urd::index_view<Ts, Repository>& view) { view.get_plan(); })
+                && requires(urd::data<Ts>& data) { data.plan; } == requires(const urd::index_view<Ts, Repository>& view) { view.get_plan(); })
             && ...);
 }
 
@@ -120,12 +116,12 @@ TEST(RunirKrDlConcept, RoutesUnaryBinaryAndNumberRestrictionData)
 
     auto unary_data = urd::data<kr::dl::Concept<SemanticFamily, kr::dl::NegationTag>>(urd::index<Concept>(3));
     const auto unary = repository->insert(unary_data).first;
-    EXPECT_EQ(unary.get_arg().index(), urd::index<Concept>(3));
+    EXPECT_EQ(unary.get_operand().index(), urd::index<Concept>(3));
 
     auto binary_data = urd::data<kr::dl::Concept<SemanticFamily, kr::dl::ValueRestrictionTag>>(urd::index<Role>(1), urd::index<Concept>(2));
     const auto binary = repository->insert(binary_data).first;
-    EXPECT_EQ(binary.get_lhs().index(), urd::index<Role>(1));
-    EXPECT_EQ(binary.get_rhs().index(), urd::index<Concept>(2));
+    EXPECT_EQ(binary.get_role().index(), urd::index<Role>(1));
+    EXPECT_EQ(binary.get_qualifier().index(), urd::index<Concept>(2));
 
     auto restriction_data = urd::data<kr::dl::Concept<SemanticFamily, kr::dl::AtLeastNumberRestrictionTag>>(5, urd::index<Role>(4));
     const auto restriction = repository->insert(restriction_data).first;
@@ -142,12 +138,12 @@ TEST(RunirKrDlRole, RoutesUnaryAndMixedBinaryData)
 
     auto unary_data = urd::data<kr::dl::Role<SemanticFamily, kr::dl::InverseTag>>(urd::index<Role>(3));
     const auto unary = repository->insert(unary_data).first;
-    EXPECT_EQ(unary.get_arg().index(), urd::index<Role>(3));
+    EXPECT_EQ(unary.get_operand().index(), urd::index<Role>(3));
 
     auto binary_data = urd::data<kr::dl::Role<SemanticFamily, kr::dl::RestrictionTag>>(urd::index<Role>(1), urd::index<Concept>(2));
     const auto binary = repository->insert(binary_data).first;
-    EXPECT_EQ(binary.get_lhs().index(), urd::index<Role>(1));
-    EXPECT_EQ(binary.get_rhs().index(), urd::index<Concept>(2));
+    EXPECT_EQ(binary.get_role().index(), urd::index<Role>(1));
+    EXPECT_EQ(binary.get_qualifier().index(), urd::index<Concept>(2));
 }
 
 TEST(RunirKrDlBoolean, RoutesConstantUnaryAndBinaryData)
@@ -162,12 +158,12 @@ TEST(RunirKrDlBoolean, RoutesConstantUnaryAndBinaryData)
 
     auto unary_data = urd::data<kr::dl::Boolean<SemanticFamily, kr::dl::NotTag>>(urd::index<Constructor>(4));
     const auto unary = repository->insert(unary_data).first;
-    EXPECT_EQ(unary.get_arg().index(), urd::index<Constructor>(4));
+    EXPECT_EQ(unary.get_operand().index(), urd::index<Constructor>(4));
 
     auto binary_data = urd::data<kr::dl::Boolean<SemanticFamily, kr::dl::AndTag>>(urd::index<Constructor>(1), urd::index<Constructor>(2));
     const auto binary = repository->insert(binary_data).first;
-    EXPECT_EQ(binary.get_lhs().index(), urd::index<Constructor>(1));
-    EXPECT_EQ(binary.get_rhs().index(), urd::index<Constructor>(2));
+    EXPECT_EQ(binary.get_left_operand().index(), urd::index<Constructor>(1));
+    EXPECT_EQ(binary.get_right_operand().index(), urd::index<Constructor>(2));
 }
 
 TEST(RunirKrDlNumerical, RoutesValueBinaryAndDistanceData)
@@ -183,20 +179,24 @@ TEST(RunirKrDlNumerical, RoutesValueBinaryAndDistanceData)
 
     auto binary_data = urd::data<kr::dl::Numerical<SemanticFamily, kr::dl::AddTag>>(urd::index<Numerical>(1), urd::index<Numerical>(2));
     const auto binary = repository->insert(binary_data).first;
-    EXPECT_EQ(binary.get_lhs().index(), urd::index<Numerical>(1));
-    EXPECT_EQ(binary.get_rhs().index(), urd::index<Numerical>(2));
+    EXPECT_EQ(binary.get_left_operand().index(), urd::index<Numerical>(1));
+    EXPECT_EQ(binary.get_right_operand().index(), urd::index<Numerical>(2));
 
     // Vertices are concept-or-query and edges role-or-query variants.
     using Query = kr::dl::Query<>;
     using DistanceData = urd::data<kr::dl::Numerical<SemanticFamily, kr::dl::DistanceTag>>;
-    static_assert(std::same_as<DistanceData::Vertex, urd::index_variant<boost::mp11::mp_list<Concept, Query>>>);
-    static_assert(std::same_as<DistanceData::Edge, urd::index_variant<boost::mp11::mp_list<Role, Query>>>);
-    auto distance_data = DistanceData(urd::index<Concept>(3), urd::index<Query>(4), urd::index<Query>(5));
+    static_assert(std::same_as<decltype(DistanceData::sources), urd::index_variant<boost::mp11::mp_list<Concept, Query>>>);
+    static_assert(std::same_as<decltype(DistanceData::edges), urd::index_variant<boost::mp11::mp_list<Role, Query>>>);
+    static_assert(std::same_as<decltype(DistanceData::targets), urd::index_variant<boost::mp11::mp_list<Concept, Query>>>);
+    auto distance_data = DistanceData();
+    distance_data.sources = urd::index<Concept>(3);
+    distance_data.edges = urd::index<Query>(4);
+    distance_data.targets = urd::index<Query>(5);
     const auto distance = repository->insert(distance_data).first;
-    EXPECT_EQ((std::get<urd::index_view<Concept, runir::kr::dl::ConstructorRepository>>(distance.get_lhs()).index()), urd::index<Concept>(3));
-    EXPECT_EQ((std::get<urd::index_view<Query, runir::kr::dl::ConstructorRepository>>(distance.get_mid()).index()), urd::index<Query>(4));
-    EXPECT_EQ((std::get<urd::index_view<Query, runir::kr::dl::ConstructorRepository>>(distance.get_rhs()).index()), urd::index<Query>(5));
-    EXPECT_TRUE((std::holds_alternative<urd::index_view<Query, runir::kr::dl::ConstructorRepository>>(distance.get_mid())));
+    EXPECT_EQ((std::get<urd::index_view<Concept, runir::kr::dl::ConstructorRepository>>(distance.get_sources()).index()), urd::index<Concept>(3));
+    EXPECT_EQ((std::get<urd::index_view<Query, runir::kr::dl::ConstructorRepository>>(distance.get_edges()).index()), urd::index<Query>(4));
+    EXPECT_EQ((std::get<urd::index_view<Query, runir::kr::dl::ConstructorRepository>>(distance.get_targets()).index()), urd::index<Query>(5));
+    EXPECT_TRUE((std::holds_alternative<urd::index_view<Query, runir::kr::dl::ConstructorRepository>>(distance.get_edges())));
 }
 
 namespace
@@ -242,9 +242,9 @@ TYPED_TEST(RunirKrDlGrammarNumerical, ExposesDistanceOperands)
     const auto distance = repository->insert(distance_data).first;
 
     // A grammar operand resolves to its non-terminal's view, or (grammars) to the variant holding it.
-    EXPECT_EQ(distance.get_lhs(), urd::resolve(ConceptOperand(source.index()), *repository));
-    EXPECT_EQ(distance.get_mid(), urd::resolve(RoleOperand(role.index()), *repository));
-    EXPECT_EQ(distance.get_rhs(), urd::resolve(ConceptOperand(target.index()), *repository));
+    EXPECT_EQ(distance.get_sources(), urd::resolve(ConceptOperand(source.index()), *repository));
+    EXPECT_EQ(distance.get_edges(), urd::resolve(RoleOperand(role.index()), *repository));
+    EXPECT_EQ(distance.get_targets(), urd::resolve(ConceptOperand(target.index()), *repository));
 }
 
 }  // namespace runir::tests::dl_constructors

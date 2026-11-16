@@ -19,7 +19,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    const auto& get_reset_pairs() const noexcept { return self().data().reset_pairs; }
+    const auto& get_reset_pairs() const noexcept { return self().template member<&urd::record_of<V>::reset_pairs>(); }
     auto get_concept_features() const noexcept { return this->template get_features<runir::kr::dl::ConceptTag>(); }
 };
 }  // namespace urd

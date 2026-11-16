@@ -37,16 +37,16 @@ inline void mark_sources(SetOperationWorkspace& workspace, const DenotationDelta
     for_changed(delta, [&](auto edge) { workspace.mark(edge.first.index()); });
 }
 
-inline void mark_predecessors(SetOperationWorkspace& workspace, const urd::builder<Denotation<RoleTag>>& role, urd::index<tyr::formalism::Object> target)
+inline void mark_predecessors(SetOperationWorkspace& workspace, BorrowedDenotationView<RoleTag> role, urd::index<tyr::formalism::Object> target)
 {
     const auto index = static_cast<ygg::uint_t>(target.value);
     for (ygg::uint_t source = 0; source < role.get_num_objects(); ++source)
-        if (!workspace.is_marked(urd::index<tyr::formalism::Object>(source)) && role.get(urd::index<tyr::formalism::Object>(source)).test(index))
+        if (!workspace.is_marked(urd::index<tyr::formalism::Object>(source)) && role.value(urd::index<tyr::formalism::Object>(source)).test(index))
             workspace.mark(urd::index<tyr::formalism::Object>(source));
 }
 
 template<ConceptOrRoleTag Category>
-void mark_predecessors(SetOperationWorkspace& workspace, const urd::builder<Denotation<RoleTag>>& role, const DenotationDelta<Category>& delta)
+void mark_predecessors(SetOperationWorkspace& workspace, BorrowedDenotationView<RoleTag> role, const DenotationDelta<Category>& delta)
 {
     if (delta.empty())
         return;
@@ -71,7 +71,7 @@ void mark_predecessors(SetOperationWorkspace& workspace, const urd::builder<Deno
         return;
     }
     for (ygg::uint_t source = 0; source < role.get_num_objects(); ++source)
-        if (!workspace.is_marked(urd::index<tyr::formalism::Object>(source)) && role.get(urd::index<tyr::formalism::Object>(source)).intersects(targets))
+        if (!workspace.is_marked(urd::index<tyr::formalism::Object>(source)) && role.value(urd::index<tyr::formalism::Object>(source)).intersects(targets))
             workspace.mark(urd::index<tyr::formalism::Object>(source));
 }
 
@@ -185,7 +185,7 @@ void evaluate_rows(CompositionTag, BorrowedDenotationView<RoleTag> lhs, Borrowed
 
 template<BaseRoleConstructorTag Tag, std::invocable<urd::index<tyr::formalism::Object>, urd::bitset_span<const ygg::uint_t>> Emit>
 void evaluate_rows(Tag, const urd::builder<Denotation<RoleTag>>& result, BorrowedDenotationView<RoleTag> role, SetOperationWorkspace& workspace, Emit emit)
-{ evaluate_closure(Tag {}, result, role.data(), workspace.rows, workspace.row, workspace.closure, emit); }
+{ evaluate_closure(Tag {}, result, role, workspace.rows, workspace.row, workspace.closure, emit); }
 
 template<ConceptOrRoleTag Category>
 void initialize_set(IntersectionTag,
@@ -338,7 +338,7 @@ inline void update_set(RestrictionTag,
     output.clear_delta();
     workspace.clear_rows();
     mark_sources(workspace, role_delta);
-    mark_predecessors(workspace, role.data(), concept_delta);
+    mark_predecessors(workspace, role, concept_delta);
     evaluate_rows(RestrictionTag {},
                   role,
                   concept_,
@@ -372,7 +372,7 @@ void update_set(Tag,
     output.clear_delta();
     workspace.clear_rows();
     mark_sources(workspace, role_delta);
-    mark_predecessors(workspace, role.data(), concept_delta);
+    mark_predecessors(workspace, role, concept_delta);
     evaluate_rows(Tag {}, role, concept_, workspace, [&](auto source, bool present) { output.set(source, present, role.get_formalism_repository()); });
 }
 
@@ -431,7 +431,7 @@ void update_set(Tag,
     output.clear_delta();
     workspace.clear_rows();
     mark_sources(workspace, role_delta);
-    mark_predecessors(workspace, role.data(), concept_delta);
+    mark_predecessors(workspace, role, concept_delta);
     evaluate_rows(Tag {},
                   role,
                   concept_,
@@ -531,7 +531,7 @@ inline void update_set(CompositionTag,
     output.clear_delta();
     workspace.clear_rows();
     mark_sources(workspace, lhs_delta);
-    mark_predecessors(workspace, lhs.data(), rhs_delta);
+    mark_predecessors(workspace, lhs, rhs_delta);
     // ponytail: affected rows are rebuilt; retain witness counts if dense rows dominate profiling.
     evaluate_rows(CompositionTag {}, lhs, rhs, workspace, [&](auto source, auto row) { output.update_row(source, row, lhs.get_formalism_repository()); });
 }
@@ -559,7 +559,7 @@ void update_set(Tag,
     workspace.clear_rows();
     // Read all dirty predecessors from the old closure before modifying it.
     mark_sources(workspace, delta);
-    mark_predecessors(workspace, output.get_builder(), delta);
+    mark_predecessors(workspace, output.get_result(role.get_formalism_repository()), delta);
     evaluate_rows(Tag {},
                   output.get_builder(),
                   role,

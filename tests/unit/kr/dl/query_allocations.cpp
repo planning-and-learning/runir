@@ -111,8 +111,8 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
         auto borrowed = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>(initial.get_state(), builder, storage, argument_values, register_values);
         auto copied = borrowed;
         valid &= &copied.get_workspace() == &builder.get_workspace();
-        valid &= &copied.registers().data() == &register_values.data();
-        valid &= &copied.arguments().data() == &argument_values.data();
+        valid &= copied.registers().template values<kr::dl::ConceptTag>().base().data() == register_values.template values<kr::dl::ConceptTag>().base().data();
+        valid &= copied.arguments() == argument_values;
         valid &= copied.registers().at(kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(5)).value().index() == object.index();
         valid &= copied.registers().at(kr::dl::RegisterIdentifier<kr::dl::RoleTag>(7)).value().second.index() == object.index();
         valid &= copied.arguments().at(kr::dl::ArgumentIdentifier<kr::dl::ConceptTag>(0)).value().count() == 1;
@@ -138,13 +138,13 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
                                                         *repository);
     const auto query = std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(
         std::get<urd::index_view<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant())
-            .get_arg());
+            .get_operand());
     const auto projected = std::get<urd::index_view<kr::dl::Query<kr::dl::QueryProjectTag>, runir::kr::dl::ConstructorRepository>>(query.get_variant());
     const auto atomic =
-        std::get<urd::index_view<kr::dl::Query<kr::dl::AtomicStateTag<Fluent>>, runir::kr::dl::ConstructorRepository>>(projected.get_arg().get_variant());
+        std::get<urd::index_view<kr::dl::Query<kr::dl::AtomicStateTag<Fluent>>, runir::kr::dl::ConstructorRepository>>(projected.get_operand().get_variant());
     const auto layer = ygg::FreeRelationRepository();
     auto leaf = kr::dl::semantics::incremental::detail::AtomicQueryEvaluator<Fluent>(layer, atomic);
-    auto projection = tyr::datalog::database::incremental::ProjectionEvaluator(layer, projected.data().plan);
+    auto projection = tyr::datalog::database::incremental::ProjectionEvaluator(layer, projected.get_plan());
     auto workspace = tyr::datalog::database::Workspace {};
     leaf.initialize<tyr::GroundTag>(initial.get_state());
     projection.initialize(leaf.get_result(), workspace);
@@ -162,7 +162,7 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
         *repository);
     const auto graph_query = std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(
         std::get<urd::index_view<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(graph_count.get_variant())
-            .get_arg());
+            .get_operand());
     auto graph = QueryRootEvaluator<tyr::GroundTag>(*search->task, graph_query);
     auto denotations = kr::dl::semantics::DenotationRepository(search->task->get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
@@ -477,7 +477,7 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
     const auto stored = kr::dl::semantics::insert(denotations, *result, dl_builder).first;
     const auto* stored_schema_buffer = stored.columns().data();
     const auto* stored_row_buffer = stored.row(0).get_values().data();
-    const auto* stored_row_indices = stored.data().rows.data();
+    const auto* stored_row_indices = stored.get_rows().base().data();
     result = {};
 
     bool reused = true;
@@ -498,7 +498,7 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
         const auto value = kr::dl::semantics::insert(denotations, *next, dl_builder).first;
         reused &= value.columns().data() == stored_schema_buffer;
         reused &= value.row(0).get_values().data() == stored_row_buffer;
-        reused &= value.data().rows.data() == stored_row_indices;
+        reused &= value.get_rows().base().data() == stored_row_indices;
     }
     const auto counts = urd::testing::counts();
     EXPECT_TRUE(reused);
@@ -534,7 +534,7 @@ TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
             const auto value = kr::dl::semantics::insert(denotations, *owner, dl_builder).first;
             const auto alias = kr::dl::semantics::rename(denotations, value, aliases, dl_builder);
             valid &= value.size() == 2 && alias.size() == 2 && ObjectIndex(ygg::decode_value<ygg::uint_t>(value.row(0).value(0))) == object;
-            valid &= std::ranges::equal(value.data().rows, alias.data().rows);
+            valid &= std::ranges::equal(value.get_rows(), alias.get_rows());
             auto duplicate = repository.get_relation_builder<ygg::Schema>(columns);
             duplicate->insert(
                 std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(object.value), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(2)) });
@@ -602,7 +602,8 @@ TEST(RunirSearch, WarmedProgramSearchAllocationsGrowWithContainerCapacity)
                 options.universal = universal;
                 auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(context, program);
                 const auto initial_node = search->successor_generator->get_packed_initial_node(*search->state_repository, *search->axiom_evaluator);
-                const auto initial = expander.initial_state(initial_node.get_state().unpack());
+                const auto initial_state = initial_node.get_state().unpack();
+                const auto initial = expander.initial_state(initial_state);
                 auto classifier = kr::ps::NoUnsolvability<tyr::GroundTag> {};
                 auto path_pool = urd::Store<urd::slots<Path>> {};
                 // Warm path and binding pools to the live DFS depth. Fresh search storage
@@ -616,7 +617,7 @@ TEST(RunirSearch, WarmedProgramSearchAllocationsGrowWithContainerCapacity)
                     auto witness = std::shared_ptr<Path> {};
                     const urd::testing::Counted measured;
                     const auto status = kr::ps::ext::detail::depth_first_search<
-                        tyr::GroundTag>(expander, initial_node.get_state(), initial, options, classifier, storage, statistics, path_pool, first_goal, witness);
+                        tyr::GroundTag>(expander, initial_state, initial, options, classifier, storage, statistics, path_pool, first_goal, witness);
                     const auto counts = urd::testing::counts();
                     if (!warmup)
                         allocations[scale] = static_cast<size_t>(counts.allocations);

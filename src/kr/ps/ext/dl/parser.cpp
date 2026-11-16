@@ -56,7 +56,9 @@ using runir::kr::parser::constructors::parse_constructor;
 
 template<typename T>
 auto intern(Repository& repository, urd::data<T>& data)
-{ return runir::kr::ps::ext::insert(repository, data).first; }
+{
+    return runir::kr::ps::ext::insert(repository, data).first;
+}
 
 template<typename T>
 struct AstCategory
@@ -355,7 +357,9 @@ auto parse_do_argument(const ast::SymbolExpression& expression,
                        const urd::Store<urd::map<std::string, urd::index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>,
                                         urd::stable_refs>& concept_features,
                        const runir::kr::parser::DiagnosticContext& diagnostics)
-{ return require_feature(concept_features, expression.symbol, diagnostics); }
+{
+    return require_feature(concept_features, expression.symbol, diagnostics);
+}
 
 auto parse_call_argument(
     const ast::SymbolExpression& expression,
@@ -566,12 +570,12 @@ auto parse_binding_rule(
     if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
     {
         data->feature = require_feature(concept_features, rule.feature, diagnostics);
-        data->reg = require_register(references.concept_registers.by_name, rule.reg, diagnostics);
+        data->slot = require_register(references.concept_registers.by_name, rule.slot, diagnostics);
     }
     else
     {
         data->feature = require_feature(role_features, rule.feature, diagnostics);
-        data->reg = require_register(references.role_registers.by_name, rule.reg, diagnostics);
+        data->slot = require_register(references.role_registers.by_name, rule.slot, diagnostics);
     }
     return intern_rule_variant(repository, builder, *data, symbol);
 }

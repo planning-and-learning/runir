@@ -63,6 +63,20 @@ public:
     [[nodiscard]] const auto& get_denotation_repository() const noexcept { return *m_denotation_repository; }
     [[nodiscard]] const auto& get_program_repository() const noexcept { return *m_program_repository; }
     [[nodiscard]] const auto& get_formalism_repository() const noexcept { return m_denotation_repository->get_formalism_repository(); }
+
+    using Base::view;
+    /// A program symbol, a denotation or a state as its view in the repository that holds it: so that urd resolves every
+    /// member of an execution record through this context (urd's resolves contract).
+    template<typename T>
+        requires ygg::formalism::SupportsSymbol<Repository<Family>, T>
+    [[nodiscard]] auto view(urd::index<T> index) const
+    { return get_program_repository().view(index); }
+    template<typename T>
+        requires ygg::formalism::SupportsSymbol<runir::kr::dl::semantics::DenotationRepository, T>
+    [[nodiscard]] auto view(urd::index<T> index) const
+    { return get_denotation_repository().view(index); }
+    [[nodiscard]] tyr::planning::PackedStateView<Kind> view(urd::index<tyr::planning::State<Kind>> index) const
+    { return get_state_repository().view(index); }
 };
 
 template<ProgramFamilyTag Family, tyr::TaskKind Kind>

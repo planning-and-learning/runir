@@ -46,7 +46,7 @@ def test_fields_describe_native_layouts_without_instances() -> None:
     assert list(base.SketchProofEdgeLabel.Fields.__members__) == ["action", "rule"]
     assert list(ext.ProgramProofEdgeLabel.Fields.__members__) == ["action", "rule"]
     assert list(StateGraphEdgeLabel.Fields.__members__) == ["action", "cost"]
-    assert list(semantics.BooleanNonempty.Fields.__members__) == ["arg"]
+    assert list(semantics.BooleanNonempty.Fields.__members__) == ["operand"]
     assert list(fp.FluentPredicateRow.Fields.__members__) == ["relation", "objects"]
     for module_state, call_stack, program_state in (
         (ext.GroundModuleState, ext.GroundCallStack, ext.GroundProgramState),
@@ -138,11 +138,11 @@ def test_nonempty_requires_registered_operands_or_an_explicit_text_projection(
         semantics.BooleanNonempty,
         "nonempty",
         "b",
-        project=lambda nonempty: {"arg": str(nonempty.get_arg())},
+        project=lambda nonempty: {"operand": str(nonempty.get_operand())},
     )
     assert serialize(dictionaries, expression) == "x0"
     assert table(dictionaries, semantics.Boolean) == [{"variant": "b0"}]
-    assert table(dictionaries, semantics.BooleanNonempty) == [{"arg": f"({operand})"}]
+    assert table(dictionaries, semantics.BooleanNonempty) == [{"operand": f"({operand})"}]
 
 
 def test_rule_text_requires_an_explicit_projection(gripper_planning_domain: fp.PlanningDomain) -> None:

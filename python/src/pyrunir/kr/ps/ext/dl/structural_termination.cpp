@@ -11,9 +11,9 @@
 #include <runir/kr/ps/ext/dl/structural_termination.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
+#include <urd/dot.hpp>
 #include <urd/python/graphs.hpp>
 #include <vector>
-#include <vefr/dot.hpp>
 #include <vefr/python/bindings.hpp>
 #include <yggdrasil/python/bindings.hpp>
 
@@ -55,7 +55,7 @@ void bind_structural_termination(nb::module_& m)
     {
         auto graph = nb::class_<ModulePolicyGraph>(m, "ModulePolicyGraph");
         urd::python::bind_graph(graph);
-        vefr::python::bind_algorithms(graph, vefr::python::one_color, vefr::vertex_data, vefr::edge_data);
+        vefr::python::bind_algorithms(graph, vefr::python::one_color, urd::vertex_data, urd::edge_data);
     }
 
     nb::class_<SccStructuralTerminationResult>(m, "SccStructuralTerminationResult")

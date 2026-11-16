@@ -31,19 +31,19 @@ def _row_values(rows: formalism.RelationView) -> list[int]:
 def _boolean_arg(expression: semantics.Boolean) -> semantics.Concept | semantics.Role | semantics.Query:
     variant = expression.get_variant()
     assert isinstance(variant, semantics.BooleanNonempty)
-    return variant.get_arg()
+    return variant.get_operand()
 
 
 def _numerical_arg(expression: semantics.Numerical) -> semantics.Concept | semantics.Role | semantics.Query:
     variant = expression.get_variant()
     assert isinstance(variant, semantics.NumericalCount)
-    return variant.get_arg()
+    return variant.get_operand()
 
 
 def _concept_query(expression: semantics.Concept) -> semantics.Query:
     variant = expression.get_variant()
     assert isinstance(variant, semantics.ConceptProject)
-    return variant.get_arg()
+    return variant.get_operand()
 
 
 def _sketch(expression: str, category: str, domain: PlanningDomain, context: DomainContext) -> Sketch:
@@ -159,7 +159,7 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
     project = query.get_variant()
     assert isinstance(project, semantics.QueryProject)
     assert [column.get_name() for column in project.get_columns()] == ["ball"]
-    atom = project.get_arg().get_variant()
+    atom = project.get_operand().get_variant()
     assert isinstance(atom, semantics.QueryAtomicStateFluent)
     assert not hasattr(atom, "get_polarity")
     assert not hasattr(semantics.QueryAtomicStateFluentData(), "polarity")
@@ -169,7 +169,7 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
     data.variant = atom.index()
     assert data.variant == atom.index()
     assert [column.get_name() for column in atom.get_columns()] == ["ball", "room"]
-    assert list(semantics.QueryProject.Fields.__members__) == ["arg", "columns"]
+    assert list(semantics.QueryProject.Fields.__members__) == ["operand", "columns"]
     assert list(semantics.QueryColumn.Fields.__members__) == ["name"]
 
     dictionaries = Dictionaries()
@@ -184,7 +184,7 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
         project=lambda value: {"predicate": value.get_predicate().get_name()},
     )
     assert serialize(dictionaries, query) == "q0"
-    assert table(dictionaries, semantics.QueryProject) == [{"columns": ["c0"], "arg": "q1"}]
+    assert table(dictionaries, semantics.QueryProject) == [{"columns": ["c0"], "operand": "q1"}]
     assert table(dictionaries, semantics.QueryColumn) == [{"name": "ball"}]
     assert table(dictionaries, semantics.QueryAtomicStateFluent) == [{"predicate": "at"}]
 
@@ -238,7 +238,7 @@ def test_query_program_round_trip_preserves_named_references(gripper_planning_do
     join = query.get_variant()
     assert isinstance(join, semantics.QueryJoin)
     assert [column.get_name() for column in join.get_columns()] == ["ball", "room"]
-    assert list(semantics.QueryJoin.Fields.__members__) == ["lhs", "rhs"]
+    assert list(semantics.QueryJoin.Fields.__members__) == ["left_operand", "right_operand"]
 
 
 @pytest.mark.parametrize(
@@ -405,7 +405,7 @@ def test_query_column_retains_owner_after_list_and_repository_scope(
         role_data.variant = repository.insert(semantics.RoleUniversalData())[0].index()
         role = repository.insert(role_data)[0]
         concrete_data = semantics.QueryRoleData()
-        concrete_data.arg = role.index()
+        concrete_data.operand = role.index()
         concrete_data.columns = column_indices
         concrete = repository.insert(concrete_data)[0]
         query_data = semantics.QueryData()
@@ -414,7 +414,7 @@ def test_query_column_retains_owner_after_list_and_repository_scope(
 
         if owner_kind in ("concept", "role"):
             data = semantics.ConceptProjectData() if owner_kind == "concept" else semantics.RoleProjectData()
-            data.arg = query.index()
+            data.operand = query.index()
             data.columns = column_indices[1:] if owner_kind == "concept" else column_indices[::-1]
             owner = repository.insert(data)[0]
             expected = ["right"] if owner_kind == "concept" else ["right", "left"]
@@ -456,15 +456,15 @@ def test_native_ext_query_construction_derives_schema_and_evaluates(
     original = query_arg.get_variant()
     assert isinstance(original, semantics.QueryJoin)
     join_data = semantics.QueryJoinData()
-    join_data.lhs = original.get_rhs().index()
-    join_data.rhs = original.get_lhs().index()
+    join_data.left_operand = original.get_right_operand().index()
+    join_data.right_operand = original.get_left_operand().index()
     joined = repository.insert(join_data)[0]
     assert [column.get_name() for column in joined.get_columns()] == ["room", "ball"]
     query_data = semantics.QueryData()
     query_data.variant = joined.index()
     query = repository.insert(query_data)[0]
     count_data = semantics.NumericalCountData()
-    count_data.arg = query.index()
+    count_data.operand = query.index()
     count = repository.insert(count_data)[0]
     numerical_data = semantics.NumericalData()
     numerical_data.variant = count.index()

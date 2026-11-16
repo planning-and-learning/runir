@@ -96,7 +96,9 @@ public:
     /// (tyr::datalog::database::relax); built in this translator's repository.
     template<std::predicate<size_t> Known>
     tyr::datalog::database::Relaxation relax(std::span<const YggQuery> roots, Known&& known)
-    { return tyr::datalog::database::relax(roots, std::forward<Known>(known), m_repository, m_builder); }
+    {
+        return tyr::datalog::database::relax(roots, std::forward<Known>(known), m_repository, m_builder);
+    }
 
     /// The expression of each input slot, by slot.
     [[nodiscard]] const urd::Store<urd::sequence<QuerySlot>>& get_slots() const noexcept { return m_slots; }
@@ -106,20 +108,22 @@ public:
 private:
     template<typename Tag>
     YggQuery insert(urd::data<tyr::datalog::database::Query<Tag>>& data)
-    { return tyr::datalog::database::insert_query(m_repository, m_builder, data); }
+    {
+        return tyr::datalog::database::insert_query(m_repository, m_builder, data);
+    }
     template<typename Tag>
     YggQuery binary(YggQuery lhs, YggQuery rhs)
     {
         auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<Tag>>(m_builder);
-        out->lhs = lhs.index();
-        out->rhs = rhs.index();
+        out->left_operand = lhs.index();
+        out->right_operand = rhs.index();
         return insert(*out);
     }
     template<typename Tag>
     YggQuery unary(YggQuery arg, std::span<const Label> labels)
     {
         auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<Tag>>(m_builder);
-        out->arg = arg.index();
+        out->operand = arg.index();
         out->labels.set(labels.begin(), labels.end());
         return insert(*out);
     }

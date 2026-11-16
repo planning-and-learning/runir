@@ -35,9 +35,9 @@ public:
         requires(std::same_as<Category, runir::kr::dl::ConceptTag> || std::same_as<Category, runir::kr::dl::RoleTag>)
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return urd::resolve(self().data().concept_registers, get_repository(self().context()).get_dl_repository());
+            return self().template member<&urd::record_of<V>::concept_registers>();
         else
-            return urd::resolve(self().data().role_registers, get_repository(self().context()).get_dl_repository());
+            return self().template member<&urd::record_of<V>::role_registers>();
     }
 
     template<typename FeatureTag>

@@ -22,11 +22,10 @@ template<tyr::TaskKind Kind, typename Tag, typename C, StateEvaluationContextCon
     requires(!std::same_as<Tag, void>)
 void evaluate_query(urd::index_view<Query<Tag>, C> constructor, Context& context, urd::builder<ygg::Relation<ygg::Schema>>& result)
 {
-    const auto& data = constructor.data();
     auto children = context.child_context();
     if constexpr (std::same_as<Tag, QueryRenameTag>)
     {
-        const auto child = evaluate<Kind>(constructor.get_arg(), children);
+        const auto child = evaluate<Kind>(constructor.get_operand(), children);
         for (size_t i = 0; i < child.size(); ++i)
             result.insert(child.row(i));
     }
@@ -46,52 +45,44 @@ void evaluate_query(urd::index_view<Query<Tag>, C> constructor, Context& context
             result.insert(encode_object_row(atom.get_row().get_key().second, row));
     }
     else if constexpr (std::same_as<Tag, QueryConceptTag>)
-        insert_denotation_rows<ConceptTag>(evaluate<Kind>(constructor.get_arg(), children), result);
+        insert_denotation_rows<ConceptTag>(evaluate<Kind>(constructor.get_operand(), children), result);
     else if constexpr (std::same_as<Tag, QueryRoleTag>)
-        insert_denotation_rows<RoleTag>(evaluate<Kind>(constructor.get_arg(), children), result);
+        insert_denotation_rows<RoleTag>(evaluate<Kind>(constructor.get_operand(), children), result);
     else if constexpr (std::same_as<Tag, QueryJoinTag> || std::same_as<Tag, QueryUnionTag> || std::same_as<Tag, QueryDifferenceTag>)
     {
-        const auto lhs = evaluate<Kind>(constructor.get_lhs(), children);
-        const auto rhs = evaluate<Kind>(constructor.get_rhs(), children);
+        const auto lhs = evaluate<Kind>(constructor.get_left_operand(), children);
+        const auto rhs = evaluate<Kind>(constructor.get_right_operand(), children);
         if constexpr (std::same_as<Tag, QueryJoinTag>)
         {
-            const auto lhs_static = constructor.get_lhs().is_static();
-            const auto rhs_static = constructor.get_rhs().is_static();
-            // Fully static joins already retain their complete result.
-            tyr::datalog::database::join(lhs,
-                                         rhs,
-                                         data.plan,
-                                         children.get_caches().get_static_join_indexes(),
-                                         { .lhs = lhs_static && !rhs_static, .rhs = rhs_static && !lhs_static },
-                                         result,
-                                         context.get_workspace().get_database_workspace());
+            tyr::datalog::database::join(lhs, rhs, constructor.get_plan(), result, context.get_workspace().get_database_workspace());
         }
         else if constexpr (std::same_as<Tag, QueryUnionTag>)
-            tyr::datalog::database::union_(lhs, rhs, data.plan, result);
+            tyr::datalog::database::union_(lhs, rhs, constructor.get_plan(), result);
         else
-            tyr::datalog::database::difference(lhs, rhs, data.plan, result);
+            tyr::datalog::database::difference(lhs, rhs, constructor.get_plan(), result);
     }
     else if constexpr (std::same_as<Tag, QueryProjectTag>)
     {
-        const auto child = evaluate<Kind>(constructor.get_arg(), children);
-        tyr::datalog::database::project(child, data.plan, result, context.get_workspace().get_database_workspace());
+        const auto child = evaluate<Kind>(constructor.get_operand(), children);
+        tyr::datalog::database::project(child, constructor.get_plan(), result, context.get_workspace().get_database_workspace());
     }
     else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
     {
-        const auto child = evaluate<Kind>(constructor.get_arg(), children);
-        tyr::datalog::database::select_equal_columns(child, data.plan, result);
+        const auto child = evaluate<Kind>(constructor.get_operand(), children);
+        tyr::datalog::database::select_equal_columns(child, constructor.get_plan(), result);
     }
     else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
     {
-        const auto child = evaluate<Kind>(constructor.get_arg(), children);
-        tyr::datalog::database::select_equal_value(child, data.plan, result);
+        const auto child = evaluate<Kind>(constructor.get_operand(), children);
+        tyr::datalog::database::select_equal_value(child, constructor.get_plan(), result);
     }
     else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
     {
         urd::Store<urd::sequence<QueryDenotationView>> inputs;
         for (const auto arg : constructor.get_args())
             inputs.push_back(evaluate<Kind>(arg, children));
-        tyr::datalog::database::generic_join(inputs, data.plan, result, context.get_workspace().get_generic_join_workspace(data.plan));
+        const auto& plan = constructor.get_plan();
+        tyr::datalog::database::generic_join(inputs, plan, result, context.get_workspace().get_generic_join_workspace(plan));
     }
     else if constexpr (std::same_as<Tag, QueryEmptyTag>)
     {

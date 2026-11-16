@@ -1,5 +1,6 @@
 #include "fixtures.hpp"
 #include "module_fixtures.hpp"
+#include "record_copy.hpp"
 
 #include <boost/variant/get.hpp>
 #include <cista/serialization.h>
@@ -141,7 +142,7 @@ TEST(RunirTests, ExtModuleParserLowersNamedCalleesWithoutPreexistingModules)
     EXPECT_EQ(modules[0].get_name(), "caller");
     EXPECT_EQ(modules[1].get_name(), "callee");
 
-    ASSERT_EQ(modules[0].data().memory_transitions.size(), 1);
+    ASSERT_EQ(modules[0].context()[modules[0].index()].memory_transitions.size(), 1);
     const auto rules = modules[0].get_memory_transitions()[0];
     ASSERT_FALSE(rules.empty());
     auto found_call_rule = false;
@@ -578,7 +579,7 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
             using View = std::decay_t<decltype(rule)>;
             using Expected = urd::index_view<kr::ps::ext::Rule<kr::ps::ext::LoadTag<kr::dl::ConceptTag>>, kr::ps::ext::Repository>;
             if constexpr (std::same_as<View, Expected>)
-                return ygg::uint_t(rule.get_register().get_identifier().value) == 0 && rule.get_conditions().size() == 1;
+                return ygg::uint_t(rule.get_slot().get_identifier().value) == 0 && rule.get_conditions().size() == 1;
             else
                 return false;
         },
@@ -645,9 +646,9 @@ TEST(RunirTests, ExtBindingRulesParseEffectsAndRoundTrip)
                         {
                             EXPECT_EQ(kr::ps::ext::ChooseRuleView<R>, std::string(keyword) == "choose");
                             EXPECT_EQ(rule.get_feature().get_symbol(), "F");
-                            EXPECT_EQ(rule.get_register().get_name(), "r");
+                            EXPECT_EQ(rule.get_slot().get_name(), "r");
                             EXPECT_EQ(rule.get_effects().size(), expected_effects);
-                            auto data = rule.data();
+                            auto data = runir::tests::copy_fields(rule.context()[rule.index()]);
                             EXPECT_TRUE(kr::ps::ext::is_canonical(data));
                             urd::clear_members(data);
                             EXPECT_TRUE(data.effects.empty());
@@ -703,7 +704,7 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
             using View = std::decay_t<decltype(child)>;
             using Expected = urd::index_view<kr::dl::Concept<kr::dl::SemanticFamily, kr::dl::RegisterTag>, kr::dl::ConstructorRepository>;
             if constexpr (std::same_as<View, Expected>)
-                return ygg::uint_t(child.get_register().get_identifier().value) == 1;
+                return ygg::uint_t(child.get_slot().get_identifier().value) == 1;
             else
                 return false;
         },
@@ -805,19 +806,19 @@ TEST(RunirTests, ExtChooseOrderRoundTrip)
                 {
                     ASSERT_EQ(rule.get_order().size(), 3U);
                     EXPECT_EQ(rule.get_order()[0].get_direction(), kr::ps::ext::OrderDirection::MAX);
-                    auto bytes = cista::serialize(rule.data());
-                    using Data = std::remove_cvref_t<decltype(rule.data())>;
+                    auto bytes = cista::serialize(rule.context()[rule.index()]);
+                    using Data = std::remove_cvref_t<decltype(rule.context()[rule.index()])>;
                     const auto* decoded = cista::deserialize<Data>(bytes);
                     EXPECT_EQ(decoded->order.size(), 3U);
                     EXPECT_EQ(decoded->order[1], rule.get_order()[1].index());
                     EXPECT_EQ(decoded->order[0], decoded->order[2]);
                     const auto term = rule.get_order()[1];
-                    const auto& term_data = term.data();
+                    const auto& term_data = term.context()[term.index()];
                     auto term_bytes = cista::serialize(term_data);
                     const auto* decoded_term = cista::deserialize<urd::data<kr::ps::ext::OrderTerm>>(term_bytes);
                     EXPECT_TRUE(urd::EqualTo<urd::data<kr::ps::ext::OrderTerm>> {}(*decoded_term, term_data));
                     EXPECT_EQ(decoded_term->direction, kr::ps::ext::OrderDirection::MIN);
-                    EXPECT_TRUE(urd::EqualTo<Data> {}(*decoded, rule.data()));
+                    EXPECT_TRUE(urd::EqualTo<Data> {}(*decoded, rule.context()[rule.index()]));
                 }
             },
             module_.get_memory_transitions()[0][0].get_variant());

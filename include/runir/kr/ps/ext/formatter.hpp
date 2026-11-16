@@ -42,7 +42,7 @@ void append_rule_body(std::ostream& os, urd::index_view<runir::kr::ps::ext::Rule
         os << ygg::print_indent << "(:register\n";
         {
             ygg::IndentScope scope(os);
-            os << ygg::print_indent << "(:" << Category::name << ' ' << view.get_register().get_name() << ")\n";
+            os << ygg::print_indent << "(:" << Category::name << ' ' << view.get_slot().get_name() << ")\n";
         }
         os << ygg::print_indent << ")\n";
         if (!view.get_effects().empty())

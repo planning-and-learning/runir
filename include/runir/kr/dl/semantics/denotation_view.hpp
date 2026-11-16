@@ -95,11 +95,14 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    const auto& get_formalism_repository() const noexcept { return self().context(); }
-
     auto get_num_objects() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    { return self().data().num_objects; }
+    { return self().template member<&urd::record_of<V>::num_objects>(); }
+    const auto& get_blocks() const noexcept
+        requires runir::kr::dl::ConceptOrRoleTag<Category>
+    { return self().template member<&urd::record_of<V>::blocks>(); }
+
+    const auto& get_formalism_repository() const noexcept { return self().context(); }
 
     [[nodiscard]] bool any() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
@@ -112,17 +115,31 @@ public:
     // Internal interface: raw values, bitsets and typed indices avoid constructing object views.
 
     auto value() const noexcept
-        requires(!std::same_as<Category, runir::kr::dl::RoleTag>)
-    { return self().data().get(); }
+        requires runir::kr::dl::BooleanOrNumericalTag<Category>
+    { return self().template member<&urd::record_of<V>::value>(); }
+
+    auto value() const noexcept
+        requires std::same_as<Category, runir::kr::dl::ConceptTag>
+    {
+        using Layout = urd::builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>;
+        return urd::bitset_span<const ygg::uint_t>(get_blocks().data(), Layout::num_bits(get_num_objects()));
+    }
 
     auto value(urd::index<tyr::formalism::Object> object) const noexcept
         requires std::same_as<Category, runir::kr::dl::RoleTag>
-    { return self().data().get(object); }
+    {
+        using Layout = urd::builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>;
+        assert(ygg::uint_t(object.value) < get_num_objects());
+        return urd::bitset_span<const ygg::uint_t>(get_blocks().data() + Layout::row_block_offset(object, get_num_objects()), get_num_objects());
+    }
 
     /// Includes zero padding: trailing concept bits or padding after each role row.
     auto storage_bits() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    { return self().data().storage_bits(); }
+    {
+        using Bitset = urd::bitset_span<const ygg::uint_t>;
+        return Bitset(get_blocks().data(), get_blocks().size() * Bitset::Digits);
+    }
 
     /// Typed indices borrowing only the bits, independently of the view and range wrappers.
     auto indices() const noexcept
@@ -176,13 +193,13 @@ private:
 public:
     auto get_vector() const noexcept
         requires(std::same_as<Category, runir::kr::dl::ConceptTag> || std::same_as<Category, runir::kr::dl::RoleTag>)
-    { return self().context().get_vector_repository().at(self().data().vec_index); }
+    { return self().template member<&urd::record_of<V>::vec_index>(); }
 
     const auto& get_formalism_repository() const noexcept { return self().context().get_formalism_repository(); }
 
     auto get_num_objects() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    { return self().data().num_objects; }
+    { return self().template member<&urd::record_of<V>::num_objects>(); }
 
     [[nodiscard]] bool any() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
@@ -196,7 +213,7 @@ public:
 
     auto value() const noexcept
         requires runir::kr::dl::BooleanOrNumericalTag<Category>
-    { return self().data().get_data(); }
+    { return self().template member<&urd::record_of<V>::value>(); }
 
     auto value() const noexcept
         requires(std::same_as<Category, runir::kr::dl::ConceptTag>)
@@ -205,11 +222,8 @@ public:
         using Bitset = urd::bitset_span<const ygg::uint_t>;
 
         const auto vector = get_vector();
-        const auto& data = self().data();
-
-        assert(vector.size() == Layout::num_blocks(data.num_objects));
-
-        return Bitset(vector.data(), Layout::num_bits(data.num_objects));
+        assert(vector.size() == Layout::num_blocks(get_num_objects()));
+        return Bitset(vector.data(), Layout::num_bits(get_num_objects()));
     }
 
     auto value(urd::index<::tyr::formalism::Object> object) const noexcept
@@ -219,12 +233,9 @@ public:
         using Bitset = urd::bitset_span<const ygg::uint_t>;
 
         const auto vector = get_vector();
-        const auto& data = self().data();
-
-        assert(vector.size() == Layout::num_blocks(data.num_objects));
-        assert(ygg::uint_t(object.value) < data.num_objects);
-
-        return Bitset(vector.data() + Layout::row_block_offset(object, data.num_objects), data.num_objects);
+        assert(vector.size() == Layout::num_blocks(get_num_objects()));
+        assert(ygg::uint_t(object.value) < get_num_objects());
+        return Bitset(vector.data() + Layout::row_block_offset(object, get_num_objects()), get_num_objects());
     }
 
     /// Includes zero padding: trailing concept bits or padding after each role row.

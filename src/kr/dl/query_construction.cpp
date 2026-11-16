@@ -60,9 +60,9 @@ void prepare(urd::data<Numerical<SemanticFamily, DistanceTag>>& data, const Cons
             },
             argument);
     };
-    const auto sources = columns(data.lhs);
-    const auto edges = columns(data.mid);
-    const auto targets = columns(data.rhs);
+    const auto sources = columns(data.sources);
+    const auto edges = columns(data.edges);
+    const auto targets = columns(data.targets);
     data.plan = tyr::datalog::database::DistancePlan({ sources.data(), sources.size() },
                                                      { edges.data(), edges.size() },
                                                      { targets.data(), targets.size() },

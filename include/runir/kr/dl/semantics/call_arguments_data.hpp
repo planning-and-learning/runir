@@ -35,11 +35,25 @@ struct data<runir::kr::dl::semantics::CallArguments>
         numerical_arguments(std::move(numerical_arguments_))
     {
     }
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
 
-    static constexpr auto cista_members() noexcept
-    { return urd::Members<&data::index, &data::concept_arguments, &data::role_arguments, &data::boolean_arguments, &data::numerical_arguments> {}; }
+    static constexpr auto fields() noexcept
+    {
+        return urd::Fields<urd::field<"concept_arguments", &data::concept_arguments>,
+                           urd::field<"role_arguments", &data::role_arguments>,
+                           urd::field<"boolean_arguments", &data::boolean_arguments>,
+                           urd::field<"numerical_arguments", &data::numerical_arguments>> {};
+    }
     static constexpr auto identifying_members() noexcept
     { return urd::Members<&data::concept_arguments, &data::role_arguments, &data::boolean_arguments, &data::numerical_arguments> {}; }
+    static constexpr auto cista_members() noexcept
+    {
+        return urd::Members<&data::index, &data::concept_arguments, &data::role_arguments, &data::boolean_arguments, &data::numerical_arguments> {};
+    }
 };
 
 }  // namespace urd

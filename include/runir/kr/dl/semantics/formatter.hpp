@@ -50,7 +50,9 @@ std::string constructor(std::string_view keyword, Components&&... components)
 
 template<typename Columns>
 std::string query_columns(Columns columns)
-{ return fmt::format("({})", fmt::join(columns, " ")); }
+{
+    return fmt::format("({})", fmt::join(columns, " "));
+}
 
 template<typename Tag, typename C>
 std::string query(urd::index_view<runir::kr::dl::Query<Tag>, C> view)
@@ -65,26 +67,26 @@ std::string query(urd::index_view<runir::kr::dl::Query<Tag>, C> view)
                            boolean(view.get_polarity()),
                            query_columns(view.get_columns()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::QueryConceptTag>)
-        return constructor(runir::kr::dl::QueryConceptTag::keyword, *view.get_columns().begin(), view.get_arg());
+        return constructor(runir::kr::dl::QueryConceptTag::keyword, *view.get_columns().begin(), view.get_operand());
     else if constexpr (std::same_as<Tag, runir::kr::dl::QueryRoleTag>)
-        return constructor(runir::kr::dl::QueryRoleTag::keyword, query_columns(view.get_columns()), view.get_arg());
+        return constructor(runir::kr::dl::QueryRoleTag::keyword, query_columns(view.get_columns()), view.get_operand());
     else if constexpr (std::same_as<Tag, runir::kr::dl::QueryProjectTag>)
-        return constructor(runir::kr::dl::QueryProjectTag::keyword, query_columns(view.get_columns()), view.get_arg());
+        return constructor(runir::kr::dl::QueryProjectTag::keyword, query_columns(view.get_columns()), view.get_operand());
     else if constexpr (std::same_as<Tag, runir::kr::dl::QueryRenameTag>)
-        return constructor(runir::kr::dl::QueryRenameTag::keyword, query_columns(view.get_columns()), view.get_arg());
+        return constructor(runir::kr::dl::QueryRenameTag::keyword, query_columns(view.get_columns()), view.get_operand());
     else if constexpr (std::same_as<Tag, runir::kr::dl::QuerySelectEqualTag>)
-        return constructor(runir::kr::dl::QuerySelectEqualTag::keyword, view.get_lhs_column(), view.get_rhs_column(), view.get_arg());
+        return constructor(runir::kr::dl::QuerySelectEqualTag::keyword, view.get_left_column(), view.get_right_column(), view.get_operand());
     else if constexpr (std::same_as<Tag, runir::kr::dl::QuerySelectValueTag>)
         return constructor(runir::kr::dl::QuerySelectValueTag::keyword,
                            view.get_column(),
                            fmt::format("{:?}", view.get_object().get_name().view()),
-                           view.get_arg());
+                           view.get_operand());
     else if constexpr (std::same_as<Tag, runir::kr::dl::QueryJoinTag>)
-        return constructor(runir::kr::dl::QueryJoinTag::keyword, view.get_lhs(), view.get_rhs());
+        return constructor(runir::kr::dl::QueryJoinTag::keyword, view.get_left_operand(), view.get_right_operand());
     else if constexpr (std::same_as<Tag, runir::kr::dl::QueryUnionTag>)
-        return constructor(runir::kr::dl::QueryUnionTag::keyword, view.get_lhs(), view.get_rhs());
+        return constructor(runir::kr::dl::QueryUnionTag::keyword, view.get_left_operand(), view.get_right_operand());
     else if constexpr (std::same_as<Tag, runir::kr::dl::QueryDifferenceTag>)
-        return constructor(runir::kr::dl::QueryDifferenceTag::keyword, view.get_lhs(), view.get_rhs());
+        return constructor(runir::kr::dl::QueryDifferenceTag::keyword, view.get_left_operand(), view.get_right_operand());
     else if constexpr (std::same_as<Tag, runir::kr::dl::QueryGenericJoinTag>)
         return constructor(runir::kr::dl::QueryGenericJoinTag::keyword,
                            query_columns(view.get_variable_order()),
@@ -110,9 +112,9 @@ std::string query_projection(urd::index_view<runir::kr::dl::QueryProjection<Cate
     auto it = columns.begin();
     auto lhs = *it++;
     if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-        return constructor(runir::kr::dl::ConceptProjectSyntaxTag::keyword, lhs, view.get_arg());
+        return constructor(runir::kr::dl::ConceptProjectSyntaxTag::keyword, lhs, view.get_operand());
     else
-        return constructor(runir::kr::dl::RoleProjectSyntaxTag::keyword, lhs, *it, view.get_arg());
+        return constructor(runir::kr::dl::RoleProjectSyntaxTag::keyword, lhs, *it, view.get_operand());
 }
 
 template<runir::kr::dl::CategoryTag Category, typename C>
@@ -154,7 +156,9 @@ template<typename C>
 struct fmt::formatter<urd::index_view<runir::kr::dl::QueryColumn, C>> : fmt::formatter<std::string_view>
 {
     auto format(const urd::index_view<runir::kr::dl::QueryColumn, C>& value, format_context& ctx) const
-    { return fmt::format_to(ctx.out(), "{}", value.get_name()); }
+    {
+        return fmt::format_to(ctx.out(), "{}", value.get_name());
+    }
 };
 
 template<typename Tag, typename C>
@@ -169,28 +173,36 @@ struct fmt::formatter<urd::index_view<runir::kr::dl::QueryProjection<Category>, 
 {
     using View = urd::index_view<runir::kr::dl::QueryProjection<Category>, C>;
     auto format(View view, format_context& ctx) const
-    { return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::query_projection(view), ctx); }
+    {
+        return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::query_projection(view), ctx);
+    }
 };
 
 template<runir::kr::dl::CategoryTag Category, typename C>
 struct fmt::formatter<urd::index_view<runir::kr::dl::Argument<Category>, C>> : fmt::formatter<std::string_view>
 {
     auto format(const urd::index_view<runir::kr::dl::Argument<Category>, C>& value, format_context& ctx) const
-    { return fmt::format_to(ctx.out(), "{}", value.get_name()); }
+    {
+        return fmt::format_to(ctx.out(), "{}", value.get_name());
+    }
 };
 
 template<runir::kr::dl::ConceptOrRoleTag Category, typename C>
 struct fmt::formatter<urd::index_view<runir::kr::dl::Register<Category>, C>> : fmt::formatter<std::string_view>
 {
     auto format(const urd::index_view<runir::kr::dl::Register<Category>, C>& value, format_context& ctx) const
-    { return fmt::format_to(ctx.out(), "{}", value.get_name()); }
+    {
+        return fmt::format_to(ctx.out(), "{}", value.get_name());
+    }
 };
 
 template<runir::kr::dl::CategoryTag Category>
 struct fmt::formatter<runir::kr::dl::ConstructorView<Category>> : fmt::formatter<std::string_view>
 {
     auto format(runir::kr::dl::ConstructorView<Category> view, format_context& ctx) const
-    { return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::text(view), ctx); }
+    {
+        return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::text(view), ctx);
+    }
 };
 
 template<runir::kr::dl::CategoryTag Category, typename C>

@@ -34,7 +34,9 @@ using runir::kr::parser::ext_constructors::parse;
 
 template<typename T>
 auto intern(Repository& repository, urd::data<T>& data)
-{ return insert(repository, data).first; }
+{
+    return insert(repository, data).first;
+}
 
 using runir::kr::parser::observations::append_conditions;
 using runir::kr::parser::observations::append_effects;
@@ -275,12 +277,12 @@ ModuleView lower_module(const ast::Module& module,
                         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
                         {
                             rule->feature = require_feature(concepts, concrete.feature, diagnostics);
-                            rule->reg = require(references.concept_registers.by_name, concrete.reg, "concept register", diagnostics);
+                            rule->slot = require(references.concept_registers.by_name, concrete.slot, "concept register", diagnostics);
                         }
                         else
                         {
                             rule->feature = require_feature(roles, concrete.feature, diagnostics);
-                            rule->reg = require(references.role_registers.by_name, concrete.reg, "role register", diagnostics);
+                            rule->slot = require(references.role_registers.by_name, concrete.slot, "role register", diagnostics);
                         }
                         variant->variant = intern(repository, *rule).index();
                     }

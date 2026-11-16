@@ -35,9 +35,18 @@ struct data<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>
         effects(std::move(effects_))
     {
     }
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
 
-    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::symbol, &data::conditions, &data::effects> {}; }
+    static constexpr auto fields() noexcept
+    {
+        return urd::Fields<urd::field<"symbol", &data::symbol>, urd::field<"conditions", &data::conditions>, urd::field<"effects", &data::effects>> {};
+    }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::symbol, &data::conditions, &data::effects> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::symbol, &data::conditions, &data::effects> {}; }
 };
 
 }  // namespace urd

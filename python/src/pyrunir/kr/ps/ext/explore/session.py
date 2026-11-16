@@ -181,7 +181,7 @@ def _choose_rules(module: Module) -> dict[str, ChooseRule]:
         for body in bodies:
             variant = body.get_variant()
             if isinstance(variant, ConceptChooseRule | RoleChooseRule):
-                rules[body.get_symbol()] = ChooseRule(body.get_symbol(), str(variant.get_register().get_name()))
+                rules[body.get_symbol()] = ChooseRule(body.get_symbol(), str(variant.get_slot().get_name()))
     return rules
 
 

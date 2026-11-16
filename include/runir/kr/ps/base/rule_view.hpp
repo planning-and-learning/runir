@@ -17,7 +17,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    const auto& get_symbol() const noexcept { return self().data().symbol; }
+    const auto& get_symbol() const noexcept { return self().template member<&urd::record_of<V>::symbol>(); }
     auto get_conditions() const noexcept { return self().template member<&urd::record_of<V>::conditions>(); }
     auto get_effects() const noexcept { return self().template member<&urd::record_of<V>::effects>(); }
 };

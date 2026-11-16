@@ -2,6 +2,7 @@
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_DETAIL_CLOSURE_HPP_
 
 #include "runir/kr/dl/semantics/denotation_builder.hpp"
+#include "runir/kr/dl/semantics/denotation_view.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -59,7 +60,7 @@ struct ClosureWorkspace
 template<BaseRoleConstructorTag Tag, std::invocable<urd::index<tyr::formalism::Object>, urd::bitset_span<const ygg::uint_t>> Emit>
 void evaluate_closure(Tag,
                       const urd::builder<Denotation<RoleTag>>& result,
-                      const urd::builder<Denotation<RoleTag>>& role,
+                      BorrowedDenotationView<RoleTag> role,
                       const MarkedRows& dirty,
                       urd::builder<Denotation<ConceptTag>>& row,
                       ClosureWorkspace& scratch,
@@ -83,7 +84,7 @@ void evaluate_closure(Tag,
         scratch.discovery[vertex] = scratch.lowlink[vertex] = ++index;
         scratch.active.insert(vertex);
         scratch.active_stack.push_back(vertex);
-        scratch.frames.push_back({ vertex, urd::set_bit_indices(role.get(urd::index<tyr::formalism::Object>(vertex))).begin() });
+        scratch.frames.push_back({ vertex, urd::set_bit_indices(role.value(urd::index<tyr::formalism::Object>(vertex))).begin() });
     };
     for (const auto source : dirty)
     {
@@ -132,7 +133,7 @@ void evaluate_closure(Tag,
                 for (const auto member : scratch.component)
                     reached.set(member);
             for (const auto member : scratch.component)
-                for (const auto neighbor : urd::set_bit_indices(role.get(urd::index<tyr::formalism::Object>(member))))
+                for (const auto neighbor : urd::set_bit_indices(role.value(urd::index<tyr::formalism::Object>(member))))
                 {
                     const auto target = static_cast<ygg::uint_t>(neighbor);
                     if (!reached.test(target))

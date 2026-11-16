@@ -22,7 +22,9 @@ concept IndexedDataView = std::constructible_from<urd::index<T>, ygg::uint_t> &&
 
 template<typename... Ts>
 consteval bool indexed_data_views(boost::mp11::mp_list<Ts...>)
-{ return (IndexedDataView<Ts, kr::dl::ConstructorRepository> && ...); }
+{
+    return (IndexedDataView<Ts, kr::dl::ConstructorRepository> && ...);
+}
 
 template<typename Category>
 consteval bool view_alias()
@@ -40,7 +42,9 @@ consteval bool view_alias()
 
 template<typename... Categories>
 consteval bool view_aliases(boost::mp11::mp_list<Categories...>)
-{ return (view_alias<Categories>() && ...); }
+{
+    return (view_alias<Categories>() && ...);
+}
 
 template<typename Category>
 consteval bool query_projection_contract()
@@ -48,15 +52,12 @@ consteval bool query_projection_contract()
     using Entity = kr::dl::QueryProjection<Category>;
     using Repository = kr::dl::ConstructorRepository;
     using View = urd::index_view<Entity, Repository>;
-    return urd::resolves<Repository, Entity>&&
-        requires(urd::data<Entity> & data, const View& view)
-    {
-        data.arg;
+    return urd::resolves<Repository, Entity> && requires(urd::data<Entity>& data, const View& view) {
+        data.operand;
         data.columns;
-        view.get_arg();
+        view.get_operand();
         view.get_columns();
-    }
-    &&!requires(const View& view) { view.get_plan(); };
+    } && requires(const View& view) { view.get_plan(); };
 }
 
 template<typename... Tags>
@@ -107,8 +108,8 @@ TEST(RunirKrDlConstructor, SharedInterningCanonicalizesAndPrepares)
         const auto [intersection, created] = ygg::formalism::insert(*repository, data);
         EXPECT_TRUE(created);
         EXPECT_TRUE(kr::dl::is_canonical(data));
-        EXPECT_EQ(data.lhs, first.index());
-        std::swap(data.lhs, data.rhs);
+        EXPECT_EQ(data.left_operand, first.index());
+        std::swap(data.left_operand, data.right_operand);
         const auto [same, duplicate_created] = kr::dl::insert(*repository, data);
         EXPECT_FALSE(duplicate_created);
         EXPECT_EQ(same.index(), intersection.index());

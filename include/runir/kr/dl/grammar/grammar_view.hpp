@@ -18,7 +18,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_domain() const noexcept { return urd::resolve(self().data().domain, self().context().get_planning_repository()); }
+    auto get_domain() const noexcept { return self().template member<&urd::record_of<V>::domain>(); }
 
     template<runir::kr::dl::CategoryTag Category>
     auto get_start() const noexcept

@@ -30,9 +30,9 @@
 #include <string>
 #include <tyr/datalog/lifted/database/syntax/query_repository.hpp>
 #include <tyr/planning/declarations.hpp>
+#include <urd/dot.hpp>
 #include <urd/python/graphs.hpp>
 #include <utility>
-#include <vefr/dot.hpp>
 #include <vefr/python/bindings.hpp>
 #include <yggdrasil/python/bindings.hpp>
 
@@ -126,7 +126,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     {
         auto graph = nb::class_<Graph>(m, (std::string(prefix) + "ProgramProofGraph").c_str());
         urd::python::bind_graph(graph);
-        vefr::python::bind_algorithms(graph, vefr::python::one_color, vefr::vertex_data, vefr::edge_data);
+        vefr::python::bind_algorithms(graph, vefr::python::one_color, urd::vertex_data, urd::edge_data);
     }
 
     nb::class_<Results>(m, (std::string(prefix) + "ProgramProofResults").c_str())

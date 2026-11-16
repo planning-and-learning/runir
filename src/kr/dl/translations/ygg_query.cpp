@@ -32,13 +32,13 @@ bool visit_complement_argument(QueryView<> query, F f)
                     {
                         if constexpr (is_complement_view_v<V>)
                         {
-                            f(constructor.get_arg());
+                            f(constructor.get_operand());
                             return true;
                         }
                         else
                             return false;
                     },
-                    concrete.get_arg().get_variant());
+                    concrete.get_operand().get_variant());
             else
                 return false;
         },
@@ -65,7 +65,7 @@ QueryTranslator::YggQuery QueryTranslator::translate(DlQuery query)
 QueryTranslator::YggQuery QueryTranslator::project(YggQuery query, std::span<const Label> labels)
 {
     auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<tyr::datalog::database::QueryProjectTag>>(m_builder);
-    out->arg = query.index();
+    out->operand = query.index();
     out->labels.set(labels.begin(), labels.end());
     return insert(*out);
 }
@@ -103,8 +103,8 @@ void QueryTranslator::flatten(DlQuery query, urd::Store<urd::sequence<DlQuery>>&
         {
             if constexpr (std::same_as<Tag, QueryJoinTag>)
             {
-                flatten(concrete.get_lhs(), conjuncts);
-                flatten(concrete.get_rhs(), conjuncts);
+                flatten(concrete.get_left_operand(), conjuncts);
+                flatten(concrete.get_right_operand(), conjuncts);
             }
             else
                 conjuncts.push_back(query);
@@ -170,7 +170,6 @@ QueryTranslator::YggQuery QueryTranslator::complement_argument(DlQuery complemen
 template<typename Tag>
 QueryTranslator::YggQuery QueryTranslator::translate_concrete(DlQuery query, QueryView<Tag> concrete)
 {
-    const auto& data = concrete.data();
     if constexpr (is_query_leaf_tag_v<Tag>)
     {
         const auto columns = concrete.get_schema();
@@ -180,41 +179,43 @@ QueryTranslator::YggQuery QueryTranslator::translate_concrete(DlQuery query, Que
     else if constexpr (std::same_as<Tag, QueryJoinTag>)
     {
         if (m_rewrite_complements)
-            if (const auto rewritten = rewrite_complements(query, query_labels(data.columns)))
+            if (const auto rewritten = rewrite_complements(query, query_labels(concrete.get_columns())))
                 return *rewritten;
-        return binary<tyr::datalog::database::QueryJoinTag>(translate(concrete.get_lhs()), translate(concrete.get_rhs()));
+        return binary<tyr::datalog::database::QueryJoinTag>(translate(concrete.get_left_operand()), translate(concrete.get_right_operand()));
     }
     else if constexpr (std::same_as<Tag, QueryUnionTag>)
-        return binary<tyr::datalog::database::QueryUnionTag>(translate(concrete.get_lhs()), translate(concrete.get_rhs()));
+        return binary<tyr::datalog::database::QueryUnionTag>(translate(concrete.get_left_operand()), translate(concrete.get_right_operand()));
     else if constexpr (std::same_as<Tag, QueryDifferenceTag>)
-        return binary<tyr::datalog::database::QueryDifferenceTag>(translate(concrete.get_lhs()), translate(concrete.get_rhs()));
+        return binary<tyr::datalog::database::QueryDifferenceTag>(translate(concrete.get_left_operand()), translate(concrete.get_right_operand()));
     else if constexpr (std::same_as<Tag, QueryProjectTag>)
-        return unary<tyr::datalog::database::QueryProjectTag>(translate(concrete.get_arg()), query_labels(data.columns));
+        return unary<tyr::datalog::database::QueryProjectTag>(translate(concrete.get_operand()), query_labels(concrete.get_columns()));
     else if constexpr (std::same_as<Tag, QueryRenameTag>)
-        return unary<tyr::datalog::database::QueryRenameTag>(translate(concrete.get_arg()), query_labels(data.columns));
+        return unary<tyr::datalog::database::QueryRenameTag>(translate(concrete.get_operand()), query_labels(concrete.get_columns()));
     else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
     {
         auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<tyr::datalog::database::QuerySelectEqualTag>>(m_builder);
-        out->arg = translate(concrete.get_arg()).index();
-        out->lhs_column = Label(data.lhs_column.value);
-        out->rhs_column = Label(data.rhs_column.value);
+        out->operand = translate(concrete.get_operand()).index();
+        out->left_column = Label(concrete.get_left_column().index().value);
+        out->right_column = Label(concrete.get_right_column().index().value);
         return insert(*out);
     }
     else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
     {
-        auto out =
-            urd::data<tyr::datalog::database::Query<tyr::datalog::database::QuerySelectValueTag>>(translate(concrete.get_arg()).index(),
-                                                                                                  Label(data.column.value),
-                                                                                                  urd::index<ygg::formalism::Object<void>>(data.object.value));
-        return insert(out);
+        using Object = urd::index<ygg::formalism::Object<void>>;
+        auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<tyr::datalog::database::QuerySelectValueTag>>(m_builder);
+        out->operand = translate(concrete.get_operand()).index();
+        out->column = Label(concrete.get_column().index().value);
+        out->constant = ygg::encode_value(Object(concrete.get_object().index().value));
+        out->constant_type = ygg::type_id<Object>;
+        return insert(*out);
     }
     else if constexpr (std::same_as<Tag, QueryGenericJoinTag>)
     {
         auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<tyr::datalog::database::QueryGenericJoinTag>>(m_builder);
         for (const auto arg : concrete.get_args())
             out->inputs.push_back(translate(arg).index());
-        const auto variable_order = query_labels(data.variable_order);
-        const auto output_order = query_labels(data.output_order);
+        const auto variable_order = query_labels(concrete.get_variable_order());
+        const auto output_order = query_labels(concrete.get_output_order());
         out->variable_order.set(variable_order.begin(), variable_order.end());
         out->output_order.set(output_order.begin(), output_order.end());
         return insert(*out);

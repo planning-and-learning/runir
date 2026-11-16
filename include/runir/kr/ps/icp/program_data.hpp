@@ -4,6 +4,7 @@
 #include "runir/kr/ps/icp/declarations.hpp"
 
 #include <tuple>
+#include <type_traits>
 #include <urd/elements/flat.hpp>
 #include <utility>
 
@@ -18,9 +19,15 @@ struct data<runir::kr::ps::icp::Program>
 
     data() = default;
     data(urd::index<runir::kr::ps::icp::Module> module_) : index(), module(module_) {}
+    static constexpr bool copyable() noexcept
+    {
+        static_assert(std::is_trivially_copyable_v<data>, "a copyable record is trivially copyable");
+        return true;
+    }
 
-    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::module> {}; }
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"module", &data::module>> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::module> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::module> {}; }
 };
 
 }  // namespace urd

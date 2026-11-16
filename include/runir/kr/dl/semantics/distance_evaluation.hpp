@@ -76,12 +76,12 @@ heuristics::ProjectionHeuristic make_heuristic(const ygg::FreeRelationRepository
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
 ygg::uint_t on_demand_distance(NumericalView<DistanceTag> constructor, Context& context)
 {
-    const auto& plan = constructor.data().plan;
+    const auto& plan = constructor.get_plan();
     auto children = context.child_context();
     const auto relation = [&](auto argument, auto columns)
     { return std::visit([&](auto child) { return evaluate_relation<Kind>(child, columns, children); }, argument); };
-    const auto sources = relation(constructor.get_lhs(), plan.source_columns());
-    const auto targets = relation(constructor.get_rhs(), plan.target_columns());
+    const auto sources = relation(constructor.get_sources(), plan.source_columns());
+    const auto targets = relation(constructor.get_targets(), plan.target_columns());
     return std::visit(
         [&]<typename Edges>(Edges edges) -> ygg::uint_t
         {
@@ -104,7 +104,7 @@ ygg::uint_t on_demand_distance(NumericalView<DistanceTag> constructor, Context& 
             const auto input = [&](size_t slot) { return evaluate_slot<Kind>(feature.edges.slots[slot], edges.context(), children); };
             return feature.edges.distance.min_distance(input, sources, targets, feature.heuristic);
         },
-        constructor.get_mid());
+        constructor.get_edges());
 }
 
 /// Translates a must-pass query's edges and builds its must-pass evaluator and the abstraction of its heuristic.
@@ -166,7 +166,7 @@ void on_demand_must_pass(urd::index_view<Query<QueryMustPassTag>, C> constructor
         context.get_state().get_formalism_repository(),
         constructor.context(),
         static_cast<ygg::uint_t>(constructor.index().value),
-        [&] { return make_must_pass_feature(context.get_workspace().get_layer(), constructor.data().plan, edges); });
+        [&] { return make_must_pass_feature(context.get_workspace().get_layer(), constructor.get_plan(), edges); });
     const auto input = [&](size_t slot) { return evaluate_slot<Kind>(feature.slots[slot], edges.context(), children); };
     auto& heuristic = must_pass_heuristic(context.get_workspace().get_layer(), feature, detail::num_objects<Kind>(context), input, targets);
     feature.must_pass.must_pass(input, sources, targets, probes, result, heuristic);

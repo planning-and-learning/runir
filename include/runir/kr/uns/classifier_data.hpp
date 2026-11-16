@@ -45,9 +45,15 @@ struct data<runir::kr::uns::ClassifierClause>
 
     data() = default;
     data(urd::flat_vector<urd::index<runir::kr::uns::ClassifierLiteral>> literals_) : index(), literals(std::move(literals_)) {}
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
 
-    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::literals> {}; }
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"literals", &data::literals>> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::literals> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::literals> {}; }
 };
 
 // A classifier: named boolean features + a DNF (disjunction of clauses).
@@ -69,9 +75,18 @@ struct data<runir::kr::uns::Classifier>
         clauses(std::move(clauses_))
     {
     }
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
 
-    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::symbol, &data::features, &data::clauses> {}; }
+    static constexpr auto fields() noexcept
+    {
+        return urd::Fields<urd::field<"symbol", &data::symbol>, urd::field<"features", &data::features>, urd::field<"clauses", &data::clauses>> {};
+    }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::symbol, &data::features, &data::clauses> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::symbol, &data::features, &data::clauses> {}; }
 };
 
 }  // namespace urd

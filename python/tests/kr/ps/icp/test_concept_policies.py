@@ -355,7 +355,7 @@ def test_serialization_fields_and_program_projection() -> None:
         {
             "operation": "belongs",
             "argument_position": 0,
-            "register": None,
+            "slot": None,
             "concept": "f0",
         }
     ]

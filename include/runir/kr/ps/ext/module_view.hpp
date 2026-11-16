@@ -23,13 +23,13 @@ public:
     auto get_arguments() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return urd::resolve(self().data().concept_arguments, get_repository(self().context()).get_dl_repository());
+            return self().template member<&urd::record_of<V>::concept_arguments>();
         else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return urd::resolve(self().data().role_arguments, get_repository(self().context()).get_dl_repository());
+            return self().template member<&urd::record_of<V>::role_arguments>();
         else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-            return urd::resolve(self().data().boolean_arguments, get_repository(self().context()).get_dl_repository());
+            return self().template member<&urd::record_of<V>::boolean_arguments>();
         else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-            return urd::resolve(self().data().numerical_arguments, get_repository(self().context()).get_dl_repository());
+            return self().template member<&urd::record_of<V>::numerical_arguments>();
     }
 };
 }  // namespace urd

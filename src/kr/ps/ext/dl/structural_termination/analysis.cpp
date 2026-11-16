@@ -27,7 +27,7 @@ using RegisterConstructorView = urd::index_view<RegisterConstructor<Category>, r
 
 /// A view of a record that declares its fields (urd::Fields).
 template<typename V>
-concept RecordView = requires(const V& view) { view.data(); } && urd::HasFields<urd::record_of<V>>;
+concept RecordView = requires { typename urd::record_of<V>; } && urd::HasFields<urd::record_of<V>>;
 
 /// A range of children: any range but text.
 template<typename T>
@@ -45,7 +45,7 @@ template<runir::kr::dl::CategoryTag Category, typename Value>
 bool references_register(const Value& value, runir::kr::dl::RegisterIdentifier<Category> reg)
 {
     if constexpr (std::same_as<Value, RegisterConstructorView<Category>>)
-        return value.get_register().get_identifier() == reg;
+        return value.get_slot().get_identifier() == reg;
     else if constexpr (is_variant<Value>)
         return std::visit([&](const auto& child) { return references_register<Category>(child, reg); }, value);
     else if constexpr (RecordView<Value>)
@@ -133,7 +133,7 @@ Analysis analyze_module(ModuleView module_)
                                 std::visit([&](auto concrete) { ps::detail::record_effect(module_, profile, concrete); }, effect);
                         }
                         if constexpr (BindingRuleKind<Kind>)
-                            record_binding_effects(module_, profile, concrete_rule.get_register().get_identifier());
+                            record_binding_effects(module_, profile, concrete_rule.get_slot().get_identifier());
                         // Other rules leave unmentioned features unconstrained.
                         // Call rules have no effect entries.
                         analysis.rules.push_back(rule);

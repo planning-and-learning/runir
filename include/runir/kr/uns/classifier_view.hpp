@@ -19,7 +19,7 @@ private:
 
 public:
     auto get_feature() const noexcept { return self().template member<&urd::record_of<V>::variant>(); }
-    auto get_polarity() const noexcept { return self().data().polarity; }
+    auto get_polarity() const noexcept { return self().template member<&urd::record_of<V>::polarity>(); }
 };
 
 template<typename V>
@@ -39,7 +39,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    const auto& get_symbol() const noexcept { return self().data().symbol; }
+    const auto& get_symbol() const noexcept { return self().template member<&urd::record_of<V>::symbol>(); }
     auto get_features() const noexcept { return self().template member<&urd::record_of<V>::features>(); }
     auto get_clauses() const noexcept { return self().template member<&urd::record_of<V>::clauses>(); }
 };

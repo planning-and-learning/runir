@@ -72,7 +72,7 @@ def test_optimized_features_evaluate_like_originals(
 def _count_arg_variant(feature: NumericalFeature) -> object:
     count = feature.get_expression().get_variant()
     assert isinstance(count, semantics.NumericalCount)
-    return count.get_arg().get_variant()
+    return count.get_operand().get_variant()
 
 
 def test_generic_join_and_empty_bindings(gripper_planning_domain: PlanningDomain) -> None:

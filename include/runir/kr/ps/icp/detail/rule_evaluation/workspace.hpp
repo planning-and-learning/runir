@@ -87,8 +87,10 @@ public:
     update_histories(ProgramStateView<Kind> state, Transition& transition, std::optional<tyr::planning::BorrowedActionRowView<Kind>> binding, const Stop& stop)
     {
         auto histories = checkout<Histories>(m_task->icp_execution_builder);
-        *histories = state.get_histories().data();
         const auto previous = state.get_histories().get_concepts();
+        histories->concepts.clear();
+        for (const auto concept_ : previous)
+            urd::append(histories->concepts, concept_);
         const auto features = m_program.get_module().template get_features<Concept>();
         m_changed.clear();
         bool progress = !binding;

@@ -162,8 +162,8 @@ inline auto parse(const runir::kr::dl::grammar::ast::ConceptRegister& node, tyr:
 {
     require_registers(node, context);
     auto data = runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::RegisterTag>>(context.builder());
-    data->reference = resolve_reference<runir::kr::dl::Register<runir::kr::dl::ConceptTag>, runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>(
-        node.reference,
+    data->slot = resolve_reference<runir::kr::dl::Register<runir::kr::dl::ConceptTag>, runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>(
+        node.slot,
         context.references() ? &context.references()->concept_registers : nullptr,
         "concept register",
         context);
@@ -175,8 +175,8 @@ inline auto parse(const runir::kr::dl::grammar::ast::ConceptArgument& node, tyr:
     require_arguments(node, context);
     auto data = runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>>(
         context.builder());
-    data->reference = resolve_reference<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>, runir::kr::dl::ArgumentIdentifier<runir::kr::dl::ConceptTag>>(
-        node.reference,
+    data->argument = resolve_reference<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>, runir::kr::dl::ArgumentIdentifier<runir::kr::dl::ConceptTag>>(
+        node.argument,
         context.references() ? &context.references()->concept_arguments : nullptr,
         "concept argument",
         context);
@@ -187,8 +187,8 @@ inline auto parse(const runir::kr::dl::grammar::ast::RoleRegister& node, tyr::fo
 {
     require_registers(node, context);
     auto data = runir::kr::dl::checkout<runir::kr::dl::Role<runir::kr::dl::SemanticFamily, runir::kr::dl::RegisterTag>>(context.builder());
-    data->reference = resolve_reference<runir::kr::dl::Register<runir::kr::dl::RoleTag>, runir::kr::dl::RegisterIdentifier<runir::kr::dl::RoleTag>>(
-        node.reference,
+    data->slot = resolve_reference<runir::kr::dl::Register<runir::kr::dl::RoleTag>, runir::kr::dl::RegisterIdentifier<runir::kr::dl::RoleTag>>(
+        node.slot,
         context.references() ? &context.references()->role_registers : nullptr,
         "role register",
         context);
@@ -200,8 +200,8 @@ inline auto parse(const runir::kr::dl::grammar::ast::RoleArgument& node, tyr::fo
     require_arguments(node, context);
     auto data =
         runir::kr::dl::checkout<runir::kr::dl::Role<runir::kr::dl::SemanticFamily, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>>(context.builder());
-    data->reference = resolve_reference<runir::kr::dl::Argument<runir::kr::dl::RoleTag>, runir::kr::dl::ArgumentIdentifier<runir::kr::dl::RoleTag>>(
-        node.reference,
+    data->argument = resolve_reference<runir::kr::dl::Argument<runir::kr::dl::RoleTag>, runir::kr::dl::ArgumentIdentifier<runir::kr::dl::RoleTag>>(
+        node.argument,
         context.references() ? &context.references()->role_arguments : nullptr,
         "role argument",
         context);
@@ -213,8 +213,8 @@ inline auto parse(const runir::kr::dl::grammar::ast::BooleanArgument& node, tyr:
     require_arguments(node, context);
     auto data = runir::kr::dl::checkout<runir::kr::dl::Boolean<runir::kr::dl::SemanticFamily, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>>(
         context.builder());
-    data->reference = resolve_reference<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>, runir::kr::dl::ArgumentIdentifier<runir::kr::dl::BooleanTag>>(
-        node.reference,
+    data->argument = resolve_reference<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>, runir::kr::dl::ArgumentIdentifier<runir::kr::dl::BooleanTag>>(
+        node.argument,
         context.references() ? &context.references()->boolean_arguments : nullptr,
         "boolean argument",
         context);
@@ -226,8 +226,8 @@ inline auto parse(const runir::kr::dl::grammar::ast::NumericalArgument& node, ty
     require_arguments(node, context);
     auto data = runir::kr::dl::checkout<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>>(
         context.builder());
-    data->reference = resolve_reference<runir::kr::dl::Argument<runir::kr::dl::NumericalTag>, runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>(
-        node.reference,
+    data->argument = resolve_reference<runir::kr::dl::Argument<runir::kr::dl::NumericalTag>, runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>(
+        node.argument,
         context.references() ? &context.references()->numerical_arguments : nullptr,
         "numerical argument",
         context);

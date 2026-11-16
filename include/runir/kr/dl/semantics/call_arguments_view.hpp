@@ -22,13 +22,13 @@ public:
     auto arguments() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return urd::resolve(self().data().concept_arguments, self().context());
+            return self().template member<&urd::record_of<V>::concept_arguments>();
         else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return urd::resolve(self().data().role_arguments, self().context());
+            return self().template member<&urd::record_of<V>::role_arguments>();
         else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-            return urd::resolve(self().data().boolean_arguments, self().context());
+            return self().template member<&urd::record_of<V>::boolean_arguments>();
         else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-            return urd::resolve(self().data().numerical_arguments, self().context());
+            return self().template member<&urd::record_of<V>::numerical_arguments>();
         else
             static_assert(false, "unhandled argument category");
     }

@@ -18,23 +18,25 @@ namespace runir::kr::dl::semantics::incremental::detail
 template<tyr::TaskKind Kind, CategoryTag Category, typename Tag, BooleanOrNumericalTag Input>
 struct ScalarBinaryEvaluator
 {
-    EvaluationIndex<Input> lhs;
-    EvaluationIndex<Input> rhs;
+    EvaluationIndex<Input> left;
+    EvaluationIndex<Input> right;
     DenotationState<Category> value;
 
-    ScalarBinaryEvaluator(EvaluationIndex<Input> lhs_, EvaluationIndex<Input> rhs_) : lhs(lhs_), rhs(rhs_) {}
+    ScalarBinaryEvaluator(EvaluationIndex<Input> left_, EvaluationIndex<Input> right_) : left(left_), right(right_) {}
     void refresh(EvaluationGraph<Kind>& graph)
     {
         if constexpr (NumericalBinaryTag<Tag>)
-            value.set(semantics::detail::apply_numerical_binary<Tag>(graph.result(lhs).value(), graph.result(rhs).value()));
+            value.set(semantics::detail::apply_numerical_binary<Tag>(graph.result(left).value(), graph.result(right).value()));
         else if constexpr (LogicalBinaryTag<Tag>)
-            value.set(semantics::detail::apply_logical_binary<Tag>(graph.result(lhs).value(), graph.result(rhs).value()));
+            value.set(semantics::detail::apply_logical_binary<Tag>(graph.result(left).value(), graph.result(right).value()));
         else
-            value.set(semantics::detail::apply_comparison<Tag>(graph.result(lhs).value(), graph.result(rhs).value()));
+            value.set(semantics::detail::apply_comparison<Tag>(graph.result(left).value(), graph.result(right).value()));
     }
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
-    { refresh(graph); }
+    {
+        refresh(graph);
+    }
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&) { refresh(graph); }
 };
 
@@ -47,7 +49,9 @@ struct LogicalNotEvaluator
     explicit LogicalNotEvaluator(EvaluationIndex<BooleanTag> child_) : child(child_) {}
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
-    { value.set(!graph.result(child).value()); }
+    {
+        value.set(!graph.result(child).value());
+    }
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&) { value.set(!graph.result(child).value()); }
 };
 

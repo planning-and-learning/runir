@@ -28,6 +28,7 @@
 #include <memory>
 #include <optional>
 #include <tuple>
+#include <type_traits>
 #include <tyr/formalism/planning/repository.hpp>
 #include <tyr/formalism/predicate_data.hpp>
 #include <tyr/formalism/predicate_view.hpp>
@@ -83,14 +84,20 @@ struct data<runir::datasets::PredicateColor<T>>
         context(context_)
     {
     }
-    data(const data&) = default;
-    data& operator=(const data&) = default;
-    data(data&&) = default;
-    data& operator=(data&&) = default;
-    ~data() = default;
+    static constexpr bool copyable() noexcept
+    {
+        static_assert(std::is_trivially_copyable_v<data>, "a copyable record is trivially copyable");
+        return true;
+    }
 
-    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::predicate, &data::argument_position, &data::context> {}; }
+    static constexpr auto fields() noexcept
+    {
+        return urd::Fields<urd::field<"predicate", &data::predicate>,
+                           urd::field<"argument_position", &data::argument_position>,
+                           urd::field<"context", &data::context>> {};
+    }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::predicate, &data::argument_position, &data::context> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::predicate, &data::argument_position, &data::context> {}; }
 };
 
 template<>
@@ -126,9 +133,9 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_predicate() const noexcept { return urd::resolve(self().data().predicate, self().context().get_planning_repository()); }
-    auto get_argument_position() const noexcept { return self().data().argument_position; }
-    auto get_predicate_context() const noexcept { return self().data().context; }
+    auto get_predicate() const noexcept { return self().template member<&urd::record_of<V>::predicate>(); }
+    auto get_argument_position() const noexcept { return self().template member<&urd::record_of<V>::argument_position>(); }
+    auto get_predicate_context() const noexcept { return self().template member<&urd::record_of<V>::context>(); }
 };
 
 template<typename V>
@@ -138,7 +145,7 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_colors() const noexcept { return urd::resolve(self().data().values, self().context()); }
+    auto get_colors() const noexcept { return self().template member<&urd::record_of<V>::values>(); }
 };
 }  // namespace urd
 
@@ -190,6 +197,14 @@ public:
         return *m_planning_repository;
     }
     [[nodiscard]] const auto& get_planning_repository_ptr() const noexcept { return m_planning_repository; }
+
+    using Base::view;
+    /// A planning symbol (a predicate) as its view in the planning repository, which holds it: so that urd resolves
+    /// every member of a color through this context (urd's resolves contract).
+    template<typename T>
+        requires ygg::formalism::SupportsSymbol<::tyr::formalism::planning::Repository, T>
+    [[nodiscard]] urd::index_view<T, ::tyr::formalism::planning::Repository> view(urd::index<T> index) const
+    { return get_planning_repository().view(index); }
 
     template<typename T>
     std::optional<urd::index_view<T, ColorRepository>> find(const urd::data<T>& data) const noexcept

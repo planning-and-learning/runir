@@ -23,19 +23,19 @@ bool infer_is_static(urd::index_view<Expression<Args...>, C> constructor)
                        || std::same_as<Tag, OneOfTag> || std::same_as<Tag, NominalTag> || std::same_as<Tag, BooleanConstantTag>
                        || std::same_as<Tag, NumericalConstantTag> || std::same_as<Tag, QueryEmptyTag>)
         return true;
-    else if constexpr (requires { constructor.get_register(); } || requires { constructor.get_argument(); })
+    else if constexpr (requires { constructor.get_slot(); } || requires { constructor.get_argument(); })
         return false;
     else if constexpr (std::same_as<Tag, QueryMustPassTag>)
         return constructor.get_sources().is_static() && constructor.get_edges().is_static() && constructor.get_targets().is_static()
                && constructor.get_probes().is_static();
-    else if constexpr (requires { constructor.get_mid(); })
+    else if constexpr (requires { constructor.get_edges(); })
     {
         const auto is_static = [](auto argument) { return std::visit([](auto child) { return child.is_static(); }, argument); };
-        return is_static(constructor.get_lhs()) && is_static(constructor.get_mid()) && is_static(constructor.get_rhs());
+        return is_static(constructor.get_sources()) && is_static(constructor.get_edges()) && is_static(constructor.get_targets());
     }
     else if constexpr (requires {
-                           constructor.get_lhs();
-                           constructor.get_rhs();
+                           constructor.get_left_operand();
+                           constructor.get_right_operand();
                        })
     {
         // An operand is a view, or a variant of views (comparisons of scalars).
@@ -46,19 +46,26 @@ bool infer_is_static(urd::index_view<Expression<Args...>, C> constructor)
             else
                 return std::visit([](auto child) { return child.is_static(); }, argument);
         };
-        return is_static(constructor.get_lhs()) && is_static(constructor.get_rhs());
+        return is_static(constructor.get_left_operand()) && is_static(constructor.get_right_operand());
     }
+    else if constexpr (requires {
+                           constructor.get_left_operand();
+                           constructor.get_right_operand();
+                       })
+        return constructor.get_left_operand().is_static() && constructor.get_right_operand().is_static();
     else if constexpr (requires { constructor.get_args(); })
         return std::ranges::all_of(constructor.get_args(), [](auto child) { return child.is_static(); });
     else if constexpr (std::same_as<Tag, CountTag> || std::same_as<Tag, NonemptyTag>)
-        return std::visit([](auto child) { return child.is_static(); }, constructor.get_arg());
-    else if constexpr (requires { constructor.get_arg(); })
-        return constructor.get_arg().is_static();
+        return std::visit([](auto child) { return child.is_static(); }, constructor.get_operand());
+    else if constexpr (requires { constructor.get_operand(); })
+        return constructor.get_operand().is_static();
+    else if constexpr (requires { constructor.get_operand(); })
+        return constructor.get_operand().is_static();
     else if constexpr (requires {
                            constructor.get_role();
-                           constructor.get_concept();
+                           constructor.get_qualifier();
                        })
-        return constructor.get_role().is_static() && constructor.get_concept().is_static();
+        return constructor.get_role().is_static() && constructor.get_qualifier().is_static();
     else if constexpr (requires { constructor.get_role(); })
         return constructor.get_role().is_static();
     else

@@ -1,4 +1,5 @@
 #include "planning_fixtures.hpp"
+#include "record_copy.hpp"
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/evaluation.hpp"
@@ -140,7 +141,6 @@ TEST(RunirEvaluationStorage, BorrowedDenotationsExposeReadOnlyValuesAndMatchInde
     static_assert(std::same_as<decltype(numerical_view.value()), ygg::uint_t>);
     EXPECT_TRUE(boolean_view.value());
     EXPECT_EQ(numerical_view.value(), 7);
-    EXPECT_EQ(&boolean_view.data(), &boolean);
     EXPECT_EQ(&numerical_view.context(), formalism.get());
 
     const auto check = [&]<kr::dl::ConceptOrRoleTag Category>()
@@ -149,7 +149,6 @@ TEST(RunirEvaluationStorage, BorrowedDenotationsExposeReadOnlyValuesAndMatchInde
         static_assert(std::ranges::forward_range<const kr::dl::semantics::DenotationView<Category>>);
         auto builder = urd::builder<kr::dl::semantics::Denotation<Category>>(num_objects);
         const auto borrowed = urd::resolve(builder, *formalism);
-        static_assert(std::same_as<decltype(borrowed.data()), const urd::builder<kr::dl::semantics::Denotation<Category>>&>);
         EXPECT_EQ(borrowed.begin(), borrowed.end());
         EXPECT_FALSE(borrowed.any());
         EXPECT_EQ(borrowed.count(), 0);
@@ -245,23 +244,24 @@ TEST(RunirEvaluationStorage, RegisterInterningUsesRepositoryOwnershipAndPreserve
     values.concept_values.resize(2);
     values.concept_values[0] = objects[0].index();
     values.role_values.emplace_back(::cista::pair { objects[1].index(), objects[2].index() });
-    const auto expected = values;
+    const auto expected_index = values.index;
+    const auto expected = runir::tests::copy_fields(values);
     const auto borrowed = urd::resolve(values, *formalism);
     const auto [view, inserted] = kr::dl::semantics::copy(borrowed, { repository, builder });
     EXPECT_TRUE(inserted);
     EXPECT_EQ(&view.context(), &repository);
-    EXPECT_TRUE(urd::EqualTo<urd::data<kr::dl::semantics::RegisterValues>> {}(view.data(), expected));
+    EXPECT_TRUE(urd::EqualTo<urd::data<kr::dl::semantics::RegisterValues>> {}(repository[view.index()], expected));
     const auto [duplicate, duplicate_inserted] = kr::dl::semantics::copy(borrowed, { repository, builder });
     EXPECT_FALSE(duplicate_inserted);
     EXPECT_EQ(duplicate, view);
     const auto [same_repository, same_inserted] = kr::dl::semantics::copy(view, { repository, builder });
     EXPECT_FALSE(same_inserted);
-    EXPECT_EQ(&same_repository.data(), &view.data());
+    EXPECT_EQ(same_repository, view);
     EXPECT_EQ(repository.size<kr::dl::semantics::RegisterValues>(), 1);
-    EXPECT_EQ(values.index, expected.index);
+    EXPECT_EQ(values.index, expected_index);
     EXPECT_TRUE(urd::EqualTo<urd::data<kr::dl::semantics::RegisterValues>> {}(values, expected));
 
-    auto other_values = expected;
+    auto other_values = runir::tests::copy_fields(expected);
     other_values.concept_values[0] = objects[1].index();
     const auto occupied = kr::dl::semantics::insert(other_repository, other_values).first;
     ASSERT_NE(other_repository.layer(), repository.layer());
@@ -270,7 +270,7 @@ TEST(RunirEvaluationStorage, RegisterInterningUsesRepositoryOwnershipAndPreserve
     EXPECT_TRUE(transferred_inserted);
     EXPECT_EQ(&transferred.context(), &other_repository);
     EXPECT_NE(transferred.index(), occupied.index());
-    EXPECT_TRUE(urd::EqualTo<urd::data<kr::dl::semantics::RegisterValues>> {}(transferred.data(), expected));
+    EXPECT_TRUE(urd::EqualTo<urd::data<kr::dl::semantics::RegisterValues>> {}(other_repository[transferred.index()], expected));
     const auto [same_target, same_target_inserted] = kr::dl::semantics::copy(view, { other_repository, builder });
     EXPECT_EQ(same_target, transferred);
     EXPECT_FALSE(same_target_inserted);
@@ -280,7 +280,7 @@ TEST(RunirEvaluationStorage, RegisterInterningUsesRepositoryOwnershipAndPreserve
     auto foreign_repository = kr::dl::semantics::DenotationRepository(foreign_search->task->get_repository());
     EXPECT_THROW((void) kr::dl::semantics::copy(borrowed, { foreign_repository, builder }), std::invalid_argument);
     EXPECT_EQ(foreign_repository.size<kr::dl::semantics::RegisterValues>(), 0);
-    auto foreign_values = expected;
+    auto foreign_values = runir::tests::copy_fields(expected);
     const auto foreign_view = kr::dl::semantics::insert(foreign_repository, foreign_values).first;
     EXPECT_THROW((void) kr::dl::semantics::copy(foreign_view, { repository, builder }), std::invalid_argument);
     EXPECT_EQ(repository.size<kr::dl::semantics::RegisterValues>(), 1);
@@ -318,9 +318,9 @@ TEST(RunirEvaluationStorage, RegisterExtractionClearsIdentityAndRetainsBuffers)
     EXPECT_EQ(extracted.concept_values.allocated_size_, concept_capacity);
     EXPECT_EQ(extracted.role_values.data(), role_buffer);
     EXPECT_EQ(extracted.role_values.allocated_size_, role_capacity);
-    EXPECT_EQ(view.data().concept_values.size(), 2);
-    EXPECT_EQ(view.data().concept_values[0].value(), objects[0].index());
-    EXPECT_TRUE(view.data().role_values[0].has_value());
+    EXPECT_EQ(repository[view.index()].concept_values.size(), 2);
+    EXPECT_EQ(repository[view.index()].concept_values[0].value(), objects[0].index());
+    EXPECT_TRUE(repository[view.index()].role_values[0].has_value());
 
     extracted.index = view.index();
     kr::dl::semantics::assign(extracted, urd::resolve(extracted, *formalism));
@@ -407,11 +407,12 @@ TEST(RunirEvaluationStorage, TypedRegisterAssignmentPreservesBuffersAndClearsIde
     EXPECT_EQ(values.role_values.data(), role_buffer);
 
     values.index = urd::index<kr::dl::semantics::RegisterValues>(42);
-    const auto expected = values;
+    const auto expected_index = values.index;
+    const auto expected = runir::tests::copy_fields(values);
     EXPECT_THROW(kr::dl::semantics::assign_register(values, kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(2), objects[2]), std::out_of_range);
     EXPECT_THROW(kr::dl::semantics::assign_register(values, kr::dl::RegisterIdentifier<kr::dl::RoleTag>(2), std::pair(objects[2], objects[0])),
                  std::out_of_range);
-    EXPECT_EQ(values.index, expected.index);
+    EXPECT_EQ(values.index, expected_index);
     EXPECT_TRUE(urd::EqualTo<urd::data<kr::dl::semantics::RegisterValues>> {}(values, expected));
 }
 
@@ -454,8 +455,8 @@ TEST(RunirEvaluationStorage, DurableRootsDoNotReuseTransientRootEntries)
         for (auto copy : { transient_result, durable_result, transient_children, durable_children })
         {
             EXPECT_EQ(&copy.get_workspace(), &builder.get_workspace());
-            EXPECT_EQ(&copy.arguments().data(), &arguments.data());
-            EXPECT_EQ(&copy.registers().data(), &registers_data);
+            EXPECT_EQ(copy.arguments(), arguments);
+            EXPECT_EQ(copy.registers().template values<kr::dl::ConceptTag>().base().data(), registers_data.concept_values.data());
             EXPECT_EQ(copy.registers().at(kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(0)).value().index(), registers_data.concept_values[0].value());
         }
     }
@@ -506,7 +507,7 @@ TEST(RunirEvaluationStorage, DynamicResetPreservesStaticRowsAndJoinIndexes)
         const auto count = kr::ps::ext::dl::parse_numerical("(n_count " + expression + ")", domain, *constructors);
         return std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(
             std::get<urd::index_view<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant())
-                .get_arg());
+                .get_operand());
     };
     const auto fixed_query = query(R"((q_atomic_state "fixed" (x y z)))");
     const auto renamed_query = query(R"((q_rename (a b c) (q_atomic_state "fixed" (x y z))))");
@@ -514,15 +515,12 @@ TEST(RunirEvaluationStorage, DynamicResetPreservesStaticRowsAndJoinIndexes)
     const auto fixed = kr::dl::semantics::evaluate<tyr::GroundTag>(fixed_query, context);
     const auto alias = kr::dl::semantics::evaluate<tyr::GroundTag>(renamed_query, context);
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(dynamic_query, context).size(), 4);
-    const auto keys = std::array { tyr::datalog::database::ColumnSlice { 0 } };
-    storage.get_caches().get_static_join_indexes().get_or_create(fixed, keys);
-    EXPECT_TRUE(std::ranges::equal(alias.data().rows, fixed.data().rows));
+    EXPECT_TRUE(std::ranges::equal(alias.get_rows(), fixed.get_rows()));
     EXPECT_NE(alias, fixed);
 
     storage.reset_dynamic();
     EXPECT_TRUE(storage.get_denotation_repository(false).get_relation_repository().template size<ygg::Relation<ygg::Schema>>() == 0);
     EXPECT_EQ(fixed.size(), 2);
-    EXPECT_EQ(storage.get_caches().get_static_join_indexes().size(), 1);
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(fixed_query, context), fixed);
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(renamed_query, context), alias);
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(dynamic_query, context).size(), 4);
@@ -530,10 +528,9 @@ TEST(RunirEvaluationStorage, DynamicResetPreservesStaticRowsAndJoinIndexes)
     storage.reset_all();
     EXPECT_TRUE(storage.get_denotation_repository(false).get_relation_repository().template size<ygg::Relation<ygg::Schema>>() == 0);
     EXPECT_TRUE(storage.get_denotation_repository(true).get_relation_repository().template size<ygg::Relation<ygg::Schema>>() == 0);
-    EXPECT_EQ(storage.get_caches().get_static_join_indexes().size(), 0);
     const auto rebuilt = kr::dl::semantics::evaluate<tyr::GroundTag>(fixed_query, context);
     EXPECT_EQ(rebuilt.size(), 2);
-    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(renamed_query, context).data().rows, rebuilt.data().rows));
+    EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(renamed_query, context).get_rows(), rebuilt.get_rows()));
 }
 
 TEST(RunirEvaluationStorage, PreparedContextsRejectForeignTaskRepositories)
@@ -608,7 +605,7 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
         const auto count = kr::ps::ext::dl::parse_numerical("(n_count " + expression + ")", search->task->get_domain().get_domain(), repository);
         return std::get<urd::index_view<kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(
             std::get<urd::index_view<kr::dl::Numerical<kr::dl::SemanticFamily, kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(count.get_variant())
-                .get_arg());
+                .get_operand());
     };
     const auto left = query("(q_role (left_source left_target) (r_universal))", *first_repository);
     const auto right = query("(q_role (right_source right_target) (r_universal))", *second_repository);
@@ -624,7 +621,7 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     EXPECT_TRUE(std::ranges::equal(left_result.columns(), columns, {}, &ygg::ColumnLayout::label));
     EXPECT_EQ(&left_result.context(), &persistent.get_relation_repository());
     EXPECT_EQ(left_result, right_result);
-    EXPECT_TRUE(std::ranges::equal(left_result.data().rows, right_result.data().rows));
+    EXPECT_TRUE(std::ranges::equal(left_result.get_rows(), right_result.get_rows()));
     EXPECT_EQ(results.template size<ygg::Relation<ygg::Schema>>(), 1);
 
     const auto left_alias = query("(q_rename (left_target left_source) (q_role (left_source left_target) (r_universal)))", *first_repository);
@@ -635,8 +632,8 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     EXPECT_TRUE(std::ranges::equal(renamed_left.columns(), reversed_columns, {}, &ygg::ColumnLayout::label));
     EXPECT_EQ(renamed_left, renamed_right);
     EXPECT_NE(renamed_left, left_result);
-    EXPECT_TRUE(std::ranges::equal(renamed_left.data().rows, left_result.data().rows));
-    EXPECT_TRUE(std::ranges::equal(renamed_right.data().rows, right_result.data().rows));
+    EXPECT_TRUE(std::ranges::equal(renamed_left.get_rows(), left_result.get_rows()));
+    EXPECT_TRUE(std::ranges::equal(renamed_right.get_rows(), right_result.get_rows()));
     EXPECT_EQ(results.template size<ygg::Relation<ygg::Schema>>(), 2);
 
     {

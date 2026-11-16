@@ -18,7 +18,7 @@ auto bound_registers(RuleView<Tag> rule,
                      Storage& storage)
 {
     runir::kr::dl::semantics::assign(registers, source);
-    runir::kr::dl::semantics::assign_register(registers, rule.get_register().get_identifier(), value);
+    runir::kr::dl::semantics::assign_register(registers, rule.get_slot().get_identifier(), value);
     return storage.registers(registers);
 }
 

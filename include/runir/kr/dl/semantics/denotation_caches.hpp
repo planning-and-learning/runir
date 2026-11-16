@@ -10,11 +10,6 @@
 #include <optional>
 #include <vector>
 
-namespace tyr::datalog::database
-{
-class JoinIndexCache;
-}
-
 namespace runir::kr::dl::semantics
 {
 
@@ -55,9 +50,6 @@ public:
     QueryDenotationView insert_query(bool is_static, QueryView<> query, QueryDenotationView result);
     /// The cached query results of a partition.
     [[nodiscard]] std::vector<QueryDenotationView> get_queries(bool is_static) const;
-
-    [[nodiscard]] tyr::datalog::database::JoinIndexCache& get_static_join_indexes() noexcept;
-    [[nodiscard]] const tyr::datalog::database::JoinIndexCache& get_static_join_indexes() const noexcept;
 
     void reset_dynamic() noexcept;
     void reset_all() noexcept;

@@ -64,7 +64,7 @@ int run(std::span<char*> args)
     const auto query = std::get<urd::index_view<runir::kr::dl::Query<>, runir::kr::dl::ConstructorRepository>>(
         std::get<urd::index_view<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, runir::kr::dl::CountTag>, runir::kr::dl::ConstructorRepository>>(
             count.get_variant())
-            .get_arg());
+            .get_operand());
     const auto must_pass =
         std::get<urd::index_view<runir::kr::dl::Query<runir::kr::dl::QueryMustPassTag>, runir::kr::dl::ConstructorRepository>>(query.get_variant());
 
@@ -91,7 +91,7 @@ int run(std::span<char*> args)
         start = std::chrono::steady_clock::now();
         if (!feature)
             feature.emplace(
-                runir::kr::dl::semantics::detail::make_must_pass_feature(builder.get_workspace().get_layer(), must_pass.data().plan, must_pass.get_edges()));
+                runir::kr::dl::semantics::detail::make_must_pass_feature(builder.get_workspace().get_layer(), must_pass.get_plan(), must_pass.get_edges()));
         const auto translate_time = seconds_since(start);
         const auto edges = must_pass.get_edges();
         auto slot_time = 0.0;

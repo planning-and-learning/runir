@@ -18,19 +18,19 @@ private:
     [[nodiscard]] const V& self() const noexcept { return static_cast<const V&>(*this); }
 
 public:
-    auto get_domain() const noexcept { return urd::resolve(self().data().domain, self().context().get_planning_repository()); }
+    auto get_domain() const noexcept { return self().template member<&urd::record_of<V>::domain>(); }
 
     template<runir::kr::dl::CategoryTag Category>
     auto get_start() const noexcept
-    { return urd::resolve(self().data().template get_start<Category>(), self().context()); }
+    { return self().template member<runir::kr::dl::cnf_grammar::start_member<Category>()>(); }
 
     template<runir::kr::dl::CategoryTag Category>
     auto get_derivation_rules() const noexcept
-    { return urd::resolve(self().data().template get_derivation_rules<Category>(), self().context()); }
+    { return self().template member<runir::kr::dl::cnf_grammar::derivation_rules_member<Category>()>(); }
 
     template<runir::kr::dl::CategoryTag Category>
     auto get_substitution_rules() const noexcept
-    { return urd::resolve(self().data().template get_substitution_rules<Category>(), self().context()); }
+    { return self().template member<runir::kr::dl::cnf_grammar::substitution_rules_member<Category>()>(); }
 };
 }  // namespace urd
 

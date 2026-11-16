@@ -23,22 +23,26 @@ struct NumberRestrictionEvaluator
     NumberRestrictionEvaluator(EvaluationIndex<RoleTag> role_, ygg::uint_t threshold_) : role(role_), threshold(threshold_) {}
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
-    { initialize_set(Tag {}, value, graph.result(role), graph.change(role), threshold, graph.set_workspace()); }
+    {
+        initialize_set(Tag {}, value, graph.result(role), graph.change(role), threshold, graph.set_workspace());
+    }
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
-    { update_set(Tag {}, value, graph.result(role), graph.change(role), threshold, graph.set_workspace()); }
+    {
+        update_set(Tag {}, value, graph.result(role), graph.change(role), threshold, graph.set_workspace());
+    }
 };
 
 template<tyr::TaskKind Kind, typename Tag>
 struct QualifiedNumberRestrictionEvaluator
 {
     EvaluationIndex<RoleTag> role;
-    EvaluationIndex<ConceptTag> qualifying_concept;
+    EvaluationIndex<ConceptTag> qualifier;
     ygg::uint_t threshold;
     DenotationState<ConceptTag> value;
 
-    QualifiedNumberRestrictionEvaluator(EvaluationIndex<RoleTag> role_, EvaluationIndex<ConceptTag> qualifying_concept_, ygg::uint_t threshold_) :
+    QualifiedNumberRestrictionEvaluator(EvaluationIndex<RoleTag> role_, EvaluationIndex<ConceptTag> qualifier_, ygg::uint_t threshold_) :
         role(role_),
-        qualifying_concept(qualifying_concept_),
+        qualifier(qualifier_),
         threshold(threshold_)
     {
     }
@@ -49,21 +53,14 @@ struct QualifiedNumberRestrictionEvaluator
                        value,
                        graph.result(role),
                        graph.change(role),
-                       graph.result(qualifying_concept),
-                       graph.change(qualifying_concept),
+                       graph.result(qualifier),
+                       graph.change(qualifier),
                        threshold,
                        graph.set_workspace());
     }
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     {
-        update_set(Tag {},
-                   value,
-                   graph.result(role),
-                   graph.change(role),
-                   graph.result(qualifying_concept),
-                   graph.change(qualifying_concept),
-                   threshold,
-                   graph.set_workspace());
+        update_set(Tag {}, value, graph.result(role), graph.change(role), graph.result(qualifier), graph.change(qualifier), threshold, graph.set_workspace());
     }
 };
 

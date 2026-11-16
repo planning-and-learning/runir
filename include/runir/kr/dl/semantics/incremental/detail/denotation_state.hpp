@@ -125,7 +125,7 @@ public:
     [[nodiscard]] auto get_value() const noexcept { return m_result.get(); }
     [[nodiscard]] bool changed() const noexcept { return m_changed; }
     void assign(DenotationView<Category> source) { initialize(source.value()); }
-    void assign(BorrowedDenotationView<Category> source) { initialize(source.get()); }
+    void assign(BorrowedDenotationView<Category> source) { initialize(source.value()); }
     void set(DenotationElementView<Category> value) noexcept
     {
         m_changed = m_result.get() != value;

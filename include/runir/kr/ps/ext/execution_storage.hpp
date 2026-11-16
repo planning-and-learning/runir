@@ -95,7 +95,7 @@ public:
     {
         auto module_data = urd::data<ModuleState<Kind>>(planning_state.index(), module_.index(), memory_state.index(), registers.index(), arguments.index());
         auto data = urd::data<ProgramState<Kind>>(m_program.index(), insert(*m_context->execution_repository, module_data).first.index(), {});
-        data.call_stack = urd::to_stored(caller);
+        urd::store(data.call_stack, caller);
         return insert(*m_context->execution_repository, data).first;
     }
 
@@ -103,8 +103,8 @@ public:
     {
         const auto entry = m_program.get_entry_module();
         auto empty = checkout<runir::kr::dl::semantics::RegisterValues>(m_context->dl_builder);
-        empty->concept_values.resize(entry.data().concept_registers.size());
-        empty->role_values.resize(entry.data().role_registers.size());
+        empty->concept_values.resize(entry.template get_registers<runir::kr::dl::ConceptTag>().size());
+        empty->role_values.resize(entry.template get_registers<runir::kr::dl::RoleTag>().size());
         auto arguments = checkout<runir::kr::dl::semantics::CallArguments>(m_context->dl_builder);
         return store(state, entry, entry.get_entry_memory_state(), registers(*empty), insert(*m_context->dl_denotation_repository, *arguments).first, {});
     }
@@ -116,8 +116,13 @@ public:
 
     CallStackView<Kind> save_caller(ProgramStateView<Kind> state, MemoryStateView return_state)
     {
-        const auto& module_ = state.get_module_state().data();
-        auto saved = urd::data<CallStack>(module_.module_, return_state.index(), module_.registers, module_.arguments, state.data().call_stack);
+        const auto module_ = state.get_module_state();
+        auto saved = urd::data<CallStack>(module_.get_module().index(),
+                                          return_state.index(),
+                                          module_.get_registers().index(),
+                                          module_.get_arguments().index(),
+                                          {});
+        urd::store(saved.caller, state.get_call_stack());
         return insert(*m_context->execution_repository, saved).first;
     }
 
@@ -151,9 +156,12 @@ public:
     [[nodiscard]] StateView view(const StoredState& state) const noexcept { return urd::resolve(*state, *m_context->execution_repository); }
     StoredState retain(StateView state)
     {
-        auto result = m_program_states.make_shared();
-        *result = state.data();
-        return result;
+        return store(state.get_state(),
+                     state.get_module_state().get_module(),
+                     state.get_module_state().get_memory_state(),
+                     state.get_module_state().get_registers(),
+                     state.get_module_state().get_arguments(),
+                     state.get_call_stack());
     }
     runir::kr::dl::semantics::BorrowedRegisterValuesView registers(const urd::data<runir::kr::dl::semantics::RegisterValues>& data)
     { return urd::resolve(data, *m_context->search_context->task->get_repository()); }
@@ -169,12 +177,12 @@ public:
         result->program = m_program.index();
         // Assign into the destination's existing buffers so released pool slots retain their capacity.
         auto& target = result->module_state;
-        target.state.assign(planning_state.data());
+        target.state.builder.assign(planning_state);
         target.module_ = module_.index();
         target.memory_state = memory_state.index();
-        runir::kr::dl::semantics::assign(target.registers, registers);
+        runir::kr::dl::semantics::assign(target.registers.values, registers);
         target.arguments = arguments.index();
-        result->call_stack = urd::to_stored(caller);
+        urd::store(result->call_stack, caller);
         return result;
     }
 
@@ -182,8 +190,8 @@ public:
     {
         const auto entry = m_program.get_entry_module();
         auto empty = checkout<runir::kr::dl::semantics::RegisterValues>(m_context->dl_builder);
-        empty->concept_values.resize(entry.data().concept_registers.size());
-        empty->role_values.resize(entry.data().role_registers.size());
+        empty->concept_values.resize(entry.template get_registers<runir::kr::dl::ConceptTag>().size());
+        empty->role_values.resize(entry.template get_registers<runir::kr::dl::RoleTag>().size());
         auto arguments = checkout<runir::kr::dl::semantics::CallArguments>(m_context->dl_builder);
         return store(state, entry, entry.get_entry_memory_state(), registers(*empty), insert(*m_context->dl_denotation_repository, *arguments).first, {});
     }
@@ -212,7 +220,8 @@ public:
                                                  module_.get_memory_state().index(),
                                                  copy(module_.get_registers(), { denotations, dl_builder }).first.index(),
                                                  module_.get_arguments().index());
-        auto program = urd::data<ProgramState<Kind>>(m_program.index(), insert(*m_context->execution_repository, data).first.index(), state.data().call_stack);
+        auto program = urd::data<ProgramState<Kind>>(m_program.index(), insert(*m_context->execution_repository, data).first.index(), {});
+        urd::store(program.call_stack, state.get_call_stack());
         return insert(*m_context->execution_repository, program).first;
     }
 
@@ -224,7 +233,8 @@ public:
                                           return_state.index(),
                                           registers.index(),
                                           module_.get_arguments().index(),
-                                          state.data().call_stack);
+                                          {});
+        urd::store(saved.caller, state.get_call_stack());
         return insert(*m_context->execution_repository, saved).first;
     }
 

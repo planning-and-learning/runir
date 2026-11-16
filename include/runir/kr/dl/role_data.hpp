@@ -2,93 +2,203 @@
 #define RUNIR_KR_DL_ROLE_DATA_HPP_
 
 #include "runir/kr/dl/concept_data.hpp"
-#include "runir/kr/dl/data_helpers.hpp"
 
-#include <concepts>
 #include <urd/elements/flat.hpp>
+#include <utility>
 
 namespace urd
 {
 
 template<typename F>
-struct data<runir::kr::dl::Role<F, runir::kr::dl::UniversalTag>> : runir::kr::dl::NullaryData<runir::kr::dl::Role<F, runir::kr::dl::UniversalTag>>
+struct data<runir::kr::dl::Role<F, runir::kr::dl::UniversalTag>>
 {
-    using Base = runir::kr::dl::NullaryData<runir::kr::dl::Role<F, runir::kr::dl::UniversalTag>>;
-    using Base::Base;
+    urd::index<runir::kr::dl::Role<F, runir::kr::dl::UniversalTag>> index;
+
+    data() = default;
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
+
+    static constexpr auto fields() noexcept { return urd::Fields<> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index> {}; }
 };
 
 template<typename F, typename Tag>
     requires runir::kr::dl::is_atomic_state_tag_v<Tag>
-struct data<runir::kr::dl::Role<F, Tag>> : runir::kr::dl::AtomData<runir::kr::dl::Role<F, Tag>, runir::kr::dl::TagFactKind<Tag>>
+struct data<runir::kr::dl::Role<F, Tag>>
 {
-    using Base = runir::kr::dl::AtomData<runir::kr::dl::Role<F, Tag>, runir::kr::dl::TagFactKind<Tag>>;
-    using Base::Base;
+    urd::index<runir::kr::dl::Role<F, Tag>> index;
+    urd::index<tyr::formalism::Predicate<runir::kr::dl::TagFactKind<Tag>>> predicate;
+
+    data() = default;
+    explicit data(urd::index<tyr::formalism::Predicate<runir::kr::dl::TagFactKind<Tag>>> predicate_) : index(), predicate(std::move(predicate_)) {}
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
+
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"predicate", &data::predicate>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::predicate> {}; }
 };
 
 template<typename F, typename Tag>
     requires runir::kr::dl::is_atomic_goal_tag_v<Tag>
-struct data<runir::kr::dl::Role<F, Tag>> : runir::kr::dl::PredicateData<runir::kr::dl::Role<F, Tag>, runir::kr::dl::TagFactKind<Tag>>
+struct data<runir::kr::dl::Role<F, Tag>>
 {
-    using Base = runir::kr::dl::PredicateData<runir::kr::dl::Role<F, Tag>, runir::kr::dl::TagFactKind<Tag>>;
-    using Base::Base;
+    urd::index<runir::kr::dl::Role<F, Tag>> index;
+    urd::index<tyr::formalism::Predicate<runir::kr::dl::TagFactKind<Tag>>> predicate;
+    bool polarity = false;
+
+    data() = default;
+    data(urd::index<tyr::formalism::Predicate<runir::kr::dl::TagFactKind<Tag>>> predicate_, bool polarity_) :
+        index(),
+        predicate(std::move(predicate_)),
+        polarity(std::move(polarity_))
+    {
+    }
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
+
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"predicate", &data::predicate>, urd::field<"polarity", &data::polarity>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::predicate, &data::polarity> {}; }
 };
 
-template<typename F, typename Tag>
-    requires(std::same_as<Tag, runir::kr::dl::IntersectionTag> || std::same_as<Tag, runir::kr::dl::UnionTag>
-             || std::same_as<Tag, runir::kr::dl::CompositionTag>)
-struct data<runir::kr::dl::Role<F, Tag>> :
-    runir::kr::dl::
-        BinaryData<runir::kr::dl::Role<F, Tag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>>
+template<typename F, runir::kr::dl::RoleBinaryTag Tag>
+struct data<runir::kr::dl::Role<F, Tag>>
 {
-    using Base = runir::kr::dl::
-        BinaryData<runir::kr::dl::Role<F, Tag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>>;
-    using Base::Base;
+    urd::index<runir::kr::dl::Role<F, Tag>> index;
+    runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> left_operand;
+    runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> right_operand;
+
+    data() = default;
+    data(runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> left_operand_, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> right_operand_) :
+        index(),
+        left_operand(std::move(left_operand_)),
+        right_operand(std::move(right_operand_))
+    {
+    }
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
+
+    static constexpr auto fields() noexcept
+    {
+        return urd::Fields<urd::field<"left_operand", &data::left_operand>, urd::field<"right_operand", &data::right_operand>> {};
+    }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::left_operand, &data::right_operand> {}; }
 };
 
-template<typename F, typename Tag>
-    requires(std::same_as<Tag, runir::kr::dl::ComplementTag> || std::same_as<Tag, runir::kr::dl::InverseTag>
-             || std::same_as<Tag, runir::kr::dl::TransitiveClosureTag> || std::same_as<Tag, runir::kr::dl::ReflexiveTransitiveClosureTag>)
-struct data<runir::kr::dl::Role<F, Tag>> : runir::kr::dl::UnaryData<runir::kr::dl::Role<F, Tag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>>
+template<typename F, runir::kr::dl::RoleUnaryTag Tag>
+struct data<runir::kr::dl::Role<F, Tag>>
 {
-    using Base = runir::kr::dl::UnaryData<runir::kr::dl::Role<F, Tag>, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>>;
-    using Base::Base;
+    urd::index<runir::kr::dl::Role<F, Tag>> index;
+    runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> operand;
+
+    data() = default;
+    explicit data(runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> operand_) : index(), operand(std::move(operand_)) {}
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
+
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"operand", &data::operand>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operand> {}; }
 };
 
 template<typename F>
-struct data<runir::kr::dl::Role<F, runir::kr::dl::RestrictionTag>> :
-    runir::kr::dl::BinaryData<runir::kr::dl::Role<F, runir::kr::dl::RestrictionTag>,
-                              runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>,
-                              runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag>>
+struct data<runir::kr::dl::Role<F, runir::kr::dl::RestrictionTag>>
 {
-    using Base = runir::kr::dl::BinaryData<runir::kr::dl::Role<F, runir::kr::dl::RestrictionTag>,
-                                           runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag>,
-                                           runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag>>;
-    using Base::Base;
+    urd::index<runir::kr::dl::Role<F, runir::kr::dl::RestrictionTag>> index;
+    runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> role;
+    runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag> qualifier;
+
+    data() = default;
+    data(runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> role_, runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag> qualifier_) :
+        index(),
+        role(std::move(role_)),
+        qualifier(std::move(qualifier_))
+    {
+    }
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
+
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"role", &data::role>, urd::field<"qualifier", &data::qualifier>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::role, &data::qualifier> {}; }
 };
 
 template<typename F>
-struct data<runir::kr::dl::Role<F, runir::kr::dl::IdentityTag>> :
-    runir::kr::dl::UnaryData<runir::kr::dl::Role<F, runir::kr::dl::IdentityTag>, runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag>>
+struct data<runir::kr::dl::Role<F, runir::kr::dl::IdentityTag>>
 {
-    using Base = runir::kr::dl::UnaryData<runir::kr::dl::Role<F, runir::kr::dl::IdentityTag>, runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag>>;
-    using Base::Base;
+    urd::index<runir::kr::dl::Role<F, runir::kr::dl::IdentityTag>> index;
+    runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag> operand;
+
+    data() = default;
+    explicit data(runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag> operand_) : index(), operand(std::move(operand_)) {}
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
+
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"operand", &data::operand>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operand> {}; }
 };
 
 template<typename F>
-struct data<runir::kr::dl::Role<F, runir::kr::dl::RegisterTag>> :
-    runir::kr::dl::ReferenceData<runir::kr::dl::Role<F, runir::kr::dl::RegisterTag>, runir::kr::dl::Register<runir::kr::dl::RoleTag>>
+struct data<runir::kr::dl::Role<F, runir::kr::dl::RegisterTag>>
 {
-    using Base = runir::kr::dl::ReferenceData<runir::kr::dl::Role<F, runir::kr::dl::RegisterTag>, runir::kr::dl::Register<runir::kr::dl::RoleTag>>;
-    using Base::Base;
+    urd::index<runir::kr::dl::Role<F, runir::kr::dl::RegisterTag>> index;
+    urd::index<runir::kr::dl::Register<runir::kr::dl::RoleTag>> slot;
+
+    data() = default;
+    explicit data(urd::index<runir::kr::dl::Register<runir::kr::dl::RoleTag>> slot_) : index(), slot(std::move(slot_)) {}
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
+
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"slot", &data::slot>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::slot> {}; }
 };
 
 template<typename F>
-struct data<runir::kr::dl::Role<F, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>> :
-    runir::kr::dl::ReferenceData<runir::kr::dl::Role<F, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>, runir::kr::dl::Argument<runir::kr::dl::RoleTag>>
+struct data<runir::kr::dl::Role<F, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>>
 {
-    using Base = runir::kr::dl::ReferenceData<runir::kr::dl::Role<F, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>,
-                                              runir::kr::dl::Argument<runir::kr::dl::RoleTag>>;
-    using Base::Base;
+    urd::index<runir::kr::dl::Role<F, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>> index;
+    urd::index<runir::kr::dl::Argument<runir::kr::dl::RoleTag>> argument;
+
+    data() = default;
+    explicit data(urd::index<runir::kr::dl::Argument<runir::kr::dl::RoleTag>> argument_) : index(), argument(std::move(argument_)) {}
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
+
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"argument", &data::argument>> {}; }
+    static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::argument> {}; }
 };
 
 }  // namespace urd

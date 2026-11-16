@@ -212,20 +212,20 @@ struct QueryAtomicGoal : boost::spirit::x3::position_tagged
 struct QueryConcept : boost::spirit::x3::position_tagged
 {
     urd::Store<urd::sequence<Identifier>> columns;
-    ConceptChoice arg;
+    ConceptChoice operand;
 };
 
 struct QueryRole : boost::spirit::x3::position_tagged
 {
     urd::Store<urd::sequence<Identifier>> columns;
-    RoleChoice arg;
+    RoleChoice operand;
 };
 
 template<typename Tag>
 struct QueryBinary : boost::spirit::x3::position_tagged
 {
-    boost::spirit::x3::forward_ast<Query> lhs;
-    boost::spirit::x3::forward_ast<Query> rhs;
+    boost::spirit::x3::forward_ast<Query> left_operand;
+    boost::spirit::x3::forward_ast<Query> right_operand;
 };
 
 using QueryJoin = QueryBinary<runir::kr::dl::QueryJoinTag>;
@@ -238,7 +238,7 @@ template<typename Tag>
 struct QueryColumns : boost::spirit::x3::position_tagged
 {
     urd::Store<urd::sequence<Identifier>> columns;
-    boost::spirit::x3::forward_ast<Query> arg;
+    boost::spirit::x3::forward_ast<Query> operand;
 };
 
 using QueryProject = QueryColumns<runir::kr::dl::QueryProjectTag>;
@@ -247,16 +247,16 @@ using QueryRename = QueryColumns<runir::kr::dl::QueryRenameTag>;
 
 struct QuerySelectEqual : boost::spirit::x3::position_tagged
 {
-    Identifier lhs_column;
-    Identifier rhs_column;
-    boost::spirit::x3::forward_ast<Query> arg;
+    Identifier left_column;
+    Identifier right_column;
+    boost::spirit::x3::forward_ast<Query> operand;
 };
 
 struct QuerySelectValue : boost::spirit::x3::position_tagged
 {
     Identifier column;
     Identifier object_name;
-    boost::spirit::x3::forward_ast<Query> arg;
+    boost::spirit::x3::forward_ast<Query> operand;
 };
 
 struct QueryGenericJoin : boost::spirit::x3::position_tagged
@@ -318,7 +318,7 @@ template<runir::kr::dl::CategoryTag Category>
 struct Constructor<Category, runir::kr::dl::ProjectTag> : boost::spirit::x3::position_tagged
 {
     urd::Store<urd::sequence<Identifier>> columns;
-    Query arg;
+    Query operand;
 };
 
 using ConceptProject = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ProjectTag>;
@@ -374,35 +374,35 @@ struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ConceptAtomicGoalSy
 template<>
 struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ConceptIntersectionSyntaxTag> : boost::spirit::x3::position_tagged
 {
-    ConceptChoice lhs;
-    ConceptChoice rhs;
+    ConceptChoice left_operand;
+    ConceptChoice right_operand;
 };
 
 template<>
 struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ConceptUnionSyntaxTag> : boost::spirit::x3::position_tagged
 {
-    ConceptChoice lhs;
-    ConceptChoice rhs;
+    ConceptChoice left_operand;
+    ConceptChoice right_operand;
 };
 
 template<>
 struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::NegationTag> : boost::spirit::x3::position_tagged
 {
-    ConceptChoice arg;
+    ConceptChoice operand;
 };
 
 template<>
 struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ValueRestrictionTag> : boost::spirit::x3::position_tagged
 {
-    RoleChoice lhs;
-    ConceptChoice rhs;
+    RoleChoice role;
+    ConceptChoice qualifier;
 };
 
 template<>
 struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::ExistentialQuantificationTag> : boost::spirit::x3::position_tagged
 {
-    RoleChoice lhs;
-    ConceptChoice rhs;
+    RoleChoice role;
+    ConceptChoice qualifier;
 };
 
 template<>
@@ -431,7 +431,7 @@ struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAtLeastNum
 {
     ygg::uint_t n = 0;
     RoleChoice role;
-    ConceptChoice concept_;
+    ConceptChoice qualifier;
 };
 
 template<>
@@ -439,7 +439,7 @@ struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAtMostNumb
 {
     ygg::uint_t n = 0;
     RoleChoice role;
-    ConceptChoice concept_;
+    ConceptChoice qualifier;
 };
 
 template<>
@@ -447,21 +447,21 @@ struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedExactNumbe
 {
     ygg::uint_t n = 0;
     RoleChoice role;
-    ConceptChoice concept_;
+    ConceptChoice qualifier;
 };
 
 template<>
 struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::RoleValueMapTag> : boost::spirit::x3::position_tagged
 {
-    RoleChoice lhs;
-    RoleChoice rhs;
+    RoleChoice left_operand;
+    RoleChoice right_operand;
 };
 
 template<>
 struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::AgreementTag> : boost::spirit::x3::position_tagged
 {
-    RoleChoice lhs;
-    RoleChoice rhs;
+    RoleChoice left_operand;
+    RoleChoice right_operand;
 };
 
 template<>
@@ -486,19 +486,19 @@ struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::NominalTag> : boost
 template<runir::kr::dl::CategoryTag Category>
 struct Constructor<Category, runir::kr::dl::ArgumentTag<Category>> : boost::spirit::x3::position_tagged
 {
-    ArgumentReference<Category> reference;
+    ArgumentReference<Category> argument;
 };
 
 template<>
 struct Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::RegisterTag> : boost::spirit::x3::position_tagged
 {
-    RegisterReference<runir::kr::dl::ConceptTag> reference;
+    RegisterReference<runir::kr::dl::ConceptTag> slot;
 };
 
 template<>
 struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::RegisterTag> : boost::spirit::x3::position_tagged
 {
-    RegisterReference<runir::kr::dl::RoleTag> reference;
+    RegisterReference<runir::kr::dl::RoleTag> slot;
 };
 
 using ConceptBot = Constructor<runir::kr::dl::ConceptTag, runir::kr::dl::BotTag>;
@@ -545,59 +545,59 @@ struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::RoleAtomicGoalSyntaxTa
 template<>
 struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::RoleIntersectionSyntaxTag> : boost::spirit::x3::position_tagged
 {
-    RoleChoice lhs;
-    RoleChoice rhs;
+    RoleChoice left_operand;
+    RoleChoice right_operand;
 };
 
 template<>
 struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::RoleUnionSyntaxTag> : boost::spirit::x3::position_tagged
 {
-    RoleChoice lhs;
-    RoleChoice rhs;
+    RoleChoice left_operand;
+    RoleChoice right_operand;
 };
 
 template<>
 struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::ComplementTag> : boost::spirit::x3::position_tagged
 {
-    RoleChoice arg;
+    RoleChoice operand;
 };
 
 template<>
 struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::InverseTag> : boost::spirit::x3::position_tagged
 {
-    RoleChoice arg;
+    RoleChoice operand;
 };
 
 template<>
 struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::CompositionTag> : boost::spirit::x3::position_tagged
 {
-    RoleChoice lhs;
-    RoleChoice rhs;
+    RoleChoice left_operand;
+    RoleChoice right_operand;
 };
 
 template<>
 struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::TransitiveClosureTag> : boost::spirit::x3::position_tagged
 {
-    RoleChoice arg;
+    RoleChoice operand;
 };
 
 template<>
 struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::ReflexiveTransitiveClosureTag> : boost::spirit::x3::position_tagged
 {
-    RoleChoice arg;
+    RoleChoice operand;
 };
 
 template<>
 struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::RestrictionTag> : boost::spirit::x3::position_tagged
 {
-    RoleChoice lhs;
-    ConceptChoice rhs;
+    RoleChoice role;
+    ConceptChoice qualifier;
 };
 
 template<>
 struct Constructor<runir::kr::dl::RoleTag, runir::kr::dl::IdentityTag> : boost::spirit::x3::position_tagged
 {
-    ConceptChoice arg;
+    ConceptChoice operand;
 };
 
 using RoleUniversal = Constructor<runir::kr::dl::RoleTag, runir::kr::dl::UniversalTag>;
@@ -632,14 +632,14 @@ struct Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicGoalSy
 template<>
 struct Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::NonemptyTag> : boost::spirit::x3::position_tagged
 {
-    ConstructorOrNonTerminalVariant arg;
+    ConstructorOrNonTerminalVariant operand;
 };
 
 template<runir::kr::dl::ComparisonTag Tag>
 struct Constructor<runir::kr::dl::BooleanTag, Tag> : boost::spirit::x3::position_tagged
 {
-    ConstructorOrNonTerminal<typename Tag::OperandCategory> lhs;
-    ConstructorOrNonTerminal<typename Tag::OperandCategory> rhs;
+    ConstructorOrNonTerminal<typename Tag::OperandCategory> left_operand;
+    ConstructorOrNonTerminal<typename Tag::OperandCategory> right_operand;
 };
 
 template<>
@@ -651,14 +651,14 @@ struct Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::BooleanConstantTag>
 template<runir::kr::dl::LogicalBinaryTag Tag>
 struct Constructor<runir::kr::dl::BooleanTag, Tag> : boost::spirit::x3::position_tagged
 {
-    BooleanChoice lhs;
-    BooleanChoice rhs;
+    BooleanChoice left_operand;
+    BooleanChoice right_operand;
 };
 
 template<>
 struct Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::NotTag> : boost::spirit::x3::position_tagged
 {
-    BooleanChoice arg;
+    BooleanChoice operand;
 };
 
 using BooleanAtomicState = Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicStateSyntaxTag>;
@@ -685,15 +685,15 @@ using BooleanArgument = Constructor<runir::kr::dl::BooleanTag, runir::kr::dl::Ar
 template<>
 struct Constructor<runir::kr::dl::NumericalTag, runir::kr::dl::CountTag> : boost::spirit::x3::position_tagged
 {
-    ConstructorOrNonTerminalVariant arg;
+    ConstructorOrNonTerminalVariant operand;
 };
 
 template<>
 struct Constructor<runir::kr::dl::NumericalTag, runir::kr::dl::DistanceTag> : boost::spirit::x3::position_tagged
 {
-    ConceptOrQueryVariant lhs;
-    RoleOrQueryVariant mid;
-    ConceptOrQueryVariant rhs;
+    ConceptOrQueryVariant sources;
+    RoleOrQueryVariant edges;
+    ConceptOrQueryVariant targets;
 };
 
 template<>
@@ -705,8 +705,8 @@ struct Constructor<runir::kr::dl::NumericalTag, runir::kr::dl::NumericalConstant
 template<runir::kr::dl::NumericalBinaryTag Tag>
 struct Constructor<runir::kr::dl::NumericalTag, Tag> : boost::spirit::x3::position_tagged
 {
-    NumericalChoice lhs;
-    NumericalChoice rhs;
+    NumericalChoice left_operand;
+    NumericalChoice right_operand;
 };
 
 using NumericalCount = Constructor<runir::kr::dl::NumericalTag, runir::kr::dl::CountTag>;

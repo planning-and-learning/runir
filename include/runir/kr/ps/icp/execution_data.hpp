@@ -7,6 +7,7 @@
 #include "runir/kr/ps/icp/execution_declarations.hpp"
 
 #include <tuple>
+#include <type_traits>
 #include <tyr/planning/declarations.hpp>
 #include <urd/elements/flat.hpp>
 #include <urd/repr/sequences/sequence.hpp>
@@ -26,9 +27,15 @@ struct data<runir::kr::ps::icp::Histories>
 
     data() = default;
     data(urd::flat_vector<urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>> concepts_) : index(), concepts(std::move(concepts_)) {}
+    data(const data& other) = delete;
+    data& operator=(const data& other) = delete;
+    data(data&& other) = default;
+    data& operator=(data&& other) = default;
+    ~data() = default;
 
-    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::concepts> {}; }
+    static constexpr auto fields() noexcept { return urd::Fields<urd::field<"concepts", &data::concepts>> {}; }
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::concepts> {}; }
+    static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::concepts> {}; }
 };
 
 template<tyr::TaskKind Kind>
@@ -56,11 +63,26 @@ struct data<runir::kr::ps::icp::ProgramState<Kind>>
         state(std::move(state_))
     {
     }
+    static constexpr bool copyable() noexcept
+    {
+        static_assert(std::is_trivially_copyable_v<data>, "a copyable record is trivially copyable");
+        return true;
+    }
 
-    static constexpr auto cista_members() noexcept
-    { return urd::Members<&data::index, &data::program, &data::memory_state, &data::registers, &data::histories, &data::state> {}; }
+    static constexpr auto fields() noexcept
+    {
+        return urd::Fields<urd::field<"program", &data::program>,
+                           urd::field<"memory_state", &data::memory_state>,
+                           urd::field<"registers", &data::registers>,
+                           urd::field<"histories", &data::histories>,
+                           urd::field<"state", &data::state>> {};
+    }
     static constexpr auto identifying_members() noexcept
     { return urd::Members<&data::program, &data::memory_state, &data::registers, &data::histories, &data::state> {}; }
+    static constexpr auto cista_members() noexcept
+    {
+        return urd::Members<&data::index, &data::program, &data::memory_state, &data::registers, &data::histories, &data::state> {};
+    }
 };
 
 }  // namespace urd
