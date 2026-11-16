@@ -24,5 +24,4 @@ extern template auto find_solution<tyr::LiftedTag>(const TaskContextPtr<tyr::Lif
 
 }
 
-
 #endif

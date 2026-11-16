@@ -352,5 +352,4 @@ public:
 
 }  // namespace runir::kr::dl::semantics::incremental
 
-
 #endif

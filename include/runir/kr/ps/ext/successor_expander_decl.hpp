@@ -156,5 +156,4 @@ SuccessorExpander<tyr::LiftedTag, TransientExecutionStorage<tyr::LiftedTag>>::ap
 
 }  // namespace runir::kr::ps::ext
 
-
 #endif

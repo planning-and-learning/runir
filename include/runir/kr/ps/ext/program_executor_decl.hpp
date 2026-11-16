@@ -31,5 +31,4 @@ extern template auto find_solution<tyr::LiftedTag>(runir::kr::TaskContextPtr<tyr
 
 }  // namespace runir::kr::ps::ext
 
-
 #endif

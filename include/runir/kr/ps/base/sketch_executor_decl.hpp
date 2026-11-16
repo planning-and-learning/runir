@@ -26,5 +26,4 @@ extern template auto find_solution<tyr::LiftedTag>(const runir::kr::TaskContextP
 
 }  // namespace runir::kr::ps::base
 
-
 #endif
