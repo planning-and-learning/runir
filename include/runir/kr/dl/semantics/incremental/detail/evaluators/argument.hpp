@@ -19,9 +19,11 @@ struct ArgumentEvaluator
     DenotationState<Category> value;
 
     explicit ArgumentEvaluator(ArgumentIdentifier<Category> identifier_) : identifier(identifier_) {}
+
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>&, Context& context)
     { value.assign(argument_value(context, identifier)); }
+
     void update(EvaluationGraph<Kind>&, const Delta&, tyr::datalog::database::Workspace&) {}
 };
 

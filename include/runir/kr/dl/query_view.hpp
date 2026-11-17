@@ -136,7 +136,9 @@ private:
 
 public:
     auto get_operand() const noexcept { return self().template member<&urd::record_of<V>::operand>(); }
+
     auto get_columns() const noexcept { return self().template member<&urd::record_of<V>::columns>(); }
+
     /// Its plan, derived when it was interned.
     const auto& get_plan() const noexcept { return self().template member<&urd::record_of<V>::plan>(); }
 };

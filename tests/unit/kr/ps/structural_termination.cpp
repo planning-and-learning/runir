@@ -214,6 +214,7 @@ TEST(RunirTests, CommonFeaturePositionRejectsUndeclaredFeatureBeforeMaskShift)
         std::size_t index;
         bool operator==(const Feature&) const = default;
     };
+
     auto features = std::array<Feature, 64> {};
     for (std::size_t position = 0; position < features.size(); ++position)
         features[position].index = position;

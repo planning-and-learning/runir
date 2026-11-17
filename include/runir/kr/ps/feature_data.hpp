@@ -29,7 +29,9 @@ struct data<runir::kr::ps::Feature<Family, FeatureTag>>
     runir::kr::ps::FeatureVariant<Family, FeatureTag> variant;
 
     data() = default;
+
     explicit data(runir::kr::ps::FeatureVariant<Family, FeatureTag> variant_) : index(), variant(std::move(variant_)) {}
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -37,7 +39,9 @@ struct data<runir::kr::ps::Feature<Family, FeatureTag>>
     ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"variant", &data::variant>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::variant> {}; }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::variant> {}; }
 };
 

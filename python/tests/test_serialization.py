@@ -258,7 +258,7 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
     )
 
     assert serialize(dictionaries, initial) == "e0"
-    assert tyr_serialization.serialize(dictionaries, initial.get_state()) == "s0"
+    assert tyr_serialization.serialize(dictionaries, initial.get_module_state().get_state().unpack()) == "s0"
     assert serialize(dictionaries, step.target) == "e1"
     assert serialize(dictionaries, initial) == "e0"
     first, second = rows(table(dictionaries, ext.ProgramStateGround))
@@ -330,7 +330,10 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
     assert table(selected, ext.Program) == []
 
     def project(value: ext.ProgramStateGround) -> dict[str, object]:
-        return {"planning_state": value.get_state(), "has_caller": value.get_call_stack() is not None}
+        return {
+            "planning_state": value.get_module_state().get_state(),
+            "has_caller": value.get_call_stack() is not None,
+        }
 
     projected = Dictionaries()
     tyr_serialization.register_table(projected, ground.State, "states", "s", fields=())
@@ -342,7 +345,7 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
             "has_caller": False,
         }
     ]
-    assert tyr_serialization.serialize(projected, initial.get_state()) == "s0"
+    assert tyr_serialization.serialize(projected, initial.get_module_state().get_state().unpack()) == "s0"
     assert tyr_serialization.table(projected, ground.State) == [{}]
 
     reverse = Dictionaries()
@@ -358,9 +361,9 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
         ext.ProgramStateGround,
         "program_states",
         "e",
-        project=lambda value: {"state": value.get_state()},
+        project=lambda value: {"state": value.get_module_state().get_state()},
     )
-    assert tyr_serialization.serialize(reverse, initial.get_state()) == "s0"
+    assert tyr_serialization.serialize(reverse, initial.get_module_state().get_state().unpack()) == "s0"
     assert tyr_serialization.table(reverse, ground.State) == [{"program_state": "e0"}]
     assert table(reverse, ext.ProgramStateGround) == [{"state": "s0"}]
     assert serialize(reverse, initial) == "e0"

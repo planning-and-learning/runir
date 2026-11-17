@@ -53,12 +53,14 @@ struct RoleEdgeDistanceEvaluator
         operation(graph.layer(), expression.get_plan())
     {
     }
+
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     {
         operation.initialize(graph.result(sources), graph.result(edges), graph.result(targets));
         value.set(operation.get_result());
     }
+
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     {
         operation.update(graph.change(sources).change(), graph.change(edges).change(), graph.change(targets).change());
@@ -98,6 +100,7 @@ struct QueryEdgeDistanceEvaluator
         for (const auto& slot : feature.slots)
             slots.push_back(visit_slot<>(slot, edges.context(), [&](auto argument) { return graph.prepare_relation(argument, slot.columns, dependencies); }));
     }
+
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context)
     {
@@ -111,6 +114,7 @@ struct QueryEdgeDistanceEvaluator
         set_targets(graph);
         evaluate(graph);
     }
+
     /// The children's deltas are exact (IncrementalEvaluation): they are the slots' changes, unchanged arguments and
     /// slots leave the distance unchanged, and unchanged targets leave the search and the heuristic's tables valid.
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
@@ -148,14 +152,17 @@ private:
     {
         return [this, &graph](size_t slot) { return graph.result(slots[slot]); };
     }
+
     static bool modified(const EvaluationGraph<Kind>& graph, QueryEvaluationIndex index)
     { return !graph.change(index).added.empty() || !graph.change(index).removed.empty(); }
+
     void set_targets(const EvaluationGraph<Kind>& graph)
     {
         URD_ASSUME(heuristic.has_value());  // Built by initialize(), which precedes every update().
         feature.distance.set_targets(graph.result(targets));
         heuristic->update(graph.result(targets));
     }
+
     void evaluate(const EvaluationGraph<Kind>& graph)
     {
         URD_ASSUME(heuristic.has_value());  // Built by initialize(), which precedes every update().

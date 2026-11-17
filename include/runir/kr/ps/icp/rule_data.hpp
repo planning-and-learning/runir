@@ -33,6 +33,7 @@ struct data<runir::kr::ps::icp::Rule<Kind>>
     runir::kr::ps::EffectList<runir::kr::IcpFamilyTag> effects;
 
     data() = default;
+
     // Registers live in the description-logic repository, hence the separate context parameter.
     data(urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> source_,
          urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> target_,
@@ -49,6 +50,7 @@ struct data<runir::kr::ps::icp::Rule<Kind>>
         effects(std::move(effects_))
     {
     }
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) noexcept = default;
@@ -64,7 +66,9 @@ struct data<runir::kr::ps::icp::Rule<Kind>>
                            urd::field<"slot", &data::slot>,
                            urd::field<"effects", &data::effects>> {};
     }
+
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::source, &data::target, &data::conditions, &data::feature, &data::slot, &data::effects> {}; }
 };
@@ -83,6 +87,7 @@ struct data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>>
     urd::flat_vector<urd::index<runir::kr::ps::icp::XEffect>> xeffects;
 
     data() = default;
+
     data(urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> source_,
          urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> target_,
          runir::kr::ps::ConditionList<runir::kr::IcpFamilyTag> conditions_,
@@ -102,6 +107,7 @@ struct data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>>
         xeffects(std::move(xeffects_))
     {
     }
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) noexcept = default;
@@ -119,7 +125,9 @@ struct data<runir::kr::ps::icp::Rule<runir::kr::ps::icp::CruleTag>>
                            urd::field<"xconditions", &data::xconditions>,
                            urd::field<"xeffects", &data::xeffects>> {};
     }
+
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
     static constexpr auto cista_members() noexcept
     {
         return urd::Members<&data::index,

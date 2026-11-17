@@ -22,6 +22,7 @@ private:
 
 public:
     auto get_concept_values() const noexcept { return self().template member<&urd::record_of<V>::concept_values>(); }
+
     auto get_role_values() const noexcept { return self().template member<&urd::record_of<V>::role_values>(); }
 
     /// The formalism repository: the context's, or the context itself for a register record held outside it.
@@ -45,6 +46,8 @@ public:
     template<runir::kr::dl::ConceptOrRoleTag Category>
     auto at(runir::kr::dl::RegisterIdentifier<Category> reg) const
     { return values<Category>().at(static_cast<size_t>(ygg::uint_t(reg.value))); }
+
+    static constexpr auto functions() noexcept { return urd::Functions<urd::function<"get_formalism_repository", &view_mixin::get_formalism_repository>> {}; }
 };
 }  // namespace urd
 

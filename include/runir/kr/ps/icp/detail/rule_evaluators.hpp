@@ -26,6 +26,7 @@ class RuleEvaluators
     using Evaluator =
         std::variant<RuleEvaluator<Kind, LoadTag<runir::kr::dl::ConceptTag>>, RuleEvaluator<Kind, LoadTag<runir::kr::dl::RoleTag>>, CruleEvaluator>;
     using Action = tyr::formalism::planning::ActionView<tyr::LiftedTag>;
+
     struct ActionRules
     {
         Action action;
@@ -109,7 +110,9 @@ public:
     }
 
     [[nodiscard]] const auto& get_task_context() const noexcept { return m_workspace.get_task_context(); }
+
     [[nodiscard]] auto get_program() const noexcept { return m_workspace.get_program(); }
+
     auto initial_state(tyr::planning::StateView<Kind> state) { return m_workspace.initial_state(state); }
 
     /// Callbacks borrow shared scratch and must not reenter the evaluators or planning generator.

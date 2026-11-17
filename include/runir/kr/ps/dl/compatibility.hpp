@@ -27,7 +27,7 @@ template<tyr::TaskKind Kind,
          runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context>
 bool is_compatible_with(urd::index_view<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, C> condition, Context& context)
 {
-    const auto value = runir::kr::ps::evaluate<Kind>(condition.get_feature(), context).value();
+    const auto value = runir::kr::ps::evaluate<Kind>(condition.get_feature(), context).get_value();
     if constexpr (std::same_as<FeatureTag, runir::kr::dl::BooleanTag> && std::same_as<ObservationTag, runir::kr::ps::dl::Positive>)
         return value;
     else if constexpr (std::same_as<FeatureTag, runir::kr::dl::BooleanTag> && std::same_as<ObservationTag, runir::kr::ps::dl::Negative>)
@@ -55,7 +55,7 @@ template<tyr::TaskKind Kind,
          runir::kr::ps::dl::TransitionEvaluationContextConcept<Family, Kind> Context>
 bool is_compatible_with(urd::index_view<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>, C> effect, Context& context)
 {
-    const auto target = runir::kr::ps::evaluate<Kind>(effect.get_feature(), context.get_target_context()).value();
+    const auto target = runir::kr::ps::evaluate<Kind>(effect.get_feature(), context.get_target_context()).get_value();
 
     if constexpr (std::same_as<FeatureTag, runir::kr::dl::BooleanTag> && std::same_as<ObservationTag, runir::kr::ps::dl::Positive>)
         return target;
@@ -63,7 +63,7 @@ bool is_compatible_with(urd::index_view<runir::kr::ps::ConcreteEffect<Family, ru
         return !target;
     else
     {
-        const auto source = runir::kr::ps::evaluate<Kind>(effect.get_feature(), context.get_source_context()).value();
+        const auto source = runir::kr::ps::evaluate<Kind>(effect.get_feature(), context.get_source_context()).get_value();
 
         if constexpr (std::same_as<ObservationTag, runir::kr::ps::dl::Unchanged>)
             return source == target;

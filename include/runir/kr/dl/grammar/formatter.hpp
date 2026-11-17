@@ -72,6 +72,7 @@ template<runir::kr::dl::CategoryTag Category, typename C>
 struct fmt::formatter<urd::index_view<runir::kr::dl::grammar::NonTerminal<Category>, C>> : fmt::formatter<std::string_view>
 {
     using View = urd::index_view<runir::kr::dl::grammar::NonTerminal<Category>, C>;
+
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(view.get_name().str(), ctx); }
 };
 
@@ -79,6 +80,7 @@ template<runir::kr::dl::CategoryTag Category, typename C>
 struct fmt::formatter<urd::index_view<runir::kr::dl::grammar::DerivationRule<Category>, C>> : fmt::formatter<std::string_view>
 {
     using View = urd::index_view<runir::kr::dl::grammar::DerivationRule<Category>, C>;
+
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::grammar::rule(view), ctx); }
 };
 
@@ -86,6 +88,7 @@ template<typename C>
 struct fmt::formatter<urd::index_view<runir::kr::dl::grammar::GrammarTag, C>> : fmt::formatter<std::string_view>
 {
     using View = urd::index_view<runir::kr::dl::grammar::GrammarTag, C>;
+
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::grammar::grammar(view), ctx); }
 };
 

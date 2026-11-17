@@ -262,6 +262,7 @@ private:
     {
         return intern_wrapped<Category, T>([&](auto& data) { urd::store(data.predicate, predicate); });
     }
+
     template<runir::kr::dl::CategoryTag Category, typename T, typename Predicate>
     auto intern_predicate(Predicate predicate, bool polarity)
     {
@@ -942,6 +943,7 @@ public:
 };
 
 }  // namespace
+
 template<tyr::TaskKind Kind>
 GenerateResultsFor generate(GrammarView grammar,
                             const urd::Store<urd::sequence<tyr::planning::PackedStateView<Kind>>>& states,
@@ -961,7 +963,7 @@ GenerateResultsFor generate(GrammarView grammar,
 
     for (const auto& state : states)
     {
-        const auto& task = state.get_state_repository().get_task();
+        const auto& task = state.context().get_task();
         if (task->get_repository() != planning_repository && task->get_domain().get_repository() != planning_repository)
             throw std::invalid_argument("generate requires states and output repository for the same planning domain");
         if (task->get_repository().get() != &denotation_repository.get_formalism_repository())

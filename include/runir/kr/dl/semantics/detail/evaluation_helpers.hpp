@@ -41,7 +41,7 @@ namespace runir::kr::dl::semantics::detail
 template<tyr::TaskKind Kind, StateEvaluationContextConcept<Kind> Context>
 auto num_objects(const Context& context) noexcept -> ygg::uint_t
 {
-    const auto task = context.get_state().get_task().get_task();
+    const auto task = context.get_state().context().get_task()->get_task();
     return static_cast<ygg::uint_t>(task.get_num_objects());
 }
 
@@ -83,7 +83,7 @@ void evaluate_atomic_goal_concept(urd::index_view<Concept<SemanticFamily, Atomic
     auto bitset = result.get();
 
     const auto predicate = constructor.get_predicate();
-    for (const auto atom : context.get_state().get_task().get_task().get_goal().template get_atoms<T>(constructor.get_polarity(), predicate))
+    for (const auto atom : context.get_state().context().get_task()->get_task().get_goal().template get_atoms<T>(constructor.get_polarity(), predicate))
     {
         const auto object = detail::object_index(atom, 0);
         assert(ygg::uint_t(object.value) < num_objects);
@@ -117,7 +117,7 @@ void evaluate_atomic_goal_role(urd::index_view<Role<SemanticFamily, AtomicGoalTa
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind>(context);
 
     const auto predicate = constructor.get_predicate();
-    for (const auto atom : context.get_state().get_task().get_task().get_goal().template get_atoms<T>(constructor.get_polarity(), predicate))
+    for (const auto atom : context.get_state().context().get_task()->get_task().get_goal().template get_atoms<T>(constructor.get_polarity(), predicate))
     {
         const auto lhs = detail::object_index(atom, 0);
         const auto rhs = detail::object_index(atom, 1);
@@ -138,16 +138,20 @@ bool evaluate_atomic_state_boolean(urd::index_view<Boolean<SemanticFamily, Atomi
 template<tyr::TaskKind Kind, tyr::formalism::FactKind T, StateEvaluationContextConcept<Kind> Context, typename C>
 bool evaluate_atomic_goal_boolean(urd::index_view<Boolean<SemanticFamily, AtomicGoalTag<T>>, C> constructor, Context& context)
 {
-    auto atoms = context.get_state().get_task().get_task().get_goal().template get_atoms<T>(constructor.get_polarity(), constructor.get_predicate());
+    auto atoms = context.get_state().context().get_task()->get_task().get_goal().template get_atoms<T>(constructor.get_polarity(), constructor.get_predicate());
     return atoms.begin() != atoms.end();
 }
 
 inline bool nonempty(DenotationView<ConceptTag> value) { return value.value().any(); }
-inline bool nonempty(DenotationView<RoleTag> value) { return value.any(); }
+
+inline bool nonempty(DenotationView<RoleTag> value) { return value.storage_bits().any(); }
+
 inline bool nonempty(QueryDenotationView value) { return !value.empty(); }
 
 inline ygg::uint_t count(DenotationView<ConceptTag> value) { return ygg::to_uint_t(value.value().count()); }
-inline ygg::uint_t count(DenotationView<RoleTag> value) { return ygg::to_uint_t(value.count()); }
+
+inline ygg::uint_t count(DenotationView<RoleTag> value) { return ygg::to_uint_t(value.storage_bits().count()); }
+
 inline ygg::uint_t count(QueryDenotationView value) { return ygg::to_uint_t(value.size()); }
 
 template<ComparisonTag Tag>

@@ -20,6 +20,7 @@ struct StaticEvaluator
     bool initialized = false;
 
     explicit StaticEvaluator(ConstructorView<Category> expression_) : expression(expression_) {}
+
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>&, Context& context)
     {
@@ -29,6 +30,7 @@ struct StaticEvaluator
             initialized = true;
         }
     }
+
     void update(EvaluationGraph<Kind>&, const Delta&, tyr::datalog::database::Workspace&) {}
 };
 

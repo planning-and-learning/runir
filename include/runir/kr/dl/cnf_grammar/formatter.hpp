@@ -65,6 +65,7 @@ template<runir::kr::dl::CategoryTag Category, typename C>
 struct fmt::formatter<urd::index_view<runir::kr::dl::cnf_grammar::NonTerminal<Category>, C>> : fmt::formatter<std::string_view>
 {
     using View = urd::index_view<runir::kr::dl::cnf_grammar::NonTerminal<Category>, C>;
+
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(view.get_name().str(), ctx); }
 };
 
@@ -72,6 +73,7 @@ template<runir::kr::dl::CategoryTag Category, typename C>
 struct fmt::formatter<urd::index_view<runir::kr::dl::cnf_grammar::DerivationRule<Category>, C>> : fmt::formatter<std::string_view>
 {
     using View = urd::index_view<runir::kr::dl::cnf_grammar::DerivationRule<Category>, C>;
+
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::cnf_grammar::rule(view), ctx); }
 };
 
@@ -79,6 +81,7 @@ template<runir::kr::dl::CategoryTag Category, typename C>
 struct fmt::formatter<urd::index_view<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>, C>> : fmt::formatter<std::string_view>
 {
     using View = urd::index_view<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>, C>;
+
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::cnf_grammar::rule(view), ctx); }
 };
 
@@ -86,6 +89,7 @@ template<typename C>
 struct fmt::formatter<urd::index_view<runir::kr::dl::cnf_grammar::Grammar, C>> : fmt::formatter<std::string_view>
 {
     using View = urd::index_view<runir::kr::dl::cnf_grammar::Grammar, C>;
+
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::cnf_grammar::grammar(view), ctx); }
 };
 

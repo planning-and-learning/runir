@@ -83,6 +83,7 @@ struct data<runir::datasets::PredicateColor<T>>
     runir::datasets::PredicateContext context {};
 
     data() = default;
+
     data(urd::index<::tyr::formalism::Predicate<T>> predicate_, ygg::uint_t argument_position_, runir::datasets::PredicateContext context_) noexcept :
         index(),
         predicate(predicate_),
@@ -90,6 +91,7 @@ struct data<runir::datasets::PredicateColor<T>>
         context(context_)
     {
     }
+
     static constexpr bool copyable() noexcept
     {
         static_assert(std::is_trivially_copyable_v<data>, "a copyable record is trivially copyable");
@@ -102,7 +104,9 @@ struct data<runir::datasets::PredicateColor<T>>
                            urd::field<"argument_position", &data::argument_position>,
                            urd::field<"context", &data::context>> {};
     }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::predicate, &data::argument_position, &data::context> {}; }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::predicate, &data::argument_position, &data::context> {}; }
 };
 
@@ -113,7 +117,9 @@ struct data<runir::datasets::Color>
     urd::flat_vector<runir::datasets::ColorVariant> values;
 
     data() = default;
+
     explicit data(urd::flat_vector<runir::datasets::ColorVariant> values_) : index(), values(std::move(values_)) {}
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -121,7 +127,9 @@ struct data<runir::datasets::Color>
     ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"values", &data::values>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::values> {}; }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::values> {}; }
 };
 
@@ -137,7 +145,9 @@ private:
 
 public:
     auto get_predicate() const noexcept { return self().template member<&urd::record_of<V>::predicate>(); }
+
     auto get_argument_position() const noexcept { return self().template member<&urd::record_of<V>::argument_position>(); }
+
     auto get_context() const noexcept { return self().template member<&urd::record_of<V>::context>(); }
 };
 
@@ -186,6 +196,7 @@ public:
         m_planning_repository(std::move(planning_repository)),
         m_index(ygg::next_layer())
     { assert(m_planning_repository); }
+
     ColorRepository(const ColorRepository&) = delete;
     ColorRepository& operator=(const ColorRepository&) = delete;
     ColorRepository(ColorRepository&&) = delete;
@@ -194,14 +205,17 @@ public:
 
     /// The repository's number, as urd's views ask of a context.
     [[nodiscard]] std::size_t layer() const noexcept { return m_index; }
+
     [[nodiscard]] const auto& get_planning_repository() const noexcept
     {
         assert(m_planning_repository);
         return *m_planning_repository;
     }
+
     [[nodiscard]] const auto& get_planning_repository_ptr() const noexcept { return m_planning_repository; }
 
     using Base::view;
+
     /// A planning symbol (a predicate) as its view in the planning repository, which holds it: so that urd resolves
     /// every member of a color through this context (urd's resolves contract).
     template<typename T>
@@ -228,6 +242,7 @@ public:
 using ColorView = urd::index_view<Color, ColorRepository>;
 
 inline const ColorRepository& get_repository(const ColorRepository& repository URD_LIFETIMEBOUND) noexcept { return repository; }
+
 inline ColorRepository& get_repository(ColorRepository& repository URD_LIFETIMEBOUND) noexcept { return repository; }
 
 }  // namespace runir::datasets

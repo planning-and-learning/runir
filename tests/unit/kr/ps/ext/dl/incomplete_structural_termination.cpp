@@ -118,6 +118,7 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationReportsRecursiveCalls)
         EXPECT_TRUE(module_result.is_terminating());
     EXPECT_EQ(result.recursive_call_rules.size(), 2);
 }
+
 TEST(RunirTests, ExtIncompleteStructuralTerminationAcyclicEmptyProgramIsTerminating)
 {
     const auto planning_domain = tyr::formalism::planning::Parser(gripper_domain()).get_domain();

@@ -38,6 +38,7 @@ struct DenotationCaches::Impl
 };
 
 DenotationCaches::DenotationCaches() : m_impl(std::make_unique<Impl>()) {}
+
 DenotationCaches::DenotationCaches(DenotationCaches&&) noexcept = default;
 DenotationCaches& DenotationCaches::operator=(DenotationCaches&&) noexcept = default;
 DenotationCaches::~DenotationCaches() = default;

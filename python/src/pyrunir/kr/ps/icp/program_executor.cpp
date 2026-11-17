@@ -102,7 +102,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     auto kind_module = m.def_submodule(std::string(prefix) == "Ground" ? "ground" : "lifted");
     urd::python::bind_view<HistoryView>(kind_module);
     // The planning state of a program state: the registered state, not the index its record holds.
-    urd::python::bind_view<StateView>(m).def("get_state", &StateView::get_state, nb::keep_alive<0, 1>()).def("get_module", &StateView::get_module);
+    urd::python::bind_view<StateView>(m);
 
     auto vertex_label = nb::class_<VertexLabel>(m, (std::string(prefix) + "ProgramProofVertexLabel").c_str())
                             .def_ro("program_state", &VertexLabel::program_state)

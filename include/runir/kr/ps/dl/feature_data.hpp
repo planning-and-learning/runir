@@ -42,12 +42,14 @@ struct data<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>
     urd::flat_string symbol;
 
     data() = default;
+
     data(urd::index<typename runir::kr::ps::dl::FeatureExpression<Family, FeatureTag>::Type> feature_, urd::flat_string symbol_) :
         index(),
         feature(std::move(feature_)),
         symbol(std::move(symbol_))
     {
     }
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -55,7 +57,9 @@ struct data<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>
     ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"feature", &data::feature>, urd::field<"symbol", &data::symbol>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::feature, &data::symbol> {}; }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::feature, &data::symbol> {}; }
 };
 

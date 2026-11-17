@@ -125,6 +125,7 @@ public:
     }
 
     [[nodiscard]] const urd::Store<urd::sequence<NodeIndex>>& roots() const noexcept { return roots_; }
+
     [[nodiscard]] const urd::Store<urd::sequence<Node>>& nodes() const noexcept { return nodes_; }
 
     [[nodiscard]] NodeIndex leaf_of_memory(std::size_t memory_position) const { return leaf_of_memory_.at(memory_position); }

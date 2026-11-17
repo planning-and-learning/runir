@@ -15,7 +15,7 @@ void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::
 {
     if constexpr (runir::kr::dl::BooleanOrNumericalTag<Category>)
     {
-        ar.field("value", [](const auto& value) -> decltype(auto) { return (value.value()); });
+        ar.field("value", [](const auto& value) -> decltype(auto) { return (value.get_value()); });
     }
     else
     {
@@ -23,7 +23,7 @@ void describe_fields(Archive& ar, std::type_identity<urd::index_view<runir::kr::
                  [](const auto& value)
                  {
                      auto elements = runir::kr::dl::semantics::DenotationElementViewList<Category> {};
-                     for (auto element : value)
+                     for (auto element : value.views())
                          elements.push_back(element);
                      return elements;
                  });

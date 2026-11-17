@@ -40,14 +40,14 @@ public:
         if (!runir::kr::ps::all_compatible<Kind, IcpFamilyTag>(m_rule.get_conditions(), source_context))
             return true;
         const auto denotation = evaluate<Kind>(m_rule.get_feature(), source_context);
-        if (denotation.begin() == denotation.end())
+        if (std::ranges::empty(denotation.views()))
         {
             auto step = ProgramStep<IcpFamilyTag, Kind>(ProgramOutcome::FAILURE, source, task);
             step.rule = m_variant;
             return output(std::move(step));
         }
         auto registers = checkout<Registers>(task->dl_builder);
-        for (const auto value : denotation)
+        for (const auto value : denotation.views())
         {
             if (stop())
                 return false;

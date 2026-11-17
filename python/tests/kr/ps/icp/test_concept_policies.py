@@ -261,7 +261,7 @@ def check_histories_ground() -> None:
     assert loaded.get_memory_state().get_name() == "pick"
     environment = icp.GroundEvaluationEnvironment(context, program)
     dl_context = environment.make_dl_context(loaded)
-    check_loaded_features(loaded.get_module(), dl_context)
+    check_loaded_features(loaded.get_program().get_entry_mod(), dl_context)
     assert len(collect_steps(expander, loaded)) == 2
     histories = loaded.get_histories()
     counts = [len(history.views()) for history in histories.get_concepts()]
@@ -287,7 +287,7 @@ def check_histories_lifted() -> None:
     assert loaded.get_memory_state().get_name() == "pick"
     environment = icp.LiftedEvaluationEnvironment(context, program)
     dl_context = environment.make_dl_context(loaded)
-    check_loaded_features(loaded.get_module(), dl_context)
+    check_loaded_features(loaded.get_program().get_entry_mod(), dl_context)
     assert len(collect_steps(expander, loaded)) == 2
     histories = loaded.get_histories()
     counts = [len(history.views()) for history in histories.get_concepts()]

@@ -339,11 +339,7 @@ inline void update_set(RestrictionTag,
     workspace.clear_rows();
     mark_sources(workspace, role_delta);
     mark_predecessors(workspace, role, concept_delta);
-    evaluate_rows(RestrictionTag {},
-                  role,
-                  concept_,
-                  workspace,
-                  [&](auto source, auto row) { output.update_row(source, row, role.get_formalism_repository()); });
+    evaluate_rows(RestrictionTag {}, role, concept_, workspace, [&](auto source, auto row) { output.update_row(source, row, role.context()); });
 }
 
 template<BaseConceptConstructorTag Tag>
@@ -373,7 +369,7 @@ void update_set(Tag,
     workspace.clear_rows();
     mark_sources(workspace, role_delta);
     mark_predecessors(workspace, role, concept_delta);
-    evaluate_rows(Tag {}, role, concept_, workspace, [&](auto source, bool present) { output.set(source, present, role.get_formalism_repository()); });
+    evaluate_rows(Tag {}, role, concept_, workspace, [&](auto source, bool present) { output.set(source, present, role.context()); });
 }
 
 template<BaseConceptConstructorTag Tag>
@@ -400,7 +396,7 @@ void update_set(Tag,
     output.clear_delta();
     workspace.clear_rows();
     mark_sources(workspace, delta);
-    evaluate_rows(Tag {}, role, threshold, workspace, [&](auto source, bool present) { output.set(source, present, role.get_formalism_repository()); });
+    evaluate_rows(Tag {}, role, threshold, workspace, [&](auto source, bool present) { output.set(source, present, role.context()); });
 }
 
 template<BaseConceptConstructorTag Tag>
@@ -432,12 +428,7 @@ void update_set(Tag,
     workspace.clear_rows();
     mark_sources(workspace, role_delta);
     mark_predecessors(workspace, role, concept_delta);
-    evaluate_rows(Tag {},
-                  role,
-                  concept_,
-                  threshold,
-                  workspace,
-                  [&](auto source, bool present) { output.set(source, present, role.get_formalism_repository()); });
+    evaluate_rows(Tag {}, role, concept_, threshold, workspace, [&](auto source, bool present) { output.set(source, present, role.context()); });
 }
 
 template<BaseConceptConstructorTag Tag>
@@ -467,7 +458,7 @@ void update_set(Tag,
     workspace.clear_rows();
     mark_sources(workspace, lhs_delta);
     mark_sources(workspace, rhs_delta);
-    evaluate_rows(Tag {}, lhs, rhs, workspace, [&](auto source, bool present) { output.set(source, present, lhs.get_formalism_repository()); });
+    evaluate_rows(Tag {}, lhs, rhs, workspace, [&](auto source, bool present) { output.set(source, present, lhs.context()); });
 }
 
 template<typename Objects>
@@ -500,11 +491,7 @@ void update_set(RoleFillersTag,
     output.clear_delta();
     workspace.clear_rows();
     mark_sources(workspace, delta);
-    evaluate_rows(RoleFillersTag {},
-                  role,
-                  fillers,
-                  workspace,
-                  [&](auto source, bool present) { output.set(source, present, role.get_formalism_repository()); });
+    evaluate_rows(RoleFillersTag {}, role, fillers, workspace, [&](auto source, bool present) { output.set(source, present, role.context()); });
 }
 
 inline void initialize_set(CompositionTag,
@@ -533,7 +520,7 @@ inline void update_set(CompositionTag,
     mark_sources(workspace, lhs_delta);
     mark_predecessors(workspace, lhs, rhs_delta);
     // ponytail: affected rows are rebuilt; retain witness counts if dense rows dominate profiling.
-    evaluate_rows(CompositionTag {}, lhs, rhs, workspace, [&](auto source, auto row) { output.update_row(source, row, lhs.get_formalism_repository()); });
+    evaluate_rows(CompositionTag {}, lhs, rhs, workspace, [&](auto source, auto row) { output.update_row(source, row, lhs.context()); });
 }
 
 template<BaseRoleConstructorTag Tag>
@@ -559,12 +546,8 @@ void update_set(Tag,
     workspace.clear_rows();
     // Read all dirty predecessors from the old closure before modifying it.
     mark_sources(workspace, delta);
-    mark_predecessors(workspace, output.get_result(role.get_formalism_repository()), delta);
-    evaluate_rows(Tag {},
-                  output.get_builder(),
-                  role,
-                  workspace,
-                  [&](auto source, auto row) { output.update_row(source, row, role.get_formalism_repository()); });
+    mark_predecessors(workspace, output.get_result(role.context()), delta);
+    evaluate_rows(Tag {}, output.get_builder(), role, workspace, [&](auto source, auto row) { output.update_row(source, row, role.context()); });
 }
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

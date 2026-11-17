@@ -85,6 +85,7 @@ template<typename C>
 struct fmt::formatter<urd::index_view<runir::kr::uns::ClassifierLiteral, C>> : fmt::formatter<std::string_view>
 {
     using View = urd::index_view<runir::kr::uns::ClassifierLiteral, C>;
+
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::uns::literal(view), ctx); }
 };
 
@@ -92,6 +93,7 @@ template<typename C>
 struct fmt::formatter<urd::index_view<runir::kr::uns::ClassifierClause, C>> : fmt::formatter<std::string_view>
 {
     using View = urd::index_view<runir::kr::uns::ClassifierClause, C>;
+
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::uns::clause(view), ctx); }
 };
 
@@ -99,6 +101,7 @@ template<typename C>
 struct fmt::formatter<urd::index_view<runir::kr::uns::Classifier, C>> : fmt::formatter<std::string_view>
 {
     using View = urd::index_view<runir::kr::uns::Classifier, C>;
+
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::uns::classifier(view), ctx); }
 };
 

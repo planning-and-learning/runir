@@ -22,8 +22,11 @@ class SketchRuleEvaluator
 
 public:
     using RuleTag = SketchTag;
+
     SketchRuleEvaluator(RuleView<SketchTag> rule, RuleVariantView variant) : m_rule(rule), m_variant(variant) {}
+
     [[nodiscard]] auto get_rule() const noexcept { return m_rule; }
+
     [[nodiscard]] auto get_variant() const noexcept { return m_variant; }
 
     /// Emit a control-only rule; effectful rules must use matches() on the shared successor batch.

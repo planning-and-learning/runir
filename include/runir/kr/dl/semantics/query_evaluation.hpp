@@ -34,14 +34,15 @@ void evaluate_query(urd::index_view<Query<Tag>, C> constructor, Context& context
         auto& row = context.get_workspace().get_values();
         const auto predicate = constructor.get_predicate();
         for (const auto atom : context.get_state().get_atoms(predicate))
-            result.insert(encode_object_row(atom.get_row().get_key().second, row));
+            result.insert(encode_object_row(atom.get_row().get_values(), row));
     }
     else if constexpr (is_atomic_goal_tag_v<Tag>)
     {
         auto& row = context.get_workspace().get_values();
         const auto predicate = constructor.get_predicate();
-        for (const auto atom : context.get_state().get_task().get_task().get_goal().template get_atoms<TagFactKind<Tag>>(constructor.get_polarity(), predicate))
-            result.insert(encode_object_row(atom.get_row().get_key().second, row));
+        for (const auto atom :
+             context.get_state().context().get_task()->get_task().get_goal().template get_atoms<TagFactKind<Tag>>(constructor.get_polarity(), predicate))
+            result.insert(encode_object_row(atom.get_row().get_values(), row));
     }
     else if constexpr (std::same_as<Tag, QueryConceptTag>)
         insert_denotation_rows<ConceptTag>(evaluate<Kind>(constructor.get_operand(), children), result);

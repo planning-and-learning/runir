@@ -99,10 +99,10 @@ void check_atomic_projection()
     const auto domain = search->task->get_domain().get_domain();
     const auto a = domain.get_constants()[0].index();
     const auto first_candidates = search->successor_generator->get_labeled_successor_nodes(initial, *search->state_repository, *search->axiom_evaluator);
-    const auto first = std::ranges::find_if(first_candidates, [&](const auto& candidate) { return objects_of(candidate.label)[0].index() == a; });
+    const auto first = std::ranges::find_if(first_candidates, [&](const auto& candidate) { return candidate.label.get_objects()[0].index() == a; });
     ASSERT_NE(first, first_candidates.end());
     const auto second_candidates = search->successor_generator->get_labeled_successor_nodes(first->node, *search->state_repository, *search->axiom_evaluator);
-    const auto second = std::ranges::find_if(second_candidates, [&](const auto& candidate) { return objects_of(candidate.label)[0].index() == a; });
+    const auto second = std::ranges::find_if(second_candidates, [&](const auto& candidate) { return candidate.label.get_objects()[0].index() == a; });
     ASSERT_NE(second, second_candidates.end());
 
     auto constructors = std::make_shared<kr::dl::ConstructorRepository>(search->task->get_repository());
@@ -404,8 +404,11 @@ void check_query_graph()
 }  // namespace
 
 TEST(RunirKrDlIncrementalQuery, GroundAtomicProjectionMatchesFullEvaluation) { check_atomic_projection<tyr::GroundTag>(); }
+
 TEST(RunirKrDlIncrementalQuery, LiftedAtomicProjectionMatchesFullEvaluation) { check_atomic_projection<tyr::LiftedTag>(); }
+
 TEST(RunirKrDlIncrementalQuery, GroundQueryGraphMatchesFullEvaluation) { check_query_graph<tyr::GroundTag>(); }
+
 TEST(RunirKrDlIncrementalQuery, LiftedQueryGraphMatchesFullEvaluation) { check_query_graph<tyr::LiftedTag>(); }
 
 }  // namespace runir::tests

@@ -135,6 +135,7 @@ template<typename C>
 struct fmt::formatter<urd::index_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C>> : fmt::formatter<std::string_view>
 {
     using View = urd::index_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, C>;
+
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::rule(view), ctx); }
 };
 
@@ -142,6 +143,7 @@ template<typename C>
 struct fmt::formatter<urd::index_view<runir::kr::ps::base::Sketch, C>> : fmt::formatter<std::string_view>
 {
     using View = urd::index_view<runir::kr::ps::base::Sketch, C>;
+
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::sketch(view), ctx); }
 };
 

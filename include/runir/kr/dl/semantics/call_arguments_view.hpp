@@ -19,8 +19,11 @@ private:
 
 public:
     auto get_concept_arguments() const noexcept { return self().template member<&urd::record_of<V>::concept_arguments>(); }
+
     auto get_role_arguments() const noexcept { return self().template member<&urd::record_of<V>::role_arguments>(); }
+
     auto get_boolean_arguments() const noexcept { return self().template member<&urd::record_of<V>::boolean_arguments>(); }
+
     auto get_numerical_arguments() const noexcept { return self().template member<&urd::record_of<V>::numerical_arguments>(); }
 
     template<runir::kr::dl::CategoryTag Category>

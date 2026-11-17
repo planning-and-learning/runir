@@ -20,7 +20,9 @@ struct data<runir::kr::dl::Register<Category>>
     runir::kr::dl::RegisterIdentifier<Category> identifier;
 
     data() = default;
+
     data(urd::flat_string name_, runir::kr::dl::RegisterIdentifier<Category> identifier_) : index(), name(std::move(name_)), identifier(identifier_) {}
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -28,7 +30,9 @@ struct data<runir::kr::dl::Register<Category>>
     ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"name", &data::name>, urd::field<"identifier", &data::identifier>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::name, &data::identifier> {}; }
 };
 

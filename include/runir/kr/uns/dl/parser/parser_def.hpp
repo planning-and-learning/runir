@@ -75,24 +75,31 @@ struct IdentifierClass : ygg::diagnostics::ErrorHandlerBase
 struct BooleanFeatureClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct PositiveLiteralClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct NegativeLiteralClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct LiteralClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ConjunctionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct DisjunctionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ClassifierClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ClassifierRootClass : ygg::diagnostics::ErrorHandlerBase
 {
 };

@@ -104,7 +104,7 @@ TEST(StateGraphTest, KeepsInitialVertexWhenStateLimitIsZero)
     ASSERT_EQ(graph.num_vertices(), 1);
     EXPECT_EQ(graph.vertex_value(0).state,
               context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator).get_state().pack());
-    EXPECT_EQ(&graph.vertex_value(0).state.get_state_repository(), context->state_repository.get());
+    EXPECT_EQ(&graph.vertex_value(0).state.context(), context->state_repository.get());
 }
 
 TEST(StateGraphTest, LabelsDoNotRetainUnpackedBuilders)

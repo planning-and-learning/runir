@@ -36,6 +36,7 @@ struct data<runir::kr::ps::icp::Module>
     urd::flat_vector<runir::kr::ps::icp::ResetPair> reset_pairs;
 
     data() = default;
+
     // Registers live in the description-logic repository, hence the separate context parameter.
     data(urd::index<runir::kr::ps::ModuleSymbol<runir::kr::IcpFamilyTag>> symbol_,
          urd::flat_vector<urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> concept_registers_,
@@ -64,6 +65,7 @@ struct data<runir::kr::ps::icp::Module>
         reset_pairs(std::move(reset_pairs_))
     {
     }
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -85,6 +87,7 @@ struct data<runir::kr::ps::icp::Module>
                            urd::field<"memory_transitions", &data::memory_transitions>,
                            urd::field<"reset_pairs", &data::reset_pairs>> {};
     }
+
     static constexpr auto identifying_members() noexcept
     {
         return urd::Members<&data::symbol,
@@ -100,6 +103,7 @@ struct data<runir::kr::ps::icp::Module>
                             &data::memory_transitions,
                             &data::reset_pairs> {};
     }
+
     static constexpr auto cista_members() noexcept
     {
         return urd::Members<&data::index,

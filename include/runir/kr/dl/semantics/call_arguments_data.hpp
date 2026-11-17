@@ -24,6 +24,7 @@ struct data<runir::kr::dl::semantics::CallArguments>
     urd::flat_vector<urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>>> numerical_arguments;
 
     data() = default;
+
     data(urd::flat_vector<urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>> concept_arguments_,
          urd::flat_vector<urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>> role_arguments_,
          urd::flat_vector<urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>>> boolean_arguments_,
@@ -35,6 +36,7 @@ struct data<runir::kr::dl::semantics::CallArguments>
         numerical_arguments(std::move(numerical_arguments_))
     {
     }
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -48,8 +50,10 @@ struct data<runir::kr::dl::semantics::CallArguments>
                            urd::field<"boolean_arguments", &data::boolean_arguments>,
                            urd::field<"numerical_arguments", &data::numerical_arguments>> {};
     }
+
     static constexpr auto identifying_members() noexcept
     { return urd::Members<&data::concept_arguments, &data::role_arguments, &data::boolean_arguments, &data::numerical_arguments> {}; }
+
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::concept_arguments, &data::role_arguments, &data::boolean_arguments, &data::numerical_arguments> {}; }
 };

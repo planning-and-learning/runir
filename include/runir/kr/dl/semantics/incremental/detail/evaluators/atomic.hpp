@@ -14,6 +14,7 @@
 #include <span>
 #include <stdexcept>
 #include <utility>
+#include <yggdrasil/formalism/row_view.hpp>
 
 namespace runir::kr::dl::semantics::incremental::detail
 {
@@ -30,11 +31,13 @@ struct AtomicEvaluator
         : predicate(predicate_)
     {
     }
+
     AtomicEvaluator(tyr::formalism::planning::PredicateView<Fact> predicate_, bool polarity_)
         requires std::same_as<Category, BooleanTag>
         : predicate(predicate_), polarity(polarity_)
     {
     }
+
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context)
     {
@@ -60,6 +63,7 @@ struct AtomicEvaluator
             }
         }
     }
+
     void update(EvaluationGraph<Kind>&, const Delta& delta, tyr::datalog::database::Workspace&)
     {
         if constexpr (std::same_as<Fact, tyr::formalism::FluentTag>)
@@ -72,7 +76,7 @@ private:
     static DenotationElementView<Category> atom_element(tyr::formalism::planning::AtomView<tyr::GroundTag, Fact> atom)
         requires ConceptOrRoleTag<Category>
     {
-        const auto objects = atom.get_objects();
+        const auto objects = atom.get_row().get_objects();
         if constexpr (std::same_as<Category, ConceptTag>)
             return objects[0];
         else

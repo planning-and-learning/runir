@@ -32,6 +32,7 @@ struct data<runir::kr::dl::grammar::GrammarTag>
     urd::index<::tyr::formalism::planning::Domain> domain;
 
     data() = default;
+
     data(urd::flat_optional<urd::index<runir::kr::dl::grammar::NonTerminal<runir::kr::dl::ConceptTag>>> concept_start_,
          urd::flat_optional<urd::index<runir::kr::dl::grammar::NonTerminal<runir::kr::dl::RoleTag>>> role_start_,
          urd::flat_optional<urd::index<runir::kr::dl::grammar::NonTerminal<runir::kr::dl::BooleanTag>>> boolean_start_,
@@ -53,6 +54,7 @@ struct data<runir::kr::dl::grammar::GrammarTag>
         domain(domain_)
     {
     }
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -71,6 +73,7 @@ struct data<runir::kr::dl::grammar::GrammarTag>
                            urd::field<"numerical_derivation_rules", &data::numerical_derivation_rules>,
                            urd::field<"domain", &data::domain>> {};
     }
+
     static constexpr auto identifying_members() noexcept
     {
         return urd::Members<&data::concept_start,
@@ -83,6 +86,7 @@ struct data<runir::kr::dl::grammar::GrammarTag>
                             &data::numerical_derivation_rules,
                             &data::domain> {};
     }
+
     static constexpr auto cista_members() noexcept
     {
         return urd::Members<&data::index,

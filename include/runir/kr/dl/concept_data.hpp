@@ -24,7 +24,9 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index> {}; }
 };
 
@@ -36,7 +38,9 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     urd::index<tyr::formalism::Predicate<runir::kr::dl::TagFactKind<Tag>>> predicate;
 
     data() = default;
+
     explicit data(urd::index<tyr::formalism::Predicate<runir::kr::dl::TagFactKind<Tag>>> predicate_) : index(), predicate(std::move(predicate_)) {}
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -44,7 +48,9 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"predicate", &data::predicate>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::predicate> {}; }
 };
 
@@ -57,12 +63,14 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     bool polarity = false;
 
     data() = default;
+
     data(urd::index<tyr::formalism::Predicate<runir::kr::dl::TagFactKind<Tag>>> predicate_, bool polarity_) :
         index(),
         predicate(std::move(predicate_)),
         polarity(polarity_)
     {
     }
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -70,7 +78,9 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"predicate", &data::predicate>, urd::field<"polarity", &data::polarity>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::predicate, &data::polarity> {}; }
 };
 
@@ -82,12 +92,14 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag> right_operand;
 
     data() = default;
+
     data(runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag> left_operand_, runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag> right_operand_) :
         index(),
         left_operand(std::move(left_operand_)),
         right_operand(std::move(right_operand_))
     {
     }
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -96,7 +108,9 @@ struct data<runir::kr::dl::Concept<F, Tag>>
 
     static constexpr auto fields() noexcept
     { return urd::Fields<urd::field<"left_operand", &data::left_operand>, urd::field<"right_operand", &data::right_operand>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::left_operand, &data::right_operand> {}; }
 };
 
@@ -107,7 +121,9 @@ struct data<runir::kr::dl::Concept<F, runir::kr::dl::NegationTag>>
     runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag> operand;
 
     data() = default;
+
     explicit data(runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag> operand_) : index(), operand(std::move(operand_)) {}
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -115,7 +131,9 @@ struct data<runir::kr::dl::Concept<F, runir::kr::dl::NegationTag>>
     ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"operand", &data::operand>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operand> {}; }
 };
 
@@ -127,12 +145,14 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag> qualifier;
 
     data() = default;
+
     data(runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> role_, runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag> qualifier_) :
         index(),
         role(std::move(role_)),
         qualifier(std::move(qualifier_))
     {
     }
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -140,7 +160,9 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"role", &data::role>, urd::field<"qualifier", &data::qualifier>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::role, &data::qualifier> {}; }
 };
 
@@ -152,7 +174,9 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> role;
 
     data() = default;
+
     data(ygg::uint_t n_, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> role_) : index(), n(n_), role(std::move(role_)) {}
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -160,7 +184,9 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"n", &data::n>, urd::field<"role", &data::role>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::n, &data::role> {}; }
 };
 
@@ -173,6 +199,7 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag> qualifier;
 
     data() = default;
+
     data(ygg::uint_t n_, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> role_, runir::kr::dl::operand_t<F, runir::kr::dl::ConceptTag> qualifier_) :
         index(),
         n(n_),
@@ -180,6 +207,7 @@ struct data<runir::kr::dl::Concept<F, Tag>>
         qualifier(std::move(qualifier_))
     {
     }
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -188,7 +216,9 @@ struct data<runir::kr::dl::Concept<F, Tag>>
 
     static constexpr auto fields() noexcept
     { return urd::Fields<urd::field<"n", &data::n>, urd::field<"role", &data::role>, urd::field<"qualifier", &data::qualifier>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::n, &data::role, &data::qualifier> {}; }
 };
 
@@ -200,12 +230,14 @@ struct data<runir::kr::dl::Concept<F, Tag>>
     runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> right_operand;
 
     data() = default;
+
     data(runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> left_operand_, runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> right_operand_) :
         index(),
         left_operand(std::move(left_operand_)),
         right_operand(std::move(right_operand_))
     {
     }
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -214,7 +246,9 @@ struct data<runir::kr::dl::Concept<F, Tag>>
 
     static constexpr auto fields() noexcept
     { return urd::Fields<urd::field<"left_operand", &data::left_operand>, urd::field<"right_operand", &data::right_operand>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::left_operand, &data::right_operand> {}; }
 };
 
@@ -226,12 +260,14 @@ struct data<runir::kr::dl::Concept<F, runir::kr::dl::RoleFillersTag>>
     urd::flat_vector<urd::index<tyr::formalism::Object>> objects;
 
     data() = default;
+
     data(runir::kr::dl::operand_t<F, runir::kr::dl::RoleTag> role_, urd::flat_vector<urd::index<tyr::formalism::Object>> objects_) :
         index(),
         role(std::move(role_)),
         objects(std::move(objects_))
     {
     }
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -239,7 +275,9 @@ struct data<runir::kr::dl::Concept<F, runir::kr::dl::RoleFillersTag>>
     ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"role", &data::role>, urd::field<"objects", &data::objects>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::role, &data::objects> {}; }
 };
 
@@ -250,7 +288,9 @@ struct data<runir::kr::dl::Concept<F, runir::kr::dl::OneOfTag>>
     urd::flat_vector<urd::index<tyr::formalism::Object>> objects;
 
     data() = default;
+
     explicit data(urd::flat_vector<urd::index<tyr::formalism::Object>> objects_) : index(), objects(std::move(objects_)) {}
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -258,7 +298,9 @@ struct data<runir::kr::dl::Concept<F, runir::kr::dl::OneOfTag>>
     ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"objects", &data::objects>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::objects> {}; }
 };
 
@@ -269,7 +311,9 @@ struct data<runir::kr::dl::Concept<F, runir::kr::dl::NominalTag>>
     urd::index<tyr::formalism::Object> object;
 
     data() = default;
+
     explicit data(urd::index<tyr::formalism::Object> object_) : index(), object(object_) {}
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -277,7 +321,9 @@ struct data<runir::kr::dl::Concept<F, runir::kr::dl::NominalTag>>
     ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"object", &data::object>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::object> {}; }
 };
 
@@ -288,7 +334,9 @@ struct data<runir::kr::dl::Concept<F, runir::kr::dl::RegisterTag>>
     urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>> slot;
 
     data() = default;
+
     explicit data(urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>> slot_) : index(), slot(slot_) {}
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -296,7 +344,9 @@ struct data<runir::kr::dl::Concept<F, runir::kr::dl::RegisterTag>>
     ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"slot", &data::slot>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::slot> {}; }
 };
 
@@ -307,7 +357,9 @@ struct data<runir::kr::dl::Concept<F, runir::kr::dl::ArgumentTag<runir::kr::dl::
     urd::index<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>> argument;
 
     data() = default;
+
     explicit data(urd::index<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>> argument_) : index(), argument(argument_) {}
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -315,7 +367,9 @@ struct data<runir::kr::dl::Concept<F, runir::kr::dl::ArgumentTag<runir::kr::dl::
     ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"argument", &data::argument>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::members_of(fields()); }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::argument> {}; }
 };
 

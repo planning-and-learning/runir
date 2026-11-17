@@ -101,7 +101,7 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
     for (size_t i = 0; i < 8; ++i)
     {
         storage.reset_dynamic();
-        ASSERT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(expression, context).value(), 3);
+        ASSERT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(expression, context).get_value(), 3);
     }
 
     bool valid = true;
@@ -117,7 +117,7 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
         valid &= copied.registers().at(kr::dl::RegisterIdentifier<kr::dl::RoleTag>(7)).value().second.index() == object.index();
         valid &= copied.arguments().at(kr::dl::ArgumentIdentifier<kr::dl::ConceptTag>(0)).value().count() == 1;
         storage.reset_dynamic();
-        valid &= kr::dl::semantics::evaluate<tyr::GroundTag>(expression, copied).value() == 3;
+        valid &= kr::dl::semantics::evaluate<tyr::GroundTag>(expression, copied).get_value() == 3;
     }
     const auto counts = urd::testing::counts();
 
@@ -402,21 +402,21 @@ TEST(RunirQueries, WarmedIncrementalDlEvaluationAllocatesAndFreesNothing)
             auto boolean = booleans[i].update(target_context, delta, workspace);
             (void) numerical.changed();
             (void) boolean.changed();
-            valid &= numerical.get_result().value() == expected;
-            valid &= boolean.get_result().value() == (expected != 0);
+            valid &= numerical.get_result().get_value() == expected;
+            valid &= boolean.get_result().get_value() == (expected != 0);
         }
         auto graph_state = evaluation.enter(target_context, delta, workspace);
         const auto infinity = std::numeric_limits<ygg::uint_t>::max();
         const auto expected_distance = members == 2 ? static_cast<ygg::uint_t>(2) : members == 1 ? static_cast<ygg::uint_t>(0) : infinity;
         valid &= graph_state.size(source_id) == register_members && graph_state.size(edge_id) == members;
-        valid &= graph_state.evaluate(source_count_id).value() == register_members;
-        valid &= graph_state.evaluate(edge_count_id).value() == members;
-        valid &= graph_state.evaluate(distance_id).value() == expected_distance;
-        valid &= graph_state.evaluate(self_distance_id).value() == (register_members ? 0 : infinity);
+        valid &= graph_state.evaluate(source_count_id).get_value() == register_members;
+        valid &= graph_state.evaluate(edge_count_id).get_value() == members;
+        valid &= graph_state.evaluate(distance_id).get_value() == expected_distance;
+        valid &= graph_state.evaluate(self_distance_id).get_value() == (register_members ? 0 : infinity);
         valid &= graph_state.size(closure_id) == (members == 2 ? 3 : members);
-        valid &= graph_state.evaluate(nonempty_id).value() == (members == 2);
+        valid &= graph_state.evaluate(nonempty_id).get_value() == (members == 2);
         valid &= graph_state.size(projected_id) == members && graph_state.size(projected_role_id) == members;
-        valid &= graph_state.evaluate(query_count_id).value() == members;
+        valid &= graph_state.evaluate(query_count_id).get_value() == members;
         for (const auto id : { source_count_id, edge_count_id, distance_id, self_distance_id, query_count_id })
             (void) graph_state.changed(id);
         (void) graph_state.changed(nonempty_id);
@@ -756,6 +756,7 @@ void expect_warmed_action_storage()
 }  // namespace
 
 TEST(RunirSearch, WarmedActionExpansionsReuseGroundStorage) { expect_warmed_action_storage<tyr::GroundTag>(); }
+
 TEST(RunirSearch, WarmedActionExpansionsReuseLiftedStorage) { expect_warmed_action_storage<tyr::LiftedTag>(); }
 
 }  // namespace runir::tests

@@ -36,33 +36,43 @@ using ygg::diagnostics::keyword;
 struct ArgumentObjectClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct RegisterObjectClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ObjectClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct XConditionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct XEffectClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct CruleClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct RuleClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct RuleEntryClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ResetPairClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ModuleClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ProgramClass : boost::spirit::x3::annotate_on_success
 {
 };

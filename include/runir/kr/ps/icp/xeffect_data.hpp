@@ -21,6 +21,7 @@ struct data<runir::kr::ps::icp::XEffect>
     urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>> feature;
 
     data() = default;
+
     data(runir::kr::ps::icp::EffectOperation operation_,
          urd::flat_variant<runir::kr::ps::icp::ArgumentPosition, urd::index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> object_,
          urd::index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>> feature_) :
@@ -30,6 +31,7 @@ struct data<runir::kr::ps::icp::XEffect>
         feature(feature_)
     {
     }
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -38,7 +40,9 @@ struct data<runir::kr::ps::icp::XEffect>
 
     static constexpr auto fields() noexcept
     { return urd::Fields<urd::field<"operation", &data::operation>, urd::field<"object", &data::object>, urd::field<"feature", &data::feature>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::operation, &data::object, &data::feature> {}; }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::operation, &data::object, &data::feature> {}; }
 };
 

@@ -41,9 +41,11 @@ struct TaskClass : urd::compared_by_identity<TaskClass<Kind>>
     urd::Store<urd::sequence<tyr::planning::TaskPtr<Kind>>> tasks;
 
     TaskClass() = default;
+
     explicit TaskClass(urd::Store<urd::sequence<tyr::planning::TaskPtr<Kind>>> tasks_) : tasks(std::move(tasks_)) {}
 
     static constexpr auto cista_members() noexcept { return urd::Members<&TaskClass::tasks> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&TaskClass::tasks> {}; }
 };
 

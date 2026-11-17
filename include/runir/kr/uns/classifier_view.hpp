@@ -19,6 +19,7 @@ private:
 
 public:
     auto get_feature() const noexcept { return self().template member<&urd::record_of<V>::feature>(); }
+
     auto get_polarity() const noexcept { return self().template member<&urd::record_of<V>::polarity>(); }
 };
 
@@ -40,7 +41,9 @@ private:
 
 public:
     const auto& get_symbol() const noexcept { return self().template member<&urd::record_of<V>::symbol>(); }
+
     auto get_features() const noexcept { return self().template member<&urd::record_of<V>::features>(); }
+
     auto get_clauses() const noexcept { return self().template member<&urd::record_of<V>::clauses>(); }
 };
 }  // namespace urd

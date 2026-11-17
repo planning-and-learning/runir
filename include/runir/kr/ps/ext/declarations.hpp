@@ -147,16 +147,19 @@ using RuleView = urd::index_view<Rule<Kind>, Repository>;
 /// The kind of a rule, or of its view.
 template<typename T>
 struct rule_kind;
+
 template<RuleKind Kind>
 struct rule_kind<Rule<Kind>>
 {
     using type = Kind;
 };
+
 template<RuleKind Kind, typename C>
 struct rule_kind<urd::index_view<Rule<Kind>, C>>
 {
     using type = Kind;
 };
+
 template<typename T>
 using rule_kind_t = typename rule_kind<std::remove_cvref_t<T>>::type;
 

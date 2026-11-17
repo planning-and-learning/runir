@@ -31,6 +31,7 @@ struct ClosureWorkspace
         ygg::uint_t vertex;
         urd::set_bit_indices_view<ygg::uint_t>::Iterator next;
     };
+
     urd::Store<urd::sequence<size_t>> discovery;
     urd::Store<urd::sequence<size_t>> lowlink;
     urd::Store<urd::set<ygg::uint_t>, urd::dense> active;  ///< The vertices on active_stack.

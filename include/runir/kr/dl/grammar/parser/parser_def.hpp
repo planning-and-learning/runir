@@ -111,7 +111,9 @@ constexpr auto query_columns_parser()
 }
 
 constexpr auto true_string_parser() { return keyword(runir::kr::dl::TrueTag::keyword) >> boost::spirit::x3::attr(true); }
+
 constexpr auto false_string_parser() { return keyword(runir::kr::dl::FalseTag::keyword) >> boost::spirit::x3::attr(false); }
+
 constexpr auto bool_string_parser()
 { return boost::spirit::x3::rule<class BooleanValue, bool> { "true or false" } = boost::spirit::x3::lexeme[true_string_parser() | false_string_parser()]; }
 

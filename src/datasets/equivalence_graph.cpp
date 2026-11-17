@@ -121,7 +121,9 @@ public:
     }
 
     [[nodiscard]] size_t get_num_state_vertices() const noexcept { return static_cast<size_t>(m_next_state_vertex.load(std::memory_order_relaxed)); }
+
     [[nodiscard]] const auto& get_start() const noexcept { return m_start; }
+
     [[nodiscard]] const auto& get_workers() const noexcept { return m_workers; }
 
 private:
@@ -158,6 +160,7 @@ public:
     void on_start_search(const tyr::planning::Node<Kind>& node, ygg::float_t f_value) override { m_events.on_start_search(node, f_value); }
 
     void on_end_search(tyr::planning::SearchStatus, const tyr::planning::Statistics&) override {}
+
     void on_solved(const tyr::planning::Plan<Kind>&) override {}
 
     auto make_worker(urd::index<tyr::planning::Worker> index) -> tyr::planning::astar_eager::WorkerEventHandlerPtr<Kind> override

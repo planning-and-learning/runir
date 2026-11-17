@@ -73,7 +73,7 @@ template<kr::dl::ConceptOrRoleTag Category>
 auto elements(const auto& denotation)
 {
     auto result = kr::dl::semantics::DenotationElementViewList<Category> {};
-    for (const auto value : denotation)
+    for (const auto value : denotation.views())
         result.push_back(value);
     std::ranges::sort(result);
     return result;
@@ -89,7 +89,7 @@ auto difference(const auto& lhs, const auto& rhs)
 template<tyr::TaskKind Kind>
 void check_planning_graph(tyr::planning::StateView<Kind> source, tyr::planning::StateView<Kind> target)
 {
-    const auto& task = source.get_task();
+    const auto& task = *source.context().get_task();
     auto constructors = std::make_shared<kr::dl::ConstructorRepository>(task.get_repository());
     auto denotations = kr::dl::semantics::DenotationRepository(task.get_repository());
     auto storage = kr::dl::semantics::EvaluationStorage(denotations);
@@ -125,7 +125,7 @@ void check_planning_graph(tyr::planning::StateView<Kind> source, tyr::planning::
                 auto context = kr::dl::semantics::StateEvaluationContext<Kind>(state, builder, storage);
                 EXPECT_EQ(elements<kr::dl::ConceptTag>(evaluated.evaluate(concept_id)),
                           elements<kr::dl::ConceptTag>(kr::dl::semantics::evaluate<Kind>(concept_, context)));
-                EXPECT_EQ(evaluated.evaluate(count_id).value(), kr::dl::semantics::evaluate<Kind>(count, context).value());
+                EXPECT_EQ(evaluated.evaluate(count_id).get_value(), kr::dl::semantics::evaluate<Kind>(count, context).get_value());
             };
             storage.reset_all();
             auto context = kr::dl::semantics::StateEvaluationContext<Kind>(source, builder, storage);
@@ -256,7 +256,7 @@ void check_incremental_evaluation()
             if constexpr (kr::dl::ConceptOrRoleTag<Category>)
                 return elements<Category>(result);
             else
-                return result.value();
+                return result.get_value();
         };
         const auto expect_empty_delta = [&](auto& state)
         {
@@ -286,10 +286,10 @@ void check_incremental_evaluation()
                 if constexpr (std::same_as<Category, kr::dl::ConceptTag>)
                     EXPECT_EQ(state.get_result().value().count(), state.size());
                 else
-                    EXPECT_EQ(state.get_result().count(), state.size());
+                    EXPECT_EQ(state.get_result().storage_bits().count(), state.size());
             }
             else
-                EXPECT_EQ(snapshot(state.get_result()), expected.value());
+                EXPECT_EQ(snapshot(state.get_result()), expected.get_value());
         };
         storage.reset_all();
         auto initial_context = context_for(nodes.front().get_state(), 0, arguments);
@@ -321,7 +321,7 @@ void check_incremental_evaluation()
             }
             else
             {
-                EXPECT_EQ(retained_view.value(), snapshot(state.get_result()));
+                EXPECT_EQ(retained_view.get_value(), snapshot(state.get_result()));
                 EXPECT_EQ(state.changed(), before != snapshot(state.get_result()));
             }
             compare_full(state, context);
@@ -368,12 +368,12 @@ void check_incremental_evaluation()
             if constexpr (kr::dl::ConceptOrRoleTag<Category>)
                 EXPECT_EQ(elements<Category>(actual), elements<Category>(expected));
             else
-                EXPECT_EQ(actual.value(), expected.value());
+                EXPECT_EQ(actual.get_value(), expected.get_value());
             const auto repeated = kr::dl::semantics::evaluate<Kind>(expression, demand);
             if constexpr (kr::dl::ConceptOrRoleTag<Category>)
                 EXPECT_EQ(elements<Category>(actual), elements<Category>(repeated));
             else
-                EXPECT_EQ(actual.value(), repeated.value());
+                EXPECT_EQ(actual.get_value(), repeated.get_value());
         };
         const auto states = std::array<size_t, 7> { 0, 1, 2, 1, 0, 2, 0 };
         for (size_t epoch = 0; epoch < states.size(); ++epoch)
@@ -574,7 +574,7 @@ void check_incremental_evaluation()
     {
         auto values = std::array<ygg::uint_t, 5> {};
         for (size_t i = 0; i < values.size(); ++i)
-            values[i] = state.evaluate(scalar_ids[i]).value();
+            values[i] = state.evaluate(scalar_ids[i]).get_value();
         return values;
     };
     const auto query_rows = [](const auto& relation)
@@ -605,7 +605,7 @@ void check_incremental_evaluation()
         EXPECT_EQ(elements<kr::dl::ConceptTag>(state.evaluate(target_id)), elements<kr::dl::ConceptTag>(kr::dl::semantics::evaluate<Kind>(target, context)));
         EXPECT_EQ(elements<kr::dl::RoleTag>(state.evaluate(edge_id)), elements<kr::dl::RoleTag>(kr::dl::semantics::evaluate<Kind>(edge, context)));
         for (size_t i = 0; i < scalar_ids.size(); ++i)
-            EXPECT_EQ(state.evaluate(scalar_ids[i]).value(), kr::dl::semantics::evaluate<Kind>(scalar_expressions[i], context).value());
+            EXPECT_EQ(state.evaluate(scalar_ids[i]).get_value(), kr::dl::semantics::evaluate<Kind>(scalar_expressions[i], context).get_value());
         EXPECT_EQ(query_rows(state.evaluate(query_id)), query_rows(kr::dl::semantics::evaluate<Kind>(query, context)));
     };
     storage.reset_all();
@@ -716,7 +716,7 @@ void check_incremental_evaluation()
     storage.reset_all();
     auto demanded = evaluation.enter(initial_context);
     EXPECT_EQ(query_rows(demanded.evaluate(query_id)), query_rows(kr::dl::semantics::evaluate<Kind>(query, initial_context)));
-    EXPECT_EQ(demanded.evaluate(edge_count_id).value(), kr::dl::semantics::evaluate<Kind>(edge_count, initial_context).value());
+    EXPECT_EQ(demanded.evaluate(edge_count_id).get_value(), kr::dl::semantics::evaluate<Kind>(edge_count, initial_context).get_value());
     EXPECT_THROW(demanded.delta(query_id), std::logic_error);  // Initialized results have no delta.
     size_t previous_state = 0;
     auto demand_delta = kr::dl::semantics::incremental::Delta {};
@@ -728,17 +728,17 @@ void check_incremental_evaluation()
         auto state = evaluation.enter(context, demand_delta, workspace);
         EXPECT_EQ(query_rows(state.evaluate(query_id)), query_rows(kr::dl::semantics::evaluate<Kind>(query, context)));
         EXPECT_NO_THROW(state.delta(query_id));  // Updated from the delta.
-        EXPECT_EQ(state.evaluate(edge_count_id).value(), kr::dl::semantics::evaluate<Kind>(edge_count, context).value());
+        EXPECT_EQ(state.evaluate(edge_count_id).get_value(), kr::dl::semantics::evaluate<Kind>(edge_count, context).get_value());
         if (i == 0)
         {
             // Unrelated roots remained unmaterialized in the previous state: the parent of the exact query is
             // initialized, and so is the register the distance depends on.
             EXPECT_THROW(state.changed(query_count_id), std::logic_error);
             EXPECT_THROW(state.delta(source_id), std::logic_error);
-            EXPECT_EQ(state.evaluate(query_count_id).value(), kr::dl::semantics::evaluate<Kind>(query_count, context).value());
+            EXPECT_EQ(state.evaluate(query_count_id).get_value(), kr::dl::semantics::evaluate<Kind>(query_count, context).get_value());
             const auto retained_rows = query_rows(state.evaluate(query_id));
             for (size_t j = 0; j < scalar_ids.size(); ++j)
-                EXPECT_EQ(state.evaluate(scalar_ids[j]).value(), kr::dl::semantics::evaluate<Kind>(scalar_expressions[j], context).value());
+                EXPECT_EQ(state.evaluate(scalar_ids[j]).get_value(), kr::dl::semantics::evaluate<Kind>(scalar_expressions[j], context).get_value());
             EXPECT_EQ(query_rows(state.evaluate(query_id)), retained_rows);
         }
         previous_state = i;
@@ -746,7 +746,7 @@ void check_incremental_evaluation()
     EXPECT_THROW(demanded.evaluate(query_id), std::logic_error);  // A handle of an earlier state is stale.
     auto fresh = evaluation.enter(invocation_context);
     storage.reset_all();
-    EXPECT_EQ(fresh.evaluate(query_count_id).value(), kr::dl::semantics::evaluate<Kind>(query_count, invocation_context).value());
+    EXPECT_EQ(fresh.evaluate(query_count_id).get_value(), kr::dl::semantics::evaluate<Kind>(query_count, invocation_context).get_value());
     const auto reject_multiple_values = [&]<kr::dl::ConceptOrRoleTag Category>(kr::dl::ConstructorView<Category> expression)
     {
         auto evaluator = RootEvaluator<Kind, Category>(*search->task, expression);
@@ -772,17 +772,17 @@ void check_incremental_evaluation()
         auto failed_state = demand.enter(invocation_context, invalid, workspace);
         EXPECT_THROW(failed_state.evaluate(root), std::invalid_argument);
         EXPECT_THROW(demand.enter(invocation_context, empty_delta, workspace).delta(root), std::logic_error);
-        EXPECT_EQ(demand.enter(invocation_context).evaluate(root).count(), 0);
+        EXPECT_EQ(demand.enter(invocation_context).evaluate(root).storage_bits().count(), 0);
         auto unchanged = demand.enter(invocation_context, empty_delta, workspace);
-        EXPECT_EQ(unchanged.evaluate(root).count(), 0);
+        EXPECT_EQ(unchanged.evaluate(root).storage_bits().count(), 0);
         EXPECT_NO_THROW(unchanged.delta(root));  // Updated from the delta.
 
         const auto roots = std::array<kr::dl::semantics::incremental::EvaluationRoot, 1> { expression };
         auto delta_policy = kr::dl::semantics::DeltaEvaluationPolicy<Kind>(*search->task, roots);
         auto context = delta_policy.make_source_context(invocation_context);
-        EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(expression, context).count(), 0);
+        EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(expression, context).storage_bits().count(), 0);
         auto recovered = delta_policy.make_source_context(invocation_context);
-        EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(expression, recovered).count(), 0);
+        EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(expression, recovered).storage_bits().count(), 0);
     };
     reject_multiple_values(source);
     reject_multiple_values(kr::ps::ext::dl::parse_role("(r_register 0)", domain, *constructors));
@@ -790,6 +790,7 @@ void check_incremental_evaluation()
 }  // namespace
 
 TEST(RunirKrDlIncrementalEvaluation, GroundFeaturesMatchFullEvaluationAndReverse) { check_incremental_evaluation<tyr::GroundTag>(); }
+
 TEST(RunirKrDlIncrementalEvaluation, LiftedFeaturesMatchFullEvaluationAndReverse) { check_incremental_evaluation<tyr::LiftedTag>(); }
 
 }  // namespace runir::tests

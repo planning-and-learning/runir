@@ -32,7 +32,7 @@ void append_only_in(const Lhs& lhs, const Rhs& rhs, urd::Store<urd::sequence<tyr
 template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> Source, tyr::planning::StateViewConcept<Kind> Target, typename DeltaType>
 void assign_atom_delta(const Source& source, const Target& target, DeltaType& delta)
 {
-    if (&source.get_task() != &target.get_task())
+    if (&*source.context().get_task() != &*target.context().get_task())
         throw std::invalid_argument("Feature delta requires states from the same task.");
     delta.clear();
     append_only_in<Kind, tyr::formalism::FluentTag>(source, target, delta.removed.fluent_atoms);

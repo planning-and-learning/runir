@@ -201,7 +201,7 @@ QueryTranslator::YggQuery QueryTranslator::translate_concrete(DlQuery query, Que
     }
     else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
     {
-        using Object = urd::index<ygg::formalism::Object<void>>;
+        using Object = urd::index<ygg::formalism::Object>;
         auto out = tyr::datalog::database::checkout<tyr::datalog::database::Query<tyr::datalog::database::QuerySelectValueTag>>(m_builder);
         out->operand = translate(concrete.get_operand()).index();
         out->column = Label(concrete.get_column().index().value);

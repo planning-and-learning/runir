@@ -21,6 +21,7 @@ public:
     RuleEvaluators(runir::kr::TaskContext<Kind>& task, SketchView sketch) : m_environment(task, sketch), m_sketch(sketch) {}
 
     auto& get_environment() noexcept { return m_environment; }
+
     void begin_source() { m_environment.reset_source(); }
 
     /// Reuse source evaluations across candidates and target evaluations across rules.

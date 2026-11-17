@@ -37,7 +37,9 @@ public:
     }
 
     [[nodiscard]] ConstructorRepository& repository() const noexcept { return *m_repository; }
+
     [[nodiscard]] Builder& builder() const noexcept { return *m_builder; }
+
     [[nodiscard]] const runir::kr::parser::DiagnosticContext& diagnostics() const noexcept { return *m_diagnostics; }
 };
 

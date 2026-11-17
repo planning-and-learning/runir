@@ -64,6 +64,7 @@ concept StateEvaluationContextConcept =
 
 /// Registers in the borrowed form, which interned registers provide without copying: their record in their repository.
 inline BorrowedRegisterValuesView borrow_registers(BorrowedRegisterValuesView registers) noexcept { return registers; }
+
 inline BorrowedRegisterValuesView borrow_registers(RegisterValuesView registers)
 { return BorrowedRegisterValuesView(&registers.context()[registers.index()], &registers.get_formalism_repository()); }
 
@@ -83,6 +84,7 @@ private:
     bool m_result_is_static = false;
 
     void select_result(bool is_static) noexcept { m_result_is_static = is_static; }
+
     void select_children() noexcept
     {
         m_caches = &m_intermediates->get_caches();
@@ -159,14 +161,21 @@ public:
     { select_roots(caches, repository); }
 
     [[nodiscard]] const S& get_state() const noexcept { return m_state; }
+
     Builder& get_builder() noexcept { return *m_builder; }
+
     [[nodiscard]] DenotationRepository& get_denotation_repository(bool is_static) const noexcept { return *m_denotations[is_static]; }
+
     [[nodiscard]] DenotationRepository& get_denotation_repository() const noexcept { return get_denotation_repository(m_result_is_static); }
+
     EvaluationWorkspace& get_workspace() noexcept { return detail::get_workspace(*m_builder); }
+
     DenotationCaches& get_caches() noexcept { return *m_caches; }
 
     [[nodiscard]] BorrowedRegisterValuesView registers() const noexcept { return m_registers; }
+
     [[nodiscard]] bool has_arguments() const noexcept { return m_arguments.has_value(); }
+
     [[nodiscard]] CallArgumentsView arguments() const
     {
         if (!m_arguments)

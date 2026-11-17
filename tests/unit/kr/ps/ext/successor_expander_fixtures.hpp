@@ -150,14 +150,14 @@ void expect_module_return_preserves_callee_planning_state()
     {
         const auto moved = move.get_target();
         ASSERT_TRUE(move.planning_successor);
-        ASSERT_NE(moved.get_state().index(), initial.get_state().index());
-        EXPECT_EQ(move.planning_successor->node.get_state(), moved.get_state().pack());
+        ASSERT_NE(moved.get_module_state().get_state().index(), initial.get_module_state().get_state().index());
+        EXPECT_EQ(move.planning_successor->node.get_state(), moved.get_module_state().get_state().pack());
         const auto returns = collect_steps(expander, moved);
         ASSERT_EQ(returns.size(), 1);
         EXPECT_EQ(returns.front().status, kr::ps::ProgramOutcome::RESTORED_CALLER);
         EXPECT_FALSE(returns.front().planning_successor);
         const auto returned = returns.front().get_target();
-        EXPECT_EQ(returned.get_state().index(), moved.get_state().index());
+        EXPECT_EQ(returned.get_module_state().get_state().index(), moved.get_module_state().get_state().index());
         EXPECT_EQ(returned.get_module_state().get_mod(), suspended_callee->get_mod());
         EXPECT_EQ(returned.get_module_state().get_memory_state(), suspended_callee->get_return_memory_state());
         EXPECT_EQ(returned.get_module_state().get_registers(), suspended_callee->get_registers());
@@ -169,14 +169,14 @@ void expect_module_return_preserves_callee_planning_state()
         EXPECT_EQ(outer_returns.front().status, kr::ps::ProgramOutcome::RESTORED_CALLER);
         EXPECT_FALSE(outer_returns.front().planning_successor);
         const auto caller = outer_returns.front().get_target();
-        EXPECT_EQ(caller.get_state().index(), moved.get_state().index());
+        EXPECT_EQ(caller.get_module_state().get_state().index(), moved.get_module_state().get_state().index());
         EXPECT_EQ(caller.get_module_state().get_mod(), suspended->get_mod());
         EXPECT_EQ(caller.get_module_state().get_memory_state(), suspended->get_return_memory_state());
         EXPECT_EQ(caller.get_module_state().get_registers(), suspended->get_registers());
         EXPECT_EQ(caller.get_module_state().get_arguments(), suspended->get_arguments());
         EXPECT_FALSE(caller.get_call_stack());
     }
-    EXPECT_EQ(callee.get_state().index(), initial.get_state().index());
+    EXPECT_EQ(callee.get_module_state().get_state().index(), initial.get_module_state().get_state().index());
 }
 
 template<tyr::TaskKind Kind>
@@ -214,7 +214,7 @@ void expect_borrowed_query_evaluation()
         const auto successors = search.successor_generator->get_labeled_successor_nodes(initial, *search.state_repository, *search.axiom_evaluator);
         ASSERT_FALSE(successors.empty());
         const auto stack = state.get_module_state();
-        auto transition = environment.make_dl_transition_context(state.get_state(),
+        auto transition = environment.make_dl_transition_context(state.get_module_state().get_state(),
                                                                  successors.front().node.get_state(),
                                                                  stack.get_arguments(),
                                                                  stack.get_registers(),
@@ -320,7 +320,7 @@ void expect_binding_effects_and_empty_choices()
                     {
                         EXPECT_EQ(step.status, kr::ps::ProgramOutcome::APPLIED);
                         const auto target = step.get_target();
-                        EXPECT_EQ(target.get_state().index(), initial.get_state().index());
+                        EXPECT_EQ(target.get_module_state().get_state().index(), initial.get_module_state().get_state().index());
                         EXPECT_EQ(target.get_module_state().get_memory_state().get_name(), "target");
                         EXPECT_FALSE(step.planning_successor.has_value());
                         ASSERT_TRUE(step.rule);
@@ -450,7 +450,7 @@ void expect_lazy_do_successors()
                 const auto action = step.planning_successor->label;
                 if (action.get_relation().get_name() == "pick")
                 {
-                    EXPECT_EQ(objects_of(action)[0].get_name(), "ball2");
+                    EXPECT_EQ(action.get_objects()[0].get_name(), "ball2");
                     EXPECT_EQ(step.get_target().get_module_state().get_memory_state().get_name(), "do-target");
                 }
                 else
@@ -525,7 +525,7 @@ void expect_control_only_steps_do_not_generate_planning_successors()
     for (const auto& step : steps)
     {
         EXPECT_EQ(step.status, kr::ps::ProgramOutcome::APPLIED);
-        EXPECT_EQ(step.get_target().get_state().index(), initial.get_state().index());
+        EXPECT_EQ(step.get_target().get_module_state().get_state().index(), initial.get_module_state().get_state().index());
         EXPECT_FALSE(step.planning_successor.has_value());
         ASSERT_TRUE(step.rule);
         const auto applied = expander.apply(initial, step.rule.value());
@@ -568,7 +568,7 @@ void expect_transient_program_states_retain_values_and_intern_callers()
     const auto initial = storage.initial_state(initial_node.get_state());
     EXPECT_FALSE(storage.view(initial).get_call_stack());
     EXPECT_EQ(executions.template size<kr::ps::ext::CallStack>(), 0);
-    const auto source = storage.view(initial).get_state();
+    const auto source = storage.view(initial).get_module_state().get_state();
     const auto bindings = search.successor_generator->get_applicable_action_bindings(initial_node);
     ASSERT_EQ(bindings.size(), 2);
 
@@ -609,7 +609,7 @@ void expect_transient_program_states_retain_values_and_intern_callers()
     const auto caller = storage.view(copy).get_call_stack();
     ASSERT_TRUE(caller);
     EXPECT_EQ(caller.value().index(), inner_caller.index());
-    const auto returned = storage.store(storage.view(copy).get_state(),
+    const auto returned = storage.store(storage.view(copy).get_module_state().get_state(),
                                         caller.value().get_mod(),
                                         caller.value().get_return_memory_state(),
                                         caller.value().get_registers(),
@@ -835,7 +835,7 @@ void expect_query_action_contracts()
         {
             ASSERT_TRUE(step.planning_successor.has_value());
             const auto candidate = step.planning_successor.value().unpack();
-            EXPECT_EQ(objects_of(candidate.label)[0].get_name(), "start");
+            EXPECT_EQ(candidate.label.get_objects()[0].get_name(), "start");
             EXPECT_EQ(step.get_target().get_module_state().get_memory_state().get_name(), "target");
             const auto matching = expander.matching_rule(initial, candidate);
             ASSERT_TRUE(matching);
@@ -1044,11 +1044,11 @@ void expect_query_action_existential_binding()
     const auto steps = collect_steps(expander, expander.initial_state(planning_node.get_state()));
     ASSERT_EQ(steps.size(), 1);
     ASSERT_TRUE(steps.front().planning_successor.has_value());
-    const auto objects = objects_of(steps.front().planning_successor.value().label);
+    const auto objects = steps.front().planning_successor.value().label.get_objects();
     ASSERT_EQ(objects.size(), 2);
     EXPECT_EQ(objects[0].get_name(), "start");
     EXPECT_EQ(objects[1].get_name(), "proof");
-    EXPECT_TRUE(is_planning_goal(expander, steps.front().get_target().get_state()));
+    EXPECT_TRUE(is_planning_goal(expander, steps.front().get_target().get_module_state().get_state()));
     EXPECT_TRUE(kr::ps::ext::find_solution(task_context, program, kr::ps::ext::ProgramSearchOptions<Kind> {}).is_successful());
 }
 
@@ -1087,8 +1087,8 @@ void expect_query_action_nullary_binding()
         {
             EXPECT_EQ(steps.front().status, kr::ps::ProgramOutcome::APPLIED);
             ASSERT_TRUE(steps.front().planning_successor.has_value());
-            EXPECT_TRUE(objects_of(steps.front().planning_successor.value().label).empty());
-            EXPECT_TRUE(is_planning_goal(expander, steps.front().get_target().get_state()));
+            EXPECT_TRUE(steps.front().planning_successor.value().label.get_objects().empty());
+            EXPECT_TRUE(is_planning_goal(expander, steps.front().get_target().get_module_state().get_state()));
             EXPECT_THROW(collect_steps(expander, steps.front().get_target()), std::logic_error);
             EXPECT_THROW(kr::ps::ext::find_solution(task_context, program, kr::ps::ext::ProgramSearchOptions<Kind> {}), std::invalid_argument);
         }
@@ -1149,7 +1149,7 @@ void expect_callback_expansion_counts()
                 first.push_back(std::string(
                     steps.front().get_target().get_module_state().get_registers().template values<kr::dl::ConceptTag>()[0].value().get_name().str()));
             else
-                for (const auto object : objects_of(steps.front().planning_successor->label))
+                for (const auto object : steps.front().planning_successor->label.get_objects())
                     first.push_back(std::string(object.get_name().str()));
             first_bindings.push_back(std::move(first));
         }

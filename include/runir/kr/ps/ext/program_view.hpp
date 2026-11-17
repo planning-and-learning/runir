@@ -20,7 +20,9 @@ private:
 
 public:
     auto get_entry_mod() const noexcept { return self().template member<&urd::record_of<V>::entry_mod>(); }
+
     auto get_modules() const noexcept { return self().template member<&urd::record_of<V>::modules>(); }
+
     template<typename Symbol>
     auto find_module(Symbol symbol) const
     {

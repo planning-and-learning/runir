@@ -29,6 +29,7 @@ using ObjectIndex = urd::index<tyr::formalism::Object>;
 struct QueryValue : tyr::datalog::database::incremental::detail::QueryValue
 {
     using tyr::datalog::database::incremental::detail::QueryValue::QueryValue;
+
     auto& clear() noexcept
     {
         result.clear();
@@ -48,6 +49,7 @@ struct QueryStaticEvaluator : QueryValue
         expression(expression_)
     {
     }
+
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>&, Context& context)
     {
@@ -60,6 +62,7 @@ struct QueryStaticEvaluator : QueryValue
         }
         this->delta.clear();
     }
+
     void update(EvaluationGraph<Kind>&, const Delta&, tyr::datalog::database::Workspace&) {}
 };
 
@@ -69,9 +72,11 @@ struct QueryAtomicEvaluator : AtomicQueryEvaluator<Fact>
     QueryAtomicEvaluator(const ygg::FreeRelationRepository& layer, QueryView<AtomicStateTag<Fact>> expression) : AtomicQueryEvaluator<Fact>(layer, expression)
     {
     }
+
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>&, Context& context)
     { AtomicQueryEvaluator<Fact>::template initialize<Kind>(context.get_state()); }
+
     void update(EvaluationGraph<Kind>&, const Delta& delta, tyr::datalog::database::Workspace&)
     {
         if constexpr (std::same_as<Fact, tyr::formalism::FluentTag>)
@@ -91,9 +96,11 @@ struct QueryProjectionEvaluator : tyr::datalog::database::incremental::Projectio
         argument(argument_)
     {
     }
+
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context)
     { tyr::datalog::database::incremental::ProjectionEvaluator::initialize(graph.result(argument), context.get_workspace().get_database_workspace()); }
+
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace& workspace)
     { tyr::datalog::database::incremental::ProjectionEvaluator::update(graph.change(argument).change(), workspace); }
 };
@@ -113,9 +120,11 @@ struct QueryJoinEvaluator : tyr::datalog::database::incremental::JoinEvaluator
         rhs(rhs_)
     {
     }
+
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context)
     { tyr::datalog::database::incremental::JoinEvaluator::initialize(graph.result(lhs), graph.result(rhs), context.get_workspace().get_database_workspace()); }
+
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace& workspace)
     { tyr::datalog::database::incremental::JoinEvaluator::update(graph.change(lhs).change(), graph.change(rhs).change(), workspace); }
 };
@@ -132,12 +141,14 @@ struct QueryGenericJoinEvaluator : tyr::datalog::database::incremental::GenericJ
         args(std::move(args_))
     {
     }
+
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     {
         tyr::datalog::database::incremental::GenericJoinEvaluator::initialize(
             args | std::views::transform([&](QueryEvaluationIndex arg) { return graph.result(arg); }));
     }
+
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     {
         tyr::datalog::database::incremental::GenericJoinEvaluator::update(
@@ -155,6 +166,7 @@ struct QueryFromDenotationEvaluator : QueryValue
         argument(argument_)
     {
     }
+
     void set_element(DenotationElementView<Category> element, bool present)
     {
         if constexpr (std::same_as<Category, ConceptTag>)
@@ -164,9 +176,11 @@ struct QueryFromDenotationEvaluator : QueryValue
                                                   ygg::encode_value<ygg::uint_t>(element.second.index().value) },
                       present);
     }
+
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     { semantics::detail::insert_denotation_rows<Category>(graph.result(argument), this->clear()); }
+
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     {
         this->delta.clear();
@@ -193,6 +207,7 @@ struct QuerySetCombinationEvaluator : QueryValue
         rhs(rhs_)
     {
     }
+
     template<tyr::datalog::database::RelationViewConcept Rows, std::invocable<decltype(std::declval<const Rows&>().row(0)), bool> Emit>
     void evaluate_rows(EvaluationGraph<Kind>& graph, const Rows& rows, Emit emit)
     {
@@ -208,6 +223,7 @@ struct QuerySetCombinationEvaluator : QueryValue
             emit(row, present);
         }
     }
+
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     {
@@ -221,6 +237,7 @@ struct QuerySetCombinationEvaluator : QueryValue
         if constexpr (std::same_as<Tag, QueryUnionTag>)
             evaluate_rows(graph, graph.result(rhs), emit);
     }
+
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     {
         this->delta.clear();
@@ -246,6 +263,7 @@ struct QuerySelectionEvaluator : QueryValue
         expression(expression_)
     {
     }
+
     template<tyr::datalog::database::RelationViewConcept Rows, std::invocable<decltype(std::declval<const Rows&>().row(0))> Emit>
     void evaluate_rows(const Rows& rows, Emit emit)
     {
@@ -267,12 +285,14 @@ struct QuerySelectionEvaluator : QueryValue
             emit(row);
         }
     }
+
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     {
         auto& output = this->clear();
         evaluate_rows(graph.result(argument), [&output](auto row) { output.insert(row); });
     }
+
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     {
         this->delta.clear();

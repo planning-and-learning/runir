@@ -36,8 +36,11 @@ std::string quote(std::string_view value)
 void add_rule(std::stringstream& out, const std::string& lhs, const std::string& rhs) { out << "    (" << lhs << " (" << rhs << "))\n"; }
 
 std::string category_prefix(runir::kr::dl::ConceptTag) { return "c"; }
+
 std::string category_prefix(runir::kr::dl::RoleTag) { return "r"; }
+
 std::string category_prefix(runir::kr::dl::BooleanTag) { return "b"; }
+
 std::string category_prefix(runir::kr::dl::NumericalTag) { return "n"; }
 
 template<runir::kr::dl::CategoryTag Category>

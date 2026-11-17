@@ -27,6 +27,7 @@ struct RegisterEvaluator
     DenotationState<Category> value;
 
     explicit RegisterEvaluator(RegisterIdentifier<Category> identifier_) : identifier(identifier_) {}
+
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>&, Context& context)
     {
@@ -40,6 +41,7 @@ struct RegisterEvaluator
                 builder.set(slot.value().first.index(), slot.value().second.index(), true);
         }
     }
+
     void update(EvaluationGraph<Kind>&, const Delta& delta, tyr::datalog::database::Workspace&)
     {
         if constexpr (std::same_as<Category, ConceptTag>)

@@ -27,9 +27,13 @@ private:
 
 public:
     auto get_state() const { return self().template member<&urd::record_of<V>::state>().unpack(); }
+
     auto get_mod() const noexcept { return self().template member<&urd::record_of<V>::mod>(); }
+
     auto get_memory_state() const noexcept { return self().template member<&urd::record_of<V>::memory_state>(); }
+
     auto get_registers() const noexcept { return self().template member<&urd::record_of<V>::registers>(); }
+
     auto get_arguments() const noexcept { return self().template member<&urd::record_of<V>::arguments>(); }
 };
 
@@ -42,8 +46,11 @@ private:
 
 public:
     auto get_mod() const noexcept { return self().template member<&urd::record_of<V>::mod>(); }
+
     auto get_return_memory_state() const noexcept { return self().template member<&urd::record_of<V>::return_memory_state>(); }
+
     auto get_registers() const noexcept { return self().template member<&urd::record_of<V>::registers>(); }
+
     auto get_arguments() const noexcept { return self().template member<&urd::record_of<V>::arguments>(); }
 
     auto get_caller() const { return self().template member<&urd::record_of<V>::caller>(); }
@@ -59,9 +66,10 @@ private:
 
 public:
     auto get_program() const noexcept { return self().template member<&urd::record_of<V>::program>(); }
+
     auto get_module_state() const noexcept { return self().template member<&urd::record_of<V>::module_state>(); }
+
     auto get_call_stack() const { return self().template member<&urd::record_of<V>::call_stack>(); }
-    auto get_state() const { return get_module_state().get_state(); }
 };
 
 /// A module state being built: its planning state is not registered yet, so it is read as the builder's view.
@@ -91,7 +99,7 @@ concept ModuleStateViewConcept = tyr::TaskKind<Kind> && requires(const std::remo
 /// Shared semantic access for indexed, borrowed-data and builder views; no registered identity is required.
 template<typename S, typename Kind>
 concept ProgramStateViewConcept = tyr::TaskKind<Kind> && requires(const std::remove_reference_t<S>& state) {
-    { state.get_state() } -> tyr::planning::StateViewConcept<Kind>;
+    { state.get_module_state().get_state() } -> tyr::planning::StateViewConcept<Kind>;
     { state.get_program() } -> std::same_as<ProgramView>;
     { state.get_module_state() } -> ModuleStateViewConcept<Kind>;
     { state.get_call_stack() } -> std::same_as<std::optional<CallStackView<Kind>>>;

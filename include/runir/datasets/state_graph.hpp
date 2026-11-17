@@ -47,6 +47,7 @@ struct StateGraphVertexLabel : urd::compared_by_identity<StateGraphVertexLabel<K
     explicit StateGraphVertexLabel(tyr::planning::PackedStateView<Kind> state_) noexcept : state(std::move(state_)) {}
 
     static constexpr auto cista_members() noexcept { return urd::Members<&StateGraphVertexLabel::state> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&StateGraphVertexLabel::state> {}; }
 };
 
@@ -84,6 +85,7 @@ struct AnnotatedStateGraphVertexLabel : urd::compared_by_identity<AnnotatedState
                             &AnnotatedStateGraphVertexLabel::is_alive,
                             &AnnotatedStateGraphVertexLabel::is_unsolvable> {};
     }
+
     static constexpr auto identifying_members() noexcept
     {
         return urd::Members<&AnnotatedStateGraphVertexLabel::state,
@@ -101,10 +103,13 @@ struct StateGraphEdgeLabel : urd::compared_by_identity<StateGraphEdgeLabel>
     ygg::float_t cost = 0;
 
     StateGraphEdgeLabel() = delete;
+
     StateGraphEdgeLabel(tyr::formalism::planning::ActionRowView action_, ygg::float_t cost_) noexcept : action(action_), cost(cost_) {}
 
     static constexpr auto cista_members() noexcept { return urd::Members<&StateGraphEdgeLabel::action, &StateGraphEdgeLabel::cost> {}; }
+
     [[nodiscard]] auto action_index() const noexcept { return action.index(); }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&StateGraphEdgeLabel::action_index, &StateGraphEdgeLabel::cost> {}; }
 };
 

@@ -72,9 +72,13 @@ public:
     }
 
     [[nodiscard]] runir::kr::dl::ConstructorRepository& repository() const noexcept { return *m_repository; }
+
     [[nodiscard]] runir::kr::dl::Builder& builder() const noexcept { return *m_builder; }
+
     [[nodiscard]] const runir::kr::parser::DiagnosticContext& diagnostics() const noexcept { return *m_diagnostics; }
+
     [[nodiscard]] const ModuleReferences* references() const noexcept { return m_references; }
+
     [[nodiscard]] const LanguageCapabilities& capabilities() const noexcept { return m_capabilities; }
 };
 

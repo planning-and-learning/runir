@@ -42,6 +42,7 @@ struct urd::resolution<runir::kr::ps::ext::BuiltState<Kind>>
     template<typename C>
     static tyr::planning::BuilderStateView<Kind> of(const runir::kr::ps::ext::BuiltState<Kind>& member, const C& context) noexcept
     { return urd::resolve(member.builder, context.get_state_repository()); }
+
     template<typename C>
     static void of(const runir::kr::ps::ext::BuiltState<Kind>&& member, const C& context) = delete;
 };
@@ -53,6 +54,7 @@ struct urd::resolution<runir::kr::ps::ext::BuiltRegisters>
     template<typename C>
     static runir::kr::dl::semantics::BorrowedRegisterValuesView of(const runir::kr::ps::ext::BuiltRegisters& member, const C& context) noexcept
     { return urd::resolve(member.values, context.get_formalism_repository()); }
+
     template<typename C>
     static void of(const runir::kr::ps::ext::BuiltRegisters&& member, const C& context) = delete;
 };

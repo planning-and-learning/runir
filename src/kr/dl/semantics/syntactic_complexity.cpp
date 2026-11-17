@@ -20,9 +20,13 @@ std::size_t of_variant(View view)
 }  // namespace
 
 std::size_t syntactic_complexity(ConstructorView<ConceptTag> view) { return of_variant(view); }
+
 std::size_t syntactic_complexity(ConstructorView<RoleTag> view) { return of_variant(view); }
+
 std::size_t syntactic_complexity(ConstructorView<BooleanTag> view) { return of_variant(view); }
+
 std::size_t syntactic_complexity(ConstructorView<NumericalTag> view) { return of_variant(view); }
+
 std::size_t syntactic_complexity(QueryView<> view) { return of_variant(view); }
 
 }  // namespace runir::kr::dl::semantics

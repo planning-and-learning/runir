@@ -23,16 +23,27 @@ private:
 
 public:
     [[nodiscard]] auto get_symbol() const noexcept { return self().template member<&urd::record_of<V>::symbol>(); }
+
     [[nodiscard]] auto get_concept_registers() const noexcept { return self().template member<&urd::record_of<V>::concept_registers>(); }
+
     [[nodiscard]] auto get_role_registers() const noexcept { return self().template member<&urd::record_of<V>::role_registers>(); }
+
     [[nodiscard]] auto get_concept_features() const noexcept { return self().template member<&urd::record_of<V>::concept_features>(); }
+
     [[nodiscard]] auto get_role_features() const noexcept { return self().template member<&urd::record_of<V>::role_features>(); }
+
     [[nodiscard]] auto get_boolean_features() const noexcept { return self().template member<&urd::record_of<V>::boolean_features>(); }
+
     [[nodiscard]] auto get_numerical_features() const noexcept { return self().template member<&urd::record_of<V>::numerical_features>(); }
+
     [[nodiscard]] auto get_query_features() const noexcept { return self().template member<&urd::record_of<V>::query_features>(); }
+
     [[nodiscard]] auto get_entry_memory_state() const noexcept { return self().template member<&urd::record_of<V>::entry_memory_state>(); }
+
     [[nodiscard]] auto get_memory_states() const noexcept { return self().template member<&urd::record_of<V>::memory_states>(); }
+
     [[nodiscard]] auto get_memory_transitions() const noexcept { return self().template member<&urd::record_of<V>::memory_transitions>(); }
+
     [[nodiscard]] const auto& get_reset_pairs() const noexcept { return self().template member<&urd::record_of<V>::reset_pairs>(); }
 
     // user: one getter templated on the tag over the fields it chooses (next to the record), besides the plain getters.

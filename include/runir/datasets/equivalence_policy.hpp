@@ -38,6 +38,7 @@ struct StateGraphVertexRef : urd::compared_by_identity<StateGraphVertexRef>
     VertexIndex state_vertex_index = 0;
 
     StateGraphVertexRef() = default;
+
     constexpr StateGraphVertexRef(ygg::uint_t state_graph_index_, VertexIndex state_vertex_index_) noexcept :
         state_graph_index(state_graph_index_),
         state_vertex_index(state_vertex_index_)
@@ -46,6 +47,7 @@ struct StateGraphVertexRef : urd::compared_by_identity<StateGraphVertexRef>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&StateGraphVertexRef::state_graph_index, &StateGraphVertexRef::state_vertex_index> {}; }
+
     static constexpr auto identifying_members() noexcept
     { return urd::Members<&StateGraphVertexRef::state_graph_index, &StateGraphVertexRef::state_vertex_index> {}; }
 };
@@ -63,6 +65,7 @@ struct StateGraphVertexCandidate : urd::compared_by_identity<StateGraphVertexCan
     }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&StateGraphVertexCandidate::state_graph_index, &StateGraphVertexCandidate::state> {}; }
+
     static constexpr auto identifying_members() noexcept
     { return urd::Members<&StateGraphVertexCandidate::state_graph_index, &StateGraphVertexCandidate::state> {}; }
 };

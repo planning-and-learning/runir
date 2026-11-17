@@ -77,13 +77,21 @@ public:
         for (const auto binding : denotation)
             m_bindings->push_back(binding);
     }
+
     [[nodiscard]] RuleVariantView get_rule() const noexcept { return m_rule; }
+
     auto& bindings() noexcept { return *m_bindings; }
+
     [[nodiscard]] const auto& bindings() const noexcept { return *m_bindings; }
+
     [[nodiscard]] bool exhausted() const noexcept { return m_position == bindings().size(); }
+
     [[nodiscard]] const auto& current() const { return bindings().at(m_position); }
+
     void advance() noexcept { ++m_position; }
+
     [[nodiscard]] bool has_alternatives() const noexcept { return bindings().size() > 1; }
+
     [[nodiscard]] size_t count() const noexcept { return bindings().size(); }
 };
 

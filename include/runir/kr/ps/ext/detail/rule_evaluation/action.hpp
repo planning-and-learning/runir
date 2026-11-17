@@ -52,12 +52,15 @@ class ActionRuleEvaluator
 
 public:
     using RuleTag = ActionTag;
+
     ActionRuleEvaluator(RuleView<ActionTag> rule, RuleVariantView variant, tyr::formalism::planning::ActionView<tyr::LiftedTag> action) :
         m_rule(rule),
         m_variant(variant),
         m_action(action)
     { m_offer.relation = action.index(); }
+
     auto get_rule() const noexcept { return m_rule; }
+
     auto get_variant() const noexcept { return m_variant; }
 
 private:
@@ -120,6 +123,7 @@ public:
         }
         return true;
     }
+
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,

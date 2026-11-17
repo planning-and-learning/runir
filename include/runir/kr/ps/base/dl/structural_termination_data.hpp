@@ -40,6 +40,7 @@ struct PolicyGraphVertexLabel : urd::compared_by_identity<PolicyGraphVertexLabel
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&PolicyGraphVertexLabel::boolean_values, &PolicyGraphVertexLabel::numerical_values> {}; }
+
     static constexpr auto identifying_members() noexcept
     { return urd::Members<&PolicyGraphVertexLabel::boolean_values, &PolicyGraphVertexLabel::numerical_values> {}; }
 };

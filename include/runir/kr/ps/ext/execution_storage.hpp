@@ -55,12 +55,18 @@ concept ExecutionStorageConcept = requires(Storage& storage,
     { const_storage.view(stored) } -> std::same_as<StorageStateView<Storage>>;
     { storage.retain(state) } -> std::same_as<StorageStoredState<Storage>>;
     { storage.registers(registers) } -> runir::kr::dl::semantics::RegisterValuesViewConcept;
-    { storage.store(state.get_state(), module_, memory, storage.registers(registers), arguments, caller) } -> std::same_as<StorageStoredState<Storage>>;
-    { storage.store(state.get_state(), module_, memory, saved_registers, arguments, caller) } -> std::same_as<StorageStoredState<Storage>>;
+    {
+        storage.store(state.get_module_state().get_state(), module_, memory, storage.registers(registers), arguments, caller)
+    } -> std::same_as<StorageStoredState<Storage>>;
+    { storage.store(state.get_module_state().get_state(), module_, memory, saved_registers, arguments, caller) } -> std::same_as<StorageStoredState<Storage>>;
     { storage.save_caller(state, memory) } -> std::same_as<CallStackView<Kind>>;
     { storage.materialize(state) } -> std::same_as<ProgramStateView<Kind>>;
-    { storage.successor(state.get_state(), binding) } -> std::same_as<tyr::planning::Node<Kind, decltype(state.get_state())>>;
-    { storage.successor(state.get_state(), borrowed_binding) } -> std::same_as<tyr::planning::Node<Kind, decltype(state.get_state())>>;
+    {
+        storage.successor(state.get_module_state().get_state(), binding)
+    } -> std::same_as<tyr::planning::Node<Kind, decltype(state.get_module_state().get_state())>>;
+    {
+        storage.successor(state.get_module_state().get_state(), borrowed_binding)
+    } -> std::same_as<tyr::planning::Node<Kind, decltype(state.get_module_state().get_state())>>;
 };
 
 /// Emission consumes this storage's source view; matching may inspect other program-state views.
@@ -84,6 +90,7 @@ public:
     { return insert(*m_context->dl_denotation_repository, data).first; }
 
     [[nodiscard]] StateView view(StoredState state) const noexcept { return state; }
+
     [[nodiscard]] StoredState retain(StateView state) const noexcept { return state; }
 
     StoredState store(tyr::planning::StateView<Kind> planning_state,
@@ -151,17 +158,20 @@ public:
     TransientExecutionStorage(runir::kr::TaskContextPtr<Kind> context, ProgramView program) : m_context(std::move(context)), m_program(program) {}
 
     [[nodiscard]] StateView view(const StoredState& state) const noexcept { return urd::resolve(*state, *m_context->execution_repository); }
+
     StoredState retain(StateView state)
     {
-        return store(state.get_state(),
+        return store(state.get_module_state().get_state(),
                      state.get_module_state().get_mod(),
                      state.get_module_state().get_memory_state(),
                      state.get_module_state().get_registers(),
                      state.get_module_state().get_arguments(),
                      state.get_call_stack());
     }
+
     runir::kr::dl::semantics::BorrowedRegisterValuesView registers(const urd::data<runir::kr::dl::semantics::RegisterValues>& data)
     { return urd::resolve(data, *m_context->search_context->task->get_repository()); }
+
     template<tyr::planning::StateViewConcept<Kind> S, runir::kr::dl::semantics::RegisterValuesViewConcept R>
     StoredState store(const S& planning_state,
                       ModuleView module_,
@@ -208,7 +218,7 @@ public:
     ProgramStateView<Kind> materialize(BuilderProgramStateView<Kind> state)
     {
         auto& search = *m_context->search_context;
-        const auto planning = search.state_repository->register_extended_state(state.get_state());
+        const auto planning = search.state_repository->register_extended_state(state.get_module_state().get_state());
         auto& denotations = *m_context->dl_denotation_repository;
         auto& dl_builder = m_context->dl_builder;
         const auto module_ = state.get_module_state();

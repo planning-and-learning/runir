@@ -81,8 +81,8 @@ void check_state_delta(tyr::planning::StateView<Kind> source, tyr::planning::Sta
     source_builder.assign(source);
     auto target_builder = urd::builder<tyr::planning::State<Kind>>();
     target_builder.assign(target);
-    const auto borrowed_source = urd::resolve(source_builder, source.get_state_repository());
-    const auto borrowed_target = urd::resolve(target_builder, target.get_state_repository());
+    const auto borrowed_source = urd::resolve(source_builder, source.context());
+    const auto borrowed_target = urd::resolve(target_builder, target.context());
     delta.template assign<Kind>(borrowed_source, borrowed_target);
     EXPECT_FALSE(delta.empty());
     const auto expect_atoms = [&](const auto& before, const auto& after)
@@ -113,7 +113,8 @@ void check_state_delta(tyr::planning::StateView<Kind> source, tyr::planning::Sta
     delta.template assign<Kind>(target, source);
     expect_atoms(target, source);
     EXPECT_EQ(capacities(), reserved);
-    const auto other_repository = std::make_shared<tyr::planning::StateRepository<Kind>>(std::make_shared<tyr::planning::Task<Kind>>(source.get_task()));
+    const auto other_repository =
+        std::make_shared<tyr::planning::StateRepository<Kind>>(std::make_shared<tyr::planning::Task<Kind>>(*source.context().get_task()));
     EXPECT_THROW(delta.template assign<Kind>(source, urd::resolve(source_builder, *other_repository)), std::invalid_argument);
     expect_atoms(target, source);
     delta.template assign<Kind>(source, source);
@@ -245,6 +246,7 @@ void check_delta()
 }  // namespace
 
 TEST(RunirKrDlSemanticsDelta, GroundInputsAreReversibleAndReuseStorage) { check_delta<tyr::GroundTag>(); }
+
 TEST(RunirKrDlSemanticsDelta, LiftedInputsAreReversibleAndReuseStorage) { check_delta<tyr::LiftedTag>(); }
 
 }  // namespace runir::tests

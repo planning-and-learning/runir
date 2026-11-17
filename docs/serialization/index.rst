@@ -127,7 +127,7 @@ Or represent a Tyr action binding with its name and references to objects:
    register_table(dictionaries, fp.Object, "objects", "o")
    register_table(
        dictionaries,
-       fp.ActionRow,
+       fp.RowActionLifted,
        "actions",
        "a",
        project=lambda binding: {

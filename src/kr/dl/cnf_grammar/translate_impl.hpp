@@ -61,8 +61,11 @@ private:
     TranslationContext* m_context;
 
     [[nodiscard]] auto& repository() const noexcept { return m_context->repository; }
+
     [[nodiscard]] auto& data() const noexcept { return *m_context->data; }
+
     [[nodiscard]] auto& non_terminal_names() const noexcept { return m_context->non_terminal_names; }
+
     [[nodiscard]] auto& next_fresh_index() const noexcept { return m_context->next_fresh_index; }
 
     template<typename T, typename Initialize>
@@ -116,6 +119,7 @@ private:
     {
         return intern_concrete<T>([&](auto& data) { urd::store(data.predicate, predicate); });
     }
+
     template<typename T, typename Predicate>
     auto intern_predicate(Predicate predicate, bool polarity)
     {

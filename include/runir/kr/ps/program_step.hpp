@@ -73,8 +73,11 @@ struct ProgramStep
     }
 
     [[nodiscard]] std::string_view get_status_name() const { return to_string(status); }
+
     [[nodiscard]] Target get_target() const noexcept { return target; }
+
     [[nodiscard]] const auto& get_state_transition() const noexcept { return state_transition; }
+
     [[nodiscard]] const auto& get_rule() const noexcept { return rule; }
 };
 

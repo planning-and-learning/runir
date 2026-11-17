@@ -31,6 +31,7 @@ struct data<runir::kr::dl::semantics::RegisterValues>
     urd::flat_vector<urd::flat_optional<urd::flat_pair<urd::index<tyr::formalism::Object>, urd::index<tyr::formalism::Object>>>> role_values;
 
     data() = default;
+
     data(urd::flat_vector<urd::flat_optional<urd::index<tyr::formalism::Object>>> concept_values_,
          urd::flat_vector<urd::flat_optional<urd::flat_pair<urd::index<tyr::formalism::Object>, urd::index<tyr::formalism::Object>>>> role_values_) :
         index(),
@@ -38,6 +39,7 @@ struct data<runir::kr::dl::semantics::RegisterValues>
         role_values(std::move(role_values_))
     {
     }
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -46,7 +48,9 @@ struct data<runir::kr::dl::semantics::RegisterValues>
 
     static constexpr auto fields() noexcept
     { return urd::Fields<urd::field<"concept_values", &data::concept_values>, urd::field<"role_values", &data::role_values>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::concept_values, &data::role_values> {}; }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::concept_values, &data::role_values> {}; }
 };
 

@@ -52,8 +52,10 @@ public:
     }
 
     [[nodiscard]] auto get_rule() const noexcept { return m_rule; }
+
     /// The aggregate groups rules by their resolved action before generating candidates.
     [[nodiscard]] auto get_action() const noexcept { return m_action; }
+
     /// Skip disabled rules before action enumeration; matches() also checks this for direct callers.
     template<runir::kr::dl::semantics::EvaluationContextConcept<Kind> Context>
     bool is_applicable(Context& context) const

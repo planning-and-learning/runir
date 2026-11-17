@@ -22,7 +22,9 @@ public:
     using FamilyType = Family;
 
     EvaluationTransitionContext(SourceContext source, TargetContext target) : m_source(std::move(source)), m_target(std::move(target)) {}
+
     auto& get_source_context() noexcept { return m_source; }
+
     auto& get_target_context() noexcept { return m_target; }
 };
 
@@ -82,8 +84,11 @@ public:
     }
 
     [[nodiscard]] const auto& get_source_state() const noexcept { return m_source_context.get_state(); }
+
     [[nodiscard]] const auto& get_target_state() const noexcept { return m_target_context.get_state(); }
+
     auto& get_source_context() noexcept { return m_source_context; }
+
     auto& get_target_context() noexcept { return m_target_context; }
 };
 

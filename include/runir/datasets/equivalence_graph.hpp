@@ -44,6 +44,7 @@ struct EquivalenceVertexLabel : urd::compared_by_identity<EquivalenceVertexLabel
     VertexIndex state_vertex_index = 0;
 
     EquivalenceVertexLabel() = default;
+
     constexpr EquivalenceVertexLabel(ygg::uint_t state_graph_index_, VertexIndex state_vertex_index_) noexcept :
         state_graph_index(state_graph_index_),
         state_vertex_index(state_vertex_index_)
@@ -52,6 +53,7 @@ struct EquivalenceVertexLabel : urd::compared_by_identity<EquivalenceVertexLabel
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&EquivalenceVertexLabel::state_graph_index, &EquivalenceVertexLabel::state_vertex_index> {}; }
+
     static constexpr auto identifying_members() noexcept
     { return urd::Members<&EquivalenceVertexLabel::state_graph_index, &EquivalenceVertexLabel::state_vertex_index> {}; }
 };
@@ -67,6 +69,7 @@ struct AnnotatedEquivalenceVertexLabel : urd::compared_by_identity<AnnotatedEqui
     bool is_unsolvable = false;
 
     AnnotatedEquivalenceVertexLabel() = default;
+
     AnnotatedEquivalenceVertexLabel(ygg::uint_t state_graph_index_,
                                     VertexIndex state_vertex_index_,
                                     ygg::float_t goal_distance_,
@@ -113,6 +116,7 @@ struct EquivalenceEdgeLabel : urd::compared_by_identity<EquivalenceEdgeLabel>
     EdgeIndex state_edge_index = 0;
 
     EquivalenceEdgeLabel() = default;
+
     constexpr EquivalenceEdgeLabel(ygg::uint_t state_graph_index_, EdgeIndex state_edge_index_) noexcept :
         state_graph_index(state_graph_index_),
         state_edge_index(state_edge_index_)
@@ -121,6 +125,7 @@ struct EquivalenceEdgeLabel : urd::compared_by_identity<EquivalenceEdgeLabel>
 
     static constexpr auto cista_members() noexcept
     { return urd::Members<&EquivalenceEdgeLabel::state_graph_index, &EquivalenceEdgeLabel::state_edge_index> {}; }
+
     static constexpr auto identifying_members() noexcept
     { return urd::Members<&EquivalenceEdgeLabel::state_graph_index, &EquivalenceEdgeLabel::state_edge_index> {}; }
 };

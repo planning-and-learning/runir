@@ -43,6 +43,7 @@ struct SketchProofVertexLabel : urd::compared_by_identity<SketchProofVertexLabel
                             &SketchProofVertexLabel::is_alive,
                             &SketchProofVertexLabel::is_unsolvable> {};
     }
+
     static constexpr auto identifying_members() noexcept
     {
         return urd::Members<&SketchProofVertexLabel::state,
@@ -61,6 +62,7 @@ struct SketchProofEdgeLabel : urd::compared_by_identity<SketchProofEdgeLabel>
     SketchProofEdgeLabel(tyr::formalism::planning::ActionRowView action_, RuleView rule_) noexcept : action(action_), rule(rule_) {}
 
     static constexpr auto cista_members() noexcept { return urd::Members<&SketchProofEdgeLabel::action, &SketchProofEdgeLabel::rule> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&SketchProofEdgeLabel::action, &SketchProofEdgeLabel::rule> {}; }
 };
 

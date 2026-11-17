@@ -21,11 +21,13 @@ struct NonemptyEvaluator
     DenotationState<BooleanTag> value;
 
     explicit NonemptyEvaluator(std::variant<EvaluationIndex<ConceptTag>, EvaluationIndex<RoleTag>, QueryEvaluationIndex> child_) : child(child_) {}
+
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     {
         value.set(std::visit([&](auto index) { return graph.nonempty(index); }, child));
     }
+
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     {
         value.set(std::visit(

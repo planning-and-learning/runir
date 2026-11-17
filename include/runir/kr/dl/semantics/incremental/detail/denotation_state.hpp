@@ -30,8 +30,11 @@ public:
     }
 
     void clear_delta() noexcept { m_delta.clear(); }
+
     [[nodiscard]] const auto& get_builder() const noexcept { return m_result; }
+
     [[nodiscard]] const auto& get_delta() const noexcept { return m_delta; }
+
     [[nodiscard]] size_t size() const noexcept { return m_result.count(); }
 
     /// Copy a complete result while retaining storage and clearing previous changes.
@@ -120,17 +123,25 @@ public:
         m_result.initialize(value);
         clear_delta();
     }
+
     void clear_delta() noexcept { m_changed = false; }
+
     [[nodiscard]] const auto& get_builder() const noexcept { return m_result; }
+
     [[nodiscard]] auto get_value() const noexcept { return m_result.get(); }
+
     [[nodiscard]] bool changed() const noexcept { return m_changed; }
-    void assign(DenotationView<Category> source) { initialize(source.value()); }
+
+    void assign(DenotationView<Category> source) { initialize(source.get_value()); }
+
     void assign(BorrowedDenotationView<Category> source) { initialize(source.value()); }
+
     void set(DenotationElementView<Category> value) noexcept
     {
         m_changed = m_result.get() != value;
         m_result.get() = value;
     }
+
     [[nodiscard]] BorrowedDenotationView<Category> get_result(const tyr::formalism::planning::Repository& repository) const noexcept
     { return urd::resolve(m_result, repository); }
 };

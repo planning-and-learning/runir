@@ -15,16 +15,20 @@ template<ConceptOrRoleTag Category>
 void canonicalize(urd::data<QueryProjection<Category>>&) noexcept
 {
 }
+
 template<ConceptOrRoleTag Category>
 bool is_canonical(const urd::data<QueryProjection<Category>>&) noexcept
 { return true; }
 
 inline void canonicalize(urd::data<QueryColumn>&) noexcept {}
+
 inline bool is_canonical(const urd::data<QueryColumn>&) noexcept { return true; }
+
 template<typename Tag>
 void canonicalize(urd::data<Query<Tag>>&) noexcept
 {
 }
+
 template<typename Tag>
 bool is_canonical(const urd::data<Query<Tag>>&) noexcept
 { return true; }

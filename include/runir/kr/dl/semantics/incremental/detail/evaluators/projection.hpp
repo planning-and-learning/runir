@@ -29,6 +29,7 @@ struct ProjectionEvaluator
         operation(layer, plan)
     {
     }
+
     static void set_row(urd::builder<Denotation<Category>>& builder, const auto& row, bool present)
     {
         using ObjectIndex = urd::index<tyr::formalism::Object>;
@@ -37,6 +38,7 @@ struct ProjectionEvaluator
         else
             builder.set(ObjectIndex(ygg::decode_value<ygg::uint_t>(row.value(0))), ObjectIndex(ygg::decode_value<ygg::uint_t>(row.value(1))), present);
     }
+
     static void set_row(DenotationState<Category>& state, const auto& row, bool present, const tyr::formalism::planning::Repository& repository)
     {
         using ObjectIndex = urd::index<tyr::formalism::Object>;
@@ -48,6 +50,7 @@ struct ProjectionEvaluator
                       present,
                       repository);
     }
+
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context)
     {
@@ -57,6 +60,7 @@ struct ProjectionEvaluator
         for (size_t i = 0; i < rows.size(); ++i)
             set_row(builder, rows.row(i), true);
     }
+
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace& workspace)
     {
         operation.update(graph.change(child).change(), workspace);

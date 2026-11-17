@@ -24,13 +24,16 @@ class CallRuleEvaluator
 
 public:
     using RuleTag = CallTag;
+
     CallRuleEvaluator(RuleView<CallTag> rule, RuleVariantView variant, ProgramView program) :
         m_rule(rule),
         m_variant(variant),
         m_callee(program.find_module(rule.get_callee()))
     {
     }
+
     [[nodiscard]] auto get_rule() const noexcept { return m_rule; }
+
     [[nodiscard]] auto get_variant() const noexcept { return m_variant; }
 
 private:
@@ -41,6 +44,7 @@ private:
                && arguments.template arguments<runir::kr::dl::BooleanTag>().size() == callee.template get_arguments<runir::kr::dl::BooleanTag>().size()
                && arguments.template arguments<runir::kr::dl::NumericalTag>().size() == callee.template get_arguments<runir::kr::dl::NumericalTag>().size();
     }
+
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,

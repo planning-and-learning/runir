@@ -260,7 +260,7 @@ def test_module_state_and_suspended_caller_preserve_fields_and_dependencies(kind
     assert isinstance(module_state, ext.ModuleStateGround if kind == "ground" else ext.ModuleStateLifted)
     assert sys.getrefcount(loaded) > references
     assert len({module_state, loaded.get_module_state()}) == 1
-    assert _same_state(module_state.get_state().unpack(), loaded.get_state())
+    assert _same_state(module_state.get_state().unpack(), loaded.get_module_state().get_state().unpack())
     assert module_state.get_memory_state().get_name() == "m2"
     caller = loaded.get_call_stack()
     assert isinstance(caller, ext.ground.CallStack if kind == "ground" else ext.lifted.CallStack)
@@ -328,7 +328,9 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
     child = collect_steps(expander, initial_program_state(expander, initial_node(task_context).get_state()))[0].target
     other_concept = collect_steps(expander, child)[1].target
     other_frame = collect_steps(expander, other_concept)[0].target
-    assert _same_state(other_frame.get_state(), loaded.get_state())
+    assert _same_state(
+        other_frame.get_module_state().get_state().unpack(), loaded.get_module_state().get_state().unpack()
+    )
     environment.reset_source()
     other_dl_context = make_dl_context(environment, other_frame)
     assert ext.evaluate(booleans["selected_goal_ball"], other_dl_context).get_value() is True
@@ -459,7 +461,9 @@ def test_more_than_four_registers_and_interned_binding_views(kind: Literal["grou
     assert len({argument_view, loaded.get_module_state().get_arguments()}) == 1
     assert len({register_view, loaded.get_module_state().get_registers()}) == 1
     storage = semantics.EvaluationStorage(repository)
-    context = _state_context(loaded.get_state(), task_context.dl_builder, storage, argument_view, register_view)
+    context = _state_context(
+        loaded.get_module_state().get_state().unpack(), task_context.dl_builder, storage, argument_view, register_view
+    )
     assert ext.evaluate(features["argument_count"], context).get_value() == 2
     assert ext.evaluate(features["concept_register_size"], context).get_value() == 1
     assert ext.evaluate(features["role_register_size"], context).get_value() == 1
@@ -470,7 +474,13 @@ def test_more_than_four_registers_and_interned_binding_views(kind: Literal["grou
     storage.reset_dynamic()
     assert ext.evaluate(features["concept_register_size"], context).get_value() == 1
     assert ext.evaluate(features["role_register_size"], context).get_value() == 1
-    context = _state_context(loaded.get_state(), task_context.dl_builder, storage, argument_view, empty_register_view)
+    context = _state_context(
+        loaded.get_module_state().get_state().unpack(),
+        task_context.dl_builder,
+        storage,
+        argument_view,
+        empty_register_view,
+    )
     storage.reset_dynamic()
     assert ext.evaluate(features["concept_register_size"], context).get_value() == 0
     assert ext.evaluate(features["role_register_size"], context).get_value() == 0
@@ -543,7 +553,9 @@ def test_choice_callbacks_filter_effects_and_keep_independent_cursors(kind: Lite
         assert len(role_steps) == 2
         assert step.target.get_module_state().get_registers().get_role_values()[0] is None
         for role_step in role_steps:
-            assert _same_state(role_step.target.get_state(), child.get_state())
+            assert _same_state(
+                role_step.target.get_module_state().get_state().unpack(), child.get_module_state().get_state().unpack()
+            )
             assert role_step.target.get_module_state().get_registers().get_role_values()[0] is not None
 
 

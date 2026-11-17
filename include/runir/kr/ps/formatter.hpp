@@ -275,6 +275,7 @@ template<runir::kr::ps::ProgramFamilyTag Family, typename C>
 struct fmt::formatter<urd::index_view<runir::kr::ps::MemoryState<Family>, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
+
     auto format(auto view, format_context& context) const { return fmt::format_to(context.out(), "{}", view.get_name()); }
 };
 
@@ -282,6 +283,7 @@ template<runir::kr::ps::ProgramFamilyTag Family, typename C>
 struct fmt::formatter<urd::index_view<runir::kr::ps::ModuleSymbol<Family>, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
+
     auto format(auto view, format_context& context) const { return fmt::format_to(context.out(), "{}", view.get_name()); }
 };
 
@@ -295,6 +297,7 @@ template<runir::kr::ps::ProgramFamilyTag Family>
 struct fmt::formatter<runir::kr::ps::ProgramProofEdgeLabel<Family>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
+
     auto format(const auto& label, format_context& context) const
     {
         if (label.rule)

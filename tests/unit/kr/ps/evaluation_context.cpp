@@ -52,6 +52,7 @@ struct InvalidTargetPolicy : kr::dl::semantics::FullEvaluationPolicy<tyr::Ground
     using FullEvaluationPolicy::FullEvaluationPolicy;
     int make_target_context(kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>);
 };
+
 static_assert(!kr::dl::semantics::EvaluationPolicyConcept<InvalidTargetPolicy, tyr::GroundTag>);
 
 template<typename ConceptResult, typename RoleResult>
@@ -81,6 +82,7 @@ constexpr bool denotation_views()
            && kr::dl::semantics::DenotationViewConcept<const kr::dl::semantics::BorrowedDenotationView<Category>&, Category>
            && !kr::dl::semantics::DenotationViewConcept<int, Category>;
 }
+
 static_assert(denotation_views<kr::dl::BooleanTag>());
 static_assert(denotation_views<kr::dl::NumericalTag>());
 static_assert(denotation_views<kr::dl::ConceptTag>());
@@ -95,6 +97,7 @@ constexpr bool evaluation_policies_accept_borrowed_states()
            && kr::dl::semantics::EvaluationContextConcept<Inputs, Kind>
            && kr::dl::semantics::EvaluationContextConcept<kr::dl::semantics::incremental::StateEvaluation<Kind, Inputs>, Kind>;
 }
+
 static_assert(evaluation_policies_accept_borrowed_states<kr::BaseFamilyTag, tyr::GroundTag>());
 static_assert(evaluation_policies_accept_borrowed_states<kr::BaseFamilyTag, tyr::LiftedTag>());
 static_assert(evaluation_policies_accept_borrowed_states<kr::ExtFamilyTag, tyr::GroundTag>());
@@ -120,9 +123,12 @@ struct ResourceContext
     using FamilyType = Family;
 
     kr::ps::dl::TransitionEvaluationContext<Family, tyr::GroundTag>* transition;
+
     auto& get_source_context() { return transition->get_source_context(); }
+
     auto& get_target_context() { return transition->get_target_context(); }
 };
+
 using IcpResourceContext = ResourceContext<kr::IcpFamilyTag>;
 using BaseResourceContext = ResourceContext<kr::BaseFamilyTag>;
 

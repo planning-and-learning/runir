@@ -178,7 +178,7 @@ def object_types(state: lifted.State) -> dict[str, frozenset[str]]:
     """Each object's static unary predicates, which include its domain types."""
     types: dict[str, set[str]] = {}
     for atom in state.static_atoms():
-        objects = atom.get_objects()
+        objects = atom.get_row().get_objects()
         if len(objects) == 1:
             types.setdefault(str(objects[0].get_name()), set()).add(str(atom.get_predicate().get_name()))
     return {name: frozenset(values) for name, values in types.items()}
@@ -188,7 +188,7 @@ def object_atoms(state: lifted.State, name: str) -> list[tuple[str, tuple[str, .
     """The static, fluent and derived atoms of `state` that mention the object `name`, with `*` for it."""
     atoms: list[tuple[str, tuple[str, ...]]] = []
     for atom in (*state.static_atoms(), *state.fluent_atoms(), *state.derived_atoms()):
-        objects = tuple(str(item.get_name()) for item in atom.get_objects())
+        objects = tuple(str(item.get_name()) for item in atom.get_row().get_objects())
         if name in objects:
             atoms.append(
                 (str(atom.get_predicate().get_name()), tuple("*" if item == name else item for item in objects))

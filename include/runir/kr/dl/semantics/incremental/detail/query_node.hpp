@@ -22,6 +22,7 @@ class QueryNode
 {
 public:
     QueryNode(QueryView<> expression, GraphBuilder<Kind>& graph);
+
     /// A concept or role lifted into a relation with the given columns; it has no query expression.
     template<ConceptOrRoleTag Category>
     QueryNode(const ygg::FreeRelationRepository& layer, EvaluationIndex<Category> argument, std::span<const ygg::ColumnLayout> columns) :
@@ -29,7 +30,9 @@ public:
         m_operation(QueryFromDenotationEvaluator<Kind, Category>(layer, argument, columns))
     {
     }
+
     [[nodiscard]] std::optional<QueryView<>> get_expression() const noexcept { return m_expression; }
+
     /// Whether this node lifts argument into a relation with exactly these columns.
     template<ConceptOrRoleTag Category>
     bool lifts(EvaluationIndex<Category> argument, std::span<const ygg::ColumnLayout> columns) const
@@ -37,10 +40,13 @@ public:
         const auto* lifted = std::get_if<QueryFromDenotationEvaluator<Kind, Category>>(&m_operation);
         return !m_expression && lifted && lifted->argument == argument && std::ranges::equal(lifted->result.columns(), columns);
     }
+
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context);
     void update(EvaluationGraph<Kind>& graph, const Delta& delta, tyr::datalog::database::Workspace& workspace);
+
     [[nodiscard]] std::span<const ygg::uint_t> get_dependencies() const noexcept { return m_dependencies; }
+
     [[nodiscard]] ygg::FreeRelationBuilderView get_result() const;
     [[nodiscard]] const tyr::datalog::database::incremental::Delta& get_delta() const;
 

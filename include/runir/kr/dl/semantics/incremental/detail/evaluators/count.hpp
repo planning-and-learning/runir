@@ -22,11 +22,13 @@ struct CountEvaluator
     DenotationState<NumericalTag> value;
 
     explicit CountEvaluator(std::variant<EvaluationIndex<ConceptTag>, EvaluationIndex<RoleTag>, QueryEvaluationIndex> child_) : child(child_) {}
+
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     {
         value.set(ygg::to_uint_t(std::visit([&](auto index) { return graph.cardinality(index); }, child)));
     }
+
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
     {
         value.set(std::visit(

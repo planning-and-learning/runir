@@ -143,15 +143,19 @@ lower(const tyr::datalog::database::QueryPlan& plan, std::span<const QueryView<>
 template<>
 RecordView<Constructor<ConceptTag>> QueryOptimizer::optimize(RecordView<Constructor<ConceptTag>> view)
 { return memoized(view); }
+
 template<>
 RecordView<Constructor<RoleTag>> QueryOptimizer::optimize(RecordView<Constructor<RoleTag>> view)
 { return memoized(view); }
+
 template<>
 RecordView<Constructor<BooleanTag>> QueryOptimizer::optimize(RecordView<Constructor<BooleanTag>> view)
 { return memoized(view); }
+
 template<>
 RecordView<Constructor<NumericalTag>> QueryOptimizer::optimize(RecordView<Constructor<NumericalTag>> view)
 { return memoized(view); }
+
 template<>
 RecordView<Query<>> QueryOptimizer::optimize(RecordView<Query<>> view)
 { return optimize_root(view, std::nullopt); }
@@ -162,24 +166,28 @@ void QueryStatisticsCollector::collect(RecordView<Constructor<ConceptTag>> view)
     if (first_visit(view))
         collect_children(view);
 }
+
 template<>
 void QueryStatisticsCollector::collect(RecordView<Constructor<RoleTag>> view)
 {
     if (first_visit(view))
         collect_children(view);
 }
+
 template<>
 void QueryStatisticsCollector::collect(RecordView<Constructor<BooleanTag>> view)
 {
     if (first_visit(view))
         collect_children(view);
 }
+
 template<>
 void QueryStatisticsCollector::collect(RecordView<Constructor<NumericalTag>> view)
 {
     if (first_visit(view))
         collect_children(view);
 }
+
 template<>
 void QueryStatisticsCollector::collect(RecordView<Query<>> view)
 {

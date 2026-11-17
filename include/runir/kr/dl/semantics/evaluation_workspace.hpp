@@ -49,6 +49,7 @@ private:
         std::weak_ptr<const tyr::formalism::planning::Repository> formalism;  ///< Its control block identifies it while kept.
         Feature feature;
     };
+
     /// The features of a constructor, by its repository's address and layer and its index, as positions in their sequence.
     using FeaturePositions = urd::Store<urd::map<std::tuple<std::uintptr_t, size_t, ygg::uint_t>, size_t>, urd::multi>;
     /// The layer the features' input snapshots come from (ygg::FreeRelationRepository::get_relation_builder); declared
@@ -98,9 +99,13 @@ public:
                 return workspace;
         return m_generic_join_workspaces.emplace_back(plan);
     }
+
     auto& get_database_workspace() noexcept { return m_database_workspace; }
+
     auto& get_values() noexcept { return m_values; }
+
     [[nodiscard]] const ygg::FreeRelationRepository& get_layer() const noexcept { return *m_layer; }
+
     /// The feature of a distance constructor of a constructor repository over a formalism repository, made by
     /// make() at first use. References stay valid while this workspace lives.
     template<std::invocable Make>
@@ -117,6 +122,7 @@ public:
                                                  constructor,
                                                  std::forward<Make>(make));
     }
+
     /// The feature of a must-pass query, like get_distance_feature().
     template<std::invocable Make>
         requires std::same_as<std::invoke_result_t<Make&>, MustPassFeature>

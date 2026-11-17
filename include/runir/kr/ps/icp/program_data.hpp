@@ -18,7 +18,9 @@ struct data<runir::kr::ps::icp::Program>
     urd::index<runir::kr::ps::icp::Module> entry_mod;
 
     data() = default;
+
     data(urd::index<runir::kr::ps::icp::Module> entry_mod_) : index(), entry_mod(entry_mod_) {}
+
     static constexpr bool copyable() noexcept
     {
         static_assert(std::is_trivially_copyable_v<data>, "a copyable record is trivially copyable");
@@ -26,7 +28,9 @@ struct data<runir::kr::ps::icp::Program>
     }
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"entry_mod", &data::entry_mod>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::entry_mod> {}; }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::entry_mod> {}; }
 };
 

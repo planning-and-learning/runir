@@ -24,6 +24,7 @@ struct data<runir::kr::ps::base::Sketch>
     urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>> rules;
 
     data() = default;
+
     data(urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>> boolean_features_,
          urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>> numerical_features_,
          urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>> rules_) :
@@ -33,6 +34,7 @@ struct data<runir::kr::ps::base::Sketch>
         rules(std::move(rules_))
     {
     }
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -45,7 +47,9 @@ struct data<runir::kr::ps::base::Sketch>
                            urd::field<"numerical_features", &data::numerical_features>,
                            urd::field<"rules", &data::rules>> {};
     }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::boolean_features, &data::numerical_features, &data::rules> {}; }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::boolean_features, &data::numerical_features, &data::rules> {}; }
 };
 

@@ -123,7 +123,6 @@ concept ProgramStateContract =
            data.module_state;
            view.index();
            view.get_program();
-           view.get_state();
            view.get_call_stack();
            view.get_module_state();
        };

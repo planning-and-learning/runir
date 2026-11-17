@@ -190,6 +190,7 @@ template<typename C>
 struct fmt::formatter<urd::index_view<runir::kr::ps::icp::Histories, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
+
     auto format(const auto& value, format_context& context) const { return fmt::format_to(context.out(), "Histories(concepts={})", value.get_concepts()); }
 };
 
@@ -197,6 +198,7 @@ template<tyr::TaskKind Kind, typename C>
 struct fmt::formatter<urd::index_view<runir::kr::ps::icp::ProgramState<Kind>, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
+
     auto format(const auto& value, format_context& context) const
     {
         return fmt::format_to(context.out(),
@@ -213,6 +215,7 @@ template<tyr::TaskKind Kind>
 struct fmt::formatter<runir::kr::ps::ProgramProofVertexLabel<runir::kr::IcpFamilyTag, Kind>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
+
     auto format(const auto& label, format_context& context) const
     {
         return fmt::format_to(context.out(),

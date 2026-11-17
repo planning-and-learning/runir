@@ -31,15 +31,19 @@ void describe_variant(DictionaryWriter<View>& ar)
 }  // namespace
 
 void describe_fields(DictionaryWriter<runir::kr::dl::QueryView<>>& ar, std::type_identity<runir::kr::dl::QueryView<>> /*type*/) { describe_variant(ar); }
+
 void describe_fields(DictionaryWriter<runir::kr::dl::ConstructorView<runir::kr::dl::ConceptTag>>& ar,
                      std::type_identity<runir::kr::dl::ConstructorView<runir::kr::dl::ConceptTag>> /*type*/)
 { describe_variant(ar); }
+
 void describe_fields(DictionaryWriter<runir::kr::dl::ConstructorView<runir::kr::dl::RoleTag>>& ar,
                      std::type_identity<runir::kr::dl::ConstructorView<runir::kr::dl::RoleTag>> /*type*/)
 { describe_variant(ar); }
+
 void describe_fields(DictionaryWriter<runir::kr::dl::ConstructorView<runir::kr::dl::BooleanTag>>& ar,
                      std::type_identity<runir::kr::dl::ConstructorView<runir::kr::dl::BooleanTag>> /*type*/)
 { describe_variant(ar); }
+
 void describe_fields(DictionaryWriter<runir::kr::dl::ConstructorView<runir::kr::dl::NumericalTag>>& ar,
                      std::type_identity<runir::kr::dl::ConstructorView<runir::kr::dl::NumericalTag>> /*type*/)
 { describe_variant(ar); }

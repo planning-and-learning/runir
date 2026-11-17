@@ -30,6 +30,7 @@
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/config.hpp>
+#include <yggdrasil/formalism/row_view.hpp>
 #include <yggdrasil/formalism/symbol_context_instantiations.hpp>
 
 namespace runir::datasets
@@ -77,7 +78,7 @@ public:
     template<PredicateContext Context, tyr::formalism::FactKind T>
     void add_atom(tyr::formalism::planning::AtomView<::tyr::GroundTag, T> atom)
     {
-        const auto objects = atom.get_objects();
+        const auto objects = atom.get_row().get_objects();
         auto vertices = VertexIndexList {};
         vertices.reserve(objects.size());
 
@@ -121,7 +122,7 @@ public:
 template<tyr::TaskKind Kind>
 void add_objects(tyr::planning::StateView<Kind> state, ObjectGraphConstructionContext& context)
 {
-    const auto task = state.get_state_repository().get_task()->get_task();
+    const auto task = state.context().get_task()->get_task();
 
     for (auto object : task.get_domain().get_constants())
         context.add_object(object);
@@ -144,7 +145,7 @@ void add_atoms(tyr::planning::StateView<Kind> state, ObjectGraphConstructionCont
 template<tyr::TaskKind Kind>
 void add_goal_atoms(tyr::planning::StateView<Kind> state, ObjectGraphConstructionContext& context)
 {
-    const auto goal = state.get_state_repository().get_task()->get_task().get_goal();
+    const auto goal = state.context().get_task()->get_task().get_goal();
 
     for (auto literal : goal.template get_literals<tyr::formalism::StaticTag>())
         context.template add_atom<PredicateContext::GOAL>(literal.get_atom());

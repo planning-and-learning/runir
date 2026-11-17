@@ -92,6 +92,7 @@ public:
     void on_start_search([[maybe_unused]] const tyr::planning::Node<Kind>& node, ygg::float_t) override { assert(m_start == node.get_state().pack()); }
 
     void on_end_search(tyr::planning::SearchStatus, const tyr::planning::Statistics&) override {}
+
     void on_solved(const tyr::planning::Plan<Kind>&) override {}
 
     auto make_worker(urd::index<tyr::planning::Worker> index) -> tyr::planning::astar_eager::WorkerEventHandlerPtr<Kind> override
@@ -103,6 +104,7 @@ public:
     }
 
     const auto& get_workers() const noexcept { return m_workers; }
+
     const auto& get_start() const noexcept { return m_start; }
 
 private:

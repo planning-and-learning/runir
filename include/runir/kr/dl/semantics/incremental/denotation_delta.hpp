@@ -18,6 +18,7 @@ struct DenotationDelta
         added.clear();
         removed.clear();
     }
+
     [[nodiscard]] bool empty() const noexcept { return added.empty() && removed.empty(); }
 };
 

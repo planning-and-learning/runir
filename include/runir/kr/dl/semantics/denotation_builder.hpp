@@ -26,6 +26,7 @@ struct builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>>
     bool value = false;
 
     builder() = default;
+
     explicit builder(bool value_) noexcept : value(value_) {}
 
     void initialize(bool value_) noexcept
@@ -35,7 +36,9 @@ struct builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>>
     }
 
     auto get() noexcept -> bool& { return value; }
+
     [[nodiscard]] auto get() const noexcept -> const bool& { return value; }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&builder::value> {}; }
 };
 
@@ -46,6 +49,7 @@ struct builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>
     ygg::uint_t value = 0;
 
     builder() = default;
+
     explicit builder(ygg::uint_t value_) noexcept : value(value_) {}
 
     void initialize(ygg::uint_t value_) noexcept
@@ -55,7 +59,9 @@ struct builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>
     }
 
     auto get() noexcept -> ygg::uint_t& { return value; }
+
     [[nodiscard]] auto get() const noexcept -> const ygg::uint_t& { return value; }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&builder::value> {}; }
 };
 
@@ -75,7 +81,9 @@ public:
     Blocks blocks;
 
     builder() = default;
+
     explicit builder(ygg::uint_t num_objects_) { initialize(num_objects_); }
+
     builder(ygg::uint_t num_objects_, Blocks blocks_) noexcept : num_objects(num_objects_), blocks(std::move(blocks_))
     {
         assert_valid_num_blocks(blocks.size(), num_objects);
@@ -90,13 +98,18 @@ public:
     }
 
     static constexpr auto num_bits(ygg::uint_t num_objects_) noexcept -> size_t { return num_objects_; }
+
     static constexpr auto num_blocks(ygg::uint_t num_objects_) noexcept -> size_t { return Bitset::num_blocks(num_bits(num_objects_)); }
+
     static constexpr auto valid_num_blocks(size_t num_blocks_, ygg::uint_t num_objects_) noexcept -> bool { return num_blocks_ == num_blocks(num_objects_); }
+
     static constexpr void assert_valid_num_blocks([[maybe_unused]] size_t num_blocks_, [[maybe_unused]] ygg::uint_t num_objects_) noexcept
     { assert(valid_num_blocks(num_blocks_, num_objects_)); }
 
     auto get() noexcept -> Bitset { return Bitset(blocks.data(), num_bits(num_objects)); }
+
     [[nodiscard]] auto get() const noexcept -> ConstBitset { return ConstBitset(blocks.data(), num_bits(num_objects)); }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&builder::num_objects, &builder::blocks> {}; }
 
     [[nodiscard]] bool contains(urd::index<tyr::formalism::Object> object) const noexcept { return get().test(static_cast<ygg::uint_t>(object.value)); }
@@ -119,9 +132,11 @@ public:
 
     /// Includes trailing padding; bulk operations must preserve its zero bits.
     auto storage_bits() noexcept -> Bitset { return Bitset(blocks.data(), blocks.size() * Bitset::Digits); }
+
     [[nodiscard]] auto storage_bits() const noexcept -> ConstBitset { return ConstBitset(blocks.data(), blocks.size() * ConstBitset::Digits); }
 
     [[nodiscard]] bool any() const noexcept { return get().any(); }
+
     [[nodiscard]] auto count() const noexcept -> size_t { return get().count(); }
 };
 
@@ -141,7 +156,9 @@ public:
     Blocks blocks;
 
     builder() = default;
+
     explicit builder(ygg::uint_t num_objects_) { initialize(num_objects_); }
+
     builder(ygg::uint_t num_objects_, Blocks blocks_) noexcept : num_objects(num_objects_), blocks(std::move(blocks_))
     {
         assert_valid_num_blocks(blocks.size(), num_objects);
@@ -158,11 +175,16 @@ public:
 
     static constexpr auto num_bits(ygg::uint_t num_objects_) noexcept -> size_t
     { return static_cast<size_t>(num_objects_) * static_cast<size_t>(num_objects_); }
+
     static constexpr auto num_row_blocks(ygg::uint_t num_objects_) noexcept -> size_t { return Bitset::num_blocks(num_objects_); }
+
     static constexpr auto num_blocks(ygg::uint_t num_objects_) noexcept -> size_t { return static_cast<size_t>(num_objects_) * num_row_blocks(num_objects_); }
+
     static constexpr auto valid_num_blocks(size_t num_blocks_, ygg::uint_t num_objects_) noexcept -> bool { return num_blocks_ == num_blocks(num_objects_); }
+
     static constexpr void assert_valid_num_blocks([[maybe_unused]] size_t num_blocks_, [[maybe_unused]] ygg::uint_t num_objects_) noexcept
     { assert(valid_num_blocks(num_blocks_, num_objects_)); }
+
     static constexpr auto row_block_offset(urd::index<tyr::formalism::Object> object, ygg::uint_t num_objects_) noexcept -> size_t
     { return static_cast<size_t>(static_cast<ygg::uint_t>(object.value)) * num_row_blocks(num_objects_); }
 
@@ -179,6 +201,7 @@ public:
     }
 
     [[nodiscard]] auto get_num_objects() const noexcept { return num_objects; }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&builder::num_objects, &builder::blocks> {}; }
 
     [[nodiscard]] bool contains(urd::index<tyr::formalism::Object> source, urd::index<tyr::formalism::Object> target) const noexcept
@@ -209,9 +232,11 @@ public:
 
     /// Includes per-row padding; bulk operations must preserve its zero bits.
     auto storage_bits() noexcept -> Bitset { return Bitset(blocks.data(), blocks.size() * Bitset::Digits); }
+
     [[nodiscard]] auto storage_bits() const noexcept -> ConstBitset { return ConstBitset(blocks.data(), blocks.size() * ConstBitset::Digits); }
 
     [[nodiscard]] bool any() const noexcept { return storage_bits().any(); }
+
     [[nodiscard]] auto count() const noexcept -> size_t { return storage_bits().count(); }
 };
 

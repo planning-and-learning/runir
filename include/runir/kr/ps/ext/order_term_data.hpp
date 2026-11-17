@@ -32,12 +32,14 @@ struct data<runir::kr::ps::ext::OrderTerm>
     runir::kr::ps::ext::OrderTermFeature feature;
 
     data() = default;
+
     data(runir::kr::ps::ext::OrderDirection direction_, runir::kr::ps::ext::OrderTermFeature feature_) :
         index(),
         direction(direction_),
         feature(std::move(feature_))
     {
     }
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -45,7 +47,9 @@ struct data<runir::kr::ps::ext::OrderTerm>
     ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"direction", &data::direction>, urd::field<"feature", &data::feature>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::direction, &data::feature> {}; }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::direction, &data::feature> {}; }
 };
 

@@ -57,8 +57,11 @@ public:
                 std::span<const tyr::formalism::planning::AtomView<tyr::GroundTag, Fact>> removed);
 
     [[nodiscard]] ygg::FreeRelationBuilderView get_result() const& noexcept { return m_layer->view(m_result); }
+
     [[nodiscard]] ygg::FreeRelationBuilderView get_result() const&& = delete;
+
     [[nodiscard]] const tyr::datalog::database::incremental::Delta& get_delta() const& noexcept { return m_delta; }
+
     [[nodiscard]] const tyr::datalog::database::incremental::Delta& get_delta() const&& = delete;
 };
 
@@ -84,7 +87,7 @@ void AtomicQueryEvaluator<Fact>::initialize(const State& state)
     m_result.clear();
     m_delta.clear();
     for (const auto atom : state.get_atoms(m_predicate))
-        m_result.insert(encode_object_row(atom.get_row().get_key().second, m_row));
+        m_result.insert(encode_object_row(atom.get_row().get_values(), m_row));
     m_initialized = true;
 }
 
@@ -102,7 +105,7 @@ void AtomicQueryEvaluator<Fact>::update(std::span<const tyr::formalism::planning
     {
         if (atom.get_predicate() != m_predicate)
             continue;
-        const auto row = encode_object_row(atom.get_row().get_key().second, m_row);
+        const auto row = encode_object_row(atom.get_row().get_values(), m_row);
         if (m_result.contains(row))
             throw std::invalid_argument("Incremental atomic query: added atom is already present.");
         m_delta.added.insert(row);
@@ -111,7 +114,7 @@ void AtomicQueryEvaluator<Fact>::update(std::span<const tyr::formalism::planning
     {
         if (atom.get_predicate() != m_predicate)
             continue;
-        const auto row = encode_object_row(atom.get_row().get_key().second, m_row);
+        const auto row = encode_object_row(atom.get_row().get_values(), m_row);
         const auto position = m_result.find(row);
         if (!position)
             throw std::invalid_argument("Incremental atomic query: removed atom is absent.");

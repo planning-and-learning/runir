@@ -167,6 +167,7 @@ template<tyr::TaskKind Kind, typename C>
 struct fmt::formatter<urd::index_view<runir::kr::ps::ext::ModuleState<Kind>, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
+
     auto format(const auto& value, format_context& context) const
     {
         return fmt::format_to(context.out(),
@@ -183,6 +184,7 @@ template<typename C>
 struct fmt::formatter<urd::index_view<runir::kr::ps::ext::CallStack, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
+
     auto format(const auto& value, format_context& context) const -> format_context::iterator
     {
         return fmt::format_to(context.out(),
@@ -199,6 +201,7 @@ template<tyr::TaskKind Kind, typename C>
 struct fmt::formatter<urd::index_view<runir::kr::ps::ext::ProgramState<Kind>, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
+
     auto format(const auto& value, format_context& context) const
     {
         return fmt::format_to(context.out(),
@@ -213,12 +216,13 @@ template<tyr::TaskKind Kind>
 struct fmt::formatter<runir::kr::ps::ProgramProofVertexLabel<runir::kr::ExtFamilyTag, Kind>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
+
     auto format(const auto& label, format_context& context) const
     {
         const auto state = label.program_state;
         return fmt::format_to(context.out(),
                               "state={} module={} initial={} goal={} alive={} unsolvable={}",
-                              state.get_state().index(),
+                              state.get_module_state().get_state().index(),
                               state.get_module_state().get_mod().get_symbol().get_name(),
                               label.is_initial,
                               label.is_goal,
@@ -231,6 +235,7 @@ template<tyr::TaskKind Kind>
 struct fmt::formatter<runir::kr::ps::ext::ProgramProofResults<Kind>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
+
     auto format(const auto& result, format_context& context) const
     {
         return fmt::format_to(context.out(),

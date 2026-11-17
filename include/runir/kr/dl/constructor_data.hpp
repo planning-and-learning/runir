@@ -36,7 +36,9 @@ struct data<runir::kr::dl::Constructor<Category>>
     bool is_static = false;
 
     data() = default;
+
     data(runir::kr::dl::detail::ConstructorDataVariant<Category> variant_, bool is_static_) : index(), variant(std::move(variant_)), is_static(is_static_) {}
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -44,8 +46,10 @@ struct data<runir::kr::dl::Constructor<Category>>
     ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"variant", &data::variant>, urd::field<"is_static", &data::is_static>> {}; }
+
     // is_static is derived from the variant before the record is interned (detail::prepare): stored, not identifying.
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::variant> {}; }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::variant, &data::is_static> {}; }
 };
 

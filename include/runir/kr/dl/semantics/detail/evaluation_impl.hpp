@@ -344,8 +344,8 @@ auto evaluate_impl(urd::index_view<Boolean<SemanticFamily, Tag>, C> constructor,
     {
         const auto lhs = evaluate<Kind>(constructor.get_left_operand(), children);
         const auto rhs = evaluate<Kind>(constructor.get_right_operand(), children);
-        const auto lhs_value = static_cast<ygg::uint_t>(lhs.value());
-        const auto rhs_value = static_cast<ygg::uint_t>(rhs.value());
+        const auto lhs_value = static_cast<ygg::uint_t>(lhs.get_value());
+        const auto rhs_value = static_cast<ygg::uint_t>(rhs.get_value());
         result_value = detail::apply_comparison<Tag>(lhs_value, rhs_value);
     }
     else if constexpr (std::same_as<Tag, BooleanConstantTag>)
@@ -356,12 +356,12 @@ auto evaluate_impl(urd::index_view<Boolean<SemanticFamily, Tag>, C> constructor,
     {
         const auto lhs = evaluate<Kind>(constructor.get_left_operand(), children);
         const auto rhs = evaluate<Kind>(constructor.get_right_operand(), children);
-        result_value = detail::apply_logical_binary<Tag>(lhs.value(), rhs.value());
+        result_value = detail::apply_logical_binary<Tag>(lhs.get_value(), rhs.get_value());
     }
     else if constexpr (std::same_as<Tag, NotTag>)
     {
         const auto arg = evaluate<Kind>(constructor.get_operand(), children);
-        result_value = !arg.value();
+        result_value = !arg.get_value();
     }
     else
     {
@@ -396,7 +396,7 @@ auto evaluate_impl(urd::index_view<Numerical<SemanticFamily, Tag>, C> constructo
     {
         const auto lhs = evaluate<Kind>(constructor.get_left_operand(), children);
         const auto rhs = evaluate<Kind>(constructor.get_right_operand(), children);
-        result_value = detail::apply_numerical_binary<Tag>(lhs.value(), rhs.value());
+        result_value = detail::apply_numerical_binary<Tag>(lhs.get_value(), rhs.get_value());
     }
     else
     {

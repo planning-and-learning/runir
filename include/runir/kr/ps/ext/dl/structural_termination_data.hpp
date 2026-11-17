@@ -47,6 +47,7 @@ struct ModulePolicyGraphVertexLabel : urd::compared_by_identity<ModulePolicyGrap
                             &ModulePolicyGraphVertexLabel::numerical_values,
                             &ModulePolicyGraphVertexLabel::memory_state> {};
     }
+
     static constexpr auto identifying_members() noexcept
     {
         return urd::Members<&ModulePolicyGraphVertexLabel::boolean_values,

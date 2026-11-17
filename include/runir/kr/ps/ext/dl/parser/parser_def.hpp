@@ -31,6 +31,7 @@ using boost::spirit::x3::ascii::char_;
 struct IdentifierText
 {
 };
+
 struct QuotedStringText
 {
 };
@@ -277,186 +278,247 @@ BOOST_SPIRIT_DEFINE(identifier,
 struct IdentifierClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct QuotedStringClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct SymbolSectionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct SourceMemorySectionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct TargetMemorySectionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct EntrySectionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ActionSectionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct CalleeSectionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ArgumentsSectionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct RegistersSectionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct FeaturesSectionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ConditionsSectionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct EffectsSectionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ArgumentsExpressionSectionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct RulesSectionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct MemorySectionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ConceptArgumentClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct RoleArgumentClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct BooleanArgumentClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct NumericalArgumentClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ArgumentClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ConceptRegisterClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct RoleRegisterClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct RegisterClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ConceptFeatureClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct RoleFeatureClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct BooleanFeatureClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct NumericalFeatureClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct QueryFeatureClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct FeatureClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct SymbolExpressionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct NamedValueClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct PositiveConditionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct NegativeConditionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct EqualZeroConditionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct GreaterZeroConditionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ConditionObservationClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ConditionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct PositiveEffectClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct NegativeEffectClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct UnchangedEffectClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct IncreasesEffectClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct DecreasesEffectClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct EffectObservationClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct EffectClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ConceptLoadRuleClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct RoleLoadRuleClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct OrderTermClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct OrderSectionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ConceptChooseRuleClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct RoleChooseRuleClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct SketchRuleClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct DoRuleClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct CallRuleClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ActionRuleClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct BacktrackRuleClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct RuleClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct RuleEntryClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ModuleClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ProgramClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ModuleRootClass : ygg::diagnostics::ErrorHandlerBase
 {
 };
+
 struct ProgramRootClass : ygg::diagnostics::ErrorHandlerBase
 {
 };

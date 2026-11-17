@@ -34,8 +34,11 @@ class ChooseRuleEvaluator
 
 public:
     using RuleTag = ChooseTag<Category>;
+
     ChooseRuleEvaluator(RuleView<ChooseTag<Category>> rule, RuleVariantView variant) : m_rule(rule), m_variant(variant) {}
+
     [[nodiscard]] auto get_rule() const noexcept { return m_rule; }
+
     [[nodiscard]] auto get_variant() const noexcept { return m_variant; }
 
     /// Resume a retained choice after child search; emit() only enumerates and prepares its alternatives.
@@ -76,6 +79,7 @@ private:
         else
             return detail::Choice<Category>(rule, denotation, workspace.role_bindings);
     }
+
     /// Ordering is evaluated after binding, and only rearranges the admitted values.
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,
@@ -140,7 +144,7 @@ private:
                 if (stop())
                     return false;
                 workspace.order_scores.push_back(std::visit([&](auto feature)
-                                                            { return ygg::uint_t(evaluate<Kind>(feature, transition.get_target_context()).value()); },
+                                                            { return ygg::uint_t(evaluate<Kind>(feature, transition.get_target_context()).get_value()); },
                                                             term.get_feature()));
             }
             workspace.order_indices.push_back(workspace.order_indices.size());
@@ -198,7 +202,7 @@ public:
             return true;
         auto state_context = context.make_dl_context(state);
         const auto denotation = evaluate<Kind>(rule.get_feature(), state_context);
-        return emit_choice(context, workspace, rule, rule_variant, state, planning_state, denotation, emit, stop);
+        return emit_choice(context, workspace, rule, rule_variant, state, planning_state, denotation.views(), emit, stop);
     }
 };
 

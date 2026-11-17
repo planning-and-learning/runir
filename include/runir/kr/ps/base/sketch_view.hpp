@@ -20,7 +20,9 @@ private:
 
 public:
     auto get_boolean_features() const noexcept { return self().template member<&urd::record_of<V>::boolean_features>(); }
+
     auto get_numerical_features() const noexcept { return self().template member<&urd::record_of<V>::numerical_features>(); }
+
     auto get_rules() const noexcept { return self().template member<&urd::record_of<V>::rules>(); }
 
     template<typename FeatureTag>

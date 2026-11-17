@@ -14,12 +14,15 @@ struct RootState
     kr::dl::semantics::incremental::EvaluationIndex<Category> root;
 
     auto get_result() { return state.evaluate(root); }
+
     const auto& get_delta()
         requires kr::dl::ConceptOrRoleTag<Category>
     { return state.delta(root); }
+
     size_t size()
         requires kr::dl::ConceptOrRoleTag<Category>
     { return state.size(root); }
+
     bool changed()
         requires kr::dl::BooleanOrNumericalTag<Category>
     { return state.changed(root); }
@@ -46,10 +49,12 @@ public:
         m_root(m_evaluation.graph().get_index(expression))
     {
     }
+
     /// Enters the state of `context` unrelated to the previous one.
     template<kr::dl::semantics::StateEvaluationContextConcept<Kind> Context>
     RootState<Kind, Category, Context> initialize(const Context& context)
     { return evaluated(m_evaluation.enter(context)); }
+
     /// Enters the state of `context`, reached from the previous one by `delta`. The root is updated from the delta if
     /// it can be, otherwise initialized; its get_delta() / changed() throw std::logic_error in the latter case.
     template<kr::dl::semantics::StateEvaluationContextConcept<Kind> Context>
@@ -67,7 +72,9 @@ struct QueryRootState
     kr::dl::semantics::incremental::QueryEvaluationIndex root;
 
     auto get_result() { return state.evaluate(root); }
+
     const auto& get_delta() { return state.delta(root); }
+
     size_t size() { return state.size(root); }
 };
 
@@ -92,9 +99,11 @@ public:
         m_root(m_evaluation.graph().get_index(expression))
     {
     }
+
     template<kr::dl::semantics::StateEvaluationContextConcept<Kind> Context>
     QueryRootState<Kind, Context> initialize(const Context& context)
     { return evaluated(m_evaluation.enter(context)); }
+
     template<kr::dl::semantics::StateEvaluationContextConcept<Kind> Context>
     QueryRootState<Kind, Context>
     update(const Context& context, const kr::dl::semantics::incremental::Delta& delta, tyr::datalog::database::Workspace& workspace)

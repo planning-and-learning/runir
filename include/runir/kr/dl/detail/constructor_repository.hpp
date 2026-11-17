@@ -34,6 +34,7 @@ public:
         assert(m_planning_repository);
         this->clear();
     }
+
     BasicConstructorRepository(const BasicConstructorRepository&) = delete;
     BasicConstructorRepository& operator=(const BasicConstructorRepository&) = delete;
     BasicConstructorRepository(BasicConstructorRepository&&) = delete;
@@ -42,15 +43,18 @@ public:
 
     /// The repository's number, as urd's views ask of a context.
     [[nodiscard]] std::size_t layer() const noexcept { return m_index; }
+
     [[nodiscard]] const tyr::formalism::planning::Repository& get_planning_repository() const noexcept
     {
         assert(m_planning_repository);
         // Dereference the raw pointer: operator* on the shared_ptr would complete the repository type for its lookup.
         return *m_planning_repository.get();
     }
+
     [[nodiscard]] const auto& get_planning_repository_ptr() const noexcept { return m_planning_repository; }
 
     using Base::view;
+
     /// A planning symbol (a predicate, an object) as its view in the planning repository, which holds it: so that urd
     /// resolves every member of a record through this context (urd's resolves contract).
     template<typename T>

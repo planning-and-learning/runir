@@ -122,11 +122,11 @@ std::string denotation(urd::index_view<runir::kr::dl::semantics::Denotation<Cate
 {
     if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
     {
-        return boolean(view.value());
+        return boolean(view.get_value());
     }
     else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
     {
-        return fmt::format("{}", view.value());
+        return fmt::format("{}", view.get_value());
     }
     else if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
     {
@@ -135,7 +135,7 @@ std::string denotation(urd::index_view<runir::kr::dl::semantics::Denotation<Cate
     else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
     {
         auto pairs = urd::Store<urd::sequence<std::string>> {};
-        for (auto [source, target] : view)
+        for (auto [source, target] : view.views())
             pairs.push_back(fmt::format("({}, {})", source.index(), target.index()));
         return fmt::format("{}{{{}}}", Category::keyword, fmt::join(pairs, ", "));
     }
@@ -163,6 +163,7 @@ template<typename Tag, typename C>
 struct fmt::formatter<urd::index_view<runir::kr::dl::Query<Tag>, C>> : fmt::formatter<std::string_view>
 {
     using View = urd::index_view<runir::kr::dl::Query<Tag>, C>;
+
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::query(view), ctx); }
 };
 
@@ -170,6 +171,7 @@ template<runir::kr::dl::ConceptOrRoleTag Category, typename C>
 struct fmt::formatter<urd::index_view<runir::kr::dl::QueryProjection<Category>, C>> : fmt::formatter<std::string_view>
 {
     using View = urd::index_view<runir::kr::dl::QueryProjection<Category>, C>;
+
     auto format(View view, format_context& ctx) const
     { return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::query_projection(view), ctx); }
 };
@@ -199,6 +201,7 @@ template<runir::kr::dl::CategoryTag Category, typename C>
 struct fmt::formatter<urd::index_view<runir::kr::dl::semantics::Denotation<Category>, C>> : fmt::formatter<std::string_view>
 {
     using View = urd::index_view<runir::kr::dl::semantics::Denotation<Category>, C>;
+
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::denotation(view), ctx); }
 };
 
@@ -206,6 +209,7 @@ template<typename C>
 struct fmt::formatter<urd::index_view<runir::kr::dl::semantics::RegisterValues, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
+
     auto format(const auto& value, format_context& context) const
     {
         return fmt::format_to(context.out(),
@@ -219,6 +223,7 @@ template<typename C>
 struct fmt::formatter<urd::index_view<runir::kr::dl::semantics::CallArguments, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
+
     auto format(const auto& value, format_context& context) const
     {
         return fmt::format_to(context.out(),

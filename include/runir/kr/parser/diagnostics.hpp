@@ -21,6 +21,7 @@ struct DiagnosticContext
     {
         Scope(DiagnosticContext& diagnostics_, const ErrorHandlerType& error_handler) : diagnostics(diagnostics_), previous(diagnostics_.active)
         { diagnostics_.active = std::cref(error_handler); }
+
         ~Scope() { diagnostics.active = previous; }
 
         Scope(const Scope&) = delete;

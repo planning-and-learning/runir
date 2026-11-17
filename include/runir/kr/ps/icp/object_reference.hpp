@@ -24,7 +24,9 @@ struct ResetPair
     urd::index<ps::Feature<IcpFamilyTag, runir::kr::dl::ConceptTag>> after;
 
     static constexpr auto cista_members() noexcept { return urd::Members<&ResetPair::before, &ResetPair::after> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&ResetPair::before, &ResetPair::after> {}; }
+
     bool operator==(const ResetPair&) const = default;
     auto operator<=>(const ResetPair&) const = default;
 };

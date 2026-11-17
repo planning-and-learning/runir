@@ -19,6 +19,7 @@ private:
 
 public:
     auto get_variant() const noexcept { return self().template member<&urd::record_of<V>::variant>(); }
+
     [[nodiscard]] bool get_is_static() const noexcept { return self().template member<&urd::record_of<V>::is_static>(); }
 };
 }  // namespace urd

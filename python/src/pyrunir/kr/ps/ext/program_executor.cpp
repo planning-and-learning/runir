@@ -156,18 +156,18 @@ void bind_execution_types(nb::module_& m, const char* prefix)
 
     // The records are bound first (bind_data, bind_program_executor). The planning state of a module or program state:
     // the registered state, not the index its record holds.
-    urd::python::bind_view<LocalStateView>(m).def("get_state", &LocalStateView::get_state, nb::keep_alive<0, 1>());
+    urd::python::bind_view<LocalStateView>(m);
     // A call stack's record has no task kind: the views of its ground and lifted repositories are bound in a module of
     // their own (ground, lifted), where each has its name.
     auto kind_module = m.def_submodule(std::string(prefix) == "Ground" ? "ground" : "lifted");
     urd::python::bind_view<StackView>(kind_module);
-    urd::python::bind_view<StateView>(m).def("get_state", &StateView::get_state, nb::keep_alive<0, 1>());
+    urd::python::bind_view<StateView>(m);
 
     auto vertex_label = nb::class_<VertexLabel>(m, (std::string(prefix) + "ProgramProofVertexLabel").c_str())
                             .def_ro("program_state", &VertexLabel::program_state)
                             .def_prop_ro(
                                 "state",
-                                [](const VertexLabel& self) { return self.program_state.get_state(); },
+                                [](const VertexLabel& self) { return self.program_state.get_module_state().get_state(); },
                                 nb::keep_alive<0, 1>())
                             .def_ro("is_initial", &VertexLabel::is_initial)
                             .def_ro("is_goal", &VertexLabel::is_goal)

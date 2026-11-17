@@ -23,6 +23,7 @@ public:
     CopyContext(DenotationRepository& repository, Builder& builder) noexcept : m_repository(&repository), m_builder(&builder) {}
 
     [[nodiscard]] DenotationRepository& repository() const noexcept { return *m_repository; }
+
     [[nodiscard]] Builder& builder() const noexcept { return *m_builder; }
 };
 
@@ -36,7 +37,7 @@ urd::builder<Denotation<Category>>& assign(urd::builder<Denotation<Category>>& d
         destination.num_objects = source.get_num_objects();
     }
     else
-        destination.value = source.value();
+        destination.value = source.get_value();
     destination.index = {};
     return destination;
 }
@@ -53,7 +54,7 @@ urd::builder<Denotation<Category>>& assign(urd::builder<Denotation<Category>>& d
         }
     }
     else
-        destination.value = source.value();
+        destination.value = source.get_value();
     destination.index = {};
     return destination;
 }
@@ -97,6 +98,7 @@ insert(DenotationRepository& repository, const urd::builder<ygg::Relation<ygg::S
     relation->columns = relations.insert(*columns).first.index();
     return relations.insert(*relation);
 }
+
 /// `source` under new columns (the same pool and rows) in the denotation repository's relation repository, in scratch
 /// records from `builder`.
 [[nodiscard]] inline QueryDenotationView
@@ -151,7 +153,7 @@ template<CategoryTag Category>
         data->blocks = repository.get_vector_repository().insert(blocks).first;
     }
     else
-        data->value = source.value();
+        data->value = source.get_value();
     return insert(repository, *data);
 }
 

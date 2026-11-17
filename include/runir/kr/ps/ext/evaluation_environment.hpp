@@ -38,6 +38,7 @@ private:
         {
         }
     };
+
     struct Invocation
     {
         ModuleView module_;
@@ -92,6 +93,7 @@ public:
             m_modules.emplace_back(*task_context.search_context->task, module_, roots);
         }
     }
+
     EvaluationEnvironment(const EvaluationEnvironment&) = delete;
     EvaluationEnvironment& operator=(const EvaluationEnvironment&) = delete;
     EvaluationEnvironment(EvaluationEnvironment&&) = default;
@@ -99,6 +101,7 @@ public:
     ~EvaluationEnvironment() = default;
 
     auto& get_dl_caches() noexcept { return m_dl_storage.get_caches(); }
+
     auto& get_dl_target_caches() noexcept { return m_dl_target_storage.get_caches(); }
 
     void reset_source() noexcept

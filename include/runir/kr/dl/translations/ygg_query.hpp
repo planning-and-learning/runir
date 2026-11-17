@@ -81,6 +81,7 @@ class QueryTranslator
 
 public:
     explicit QueryTranslator(bool rewrite_complements = false) : m_rewrite_complements(rewrite_complements) {}
+
     QueryTranslator(const QueryTranslator&) = delete;
     QueryTranslator& operator=(const QueryTranslator&) = delete;
     QueryTranslator(QueryTranslator&&) = delete;  // Translated views borrow the owned repository.
@@ -100,6 +101,7 @@ public:
 
     /// The expression of each input slot, by slot.
     [[nodiscard]] const urd::Store<urd::sequence<QuerySlot>>& get_slots() const noexcept { return m_slots; }
+
     /// The DL leaf of each input slot; without complement rewriting, every slot is a leaf query.
     [[nodiscard]] urd::Store<urd::sequence<DlQuery>> get_leaves(const ConstructorRepository& constructors) const;
 
@@ -107,6 +109,7 @@ private:
     template<typename Tag>
     YggQuery insert(urd::data<tyr::datalog::database::Query<Tag>>& data)
     { return tyr::datalog::database::insert_query(m_repository, m_builder, data); }
+
     template<typename Tag>
     YggQuery binary(YggQuery lhs, YggQuery rhs)
     {
@@ -115,6 +118,7 @@ private:
         out->right_operand = rhs.index();
         return insert(*out);
     }
+
     template<typename Tag>
     YggQuery unary(YggQuery arg, std::span<const Label> labels)
     {
@@ -123,6 +127,7 @@ private:
         out->labels.set(labels.begin(), labels.end());
         return insert(*out);
     }
+
     YggQuery input(QuerySlot slot);
     static std::span<const ygg::ColumnLayout> schema(DlQuery query);
 

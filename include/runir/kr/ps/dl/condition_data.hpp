@@ -22,7 +22,9 @@ struct data<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTa
     urd::index<runir::kr::ps::Feature<Family, FeatureTag>> feature;
 
     data() = default;
+
     data(urd::index<runir::kr::ps::Feature<Family, FeatureTag>> feature_) : index(), feature(std::move(feature_)) {}
+
     static constexpr bool copyable() noexcept
     {
         static_assert(std::is_trivially_copyable_v<data>, "a copyable record is trivially copyable");
@@ -30,7 +32,9 @@ struct data<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTa
     }
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"feature", &data::feature>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::feature> {}; }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::feature> {}; }
 };
 

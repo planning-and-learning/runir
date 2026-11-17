@@ -108,7 +108,7 @@ def test_ground_state_graph_labels_own_packed_states_and_action_bindings(gripper
     states = [graph.vertex_value(vertex).state for vertex in graph.vertices()]
     for state in states:
         assert isinstance(state, PackedStateGround)
-        assert state.get_state_repository().layer() == context.state_repository.layer()
+        assert state.context().layer() == context.state_repository.layer()
 
     state = states[-1]
     expected = str(state.unpack())
@@ -132,7 +132,7 @@ def test_lifted_state_graph_labels_own_packed_states_and_action_bindings(gripper
     states = [graph.vertex_value(vertex).state for vertex in graph.vertices()]
     for state in states:
         assert isinstance(state, PackedStateLifted)
-        assert state.get_state_repository().layer() == context.state_repository.layer()
+        assert state.context().layer() == context.state_repository.layer()
 
     state = states[-1]
     expected = str(state.unpack())
@@ -162,7 +162,7 @@ def test_generate_ground_equivalence_graph_exposes_owned_result_graphs(
     assert state_graph.num_vertices > 0
     for vertex in state_graph.vertices():
         assert (
-            state_graph.vertex_value(vertex).state.get_state_repository().layer()
+            state_graph.vertex_value(vertex).state.context().layer()
             == ground_gripper_search_context.state_repository.layer()
         )
     with pytest.raises(IndexError, match="State graph result index is out of range"):

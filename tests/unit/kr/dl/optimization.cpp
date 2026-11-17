@@ -105,7 +105,7 @@ void check_optimized_queries()
         EXPECT_NE(warnings.get()[0].message.find(never + " was empty in all"), std::string::npos) << warnings.get()[0].message;
         const auto optimized = kr::dl::optimize(original, *repository, statistics);
         for (auto* context : context_pointers)
-            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(optimized, *context).value(), kr::dl::semantics::evaluate<Kind>(original, *context).value());
+            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(optimized, *context).get_value(), kr::dl::semantics::evaluate<Kind>(original, *context).get_value());
     }
 
     for (const auto& text : expressions)
@@ -140,7 +140,7 @@ void check_optimized_queries()
             const auto formatted = fmt::format("{}", optimized);
             EXPECT_EQ(kr::ps::ext::dl::parse_numerical(formatted, domain, *repository), optimized) << formatted;
             for (auto* context : context_pointers)
-                EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(optimized, *context).value(), kr::dl::semantics::evaluate<Kind>(original, *context).value())
+                EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(optimized, *context).get_value(), kr::dl::semantics::evaluate<Kind>(original, *context).get_value())
                     << text << " => " << formatted;
             if (text == triangle)
             {
@@ -157,6 +157,7 @@ void check_optimized_queries()
 }  // namespace
 
 TEST(RunirQueryOptimization, GroundOptimizedFeaturesEvaluateLikeOriginals) { check_optimized_queries<tyr::GroundTag>(); }
+
 TEST(RunirQueryOptimization, LiftedOptimizedFeaturesEvaluateLikeOriginals) { check_optimized_queries<tyr::LiftedTag>(); }
 
 }  // namespace runir::tests

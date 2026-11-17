@@ -1019,24 +1019,28 @@ using operand_t = typename Family::template Operand<Category>;
 /// The record template of Category, quoted: fn<Family, Tag> is Concept<Family, Tag>, Role<Family, Tag>, ...
 template<CategoryTag Category>
 struct record_of;
+
 template<>
 struct record_of<ConceptTag>
 {
     template<typename Family, typename Tag>
     using fn = Concept<Family, Tag>;
 };
+
 template<>
 struct record_of<RoleTag>
 {
     template<typename Family, typename Tag>
     using fn = Role<Family, Tag>;
 };
+
 template<>
 struct record_of<BooleanTag>
 {
     template<typename Family, typename Tag>
     using fn = Boolean<Family, Tag>;
 };
+
 template<>
 struct record_of<NumericalTag>
 {
@@ -1142,6 +1146,7 @@ struct urd::resolution<urd::index<runir::kr::dl::RegisterSlot<Category>>> : urd:
                                                                        const C& /*context*/) noexcept
     { return at; }  // NOLINT(bugprone-return-const-ref-from-parameter): the member lives in the record
 };
+
 template<runir::kr::dl::CategoryTag Category>
 struct urd::resolution<urd::index<runir::kr::dl::ArgumentSlot<Category>>> : urd::resolution<std::size_t>
 {

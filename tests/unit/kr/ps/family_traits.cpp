@@ -78,15 +78,21 @@ static_assert(requires(BaseFeatureInExt feature) { feature.get_variant(); });
 struct BaseFeatureStorage
 {
     const BaseCustomRepository* repository;
+
     [[nodiscard]] const auto& get_dl_repository() const { return repository->get_dl_repository(); }
+
     [[nodiscard]] std::size_t layer() const { return repository->layer(); }
+
     [[maybe_unused]] friend const BaseCustomRepository& get_repository(const BaseFeatureStorage& storage) { return *storage.repository; }
+
     template<typename T>
     [[nodiscard]] decltype(auto) operator[](urd::index<T> index) const
     { return (*repository)[index]; }
+
     template<typename T>
     [[nodiscard]] urd::index_view<T, BaseFeatureStorage> view(urd::index<T> index) const
     { return { index, this }; }
+
     /// A DL record as its view in the DL repository, which holds it.
     template<typename T>
         requires ygg::formalism::SupportsSymbol<kr::dl::ConstructorRepository, T>

@@ -33,7 +33,9 @@ struct data<runir::kr::ps::Rule<Family>>
     runir::kr::ps::RuleVariant<Family> variant;
 
     data() = default;
+
     data(urd::flat_string symbol_, runir::kr::ps::RuleVariant<Family> variant_) : index(), symbol(std::move(symbol_)), variant(std::move(variant_)) {}
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -41,7 +43,9 @@ struct data<runir::kr::ps::Rule<Family>>
     ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"symbol", &data::symbol>, urd::field<"variant", &data::variant>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::symbol, &data::variant> {}; }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::symbol, &data::variant> {}; }
 };
 

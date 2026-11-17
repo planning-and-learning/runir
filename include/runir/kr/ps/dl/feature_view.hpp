@@ -19,6 +19,7 @@ private:
 
 public:
     auto get_feature() const noexcept { return self().template member<&urd::record_of<V>::feature>(); }
+
     const auto& get_symbol() const noexcept { return self().template member<&urd::record_of<V>::symbol>(); }
 };
 }  // namespace urd

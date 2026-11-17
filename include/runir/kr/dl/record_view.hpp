@@ -41,6 +41,7 @@ private:
 
 public:
     [[nodiscard]] decltype(auto) get_predicate() const noexcept { return self().template member<&urd::record_of<V>::predicate>(); }
+
     [[nodiscard]] decltype(auto) get_polarity() const noexcept { return self().template member<&urd::record_of<V>::polarity>(); }
 };
 
@@ -52,6 +53,7 @@ private:
 
 public:
     [[nodiscard]] decltype(auto) get_left_operand() const noexcept { return self().template member<&urd::record_of<V>::left_operand>(); }
+
     [[nodiscard]] decltype(auto) get_right_operand() const noexcept { return self().template member<&urd::record_of<V>::right_operand>(); }
 };
 
@@ -73,6 +75,7 @@ private:
 
 public:
     [[nodiscard]] decltype(auto) get_role() const noexcept { return self().template member<&urd::record_of<V>::role>(); }
+
     [[nodiscard]] decltype(auto) get_qualifier() const noexcept { return self().template member<&urd::record_of<V>::qualifier>(); }
 };
 
@@ -84,6 +87,7 @@ private:
 
 public:
     [[nodiscard]] decltype(auto) get_n() const noexcept { return self().template member<&urd::record_of<V>::n>(); }
+
     [[nodiscard]] decltype(auto) get_role() const noexcept { return self().template member<&urd::record_of<V>::role>(); }
 };
 
@@ -95,7 +99,9 @@ private:
 
 public:
     [[nodiscard]] decltype(auto) get_n() const noexcept { return self().template member<&urd::record_of<V>::n>(); }
+
     [[nodiscard]] decltype(auto) get_role() const noexcept { return self().template member<&urd::record_of<V>::role>(); }
+
     [[nodiscard]] decltype(auto) get_qualifier() const noexcept { return self().template member<&urd::record_of<V>::qualifier>(); }
 };
 
@@ -107,6 +113,7 @@ private:
 
 public:
     [[nodiscard]] decltype(auto) get_left_operand() const noexcept { return self().template member<&urd::record_of<V>::left_operand>(); }
+
     [[nodiscard]] decltype(auto) get_right_operand() const noexcept { return self().template member<&urd::record_of<V>::right_operand>(); }
 };
 
@@ -118,6 +125,7 @@ private:
 
 public:
     [[nodiscard]] decltype(auto) get_role() const noexcept { return self().template member<&urd::record_of<V>::role>(); }
+
     [[nodiscard]] decltype(auto) get_objects() const noexcept { return self().template member<&urd::record_of<V>::objects>(); }
 };
 
@@ -188,6 +196,7 @@ private:
 
 public:
     [[nodiscard]] decltype(auto) get_predicate() const noexcept { return self().template member<&urd::record_of<V>::predicate>(); }
+
     [[nodiscard]] decltype(auto) get_polarity() const noexcept { return self().template member<&urd::record_of<V>::polarity>(); }
 };
 
@@ -199,6 +208,7 @@ private:
 
 public:
     [[nodiscard]] decltype(auto) get_left_operand() const noexcept { return self().template member<&urd::record_of<V>::left_operand>(); }
+
     [[nodiscard]] decltype(auto) get_right_operand() const noexcept { return self().template member<&urd::record_of<V>::right_operand>(); }
 };
 
@@ -220,6 +230,7 @@ private:
 
 public:
     [[nodiscard]] decltype(auto) get_role() const noexcept { return self().template member<&urd::record_of<V>::role>(); }
+
     [[nodiscard]] decltype(auto) get_qualifier() const noexcept { return self().template member<&urd::record_of<V>::qualifier>(); }
 };
 
@@ -261,6 +272,7 @@ private:
 
 public:
     [[nodiscard]] decltype(auto) get_predicate() const noexcept { return self().template member<&urd::record_of<V>::predicate>(); }
+
     [[nodiscard]] decltype(auto) get_polarity() const noexcept { return self().template member<&urd::record_of<V>::polarity>(); }
 };
 
@@ -292,6 +304,7 @@ private:
 
 public:
     [[nodiscard]] decltype(auto) get_left_operand() const noexcept { return self().template member<&urd::record_of<V>::left_operand>(); }
+
     [[nodiscard]] decltype(auto) get_right_operand() const noexcept { return self().template member<&urd::record_of<V>::right_operand>(); }
 };
 
@@ -313,6 +326,7 @@ private:
 
 public:
     [[nodiscard]] decltype(auto) get_left_operand() const noexcept { return self().template member<&urd::record_of<V>::left_operand>(); }
+
     [[nodiscard]] decltype(auto) get_right_operand() const noexcept { return self().template member<&urd::record_of<V>::right_operand>(); }
 };
 
@@ -344,7 +358,9 @@ private:
 
 public:
     [[nodiscard]] decltype(auto) get_sources() const noexcept { return self().template member<&urd::record_of<V>::sources>(); }
+
     [[nodiscard]] decltype(auto) get_edges() const noexcept { return self().template member<&urd::record_of<V>::edges>(); }
+
     [[nodiscard]] decltype(auto) get_targets() const noexcept { return self().template member<&urd::record_of<V>::targets>(); }
 };
 
@@ -356,8 +372,11 @@ private:
 
 public:
     [[nodiscard]] decltype(auto) get_sources() const noexcept { return self().template member<&urd::record_of<V>::sources>(); }
+
     [[nodiscard]] decltype(auto) get_edges() const noexcept { return self().template member<&urd::record_of<V>::edges>(); }
+
     [[nodiscard]] decltype(auto) get_targets() const noexcept { return self().template member<&urd::record_of<V>::targets>(); }
+
     [[nodiscard]] decltype(auto) get_plan() const noexcept { return self().template member<&urd::record_of<V>::plan>(); }
 };
 
@@ -389,6 +408,7 @@ private:
 
 public:
     [[nodiscard]] decltype(auto) get_left_operand() const noexcept { return self().template member<&urd::record_of<V>::left_operand>(); }
+
     [[nodiscard]] decltype(auto) get_right_operand() const noexcept { return self().template member<&urd::record_of<V>::right_operand>(); }
 };
 }  // namespace urd

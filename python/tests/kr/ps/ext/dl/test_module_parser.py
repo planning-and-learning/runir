@@ -600,22 +600,27 @@ def _check_ground_successor_callbacks() -> None:
         search.state_repository,
         search.axiom_evaluator,
     )
-    assert Counter((_transition(step).action, step.target.get_state().index()) for step in actual) == Counter(
+    assert Counter(
+        (_transition(step).action, step.target.get_module_state().get_state().index()) for step in actual
+    ) == Counter(
         (step.label, step.node.get_state().index())
         for step in expected
         if expander.matching_rule(initial, step) is not None
     )
     retained = actual[0]
-    signature = (str(_transition(retained).action), str(retained.target.get_state()))
+    signature = (str(_transition(retained).action), str(retained.target.get_module_state().get_state().unpack()))
     actual.clear()
     del expected, node, initial, expander, program, context, search, task, lifted_task
     del planning_task, planning_domain, execution_context, parser
     gc.collect()
 
-    assert (str(_transition(retained).action), str(retained.target.get_state())) == signature
+    assert (
+        str(_transition(retained).action),
+        str(retained.target.get_module_state().get_state().unpack()),
+    ) == signature
     successor = retained.planning_successor
     assert successor is not None
-    assert successor.node.get_state().unpack() == retained.target.get_state()
+    assert successor.node.get_state().unpack() == retained.target.get_module_state().get_state().unpack()
 
 
 def _check_lifted_successor_callbacks() -> None:
@@ -661,22 +666,27 @@ def _check_lifted_successor_callbacks() -> None:
         search.state_repository,
         search.axiom_evaluator,
     )
-    assert Counter((_transition(step).action, step.target.get_state().index()) for step in actual) == Counter(
+    assert Counter(
+        (_transition(step).action, step.target.get_module_state().get_state().index()) for step in actual
+    ) == Counter(
         (step.label, step.node.get_state().index())
         for step in expected
         if expander.matching_rule(initial, step) is not None
     )
     retained = actual[0]
-    signature = (str(_transition(retained).action), str(retained.target.get_state()))
+    signature = (str(_transition(retained).action), str(retained.target.get_module_state().get_state().unpack()))
     actual.clear()
     del expected, node, initial, expander, program, context, search, task, lifted_task
     del planning_task, planning_domain, execution_context, parser
     gc.collect()
 
-    assert (str(_transition(retained).action), str(retained.target.get_state())) == signature
+    assert (
+        str(_transition(retained).action),
+        str(retained.target.get_module_state().get_state().unpack()),
+    ) == signature
     successor = retained.planning_successor
     assert successor is not None
-    assert successor.node.get_state().unpack() == retained.target.get_state()
+    assert successor.node.get_state().unpack() == retained.target.get_module_state().get_state().unpack()
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
@@ -721,7 +731,7 @@ def test_ground_execution_views_own_their_task_and_program_contexts() -> None:
     del steps, duplicate_initial, initial, expander, program, repository, dl_repository, task_context
     gc.collect()
 
-    assert target.get_state() is not None
+    assert target.get_module_state().get_state() is not None
     assert target.get_program().get_entry_mod() is not None
     assert target.get_module_state().get_mod() is not None
     del target
@@ -760,5 +770,5 @@ def test_lifted_execution_views_and_proof_labels_survive_owner_destruction(mode:
     del result, expander, initial, program, repository, dl_repository, task_context, search_context, lifted_task
     gc.collect()
 
-    assert label.program_state.get_state() is not None
+    assert label.program_state.get_module_state().get_state() is not None
     assert label.program_state.get_module_state().get_memory_state() is not None

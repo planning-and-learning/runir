@@ -21,8 +21,11 @@ class LoadRuleEvaluator
 
 public:
     using RuleTag = LoadTag<Category>;
+
     LoadRuleEvaluator(RuleView<LoadTag<Category>> rule, RuleVariantView variant) : m_rule(rule), m_variant(variant) {}
+
     [[nodiscard]] auto get_rule() const noexcept { return m_rule; }
+
     [[nodiscard]] auto get_variant() const noexcept { return m_variant; }
 
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<Kind> EvaluationPolicy,
@@ -42,7 +45,7 @@ public:
         auto state_context = context.make_dl_context(state);
         const auto denotation = evaluate<Kind>(rule.get_feature(), state_context);
         auto registers = checkout<runir::kr::dl::semantics::RegisterValues>((*context.task_context)->dl_builder);
-        for (const auto value : denotation)
+        for (const auto value : denotation.views())
         {
             if (stop())
                 return false;

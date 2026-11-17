@@ -26,7 +26,9 @@ struct data<runir::kr::ps::icp::Histories>
     urd::flat_vector<urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>> concepts;
 
     data() = default;
+
     data(urd::flat_vector<urd::index<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>> concepts_) : index(), concepts(std::move(concepts_)) {}
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -34,7 +36,9 @@ struct data<runir::kr::ps::icp::Histories>
     ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"concepts", &data::concepts>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::concepts> {}; }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::concepts> {}; }
 };
 
@@ -49,6 +53,7 @@ struct data<runir::kr::ps::icp::ProgramState<Kind>>
     urd::index<tyr::planning::State<Kind>> state;
 
     data() = default;
+
     // The referenced indices live in different repositories, hence the separate context parameters.
     data(urd::index<runir::kr::ps::icp::Program> program_,
          urd::index<runir::kr::ps::MemoryState<runir::kr::IcpFamilyTag>> memory_state_,
@@ -63,6 +68,7 @@ struct data<runir::kr::ps::icp::ProgramState<Kind>>
         state(std::move(state_))
     {
     }
+
     static constexpr bool copyable() noexcept
     {
         static_assert(std::is_trivially_copyable_v<data>, "a copyable record is trivially copyable");
@@ -77,8 +83,10 @@ struct data<runir::kr::ps::icp::ProgramState<Kind>>
                            urd::field<"histories", &data::histories>,
                            urd::field<"state", &data::state>> {};
     }
+
     static constexpr auto identifying_members() noexcept
     { return urd::Members<&data::program, &data::memory_state, &data::registers, &data::histories, &data::state> {}; }
+
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::program, &data::memory_state, &data::registers, &data::histories, &data::state> {}; }
 };

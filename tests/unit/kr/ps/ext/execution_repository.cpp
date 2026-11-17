@@ -175,7 +175,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         urd::clear_members(*data);
         const auto empty = denotations.insert(*data).first;
         EXPECT_TRUE(empty.arguments<kr::dl::BooleanTag>().empty());
-        EXPECT_TRUE(arguments.arguments<kr::dl::BooleanTag>()[0].value());
+        EXPECT_TRUE(arguments.arguments<kr::dl::BooleanTag>()[0].get_value());
         EXPECT_EQ(denotations.size<kr::dl::semantics::CallArguments>(), 2);
     }
 
@@ -291,7 +291,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     EXPECT_EQ(returned_state.get_module_state().get_mod().get_symbol().get_name(), "caller");
     EXPECT_EQ(returned_state.get_program().index(), program.index());
     EXPECT_EQ(returned_state.get_module_state(), caller_configuration);
-    EXPECT_EQ(returned_state.get_state().index(), state.index());
+    EXPECT_EQ(returned_state.get_module_state().get_state().index(), state.index());
     EXPECT_FALSE(returned_state.get_call_stack());
 }
 

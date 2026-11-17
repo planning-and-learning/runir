@@ -38,14 +38,17 @@ namespace
 using ObjectIndex = urd::index<tyr::formalism::Object>;
 
 using GroundContext = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>;
+
 struct InvalidResultContext : GroundContext
 {
     [[nodiscard]] int for_result(bool) const;
 };
+
 struct WrongKindContext : GroundContext
 {
     [[nodiscard]] kr::dl::semantics::StateEvaluationContext<tyr::LiftedTag> child_context() const;
 };
+
 static_assert(kr::dl::semantics::StateEvaluationContextConcept<GroundContext, tyr::GroundTag>);
 static_assert(!kr::dl::semantics::StateEvaluationContextConcept<InvalidResultContext, tyr::GroundTag>);
 static_assert(!kr::dl::semantics::StateEvaluationContextConcept<WrongKindContext, tyr::GroundTag>);
@@ -107,11 +110,11 @@ TEST(RunirEvaluationStorage, DenotationBuildersInternValuesAndUpdateTheirIndices
         else if constexpr (std::same_as<Category, kr::dl::RoleTag>)
         {
             EXPECT_EQ(view.get_num_objects(), 3);
-            EXPECT_EQ(view.count(), 1);
+            EXPECT_EQ(view.storage_bits().count(), 1);
             EXPECT_TRUE(view.value(urd::index<tyr::formalism::Object>(0)).test(2));
         }
         else
-            EXPECT_EQ(view.value(), expected.get());
+            EXPECT_EQ(view.get_value(), expected.get());
     };
     check.template operator()<kr::dl::BooleanTag>();
     check.template operator()<kr::dl::NumericalTag>();
@@ -137,23 +140,21 @@ TEST(RunirEvaluationStorage, BorrowedDenotationsExposeReadOnlyValuesAndMatchInde
     auto numerical = urd::builder<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>(7);
     const auto boolean_view = urd::resolve(boolean, *formalism);
     const auto numerical_view = urd::resolve(numerical, *formalism);
-    static_assert(std::same_as<decltype(boolean_view.value()), bool>);
-    static_assert(std::same_as<decltype(numerical_view.value()), ygg::uint_t>);
-    EXPECT_TRUE(boolean_view.value());
-    EXPECT_EQ(numerical_view.value(), 7);
+    static_assert(std::same_as<decltype(boolean_view.get_value()), bool>);
+    static_assert(std::same_as<decltype(numerical_view.get_value()), ygg::uint_t>);
+    EXPECT_TRUE(boolean_view.get_value());
+    EXPECT_EQ(numerical_view.get_value(), 7);
     EXPECT_EQ(&numerical_view.context(), formalism.get());
 
     const auto check = [&]<kr::dl::ConceptOrRoleTag Category>()
     {
-        static_assert(std::ranges::forward_range<const kr::dl::semantics::BorrowedDenotationView<Category>>);
-        static_assert(std::ranges::forward_range<const kr::dl::semantics::DenotationView<Category>>);
         auto builder = urd::builder<kr::dl::semantics::Denotation<Category>>(num_objects);
         const auto borrowed = urd::resolve(builder, *formalism);
-        EXPECT_EQ(borrowed.begin(), borrowed.end());
-        EXPECT_FALSE(borrowed.any());
-        EXPECT_EQ(borrowed.count(), 0);
+        EXPECT_EQ(borrowed.views().begin(), borrowed.views().end());
+        EXPECT_FALSE(borrowed.storage_bits().any());
+        EXPECT_EQ(borrowed.storage_bits().count(), 0);
         EXPECT_EQ(borrowed.get_num_objects(), num_objects);
-        EXPECT_EQ(&borrowed.get_formalism_repository(), formalism.get());
+        EXPECT_EQ(&borrowed.context(), formalism.get());
 
         const auto expected = [&]
         {
@@ -179,40 +180,30 @@ TEST(RunirEvaluationStorage, BorrowedDenotationsExposeReadOnlyValuesAndMatchInde
         }();
         const auto indexed = kr::dl::semantics::insert(repository, builder, scratch).first;
         EXPECT_EQ(indexed.get_num_objects(), num_objects);
-        EXPECT_EQ(&indexed.get_formalism_repository(), formalism.get());
-        EXPECT_TRUE(borrowed.any());
-        EXPECT_EQ(borrowed.count(), expected.size());
-        EXPECT_EQ(indexed.count(), expected.size());
-        EXPECT_TRUE(std::ranges::equal(borrowed, expected));
-        EXPECT_TRUE(std::ranges::equal(indexed, expected));
+        EXPECT_EQ(&indexed.context().get_formalism_repository(), formalism.get());
+        EXPECT_TRUE(borrowed.storage_bits().any());
+        EXPECT_EQ(borrowed.storage_bits().count(), expected.size());
+        EXPECT_EQ(indexed.storage_bits().count(), expected.size());
         EXPECT_TRUE(std::ranges::equal(borrowed.views(), expected));
         EXPECT_TRUE(std::ranges::equal(indexed.views(), expected));
         static_assert(std::ranges::borrowed_range<decltype(borrowed.views())> && std::ranges::borrowed_range<decltype(indexed.indices())>);
-        EXPECT_EQ(borrowed.views().begin(), borrowed.begin());
-        EXPECT_EQ(indexed.views().begin(), indexed.begin());
-        auto borrowed_iterator = urd::resolve(builder, *formalism).begin();
-        auto indexed_iterator = kr::dl::semantics::DenotationView<Category>(indexed).begin();
+        auto borrowed_iterator = urd::resolve(builder, *formalism).views().begin();
+        auto indexed_iterator = kr::dl::semantics::DenotationView<Category>(indexed).views().begin();
         for (const auto& value : expected)
         {
-            ASSERT_NE(borrowed_iterator, borrowed.end());
-            ASSERT_NE(indexed_iterator, indexed.end());
+            ASSERT_NE(borrowed_iterator, borrowed.views().end());
+            ASSERT_NE(indexed_iterator, indexed.views().end());
             EXPECT_EQ(*borrowed_iterator++, value);
             EXPECT_EQ(*indexed_iterator++, value);
         }
-        EXPECT_EQ(borrowed_iterator, borrowed.end());
-        EXPECT_EQ(indexed_iterator, indexed.end());
+        EXPECT_EQ(borrowed_iterator, borrowed.views().end());
+        EXPECT_EQ(indexed_iterator, indexed.views().end());
         if constexpr (std::same_as<Category, kr::dl::RoleTag>)
         {
             const auto borrowed_row = borrowed.views_from(object(0));
             const auto indexed_row = indexed.views_from(object(0));
             static_assert(std::ranges::forward_range<decltype(borrowed_row)>);
             static_assert(std::ranges::forward_range<decltype(indexed_row)>);
-            static_assert(std::same_as<decltype(borrowed.begin(object(0))), decltype(indexed.begin(object(0)))>);
-            static_assert(std::same_as<std::iter_value_t<decltype(borrowed.begin(object(0)))>, tyr::formalism::planning::ObjectView>);
-            EXPECT_EQ(borrowed.begin(object(0)), borrowed_row.begin());
-            static_assert(std::same_as<decltype(borrowed.end(object(0))), decltype(borrowed_row.end())>);  // the bits' sentinel
-            EXPECT_EQ(indexed.begin(object(0)), indexed_row.begin());
-            static_assert(std::same_as<decltype(indexed.end(object(0))), decltype(indexed_row.end())>);  // the bits' sentinel
             const auto targets = std::array { object(num_objects - 1) };
             EXPECT_TRUE(std::ranges::equal(borrowed_row, targets));
             EXPECT_TRUE(std::ranges::equal(indexed_row, targets));
@@ -473,14 +464,14 @@ TEST(RunirEvaluationStorage, DurableRootsDoNotReuseTransientRootEntries)
     const auto retained = kr::dl::semantics::evaluate<tyr::GroundTag>(expression, durable);
     EXPECT_EQ(&retained.context(), &persistent);
     EXPECT_NE(retained, temporary);
-    EXPECT_EQ(retained.count(), temporary.count());
+    EXPECT_EQ(retained.storage_bits().count(), temporary.storage_bits().count());
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(expression, durable), retained);
     EXPECT_TRUE(root_caches.find(false, expression).has_value());
 
     root_caches.reset_dynamic();
     storage.reset_dynamic();
     EXPECT_EQ(root_caches.template size<kr::dl::RoleTag>(false), 0);
-    EXPECT_EQ(retained.count(), 4);
+    EXPECT_EQ(retained.storage_bits().count(), 4);
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(expression, durable), retained);
     EXPECT_EQ(persistent.size<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(), 1);
     EXPECT_EQ(storage.get_denotation_repository(false).size<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(), 0);

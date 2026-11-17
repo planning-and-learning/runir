@@ -44,6 +44,7 @@ struct PatternDatabase
 
     /// Whether h has been computed, for some abstract targets.
     [[nodiscard]] bool computed() const noexcept { return !h.empty(); }
+
     /// Whether h must be computed for `abstract_targets`: it never was, or it was for other abstract targets.
     [[nodiscard]] bool needs_update(const urd::Store<urd::set<ygg::uint_t>, urd::dense>& abstract_targets) const
     { return !computed() || targets != abstract_targets; }
@@ -60,6 +61,7 @@ class ProjectionHeuristic
 {
 public:
     ProjectionHeuristic() = default;
+
     ProjectionHeuristic(urd::Store<urd::sequence<PatternDatabase>> databases,
                         std::span<const ygg::ColumnLayout> vertex_columns,
                         std::span<const ygg::ColumnLayout> target_columns,
@@ -97,6 +99,7 @@ public:
 
     /// The tables of every pattern database for other targets, without changing this heuristic's own.
     using Tables = urd::Store<urd::sequence<urd::Store<urd::sequence<ygg::uint_t>>>, urd::monotone>;
+
     template<tyr::datalog::database::RelationViewConcept Targets>
     Tables tables(const Targets& targets)
     {
@@ -108,6 +111,7 @@ public:
         }
         return result;
     }
+
     /// h(vertex) with tables().
     [[nodiscard]] ygg::uint_t estimate(std::span<const ygg::Value> vertex, const Tables& tables) const
     {
@@ -121,6 +125,7 @@ public:
         }
         return value;
     }
+
     [[nodiscard]] bool blind() const noexcept { return m_databases.empty(); }
 
 private:
@@ -145,6 +150,7 @@ private:
         database.h = std::move(h);
         std::swap(database.targets, m_abstract_targets);
     }
+
     /// α_i(T) into m_abstract_targets.
     template<tyr::datalog::database::RelationViewConcept Targets>
     void abstract_targets(const PatternDatabase& database, const Targets& targets)
@@ -153,12 +159,14 @@ private:
         for (size_t r = 0; r < targets.size(); ++r)
             m_abstract_targets.insert(ygg::decode_value<ygg::uint_t>(targets.row(r).value(database.pattern)));
     }
+
     Tables::value_type breadth_first(PatternDatabase& database)
     {
         auto h = Tables::value_type();
         breadth_first(database, h);
         return h;
     }
+
     /// The backward breadth-first distances from m_abstract_targets in the database's abstract graph, into h.
     void breadth_first(PatternDatabase& database, Tables::value_type& h)
     {
@@ -196,6 +204,7 @@ class KeyedProjectionHeuristic
 {
 public:
     KeyedProjectionHeuristic() = default;
+
     /// Its per-key target relations are read through `layer`, which must outlive it.
     KeyedProjectionHeuristic(const ygg::FreeRelationRepository& layer,
                              ProjectionHeuristic heuristic,
@@ -247,6 +256,7 @@ public:
             }
         }
     }
+
     /// h(key and vertex); a key without targets is unreachable.
     ygg::uint_t estimate(std::span<const ygg::Value> key_and_vertex) const
     {
@@ -263,6 +273,7 @@ private:
         urd::Store<urd::sequence<urd::Store<urd::sequence<ygg::Value>>>> targets;  ///< The vertices the tables were computed for, sorted.
         ProjectionHeuristic::Tables tables;
     };
+
     const ygg::FreeRelationRepository* m_layer = nullptr;
     ProjectionHeuristic m_heuristic;
     size_t m_key_size = 0;

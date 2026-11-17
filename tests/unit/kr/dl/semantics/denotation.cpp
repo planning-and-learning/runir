@@ -35,13 +35,14 @@ using DenotationTypes = boost::mp11::mp_transform<Denotation, kr::dl::CategoryTa
 static_assert(indexed_data_views<kr::dl::semantics::DenotationRepository>(DenotationTypes {}));
 
 using ScalarDenotations = boost::mp11::mp_list<Denotation<kr::dl::BooleanTag>, Denotation<kr::dl::NumericalTag>>;
+
 template<typename T>
 consteval bool scalar_denotation()
 {
     return requires(urd::data<T>& data, const urd::builder<T>& builder, const urd::index_view<T, kr::dl::semantics::DenotationRepository>& view) {
         data.value;
         builder.get();
-        view.value();
+        view.get_value();
     };
 }
 
@@ -64,8 +65,6 @@ static_assert(requires(urd::data<Concept>& data, const urd::builder<Concept>& bu
     data.blocks;
     builder.get();
     view.value();
-    view.begin();
-    view.end();
 });
 using Role = Denotation<kr::dl::RoleTag>;
 using RoleView = kr::dl::semantics::DenotationView<kr::dl::RoleTag>;
@@ -75,15 +74,11 @@ static_assert(requires(urd::data<Role>& data, const urd::builder<Role>& builder,
     builder.get(object);
     builder.get_num_objects();
     builder.storage_bits();
-    builder.any();
-    builder.count();
     view.value(object);
     view.get_num_objects();
     view.storage_bits();
-    view.any();
-    view.count();
-    view.begin();
-    view.end();
+    view.storage_bits().any();
+    view.storage_bits().count();
 });
 static_assert(view_aliases(kr::dl::CategoryTags {}));
 static_assert(std::same_as<kr::dl::semantics::ConceptDenotationView, urd::index_view<Denotation<kr::dl::ConceptTag>, kr::dl::semantics::DenotationRepository>>);
@@ -128,8 +123,8 @@ TEST(RunirKrDlSemanticsDenotation, ExposesScalarValues)
 
     auto boolean_data = urd::data<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>(true);
     auto numerical_data = urd::data<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>(9);
-    EXPECT_TRUE(repository.insert(boolean_data).first.value());
-    EXPECT_EQ(repository.insert(numerical_data).first.value(), 9);
+    EXPECT_TRUE(repository.insert(boolean_data).first.get_value());
+    EXPECT_EQ(repository.insert(numerical_data).first.get_value(), 9);
 }
 
 TEST(RunirKrDlSemanticsDenotation, CountsRolePairs)
@@ -149,8 +144,8 @@ TEST(RunirKrDlSemanticsDenotation, CountsRolePairs)
     auto data = urd::data<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(builder.get_num_objects(), blocks);
     const auto view = repository.insert(data).first;
 
-    EXPECT_TRUE(view.any());
-    EXPECT_EQ(view.count(), 2);
+    EXPECT_TRUE(view.storage_bits().any());
+    EXPECT_EQ(view.storage_bits().count(), 2);
 }
 
 TEST(RunirKrDlSemanticsDenotation, ConceptMutationsClearIdentityAndRetainStorage)
@@ -304,9 +299,9 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsOutliveViewWrappers)
         urd::data<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(3, repository.get_vector_repository().insert(concept_builder.blocks).first);
     const auto concept_view = repository.insert(concept_data).first;
     const auto concept_copy = concept_view;
-    EXPECT_TRUE(concept_view.begin() == concept_copy.begin());
-    auto concept_iterator = ConceptView(concept_view).begin();  // The temporary wrapper is gone before iteration.
-    const auto concept_end = ConceptView(concept_view).end();
+    EXPECT_TRUE(concept_view.views().begin() == concept_copy.views().begin());
+    auto concept_iterator = ConceptView(concept_view).views().begin();  // The temporary wrapper is gone before iteration.
+    const auto concept_end = ConceptView(concept_view).views().end();
     ASSERT_TRUE(concept_iterator != concept_end);
     EXPECT_EQ((*concept_iterator).index(), urd::index<tyr::formalism::Object>(0));
     ASSERT_TRUE(++concept_iterator != concept_end);
@@ -319,9 +314,9 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsOutliveViewWrappers)
     auto role_data = urd::data<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(3, repository.get_vector_repository().insert(role_builder.blocks).first);
     const auto role_view = repository.insert(role_data).first;
     const auto role_copy = role_view;
-    EXPECT_TRUE(role_view.begin() == role_copy.begin());
-    auto role_iterator = RoleView(role_view).begin();
-    const auto role_end = RoleView(role_view).end();
+    EXPECT_TRUE(role_view.views().begin() == role_copy.views().begin());
+    auto role_iterator = RoleView(role_view).views().begin();
+    const auto role_end = RoleView(role_view).views().end();
     ASSERT_TRUE(role_iterator != role_end);
     EXPECT_EQ((*role_iterator).first.index(), urd::index<tyr::formalism::Object>(0));
     EXPECT_EQ((*role_iterator).second.index(), urd::index<tyr::formalism::Object>(1));
@@ -365,8 +360,8 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsSurviveRepositoryGrowthAndSkipRolePa
     concept_builder.get().set(129);
     auto concept_data = urd::data<Concept>(num_objects, repository.get_vector_repository().insert(concept_builder.blocks).first);
     const auto concept_view = repository.insert(concept_data).first;
-    auto concept_iterator = ConceptView(concept_view).begin();
-    const auto concept_end = ConceptView(concept_view).end();
+    auto concept_iterator = ConceptView(concept_view).views().begin();
+    const auto concept_end = ConceptView(concept_view).views().end();
     // Only copied iterators survive: both temporary denotation views and indices ranges are gone.
     const auto concept_indices = std::ranges::subrange(ConceptView(concept_view).indices().begin(), ConceptView(concept_view).indices().end());
     const auto borrowed_concept_indices = std::ranges::subrange(urd::resolve(concept_builder, *planning_repository).indices().begin(),
@@ -382,8 +377,8 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsSurviveRepositoryGrowthAndSkipRolePa
     role_builder.get(urd::index<tyr::formalism::Object>(129)).set(1);
     auto role_data = urd::data<Role>(num_objects, repository.get_vector_repository().insert(role_builder.blocks).first);
     const auto role_view = repository.insert(role_data).first;
-    auto role_iterator = RoleView(role_view).begin();
-    const auto role_end = RoleView(role_view).end();
+    auto role_iterator = RoleView(role_view).views().begin();
+    const auto role_end = RoleView(role_view).views().end();
     const auto role_indices = std::ranges::subrange(RoleView(role_view).indices().begin(), RoleView(role_view).indices().end());
     const auto row_indices = std::ranges::subrange(RoleView(role_view).indices(ObjectIndex(129)).begin(), RoleView(role_view).indices(ObjectIndex(129)).end());
     const auto expected_role_indices = std::array { std::pair(ObjectIndex(0), ObjectIndex(64)), std::pair(ObjectIndex(129), ObjectIndex(1)) };
@@ -415,7 +410,7 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsSurviveRepositoryGrowthAndSkipRolePa
     check_indices(concept_indices, expected_concept_indices);
     check_indices(role_indices, expected_role_indices);
     check_indices(row_indices, expected_row_indices);
-    EXPECT_TRUE(concept_iterator == concept_view.begin());
+    EXPECT_TRUE(concept_iterator == concept_view.views().begin());
     for (const auto expected : { 0U, 64U, 129U })
     {
         ASSERT_TRUE(concept_iterator != concept_end);
@@ -423,7 +418,7 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsSurviveRepositoryGrowthAndSkipRolePa
         ++concept_iterator;
     }
     EXPECT_TRUE(concept_iterator == concept_end);
-    EXPECT_TRUE(role_iterator == role_view.begin());
+    EXPECT_TRUE(role_iterator == role_view.views().begin());
     ASSERT_TRUE(role_iterator != role_end);
     EXPECT_EQ((*role_iterator).first.index(), urd::index<tyr::formalism::Object>(0));
     EXPECT_EQ((*role_iterator).second.index(), urd::index<tyr::formalism::Object>(64));
@@ -487,12 +482,12 @@ TEST(RunirKrDlSemanticsDenotation, RoleStorageBitsetsPreserveRowPadding)
             auto data = urd::data<Role>(size, repository.get_vector_repository().insert(result.blocks).first);
             const auto view = repository.insert(data).first;
             EXPECT_EQ(view.storage_bits(), std::as_const(result).storage_bits());
-            EXPECT_EQ(view.count(), count);
-            EXPECT_EQ(view.any(), count != 0);
+            EXPECT_EQ(view.storage_bits().count(), count);
+            EXPECT_EQ(view.storage_bits().any(), count != 0);
             EXPECT_EQ(std::ranges::distance(view.indices()), count);
             EXPECT_EQ(std::ranges::distance(urd::resolve(result, *planning_repository).indices()), count);
             auto iterated = size_t { 0 };
-            for (const auto [source, target] : view)
+            for (const auto [source, target] : view.views())
             {
                 EXPECT_LT(ygg::uint_t(source.index().value), size);
                 EXPECT_LT(ygg::uint_t(target.index().value), size);

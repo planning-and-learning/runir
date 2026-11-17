@@ -40,6 +40,7 @@ struct QueryMustPassEvaluator : QueryValue
         for (const auto& slot : feature.slots)
             slots.push_back(visit_slot<>(slot, edges.context(), [&](auto argument) { return graph.prepare_relation(argument, slot.columns, dependencies); }));
     }
+
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context)
     {
@@ -47,6 +48,7 @@ struct QueryMustPassEvaluator : QueryValue
         auto& output = this->clear();
         compute(graph, output);
     }
+
     /// The children's deltas are exact (IncrementalEvaluation), so unchanged sources, targets and slots leave the
     /// result unchanged.
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&)
@@ -90,10 +92,12 @@ private:
         auto& heuristic = semantics::detail::must_pass_heuristic(graph.layer(), feature, num_objects, input(graph), graph.result(targets));
         feature.must_pass.must_pass(input(graph), graph.result(sources), graph.result(targets), graph.result(probes), out, heuristic);
     }
+
     auto input(const EvaluationGraph<Kind>& graph) const
     {
         return [this, &graph](size_t slot) { return graph.result(slots[slot]); };
     }
+
     static bool modified(const EvaluationGraph<Kind>& graph, QueryEvaluationIndex index)
     { return !graph.change(index).added.empty() || !graph.change(index).removed.empty(); }
 };

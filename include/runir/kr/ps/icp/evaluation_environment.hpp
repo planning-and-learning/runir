@@ -59,14 +59,19 @@ public:
     }
 
     [[nodiscard]] auto get_program() const noexcept { return m_program; }
+
     auto& get_dl_repository() noexcept { return m_program.context().get_dl_repository(); }
+
     auto& get_dl_caches() noexcept { return m_source_storage.get_caches(); }
+
     auto& get_dl_target_caches() noexcept { return m_target_storage.get_caches(); }
+
     void reset_source() noexcept
     {
         m_source_storage.reset_dynamic();
         m_policy.reset_source();
     }
+
     void reset_target() noexcept
     {
         m_target_storage.reset_dynamic();
@@ -80,8 +85,10 @@ public:
             throw std::invalid_argument("ICP evaluation requires a state from the selected task and program.");
         return make_dl_context(state.get_state(), state.get_registers());
     }
+
     auto make_dl_context(tyr::planning::StateView<Kind> state, runir::kr::dl::semantics::RegisterValuesView registers)
     { return m_policy.make_source_context(StateContext(state, m_task->dl_builder, m_source_storage, m_arguments, registers)); }
+
     auto make_dl_transition_context(tyr::planning::StateView<Kind> source,
                                     tyr::planning::StateView<Kind> target,
                                     runir::kr::dl::semantics::RegisterValuesView source_registers,

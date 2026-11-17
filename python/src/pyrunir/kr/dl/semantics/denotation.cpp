@@ -11,6 +11,7 @@
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <tyr/formalism/object_view.hpp>
 #include <urd/python/bindings.hpp>
+#include <urd/python/containers/bitset_span.hpp>
 #include <urd/python/owner.hpp>
 #include <vector>
 
@@ -25,9 +26,7 @@ template<CategoryTag Category>
 void bind_denotation_view(nb::module_& m)
 {
     using View = urd::index_view<runir::kr::dl::semantics::Denotation<Category>, runir::kr::dl::semantics::DenotationRepository>;
-    auto cls = urd::python::bind_view<View>(m);
-    if constexpr (ConceptOrRoleTag<Category>)
-        cls.def("views", &View::views);
+    urd::python::bind_view<View>(m);
 }
 
 }  // namespace

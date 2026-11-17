@@ -109,9 +109,11 @@ struct IdentifierClass : ygg::diagnostics::ErrorHandlerBase
 struct BooleanFeatureClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct NumericalFeatureClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct FeatureClass : boost::spirit::x3::annotate_on_success
 {
 };
@@ -119,18 +121,23 @@ struct FeatureClass : boost::spirit::x3::annotate_on_success
 struct PositiveConditionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct NegativeConditionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct EqualZeroConditionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct GreaterZeroConditionClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ConditionObservationClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct ConditionClass : boost::spirit::x3::annotate_on_success
 {
 };
@@ -138,21 +145,27 @@ struct ConditionClass : boost::spirit::x3::annotate_on_success
 struct PositiveEffectClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct NegativeEffectClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct UnchangedEffectClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct IncreasesEffectClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct DecreasesEffectClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct EffectObservationClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct EffectClass : boost::spirit::x3::annotate_on_success
 {
 };
@@ -160,9 +173,11 @@ struct EffectClass : boost::spirit::x3::annotate_on_success
 struct RuleClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct SketchClass : boost::spirit::x3::annotate_on_success
 {
 };
+
 struct SketchRootClass : ygg::diagnostics::ErrorHandlerBase
 {
 };

@@ -43,6 +43,7 @@ struct ProgramProofVertexLabel : urd::compared_by_identity<ProgramProofVertexLab
                             &ProgramProofVertexLabel::is_alive,
                             &ProgramProofVertexLabel::is_unsolvable> {};
     }
+
     static constexpr auto identifying_members() noexcept { return cista_members(); }
 };
 
@@ -53,6 +54,7 @@ struct ProgramProofEdgeLabel : urd::compared_by_identity<ProgramProofEdgeLabel<F
     urd::flat_optional<RuleView<Family>> rule;
 
     ProgramProofEdgeLabel() = default;
+
     ProgramProofEdgeLabel(urd::flat_optional<tyr::formalism::planning::ActionRowView> action_, urd::flat_optional<RuleView<Family>> rule_) :
         action(std::move(action_)),
         rule(std::move(rule_))
@@ -60,6 +62,7 @@ struct ProgramProofEdgeLabel : urd::compared_by_identity<ProgramProofEdgeLabel<F
     }
 
     static constexpr auto cista_members() noexcept { return urd::Members<&ProgramProofEdgeLabel::action, &ProgramProofEdgeLabel::rule> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&ProgramProofEdgeLabel::action, &ProgramProofEdgeLabel::rule> {}; }
 };
 

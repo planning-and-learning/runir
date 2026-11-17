@@ -19,12 +19,14 @@ struct data<runir::kr::dl::cnf_grammar::DerivationRule<Category>>
     runir::kr::dl::cnf_grammar::Constructor<Category> rhs;
 
     data() = default;
+
     data(urd::index<runir::kr::dl::cnf_grammar::NonTerminal<Category>> lhs_, runir::kr::dl::cnf_grammar::Constructor<Category> rhs_) :
         index(),
         lhs(std::move(lhs_)),
         rhs(std::move(rhs_))
     {
     }
+
     static constexpr bool copyable() noexcept
     {
         static_assert(std::is_trivially_copyable_v<data>, "a copyable record is trivially copyable");
@@ -32,7 +34,9 @@ struct data<runir::kr::dl::cnf_grammar::DerivationRule<Category>>
     }
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"lhs", &data::lhs>, urd::field<"rhs", &data::rhs>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::lhs, &data::rhs> {}; }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::lhs, &data::rhs> {}; }
 };
 

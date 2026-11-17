@@ -37,6 +37,7 @@ struct SearchStorage<Kind, StateMemorization::ALL>
     auto& node(ProgramStateView<Kind> state) { return get_or_create_search_node(state, nodes); }
 
     auto initial_memo_state(ProgramStateView<Kind> state) { return std::optional(state); }
+
     std::optional<ProgramStateView<Kind>> choice_memo_state(auto&&) { return std::nullopt; }
 
     bool admit(ProgramStateView<Kind> state, auto&& classify)
@@ -114,6 +115,7 @@ struct SearchStorage<Kind, StateMemorization::NONE>
     explicit SearchStorage(const ProgramSearchOptions<Kind>& options_) : options(&options_) {}
 
     std::optional<ProgramStateView<Kind>> initial_memo_state(BuilderProgramStateView<Kind>) { return std::nullopt; }
+
     std::optional<ProgramStateView<Kind>> choice_memo_state(auto&&) { return std::nullopt; }
 
     bool admit(BuilderProgramStateView<Kind>, auto&&)
@@ -135,8 +137,11 @@ struct SearchStorage<Kind, StateMemorization::NONE>
     std::optional<bool> completed(ProgramStateView<Kind>) { return std::nullopt; }
 
     auto classify(BuilderProgramStateView<Kind> state, auto&& classify) { return classify(state); }
+
     void record_flags(BuilderProgramStateView<Kind>, const auto&) {}
+
     void memorize(ProgramStateView<Kind>) {}
+
     void complete(ProgramStateView<Kind>, bool) {}
 };
 

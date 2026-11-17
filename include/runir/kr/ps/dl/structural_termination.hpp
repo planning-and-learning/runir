@@ -174,6 +174,7 @@ struct IncompletePolicyResult
     urd::Store<urd::sequence<SurvivingRule>> surviving_rules;
 
     [[nodiscard]] bool is_terminating() const noexcept { return surviving_rules.empty(); }
+
     /// Original rule positions not ruled out by incomplete elimination.
     [[nodiscard]] urd::Store<urd::sequence<std::size_t>> get_cyclic_rule_positions() const;
 };
@@ -222,6 +223,7 @@ struct StructuralTerminationResult
     urd::Store<urd::sequence<CounterexampleComponent>> counterexample_components;
 
     [[nodiscard]] bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }
+
     /// Sorted unique original rule positions on any final residual cycle.
     /// Hybrid results use the final SIEVE frontier, not the incomplete prefix.
     [[nodiscard]] urd::Store<urd::sequence<std::size_t>> get_cyclic_rule_positions() const;

@@ -35,7 +35,9 @@ struct data<runir::kr::uns::ClassifierLiteral>
     bool polarity = true;
 
     data() = default;
+
     data(runir::kr::uns::ClassifierLiteralVariant feature_, bool polarity_) : index(), feature(std::move(feature_)), polarity(polarity_) {}
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) noexcept = default;
@@ -43,7 +45,9 @@ struct data<runir::kr::uns::ClassifierLiteral>
     ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"feature", &data::feature>, urd::field<"polarity", &data::polarity>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::feature, &data::polarity> {}; }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::feature, &data::polarity> {}; }
 };
 
@@ -55,7 +59,9 @@ struct data<runir::kr::uns::ClassifierClause>
     urd::flat_vector<urd::index<runir::kr::uns::ClassifierLiteral>> literals;
 
     data() = default;
+
     data(urd::flat_vector<urd::index<runir::kr::uns::ClassifierLiteral>> literals_) : index(), literals(std::move(literals_)) {}
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) noexcept = default;
@@ -63,7 +69,9 @@ struct data<runir::kr::uns::ClassifierClause>
     ~data() = default;
 
     static constexpr auto fields() noexcept { return urd::Fields<urd::field<"literals", &data::literals>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::literals> {}; }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::literals> {}; }
 };
 
@@ -77,6 +85,7 @@ struct data<runir::kr::uns::Classifier>
     urd::flat_vector<urd::index<runir::kr::uns::ClassifierClause>> clauses;
 
     data() = default;
+
     data(urd::flat_string symbol_,
          urd::flat_vector<urd::index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>>> features_,
          urd::flat_vector<urd::index<runir::kr::uns::ClassifierClause>> clauses_) :
@@ -86,6 +95,7 @@ struct data<runir::kr::uns::Classifier>
         clauses(std::move(clauses_))
     {
     }
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) noexcept = default;
@@ -94,7 +104,9 @@ struct data<runir::kr::uns::Classifier>
 
     static constexpr auto fields() noexcept
     { return urd::Fields<urd::field<"symbol", &data::symbol>, urd::field<"features", &data::features>, urd::field<"clauses", &data::clauses>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::symbol, &data::features, &data::clauses> {}; }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::symbol, &data::features, &data::clauses> {}; }
 };
 

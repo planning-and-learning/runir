@@ -98,28 +98,16 @@ public:
     auto get_value() const noexcept
         requires runir::kr::dl::BooleanOrNumericalTag<Category>
     { return self().template member<&urd::record_of<V>::value>(); }
+
     auto get_num_objects() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
     { return self().template member<&urd::record_of<V>::num_objects>(); }
+
     const auto& get_blocks() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
     { return self().template member<&urd::record_of<V>::blocks>(); }
 
-    const auto& get_formalism_repository() const noexcept { return self().context(); }
-
-    [[nodiscard]] bool any() const noexcept
-        requires runir::kr::dl::ConceptOrRoleTag<Category>
-    { return storage_bits().any(); }
-
-    [[nodiscard]] size_t count() const noexcept
-        requires runir::kr::dl::ConceptOrRoleTag<Category>
-    { return storage_bits().count(); }
-
     // Internal interface: raw values, bitsets and typed indices avoid constructing object views.
-
-    auto value() const noexcept
-        requires runir::kr::dl::BooleanOrNumericalTag<Category>
-    { return get_value(); }
 
     auto value() const noexcept
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
@@ -153,7 +141,9 @@ public:
         requires std::same_as<Category, runir::kr::dl::RoleTag>
     { return runir::kr::dl::semantics::detail::object_pair_indices(storage_bits(), get_num_objects()); }
 
-    auto indices(urd::index<tyr::formalism::Object> source) const noexcept
+    // Its return type is spelled out, so that taking the address of `indices` in another category does not deduce it.
+    [[nodiscard]] auto indices(urd::index<tyr::formalism::Object> source) const noexcept
+        -> decltype(runir::kr::dl::semantics::detail::object_indices(std::declval<urd::bitset_span<const ygg::uint_t>>()))
         requires std::same_as<Category, runir::kr::dl::RoleTag>
     { return runir::kr::dl::semantics::detail::object_indices(value(source)); }
 
@@ -161,28 +151,43 @@ public:
 
     auto views() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    { return urd::resolve(indices(), get_formalism_repository()); }
+    { return urd::resolve(indices(), self().context()); }
 
     /// Objects reached from this source.
     auto views_from(tyr::formalism::planning::ObjectView source) const noexcept
         requires std::same_as<Category, runir::kr::dl::RoleTag>
-    { return urd::resolve(indices(source.index()), get_formalism_repository()); }
+    { return urd::resolve(indices(source.index()), self().context()); }
 
-    auto begin() const noexcept
-        requires runir::kr::dl::ConceptOrRoleTag<Category>
-    { return views().begin(); }
-
-    auto begin(tyr::formalism::planning::ObjectView source) const noexcept
-        requires std::same_as<Category, runir::kr::dl::RoleTag>
-    { return views_from(source).begin(); }
-
-    auto end() const noexcept
-        requires runir::kr::dl::ConceptOrRoleTag<Category>
-    { return views().end(); }
-
-    auto end(tyr::formalism::planning::ObjectView source) const noexcept
-        requires std::same_as<Category, runir::kr::dl::RoleTag>
-    { return views_from(source).end(); }
+    static constexpr auto functions() noexcept
+    {
+        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
+        {
+            using Self = const view_mixin&;
+            return urd::Functions<
+                urd::function<"indices", static_cast<decltype(std::declval<Self>().indices()) (view_mixin::*)() const noexcept>(&view_mixin::indices)>,
+                urd::function<"views", &view_mixin::views>,
+                urd::function<"value", static_cast<decltype(std::declval<Self>().value()) (view_mixin::*)() const noexcept>(&view_mixin::value)>,
+                urd::function<"storage_bits", &view_mixin::storage_bits>> {};
+        }
+        else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
+        {
+            using Self = const view_mixin&;
+            using Object = urd::index<tyr::formalism::Object>;
+            return urd::Functions<
+                urd::function<"indices", static_cast<decltype(std::declval<Self>().indices()) (view_mixin::*)() const noexcept>(&view_mixin::indices)>,
+                urd::function<"indices",
+                              static_cast<decltype(std::declval<Self>().indices(std::declval<Object>())) (view_mixin::*)(Object) const noexcept>(
+                                  &view_mixin::indices)>,
+                urd::function<"views", &view_mixin::views>,
+                urd::function<"views_from", &view_mixin::views_from>,
+                urd::function<"value",
+                              static_cast<decltype(std::declval<Self>().value(std::declval<Object>())) (view_mixin::*)(Object) const noexcept>(
+                                  &view_mixin::value)>,
+                urd::function<"storage_bits", &view_mixin::storage_bits>> {};
+        }
+        else
+            return urd::Functions<> {};
+    }
 };
 
 namespace urd
@@ -206,21 +211,7 @@ public:
         requires runir::kr::dl::ConceptOrRoleTag<Category>
     { return self().template member<&urd::record_of<V>::blocks>(); }
 
-    const auto& get_formalism_repository() const noexcept { return self().context().get_formalism_repository(); }
-
-    [[nodiscard]] bool any() const noexcept
-        requires runir::kr::dl::ConceptOrRoleTag<Category>
-    { return storage_bits().any(); }
-
-    [[nodiscard]] size_t count() const noexcept
-        requires runir::kr::dl::ConceptOrRoleTag<Category>
-    { return storage_bits().count(); }
-
     // Internal interface: raw values, bitsets and typed indices avoid constructing object views.
-
-    auto value() const noexcept
-        requires runir::kr::dl::BooleanOrNumericalTag<Category>
-    { return get_value(); }
 
     auto value() const noexcept
         requires(std::same_as<Category, runir::kr::dl::ConceptTag>)
@@ -263,7 +254,9 @@ public:
         requires std::same_as<Category, runir::kr::dl::RoleTag>
     { return runir::kr::dl::semantics::detail::object_pair_indices(storage_bits(), get_num_objects()); }
 
-    auto indices(urd::index<tyr::formalism::Object> source) const noexcept
+    // Its return type is spelled out, so that taking the address of `indices` in another category does not deduce it.
+    [[nodiscard]] auto indices(urd::index<tyr::formalism::Object> source) const noexcept
+        -> decltype(runir::kr::dl::semantics::detail::object_indices(std::declval<urd::bitset_span<const ygg::uint_t>>()))
         requires std::same_as<Category, runir::kr::dl::RoleTag>
     { return runir::kr::dl::semantics::detail::object_indices(value(source)); }
 
@@ -271,28 +264,43 @@ public:
 
     auto views() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
-    { return urd::resolve(indices(), get_formalism_repository()); }
+    { return urd::resolve(indices(), self().context().get_formalism_repository()); }
 
     /// Objects reached from this source.
     auto views_from(tyr::formalism::planning::ObjectView source) const noexcept
         requires std::same_as<Category, runir::kr::dl::RoleTag>
-    { return urd::resolve(indices(source.index()), get_formalism_repository()); }
+    { return urd::resolve(indices(source.index()), self().context().get_formalism_repository()); }
 
-    auto begin() const noexcept
-        requires runir::kr::dl::ConceptOrRoleTag<Category>
-    { return views().begin(); }
-
-    auto begin(tyr::formalism::planning::ObjectView source) const noexcept
-        requires std::same_as<Category, runir::kr::dl::RoleTag>
-    { return views_from(source).begin(); }
-
-    auto end() const noexcept
-        requires runir::kr::dl::ConceptOrRoleTag<Category>
-    { return views().end(); }
-
-    auto end(tyr::formalism::planning::ObjectView source) const noexcept
-        requires std::same_as<Category, runir::kr::dl::RoleTag>
-    { return views_from(source).end(); }
+    static constexpr auto functions() noexcept
+    {
+        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
+        {
+            using Self = const view_mixin&;
+            return urd::Functions<
+                urd::function<"indices", static_cast<decltype(std::declval<Self>().indices()) (view_mixin::*)() const noexcept>(&view_mixin::indices)>,
+                urd::function<"views", &view_mixin::views>,
+                urd::function<"value", static_cast<decltype(std::declval<Self>().value()) (view_mixin::*)() const noexcept>(&view_mixin::value)>,
+                urd::function<"storage_bits", &view_mixin::storage_bits>> {};
+        }
+        else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
+        {
+            using Self = const view_mixin&;
+            using Object = urd::index<tyr::formalism::Object>;
+            return urd::Functions<
+                urd::function<"indices", static_cast<decltype(std::declval<Self>().indices()) (view_mixin::*)() const noexcept>(&view_mixin::indices)>,
+                urd::function<"indices",
+                              static_cast<decltype(std::declval<Self>().indices(std::declval<Object>())) (view_mixin::*)(Object) const noexcept>(
+                                  &view_mixin::indices)>,
+                urd::function<"views", &view_mixin::views>,
+                urd::function<"views_from", &view_mixin::views_from>,
+                urd::function<"value",
+                              static_cast<decltype(std::declval<Self>().value(std::declval<Object>())) (view_mixin::*)(Object) const noexcept>(
+                                  &view_mixin::value)>,
+                urd::function<"storage_bits", &view_mixin::storage_bits>> {};
+        }
+        else
+            return urd::Functions<> {};
+    }
 };
 }  // namespace urd
 

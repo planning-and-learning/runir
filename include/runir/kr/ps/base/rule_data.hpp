@@ -26,6 +26,7 @@ struct data<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>
     runir::kr::ps::EffectList<runir::kr::BaseFamilyTag> effects;
 
     data() = default;
+
     data(urd::flat_string symbol_,
          runir::kr::ps::ConditionList<runir::kr::BaseFamilyTag> conditions_,
          runir::kr::ps::EffectList<runir::kr::BaseFamilyTag> effects_) :
@@ -35,6 +36,7 @@ struct data<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>
         effects(std::move(effects_))
     {
     }
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) noexcept = default;
@@ -43,7 +45,9 @@ struct data<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>
 
     static constexpr auto fields() noexcept
     { return urd::Fields<urd::field<"symbol", &data::symbol>, urd::field<"conditions", &data::conditions>, urd::field<"effects", &data::effects>> {}; }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::symbol, &data::conditions, &data::effects> {}; }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::symbol, &data::conditions, &data::effects> {}; }
 };
 

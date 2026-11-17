@@ -23,18 +23,21 @@ struct ScalarBinaryEvaluator
     DenotationState<Category> value;
 
     ScalarBinaryEvaluator(EvaluationIndex<Input> left_, EvaluationIndex<Input> right_) : left(left_), right(right_) {}
+
     void refresh(EvaluationGraph<Kind>& graph)
     {
         if constexpr (NumericalBinaryTag<Tag>)
-            value.set(semantics::detail::apply_numerical_binary<Tag>(graph.result(left).value(), graph.result(right).value()));
+            value.set(semantics::detail::apply_numerical_binary<Tag>(graph.result(left).get_value(), graph.result(right).get_value()));
         else if constexpr (LogicalBinaryTag<Tag>)
-            value.set(semantics::detail::apply_logical_binary<Tag>(graph.result(left).value(), graph.result(right).value()));
+            value.set(semantics::detail::apply_logical_binary<Tag>(graph.result(left).get_value(), graph.result(right).get_value()));
         else
-            value.set(semantics::detail::apply_comparison<Tag>(graph.result(left).value(), graph.result(right).value()));
+            value.set(semantics::detail::apply_comparison<Tag>(graph.result(left).get_value(), graph.result(right).get_value()));
     }
+
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
     { refresh(graph); }
+
     void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&) { refresh(graph); }
 };
 
@@ -45,10 +48,12 @@ struct LogicalNotEvaluator
     DenotationState<BooleanTag> value;
 
     explicit LogicalNotEvaluator(EvaluationIndex<BooleanTag> child_) : child(child_) {}
+
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context&)
-    { value.set(!graph.result(child).value()); }
-    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&) { value.set(!graph.result(child).value()); }
+    { value.set(!graph.result(child).get_value()); }
+
+    void update(EvaluationGraph<Kind>& graph, const Delta&, tyr::datalog::database::Workspace&) { value.set(!graph.result(child).get_value()); }
 };
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

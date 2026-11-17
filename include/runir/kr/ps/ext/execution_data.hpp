@@ -30,6 +30,7 @@ struct data<runir::kr::ps::ext::ModuleState<Kind>>
     urd::index<runir::kr::dl::semantics::CallArguments> arguments;
 
     data() = default;
+
     // The referenced indices live in different repositories, hence the separate context parameters.
     data(urd::index<tyr::planning::State<Kind>> state_,
          urd::index<runir::kr::ps::ext::Module> module_index,
@@ -44,6 +45,7 @@ struct data<runir::kr::ps::ext::ModuleState<Kind>>
         arguments(arguments_)
     {
     }
+
     static constexpr bool copyable() noexcept
     {
         static_assert(std::is_trivially_copyable_v<data>, "a copyable record is trivially copyable");
@@ -58,8 +60,10 @@ struct data<runir::kr::ps::ext::ModuleState<Kind>>
                            urd::field<"registers", &data::registers>,
                            urd::field<"arguments", &data::arguments>> {};
     }
+
     static constexpr auto identifying_members() noexcept
     { return urd::Members<&data::state, &data::mod, &data::memory_state, &data::registers, &data::arguments> {}; }
+
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::state, &data::mod, &data::memory_state, &data::registers, &data::arguments> {}; }
 };
@@ -75,6 +79,7 @@ struct data<runir::kr::ps::ext::CallStack>
     urd::flat_optional<urd::index<runir::kr::ps::ext::CallStack>> caller;
 
     data() = default;
+
     // The referenced indices live in different repositories, hence the separate context parameters.
     data(urd::index<runir::kr::ps::ext::Module> module_index,
          urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>> return_memory_state_,
@@ -89,6 +94,7 @@ struct data<runir::kr::ps::ext::CallStack>
         caller(std::move(caller_))
     {
     }
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -103,8 +109,10 @@ struct data<runir::kr::ps::ext::CallStack>
                            urd::field<"arguments", &data::arguments>,
                            urd::field<"caller", &data::caller>> {};
     }
+
     static constexpr auto identifying_members() noexcept
     { return urd::Members<&data::mod, &data::return_memory_state, &data::registers, &data::arguments, &data::caller> {}; }
+
     static constexpr auto cista_members() noexcept
     { return urd::Members<&data::index, &data::mod, &data::return_memory_state, &data::registers, &data::arguments, &data::caller> {}; }
 };
@@ -118,6 +126,7 @@ struct data<runir::kr::ps::ext::ProgramState<Kind>>
     urd::flat_optional<urd::index<runir::kr::ps::ext::CallStack>> call_stack;
 
     data() = default;
+
     // The referenced indices live in different repositories, hence the separate context parameters.
     data(urd::index<runir::kr::ps::ext::Program> program_,
          urd::index<runir::kr::ps::ext::ModuleState<Kind>> module_state_,
@@ -128,6 +137,7 @@ struct data<runir::kr::ps::ext::ProgramState<Kind>>
         call_stack(std::move(call_stack_))
     {
     }
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -139,7 +149,9 @@ struct data<runir::kr::ps::ext::ProgramState<Kind>>
         return urd::
             Fields<urd::field<"program", &data::program>, urd::field<"module_state", &data::module_state>, urd::field<"call_stack", &data::call_stack>> {};
     }
+
     static constexpr auto identifying_members() noexcept { return urd::Members<&data::program, &data::module_state, &data::call_stack> {}; }
+
     static constexpr auto cista_members() noexcept { return urd::Members<&data::index, &data::program, &data::module_state, &data::call_stack> {}; }
 };
 

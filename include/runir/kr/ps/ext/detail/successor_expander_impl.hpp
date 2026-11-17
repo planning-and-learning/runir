@@ -85,7 +85,7 @@ bool SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::for_each_succe
             statistics.num_generated += expansion.status == ProgramOutcome::APPLIED || expansion.status == ProgramOutcome::RESTORED_CALLER;
         return emit(std::forward<Expansion>(expansion));
     };
-    auto context = m_rule_evaluators.make_context(m_storage, state.get_state());
+    auto context = m_rule_evaluators.make_context(m_storage, state.get_module_state().get_state());
     if (!m_rule_evaluators.for_each_successor(context, state, emit_expansion, stop))
         return false;
     if (stop())
@@ -100,7 +100,7 @@ auto SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::apply_choice(S
                                                                                ProgramSearchStatistics& statistics) -> Step
 {
     validate_source(state);
-    auto context = m_rule_evaluators.make_context(m_storage, state.get_state());
+    auto context = m_rule_evaluators.make_context(m_storage, state.get_module_state().get_state());
     auto step = m_rule_evaluators.apply_choice(context, state, choice);
     statistics.num_generated += step.status == ProgramOutcome::APPLIED;
     return step;
@@ -115,7 +115,7 @@ std::optional<RuleVariantView> SuccessorExpander<Kind, ExecutionStorage, Evaluat
     get_environment().reset_source();
     get_environment().select_source(state);
     get_environment().reset_target();
-    auto context = m_rule_evaluators.make_context(m_storage, state.get_state());
+    auto context = m_rule_evaluators.make_context(m_storage, state.get_module_state().get_state());
     return m_rule_evaluators.matching_rule(context, state, candidate);
 }
 
@@ -130,7 +130,7 @@ auto SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::apply(StorageS
     get_environment().reset_source();
     get_environment().select_source(state);
     get_environment().reset_target();
-    auto context = m_rule_evaluators.make_context(m_storage, state.get_state());
+    auto context = m_rule_evaluators.make_context(m_storage, state.get_module_state().get_state());
     return m_rule_evaluators.apply(context, state, rule, candidate);
 }
 
@@ -138,7 +138,7 @@ template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, run
 template<tyr::planning::StateViewConcept<Kind> S>
 void SuccessorExpander<Kind, ExecutionStorage, EvaluationPolicy>::validate_planning_state(const S& state) const
 {
-    if (&state.get_state_repository() != m_task_context->search_context->state_repository.get())
+    if (&state.context() != m_task_context->search_context->state_repository.get())
         throw std::invalid_argument("SuccessorExpander requires a planning state from the selected task's state repository.");
 }
 

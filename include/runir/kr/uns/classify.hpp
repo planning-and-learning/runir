@@ -22,7 +22,7 @@ bool classify(urd::index_view<runir::kr::uns::Classifier, C> classifier, Context
         bool satisfied = true;
         for (auto literal : clause.get_literals())
         {
-            const bool value = std::visit([&](auto feature) { return runir::kr::ps::evaluate<Kind>(feature, context).value(); }, literal.get_feature());
+            const bool value = std::visit([&](auto feature) { return runir::kr::ps::evaluate<Kind>(feature, context).get_value(); }, literal.get_feature());
             if (literal.get_polarity() ? !value : value)
             {
                 satisfied = false;

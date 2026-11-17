@@ -16,6 +16,7 @@ private:
 
 public:
     auto get_direction() const noexcept { return self().template member<&urd::record_of<V>::direction>(); }
+
     auto get_feature() const noexcept { return self().template member<&urd::record_of<V>::feature>(); }
 };
 }  // namespace urd

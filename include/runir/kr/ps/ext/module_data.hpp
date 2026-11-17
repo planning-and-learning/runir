@@ -36,6 +36,7 @@ struct data<runir::kr::ps::ext::Module>
     urd::flat_vector<urd::index<runir::kr::ps::MemoryState<runir::kr::ExtFamilyTag>>> memory_states;
     urd::flat_vector<urd::flat_vector<urd::index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>>> memory_transitions;
     data() = default;
+
     // Arguments and registers live in the description-logic repository, hence the separate context parameter.
     data(urd::index<runir::kr::ps::ModuleSymbol<runir::kr::ExtFamilyTag>> symbol_,
          urd::flat_vector<urd::index<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>>> concept_arguments_,
@@ -70,6 +71,7 @@ struct data<runir::kr::ps::ext::Module>
         memory_transitions(std::move(memory_transitions_))
     {
     }
+
     data(const data& other) = delete;
     data& operator=(const data& other) = delete;
     data(data&& other) = default;
@@ -94,6 +96,7 @@ struct data<runir::kr::ps::ext::Module>
                            urd::field<"memory_states", &data::memory_states>,
                            urd::field<"memory_transitions", &data::memory_transitions>> {};
     }
+
     static constexpr auto identifying_members() noexcept
     {
         return urd::Members<&data::symbol,
@@ -112,6 +115,7 @@ struct data<runir::kr::ps::ext::Module>
                             &data::memory_states,
                             &data::memory_transitions> {};
     }
+
     static constexpr auto cista_members() noexcept
     {
         return urd::Members<&data::index,

@@ -33,19 +33,26 @@ class FeatureNode
 {
 public:
     FeatureNode(ConstructorView<Category> expression, GraphBuilder<Kind>& graph);
+
     [[nodiscard]] ConstructorView<Category> get_expression() const noexcept { return m_expression; }
+
     template<StateEvaluationContextConcept<Kind> Context>
     void initialize(EvaluationGraph<Kind>& graph, Context& context);
     void update(EvaluationGraph<Kind>& graph, const Delta& delta, tyr::datalog::database::Workspace& workspace);
+
     [[nodiscard]] std::span<const ygg::uint_t> get_dependencies() const noexcept { return m_dependencies; }
+
     [[nodiscard]] BorrowedDenotationView<Category> get_result(const tyr::formalism::planning::Repository& repository) const
     { return state().get_result(repository); }
+
     [[nodiscard]] const auto& get_delta() const
         requires ConceptOrRoleTag<Category>
     { return state().get_delta(); }
+
     [[nodiscard]] size_t size() const
         requires ConceptOrRoleTag<Category>
     { return state().size(); }
+
     [[nodiscard]] bool changed() const
         requires BooleanOrNumericalTag<Category>
     { return state().changed(); }
@@ -131,6 +138,7 @@ private:
 
     Evaluators prepare_distance(NumericalView<DistanceTag> expression, ConstructorView<RoleTag>, GraphBuilder<Kind>& graph)
     { return RoleEdgeDistanceEvaluator<Kind>(expression, graph, m_dependencies); }
+
     /// Query edges can range over pair vertices; maintaining them would materialize every edge.
     Evaluators prepare_distance(NumericalView<DistanceTag> expression, QueryView<> edges, GraphBuilder<Kind>& graph)
     { return QueryEdgeDistanceEvaluator<Kind>(expression, edges, graph, m_dependencies); }

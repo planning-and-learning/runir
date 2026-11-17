@@ -60,8 +60,11 @@ public:
     }
 
     [[nodiscard]] const auto& get_task_context() const noexcept { return m_task; }
+
     [[nodiscard]] auto get_program() const noexcept { return m_program; }
+
     auto& get_environment() noexcept { return m_environment; }
+
     auto intern(urd::data<ProgramState<Kind>>& data) { return insert(*m_task->icp_execution_repository, data).first; }
 
     ProgramStateView<Kind> initial_state(tyr::planning::StateView<Kind> state)

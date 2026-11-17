@@ -336,7 +336,7 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     {
         EXPECT_EQ(step.status, kr::ps::ProgramOutcome::APPLIED);
         const auto target_state = step.get_target();
-        EXPECT_EQ(target_state.get_state().index(), initial_state.get_state().index());
+        EXPECT_EQ(target_state.get_module_state().get_state().index(), initial_state.get_module_state().get_state().index());
         EXPECT_EQ(target_state.get_module_state().get_memory_state().index(), target.index());
         const auto loaded = target_state.get_module_state().get_registers().template values<kr::dl::ConceptTag>()[0];
         ASSERT_TRUE(loaded);
@@ -406,7 +406,7 @@ TEST(RunirTests, ExtRoleLoadRuleEnumeratesAllPairsAndAdvancesMemory)
     {
         EXPECT_EQ(step.status, kr::ps::ProgramOutcome::APPLIED);
         const auto target_state = step.get_target();
-        EXPECT_EQ(target_state.get_state().index(), initial_state.get_state().index());
+        EXPECT_EQ(target_state.get_module_state().get_state().index(), initial_state.get_module_state().get_state().index());
         EXPECT_EQ(target_state.get_module_state().get_memory_state().get_name(), "target");
         const auto loaded = target_state.get_module_state().get_registers().template values<kr::dl::RoleTag>()[0];
         ASSERT_TRUE(loaded);
@@ -569,19 +569,19 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     ASSERT_EQ(numerical_arguments.size(), 1);
 
     const auto concept_denotation = concept_arguments[0];
-    const auto concept_first = concept_denotation.begin();
-    ASSERT_NE(concept_first, concept_denotation.end());
+    const auto concept_first = concept_denotation.views().begin();
+    ASSERT_NE(concept_first, concept_denotation.views().end());
     EXPECT_EQ((*concept_first).index(), urd::index<tyr::formalism::Object>(0));
 
     const auto role_denotation = role_arguments[0];
-    const auto role_first = role_denotation.begin();
-    ASSERT_NE(role_first, role_denotation.end());
+    const auto role_first = role_denotation.views().begin();
+    ASSERT_NE(role_first, role_denotation.views().end());
     const auto role_pair = *role_first;
     EXPECT_EQ(role_pair.first.index(), urd::index<tyr::formalism::Object>(0));
     EXPECT_EQ(role_pair.second.index(), urd::index<tyr::formalism::Object>(0));
 
-    EXPECT_TRUE(boolean_arguments[0].value());
-    EXPECT_GT(numerical_arguments[0].value(), 0);
+    EXPECT_TRUE(boolean_arguments[0].get_value());
+    EXPECT_GT(numerical_arguments[0].get_value(), 0);
 
     // Contexts borrow the persistent data; preparing another context does not replace it.
     auto environment = kr::ps::ext::EvaluationEnvironment<tyr::GroundTag, kr::dl::semantics::FullEvaluationPolicy<tyr::GroundTag>>(*task_context, program);
@@ -592,11 +592,11 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     EXPECT_EQ(evaluation_context.registers().template values<kr::dl::ConceptTag>().base().data(),
               module_state.get_registers().template values<kr::dl::ConceptTag>().base().data());
     EXPECT_EQ(evaluation_context.arguments().template arguments<kr::dl::ConceptTag>()[0].index(), concept_arguments[0].index());
-    EXPECT_TRUE(evaluation_context.arguments().template arguments<kr::dl::BooleanTag>()[0].value());
-    EXPECT_EQ(evaluation_context.arguments().template arguments<kr::dl::NumericalTag>()[0].value(), numerical_arguments[0].value());
+    EXPECT_TRUE(evaluation_context.arguments().template arguments<kr::dl::BooleanTag>()[0].get_value());
+    EXPECT_EQ(evaluation_context.arguments().template arguments<kr::dl::NumericalTag>()[0].get_value(), numerical_arguments[0].get_value());
 
-    auto evaluation_transition = environment.make_dl_transition_context(call_target.get_state(),
-                                                                        call_target.get_state(),
+    auto evaluation_transition = environment.make_dl_transition_context(call_target.get_module_state().get_state(),
+                                                                        call_target.get_module_state().get_state(),
                                                                         arguments,
                                                                         module_state.get_registers(),
                                                                         module_state.get_registers());
@@ -723,7 +723,7 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
         ASSERT_TRUE(step.planning_successor.has_value());
         EXPECT_EQ(step.planning_successor.value().label.get_relation().get_name(), "pick");
         EXPECT_EQ(step.get_target().get_module_state().get_memory_state().index(), target.index());
-        EXPECT_NE(step.get_target().get_state().index(), initial_state.get_state().index());
+        EXPECT_NE(step.get_target().get_module_state().get_state().index(), initial_state.get_module_state().get_state().index());
     }
 
     auto greedy_options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
@@ -738,7 +738,7 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
 
     const auto edge = greedy.graph->out_edges(0).front();
     const auto selected = greedy.graph->vertex_value(greedy.graph->target(edge)).program_state;
-    EXPECT_EQ(selected.get_state().index(), steps.front().get_target().get_state().index());
+    EXPECT_EQ(selected.get_module_state().get_state().index(), steps.front().get_target().get_module_state().get_state().index());
     EXPECT_EQ(selected.get_module_state().get_memory_state().index(), steps.front().get_target().get_module_state().get_memory_state().index());
 }
 
@@ -762,7 +762,7 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
     const auto steps = collect_steps(expander, initial_state);
     ASSERT_EQ(steps.size(), 1);
     EXPECT_EQ(steps.front().status, kr::ps::ProgramOutcome::NO_APPLICABLE_ACTION);
-    EXPECT_EQ(steps.front().get_target().get_state().index(), initial_state.get_state().index());
+    EXPECT_EQ(steps.front().get_target().get_module_state().get_state().index(), initial_state.get_module_state().get_state().index());
 
     auto options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
     options.universal = true;

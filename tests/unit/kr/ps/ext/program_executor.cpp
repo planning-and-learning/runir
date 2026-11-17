@@ -266,9 +266,13 @@ std::string choice_rule(const std::string& name, const std::string& source, cons
 { return "(:rule (:symbol " + name + ") (:expression (:source-memory " + source + ") (:target-memory " + target + ") " + body + "))"; }
 
 std::string choose_candidates() { return "(:choose (:conditions) (:concept Candidates) (:register (:concept r0)))"; }
+
 std::string choose_empty() { return "(:choose (:conditions) (:concept Empty) (:register (:concept r0)))"; }
+
 std::string move_to_register() { return R"((:do (:conditions) (:action "move") (:arguments Here R) (:effects)))"; }
+
 std::string move_to_goal() { return R"((:do (:conditions) (:action "move") (:arguments Here Goal) (:effects)))"; }
+
 std::string move_rules() { return choice_rule("move-selected", "m1", "m2", move_to_register()) + choice_rule("finish", "m2", "m3", move_to_goal()); }
 
 std::string backtrack_rule(const std::string& name, const std::string& source, const std::string& conditions = "")
@@ -382,7 +386,7 @@ void check_backtrack_execution()
             {
                 ASSERT_TRUE(selected.plan);
                 ASSERT_EQ(selected.plan->get_length(), 2);
-                EXPECT_EQ(objects_of(selected.plan->get_labeled_succ_nodes().front().label)[1].get_name(), "good");
+                EXPECT_EQ(selected.plan->get_labeled_succ_nodes().front().label.get_objects()[1].get_name(), "good");
             }
 
             const auto blocked = kr::ps::ext::find_solution(context, called, options);
@@ -591,10 +595,10 @@ void check_choice_execution()
     EXPECT_EQ(plan.get_start_node().get_metric(), 0);
     EXPECT_EQ(plan_steps[0].node.get_metric(), 1);
     EXPECT_EQ(plan_steps[1].node.get_metric(), 2);
-    EXPECT_EQ(objects_of(plan_steps[0].label)[0].get_name(), "start");
-    EXPECT_EQ(objects_of(plan_steps[0].label)[1].get_name(), "good");
-    EXPECT_EQ(objects_of(plan_steps[1].label)[0].get_name(), "good");
-    EXPECT_EQ(objects_of(plan_steps[1].label)[1].get_name(), "goal");
+    EXPECT_EQ(plan_steps[0].label.get_objects()[0].get_name(), "start");
+    EXPECT_EQ(plan_steps[0].label.get_objects()[1].get_name(), "good");
+    EXPECT_EQ(plan_steps[1].label.get_objects()[0].get_name(), "good");
+    EXPECT_EQ(plan_steps[1].label.get_objects()[1].get_name(), "goal");
     auto expected_node = planning_node;
     EXPECT_EQ(plan.get_start_node(), expected_node.pack());
     for (const auto& step : plan_steps)
@@ -623,7 +627,7 @@ void check_choice_execution()
             ASSERT_TRUE(result.plan);
             EXPECT_EQ(result.plan->get_length(), 2);
             EXPECT_TRUE(is_planning_goal(expander, result.plan->get_labeled_succ_nodes().back().node.get_state().unpack()));
-            EXPECT_EQ(objects_of(result.plan->get_labeled_succ_nodes().front().label)[1].get_name(), "good");
+            EXPECT_EQ(result.plan->get_labeled_succ_nodes().front().label.get_objects()[1].get_name(), "good");
         }
 
         const auto cyclic = make_program(choice_module(
@@ -747,7 +751,7 @@ void check_choice_execution()
         {
             ASSERT_TRUE(call_result.plan);
             EXPECT_EQ(call_result.plan->get_length(), 2);
-            EXPECT_EQ(objects_of(call_result.plan->get_labeled_succ_nodes().front().label)[1].get_name(), "good");
+            EXPECT_EQ(call_result.plan->get_labeled_succ_nodes().front().label.get_objects()[1].get_name(), "good");
         }
 
         // A normal return here would let the caller reach the goal: the empty choose must prevent it.
@@ -945,8 +949,11 @@ void check_choice_execution()
 }  // namespace
 
 TEST(RunirTests, ExtBacktrackRulesInGroundExecution) { check_backtrack_execution<tyr::GroundTag>(); }
+
 TEST(RunirTests, ExtBacktrackRulesInLiftedExecution) { check_backtrack_execution<tyr::LiftedTag>(); }
+
 TEST(RunirTests, ExtAndBacktrackingInGroundExecution) { check_and_backtracking<tyr::GroundTag>(); }
+
 TEST(RunirTests, ExtAndBacktrackingInLiftedExecution) { check_and_backtracking<tyr::LiftedTag>(); }
 
 TEST(RunirTests, ExtBacktrackRulesUseFullAndDeltaEvaluation)
@@ -971,6 +978,7 @@ TEST(RunirTests, ExtBacktrackRulesUseFullAndDeltaEvaluation)
 }
 
 TEST(RunirTests, ExtChooseBacktracksInGroundExecution) { check_choice_execution<tyr::GroundTag>(); }
+
 TEST(RunirTests, ExtChooseBacktracksInLiftedExecution) { check_choice_execution<tyr::LiftedTag>(); }
 
 namespace
@@ -1072,6 +1080,7 @@ void check_ordinary_execution_keeps_complete_graph()
 }  // namespace
 
 TEST(RunirTests, ExtOrdinaryGroundExecutionKeepsCompleteGraph) { check_ordinary_execution_keeps_complete_graph<tyr::GroundTag>(); }
+
 TEST(RunirTests, ExtOrdinaryLiftedExecutionKeepsCompleteGraph) { check_ordinary_execution_keeps_complete_graph<tyr::LiftedTag>(); }
 
 namespace
@@ -1212,7 +1221,7 @@ void check_state_memorization()
             if (result.plan)
             {
                 EXPECT_EQ(result.plan->get_length(), 2);
-                EXPECT_EQ(objects_of(result.plan->get_labeled_succ_nodes().front().label)[1].get_name(), "good");
+                EXPECT_EQ(result.plan->get_labeled_succ_nodes().front().label.get_objects()[1].get_name(), "good");
             }
 
             const auto filtered = run(choice_module("main", choice_rule("select", "m0", "m1", singleton) + move_rules()), options);
@@ -1271,9 +1280,9 @@ void check_state_memorization()
                     ASSERT_EQ(arguments.template arguments<kr::dl::BooleanTag>().size(), 1);
                     ASSERT_EQ(arguments.template arguments<kr::dl::NumericalTag>().size(), 1);
                     EXPECT_EQ(arguments.template arguments<kr::dl::ConceptTag>().at(0).value().count(), 2);
-                    EXPECT_EQ(arguments.template arguments<kr::dl::RoleTag>().at(0).count(), 3);
-                    EXPECT_TRUE(arguments.template arguments<kr::dl::BooleanTag>().at(0).value());
-                    EXPECT_EQ(arguments.template arguments<kr::dl::NumericalTag>().at(0).value(), 2);
+                    EXPECT_EQ(arguments.template arguments<kr::dl::RoleTag>().at(0).storage_bits().count(), 3);
+                    EXPECT_TRUE(arguments.template arguments<kr::dl::BooleanTag>().at(0).get_value());
+                    EXPECT_EQ(arguments.template arguments<kr::dl::NumericalTag>().at(0).get_value(), 2);
                 }
             }
             EXPECT_GT(child_states, 0);
@@ -1325,8 +1334,8 @@ void check_state_memorization()
                     first_invocations += memory == "first";
                     second_invocations += memory == "second";
                     EXPECT_EQ(frame.get_registers().template values<kr::dl::ConceptTag>().at(0).value().get_name(), memory == "first" ? "good" : "goal");
-                    EXPECT_EQ(frame.get_arguments().template arguments<kr::dl::BooleanTag>().at(0).value(), memory == "first");
-                    EXPECT_EQ(frame.get_arguments().template arguments<kr::dl::NumericalTag>().at(0).value(), memory == "first" ? 1 : 0);
+                    EXPECT_EQ(frame.get_arguments().template arguments<kr::dl::BooleanTag>().at(0).get_value(), memory == "first");
+                    EXPECT_EQ(frame.get_arguments().template arguments<kr::dl::NumericalTag>().at(0).get_value(), memory == "first" ? 1 : 0);
                 }
                 if (frame.get_mod().get_symbol().get_name() == "main" && (memory == "m2" || memory == "m4"))
                 {
@@ -1429,6 +1438,7 @@ void check_state_memorization()
 }  // namespace
 
 TEST(RunirTests, ExtGroundStateMemorizationPreservesSemanticsAndRetainsOnlyWitnesses) { check_state_memorization<tyr::GroundTag>(); }
+
 TEST(RunirTests, ExtLiftedStateMemorizationPreservesSemanticsAndRetainsOnlyWitnesses) { check_state_memorization<tyr::LiftedTag>(); }
 
 namespace
@@ -1498,7 +1508,7 @@ void check_transient_builder_values_and_reuse()
     EXPECT_TRUE(urd::EqualTo<kr::ps::ext::ModuleView> {}(module_state.get_mod(), module_));
     EXPECT_TRUE(urd::EqualTo<kr::ps::ext::MemoryStateView> {}(module_state.get_memory_state(), module_.get_entry_memory_state()));
     EXPECT_EQ(&module_state.get_mod().context(), &repository);
-    EXPECT_EQ(&module_state.get_state().get_task(), search->task.get());
+    EXPECT_EQ(&*module_state.get_state().context().get_task(), search->task.get());
     EXPECT_EQ(&module_state.get_state().get_fact_storage(), &first_module.state.builder.fact_storage);
     EXPECT_TRUE(urd::EqualTo<kr::dl::semantics::CallArgumentsView> {}(module_state.get_arguments(), argument_view));
     EXPECT_EQ(&module_state.get_arguments().context(), context->dl_denotation_repository.get());
@@ -1605,6 +1615,7 @@ void check_transient_builder_values_and_reuse()
 }  // namespace
 
 TEST(RunirTests, ExtGroundPlanningBuildersOwnValuesAndReuseBuffers) { check_transient_builder_values_and_reuse<tyr::GroundTag>(); }
+
 TEST(RunirTests, ExtLiftedPlanningBuildersOwnValuesAndReuseBuffers) { check_transient_builder_values_and_reuse<tyr::LiftedTag>(); }
 
 TEST(RunirTests, ExtPooledSearchPathReleasesLongChainsIteratively)
