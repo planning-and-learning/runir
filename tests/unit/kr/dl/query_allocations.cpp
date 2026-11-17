@@ -148,8 +148,8 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
     auto workspace = tyr::datalog::database::Workspace {};
     leaf.initialize<tyr::GroundTag>(initial.get_state());
     projection.initialize(leaf.get_result(), workspace);
-    ASSERT_EQ(leaf.get_result().size(), 4);
-    ASSERT_EQ(projection.get_result().size(), 2);
+    ASSERT_EQ(leaf.get_result().get_rows().size(), 4);
+    ASSERT_EQ(projection.get_result().get_rows().size(), 2);
 
     auto registers = urd::data<kr::dl::semantics::RegisterValues> {};
     const auto register_view = urd::resolve(registers, *search->task->get_repository());
@@ -171,7 +171,7 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
     const auto arguments = kr::dl::semantics::insert(denotations, argument_data).first;
     const auto register_values = kr::dl::semantics::insert(denotations, registers).first;
     auto context = kr::dl::semantics::StateEvaluationContext<tyr::GroundTag>(initial.get_state(), builder, storage, arguments, register_values);
-    ASSERT_EQ(graph.initialize(context).get_result().size(), 2);
+    ASSERT_EQ(graph.initialize(context).get_result().get_rows().size(), 2);
 
     // Build completed planning transitions before tracking evaluation allocations.
     auto changes = std::array<kr::dl::semantics::incremental::Delta, 4> {};
@@ -205,7 +205,7 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
     };
     const auto apply = [&](const auto& change, size_t target, size_t rows, size_t projected_rows, bool adding)
     {
-        const auto previous_size = projection.get_result().size();
+        const auto previous_size = projection.get_result().get_rows().size();
         leaf.update(change.added.fluent_atoms, change.removed.fluent_atoms);
         const auto& delta = leaf.get_delta();
         projection.update(delta.change(), workspace);
@@ -213,8 +213,8 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
         const auto& projected_delta = projection.get_delta();
         const auto [graph_added, graph_removed] = graph_state.get_delta().change();
         const auto [projected_added, projected_removed] = projected_delta.change();
-        return leaf.get_result().size() == rows && delta.added.size() == static_cast<size_t>(adding) && delta.removed.size() == static_cast<size_t>(!adding)
-               && projection.get_result().size() == projected_rows && projected_delta.added.size() == (adding ? projected_rows - previous_size : 0)
+        return leaf.get_result().get_rows().size() == rows && delta.added.size() == static_cast<size_t>(adding) && delta.removed.size() == static_cast<size_t>(!adding)
+               && projection.get_result().get_rows().size() == projected_rows && projected_delta.added.size() == (adding ? projected_rows - previous_size : 0)
                && projected_delta.removed.size() == (adding ? 0 : previous_size - projected_rows)
                && same_rows(graph_state.get_result(), projection.get_result()) && same_rows(graph_added, projected_added)
                && same_rows(graph_removed, projected_removed);
@@ -533,7 +533,7 @@ TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
                 std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(object.value), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(2)) });
             const auto value = kr::dl::semantics::insert(denotations, *owner, dl_builder).first;
             const auto alias = kr::dl::semantics::rename(denotations, value, aliases, dl_builder);
-            valid &= value.size() == 2 && alias.size() == 2 && ObjectIndex(ygg::decode_value<ygg::uint_t>(value.row(0).value(0))) == object;
+            valid &= value.get_rows().size() == 2 && alias.get_rows().size() == 2 && ObjectIndex(ygg::decode_value<ygg::uint_t>(value.row(0).value(0))) == object;
             valid &= std::ranges::equal(value.get_rows(), alias.get_rows());
             auto duplicate = repository.get_relation_builder<ygg::Schema>(columns);
             duplicate->insert(

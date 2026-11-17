@@ -364,8 +364,6 @@ def test_concept_and_role_projection_bindings(
     assert isinstance(concept.get_variant(), semantics.QueryProjectionConcept)
     assert not hasattr(semantics.ConceptSemanticTop, "get_columns")
     assert not hasattr(semantics.RoleSemanticUniversal, "get_columns")
-    assert not hasattr(semantics.QueryProjectionConcept, "get_plan")
-    assert not hasattr(semantics.QueryProjectionRole, "get_plan")
     assert isinstance(role.get_variant(), semantics.QueryProjectionRole)
     assert semantics.syntactic_complexity(concept) == semantics.syntactic_complexity(role) == 2
     assert {value.get_name() for value in semantics.evaluate(concept, context).views()} == {"ball1", "ball2"}

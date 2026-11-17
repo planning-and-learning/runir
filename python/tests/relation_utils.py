@@ -6,6 +6,7 @@
 from collections.abc import Iterable, Sequence
 from typing import Any
 
+from pytyr.formalism import ObjectIndex
 from pyyggdrasil import formalism
 
 
@@ -22,8 +23,13 @@ def insert(builder: formalism.RelationBuilder, values: Sequence[Any]) -> int:
 # `row` is a row of a builder (RowBuilderView) or of an interned relation (RowSchema); the bindings give them no common
 # base.
 def values(row: Any) -> tuple[object, ...]:  # noqa: ANN401
-    """The decoded values of `row`."""
-    return tuple(row.get(i) for i in range(len(row.get_values())))
+    """The decoded values of `row`, an object column as its index (an int)."""
+    return tuple(_plain(row.get(i)) for i in range(len(row.get_values())))
+
+
+def _plain(value: object) -> object:
+    """An object index (ObjectIndex) as its int, any other decoded value as it is."""
+    return int(value) if isinstance(value, ObjectIndex) else value
 
 
 # `relation` is a relation view (RelationBuilderView) or an interned relation (RelationSchema).

@@ -505,22 +505,22 @@ TEST(RunirEvaluationStorage, DynamicResetPreservesStaticRowsAndJoinIndexes)
     const auto dynamic_query = query(R"((q_atomic_state "triple" (x y z)))");
     const auto fixed = kr::dl::semantics::evaluate<tyr::GroundTag>(fixed_query, context);
     const auto alias = kr::dl::semantics::evaluate<tyr::GroundTag>(renamed_query, context);
-    EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(dynamic_query, context).size(), 4);
+    EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(dynamic_query, context).get_rows().size(), 4);
     EXPECT_TRUE(std::ranges::equal(alias.get_rows(), fixed.get_rows()));
     EXPECT_NE(alias, fixed);
 
     storage.reset_dynamic();
     EXPECT_TRUE(storage.get_denotation_repository(false).get_relation_repository().template size<ygg::Relation<ygg::Schema>>() == 0);
-    EXPECT_EQ(fixed.size(), 2);
+    EXPECT_EQ(fixed.get_rows().size(), 2);
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(fixed_query, context), fixed);
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(renamed_query, context), alias);
-    EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(dynamic_query, context).size(), 4);
+    EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(dynamic_query, context).get_rows().size(), 4);
 
     storage.reset_all();
     EXPECT_TRUE(storage.get_denotation_repository(false).get_relation_repository().template size<ygg::Relation<ygg::Schema>>() == 0);
     EXPECT_TRUE(storage.get_denotation_repository(true).get_relation_repository().template size<ygg::Relation<ygg::Schema>>() == 0);
     const auto rebuilt = kr::dl::semantics::evaluate<tyr::GroundTag>(fixed_query, context);
-    EXPECT_EQ(rebuilt.size(), 2);
+    EXPECT_EQ(rebuilt.get_rows().size(), 2);
     EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(renamed_query, context).get_rows(), rebuilt.get_rows()));
 }
 
@@ -608,7 +608,7 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     auto& results = persistent.get_relation_repository();
     const auto left_result = kr::dl::semantics::evaluate<tyr::GroundTag>(left, context);
     const auto right_result = kr::dl::semantics::evaluate<tyr::GroundTag>(right, context);
-    ASSERT_EQ(left_result.size(), 9);
+    ASSERT_EQ(left_result.get_rows().size(), 9);
     EXPECT_TRUE(std::ranges::equal(left_result.columns(), columns, {}, &ygg::ColumnLayout::label));
     EXPECT_EQ(&left_result.context(), &persistent.get_relation_repository());
     EXPECT_EQ(left_result, right_result);
@@ -631,7 +631,7 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
         auto direct = persistent.get_relation_repository().get_relation_builder<ygg::Schema>(
             std::array { ygg::ColumnLayout { columns[0], ygg::type_id<urd::index<tyr::formalism::Object>> },
                          ygg::ColumnLayout { columns[1], ygg::type_id<urd::index<tyr::formalism::Object>> } });
-        for (size_t i = 0; i < left_result.size(); ++i)
+        for (size_t i = 0; i < left_result.get_rows().size(); ++i)
             direct->insert(left_result.row(i));
         auto dl_builder = kr::dl::semantics::Builder();
         const auto [interned, inserted] = kr::dl::semantics::insert(persistent, *direct, dl_builder);
@@ -644,7 +644,7 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     first_repository->clear();
     first_repository.reset();
     second_repository.reset();
-    EXPECT_EQ(left_result.size(), 9);
+    EXPECT_EQ(left_result.get_rows().size(), 9);
     EXPECT_TRUE(
         left_result.contains(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(ygg::uint_t(0)), ygg::encode_value<ygg::uint_t>(ygg::uint_t(2)) }));
     EXPECT_TRUE(std::ranges::equal(renamed_left.columns(), reversed_columns, {}, &ygg::ColumnLayout::label));

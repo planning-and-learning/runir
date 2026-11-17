@@ -26,7 +26,7 @@ void evaluate_query(urd::index_view<Query<Tag>, C> constructor, Context& context
     if constexpr (std::same_as<Tag, QueryRenameTag>)
     {
         const auto child = evaluate<Kind>(constructor.get_operand(), children);
-        for (size_t i = 0; i < child.size(); ++i)
+        for (size_t i = 0; i < child.get_rows().size(); ++i)
             result.insert(child.row(i));
     }
     else if constexpr (is_atomic_state_tag_v<Tag>)

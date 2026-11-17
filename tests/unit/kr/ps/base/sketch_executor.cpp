@@ -429,7 +429,7 @@ TEST(RunirTests, BaseSketchTransitionsRefreshDynamicQueriesAndReuseStaticQueries
         const auto static_queries = expander.get_environment().get_dl_caches().get_queries(true);
         ASSERT_EQ(static_queries.size(), 1);
         const auto static_storage = std::vector(static_queries.front().get_rows().begin(), static_queries.front().get_rows().end());
-        EXPECT_EQ(static_queries.front().size(), 2);
+        EXPECT_EQ(static_queries.front().get_rows().size(), 2);
 
         EXPECT_TRUE(matches(source, successors.back().node.get_state()));
         const auto target = successors.front().node.get_state();

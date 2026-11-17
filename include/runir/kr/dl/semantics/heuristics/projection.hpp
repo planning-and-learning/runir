@@ -156,7 +156,7 @@ private:
     void abstract_targets(const PatternDatabase& database, const Targets& targets)
     {
         m_abstract_targets.clear();
-        for (size_t r = 0; r < targets.size(); ++r)
+        for (size_t r = 0; r < targets.get_rows().size(); ++r)
             m_abstract_targets.insert(ygg::decode_value<ygg::uint_t>(targets.row(r).value(database.pattern)));
     }
 
@@ -225,7 +225,7 @@ public:
             return;
         // The targets rarely change between calls (e.g. goals); identical rows keep every table.
         m_rows.clear();
-        for (size_t r = 0; r < targets.size(); ++r)
+        for (size_t r = 0; r < targets.get_rows().size(); ++r)
         {
             const auto row = tyr::datalog::database::vertex_values(targets.row(r), m_values);
             m_rows.insert(m_rows.end(), row.begin(), row.end());
@@ -235,7 +235,7 @@ public:
         std::swap(m_rows, m_previous);
         auto grouped =
             urd::Store<urd::map<urd::Store<urd::sequence<ygg::Value>>, urd::Store<urd::sequence<urd::Store<urd::sequence<ygg::Value>>>>>, urd::sorted> {};
-        for (size_t r = 0; r < targets.size(); ++r)
+        for (size_t r = 0; r < targets.get_rows().size(); ++r)
         {
             const auto row = tyr::datalog::database::vertex_values(targets.row(r), m_values);
             grouped[urd::Store<urd::sequence<ygg::Value>>(row.begin(), row.begin() + static_cast<std::ptrdiff_t>(m_key_size))].emplace_back(

@@ -148,13 +148,13 @@ public:
     template<ConceptOrRoleTag Category>
     [[nodiscard]] size_t cardinality(EvaluationIndex<Category> index) const;
 
-    [[nodiscard]] size_t cardinality(QueryEvaluationIndex index) const { return result(index).size(); }
+    [[nodiscard]] size_t cardinality(QueryEvaluationIndex index) const { return result(index).get_rows().size(); }
 
     template<ConceptOrRoleTag Category>
     [[nodiscard]] bool nonempty(EvaluationIndex<Category> index) const
     { return result(index).storage_bits().any(); }
 
-    [[nodiscard]] bool nonempty(QueryEvaluationIndex index) const { return !result(index).empty(); }
+    [[nodiscard]] bool nonempty(QueryEvaluationIndex index) const { return !result(index).get_rows().empty(); }
 
     [[nodiscard]] const tyr::formalism::planning::Repository& repository() const { return *m_task->get_repository(); }
 

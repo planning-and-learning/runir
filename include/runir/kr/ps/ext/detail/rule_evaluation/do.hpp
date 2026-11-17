@@ -73,7 +73,7 @@ private:
     {
         if (action.get_relation().get_name() != rule.get_action_name())
             return false;
-        if (action.size() != denotations.size())
+        if (action.get_values().size() != denotations.size())
             return false;
         // The canonical values of its object columns are the objects' indices (a lifted binding may be borrowed, its pool not
         // yet made, so it is not read typed).

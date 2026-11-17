@@ -141,7 +141,7 @@ public:
         auto state_context = context.make_dl_context(state);
         const auto query = evaluate<Kind>(rule.get_query_feature(), state_context);
         const auto& label = candidate.label;
-        if (label.size() != query.columns().size()
+        if (label.get_values().size() != query.columns().size()
             || !query.contains(runir::kr::dl::encode_object_row(label.get_values(), m_row)))  // object columns: canonical values
             return false;
         auto& generator = *(*context.task_context)->search_context->successor_generator;

@@ -119,7 +119,7 @@ int run(std::span<char*> args)
                    "keys {}, expanded {}, backward {}, edges {}, removals {}\n",
                    repeat,
                    arguments_time,
-                   targets.size(),
+                   targets.get_rows().size(),
                    translate_time,
                    heuristic_time,
                    must_pass_time,

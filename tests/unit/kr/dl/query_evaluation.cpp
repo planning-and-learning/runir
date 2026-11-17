@@ -65,7 +65,7 @@ using ColumnIndex = urd::index<ygg::Column>;
 urd::Store<urd::sequence<ObjectIndex>> object_values(const auto& row)
 {
     auto result = urd::Store<urd::sequence<ObjectIndex>> {};
-    for (size_t i = 0; i < row.size(); ++i)
+    for (size_t i = 0; i < row.get_values().size(); ++i)
         result.push_back(ObjectIndex(ygg::decode_value<ygg::uint_t>(row.value(i))));
     return result;
 }
@@ -783,7 +783,7 @@ void check_cached_queries()
     const auto nested = kr::dl::semantics::evaluate<tyr::GroundTag>(kr::dl::insert(repo, query_data).first, context);
     EXPECT_EQ(nested.columns()[0].label, ColumnIndex(ygg::uint_t(x.value)));
     EXPECT_TRUE(std::ranges::equal(nested.get_rows(), held_storage));
-    EXPECT_EQ(nested.size(), held.size());
+    EXPECT_EQ(nested.get_rows().size(), held.get_rows().size());
     EXPECT_EQ(held.columns()[0].label, ColumnIndex(ygg::uint_t(renamed_column.value)));
     // Owned labels and shared rows remain valid during repository/cache growth.
     for (int i = 0; i < 64; ++i)
@@ -795,7 +795,7 @@ void check_cached_queries()
         const auto extra_query = kr::dl::insert(repo, query_data).first;
         const auto other = kr::dl::semantics::evaluate<tyr::GroundTag>(extra_query, context);
         EXPECT_TRUE(std::ranges::equal(other.get_rows(), held_storage));
-        EXPECT_EQ(held.size(), 3);
+        EXPECT_EQ(held.get_rows().size(), 3);
         EXPECT_EQ(held.columns().data(), held_columns);
         EXPECT_EQ(held.columns()[0].label, ColumnIndex(ygg::uint_t(renamed_column.value)));
         EXPECT_EQ(other.columns()[0].label, ColumnIndex(ygg::uint_t(extra_column.value)));
@@ -819,8 +819,8 @@ void check_cached_queries()
     const auto other_cached = kr::dl::semantics::evaluate<tyr::GroundTag>(other_query, context);
     EXPECT_EQ(cached.columns()[0].label, ColumnIndex(ygg::uint_t(x.value)));
     EXPECT_EQ(other_cached.columns()[0].label, ColumnIndex(ygg::uint_t(other_column.value)));
-    EXPECT_EQ(cached.size(), 3);
-    EXPECT_EQ(other_cached.size(), 3);
+    EXPECT_EQ(cached.get_rows().size(), 3);
+    EXPECT_EQ(other_cached.get_rows().size(), 3);
     EXPECT_NE(cached, other_cached);
     EXPECT_TRUE(std::ranges::equal(cached.get_rows(), other_cached.get_rows()));
     EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).get_rows(), cached.get_rows()));
@@ -831,7 +831,7 @@ void check_cached_queries()
     EXPECT_TRUE(caches.get_queries(true).empty());
     EXPECT_TRUE(caches.get_queries(false).empty());
     const auto rebuilt = kr::dl::semantics::evaluate<tyr::GroundTag>(renamed, context);
-    EXPECT_EQ(rebuilt.size(), 3);
+    EXPECT_EQ(rebuilt.get_rows().size(), 3);
     EXPECT_EQ(rebuilt.columns()[0].label, ColumnIndex(ygg::uint_t(renamed_column.value)));
     EXPECT_TRUE(std::ranges::equal(rebuilt.get_rows(), kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).get_rows()));
     storage.reset_all();
@@ -877,7 +877,7 @@ void check_query_cache_across_states()
         for (const auto query : { fixed_join, reversed_join })
         {
             const auto rows = kr::dl::semantics::evaluate<Kind>(query, target);
-            EXPECT_EQ(rows.size(), matches ? 1 : 0);
+            EXPECT_EQ(rows.get_rows().size(), matches ? 1 : 0);
             EXPECT_EQ(rows.contains(matching_row), matches);
         }
         return matches;
@@ -885,15 +885,15 @@ void check_query_cache_across_states()
 
     const auto fixed_rows = kr::dl::semantics::evaluate<Kind>(fixed, context);
     const auto goal_rows = kr::dl::semantics::evaluate<Kind>(goal, context);
-    EXPECT_EQ(fixed_rows.size(), 2);
-    EXPECT_EQ(goal_rows.size(), 1);
+    EXPECT_EQ(fixed_rows.get_rows().size(), 2);
+    EXPECT_EQ(goal_rows.get_rows().size(), 1);
     EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(fixed, context).get_rows(), fixed_rows.get_rows()));
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(derived, context).size(), 4);
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(ready, context).size(), 1);
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(derived, context).get_rows().size(), 4);
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(ready, context).get_rows().size(), 1);
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(count, context).get_value(), 4);
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(fixed_count, context).get_value(), 2);
     // A fully static join caches its result.
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(static_join, context).size(), fixed_rows.size());
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(static_join, context).get_rows().size(), fixed_rows.get_rows().size());
     EXPECT_TRUE(check_mixed_joins(context));
 
     const auto successors = search->successor_generator->get_successor_nodes(initial, *search->state_repository, *search->axiom_evaluator);
@@ -920,8 +920,8 @@ void check_query_cache_across_states()
     EXPECT_TRUE(caches.find(true, fixed_count).has_value());
     EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(fixed, next).get_rows(), fixed_rows.get_rows()));
     EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(goal, next).get_rows(), goal_rows.get_rows()));
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(derived, next).size(), 3);
-    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(ready, next).empty());
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(derived, next).get_rows().size(), 3);
+    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(ready, next).get_rows().empty());
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(count, next).get_value(), 3);
 
     const auto dynamic_role = kr::ps::ext::dl::parse_role(R"((r_project x z (q_atomic_state "triple" (x y z))))", domain, *repository);
@@ -1023,15 +1023,15 @@ void check_query_cache_across_bindings()
 
     const auto fixed_rows = kr::dl::semantics::evaluate<Kind>(fixed, bound);
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(register_count, bound).get_value(), 1);
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(argument, bound).size(), 1);
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(role_register, bound).size(), 1);
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(argument, bound).get_rows().size(), 1);
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(role_register, bound).get_rows().size(), 1);
     const auto rhs_rows = kr::dl::semantics::evaluate<Kind>(register_rhs, bound);
-    EXPECT_EQ(rhs_rows.size(), 1);
+    EXPECT_EQ(rhs_rows.get_rows().size(), 1);
     EXPECT_TRUE(rhs_rows.contains(std::array<ygg::Value, 3> { ygg::encode_value<ygg::uint_t>(a.index().value),
                                                               ygg::encode_value<ygg::uint_t>(c.index().value),
                                                               ygg::encode_value<ygg::uint_t>(b.index().value) }));
     EXPECT_TRUE(std::ranges::equal(rhs_rows.columns(), schema_of(register_rhs)));
-    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(role_register_rhs, bound).empty());
+    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(role_register_rhs, bound).get_rows().empty());
     registers.concept_values[0] = b.index();
     registers.role_values[0] = ::cista::pair(b.index(), c.index());
     argument_values.concept_arguments[0] = b_set.index();
@@ -1039,12 +1039,12 @@ void check_query_cache_across_bindings()
     storage.reset_dynamic();
     EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<Kind>(fixed, rebound).get_rows(), fixed_rows.get_rows()));
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(register_count, rebound).get_value(), 0);
-    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(argument, rebound).empty());
-    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(role_register, rebound).empty());
-    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(register_rhs, rebound).empty());
+    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(argument, rebound).get_rows().empty());
+    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(role_register, rebound).get_rows().empty());
+    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(register_rhs, rebound).get_rows().empty());
     // Reordered shared columns are matched by label, not by their position in either operand.
     const auto rhs_role_rows = kr::dl::semantics::evaluate<Kind>(role_register_rhs, rebound);
-    EXPECT_EQ(rhs_role_rows.size(), 1);
+    EXPECT_EQ(rhs_role_rows.get_rows().size(), 1);
     EXPECT_TRUE(rhs_role_rows.contains(std::array<ygg::Value, 3> { ygg::encode_value<ygg::uint_t>(b.index().value),
                                                                    ygg::encode_value<ygg::uint_t>(c.index().value),
                                                                    ygg::encode_value<ygg::uint_t>(a.index().value) }));
@@ -1058,10 +1058,10 @@ void check_query_cache_across_bindings()
     auto cleared = make_bound();
     storage.reset_dynamic();
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(register_count, cleared).get_value(), 0);
-    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(argument, cleared).size(), 1);
-    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(role_register, cleared).empty());
-    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(register_rhs, cleared).empty());
-    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(role_register_rhs, cleared).empty());
+    EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(argument, cleared).get_rows().size(), 1);
+    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(role_register, cleared).get_rows().empty());
+    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(register_rhs, cleared).get_rows().empty());
+    EXPECT_TRUE(kr::dl::semantics::evaluate<Kind>(role_register_rhs, cleared).get_rows().empty());
     EXPECT_EQ(bound.registers().template values<kr::dl::ConceptTag>()[0].value().index(), a.index());
     EXPECT_EQ(bound.arguments().template arguments<kr::dl::ConceptTag>()[0].index(), a_set.index());
     EXPECT_EQ(rebound.registers().template values<kr::dl::ConceptTag>()[0].value().index(), b.index());
@@ -1153,7 +1153,7 @@ void check_predicate_repository_identity()
                 query_data.polarity = true;
             auto query_wrapper = urd::data<kr::dl::Query<>>();
             query_wrapper.variant = kr::dl::insert(*repository, query_data).first.index();
-            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(kr::dl::insert(*repository, query_wrapper).first, context).size(), size_t(expected));
+            EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(kr::dl::insert(*repository, query_wrapper).first, context).get_rows().size(), size_t(expected));
         };
         check.template operator()<kr::dl::AtomicStateTag<Fact>>();
         check.template operator()<kr::dl::AtomicGoalTag<Fact>>();
@@ -1206,7 +1206,7 @@ void check_query_object_views()
     ASSERT_NE(&constant.context(), &local.context());
     const auto raw = std::vector { constant.index(), local.index() };
     const auto result = kr::dl::semantics::evaluate<Kind>(query, context);
-    ASSERT_EQ(result.size(), 1);
+    ASSERT_EQ(result.get_rows().size(), 1);
     EXPECT_EQ(&result.context(), &storage.get_denotation_repository(true).get_relation_repository());
     // Rows hold raw object indices; the relation repository cannot resolve them.
     const auto row = result.row(0);
@@ -1220,7 +1220,7 @@ void check_query_object_views()
     EXPECT_EQ(kr::dl::semantics::evaluate<Kind>(query, context), result);
     storage.reset_all();
     const auto rebuilt = kr::dl::semantics::evaluate<Kind>(query, context);
-    ASSERT_EQ(rebuilt.size(), 1);
+    ASSERT_EQ(rebuilt.get_rows().size(), 1);
     EXPECT_TRUE(std::ranges::equal(object_values(rebuilt.row(0)), raw));
 }
 
@@ -1283,19 +1283,19 @@ void check_multiword_bit_evaluation()
     const auto edge = std::string(R"((r_atomic_state "edge"))");
 
     const auto selected = query("(q_concept x " + marked + ")");
-    ASSERT_EQ(selected.size(), 4);
+    ASSERT_EQ(selected.get_rows().size(), 4);
     for (const auto i : { static_cast<ygg::uint_t>(0), word_bits - 1, word_bits, last })
         EXPECT_TRUE(selected.contains(std::array<ygg::Value, 1> { ygg::encode_value<ygg::uint_t>(ygg::uint_t(i)) }));
-    EXPECT_EQ(query("(q_concept x (c_top))").size(), num_objects);
-    EXPECT_TRUE(query("(q_concept x (c_bot))").empty());
+    EXPECT_EQ(query("(q_concept x (c_top))").get_rows().size(), num_objects);
+    EXPECT_TRUE(query("(q_concept x (c_bot))").get_rows().empty());
     const auto identity = query("(q_role (x y) (r_identity (c_top)))");
-    EXPECT_EQ(identity.size(), num_objects);
+    EXPECT_EQ(identity.get_rows().size(), num_objects);
     EXPECT_TRUE(
         identity.contains(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(ygg::uint_t(last)), ygg::encode_value<ygg::uint_t>(ygg::uint_t(last)) }));
-    EXPECT_TRUE(query("(q_role (x y) (r_identity (c_bot)))").empty());
+    EXPECT_TRUE(query("(q_role (x y) (r_identity (c_bot)))").get_rows().empty());
 
     const auto inverse = query("(q_role (x y) (r_inverse " + edge + "))");
-    ASSERT_EQ(inverse.size(), 4);
+    ASSERT_EQ(inverse.get_rows().size(), 4);
     EXPECT_TRUE(inverse.contains(
         std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(ygg::uint_t(word_bits - 1)), ygg::encode_value<ygg::uint_t>(ygg::uint_t(0)) }));
     EXPECT_TRUE(
@@ -1305,10 +1305,10 @@ void check_multiword_bit_evaluation()
     EXPECT_TRUE(inverse.contains(
         std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(ygg::uint_t(last)), ygg::encode_value<ygg::uint_t>(ygg::uint_t(word_bits)) }));
     const auto composition = query("(q_role (x y) (r_composition " + edge + " " + edge + "))");
-    ASSERT_EQ(composition.size(), 1);
+    ASSERT_EQ(composition.get_rows().size(), 1);
     EXPECT_TRUE(
         composition.contains(std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(ygg::uint_t(0)), ygg::encode_value<ygg::uint_t>(ygg::uint_t(last)) }));
-    EXPECT_TRUE(query("(q_role (x y) (r_composition " + edge + " (r_identity (c_bot))))").empty());
+    EXPECT_TRUE(query("(q_role (x y) (r_composition " + edge + " (r_identity (c_bot))))").get_rows().empty());
 
     const auto at_least = concept_value("(c_at_least 2 " + edge + " " + marked + ")").value();
     EXPECT_EQ(at_least.count(), 1);
@@ -1554,11 +1554,11 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     const auto truth = parse_query("(q_project () " + description + ")", domain, *repository);
     const auto true_rows = kr::dl::semantics::evaluate<tyr::GroundTag>(truth, context);
     EXPECT_TRUE(true_rows.columns().empty());
-    EXPECT_EQ(true_rows.size(), 1);
+    EXPECT_EQ(true_rows.get_rows().size(), 1);
     const auto true_join = parse_query("(q_join " + description + " (q_project () " + description + "))", domain, *repository);
     const auto false_join = parse_query("(q_join " + description + " (q_atomic_state \"missing\" ()))", domain, *repository);
-    EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(true_join, context).size(), original_rows.size());
-    EXPECT_TRUE(kr::dl::semantics::evaluate<tyr::GroundTag>(false_join, context).empty());
+    EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(true_join, context).get_rows().size(), original_rows.get_rows().size());
+    EXPECT_TRUE(kr::dl::semantics::evaluate<tyr::GroundTag>(false_join, context).get_rows().empty());
     EXPECT_TRUE(std::ranges::equal(kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).columns(), schema_of(query)));
 
     auto raw_rename_data = urd::data<kr::dl::Query<kr::dl::QueryRenameTag>>();
@@ -1592,12 +1592,12 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     EXPECT_FALSE(caches.find_query(false, raw_nested).has_value());
     EXPECT_FALSE(caches.find_query(true, query).has_value());
     const auto rebuilt_nested = kr::dl::semantics::evaluate<tyr::GroundTag>(raw_nested, context);
-    EXPECT_EQ(rebuilt_nested.size(), 2);
+    EXPECT_EQ(rebuilt_nested.get_rows().size(), 2);
     EXPECT_TRUE(std::ranges::equal(rebuilt_nested.columns(), schema_of(raw_nested)));
     EXPECT_TRUE(std::ranges::equal(rebuilt_nested.get_rows(), kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).get_rows()));
     EXPECT_TRUE(caches.find_query(false, raw_nested).has_value());
     const auto rebuilt = kr::dl::semantics::evaluate<tyr::GroundTag>(raw, context);
-    EXPECT_EQ(rebuilt.size(), 2);
+    EXPECT_EQ(rebuilt.get_rows().size(), 2);
     EXPECT_TRUE(std::ranges::equal(rebuilt.columns(), schema_of(raw)));
     EXPECT_TRUE(std::ranges::equal(rebuilt.get_rows(), kr::dl::semantics::evaluate<tyr::GroundTag>(query, context).get_rows()));
     EXPECT_TRUE(caches.find_query(false, raw).has_value());
@@ -1663,14 +1663,14 @@ TEST(RunirQueries, PersistentRenameSurvivesIntermediateResetAndConstructorReleas
                                                                              kr::dl::semantics::insert(denotations, registers).first);
     const auto expression = parse_query(R"((q_rename (a b c) (q_atomic_state "triple" (x y z))))", domain, *constructors);
     const auto result = kr::dl::semantics::evaluate<tyr::GroundTag>(expression, context);
-    ASSERT_EQ(result.size(), 4);
+    ASSERT_EQ(result.get_rows().size(), 4);
     const auto schema = column_labels(result.columns());
     const auto first = object_values(result.row(0));
     intermediates.reset_all();
     EXPECT_EQ(kr::dl::semantics::evaluate<tyr::GroundTag>(expression, context), result);
     output_memo.reset_all();
     constructors->clear();
-    EXPECT_EQ(result.size(), 4);
+    EXPECT_EQ(result.get_rows().size(), 4);
     EXPECT_EQ(column_labels(result.columns()), schema);
     EXPECT_EQ(object_values(result.row(0)), first);
 }

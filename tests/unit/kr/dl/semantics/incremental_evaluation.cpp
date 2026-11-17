@@ -580,11 +580,11 @@ void check_incremental_evaluation()
     const auto query_rows = [](const auto& relation)
     {
         auto result = urd::Store<urd::sequence<urd::Store<urd::sequence<Object>>>> {};
-        for (size_t i = 0; i < relation.size(); ++i)
+        for (size_t i = 0; i < relation.get_rows().size(); ++i)
         {
             const auto row = relation.row(i);
             auto& values = result.emplace_back();
-            for (size_t j = 0; j < row.size(); ++j)
+            for (size_t j = 0; j < row.get_values().size(); ++j)
                 values.emplace_back(ygg::decode_value<ygg::uint_t>(row.value(j)));
         }
         std::ranges::sort(result);

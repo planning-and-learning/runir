@@ -9,7 +9,7 @@ import re
 from collections import deque
 from collections.abc import Mapping
 
-from pytyr.formalism.planning import Object
+from pytyr.formalism.planning import AtomGroundDerived, AtomGroundFluent, AtomGroundStatic, Object
 from pytyr.planning import lifted
 
 from pyrunir.kr.ps import ProofStatus
@@ -182,6 +182,13 @@ def object_types(state: lifted.State) -> dict[str, frozenset[str]]:
         if len(objects) == 1:
             types.setdefault(str(objects[0].get_name()), set()).add(str(atom.get_predicate().get_name()))
     return {name: frozenset(values) for name, values in types.items()}
+
+
+def atom_text(atom: AtomGroundStatic | AtomGroundFluent | AtomGroundDerived) -> str:
+    """A ground atom as PDDL writes it, `(name object ...)`."""
+    names = [str(atom.get_predicate().get_name())]
+    names += [str(item.get_name()) for item in atom.get_row().get_objects()]
+    return "(" + " ".join(names) + ")"
 
 
 def object_atoms(state: lifted.State, name: str) -> list[tuple[str, tuple[str, ...]]]:

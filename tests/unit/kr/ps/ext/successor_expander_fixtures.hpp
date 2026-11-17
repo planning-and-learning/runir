@@ -204,7 +204,7 @@ void expect_borrowed_query_evaluation()
     const auto query = std::visit([](auto concrete) { return concrete.get_feature(); }, feature.get_variant());
     {
         const auto rows = kr::ps::evaluate<Kind>(feature, state_context);
-        ASSERT_EQ(rows.size(), 1);
+        ASSERT_EQ(rows.get_rows().size(), 1);
         EXPECT_TRUE(std::ranges::equal(kr::ps::evaluate<Kind>(feature, state_context).get_rows(), rows.get_rows()));
         const auto cached = environment.get_dl_caches().find_query(false, query).value();
         EXPECT_TRUE(std::ranges::equal(rows.get_rows(), cached.get_rows()));
@@ -221,7 +221,7 @@ void expect_borrowed_query_evaluation()
                                                                  stack.get_registers());
         {
             const auto target_rows = kr::ps::evaluate<Kind>(feature, transition.get_target_context());
-            ASSERT_EQ(target_rows.size(), 1);
+            ASSERT_EQ(target_rows.get_rows().size(), 1);
             EXPECT_NE(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(target_rows.row(0).value(0))),
                       urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(rows.row(0).value(0))));
             EXPECT_NE(&target_rows.context(), &rows.context());  // independent caches: other layers
@@ -239,7 +239,7 @@ void expect_borrowed_query_evaluation()
             auto prepared_context = context.make_dl_context(state);
             static_assert(std::same_as<std::remove_cvref_t<decltype(prepared_context.get_state())>, tyr::planning::BuilderStateView<Kind>>);
             const auto prepared_rows = kr::ps::evaluate<Kind>(feature, prepared_context);
-            ASSERT_EQ(prepared_rows.size(), rows.size());
+            ASSERT_EQ(prepared_rows.get_rows().size(), rows.get_rows().size());
             EXPECT_EQ(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(prepared_rows.row(0).value(0))),
                       urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(rows.row(0).value(0))));
             const auto candidate = tyr::planning::LabeledNode<Kind, tyr::planning::BuilderStateView<Kind>> {
@@ -248,7 +248,7 @@ void expect_borrowed_query_evaluation()
             };
             auto prepared_transition = context.make_dl_transition_context(state, candidate);
             const auto prepared_target_rows = kr::ps::evaluate<Kind>(feature, prepared_transition.get_target_context());
-            ASSERT_EQ(prepared_target_rows.size(), target_rows.size());
+            ASSERT_EQ(prepared_target_rows.get_rows().size(), target_rows.get_rows().size());
             EXPECT_EQ(urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(prepared_target_rows.row(0).value(0))),
                       urd::index<tyr::formalism::Object>(ygg::decode_value<ygg::uint_t>(target_rows.row(0).value(0))));
             EXPECT_EQ(urd::index<tyr::formalism::Object>(
@@ -258,13 +258,13 @@ void expect_borrowed_query_evaluation()
         EXPECT_TRUE(environment.get_dl_target_caches().find_query(false, query).has_value());
         environment.reset_target();
         EXPECT_TRUE(environment.get_dl_caches().find_query(false, query).has_value());
-        EXPECT_EQ(rows.size(), 1);
+        EXPECT_EQ(rows.get_rows().size(), 1);
         EXPECT_TRUE(std::ranges::equal(kr::ps::evaluate<Kind>(feature, state_context).get_rows(), rows.get_rows()));
     }
     environment.reset_source();
     EXPECT_TRUE(environment.get_dl_caches().get_queries(false).empty());
     const auto rebuilt = kr::ps::evaluate<Kind>(feature, state_context);
-    EXPECT_EQ(rebuilt.size(), 1);
+    EXPECT_EQ(rebuilt.get_rows().size(), 1);
     EXPECT_TRUE(std::ranges::equal(rebuilt.columns(), schema_of(query)));
 }
 

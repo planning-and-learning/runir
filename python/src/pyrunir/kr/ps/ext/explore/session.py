@@ -78,6 +78,7 @@ from pyrunir.kr.ps.ext.dl import (
     structural_termination,
 )
 from pyrunir.kr.ps.ext.explore.graph import (
+    atom_text,
     deltas,
     distinguishing_atoms,
     failure_category,
@@ -694,7 +695,7 @@ class Session:
             ref=ref,
             memory=str(module_state.get_memory_state().get_name()),
             registers=registers,
-            atoms=tuple(str(atom) for atom in label.state.fluent_atoms()),
+            atoms=tuple(atom_text(atom) for atom in label.state.fluent_atoms()),
             features=features,
             goal=label.is_goal,
         )

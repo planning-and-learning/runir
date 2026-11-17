@@ -52,11 +52,11 @@ auto parse_query(const std::string& expression, tyr::formalism::planning::Domain
 auto rows(const auto& relation)
 {
     auto result = urd::Store<urd::sequence<urd::Store<urd::sequence<Object>>>> {};
-    for (size_t i = 0; i < relation.size(); ++i)
+    for (size_t i = 0; i < relation.get_rows().size(); ++i)
     {
         const auto row = relation.row(i);
         auto& values = result.emplace_back();
-        for (size_t j = 0; j < row.size(); ++j)
+        for (size_t j = 0; j < row.get_values().size(); ++j)
             values.emplace_back(ygg::decode_value<ygg::uint_t>(row.value(j)));
     }
     std::ranges::sort(result);
@@ -186,8 +186,8 @@ void check_atomic_projection()
 
     EXPECT_THROW(triple_leaf.update({}, {}), std::logic_error);
     initialize(initial.get_state());
-    ASSERT_EQ(triple_leaf.get_result().size(), 4);
-    ASSERT_EQ(triple_projection.get_result().size(), 2);
+    ASSERT_EQ(triple_leaf.get_result().get_rows().size(), 4);
+    ASSERT_EQ(triple_projection.get_result().get_rows().size(), 2);
     ASSERT_TRUE(ready_leaf.get_result().contains(std::array<ygg::Value, 0> {}));
     auto first_delta = kr::dl::semantics::incremental::Delta {};
     first_delta.template assign<Kind>(initial.get_state(), registers, first->node.get_state(), registers);
@@ -224,9 +224,9 @@ void check_atomic_projection()
     auto borrowed_builder = urd::builder<tyr::planning::State<Kind>>();
     borrowed_builder.assign(second->node.get_state());
     initialize(urd::resolve(borrowed_builder, *search->state_repository));
-    EXPECT_EQ(triple_leaf.get_result().size(), 2);
+    EXPECT_EQ(triple_leaf.get_result().get_rows().size(), 2);
     EXPECT_FALSE(triple_projection.get_result().contains(std::array<ygg::Value, 1> { ygg::encode_value<ygg::uint_t>(a.value) }));
-    EXPECT_TRUE(ready_leaf.get_result().empty());
+    EXPECT_TRUE(ready_leaf.get_result().get_rows().empty());
     EXPECT_TRUE(denotations.get_relation_repository().template size<ygg::Relation<ygg::Schema>>() == 0);
 }
 

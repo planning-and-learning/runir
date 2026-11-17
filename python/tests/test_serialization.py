@@ -331,7 +331,7 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
 
     def project(value: ext.ProgramStateGround) -> dict[str, object]:
         return {
-            "planning_state": value.get_module_state().get_state(),
+            "planning_state": value.get_module_state().get_state().unpack(),
             "has_caller": value.get_call_stack() is not None,
         }
 
@@ -361,7 +361,7 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
         ext.ProgramStateGround,
         "program_states",
         "e",
-        project=lambda value: {"state": value.get_module_state().get_state()},
+        project=lambda value: {"state": value.get_module_state().get_state().unpack()},
     )
     assert tyr_serialization.serialize(reverse, initial.get_module_state().get_state().unpack()) == "s0"
     assert tyr_serialization.table(reverse, ground.State) == [{"program_state": "e0"}]

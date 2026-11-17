@@ -146,13 +146,13 @@ inline bool nonempty(DenotationView<ConceptTag> value) { return value.value().an
 
 inline bool nonempty(DenotationView<RoleTag> value) { return value.storage_bits().any(); }
 
-inline bool nonempty(QueryDenotationView value) { return !value.empty(); }
+inline bool nonempty(QueryDenotationView value) { return !value.get_rows().empty(); }
 
 inline ygg::uint_t count(DenotationView<ConceptTag> value) { return ygg::to_uint_t(value.value().count()); }
 
 inline ygg::uint_t count(DenotationView<RoleTag> value) { return ygg::to_uint_t(value.storage_bits().count()); }
 
-inline ygg::uint_t count(QueryDenotationView value) { return ygg::to_uint_t(value.size()); }
+inline ygg::uint_t count(QueryDenotationView value) { return ygg::to_uint_t(value.get_rows().size()); }
 
 template<ComparisonTag Tag>
 constexpr bool apply_comparison(ygg::uint_t lhs, ygg::uint_t rhs) noexcept

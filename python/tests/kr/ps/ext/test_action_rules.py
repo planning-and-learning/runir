@@ -277,12 +277,12 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
     relation = ext.evaluate(features["selected"], dl_context)
     assert isinstance(relation, formalism.RelationSchema)
     assert relation == semantics.evaluate(features["selected"].get_variant().get_feature(), dl_context)
-    assert relation.size() == 2
+    assert len(relation.get_rows()) == 2
     assert relation.arity() == 2
     assert len(relation.columns()) == 2
     assert relation == ext.evaluate(features["selected"], dl_context)
     assert len({relation, ext.evaluate(features["selected"], dl_context)}) == 1
-    assert all(isinstance(row, formalism.RowSchema) and row.size() == 2 for row in relation.get_rows())
+    assert all(isinstance(row, formalism.RowSchema) and len(row.get_values()) == 2 for row in relation.get_rows())
     rows = {_ints(values(row)) for row in relation.get_rows()}
     objects = task_context.dl_denotation_repository
     assert all(isinstance(objects.get_object(ObjectIndex(value)), Object) for row in rows for value in row)
@@ -290,9 +290,9 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
         ("start", "bad"),
         ("start", "good"),
     }
-    assert relation.get_rows()[-1] == relation.row(relation.size() - 1)
+    assert relation.get_rows()[-1] == relation.row(len(relation.get_rows()) - 1)
     with pytest.raises(IndexError):
-        relation.row(relation.size())
+        relation.row(len(relation.get_rows()))
     with pytest.raises(IndexError):
         relation.row(0).get(relation.arity())
     assert {values(row) for row in ext.evaluate(features["reversed"], dl_context).get_rows()} == {
@@ -302,7 +302,7 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
     empty = ext.evaluate(features["empty"], dl_context)
     assert truth.arity() == empty.arity() == 0
     assert [values(row) for row in truth.get_rows()] == [()]
-    assert empty.empty()
+    assert not empty.get_rows()
     assert {values(row) for row in ext.evaluate(features["selected"], dl_context).get_rows()} == rows
     assert {values(row) for row in relation.get_rows()} == rows
 
@@ -324,7 +324,7 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
     environment.reset_source()
     dl_context = make_dl_context(environment, state)
     relation = ext.evaluate(features["selected"], dl_context)
-    assert relation.size() == 1
+    assert len(relation.get_rows()) == 1
     new_rows = {values(row) for row in relation.get_rows()}
     row = relation.row(0)
     iterated_row = relation.get_rows()[0]
@@ -419,8 +419,8 @@ def test_query_objects_iterators_and_renames_retain_owners(kind: str, access: st
         object_ = row.get(0)
         del row, renamed
     gc.collect()
-    assert isinstance(object_, int)
-    assert object_ == expected[0]
+    assert isinstance(object_, ObjectIndex)
+    assert int(object_) == expected[0]
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
