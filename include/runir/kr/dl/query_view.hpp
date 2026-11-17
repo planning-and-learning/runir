@@ -3,9 +3,23 @@
 
 #include "runir/kr/dl/query_data.hpp"
 
+#include <cstddef>
 #include <tyr/formalism/object_view.hpp>
 #include <tyr/formalism/predicate_view.hpp>
 #include <urd/elements/flat.hpp>
+
+namespace runir::kr::dl::semantics
+{
+/// The syntactic complexity of a query and of a query projection (defined in syntactic_complexity.hpp), declared
+/// before their views, whose functions() list it.
+template<typename Tag, typename C>
+std::size_t syntactic_complexity(const urd::index_view<runir::kr::dl::Query<Tag>, C>& view);
+
+template<runir::kr::dl::ConceptOrRoleTag Category, typename C>
+std::size_t syntactic_complexity(const urd::index_view<runir::kr::dl::QueryProjection<Category>, C>& view);
+
+std::size_t syntactic_complexity(const runir::kr::dl::QueryView<>& view);
+}  // namespace runir::kr::dl::semantics
 
 namespace urd
 {
@@ -126,6 +140,12 @@ public:
         else
             return { self().template member<&urd::record_of<V>::schema>().data(), self().template member<&urd::record_of<V>::schema>().size() };
     }
+
+    static constexpr auto functions() noexcept
+    {
+        return urd::Functions<
+            urd::function<"syntactic_complexity", static_cast<std::size_t (*)(const V&)>(&runir::kr::dl::semantics::syntactic_complexity)>> {};
+    }
 };
 
 template<runir::kr::dl::ConceptOrRoleTag Category, typename V>
@@ -141,6 +161,12 @@ public:
 
     /// Its plan, derived when it was interned.
     const auto& get_plan() const noexcept { return self().template member<&urd::record_of<V>::plan>(); }
+
+    static constexpr auto functions() noexcept
+    {
+        return urd::Functions<
+            urd::function<"syntactic_complexity", static_cast<std::size_t (*)(const V&)>(&runir::kr::dl::semantics::syntactic_complexity)>> {};
+    }
 };
 }  // namespace urd
 

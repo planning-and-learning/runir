@@ -5,9 +5,18 @@
 #include "runir/kr/ps/feature_view.hpp"
 #include "runir/kr/uns/classifier_data.hpp"
 
+#include <cstddef>
 #include <tuple>
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
+
+namespace runir::kr::uns
+{
+/// The syntactic complexity of a classifier (defined in syntactic_complexity.hpp), declared before its view, whose
+/// functions() list it.
+template<typename C>
+std::size_t syntactic_complexity(const urd::index_view<Classifier, C>& view);
+}  // namespace runir::kr::uns
 
 namespace urd
 {
@@ -45,6 +54,9 @@ public:
     auto get_features() const noexcept { return self().template member<&urd::record_of<V>::features>(); }
 
     auto get_clauses() const noexcept { return self().template member<&urd::record_of<V>::clauses>(); }
+
+    static constexpr auto functions() noexcept
+    { return urd::Functions<urd::function<"syntactic_complexity", static_cast<std::size_t (*)(const V&)>(&runir::kr::uns::syntactic_complexity)>> {}; }
 };
 }  // namespace urd
 

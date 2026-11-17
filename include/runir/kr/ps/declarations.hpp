@@ -8,6 +8,7 @@
 #include <concepts>
 #include <memory>
 #include <tyr/planning/state_view_concepts.hpp>
+#include <urd/elements/concepts.hpp>
 #include <urd/elements/flat.hpp>
 
 namespace runir::kr::ps
@@ -25,7 +26,7 @@ inline constexpr bool transition_rule = true;
 template<FamilyTag Family>
 struct Rule
 {
-    static constexpr auto name = "Rule";
+    static constexpr std::string_view name = urd::joined_name<"Rule", Family::name>;
 };
 
 // Feature
@@ -33,13 +34,13 @@ struct Rule
 template<FamilyTag Family, typename FeatureTag>
 struct Feature
 {
-    static constexpr auto name = "Feature";
+    static constexpr std::string_view name = urd::joined_name<"Feature", Family::name, FeatureTag::name>;
 };
 
 template<FamilyTag Family, typename LanguageTag, typename FeatureTag>
 struct ConcreteFeature
 {
-    static constexpr auto name = "ConcreteFeature";
+    static constexpr std::string_view name = urd::joined_name<"ConcreteFeature", Family::name, LanguageTag::name, FeatureTag::name>;
 };
 
 // Transition evaluation
@@ -58,7 +59,7 @@ class TransitionEvaluationContext;
 template<FamilyTag Family, typename LanguageTag, typename FeatureTag, typename ObservationTag>
 struct ConcreteCondition
 {
-    static constexpr auto name = "ConcreteCondition";
+    static constexpr std::string_view name = urd::joined_name<"ConcreteCondition", Family::name, LanguageTag::name, FeatureTag::name, ObservationTag::name>;
 };
 
 // Effect
@@ -66,7 +67,7 @@ struct ConcreteCondition
 template<FamilyTag Family, typename LanguageTag, typename FeatureTag, typename ObservationTag>
 struct ConcreteEffect
 {
-    static constexpr auto name = "ConcreteEffect";
+    static constexpr std::string_view name = urd::joined_name<"ConcreteEffect", Family::name, LanguageTag::name, FeatureTag::name, ObservationTag::name>;
 };
 
 // Repository
@@ -97,13 +98,13 @@ concept ProgramFamilyTag = std::same_as<T, ExtFamilyTag> || std::same_as<T, IcpF
 template<ProgramFamilyTag Family>
 struct MemoryState
 {
-    static constexpr auto name = "MemoryState";
+    static constexpr std::string_view name = urd::joined_name<"MemoryState", Family::name>;
 };
 
 template<ProgramFamilyTag Family>
 struct ModuleSymbol
 {
-    static constexpr auto name = "ModuleSymbol";
+    static constexpr std::string_view name = urd::joined_name<"ModuleSymbol", Family::name>;
 };
 
 template<ProgramFamilyTag Family, tyr::TaskKind Kind>

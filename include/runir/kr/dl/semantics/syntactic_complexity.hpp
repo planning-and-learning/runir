@@ -18,37 +18,7 @@ namespace runir::kr::dl::semantics
 
 template<typename Tag, typename C>
     requires runir::kr::dl::ConceptConstructorTag<Tag>
-std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, Tag>, C> view);
-
-template<typename Tag, typename C>
-    requires runir::kr::dl::RoleConstructorTag<Tag>
-std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Role<runir::kr::dl::SemanticFamily, Tag>, C> view);
-
-template<typename Tag, typename C>
-    requires runir::kr::dl::BooleanConstructorTag<Tag>
-std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Boolean<runir::kr::dl::SemanticFamily, Tag>, C> view);
-
-template<typename Tag, typename C>
-    requires runir::kr::dl::NumericalConstructorTag<Tag>
-std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, Tag>, C> view);
-
-template<typename Tag, typename C>
-std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Query<Tag>, C> view);
-
-template<runir::kr::dl::ConceptOrRoleTag Category, typename C>
-std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::QueryProjection<Category>, C> view);
-
-/// The complexity of a constructor or a query of any kind. Each visits its operands, of every kind in turn, so the
-/// library compiles it once instead of every file that measures one (brokkr's template rules, rule 24).
-std::size_t syntactic_complexity(ConstructorView<ConceptTag> view);
-std::size_t syntactic_complexity(ConstructorView<RoleTag> view);
-std::size_t syntactic_complexity(ConstructorView<BooleanTag> view);
-std::size_t syntactic_complexity(ConstructorView<NumericalTag> view);
-std::size_t syntactic_complexity(QueryView<> view);
-
-template<typename Tag, typename C>
-    requires runir::kr::dl::ConceptConstructorTag<Tag>
-std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, Tag>, C> view)
+std::size_t syntactic_complexity(const urd::index_view<runir::kr::dl::Concept<runir::kr::dl::SemanticFamily, Tag>, C>& view)
 {
     if constexpr (requires { view.get_operand(); })
         return 1 + syntactic_complexity(view.get_operand());
@@ -70,7 +40,7 @@ std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Concept<runir::k
 
 template<typename Tag, typename C>
     requires runir::kr::dl::RoleConstructorTag<Tag>
-std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Role<runir::kr::dl::SemanticFamily, Tag>, C> view)
+std::size_t syntactic_complexity(const urd::index_view<runir::kr::dl::Role<runir::kr::dl::SemanticFamily, Tag>, C>& view)
 {
     if constexpr (requires { view.get_operand(); })
         return 1 + syntactic_complexity(view.get_operand());
@@ -90,7 +60,7 @@ std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Role<runir::kr::
 
 template<typename Tag, typename C>
     requires runir::kr::dl::BooleanConstructorTag<Tag>
-std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Boolean<runir::kr::dl::SemanticFamily, Tag>, C> view)
+std::size_t syntactic_complexity(const urd::index_view<runir::kr::dl::Boolean<runir::kr::dl::SemanticFamily, Tag>, C>& view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::NonemptyTag>)
         return 1 + std::visit([](auto child) { return syntactic_complexity(child); }, view.get_operand());
@@ -107,7 +77,7 @@ std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Boolean<runir::k
 
 template<typename Tag, typename C>
     requires runir::kr::dl::NumericalConstructorTag<Tag>
-std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, Tag>, C> view)
+std::size_t syntactic_complexity(const urd::index_view<runir::kr::dl::Numerical<runir::kr::dl::SemanticFamily, Tag>, C>& view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::CountTag>)
         return 1 + std::visit([](auto child) { return syntactic_complexity(child); }, view.get_operand());
@@ -126,7 +96,7 @@ std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Numerical<runir:
 }
 
 template<typename Tag, typename C>
-std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Query<Tag>, C> view)
+std::size_t syntactic_complexity(const urd::index_view<runir::kr::dl::Query<Tag>, C>& view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::QueryMustPassTag>)
         return 1 + syntactic_complexity(view.get_sources()) + syntactic_complexity(view.get_edges()) + syntactic_complexity(view.get_targets())
@@ -150,7 +120,7 @@ std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::Query<Tag>, C> v
 }
 
 template<runir::kr::dl::ConceptOrRoleTag Category, typename C>
-std::size_t syntactic_complexity(urd::index_view<runir::kr::dl::QueryProjection<Category>, C> view)
+std::size_t syntactic_complexity(const urd::index_view<runir::kr::dl::QueryProjection<Category>, C>& view)
 { return 1 + syntactic_complexity(view.get_operand()); }
 
 }  // namespace runir::kr::dl::semantics

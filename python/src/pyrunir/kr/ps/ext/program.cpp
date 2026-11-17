@@ -27,7 +27,6 @@ void bind_program(nb::module_& m, RepositoryBinding& repository)
 {
     urd::python::bind_data<Program>(m);
     urd::python::bind_view<ProgramView>(m);
-    m.def("syntactic_complexity", [](ProgramView program) { return runir::kr::ps::ext::syntactic_complexity(program); }, nb::arg("program"));
     runir::kr::python::bind_ps_optimize<runir::kr::ExtFamilyTag, Repository, ProgramView>(m);
     ygg::bind_insert<Program>(repository);
 }

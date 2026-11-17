@@ -21,7 +21,6 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
 {
     urd::python::bind_data<Module>(m);
     urd::python::bind_view<ModuleView>(m);
-    m.def("syntactic_complexity", [](ModuleView module_) { return runir::kr::ps::icp::syntactic_complexity(module_); }, nb::arg("module"));
     ygg::bind_insert<Module>(repository);
 }
 

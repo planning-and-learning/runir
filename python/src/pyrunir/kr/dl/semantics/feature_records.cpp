@@ -1,9 +1,20 @@
-#include "../record_bindings.hpp"
+#include "../module.hpp"
 #include "bindings.hpp"
+#include "pyrunir/module.hpp"
 
+#include <nanobind/stl/variant.h>
+#include <nanobind/stl/vector.h>
+#include <runir/kr/dl/formatter.hpp>
+#include <runir/kr/dl/record_view.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
+#include <runir/kr/dl/semantics/syntactic_complexity.hpp>
+#include <tyr/formalism/planning/repository.hpp>
 #include <urd/python/bindings.hpp>
+#include <urd/python/sequences/sequence.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
+#include <yggdrasil/python/bindings.hpp>
 
 namespace runir::kr::dl
 {
@@ -49,8 +60,40 @@ void bind_semantics_feature_records(nb::module_& m)
     urd::python::bind_data<Numerical<SemanticFamily, MinTag>>(m);
     urd::python::bind_data<Numerical<SemanticFamily, MaxTag>>(m);
 
-    python::bind_record_views<SemanticFamily, ConstructorRepository>(m, BooleanTag {});
-    python::bind_record_views<SemanticFamily, ConstructorRepository>(m, NumericalTag {});
+    urd::python::bind_view<urd::index_view<Boolean<SemanticFamily, AtomicStateTag<StaticTag>>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<SemanticFamily, AtomicStateTag<FluentTag>>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<SemanticFamily, AtomicStateTag<DerivedTag>>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<SemanticFamily, AtomicGoalTag<StaticTag>>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<SemanticFamily, AtomicGoalTag<FluentTag>>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<SemanticFamily, AtomicGoalTag<DerivedTag>>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<SemanticFamily, NonemptyTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<SemanticFamily, ArgumentTag<BooleanTag>>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<SemanticFamily, BooleanEqTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<SemanticFamily, BooleanNeTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<SemanticFamily, BooleanLtTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<SemanticFamily, BooleanLeTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<SemanticFamily, BooleanGtTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<SemanticFamily, BooleanGeTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<SemanticFamily, NumericalEqTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<SemanticFamily, NumericalNeTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<SemanticFamily, NumericalLtTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<SemanticFamily, NumericalLeTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<SemanticFamily, NumericalGtTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<SemanticFamily, NumericalGeTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<SemanticFamily, BooleanConstantTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<SemanticFamily, AndTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<SemanticFamily, OrTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<SemanticFamily, NotTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Numerical<SemanticFamily, CountTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Numerical<SemanticFamily, DistanceTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Numerical<SemanticFamily, ArgumentTag<NumericalTag>>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Numerical<SemanticFamily, NumericalConstantTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Numerical<SemanticFamily, AddTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Numerical<SemanticFamily, SubTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Numerical<SemanticFamily, MulTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Numerical<SemanticFamily, DivTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Numerical<SemanticFamily, MinTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Numerical<SemanticFamily, MaxTag>, ConstructorRepository>>(m);
 }
 
 }  // namespace runir::kr::dl

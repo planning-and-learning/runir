@@ -158,7 +158,7 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip() -> None
         assert len(module.get_boolean_features()) == case["boolean_features"]
         assert len(module.get_numerical_features()) == case["numerical_features"]
         assert len(module.get_memory_transitions()) == case["transitions"]
-        assert ext.syntactic_complexity(module) == case["syntactic_complexity"]
+        assert module.syntactic_complexity() == case["syntactic_complexity"]
     assert "(:symbol blocks)" in str(modules[3])
     for feature in (
         next(feature for module in modules for feature in module.get_concept_features()),
@@ -166,7 +166,7 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip() -> None
         next(feature for module in modules for feature in module.get_boolean_features()),
         next(feature for module in modules for feature in module.get_numerical_features()),
     ):
-        assert ext.dl.syntactic_complexity(feature) == ext.dl.syntactic_complexity(feature.get_variant())
+        assert feature.syntactic_complexity() == feature.get_variant().syntactic_complexity()
     for module in modules:
         feature_groups = (
             module.get_concept_features(),
@@ -174,8 +174,8 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip() -> None
             module.get_boolean_features(),
             module.get_numerical_features(),
         )
-        assert ext.syntactic_complexity(module) == sum(
-            ext.dl.syntactic_complexity(feature) for feature_group in feature_groups for feature in feature_group
+        assert module.syntactic_complexity() == sum(
+            feature.syntactic_complexity() for feature_group in feature_groups for feature in feature_group
         )
     memory_transitions = modules[3].get_memory_transitions()
     assert len(memory_transitions) > 0
@@ -222,7 +222,7 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip() -> None
     program = dl.ModuleFactory.create_bonet_et_al_icaps2024_program(planning_domain, repository)
     assert program.get_entry_mod().get_symbol().get_name() == PROGRAM_FACTORY_CASE["entry"]
     assert [module.get_symbol().get_name() for module in program.get_modules()] == PROGRAM_FACTORY_CASE["modules"]
-    assert ext.syntactic_complexity(program) == PROGRAM_FACTORY_CASE["syntactic_complexity"]
+    assert program.syntactic_complexity() == PROGRAM_FACTORY_CASE["syntactic_complexity"]
 
     formatted_program = str(program)
     assert MODULE_FACTORY_SKETCH_FRAGMENT in formatted_program
@@ -367,8 +367,8 @@ def test_empty_module_factory_uses_ext_repositories() -> None:
 
     assert module.get_symbol().get_name() == "empty"
     assert reparsed.get_symbol().get_name() == "empty"
-    assert ext.syntactic_complexity(module) == 0
-    assert ext.syntactic_complexity(reparsed) == 0
+    assert module.syntactic_complexity() == 0
+    assert reparsed.syntactic_complexity() == 0
 
 
 @pytest.mark.parametrize("universal", [False, True])

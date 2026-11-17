@@ -7,6 +7,7 @@
 #include <concepts>
 #include <memory>
 #include <type_traits>
+#include <urd/elements/concepts.hpp>
 #include <urd/elements/flat.hpp>
 #include <variant>
 
@@ -21,19 +22,19 @@ struct Grammar
 template<runir::kr::dl::CategoryTag Category>
 struct NonTerminal
 {
-    static constexpr auto name = "NonTerminal";
+    static constexpr std::string_view name = urd::joined_name<"NonTerminal", Category::name>;
 };
 
 template<runir::kr::dl::CategoryTag Category>
 struct DerivationRule
 {
-    static constexpr auto name = "DerivationRule";
+    static constexpr std::string_view name = urd::joined_name<"DerivationRule", Category::name>;
 };
 
 template<runir::kr::dl::CategoryTag Category>
 struct SubstitutionRule
 {
-    static constexpr auto name = "SubstitutionRule";
+    static constexpr std::string_view name = urd::joined_name<"SubstitutionRule", Category::name>;
 };
 
 struct CnfGrammarFamily;

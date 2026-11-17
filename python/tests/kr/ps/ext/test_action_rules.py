@@ -228,7 +228,7 @@ def test_action_and_query_feature_bindings_round_trip_and_serialize() -> None:
         "from",
         "to",
     ]
-    assert dl.syntactic_complexity(feature) > 0
+    assert feature.syntactic_complexity() > 0
     assert str(dl.parse_program(str(program), domain, repository)) == str(program)
 
     concrete = dl.ConcreteFeatureExtDlQueryData()

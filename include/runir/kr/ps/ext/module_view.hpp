@@ -10,8 +10,17 @@
 #include "runir/kr/ps/rule_variant_view.hpp"
 
 #include <concepts>
+#include <cstddef>
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
+
+namespace runir::kr::ps::ext
+{
+/// The syntactic complexity of a module (defined in syntactic_complexity.hpp), declared before its view, whose
+/// functions() list it.
+template<typename C>
+std::size_t syntactic_complexity(const urd::index_view<Module, C>& view);
+}  // namespace runir::kr::ps::ext
 
 namespace urd
 {
@@ -96,6 +105,9 @@ public:
             static_assert(false, "unhandled feature tag in Module::get_features");
         }
     }
+
+    static constexpr auto functions() noexcept
+    { return urd::Functions<urd::function<"syntactic_complexity", static_cast<std::size_t (*)(const V&)>(&runir::kr::ps::ext::syntactic_complexity)>> {}; }
 };
 }  // namespace urd
 

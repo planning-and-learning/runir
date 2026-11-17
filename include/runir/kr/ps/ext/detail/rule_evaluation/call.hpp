@@ -57,19 +57,20 @@ private:
         auto result = checkout<runir::kr::dl::semantics::CallArguments>((*context.task_context)->dl_builder);
         auto state_context =
             context.environment->make_call_context(planning_state, state.get_module_state().get_arguments(), state.get_module_state().get_registers());
-        rule.for_each_call_argument(
-            [&]<typename FeatureTag, typename FC>(urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>, FC> argument)
-            {
-                const auto denotation = evaluate<Kind>(std::visit([](auto concrete) { return concrete.get_feature(); }, argument.get_variant()), state_context);
-                if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)
-                    result->concept_arguments.push_back(denotation.index());
-                else if constexpr (std::same_as<FeatureTag, runir::kr::dl::RoleTag>)
-                    result->role_arguments.push_back(denotation.index());
-                else if constexpr (std::same_as<FeatureTag, runir::kr::dl::BooleanTag>)
-                    result->boolean_arguments.push_back(denotation.index());
-                else
-                    result->numerical_arguments.push_back(denotation.index());
-            });
+        for_each_call_argument(rule,
+                               [&]<typename FeatureTag, typename FC>(urd::index_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>, FC> argument)
+                               {
+                                   const auto denotation =
+                                       evaluate<Kind>(std::visit([](auto concrete) { return concrete.get_feature(); }, argument.get_variant()), state_context);
+                                   if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)
+                                       result->concept_arguments.push_back(denotation.index());
+                                   else if constexpr (std::same_as<FeatureTag, runir::kr::dl::RoleTag>)
+                                       result->role_arguments.push_back(denotation.index());
+                                   else if constexpr (std::same_as<FeatureTag, runir::kr::dl::BooleanTag>)
+                                       result->boolean_arguments.push_back(denotation.index());
+                                   else
+                                       result->numerical_arguments.push_back(denotation.index());
+                               });
         return insert(*(*context.task_context)->dl_denotation_repository, *result).first;
     }
 

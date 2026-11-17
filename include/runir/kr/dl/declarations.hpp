@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <type_traits>
 #include <tyr/formalism/declarations.hpp>
+#include <urd/elements/concepts.hpp>
 #include <urd/elements/flat.hpp>
 #include <urd/elements/view.hpp>
 
@@ -90,14 +91,14 @@ struct TopTag
 template<tyr::formalism::FactKind T>
 struct AtomicStateTag
 {
-    static constexpr auto name = "AtomicState";
+    static constexpr std::string_view name = urd::joined_name<"AtomicState", T::name>;
     using FactKind = T;
 };
 
 template<tyr::formalism::FactKind T>
 struct AtomicGoalTag
 {
-    static constexpr auto name = "AtomicGoal";
+    static constexpr std::string_view name = urd::joined_name<"AtomicGoal", T::name>;
     using FactKind = T;
 };
 
@@ -360,13 +361,13 @@ inline constexpr bool is_atomic_goal_tag_v = IsAtomicGoalTag<T>::value;
 template<CategoryTag Category>
 struct Argument
 {
-    static constexpr auto name = "Argument";
+    static constexpr std::string_view name = urd::joined_name<"Argument", Category::name>;
 };
 
 template<ConceptOrRoleTag Category>
 struct Register
 {
-    static constexpr auto name = "Register";
+    static constexpr std::string_view name = urd::joined_name<"Register", Category::name>;
 };
 
 struct RegisterTag
@@ -377,7 +378,7 @@ struct RegisterTag
 template<CategoryTag Category>
 struct ArgumentTag
 {
-    static constexpr auto name = "Argument";
+    static constexpr std::string_view name = urd::joined_name<"Argument", Category::name>;
     static constexpr auto keyword = []
     {
         if constexpr (std::same_as<Category, ConceptTag>)
@@ -703,13 +704,20 @@ struct QueryColumn
 template<typename Tag = void>
 struct Query
 {
-    static constexpr auto name = "Query";
+    static constexpr std::string_view name = urd::joined_name<"Query", Tag::name>;
+};
+
+/// The query of any operation is named Query: its tag's argument, void, has no name.
+template<>
+struct Query<void>
+{
+    static constexpr std::string_view name = "Query";
 };
 
 template<ConceptOrRoleTag Category>
 struct QueryProjection
 {
-    static constexpr auto name = "QueryProjection";
+    static constexpr std::string_view name = urd::joined_name<"QueryProjection", Category::name>;
 };
 
 struct ProjectTag
@@ -991,25 +999,25 @@ concept ConstructorOf = boost::mp11::mp_contains<typename Family::template Tags<
 template<typename Family, ConstructorOf<Family, ConceptTag> Tag>
 struct Concept
 {
-    static constexpr auto name = "Concept";
+    static constexpr std::string_view name = urd::joined_name<"Concept", Family::name, Tag::name>;
 };
 
 template<typename Family, ConstructorOf<Family, RoleTag> Tag>
 struct Role
 {
-    static constexpr auto name = "Role";
+    static constexpr std::string_view name = urd::joined_name<"Role", Family::name, Tag::name>;
 };
 
 template<typename Family, ConstructorOf<Family, BooleanTag> Tag>
 struct Boolean
 {
-    static constexpr auto name = "Boolean";
+    static constexpr std::string_view name = urd::joined_name<"Boolean", Family::name, Tag::name>;
 };
 
 template<typename Family, ConstructorOf<Family, NumericalTag> Tag>
 struct Numerical
 {
-    static constexpr auto name = "Numerical";
+    static constexpr std::string_view name = urd::joined_name<"Numerical", Family::name, Tag::name>;
 };
 
 /// How a record of Family stores an operand of Category.
@@ -1056,7 +1064,7 @@ using RecordTypes = boost::mp11::mp_transform_q<boost::mp11::mp_bind_front_q<rec
 template<CategoryTag Category>
 struct Constructor
 {
-    static constexpr auto name = "Constructor";
+    static constexpr std::string_view name = urd::joined_name<"Constructor", Category::name>;
 };
 
 /// Semantic constructors: every constructor tag, operands interned as constructors, collections also as queries.

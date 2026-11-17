@@ -12,6 +12,7 @@
 #include <tyr/datalog/lifted/database/declarations.hpp>
 #include <tyr/formalism/declarations.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
+#include <urd/elements/concepts.hpp>
 #include <urd/elements/flat.hpp>
 #include <vector>
 #include <yggdrasil/formalism/relation_view.hpp>
@@ -32,7 +33,7 @@ struct CallArguments
 template<CategoryTag Category>
 struct Denotation
 {
-    static constexpr auto name = "Denotation";
+    static constexpr std::string_view name = urd::joined_name<"Denotation", Category::name>;
 };
 
 using DenotationTypes = boost::mp11::mp_list<Denotation<BooleanTag>, Denotation<NumericalTag>, Denotation<ConceptTag>, Denotation<RoleTag>>;

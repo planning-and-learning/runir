@@ -67,5 +67,4 @@ from pyrunir._pyrunir.kr.ps.base.dl import (
     parse_sketch as parse_sketch,
     query_statistics_sampler as query_statistics_sampler,
     structural_termination as structural_termination,
-    syntactic_complexity as syntactic_complexity,
 )

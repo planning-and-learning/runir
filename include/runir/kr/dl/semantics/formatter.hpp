@@ -257,11 +257,4 @@ struct fmt::formatter<tyr::datalog::database::MustPassPlan, char>
     { return fmt::format_to(ctx.out(), "[{}]", fmt::join(plan.output_columns(), ", ")); }
 };
 
-/// The query of any operation is named Query (its tag's argument, void, has no name).
-template<>
-struct urd::name_of<runir::kr::dl::Query<>>
-{
-    static std::string named() { return "Query"; }
-};
-
 #endif

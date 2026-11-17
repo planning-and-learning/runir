@@ -28,7 +28,6 @@ void bind_classifier(nb::module_& m)
     using Family = runir::kr::UnsFamilyTag;
     urd::python::bind_data<Classifier>(m);
     urd::python::bind_view<ClassifierView>(m);
-    m.def("syntactic_complexity", [](ClassifierView classifier) { return syntactic_complexity(classifier); }, "classifier"_a);
     runir::kr::python::bind_ps_optimize<Family, Repository, ClassifierView>(m);
     m.def(
         "classify",

@@ -28,6 +28,5 @@ from pyrunir._pyrunir.kr.ps.base import (
     is_compatible_with as is_compatible_with,
     optimize as optimize,
     query_statistics_sampler as query_statistics_sampler,
-    syntactic_complexity as syntactic_complexity,
 )
 from pyrunir.kr.ps.base import dl as dl

@@ -24,10 +24,14 @@ void bind_conditions(nb::module_& m, RepositoryBinding& repository)
     urd::python::bind_data<runir::kr::ps::ConcreteCondition<IcpFamilyTag, DlTag, BooleanTag, Negative>>(m);
     urd::python::bind_data<runir::kr::ps::ConcreteCondition<IcpFamilyTag, DlTag, NumericalTag, EqualZero>>(m);
     urd::python::bind_data<runir::kr::ps::ConcreteCondition<IcpFamilyTag, DlTag, NumericalTag, GreaterZero>>(m);
-    runir::kr::python::bind_observation_view<runir::kr::ps::ConcreteCondition<IcpFamilyTag, DlTag, BooleanTag, Positive>>(repository, m);
-    runir::kr::python::bind_observation_view<runir::kr::ps::ConcreteCondition<IcpFamilyTag, DlTag, BooleanTag, Negative>>(repository, m);
-    runir::kr::python::bind_observation_view<runir::kr::ps::ConcreteCondition<IcpFamilyTag, DlTag, NumericalTag, EqualZero>>(repository, m);
-    runir::kr::python::bind_observation_view<runir::kr::ps::ConcreteCondition<IcpFamilyTag, DlTag, NumericalTag, GreaterZero>>(repository, m);
+    urd::python::bind_view<urd::index_view<runir::kr::ps::ConcreteCondition<IcpFamilyTag, DlTag, BooleanTag, Positive>, Repository>>(m);
+    ygg::bind_insert<runir::kr::ps::ConcreteCondition<IcpFamilyTag, DlTag, BooleanTag, Positive>>(repository);
+    urd::python::bind_view<urd::index_view<runir::kr::ps::ConcreteCondition<IcpFamilyTag, DlTag, BooleanTag, Negative>, Repository>>(m);
+    ygg::bind_insert<runir::kr::ps::ConcreteCondition<IcpFamilyTag, DlTag, BooleanTag, Negative>>(repository);
+    urd::python::bind_view<urd::index_view<runir::kr::ps::ConcreteCondition<IcpFamilyTag, DlTag, NumericalTag, EqualZero>, Repository>>(m);
+    ygg::bind_insert<runir::kr::ps::ConcreteCondition<IcpFamilyTag, DlTag, NumericalTag, EqualZero>>(repository);
+    urd::python::bind_view<urd::index_view<runir::kr::ps::ConcreteCondition<IcpFamilyTag, DlTag, NumericalTag, GreaterZero>, Repository>>(m);
+    ygg::bind_insert<runir::kr::ps::ConcreteCondition<IcpFamilyTag, DlTag, NumericalTag, GreaterZero>>(repository);
 }
 
 }  // namespace runir::kr::ps::icp::dl

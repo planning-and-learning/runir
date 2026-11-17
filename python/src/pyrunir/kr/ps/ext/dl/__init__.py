@@ -89,5 +89,4 @@ from pyrunir._pyrunir.kr.ps.ext.dl import (
     parse_role as parse_role,
     query_statistics_sampler as query_statistics_sampler,
     structural_termination as structural_termination,
-    syntactic_complexity as syntactic_complexity,
 )

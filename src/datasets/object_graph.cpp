@@ -137,7 +137,7 @@ void add_atoms(tyr::planning::StateView<Kind> state, ObjectGraphConstructionCont
     for (auto atom : state.template get_atoms<tyr::formalism::StaticTag>())
         context.template add_atom<PredicateContext::STATE>(atom);
 
-    for (auto fact : state.get_fluent_facts_view())
+    for (auto fact : state.get_fluent_facts())
         if (const auto atom = fact.get_atom())
             context.template add_atom<PredicateContext::STATE>(*atom);
 }

@@ -1,9 +1,20 @@
-#include "../record_bindings.hpp"
+#include "../module.hpp"
 #include "bindings.hpp"
+#include "pyrunir/module.hpp"
 
+#include <nanobind/stl/variant.h>
+#include <nanobind/stl/vector.h>
 #include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
 #include <runir/kr/dl/cnf_grammar/formatter.hpp>
+#include <runir/kr/dl/formatter.hpp>
+#include <runir/kr/dl/record_view.hpp>
+#include <runir/kr/dl/semantics/syntactic_complexity.hpp>
+#include <tyr/formalism/planning/repository.hpp>
 #include <urd/python/bindings.hpp>
+#include <urd/python/sequences/sequence.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
+#include <yggdrasil/python/bindings.hpp>
 
 namespace runir::kr::dl
 {
@@ -64,10 +75,56 @@ void bind_cnf_grammar_records(nb::module_& m)
     urd::python::bind_data<Numerical<cnf_grammar::CnfGrammarFamily, CountTag>>(m);
     urd::python::bind_data<Numerical<cnf_grammar::CnfGrammarFamily, DistanceTag>>(m);
 
-    python::bind_record_views<cnf_grammar::CnfGrammarFamily, cnf_grammar::ConstructorRepository>(m, ConceptTag {});
-    python::bind_record_views<cnf_grammar::CnfGrammarFamily, cnf_grammar::ConstructorRepository>(m, RoleTag {});
-    python::bind_record_views<cnf_grammar::CnfGrammarFamily, cnf_grammar::ConstructorRepository>(m, BooleanTag {});
-    python::bind_record_views<cnf_grammar::CnfGrammarFamily, cnf_grammar::ConstructorRepository>(m, NumericalTag {});
+    urd::python::bind_view<urd::index_view<Concept<cnf_grammar::CnfGrammarFamily, BotTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<cnf_grammar::CnfGrammarFamily, TopTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<cnf_grammar::CnfGrammarFamily, AtomicStateTag<StaticTag>>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<cnf_grammar::CnfGrammarFamily, AtomicStateTag<FluentTag>>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<cnf_grammar::CnfGrammarFamily, AtomicStateTag<DerivedTag>>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<cnf_grammar::CnfGrammarFamily, AtomicGoalTag<StaticTag>>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<cnf_grammar::CnfGrammarFamily, AtomicGoalTag<FluentTag>>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<cnf_grammar::CnfGrammarFamily, AtomicGoalTag<DerivedTag>>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<cnf_grammar::CnfGrammarFamily, IntersectionTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<cnf_grammar::CnfGrammarFamily, UnionTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<cnf_grammar::CnfGrammarFamily, NegationTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<cnf_grammar::CnfGrammarFamily, ValueRestrictionTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<cnf_grammar::CnfGrammarFamily, ExistentialQuantificationTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<cnf_grammar::CnfGrammarFamily, AtLeastNumberRestrictionTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<cnf_grammar::CnfGrammarFamily, AtMostNumberRestrictionTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<cnf_grammar::CnfGrammarFamily, ExactNumberRestrictionTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<cnf_grammar::CnfGrammarFamily, QualifiedAtLeastNumberRestrictionTag>, cnf_grammar::ConstructorRepository>>(
+        m);
+    urd::python::bind_view<urd::index_view<Concept<cnf_grammar::CnfGrammarFamily, QualifiedAtMostNumberRestrictionTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<cnf_grammar::CnfGrammarFamily, QualifiedExactNumberRestrictionTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<cnf_grammar::CnfGrammarFamily, RoleValueMapTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<cnf_grammar::CnfGrammarFamily, AgreementTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<cnf_grammar::CnfGrammarFamily, RoleFillersTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<cnf_grammar::CnfGrammarFamily, OneOfTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<cnf_grammar::CnfGrammarFamily, NominalTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<cnf_grammar::CnfGrammarFamily, UniversalTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<cnf_grammar::CnfGrammarFamily, AtomicStateTag<StaticTag>>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<cnf_grammar::CnfGrammarFamily, AtomicStateTag<FluentTag>>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<cnf_grammar::CnfGrammarFamily, AtomicStateTag<DerivedTag>>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<cnf_grammar::CnfGrammarFamily, AtomicGoalTag<StaticTag>>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<cnf_grammar::CnfGrammarFamily, AtomicGoalTag<FluentTag>>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<cnf_grammar::CnfGrammarFamily, AtomicGoalTag<DerivedTag>>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<cnf_grammar::CnfGrammarFamily, IntersectionTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<cnf_grammar::CnfGrammarFamily, UnionTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<cnf_grammar::CnfGrammarFamily, ComplementTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<cnf_grammar::CnfGrammarFamily, InverseTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<cnf_grammar::CnfGrammarFamily, CompositionTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<cnf_grammar::CnfGrammarFamily, TransitiveClosureTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<cnf_grammar::CnfGrammarFamily, ReflexiveTransitiveClosureTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<cnf_grammar::CnfGrammarFamily, RestrictionTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<cnf_grammar::CnfGrammarFamily, IdentityTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<cnf_grammar::CnfGrammarFamily, AtomicStateTag<StaticTag>>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<cnf_grammar::CnfGrammarFamily, AtomicStateTag<FluentTag>>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<cnf_grammar::CnfGrammarFamily, AtomicStateTag<DerivedTag>>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<cnf_grammar::CnfGrammarFamily, AtomicGoalTag<StaticTag>>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<cnf_grammar::CnfGrammarFamily, AtomicGoalTag<FluentTag>>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<cnf_grammar::CnfGrammarFamily, AtomicGoalTag<DerivedTag>>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<cnf_grammar::CnfGrammarFamily, NonemptyTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Numerical<cnf_grammar::CnfGrammarFamily, CountTag>, cnf_grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Numerical<cnf_grammar::CnfGrammarFamily, DistanceTag>, cnf_grammar::ConstructorRepository>>(m);
 }
 
 }  // namespace runir::kr::dl

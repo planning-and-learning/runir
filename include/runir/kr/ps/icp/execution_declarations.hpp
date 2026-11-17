@@ -7,6 +7,7 @@
 
 #include <boost/mp11.hpp>
 #include <tyr/planning/declarations.hpp>
+#include <urd/elements/concepts.hpp>
 #include <urd/elements/flat.hpp>
 
 namespace runir::kr::ps::icp
@@ -20,7 +21,7 @@ struct Histories
 template<tyr::TaskKind Kind>
 struct ProgramState
 {
-    static constexpr auto name = "ProgramState";
+    static constexpr std::string_view name = urd::joined_name<"ProgramState", Kind::name>;
 };
 
 template<tyr::TaskKind Kind>

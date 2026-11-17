@@ -347,5 +347,4 @@ from pyrunir._pyrunir.kr.dl.semantics import (
     evaluate as evaluate,
     optimize as optimize,
     query_statistics_sampler as query_statistics_sampler,
-    syntactic_complexity as syntactic_complexity,
 )

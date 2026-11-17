@@ -159,7 +159,7 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
     assert str(reparsed) == formatted
 
     assert str(expression) == source
-    assert semantics.syntactic_complexity(expression) == 3
+    assert expression.syntactic_complexity() == 3
     assert [column.get_name() for column in query.get_variant().get_columns()] == ["ball"]
     project = query.get_variant()
     assert isinstance(project, semantics.QueryProject)
@@ -365,7 +365,7 @@ def test_concept_and_role_projection_bindings(
     assert not hasattr(semantics.ConceptSemanticTop, "get_columns")
     assert not hasattr(semantics.RoleSemanticUniversal, "get_columns")
     assert isinstance(role.get_variant(), semantics.QueryProjectionRole)
-    assert semantics.syntactic_complexity(concept) == semantics.syntactic_complexity(role) == 2
+    assert concept.syntactic_complexity() == role.syntactic_complexity() == 2
     assert {value.get_name() for value in semantics.evaluate(concept, context).views()} == {"ball1", "ball2"}
     assert {(lhs.get_name(), rhs.get_name()) for lhs, rhs in semantics.evaluate(role, context).views()} == {
         ("rooma", "ball1"),

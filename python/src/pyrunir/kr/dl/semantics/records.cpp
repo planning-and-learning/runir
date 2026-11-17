@@ -1,9 +1,20 @@
-#include "../record_bindings.hpp"
+#include "../module.hpp"
 #include "bindings.hpp"
+#include "pyrunir/module.hpp"
 
+#include <nanobind/stl/variant.h>
+#include <nanobind/stl/vector.h>
+#include <runir/kr/dl/formatter.hpp>
+#include <runir/kr/dl/record_view.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
+#include <runir/kr/dl/semantics/syntactic_complexity.hpp>
+#include <tyr/formalism/planning/repository.hpp>
 #include <urd/python/bindings.hpp>
+#include <urd/python/sequences/sequence.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
+#include <yggdrasil/python/bindings.hpp>
 
 namespace runir::kr::dl
 {
@@ -59,8 +70,50 @@ void bind_semantics_records(nb::module_& m)
     urd::python::bind_data<Role<SemanticFamily, RegisterTag>>(m);
     urd::python::bind_data<Role<SemanticFamily, ArgumentTag<RoleTag>>>(m);
 
-    python::bind_record_views<SemanticFamily, ConstructorRepository>(m, ConceptTag {});
-    python::bind_record_views<SemanticFamily, ConstructorRepository>(m, RoleTag {});
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, BotTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, TopTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, AtomicStateTag<StaticTag>>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, AtomicStateTag<FluentTag>>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, AtomicStateTag<DerivedTag>>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, AtomicGoalTag<StaticTag>>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, AtomicGoalTag<FluentTag>>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, AtomicGoalTag<DerivedTag>>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, IntersectionTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, UnionTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, NegationTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, ValueRestrictionTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, ExistentialQuantificationTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, AtLeastNumberRestrictionTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, AtMostNumberRestrictionTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, ExactNumberRestrictionTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, QualifiedAtLeastNumberRestrictionTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, QualifiedAtMostNumberRestrictionTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, QualifiedExactNumberRestrictionTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, RoleValueMapTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, AgreementTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, RoleFillersTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, OneOfTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, NominalTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, RegisterTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<SemanticFamily, ArgumentTag<ConceptTag>>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<SemanticFamily, UniversalTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<SemanticFamily, AtomicStateTag<StaticTag>>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<SemanticFamily, AtomicStateTag<FluentTag>>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<SemanticFamily, AtomicStateTag<DerivedTag>>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<SemanticFamily, AtomicGoalTag<StaticTag>>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<SemanticFamily, AtomicGoalTag<FluentTag>>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<SemanticFamily, AtomicGoalTag<DerivedTag>>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<SemanticFamily, IntersectionTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<SemanticFamily, UnionTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<SemanticFamily, ComplementTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<SemanticFamily, InverseTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<SemanticFamily, CompositionTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<SemanticFamily, TransitiveClosureTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<SemanticFamily, ReflexiveTransitiveClosureTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<SemanticFamily, RestrictionTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<SemanticFamily, IdentityTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<SemanticFamily, RegisterTag>, ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<SemanticFamily, ArgumentTag<RoleTag>>, ConstructorRepository>>(m);
 }
 
 }  // namespace runir::kr::dl

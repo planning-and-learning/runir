@@ -6,9 +6,18 @@
 #include "runir/kr/ps/base/sketch_data.hpp"
 
 #include <concepts>
+#include <cstddef>
 #include <tuple>
 #include <urd/elements/flat.hpp>
 #include <yggdrasil/formalism/declarations.hpp>
+
+namespace runir::kr::ps::base
+{
+/// The syntactic complexity of a sketch (defined in syntactic_complexity.hpp), declared before its view, whose
+/// functions() list it.
+template<typename C>
+std::size_t syntactic_complexity(const urd::index_view<Sketch, C>& view);
+}  // namespace runir::kr::ps::base
 
 namespace urd
 {
@@ -37,6 +46,9 @@ public:
             static_assert(false, "unhandled feature tag in Sketch::get_features");
         }
     }
+
+    static constexpr auto functions() noexcept
+    { return urd::Functions<urd::function<"syntactic_complexity", static_cast<std::size_t (*)(const V&)>(&runir::kr::ps::base::syntactic_complexity)>> {}; }
 };
 }  // namespace urd
 

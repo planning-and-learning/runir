@@ -44,6 +44,14 @@ public:
     template<runir::kr::dl::CategoryTag Category>
     auto at(runir::kr::dl::ArgumentIdentifier<Category> arg) const
     { return arguments<Category>().at(static_cast<size_t>(ygg::uint_t(arg.value))); }
+
+    static constexpr auto functions() noexcept
+    {
+        return urd::Functions<urd::function<"at", &view_mixin::template at<runir::kr::dl::ConceptTag>, urd::arg<"arg">>,
+                              urd::function<"at", &view_mixin::template at<runir::kr::dl::RoleTag>, urd::arg<"arg">>,
+                              urd::function<"at", &view_mixin::template at<runir::kr::dl::BooleanTag>, urd::arg<"arg">>,
+                              urd::function<"at", &view_mixin::template at<runir::kr::dl::NumericalTag>, urd::arg<"arg">>> {};
+    }
 };
 }  // namespace urd
 

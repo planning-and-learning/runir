@@ -7,6 +7,7 @@
 
 #include <boost/mp11.hpp>
 #include <tyr/planning/declarations.hpp>
+#include <urd/elements/concepts.hpp>
 #include <urd/elements/flat.hpp>
 #include <urd/repr/slots/slots.hpp>
 #include <urd/store.hpp>
@@ -17,7 +18,7 @@ namespace runir::kr::ps::ext
 template<tyr::TaskKind Kind>
 struct ModuleState
 {
-    static constexpr auto name = "ModuleState";
+    static constexpr std::string_view name = urd::joined_name<"ModuleState", Kind::name>;
 };
 
 struct CallStack
@@ -28,7 +29,7 @@ struct CallStack
 template<tyr::TaskKind Kind>
 struct ProgramState
 {
-    static constexpr auto name = "ProgramState";
+    static constexpr std::string_view name = urd::joined_name<"ProgramState", Kind::name>;
 };
 
 template<tyr::TaskKind Kind>

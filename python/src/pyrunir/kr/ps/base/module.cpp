@@ -17,7 +17,6 @@ void bind_module_definitions(nb::module_& m)
     bind_sketch(m, repository);
     runir::kr::python::bind_repository(m, repository);
     bind_sketch_executor(m);
-    bind_syntactic_complexity(m);
 
     auto dl = m.def_submodule("dl");
     runir::kr::ps::base::dl::bind_module_definitions(dl, repository);

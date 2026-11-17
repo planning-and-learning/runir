@@ -47,7 +47,12 @@ public:
     auto at(runir::kr::dl::RegisterIdentifier<Category> reg) const
     { return values<Category>().at(static_cast<size_t>(ygg::uint_t(reg.value))); }
 
-    static constexpr auto functions() noexcept { return urd::Functions<urd::function<"get_formalism_repository", &view_mixin::get_formalism_repository>> {}; }
+    static constexpr auto functions() noexcept
+    {
+        return urd::Functions<urd::function<"get_formalism_repository", &view_mixin::get_formalism_repository>,
+                              urd::function<"at", &view_mixin::template at<runir::kr::dl::ConceptTag>, urd::arg<"reg">>,
+                              urd::function<"at", &view_mixin::template at<runir::kr::dl::RoleTag>, urd::arg<"reg">>> {};
+    }
 };
 }  // namespace urd
 

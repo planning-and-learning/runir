@@ -7,17 +7,16 @@ from collections import Counter
 
 from fixture_utils import read_fixture
 from pytyr.formalism.planning import PlanningDomain, RowActionLifted
-from pytyr.planning.ground import LabeledNode, Node, PackedStateGround
+from pytyr.planning.ground import LabeledNode, Node, PackedState
 
 from pyrunir.datasets import GroundTaskSearchContext
-from pyrunir.kr import DomainContext, GroundTaskContext, uns
+from pyrunir.kr import DomainContext, GroundTaskContext
 from pyrunir.kr.dl import semantics
 from pyrunir.kr.dl.semantics import (
     ConstructorRepository,
     EvaluationStorage,
     GroundStateEvaluationContext,
     LiftedStateEvaluationContext,
-    syntactic_complexity as dl_syntactic_complexity,
 )
 from pyrunir.kr.ps import ProofStatus, base
 from pyrunir.kr.ps.base import (
@@ -30,7 +29,6 @@ from pyrunir.kr.ps.base import (
     SketchSearchStatistics,
     SuccessorExpander,
     find_ground_solution,
-    syntactic_complexity,
 )
 from pyrunir.kr.ps.base.dl import (
     ConcreteFeatureBaseDlBoolean,
@@ -56,7 +54,7 @@ def test_base_proof_properties_keep_the_graph_and_sketch_alive(
     graph = proof.graph
     references = sys.getrefcount(graph)
     vertex = graph.vertex_value(next(iter(graph.vertices())))
-    assert isinstance(vertex.state, PackedStateGround)
+    assert isinstance(vertex.state, PackedState)
     assert vertex.state.unpack().pack() == vertex.state
     assert sys.getrefcount(graph) > references
     references = sys.getrefcount(vertex)
@@ -171,8 +169,7 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
     empty_sketch = SketchFactory.create_empty(sketch_repository)
     empty_sketch_description = str(empty_sketch)
     assert empty_sketch_description == str(parse_sketch(empty_sketch_description, planning_domain, sketch_repository))
-    assert syntactic_complexity(empty_sketch) == 0
-    assert base.syntactic_complexity(empty_sketch) == 0
+    assert empty_sketch.syntactic_complexity() == 0
 
     sketch = SketchFactory.create(
         SketchSpecification.GRIPPER_FRANCE_ET_AL_AAAI2021,
@@ -182,7 +179,7 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
     sketch_description = str(sketch)
     reparsed_sketch = parse_sketch(sketch_description, planning_domain, sketch_repository)
     assert str(reparsed_sketch) == sketch_description
-    assert syntactic_complexity(sketch) == 13
+    assert sketch.syntactic_complexity() == 13
 
     initial_node = search_context.successor_generator.get_initial_node(
         search_context.state_repository, search_context.axiom_evaluator
@@ -221,9 +218,7 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
     dl_denotation = semantics.evaluate(dl_constructor, state_context)
     assert isinstance(base.dl.evaluate(feature, state_context).get_value(), bool)
     assert base.dl.evaluate(concrete_feature, state_context) == dl_denotation
-    assert dl_syntactic_complexity(dl_constructor) == semantics.syntactic_complexity(dl_constructor)
-    assert base.dl.syntactic_complexity(feature) == base.dl.syntactic_complexity(concrete_feature)
-    assert syntactic_complexity(sketch) == base.syntactic_complexity(sketch)
+    assert feature.syntactic_complexity() == concrete_feature.syntactic_complexity()
     assert dl_denotation.index() is not None
     same_sketch = sketch
     assert sketch == same_sketch
@@ -277,12 +272,13 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
     classifier = parse_classifier(read_fixture("kr/uns/always.classifier"), planning_domain, classifier_repository)
     classifier_feature = classifier.get_features()[0]
     concrete_classifier_feature = classifier_feature.get_variant()
-    assert uns.dl.syntactic_complexity(classifier_feature) == uns.dl.syntactic_complexity(concrete_classifier_feature)
-    assert uns.dl.syntactic_complexity(concrete_classifier_feature) == semantics.syntactic_complexity(
-        concrete_classifier_feature.get_feature()
+    assert classifier_feature.syntactic_complexity() == concrete_classifier_feature.syntactic_complexity()
+    assert (
+        concrete_classifier_feature.syntactic_complexity()
+        == concrete_classifier_feature.get_feature().syntactic_complexity()
     )
-    assert uns.syntactic_complexity(classifier) == 1
-    assert uns.syntactic_complexity(ClassifierFactory.create_empty(classifier_repository)) == 0
+    assert classifier.syntactic_complexity() == 1
+    assert ClassifierFactory.create_empty(classifier_repository).syntactic_complexity() == 0
     classified_options = GroundSketchSearchOptions()
     assert classified_options.classifier is None
     classified_options.classifier = classifier

@@ -16,5 +16,4 @@ from pyrunir._pyrunir.kr.uns.dl import (
     optimize as optimize,
     parse_classifier as parse_classifier,
     query_statistics_sampler as query_statistics_sampler,
-    syntactic_complexity as syntactic_complexity,
 )

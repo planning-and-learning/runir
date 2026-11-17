@@ -57,7 +57,7 @@ struct data<runir::kr::dl::QueryColumn>
 // A query's derived fields (its schema, or its columns and plan, and a query's is_static) are computed from its other
 // fields and its children before it is interned (detail::prepare). They are stored, but do not identify it.
 template<>
-struct data<runir::kr::dl::Query<>>
+struct data<runir::kr::dl::Query<void>>
 {
     urd::index<runir::kr::dl::Query<>> index;
     runir::kr::dl::QueryVariant variant;

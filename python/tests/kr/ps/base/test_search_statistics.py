@@ -67,12 +67,12 @@ def _context(
 
 
 def _same_state(
-    left: ground.PackedStateGround | lifted.PackedStateLifted,
-    right: ground.PackedStateGround | lifted.PackedStateLifted,
+    left: ground.PackedState | lifted.PackedState,
+    right: ground.PackedState | lifted.PackedState,
 ) -> bool:
-    if isinstance(left, ground.PackedStateGround):
-        return isinstance(right, ground.PackedStateGround) and left == right
-    return isinstance(right, lifted.PackedStateLifted) and left == right
+    if isinstance(left, ground.PackedState):
+        return isinstance(right, ground.PackedState) and left == right
+    return isinstance(right, lifted.PackedState) and left == right
 
 
 def _options(context: TaskContext) -> SearchOptions:

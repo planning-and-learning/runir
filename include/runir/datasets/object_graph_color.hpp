@@ -33,6 +33,7 @@
 #include <tyr/formalism/predicate_data.hpp>
 #include <tyr/formalism/predicate_view.hpp>
 #include <urd/config.hpp>
+#include <urd/elements/concepts.hpp>
 #include <urd/elements/flat.hpp>
 #include <urd/repr/sequences/sequence.hpp>
 #include <urd/store.hpp>
@@ -49,7 +50,7 @@ namespace runir::datasets
 template<::tyr::formalism::FactKind T>
 struct PredicateColor
 {
-    static constexpr auto name = "PredicateColor";
+    static constexpr std::string_view name = urd::joined_name<"PredicateColor", T::name>;
 };
 
 struct Color

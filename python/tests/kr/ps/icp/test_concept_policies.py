@@ -174,8 +174,8 @@ IcpFeature = (
 def check_feature_complexity(features: Sequence[IcpFeature], symbol: str, complexity: int) -> None:
     """Check the complexity of the feature named ``symbol`` and of its concrete feature."""
     feature = next(value for value in features if value.get_variant().get_symbol() == symbol)
-    assert icp.dl.syntactic_complexity(feature) == complexity
-    assert icp.dl.syntactic_complexity(feature.get_variant()) == complexity
+    assert feature.syntactic_complexity() == complexity
+    assert feature.get_variant().syntactic_complexity() == complexity
 
 
 def test_feature_complexity_uses_the_shared_dl_language() -> None:
@@ -196,9 +196,9 @@ def test_feature_complexity_uses_the_shared_dl_language() -> None:
     )
     for features, symbol, complexity in cases:
         check_feature_complexity(features, symbol, complexity)
-    total = sum(icp.dl.syntactic_complexity(feature) for features, _, _ in cases for feature in features)
-    assert icp.syntactic_complexity(module) == total
-    assert icp.syntactic_complexity(program) == total
+    total = sum(feature.syntactic_complexity() for features, _, _ in cases for feature in features)
+    assert module.syntactic_complexity() == total
+    assert program.syntactic_complexity() == total
     domain = context.search_context.task.get_formalism_task().get_domain()
     assert icp.dl.parse_program(str(program), domain, context.domain_context.icp_repository) == program
 

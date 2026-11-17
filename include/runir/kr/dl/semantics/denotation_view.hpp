@@ -172,17 +172,18 @@ public:
         else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
         {
             using Self = const view_mixin&;
-            using Object = urd::index<tyr::formalism::Object>;
             return urd::Functions<
                 urd::function<"indices", static_cast<decltype(std::declval<Self>().indices()) (view_mixin::*)() const noexcept>(&view_mixin::indices)>,
                 urd::function<"indices",
-                              static_cast<decltype(std::declval<Self>().indices(std::declval<Object>())) (view_mixin::*)(Object) const noexcept>(
-                                  &view_mixin::indices)>,
+                              static_cast<decltype(std::declval<Self>().indices(std::declval<urd::index<tyr::formalism::Object>>())) (view_mixin::*)(
+                                  urd::index<tyr::formalism::Object>) const noexcept>(&view_mixin::indices),
+                              urd::arg<"source">>,
                 urd::function<"views", &view_mixin::views>,
-                urd::function<"views_from", &view_mixin::views_from>,
+                urd::function<"views_from", &view_mixin::views_from, urd::arg<"source">>,
                 urd::function<"value",
-                              static_cast<decltype(std::declval<Self>().value(std::declval<Object>())) (view_mixin::*)(Object) const noexcept>(
-                                  &view_mixin::value)>,
+                              static_cast<decltype(std::declval<Self>().value(std::declval<urd::index<tyr::formalism::Object>>())) (view_mixin::*)(
+                                  urd::index<tyr::formalism::Object>) const noexcept>(&view_mixin::value),
+                              urd::arg<"object">>,
                 urd::function<"storage_bits", &view_mixin::storage_bits>> {};
         }
         else
@@ -285,17 +286,18 @@ public:
         else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
         {
             using Self = const view_mixin&;
-            using Object = urd::index<tyr::formalism::Object>;
             return urd::Functions<
                 urd::function<"indices", static_cast<decltype(std::declval<Self>().indices()) (view_mixin::*)() const noexcept>(&view_mixin::indices)>,
                 urd::function<"indices",
-                              static_cast<decltype(std::declval<Self>().indices(std::declval<Object>())) (view_mixin::*)(Object) const noexcept>(
-                                  &view_mixin::indices)>,
+                              static_cast<decltype(std::declval<Self>().indices(std::declval<urd::index<tyr::formalism::Object>>())) (view_mixin::*)(
+                                  urd::index<tyr::formalism::Object>) const noexcept>(&view_mixin::indices),
+                              urd::arg<"source">>,
                 urd::function<"views", &view_mixin::views>,
-                urd::function<"views_from", &view_mixin::views_from>,
+                urd::function<"views_from", &view_mixin::views_from, urd::arg<"source">>,
                 urd::function<"value",
-                              static_cast<decltype(std::declval<Self>().value(std::declval<Object>())) (view_mixin::*)(Object) const noexcept>(
-                                  &view_mixin::value)>,
+                              static_cast<decltype(std::declval<Self>().value(std::declval<urd::index<tyr::formalism::Object>>())) (view_mixin::*)(
+                                  urd::index<tyr::formalism::Object>) const noexcept>(&view_mixin::value),
+                              urd::arg<"object">>,
                 urd::function<"storage_bits", &view_mixin::storage_bits>> {};
         }
         else

@@ -1,9 +1,20 @@
-#include "../record_bindings.hpp"
+#include "../module.hpp"
 #include "bindings.hpp"
+#include "pyrunir/module.hpp"
 
+#include <nanobind/stl/variant.h>
+#include <nanobind/stl/vector.h>
+#include <runir/kr/dl/formatter.hpp>
 #include <runir/kr/dl/grammar/constructor_repository.hpp>
 #include <runir/kr/dl/grammar/formatter.hpp>
+#include <runir/kr/dl/record_view.hpp>
+#include <runir/kr/dl/semantics/syntactic_complexity.hpp>
+#include <tyr/formalism/planning/repository.hpp>
 #include <urd/python/bindings.hpp>
+#include <urd/python/sequences/sequence.hpp>
+#include <urd/repr/sequences/sequence.hpp>
+#include <urd/store.hpp>
+#include <yggdrasil/python/bindings.hpp>
 
 namespace runir::kr::dl
 {
@@ -64,10 +75,55 @@ void bind_grammar_records(nb::module_& m)
     urd::python::bind_data<Numerical<grammar::GrammarFamily, CountTag>>(m);
     urd::python::bind_data<Numerical<grammar::GrammarFamily, DistanceTag>>(m);
 
-    python::bind_record_views<grammar::GrammarFamily, grammar::ConstructorRepository>(m, ConceptTag {});
-    python::bind_record_views<grammar::GrammarFamily, grammar::ConstructorRepository>(m, RoleTag {});
-    python::bind_record_views<grammar::GrammarFamily, grammar::ConstructorRepository>(m, BooleanTag {});
-    python::bind_record_views<grammar::GrammarFamily, grammar::ConstructorRepository>(m, NumericalTag {});
+    urd::python::bind_view<urd::index_view<Concept<grammar::GrammarFamily, BotTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<grammar::GrammarFamily, TopTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<grammar::GrammarFamily, AtomicStateTag<StaticTag>>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<grammar::GrammarFamily, AtomicStateTag<FluentTag>>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<grammar::GrammarFamily, AtomicStateTag<DerivedTag>>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<grammar::GrammarFamily, AtomicGoalTag<StaticTag>>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<grammar::GrammarFamily, AtomicGoalTag<FluentTag>>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<grammar::GrammarFamily, AtomicGoalTag<DerivedTag>>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<grammar::GrammarFamily, IntersectionTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<grammar::GrammarFamily, UnionTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<grammar::GrammarFamily, NegationTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<grammar::GrammarFamily, ValueRestrictionTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<grammar::GrammarFamily, ExistentialQuantificationTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<grammar::GrammarFamily, AtLeastNumberRestrictionTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<grammar::GrammarFamily, AtMostNumberRestrictionTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<grammar::GrammarFamily, ExactNumberRestrictionTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<grammar::GrammarFamily, QualifiedAtLeastNumberRestrictionTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<grammar::GrammarFamily, QualifiedAtMostNumberRestrictionTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<grammar::GrammarFamily, QualifiedExactNumberRestrictionTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<grammar::GrammarFamily, RoleValueMapTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<grammar::GrammarFamily, AgreementTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<grammar::GrammarFamily, RoleFillersTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<grammar::GrammarFamily, OneOfTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Concept<grammar::GrammarFamily, NominalTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<grammar::GrammarFamily, UniversalTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<grammar::GrammarFamily, AtomicStateTag<StaticTag>>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<grammar::GrammarFamily, AtomicStateTag<FluentTag>>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<grammar::GrammarFamily, AtomicStateTag<DerivedTag>>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<grammar::GrammarFamily, AtomicGoalTag<StaticTag>>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<grammar::GrammarFamily, AtomicGoalTag<FluentTag>>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<grammar::GrammarFamily, AtomicGoalTag<DerivedTag>>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<grammar::GrammarFamily, IntersectionTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<grammar::GrammarFamily, UnionTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<grammar::GrammarFamily, ComplementTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<grammar::GrammarFamily, InverseTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<grammar::GrammarFamily, CompositionTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<grammar::GrammarFamily, TransitiveClosureTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<grammar::GrammarFamily, ReflexiveTransitiveClosureTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<grammar::GrammarFamily, RestrictionTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Role<grammar::GrammarFamily, IdentityTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<grammar::GrammarFamily, AtomicStateTag<StaticTag>>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<grammar::GrammarFamily, AtomicStateTag<FluentTag>>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<grammar::GrammarFamily, AtomicStateTag<DerivedTag>>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<grammar::GrammarFamily, AtomicGoalTag<StaticTag>>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<grammar::GrammarFamily, AtomicGoalTag<FluentTag>>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<grammar::GrammarFamily, AtomicGoalTag<DerivedTag>>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Boolean<grammar::GrammarFamily, NonemptyTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Numerical<grammar::GrammarFamily, CountTag>, grammar::ConstructorRepository>>(m);
+    urd::python::bind_view<urd::index_view<Numerical<grammar::GrammarFamily, DistanceTag>, grammar::ConstructorRepository>>(m);
 }
 
 }  // namespace runir::kr::dl

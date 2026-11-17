@@ -19,7 +19,7 @@ namespace runir::kr::dl
 namespace
 {
 
-/// The constructor of Category: bind_data, bind_view, and evaluate, optimize and syntactic_complexity of it.
+/// The constructor of Category: bind_data, bind_view, and evaluate and optimize of it.
 template<CategoryTag Category>
 void bind_constructor_view(nb::module_& m)
 {
@@ -27,7 +27,6 @@ void bind_constructor_view(nb::module_& m)
     urd::python::bind_view<View>(m);
     runir::kr::python::bind_evaluate<View>(m);
     runir::kr::python::bind_optimize<View>(m);
-    m.def("syntactic_complexity", [](View constructor) { return semantics::syntactic_complexity(constructor); }, nb::arg("constructor"));
 }
 
 }  // namespace

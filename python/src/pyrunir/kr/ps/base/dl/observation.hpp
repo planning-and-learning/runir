@@ -19,7 +19,8 @@ void bind_observation(nb::module_& m, RepositoryBinding& repository)
     using View = urd::index_view<T, Repository>;
     using GroundContext = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>;
     using LiftedContext = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
-    runir::kr::python::bind_observation_view<T>(repository, m);
+    urd::python::bind_view<View>(m);
+    ygg::bind_insert<T>(repository);
     m.def(
          "is_compatible_with",
          [](View observation, GroundContext& context) { return runir::kr::ps::is_compatible_with<tyr::GroundTag>(observation, context); },

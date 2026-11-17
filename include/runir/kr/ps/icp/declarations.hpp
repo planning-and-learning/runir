@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <memory>
 #include <tyr/planning/declarations.hpp>
+#include <urd/elements/concepts.hpp>
 #include <urd/elements/flat.hpp>
 
 namespace runir::kr::ps::icp
@@ -52,7 +53,7 @@ enum class EffectOperation : std::uint8_t
 template<runir::kr::dl::CategoryTag CategoryT>
 struct LoadTag
 {
-    static constexpr auto name = "Load";
+    static constexpr std::string_view name = urd::joined_name<"Load", CategoryT::name>;
     using Category = CategoryT;
     static constexpr auto keyword = "load";
 };
@@ -76,7 +77,7 @@ using RuleCategoryFor = typename Tag::Category;
 template<RuleKind Kind>
 struct Rule
 {
-    static constexpr auto name = "Rule";
+    static constexpr std::string_view name = urd::joined_name<"Rule", Kind::name>;
 };
 
 using LoadRuleTypes = boost::mp11::mp_list<Rule<LoadTag<runir::kr::dl::ConceptTag>>, Rule<LoadTag<runir::kr::dl::RoleTag>>>;

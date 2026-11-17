@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from pypddl.formalism import ParserOptions
 from pytyr.formalism.planning import Parser, PlanningDomain
-from pytyr.planning.ground import PackedStateGround
+from pytyr.planning.ground import PackedState
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 from pyyggdrasil.execution import ExecutionContext
 
@@ -36,7 +36,7 @@ def _make_gripper_context(
 
 def _generate(
     grammar_description: str,
-    states: Sequence[PackedStateGround],
+    states: Sequence[PackedState],
     planning_domain: PlanningDomain,
     task_context: GroundTaskContext,
     max_syntactic_complexity: int,
@@ -57,7 +57,7 @@ def _generate(
 
 
 def _concept_vector(
-    concept: semantics.ConstructorConcept, states: Sequence[PackedStateGround], task_context: GroundTaskContext
+    concept: semantics.ConstructorConcept, states: Sequence[PackedState], task_context: GroundTaskContext
 ) -> tuple[tuple[str, ...], ...]:
     result: list[tuple[str, ...]] = []
     storage = semantics.EvaluationStorage(task_context.dl_denotation_repository)
@@ -202,7 +202,7 @@ def test_generate_keeps_equal_denotations_in_distinct_nonterminals(gripper_data_
     assert result.statistics.num_pruned == 0
     assert result.statistics.num_kept == 2
     assert len(result.concepts) == 1
-    assert semantics.syntactic_complexity(result.concepts[0]) == 3
+    assert result.concepts[0].syntactic_complexity() == 3
 
 
 def test_generate_computes_substitution_closure_independent_of_rule_order(gripper_data_dir: Path) -> None:
@@ -233,7 +233,7 @@ def test_generate_deduplicates_commutative_candidates(gripper_data_dir: Path) ->
     assert result.statistics.num_generated == 5
     assert result.statistics.num_pruned == 2
     assert result.statistics.num_kept == 3
-    assert sum(semantics.syntactic_complexity(concept) == 3 for concept in result.concepts) == 1
+    assert sum(concept.syntactic_complexity() == 3 for concept in result.concepts) == 1
 
 
 def test_generate_terminates_substitution_closure_cycle_without_states(gripper_data_dir: Path) -> None:

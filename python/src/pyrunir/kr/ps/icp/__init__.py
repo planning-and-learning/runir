@@ -77,6 +77,5 @@ from pyrunir._pyrunir.kr.ps.icp import (
     lifted as lifted,
     optimize as optimize,
     query_statistics_sampler as query_statistics_sampler,
-    syntactic_complexity as syntactic_complexity,
 )
 from pyrunir.kr.ps.icp import dl as dl

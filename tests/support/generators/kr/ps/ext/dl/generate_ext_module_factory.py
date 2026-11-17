@@ -54,7 +54,7 @@ def main() -> None:
             "boolean_features": len(module.get_boolean_features()),
             "numerical_features": len(module.get_numerical_features()),
             "transitions": len(module.get_memory_transitions()),
-            "syntactic_complexity": ext.syntactic_complexity(module),
+            "syntactic_complexity": module.syntactic_complexity(),
         }
         for module in modules
     ]
@@ -62,7 +62,7 @@ def main() -> None:
     suite["program"] = {
         "entry": program.get_entry_mod().get_symbol().get_name(),
         "modules": [module.get_symbol().get_name() for module in program.get_modules()],
-        "syntactic_complexity": ext.syntactic_complexity(program),
+        "syntactic_complexity": program.syntactic_complexity(),
     }
     SUITE.write_text(json.dumps(suite, indent=2) + "\n", encoding="utf-8")
 

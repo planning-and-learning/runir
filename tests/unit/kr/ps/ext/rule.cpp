@@ -97,7 +97,7 @@ static_assert(TransitionRuleContract<Call> && requires(urd::data<Entity<Call>>& 
     data.callee;
     data.arguments;
     view.get_callee();
-    view.for_each_call_argument([](auto) {});
+    runir::kr::ps::ext::for_each_call_argument(view, [](auto) {});
 });
 
 }  // namespace

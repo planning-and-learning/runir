@@ -64,15 +64,18 @@ public:
     auto get_arguments() const noexcept
         requires(std::same_as<Kind, runir::kr::ps::ext::DoTag> || std::same_as<Kind, runir::kr::ps::ext::CallTag>)
     { return self().template member<&urd::record_of<V>::arguments>(); }
-
-    template<typename F>
-    void for_each_call_argument(F function) const
-        requires std::same_as<Kind, runir::kr::ps::ext::CallTag>
-    {
-        for (const auto& argument : get_arguments())
-            std::visit(function, argument);
-    }
 };
 }  // namespace urd
+
+namespace runir::kr::ps::ext
+{
+/// Calls `function` with each argument of the call rule `rule`, as its feature view.
+template<typename V, typename F>
+void for_each_call_argument(const V& rule, F function)
+{
+    for (const auto& argument : rule.get_arguments())
+        std::visit(function, argument);
+}
+}  // namespace runir::kr::ps::ext
 
 #endif

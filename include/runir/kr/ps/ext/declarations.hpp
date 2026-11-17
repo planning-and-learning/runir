@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <memory>
 #include <type_traits>
+#include <urd/elements/concepts.hpp>
 #include <urd/elements/flat.hpp>
 
 namespace runir::kr::ps::ext
@@ -40,7 +41,7 @@ struct SketchTag
 template<runir::kr::dl::CategoryTag CategoryT>
 struct LoadTag
 {
-    static constexpr auto name = "Load";
+    static constexpr std::string_view name = urd::joined_name<"Load", CategoryT::name>;
     using Category = CategoryT;
     static constexpr auto keyword = "load";
 };
@@ -48,7 +49,7 @@ struct LoadTag
 template<runir::kr::dl::CategoryTag CategoryT>
 struct ChooseTag
 {
-    static constexpr auto name = "Choose";
+    static constexpr std::string_view name = urd::joined_name<"Choose", CategoryT::name>;
     using Category = CategoryT;
     static constexpr auto keyword = "choose";
 };
@@ -100,7 +101,7 @@ using RuleCategoryFor = typename Tag::Category;
 template<RuleKind Kind>
 struct Rule
 {
-    static constexpr auto name = "Rule";
+    static constexpr std::string_view name = urd::joined_name<"Rule", Kind::name>;
 };
 
 struct Module

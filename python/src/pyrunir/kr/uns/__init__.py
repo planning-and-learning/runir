@@ -18,6 +18,5 @@ from pyrunir._pyrunir.kr.uns import (
     collect_query_statistics as collect_query_statistics,
     optimize as optimize,
     query_statistics_sampler as query_statistics_sampler,
-    syntactic_complexity as syntactic_complexity,
 )
 from pyrunir.kr.uns import dl as dl

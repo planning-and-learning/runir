@@ -69,5 +69,4 @@ from pyrunir._pyrunir.kr.ps.icp.dl import (
     parse_module as parse_module,
     parse_program as parse_program,
     query_statistics_sampler as query_statistics_sampler,
-    syntactic_complexity as syntactic_complexity,
 )
