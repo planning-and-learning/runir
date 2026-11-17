@@ -103,7 +103,7 @@ public:
             if (stop())
                 return false;
             m_offer.values.clear();
-            for (size_t i = 0; i < row.size(); ++i)
+            for (size_t i = 0; i < row.get_values().size(); ++i)
                 m_offer.values.emplace_back(row.value(i));
             // Policy applicability has no carried path metric.
             const auto offered =
