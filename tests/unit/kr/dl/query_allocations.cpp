@@ -213,8 +213,9 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
         const auto& projected_delta = projection.get_delta();
         const auto [graph_added, graph_removed] = graph_state.get_delta().change();
         const auto [projected_added, projected_removed] = projected_delta.change();
-        return leaf.get_result().get_rows().size() == rows && delta.added.size() == static_cast<size_t>(adding) && delta.removed.size() == static_cast<size_t>(!adding)
-               && projection.get_result().get_rows().size() == projected_rows && projected_delta.added.size() == (adding ? projected_rows - previous_size : 0)
+        return leaf.get_result().get_rows().size() == rows && delta.added.size() == static_cast<size_t>(adding)
+               && delta.removed.size() == static_cast<size_t>(!adding) && projection.get_result().get_rows().size() == projected_rows
+               && projected_delta.added.size() == (adding ? projected_rows - previous_size : 0)
                && projected_delta.removed.size() == (adding ? 0 : previous_size - projected_rows)
                && same_rows(graph_state.get_result(), projection.get_result()) && same_rows(graph_added, projected_added)
                && same_rows(graph_removed, projected_removed);
@@ -533,7 +534,8 @@ TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
                 std::array<ygg::Value, 2> { ygg::encode_value<ygg::uint_t>(object.value), ygg::encode_value<ygg::uint_t>(static_cast<ygg::uint_t>(2)) });
             const auto value = kr::dl::semantics::insert(denotations, *owner, dl_builder).first;
             const auto alias = kr::dl::semantics::rename(denotations, value, aliases, dl_builder);
-            valid &= value.get_rows().size() == 2 && alias.get_rows().size() == 2 && ObjectIndex(ygg::decode_value<ygg::uint_t>(value.row(0).value(0))) == object;
+            valid &=
+                value.get_rows().size() == 2 && alias.get_rows().size() == 2 && ObjectIndex(ygg::decode_value<ygg::uint_t>(value.row(0).value(0))) == object;
             valid &= std::ranges::equal(value.get_rows(), alias.get_rows());
             auto duplicate = repository.get_relation_builder<ygg::Schema>(columns);
             duplicate->insert(

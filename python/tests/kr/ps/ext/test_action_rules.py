@@ -23,11 +23,11 @@ from ext_execution_utils import (
 )
 from fixture_utils import FIXTURE_ROOT
 from pypddl.formalism import ParserOptions
-from pytyr.formalism import ObjectIndex
 from pytyr.formalism.planning import Object, Parser, PlanningDomain, RowActionLifted
 from pytyr.planning import ground, lifted
 from pyyggdrasil import formalism
 from pyyggdrasil.execution import ExecutionContext
+from pyyggdrasil.formalism import ObjectIndex
 from pyyggdrasil.serialization import Dictionaries
 from relation_utils import rename, values
 

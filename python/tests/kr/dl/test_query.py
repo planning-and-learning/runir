@@ -4,9 +4,9 @@
 import gc
 
 import pytest
-from pytyr.formalism import ObjectIndex
 from pytyr.formalism.planning import Object, PlanningDomain
 from pyyggdrasil import formalism
+from pyyggdrasil.formalism import ObjectIndex
 from pyyggdrasil.serialization import Dictionaries
 from relation_utils import rename, values
 

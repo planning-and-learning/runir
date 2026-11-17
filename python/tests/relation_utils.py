@@ -6,8 +6,8 @@
 from collections.abc import Iterable, Sequence
 from typing import Any
 
-from pytyr.formalism import ObjectIndex
 from pyyggdrasil import formalism
+from pyyggdrasil.formalism import ObjectIndex
 
 
 def labels(columns: Iterable[formalism.ColumnLayout]) -> list[formalism.ColumnIndex]:
