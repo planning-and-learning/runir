@@ -132,9 +132,9 @@ endif()
 
 # Dependencies
 
-set(RUNIR_YGGDRASIL_REQUIRED_VERSION 0.9.0)
-set(RUNIR_TYR_REQUIRED_VERSION 0.9.0)
-set(RUNIR_VEFR_REQUIRED_VERSION 0.3.0)
+set(RUNIR_YGGDRASIL_REQUIRED_VERSION 0.10.0)
+set(RUNIR_TYR_REQUIRED_VERSION 0.10.0)
+set(RUNIR_VEFR_REQUIRED_VERSION 0.4.0)
 
 brokkr_find_python_native_prefix(pyurd URD_PREFIX)
 brokkr_find_python_native_prefix(pyurd_native URD_NATIVE_PREFIX)
