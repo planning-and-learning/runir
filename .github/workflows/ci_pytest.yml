@@ -51,10 +51,14 @@ jobs:
       - name: Diag weak symbols
         run: |
           sp=$(python -c 'import sysconfig; print(sysconfig.get_paths()["platlib"])')
-          for f in $(find "$sp" \( -name '*.so' -o -name '*.dylib' \) | grep -E 'pyurd|pyyggdrasil|pytyr|pyvefr|pyrunir|pypddl'); do
-            echo "DIAGSO $f exported=$(nm -gU "$f" | wc -l) weak=$(nm -gmU "$f" | grep -c 'weak external')"
-            nm -gmU "$f" | grep 'weak external' | c++filt | grep -E 'with_context|transformed_range|SetBitIndices|object_pair_indices|BitsetSpan' | cut -c1-400 | head -20 | sed "s/^/DIAGSYM /"
-          done
-          otool -L "$sp/pyrunir/_pyrunir.abi3.so" | sed "s/^/DIAGLINK /"
+          weak() { nm -gmU "$1" | grep 'weak external' | awk '{print $NF}' | sort -u; }
+          weak "$sp/pyrunir/native/lib/librunir_kr.dylib" > kr.txt
+          weak "$sp/pytyr/native/lib/libtyr_core.dylib" > tyr.txt
+          comm -12 kr.txt tyr.txt > shared.txt
+          echo "DIAGSHARED count=$(wc -l < shared.txt)"
+          c++filt < shared.txt | grep -E 'urd::|ygg' | cut -c1-300 | sed 's/^/DIAGSHARED /' | head -80
+          nm -gmU "$sp/pyrunir/native/lib/librunir_kr.dylib" | c++filt | grep -E 'object_pair_indices|with_context' | cut -c1-300 | sed 's/^/DIAGKR /' | head -20
+          otool -L "$sp/pyrunir/_pyrunir.abi3.so" | sed 's/^/DIAGLINK /'
+          otool -L "$sp/pyrunir/native/lib/librunir_kr.dylib" | sed 's/^/DIAGLINK /'
       - name: Test
         run: pytest -s -p no:cacheprovider python/tests/kr/dl/test_diag_role_views.py; pytest python/tests
