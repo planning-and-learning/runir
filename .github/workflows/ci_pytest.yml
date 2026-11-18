@@ -48,5 +48,13 @@ jobs:
         env:
           PIP_NO_CACHE_DIR: 1
 
+      - name: Diag weak symbols
+        run: |
+          sp=$(python -c 'import sysconfig; print(sysconfig.get_paths()["platlib"])')
+          for f in $(find "$sp" -name '*.so' -path '*py*' | grep -E 'pyurd|pyyggdrasil|pytyr|pyvefr|pyrunir|pypddl'); do
+            echo "DIAGSO $f $(nm -gmU "$f" | wc -l) exported"
+            nm -gmU "$f" | grep -c 'weak external' | sed "s/^/DIAGSO weak: /"
+            nm -gmU "$f" | grep 'weak external' | c++filt | grep -E 'with_context|transformed_range|SetBitIndices|object_pair_indices' | head -15 | sed "s/^/DIAGSYM /"
+          done
       - name: Test
         run: pytest -s -p no:cacheprovider python/tests/kr/dl/test_diag_role_views.py; pytest python/tests

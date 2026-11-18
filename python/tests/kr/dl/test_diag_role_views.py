@@ -44,5 +44,6 @@ def test_diag_role_views(
         _try(f"{name} views first", lambda d=d: next(iter(d.views())))
         _try(f"{name} views list", lambda d=d: list(d.views()))
     _try("role indices(source 0)", lambda: list(r.indices(c.indices()[0] if hasattr(c.indices(), "__getitem__") else next(iter(c.indices())))))
+    _try("role views_from(first object)", lambda: [str(o.get_name()) for o in r.views_from(next(iter(c.views())))])
     _try("concept views names", lambda: [str(o.get_name()) for o in c.views()])
     assert False, "diagnostic"
