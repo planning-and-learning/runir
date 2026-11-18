@@ -48,17 +48,15 @@ jobs:
         env:
           PIP_NO_CACHE_DIR: 1
 
-      - name: Diag weak symbols
+      - name: Diag disassembly
         run: |
           sp=$(python -c 'import sysconfig; print(sysconfig.get_paths()["platlib"])')
-          weak() { nm -gmU "$1" | grep 'weak external' | awk '{print $NF}' | sort -u; }
-          weak "$sp/pyrunir/native/lib/librunir_kr.dylib" > kr.txt
-          weak "$sp/pytyr/native/lib/libtyr_core.dylib" > tyr.txt
-          comm -12 kr.txt tyr.txt > shared.txt
-          echo "DIAGSHARED count=$(wc -l < shared.txt)"
-          c++filt < shared.txt | grep -E 'urd::|ygg' | cut -c1-300 | sed 's/^/DIAGSHARED /' | head -80
-          nm -gmU "$sp/pyrunir/native/lib/librunir_kr.dylib" | c++filt | grep -E 'object_pair_indices|with_context' | cut -c1-300 | sed 's/^/DIAGKR /' | head -20
-          otool -L "$sp/pyrunir/_pyrunir.abi3.so" | sed 's/^/DIAGLINK /'
-          otool -L "$sp/pyrunir/native/lib/librunir_kr.dylib" | sed 's/^/DIAGLINK /'
+          so="$sp/pyrunir/_pyrunir.abi3.so"
+          nm "$so" | awk '{print $1, $2, $3}' > syms.txt
+          grep -E 'object_pair_indices|7indicesE' syms.txt | while read a t m; do echo "DIAGSYM $a $t $m $(echo $m | c++filt | cut -c1-400)"; done | head -40
+          for m in $(grep -E 'object_pair_indices' syms.txt | awk '{print $3}' | head -4) $(grep -E '7indicesEv' syms.txt | grep -E 'RoleTag|7RoleTag' | awk '{print $3}' | head -6); do
+            echo "DIAGASM ===== $(echo $m | c++filt | cut -c1-300)"
+            objdump --disassemble-symbols="$m" --no-show-raw-insn "$so" 2>&1 | head -120 | sed 's/^/DIAGASM /'
+          done
       - name: Test
         run: pytest -s -p no:cacheprovider python/tests/kr/dl/test_diag_role_views.py; pytest python/tests
