@@ -46,4 +46,6 @@ def test_diag_role_views(
     _try("role indices(source 0)", lambda: list(r.indices(c.indices()[0] if hasattr(c.indices(), "__getitem__") else next(iter(c.indices())))))
     _try("role views_from(first object)", lambda: [str(o.get_name()) for o in r.views_from(next(iter(c.views())))])
     _try("concept views names", lambda: [str(o.get_name()) for o in c.views()])
+    _try("cpp diag_pairs(6)", lambda: __import__("pyrunir._pyrunir", fromlist=["kr"]).kr.dl.semantics.diag_pairs(6))
+    _try("cpp diag_view(role)", lambda: __import__("pyrunir._pyrunir", fromlist=["kr"]).kr.dl.semantics.diag_view(r))
     assert False, "diagnostic"
