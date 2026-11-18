@@ -133,13 +133,16 @@ public:
     }
 
     /// Typed indices borrowing only the bits, independently of the view and range wrappers.
+    // One function, not an overload per category: functions() takes its address, which deduces the return type of every
+    // overload, and AppleClang does not mangle requires-clauses, so a concept and a role overload would share a symbol.
     auto indices() const noexcept
-        requires std::same_as<Category, runir::kr::dl::ConceptTag>
-    { return runir::kr::dl::semantics::detail::object_indices(storage_bits()); }
-
-    auto indices() const noexcept
-        requires std::same_as<Category, runir::kr::dl::RoleTag>
-    { return runir::kr::dl::semantics::detail::object_pair_indices(storage_bits(), get_num_objects()); }
+        requires runir::kr::dl::ConceptOrRoleTag<Category>
+    {
+        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
+            return runir::kr::dl::semantics::detail::object_indices(storage_bits());
+        else
+            return runir::kr::dl::semantics::detail::object_pair_indices(storage_bits(), get_num_objects());
+    }
 
     // Its return type is spelled out, so that taking the address of `indices` in another category does not deduce it.
     [[nodiscard]] auto indices(urd::index<tyr::formalism::Object> source) const noexcept
@@ -247,13 +250,16 @@ public:
     }
 
     /// Typed indices borrowing only the bits, independently of the view and range wrappers.
+    // One function, not an overload per category: functions() takes its address, which deduces the return type of every
+    // overload, and AppleClang does not mangle requires-clauses, so a concept and a role overload would share a symbol.
     auto indices() const noexcept
-        requires std::same_as<Category, runir::kr::dl::ConceptTag>
-    { return runir::kr::dl::semantics::detail::object_indices(storage_bits()); }
-
-    auto indices() const noexcept
-        requires std::same_as<Category, runir::kr::dl::RoleTag>
-    { return runir::kr::dl::semantics::detail::object_pair_indices(storage_bits(), get_num_objects()); }
+        requires runir::kr::dl::ConceptOrRoleTag<Category>
+    {
+        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
+            return runir::kr::dl::semantics::detail::object_indices(storage_bits());
+        else
+            return runir::kr::dl::semantics::detail::object_pair_indices(storage_bits(), get_num_objects());
+    }
 
     // Its return type is spelled out, so that taking the address of `indices` in another category does not deduce it.
     [[nodiscard]] auto indices(urd::index<tyr::formalism::Object> source) const noexcept
