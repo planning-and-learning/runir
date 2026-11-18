@@ -48,15 +48,22 @@ jobs:
         env:
           PIP_NO_CACHE_DIR: 1
 
-      - name: Diag disassembly
+      - name: Diag AppleClang constraint mangling
         run: |
-          sp=$(python -c 'import sysconfig; print(sysconfig.get_paths()["platlib"])')
-          so="$sp/pyrunir/_pyrunir.abi3.so"
-          nm "$so" | awk '{print $1, $2, $3}' > syms.txt
-          grep -E 'object_pair_indices|7indicesE' syms.txt | while read a t m; do echo "DIAGSYM $a $t $m $(echo $m | c++filt | cut -c1-400)"; done | head -40
-          for m in $(grep -E 'object_pair_indices' syms.txt | awk '{print $3}' | head -4) $(grep -E '7indicesEv' syms.txt | grep -E 'RoleTag|7RoleTag' | awk '{print $3}' | head -6); do
-            echo "DIAGASM ===== $(echo $m | c++filt | cut -c1-300)"
-            objdump --disassemble-symbols="$m" --no-show-raw-insn "$so" 2>&1 | head -120 | sed 's/^/DIAGASM /'
-          done
+          cat > m.cpp <<'CPP'
+          template<class T, class U> concept same_as_ = __is_same(T, U);
+          struct A {}; struct B {};
+          template<class C> struct M {
+              auto f() const noexcept requires same_as_<C, A> { return 1; }
+              auto f() const noexcept requires same_as_<C, B> { return 2.0; }
+              static auto pick() { return static_cast<decltype(M{}.f()) (M::*)() const noexcept>(&M::f); }
+          };
+          double g() { M<B> m; return (m.*M<B>::pick())(); }
+          CPP
+          c++ --version | head -1 | sed 's/^/DIAGMANGLE /'
+          c++ -std=c++20 -c m.cpp -o m.o 2>&1 | sed 's/^/DIAGMANGLE /' || true
+          nm m.o | sed 's/^/DIAGMANGLE /' || true
+          c++ -std=c++23 -c m.cpp -o m.o 2>&1 | sed 's/^/DIAGMANGLE c++23 /' || true
+          nm m.o | sed 's/^/DIAGMANGLE c++23 /' || true
       - name: Test
-        run: pytest -s -p no:cacheprovider python/tests/kr/dl/test_diag_role_views.py; pytest python/tests
+        run: pytest python/tests
