@@ -7,6 +7,7 @@
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/tuple.h>
+#include <string>
 #include <tuple>
 #include <optional>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
@@ -64,13 +65,40 @@ void bind_semantics_denotation(nb::module_& m)
     m.def("diag_view",
           [](const urd::index_view<semantics::Denotation<RoleTag>, semantics::DenotationRepository>& view)
           {
-              const auto range = view.indices();
+              const auto hex = [](const auto& object)
+              {
+                  std::string out;
+                  const auto* bytes = reinterpret_cast<const unsigned char*>(&object);
+                  for (std::size_t i = 0; i < sizeof(object); ++i)
+                  {
+                      static constexpr char digits[] = "0123456789abcdef";
+                      out += digits[bytes[i] >> 4];
+                      out += digits[bytes[i] & 15];
+                      if (i % 8 == 7)
+                          out += ' ';
+                  }
+                  return out;
+              };
               const std::size_t n = view.get_num_objects();
-              const std::size_t stored = range.function().context;
-              std::vector<std::pair<unsigned, unsigned>> out;
-              for (const auto& [a, b] : range)
-                  out.emplace_back(unsigned(a.value), unsigned(b.value));
-              return std::make_tuple(n, stored, out);
+              const auto bits = view.storage_bits();
+              const auto manual = semantics::detail::object_pair_indices(bits, view.get_num_objects());
+              const auto via = view.indices();
+              const auto via_concept_free = view.indices(urd::index<tyr::formalism::Object>(1));
+              std::vector<std::pair<unsigned, unsigned>> manual_pairs;
+              for (const auto& [a, b] : manual)
+                  manual_pairs.emplace_back(unsigned(a.value), unsigned(b.value));
+              std::vector<unsigned> from_one;
+              for (const auto a : via_concept_free)
+                  from_one.push_back(unsigned(a.value));
+              return std::make_tuple(n,
+                                     bits.size(),
+                                     std::size_t(manual.function().context),
+                                     std::size_t(via.function().context),
+                                     sizeof(manual),
+                                     hex(manual),
+                                     hex(via),
+                                     manual_pairs,
+                                     from_one);
           });
 }
 
