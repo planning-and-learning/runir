@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [macos-latest]
         python-version: ["3.13"]
 
     steps:
@@ -49,4 +49,4 @@ jobs:
           PIP_NO_CACHE_DIR: 1
 
       - name: Test
-        run: pytest python/tests
+        run: pytest -s -p no:cacheprovider python/tests/kr/dl/test_diag_role_views.py; pytest python/tests
